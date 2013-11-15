@@ -1,0 +1,12 @@
+*.dylib
+*.o
+*.os
+*.pyc
+*.so
+.sconf_temp
+.sconsign.dblite
+config.log
+doc/htmlDir
+tests/.tests
+ups/*.cfgc
+python/lsst/sims/operations/maf/version.py
