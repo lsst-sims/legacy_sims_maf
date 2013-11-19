@@ -9,15 +9,19 @@ try:
     # Try cKDTree first, as it's supposed to be faster.
     from scipy.spatial import cKDTree as kdtree 
 except:
-    # But some computers in department only have KDTree.
+    # But older scipy may not have cKDTree.
     from scipy.spatial import KDTree as kdtree
-# Check API is the same. (was on my laptop).
 
 from baseGrid import BaseGrid
 
 class BaseSpatialGrid(BaseGrid):
     """Base grid object, with added slicing functions for spatial grids."""
-
+    def __init__(self, verbose=True, *args, **kwargs):
+        """Instantiate the base spatial grid object."""
+        super(BaseSpatialGrid, self).__init__(verbose=verbose)
+        self.gridtype = 'SPATIAL'
+        return
+    
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
         # Note ra/dec can be arrays.
@@ -28,11 +32,14 @@ class BaseSpatialGrid(BaseGrid):
     
     def buildTree(self, simDataRa, simDataDec, 
                   leafsize=500, radius=1.8):
-        """Build KD tree on simDataRA/Dec values. 
+        """Build KD tree on simDataRA/Dec and set radius (via setRad) for matching.
 
-        leafsize corresponds to the number of Ra/Dec pointings in each leaf node.
-        radius corresponds to the distance at which matches between the simData kdtree
-         and the gridpoint RA/Dec value will be produced. (Can be set independently via setRad method).  """
+        simDataRA, simDataDec = RA and Dec values (in radians).
+        leafsize = the number of Ra/Dec pointings in each leaf node.
+        radius = the distance (in degrees) at which matches between the simData kdtree
+        and the gridpoint RA/Dec value will be produced. """
+        if np.any(simDataRa > np.pi*2.0) or np.any(simDataDec> np.pi*2.0):
+            raise Exception('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x,y,z)
         self.opsimtree = kdtree(data, leafsize=leafsize)

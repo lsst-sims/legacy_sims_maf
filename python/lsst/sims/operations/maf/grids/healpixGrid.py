@@ -6,10 +6,7 @@
 
 import numpy as np
 import healpy as hp
-# Might have to fiddle with the next few lines in case of non-interactive shell.
-import matplotlib
-#matplotlib.use('Agg')
-import pylab
+import matplotlib.pyplot as plt
 
 from baseSpatialGrid import BaseSpatialGrid
 
@@ -127,7 +124,7 @@ class HealpixGrid(BaseSpatialGrid):
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default None, try to set)
         cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by pylab.hist)
+        histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         if scale == None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
@@ -143,22 +140,22 @@ class HealpixGrid(BaseSpatialGrid):
                           label=None, addLegend=False):
         """Generate and plot the power spectrum of metricValue."""
         if fignum!=None:
-            fig = pylab.figure(fignum)
+            fig = plt.figure(fignum)
         else:
-            fig = pylab.figure()
+            fig = plt.figure()
         # To handle masked values properly, need polespice. (might this work if use_weights & weight values set appropriately?)
         # But this will work when comparing two different angular power spectra calculated in the same way, with the same (incomplete) footprint.
         cl = hp.anafast(metricValue)
         l=np.arange(np.size(cl))
         # Plot the results.
-        pylab.plot(l,cl*l*(l+1), label=label)
-        pylab.yscale('log')
-        pylab.xlabel(r'$l$')
-        pylab.ylabel(r'$l(l+1)C_l$')
+        plt.plot(l,cl*l*(l+1), label=label)
+        plt.yscale('log')
+        plt.xlabel(r'$l$')
+        plt.ylabel(r'$l(l+1)C_l$')
         if addLegend:
-            pylab.legend(loc='lower right', fancybox=True, fontsize='smaller')
+            plt.legend(loc='lower right', fancybox=True, fontsize='smaller')
         if title!=None:
-            pylab.title(title)
+            plt.title(title)
         # Return figure number (so we can reuse/add onto this figure if desired). 
         return fig.number
 

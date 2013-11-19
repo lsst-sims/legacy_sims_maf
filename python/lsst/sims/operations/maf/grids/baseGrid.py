@@ -5,7 +5,8 @@
 #  * for global metrics this means handing over the entire (or part of the) data column to the metric)
 # To facilitate metric calculation, the grid should be iterable and indexable:
 #  (for spatial metrics, this means iterating over the RA/Dec points)
-#  (for global metrics, this means iterating over the visits with a particular 'stepsize' -- for the base global grid, the stepsize is all the visits.)
+#  (for global metrics, this means iterating over the visits based on divisions 
+#   in a user-defined 'simDataSliceCol': for the base global grid, there is no split.)
 # Grid metrics must also know how to set themselves up ('set up the grid'),
 # read and write metric data, and generate plot representations of the metric data. 
 # In order to compare metrics calculated on various grids, they must also be
@@ -14,19 +15,17 @@
 # TODO add read/write sql constraint & metric name
 
 import numpy as np
+import matplotlib.pyplot as plt
 
-# Might have to fiddle with the next few lines in case of non-interactive shell.
-import matplotlib
-#matplotlib.use('Agg')
-import pylab
 
 class BaseGrid(object):
     """Base class for all grid objects: sets required methods and implements common functionality."""
 
     def __init__(self, verbose=True, *args, **kwargs):
-        """Set up grid."""
+        """Instantiate the base grid object."""
         self.verbose = verbose
         self.badval = np.nan
+        self.gridtype = None
         return
 
     def __len__(self):
@@ -103,14 +102,14 @@ class BaseGrid(object):
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default None, try to set)
         cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by pylab.hist)
+        histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         # Histogram metricValues. 
         if fignum != None:
-            fig = pylab.figure(fignum)
+            fig = plt.figure(fignum)
         else:
-            fig = pylab.figure()
+            fig = plt.figure()
         # Estimate number of bins needed (unless passed bins).
         if bins == None:
             bins = int(self.npix/2000.0)
@@ -118,23 +117,23 @@ class BaseGrid(object):
                 bins = self.npix
         # Need to only use 'good' values in histogram.
         good = np.where(metricValue != self.badval)
-        n, b, p = pylab.hist(metricValue[good], bins=bins, histtype='step', 
+        n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
                              cumulative=cumulative, range=histRange, label=label)
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(x,  pos):        
             return "%.3f" % (x * scale)
-        ax = pylab.gca()
+        ax = plt.gca()
         ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(mjrFormatter))
-        pylab.ylabel('Area (1000s of square degrees)')
-        pylab.xlabel(metricUnit)
+        plt.ylabel('Area (1000s of square degrees)')
+        plt.xlabel(metricUnit)
         if flipXaxis:
             # Might be useful for magnitude scales.
-            x0, x1 = pylab.xlim()
-            pylab.xlim(x1, x0)
+            x0, x1 = plt.xlim()
+            plt.xlim(x1, x0)
         if addLegend:
-            pylab.legend(fancybox=True, fontsize='smaller', loc='upper left')
+            plt.legend(fancybox=True, fontsize='smaller', loc='upper left')
         if title!=None:
-            pylab.title(title)
+            plt.title(title)
         # Return figure number (so we can reuse this if desired).         
         return fig.number
             

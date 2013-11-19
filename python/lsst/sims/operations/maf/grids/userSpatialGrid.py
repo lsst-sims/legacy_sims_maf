@@ -3,10 +3,7 @@
 # The method to read and write the metric encodes the grid in the data. 
 
 import numpy as np
-# Might have to fiddle with the next few lines in case of non-interactive shell.
-import matplotlib
-#matplotlib.use('Agg')
-import pylab
+import matplotlib.pyplot as plt
 
 from baseSpatialGrid import BaseSpatialGrid
 
@@ -62,5 +59,5 @@ class UserSpatialGrid(baseSpatialGrid):
                    clims=None, cbarFormat='%.2g'):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a plot.
-        pass
+        raise NotImplementedError()
 

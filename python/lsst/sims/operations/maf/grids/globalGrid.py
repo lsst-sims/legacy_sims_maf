@@ -15,6 +15,7 @@ class GlobalGrid(BaseGrid):
         """Instantiate object and call set up global grid method."""
         super(GlobalGrid, self).__init__(verbose=verbose)
         self._setupGrid(*args, **kwargs)
+        self.gridtype = 'GLOBAL'
         return
     
     def _setupGrid(self, *args, **kwargs):
@@ -71,7 +72,7 @@ class GlobalGrid(BaseGrid):
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default None, try to set)
         cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by pylab.hist)
+        histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         super(GlobalGrid, self).plotHistogram(simDataCol, simDataColLabel, 

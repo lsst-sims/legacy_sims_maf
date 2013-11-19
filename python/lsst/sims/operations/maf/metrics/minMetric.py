@@ -1,4 +1,5 @@
 # Example of a very basic metric. Calculates the minimum of the values at a gridpoint.
+
 import numpy as np
 from baseMetric import BaseMetric
 

@@ -6,6 +6,7 @@
 #  is that these vectors may be expensive to compute; by keeping/writing the full
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
+
 # ClassRegistry adds some extras to a normal dictionary.
 class ClassRegistry(dict):
     # Contents of the dictionary look like {metricClassName: 'set' of [simData columns]}
@@ -40,16 +41,15 @@ class BaseMetric(object):
         self.registerCols(cols)
         # Save a name for the metric + the data it's working on, so we
         #  can identify this later.
-        # If passed the value:
         if metricName:
             self.name = metricName
-        # Else construct our own name from the class name and the data columns.
-        else:
-            # If the colnames is a list, just use the first column.
+        else: # Construct our own name.
             if hasattr(cols, '__iter__'):
                 self.name = self.__class__.__name__.rstrip('Metric') + '_' + cols[0]
             else:
                 self.name = self.__class__.__name__.rstrip('Metric') + '_' + cols
+        # Set size of metric return value (scalar = 1, vector = X, variableList= None)
+        self.metricLen = 1
         return
 
     def registerCols(self, cols):
@@ -93,4 +93,6 @@ class BaseMetric(object):
     def run(self, dataSlice):
         raise NotImplementedError('Please implement your metric calculation.')
 
+    def reduce(self, reduce_function):
+        raise NotImplementedError()
     
