@@ -44,6 +44,7 @@ class BaseMetric(object):
     
     def __init__(self, cols, metricName, *args, **kwargs):
         """Instantiate metric. """
+        # Turn cols 
         self.colNameList = ClassRegistry.makeColArr(cols)
         # Register the columns in the classRegistry.
         self.registerCols(self.colNameList)
