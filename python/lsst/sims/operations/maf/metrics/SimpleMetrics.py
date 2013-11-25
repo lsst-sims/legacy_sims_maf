@@ -6,12 +6,12 @@ class SimpleScalarMetric(BaseMetric):
     """This is the base class for the simplist metrics: ones that calculate one
        number on one column of data and return a scalar. 
     """
-    def __init__(self, colname, metricName):
+    def __init__(self, colname, metricName=None):
         """Intantiate metric.
         """
         super(SimpleScalarMetric, self).__init__(colname, metricName)
         if len(self.colNameList) > 1:
-            raise Exception('m5col should be single column name: %s' %(m5col))
+            raise Exception('Simple metrics should be passed single column. Got %s' %(colname))
         self.colname = self.colNameList[0]
     def run(self, dataSlice):
         raise NotImplementedError()
@@ -23,7 +23,8 @@ class Coaddm5Metric(SimpleScalarMetric):
     """Calculate the coadded m5 value at this gridpoint."""
     def __init__(self, m5col = '5sigma_modified', metricName = 'coaddm5'):
         """Instantiate metric.
-        m5col should be the column name of the individual visit m5 data. """
+        
+        m5col = the column name of the individual visit m5 data. """
         super(Coaddm5Metric, self).__init__(m5col, metricName)            
     def run(self, dataSlice):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
@@ -61,6 +62,6 @@ class SumMetric(SimpleScalarMetric):
 class CountMetric(SimpleScalarMetric):
     """Count the length of a simData column slice. """
     def run(self, dataSlice):
-        return len(dataSlice[self.colname])a
+        return len(dataSlice[self.colname])
 
 

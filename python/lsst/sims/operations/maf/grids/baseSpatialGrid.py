@@ -12,7 +12,7 @@ except:
     # But older scipy may not have cKDTree.
     from scipy.spatial import KDTree as kdtree
 
-from baseGrid import BaseGrid
+from .baseGrid import BaseGrid
 
 class BaseSpatialGrid(BaseGrid):
     """Base grid object, with added slicing functions for spatial grids."""

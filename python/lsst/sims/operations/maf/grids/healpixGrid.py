@@ -8,7 +8,7 @@ import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 
-from baseSpatialGrid import BaseSpatialGrid
+from .baseSpatialGrid import BaseSpatialGrid
 
 class HealpixGrid(BaseSpatialGrid):
     """Healpix spatial grid."""

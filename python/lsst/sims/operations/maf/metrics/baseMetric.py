@@ -34,7 +34,7 @@ class ClassRegistry(dict):
             for col in self[k]:
                 colset.add(col)
         return colset
-        
+    
 
 class BaseMetric(object):
     """Base class for the metrics."""
@@ -42,7 +42,7 @@ class BaseMetric(object):
     classRegistry = ClassRegistry()
 
     
-    def __init__(self, cols, metricName, *args, **kwargs):
+    def __init__(self, cols, metricName=None, *args, **kwargs):
         """Instantiate metric. """
         # Turn cols 
         self.colNameList = ClassRegistry.makeColArr(cols)

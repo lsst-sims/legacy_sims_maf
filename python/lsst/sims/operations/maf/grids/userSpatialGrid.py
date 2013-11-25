@@ -5,9 +5,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from baseSpatialGrid import BaseSpatialGrid
+from .baseSpatialGrid import BaseSpatialGrid
 
-class UserSpatialGrid(baseSpatialGrid):
+class UserSpatialGrid(BaseSpatialGrid):
     """User defined spatial grid."""
     def __init__(self, filename, verbose=True):
         """Set up healpix grid object."""

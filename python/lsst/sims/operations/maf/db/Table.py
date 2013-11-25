@@ -44,7 +44,7 @@ class Table(DBObject):
                     continue
                 else:
                     print("%s not in columnMap"%(c))
-            raise ValueError('entries in colnames must be in self.columnMap')
+            raise ValueError('entries in colnames must be in self.columnMap', self.columnMap)
 
         # Get the first query
         idColName = self.columnMap[self.idColKey]
