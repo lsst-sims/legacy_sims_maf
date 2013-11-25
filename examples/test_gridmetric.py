@@ -13,7 +13,9 @@ print simdata.dtype.names[0]
 print numpy.shape(simdata[simdata.dtype.names[0]])
 
 # Set up grid.
-gg = grids.GlobalGrid()
+#gg = grids.GlobalGrid()
+gg = grids.HealpixGrid()
+gg.buildTree(simdata['fieldra'],simdata['fielddec'])
 
 # Set up metrics.
 magmetric = metrics.MeanMetric('m5')
@@ -23,8 +25,8 @@ seeingrms = metrics.RmsMetric('seeing')
 print magmetric.classRegistry
 
 gm = gridMetrics.BaseGridMetric(gg)
-gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
-gm.runGrid()
+#gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
+gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
 #print gm.metricValues
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]

@@ -1,4 +1,4 @@
 from .baseMetric import *
-from .simpleMetrics import *
+from .SimpleMetrics import *
 from .timeseriesMetric import *
 
