@@ -60,7 +60,7 @@ class BaseGridMetric(object):
         simData = numpy recarray holding simulated data
         simDataName = identifier for simulated data
         metadata = further information from config files ('WFD', 'r band', etc.)
-        slicecol = column for slicing grid, if needed (default None)"""
+        sliceCol = column for slicing grid, if needed (default None)"""
         # Set metrics (convert to list if not iterable). 
         if hasattr(metricList, '__iter__'):
             self.metrics = metricList
@@ -73,10 +73,10 @@ class BaseGridMetric(object):
             if c not in simData.dtype.names:
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n',
                                 self.metrics[0].classRegistry)
-        # And verify that slicecol is part of simData too.
-        if sliceCol:
+        # And verify that sliceCol is part of simData too.
+        if sliceCol != None:
             if sliceCol not in simData.dtype.names:
-                raise Exception('Simdata slice column', slicecol, 'not in simData.')
+                raise Exception('Simdata slice column', sliceCol, 'not in simData.')
         # Set metadata for each metric.
         for m in self.metrics:
             self.simDataName[m.name] = simDataName
@@ -84,7 +84,7 @@ class BaseGridMetric(object):
         # Set up arrays to store metric data.
         for m in self.metrics:
             self.metricValues[m.name] = np.empty(len(self.grid), 'object') 
-        # Slicecol is needed for global grids, but only has to be a specific
+        # SliceCol is needed for global grids, but only has to be a specific
         #  column if the grid needs a specific column (for time slicing, for example).
         if sliceCol==None:
             sliceCol = simData.dtype.names[0]
@@ -96,7 +96,8 @@ class BaseGridMetric(object):
                 if len(idxs)==0:
                     # No data at this gridpoint.
                     self.metricValues[m.name][i] = self.grid.badval
-                self.metricValues[m.name][i] = m.run(simData[idxs])
+                else:
+                    self.metricValues[m.name][i] = m.run(simData[idxs])
         return
 
     def reduceMetric(self, metric):
