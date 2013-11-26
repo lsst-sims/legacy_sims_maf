@@ -14,16 +14,16 @@ print simdata.dtype.names
 gg = grids.GlobalGrid()
 
 # Set up metrics.
-magmetric = metrics.MeanMetric('m5')
-seeingmean = metrics.MeanMetric('seeing')
-seeingrms = metrics.RmsMetric('seeing')
-
-print magmetric.classRegistry
+dtmin = 1./60./24.
+dtmax = 360./60./24.
+print dtmin, dtmax
+visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
 
 gm = gridMetrics.BaseGridMetric(gg)
-gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
-gm.runGrid()
-#print gm.metricValues
-print gm.metricValues[magmetric.name]
-print gm.metricValues[seeingmean.name]
-print gm.metricValues[seeingrms.name]
+gm.runGrid([visitPairs,], simdata)
+gm.reduceMetric(visitPairs)
+
+print gm.metricValues[visitPairs.name]
+for k in visitPairs.reduceFuncs.keys():
+    print k, gm.reduceValues[visitPairs.name][k]
+

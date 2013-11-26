@@ -53,7 +53,7 @@ class BaseGridMetric(object):
         return
 
     def runGrid(self, metricList, simData, 
-                simDataName='opsim', metadata='', slicecol=None):
+                simDataName='opsim', metadata='', sliceCol=None):
         """Run metric generation; validates that simData has columns needed for metrics, then runs metrics over grid. 
 
         metricList = list of metric objects
@@ -74,7 +74,7 @@ class BaseGridMetric(object):
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n',
                                 self.metrics[0].classRegistry)
         # And verify that slicecol is part of simData too.
-        if sliceCol != None:
+        if sliceCol:
             if sliceCol not in simData.dtype.names:
                 raise Exception('Simdata slice column', slicecol, 'not in simData.')
         # Set metadata for each metric.
@@ -96,7 +96,7 @@ class BaseGridMetric(object):
                 if len(idxs)==0:
                     # No data at this gridpoint.
                     self.metricValues[m.name][i] = self.grid.badval
-                self.metricValues[m.name][i] = m.run(self.simData[idxs])
+                self.metricValues[m.name][i] = m.run(simData[idxs])
         return
 
     def reduceMetric(self, metric):
@@ -104,14 +104,13 @@ class BaseGridMetric(object):
         # Set up a dictionary to hold the reduced values for this particular metric.
         self.reduceValues[metric.name] = {}
         # Run through reduce methods and set up arrays to store results.
-        for reduceFunc in metric.reduceFuncs:
-            rName = reduceFunc.name
+        for rName in metric.reduceFuncs.keys():
             self.reduceValues[metric.name][rName] = np.zeros(len(self.grid), 'float')
         # Run through gridpoints and actually calculate reduced values at each pt.
         for i, g in enumerate(self.grid):
             metricValuesPt = self.metricValues[metric.name][i]
-            for reduceFunc in metric.reduceFuncs:
-                self.reduceValues[metric.name][rName] = reduceFunc(metricValuesPt)
+            for rName in metric.reduceFuncs.keys():
+                self.reduceValues[metric.name][rName] = metric.reduceFuncs[rName](metricValuesPt)
         return
 
     def writeMetric(self, metric, comment='', outfile_root=None, outdir=None):

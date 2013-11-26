@@ -16,7 +16,7 @@ class FftMetric(BaseMetric):
         return
             
     def run(self, dataSlice):
-        dtimes = dataSlice[self.expmjd] - dataSlice[self.expmjd][0]
+        dtimes = dataSlice[self.times] - dataSlice[self.times][0]
         fft = fftpack.rfft(dtimes)
         return fft[0:10]
 
