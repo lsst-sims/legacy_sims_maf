@@ -23,9 +23,10 @@ class VisitPairsMetric(BaseMetric):
         super(VisitPairsMetric, self).__init__([self.times, self.nights], metricName)
         # Dictionary of reduce functions.
         self.reduceFuncs = {'Median': self.reduceMedian,
-                            'Mean': self.reduceMean, 
+                            'Mean': self.reduceMean,
                             'Rms': self.reduceRms,
-                            'NNights':self.reduceNNights}
+                            'NNightsWithPairs': self.reduceNNights,
+                            'NPairsInWindow': self.reduceNPairsInWindow}
         return
 
     def run(self, dataSlice):
@@ -38,22 +39,34 @@ class VisitPairsMetric(BaseMetric):
                 dt = times - t
                 condition = ((dt >= self.deltaTmin) & (dt <= self.deltaTmax))
                 visitPairs[i] += len(dt[condition])
-        return visitPairs
+        return (visitPairs, nights)
         
-    def reduceMedian(self, pairs):
+    def reduceMedian(self, (pairs, nights)):
         """Reduce to median number of pairs per night."""
         return np.median(pairs)
 
-    def reduceMean(self, pairs):
+    def reduceMean(self, (pairs, nights)):
         """Reduce to mean number of pairs per night."""
         return pairs.mean()
     
-    def reduceRms(self, pairs):
+    def reduceRms(self, (pairs, nights)):
         """Reduce to std dev of number of pairs per night."""
         return pairs.std()
 
-    def reduceNNights(self, pairs, nPairs=2):
+    def reduceNNightsWithPairs(self, (pairs, nights), nPairs=2):
         """Reduce to number of nights with more than 'nPairs' (default=2) visits."""
         condition = (pairs >= nPairs)
         return len(pairs[condition])
+
+    def reduceNPairsInWindow(self, (pairs, nights), window=30.):
+        """Reduce to max number of pairs within 'window' (default=30 nights) of time."""
+        maxnpairs = 0
+        for n in nights:
+            condition = ((nights >= n) & (nights <= n+window))
+            maxnpairs = np.max((pairs[condition].sum(), maxnpairs))
+        return maxnpairs
+
+    def reduceNNightsInWindow(self, (pairs, nights), window=30.):
+        """Reduce to number of nights with a pair (or more) of visits, within 'window'."""
+        pass
         
