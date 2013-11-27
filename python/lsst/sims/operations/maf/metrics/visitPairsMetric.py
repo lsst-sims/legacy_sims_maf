@@ -4,11 +4,11 @@
 # Uses multiple reduce functions
 
 import numpy as np
-from .baseMetric import BaseMetric
+from .complexMetrics import ComplexMetric
 
-class VisitPairsMetric(BaseMetric):
+class VisitPairsMetric(ComplexMetric):
     """Count the number of pairs of visits per night within deltaTmin and deltaTmax."""
-    def __init__(self, timesCol='expmjd', nightsCol='night', metricName='dtimes',
+    def __init__(self, timesCol='expMJD', nightsCol='night', metricName='dtimes',
                  deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0):
         """Instantiate metric.
         
@@ -21,24 +21,27 @@ class VisitPairsMetric(BaseMetric):
         self.deltaTmin = deltaTmin
         self.deltaTmax = deltaTmax
         super(VisitPairsMetric, self).__init__([self.times, self.nights], metricName)
-        # Dictionary of reduce functions.
-        self.reduceFuncs = {'Median': self.reduceMedian,
-                            'Mean': self.reduceMean,
-                            'Rms': self.reduceRms,
-                            'NNightsWithPairs': self.reduceNNights,
-                            'NPairsInWindow': self.reduceNPairsInWindow}
         return
 
     def run(self, dataSlice):
-        nights = np.unique(dataSlice[self.nights])
-        visitPairs = np.zeros(len(nights), 'int')        
-        for i, n in enumerate(nights):
+        # Identify the nights with any visits.
+        uniquenights = np.unique(dataSlice[self.nights])
+        nights = []
+        visitPairs = []
+        # Identify the nights with pairs of visits within time window.
+        for i, n in enumerate(uniquenights):
             condition = (dataSlice[self.nights] == n)
             times = dataSlice[self.times][condition]
             for t in times:
                 dt = times - t
                 condition = ((dt >= self.deltaTmin) & (dt <= self.deltaTmax))
-                visitPairs[i] += len(dt[condition])
+                pairnum = len(dt[condition])
+                if pairnum > 0:
+                    visitPairs.append(pairnum)
+                    nights.append(n)
+        # Convert to numpy arrays.
+        visitPairs = np.array(visitPairs)
+        nights = np.array(nights)
         return (visitPairs, nights)
         
     def reduceMedian(self, (pairs, nights)):
@@ -63,10 +66,14 @@ class VisitPairsMetric(BaseMetric):
         maxnpairs = 0
         for n in nights:
             condition = ((nights >= n) & (nights <= n+window))
-            maxnpairs = np.max((pairs[condition].sum(), maxnpairs))
+            maxnpairs = max((pairs[condition].sum(), maxnpairs))
         return maxnpairs
 
     def reduceNNightsInWindow(self, (pairs, nights), window=30.):
-        """Reduce to number of nights with a pair (or more) of visits, within 'window'."""
-        pass
+        """Reduce to max number of nights with a pair (or more) of visits, within 'window'."""
+        maxnights = 0
+        for n in nights:
+            condition = ((nights >=n) & (nights<=n+window))
+            maxnights = max(len(nights[condition]), maxnights)
+        return maxnights
         
