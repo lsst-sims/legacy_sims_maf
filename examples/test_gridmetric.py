@@ -3,6 +3,7 @@ import lsst.sims.operations.maf.utils.testUtils as tu
 import lsst.sims.operations.maf.grids as grids
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.gridMetrics as gridMetrics
+import glob
 
 # set up some test data
 simdata = tu.makeSimpleTestSet()
@@ -32,3 +33,13 @@ print gm.metricValues[seeingrms.name]
 
 #try to save and restore
 gm.writeMetric([magmetric, seeingmean, seeingrms],outfile_root='savetest')
+
+#the fits files that were output
+filelist = glob.glob('savetest*.fits')
+
+#new object to restore info into
+ack = gridMetrics.BaseGridMetric(None) #can instant with None grid since it will be loaded.
+ack.readMetric(filelist, gridfile='savetestgrid.obj')
+print ack.metricValues[magmetric.name]
+print ack.metricValues[seeingmean.name]
+print ack.metricValues[seeingrms.name]

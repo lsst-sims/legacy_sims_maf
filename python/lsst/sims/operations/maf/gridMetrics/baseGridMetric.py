@@ -38,6 +38,7 @@
 
 import os
 import numpy as np
+import pickle
 
 class BaseGridMetric(object):
     def __init__(self, grid):
@@ -50,6 +51,7 @@ class BaseGridMetric(object):
         self.reduceValues = {}
         self.simDataName = {}
         self.metadata = {}
+        self.comment={}
         return
 
     def runGrid(self, metricList, simData, 
@@ -91,6 +93,7 @@ class BaseGridMetric(object):
         # Run through all gridpoints and calculate metrics 
         #    (slicing the data once per gridpoint for all metrics).
         for i, g in enumerate(self.grid):
+            #XXX-seems like this searches the tree more than necissary.  Maybe look at ra,dec ranges of the data and not search if gridpoint outside the range (plus radius)
             idxs = self.grid.sliceSimData(g, simData[sliceCol])
             for m in self.metrics:
                 if len(idxs)==0:
@@ -114,7 +117,7 @@ class BaseGridMetric(object):
                 self.reduceValues[metric.name][rName] = metric.reduceFuncs[rName](metricValuesPt)
         return
 
-    def writeMetric(self, metric, comment='', outfile_root='', outdir='', gridfile='grid_pi.obj'):
+    def writeMetric(self, metric, comment='', outfile_root='', outdir='', gridfile='grid.obj'):
         """Write metric values to disk.
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
@@ -125,26 +128,31 @@ class BaseGridMetric(object):
         if outfile_root == None:
             outfile_root = self.simDataName
         for m in self.metrics:
-            outfile = os.path.join(outdir, outfile_root + m.name)
+            outfile = os.path.join(outdir, outfile_root + m.name+'.fits')
             self.grid.writeMetricData(outfile, self.metricValues[m.name],
                                       metricName = m.name, 
                                       simDataName = self.simDataName[m.name],
                                       metadata = self.metadata[m.name],
                                       comment = comment)
         outfile = os.path.join(outdir, outfile_root + gridfile)
-        pickle.dump(self.grid, open(outfile,'w'))
+        modgrid = self.grid
+        delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
+        pickle.dump(modgrid, open(outfile,'w'))
         return
 
-    def readMetric(self, filename, gridfile='grid_pi.obj'):
+    def readMetric(self, filenames, gridfile='grid.obj'):
         """Read metric values from disk. """
+        #restore the grid object
+        self.grid = pickle.load(open(gridfile,'r'))
         # read metrics from disk
-        metricValues, metricName, simDataName, metadata, comment \
-          = self.grid.readMetricData(filename)
-        # Store results.
-        self.metricValues[metricName] = metricValues
-        self.simDataName[metricName] = simDataName
-        self.metadata[metricName] = metadata + comment
-        self.grid = pickle.load(gridfile)
+        for f in filenames:
+            metricValues, metricName, simDataName, metadata, comment \
+                = self.grid.readMetricData(f)
+            # Store the header values in variables
+            self.metricValues[metricName] = metricValues
+            self.simDataName[metricName] = simDataName
+            self.metadata[metricName] = metadata
+            self.comment[metricName] = comment
         ### What do we do about complex metrics -- does name alone give enough info
         ### to instantiate a new object to access 'reduce' functions? (possibly new 
         ### reduce functions as the results of old ones should be stored with the data)?

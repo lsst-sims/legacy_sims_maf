@@ -72,15 +72,17 @@ class BaseSpatialGrid(BaseGrid):
                                                       self.rad)
         return indices
 
-    def writeMetricData(self, outfilename, metricValues, comment='', metricName='', simDataName='', metadata=''):
+    def writeMetricData(self, outfilename, metricValues,
+                        comment='', metricName='',
+                        simDataName='', metadata=''):
         head = pyf.Header()
         head.update(comment=comment, metricName=metricName,
-                    simDataName=simDataname, metadata=metadata)
-        pyf.writeto(outfilename, head)
+                    simDataName=simDataName, metadata=metadata)
+        pyf.writeto(outfilename, metricValues.astype('float'), head) #XXX-can't save datatype 'object' to fits.  Might want to check the values to see if the metric is actually an int.
         return
     def readMetricData(self,infilename):
         metricValues, head = pyf.getdata(infilename, header=True)
-        return, metricValues, head['metricName'],
-                head['simDataName'],head['metadata']
+        return metricValues, head['metricName'], \
+            head['simDataName'],head['metadata'], head['comment']
         
         
