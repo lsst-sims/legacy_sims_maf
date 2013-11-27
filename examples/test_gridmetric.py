@@ -32,8 +32,8 @@ print gm.metricValues[seeingmean.name]
 print gm.metricValues[seeingrms.name]
 
 #try to save and restore
-gm.writeMetric([magmetric, seeingmean, seeingrms],outfile_root='savetest')
-
+#gm.writeMetric([magmetric, seeingmean, seeingrms],outfile_root='savetest')
+gm.writeAll(outfile_root='savetest')
 #the fits files that were output
 filelist = glob.glob('savetest*.fits')
 

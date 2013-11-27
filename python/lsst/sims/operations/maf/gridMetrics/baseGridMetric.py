@@ -56,7 +56,7 @@ class BaseGridMetric(object):
 
     def runGrid(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None):
-        """Run metric generation; validates that simData has columns needed for metrics, then runs metrics over grid. 
+        """Run metric generation over grid.
 
         metricList = list of metric objects
         simData = numpy recarray holding simulated data
@@ -103,21 +103,47 @@ class BaseGridMetric(object):
                     self.metricValues[m.name][i] = m.run(simData[idxs])
         return
 
-    def reduceMetric(self, metric):
-        """Run all reduce methods for 'metric'. """
-        # Set up a dictionary to hold the reduced values for this particular metric.
-        self.reduceValues[metric.name] = {}
-        # Run through reduce methods and set up arrays to store results.
-        for rName in metric.reduceFuncs.keys():
-            self.reduceValues[metric.name][rName] = np.zeros(len(self.grid), 'float')
-        # Run through gridpoints and actually calculate reduced values at each pt.
+    def reduceAll(self):
+        """Run all reduce functions on all (complex) metrics."""
+        for m in self.metrics:
+            # Check if there are reduce functions to apply.
+            try:
+                m.reduceFuncs
+            except: 
+                continue
+            for reduceFunc in m.reduceFuncs.values():
+                # Apply reduce function.
+                self.reduceMetric(m.name, reduceFunc)
+        return
+                
+    def reduceMetric(self, metricName, reduceFunc):
+        """Run 'reduceFunc' on metric data 'metricName'. """
+        # Check for a dictionary to hold the reduced values for this particular metric.
+        try:
+            self.reduceValues[metricName]
+        except:
+            self.reduceValues[metricName] = {}
+        # Run reduceFunc on metricValues[metricName]. 
+        rName = reduceFunc.__name__.lstrip('reduce')
+        self.reduceValues[metricName][rName] = np.zeros(len(self.grid), 'float')
         for i, g in enumerate(self.grid):
-            metricValuesPt = self.metricValues[metric.name][i]
-            for rName in metric.reduceFuncs.keys():
-                self.reduceValues[metric.name][rName] = metric.reduceFuncs[rName](metricValuesPt)
+            metricValuesPt = self.metricValues[metricName][i]
+            if metricValuesPt == self.grid.badval:
+                self.reduceValues[metricName][rName][i] = self.grid.badval
+            else:
+                self.reduceValues[metricName][rName][i] = reduceFunc(metricValuesPt)
         return
 
-    def writeMetric(self, metric, comment='', outfile_root='', outdir='', gridfile='grid.obj'):
+
+    def writeAll(self, outdir='', outfile_root='', comment='',  gridfile='grid.obj'):
+        """Write all metric values to disk."""
+        for m in self.metrics:
+            self.writeMetric(m, comment=comment, outdir=outdir, outfile_root=outfile_root)
+        self.writeGrid(gridfile=gridfile, outfile_root=outfile_root,outdir=outdir)
+        return
+
+
+    def writeMetric(self, metric, comment='', outfile_root='', outdir=''):
         """Write metric values to disk.
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
@@ -127,19 +153,22 @@ class BaseGridMetric(object):
             outdir = self.simDataName
         if outfile_root == None:
             outfile_root = self.simDataName
-        for m in self.metrics:
-            outfile = os.path.join(outdir, outfile_root + m.name+'.fits')
-            self.grid.writeMetricData(outfile, self.metricValues[m.name],
-                                      metricName = m.name, 
-                                      simDataName = self.simDataName[m.name],
-                                      metadata = self.metadata[m.name],
-                                      comment = comment)
+        outfile = os.path.join(outdir, outfile_root + metric.name+'.fits')
+        self.grid.writeMetricData(outfile, self.metricValues[metric.name],
+                                  metricName = metric.name, 
+                                  simDataName = self.simDataName[metric.name],
+                                  metadata = self.metadata[metric.name],
+                                  comment = comment)
+        return
+    
+    def writeGrid(self,  gridfile='grid.obj',outfile_root='', outdir=''):
         outfile = os.path.join(outdir, outfile_root + gridfile)
         modgrid = self.grid
         delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
         pickle.dump(modgrid, open(outfile,'w'))
         return
 
+    
     def readMetric(self, filenames, gridfile='grid.obj'):
         """Read metric values from disk. """
         #restore the grid object
@@ -161,9 +190,9 @@ class BaseGridMetric(object):
         ### know where the data should be going. 
         return    
         
-    def plotMetric(self, metric):
-        # Plot the sky map, if available. 
-        # Plot the histograms.
+    def plotMetric(self, metricName, reduceName=None):
+        # Plot the sky map, if available.         
+        # Plot the histogram.
         pass
 
     def computeSummaryStatistics(self):

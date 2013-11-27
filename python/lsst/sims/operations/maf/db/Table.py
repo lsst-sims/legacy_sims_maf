@@ -1,7 +1,7 @@
 __author__ = 'simon'
 
 from lsst.sims.catalogs.generation.db import DBObject, ChunkIterator
-import numpy
+import numpy as np
 from sqlalchemy import func
 from sqlalchemy.sql import expression
 
@@ -21,7 +21,7 @@ class Table(DBObject):
         if dbAddress is None:
             dbAddress = self.getDbAddress()
 
-	self.idColKey = idColKey
+        self.idColKey = idColKey
         self.dbAddress = dbAddress
         self.tableid = tableName
         self._connect_to_engine()
@@ -34,6 +34,7 @@ class Table(DBObject):
         self._make_type_map()
 
     def _get_column_query(self, colnames=None):
+        # Build the sql query - including adding all column names, if columns were None.
         if colnames is None:
             colnames = [k for k in self.columnMap.keys()]
         try:
@@ -86,3 +87,21 @@ class Table(DBObject):
         if numLimit:
             query = query.limit(numLimit)
         return ChunkIterator(self, query, chunk_size)
+
+
+    def query_columns_RecArray(self, colnames=None, chunk_size=100000, constraint=None, 
+                               groupByCol=None, numLimit=None):
+        """Same as query_columns, but returns a numpy rec array instead. """
+        # Query the database, chunk by chunk (to reduce memory footprint). 
+        # If colnames == None, then will retrieve all columns in table.
+        results = self.query_columns(colnames=colnames, chunk_size=chunk_size, 
+                                     constraint=constraint, groupByCol=groupByCol, 
+                                     numLimit=numLimit)
+        rescount = 0
+        chunkList = []
+        for result in results:
+            chunkList.append(result)
+            rescount += 1
+        # Merge results of chunked queries.
+        simdata = np.hstack(chunkList)
+        return simdata

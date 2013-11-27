@@ -33,14 +33,13 @@ class ClassRegistry(dict):
         for k in self.keys():
             for col in self[k]:
                 colset.add(col)
-        return colset
+        return colset    
     
 
 class BaseMetric(object):
     """Base class for the metrics."""
     # Add ClassRegistry to keep track of columns needed for metrics. 
     classRegistry = ClassRegistry()
-
     
     def __init__(self, cols, metricName=None, *args, **kwargs):
         """Instantiate metric. """

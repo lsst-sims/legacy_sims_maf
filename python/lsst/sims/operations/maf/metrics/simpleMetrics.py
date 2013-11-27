@@ -6,9 +6,8 @@ class SimpleScalarMetric(BaseMetric):
     """This is the base class for the simplist metrics: ones that calculate one
        number on one column of data and return a scalar. 
     """
-    def __init__(self, colname, metricName=None):
-        """Intantiate metric.
-        """
+    def __init__(self, colname, metricName=None, *args, **kwargs):
+        """Intantiate simple metric. """
         super(SimpleScalarMetric, self).__init__(colname, metricName)
         if len(self.colNameList) > 1:
             raise Exception('Simple metrics should be passed single column. Got %s' %(colname))
