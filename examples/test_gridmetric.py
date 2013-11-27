@@ -29,3 +29,6 @@ gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
 print gm.metricValues[seeingrms.name]
+
+#try to save and restore
+gm.writeMetric([magmetric, seeingmean, seeingrms],outfile_root='savetest')

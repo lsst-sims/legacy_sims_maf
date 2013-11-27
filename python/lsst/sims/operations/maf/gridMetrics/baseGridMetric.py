@@ -114,9 +114,8 @@ class BaseGridMetric(object):
                 self.reduceValues[metric.name][rName] = metric.reduceFuncs[rName](metricValuesPt)
         return
 
-    def writeMetric(self, metric, comment='', outfile_root=None, outdir=None):
+    def writeMetric(self, metric, comment='', outfile_root='', outdir='', gridfile='grid_pi.obj'):
         """Write metric values to disk.
-
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
         outfile_root = root of the output files (default simDataName).
@@ -132,9 +131,11 @@ class BaseGridMetric(object):
                                       simDataName = self.simDataName[m.name],
                                       metadata = self.metadata[m.name],
                                       comment = comment)
+        outfile = os.path.join(outdir, outfile_root + gridfile)
+        pickle.dump(self.grid, open(outfile,'w'))
         return
 
-    def readMetric(self, filename):
+    def readMetric(self, filename, gridfile='grid_pi.obj'):
         """Read metric values from disk. """
         # read metrics from disk
         metricValues, metricName, simDataName, metadata, comment \
@@ -143,6 +144,7 @@ class BaseGridMetric(object):
         self.metricValues[metricName] = metricValues
         self.simDataName[metricName] = simDataName
         self.metadata[metricName] = metadata + comment
+        self.grid = pickle.load(gridfile)
         ### What do we do about complex metrics -- does name alone give enough info
         ### to instantiate a new object to access 'reduce' functions? (possibly new 
         ### reduce functions as the results of old ones should be stored with the data)?
