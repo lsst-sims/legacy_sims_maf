@@ -1,4 +1,5 @@
 import numpy
+import matplotlib.pyplot as plt
 import lsst.sims.operations.maf.utils.testUtils as tu
 import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.grids as grids
@@ -36,14 +37,18 @@ dtmin = 1./60./24.
 dtmax = 360./60./24.
 visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
 
+meanseeing = metrics.MeanMetric('seeing')
+
 gm = gridMetrics.BaseGridMetric(gg)
-gm.runGrid([visitPairs,], simdata)
+#gm.runGrid([visitPairs,], simdata)
+gm.runGrid([meanseeing,], simdata)
+#print gm.metricValues[visitPairs.name]
+gm.reduceAll()
+gm.plotAll(savefig=False)
+
+plt.show()
 
 #print gm.metricValues[visitPairs.name]
-
-gm.reduceAll()
-
-print gm.metricValues[visitPairs.name]
-for k in visitPairs.reduceFuncs.keys():
-    print k, gm.reduceValues[visitPairs.name][k]
+#for k in visitPairs.reduceFuncs.keys():
+#    print k, gm.reduceValues[visitPairs.name][k]
 

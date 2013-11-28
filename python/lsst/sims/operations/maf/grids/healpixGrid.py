@@ -114,7 +114,7 @@ class HealpixGrid(BaseSpatialGrid):
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, 
                       bins=None, cumulative=False, histRange=None, flipXaxis=False,
-                      scale = None):
+                      scale=None):
         """Histogram metricValue over the healpix grid points.
 
         If scale == None, sets 'scale' by the healpix area per gridpoint.
@@ -156,7 +156,7 @@ class HealpixGrid(BaseSpatialGrid):
             plt.legend(loc='lower right', fancybox=True, fontsize='smaller')
         if title!=None:
             plt.title(title)
-        # Return figure number (so we can reuse/add onto this figure if desired). 
+        # Return figure number (so we can reuse/add onto/save this figure if desired). 
         return fig.number
 
 
