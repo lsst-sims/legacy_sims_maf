@@ -16,6 +16,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 
 class BaseGrid(object):
@@ -106,7 +107,7 @@ class BaseGrid(object):
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         # Histogram metricValues. 
-        if fignum != None:
+        if fignum:
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
@@ -118,14 +119,14 @@ class BaseGrid(object):
         # Need to only use 'good' values in histogram.
         good = np.where(metricValue != self.badval)
         n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
-                             cumulative=cumulative, range=histRange, label=label)
+                             cumulative=cumulative, range=histRange, label=legendLabel)
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(x,  pos):        
             return "%.3f" % (x * scale)
         ax = plt.gca()
-        ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(mjrFormatter))
+        ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         plt.ylabel('Area (1000s of square degrees)')
-        plt.xlabel(metricUnit)
+        plt.xlabel(metricLabel)
         if flipXaxis:
             # Might be useful for magnitude scales.
             x0, x1 = plt.xlim()

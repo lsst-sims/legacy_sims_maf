@@ -80,7 +80,7 @@ class BaseGridMetric(object):
             self.metadata[metricName]            
             oname = oname + self.metadata[metricName][:3]
         except KeyError:
-            continue
+            pass
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + figformat
@@ -211,18 +211,12 @@ class BaseGridMetric(object):
             self.simDataName[metricName] = simDataName
             self.metadata[metricName] = metadata
             self.comment[metricName] = comment
-        ### What do we do about complex metrics -- does name alone give enough info
-        ### to instantiate a new object to access 'reduce' functions? (possibly new 
-        ### reduce functions as the results of old ones should be stored with the data)?
-        ### Or is that a user's problem, that if they're using
-        ### a complex metric and have added new reduce functions, then they ought to
-        ### know where the data should be going. 
         return    
 
     def plotAll(self, savefig=True):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for m in self.metrics:
-            if m.name in self.reduceValues.keys()
+            if m.name in self.reduceValues.keys():
                 for k in self.reduceValues[m.name].keys():
                     self.plotMetric(m.name, reduceName=k, savefig=savefig)
             else:
@@ -233,14 +227,14 @@ class BaseGridMetric(object):
                    savefig=True, outDir=None, outfileRoot=None):
         """Create all plots for 'metricName' (and 'reduceName', if a complex metric)."""
         # Build plot title and label.
-        plotTitle = self.simDataName[metricName] + self.metadata[metricName]
+        plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
         if reduceName != None:
             metricdata = self.reduceValues[metricName][reduceName]
-            plotTitle += plotTitle + metricName + reduceName
-            plotLabel = metricName + reduceName
+            plotTitle += ' ' + metricName + '.' + reduceName
+            plotLabel = metricName + '.' + reduceName
         else:
             metricdata = self.metricValues[metricName]
-            plotTitle += metricName
+            plotTitle += ' ' + metricName
             plotLabel = metricName
         # Plot the histogram.
         histfignum = self.grid.plotHistogram(metricdata, plotLabel, title=plotTitle)
@@ -250,7 +244,7 @@ class BaseGridMetric(object):
                                              plotType='hist')
             plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if spatial grid.
-        if self.gridtype == 'SPATIAL':
+        if self.grid.gridtype == 'SPATIAL':
             skyfignum = self.grid.plotSkyMap(metricdata, plotLabel,
                                              title=plotTitle)
             if savefig:

@@ -6,6 +6,11 @@ import lsst.sims.operations.maf.grids as grids
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.gridMetrics as gridMetrics
 
+import time
+def dtime(time_prev):
+   return (time.time() - time_prev, time.time())
+
+
 # set up some test data
 #simdata = tu.makeSimpleTestSet()
 #print 'simdata shape', numpy.shape(simdata)
@@ -13,24 +18,38 @@ import lsst.sims.operations.maf.gridMetrics as gridMetrics
 
 # get sim data from DB
 bandpass = 'r'
-dbTable = 'output_opsim3_61_forLynne' 
+#dbTable = 'output_opsim3_61_forLynne' 
 #dbTable = 'output_opsim2_145_forLynne'   
-dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST'  
+#dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST' 
+
+#dbTable = 'output_opsimblitz2_1007'
+dbTable = 'output_opsim3_61'
+dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
+
+t = time.time()
+
 table = db.Table(dbTable, 'obsHistID', dbAddress)
 simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass), 
                                        colnames=['filter', 'expMJD',  'night',
                                                  'fieldRA', 'fieldDec',
-                                                 '5sigma_modified', 'seeing'], 
+                                                 '5sigma_modified', 'seeing', 
+                                                 'hexdithra', 'hexdithdec'], 
                                                  groupByCol='expMJD')
 
+
+dt, t = dtime(t)
+print 'Query complete: %f s' %(dt)
 
 # Set up global grid.
 #gg = grids.GlobalGrid()
 
 # Set up spatial grid.
-gg = grids.HealpixGrid(1)
+gg = grids.HealpixGrid(128)
 # Build kdtree on ra/dec for spatial grid.
-gg.buildTree(simdata['fieldRA'], simdata['fieldDec'])
+gg.buildTree(simdata['fieldRA'], simdata['fieldDec'], leafsize=100)
+
+dt, t = dtime(t)
+print 'Set up grid and built kdtree if spatial grid %f s' %(dt)
 
 # Set up metrics.
 dtmin = 1./60./24.
@@ -38,13 +57,72 @@ dtmax = 360./60./24.
 visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
 
 meanseeing = metrics.MeanMetric('seeing')
+coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
+
+dt, t = dtime(t)
+print 'Set up metrics %f s' %(dt)
 
 gm = gridMetrics.BaseGridMetric(gg)
-#gm.runGrid([visitPairs,], simdata)
-gm.runGrid([meanseeing,], simdata)
-#print gm.metricValues[visitPairs.name]
+
+dt, t = dtime(t)
+print 'Set up gridMetric %f s' %(dt)
+
+gm.runGrid([meanseeing, coaddm5], simdata, simDataName=dbTable.rstrip('_forLynne'))
+
+dt, t = dtime(t)
+print 'Ran grid %f s' %(dt)
+
 gm.reduceAll()
+
+dt, t = dtime(t)
+print 'Ran reduce functions %f s' %(dt)
+
 gm.plotAll(savefig=False)
+
+dt, t = dtime(t)
+print 'Made plots %f s' %(dt)
+
+print 'Round 2 (dithered)'
+
+gg = grids.HealpixGrid(128)
+# Build kdtree on ra/dec for spatial grid.
+gg.buildTree(simdata['hexdithra'], simdata['hexdithdec'], leafsize=100)
+
+dt, t = dtime(t)
+print 'Set up grid and built kdtree if spatial grid %f s' %(dt)
+
+# Set up metrics.
+dtmin = 1./60./24.
+dtmax = 360./60./24.
+visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
+
+meanseeing = metrics.MeanMetric('seeing')
+coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
+
+dt, t = dtime(t)
+print 'Set up metrics %f s' %(dt)
+
+gm = gridMetrics.BaseGridMetric(gg)
+
+dt, t = dtime(t)
+print 'Set up gridMetric %f s' %(dt)
+
+gm.runGrid([meanseeing, coaddm5], simdata, simDataName=dbTable.rstrip('_forLynne'))
+
+dt, t = dtime(t)
+print 'Ran grid %f s' %(dt)
+
+gm.reduceAll()
+
+dt, t = dtime(t)
+print 'Ran reduce functions %f s' %(dt)
+
+gm.plotAll(savefig=False)
+
+dt, t = dtime(t)
+print 'Made plots %f s' %(dt)
+
+
 
 plt.show()
 
