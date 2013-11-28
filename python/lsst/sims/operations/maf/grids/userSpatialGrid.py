@@ -4,6 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import healpy as hp
 
 from .baseSpatialGrid import BaseSpatialGrid
 
@@ -20,8 +21,8 @@ class UserSpatialGrid(BaseSpatialGrid):
     def _setupGrid(self, filename):
         """Read the user grid from filename. """
         # Read RA and Dec points from filename.
-        self.ra = numpy.zeros(100)
-        self.dec = numpy.zeros(100)
+        self.ra = np.zeros(100)
+        self.dec = np.zeros(100)
         # Set self.npix
         self.npix = len(self.ra)
         return
@@ -50,8 +51,8 @@ class UserSpatialGrid(BaseSpatialGrid):
         """Evaluate if two grids are equivalent."""
         # If the two grids are both user spatial grids, check points.
         if isinstance(otherGrid, UserSpatialGrid):
-            return ((numpy.all(otherGrid.ra == self.ra)) 
-                    and (numpy.all(otherGrid.dec) == self.dec))
+            return ((np.all(otherGrid.ra == self.ra)) 
+                    and (np.all(otherGrid.dec) == self.dec))
         else:
             return False
         

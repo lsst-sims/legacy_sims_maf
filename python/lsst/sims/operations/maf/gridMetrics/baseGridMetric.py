@@ -39,6 +39,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 class BaseGridMetric(object):
     def __init__(self, grid, figformat='png'):
@@ -52,6 +53,7 @@ class BaseGridMetric(object):
         self.reduceValues = {}
         self.simDataName = {}
         self.metadata = {}
+        self.comment={}
         # Set figure format for output plot files.
         self.figformat = figformat
         return
@@ -73,8 +75,12 @@ class BaseGridMetric(object):
             oname = metricName + '_' + reduceName
         else:
             oname = metricName
-        # Add summary of the metadata 
-        oname = oname + self.metadata[metricName][:3]
+        # Add summary of the metadata if exists.
+        try:
+            self.metadata[metricName]            
+            oname = oname + self.metadata[metricName][:3]
+        except KeyError:
+            continue
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + figformat
@@ -161,10 +167,12 @@ class BaseGridMetric(object):
                 self.reduceValues[metricName][rName][i] = reduceFunc(metricValuesPt)
         return
 
-    def writeAll(self, outdir=None, outfile_root=None, comment=''):
+
+    def writeAll(self, outdir='', outfile_root='', comment='',  gridfile='grid.obj'):
         """Write all metric values to disk."""
         for m in self.metrics:
-            self.writeMetric(m.name, comment=comment, outdir=outdir, outfile_root=outfile_root)
+            self.writeMetric(m, comment=comment, outdir=outdir, outfile_root=outfile_root)
+        self.writeGrid(gridfile=gridfile, outfile_root=outfile_root,outdir=outdir)
         return
     
     def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None):
@@ -172,8 +180,8 @@ class BaseGridMetric(object):
 
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
-        outfile_root = root of the output files (default simDataName).
-        outdir = directory to write output data (default simDataName).  """
+        outfileRoot = root of the output files (default simDataName).
+        outDir = directory to write output data (default simDataName).  """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         self.grid.writeMetricData(outfile, self.metricValues[metricName],
                                       metricName = metricName,
@@ -181,16 +189,28 @@ class BaseGridMetric(object):
                                       metadata = self.metadata[metricName],
                                       comment = comment)
         return
+        
+    def writeGrid(self,  gridfile='grid.obj',outfileRoot=None, outDir=None):
+        """Write a pickle of the grid to disk."""
+        outfile = self._buildOutfileName(gridfile, outDir=outDir, outfileRoot=outfileRoot)
+        modgrid = self.grid
+        delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
+        pickle.dump(modgrid, open(outfile,'w'))
+        return
 
-    def readMetric(self, filename):
-        """Read metric values from 'filename'."""
-        # read metrics from disk
-        metricValues, metricName, simDataName, metadata, comment \
-          = self.grid.readMetricData(filename)
-        # Store results.
-        self.metricValues[metricName] = metricValues
-        self.simDataName[metricName] = simDataName
-        self.metadata[metricName] = metadata + comment
+    def readMetric(self, filenames, gridfile='grid.obj'):
+        """Read metric values and grid (pickle object) from disk. """
+        # Read grid.
+        self.grid = pickle.load(open(gridfile, 'r'))
+        # Read metrics from disk
+        for f in filenames:
+            metricValues, metricName, simDataName, metadata, comment \
+                = self.grid.readMetricData(f)
+            # Store the header values in variables
+            self.metricValues[metricName] = metricValues
+            self.simDataName[metricName] = simDataName
+            self.metadata[metricName] = metadata
+            self.comment[metricName] = comment
         ### What do we do about complex metrics -- does name alone give enough info
         ### to instantiate a new object to access 'reduce' functions? (possibly new 
         ### reduce functions as the results of old ones should be stored with the data)?
