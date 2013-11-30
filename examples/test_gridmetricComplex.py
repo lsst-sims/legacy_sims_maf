@@ -71,6 +71,8 @@ gm = gridMetrics.BaseGridMetric(gg)
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
 
+
+## TEST
 a = np.zeros(len(gg), 'object')
 a2 = np.zeros(len(gg), 'object')
 m = np.zeros(len(gg), 'object')
@@ -78,6 +80,7 @@ s = np.zeros(len(gg), 'object')
 c = np.zeros(len(gg), 'object')
 for i, g in enumerate(gg):
     idxs = gg.sliceSimData(g, simdata['seeing'])
+    simslice = simdata[idxs]
     if len(idxs)==0:
         s[i] = gg.badval
         c[i] = gg.badval
@@ -90,10 +93,32 @@ for i, g in enumerate(gg):
         m[i] = simdata['5sigma_modified'][idxs].min()
         s[i] = simdata['seeing'][idxs].mean()
         c[i] = 1.25 * np.log10(np.sum(10.**(.8*simdata['5sigma_modified'][idxs])))
-print i
-
 dt, t = dtime(t)
-print 'Ran grid here direct %f s' %(dt)
+print 'Ran grid here direct (and with idxs to individual direct numpy methods) %f s' %(dt)
+
+a = np.zeros(len(gg), 'object')
+a2 = np.zeros(len(gg), 'object')
+m = np.zeros(len(gg), 'object')
+s = np.zeros(len(gg), 'object')
+c = np.zeros(len(gg), 'object')
+for i, g in enumerate(gg):
+    idxs = gg.sliceSimData(g, simdata['seeing'])
+    simslice = simdata[idxs]
+    if len(idxs)==0:
+        s[i] = gg.badval
+        c[i] = gg.badval
+        m[i] = gg.badval
+        a[i] = gg.badval
+        a2[i] = gg.badval
+    else:
+        a[i] = simslice['airmass'].mean() #simdata['airmass'][idxs].mean()
+        a2[i] = simslice['airmass'].min() #simdata['airmass'][idxs].min()
+        m[i] = simslice['5sigma_modified'].min() #simdata['5sigma_modified'][idxs].min()
+        s[i] = simslice['seeing'].mean() #simdata['seeing'][idxs].mean()
+        c[i] = 1.25 * np.log10(np.sum(10.**(.8*simslice['5sigma_modified'])))
+        #1.25 * np.log10(np.sum(10.**(.8*simdata['5sigma_modified'][idxs])))
+dt, t = dtime(t)
+print 'Ran grid here direct to numpy (but without idxs) %f s' %(dt)
 
 a = np.zeros(len(gg), 'object')
 a2 = np.zeros(len(gg), 'object')
@@ -114,14 +139,13 @@ for i, g in enumerate(gg):
         m[i] = minm5.run(simdata[idxs])
         a[i] = meanairmass.run(simdata[idxs])
         a[i] = minairmass.run(simdata[idxs])
-print i
 dt, t = dtime(t)
-print 'Ran grid here class methods %f s' %(dt)
+print 'Ran grid here class methods, using simdata[idxs] %f s' %(dt)
 
-gm.runGrid([meanseeing, coaddm5], simdata, simDataName=dbTable.rstrip('_forLynne'))
+gm.runGrid([meanseeing, coaddm5, minm5, meanairmass, minairmass], simdata, simDataName=dbTable.rstrip('_forLynne'))
 
 dt, t = dtime(t)
-print 'Ran grid %f s' %(dt)
+print 'Ran grid using gridMetric %f s' %(dt)
 
 exit()
                 
