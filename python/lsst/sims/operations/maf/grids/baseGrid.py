@@ -93,7 +93,7 @@ class BaseGrid(object):
 
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, 
-                      bins=None, cumulative=False, histRange=None, flipXaxis=False,
+                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=1.0):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
@@ -101,7 +101,7 @@ class BaseGrid(object):
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default None, try to set)
+        bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
@@ -111,11 +111,6 @@ class BaseGrid(object):
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        # Estimate number of bins needed (unless passed bins).
-        if bins == None:
-            bins = int(self.npix/2000.0)
-            if bins < 20.:
-                bins = self.npix
         # Need to only use 'good' values in histogram.
         good = np.where(metricValue != self.badval)
         n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 

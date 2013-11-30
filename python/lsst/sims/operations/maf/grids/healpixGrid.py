@@ -115,7 +115,7 @@ class HealpixGrid(BaseSpatialGrid):
 
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, 
-                      bins=None, cumulative=False, histRange=None, flipXaxis=False,
+                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=None):
         """Histogram metricValue over the healpix grid points.
 
@@ -124,7 +124,7 @@ class HealpixGrid(BaseSpatialGrid):
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default None, try to set)
+        bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""

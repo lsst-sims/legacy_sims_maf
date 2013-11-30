@@ -41,6 +41,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+import time
+def dtime(time_prev):
+   return (time.time() - time_prev, time.time())
+
+
 class BaseGridMetric(object):
     def __init__(self, grid, figformat='png'):
         """Instantiate gridMetric object and set grid."""
@@ -117,7 +122,7 @@ class BaseGridMetric(object):
         for m in self.metrics:
             self.simDataName[m.name] = simDataName
             self.metadata[m.name] = metadata
-        # Set up arrays to store metric data.
+        # Set up arrays to store metric data. 
         for m in self.metrics:
             self.metricValues[m.name] = np.empty(len(self.grid), 'object') 
         # SliceCol is needed for global grids, but only has to be a specific
@@ -128,12 +133,14 @@ class BaseGridMetric(object):
         #    (slicing the data once per gridpoint for all metrics).
         for i, g in enumerate(self.grid):
             idxs = self.grid.sliceSimData(g, simData[sliceCol])
-            for m in self.metrics:
-                if len(idxs)==0:
-                    # No data at this gridpoint.
+            slicedata = simData[idxs]
+            if len(idxs)==0:
+                # No data at this gridpoint.
+                for m in self.metrics:
                     self.metricValues[m.name][i] = self.grid.badval
-                else:
-                    self.metricValues[m.name][i] = m.run(simData[idxs])
+            else:
+                for m in self.metrics:
+                    self.metricValues[m.name][i] = m.run(slicedata)
         return
 
     def reduceAll(self):
