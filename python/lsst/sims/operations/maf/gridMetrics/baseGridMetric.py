@@ -205,7 +205,7 @@ class BaseGridMetric(object):
         """Write a pickle of the grid to disk."""
         outfile = self._buildOutfileName(gridfile, outDir=outDir, outfileRoot=outfileRoot)
         modgrid = self.grid
-        delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
+        if hasattr(modgrid,'opsimtree'):  delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
         pickle.dump(modgrid, open(outfile,'w'))
         return
 
@@ -218,7 +218,8 @@ class BaseGridMetric(object):
         self.grid = pickle.load(open(gridfile_1st, 'r'))
         # Read metrics from disk
         for f in filenames:
-            metricValues, metricName, simDataName, metadata, comment,gridfile \
+            metricValues, metricName, simDataName, metadata, \
+                comment,gridfile,gridtype \
                 = self.grid.readMetricData(f)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
