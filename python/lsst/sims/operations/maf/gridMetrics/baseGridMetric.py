@@ -30,8 +30,8 @@
 #
 # A mixture of readMetric & runGrid can be used to populate the data in the gridMetric!
 #
-# runGrid applies to multiple metrics at once; all other methods apply to one metric 
-#  at a time.
+# runGrid applies to multiple metrics at once; most other methods apply to one metric 
+#  at a time but a convenience method to run over all metrics is usually provided (i.e. reduceAll)
 #
 # Metric data values, as well as metadata for each metric, are stored in
 #  dictionaries keyed by the metric names (a property of the metric). 
@@ -55,7 +55,6 @@ class BaseGridMetric(object):
         #   simDataName(s) and metadata(s). All dictionary keys should be
         #   metric name -- and then for reduceValues is [metric name][reduceFuncName]
         self.metricValues = {}
-        self.reduceValues = {}
         self.simDataName = {}
         self.metadata = {}
         self.comment={}
@@ -64,9 +63,9 @@ class BaseGridMetric(object):
         return
 
 
-    def _buildOutfileName(self, metricName, reduceName=None,
+    def _buildOutfileName(self, metricName,
                           outDir=None, outfileRoot=None, plotType=None):
-        """Builds output file name for 'metricName' (and reduceName if given). 
+        """Builds output file name for 'metricName'.
 
         Output filename uses outDir and outfileRoot (defaults are to use '.' and simDataName).
         For plots, builds outfile name for plot, with addition of plot type at start."""
@@ -75,22 +74,19 @@ class BaseGridMetric(object):
             outDir = '.'
         if outfileRoot == None:
             outfileRoot = self.simDataName[metricName]
-        # Build file name.
-        if reduceName:
-            oname = metricName + '_' + reduceName
-        else:
-            oname = metricName
+        # Start building output file name.
+        oname = outfileRoot + '_' + metricName
         # Add summary of the metadata if exists.
         try:
             self.metadata[metricName]            
-            oname = oname + self.metadata[metricName][:3]
+            oname = oname + '_' + self.metadata[metricName][:3]
         except KeyError:
             pass
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
         # Build outfile (with path). 
-        outfile = os.path.join(outDir, outfileRoot + '_' + oname)
+        outfile = os.path.join(outDir, oname)
         return outfile
         
     def runGrid(self, metricList, simData, 
@@ -143,9 +139,13 @@ class BaseGridMetric(object):
                     self.metricValues[m.name][i] = m.run(slicedata)
         return
 
-    def reduceAll(self):
-        """Run all reduce functions on all (complex) metrics."""
-        for m in self.metrics:
+    def reduceAll(self, metricList=None):
+        """Run all reduce functions on all (complex) metrics.
+
+        Optional: provide a list of metric classes on which to run reduce functions."""
+        if metricList == None:
+            metricList = self.metrics
+        for m in metricList:
             # Check if there are reduce functions to apply.
             try:
                 m.reduceFuncs
@@ -158,22 +158,18 @@ class BaseGridMetric(object):
                 
     def reduceMetric(self, metricName, reduceFunc):
         """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. """
-        # Check for a dictionary to hold the reduced values for this particular metric.
-        try:
-            self.reduceValues[metricName]
-        except:
-            self.reduceValues[metricName] = {}
         # Run reduceFunc on metricValues[metricName]. 
-        rName = reduceFunc.__name__.lstrip('reduce')
-        self.reduceValues[metricName][rName] = np.zeros(len(self.grid), 'float')
+        rName = metricName + '_' + reduceFunc.__name__.lstrip('reduce')
+        self.metricValues[rName] = np.zeros(len(self.grid), 'float')
         for i, g in enumerate(self.grid):
+            # Get (complex) metric values for this gridpoint. 
             metricValuesPt = self.metricValues[metricName][i]
+            # Evaluate reduced version of metric values.
             if metricValuesPt == self.grid.badval:
-                self.reduceValues[metricName][rName][i] = self.grid.badval
+                self.metricValues[rName][i] = self.grid.badval
             else:
-                self.reduceValues[metricName][rName][i] = reduceFunc(metricValuesPt)
+                self.metricValues[rName][i] = reduceFunc(metricValuesPt)
         return
-
 
     def writeAll(self, outdir='', outfile_root='', comment='',  gridfile='grid.obj'):
         """Write all metric values to disk."""
@@ -222,58 +218,20 @@ class BaseGridMetric(object):
 
     def plotAll(self, savefig=True):
         """Plot histograms and skymaps (where relevant) for all metrics."""
-        for m in self.metrics:
-            if m.name in self.reduceValues.keys():
-                for k in self.reduceValues[m.name].keys():
-                    self.plotMetric(m.name, reduceName=k, savefig=savefig)
-            else:
-                self.plotMetric(m.name, savefig=savefig)
-        return
-        
-    def plotMetric(self, metricName, reduceName=None, doPowerSpectrum=False, 
-                   savefig=True, outDir=None, outfileRoot=None):
-        """Create all plots for 'metricName' (and 'reduceName', if a complex metric)."""
-        # Build plot title and label.
-        plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-        if reduceName != None:
-            metricdata = self.reduceValues[metricName][reduceName]
-            plotTitle += ' ' + metricName + '.' + reduceName
-            plotLabel = metricName + '.' + reduceName
-        else:
-            metricdata = self.metricValues[metricName]
-            plotTitle += ' ' + metricName
-            plotLabel = metricName
-        # Plot the histogram.
-        histfignum = self.grid.plotHistogram(metricdata, plotLabel, title=plotTitle)
-        if savefig:
-            outfile = self._buildOutfileName(metricName, reduceName=reduceName, 
-                                             outDir=outDir, outfileRoot=outfileRoot, 
-                                             plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)
-        # Plot the sky map, if spatial grid.
-        if self.grid.gridtype == 'SPATIAL':
-            skyfignum = self.grid.plotSkyMap(metricdata, plotLabel,
-                                             title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(metricName, reduceName=reduceName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='sky')
-                plt.savefig(outfile, figformat=self.figformat)
-        # Plot the power spectrum if desired (and are using an appropriate grid).
-        if doPowerSpectrum:
+        for mk in self.metricValues.keys():
             try:
-                psfignum = self.grid.plotPowerSpectrum(metricdata, title=plotTitle, 
-                                                       label=plotLabel)
-                outfile = self._buildOutfileName(metricName, reduceName=reduceName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='sky')
-                plt.savefig(outfile, figformat=self.figformat)
-            except:
-                raise Exception('This grid does not calculate a power spectrum.')
-        return
+                self.plotMetric(mk, savefig=savefig)
+            except ValueError:
+                continue 
+        return        
 
-    def computeSummaryStatistics(self):
-        # compute the summary statistics .. note can pass metric values into
-        # another global grid and then pass any metric to be evaluated on the 
-        # GlobalGrid! (mean/min/rms/...). 
-        pass 
+    def plotMetric(self, metricName, *args, **kwargs):
+        """Create all plots for 'metricName'."""
+        raise NotImplementedError()
+
+    def plotComparisons(self, metricNameList, *args, **kwargs):
+        """Create comparison plots of all metricValues in metricNameList."""
+        raise NotImplementedError()
+
+    def computeSummaryStatistics(self, metricName, summaryMetric):
+        raise NotImplementedError()
