@@ -40,6 +40,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import pyfits as pyf
 
 import time
 def dtime(time_prev):
@@ -171,49 +172,60 @@ class BaseGridMetric(object):
                 self.metricValues[rName][i] = reduceFunc(metricValuesPt)
         return
 
-    def writeAll(self, outdir='', outfile_root='', comment='',  gridfile='grid.obj'):
+    def writeAll(self, outDir='', outfileRoot='', comment='',  gridfile='grid.obj'):
         """Write all metric values to disk."""
         for m in self.metrics:
-            self.writeMetric(m, comment=comment, outdir=outdir, outfile_root=outfile_root)
-        self.writeGrid(gridfile=gridfile, outfile_root=outfile_root,outdir=outdir)
+            self.writeMetric(m.name, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
+                             gridfile=self._buildOutfileName(gridfile, outDir=outDir, 
+                                                             outfileRoot=outfileRoot),
+                                                             dt=m.metricDtype)
+        self.writeGrid(gridfile=gridfile, outfileRoot=outfileRoot,outDir=outDir)
         return
     
-    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None):
+    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, dt='float', gridfile=None):
         """Write metric values 'metricName' to disk.
 
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
-        outDir = directory to write output data (default '.').  """
+        outDir = directory to write output data (default '.').
+        dt = data type.
+        gridfile = the filename for the pickled grid"""
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         self.grid.writeMetricData(outfile, self.metricValues[metricName],
                                       metricName = metricName,
                                       simDataName = self.simDataName[metricName],
                                       metadata = self.metadata[metricName],
-                                      comment = comment)
+                                      comment = comment, dt=dt, gridfile=gridfile)
         return
         
     def writeGrid(self,  gridfile='grid.obj',outfileRoot=None, outDir=None):
         """Write a pickle of the grid to disk."""
         outfile = self._buildOutfileName(gridfile, outDir=outDir, outfileRoot=outfileRoot)
         modgrid = self.grid
-        delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
+        if hasattr(modgrid,'opsimtree'):  delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
         pickle.dump(modgrid, open(outfile,'w'))
         return
 
-    def readMetric(self, filenames, gridfile='grid.obj'):
+    def readMetric(self, filenames):
         """Read metric values and grid (pickle object) from disk. """
-        # Read grid.
-        self.grid = pickle.load(open(gridfile, 'r'))
+        # Read the header of the first file for grid file name
+        header = pyf.getheader(filenames[0])
+        gridfile_1st = header['gridfile']
+        # Restore grid.
+        self.grid = pickle.load(open(gridfile_1st, 'r'))
         # Read metrics from disk
         for f in filenames:
-            metricValues, metricName, simDataName, metadata, comment \
+            metricValues, metricName, simDataName, metadata, \
+                comment,gridfile,gridtype \
                 = self.grid.readMetricData(f)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
             self.simDataName[metricName] = simDataName
             self.metadata[metricName] = metadata
             self.comment[metricName] = comment
+            if gridfile != gridfile_1st:
+               raise Exception('Metrics not all computed on same grid.')
         return    
 
     def plotAll(self, savefig=True):

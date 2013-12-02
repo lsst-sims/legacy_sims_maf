@@ -17,7 +17,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
-
+import pyfits as pyf
 
 class BaseGrid(object):
     """Base class for all grid objects: sets required methods and implements common functionality."""
@@ -56,41 +56,26 @@ class BaseGrid(object):
         which are appropriate for the metric to be working on, at that gridpoint."""
         raise NotImplementedError()
 
-    def writeMetricData(self, outfilename, metricValues, comment=None):
-        """Save metric data to disk."""
-        # Individual grids can and should overwrite this with more appropriate methods.
-        if len(metricValues) != len(self):
-            raise Exception('Length of metric values must match length of grid points.')
-        if self.verbose:
-            print 'Writing metric values to ascii file %s' %(outfilename)
-        f = open(outfilename, 'w')
-        print >>f, "#", comment
-        for gridpoint, metricValue in zip(self, metricValues):
-            print >>f, gridpoint, metricValue
-        f.close()
+    def writeMetricData(self, outfilename, metricValues,
+                    comment='', metricName='',
+                    simDataName='', metadata='', gridfile='', dt='float'):
+        head = pyf.Header()
+        head.update(comment=comment, metricName=metricName,
+                    simDataName=simDataName, metadata=metadata, gridfile=gridfile, gridtype=self.gridtype)
+        pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
+        #XXX-can't save datatype 'object' to fits.  Might want to check the values to see if the metric is actually a float (if multiple but constant length vector, should handle that too).
+        ## And need a fallback option if there is an object / variable length list.
+        ## How does this handle preserving the info of the gridpoints?--it doesn't, the grid needs to get pickled seperatly.
         return
+    
+    def readMetricData(self,infilename):
+        metricValues, head = pyf.getdata(infilename, header=True)
+        return metricValues, head['metricName'], \
+            head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype']
+        
 
-    def readMetricData(self, infilename):
-        """Read metric data from disk."""
-        # Individual grids can and should overwrite this with more appropriate methods.
-        if self.verbose:
-            print 'Reading (single) metric values from ascii file %s' %(infilename)
-        f = open(infilename)
-        metricValues = []
-        gridpoints = []
-        for line in f:
-            if line.startswith('#') or line.startswith('!'):
-                continue
-            # Assume that gridpoint and metric are single values.
-            gridpoints.append(line.split()[0])
-            metricValues.append(line.split()[1])
-        gridpoints = np.array(gridpoints)
-        metricValues = np.array(metricValues)
-        f.close()
-        self.gridpoints = gridpoints
-        self.npix = len(self.gridpoints)
-        return metricValues
 
+    
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, 
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
