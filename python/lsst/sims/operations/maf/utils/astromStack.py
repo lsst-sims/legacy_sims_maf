@@ -26,7 +26,18 @@ def parallaxAmp(ra,dec,mjd):
 def astroStack(opsim):
     ra_pi_amp = np.zeros(np.size(opsim), dtype=[('ra_pi_amp','float')])
     dec_pi_amp = np.zeros(np.size(opsim), dtype=[('dec_pi_amp','float')])
+    ra_geo1 = np.zeros(np.size(opsim), dtype='float')
+    dec_geo1 = np.zeros(np.size(opsim), dtype='float')
+    ra_geo = np.zeros(np.size(opsim), dtype='float')
+    dec_geo = np.zeros(np.size(opsim), dtype='float')
     for i,ack in enumerate(opsim):
-        ra_pi_amp[i], dec_pi_amp[i] = parallaxAmp(opsim['fieldRA'],opsim['fieldDec'],opsim['expMJD'])
+        #ra_pi_amp[i], dec_pi_amp[i] = parallaxAmp(opsim['fieldRA'],opsim['fieldDec'],opsim['expMJD'])
+        mtoa_params = sla.sla_mappa(2000., opsim['expMJD'])
+        ra_geo1[i],dec_geo1[i] = sla.sla_mapqk(opsim['fieldRA'][i],opsim['fieldDec'][i],0.,0.,1.,0.,mtoa_params)
+        ra_geo[i],dec_geo[i] = sla.sla_mapqk(opsim['fieldRA'][i],opsim['fieldDec'][i],0.,0.,0.,0.,mtoa_params)
+    x_geo1,y_geo1 = gnomonic_project_toxy(ra_geo1, dec_geo1, opsim['fieldra'],opsim['fielddec'])
+    x_geo, ygeo = gnomonic_project_toxy(ra_geo, dec_geo, opsim['fieldra'],opsim['fielddec'])
+    ra_pi_amp[*] = x_geo1-x_geo
+    dec_pi_amp[*] = y_geo1-y_geo
     result = rfn.merge_arrays([opsim,ra_pi_amp,dec_pi_amp], flatten=True, usemask=False)
     return result
