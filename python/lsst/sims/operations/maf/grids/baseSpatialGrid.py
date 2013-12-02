@@ -11,7 +11,8 @@ try:
     # Try cKDTree first, as it's supposed to be faster.
     from scipy.spatial import cKDTree as kdtree
     #current stack scipy has a bad version of cKDTree.  
-    if not hasattr(kdtree,'query_ball_point'):  from scipy.spatial import KDTree as kdtree
+    if not hasattr(kdtree,'query_ball_point'): 
+        from scipy.spatial import KDTree as kdtree
 except:
     # But older scipy may not have cKDTree.
     from scipy.spatial import KDTree as kdtree
@@ -64,9 +65,11 @@ class BaseSpatialGrid(BaseGrid):
         """Return indexes for relevant opsim data at gridpoint (gridpoint=ra/dec)."""
         # SimData not needed here, but keep interface the same for all grids.
         gridx, gridy, gridz = self._treexyz(gridpoint[0], gridpoint[1])
+        # If we were given more than one gridpoint, try multiple query against the tree.
         if isinstance(gridx, np.ndarray):
             indices = self.opsimtree.query_ball_point(zip(gridx, gridy, gridz), 
                                                       self.rad)
+        # If we were given one gridpoint, do a single query against the tree.
         else:
             indices = self.opsimtree.query_ball_point((gridx, gridy, gridz), 
                                                       self.rad)
@@ -78,8 +81,12 @@ class BaseSpatialGrid(BaseGrid):
         head = pyf.Header()
         head.update(comment=comment, metricName=metricName,
                     simDataName=simDataName, metadata=metadata)
-        pyf.writeto(outfilename, metricValues.astype('float'), head) #XXX-can't save datatype 'object' to fits.  Might want to check the values to see if the metric is actually an int.
+        pyf.writeto(outfilename, metricValues.astype('float'), head) 
+        #XXX-can't save datatype 'object' to fits.  Might want to check the values to see if the metric is actually a float (if multiple but constant length vector, should handle that too).
+        ## And need a fallback option if there is an object / variable length list.
+        ## How does this handle preserving the info of the gridpoints?
         return
+    
     def readMetricData(self,infilename):
         metricValues, head = pyf.getdata(infilename, header=True)
         return metricValues, head['metricName'], \

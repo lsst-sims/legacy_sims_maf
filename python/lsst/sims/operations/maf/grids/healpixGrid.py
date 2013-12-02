@@ -71,6 +71,7 @@ class HealpixGrid(BaseSpatialGrid):
         # Note that ipix could be an array, 
         # in which case RA/Dec values will be an array also. 
         dec, ra = hp.pix2ang(self.nside, ipix)
+        # Move dec to +/- 90 degrees
         dec -= np.pi/2.0
         return ra, dec  
     
@@ -104,17 +105,18 @@ class HealpixGrid(BaseSpatialGrid):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a Mollweide full-sky plot.
         if clims!=None:
-            hp.mollview(metricValue, title=title, cbar=True, unit=metricUnit, 
+            hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180))
         else:
-            hp.mollview(metricValue, title=title, cbar=True, unit=metricUnit, 
+            hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
                         format=cbarFormat, rot=(0,0,180))
-        return
+        fig = plt.gcf()
+        return fig.number
 
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, 
-                      bins=None, cumulative=False, histRange=None, flipXaxis=False,
-                      scale = None):
+                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
+                      scale=None):
         """Histogram metricValue over the healpix grid points.
 
         If scale == None, sets 'scale' by the healpix area per gridpoint.
@@ -122,24 +124,26 @@ class HealpixGrid(BaseSpatialGrid):
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default None, try to set)
+        bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         if scale == None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
-        super(HealpixGrid, self).plotHistogram(metricValue, metricLabel, 
-                                               title=title, fignum=fignum, 
-                                               legendLabel=label, addLegend=addLegend,
-                                               bins=bins, cumulative=cumulative,
-                                               histRange=histRange, flipXaxis=flipXaxis,
-                                               scale=scale)
-        return fig.number
+        fignum = super(HealpixGrid, self).plotHistogram(metricValue, metricLabel, 
+                                                        title=title, fignum=fignum, 
+                                                        legendLabel=legendLabel, 
+                                                        addLegend=addLegend,
+                                                        bins=bins, cumulative=cumulative,
+                                                        histRange=histRange, 
+                                                        flipXaxis=flipXaxis,
+                                                        scale=scale)
+        return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, 
                           label=None, addLegend=False):
         """Generate and plot the power spectrum of metricValue."""
-        if fignum!=None:
+        if fignum:
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
@@ -156,7 +160,7 @@ class HealpixGrid(BaseSpatialGrid):
             plt.legend(loc='lower right', fancybox=True, fontsize='smaller')
         if title!=None:
             plt.title(title)
-        # Return figure number (so we can reuse/add onto this figure if desired). 
+        # Return figure number (so we can reuse/add onto/save this figure if desired). 
         return fig.number
 
 

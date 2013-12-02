@@ -38,11 +38,18 @@
 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 import pickle
 
+import time
+def dtime(time_prev):
+   return (time.time() - time_prev, time.time())
+
+
 class BaseGridMetric(object):
-    def __init__(self, grid):
+    def __init__(self, grid, figformat='png'):
         """Instantiate gridMetric object and set grid."""
+        # Set grid.
         self.grid = grid
         # Set up dictionaries to hold metric values, reduced metric values,
         #   simDataName(s) and metadata(s). All dictionary keys should be
@@ -52,8 +59,40 @@ class BaseGridMetric(object):
         self.simDataName = {}
         self.metadata = {}
         self.comment={}
+        # Set figure format for output plot files.
+        self.figformat = figformat
         return
 
+
+    def _buildOutfileName(self, metricName, reduceName=None,
+                          outDir=None, outfileRoot=None, plotType=None):
+        """Builds output file name for 'metricName' (and reduceName if given). 
+
+        Output filename uses outDir and outfileRoot (defaults are to use simDataName).
+        For plots, builds outfile name for plot, with addition of plot type at start."""
+        # Set output directory and root 
+        if outDir == None:
+            outDir = self.simDataName[metricName]
+        if outfileRoot == None:
+            outfileRoot = self.simDataName[metricName]
+        # Build file name.
+        if reduceName:
+            oname = metricName + '_' + reduceName
+        else:
+            oname = metricName
+        # Add summary of the metadata if exists.
+        try:
+            self.metadata[metricName]            
+            oname = oname + self.metadata[metricName][:3]
+        except KeyError:
+            pass
+        # Add plot name, if plot.
+        if plotType:
+            oname = oname + '_' + plotType + '.' + figformat
+        # Build outfile (with path). 
+        outfile = os.path.join(outDir, outfileRoot + '_' + oname)
+        return outfile
+        
     def runGrid(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None):
         """Run metric generation over grid.
@@ -83,7 +122,7 @@ class BaseGridMetric(object):
         for m in self.metrics:
             self.simDataName[m.name] = simDataName
             self.metadata[m.name] = metadata
-        # Set up arrays to store metric data.
+        # Set up arrays to store metric data. 
         for m in self.metrics:
             self.metricValues[m.name] = np.empty(len(self.grid), 'object') 
         # SliceCol is needed for global grids, but only has to be a specific
@@ -93,14 +132,15 @@ class BaseGridMetric(object):
         # Run through all gridpoints and calculate metrics 
         #    (slicing the data once per gridpoint for all metrics).
         for i, g in enumerate(self.grid):
-            #XXX-seems like this searches the tree more than necissary.  Maybe look at ra,dec ranges of the data and not search if gridpoint outside the range (plus radius)
             idxs = self.grid.sliceSimData(g, simData[sliceCol])
-            for m in self.metrics:
-                if len(idxs)==0:
-                    # No data at this gridpoint.
+            slicedata = simData[idxs]
+            if len(idxs)==0:
+                # No data at this gridpoint.
+                for m in self.metrics:
                     self.metricValues[m.name][i] = self.grid.badval
-                else:
-                    self.metricValues[m.name][i] = m.run(simData[idxs])
+            else:
+                for m in self.metrics:
+                    self.metricValues[m.name][i] = m.run(slicedata)
         return
 
     def reduceAll(self):
@@ -117,7 +157,7 @@ class BaseGridMetric(object):
         return
                 
     def reduceMetric(self, metricName, reduceFunc):
-        """Run 'reduceFunc' on metric data 'metricName'. """
+        """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. """
         # Check for a dictionary to hold the reduced values for this particular metric.
         try:
             self.reduceValues[metricName]
@@ -141,39 +181,35 @@ class BaseGridMetric(object):
             self.writeMetric(m, comment=comment, outdir=outdir, outfile_root=outfile_root)
         self.writeGrid(gridfile=gridfile, outfile_root=outfile_root,outdir=outdir)
         return
+    
+    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None):
+        """Write metric values 'metricName' to disk.
 
-
-    def writeMetric(self, metric, comment='', outfile_root='', outdir=''):
-        """Write metric values to disk.
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
-        outfile_root = root of the output files (default simDataName).
-        outdir = directory to write output data (default simDataName).  """
-        if outdir == None:
-            outdir = self.simDataName
-        if outfile_root == None:
-            outfile_root = self.simDataName
-        outfile = os.path.join(outdir, outfile_root + metric.name+'.fits')
-        self.grid.writeMetricData(outfile, self.metricValues[metric.name],
-                                  metricName = metric.name, 
-                                  simDataName = self.simDataName[metric.name],
-                                  metadata = self.metadata[metric.name],
-                                  comment = comment)
+        outfileRoot = root of the output files (default simDataName).
+        outDir = directory to write output data (default simDataName).  """
+        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
+        self.grid.writeMetricData(outfile, self.metricValues[metricName],
+                                      metricName = metricName,
+                                      simDataName = self.simDataName[metricName],
+                                      metadata = self.metadata[metricName],
+                                      comment = comment)
         return
-    
-    def writeGrid(self,  gridfile='grid.obj',outfile_root='', outdir=''):
-        outfile = os.path.join(outdir, outfile_root + gridfile)
+        
+    def writeGrid(self,  gridfile='grid.obj',outfileRoot=None, outDir=None):
+        """Write a pickle of the grid to disk."""
+        outfile = self._buildOutfileName(gridfile, outDir=outDir, outfileRoot=outfileRoot)
         modgrid = self.grid
         delattr(modgrid,'opsimtree') #some kdtrees can't be pickled
         pickle.dump(modgrid, open(outfile,'w'))
         return
 
-    
     def readMetric(self, filenames, gridfile='grid.obj'):
-        """Read metric values from disk. """
-        #restore the grid object
-        self.grid = pickle.load(open(gridfile,'r'))
-        # read metrics from disk
+        """Read metric values and grid (pickle object) from disk. """
+        # Read grid.
+        self.grid = pickle.load(open(gridfile, 'r'))
+        # Read metrics from disk
         for f in filenames:
             metricValues, metricName, simDataName, metadata, comment \
                 = self.grid.readMetricData(f)
@@ -182,18 +218,59 @@ class BaseGridMetric(object):
             self.simDataName[metricName] = simDataName
             self.metadata[metricName] = metadata
             self.comment[metricName] = comment
-        ### What do we do about complex metrics -- does name alone give enough info
-        ### to instantiate a new object to access 'reduce' functions? (possibly new 
-        ### reduce functions as the results of old ones should be stored with the data)?
-        ### Or is that a user's problem, that if they're using
-        ### a complex metric and have added new reduce functions, then they ought to
-        ### know where the data should be going. 
         return    
+
+    def plotAll(self, savefig=True):
+        """Plot histograms and skymaps (where relevant) for all metrics."""
+        for m in self.metrics:
+            if m.name in self.reduceValues.keys():
+                for k in self.reduceValues[m.name].keys():
+                    self.plotMetric(m.name, reduceName=k, savefig=savefig)
+            else:
+                self.plotMetric(m.name, savefig=savefig)
+        return
         
-    def plotMetric(self, metricName, reduceName=None):
-        # Plot the sky map, if available.         
+    def plotMetric(self, metricName, reduceName=None, doPowerSpectrum=False, 
+                   savefig=True, outDir=None, outfileRoot=None):
+        """Create all plots for 'metricName' (and 'reduceName', if a complex metric)."""
+        # Build plot title and label.
+        plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
+        if reduceName != None:
+            metricdata = self.reduceValues[metricName][reduceName]
+            plotTitle += ' ' + metricName + '.' + reduceName
+            plotLabel = metricName + '.' + reduceName
+        else:
+            metricdata = self.metricValues[metricName]
+            plotTitle += ' ' + metricName
+            plotLabel = metricName
         # Plot the histogram.
-        pass
+        histfignum = self.grid.plotHistogram(metricdata, plotLabel, title=plotTitle)
+        if savefig:
+            outfile = self._buildOutfileName(metricName, reduceName=reduceName, 
+                                             outDir=outDir, outfileRoot=outfileRoot, 
+                                             plotType='hist')
+            plt.savefig(outfile, figformat=self.figformat)
+        # Plot the sky map, if spatial grid.
+        if self.grid.gridtype == 'SPATIAL':
+            skyfignum = self.grid.plotSkyMap(metricdata, plotLabel,
+                                             title=plotTitle)
+            if savefig:
+                outfile = self._buildOutfileName(metricName, reduceName=reduceName, 
+                                                 outDir=outDir, outfileRoot=outfileRoot, 
+                                                 plotType='sky')
+                plt.savefig(outfile, figformat=self.figformat)
+        # Plot the power spectrum if desired (and are using an appropriate grid).
+        if doPowerSpectrum:
+            try:
+                psfignum = self.grid.plotPowerSpectrum(metricdata, title=plotTitle, 
+                                                       label=plotLabel)
+                outfile = self._buildOutfileName(metricName, reduceName=reduceName, 
+                                                 outDir=outDir, outfileRoot=outfileRoot, 
+                                                 plotType='sky')
+                plt.savefig(outfile, figformat=self.figformat)
+            except:
+                raise Exception('This grid does not calculate a power spectrum.')
+        return
 
     def computeSummaryStatistics(self):
         # compute the summary statistics .. note can pass metric values into
