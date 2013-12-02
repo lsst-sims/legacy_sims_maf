@@ -43,10 +43,13 @@ class BaseMetric(object):
     
     def __init__(self, cols, metricName=None, *args, **kwargs):
         """Instantiate metric. """
-        # Turn cols 
+        # Turn cols into numpy array (so we know it's iterable).
         self.colNameList = ClassRegistry.makeColArr(cols)
         # Register the columns in the classRegistry.
         self.registerCols(self.colNameList)
+        # Identify type of metric return value. Default 'object'.
+        #  Individual metrics should override with more specific value.
+        self.metricDtype = 'object'
         # Save a name for the metric + the data it's working on, so we
         #  can identify this later.
         # If passed the value:
