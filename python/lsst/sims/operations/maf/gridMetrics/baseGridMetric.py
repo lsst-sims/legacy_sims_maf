@@ -68,11 +68,11 @@ class BaseGridMetric(object):
                           outDir=None, outfileRoot=None, plotType=None):
         """Builds output file name for 'metricName' (and reduceName if given). 
 
-        Output filename uses outDir and outfileRoot (defaults are to use simDataName).
+        Output filename uses outDir and outfileRoot (defaults are to use '.' and simDataName).
         For plots, builds outfile name for plot, with addition of plot type at start."""
         # Set output directory and root 
         if outDir == None:
-            outDir = self.simDataName[metricName]
+            outDir = '.'
         if outfileRoot == None:
             outfileRoot = self.simDataName[metricName]
         # Build file name.
@@ -88,7 +88,7 @@ class BaseGridMetric(object):
             pass
         # Add plot name, if plot.
         if plotType:
-            oname = oname + '_' + plotType + '.' + figformat
+            oname = oname + '_' + plotType + '.' + self.figformat
         # Build outfile (with path). 
         outfile = os.path.join(outDir, outfileRoot + '_' + oname)
         return outfile
@@ -124,7 +124,7 @@ class BaseGridMetric(object):
             self.metadata[m.name] = metadata
         # Set up arrays to store metric data. 
         for m in self.metrics:
-            self.metricValues[m.name] = np.empty(len(self.grid), 'object') 
+            self.metricValues[m.name] = np.empty(len(self.grid), m.metricDtype) 
         # SliceCol is needed for global grids, but only has to be a specific
         #  column if the grid needs a specific column (for time slicing, for example).
         if sliceCol==None:
@@ -188,7 +188,7 @@ class BaseGridMetric(object):
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
-        outDir = directory to write output data (default simDataName).  """
+        outDir = directory to write output data (default '.').  """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         self.grid.writeMetricData(outfile, self.metricValues[metricName],
                                       metricName = metricName,
