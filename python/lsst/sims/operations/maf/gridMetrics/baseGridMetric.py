@@ -79,8 +79,9 @@ class BaseGridMetric(object):
         oname = outfileRoot + '_' + metricName.rstrip('_0123456789')
         # Add summary of the metadata if exists.
         try:
-            self.metadata[metricName]            
-            oname = oname + '_' + self.metadata[metricName][:3]
+            self.metadata[metricName]    
+            if len(self.metadata[metricName]) > 0:        
+                oname = oname + '_' + self.metadata[metricName][:3]
         except KeyError:
             pass
         # Add plot name, if plot.
