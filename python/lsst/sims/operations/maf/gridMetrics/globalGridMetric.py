@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+from .baseGridMetric import BaseGridMetric
+
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())

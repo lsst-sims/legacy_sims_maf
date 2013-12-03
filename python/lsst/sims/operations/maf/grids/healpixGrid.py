@@ -152,7 +152,7 @@ class HealpixGrid(BaseSpatialGrid):
         cl = hp.anafast(metricValue)
         l=np.arange(np.size(cl))
         # Plot the results.
-        plt.plot(l,cl*l*(l+1), label=label)
+        plt.plot(l,cl*l*(l+1), label=legendLabel)
         plt.yscale('log')
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')

@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+from .baseGridMetric import BaseGridMetric
+
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
@@ -58,49 +60,56 @@ class SpatialGridMetric(BaseGridMetric):
                 plt.savefig(outfile, figformat=self.figformat)
         return
 
-    def plotComparisons(self, metricNameList, histBins=None, histRange=None,
+    def plotComparisons(self, metricNameList, histBins=100, histRange=None,
+                        plotTitle=None,
                         savefig=False, outDir=None, outfileRoot=None):
         """Create comparison plots of all metricValues in metricNameList.
 
         Will create one histogram with all values from metricNameList, similarly for 
-        power spectra if applicable. Will create skymap difference plots if only two metrics."""
+        power spectra if applicable.
+        Will create skymap difference plots if only two metrics: skymap is intersection of 2 areas."""
         # Check is plottable data.
         for m in metricNameList:
-            if not isinstance(self.metricValues[m], float):
+            if self.metricValues[m].dtype == 'object':
                 metricNameList.remove(m)
         # If have only one metric remaining - 
         if len(metricNameList) < 2:
+            print 'Only one metric left in metricNameList - %s - so defaulting to plotMetric.' \
+              %(metricNameList)
             self.plotMetric(metricNameList[0], savefig=savefig, 
                             outDir=outDir, outfileRoot=outfileRoot)
+            return
         # Else build plot titles. 
-        simDataNames = ()
-        metadatas = ()
-        metricNames = ()
+        simDataNames = set()
+        metadatas = set()
+        metricNames = set()
         for m in metricNameList:
             simDataNames.add(self.simDataName[m])
             metadatas.add(self.metadata[m])
             metricNames.add(m.rstrip('_0123456789'))
         # Create a plot title from the unique parts of the simData/metadata/metric names.
         #  (strip trailing _? values from metric names, as they were probably added from read funct).
-        plotTitle = ''
-        if len(simDataNames) == 1:
-            plotTitle += list(simDataNames)[0]
-        if len(metadatas) == 1:
-            plotTitle += list(metadatas)[0]
-        if len(metricNames) == 1:
-            plotTitle += list(metricNames)[0]
-        if plotTitle == '':
-            # If there were more than one of everything above, join metricNames with commas. 
-            plotTitle = ', '.join(metricNames)
+        if plotTitle == None:
+            plotTitle = ''
+            if len(simDataNames) == 1:
+                plotTitle += ' ' + list(simDataNames)[0]
+            if len(metadatas) == 1:
+                plotTitle += ' ' + list(metadatas)[0]
+            if len(metricNames) == 1:
+                plotTitle += ' ' + list(metricNames)[0]
+            if plotTitle == '':
+                # If there were more than one of everything above, join metricNames with commas. 
+                plotTitle = ', '.join(metricNames)
         # Create a plot x-axis label (metricLabel)
         plotLabel = ', '.join(metricNames)                
         # Plot the histogram.
         histfignum = None
         addLegend = False
-        for m in metricNameList:
-            if m == metricNameList[-1:]:
+        for i,m in enumerate(metricNameList):
+            if i == (len(metricNameList)-1):
                 addLegend = True
-            legendLabel = self.simDataName[m] + self.metadata[m] + m.rstrip('_0123456789')
+            legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
+              + ' ' + m.rstrip('_0123456789')
             histfignum = self.grid.plotHistogram(self.metricValues[m], metricLabel=plotLabel,
                                                  fignum = histfignum, addLegend=addLegend,
                                                  bins = histBins, histRange = histRange,
@@ -114,11 +123,13 @@ class SpatialGridMetric(BaseGridMetric):
         if hasattr(self.grid, 'plotPowerSpectrum'):
             psfignum = None
             addLegend = False
-            for m in metricNameList:
-                if m == metricNameList[-1:]:
+            for i,m in enumerate(metricNameList):
+                if i == (len(metricNameList)-1):
                     addLegend = True
-                legendLabel = self.simDataName[m] + self.metadata[m] + m.rstrip('_0123456789')
+                legendLabel = self.simDataName[m] + ' '+  self.metadata[m] \
+                  + ' ' + m.rstrip('_0123456789')
                 psfignum = self.grid.plotPowerSpectrum(self.metricValues[m], addLegend=addLegend,
+                                                       fignum = psfignum,
                                                        legendLabel=legendLabel, title=plotTitle)
             if savefig:
                 outfile = self._buildOutfileName(plotTitle, 
@@ -128,10 +139,11 @@ class SpatialGridMetric(BaseGridMetric):
         # Plot the sky map, if only two metricNames.
         if len(metricNameList) == 2:
             # Mask areas where either metric has bad data values, take difference elsewhere.
-            mval0 = self.metricValues[0]
-            mval1 = self.metricValues[1]
-            diff = np.where((mval0 == self.grid.badval) or (mval1 == self.grid.badval), 
-                            self.grid.badval, mval0 - mval1)
+            mval0 = self.metricValues[metricNameList[0]]
+            mval1 = self.metricValues[metricNameList[1]]
+            diff = np.where(mval0 == self.grid.badval, self.grid.badval, mval0 - mval1)
+            diff = np.where(mval1 == self.grid.badval, self.grid.badval, diff)
+            plotLabel = metricNameList[0] + ' - ' + metricNameList[1]
             skyfignum = self.grid.plotSkyMap(diff, plotLabel, title=plotTitle)
             if savefig:
                 outfile = self._buildOutfileName(plotTitle, 
