@@ -81,14 +81,14 @@ class BaseGridMetric(object):
         try:
             self.metadata[metricName]    
             if len(self.metadata[metricName]) > 0:        
-                oname = oname + '_' + self.metadata[metricName][:3]
+                oname = oname + '_' + self.metadata[metricName][:5]
         except KeyError:
             pass
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile (with path). 
-        outfile = os.path.join(outDir, oname)
+        # Build outfile (with path) and strip white spaces (replace with underscores). 
+        outfile = os.path.join(outDir, oname.replace(' ', '_')
         return outfile
 
     def _deDupeMetricName(self, metricName):
@@ -203,7 +203,8 @@ class BaseGridMetric(object):
         self.writeGrid(gridfile=gridfile, outfileRoot=outfileRoot,outDir=outDir)
         return
     
-    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, dt='float', gridfile=None):
+    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, 
+                    dt='float', gridfile=None):
         """Write metric values 'metricName' to disk.
 
         comment = any additional comments to add to output file (beyond 
