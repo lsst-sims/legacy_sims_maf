@@ -16,6 +16,7 @@ class ComplexMetric(BaseMetric):
                 reducename = r[0].lstrip('reduce')
                 self.reduceFuncs[reducename]= r[1]
         return
+    
     def run(self, dataSlice):
         raise NotImplementedError()
 
