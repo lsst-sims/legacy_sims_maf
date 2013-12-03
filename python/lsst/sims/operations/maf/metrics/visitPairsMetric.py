@@ -8,7 +8,7 @@ from .complexMetrics import ComplexMetric
 
 class VisitPairsMetric(ComplexMetric):
     """Count the number of pairs of visits per night within deltaTmin and deltaTmax."""
-    def __init__(self, timesCol='expMJD', nightsCol='night', metricName='dtimes',
+    def __init__(self, timesCol='expMJD', nightsCol='night', metricName='VisitPairsMetric',
                  deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0):
         """Instantiate metric.
         

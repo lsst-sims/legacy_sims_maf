@@ -76,20 +76,37 @@ class BaseGridMetric(object):
         if outfileRoot == None:
             outfileRoot = self.simDataName[metricName]
         # Start building output file name. Strip trailing numerals from metricName.
-        oname = outfileRoot + '_' + metricName.rstrip('_0123456789')
+        oname = outfileRoot + '_' + self._dupeMetricName(metricName)
         # Add summary of the metadata if exists.
         try:
             self.metadata[metricName]    
             if len(self.metadata[metricName]) > 0:        
-                oname = oname + '_' + self.metadata[metricName][:3]
+                oname = oname + '_' + self.metadata[metricName][:5]
         except KeyError:
             pass
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile (with path). 
-        outfile = os.path.join(outDir, oname)
+        # Build outfile (with path) and strip white spaces (replace with underscores). 
+        outfile = os.path.join(outDir, oname.replace(' ', '_'))
         return outfile
+
+    def _deDupeMetricName(self, metricName):
+        """In case of multiple metrics having the same 'metricName', add additional characters to de-dupe."""
+        mname = metricName
+        i =0 
+        while mname in self.metricValues.keys():
+            mname = metricName + '__' + str(i)
+            i += 1
+        return mname
+
+    def _dupeMetricName(self, metricName):
+        """Remove additional characters added to de-dupe metric name."""
+        mname = metricName.split('__')
+        if len(mname) > 1:
+            return ''.join(mname.split('__')[:-1])
+        else:
+            return metricName
         
     def runGrid(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None):
@@ -186,7 +203,8 @@ class BaseGridMetric(object):
         self.writeGrid(gridfile=gridfile, outfileRoot=outfileRoot,outDir=outDir)
         return
     
-    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, dt='float', gridfile=None):
+    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, 
+                    dt='float', gridfile=None):
         """Write metric values 'metricName' to disk.
 
         comment = any additional comments to add to output file (beyond 
@@ -226,12 +244,9 @@ class BaseGridMetric(object):
             metricValues, metricName, simDataName, metadata, \
                 comment,gridfile,gridtype \
                 = self.grid.readMetricData(f)
-            if metricName in self.metricValues.keys():
-                i = 0
-                while (metricName + '_ ' + str(i)) in self.metricValues.keys():
-                    i += 1
-                metricName = metricName + '_' + str(i)
-                print '# Read multiple metrics with same name - using %s' %(metricName)
+            # Dedupe the metric name, if needed.
+            metricName = self._deDupeMetricName(metricName)
+            print '# Read multiple metrics with same name - using %s' %(metricName)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
             self.simDataName[metricName] = simDataName
