@@ -13,19 +13,20 @@ print simdata.dtype.names
 
 # Set up grid.
 #gg = grids.GlobalGrid()
-gg = grids.HealpixGrid()
+gg = grids.HealpixGrid(16)
 gg.buildTree(simdata['fieldra'],simdata['fielddec'])
 
 # Set up metrics.
 magmetric = metrics.MeanMetric('m5')
 seeingmean = metrics.MeanMetric('seeing')
 seeingrms = metrics.RmsMetric('seeing')
+visitpairs = metrics.VisitPairsMetric('expmjd')
 
 print magmetric.classRegistry
 
 gm = gridMetrics.BaseGridMetric(gg)
 #gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
-gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
+gm.runGrid([magmetric, seeingmean, seeingrms, visitpairs], simdata)
 #print gm.metricValues
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]

@@ -10,7 +10,6 @@ import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
-
 # set up some test data
 #simdata = tu.makeSimpleTestSet()
 #print 'simdata shape', np.shape(simdata)
@@ -42,11 +41,8 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
-# Set up global grid.
-#gg = grids.GlobalGrid()
-
 # Set up spatial grid.
-gg = grids.HealpixGrid(128)
+gg = grids.HealpixGrid(16)
 # Build kdtree on ra/dec for spatial grid.
 gg.buildTree(simdata['fieldRA'], simdata['fieldDec'], leafsize=100)
 
@@ -60,6 +56,7 @@ visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
 
 meanseeing = metrics.MeanMetric('seeing')
 minseeing = metrics.MinMetric('seeing')
+maxseeing = metrics.MaxMetric('seeing')
 rmsseeing = metrics.RmsMetric('seeing')
 meanairmass = metrics.MeanMetric('airmass')
 minairmass = metrics.MinMetric('airmass')
@@ -72,17 +69,17 @@ coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
 
 metricList = [meanseeing, minseeing, rmsseeing, meanairmass, minairmass, meanm5, minm5, rmsm5, 
               meanskybright, maxskybright, coaddm5]
-metricList = metricList[0:1]
+metricList = [meanseeing, minseeing, maxseeing]
 
 dt, t = dtime(t)
 print 'Set up metrics %f s' %(dt)
 
-gm = gridMetrics.BaseGridMetric(gg)
+gm = gridMetrics.SpatialGridMetric(gg)
 
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
 
-gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'))
+gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'), metadata = bandpass)
 dt, t = dtime(t)
 print 'Ran grid of %d points with %d metrics using gridMetric %f s' %(len(gg), len(metricList), dt)
                     
@@ -91,10 +88,15 @@ gm.reduceAll()
 dt, t = dtime(t)
 print 'Ran reduce functions %f s' %(dt)
 
-gm.plotAll(savefig=True)
+#gm.plotAll(savefig=True)
 
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
+
+gm.plotComparisons([meanseeing.name, minseeing.name, maxseeing.name])
+
+dt, t = dtime(t)
+print 'Made comparison plots %f s' %(dt)
 
 plt.show()
 exit()
@@ -124,7 +126,8 @@ gm = gridMetrics.BaseGridMetric(gg)
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
 
-gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'), metadata='Dithered' )
+gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'), 
+           metadata = bandpass + 'Dithered' )
 
 dt, t = dtime(t)
 print 'Ran grid %f s' %(dt)

@@ -141,7 +141,7 @@ class HealpixGrid(BaseSpatialGrid):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, 
-                          label=None, addLegend=False):
+                          legendLabel=None, addLegend=False):
         """Generate and plot the power spectrum of metricValue."""
         if fignum:
             fig = plt.figure(fignum)
@@ -152,7 +152,7 @@ class HealpixGrid(BaseSpatialGrid):
         cl = hp.anafast(metricValue)
         l=np.arange(np.size(cl))
         # Plot the results.
-        plt.plot(l,cl*l*(l+1), label=label)
+        plt.plot(l,cl*l*(l+1), label=legendLabel)
         plt.yscale('log')
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')

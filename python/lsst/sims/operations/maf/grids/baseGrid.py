@@ -63,9 +63,6 @@ class BaseGrid(object):
         head.update(comment=comment, metricName=metricName,
                     simDataName=simDataName, metadata=metadata, gridfile=gridfile, gridtype=self.gridtype)
         pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
-        #XXX-can't save datatype 'object' to fits.  Might want to check the values to see if the metric is actually a float (if multiple but constant length vector, should handle that too).
-        ## And need a fallback option if there is an object / variable length list.
-        ## How does this handle preserving the info of the gridpoints?--it doesn't, the grid needs to get pickled seperatly.
         return
     
     def readMetricData(self,infilename):
