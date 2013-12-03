@@ -83,7 +83,7 @@ gm = gridMetrics.SpatialGridMetric(gg)
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
 
-gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'), metadata = bandpass)
+gm.runGrid(metricList, simdata, simDataName=dbTable, metadata = bandpass)
 dt, t = dtime(t)
 print 'Ran grid of %d points with %d metrics using gridMetric %f s' %(len(gg), len(metricList), dt)
                     
@@ -115,8 +115,8 @@ gm = gridMetrics.SpatialGridMetric(gg)
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
 
-gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'), 
-           metadata = bandpass + ' Dithered' )
+gm.runGrid(metricList, simdata, simDataName=dbTable, 
+           metadata = bandpass + ' dithered' )
 
 dt, t = dtime(t)
 print 'Ran grid %f s' %(dt)
@@ -126,7 +126,7 @@ gm.reduceAll()
 dt, t = dtime(t)
 print 'Ran reduce functions %f s' %(dt)
 
-gm.plotAll(savefig=False)
+gm.plotAll(savefig=True)
 
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
