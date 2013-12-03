@@ -228,9 +228,9 @@ class BaseGridMetric(object):
                 = self.grid.readMetricData(f)
             if metricName in self.metricValues.keys():
                 i = 0
-                while (metricName + '_ ' + i) in self.metricValues.keys():
+                while (metricName + '_ ' + str(i)) in self.metricValues.keys():
                     i += 1
-                metricName = metricName + '_' + i
+                metricName = metricName + '_' + str(i)
                 print '# Read multiple metrics with same name - using %s' %(metricName)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
