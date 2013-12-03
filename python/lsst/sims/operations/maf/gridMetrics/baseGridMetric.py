@@ -236,9 +236,9 @@ class BaseGridMetric(object):
         #  have the same metric with different opsim or metadata values.
         # Read the header of the first file for grid file name
         header = pyf.getheader(filenames[0])
-        gridfile_1st = header['gridfile']
+        gridtype_1st = header['gridtype']
         # Restore grid.
-        self.grid = pickle.load(open(gridfile_1st, 'r'))
+        self.grid = pickle.load(open(header['gridfile'], 'r'))
         # Read metrics from disk
         for f in filenames:
             metricValues, metricName, simDataName, metadata, \
@@ -252,8 +252,11 @@ class BaseGridMetric(object):
             self.simDataName[metricName] = simDataName
             self.metadata[metricName] = metadata
             self.comment[metricName] = comment
-            if gridfile != gridfile_1st:
-               raise Exception('Metrics not all computed on same grid.')
+            if gridtype != gridtype_1st:
+               raise Exception('Metrics not computed on same grid type.')
+            if len(self.metricValues.keys()) > 1:
+               if np.size(metricValues) != np.size(self.metricValues[self.metricValues.keys()[0]]):
+                  raise Exception('Metrics do not have the same number of points.')
         return    
 
     def plotAll(self, savefig=True):
