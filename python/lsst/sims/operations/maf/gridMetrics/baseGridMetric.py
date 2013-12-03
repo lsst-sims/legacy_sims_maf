@@ -75,8 +75,8 @@ class BaseGridMetric(object):
             outDir = '.'
         if outfileRoot == None:
             outfileRoot = self.simDataName[metricName]
-        # Start building output file name.
-        oname = outfileRoot + '_' + metricName
+        # Start building output file name. Strip trailing numerals from metricName.
+        oname = outfileRoot + '_' + metricName.rstrip('_0123456789')
         # Add summary of the metadata if exists.
         try:
             self.metadata[metricName]            
@@ -99,6 +99,8 @@ class BaseGridMetric(object):
         simDataName = identifier for simulated data
         metadata = further information from config files ('WFD', 'r band', etc.)
         sliceCol = column for slicing grid, if needed (default None)"""
+        # I'm going to assume that we will never get duplicate metricNames from this method, 
+        #  as metricList would give the same results for the same metric run on same data.
         # Set metrics (convert to list if not iterable). 
         if hasattr(metricList, '__iter__'):
             self.metrics = metricList
@@ -174,11 +176,12 @@ class BaseGridMetric(object):
 
     def writeAll(self, outDir='', outfileRoot='', comment='',  gridfile='grid.obj'):
         """Write all metric values to disk."""
-        for m in self.metrics:
-            self.writeMetric(m.name, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
+        for mk in self.metricValues.keys():
+            dt = self.metricValues[mk].dtype
+            self.writeMetric(mk, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
                              gridfile=self._buildOutfileName(gridfile, outDir=outDir, 
                                                              outfileRoot=outfileRoot),
-                                                             dt=m.metricDtype)
+                                                             dt=dt)
         self.writeGrid(gridfile=gridfile, outfileRoot=outfileRoot,outDir=outDir)
         return
     
@@ -191,12 +194,13 @@ class BaseGridMetric(object):
         outDir = directory to write output data (default '.').
         dt = data type.
         gridfile = the filename for the pickled grid"""
-        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
+        outfile = self._buildOutfileName(metricName,
+                                         outDir=outDir, outfileRoot=outfileRoot)
         self.grid.writeMetricData(outfile, self.metricValues[metricName],
-                                      metricName = metricName,
-                                      simDataName = self.simDataName[metricName],
-                                      metadata = self.metadata[metricName],
-                                      comment = comment, dt=dt, gridfile=gridfile)
+                                  metricName = metricName,
+                                  simDataName = self.simDataName[metricName],
+                                  metadata = self.metadata[metricName],
+                                  comment = comment, dt=dt, gridfile=gridfile)
         return
         
     def writeGrid(self,  gridfile='grid.obj',outfileRoot=None, outDir=None):
@@ -209,6 +213,8 @@ class BaseGridMetric(object):
 
     def readMetric(self, filenames):
         """Read metric values and grid (pickle object) from disk. """
+        # Here we can get duplicate metric names however, as we could
+        #  have the same metric with different opsim or metadata values.
         # Read the header of the first file for grid file name
         header = pyf.getheader(filenames[0])
         gridfile_1st = header['gridfile']
@@ -219,6 +225,12 @@ class BaseGridMetric(object):
             metricValues, metricName, simDataName, metadata, \
                 comment,gridfile,gridtype \
                 = self.grid.readMetricData(f)
+            if metricName in self.metricValues.keys():
+                i = 0
+                while (metricName + '_ ' + i) in self.metricValues.keys():
+                    i += 1
+                metricName = metricName + '_' + i
+                print '# Read multiple metrics with same name - using %s' %(metricName)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
             self.simDataName[metricName] = simDataName

@@ -141,7 +141,7 @@ class HealpixGrid(BaseSpatialGrid):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, 
-                          label=None, addLegend=False):
+                          legendLabel=None, addLegend=False):
         """Generate and plot the power spectrum of metricValue."""
         if fignum:
             fig = plt.figure(fignum)
