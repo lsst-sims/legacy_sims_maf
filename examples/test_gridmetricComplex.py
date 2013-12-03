@@ -41,8 +41,10 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
+nside = 128*2*2*2
+
 # Set up spatial grid.
-gg = grids.HealpixGrid(16)
+gg = grids.HealpixGrid(nside)
 # Build kdtree on ra/dec for spatial grid.
 gg.buildTree(simdata['fieldRA'], simdata['fieldDec'], leafsize=100)
 
@@ -61,15 +63,17 @@ rmsseeing = metrics.RmsMetric('seeing')
 meanairmass = metrics.MeanMetric('airmass')
 minairmass = metrics.MinMetric('airmass')
 meanm5 = metrics.MeanMetric('5sigma_modified')
-minm5 = metrics.MinMetric('5sigma_modified')
+maxm5 = metrics.MaxMetric('5sigma_modified')
 rmsm5 = metrics.RmsMetric('5sigma_modified')
 meanskybright = metrics.MeanMetric('skybrightness_modified')
 maxskybright = metrics.MaxMetric('skybrightness_modified')
 coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
 
-metricList = [meanseeing, minseeing, rmsseeing, meanairmass, minairmass, meanm5, minm5, rmsm5, 
-              meanskybright, maxskybright, coaddm5]
-metricList = [meanseeing, minseeing, maxseeing]
+#metricList = [meanseeing, minseeing, rmsseeing, meanairmass, minairmass, meanm5, minm5, rmsm5, 
+#              meanskybright, maxskybright, coaddm5]
+              #metricList = [meanseeing, minseeing, maxseeing]
+
+metricList = [coaddm5, minseeing, maxm5]
 
 dt, t = dtime(t)
 print 'Set up metrics %f s' %(dt)
@@ -88,46 +92,31 @@ gm.reduceAll()
 dt, t = dtime(t)
 print 'Ran reduce functions %f s' %(dt)
 
-#gm.plotAll(savefig=True)
+gm.plotAll(savefig=True)
 
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
 
-gm.plotComparisons([meanseeing.name, minseeing.name, maxseeing.name])
+gm.writeAll()
 
-dt, t = dtime(t)
-print 'Made comparison plots %f s' %(dt)
-
-plt.show()
-exit()
 
 print 'Round 2 (dithered)'
 
-gg = grids.HealpixGrid(128)
+gg = grids.HealpixGrid(nside)
 # Build kdtree on ra/dec for spatial grid.
 gg.buildTree(simdata['hexdithra'], simdata['hexdithdec'], leafsize=100)
 
 dt, t = dtime(t)
 print 'Set up grid and built kdtree if spatial grid %f s' %(dt)
 
-# Set up metrics.
-dtmin = 1./60./24.
-dtmax = 360./60./24.
-visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
 
-meanseeing = metrics.MeanMetric('seeing')
-coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
-
-dt, t = dtime(t)
-print 'Set up metrics %f s' %(dt)
-
-gm = gridMetrics.BaseGridMetric(gg)
+gm = gridMetrics.SpatialGridMetric(gg)
 
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
 
 gm.runGrid(metricList, simdata, simDataName=dbTable.rstrip('_forLynne'), 
-           metadata = bandpass + 'Dithered' )
+           metadata = bandpass + ' Dithered' )
 
 dt, t = dtime(t)
 print 'Ran grid %f s' %(dt)
@@ -142,6 +131,7 @@ gm.plotAll(savefig=False)
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
 
+gm.writeAll()
 
 
 plt.show()

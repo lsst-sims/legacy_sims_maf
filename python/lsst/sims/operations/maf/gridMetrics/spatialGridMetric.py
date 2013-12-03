@@ -19,7 +19,7 @@ def dtime(time_prev):
 
 class SpatialGridMetric(BaseGridMetric):
 
-    # spatial grid metrics already have all the data necessary for plotting. (plotting metricValues).
+    # spatial grid metrics already have all the data necessary for plotting (in metricValues).
     
     def plotMetric(self, metricName, 
                    savefig=True, outDir=None, outfileRoot=None):
@@ -28,7 +28,7 @@ class SpatialGridMetric(BaseGridMetric):
         if not isinstance(self.metricValues[metricName][0], float):
             raise ValueError('Metric data in %s is not float-type.' %(metricName))
         # Build plot title and label.
-        mname = metricName.rstrip('_1234567890')
+        mname = self._dupeMetricName(metricName)
         plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
         plotTitle += ' ' + mname
         plotLabel = mname
@@ -86,7 +86,7 @@ class SpatialGridMetric(BaseGridMetric):
         for m in metricNameList:
             simDataNames.add(self.simDataName[m])
             metadatas.add(self.metadata[m])
-            metricNames.add(m.rstrip('_0123456789'))
+            metricNames.add(self._dupeMetricName(m)))
         # Create a plot title from the unique parts of the simData/metadata/metric names.
         #  (strip trailing _? values from metric names, as they were probably added from read funct).
         if plotTitle == None:
@@ -109,7 +109,7 @@ class SpatialGridMetric(BaseGridMetric):
             if i == (len(metricNameList)-1):
                 addLegend = True
             legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
-              + ' ' + m.rstrip('_0123456789')
+              + ' ' + self._dupeMetricName(m)
             histfignum = self.grid.plotHistogram(self.metricValues[m], metricLabel=plotLabel,
                                                  fignum = histfignum, addLegend=addLegend,
                                                  bins = histBins, histRange = histRange,
@@ -127,7 +127,7 @@ class SpatialGridMetric(BaseGridMetric):
                 if i == (len(metricNameList)-1):
                     addLegend = True
                 legendLabel = self.simDataName[m] + ' '+  self.metadata[m] \
-                  + ' ' + m.rstrip('_0123456789')
+                  + ' ' + self._dupeMetricName(m)
                 psfignum = self.grid.plotPowerSpectrum(self.metricValues[m], addLegend=addLegend,
                                                        fignum = psfignum,
                                                        legendLabel=legendLabel, title=plotTitle)

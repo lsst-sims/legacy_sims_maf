@@ -76,7 +76,7 @@ class BaseGridMetric(object):
         if outfileRoot == None:
             outfileRoot = self.simDataName[metricName]
         # Start building output file name. Strip trailing numerals from metricName.
-        oname = outfileRoot + '_' + metricName.rstrip('_0123456789')
+        oname = outfileRoot + '_' + self._dupeMetricName(metricName)
         # Add summary of the metadata if exists.
         try:
             self.metadata[metricName]    
@@ -90,6 +90,23 @@ class BaseGridMetric(object):
         # Build outfile (with path). 
         outfile = os.path.join(outDir, oname)
         return outfile
+
+    def _deDupeMetricName(self, metricName):
+        """In case of multiple metrics having the same 'metricName', add additional characters to de-dupe."""
+        mname = metricName
+        i =0 
+        while mname in self.metricValues.keys():
+            mname = metricName + '__' + i
+            i += 1
+        return mname
+
+    def _dupeMetricName(self, metricName):
+        """Remove additional characters added to de-dupe metric name."""
+        mname = metricName.split('__')
+        if len(mname) > 1:
+            return ''.join(mname.split('__')[:-1])
+        else:
+            return metricName
         
     def runGrid(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None):
@@ -226,12 +243,9 @@ class BaseGridMetric(object):
             metricValues, metricName, simDataName, metadata, \
                 comment,gridfile,gridtype \
                 = self.grid.readMetricData(f)
-            if metricName in self.metricValues.keys():
-                i = 0
-                while (metricName + '_ ' + i) in self.metricValues.keys():
-                    i += 1
-                metricName = metricName + '_' + i
-                print '# Read multiple metrics with same name - using %s' %(metricName)
+            # Dedupe the metric name, if needed.
+            metricName = self._deDupeMetricName(metricName)
+            print '# Read multiple metrics with same name - using %s' %(metricName)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
             self.simDataName[metricName] = simDataName
