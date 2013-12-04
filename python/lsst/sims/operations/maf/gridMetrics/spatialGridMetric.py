@@ -86,7 +86,7 @@ class SpatialGridMetric(BaseGridMetric):
         for m in metricNameList:
             simDataNames.add(self.simDataName[m])
             metadatas.add(self.metadata[m])
-            metricNames.add(self._dupeMetricName(m)))
+            metricNames.add(self._dupeMetricName(m))
         # Create a plot title from the unique parts of the simData/metadata/metric names.
         #  (strip trailing _? values from metric names, as they were probably added from read funct).
         if plotTitle == None:

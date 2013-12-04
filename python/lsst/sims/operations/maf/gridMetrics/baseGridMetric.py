@@ -88,7 +88,7 @@ class BaseGridMetric(object):
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
         # Build outfile (with path) and strip white spaces (replace with underscores). 
-        outfile = os.path.join(outDir, oname.replace(' ', '_')
+        outfile = os.path.join(outDir, oname.replace(' ', '_'))
         return outfile
 
     def _deDupeMetricName(self, metricName):
