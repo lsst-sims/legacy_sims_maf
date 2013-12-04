@@ -17,7 +17,7 @@ def makeSimpleTestSet():
     return numpy.array(zip(m5arr, seeing, expmjd, night, f, ra, dec), 
                        dtype=[('m5', float), 
                               ('seeing', float),
-                              ('expMJD', float),
+                              ('expmjd', float),
                               ('night', int),
                               ('filter', (str, 1)),
                               ('fieldra', float),
