@@ -239,24 +239,33 @@ class BaseGridMetric(object):
         gridtype_1st = header['gridtype']
         # Restore grid.
         self.grid = pickle.load(open(header['gridfile'], 'r'))
+        #record size of any metrics that are already loaded
+        if len(self.metricValues.keys()) > 0:
+           npoints = np.size(self.metricValues[self.metricValues.keys()[0]])
+        else:
+           npoints = -1
         # Read metrics from disk
         for f in filenames:
-            metricValues, metricName, simDataName, metadata, \
-                comment,gridfile,gridtype \
-                = self.grid.readMetricData(f)
-            # Dedupe the metric name, if needed.
-            metricName = self._deDupeMetricName(metricName)
-            print '# Read multiple metrics with same name - using %s' %(metricName)
-            # Store the header values in variables
-            self.metricValues[metricName] = metricValues
-            self.simDataName[metricName] = simDataName
-            self.metadata[metricName] = metadata
-            self.comment[metricName] = comment
-            if gridtype != gridtype_1st:
-               raise Exception('Metrics not computed on same grid type.')
-            if len(self.metricValues.keys()) > 1:
-               if np.size(metricValues) != np.size(self.metricValues[self.metricValues.keys()[0]]):
-                  raise Exception('Metrics do not have the same number of points.')
+           metricValues, metricName, simDataName, metadata, \
+               comment,gridfile,gridtype \
+               = self.grid.readMetricData(f)
+           # Dedupe the metric name, if needed.
+           metricName = self._deDupeMetricName(metricName)
+           print '# Read multiple metrics with same name - using %s' %(metricName)
+           # Store the header values in variables
+           self.metricValues[metricName] = metricValues
+           self.simDataName[metricName] = simDataName
+           self.metadata[metricName] = metadata
+           self.comment[metricName] = comment
+           #if this is the 1st metric loaded, record metric size
+           if npoints == -1:
+              npoints = np.size(self.metricValues[metricName])
+           if gridtype != gridtype_1st:
+              raise Exception('Metrics not computed on same grid type.')
+           #make sure all metrics match size of previously loaded metrics
+           if len(self.metricValues.keys()) > 1:
+              if np.size(metricValues) != npoints:
+                 raise Exception('Metrics do not have the same number of points.')
         return    
 
     def plotAll(self, savefig=True):
