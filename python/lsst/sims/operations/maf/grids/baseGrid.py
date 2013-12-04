@@ -58,15 +58,50 @@ class BaseGrid(object):
 
     def writeMetricData(self, outfilename, metricValues,
                     comment='', metricName='',
-                    simDataName='', metadata='', gridfile='', dt='float'):
+                    simDataName='', metadata='', gridfile='', badval=-666,dt='float'):
         head = pyf.Header()
         head.update(comment=comment, metricName=metricName,
-                    simDataName=simDataName, metadata=metadata, gridfile=gridfile, gridtype=self.gridtype)
-        pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
+                    simDataName=simDataName, metadata=metadata, gridfile=gridfile, gridtype=self.gridtype, badval=badval)
+        if dt == 'object':
+            #import pdb; pdb.set_trace()
+            a1 = np.where(metricValues == badval)[0]
+            a2 = np.where(metricValues != badval)[0]
+            ncols = len(metricValues[a2][0])
+            cols = []
+            for i in np.arange(ncols):
+                column = np.empty(len(metricValues), dtype=object)
+                for j in a1:  column[j] = np.array([badval]) #there has to be a better way to do this!
+                #column[a1] = badval
+                for j in a2:  column[j] = metricValues[j][i]
+                column = pyf.Column(name='c'+str(i), format='PD()', array=column) #need to update formatting.  Make a function to convert between dtype and fits format codes.
+                cols.append(column)
+            tbhdu = pyf.new_table(cols)
+            #append the info from head
+            for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
+            tbhdu.writeto(outfilename+'.fits')
+        else:              
+            pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
         return
     
     def readMetricData(self,infilename):
-        metricValues, head = pyf.getdata(infilename, header=True)
+        f = pyf.open(infilename)#metricValues, head = pyf.getdata(infilename, header=True)
+        if f[0].header['NAXIS'] == 0:
+            f = pyf.open(infilename)
+            head = f[1].header
+            badval = head['badval']
+            metricValues = np.empty(len(f[1].data), dtype=object)
+            #import pdb; pdb.set_trace()
+            for i in range(len(f[1].data)): #stupid loop to unpack the variable length bin table
+                if len(np.unique(np.ravel((f[1].data[i])))) == 0:
+                    metricValues[i] = f[1].data[i]
+                else:                    
+                    if np.max(np.unique(np.ravel((f[1].data[i])))) == badval:
+                        metricValues[i] = badval
+                    else:
+                        metricValues[i] = f[1].data[i]
+        else:
+            metricValues, head = pyf.getdata(infilename, header=True)
+        #import pdb; pdb.set_trace()
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype']
         

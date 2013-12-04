@@ -26,7 +26,7 @@ print magmetric.classRegistry
 
 gm = gridMetrics.BaseGridMetric(gg)
 #gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
-gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
+gm.runGrid([magmetric, seeingmean, seeingrms,visitpairs], simdata)
 #print gm.metricValues
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
@@ -44,3 +44,6 @@ ack.readMetric(filenames)
 print ack.metricValues[magmetric.name]
 print ack.metricValues[seeingmean.name]
 print ack.metricValues[seeingrms.name]
+
+
+

@@ -218,7 +218,8 @@ class BaseGridMetric(object):
                                   metricName = metricName,
                                   simDataName = self.simDataName[metricName],
                                   metadata = self.metadata[metricName],
-                                  comment = comment, dt=dt, gridfile=gridfile)
+                                  comment = comment, dt=dt, gridfile=gridfile,
+                                  badval = self.grid.badval)
         return
         
     def writeGrid(self,  gridfile='grid.obj',outfileRoot=None, outDir=None):
@@ -235,6 +236,8 @@ class BaseGridMetric(object):
         #  have the same metric with different opsim or metadata values.
         # Read the header of the first file for grid file name
         header = pyf.getheader(filenames[0])
+        if header['NAXIS'] == 0:
+           header = pyf.open(filenames[0])[1].header
         gridtype_1st = header['gridtype']
         # Restore grid.
         self.grid = pickle.load(open(header['gridfile'], 'r'))
