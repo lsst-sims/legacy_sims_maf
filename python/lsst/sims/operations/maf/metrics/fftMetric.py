@@ -7,7 +7,7 @@ from .complexMetrics import ComplexMetric
 
 class FftMetric(ComplexMetric):
     """Calculate a truncated FFT of the exposure times."""
-    def __init__(self, timesCol='expMJD', metricName='FftMetric',
+    def __init__(self, timesCol='expmjd', metricName='FftMetric',
                  nCoeffs=100):
         """Instantiate metric.
         
@@ -17,10 +17,11 @@ class FftMetric(ComplexMetric):
         super(FftMetric, self).__init__([self.times,], metricName)
         # Set up output metricDtype
         self.nCoeffs = nCoeffs
-        metricDtype = []
-        for i in range(0, self.nCoeffs):
-            metricDtype.append(('%s' %(i), 'float'))
-        self.metricDtype = metricDtype
+        #metricDtype = []
+        #for i in range(0, self.nCoeffs):
+        #    metricDtype.append(('%s' %(i), 'float'))
+        #self.metricDtype = metricDtype
+        self.metricDtype = 'object'
         return
 
     def run(self, dataSlice):

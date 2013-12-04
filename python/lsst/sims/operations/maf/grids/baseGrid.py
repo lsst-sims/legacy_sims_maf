@@ -25,7 +25,7 @@ class BaseGrid(object):
     def __init__(self, verbose=True, *args, **kwargs):
         """Instantiate the base grid object."""
         self.verbose = verbose
-        self.badval = np.nan
+        self.badval = -666 #np.nan
         self.gridtype = None
         return
 
@@ -62,19 +62,42 @@ class BaseGrid(object):
         head = pyf.Header()
         head.update(comment=comment, metricName=metricName,
                     simDataName=simDataName, metadata=metadata, gridfile=gridfile, gridtype=self.gridtype, badval=badval)
-        if dt == 'object':
+        if dt == 'object':            
+            mask = []
+            for val in metricValues:
+                if np.size(val)==1:
+                    mask.append(val == badval)
+                else:
+                    mask.append(False)
+            mask = np.array(mask)
+            ind = np.arange(len(metricValues))
+            a1 = ind[mask]
+            a2=ind[np.invert(mask)]
+            #a1 = np.where(metricValues == badval)[0]
+            #a2 = np.where(metricValues != badval)[0]
+            try:
+                metricValues[a2][0].shape #if this is just a single numpy array
+            except:
+                ncols = len(metricValues[a2][0]) #if it is a tuple or list 
+            else:
+                ncols = 1
             #import pdb; pdb.set_trace()
-            a1 = np.where(metricValues == badval)[0]
-            a2 = np.where(metricValues != badval)[0]
-            ncols = len(metricValues[a2][0])
             cols = []
-            for i in np.arange(ncols):
-                column = np.empty(len(metricValues), dtype=object)
-                for j in a1:  column[j] = np.array([badval]) #there has to be a better way to do this!
-                #column[a1] = badval
-                for j in a2:  column[j] = metricValues[j][i]
-                column = pyf.Column(name='c'+str(i), format='PD()', array=column) #need to update formatting.  Make a function to convert between dtype and fits format codes.
+            column = np.empty(len(metricValues), dtype=object)                              
+            if ncols == 1:
+                for j in a1:  column[j] = np.array([badval])
+                for j in a2:  column[j] = metricValues[j]
+                column = pyf.Column(name='c'+str(0), format='PD()', array=column)
                 cols.append(column)
+            else:
+                for i in np.arange(ncols):
+                    column = np.empty(len(metricValues), dtype=object)    
+                    #import pdb; pdb.set_trace()
+                    for j in a1:  column[j] = np.array([badval]) #there has to be a better way to do this!
+                    #column[a1] = badval
+                    for j in a2:  column[j] = metricValues[j][i]
+                    column = pyf.Column(name='c'+str(i), format='PD()', array=column) #need to update formatting.  Make a function to convert between dtype and fits format codes.
+                    cols.append(column)
             tbhdu = pyf.new_table(cols)
             #append the info from head
             for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
@@ -84,14 +107,14 @@ class BaseGrid(object):
         return
     
     def readMetricData(self,infilename):
-        f = pyf.open(infilename)#metricValues, head = pyf.getdata(infilename, header=True)
+        f = pyf.open(infilename)
         if f[0].header['NAXIS'] == 0:
             f = pyf.open(infilename)
             head = f[1].header
             badval = head['badval']
             metricValues = np.empty(len(f[1].data), dtype=object)
             #import pdb; pdb.set_trace()
-            for i in range(len(f[1].data)): #stupid loop to unpack the variable length bin table
+            for i in range(len(f[1].data)): #stupid loop to unpack the variable length array table
                 if len(np.unique(np.ravel((f[1].data[i])))) == 0:
                     metricValues[i] = f[1].data[i]
                 else:                    
@@ -101,7 +124,6 @@ class BaseGrid(object):
                         metricValues[i] = f[1].data[i]
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
-        #import pdb; pdb.set_trace()
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype']
         

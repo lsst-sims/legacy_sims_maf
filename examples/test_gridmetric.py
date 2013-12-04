@@ -41,6 +41,7 @@ filenames = glob.glob('savetest*.fits')
 
 #new object to restore info into
 ack = gridMetrics.BaseGridMetric(None) #can instant with None grid since it will be restored from pickle.
+ack.readGrid('savetest_grid.obj')
 ack.readMetric(filenames)
 print ack.metricValues[magmetric.name]
 print ack.metricValues[seeingmean.name]
