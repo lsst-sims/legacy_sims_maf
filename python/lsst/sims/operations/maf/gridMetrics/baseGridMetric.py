@@ -48,7 +48,7 @@ def dtime(time_prev):
 
 
 class BaseGridMetric(object):
-    def __init__(self, grid, figformat='png'):
+    def __init__(self, figformat='png'):
         """Instantiate gridMetric object and set up (empty) dictionaries."""
         # Set up dictionaries to hold metric values, reduced metric values,
         #   simDataName(s) and metadata(s). All dictionary keys should be
@@ -104,7 +104,6 @@ class BaseGridMetric(object):
             return ''.join(mname.split('__')[:-1])
         else:
             return metricName
-
 
     def setGrid(self, grid):
         """Set grid object for gridMetric."""

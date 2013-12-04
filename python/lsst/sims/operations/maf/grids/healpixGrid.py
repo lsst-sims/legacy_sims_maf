@@ -75,31 +75,6 @@ class HealpixGrid(BaseSpatialGrid):
         dec -= np.pi/2.0
         return ra, dec  
     
-    def writeFile(self, outfile, metricValues, colHeaders=None):
-        """Write metricValues to FITS file using healpy function. """
-        # Write metric data values to fits file.
-        # If >1 metric values to write in each column, they should be a list of arrays.
-        hp.write_map(outfile, metricValues, column_names=colHeaders)
-        # If metric values are not an even length of values, this will not 
-        #  work and needs some additional handling.
-        # TODO : add comments RE sql constraint & metric name
-        return
-    
-    def readFile(self, infile):
-        """Read metric data from FITS file using healpy function."""
-        # Read metric data values from fits file.
-        # First read col0 data and get header to see if there are more columns.
-        d, header = hp.read_map(infile, h=True)
-        cols = []
-        for h in header:
-            if h[0].startswith('TTYPE'):
-                cols.append(int(h[0].lstrip('TTYPE')) - 1)
-            if h[0].startswith('NSIDE'):
-                nside = h[1]
-        if len(cols) > 1:
-            d = hp.read_map(infile, field=cols)
-        return nside, d
-        
     def plotSkyMap(self, metricValue, metricLabel, title='', 
                    clims=None, cbarFormat='%.2g'):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
