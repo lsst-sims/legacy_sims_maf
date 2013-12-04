@@ -192,7 +192,7 @@ class BaseGridMetric(object):
                 self.metricValues[rName][i] = reduceFunc(metricValuesPt)
         return
 
-    def writeAll(self, outDir='', outfileRoot='', comment='',  gridfile='grid.obj'):
+    def writeAll(self, outDir=None, outfileRoot=None, comment='',  gridfile='grid.obj'):
         """Write all metric values to disk."""
         for mk in self.metricValues.keys():
             dt = self.metricValues[mk].dtype
@@ -213,8 +213,7 @@ class BaseGridMetric(object):
         outDir = directory to write output data (default '.').
         dt = data type.
         gridfile = the filename for the pickled grid"""
-        outfile = self._buildOutfileName(metricName,
-                                         outDir=outDir, outfileRoot=outfileRoot)
+        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         self.grid.writeMetricData(outfile, self.metricValues[metricName],
                                   metricName = metricName,
                                   simDataName = self.simDataName[metricName],
