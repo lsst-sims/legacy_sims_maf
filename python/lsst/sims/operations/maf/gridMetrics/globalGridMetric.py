@@ -19,6 +19,13 @@ def dtime(time_prev):
 
 class GlobalGridMetric(BaseGridMetric):
 
+    def setGrid(self, grid):
+        super(SpatialGridMetric, self).setGrid(grid)
+        # Check this grid is a spatial type.
+        if self.grid.gridtype != 'GLOBAL':
+            raise Exception('Gridtype for grid should be GLOBAL, not %s' %(self.grid.gridtype))
+        return
+    
     # Have to get simdata in here .. but how? (note that it's more than just one simdata - one
     #  column per metric, but could come from different runs)
     

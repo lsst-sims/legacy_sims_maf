@@ -24,7 +24,8 @@ visitpairs = metrics.VisitPairsMetric('expmjd')
 
 print magmetric.classRegistry
 
-gm = gridMetrics.BaseGridMetric(gg)
+gm = gridMetrics.BaseGridMetric()
+gm.setGrid(gg)
 #gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
 gm.runGrid([magmetric, seeingmean, seeingrms,visitpairs], simdata)
 #print gm.metricValues

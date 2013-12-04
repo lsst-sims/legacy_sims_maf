@@ -78,7 +78,8 @@ metricList = [coaddm5, minseeing, maxm5]
 dt, t = dtime(t)
 print 'Set up metrics %f s' %(dt)
 
-gm = gridMetrics.SpatialGridMetric(gg)
+gm = gridMetrics.SpatialGridMetric()
+gm.setGrid(gg)
 
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)

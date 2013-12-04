@@ -48,10 +48,8 @@ def dtime(time_prev):
 
 
 class BaseGridMetric(object):
-    def __init__(self, grid, figformat='png'):
-        """Instantiate gridMetric object and set grid."""
-        # Set grid.
-        self.grid = grid
+    def __init__(self, figformat='png'):
+        """Instantiate gridMetric object and set up (empty) dictionaries."""
         # Set up dictionaries to hold metric values, reduced metric values,
         #   simDataName(s) and metadata(s). All dictionary keys should be
         #   metric name -- and then for reduceValues is [metric name][reduceFuncName]
@@ -62,7 +60,6 @@ class BaseGridMetric(object):
         # Set figure format for output plot files.
         self.figformat = figformat
         return
-
 
     def _buildOutfileName(self, metricName,
                           outDir=None, outfileRoot=None, plotType=None):
@@ -107,6 +104,11 @@ class BaseGridMetric(object):
             return ''.join(mname.split('__')[:-1])
         else:
             return metricName
+
+    def setGrid(self, grid):
+        """Set grid object for gridMetric."""
+        self.grid = grid
+        return
         
     def runGrid(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None):
@@ -281,11 +283,14 @@ class BaseGridMetric(object):
 
     def plotMetric(self, metricName, *args, **kwargs):
         """Create all plots for 'metricName'."""
+        # Implemented in spatialGridMetric or globalGridMetric.
         raise NotImplementedError()
 
     def plotComparisons(self, metricNameList, *args, **kwargs):
         """Create comparison plots of all metricValues in metricNameList."""
+        # Implemented in spatialGridMetric or globalGridMetric.
         raise NotImplementedError()
 
     def computeSummaryStatistics(self, metricName, summaryMetric):
+        # Implemented in spatialGridMetric or globalGridMetric.
         raise NotImplementedError()

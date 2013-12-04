@@ -18,6 +18,13 @@ def dtime(time_prev):
 
 class SpatialGridMetric(BaseGridMetric):
 
+    def setGrid(self, grid):
+        super(SpatialGridMetric, self).setGrid(grid)
+        # Check this grid is a spatial type.
+        if self.grid.gridtype != 'SPATIAL':
+            raise Exception('Gridtype for grid should be SPATIAL, not %s' %(self.grid.gridtype))
+        return
+    
     # spatial grid metrics already have all the data necessary for plotting (in metricValues).
     
     def plotMetric(self, metricName, 
