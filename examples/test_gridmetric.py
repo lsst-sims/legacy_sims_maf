@@ -26,7 +26,7 @@ print magmetric.classRegistry
 
 gm = gridMetrics.BaseGridMetric(gg)
 #gm.setupRun([magmetric, seeingmean, seeingrms], simdata)
-gm.runGrid([magmetric, seeingmean, seeingrms, visitpairs], simdata)
+gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
 #print gm.metricValues
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
@@ -34,9 +34,9 @@ print gm.metricValues[seeingrms.name]
 
 #try to save and restore
 #gm.writeMetric([magmetric, seeingmean, seeingrms],outfile_root='savetest')
-gm.writeAll(outDir='save_files', outfileRoot='savetest')
+gm.writeAll(outfileRoot='savetest')
 #the fits files that were output
-filenames = glob.glob('save_files/savetest*.fits')
+filenames = glob.glob('savetest*.fits')
 
 #new object to restore info into
 ack = gridMetrics.BaseGridMetric(None) #can instant with None grid since it will be restored from pickle.

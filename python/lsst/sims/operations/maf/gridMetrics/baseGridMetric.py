@@ -88,7 +88,7 @@ class BaseGridMetric(object):
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
         # Build outfile (with path) and strip white spaces (replace with underscores). 
-        outfile = os.path.join(outDir, oname.replace(' ', '_')
+        outfile = os.path.join(outDir, oname.replace(' ', '_'))
         return outfile
 
     def _deDupeMetricName(self, metricName):
@@ -96,7 +96,7 @@ class BaseGridMetric(object):
         mname = metricName
         i =0 
         while mname in self.metricValues.keys():
-            mname = metricName + '__' + i
+            mname = metricName + '__' + str(i)
             i += 1
         return mname
 
@@ -235,24 +235,36 @@ class BaseGridMetric(object):
         #  have the same metric with different opsim or metadata values.
         # Read the header of the first file for grid file name
         header = pyf.getheader(filenames[0])
-        gridfile_1st = header['gridfile']
+        gridtype_1st = header['gridtype']
         # Restore grid.
-        self.grid = pickle.load(open(gridfile_1st, 'r'))
+        self.grid = pickle.load(open(header['gridfile'], 'r'))
+        #record size of any metrics that are already loaded
+        if len(self.metricValues.keys()) > 0:
+           npoints = np.size(self.metricValues[self.metricValues.keys()[0]])
+        else:
+           npoints = -1
         # Read metrics from disk
         for f in filenames:
-            metricValues, metricName, simDataName, metadata, \
-                comment,gridfile,gridtype \
-                = self.grid.readMetricData(f)
-            # Dedupe the metric name, if needed.
-            metricName = self._deDupeMetricName(metricName)
-            print '# Read multiple metrics with same name - using %s' %(metricName)
-            # Store the header values in variables
-            self.metricValues[metricName] = metricValues
-            self.simDataName[metricName] = simDataName
-            self.metadata[metricName] = metadata
-            self.comment[metricName] = comment
-            if gridfile != gridfile_1st:
-               raise Exception('Metrics not all computed on same grid.')
+           metricValues, metricName, simDataName, metadata, \
+               comment,gridfile,gridtype \
+               = self.grid.readMetricData(f)
+           # Dedupe the metric name, if needed.
+           metricName = self._deDupeMetricName(metricName)
+           print '# Read multiple metrics with same name - using %s' %(metricName)
+           # Store the header values in variables
+           self.metricValues[metricName] = metricValues
+           self.simDataName[metricName] = simDataName
+           self.metadata[metricName] = metadata
+           self.comment[metricName] = comment
+           #if this is the 1st metric loaded, record metric size
+           if npoints == -1:
+              npoints = np.size(self.metricValues[metricName])
+           if gridtype != gridtype_1st:
+              raise Exception('Metrics not computed on same grid type.')
+           #make sure all metrics match size of previously loaded metrics
+           if len(self.metricValues.keys()) > 1:
+              if np.size(metricValues) != npoints:
+                 raise Exception('Metrics do not have the same number of points.')
         return    
 
     def plotAll(self, savefig=True):
