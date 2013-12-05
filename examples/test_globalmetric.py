@@ -15,7 +15,8 @@ magmetric = metrics.MeanMetric('m5')
 seeingmean = metrics.MeanMetric('seeing')
 seeingrms = metrics.RmsMetric('seeing')
 
-gm = gridMetrics.BaseGridMetric(gg)
+gm = gridMetrics.BaseGridMetric()
+gm.setGrid(gg)
 gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
@@ -25,7 +26,8 @@ gm.writeAll(outfileRoot='savetest')
 
 filenames = glob.glob('savetest*.fits')
 
-ack = gridMetrics.BaseGridMetric(None)
+ack = gridMetrics.BaseGridMetric()
+ack.readGrid('savetest_grid.obj')
 ack.readMetric(filenames)
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
