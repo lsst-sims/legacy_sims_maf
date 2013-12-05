@@ -73,28 +73,23 @@ class BaseGrid(object):
             ind = np.arange(len(metricValues))
             a1 = ind[mask]
             a2=ind[np.invert(mask)]
-            #a1 = np.where(metricValues == badval)[0]
-            #a2 = np.where(metricValues != badval)[0]
             try:
                 metricValues[a2][0].shape #if this is just a single numpy array
             except:
                 ncols = len(metricValues[a2][0]) #if it is a tuple or list 
             else:
                 ncols = 1
-            #import pdb; pdb.set_trace()
             cols = []
             column = np.empty(len(metricValues), dtype=object)                              
             if ncols == 1:
-                for j in a1:  column[j] = np.array([badval])
+                for j in a1:  column[j] = np.array([badval]) #should be able to eliminate this loop
                 for j in a2:  column[j] = metricValues[j]
                 column = pyf.Column(name='c'+str(0), format='PD()', array=column)
                 cols.append(column)
             else:
                 for i in np.arange(ncols):
                     column = np.empty(len(metricValues), dtype=object)    
-                    #import pdb; pdb.set_trace()
                     for j in a1:  column[j] = np.array([badval]) #there has to be a better way to do this!
-                    #column[a1] = badval
                     for j in a2:  column[j] = metricValues[j][i]
                     column = pyf.Column(name='c'+str(i), format='PD()', array=column) #need to update formatting.  Make a function to convert between dtype and fits format codes.
                     cols.append(column)
@@ -113,15 +108,16 @@ class BaseGrid(object):
             head = f[1].header
             badval = head['badval']
             metricValues = np.empty(len(f[1].data), dtype=object)
-            #import pdb; pdb.set_trace()
-            for i in range(len(f[1].data)): #stupid loop to unpack the variable length array table
-                if len(np.unique(np.ravel((f[1].data[i])))) == 0:
-                    metricValues[i] = f[1].data[i]
-                else:                    
-                    if np.max(np.unique(np.ravel((f[1].data[i])))) == badval:
-                        metricValues[i] = badval
-                    else:
-                        metricValues[i] = f[1].data[i]
+            mask = []
+            for a in f[1].data:
+                if len(a) == 0:
+                    mask.append(False)
+                else:
+                    mask.append(np.ravel(a == np.array([badval]))[0])
+            mask=np.array(mask)
+            metricValues[np.where(mask == True)] = badval
+            ind = np.where(mask == False)[0]
+            for i in ind:  metricValues[i] = f[1].data[i] #this is still a stupid loop.  For some reason, the fits data thinks it's an int, so I can't just unpack with metricValues[ind] = f[1].data[ind]
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
         return metricValues, head['metricName'], \
