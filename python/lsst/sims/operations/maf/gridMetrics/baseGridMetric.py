@@ -116,7 +116,7 @@ class BaseGridMetric(object):
         return
         
     def runGrid(self, metricList, simData, 
-                simDataName='opsim', metadata='', sliceCol=None):
+                simDataName='opsim', metadata='', sliceCol=None, **kwargs):
         """Run metric generation over grid.
 
         metricList = list of metric objects

@@ -19,13 +19,56 @@ def dtime(time_prev):
 
 class GlobalGridMetric(BaseGridMetric):
 
+    def __init__(self, figformat='png'):
+        """Instantiate global gridMetric object and set up (empty) dictionaries."""
+        super(GlobalGridMetric, self).__init__(figformat=figformat)
+        self.metricHistValues = {}
+        self.metricHistBins = {}
+        return
+
+        
     def setGrid(self, grid):
-        super(SpatialGridMetric, self).setGrid(grid)
+        super(GlobalGridMetric, self).setGrid(grid)
         # Check this grid is a spatial type.
         if self.grid.gridtype != 'GLOBAL':
             raise Exception('Gridtype for grid should be GLOBAL, not %s' %(self.grid.gridtype))
         return
-    
+
+    def runGrid(self, metricList, simData, 
+                simDataName='opsim', metadata='', sliceCol=None, histbins=100, histrange=None):
+        """Run metric generation over global grid and generate histograms
+
+        metricList = list of metric objects
+        simData = numpy recarray holding simulated data
+        simDataName = identifier for simulated data
+        metadata = further information from config files ('WFD', 'r band', etc.)
+        sliceCol = column for slicing grid, if needed (default None)
+        histbins = histogram bins (default = 100, but could pass number of bins or array)
+        histrange = histogram range."""
+        super(GlobalGridMetric, self).runGrid(metricList, simData, simDataName=simDataName,
+                                              metadata=metadata, sliceCol=sliceCol)
+        # Run through all gridpoints and generate histograms 
+        #   (could be more efficient by not looping on grid twice, but relatively few
+        #    gridpoints in global grid means this shouldn't be too bad).
+        for m in self.metrics:
+            self.metricHistValues[m.name] = np.zeros(len(self.grid), 'object')
+            self.metricHistBins[m.name] = np.zeros(len(self.grid), 'object')
+        self.metricHistValues[
+        for i, g in enumerate(self.grid):
+            idxs = self.grid.sliceSimData(g, simData[sliceCol])
+            slicedata = simData[idxs]
+            if len(idxs)==0:
+                # No data at this gridpoint.
+                for m in self.metrics:
+                    self.metricHistValues[m.name][i] = self.grid.badval
+                    self.metricHistBins[m.name][i] = self.grid.badval
+                    
+            else:
+                for m in self.metrics:
+                    self.metricHistValues[m.name][i], self.metricHistBins[m.name][i] = \
+                      np.histogram(slicedata, bins=histbins, range=histrange)
+        return
+                      
     # Have to get simdata in here .. but how? (note that it's more than just one simdata - one
     #  column per metric, but could come from different runs)
     
