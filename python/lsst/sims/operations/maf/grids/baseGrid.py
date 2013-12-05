@@ -48,7 +48,12 @@ class BaseGrid(object):
     def __eq__(self, othergrid):
         """Evaluate if two grids are equivalent."""
         raise NotImplementedError()
-    
+
+    def _py2fitsFormat(self,pydtype):
+        convert_dict={'float64': 'D', 'int64': 'K', 'int32': 'J', 'float32': 'E'}
+        result = 'P'+convert_dict[pydtype.name]+'()'
+        return result
+        
     def sliceSimData(self, gridpoint, simDataCol, **kwargs):
         """Slice the simulation data appropriately for the grid.
 
@@ -58,10 +63,11 @@ class BaseGrid(object):
 
     def writeMetricData(self, outfilename, metricValues,
                     comment='', metricName='',
-                    simDataName='', metadata='', gridfile='', badval=-666,dt='float'):
+                    simDataName='', metadata='', gridfile='', int_badval=-666, badval=-666,dt='float'):
         head = pyf.Header()
         head.update(comment=comment, metricName=metricName,
-                    simDataName=simDataName, metadata=metadata, gridfile=gridfile, gridtype=self.gridtype, badval=badval)
+                    simDataName=simDataName, metadata=metadata, gridfile=gridfile,
+                    gridtype=self.gridtype, int_badval=int_badval, badval=badval)
         if dt == 'object':            
             mask = []
             for val in metricValues:
@@ -80,18 +86,29 @@ class BaseGrid(object):
             else:
                 ncols = 1
             cols = []
-            column = np.empty(len(metricValues), dtype=object)                              
+            column = np.empty(len(metricValues), dtype=object)
+            #import pdb ; pdb.set_trace()
             if ncols == 1:
-                for j in a1:  column[j] = np.array([badval]) #should be able to eliminate this loop
+                dt = metricValues[a2[0]].dtype
+                if dt.name[0:3] == 'int':
+                    use_badval = int_badval
+                else:
+                    use_badval=badval
+                for j in a1:  column[j] = np.array([use_badval]) #should be able to eliminate this loop
                 for j in a2:  column[j] = metricValues[j]
-                column = pyf.Column(name='c'+str(0), format='PD()', array=column)
+                column = pyf.Column(name='c'+str(0), format=self._py2fitsFormat(dt), array=column)
                 cols.append(column)
             else:
                 for i in np.arange(ncols):
+                    dt = metricValues[a2[0]][i].dtype
+                    if dt.name[0:3] == 'int':
+                        use_badval = int_badval
+                    else:
+                        use_badval=badval
                     column = np.empty(len(metricValues), dtype=object)    
-                    for j in a1:  column[j] = np.array([badval]) #there has to be a better way to do this!
+                    for j in a1:  column[j] = np.array([use_badval]) #there has to be a better way to do this!
                     for j in a2:  column[j] = metricValues[j][i]
-                    column = pyf.Column(name='c'+str(i), format='PD()', array=column) #need to update formatting.  Make a function to convert between dtype and fits format codes.
+                    column = pyf.Column(name='c'+str(i), format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
             tbhdu = pyf.new_table(cols)
             #append the info from head
@@ -107,13 +124,15 @@ class BaseGrid(object):
             f = pyf.open(infilename)
             head = f[1].header
             badval = head['badval']
+            int_badval = head['int_badval']
             metricValues = np.empty(len(f[1].data), dtype=object)
             mask = []
-            for a in f[1].data:
-                if len(a) == 0:
+            #import pdb ; pdb.set_trace()
+            for arr in f[1].data:
+                if np.size(arr) == 0:
                     mask.append(False)
                 else:
-                    mask.append(np.ravel(a == np.array([badval]))[0])
+                    mask.append( np.ravel(arr == np.array([badval]))[0] or np.ravel(arr == np.array([int_badval]))[0] )
             mask=np.array(mask)
             metricValues[np.where(mask == True)] = badval
             ind = np.where(mask == False)[0]
