@@ -53,20 +53,19 @@ class GlobalGridMetric(BaseGridMetric):
         for m in self.metrics:
             self.metricHistValues[m.name] = np.zeros(len(self.grid), 'object')
             self.metricHistBins[m.name] = np.zeros(len(self.grid), 'object')
-        self.metricHistValues[
         for i, g in enumerate(self.grid):
-            idxs = self.grid.sliceSimData(g, simData[sliceCol])
+            #idxs = self.grid.sliceSimData(g, simData[sliceCol])
+            idxs = self.grid.sliceSimData(g, simData) #not sure why the sliceCol screwed things up...
             slicedata = simData[idxs]
             if len(idxs)==0:
                 # No data at this gridpoint.
                 for m in self.metrics:
                     self.metricHistValues[m.name][i] = self.grid.badval
                     self.metricHistBins[m.name][i] = self.grid.badval
-                    
             else:
                 for m in self.metrics:
                     self.metricHistValues[m.name][i], self.metricHistBins[m.name][i] = \
-                      np.histogram(slicedata, bins=histbins, range=histrange)
+                      np.histogram(slicedata[m.colname], bins=histbins, range=histrange)
         return
                       
     # Have to get simdata in here .. but how? (note that it's more than just one simdata - one

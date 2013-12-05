@@ -15,7 +15,7 @@ magmetric = metrics.MeanMetric('m5')
 seeingmean = metrics.MeanMetric('seeing')
 seeingrms = metrics.RmsMetric('seeing')
 
-gm = gridMetrics.BaseGridMetric()
+gm = gridMetrics.GlobalGridMetric()
 gm.setGrid(gg)
 gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
 print gm.metricValues[magmetric.name]
