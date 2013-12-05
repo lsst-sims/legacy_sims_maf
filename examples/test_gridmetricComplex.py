@@ -41,7 +41,7 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
-nside = 128*2# *2*2
+nside = 128*2*2*2
 
 # Set up spatial grid.
 gg = grids.HealpixGrid(nside)
