@@ -70,11 +70,16 @@ class BaseGridMetric(object):
         # Set output directory and root 
         if outDir == None:
             outDir = '.'
+        # Start building output file name.
         if outfileRoot == None:
-            outfileRoot = self.simDataName[metricName]
+            try:
+                outfileRoot = self.simDataName[metricName]
+            except KeyError:
+                # Use the simDataName associated with the first metric as a backup. 
+                outfileRoot = self.simDataName[self.metrics[0].name]
         # Start building output file name. Strip trailing numerals from metricName.
         oname = outfileRoot + '_' + self._dupeMetricName(metricName)
-        # Add summary of the metadata if exists.
+        # Add summary of the metadata if it exists.
         try:
             self.metadata[metricName]    
             if len(self.metadata[metricName]) > 0:        
@@ -101,7 +106,7 @@ class BaseGridMetric(object):
         """Remove additional characters added to de-dupe metric name."""
         mname = metricName.split('__')
         if len(mname) > 1:
-            return ''.join(mname.split('__')[:-1])
+            return ''.join(mname[:-1])
         else:
             return metricName
 
@@ -198,10 +203,10 @@ class BaseGridMetric(object):
         """Write all metric values to disk."""
         for mk in self.metricValues.keys():
             dt = self.metricValues[mk].dtype
+            gridfilename = self._buildOutfileName(gridfile, outDir=outDir, 
+                                                  outfileRoot=outfileRoot)
             self.writeMetric(mk, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
-                             gridfile=self._buildOutfileName(gridfile, outDir=outDir, 
-                                                             outfileRoot=outfileRoot),
-                                                             dt=dt)
+                             gridfile=gridfilename, dt=dt)
         self.writeGrid(gridfile=gridfile, outfileRoot=outfileRoot,outDir=outDir)
         return
     
@@ -238,7 +243,8 @@ class BaseGridMetric(object):
     
     def readMetric(self, filenames, checkGrid=True):
         """Read metric values and grid (pickle object) from disk.
-        checkGrid:  make sure the gridtype and number of points match the properties of self.grid"""
+
+        checkGrid =  make sure the gridtype and number of points match the properties of self.grid"""
         # Here we can get duplicate metric names however, as we could
         #  have the same metric with different opsim or metadata values.
 
@@ -248,15 +254,13 @@ class BaseGridMetric(object):
                comment,gridfile,gridtype \
                = self.grid.readMetricData(f)
            # Dedupe the metric name, if needed.
-           if metricName != self._deDupeMetricName(metricName):
-              metricName = self._deDupeMetricName(metricName)
-              print '# Read multiple metrics with same name - using %s' %(metricName)
+           metricName = self._deDupeMetricName(metricName)
            # Store the header values in variables
            self.metricValues[metricName] = metricValues
            self.simDataName[metricName] = simDataName
            self.metadata[metricName] = metadata
            self.comment[metricName] = comment
-           if checkGrid:
+           if checkGrid:               
               if gridtype != self.grid.gridtype:
                  raise Exception('Metrics not computed on currently loaded grid type.')           
               if np.size(metricValues) != self.grid.npix:

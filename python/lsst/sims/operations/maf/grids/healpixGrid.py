@@ -132,7 +132,7 @@ class HealpixGrid(BaseSpatialGrid):
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')
         if addLegend:
-            plt.legend(loc='lower right', fancybox=True, fontsize='smaller')
+            plt.legend(loc='upper right', fancybox=True, fontsize='smaller')
         if title!=None:
             plt.title(title)
         # Return figure number (so we can reuse/add onto/save this figure if desired). 

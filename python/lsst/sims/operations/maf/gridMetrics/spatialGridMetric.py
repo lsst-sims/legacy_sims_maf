@@ -74,11 +74,15 @@ class SpatialGridMetric(BaseGridMetric):
         Will create one histogram with all values from metricNameList, similarly for 
         power spectra if applicable.
         Will create skymap difference plots if only two metrics: skymap is intersection of 2 areas."""
-        # Check is plottable data.
+        # Check if 'metricName' is plottable data.
         for m in metricNameList:
+            # Remove if an 'object' type. 
             if self.metricValues[m].dtype == 'object':
                 metricNameList.remove(m)
-        # If have only one metric remaining - 
+            # Remove if a numpy rec array or anything else longer than float.
+            if len(self.metricValues[m].dtype) > 0: 
+                metricNameList.remove(m)
+        # If there is only one metric remaining, just plot.
         if len(metricNameList) < 2:
             print 'Only one metric left in metricNameList - %s - so defaulting to plotMetric.' \
               %(metricNameList)
@@ -94,7 +98,6 @@ class SpatialGridMetric(BaseGridMetric):
             metadatas.add(self.metadata[m])
             metricNames.add(self._dupeMetricName(m))
         # Create a plot title from the unique parts of the simData/metadata/metric names.
-        #  (strip trailing _? values from metric names, as they were probably added from read funct).
         if plotTitle == None:
             plotTitle = ''
             if len(simDataNames) == 1:
@@ -149,7 +152,12 @@ class SpatialGridMetric(BaseGridMetric):
             mval1 = self.metricValues[metricNameList[1]]
             diff = np.where(mval0 == self.grid.badval, self.grid.badval, mval0 - mval1)
             diff = np.where(mval1 == self.grid.badval, self.grid.badval, diff)
-            plotLabel = metricNameList[0] + ' - ' + metricNameList[1]
+            # Make color bar label.
+            if self._dupeMetricName(metricNameList[0]) == self._dupeMetricName(metricNameList[1]):
+                plotLabel = 'Delta ' + self._dupeMetricName(metricNameList[0])
+                plotLabel += ' (' + self.metadata[metricNameList[0]] + ' - ' + self.metadata[metricNameList[1]] + ')'
+            else:
+                plotLabel = metricNameList[0] + ' - ' + metricNameList[1]
             skyfignum = self.grid.plotSkyMap(diff, plotLabel, title=plotTitle)
             if savefig:
                 outfile = self._buildOutfileName(plotTitle, 

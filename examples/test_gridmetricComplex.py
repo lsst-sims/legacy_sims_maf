@@ -41,7 +41,7 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
-nside = 128*2*2*2
+nside = 128*2# *2*2
 
 # Set up spatial grid.
 gg = grids.HealpixGrid(nside)
@@ -111,7 +111,8 @@ dt, t = dtime(t)
 print 'Set up grid and built kdtree if spatial grid %f s' %(dt)
 
 
-gm = gridMetrics.SpatialGridMetric(gg)
+gm = gridMetrics.SpatialGridMetric()
+gm.setGrid(gg)
 
 dt, t = dtime(t)
 print 'Set up gridMetric %f s' %(dt)
@@ -135,9 +136,5 @@ print 'Made plots %f s' %(dt)
 gm.writeAll()
 
 
-plt.show()
-
-#print gm.metricValues[visitPairs.name]
-#for k in visitPairs.reduceFuncs.keys():
-#    print k, gm.reduceValues[visitPairs.name][k]
+#plt.show()
 
