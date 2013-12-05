@@ -166,7 +166,7 @@ class BaseGrid(object):
             x0, x1 = plt.xlim()
             plt.xlim(x1, x0)
         if addLegend:
-            plt.legend(fancybox=True, fontsize='smaller'), loc='upper left')
+            plt.legend(fancybox=True, fontsize='smaller', loc='upper left')
         if title!=None:
             plt.title(title)
         # Return figure number (so we can reuse this if desired).         

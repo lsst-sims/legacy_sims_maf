@@ -243,7 +243,8 @@ class BaseGridMetric(object):
     
     def readMetric(self, filenames, checkGrid=True):
         """Read metric values and grid (pickle object) from disk.
-        checkGrid:  make sure the gridtype and number of points match the properties of self.grid"""
+
+        checkGrid =  make sure the gridtype and number of points match the properties of self.grid"""
         # Here we can get duplicate metric names however, as we could
         #  have the same metric with different opsim or metadata values.
 
@@ -259,7 +260,7 @@ class BaseGridMetric(object):
            self.simDataName[metricName] = simDataName
            self.metadata[metricName] = metadata
            self.comment[metricName] = comment
-           if checkGrid:
+           if checkGrid:               
               if gridtype != self.grid.gridtype:
                  raise Exception('Metrics not computed on currently loaded grid type.')           
               if np.size(metricValues) != self.grid.npix:
