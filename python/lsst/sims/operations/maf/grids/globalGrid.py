@@ -8,6 +8,7 @@
 
 import numpy as np
 from baseGrid import BaseGrid
+import pyfits as pyf
 
 class GlobalGrid(BaseGrid):
     """Global grid"""
@@ -58,6 +59,44 @@ class GlobalGrid(BaseGrid):
         For base GlobalGrid, this is all data."""
         indices = np.where(simDataCol)
         return indices
+
+    def writeMetricData(self, outfilename, metricValues,
+                        comment='', metricName='',
+                        metricHistValues=None, metricHistBins=None,
+                        simDataName='', metadata='',
+                        gridfile='', int_badval=-666, badval=-666,dt='float'):
+        head = pyf.Header()
+        head.update(comment=comment, metricName=metricName,metricValue=metricValue,
+                    simDataName=simDataName, metadata=metadata, gridfile=gridfile,
+                    gridtype=self.gridtype, int_badval=int_badval,
+                    badval=badval, hist='False')
+        if metricHistValues != None:
+            c1 = pyf.Column(name='HistValues', format='K()', array=metricHistValues)
+            c2 = pyf.Column(name='HistBins', format='K()', array=metricHistBins)
+            hdu = pyf.newtable([c1,c2])
+            for i in range(len(head)):  hdu.header[head.keys()[i]]=head[i]
+            hdu.header['hist'] = 'True'
+            hdu.writeto(outfilename+'.fits')
+        else:
+            #just write the header and have the metric value as the data
+            pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head)
+        return
+
+    def readMetricData(self, infilename):
+        f = pyf.open(infilename)
+        head = f[1].header
+        if head['hist'] == 'True':
+            metricHistValues = f[1].data['HistValues']
+            metricHistBins =f[1].data['HistBins']
+        else:
+            metricHistValues = None
+            metricHistBins = None
+            
+        return head['metricValues'], metricHistValues,metricHistBins, head['metricName'], \
+            head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype']
+        
+        pass
+    
 
     def plotHistogram(self, simDataCol, simDataColLabel, title=None, fignum=None, 
                       legendLabel=None, addLegend=False, bins=100, cumulative=False,
