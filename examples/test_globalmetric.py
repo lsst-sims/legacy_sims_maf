@@ -1,4 +1,5 @@
 import numpy
+import matplotlib.pyplot as plt
 import lsst.sims.operations.maf.utils.testUtils as tu
 import lsst.sims.operations.maf.grids as grids
 import lsst.sims.operations.maf.metrics as metrics
@@ -22,6 +23,12 @@ print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
 print gm.metricValues[seeingrms.name]
 
+gm.plotAll()
+
+#gm.plotComparisons([magmetric.name, seeingmean.name, seeingrms.name])
+plt.show()
+
+exit()
 gm.writeAll(outfileRoot='savetest')
 
 filenames = glob.glob('savetest*.fits')

@@ -86,6 +86,12 @@ class BaseGridMetric(object):
                 oname = oname + '_' + self.metadata[metricName][:5]
         except KeyError:
             pass
+        # Add letter to distinguish spatial grid metrics from global grid metrics 
+        #   (which otherwise might have the same output name).
+        if self.grid.gridtype == 'SPATIAL':
+            oname = oname + '_s'
+        elif self.grid.gridtype == 'GLOBAL':
+            oname = oname + '_g'        
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
