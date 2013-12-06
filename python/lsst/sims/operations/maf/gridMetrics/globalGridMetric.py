@@ -35,27 +35,27 @@ class GlobalGridMetric(BaseGridMetric):
         return
 
     def runGrid(self, metricList, simData, 
-                simDataName='opsim', metadata='', sliceCol=None, histbins=100, histrange=None):
-        """Run metric generation over global grid and generate histograms
+                simDataName='opsim', metadata='', sliceCol=None, histbins=100):
+        """Run metric generation over grid.
 
         metricList = list of metric objects
         simData = numpy recarray holding simulated data
         simDataName = identifier for simulated data
         metadata = further information from config files ('WFD', 'r band', etc.)
         sliceCol = column for slicing grid, if needed (default None)
-        histbins = histogram bins (default = 100, but could pass number of bins or array)
-        histrange = histogram range."""
+        histbins = histogram bins (default = 100, but could pass number of bins or array). """
         super(GlobalGridMetric, self).runGrid(metricList, simData, simDataName=simDataName,
                                               metadata=metadata, sliceCol=sliceCol)
-        # Run through all gridpoints and generate histograms 
-        #   (could be more efficient by not looping on grid twice, but relatively few
-        #    gridpoints in global grid means this shouldn't be too bad).
+        # Set sliceCol.
+        if sliceCol==None:
+            sliceCol = simData.dtype.names[0]
+        # Set up storage for histograms.
         for m in self.metrics:
-            self.metricHistValues[m.name] = np.zeros(len(self.grid), 'object')
-            self.metricHistBins[m.name] = np.zeros(len(self.grid), 'object')
+            self.metricHistValues[m.name] = np.zeros(len(self.grid), dtype ='object')
+            self.metricHistBins[m.name] = np.zeros(len(self.grid), dtype= 'object')
+        # Run through all gridpoints and generate histograms 
         for i, g in enumerate(self.grid):
-            #idxs = self.grid.sliceSimData(g, simData[sliceCol])
-            idxs = self.grid.sliceSimData(g, simData) #not sure why the sliceCol screwed things up...
+            idxs = self.grid.sliceSimData(g, simData[sliceCol])
             slicedata = simData[idxs]
             if len(idxs)==0:
                 # No data at this gridpoint.
@@ -65,25 +65,32 @@ class GlobalGridMetric(BaseGridMetric):
             else:
                 for m in self.metrics:
                     self.metricHistValues[m.name][i], self.metricHistBins[m.name][i] = \
-                      np.histogram(slicedata[m.colname], bins=histbins, range=histrange)
+                      np.histogram(slicedata[m.colname], bins=histbins)
         return
-                      
-    # Have to get simdata in here .. but how? (note that it's more than just one simdata - one
-    #  column per metric, but could come from different runs)
-    
+                          
     def plotMetric(self, metricName, 
                    savefig=True, outDir=None, outfileRoot=None):
-        """Create all plots for 'metricName' ."""
-        # Check that metricName refers to plottable ('float') data.
-        if not isinstance(self.metricValues[metricName][0], float):
-            raise ValueError('Metric data in %s is not float-type.' %(metricName))
+        """Plot histogram for 'metricName' (global gridMetric)."""
+        # Check that metricName refers to plottable (exisiting) histogram data.
+        try:
+            self.metricHistValues[metricName]
+            self.metricHistBins[metricName]
+        except KeyError:
+            raise ValueError('Metric %s does not have histogram data in gridMetric.' %(metricName))
         # Build plot title and label.
         plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-        plotTitle += ' ' + metricName
-        plotLabel = metricName
+        datacolumn = ''.join(self._dupeMetricName(metricName).split('_')[-1:])
+        plotTitle += datacolumn
+        plotLabel = datacolumn
         # Plot the histogram.
-        histfignum = self.grid.plotHistogram(self.metricValues[metricName], 
-                                             plotLabel, title=plotTitle)
+        fig = plt.figure()
+        for i, g in enumerate(self.grid):
+            height = self.metricHistValues[metricName][i]
+            left = self.metricHistBins[metricName][i][:-1]
+            width = np.diff(self.metricHistBins[metricName][i])
+            plt.bar(left, height, width, linewidth=0, alpha=0.5)
+        plt.title(plotTitle)
+        plt.xlabel(plotLabel)
         if savefig:
             outfile = self._buildOutfileName(metricName, 
                                              outDir=outDir, outfileRoot=outfileRoot, 
@@ -95,25 +102,67 @@ class GlobalGridMetric(BaseGridMetric):
                         savefig=True, outDir=None, outfileRoot=None):
         """Create comparison plots of all metricValues in metricNameList.
 
-        Will create one histogram with all values from metricNameList, similarly for 
-        power spectra if applicable. Will create skymap difference plots if only two metrics."""
+        Will create one histogram with all values from metricNameList."""
         # Check is plottable data.
         for m in metricNameList:
-            if not isinstance(self.metricValues[m], float):
+            try:
+                self.metricHistValues[m]
+                self.metricHistBins[m]
+            except KeyError:
                 metricNameList.remove(m)
-        # Build plot title and label.
-        plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-        plotTitle += ' ' + metricName
-        plotLabel = metricName
+        # If there is only one metric remaining, just plot.
+        if len(metricNameList) < 2:
+            print 'Only one metric left in metricNameList - %s - so defaulting to plotMetric.' \
+              %(metricNameList)
+            self.plotMetric(metricNameList[0], savefig=savefig, 
+                            outDir=outDir, outfileRoot=outfileRoot)
+            return    
+        # Else build plot titles. 
+        simDataNames = []
+        metadatas = []
+        datacolumns = []
+        metricNames = []
+        for m in metricNameList:
+            print m
+            print self._dupeMetricName[m]
+            datacol = ''.join(self._dupeMetricName[m].split('_')[-1:])
+            if datacol not in datacolumns:
+                datacolumns.append(datacol)
+                simDataNames.append(self.simDataName[m])
+                metadatas.append(self.metadata[m])
+                metricNames.append(m)
+        # Create a plot title from the unique parts of the simData/metadata/metric names.
+        if plotTitle == None:
+            plotTitle = ''
+            if len(simDataNames) == 1:
+                plotTitle += ' ' + simDataNames[0]
+            if len(metadatas) == 1:
+                plotTitle += ' ' + metadatas[0]
+            if len(datacolumns) == 1:
+                plotTitle += ' ' + datacolumns[0]
+            if plotTitle == '':
+                # If there were more than one of everything above, join metricNames with commas. 
+                plotTitle = ', '.join(datacolumns)
+        # Create a plot x-axis label (metricLabel)
+        plotLabel = ', '.join(datacolumns)                
         # Plot the histogram.
-        histfignum = self.grid.plotHistogram(self.metricValues[metricName], 
-                                             plotLabel, title=plotTitle)
+        fig = plt.figure()
+        for sim, meta, datacol, metric in zip(simDataNames, metadatas, datacolumns, metricNames): 
+            legendLabel = sim + ' ' + meta + ' ' + datacol
+            for i, g in enumerate(self.grid):
+                height = self.metricHistValues[metric][i]
+                left = self.metricHistBins[metric][i][:-1]
+                width = np.diff(self.metricHistBins[metric][i])
+                plt.bar(left, height, width, linewidth=0, alpha=0.3, label=legendLabel)
+        plt.legend(fancybox=True, fontsize='smaller', loc='upper left')
+        plt.title(plotTitle)
+        plt.xlabel(plotLabel)
         if savefig:
-            outfile = self._buildOutfileName(metricName, 
+            outfile = self._buildOutfileName(plotTitle, 
                                              outDir=outDir, outfileRoot=outfileRoot, 
                                              plotType='hist')
             plt.savefig(outfile, figformat=self.figformat)        
-            
+        return
         
         
     def computeSummaryStatistics(self, metricName, summaryMetric=None):

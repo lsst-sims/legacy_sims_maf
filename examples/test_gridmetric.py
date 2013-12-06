@@ -33,11 +33,14 @@ print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
 print gm.metricValues[seeingrms.name]
 
+#gm.plotMetric(magmetric.name)
+
 #try to save and restore
 #gm.writeMetric([magmetric, seeingmean, seeingrms],outfile_root='savetest')
 gm.writeAll(outfileRoot='savetest')
 #the fits files that were output
 filenames = glob.glob('savetest*.fits')
+
 
 #new object to restore info into
 ack = gridMetrics.BaseGridMetric(None) #can instant with None grid since it will be restored from pickle.
