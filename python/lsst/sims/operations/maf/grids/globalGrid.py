@@ -60,20 +60,20 @@ class GlobalGrid(BaseGrid):
         indices = np.where(simDataCol)
         return indices
 
-    def writeMetricData(self, outfilename, metricValues,
+    def writeMetricData(self, outfilename, metricValues, metricHistValues,metricHistBins,
                         comment='', metricName='',
-                        metricHistValues=None, metricHistBins=None,
                         simDataName='', metadata='',
                         gridfile='', int_badval=-666, badval=-666,dt='float'):
         head = pyf.Header()
-        head.update(comment=comment, metricName=metricName,metricValue=metricValue,
+        head.update(comment=comment, metricName=metricName,
                     simDataName=simDataName, metadata=metadata, gridfile=gridfile,
                     gridtype=self.gridtype, int_badval=int_badval,
                     badval=badval, hist='False')
         if metricHistValues != None:
-            c1 = pyf.Column(name='HistValues', format='K()', array=metricHistValues)
-            c2 = pyf.Column(name='HistBins', format='K()', array=metricHistBins)
-            hdu = pyf.newtable([c1,c2])
+            c0 = pyf.Column(name='metricValues', format=self._py2fitsFormat(dt)[1:], array=metricValues)
+            c1 = pyf.Column(name='HistValues', format='K()', array=metricHistValues[0])
+            c2 = pyf.Column(name='HistBins', format='D()', array=metricHistBins[0]) #XXX-double check that hist values will always be ints.  Double check that histValues and HistBins should always e arrays (not sure why they are dtype=object now)
+            hdu = pyf.new_table([c0,c1,c2])
             for i in range(len(head)):  hdu.header[head.keys()[i]]=head[i]
             hdu.header['hist'] = 'True'
             hdu.writeto(outfilename+'.fits')
@@ -86,16 +86,17 @@ class GlobalGrid(BaseGrid):
         f = pyf.open(infilename)
         head = f[1].header
         if head['hist'] == 'True':
+            metricValues = f[1].data['metricValues'][0] #XXX-kludge, need to switch to variable length columns
             metricHistValues = f[1].data['HistValues']
             metricHistBins =f[1].data['HistBins']
         else:
             metricHistValues = None
             metricHistBins = None
-            
-        return head['metricValues'], metricHistValues,metricHistBins, head['metricName'], \
-            head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype']
-        
-        pass
+            metricValues = pyf.getdata(infilename)
+        return metricValues, head['metricName'], \
+            head['simDataName'],head['metadata'], head['comment'], \
+            head['gridfile'], head['gridtype'], metricHistValues, metricHistBins
+
     
 
     def plotHistogram(self, simDataCol, simDataColLabel, title=None, fignum=None, 

@@ -33,8 +33,8 @@ gm.writeAll(outfileRoot='savetest')
 
 filenames = glob.glob('savetest*.fits')
 
-ack = gridMetrics.BaseGridMetric()
-ack.readGrid('savetest_grid.obj')
+ack = gridMetrics.GlobalGridMetric()
+ack.readGrid('savetest_grid.obj_g')
 ack.readMetric(filenames)
 print gm.metricValues[magmetric.name]
 print gm.metricValues[seeingmean.name]
