@@ -9,6 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyfits as pyf
+import warnings
 
 from .baseGrid import BaseGrid
 
@@ -76,19 +77,21 @@ class GlobalGrid(BaseGrid):
         if metricHistValues != None:
             c0 = pyf.Column(name='metricValues', format=self._py2fitsFormat(dt)[1:], 
                             array=metricValues)
-            c1 = pyf.Column(name='HistValues', format='K()', array=metricHistValues[0])
-            c2 = pyf.Column(name='HistBins', format='D()', array=metricHistBins[0]) 
+            #c1 = pyf.Column(name='HistValues', format='K()', array=metricHistValues[0])
+            #c2 = pyf.Column(name='HistBins', format='D()', array=metricHistBins[0]) 
             # Double check that histValues and HistBins should always be arrays (updated this)
             #  (yes they will be arrays, but they will have shape [Ngridpix, Nhistbins+1])
             #    (and not 'object' anymore - are 'float' and 'int')
             hdu1 = pyf.new_table([c0])
-            hdu2 = pyf.new_table([c1,c2])
+            hdu2 = pyf.PrimaryHDU(metricHistValues)
+            hdu3 = pyf.PrimaryHDU(metricHistBins)
             for i in range(len(head)):  
                 hdu1.header[head.keys()[i]]=head[i]
             hdu1.header['hist'] = 'True'
             hdul = pyf.HDUList()
             hdul.append(hdu1)
             hdul.append(hdu2)
+            hdul.append(hdu3)
             hdul.writeto(outfilename+'.fits')
         else:
             # Just write the header and have the metric value as the data.
@@ -101,7 +104,7 @@ class GlobalGrid(BaseGrid):
         if head['hist'] == 'True':
             metricValues = f[1].data['metricValues']
             metricHistValues = f[2].data['HistValues']
-            metricHistBins =f[2].data['HistBins']
+            metricHistBins =f[3].data['HistBins']
         else:
             metricHistValues = None
             metricHistBins = None
