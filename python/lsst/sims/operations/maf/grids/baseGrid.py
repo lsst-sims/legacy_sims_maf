@@ -18,6 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import pyfits as pyf
+import warnings
+
 
 class BaseGrid(object):
     """Base class for all grid objects: sets required methods and implements common functionality."""
@@ -66,9 +68,11 @@ class BaseGrid(object):
                     simDataName='', metadata='', gridfile='', 
                     int_badval=-666, badval=-666,dt='float'):
         head = pyf.Header()
-        head.update(comment=comment, metricName=metricName,
-                    simDataName=simDataName, metadata=metadata, gridfile=gridfile,
-                    gridtype=self.gridtype, int_badval=int_badval, badval=badval)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            head.update(comment=comment, metricName=metricName,
+                        simDataName=simDataName, metadata=metadata, gridfile=gridfile,
+                        gridtype=self.gridtype, int_badval=int_badval, badval=badval)
         if dt == 'object':            
             mask = []
             for val in metricValues:
@@ -122,7 +126,7 @@ class BaseGrid(object):
             # Append the info from head.
             for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
             tbhdu.writeto(outfilename+'.fits')
-        else:              
+        else:
             pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
         return
     

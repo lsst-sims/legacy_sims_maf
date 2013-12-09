@@ -67,10 +67,12 @@ class GlobalGrid(BaseGrid):
                         simDataName='', metadata='',
                         gridfile='', int_badval=-666, badval=-666,dt='float'):
         head = pyf.Header()
-        head.update(comment=comment, metricName=metricName,
-                    simDataName=simDataName, metadata=metadata, gridfile=gridfile,
-                    gridtype=self.gridtype, int_badval=int_badval,
-                    badval=badval, hist='False')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            head.update(comment=comment, metricName=metricName,
+                        simDataName=simDataName, metadata=metadata, gridfile=gridfile,
+                        gridtype=self.gridtype, int_badval=int_badval,
+                        badval=badval, hist='False')
         if metricHistValues != None:
             c0 = pyf.Column(name='metricValues', format=self._py2fitsFormat(dt)[1:], 
                             array=metricValues)
