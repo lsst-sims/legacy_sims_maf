@@ -73,10 +73,17 @@ class BaseGridMetric(object):
         # Start building output file name.
         if outfileRoot == None:
             try:
+                # If given appropriate metric name, use simDataName associated with that.
                 outfileRoot = self.simDataName[metricName]
             except KeyError:
-                # Use the simDataName associated with the first metric as a backup. 
-                outfileRoot = self.simDataName[self.metrics[0].name]
+                # (we weren't given a metricName in the dictionary .. a plot title, for example).
+                try:
+                    # Then use the simDataName associated with the first metric.
+                    outfileRoot = self.simDataName[self.metrics[0].name]
+                except AttributeError: 
+                    # (the gridMetric doesn't have self.metrics set .. perhaps because have just
+                    #  read back in the metric values.)
+                    outfileRoot = 'comparison'
         # Start building output file name. Strip trailing numerals from metricName.
         oname = outfileRoot + '_' + self._dupeMetricName(metricName)
         # Add summary of the metadata if it exists.
@@ -89,9 +96,9 @@ class BaseGridMetric(object):
         # Add letter to distinguish spatial grid metrics from global grid metrics 
         #   (which otherwise might have the same output name).
         if self.grid.gridtype == 'SPATIAL':
-            oname = oname + '_s'
+            oname = oname + '_sp'
         elif self.grid.gridtype == 'GLOBAL':
-            oname = oname + '_g'        
+            oname = oname + '_gl'        
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat

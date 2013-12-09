@@ -51,8 +51,12 @@ class GlobalGridMetric(BaseGridMetric):
             sliceCol = simData.dtype.names[0]
         # Set up storage for histograms.
         for m in self.metrics:
-            self.metricHistValues[m.name] = np.zeros(len(self.grid), dtype ='object')
-            self.metricHistBins[m.name] = np.zeros(len(self.grid), dtype= 'object')
+            if isinstance(histbins, int):
+                histlen = histbins
+            else:
+                histlen = len(histbins)
+            self.metricHistValues[m.name] = np.zeros((len(self.grid), histlen+1), dtype ='int')
+            self.metricHistBins[m.name] = np.zeros((len(self.grid), histlen+1), dtype= 'float')
         # Run through all gridpoints and generate histograms 
         for i, g in enumerate(self.grid):
             idxs = self.grid.sliceSimData(g, simData[sliceCol])
@@ -64,7 +68,7 @@ class GlobalGridMetric(BaseGridMetric):
                     self.metricHistBins[m.name][i] = self.grid.badval
             else:
                 for m in self.metrics:
-                    self.metricHistValues[m.name][i], self.metricHistBins[m.name][i] = \
+                    self.metricHistValues[m.name][i][:-1], self.metricHistBins[m.name][i] = \
                       np.histogram(slicedata[m.colname], bins=histbins)
         return
 
@@ -79,7 +83,8 @@ class GlobalGridMetric(BaseGridMetric):
         dt = data type.
         gridfile = the filename for the pickled grid"""
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.grid.writeMetricData(outfile, self.metricValues[metricName], self.metricHistValues[metricName],self.metricHistBins[metricName],
+        self.grid.writeMetricData(outfile, self.metricValues[metricName], 
+                                  self.metricHistValues[metricName],self.metricHistBins[metricName],
                                   metricName = metricName,
                                   simDataName = self.simDataName[metricName],
                                   metadata = self.metadata[metricName],
@@ -100,15 +105,16 @@ class GlobalGridMetric(BaseGridMetric):
             raise ValueError('Metric %s does not have histogram data in gridMetric.' %(metricName))
         # Build plot title and label.
         plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-        datacolumn = ''.join(self._dupeMetricName(metricName).split('_')[-1:])
-        plotTitle += datacolumn
+        datacolumn = '_'.join(self._dupeMetricName(metricName).split('_')[1:])
+        plotTitle += ' ' + datacolumn
         plotLabel = datacolumn
         # Plot the histogram.
         fignum = None
         for i, g in enumerate(self.grid):
             fignum = self.grid.plotBinnedData(self.metricHistBins[metricName][i], 
                                               self.metricHistValues[metricName][i],
-                                              datacolumn, title=plotTitle, fignum=fignum)
+                                              datacolumn, filled=True, 
+                                              title=plotTitle, fignum=fignum)
         if savefig:
             outfile = self._buildOutfileName(metricName, 
                                              outDir=outDir, outfileRoot=outfileRoot, 
@@ -116,7 +122,7 @@ class GlobalGridMetric(BaseGridMetric):
             plt.savefig(outfile, figformat=self.figformat)
         return
 
-    def plotComparisons(self, metricNameList, 
+    def plotComparisons(self, metricNameList, plotTitle=None,
                         savefig=True, outDir=None, outfileRoot=None):
         """Create comparison plots of all metricValues in metricNameList.
 
@@ -135,17 +141,22 @@ class GlobalGridMetric(BaseGridMetric):
             self.plotMetric(metricNameList[0], savefig=savefig, 
                             outDir=outDir, outfileRoot=outfileRoot)
             return    
-        # Else build plot titles. 
+        # Find unique data to plot. 
+        datacolumns = []
         simDataNames = []
         metadatas = []
-        datacolumns = []
         metricNames = []
         for m in metricNameList:
-            print m
-            print self._dupeMetricName[m]
-            datacol = ''.join(self._dupeMetricName[m].split('_')[-1:])
-
-            if datacol not in datacolumns:
+            datacol = '_'.join(self._dupeMetricName(m).split('_')[1:])
+            if datacol in datacolumns:
+                idx = datacolumns.index(datacol)
+                if ((self.simDataName[m] != simDataNames[idx]) or 
+                    (self.metadata[m] != metadatas[idx])):
+                    datacolumns.append(datacol)
+                    simDataNames.append(self.simDataName[m])
+                    metadatas.append(self.metadata[m])
+                    metricNames.append(m)
+            else:
                 datacolumns.append(datacol)
                 simDataNames.append(self.simDataName[m])
                 metadatas.append(self.metadata[m])
@@ -153,28 +164,39 @@ class GlobalGridMetric(BaseGridMetric):
         # Create a plot title from the unique parts of the simData/metadata/metric names.
         if plotTitle == None:
             plotTitle = ''
-            if len(simDataNames) == 1:
+            if len(set(simDataNames)) == 1:
                 plotTitle += ' ' + simDataNames[0]
-            if len(metadatas) == 1:
+            if len(set(metadatas)) == 1:
                 plotTitle += ' ' + metadatas[0]
-            if len(datacolumns) == 1:
+            if len(set(datacolumns)) == 1:
                 plotTitle += ' ' + datacolumns[0]
             if plotTitle == '':
                 # If there were more than one of everything above, join metricNames with commas. 
-                plotTitle = ', '.join(datacolumns)
+                plotTitle = ', '.join(list(set(datacolumns)))
         # Create a plot x-axis label (metricLabel)
-        plotLabel = ', '.join(datacolumns)                
+        plotLabel = ', '.join(list(set(datacolumns)))
         # Plot the histogram.
         histfignum = None
         addLegend = False
         for sim, meta, datacol, metric in zip(simDataNames, metadatas, datacolumns, metricNames): 
-            if metric == metricNames[-1:]:
+            if metric == metricNames[-1:][0]:
                 addLegend = True
             legendLabel = sim + ' ' + meta + ' ' + datacol
+            print meta, addLegend, metric, metricNames[-1:][0]
+
             for i, g in enumerate(self.grid):
+                # This doesn't quite work now, as index not being restored quite as expected
+                """
                 histfignum = self.grid.plotBinnedData(self.metricHistBins[metric][i], 
                                                       self.metricHistValues[metric][i],
-                                                      datacol, title=plotTitle, fignum=histfignum,
+                                                      plotLabel, title=plotTitle, fignum=histfignum,
+                                                      alpha=0.3,
+                                                      legendLabel=legendLabel, addLegend=addLegend)
+                """
+                histfignum = self.grid.plotBinnedData(self.metricHistBins[metric], 
+                                                      self.metricHistValues[metric],
+                                                      plotLabel, title=plotTitle, fignum=histfignum,
+                                                      alpha=0.3,
                                                       legendLabel=legendLabel, addLegend=addLegend)
         if savefig:
             outfile = self._buildOutfileName(plotTitle, 

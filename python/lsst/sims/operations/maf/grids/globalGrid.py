@@ -72,19 +72,24 @@ class GlobalGrid(BaseGrid):
                     gridtype=self.gridtype, int_badval=int_badval,
                     badval=badval, hist='False')
         if metricHistValues != None:
-            c0 = pyf.Column(name='metricValues', format=self._py2fitsFormat(dt)[1:], array=metricValues)
+            c0 = pyf.Column(name='metricValues', format=self._py2fitsFormat(dt)[1:], 
+                            array=metricValues)
             c1 = pyf.Column(name='HistValues', format='K()', array=metricHistValues[0])
-            c2 = pyf.Column(name='HistBins', format='D()', array=metricHistBins[0]) #XXX-double check that hist values will always be ints.  Double check that histValues and HistBins should always e arrays (not sure why they are dtype=object now)
+            c2 = pyf.Column(name='HistBins', format='D()', array=metricHistBins[0]) 
+            # Double check that histValues and HistBins should always be arrays (updated this)
+            #  (yes they will be arrays, but they will have shape [Ngridpix, Nhistbins+1])
+            #    (and not 'object' anymore - are 'float' and 'int')
             hdu1 = pyf.new_table([c0])
             hdu2 = pyf.new_table([c1,c2])
-            for i in range(len(head)):  hdu1.header[head.keys()[i]]=head[i]
+            for i in range(len(head)):  
+                hdu1.header[head.keys()[i]]=head[i]
             hdu1.header['hist'] = 'True'
             hdul = pyf.HDUList()
             hdul.append(hdu1)
             hdul.append(hdu2)
             hdul.writeto(outfilename+'.fits')
         else:
-            #just write the header and have the metric value as the data
+            # Just write the header and have the metric value as the data.
             pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head)
         return
 
@@ -129,7 +134,7 @@ class GlobalGrid(BaseGrid):
                                               scale=scale)
 
     def plotBinnedData(self, histbins, histvalues, xlabel, title=None, fignum=None,
-                       legendLabel=None, addLegend=False, alpha=0.5):
+                       legendLabel=None, addLegend=False, filled=False, alpha=0.5):
         """Plot a set of pre-binned histogrammed data. 
 
         histbins = the bins for the histogram (as returned by numpy histogram function, for example)
@@ -144,10 +149,15 @@ class GlobalGrid(BaseGrid):
         fig = plt.figure(fignum)
         left = histbins[:-1]
         width = np.diff(histbins)
-        plt.bar(left, histvalues, width, linewidth=0, alpha=0.5)
+        if filled:
+            plt.bar(left, histvalues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha)
+        else:
+            x = np.ravel(zip(left, left+width))
+            y = np.ravel(zip(histvalues[:-1], histvalues[:-1]))
+            plt.plot(x, y, label=legendLabel)
         plt.xlabel(xlabel)
         if addLegend:
-            plt.legend(fancybox=True, fontsize='smaller', loc='upper left')
+            plt.legend(fancybox=True, fontsize='smaller', loc='upper left', numpoints=1)
         if title!=None:
             plt.title(title)
         return fig.number

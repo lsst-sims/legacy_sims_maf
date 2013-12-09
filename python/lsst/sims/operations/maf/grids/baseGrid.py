@@ -63,7 +63,8 @@ class BaseGrid(object):
 
     def writeMetricData(self, outfilename, metricValues,
                     comment='', metricName='',
-                    simDataName='', metadata='', gridfile='', int_badval=-666, badval=-666,dt='float'):
+                    simDataName='', metadata='', gridfile='', 
+                    int_badval=-666, badval=-666,dt='float'):
         head = pyf.Header()
         head.update(comment=comment, metricName=metricName,
                     simDataName=simDataName, metadata=metadata, gridfile=gridfile,
@@ -94,8 +95,11 @@ class BaseGrid(object):
                     use_badval = int_badval
                 else:
                     use_badval=badval
-                for j in a1:  column[j] = np.array([use_badval]) #should be able to eliminate this loop
-                for j in a2:  column[j] = metricValues[j]
+                for j in a1:  
+                    # Should be able to eliminate this loop
+                    column[j] = np.array([use_badval]) 
+                for j in a2:  
+                    column[j] = metricValues[j]
                 column = pyf.Column(name='c'+str(0), format=self._py2fitsFormat(dt), array=column)
                 cols.append(column)
             else:
@@ -106,12 +110,16 @@ class BaseGrid(object):
                     else:
                         use_badval=badval
                     column = np.empty(len(metricValues), dtype=object)    
-                    for j in a1:  column[j] = np.array([use_badval]) #there has to be a better way to do this!
-                    for j in a2:  column[j] = metricValues[j][i]
-                    column = pyf.Column(name='c'+str(i), format=self._py2fitsFormat(dt), array=column) 
+                    for j in a1:  
+                        # There has to be a better way to do this!
+                        column[j] = np.array([use_badval]) 
+                    for j in a2:  
+                        column[j] = metricValues[j][i]
+                    column = pyf.Column(name='c'+str(i), 
+                                        format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
             tbhdu = pyf.new_table(cols)
-            #append the info from head
+            # Append the info from head.
             for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
             tbhdu.writeto(outfilename+'.fits')
         else:              
@@ -132,17 +140,22 @@ class BaseGrid(object):
                 if np.size(arr) == 0:
                     mask.append(False)
                 else:
-                    mask.append( np.ravel(arr == np.array([badval]))[0] or np.ravel(arr == np.array([int_badval]))[0] )
+                    mask.append(np.ravel(arr == np.array([badval]))[0] or 
+                                np.ravel(arr == np.array([int_badval]))[0] )
             mask=np.array(mask)
             metricValues[np.where(mask == True)] = badval
             ind = np.where(mask == False)[0]
-            for i in ind:  metricValues[i] = f[1].data[i] #this is still a stupid loop.  For some reason, the fits data thinks it's an int, so I can't just unpack with metricValues[ind] = f[1].data[ind]
+            for i in ind:  
+                metricValues[i] = f[1].data[i] 
+                #  This is still a stupid loop.  
+                #  But, for some reason, the fits data thinks it's an int, so 
+                #  I can't just unpack with metricValues[ind] = f[1].data[ind]
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
         return metricValues, head['metricName'], \
-            head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype'], None, None #two nones so same format as with historam restores
-        
-
+            head['simDataName'],head['metadata'], head['comment'], \
+            head['gridfile'], head['gridtype'], None, None 
+            # two nones so same format as with histogram restores        
 
     
     def plotHistogram(self, metricValue, metricLabel, title=None, 

@@ -47,7 +47,7 @@ for c in compare:
         if k.startswith(c):
             comparelist.append(k)
     print 'Comparing', comparelist
-    gm.plotComparisons(comparelist)
+    gm.plotComparisons(comparelist, savefig=True)
 
 dt, t = dtime(t)
 print 'Generated comparison plots %f s' %(dt)

@@ -1,41 +1,139 @@
 import numpy
 import matplotlib.pyplot as plt
 import lsst.sims.operations.maf.utils.testUtils as tu
+import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.grids as grids
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.gridMetrics as gridMetrics
 import glob
 
+import time
+def dtime(time_prev):
+   return (time.time() - time_prev, time.time())
+
 # set up some test data
-simdata = tu.makeSimpleTestSet()
+#simdata = tu.makeSimpleTestSet()
+
+bandpass = 'r'
+#dbTable = 'output_opsimblitz2_1007'
+dbTable = 'output_opsim3_61'
+dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
+
+t = time.time()
+
+table = db.Table(dbTable, 'obsHistID', dbAddress)
+simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass), 
+                                       colnames=['filter', 'expMJD',  'night',
+                                                 'fieldRA', 'fieldDec', 'airmass',
+                                                 '5sigma_modified', 'seeing',
+                                                 'skybrightness_modified', 'altitude',
+                                                 'hexdithra', 'hexdithdec'], 
+                                                 groupByCol='expMJD')
+dt, t = dtime(t)
+print 'Query complete: %f s' %(dt)
+print 'Retrieved %d observations' %(len(simdata['expMJD']))
+
 
 gg = grids.GlobalGrid()
 
+dt, t = dtime(t)
+print 'Set up grid (and built kdtree if spatial grid) %f s' %(dt)
+
 # Set up metrics.
-magmetric = metrics.MeanMetric('m5')
-seeingmean = metrics.MeanMetric('seeing')
-seeingrms = metrics.RmsMetric('seeing')
+dtmin = 1./60./24.
+dtmax = 360./60./24.
+visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
+
+meanseeing = metrics.MeanMetric('seeing')
+minseeing = metrics.MinMetric('seeing')
+maxseeing = metrics.MaxMetric('seeing')
+rmsseeing = metrics.RmsMetric('seeing')
+meanairmass = metrics.MeanMetric('airmass')
+minairmass = metrics.MinMetric('airmass')
+meanm5 = metrics.MeanMetric('5sigma_modified')
+maxm5 = metrics.MaxMetric('5sigma_modified')
+rmsm5 = metrics.RmsMetric('5sigma_modified')
+meanskybright = metrics.MeanMetric('skybrightness_modified')
+maxskybright = metrics.MaxMetric('skybrightness_modified')
+coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
+
+metricList = [coaddm5, minseeing, maxm5]
+
+dt, t = dtime(t)
+print 'Set up metrics %f s' %(dt)
 
 gm = gridMetrics.GlobalGridMetric()
 gm.setGrid(gg)
-gm.runGrid([magmetric, seeingmean, seeingrms], simdata)
-print gm.metricValues[magmetric.name]
-print gm.metricValues[seeingmean.name]
-print gm.metricValues[seeingrms.name]
 
-gm.plotAll()
+dt, t = dtime(t)
+print 'Set up gridMetric %f s' %(dt)
 
-#gm.plotComparisons([magmetric.name, seeingmean.name, seeingrms.name])
-plt.show()
+gm.runGrid(metricList, simdata, simDataName=dbTable, metadata = bandpass)
+dt, t = dtime(t)
+print 'Ran grid of %d points with %d metrics using gridMetric %f s' %(len(gg), len(metricList), dt)
+                    
+gm.reduceAll()
 
-exit()
-gm.writeAll(outfileRoot='savetest')
+dt, t = dtime(t)
+print 'Ran reduce functions %f s' %(dt)
 
-filenames = glob.glob('savetest*.fits')
+gm.plotAll(savefig=True)
 
-ack = gridMetrics.GlobalGridMetric()
-ack.readGrid('savetest_grid.obj_g')
-ack.readMetric(filenames)
-print gm.metricValues[magmetric.name]
-print gm.metricValues[seeingmean.name]
-print gm.metricValues[seeingrms.name]
+dt, t = dtime(t)
+print 'Made plots %f s' %(dt)
+
+gm.writeAll()
+
+
+print 'Round 2 (different bandpass)'
+
+bandpass = 'i'
+#dbTable = 'output_opsimblitz2_1007'
+dbTable = 'output_opsim3_61'
+dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
+
+t = time.time()
+
+table = db.Table(dbTable, 'obsHistID', dbAddress)
+simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass), 
+                                       colnames=['filter', 'expMJD',  'night',
+                                                 'fieldRA', 'fieldDec', 'airmass',
+                                                 '5sigma_modified', 'seeing',
+                                                 'skybrightness_modified', 'altitude',
+                                                 'hexdithra', 'hexdithdec'], 
+                                                 groupByCol='expMJD')
+dt, t = dtime(t)
+print 'Query complete: %f s' %(dt)
+print 'Retrieved %d observations' %(len(simdata['expMJD']))
+
+gg = grids.GlobalGrid()
+
+dt, t = dtime(t)
+print 'Set up grid and built kdtree if spatial grid %f s' %(dt)
+
+gm = gridMetrics.GlobalGridMetric()
+gm.setGrid(gg)
+
+dt, t = dtime(t)
+print 'Set up gridMetric %f s' %(dt)
+
+gm.runGrid(metricList, simdata, simDataName=dbTable, 
+           metadata = bandpass)
+
+dt, t = dtime(t)
+print 'Ran grid %f s' %(dt)
+
+gm.reduceAll()
+
+dt, t = dtime(t)
+print 'Ran reduce functions %f s' %(dt)
+
+gm.plotAll(savefig=True)
+
+dt, t = dtime(t)
+print 'Made plots %f s' %(dt)
+
+gm.writeAll()
+
+
+# plt.show()
