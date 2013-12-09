@@ -7,8 +7,10 @@
 #  RA/Dec as that is done more efficiently in the spatial classes).
 
 import numpy as np
-from baseGrid import BaseGrid
+import matplotlib.pyplot as plt
 import pyfits as pyf
+
+from .baseGrid import BaseGrid
 
 class GlobalGrid(BaseGrid):
     """Global grid"""
@@ -120,3 +122,27 @@ class GlobalGrid(BaseGrid):
                                               bins=bins, cumulative=cumulative,
                                               histRange=histRange, flipXaxis=flipXaxis,
                                               scale=scale)
+
+    def plotBinnedData(self, histbins, histvalues, xlabel, title=None, fignum=None,
+                       legendLabel=None, addLegend=False, alpha=0.5):
+        """Plot a set of pre-binned histogrammed data. 
+
+        histbins = the bins for the histogram (as returned by numpy histogram function, for example)
+        histvalues = the values of the histogram
+        xlabel = histogram label (label for x axis)
+        title = title for the plot (default None)
+        fignum = the figure number to use (default None - will generate new figure)
+        legendLabel = the label to use for the figure legend (default None)
+        addLegend = flag for whether or not to add a legend (default False)
+        alpha = alpha value for plot bins (default 0.5). """
+        # Plot the histogrammed data.
+        fig = plt.figure(fignum)
+        left = histbins[:-1]
+        width = np.diff(histbins)
+        plt.bar(left, histvalues, width, linewidth=0, alpha=0.5)
+        plt.xlabel(xlabel)
+        if addLegend:
+            plt.legend(fancybox=True, fontsize='smaller', loc='upper left')
+        if title!=None:
+            plt.title(title)
+        return fig.number

@@ -83,14 +83,11 @@ class GlobalGridMetric(BaseGridMetric):
         plotTitle += datacolumn
         plotLabel = datacolumn
         # Plot the histogram.
-        fig = plt.figure()
+        fignum = None
         for i, g in enumerate(self.grid):
-            height = self.metricHistValues[metricName][i]
-            left = self.metricHistBins[metricName][i][:-1]
-            width = np.diff(self.metricHistBins[metricName][i])
-            plt.bar(left, height, width, linewidth=0, alpha=0.5)
-        plt.title(plotTitle)
-        plt.xlabel(plotLabel)
+            fignum = self.grid.plotBinnedData(self.metricHistBins[metricName][i], 
+                                              self.metricHistValues[metricName][i],
+                                              datacolumn, title=plotTitle, fignum=fignum)
         if savefig:
             outfile = self._buildOutfileName(metricName, 
                                              outDir=outDir, outfileRoot=outfileRoot, 
@@ -126,6 +123,7 @@ class GlobalGridMetric(BaseGridMetric):
             print m
             print self._dupeMetricName[m]
             datacol = ''.join(self._dupeMetricName[m].split('_')[-1:])
+
             if datacol not in datacolumns:
                 datacolumns.append(datacol)
                 simDataNames.append(self.simDataName[m])
@@ -146,17 +144,17 @@ class GlobalGridMetric(BaseGridMetric):
         # Create a plot x-axis label (metricLabel)
         plotLabel = ', '.join(datacolumns)                
         # Plot the histogram.
-        fig = plt.figure()
+        histfignum = None
+        addLegend = False
         for sim, meta, datacol, metric in zip(simDataNames, metadatas, datacolumns, metricNames): 
+            if metric == metricNames[-1:]:
+                addLegend = True
             legendLabel = sim + ' ' + meta + ' ' + datacol
             for i, g in enumerate(self.grid):
-                height = self.metricHistValues[metric][i]
-                left = self.metricHistBins[metric][i][:-1]
-                width = np.diff(self.metricHistBins[metric][i])
-                plt.bar(left, height, width, linewidth=0, alpha=0.3, label=legendLabel)
-        plt.legend(fancybox=True, fontsize='smaller', loc='upper left')
-        plt.title(plotTitle)
-        plt.xlabel(plotLabel)
+                histfignum = self.grid.plotBinnedData(self.metricHistBins[metric][i], 
+                                                      self.metricHistValues[metric][i],
+                                                      datacol, title=plotTitle, fignum=histfignum,
+                                                      legendLabel=legendLabel, addLegend=addLegend)
         if savefig:
             outfile = self._buildOutfileName(plotTitle, 
                                              outDir=outDir, outfileRoot=outfileRoot, 

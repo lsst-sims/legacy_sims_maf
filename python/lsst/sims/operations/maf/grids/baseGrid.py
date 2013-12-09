@@ -161,10 +161,7 @@ class BaseGrid(object):
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         # Histogram metricValues. 
-        if fignum:
-            fig = plt.figure(fignum)
-        else:
-            fig = plt.figure()
+        fig = plt.figure(fignum)
         # Need to only use 'good' values in histogram.
         good = np.where(metricValue != self.badval)
         n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
@@ -174,7 +171,7 @@ class BaseGrid(object):
             return "%.3f" % (x * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        plt.ylabel('Area (1000s of square degrees)')
+        #plt.ylabel('Area (1000s of square degrees)')
         plt.xlabel(metricLabel)
         if flipXaxis:
             # Might be useful for magnitude scales.

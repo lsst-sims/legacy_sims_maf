@@ -113,6 +113,7 @@ class HealpixGrid(BaseSpatialGrid):
                                                         histRange=histRange, 
                                                         flipXaxis=flipXaxis,
                                                         scale=scale)
+        plt.ylabel('Area (1000s of square degrees)')
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, 
