@@ -140,7 +140,7 @@ class BaseGrid(object):
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
         return metricValues, head['metricName'], \
-            head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype']
+            head['simDataName'],head['metadata'], head['comment'], head['gridfile'], head['gridtype'], None, None #two nones so same format as with historam restores
         
 
 

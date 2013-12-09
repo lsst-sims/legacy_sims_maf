@@ -257,12 +257,15 @@ class BaseGridMetric(object):
         # Read metrics from disk
         for f in filenames:
            metricValues, metricName, simDataName, metadata, \
-               comment,gridfile,gridtype \
+               comment,gridfile,gridtype, metricHistValues,metricHistBins \
                = self.grid.readMetricData(f)
            # Dedupe the metric name, if needed.
            metricName = self._deDupeMetricName(metricName)
            # Store the header values in variables
            self.metricValues[metricName] = metricValues
+           if hasattr(self,'metricHistValues'):
+              self.metricHistValues[metricName] = metricHistValues
+              self.metricHistBins[metricName] = metricHistBins
            self.simDataName[metricName] = simDataName
            self.metadata[metricName] = metadata
            self.comment[metricName] = comment

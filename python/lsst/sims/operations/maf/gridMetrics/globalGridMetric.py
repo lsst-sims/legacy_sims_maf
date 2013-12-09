@@ -67,7 +67,28 @@ class GlobalGridMetric(BaseGridMetric):
                     self.metricHistValues[m.name][i], self.metricHistBins[m.name][i] = \
                       np.histogram(slicedata[m.colname], bins=histbins)
         return
-                          
+
+    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, 
+                    dt='float', gridfile=None):
+        """Write metric values 'metricName' to disk.
+
+        comment = any additional comments to add to output file (beyond 
+           metric name, simDataName, and metadata).
+        outfileRoot = root of the output files (default simDataName).
+        outDir = directory to write output data (default '.').
+        dt = data type.
+        gridfile = the filename for the pickled grid"""
+        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
+        self.grid.writeMetricData(outfile, self.metricValues[metricName], self.metricHistValues[metricName],self.metricHistBins[metricName],
+                                  metricName = metricName,
+                                  simDataName = self.simDataName[metricName],
+                                  metadata = self.metadata[metricName],
+                                  comment = comment, dt=dt, gridfile=gridfile,
+                                  badval = self.grid.badval)
+        return
+
+
+    
     def plotMetric(self, metricName, 
                    savefig=True, outDir=None, outfileRoot=None):
         """Plot histogram for 'metricName' (global gridMetric)."""
