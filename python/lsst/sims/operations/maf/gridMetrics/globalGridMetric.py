@@ -215,5 +215,6 @@ class GlobalGridMetric(BaseGridMetric):
         if summaryMetric == None:
             summaryNumber = self.metricValues[metricName]
         else:
-            summaryNumber = summaryMetric(self.metricValues[metricName])
+            good = np.where(self.metricValues[metricName] != self.grid.badval)
+            summaryNumber = summaryMetric(self.metricValues[metricName][good])
         return summaryNumber

@@ -116,9 +116,16 @@ class HealpixGrid(BaseSpatialGrid):
         plt.ylabel('Area (1000s of square degrees)')
         return fignum
 
-    def plotPowerSpectrum(self, metricValue, title=None, fignum=None, 
+    def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
                           legendLabel=None, addLegend=False):
-        """Generate and plot the power spectrum of metricValue."""
+        """Generate and plot the power spectrum of metricValue.
+
+        maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
+        title = plot Title (default None)
+        fignum = figure number (default None and create new plot)
+        legendLabel = label to add in figure legend (default None)
+        addLegend = flag to add legend (default False).
+        """
         if fignum:
             fig = plt.figure(fignum)
         else:
@@ -128,7 +135,8 @@ class HealpixGrid(BaseSpatialGrid):
         cl = hp.anafast(metricValue)
         l=np.arange(np.size(cl))
         # Plot the results.
-        plt.plot(l,cl*l*(l+1), label=legendLabel)
+        condition = (l < maxl)
+        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=legendLabel)
         plt.yscale('log')
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')

@@ -10,20 +10,22 @@ import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
-# set up some test data
+# Set up some test data (for testing - no DB access).
 #simdata = tu.makeSimpleTestSet()
-#print 'simdata shape', np.shape(simdata)
-#print simdata.dtype.names
 
-# get sim data from DB
-bandpass = 'r'
-#dbTable = 'output_opsim3_61_forLynne' 
-#dbTable = 'output_opsim2_145_forLynne'   
-#dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST' 
+# Get sim data from DB
+# Set up database access info. 
 
-#dbTable = 'output_opsimblitz2_1007'
+# On Lynne's laptop
 dbTable = 'output_opsim3_61'
 dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
+
+# In department, use Peter's postgres.
+#dbTable = 'output_opsim3_61'
+#dbAddress = 'postgres://calibuser:calibuser@ivy.astro.washington.edu:5432/calibDB.05.05.2010'
+
+bandpass = 'r'
+
 
 t = time.time()
 
@@ -41,7 +43,7 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
-nside = 128*2*2*2
+nside = 128#*2*2*2
 
 # Set up spatial grid.
 gg = grids.HealpixGrid(nside)
@@ -98,8 +100,12 @@ gm.plotAll(savefig=True)
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
 
-gm.writeAll()
 
+for m in metricList:
+    mean = gm.computeSummaryStatistics(m.name, np.mean)
+    print "Mean of ", m.name, mean
+
+gm.writeAll()
 
 print 'Round 2 (dithered)'
 
@@ -133,8 +139,11 @@ gm.plotAll(savefig=True)
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
 
+for m in metricList:
+    mean = gm.computeSummaryStatistics(m.name, np.mean)
+    print "Mean of ", m.name, mean
+
 gm.writeAll()
 
-
-#plt.show()
+plt.show()
 

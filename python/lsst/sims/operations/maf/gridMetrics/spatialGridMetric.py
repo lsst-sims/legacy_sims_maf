@@ -66,7 +66,7 @@ class SpatialGridMetric(BaseGridMetric):
                 plt.savefig(outfile, figformat=self.figformat)
         return
 
-    def plotComparisons(self, metricNameList, histBins=100, histRange=None,
+    def plotComparisons(self, metricNameList, histBins=100, histRange=None, maxl=500.,
                         plotTitle=None,
                         savefig=False, outDir=None, outfileRoot=None):
         """Create comparison plots of all metricValues in metricNameList.
@@ -138,7 +138,7 @@ class SpatialGridMetric(BaseGridMetric):
                 legendLabel = self.simDataName[m] + ' '+  self.metadata[m] \
                   + ' ' + self._dupeMetricName(m)
                 psfignum = self.grid.plotPowerSpectrum(self.metricValues[m], addLegend=addLegend,
-                                                       fignum = psfignum,
+                                                       fignum = psfignum, maxl = maxl,
                                                        legendLabel=legendLabel, title=plotTitle)
             if savefig:
                 outfile = self._buildOutfileName(plotTitle, 
@@ -174,5 +174,6 @@ class SpatialGridMetric(BaseGridMetric):
         reduce the values in metricName to a single number over the whole sky."""
         if not isinstance(self.metricValues[metricName][0], float):
             raise Exception('Values in metricName should be float - apply reduce function first.')
-        summaryNumber = summaryMetric(self.metricValues[metricName])
+        good = np.where(self.metricValues[metricName] != self.grid.badval)
+        summaryNumber = summaryMetric(self.metricValues[metricName][good])
         return summaryNumber

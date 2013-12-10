@@ -19,14 +19,14 @@ print 'Set up gridmetric %f s' %(dt)
 
 # Read in grid pickle
 
-gridfile = 'output_opsim3_61_grid.obj'
+gridfile = 'output_opsim3_61_grid.obj_sp'
 gm.readGrid(gridfile)
 
 # Read in metric files
 
-filenames =  ['output_opsim3_61_coaddm5_r.fits', 'output_opsim3_61_coaddm5_r_dit.fits', 
-              'output_opsim3_61_Min_seeing_r.fits', 'output_opsim3_61_Min_seeing_r_dit.fits',
-              'output_opsim3_61_Max_5sigma_modified_r.fits', 'output_opsim3_61_Max_5sigma_modified_r_dit.fits']
+filenames =  ['output_opsim3_61_coaddm5_r_sp.fits', 'output_opsim3_61_coaddm5_r_dit_sp.fits', 
+              'output_opsim3_61_Min_seeing_r_sp.fits', 'output_opsim3_61_Min_seeing_r_dit_sp.fits',
+              'output_opsim3_61_Max_5sigma_modified_r_sp.fits', 'output_opsim3_61_Max_5sigma_modified_r_dit_sp.fits']
 
 gm.readMetric(filenames)
 
