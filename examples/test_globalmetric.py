@@ -15,6 +15,9 @@ def dtime(time_prev):
 #simdata = tu.makeSimpleTestSet()
 
 bandpass = 'r'
+#dbTable = 'output_opsim3_61_forLynne' 
+#dbTable = 'output_opsim2_145_forLynne'   
+#dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST' 
 #dbTable = 'output_opsimblitz2_1007'
 dbTable = 'output_opsim3_61'
 dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
