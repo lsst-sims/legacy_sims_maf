@@ -132,7 +132,10 @@ class HealpixGrid(BaseSpatialGrid):
             fig = plt.figure()
         # To handle masked values properly, need polespice. (might this work if use_weights & weight values set appropriately?)
         # But this will work when comparing two different angular power spectra calculated in the same way, with the same (incomplete) footprint.
-        cl = hp.anafast(metricValue)
+        # I think we need to subtact mean value off before calculating power spectrum
+        good_vals = np.where(metricValue != self.badval)
+        mV = metricValue[good] - np.mean(metricValue[good])
+        cl = hp.anafast(mV)
         l=np.arange(np.size(cl))
         # Plot the results.
         condition = (l < maxl)

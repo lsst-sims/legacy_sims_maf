@@ -6,6 +6,7 @@ import lsst.sims.operations.maf.grids as grids
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.gridMetrics as gridMetrics
 import glob
+import numpy as np
 
 
 bandpass = 'r'
@@ -22,4 +23,9 @@ simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass),
                                                  'skybrightness_modified', 'altitude',
                                                  'hexdithra', 'hexdithdec'], 
                                                  groupByCol='expmjd')
+
+
+#stupid postgres case-sensitivity issues
+simdata.dtype.names = 'obsHistID', 'filter', 'expMJD', 'night', 'fieldRA', 'fieldDec', 'airmass', '5sigma_modified', 'seeing', 'skybrightness_modified', 'altitude', 'hexdithra', 'hexdithdec'
+
 
