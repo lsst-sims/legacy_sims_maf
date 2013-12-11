@@ -185,16 +185,8 @@ class GlobalGridMetric(BaseGridMetric):
             print meta, addLegend, metric, metricNames[-1:][0]
 
             for i, g in enumerate(self.grid):
-                # This doesn't quite work now, as index not being restored quite as expected
-                """
                 histfignum = self.grid.plotBinnedData(self.metricHistBins[metric][i], 
                                                       self.metricHistValues[metric][i],
-                                                      plotLabel, title=plotTitle, fignum=histfignum,
-                                                      alpha=0.3,
-                                                      legendLabel=legendLabel, addLegend=addLegend)
-                """
-                histfignum = self.grid.plotBinnedData(self.metricHistBins[metric], 
-                                                      self.metricHistValues[metric],
                                                       plotLabel, title=plotTitle, fignum=histfignum,
                                                       alpha=0.3,
                                                       legendLabel=legendLabel, addLegend=addLegend)
