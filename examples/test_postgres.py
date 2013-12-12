@@ -23,7 +23,10 @@ simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass),
                                                  'hexdithra', 'hexdithdec'], 
                                                  groupByCol='expmjd')
 
-#stupid postgres case-sensitivity issues
+# Fixing stupid postgres case-sensitivity issues.
 simdata.dtype.names = 'obsHistID', 'filter', 'expMJD', 'night', 'fieldRA', 'fieldDec', 'airmass', '5sigma_modified', 'seeing', 'skybrightness_modified', 'altitude', 'hexdithra', 'hexdithdec'
 
+# Eliminate the observations where hexdithra has failed for some reason
+good=np.where((simdata['hexdithra'] < np.pi*2) )
+simdata=simdata[good]
 
