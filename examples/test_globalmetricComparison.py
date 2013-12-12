@@ -25,7 +25,7 @@ gm.readGrid(gridfile)
 
 # Read in metric files
 
-filenames = glob.glob('output_opsim3_61*.fits')
+filenames = glob.glob('output_opsim3_61*gl.fits')
 
 gm.readMetric(filenames)
 
