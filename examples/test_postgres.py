@@ -23,3 +23,7 @@ simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass),
                                                  'hexdithra', 'hexdithdec'], 
                                                  groupByCol='expmjd')
 
+#stupid postgres case-sensitivity issues
+simdata.dtype.names = 'obsHistID', 'filter', 'expMJD', 'night', 'fieldRA', 'fieldDec', 'airmass', '5sigma_modified', 'seeing', 'skybrightness_modified', 'altitude', 'hexdithra', 'hexdithdec'
+
+
