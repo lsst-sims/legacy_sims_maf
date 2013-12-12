@@ -66,7 +66,7 @@ class BaseGrid(object):
     def writeMetricData(self, outfilename, metricValues,
                     comment='', metricName='',
                     simDataName='', metadata='', gridfile='', 
-                    int_badval=-666, badval=-666,dt='float'):
+                    int_badval=-666, badval=-666,dt=np.dtype('float64')):
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -127,6 +127,7 @@ class BaseGrid(object):
             for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
             tbhdu.writeto(outfilename+'.fits')
         else:
+            head.update(dtype = dt.name)
             pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
         return
     
@@ -156,6 +157,7 @@ class BaseGrid(object):
                 #  I can't just unpack with metricValues[ind] = f[1].data[ind]
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
+            metricValues = metricValues.astype(head['dtype'])
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], \
             head['gridfile'], head['gridtype'], None, None 
