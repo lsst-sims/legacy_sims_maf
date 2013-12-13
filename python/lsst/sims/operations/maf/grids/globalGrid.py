@@ -159,7 +159,7 @@ class GlobalGrid(BaseGrid):
             plt.plot(x, y, label=legendLabel)
         plt.xlabel(xlabel)
         if addLegend:
-            plt.legend(fancybox=True, fontsize='smaller', loc='upper left', numpoints=1)
+            plt.legend(fancybox=True, prop={'size':'smaller'}, loc='upper left', numpoints=1)
         if title!=None:
             plt.title(title)
         return fig.number

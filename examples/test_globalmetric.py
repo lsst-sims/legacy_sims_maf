@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.operations.maf.utils.testUtils as tu
 import lsst.sims.operations.maf.db as db
@@ -87,6 +87,9 @@ print 'Made plots %f s' %(dt)
 
 gm.writeAll()
 
+for m in metricList:
+    mean = gm.computeSummaryStatistics(m.name, None)
+    print 'SummaryNumber for', m.name, ':', mean
 
 print 'Round 2 (different bandpass)'
 
@@ -138,5 +141,9 @@ print 'Made plots %f s' %(dt)
 
 gm.writeAll()
 
+print gm.simDataName[metricList[0].name],  gm.metadata[metricList[0].name]
+for m in metricList:
+    mean = gm.computeSummaryStatistics(m.name, None)
+    print 'SummaryNumber for', m.name, ':', mean
 
 # plt.show()

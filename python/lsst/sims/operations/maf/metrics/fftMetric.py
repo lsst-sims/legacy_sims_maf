@@ -15,13 +15,8 @@ class FftMetric(ComplexMetric):
         'nCoeffs' = number of coefficients of the (real) FFT to keep."""
         self.times = timesCol   
         super(FftMetric, self).__init__([self.times,], metricName)
-        # Set up output metricDtype
+        # Set up length of return values.
         self.nCoeffs = nCoeffs
-        #metricDtype = []
-        #for i in range(0, self.nCoeffs):
-        #    metricDtype.append(('%s' %(i), 'float'))
-        #self.metricDtype = metricDtype
-        self.metricDtype = 'object'
         return
 
     def run(self, dataSlice):
