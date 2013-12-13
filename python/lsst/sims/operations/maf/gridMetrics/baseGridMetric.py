@@ -201,6 +201,7 @@ class BaseGridMetric(object):
         """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. """
         # Run reduceFunc on metricValues[metricName]. 
         rName = metricName + '_' + reduceFunc.__name__.lstrip('reduce')
+        # Set metric values.
         self.metricValues[rName] = np.zeros(len(self.grid), 'float')
         for i, g in enumerate(self.grid):
             # Get (complex) metric values for this gridpoint. 
@@ -210,6 +211,11 @@ class BaseGridMetric(object):
                 self.metricValues[rName][i] = self.grid.badval
             else:
                 self.metricValues[rName][i] = reduceFunc(metricValuesPt)
+        # Copy simdataName, metadata and comments for this reduced version of the metric data.
+        # (so that it's available for writeMetric). 
+        self.simDataName[rName] = self.simDataName[metricName]
+        self.metadata[rName] = self.metadata[metricName]
+        self.comment[rName] = self.comment[metricName]
         return
 
     def writeAll(self, outDir=None, outfileRoot=None, comment='',  gridfile='grid.obj'):
