@@ -66,7 +66,7 @@ class GlobalGrid(BaseGrid):
     def writeMetricData(self, outfilename, metricValues, metricHistValues,metricHistBins,
                         comment='', metricName='',
                         simDataName='', metadata='',
-                        gridfile='', int_badval=-666, badval=-666,dt='float'):
+                        gridfile='', int_badval=-666, badval=-666,dt='float64'):
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -90,6 +90,7 @@ class GlobalGrid(BaseGrid):
             hdul.writeto(outfilename+'.fits')
         else:
             # Just write the header and have the metric value as the data.
+            head.update(dtype = dt)
             pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head)
         return
 
@@ -106,6 +107,8 @@ class GlobalGrid(BaseGrid):
             metricHistValues = None
             metricHistBins = None
             metricValues = pyf.getdata(infilename)
+        badval = head['badval']
+        metricValues[np.where((metricValues == head['badval']) | (metricValues == head['int_badval']) )] = badval
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], \
             head['gridfile'], head['gridtype'], metricHistValues, metricHistBins
