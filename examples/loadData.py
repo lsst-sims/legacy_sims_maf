@@ -23,8 +23,10 @@ if __name__ == "__main__":
     parser.add_argument("--connectionName", type=str, default='MSSQL_MAF_WRITER', 
                        help="Key for the connection string to use in your dbLogin file -- "\
                             "Default is MSSQL_MAF_WRITER")
+    parser.add_argument("--append", action='store_true', 
+                        help="If set, append to an existing table -- Default is False")
     args = parser.parse_args()
     authDictionary = getDbAddress()
     dbAddress = authDictionary['MSSQL_MAF_WRITER']
     engine, metaData = make_engine(dbAddress)
-    loadData(args.fileName, None, args.delimiter, args.tableName, args.primaryKey, engine, metaData, args.numGuess)
+    loadData(args.fileName, None, args.delimiter, args.tableName, args.primaryKey, engine, metaData, args.numGuess, append=args.append)
