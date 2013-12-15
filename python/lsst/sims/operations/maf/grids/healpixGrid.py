@@ -89,7 +89,7 @@ class HealpixGrid(BaseSpatialGrid):
         return fig.number
 
     def plotHistogram(self, metricValue, metricLabel, title=None, 
-                      fignum=None, legendLabel=None, addLegend=False, 
+                      fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=None):
         """Histogram metricValue over the healpix grid points.
@@ -108,7 +108,7 @@ class HealpixGrid(BaseSpatialGrid):
         fignum = super(HealpixGrid, self).plotHistogram(metricValue, metricLabel, 
                                                         title=title, fignum=fignum, 
                                                         legendLabel=legendLabel, 
-                                                        addLegend=addLegend,
+                                                        addLegend=addLegend, legendloc=legendloc,
                                                         bins=bins, cumulative=cumulative,
                                                         histRange=histRange, 
                                                         flipXaxis=flipXaxis,

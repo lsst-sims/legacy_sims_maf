@@ -116,7 +116,7 @@ class GlobalGrid(BaseGrid):
     
 
     def plotHistogram(self, simDataCol, simDataColLabel, title=None, fignum=None, 
-                      legendLabel=None, addLegend=False, bins=100, cumulative=False,
+                      legendLabel=None, addLegend=False, legendloc='upper left', bins=100, cumulative=False,
                       histRange=None, flipXaxis=False, scale=1.0):
         """Plot a histogram of simDataCol values, labelled by simDataColLabel.
 
@@ -126,6 +126,7 @@ class GlobalGrid(BaseGrid):
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
+        legendloc = location for legend
         bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
@@ -133,13 +134,13 @@ class GlobalGrid(BaseGrid):
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         super(GlobalGrid, self).plotHistogram(simDataCol, simDataColLabel, 
                                               title=title, fignum=fignum, 
-                                              legendLabel=label, addLegend=addLegend,
+                                              legendLabel=label, addLegend=addLegend, legendloc=legendloc,
                                               bins=bins, cumulative=cumulative,
                                               histRange=histRange, flipXaxis=flipXaxis,
                                               scale=scale)
 
     def plotBinnedData(self, histbins, histvalues, xlabel, title=None, fignum=None,
-                       legendLabel=None, addLegend=False, filled=False, alpha=0.5):
+                       legendLabel=None, addLegend=False, legendloc='upper left', filled=False, alpha=0.5):
         """Plot a set of pre-binned histogrammed data. 
 
         histbins = the bins for the histogram (as returned by numpy histogram function, for example)
@@ -149,7 +150,9 @@ class GlobalGrid(BaseGrid):
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        alpha = alpha value for plot bins (default 0.5). """
+        legendloc = location for legend (default 'upper left')
+        filled = flag to plot histogram as filled bars or lines (default False = lines)
+        alpha = alpha value for plot bins if filled (default 0.5). """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         left = histbins[:-1]
@@ -162,7 +165,7 @@ class GlobalGrid(BaseGrid):
             plt.plot(x, y, label=legendLabel)
         plt.xlabel(xlabel)
         if addLegend:
-            plt.legend(fancybox=True, prop={'size':'smaller'}, loc='upper left', numpoints=1)
+            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if title!=None:
             plt.title(title)
         return fig.number

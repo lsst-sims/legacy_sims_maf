@@ -165,7 +165,7 @@ class BaseGrid(object):
 
     
     def plotHistogram(self, metricValue, metricLabel, title=None, 
-                      fignum=None, legendLabel=None, addLegend=False, 
+                      fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=1.0):
         """Plot a histogram of metricValue, labelled by metricLabel.
@@ -174,6 +174,7 @@ class BaseGrid(object):
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
+        legendloc = location for legend (default 'upper left')
         bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
@@ -197,7 +198,7 @@ class BaseGrid(object):
             x0, x1 = plt.xlim()
             plt.xlim(x1, x0)
         if addLegend:
-            plt.legend(fancybox=True, prop={'size':'smaller'}, loc='upper left')
+            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc)
         if title!=None:
             plt.title(title)
         # Return figure number (so we can reuse this if desired).         

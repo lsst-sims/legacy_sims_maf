@@ -34,8 +34,8 @@ table = db.Table(dbTable, 'obsHistID', dbAddress)
 simdata = table.query_columns_RecArray(constraint="filter = \'%s\'" %(bandpass), 
                                        colnames=['filter', 'expMJD',  'night',
                                                  'fieldRA', 'fieldDec', 'airmass',
-                                                 '5sigma_modified', 'seeing',
-                                                 'skybrightness_modified', 'altitude',
+                                                 '5sigma_modified',  'finSeeing',
+                                                 'skybrightness_modified', 
                                                  'hexdithra', 'hexdithdec'], 
                                                  groupByCol='expMJD')
 
@@ -59,10 +59,10 @@ dtmin = 1./60./24.
 dtmax = 360./60./24.
 visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
 
-meanseeing = metrics.MeanMetric('seeing')
-minseeing = metrics.MinMetric('seeing')
-maxseeing = metrics.MaxMetric('seeing')
-rmsseeing = metrics.RmsMetric('seeing')
+meanseeing = metrics.MeanMetric('finSeeing')
+minseeing = metrics.MinMetric('finSeeing')
+maxseeing = metrics.MaxMetric('finSeeing')
+rmsseeing = metrics.RmsMetric('finSeeing')
 meanairmass = metrics.MeanMetric('airmass')
 minairmass = metrics.MinMetric('airmass')
 meanm5 = metrics.MeanMetric('5sigma_modified')
@@ -76,7 +76,7 @@ coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
 #              meanskybright, maxskybright, coaddm5]
               #metricList = [meanseeing, minseeing, maxseeing]
 
-metricList = [coaddm5, minseeing, maxm5, meanm5, visitPairs]
+metricList = [coaddm5, maxm5, meanm5, minseeing, rmsseeing, meanseeing, minairmass, meanairmass, visitPairs]
 
 dt, t = dtime(t)
 print 'Set up metrics %f s' %(dt)
@@ -103,8 +103,11 @@ print 'Made plots %f s' %(dt)
 
 
 for m in metricList:
-    mean = gm.computeSummaryStatistics(m.name, np.mean)
-    print "Mean of ", m.name, mean
+   try:
+      mean = gm.computeSummaryStatistics(m.name, np.mean)
+      print "Mean of ", m.name, mean
+   except ValueError:
+      pass
 
 gm.writeAll()
 
@@ -141,10 +144,14 @@ dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
 
 for m in metricList:
-    mean = gm.computeSummaryStatistics(m.name, np.mean)
-    print "Mean of ", m.name, mean
+   try:
+      mean = gm.computeSummaryStatistics(m.name, np.mean)
+      print "Mean of ", m.name, mean
+   except ValueError:
+      pass
+   
 
 gm.writeAll()
 
-plt.show()
+#plt.show()
 

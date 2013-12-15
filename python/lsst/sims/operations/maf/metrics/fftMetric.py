@@ -7,7 +7,7 @@ from .complexMetrics import ComplexMetric
 
 class FftMetric(ComplexMetric):
     """Calculate a truncated FFT of the exposure times."""
-    def __init__(self, timesCol='expmjd', metricName='FftMetric',
+    def __init__(self, timesCol='expmjd', metricName='Fft',
                  nCoeffs=100):
         """Instantiate metric.
         

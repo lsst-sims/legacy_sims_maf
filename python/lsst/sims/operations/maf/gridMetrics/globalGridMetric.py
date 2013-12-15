@@ -122,7 +122,7 @@ class GlobalGridMetric(BaseGridMetric):
             plt.savefig(outfile, figformat=self.figformat)
         return
 
-    def plotComparisons(self, metricNameList, plotTitle=None,
+    def plotComparisons(self, metricNameList, plotTitle=None, legendloc='upper left',
                         savefig=True, outDir=None, outfileRoot=None):
         """Create comparison plots of all metricValues in metricNameList.
 
@@ -189,7 +189,7 @@ class GlobalGridMetric(BaseGridMetric):
                                                       self.metricHistValues[metric][i],
                                                       plotLabel, title=plotTitle, fignum=histfignum,
                                                       alpha=0.3,
-                                                      legendLabel=legendLabel, addLegend=addLegend)
+                                                      legendLabel=legendLabel, addLegend=addLegend, legendloc=legendloc)
         if savefig:
             outfile = self._buildOutfileName(plotTitle, 
                                              outDir=outDir, outfileRoot=outfileRoot, 

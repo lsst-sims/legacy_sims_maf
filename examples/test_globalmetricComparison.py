@@ -38,13 +38,6 @@ print 'Metrics read' , gm.metricValues.keys()
 #print 'Metric comments', gm.comment
 
 
-#print len(gm.metricHistBins['Max_5sigma_modified'])
-#print len(gm.metricHistValues['Max_5sigma_modified'])
-#print len(gm.metricHistBins['Max_5sigma_modified__0'])
-#print len(gm.metricHistValues['Max_5sigma_modified__0'])
-#print gm.simDataName['Max_5sigma_modified']
-#print gm.metadata['Max_5sigma_modified']
-
 # Generate comparison plots
 
 compare = ['Max_5sigma_modified','Min_seeing', 'coaddm5']
@@ -54,7 +47,10 @@ for c in compare:
         if k.startswith(c):
             comparelist.append(k)
     print 'Comparing', comparelist
-    gm.plotComparisons(comparelist)
+    if c == 'Min_seeing':
+       gm.plotComparisons(comparelist, legendloc = 'upper right')
+    else:
+       gm.plotComparisons(comparelist)
 
 dt, t = dtime(t)
 print 'Generated comparison plots %f s' %(dt)

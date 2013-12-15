@@ -213,9 +213,18 @@ class BaseGridMetric(object):
                 self.metricValues[rName][i] = reduceFunc(metricValuesPt)
         # Copy simdataName, metadata and comments for this reduced version of the metric data.
         # (so that it's available for writeMetric). 
-        self.simDataName[rName] = self.simDataName[metricName]
-        self.metadata[rName] = self.metadata[metricName]
-        self.comment[rName] = self.comment[metricName]
+        try:
+           self.simDataName[rName] = self.simDataName[metricName]
+        except KeyError:
+           pass
+        try:
+           self.metadata[rName] = self.metadata[metricName]
+        except KeyError:
+           pass
+        try:
+           self.comment[rName] = self.comment[metricName]
+        except KeyError:
+           pass
         return
 
     def writeAll(self, outDir=None, outfileRoot=None, comment='',  gridfile='grid.obj'):

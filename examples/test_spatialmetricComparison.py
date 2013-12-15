@@ -47,7 +47,10 @@ for c in compare:
         if k.startswith(c):
             comparelist.append(k)
     print 'Comparing', comparelist
-    gm.plotComparisons(comparelist, savefig=True)
+    if c == 'Min_seeing':
+       gm.plotComparisons(comparelist, savefig=True, legendloc='upper right')
+    else:
+       gm.plotComparisons(comparelist, savefig=True)
 
 dt, t = dtime(t)
 print 'Generated comparison plots %f s' %(dt)
