@@ -50,6 +50,8 @@ class BaseMetric(object):
         # Identify type of metric return value. Default 'object'.
         #  Individual metrics should override with more specific value.
         self.metricDtype = 'object'
+        # Value to return if the metric can't be computed
+        self.badval = -666
         # Save a name for the metric + the data it's working on, so we
         #  can identify this later.
         # If passed the value:
