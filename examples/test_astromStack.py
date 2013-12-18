@@ -29,8 +29,15 @@ simdata.dtype.names = 'obsHistID', 'filter', 'expMJD', 'night', 'fieldRA', 'fiel
 good=np.where((simdata['hexdithra'] < np.pi*2) )
 simdata=simdata[good]
 
+
+# Crop down a bit
+good = np.where( (simdata['fieldRA'] > 0) & (simdata['fieldRA'] < np.radians(40)) & (simdata['fieldDec'] > np.radians(-60)) & (simdata['fieldDec'] < np.radians(-20)))
+simdata = simdata[good]
+
 # Add on the paralax factor per observation
 simdata = asstack.astroStack(simdata)
+
+
 
 nside = 128
 gg = grids.HealpixGrid(nside)

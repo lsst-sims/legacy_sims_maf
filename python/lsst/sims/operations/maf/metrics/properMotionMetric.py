@@ -30,16 +30,18 @@ class ProperMotionMetric(BaseMetric):
 
     def __init__(self, metricName='properMotion',
                  m5col='5sigma_modified', mjdcol='expMJD',
-                 filtercol='filter', seeingcol='seeing', u=16.,
-                 g=16., r=16., i=16., z=16., y=16., badval= -666,
-                 stellarType=None):
+                 filtercol='filter', seeingcol='seeing', u=20.,
+                 g=20., r=20., i=20., z=20., y=20., badval= -666,
+                 stellarType=None, atm_err=0.01):
         """ Instantiate metric.
 
         m5col = column name for inidivual visit m5
         mjdcol = column name for exposure time dates
         filtercol = column name for filter
         seeingcol = column name for seeing (assumed FWHM)
-        u,g,r,i,z = mag of fiducial star in each filter """
+        u,g,r,i,z = mag of fiducial star in each filter
+        atm_err = centroiding error due to atmosphere in arcsec
+        """
         cols = [m5col, mjdcol,filtercol,seeingcol]
         super(ProperMotionMetric, self).__init__(cols, metricName)
         # set return type
@@ -48,6 +50,7 @@ class ProperMotionMetric(BaseMetric):
         self.metricUnits = 'mas/yr'
         self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
         self.badval = badval
+        self.atm_err = atm_err
         if stellarType != None:
             raise NotImplementedError('Spot to add colors for different stars')
 
@@ -63,6 +66,7 @@ class ProperMotionMetric(BaseMetric):
                    dataslice['5sigma_modified'][observations])
                 precis[observations] = astrom_precision(
                     dataslice['seeing'][observations], snr)
+                precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2) 
                 result = sigma_slope(dataslice['expMJD'][observations], precis)
                 result = result*365.25*1e3 #convert to mas/yr
         # Observations that are very close together can still fail
