@@ -56,11 +56,9 @@ simdata.dtype.names = 'obsHistID', 'filter', 'expMJD', 'night', 'fieldRA', 'fiel
 good=np.where((simdata['hexdithra'] < np.pi*2) )
 simdata=simdata[good]
 
-
-
 ufid, fid_ind = np.unique(simdata['fieldID'], return_index=True)
 
-nside = 32
+nside = 128
 hpmap = np.zeros(hp.nside2npix(nside))
 hpid = np.arange(hpmap.size)
 hpdec,hpra = hp.pix2ang(nside, hpid)
@@ -82,3 +80,19 @@ hpmap[np.isinf(distances)] = hp.UNSEEN
 hp.mollview(hpmap, rot=(0,0,180), unit='Field ID #')
 
 plt.savefig('fieldID_healpix.png')
+
+hp.mollview(hpmap, rot=(0,0,180), unit='Field ID #', cmap=plt.cm.hot)
+plt.savefig('fieldID_healpix_heat.png')
+
+
+rad_max = setRad(radius=1.2)
+distances, locs = tree.query(zip(hpx,hpy,hpz), distance_upper_bound=rad_max)
+
+good = np.where(locs < 3408)[0]
+hpmap[good] = ufid[locs[good]]
+hpmap[np.isinf(distances)] = hp.UNSEEN
+
+hp.mollview(hpmap, rot=(0,0,180), unit='Field ID #')
+
+plt.savefig('fieldID_healpix_smallrad.png')
+
