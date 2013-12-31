@@ -48,13 +48,14 @@ def MafDriver(configOverrideFilename=None):
 
     
     # Loop over each grid in gridList:  for i,grid in enumerate(gridList)
-        # Loop over each SQL-constraint for that grid:  for j,constr in enumerate(constraints[i])
-            # Pull data from db using constraints[i][j]
-            # build kd-tree if needed--maybe make ra,dec keys and leafsize keywords for HealpixGrid so easier to pass in.
-            # make gridmetric object
-            # gridmetric.setGrid(gridList[i])
-            # gridmetric.runGrid(metricList[i], data, yadda yadda)
-            # gridmetric.reduceAll() ; gridmetric.plotAll(), gridmetric.writeAll()
+        # Loop over Opsim run names
+            # Loop over each SQL-constraint for that grid:  for j,constr in enumerate(constraints[i])
+                # Pull data from db using constraints[i][j] and Opsim run name
+                # build kd-tree if needed--maybe make ra,dec keys and leafsize keywords for HealpixGrid so easier to pass in.
+                # make gridmetric object
+                # gridmetric.setGrid(gridList[i])
+                # gridmetric.runGrid(metricList[i], data, yadda yadda)
+                # gridmetric.reduceAll() ; gridmetric.plotAll(), gridmetric.writeAll()
 
 if __name__ == "__main__":
     import sys
