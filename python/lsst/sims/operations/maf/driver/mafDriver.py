@@ -30,10 +30,16 @@ def MafDriver(configOverrideFilename=None):
                  config.metricsForGrid10]
     s_metricParams = [config.metricParamsForGrid1,config.metricParamsForGrid2
                       ,config.metricParamsForGrid3,config.metricParamsForGrid4,config.metricParamsForGrid5,
-                      config.metricParamsForGrid6,config.metricParamsForGrid7,config.metricParamsForGrid8,config.metricParamsForGrid9
-                      ,config.metricParamsForGrid10]
-    s_metricKwrds = [config.metricKwrdsForGrid1,config.metricKwrdsForGrid2,config.metricKwrdsForGrid3 ]
-    constraints = [config.constraintsForGrid1,config.constraintsForGrid2,config.constraintsForGrid3]
+                      config.metricParamsForGrid6,config.metricParamsForGrid7,config.metricParamsForGrid8,
+                      config.metricParamsForGrid9,config.metricParamsForGrid10]
+    s_metricKwrds = [config.metricKwrdsForGrid1,config.metricKwrdsForGrid2,config.metricKwrdsForGrid3,
+                     config.metricKwrdsForGrid4,config.metricKwrdsForGrid5,
+                     config.metricKwrdsForGrid6,config.metricKwrdsForGrid7,
+                     config.metricKwrdsForGrid8,config.metricKwrdsForGrid9,config.metricKwrdsForGrid10]
+    constraints = [config.constraintsForGrid1,config.constraintsForGrid2,config.constraintsForGrid3,
+                   config.constraintsForGrid4,config.constraintsForGrid5,config.constraintsForGrid6,
+                   config.constraintsForGrid7,config.constraintsForGrid8,config.constraintsForGrid9,
+                   config.constraintsForGrid10]
 
     gridList=[]
     metricList=[]

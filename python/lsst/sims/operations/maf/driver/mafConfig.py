@@ -4,7 +4,7 @@ class MafConfig(pexConfig.Config):
     """Using pexConfig to set MAF configuration parameters"""
     dbAddress = pexConfig.Field("Address to the database to query." , str, '')
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
-    opsimNames = pexConfig.Field("Which opsim runs should be analyzed", str, 'opsim_3_61')
+    opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
     
     # Manually unrolling loop since pex can't take a list of lists.
     

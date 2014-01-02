@@ -1,6 +1,8 @@
 import itertools
 
 root.outputDir = 'path/to/somwhere'
+root.dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST'
+root.opsimNames = ['opsim_3_61', 'opsim_happyrun', 'opsim_sadrun']
 
 constraints = []
 cons = itertools.product(['filter == '+s+' & ' for s in ['"u"','"g"','"r"','"i"','"z"','"y"']],
