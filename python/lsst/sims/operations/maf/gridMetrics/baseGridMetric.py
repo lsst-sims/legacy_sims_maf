@@ -298,11 +298,11 @@ class BaseGridMetric(object):
                  raise Exception('Metric does not have the same number of points as loaded grid.')
         return    
 
-    def plotAll(self, savefig=True):
+    def plotAll(self, outDir='./',savefig=True):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mk in self.metricValues.keys():
             try:
-                self.plotMetric(mk, savefig=savefig)
+                self.plotMetric(mk, outDir=outDir,savefig=savefig)
             except ValueError:
                 continue 
         return        

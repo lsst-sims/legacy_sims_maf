@@ -5,7 +5,10 @@ class MafConfig(pexConfig.Config):
     dbAddress = pexConfig.Field("Address to the database to query." , str, '')
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
     opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
-    
+
+    spatialKey1 = pexConfig.Field("first key to build KD tree on", str, 'fieldRA')
+    spatialKey2 =pexConfig.Field("first key to build KD tree on", str, 'fieldDec')
+    leafsize = pexConfig.Field("leafsize for KD tree", float, 5000)
     # Manually unrolling loop since pex can't take a list of lists.
     
     grid1 = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new grids? 
