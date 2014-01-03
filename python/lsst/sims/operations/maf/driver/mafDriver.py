@@ -98,7 +98,7 @@ class MafDriver(object):
                     gm.reduceAll()
                     gm.plotAll(outDir=self.config.outputDir, savefig=True)
                     gm.writeAll(outDir=self.config.outputDir)
-        self.config.save(outfile=outdir+'/'+'maf_config_asRan.py')
+        self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
                     
 if __name__ == "__main__":
