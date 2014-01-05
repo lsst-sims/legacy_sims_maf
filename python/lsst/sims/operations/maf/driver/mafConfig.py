@@ -4,11 +4,11 @@ import lsst.pex.config as pexConfig
 class GridPackConfig(pexConfig.Config):
     """Config for packaging up a grid and list of metrics to run together """
     grid = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new grids? 
-    kwrdsForGrid = pexConfig.Field("", dtype=str, default='')
-    metricsForGrid = pexConfig.ListField("", dtype=str, default=[''])
-    constraintsForGrid = pexConfig.ListField("", dtype=str, default=[''])
-    metricParamsForGrid = pexConfig.ListField("", dtype=str, default=[''])
-    metricKwrdsForGrid = pexConfig.ListField("", dtype=str, default=[''])
+    kwrds = pexConfig.Field("", dtype=str, default='')
+    metrics = pexConfig.ListField("", dtype=str, default=[''])
+    constraints = pexConfig.ListField("", dtype=str, default=[''])
+    metricParams = pexConfig.ListField("", dtype=str, default=[''])
+    metricKwrds = pexConfig.ListField("", dtype=str, default=[''])
 
 class MafConfig(pexConfig.Config):
     """Using pexConfig to set MAF configuration parameters"""
@@ -20,7 +20,7 @@ class MafConfig(pexConfig.Config):
     spatialKey2 =pexConfig.Field("first key to build KD tree on", str, 'fieldDec')
     leafsize = pexConfig.Field("leafsize for KD tree", float, 5000)
     # Manually unrolling loop since pex can't take a list of lists.
-
+    from lsst.sims.operations.maf.driver.mafConfig import GridPackConfig
     grid1 = pexConfig.ConfigField("",GridPackConfig, default=None)
     grid2 = pexConfig.ConfigField("",GridPackConfig, default=None)
     grid3 = pexConfig.ConfigField("",GridPackConfig, default=None)

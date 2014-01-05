@@ -23,29 +23,25 @@ class MafDriver(object):
         self.config.freeze()
 
         # Construct the grid and metric objects
-        s_grids = [self.config.grid1,self.config.grid2,self.config.grid3,self.config.grid4,self.config.grid5,
-                   self.config.grid6,self.config.grid7,self.config.grid8,self.config.grid9,self.config.grid10]
-        s_gridKwrds = [self.config.kwrdsForGrid1,self.config.kwrdsForGrid2,self.config.
-                       kwrdsForGrid3,self.config.kwrdsForGrid4,self.config.kwrdsForGrid5,
-                       self.config.kwrdsForGrid6,self.config.kwrdsForGrid7,self.config.kwrdsForGrid8,
-                       self.config.kwrdsForGrid9,self.config.kwrdsForGrid10 ]
-        s_metrics = [self.config.metricsForGrid1,self.config.metricsForGrid2, self.config.metricsForGrid3,
-                     self.config.metricsForGrid4, self.config.metricsForGrid5, self.config.metricsForGrid6,
-                     self.config.metricsForGrid7, self.config.metricsForGrid8, self.config.metricsForGrid9,
-                     self.config.metricsForGrid10]
-        s_metricParams = [self.config.metricParamsForGrid1,self.config.metricParamsForGrid2
-                          ,self.config.metricParamsForGrid3,self.config.metricParamsForGrid4,self.config.metricParamsForGrid5,
-                          self.config.metricParamsForGrid6,self.config.metricParamsForGrid7,self.config.metricParamsForGrid8,
-                          self.config.metricParamsForGrid9,self.config.metricParamsForGrid10]
-        s_metricKwrds = [self.config.metricKwrdsForGrid1,self.config.metricKwrdsForGrid2,self.config.metricKwrdsForGrid3,
-                         self.config.metricKwrdsForGrid4,self.config.metricKwrdsForGrid5,
-                         self.config.metricKwrdsForGrid6,self.config.metricKwrdsForGrid7,
-                         self.config.metricKwrdsForGrid8,self.config.metricKwrdsForGrid9,self.config.metricKwrdsForGrid10]
-        self.constraints = [self.config.constraintsForGrid1,self.config.constraintsForGrid2,self.config.constraintsForGrid3,
-                       self.config.constraintsForGrid4,self.config.constraintsForGrid5,self.config.constraintsForGrid6,
-                       self.config.constraintsForGrid7,self.config.constraintsForGrid8,self.config.constraintsForGrid9,
-                       self.config.constraintsForGrid10]
-
+        gridconfigs = [self.config.grid1,self.config.grid2,self.config.grid3,
+                   self.config.grid4,self.config.grid5,
+                   self.config.grid6,self.config.grid7,
+                   self.config.grid8,self.config.grid9,self.config.grid10]
+        s_grids = []
+        s_gridKwrds = []
+        s_gridKwrds =[]
+        s_metrics =[]
+        s_metricParams =[]
+        s_metricKwrds =[]
+        self.constraints = []
+        for g in gridconfigs:
+            s_grids.append(g.grid)
+            s_gridKwrds.append(g.kwrds)
+            s_metrics.append(g.metrics)
+            s_metricParams.append(g.metricParams)
+            s_metricKwrds.append(g.metricKwrds)
+            self.constraints.append(g.constraints) 
+            
         self.gridList=[]
         self.metricList=[]
 
@@ -106,4 +102,13 @@ if __name__ == "__main__":
     configOverrideFilename = sys.argv[1]
     driver = MafDriver(configOverrideFilename=configOverrideFilename)
     driver.run()
+
+
+
+
+
     
+
+
+
+ 
