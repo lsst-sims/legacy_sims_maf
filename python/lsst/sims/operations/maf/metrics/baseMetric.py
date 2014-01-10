@@ -5,7 +5,8 @@
 # The philosophy behind keeping the vector instead of the scalar at each gridpoint
 #  is that these vectors may be expensive to compute; by keeping/writing the full
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
-import numpy
+
+import numpy as np
 
 # ClassRegistry adds some extras to a normal dictionary.
 class ClassRegistry(dict):
@@ -13,8 +14,7 @@ class ClassRegistry(dict):
     def makeColArr(cols):
         #Promote scalar to array.  Solution from:
         #http://stackoverflow.com/questions/12653120/how-can-i-make-a-numpy-function-that-accepts-a-numpy-array-an-iterable-or-a-sc
-        return numpy.array(cols, copy=False, ndmin=1)
-
+        return np.array(cols, copy=False, ndmin=1)
     # Contents of the dictionary look like {metricClassName: 'set' of [simData columns]}
     def __str__(self):
         # Print the contents of the registry nicely.
@@ -59,7 +59,11 @@ class BaseMetric(object):
             self.name = metricName
         else:
             # Else construct our own name from the class name and the data columns.
-            self.name = self.__class__.__name__.rstrip('Metric') + '_' + self.colNameList[0]
+            allcols = ''
+            for i in self.colNameList:
+                allcols += '_' + i
+            self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
+        return
 
     def registerCols(self, cols):
         """Add cols to the column registry. """

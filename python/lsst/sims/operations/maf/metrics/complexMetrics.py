@@ -13,8 +13,8 @@ class ComplexMetric(BaseMetric):
         self.reduceFuncs = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):
             if r[0].startswith('reduce'):
-                reducename = r[0].lstrip('reduce')
-                self.reduceFuncs[reducename]= r[1]
+                reducename = r[0].replace('reduce', '', 1)
+                self.reduceFuncs[reducename] = r[1]
         return
     
     def run(self, dataSlice):
