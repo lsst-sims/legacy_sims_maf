@@ -192,27 +192,37 @@ class BaseGridMetric(object):
                 m.reduceFuncs
             except: 
                 continue
-            for reduceFunc in m.reduceFuncs.values():
-                # Apply reduce function.
-                self.reduceMetric(m.name, reduceFunc)
+            # Apply reduce functions
+            self.reduceMetric(m.name, m.reduceFuncs.values())
         return
                 
     def reduceMetric(self, metricName, reduceFunc):
-        """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. """
-        # Run reduceFunc on metricValues[metricName]. 
-        rName = metricName + '_' + reduceFunc.__name__.lstrip('reduce')
+        """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. 
+
+        reduceFunc can be a list of functions to be applied to the same metric data."""
+        # Run reduceFunc(s) on metricValues[metricName]. 
+        # Turn reduceFunc into a list if it wasn't, to make everything consistent.
+        if not isinstance(reduceFunc, list):
+           reduceFunc = [reduceFunc,]
+        # Set up metric reduced value names.
+        rNames = []
+        for r in reduceFunc:
+           rNames.append(metricName + '_' + r.__name__.lstrip('reduce'))
         # Set metric values.
-        self.metricValues[rName] = np.zeros(len(self.grid), 'float')
+        for rName in rNames:
+           self.metricValues[rName] = np.zeros(len(self.grid), 'float')
+        # Run through grid, applying all reduce functions.
         for i, g in enumerate(self.grid):
             # Get (complex) metric values for this gridpoint. 
             metricValuesPt = self.metricValues[metricName][i]
             # Evaluate reduced version of metric values.
             if metricValuesPt == self.grid.badval:
-                self.metricValues[rName][i] = self.grid.badval
+               for rName in rNames:
+                  self.metricValues[rName][i] = self.grid.badval
             else:
-                self.metricValues[rName][i] = reduceFunc(metricValuesPt)
+               for rName, rFunc in zip(rNames, reduceFunc):
+                  self.metricValues[rName][i] = rFunc(metricValuesPt)
         # Copy simdataName, metadata and comments for this reduced version of the metric data.
-        # (so that it's available for writeMetric). 
         try:
            self.simDataName[rName] = self.simDataName[metricName]
         except KeyError:
@@ -298,11 +308,13 @@ class BaseGridMetric(object):
                  raise Exception('Metric does not have the same number of points as loaded grid.')
         return    
 
-    def plotAll(self, savefig=True):
+    def plotAll(self, savefig=True, closefig=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mk in self.metricValues.keys():
             try:
                 self.plotMetric(mk, savefig=savefig)
+                if closefig:
+                   plt.close('all')
             except ValueError:
                 continue 
         return        
