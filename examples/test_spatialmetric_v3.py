@@ -96,7 +96,7 @@ gm.reduceAll()
 dt, t = dtime(t)
 print 'Ran reduce functions %f s' %(dt)
 
-gm.plotAll(savefig=True)
+gm.plotAll(savefig=True, closefig=True)
 
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)
@@ -110,6 +110,7 @@ for m in metricList:
       pass
 
 gm.writeAll()
+
 
 print 'Round 2 (dithered)'
 
@@ -138,7 +139,7 @@ gm.reduceAll()
 dt, t = dtime(t)
 print 'Ran reduce functions %f s' %(dt)
 
-gm.plotAll(savefig=True)
+gm.plotAll(savefig=True, closefig=True)
 
 dt, t = dtime(t)
 print 'Made plots %f s' %(dt)

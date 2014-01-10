@@ -184,8 +184,13 @@ class BaseGrid(object):
         fig = plt.figure(fignum)
         # Need to only use 'good' values in histogram.
         good = np.where(metricValue != self.badval)
+        if metricValue[good].min() >= metricValue[good].max():
+            if histRange==None:
+                histRange = [metricValue[good].min() , metricValue[good].min() + 1]
+                raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using a backup for histRange.' 
+                                    % (metricValue[good].max(), metricValue[good].min()))
         n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
-                             cumulative=cumulative, range=histRange, label=legendLabel)
+                           cumulative=cumulative, range=histRange, label=legendLabel)        
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(x,  pos):        
             return "%.3f" % (x * scale)

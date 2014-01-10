@@ -75,7 +75,7 @@ class HealpixGrid(BaseSpatialGrid):
         dec -= np.pi/2.0
         return ra, dec  
     
-    def plotSkyMap(self, metricValue, metricLabel, title='', 
+    def plotSkyMap(self, metricValue, metricLabel, title='',
                    clims=None, cbarFormat='%.2g'):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a Mollweide full-sky plot.
