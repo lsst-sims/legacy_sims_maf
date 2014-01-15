@@ -91,7 +91,7 @@ class GlobalGrid(BaseGrid):
         else:
             # Just write the header and have the metric value as the data.
             head.update(dtype = dt)
-            pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head)
+            pyf.writeto(outfilename+'.fits', metricValues.data.astype(dt), head)
         return
 
     def readMetricData(self, infilename):

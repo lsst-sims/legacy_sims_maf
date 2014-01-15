@@ -44,7 +44,7 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
-nside = 128*2*2*2
+nside = 16 #128*2*2*2
 
 # Set up spatial grid.
 gg = grids.HealpixGrid(nside)
@@ -80,7 +80,7 @@ metricList = [coaddm5, maxm5, meanm5, minseeing, rmsseeing, meanseeing, minairma
 
 dt, t = dtime(t)
 print 'Set up metrics %f s' %(dt)
-
+"""
 gm = gridMetrics.SpatialGridMetric()
 gm.setGrid(gg)
 
@@ -110,7 +110,7 @@ for m in metricList:
       pass
 
 gm.writeAll()
-
+"""
 
 print 'Round 2 (dithered)'
 

@@ -15,6 +15,7 @@
 # TODO add read/write sql constraint & metric name
 
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import pyfits as pyf
@@ -66,59 +67,44 @@ class BaseGrid(object):
     def writeMetricData(self, outfilename, metricValues,
                     comment='', metricName='',
                     simDataName='', metadata='', gridfile='', 
-                    int_badval=-666, badval=-666,dt=np.dtype('float64')):
+                    int_badval=-666, badval=-666, dt=np.dtype('float64')):
+        """Write metric data values to outfilename, preserving metadata. """
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             head.update(comment=comment, metricName=metricName,
                         simDataName=simDataName, metadata=metadata, gridfile=gridfile,
                         gridtype=self.gridtype, int_badval=int_badval, badval=badval)
-        if dt == 'object':            
-            mask = []
-            for val in metricValues:
-                if np.size(val)==1:
-                    mask.append(val == badval)
-                else:
-                    mask.append(False)
-            mask = np.array(mask)
-            ind = np.arange(len(metricValues))
-            a1 = ind[mask]
-            a2=ind[np.invert(mask)]
+        if dt == 'object':
             try:
-                metricValues[a2][0].shape #if this is just a single numpy array
+                ncols = len(metricValues.compressed()[0])            
             except:
-                ncols = len(metricValues[a2][0]) #if it is a tuple or list 
-            else:
                 ncols = 1
+            print ncols
             cols = []
-            column = np.empty(len(metricValues), dtype=object)
-            #import pdb ; pdb.set_trace()
             if ncols == 1:
-                dt = metricValues[a2[0]].dtype
+                dt = metricValues.compressed()[0].dtype
                 if dt.name[0:3] == 'int':
                     use_badval = int_badval
                 else:
-                    use_badval=badval
-                for j in a1:  
-                    # Should be able to eliminate this loop
-                    column[j] = np.array([use_badval]) 
-                for j in a2:  
-                    column[j] = metricValues[j]
+                    use_badval = badval
+                column = ma.filled(metricValues, use_badval)                
                 column = pyf.Column(name='c'+str(0), format=self._py2fitsFormat(dt), array=column)
                 cols.append(column)
             else:
                 for i in np.arange(ncols):
-                    dt = metricValues[a2[0]][i].dtype
+                    dt = metricValues.compressed()[0][i].dtype
                     if dt.name[0:3] == 'int':
                         use_badval = int_badval
                     else:
-                        use_badval=badval
-                    column = np.empty(len(metricValues), dtype=object)    
-                    for j in a1:  
-                        # There has to be a better way to do this!
-                        column[j] = np.array([use_badval]) 
-                    for j in a2:  
-                        column[j] = metricValues[j][i]
+                        use_badval = badval
+                    column = np.empty(len(metricValues), 'object')
+                    idx = np.where(metricValues.mask)
+                    for j in idx[0]:
+                        column[j] = np.array([use_badval,])
+                    idx = np.where(~metricValues.mask)
+                    for j in idx[0]:
+                        column[j] = metricValues.data[j][i]
                     column = pyf.Column(name='c'+str(i), 
                                         format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
@@ -128,10 +114,16 @@ class BaseGrid(object):
             tbhdu.writeto(outfilename+'.fits')
         else:
             head.update(dtype = dt.name)
-            pyf.writeto(outfilename+'.fits', metricValues.astype(dt), head) 
+            if dt.name[0:3] == 'int':
+                use_badval = int_badval
+            else:
+                use_badval = badval
+            tt = ma.filled(metricValues, use_badval)
+            pyf.writeto(outfilename+'.fits', tt.astype(dt), head) 
         return
     
-    def readMetricData(self,infilename):
+    def readMetricData(self, infilename):
+        """Read metric data values from infilename."""
         f = pyf.open(infilename)
         if f[0].header['NAXIS'] == 0:
             f = pyf.open(infilename)
@@ -158,6 +150,10 @@ class BaseGrid(object):
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
             metricValues = metricValues.astype(head['dtype'])
+        # Convert metric values to masked array.  
+        metricmasked = ma.MaskedArray(data = metricValues,
+                                      mask = mask,
+                                      fill_value = self.badval)
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], \
             head['gridfile'], head['gridtype'], None, None 
@@ -187,7 +183,7 @@ class BaseGrid(object):
         if metricValue[good].min() >= metricValue[good].max():
             if histRange==None:
                 histRange = [metricValue[good].min() , metricValue[good].min() + 1]
-                raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using a backup for histRange.' 
+                raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.' 
                                     % (metricValue[good].max(), metricValue[good].min()))
         n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
                            cumulative=cumulative, range=histRange, label=legendLabel)        

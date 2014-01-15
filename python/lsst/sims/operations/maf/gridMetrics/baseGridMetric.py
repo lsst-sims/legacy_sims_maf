@@ -12,8 +12,7 @@
 #  understanding what the metric means, and should be presented in plots & saved in the
 #  output files. 
 #
-# Instantiate the gridMetric object by providing a grid object (for spatial metrics,
-#   this does not have to be 'set up' - it does not need the kdtree to be built). 
+# Instantiate the gridMetric object by providing a grid object. 
 # Then, Metric data can enter the gridMetric through either running metrics on simData,
 #  or reading metric values from files. 
 # To run metrics on simData, 
@@ -28,16 +27,17 @@
 #   to an internal list, along with their metadata. 
 #   Note that all metrics must use the same grid. 
 #
-# A mixture of readMetric & runGrid can be used to populate the data in the gridMetric!
+# A mixture of readMetric & runGrid can also be used to populate the data in the gridMetric.
 #
 # runGrid applies to multiple metrics at once; most other methods apply to one metric 
-#  at a time but a convenience method to run over all metrics is usually provided (i.e. reduceAll)
+#  at a time but a convenience method to run over all metrics is provided (i.e. reduceAll)
 #
 # Metric data values, as well as metadata for each metric, are stored in
 #  dictionaries keyed by the metric names (a property of the metric). 
 
 import os
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 import pickle
 import pyfits as pyf
@@ -52,7 +52,7 @@ class BaseGridMetric(object):
         """Instantiate gridMetric object and set up (empty) dictionaries."""
         # Set up dictionaries to hold metric values, reduced metric values,
         #   simDataName(s) and metadata(s). All dictionary keys should be
-        #   metric name -- and then for reduceValues is [metric name][reduceFuncName]
+        #   metric name (reduced metric data is originalmetricName.reduceFuncName). 
         self.metricValues = {}
         self.simDataName = {}
         self.metadata = {}
@@ -127,7 +127,16 @@ class BaseGridMetric(object):
         """Set grid object for gridMetric."""
         self.grid = grid
         return
-        
+    
+    def validateMetricData(self, metricList, simData):
+        """Validate that simData has the required data values for the metrics in metricList."""
+        simCols = self.metrics[0].classReigstry.uniqueCols()
+        for c in simCols:
+            if c not in simData.dtype.names:
+                raise Exception('Column', c,'not in simData: needed by the metrics.\n',
+                                self.metrics[0].classRegistry)
+        return
+
     def runGrid(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None, **kwargs):
         """Run metric generation over grid.
@@ -137,47 +146,43 @@ class BaseGridMetric(object):
         simDataName = identifier for simulated data
         metadata = further information from config files ('WFD', 'r band', etc.)
         sliceCol = column for slicing grid, if needed (default None)"""
-        # I'm going to assume that we will never get duplicate metricNames from this method, 
-        #  as metricList would give the same results for the same metric run on same data.
         # Set metrics (convert to list if not iterable). 
         if hasattr(metricList, '__iter__'):
             self.metrics = metricList
         else:
             self.metrics = [metricList,]        
-        # Validate that simData has all the required data values. 
-        # The metrics have saved their required columns in the classRegistry.
-        simCols = self.metrics[0].classRegistry.uniqueCols()
-        for c in simCols:
-            if c not in simData.dtype.names:
-                raise Exception('Column', c,'not in simData: needed by the metrics.\n',
-                                self.metrics[0].classRegistry)
-        # And verify that sliceCol is part of simData too.
-        if sliceCol != None:
-            if sliceCol not in simData.dtype.names:
-                raise Exception('Simdata slice column', sliceCol, 'not in simData.')
         # Set metadata for each metric.
         for m in self.metrics:
             self.simDataName[m.name] = simDataName
             self.metadata[m.name] = metadata
-        # Set up arrays to store metric data. 
+        # Set up (masked) arrays to store metric data. 
         for m in self.metrics:
-            self.metricValues[m.name] = np.empty(len(self.grid), m.metricDtype) 
+            self.metricValues[m.name] = ma.MaskedArray(data = np.empty(len(self.grid), m.metricDtype),
+                                                       mask = np.zeros(len(self.grid), 'bool'),
+                                                       fill_value=self.grid.badval)
         # SliceCol is needed for global grids, but only has to be a specific
         #  column if the grid needs a specific column (for time slicing, for example).
         if sliceCol==None:
             sliceCol = simData.dtype.names[0]
+        if sliceCol not in simData.dtype.names:
+            raise Exception('Simdata slice column', sliceCol, 'not in simData.')
         # Run through all gridpoints and calculate metrics 
         #    (slicing the data once per gridpoint for all metrics).
         for i, g in enumerate(self.grid):
             idxs = self.grid.sliceSimData(g, simData[sliceCol])
             slicedata = simData[idxs]
             if len(idxs)==0:
-                # No data at this gridpoint.
+                # No data at this gridpoint. Mask data values.
                 for m in self.metrics:
-                    self.metricValues[m.name][i] = self.grid.badval
+                    self.metricValues[m.name].mask[i] = True
             else:
                 for m in self.metrics:
-                    self.metricValues[m.name][i] = m.run(slicedata)
+                    self.metricValues[m.name].data[i] = m.run(slicedata)
+        # Mask data where metrics could not be computed (according to metric bad value).
+        for m in self.metrics:
+            self.metricValues[m.name] = ma.masked_where(self.metricValues[m.name] == m.badval, 
+                                                        self.metricValues[m.name])
+            self.metricValues[m.name].fill_value = self.grid.badval
         return
 
     def reduceAll(self, metricList=None):
@@ -193,7 +198,7 @@ class BaseGridMetric(object):
             except: 
                 continue
             # Apply reduce functions
-            self.reduceMetric(m.name, m.reduceFuncs.values())
+            self.reduceMetric(m.name, m.reduceFuncs.values())            
         return
                 
     def reduceMetric(self, metricName, reduceFunc):
@@ -203,38 +208,38 @@ class BaseGridMetric(object):
         # Run reduceFunc(s) on metricValues[metricName]. 
         # Turn reduceFunc into a list if it wasn't, to make everything consistent.
         if not isinstance(reduceFunc, list):
-           reduceFunc = [reduceFunc,]
+            reduceFunc = [reduceFunc,]
         # Set up metric reduced value names.
         rNames = []
         for r in reduceFunc:
-           rNames.append(metricName + '_' + r.__name__.lstrip('reduce'))
-        # Set metric values.
+            rNames.append(metricName + '_' + r.__name__.lstrip('reduce'))
+        # Set up reduced metric values masked arrays, copying metricName's mask.
         for rName in rNames:
-           self.metricValues[rName] = np.zeros(len(self.grid), 'float')
+            self.metricValues[rName] = ma.MaskedArray(data = np.empty(len(self.grid), 'float'),
+                                                      mask = self.metricValues[metricName].mask,
+                                                      fill_value=self.grid.badval)
         # Run through grid, applying all reduce functions.
         for i, g in enumerate(self.grid):
-            # Get (complex) metric values for this gridpoint. 
-            metricValuesPt = self.metricValues[metricName][i]
-            # Evaluate reduced version of metric values.
-            if metricValuesPt == self.grid.badval:
-               for rName in rNames:
-                  self.metricValues[rName][i] = self.grid.badval
-            else:
-               for rName, rFunc in zip(rNames, reduceFunc):
-                  self.metricValues[rName][i] = rFunc(metricValuesPt)
+            if not self.metricValues[metricName].mask[i]:
+                # Get (complex) metric values for this gridpoint. 
+                metricValuesPt = self.metricValues[metricName][i]
+                # Evaluate reduced version of metric values.
+                for rName, rFunc in zip(rNames, reduceFunc):
+                    self.metricValues[rName].data[i] = rFunc(metricValuesPt)
         # Copy simdataName, metadata and comments for this reduced version of the metric data.
-        try:
-           self.simDataName[rName] = self.simDataName[metricName]
-        except KeyError:
-           pass
-        try:
-           self.metadata[rName] = self.metadata[metricName]
-        except KeyError:
-           pass
-        try:
-           self.comment[rName] = self.comment[metricName]
-        except KeyError:
-           pass
+        for rName in rNames:
+            try:
+                self.simDataName[rName] = self.simDataName[metricName]
+            except KeyError:
+                pass
+            try:
+                self.metadata[rName] = self.metadata[metricName]
+            except KeyError:
+                pass
+            try:
+                self.comment[rName] = self.comment[metricName]
+            except KeyError:
+                pass
         return
 
     def writeAll(self, outDir=None, outfileRoot=None, comment='',  gridfile='grid.obj'):
@@ -259,6 +264,7 @@ class BaseGridMetric(object):
         dt = data type.
         gridfile = the filename for the pickled grid"""
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
+        print metricName, outfile
         self.grid.writeMetricData(outfile, self.metricValues[metricName],
                                   metricName = metricName,
                                   simDataName = self.simDataName[metricName],
@@ -294,7 +300,11 @@ class BaseGridMetric(object):
            # Dedupe the metric name, if needed.
            metricName = self._deDupeMetricName(metricName)
            # Store the header values in variables
-           self.metricValues[metricName] = metricValues
+           self.metricValues[metricName] = ma.MaskedArray(data = metricValues,
+                                                          mask = np.where(metricValues == 
+                                                                          self.grid.badval, True, 
+                                                                          False),
+                                                            fill_value = self.grid.badval)
            if hasattr(self,'metricHistValues'):
               self.metricHistValues[metricName] = metricHistValues
               self.metricHistBins[metricName] = metricHistBins

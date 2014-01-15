@@ -23,7 +23,7 @@ class SpatialGridMetric(BaseGridMetric):
         # Check this grid is a spatial type.
         if self.grid.gridtype != 'SPATIAL':
             raise Exception('Gridtype for grid should be SPATIAL, not %s' %(self.grid.gridtype))
-        return
+        
     
     # spatial grid metrics already have all the data necessary for plotting (in metricValues).
     
@@ -39,7 +39,7 @@ class SpatialGridMetric(BaseGridMetric):
         plotTitle += ' ' + mname
         plotLabel = mname
         # Plot the histogram.
-        histfignum = self.grid.plotHistogram(self.metricValues[metricName], 
+        histfignum = self.grid.plotHistogram(self.metricValues[metricName].compressed(), 
                                              plotLabel, title=plotTitle)
         if savefig:
             outfile = self._buildOutfileName(metricName, 
@@ -47,7 +47,8 @@ class SpatialGridMetric(BaseGridMetric):
                                              plotType='hist')
             plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map.
-        skyfignum = self.grid.plotSkyMap(self.metricValues[metricName],
+        print metricName, self.metricValues[metricName].fill_value
+        skyfignum = self.grid.plotSkyMap(self.metricValues[metricName].filled(self.grid.badval),
                                          plotLabel, title=plotTitle)
         if savefig:
             outfile = self._buildOutfileName(metricName, 
@@ -56,7 +57,7 @@ class SpatialGridMetric(BaseGridMetric):
             plt.savefig(outfile, figformat=self.figformat)
         # And then plot the power spectrum if using an appropriate grid.
         if hasattr(self.grid, 'plotPowerSpectrum'):
-            psfignum = self.grid.plotPowerSpectrum(self.metricValues[metricName], 
+            psfignum = self.grid.plotPowerSpectrum(self.metricValues[metricName].filled(),
                                                    title=plotTitle, 
                                                    legendLabel=plotLabel)
             if savefig:
@@ -64,7 +65,7 @@ class SpatialGridMetric(BaseGridMetric):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='ps')
                 plt.savefig(outfile, figformat=self.figformat)
-        return
+                
 
     def plotComparisons(self, metricNameList, histBins=100, histRange=None, maxl=500.,
                         plotTitle=None, legendloc='upper left',
@@ -119,8 +120,10 @@ class SpatialGridMetric(BaseGridMetric):
                 addLegend = True
             legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
               + ' ' + self._dupeMetricName(m)
-            histfignum = self.grid.plotHistogram(self.metricValues[m], metricLabel=plotLabel,
-                                                 fignum = histfignum, addLegend=addLegend, legendloc=legendloc,
+            histfignum = self.grid.plotHistogram(self.metricValues[m].compressed(),
+                                                 metricLabel=plotLabel,
+                                                 fignum = histfignum, addLegend=addLegend, 
+                                                 legendloc=legendloc,
                                                  bins = histBins, histRange = histRange,
                                                  legendLabel=legendLabel, title=plotTitle)
         if savefig:
@@ -137,7 +140,8 @@ class SpatialGridMetric(BaseGridMetric):
                     addLegend = True
                 legendLabel = self.simDataName[m] + ' '+  self.metadata[m] \
                   + ' ' + self._dupeMetricName(m)
-                psfignum = self.grid.plotPowerSpectrum(self.metricValues[m], addLegend=addLegend,
+                psfignum = self.grid.plotPowerSpectrum(self.metricValues[m].filled(),
+                                                       addLegend=addLegend,
                                                        fignum = psfignum, maxl = maxl,
                                                        legendLabel=legendLabel, title=plotTitle)
             if savefig:
@@ -148,10 +152,12 @@ class SpatialGridMetric(BaseGridMetric):
         # Plot the sky map, if only two metricNames.
         if len(metricNameList) == 2:
             # Mask areas where either metric has bad data values, take difference elsewhere.
-            mval0 = self.metricValues[metricNameList[0]]
-            mval1 = self.metricValues[metricNameList[1]]
-            diff = np.where(mval0 == self.grid.badval, self.grid.badval, mval0 - mval1)
-            diff = np.where(mval1 == self.grid.badval, self.grid.badval, diff)
+            mask = self.metricValues[metricNameList[0]].mask
+            mask = np.where(self.metricValues[metricNameList[1]].mask == True, True, mask)
+            diff = ma.MaskedArray(data = (self.metricValues[metricNameList[0]] - 
+                                          self.metricValues[metricNameList[1]]), 
+                                          mask=mask,
+                                          filled_value = self.grid.badval)            
             # Make color bar label.
             if self._dupeMetricName(metricNameList[0]) == self._dupeMetricName(metricNameList[1]):
                 plotLabel = 'Delta ' + self._dupeMetricName(metricNameList[0])
@@ -164,8 +170,7 @@ class SpatialGridMetric(BaseGridMetric):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='sky')
                 plt.savefig(outfile, figformat=self.figformat)
-        return
-    
+                    
         
     def computeSummaryStatistics(self, metricName, summaryMetric):
         """Compute summary statistic for metricName, using function summaryMetric. 

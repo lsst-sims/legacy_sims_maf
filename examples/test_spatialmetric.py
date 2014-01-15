@@ -17,8 +17,8 @@ def dtime(time_prev):
 # Set up database access info. 
 
 # On Lynne's laptop
-#dbTable = 'output_opsim3_61'
-dbTable = 'output_opsimblitz2_1007'
+dbTable = 'output_opsim3_61'
+#dbTable = 'output_opsimblitz2_1007'
 dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
 
 # In department, use Peter's postgres.
@@ -44,7 +44,7 @@ dt, t = dtime(t)
 print 'Query complete: %f s' %(dt)
 print 'Retrieved %d observations' %(len(simdata['expMJD']))
 
-nside = 128*2*2*2
+nside = 128 #*2*2*2
 
 # Set up spatial grid.
 gg = grids.HealpixGrid(nside)

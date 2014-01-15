@@ -21,7 +21,6 @@ class VisitPairsMetric(ComplexMetric):
         self.deltaTmin = deltaTmin
         self.deltaTmax = deltaTmax
         super(VisitPairsMetric, self).__init__([self.times, self.nights], metricName)
-        return
 
     def run(self, dataSlice):
         # Identify the nights with any visits.
@@ -42,6 +41,8 @@ class VisitPairsMetric(ComplexMetric):
         # Convert to numpy arrays.
         visitPairs = np.array(visitPairs)
         nights = np.array(nights)
+        if len(visitPairs) == 0:
+            return self.badval
         return (visitPairs, nights)
         
     def reduceMedian(self, (pairs, nights)):

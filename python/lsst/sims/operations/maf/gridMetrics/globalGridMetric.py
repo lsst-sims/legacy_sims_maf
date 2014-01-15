@@ -83,7 +83,7 @@ class GlobalGridMetric(BaseGridMetric):
         dt = data type.
         gridfile = the filename for the pickled grid"""
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.grid.writeMetricData(outfile, self.metricValues[metricName], 
+        self.grid.writeMetricData(outfile, self.metricValues[metricName].filled(), 
                                   self.metricHistValues[metricName],self.metricHistBins[metricName],
                                   metricName = metricName,
                                   simDataName = self.simDataName[metricName],
@@ -120,8 +120,8 @@ class GlobalGridMetric(BaseGridMetric):
                                              outDir=outDir, outfileRoot=outfileRoot, 
                                              plotType='hist')
             plt.savefig(outfile, figformat=self.figformat)
-        return
 
+            
     def plotComparisons(self, metricNameList, plotTitle=None, legendloc='upper left',
                         savefig=True, outDir=None, outfileRoot=None):
         """Create comparison plots of all metricValues in metricNameList.
@@ -141,7 +141,8 @@ class GlobalGridMetric(BaseGridMetric):
             self.plotMetric(metricNameList[0], savefig=savefig, 
                             outDir=outDir, outfileRoot=outfileRoot)
             return    
-        # Find unique data to plot. 
+        # Find unique data to plot. (note that this is different from spatialGridMetric, 
+        #  where we can assume each metric represents different unique data at each gridpoint).
         datacolumns = []
         simDataNames = []
         metadatas = []
@@ -189,7 +190,8 @@ class GlobalGridMetric(BaseGridMetric):
                                                       self.metricHistValues[metric][i],
                                                       plotLabel, title=plotTitle, fignum=histfignum,
                                                       alpha=0.3,
-                                                      legendLabel=legendLabel, addLegend=addLegend, legendloc=legendloc)
+                                                      legendLabel=legendLabel, addLegend=addLegend, 
+                                                      legendloc=legendloc)
         if savefig:
             outfile = self._buildOutfileName(plotTitle, 
                                              outDir=outDir, outfileRoot=outfileRoot, 
