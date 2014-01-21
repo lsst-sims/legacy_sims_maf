@@ -1,11 +1,10 @@
-# The base class for all spatial grids.
-# Grids are 'data slicers' at heart; spatial grids slice data by RA/Dec and 
+# The base class for all spatial binners.
+# Binners are 'data slicers' at heart; spatial binners slice data by RA/Dec and 
 #  return the relevant indices in the simData to the metric. 
-# 
-# The primary things added here are the methods to slice the data (for any spatial grid)
+# The primary things added here are the methods to slice the data (for any spatial binner)
+#  as this uses a KD-tree built on spatial (RA/Dec type) indexes. 
 
 import numpy as np
-import pyfits as pyf
 
 try:
     # Try cKDTree first, as it's supposed to be faster.
@@ -18,14 +17,14 @@ except:
     from scipy.spatial import KDTree as kdtree
 
 
-from .baseGrid import BaseGrid
+from .baseBinner import BaseBinner
 
-class BaseSpatialGrid(BaseGrid):
-    """Base grid object, with added slicing functions for spatial grids."""
+class BaseSpatialBinner(BaseBinner):
+    """Base binner object, with added slicing functions for spatial binner."""
     def __init__(self, verbose=True, *args, **kwargs):
-        """Instantiate the base spatial grid object."""
-        super(BaseSpatialGrid, self).__init__(verbose=verbose)
-        self.gridtype = 'SPATIAL'
+        """Instantiate the base spatial binner object."""
+        super(BaseSpatialBinner, self).__init__(verbose=verbose)
+        self.binnertype = 'SPATIAL'
         return
     
     def _treexyz(self, ra, dec):
@@ -43,7 +42,7 @@ class BaseSpatialGrid(BaseGrid):
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node.
         radius = the distance (in degrees) at which matches between the simData kdtree
-        and the gridpoint RA/Dec value will be produced. """
+        and the binpoint RA/Dec value will be produced. """
         if np.any(simDataRa > np.pi*2.0) or np.any(simDataDec> np.pi*2.0):
             raise Exception('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
@@ -61,17 +60,16 @@ class BaseSpatialGrid(BaseGrid):
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
         return
     
-    def sliceSimData(self, gridpoint, simDataCol):
-        """Return indexes for relevant opsim data at gridpoint (gridpoint=ra/dec)."""
-        # SimData not needed here, but keep interface the same for all grids.
-        gridx, gridy, gridz = self._treexyz(gridpoint[0], gridpoint[1])
-        # If we were given more than one gridpoint, try multiple query against the tree.
-        if isinstance(gridx, np.ndarray):
-            indices = self.opsimtree.query_ball_point(zip(gridx, gridy, gridz), 
+    def sliceSimData(self, binpoint):
+        """Return indexes for relevant opsim data at binpoint (binpoint=ra/dec value)."""
+        binx, biny, binz = self._treexyz(binpoint[0], binpoint[1])
+        # If we were given more than one binpoint, try multiple query against the tree.
+        if isinstance(binx, np.ndarray):
+            indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), 
                                                       self.rad)
-        # If we were given one gridpoint, do a single query against the tree.
+        # If we were given one binpoint, do a single query against the tree.
         else:
-            indices = self.opsimtree.query_ball_point((gridx, gridy, gridz), 
+            indices = self.opsimtree.query_ball_point((binx, biny, binz), 
                                                       self.rad)
         return indices
 

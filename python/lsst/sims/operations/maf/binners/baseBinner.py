@@ -1,18 +1,5 @@
-# Base class for all grid objects. 
+# Base class for all 'Binner' objects. 
 # 
-# Grid objects must know slice the complete set of incoming opsim data for the metrics:
-#  * for spatial metrics, this means slicing in RA/Dec space and iterating over the sky)
-#  * for global metrics this means handing over the entire (or part of the) data column to the metric)
-# To facilitate metric calculation, the grid should be iterable and indexable:
-#  (for spatial metrics, this means iterating over the RA/Dec points)
-#  (for global metrics, this means iterating over the visits based on divisions 
-#   in a user-defined 'simDataSliceCol': for the base global grid, there is no split.)
-# Grid metrics must also know how to set themselves up ('set up the grid'),
-# read and write metric data, and generate plot representations of the metric data. 
-# In order to compare metrics calculated on various grids, they must also be
-#  able to at least check if two grids are equal. 
-
-# TODO add read/write sql constraint & metric name
 
 import numpy as np
 import numpy.ma as ma
@@ -21,31 +8,30 @@ from matplotlib.ticker import FuncFormatter
 import pyfits as pyf
 import warnings
 
-
-class BaseGrid(object):
-    """Base class for all grid objects: sets required methods and implements common functionality."""
+class BaseBinner(object):
+    """Base class for all binners: sets required methods and implements common functionality."""
 
     def __init__(self, verbose=True, *args, **kwargs):
         """Instantiate the base grid object."""
         self.verbose = verbose
-        self.badval = -666 #np.nan
-        self.gridtype = None
+        self.badval = -666 
+        self.binnertype = None
         return
 
     def __len__(self):
-        """Return npix, the number of pixels in the grid."""
-        return self.npix
+        """Return nbins, the number of bins in the binner. ."""
+        return self.nbins
 
     def __iter__(self):
-        """Iterate over the grid."""
+        """Iterate over the bins."""
         raise NotImplementedError()
 
     def next(self):
-        """Set the gridvalues to return when iterating over grid."""
+        """Define the bin values (interval or RA/Dec, etc.) to return when iterating over binner."""
         raise NotImplementedError()
 
     def __getitem__(self):
-        """Make grid indexable."""
+        """Make binner indexable."""
         raise NotImplementedError()
     
     def __eq__(self, othergrid):
@@ -53,21 +39,22 @@ class BaseGrid(object):
         raise NotImplementedError()
 
     def _py2fitsFormat(self,pydtype):
+        """Utility function to translate between python and pyfits data types."""
         convert_dict={'float64': 'D', 'int64': 'K', 'int32': 'J', 'float32': 'E'}
         result = 'P'+convert_dict[pydtype.name]+'()'
         return result
         
-    def sliceSimData(self, gridpoint, simDataCol, **kwargs):
-        """Slice the simulation data appropriately for the grid.
+    def sliceSimData(self, binpoint, **kwargs):
+        """Slice the simulation data appropriately for the binner.
 
         This slice of data should be the indices of the numpy rec array (the simData)
-        which are appropriate for the metric to be working on, at that gridpoint."""
+        which are appropriate for the metric to be working on, for that bin."""
         raise NotImplementedError()
 
     def writeMetricData(self, outfilename, metricValues,
-                    comment='', metricName='',
-                    simDataName='', metadata='', gridfile='', 
-                    int_badval=-666, badval=-666, dt=np.dtype('float64')):
+                        comment='', metricName='',
+                        simDataName='', metadata='', gridfile='', 
+                        int_badval=-666, badval=-666, dt=np.dtype('float64')):
         """Write metric data values to outfilename, preserving metadata. """
         head = pyf.Header()
         with warnings.catch_warnings():
@@ -123,7 +110,7 @@ class BaseGrid(object):
         return
     
     def readMetricData(self, infilename):
-        """Read metric data values from infilename."""
+        """Read metric data values from file 'infilename'."""
         f = pyf.open(infilename)
         if f[0].header['NAXIS'] == 0:
             f = pyf.open(infilename)
@@ -192,7 +179,6 @@ class BaseGrid(object):
             return "%.3f" % (x * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        #plt.ylabel('Area (1000s of square degrees)')
         plt.xlabel(metricLabel)
         if flipXaxis:
             # Might be useful for magnitude scales.
