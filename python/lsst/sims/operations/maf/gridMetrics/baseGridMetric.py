@@ -181,7 +181,8 @@ class BaseGridMetric(object):
         # Mask data where metrics could not be computed (according to metric bad value).
         for m in self.metrics:
             self.metricValues[m.name] = ma.masked_where(self.metricValues[m.name] == m.badval, 
-                                                        self.metricValues[m.name])
+                                                        self.metricValues[m.name], copy=False)
+            # For some reason, the mask fill value is not preserved, so reset.
             self.metricValues[m.name].fill_value = self.grid.badval
         return
 
