@@ -36,7 +36,7 @@ class BaseSpatialBinner(BaseBinner):
         return x, y, z
     
     def buildTree(self, simDataRa, simDataDec, 
-                  leafsize=500, radius=1.8):
+                  leafsize=100, radius=1.8):
         """Build KD tree on simDataRA/Dec and set radius (via setRad) for matching.
 
         simDataRA, simDataDec = RA and Dec values (in radians).

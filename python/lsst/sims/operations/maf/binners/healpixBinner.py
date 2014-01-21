@@ -1,5 +1,5 @@
-# Class for HealpixGrid (healpixel-based spatial grid).
-# User can select grid resolution using 'NSIDE'
+# Class for HealpixBinner (healpixel-based spatial binner).
+# User can select resolution using 'NSIDE'
 # Requires healpy
 # See more documentation on healpy here http://healpy.readthedocs.org/en/latest/tutorial.html
 # Also requires numpy and pylab (for histogram and power spectrum plotting)
@@ -8,21 +8,19 @@ import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 
-from .baseSpatialGrid import BaseSpatialGrid
+from .baseSpatialBinner import BaseSpatialBinner
 
-class HealpixGrid(BaseSpatialGrid):
-    """Healpix spatial grid."""
+class HealpixBinner(BaseSpatialBinner):
+    """Healpix spatial binner."""
     def __init__(self, nside=256, verbose=True):
-        """Set up healpix grid object."""
-        # Bad metric data values should be set to badval
-        super(HealpixGrid, self).__init__(verbose=verbose)
+        """Set up healpix binner object."""
+        super(HealpixBinner, self).__init__(verbose=verbose)
         self.badval = hp.UNSEEN 
-        self._setupGrid(nside = nside)
+        self._setupBinner(nside = nside)
         return
 
-    def _setupGrid(self, nside=256):
-        """Set up healpix grid with nside = nside."""
-        # Set up grid. 
+    def _setupBinner(self, nside=256):
+        """Set up healpix binner with nside = nside."""
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -31,43 +29,41 @@ class HealpixGrid(BaseSpatialGrid):
         if not(hp.isnsideok(nside)):
             raise Exception('Valid values of nside are powers of 2.')
         self.nside = nside
-        self.npix = hp.nside2npix(self.nside)
+        self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
-            print 'Set up grid with NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
-        # And we're done for now - don't have to save grid pixel locations or RA/Dec values, as nside describes all necessary information.
+            print 'Set up binner with NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
         return
     
     def __iter__(self):
-        """Iterate over the grid."""
+        """Iterate over the binner."""
         self.ipix = 0
         return self
 
     def next(self):
-        """Return RA/Dec values when iterating over grid."""
-        # To make __iter__ work, you need next. 
-        # This returns RA/Dec (in radians) of points in the grid. 
-        if self.ipix >= self.npix:
+        """Return RA/Dec values when iterating over bins."""
+        # This returns RA/Dec (in radians) of the binpoints. 
+        if self.ipix >= self.nbins:
             raise StopIteration
-        radec = self.pix2radec(self.ipix)
+        radec = self._pix2radec(self.ipix)
         self.ipix += 1
         return radec
 
     def __getitem__(self, ipix):
-        """Make healpix grid indexable."""
-        radec = self.pix2radec(ipix)
+        """Make healpix binner indexable."""
+        radec = self._pix2radec(ipix)
         return radec
 
-    def __eq__(self, otherGrid):
-        """Evaluate if two grids are equivalent."""
-        # If the two grids are both healpix grids, check nsides value. 
-        if isinstance(otherGrid, HealpixGrid):
-            return (otherGrid.nside == self.nside)
+    def __eq__(self, otherBinner):
+        """Evaluate if two binners are equivalent."""
+        # If the two binners are both healpix binners, check nsides value. 
+        if isinstance(otherBinner, HealpixBinner):
+            return (otherBinner.nside == self.nside)
         else:
             return False
     
-    def pix2radec(self, ipix):
+    def _pix2radec(self, ipix):
         """Given the pixel number, return the RA/Dec of the pointing, in radians."""
-        # Calculate RA/Dec in RADIANS of pixel in this healpix grid.
+        # Calculate RA/Dec in RADIANS of pixel in this healpix binner.
         # Note that ipix could be an array, 
         # in which case RA/Dec values will be an array also. 
         dec, ra = hp.pix2ang(self.nside, ipix)
@@ -92,9 +88,9 @@ class HealpixGrid(BaseSpatialGrid):
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=None):
-        """Histogram metricValue over the healpix grid points.
+        """Histogram metricValue over the healpix bin points.
 
-        If scale == None, sets 'scale' by the healpix area per gridpoint.
+        If scale == None, sets 'scale' by the healpix area per binpoint.
         title = the title for the plot (default None)
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
@@ -103,9 +99,10 @@ class HealpixGrid(BaseSpatialGrid):
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        # Simply overrides scale and y axis plot label of base plotHistogram. 
         if scale == None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
-        fignum = super(HealpixGrid, self).plotHistogram(metricValue, metricLabel, 
+        fignum = super(HealpixBinner, self).plotHistogram(metricValue, metricLabel, 
                                                         title=title, fignum=fignum, 
                                                         legendLabel=legendLabel, 
                                                         addLegend=addLegend, legendloc=legendloc,

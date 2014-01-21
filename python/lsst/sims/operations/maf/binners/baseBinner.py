@@ -17,7 +17,7 @@ class BaseBinner(object):
         self.badval = -666 
         self.binnertype = None
         return
-
+    
     def __len__(self):
         """Return nbins, the number of bins in the binner. ."""
         return self.nbins

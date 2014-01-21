@@ -1,171 +1,51 @@
-# Global grid class for metrics.
-# This kind of grid considers all visits / sequences / etc. regardless of RA/Dec.
-# Metrics are calculable on a global grid - the data they will receive will be
-#  all of the relevant data, which in this case is all of the data values in a 
-#  particular simData column. 
-# Subclasses of the global metric could slice on other aspects of the simData (but not
-#  RA/Dec as that is done more efficiently in the spatial classes).
+# UniBinner class.
+# This binner simply returns the indexes of all data points. No slicing done at all.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pyfits as pyf
 import warnings
 
-from .baseGrid import BaseGrid
+from .baseBinner import BaseBinner
 
-class GlobalGrid(BaseGrid):
-    """Global grid"""
+class UniBinner(BaseBinner):
+    """UniBinner."""
     def __init__(self, verbose=True, *args, **kwargs):
-        """Instantiate object and call set up global grid method."""
-        super(GlobalGrid, self).__init__(verbose=verbose)
-        self._setupGrid(*args, **kwargs)
-        self.gridtype = 'GLOBAL'
+        """Instantiate object and call set up method."""
+        super(UniBinner, self).__init__(verbose=verbose)
+        self._setupBinner(*args, **kwargs)
+        self.binnertype = 'UNI'
         return
     
-    def _setupGrid(self, *args, **kwargs):
-        """Set up global grid.
-
-        For base GlobalGrid class, this does nothing. For subclasses this could
-        (for example) split the grid by time. """
-        # Set number of 'pixels' in the grid. 
-        # Corresponds to the number of metric values returned from the metric.
-        self.npix = 1
+    def _setupBinner(self, simData):
+        """Set up unibinner. Uses simData to know length of indexes that should be returned."""
+        self.nbins = 1
+        simDataCol = simData.dtype.names[0]
+        self.indices = np.where(simDataCol)
         return
 
     def __iter__(self):
-        """Iterate over the grid."""
+        """Iterate over the binpoints."""
         self.ipix = 0
         return self
 
     def next(self):
-        """Set the gridvalues to return when iterating over grid."""
-        if self.ipix >= self.npix:
+        """Set the binpoints to return when iterating over binner."""
+        if self.ipix >= self.nbins:
             raise StopIteration
         ipix = self.ipix
         self.ipix += 1
         return ipix
 
     def __getitem__(self, ipix):
-        """Make global grid indexable."""  
         return ipix
     
-    def __eq__(self, otherGrid):
-        """Evaluate if grids are equivalent."""
-        if isinstance(otherGrid, GlobalGrid):
+    def __eq__(self, otherBinner):
+        """Evaluate if binners are equivalent."""
+        if isinstance(otherBinner, UniBinner):
             return True
         else:
             return False
             
-    def sliceSimData(self, gridpoint, simDataCol):
-        """Return relevant indices in simData for 'gridpoint'. 
-
-        For base GlobalGrid, this is all data."""
-        indices = np.where(simDataCol)
-        return indices
-
-    def writeMetricData(self, outfilename, metricValues, metricHistValues,metricHistBins,
-                        comment='', metricName='',
-                        simDataName='', metadata='',
-                        gridfile='', int_badval=-666, badval=-666,dt='float64'):
-        head = pyf.Header()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            head.update(comment=comment, metricName=metricName,
-                        simDataName=simDataName, metadata=metadata, gridfile=gridfile,
-                        gridtype=self.gridtype, int_badval=int_badval,
-                        badval=badval, hist='False')
-        if metricHistValues != None:
-            c0 = pyf.Column(name='metricValues', format=self._py2fitsFormat(dt)[1:], 
-                            array=metricValues)
-            hdu1 = pyf.new_table([c0])
-            hdu2 = pyf.PrimaryHDU(metricHistValues)
-            hdu3 = pyf.PrimaryHDU(metricHistBins)
-            for i in range(len(head)):  
-                hdu1.header[head.keys()[i]]=head[i]
-            hdu1.header['hist'] = 'True'
-            hdul = pyf.HDUList()
-            hdul.append(hdu1)
-            hdul.append(hdu2)
-            hdul.append(hdu3)
-            hdul.writeto(outfilename+'.fits')
-        else:
-            # Just write the header and have the metric value as the data.
-            head.update(dtype = dt)
-            pyf.writeto(outfilename+'.fits', metricValues.data.astype(dt), head)
-        return
-
-    def readMetricData(self, infilename):
-        f = pyf.open(infilename)
-        head = f[1].header
-        if head['hist'] == 'True':
-            metricValues = f[1].data['metricValues']
-            #metricHistValues = f[2].data['HistValues']
-            metricHistValues = f[2].data
-            #metricHistBins =f[3].data['HistBins']
-            metricHistBins = f[3].data
-        else:
-            metricHistValues = None
-            metricHistBins = None
-            metricValues = pyf.getdata(infilename)
-        badval = head['badval']
-        metricValues[np.where((metricValues == head['badval']) | (metricValues == head['int_badval']) )] = badval
-        return metricValues, head['metricName'], \
-            head['simDataName'],head['metadata'], head['comment'], \
-            head['gridfile'], head['gridtype'], metricHistValues, metricHistBins
-
-    
-
-    def plotHistogram(self, simDataCol, simDataColLabel, title=None, fignum=None, 
-                      legendLabel=None, addLegend=False, legendloc='upper left', bins=100, cumulative=False,
-                      histRange=None, flipXaxis=False, scale=1.0):
-        """Plot a histogram of simDataCol values, labelled by simDataColLabel.
-
-        simDataCol = the data values for generating the histogram
-        simDataColLabel = the units for the simDataCol ('m5', 'airmass', etc.)
-        title = the title for the plot (default None)
-        fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
-        addLegend = flag for whether or not to add a legend (default False)
-        legendloc = location for legend
-        bins = bins for histogram (numpy array or # of bins) (default 100)
-        cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by matplotlib hist)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
-        scale = scale y axis by 'scale' (i.e. to translate to area)"""
-        super(GlobalGrid, self).plotHistogram(simDataCol, simDataColLabel, 
-                                              title=title, fignum=fignum, 
-                                              legendLabel=label, addLegend=addLegend, legendloc=legendloc,
-                                              bins=bins, cumulative=cumulative,
-                                              histRange=histRange, flipXaxis=flipXaxis,
-                                              scale=scale)
-
-    def plotBinnedData(self, histbins, histvalues, xlabel, title=None, fignum=None,
-                       legendLabel=None, addLegend=False, legendloc='upper left', filled=False, alpha=0.5):
-        """Plot a set of pre-binned histogrammed data. 
-
-        histbins = the bins for the histogram (as returned by numpy histogram function, for example)
-        histvalues = the values of the histogram
-        xlabel = histogram label (label for x axis)
-        title = title for the plot (default None)
-        fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
-        addLegend = flag for whether or not to add a legend (default False)
-        legendloc = location for legend (default 'upper left')
-        filled = flag to plot histogram as filled bars or lines (default False = lines)
-        alpha = alpha value for plot bins if filled (default 0.5). """
-        # Plot the histogrammed data.
-        fig = plt.figure(fignum)
-        left = histbins[:-1]
-        width = np.diff(histbins)
-        if filled:
-            plt.bar(left, histvalues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha)
-        else:
-            x = np.ravel(zip(left, left+width))
-            y = np.ravel(zip(histvalues[:-1], histvalues[:-1]))
-            plt.plot(x, y, label=legendLabel)
-        plt.xlabel(xlabel)
-        if addLegend:
-            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
-        if title!=None:
-            plt.title(title)
-        return fig.number
+    def sliceSimData(self, binpoint):
+        """Return all indexes in simData. """
+        return self.indices

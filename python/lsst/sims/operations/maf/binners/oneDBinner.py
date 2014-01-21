@@ -1,54 +1,56 @@
-# Subclass of Global grid class for metrics, which splits data based on TIME.
+# oneDBinner - slices simData based on values in one data column. 
 
 import numpy as np
-from globalGrid import GlobalGrid
 
-class TimeGlobalGrid(GlobalGrid):
-    """Global grid"""
-    def __init__(self, timesteps, verbose=True):
-        """Instantiate object and call set up timestep global grid method.
+from .baseBinner import BaseBinner
 
-        'timesteps' is a numpy array with the timesteps 
-         (from start of survey, in days) to split the opsim data ('expmjd') values -
-        for example [0, 365, 2*365...] would split the survey by years. """
-        super(TimeGlobalGrid, self).__init__(verbose=verbose)
-        self._setupGrid(timesteps)
+class OneDBinner(BaseBinner):
+    """oneD Binner."""
+    def __init__(self, sliceDataCol, bins=None, nbins=100, verbose=True):
+        """Instantiate object and call set up method.
+
+        'bins' can be a numpy array with the binpoints for sliceDataCol 
+           or can be left 'None' in which case nbins will be used together with data min/max values
+           to slice data in 'sliceDataCol'. """
+        super(OneDBinner, self).__init__(verbose=verbose)
+        if bins == None:
+            binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
+            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, binsize, 'float')
+        self._setupBinner(bins)
         return
     
-    def _setupGrid(self, timesteps):
-        """Set up global grid with timesteps. """
+    def _setupGrid(self, bins):
+        """Set up one D binner."""
         # Set number of 'pixels' in the grid. 
         # Corresponds to the number of metric values returned from the metric.
-        self.timesteps = timesteps
-        self.npix = len(timesteps)
+        self.bins = bins
+        self.nbins = len(bins)
         return
 
     def __iter__(self):
-        """Iterate over the grid."""
         self.ipix = 0
         return self
 
     def next(self):
-        """Set the gridvalues to return when iterating over grid."""
-        if self.ipix >= self.npix:
+        """Set the binvalues to return when iterating over binpoints."""
+        if self.ipix >= self.nbins:
             raise StopIteration
-        # This returns ipix - an index in the timestep array. 
-        # Could instead rearrange to return timestep value itself.
-        return self.ipix
+        (binlo, binhi) = (self.bins[self.ipix], self.bins[self.ipix+1])
+        self.ipix += 1
+        return binlo, binhi
 
     def __getitem__(self, ipix):
-        """Make timestep global grid indexable."""
         return ipix
     
-    def __eq__(self, otherGrid):
-        """Evaluate if grids are equivalent."""
-        if isinstance(otherGrid, TimeGlobalGrid):
-            return np.all(otherGrid.timesteps == self.timesteps)
+    def __eq__(self, otherBinner):
+        """Evaluate if binners are equivalent."""
+        if isinstance(otherBinner, OneDBinner):
+            return np.all(otherBinner.bins == self.bins)
         else:
             return False
             
-    def sliceSimData(self, gridpoint, simDataTime):
-        """Slice simData on simDataTime, to return relevant indexes for gridpoint."""
+    def sliceSimData(self, binpoint):
+        """Slice simData on oneD slice column, to return relevant indexes for gridpoint."""
         # Timesteps measure time elapsed from start of survey; translate simDataTime.
         timesurvey = simDataTime - simDataTime[0]
         # Set the starting time interesting for this gridpoint.
@@ -61,25 +63,33 @@ class TimeGlobalGrid(GlobalGrid):
         indices = np.where((timesurvey >= timestart) & (timesurvey < timeend))
         return indices
 
-    def plotHistogram(self, simDataCol, simDataColLabel, title=None, fignum=None, 
-                      legendLabel=None, addLegend=False, bins=None, cumulative=False,
-                      histRange=None, flipXaxis=False, scale=1.0):
-        """Plot a histogram of simDataCol values, labelled by simDataColLabel.
+    def plotBinnedData(self, metricValues, metricLabel, title=None, fignum=None,
+                       legendLabel=None, addLegend=False, legendloc='upper left', 
+                       filled=False, alpha=0.5):
+        """Plot a set of oneD binned metric data.
 
-        simDataCol = the data values for generating the histogram
-        simDataColLabel = the units for the simDataCol ('m5', 'airmass', etc.)
-        title = the title for the plot (default None)
+        metricValues = the values to be plotted at each bin
+        metricLabel = metric label (label for x axis)
+        title = title for the plot (default None)
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default None, try to set)
-        cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by matplotlib hist)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
-        scale = scale y axis by 'scale' (i.e. to translate to area)"""
-        super(GlobalGrid, self).plotHistogram(simDataCol, simDataColLabel, 
-                                              title=title, fignum=fignum, 
-                                              legendLabel=label, addLegend=addLegend,
-                                              bins=bins, cumulative=cumulative,
-                                              histRange=histRange, flipXaxis=flipXaxis,
-                                              scale=scale)
+        legendloc = location for legend (default 'upper left')
+        filled = flag to plot histogram as filled bars or lines (default False = lines)
+        alpha = alpha value for plot bins if filled (default 0.5). """
+        # Plot the histogrammed data.
+        fig = plt.figure(fignum)
+        left = self.bins[:-1]
+        width = np.diff(self.bins)
+        if filled:
+            plt.bar(left, metricValues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha)
+        else:
+            x = np.ravel(zip(left, left+width))
+            y = np.ravel(zip(histvalues[:-1], histvalues[:-1]))
+            plt.plot(x, y, label=legendLabel)
+        plt.xlabel(xlabel)
+        if addLegend:
+            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
+        if title!=None:
+            plt.title(title)
+        return fig.number
