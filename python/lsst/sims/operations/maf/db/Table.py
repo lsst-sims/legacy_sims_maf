@@ -89,7 +89,7 @@ class Table(DBObject):
         return ChunkIterator(self, query, chunk_size)
 
 
-    def query_columns_RecArray(self, colnames=None, chunk_size=100000, constraint=None, 
+    def query_columns_RecArray(self, colnames=None, chunk_size=1000000, constraint=None, 
                                groupByCol=None, numLimit=None):
         """Same as query_columns, but returns a numpy rec array instead. """
         # Query the database, chunk by chunk (to reduce memory footprint). 

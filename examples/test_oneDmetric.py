@@ -28,10 +28,10 @@ def getData(dbTable, dbAddress, bandpass):
     print 'Retrieved %d observations' %(len(simdata['expMJD']))
     return simdata
 
-def getBinner(racol, deccol, nside=128):
+def getBinner(slicecol, nbins=100):
     t = time.time()
-    bb = binners.HealpixBinner(nside=nside)    
-    bb.setupBinner(racol, deccol)
+    bb = binners.OneDBinner()
+    bb.setupBinner(slicecol, nbins=nbins)
     
     dt, t = dtime(t)
     print 'Set up binner (and built kdtree if spatial binner) %f s' %(dt)
@@ -39,25 +39,10 @@ def getBinner(racol, deccol, nside=128):
 
 def getMetrics():
     t = time.time()
-    # Set up metrics.
-    dtmin = 1./60./24.
-    dtmax = 360./60./24.
-    visitPairs = metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax)
-
-    seeingcol = 'finSeeing' # if new v3 opsim
-    seeingcol = 'seeing' # if old opsim (output_opsim3_61)
-    meanseeing = metrics.MeanMetric(seeingcol)
-    medianairmass = metrics.MedianMetric('airmass')
-    minairmass = metrics.MinMetric('airmass')
-    meanm5 = metrics.MeanMetric('5sigma_modified')
-    maxm5 = metrics.MaxMetric('5sigma_modified')
-    rmsm5 = metrics.RmsMetric('5sigma_modified')
-    meanskybright = metrics.MeanMetric('skybrightness_modified')
-    maxskybright = metrics.MaxMetric('skybrightness_modified')
-    coaddm5 = metrics.Coaddm5Metric('5sigma_modified')
-    nvisits = metrics.CountMetric(seeingcol)
+    count = metrics.CountMetric('seeing')
+    rmsseeing = metrics.RmsMetric('seeing')
     
-    metricList = [meanseeing, medianairmass, meanm5, meanskybright, coaddm5, nvisits, visitPairs]
+    metricList = [count, rmsseeing]
 
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
@@ -65,7 +50,7 @@ def getMetrics():
     return metricList
 
 
-def goBin(dbTable, metadata, simdata, bb, metricList):
+def goBin(dbTable, bandpass, simdata, bb, metricList):
     t = time.time()
     gm = binMetrics.BaseBinMetric()
     gm.setBinner(bb)
@@ -73,7 +58,7 @@ def goBin(dbTable, metadata, simdata, bb, metricList):
     dt, t = dtime(t)
     print 'Set up gridMetric %f s' %(dt)
 
-    gm.runBins(metricList, simdata, simDataName=dbTable, metadata = metadata)
+    gm.runBins(metricList, simdata, simDataName=dbTable, metadata = bandpass)
     dt, t = dtime(t)
     print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
                     
@@ -112,18 +97,16 @@ def printSummary(gm, metricList):
 if __name__ == '__main__':
 
     
+    bandpass = 'r'
     #dbTable = 'output_opsim3_61_forLynne' 
     #dbTable = 'output_opsim2_145_forLynne'   
     #dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST' 
     #dbTable = 'output_opsimblitz2_1007'
     dbTable = 'output_opsim3_61'
     dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
-    bandpass = 'r'
-
-    nside=16
         
     simdata = getData(dbTable, dbAddress, bandpass)
-    bb = getBinner(simdata['fieldRA'], simdata['fieldDec'], nside=nside)
+    bb = getBinner(simdata['seeing'])
     metricList = getMetrics()
 
     gm = goBin(dbTable, bandpass, simdata, bb, metricList)
@@ -132,19 +115,20 @@ if __name__ == '__main__':
     plot(gm)
     write(gm)
     
-    print 'Round 2 (dithered)'
+    print 'Round 2 (different bandpass)'
     
-    bandpass = 'r'
+    bandpass = 'i'
     #dbTable = 'output_opsimblitz2_1007'
     dbTable = 'output_opsim3_61'
 
     simdata = getData(dbTable, dbAddress, bandpass)
-    bb = getBinner(simdata['hexdithra'], simdata['hexdithdec'], nside=nside)
+    bb = getBinner(simdata['seeing'])
     metricList = getMetrics()
 
-    gm = goBin(dbTable, bandpass + ' dithered', simdata, bb, metricList)
+    gm = goBin(dbTable, bandpass, simdata, bb, metricList)
     printSummary(gm, metricList)
     
     plot(gm)
     write(gm)
+
 

@@ -4,7 +4,6 @@
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
 import pyfits as pyf
 import warnings
 
@@ -12,7 +11,7 @@ class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""
 
     def __init__(self, verbose=True, *args, **kwargs):
-        """Instantiate the base grid object."""
+        """Instantiate the base binner object."""
         self.verbose = verbose
         self.badval = -666 
         self.binnertype = None
@@ -33,8 +32,8 @@ class BaseBinner(object):
         """Make binner indexable."""
         raise NotImplementedError()
     
-    def __eq__(self, othergrid):
-        """Evaluate if two grids are equivalent."""
+    def __eq__(self, otherBinner):
+        """Evaluate if two binners are equivalent."""
         raise NotImplementedError()
 
     def _py2fitsFormat(self,pydtype):
@@ -52,21 +51,20 @@ class BaseBinner(object):
 
     def writeMetricData(self, outfilename, metricValues,
                         comment='', metricName='',
-                        simDataName='', metadata='', gridfile='', 
+                        simDataName='', metadata='', binnerfile='', 
                         int_badval=-666, badval=-666, dt=np.dtype('float64')):
         """Write metric data values to outfilename, preserving metadata. """
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             head.update(comment=comment, metricName=metricName,
-                        simDataName=simDataName, metadata=metadata, gridfile=gridfile,
-                        gridtype=self.gridtype, int_badval=int_badval, badval=badval)
+                        simDataName=simDataName, metadata=metadata, binnerfile=binnerfile,
+                        binnertype=self.binnertype, int_badval=int_badval, badval=badval)
         if dt == 'object':
             try:
                 ncols = len(metricValues.compressed()[0])            
             except:
                 ncols = 1
-            print ncols
             cols = []
             if ncols == 1:
                 dt = metricValues.compressed()[0].dtype
@@ -141,51 +139,4 @@ class BaseBinner(object):
                                       fill_value = self.badval)
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], \
-            head['gridfile'], head['gridtype'], None, None 
-            # two nones so same format as with histogram restores        
-
-    
-    def plotHistogram(self, metricValue, metricLabel, title=None, 
-                      fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
-                      scale=1.0):
-        """Plot a histogram of metricValue, labelled by metricLabel.
-
-        title = the title for the plot (default None)
-        fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
-        addLegend = flag for whether or not to add a legend (default False)
-        legendloc = location for legend (default 'upper left')
-        bins = bins for histogram (numpy array or # of bins) (default 100)
-        cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by matplotlib hist)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
-        scale = scale y axis by 'scale' (i.e. to translate to area)"""
-        # Histogram metricValues. 
-        fig = plt.figure(fignum)
-        # Need to only use 'good' values in histogram.
-        good = np.where(metricValue != self.badval)
-        if metricValue[good].min() >= metricValue[good].max():
-            if histRange==None:
-                histRange = [metricValue[good].min() , metricValue[good].min() + 1]
-                raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.' 
-                                    % (metricValue[good].max(), metricValue[good].min()))
-        n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
-                           cumulative=cumulative, range=histRange, label=legendLabel)        
-        # Option to use 'scale' to turn y axis into area or other value.
-        def mjrFormatter(x,  pos):        
-            return "%.3f" % (x * scale)
-        ax = plt.gca()
-        ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        plt.xlabel(metricLabel)
-        if flipXaxis:
-            # Might be useful for magnitude scales.
-            x0, x1 = plt.xlim()
-            plt.xlim(x1, x0)
-        if addLegend:
-            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc)
-        if title!=None:
-            plt.title(title)
-        # Return figure number (so we can reuse this if desired).         
-        return fig.number
-            
+            head['binnerfile'], head['binnertype']

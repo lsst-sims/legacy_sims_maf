@@ -1,22 +1,27 @@
 # oneDBinner - slices based on values in one data column in simData.
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from .baseBinner import BaseBinner
 
 class OneDBinner(BaseBinner):
     """oneD Binner."""
-    def __init__(self, sliceDataCol, bins=None, nbins=100, verbose=True):
-        """Instantiate and set up binning.
+    def __init__(self,  verbose=True):
+        """Instantiate. """
+        super(OneDBinner, self).__init__(verbose=verbose)
+        self.binnertype = 'ONED'
+
+    def setupBinner(self, sliceDataCol, bins=None, nbins=100):
+        """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
-           or can be left 'None' in which case nbins will be used together with data min/max values
-           to slice data in 'sliceDataCol'. """
-        super(OneDBinner, self).__init__(verbose=verbose)
+        or can be left 'None' in which case nbins will be used together with data min/max values
+        to slice data in 'sliceDataCol'. """
         self.sliceDataCol = sliceDataCol
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, binsize, 'float')
+            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, binsize, 'float') 
         self.bins = bins
         self.nbins = len(bins)
 
@@ -70,9 +75,9 @@ class OneDBinner(BaseBinner):
             plt.bar(left, metricValues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha)
         else:
             x = np.ravel(zip(left, left+width))
-            y = np.ravel(zip(histvalues[:-1], histvalues[:-1]))
+            y = np.ravel(zip(metricValues[:-1], metricValues[:-1]))
             plt.plot(x, y, label=legendLabel)
-        plt.xlabel(xlabel)
+        plt.xlabel(metricLabel)
         if addLegend:
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if title!=None:

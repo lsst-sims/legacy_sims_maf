@@ -5,6 +5,8 @@
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes. 
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 try:
     # Try cKDTree first, as it's supposed to be faster.
@@ -16,7 +18,6 @@ except:
     # But older scipy may not have cKDTree.
     from scipy.spatial import KDTree as kdtree
 
-
 from .baseBinner import BaseBinner
 
 class BaseSpatialBinner(BaseBinner):
@@ -25,6 +26,15 @@ class BaseSpatialBinner(BaseBinner):
         """Instantiate the base spatial binner object."""
         super(BaseSpatialBinner, self).__init__(verbose=verbose)
         self.binnertype = 'SPATIAL'
+
+    def setupBinner(self, simDataRA, simDataDec, leafsize=100, radius=1.8):
+        """Use simDataRA and simDataDec (in radians) to set up KDTree. 
+
+        'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
+        'radius' (in radians) is distance at which matches between the simData KDtree 
+          and binpoint RA/Dec values will be produced."""
+        self._buildTree(simDataRA, simDataDec, leafsize)
+        self._setRad(radius)    
     
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
@@ -34,22 +44,19 @@ class BaseSpatialBinner(BaseBinner):
         z = np.sin(dec)
         return x, y, z
     
-    def buildTree(self, simDataRa, simDataDec, 
-                  leafsize=100, radius=1.8):
+    def _buildTree(self, simDataRa, simDataDec, 
+                  leafsize=100):
         """Build KD tree on simDataRA/Dec and set radius (via setRad) for matching.
 
         simDataRA, simDataDec = RA and Dec values (in radians).
-        leafsize = the number of Ra/Dec pointings in each leaf node.
-        radius = the distance (in degrees) at which matches between the simData kdtree
-        and the binpoint RA/Dec value will be produced. """
+        leafsize = the number of Ra/Dec pointings in each leaf node."""
         if np.any(simDataRa > np.pi*2.0) or np.any(simDataDec> np.pi*2.0):
             raise Exception('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x,y,z)
         self.opsimtree = kdtree(data, leafsize=leafsize)
-        self.setRad(radius)
 
-    def setRad(self, radius=1.8):
+    def _setRad(self, radius=1.8):
         """Set radius (in degrees) for kdtree search.
         
         kdtree queries will return pointings within rad."""        
@@ -71,3 +78,47 @@ class BaseSpatialBinner(BaseBinner):
         return indices
 
         
+    def plotHistogram(self, metricValue, metricLabel, title=None, 
+                      fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
+                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
+                      scale=1.0):
+        """Plot a histogram of metricValue, labelled by metricLabel.
+
+        title = the title for the plot (default None)
+        fignum = the figure number to use (default None - will generate new figure)
+        legendLabel = the label to use for the figure legend (default None)
+        addLegend = flag for whether or not to add a legend (default False)
+        legendloc = location for legend (default 'upper left')
+        bins = bins for histogram (numpy array or # of bins) (default 100)
+        cumulative = make histogram cumulative (default False)
+        histRange = histogram range (default None, set by matplotlib hist)
+        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
+        scale = scale y axis by 'scale' (i.e. to translate to area)"""
+        # Histogram metricValues. 
+        fig = plt.figure(fignum)
+        # Need to only use 'good' values in histogram.
+        good = np.where(metricValue != self.badval)
+        if metricValue[good].min() >= metricValue[good].max():
+            if histRange==None:
+                histRange = [metricValue[good].min() , metricValue[good].min() + 1]
+                raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.' 
+                                    % (metricValue[good].max(), metricValue[good].min()))
+        n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
+                           cumulative=cumulative, range=histRange, label=legendLabel)        
+        # Option to use 'scale' to turn y axis into area or other value.
+        def mjrFormatter(x,  pos):        
+            return "%.3f" % (x * scale)
+        ax = plt.gca()
+        ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
+        plt.xlabel(metricLabel)
+        if flipXaxis:
+            # Might be useful for magnitude scales.
+            x0, x1 = plt.xlim()
+            plt.xlim(x1, x0)
+        if addLegend:
+            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc)
+        if title!=None:
+            plt.title(title)
+        # Return figure number (so we can reuse this if desired).         
+        return fig.number
+            

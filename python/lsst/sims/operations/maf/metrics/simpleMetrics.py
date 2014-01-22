@@ -35,17 +35,22 @@ class Coaddm5Metric(SimpleScalarMetric):
 
 
 class MaxMetric(SimpleScalarMetric):
-    """Calculate the minimum of a simData column slice."""
+    """Calculate the maximum of a simData column slice."""
     def run(self, dataSlice):
         return np.max(dataSlice[self.colname])
 
 
 class MeanMetric(SimpleScalarMetric):
-    """Calculate the minimum of a simData column slice."""
+    """Calculate the mean of a simData column slice."""
     def run(self, dataSlice):
         return np.mean(dataSlice[self.colname])
 
+class MedianMetric(SimpleScalarMetric):
+    """Calculate the median of a simData column slice."""
+    def run(self, dataSlice):
+        return np.median(dataSlice[self.colname])
 
+    
 class MinMetric(SimpleScalarMetric):
     """Calculate the minimum of a simData column slice."""
     def run(self, dataSlice):
@@ -53,13 +58,13 @@ class MinMetric(SimpleScalarMetric):
 
 
 class RmsMetric(SimpleScalarMetric):
-    """Calculate the minimum of a simData column slice."""
+    """Calculate the standard deviation of a simData column slice."""
     def run(self, dataSlice):
         return np.std(dataSlice[self.colname])
 
 
 class SumMetric(SimpleScalarMetric):
-    """Calculate the minimum of a simData column slice."""
+    """Calculate the sum of a simData column slice."""
     def run(self, dataSlice):
         return np.sum(dataSlice[self.colname])
 
