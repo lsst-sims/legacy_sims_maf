@@ -13,14 +13,9 @@ from .baseSpatialBinner import BaseSpatialBinner
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
     def __init__(self, nside=256, verbose=True):
-        """Set up healpix binner object."""
+        """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose)
         self.badval = hp.UNSEEN 
-        self._setupBinner(nside = nside)
-        return
-
-    def _setupBinner(self, nside=256):
-        """Set up healpix binner with nside = nside."""
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -32,7 +27,6 @@ class HealpixBinner(BaseSpatialBinner):
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
             print 'Set up binner with NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
-        return
     
     def __iter__(self):
         """Iterate over the binner."""

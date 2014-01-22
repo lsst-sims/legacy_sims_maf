@@ -9,19 +9,15 @@ from .baseBinner import BaseBinner
 
 class UniBinner(BaseBinner):
     """UniBinner."""
-    def __init__(self, verbose=True, *args, **kwargs):
-        """Instantiate object and call set up method."""
+    def __init__(self, simData, verbose=True):
+        """Instantiate and set up unibinner. 
+
+        Uses simData to know length of indexes that should be returned."""
         super(UniBinner, self).__init__(verbose=verbose)
-        self._setupBinner(*args, **kwargs)
         self.binnertype = 'UNI'
-        return
-    
-    def _setupBinner(self, simData):
-        """Set up unibinner. Uses simData to know length of indexes that should be returned."""
         self.nbins = 1
         simDataCol = simData.dtype.names[0]
         self.indices = np.where(simDataCol)
-        return
 
     def __iter__(self):
         """Iterate over the binpoints."""

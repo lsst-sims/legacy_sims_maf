@@ -16,7 +16,6 @@ class BaseBinner(object):
         self.verbose = verbose
         self.badval = -666 
         self.binnertype = None
-        return
     
     def __len__(self):
         """Return nbins, the number of bins in the binner. ."""
@@ -107,7 +106,6 @@ class BaseBinner(object):
                 use_badval = badval
             tt = ma.filled(metricValues, use_badval)
             pyf.writeto(outfilename+'.fits', tt.astype(dt), head) 
-        return
     
     def readMetricData(self, infilename):
         """Read metric data values from file 'infilename'."""

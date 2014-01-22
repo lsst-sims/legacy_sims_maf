@@ -1,4 +1,4 @@
-# oneDBinner - slices simData based on values in one data column. 
+# oneDBinner - slices based on values in one data column in simData.
 
 import numpy as np
 
@@ -7,40 +7,34 @@ from .baseBinner import BaseBinner
 class OneDBinner(BaseBinner):
     """oneD Binner."""
     def __init__(self, sliceDataCol, bins=None, nbins=100, verbose=True):
-        """Instantiate object and call set up method.
+        """Instantiate and set up binning.
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
            or can be left 'None' in which case nbins will be used together with data min/max values
            to slice data in 'sliceDataCol'. """
         super(OneDBinner, self).__init__(verbose=verbose)
+        self.sliceDataCol = sliceDataCol
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
             bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, binsize, 'float')
-        self._setupBinner(bins)
-        return
-    
-    def _setupGrid(self, bins):
-        """Set up one D binner."""
-        # Set number of 'pixels' in the grid. 
-        # Corresponds to the number of metric values returned from the metric.
         self.bins = bins
         self.nbins = len(bins)
-        return
 
     def __iter__(self):
         self.ipix = 0
         return self
 
     def next(self):
-        """Set the binvalues to return when iterating over binpoints."""
-        if self.ipix >= self.nbins:
+        """Return the binvalues for this binpoint."""
+        if self.ipix >= self.nbins-1:
             raise StopIteration
         (binlo, binhi) = (self.bins[self.ipix], self.bins[self.ipix+1])
         self.ipix += 1
-        return binlo, binhi
+        return (binlo, binhi)
 
     def __getitem__(self, ipix):
-        return ipix
+        (binlo, binhi) = (self.bins[ipix], self.bins[ipix+1])
+        return (binlo, binhi)
     
     def __eq__(self, otherBinner):
         """Evaluate if binners are equivalent."""
@@ -50,17 +44,8 @@ class OneDBinner(BaseBinner):
             return False
             
     def sliceSimData(self, binpoint):
-        """Slice simData on oneD slice column, to return relevant indexes for gridpoint."""
-        # Timesteps measure time elapsed from start of survey; translate simDataTime.
-        timesurvey = simDataTime - simDataTime[0]
-        # Set the starting time interesting for this gridpoint.
-        timestart = self.timesteps[gridpoint]
-        # Try to set the ending time interesting for this gridpoint.
-        try:
-            timeend = self.timesteps[gridpoint + 1]
-        except:
-            timeend = timesurvey.max() + 1.0
-        indices = np.where((timesurvey >= timestart) & (timesurvey < timeend))
+        """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
+        indices = np.where((self.sliceDataCol >= binpoint[0]) & (self.sliceDataCol < binpoint[1]))
         return indices
 
     def plotBinnedData(self, metricValues, metricLabel, title=None, fignum=None,

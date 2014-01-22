@@ -25,7 +25,6 @@ class BaseSpatialBinner(BaseBinner):
         """Instantiate the base spatial binner object."""
         super(BaseSpatialBinner, self).__init__(verbose=verbose)
         self.binnertype = 'SPATIAL'
-        return
     
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
@@ -49,7 +48,6 @@ class BaseSpatialBinner(BaseBinner):
         data = zip(x,y,z)
         self.opsimtree = kdtree(data, leafsize=leafsize)
         self.setRad(radius)
-        return
 
     def setRad(self, radius=1.8):
         """Set radius (in degrees) for kdtree search.
@@ -58,7 +56,6 @@ class BaseSpatialBinner(BaseBinner):
         x0, y0, z0 = (1, 0, 0)
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
-        return
     
     def sliceSimData(self, binpoint):
         """Return indexes for relevant opsim data at binpoint (binpoint=ra/dec value)."""
