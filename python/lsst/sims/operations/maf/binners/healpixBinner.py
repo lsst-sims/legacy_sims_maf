@@ -26,7 +26,7 @@ class HealpixBinner(BaseSpatialBinner):
         self.nside = nside
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
-            print 'Set up binner with NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
+            print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
     
     def __iter__(self):
         """Iterate over the binner."""

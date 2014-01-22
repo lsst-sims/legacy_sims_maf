@@ -10,11 +10,6 @@ class opsimFieldBinner(BaseSpatialBinner):
     def __init__(self, filename, verbose=True):
         """Set up opsim field binner object."""
         super(opsimFieldBinner, self).__init__(verbose=verbose)
-        self._setupBinner(filename = filename)
-        return
-
-    def _setupBinner(self, filename):
-        """Read the opsim field pointings from a file."""
         # Read RA and Dec points from filename.
         ### 
         # Set self.npix

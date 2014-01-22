@@ -9,16 +9,17 @@ from .baseBinner import BaseBinner
 
 class UniBinner(BaseBinner):
     """UniBinner."""
-    def __init__(self, simData, verbose=True):
-        """Instantiate and set up unibinner. 
-
-        Uses simData to know length of indexes that should be returned."""
+    def __init__(self, verbose=True):
+        """Instantiate unibinner. """
         super(UniBinner, self).__init__(verbose=verbose)
         self.binnertype = 'UNI'
         self.nbins = 1
+
+    def setupBinner(self, simData):
+        """Use simData to set indexes to return."""
         simDataCol = simData.dtype.names[0]
         self.indices = np.where(simDataCol)
-
+        
     def __iter__(self):
         """Iterate over the binpoints."""
         self.ipix = 0
