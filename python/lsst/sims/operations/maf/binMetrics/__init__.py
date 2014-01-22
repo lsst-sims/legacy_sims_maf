@@ -1,3 +1,3 @@
-from .baseGridMetric import *
-from .spatialGridMetric import *
-from .globalGridMetric import *
+from .baseBinMetric import *
+from .spatialBinMetric import *
+from .globalBinMetric import *
