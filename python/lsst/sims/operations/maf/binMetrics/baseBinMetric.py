@@ -139,7 +139,7 @@ class BaseBinMetric(object):
 
     def runBin(self, metricList, simData, 
                 simDataName='opsim', metadata='', sliceCol=None, **kwargs):
-        """Run metric generation over grid.
+        """Run metric generation over bins.
 
         metricList = list of metric objects
         simData = numpy recarray holding simulated data
@@ -247,11 +247,10 @@ class BaseBinMetric(object):
         """Write all metric values to disk."""
         for mk in self.metricValues.keys():
             dt = self.metricValues[mk].dtype
-            binfilename = self._buildOutfileName(binfile, outDir=outDir, 
-                                                  outfileRoot=outfileRoot)
+            binfilename = binfile 
             self.writeMetric(mk, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
                              binfile=binfilename, dt=dt)
-        self.writeBin(binfile=binfile, outfileRoot=outfileRoot,outDir=outDir)
+        self.writeBin(binfile=binfilename, outfileRoot=outfileRoot,outDir=outDir)
         return
     
     def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, 

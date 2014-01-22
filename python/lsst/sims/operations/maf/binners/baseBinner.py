@@ -51,14 +51,14 @@ class BaseBinner(object):
 
     def writeMetricData(self, outfilename, metricValues,
                         comment='', metricName='',
-                        simDataName='', metadata='', binnerfile='', 
+                        simDataName='', metadata='', binfile='', 
                         int_badval=-666, badval=-666, dt=np.dtype('float64')):
         """Write metric data values to outfilename, preserving metadata. """
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             head.update(comment=comment, metricName=metricName,
-                        simDataName=simDataName, metadata=metadata, binnerfile=binnerfile,
+                        simDataName=simDataName, metadata=metadata, binfile=binfile,
                         binnertype=self.binnertype, int_badval=int_badval, badval=badval)
         if dt == 'object':
             try:
@@ -139,4 +139,4 @@ class BaseBinner(object):
                                       fill_value = self.badval)
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], \
-            head['binnerfile'], head['binnertype']
+            head['binfile'], head['binnertype']
