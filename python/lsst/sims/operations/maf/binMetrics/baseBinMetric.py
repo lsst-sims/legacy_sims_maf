@@ -479,12 +479,8 @@ class BaseBinMetric(object):
         if len(self.metricValues[metricName]) == 1:
             return self.metricValues[metricName]
         else:
-            if not ((self.metricValues[metricName].dtype == 'float') or 
-                    (self.metricValues[metricName].dtype =='int')):
-                raise ValueError('Metric data in %s is not float or int type (%s).' 
-                                 %(metricName, self.metricValues[metricName].dtype))
             # Create numpy rec array from metric data, with bad values removed. 
-            rarr = np.array([self.metricValues[metricName].compressed()], 
+            rarr = np.array(zip(self.metricValues[metricName].compressed()), 
                             dtype=[('metricdata', self.metricValues[metricName].dtype)])
             metric = summaryMetric('metricdata')
             return metric.run(rarr)
