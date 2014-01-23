@@ -15,6 +15,10 @@ class BaseBinner(object):
         self.verbose = verbose
         self.badval = -666 
         self.binnertype = None
+
+    def setupBinner(self, *args, **kwargs):
+        """Set up internal parameters and bins for binner. """
+        raise NotImplementedError()
     
     def __len__(self):
         """Return nbins, the number of bins in the binner. ."""

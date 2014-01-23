@@ -12,12 +12,13 @@ class OneDBinner(BaseBinner):
         super(OneDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ONED'
 
-    def setupBinner(self, sliceDataCol, bins=None, nbins=100):
+    def setupBinner(self, sliceDataCol, sliceDataColName, bins=None, nbins=100):
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
         or can be left 'None' in which case nbins will be used together with data min/max values
         to slice data in 'sliceDataCol'. """
+        self.sliceDataColName = sliceDataColName
         self.sliceDataCol = sliceDataCol
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
@@ -77,7 +78,8 @@ class OneDBinner(BaseBinner):
             x = np.ravel(zip(left, left+width))
             y = np.ravel(zip(metricValues[:-1], metricValues[:-1]))
             plt.plot(x, y, label=legendLabel)
-        plt.xlabel(metricLabel)
+        plt.ylabel(metricLabel)
+        plt.xlabel(self.sliceDataColName)
         if addLegend:
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if title!=None:

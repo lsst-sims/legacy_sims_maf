@@ -28,10 +28,10 @@ def getData(dbTable, dbAddress, bandpass):
     print 'Retrieved %d observations' %(len(simdata['expMJD']))
     return simdata
 
-def getBinner(slicecol, nbins=100):
+def getBinner(simdata, slicecolname, nbins=100):
     t = time.time()
     bb = binners.OneDBinner()
-    bb.setupBinner(slicecol, nbins=nbins)
+    bb.setupBinner(simdata, slicecolname, nbins=nbins)
     
     dt, t = dtime(t)
     print 'Set up binner (and built kdtree if spatial binner) %f s' %(dt)
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
         
     simdata = getData(dbTable, dbAddress, bandpass)
-    bb = getBinner(simdata['seeing'])
+    bb = getBinner(simdata['seeing'], 'seeing')
     metricList = getMetrics()
 
     gm = goBin(dbTable, bandpass, simdata, bb, metricList)
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     dbTable = 'output_opsim3_61'
 
     simdata = getData(dbTable, dbAddress, bandpass)
-    bb = getBinner(simdata['seeing'])
+    bb = getBinner(simdata['seeing'], 'seeing')
     metricList = getMetrics()
 
     gm = goBin(dbTable, bandpass, simdata, bb, metricList)

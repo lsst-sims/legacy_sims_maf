@@ -121,14 +121,14 @@ class BaseBinMetric(object):
     
     def validateMetricData(self, metricList, simData):
         """Validate that simData has the required data values for the metrics in metricList."""
-        simCols = self.metrics[0].classReigstry.uniqueCols()
+        simCols = metricList[0].classReigstry.uniqueCols()
         for c in simCols:
             if c not in simData.dtype.names:
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n',
-                                self.metrics[0].classRegistry)
+                                metricList[0].classRegistry)
 
     def runBins(self, metricList, simData, 
-                simDataName='opsim', metadata='', **kwargs):
+                simDataName='opsim', metadata=''):
         """Run metric generation over binner.
 
         metricList = list of metric objects

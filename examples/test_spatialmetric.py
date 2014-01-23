@@ -120,7 +120,7 @@ if __name__ == '__main__':
     dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
     bandpass = 'r'
 
-    nside=16
+    nside=128
         
     simdata = getData(dbTable, dbAddress, bandpass)
     bb = getBinner(simdata['fieldRA'], simdata['fieldDec'], nside=nside)

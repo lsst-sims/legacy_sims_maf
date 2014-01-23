@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import lsst.sims.operations.maf.grids as grids
+import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.gridMetrics as gridMetrics
+import lsst.sims.operations.maf.binMetrics as binMetrics
 import glob
 
 import time
@@ -12,20 +12,20 @@ def dtime(time_prev):
 
 t= time.time()
 
-# Set up grid metric object. 
-gm = gridMetrics.GlobalGridMetric()
+# Set up binMetric object. 
+gm = binMetrics.BaseBinMetric()
 
 dt, t = dtime(t)
 print 'Set up gridmetric %f s' %(dt)
 
 # Read in grid pickle
 
-gridfile = 'output_opsim3_61_grid.obj_gl'
-gm.readGrid(gridfile)
+binfile = 'output_opsim3_61_binner.obj_ON'
+gm.readBinner(binfile)
 
 # Read in metric files
 
-filenames = glob.glob('output_opsim3_61*gl.fits')
+filenames = glob.glob('output_opsim3_61*ON.fits')
 
 gm.readMetric(filenames)
 
@@ -40,14 +40,14 @@ print 'Metrics read' , gm.metricValues.keys()
 
 # Generate comparison plots
 
-compare = ['Max_5sigma_modified','Min_seeing', 'coaddm5']
+compare = ['Count_seeing',]
 for c in compare:
     comparelist = []
     for k in gm.metricValues.keys():
         if k.startswith(c):
             comparelist.append(k)
     print 'Comparing', comparelist
-    if c == 'Min_seeing':
+    if c == 'Count_seeing':
        gm.plotComparisons(comparelist, legendloc = 'upper right')
     else:
        gm.plotComparisons(comparelist)
