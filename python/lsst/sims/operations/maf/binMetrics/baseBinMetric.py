@@ -250,7 +250,7 @@ class BaseBinMetric(object):
                                     comment = comment, dt=dt, binnerfile=binnerfile,
                                     badval = self.binner.badval)
         
-    def writeBinner(self,  binnerfile='binner.obj',outfileRoot=None, outDir=None):
+    def writeBinner(self,  binnerfile='binner.obj', outfileRoot=None, outDir=None):
         """Write a pickle of the binner to disk."""
         outfile = self._buildOutfileName(binnerfile, outDir=outDir, outfileRoot=outfileRoot)
         modbinner = self.binner
@@ -273,11 +273,8 @@ class BaseBinMetric(object):
             # Dedupe the metric name, if needed.
             metricName = self._deDupeMetricName(metricName)
             # Store the header values in variables
-            self.metricValues[metricName] = ma.MaskedArray(data = metricValues,
-                                                           mask = np.where(metricValues == 
-                                                                           self.binner.badval, True, 
-                                                                           False),
-                                                            fill_value = self.binner.badval)
+            self.metricValues[metricName] = metricValues
+            self.metricValues[metricName].fill_value = self.binner.badval
             self.simDataName[metricName] = simDataName
             self.metadata[metricName] = metadata
             self.comment[metricName] = comment
@@ -400,7 +397,11 @@ class BaseBinMetric(object):
             histfignum = None
             addLegend = False
             for i, m in enumerate(metricNameList):
-                histfignum = self.binner.plotBinnedData(self.metricValues[m], 
+                if i == (len(metricNameList)-1):
+                    addLegend = True
+                legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
+                    + ' ' + self._dupeMetricName(m)
+                histfignum = self.binner.plotBinnedData(self.metricValues[m].filled(0), 
                                                         plotLabel, title=plotTitle, 
                                                         fignum=histfignum,
                                                         alpha=0.3,

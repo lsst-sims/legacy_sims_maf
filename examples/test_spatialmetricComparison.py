@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import lsst.sims.operations.maf.grids as grids
+import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.gridMetrics as gridMetrics
+import lsst.sims.operations.maf.binMetrics as binMetrics
+import glob
 
 import time
 def dtime(time_prev):
@@ -12,22 +13,23 @@ def dtime(time_prev):
 t= time.time()
 
 # Set up grid metric object. 
-gm = gridMetrics.SpatialGridMetric()
+gm = binMetrics.BaseBinMetric()
 
 dt, t = dtime(t)
 print 'Set up gridmetric %f s' %(dt)
 
 # Read in grid pickle
 
-gridfile = 'output_opsim3_61_grid.obj_sp'
-gm.readGrid(gridfile)
+binnerfile = 'output_opsim3_61_binner.obj_SP'
+gm.readBinner(binnerfile)
 
 # Read in metric files
 
-filenames =  ['output_opsim3_61_coaddm5_r_sp.fits', 'output_opsim3_61_coaddm5_r_dit_sp.fits', 
-              'output_opsim3_61_Min_seeing_r_sp.fits', 'output_opsim3_61_Min_seeing_r_dit_sp.fits',
-              'output_opsim3_61_Max_5sigma_modified_r_sp.fits', 'output_opsim3_61_Max_5sigma_modified_r_dit_sp.fits']
-
+#filenames = glob.glob('output_opsim3_61*SP.fits')
+filenames = ['output_opsim3_61_Mean_seeing_r_SP.fits', 
+             'output_opsim3_61_Mean_seeing_r_dit_SP.fits',
+             'output_opsim3_61_coaddm5_r_SP.fits',
+             'output_opsim3_61_coaddm5_r_dit_SP.fits']
 gm.readMetric(filenames)
 
 dt, t = dtime(t)
@@ -40,7 +42,7 @@ print 'Metrics read' , gm.metricValues.keys()
 
 # Generate comparison plots
 
-compare = ['Max_5sigma_modified', 'Min_seeing', 'coaddm5']
+compare = ['Mean_seeing', 'coaddm5']
 for c in compare:
     comparelist = []
     for k in gm.metricValues.keys():

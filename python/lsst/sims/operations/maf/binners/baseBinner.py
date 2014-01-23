@@ -55,14 +55,14 @@ class BaseBinner(object):
 
     def writeMetricData(self, outfilename, metricValues,
                         comment='', metricName='',
-                        simDataName='', metadata='', binfile='', 
+                        simDataName='', metadata='', binnerfile='', 
                         int_badval=-666, badval=-666, dt=np.dtype('float64')):
         """Write metric data values to outfilename, preserving metadata. """
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             head.update(comment=comment, metricName=metricName,
-                        simDataName=simDataName, metadata=metadata, binfile=binfile,
+                        simDataName=simDataName, metadata=metadata, binnerfile=binnerfile,
                         binnertype=self.binnertype, int_badval=int_badval, badval=badval)
         if dt == 'object':
             try:
@@ -137,10 +137,12 @@ class BaseBinner(object):
         else:
             metricValues, head = pyf.getdata(infilename, header=True)
             metricValues = metricValues.astype(head['dtype'])
+            mask = np.where(metricValues == head['badval'], True, False)
+            mask = np.where(metricValues == head['int_badval'], True, mask)
         # Convert metric values to masked array.  
-        metricmasked = ma.MaskedArray(data = metricValues,
+        metricValues = ma.MaskedArray(data = metricValues,
                                       mask = mask,
                                       fill_value = self.badval)
         return metricValues, head['metricName'], \
             head['simDataName'],head['metadata'], head['comment'], \
-            head['binfile'], head['binnertype']
+            head['binnerfile'], head['binnertype']

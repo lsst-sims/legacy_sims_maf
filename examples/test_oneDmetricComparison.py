@@ -1,3 +1,5 @@
+CURRENTLY NEEDS WORKS (COMPARISON PLOTS)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.operations.maf.binners as binners
@@ -27,7 +29,7 @@ gm.readBinner(binfile)
 
 filenames = glob.glob('output_opsim3_61*ON.fits')
 
-gm.readMetric(filenames)
+gm.readMetric(filenames, checkBinner=False)
 
 dt, t = dtime(t)
 print 'Read metric files and set up/unpickled grid %f s' %(dt)
@@ -37,6 +39,12 @@ print 'Metrics read' , gm.metricValues.keys()
 #print 'Metric metadata', gm.metadata
 #print 'Metric comments', gm.comment
 
+
+print 'Count_seeing_r', len(gm.metricValues['Count_seeing'])
+print gm.metricValues['Count_seeing']
+
+print 'Count_seeing_i', len(gm.metricValues['Count_seeing__0'])
+print gm.metricValues['Count_seeing__0']
 
 # Generate comparison plots
 
