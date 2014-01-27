@@ -27,6 +27,6 @@ if __name__ == "__main__":
                         help="If set, append to an existing table -- Default is False")
     args = parser.parse_args()
     authDictionary = getDbAddress()
-    dbAddress = authDictionary['MSSQL_MAF_WRITER']
+    dbAddress = authDictionary[args.connectionName]
     engine, metaData = make_engine(dbAddress)
     loadData(args.fileName, None, args.delimiter, args.tableName, args.primaryKey, engine, metaData, args.numGuess, append=args.append)
