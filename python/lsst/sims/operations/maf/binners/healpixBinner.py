@@ -124,7 +124,7 @@ class HealpixBinner(BaseSpatialBinner):
         # To handle masked values properly, need polespice. (might this work if use_weights & weight values set appropriately?)
         # But this will work when comparing two different angular power spectra calculated in the same way, with the same (incomplete) footprint.
         cl = hp.anafast(metricValue)
-        l=np.arange(np.size(cl))
+        l = np.arange(np.size(cl))
         # Plot the results.
         condition = (l < maxl)
         plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=legendLabel)
