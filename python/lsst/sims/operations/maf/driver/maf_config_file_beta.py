@@ -1,30 +1,31 @@
 import itertools
 from mafConfig import *
 
-root.outputDir = 'path/to/somwhere'
-root.dbAddress = 'mysql://lsst:lsst@blahblah/'
-root.opsimNames = ['opsim_3_61', 'opsim_happyrun', 'opsim_sadrun']
+root.outputDir = './output2'
+root.dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433/LSST'
+#root.dbAddress = 'postgres://calibuser:calibuser@ivy.astro.washington.edu:5432/calibDB.05.05.2010'
+root.opsimNames = ['output_opsim3_61_forLynne']
 
-constraints = []
-cons = itertools.product(['filter == '+s+' & ' for s in ['"u"','"g"','"r"','"i"','"z"','"y"']],
-                         ['proposalID == ' + s+' & ' for s in ['"WFD"', '"other"']],
-                         ['seeing ' +s for s in ['< 0.5','>=0.5','<1000']] )
-for c in cons:
-    constraints.append(''.join(c) ) 
+
+constraints = ["filter = \'r\' and night < 100+49353", "filter = \'i\' and night < 100+49353"]
 
 
 root.constraints = constraints
 
 binner1 = BinnerConfig()
 binner1.binner = 'HealpixBinner'
-m1 = makeMetricConfig('MeanMetric', params='5sigma_modified')
-m2 = makeMetricConfig('RmsMetric', params='seeing')
+binner1.kwargs = {"nside":128}
+m1 = makeMetricConfig('MeanMetric', params=['5sigma_modified'])
+m2 = makeMetricConfig('RmsMetric', params=['seeing'])
 binner1.metricDict = makeDict(m1,m2 )
+binner1.spatialKey1 = "fieldRA"
+binner1.spatialKey2 = "fieldDec"
+binner1.leafsize = 50000
 
 binner2 = BinnerConfig()
 binner2.binner = 'UniBinner'
-m1 = makeMetricConfig('MeanMetric', params='5sigma_modified')
-m2 = makeMetricConfig('RmsMetric', params='seeing')
+m1 = makeMetricConfig('MeanMetric', params=['5sigma_modified'])
+m2 = makeMetricConfig('RmsMetric', params=['seeing'])
 binner2.metricDict = makeDict(m1,m2 )
 
 root.binners = makeDict(binner1,binner2)
