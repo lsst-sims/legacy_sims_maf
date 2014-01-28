@@ -1,4 +1,5 @@
 import itertools
+from mafConfig import *
 
 root.outputDir = 'path/to/somwhere'
 root.dbAddress = 'mysql://lsst:lsst@blahblah/'
@@ -11,24 +12,20 @@ cons = itertools.product(['filter == '+s+' & ' for s in ['"u"','"g"','"r"','"i"'
 for c in cons:
     constraints.append(''.join(c) ) 
 
-root.grid1 ='GlobalGrid'
-root.kwrdsForGrid1 = ''
-root.metricsForGrid1 =['MeanMetric', 'RmsMetric','MaxMetric']
-root.metricParamsForGrid1 = ['5sigma_modified','seeing', '5sigma_modified' ]
-root.metricKwrdsForGrid1 = ['']*3
-root.constraintsForGrid1 = constraints
 
-root.grid2 = 'HealpixGrid'
-root.kwrdsForGrid2 = 'nside=256'
-root.metricsForGrid2 = ['Coaddm5Metric', 'VisitPairsMetric']
-root.metricParamsForGrid2 =['5sigma_modified', '']
-root.metricKwrdsForGrid2 = ['', 'deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0']
-root.constraintsForGrid2 = constraints
+root.constraints = constraints
 
-root.grid3 = 'HealpixGrid'
-root.kwrdsForGrid3 = 'nside=512'
-root.metricsForGrid3 = ['ProperMotionMetric']
-root.metricParamsForGrid3 = ['']
-root.constraintsForGrid3 = ' | '.join(['(filter == ' + s +')' for s in ['g','r','i']])
+binner1 = BinnerConfig()
+binner1.binner = 'HealpixBinner'
+m1 = makeMetricConfig('MeanMetric', params='5sigma_modified')
+m2 = makeMetricConfig('RmsMetric', params='seeing')
+binner1.metricDict = makeDict(m1,m2 )
 
+binner2 = BinnerConfig()
+binner2.binner = 'UniBinner'
+m1 = makeMetricConfig('MeanMetric', params='5sigma_modified')
+m2 = makeMetricConfig('RmsMetric', params='seeing')
+binner2.metricDict = makeDict(m1,m2 )
+
+root.binners = makeDict(binner1,binner2)
 
