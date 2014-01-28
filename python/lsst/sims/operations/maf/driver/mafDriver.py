@@ -1,16 +1,16 @@
 import numpy as np #segfault if numpy not imported 1st, argle bargle!
 from mafConfig import MafConfig
 import lsst.sims.operations.maf.db as db
-import lsst.sims.operations.maf.grids as grids
+import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.gridMetrics as gridMetrics
+import lsst.sims.operations.maf.binMetrics as binMetrics
 
 
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
 
     def __init__(self, configOverrideFilename=None):
-        """Load up the configuration and set the grid and metric lists """
+        """Load up the configuration and set the bin and metric lists """
         self.config=MafConfig()
         # Load any config file
         if configOverrideFilename is not None:
@@ -22,44 +22,43 @@ class MafDriver(object):
         self.config.validate()
         self.config.freeze()
 
-        # Construct the grid and metric objects
-        gridconfigs = [self.config.grid1,self.config.grid2,self.config.grid3,
-                   self.config.grid4,self.config.grid5,
-                   self.config.grid6,self.config.grid7,
-                   self.config.grid8,self.config.grid9,self.config.grid10]
-        s_grids = []
-        s_gridKwrds = []
-        s_gridKwrds =[]
+        # Construct the binners and metric objects
+        binconfigs = [self.config.bin1,self.config.bin2,self.config.bin3,
+                   self.config.bin4,self.config.bin5,
+                   self.config.bin6,self.config.bin7,
+                   self.config.bin8,self.config.bin9,self.config.bin10]
+        s_bins = []
+        s_binKwrds = []
         s_metrics =[]
         s_metricParams =[]
         s_metricKwrds =[]
         self.constraints = []
-        for g in gridconfigs:
-            s_grids.append(g.grid)
-            s_gridKwrds.append(g.kwrds)
-            s_metrics.append(g.metrics)
-            s_metricParams.append(g.metricParams)
-            s_metricKwrds.append(g.metricKwrds)
-            self.constraints.append(g.constraints) 
+        for b in binconfigs:
+            s_bins.append(b.binner)
+            s_binKwrds.append(b.kwrds)
+            s_metrics.append(b.metrics)
+            s_metricParams.append(b.metricParams)
+            s_metricKwrds.append(b.metricKwrds)
+            self.constraints.append(b.constraints) 
             
-        self.gridList=[]
+        self.binList=[]
         self.metricList=[]
 
-        for i,s_grid in enumerate(s_grids):
-            if s_grid is not '':
-                self.gridList.append(getattr(grids,s_grid)(**eval('dict('+ s_gridKwrds[i]+')'))   )
+        for i,s_bin in enumerate(s_bins):
+            if s_bin is not '':
+                self.binList.append(getattr(binners,s_bin)(**eval('dict('+ s_binKwrds[i]+')'))   )
                 sub_metricList=[]
                 for j,s_metric in enumerate(s_metrics[i]):
                     sub_metricList.append(getattr(metrics,s_metric)(*s_metricParams[i][j].split(','), **eval('dict('+s_metricKwrds[i][j]+')' )))
                 self.metricList.append(sub_metricList)
 
 
-    def _gridKey(self,grid):
-        """Take a grid and return the correct type of gridmetric"""
-        if grid.gridtype == "GLOBAL":
-            result = gridMetrics.GlobalGridMetric()
-        elif grid.gridtype == "SPATIAL":
-            result = gridMetrics.SpatialGridMetric()
+    def _binKey(self,binner):
+        """Take a binner and return the correct type of binMetric"""
+        if binner.binnertype == "UNI":
+            result = binMetrics.BaseBinMetric()
+        elif binner.binnertype == "SPATIAL":
+            result = binMetrics.BaseBinMetric()
         return result
     
     def getData(self, tableName,constraint, colnames=[], groupBy='expmjd'):
@@ -71,26 +70,28 @@ class MafDriver(object):
         return 
 
     def run(self):
-        """Loop over each grid and calc metrics for that grid. """
-        for i,grid in enumerate(self.gridList):
+        """Loop over each binner and calc metrics for that binner. """
+        for i,binner in enumerate(self.binList):
             for opsimName in self.config.opsimNames:
-                for j,constr in enumerate(self.constraints[i]): #If I have different grids w/same cosntraints, this is fetching same data multiple times.  Could do something more clever and only pull once.  This seems like a nice spot to multiprocess the sucker too.
+                for j,constr in enumerate(self.constraints[i]): #If I have different binners w/same cosntraints, this is fetching same data multiple times.  Could do something more clever and only pull once.  This seems like a nice spot to multiprocess the sucker too.
                     colnames = []
                     for m in self.metricList[i]:
                         for cn in m.colNameList:
                             colnames.append(cn)
-                    if grid.gridtype == 'SPATIAL': 
+                    if binner.binnertype == 'SPATIAL': 
                         colnames.append(self.config.spatialKey1) 
                         colnames.append(self.config.spatialKey2)
                     colnames = list(set(colnames))
                     self.getData(opsimName,constr, colnames=colnames)
                     #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)
-                    gm = self._gridKey(grid)
-                    if hasattr(grid,'buildTree'):
-                        grid.buildTree(self.data[self.config.spatialKey1],
+                    gm = self._binKey(binner)
+                    if binner.binnertype == 'SPATIAL':
+                        binner.setupBinner(self.data[self.config.spatialKey1],
                                        self.data[self.config.spatialKey2], leafsize=self.config.leafsize)
-                    gm.setGrid(grid)
-                    gm.runGrid(self.metricList[i], self.data, simDataName=opsimName+'%i'%j, metadata='')
+                    if binner.binnertype == 'UNI':
+                        binner.setupBinner(self.data)
+                    gm.setBinner(binner)
+                    gm.runBins(self.metricList[i], self.data, simDataName=opsimName+'%i'%j, metadata='')
                     gm.reduceAll()
                     gm.plotAll(outDir=self.config.outputDir, savefig=True)
                     gm.writeAll(outDir=self.config.outputDir)
