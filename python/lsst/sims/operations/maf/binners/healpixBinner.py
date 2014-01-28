@@ -23,7 +23,7 @@ class HealpixBinner(BaseSpatialBinner):
         # Check validity of nside:
         if not(hp.isnsideok(nside)):
             raise Exception('Valid values of nside are powers of 2.')
-        self.nside = nside
+        self.nside = int(nside) #argle bargle
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
             print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
