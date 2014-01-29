@@ -108,7 +108,7 @@ class HealpixBinner(BaseSpatialBinner):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          legendLabel=None, addLegend=False):
+                          legendLabel=None, addLegend=False, removeDipole=True):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -123,7 +123,10 @@ class HealpixBinner(BaseSpatialBinner):
             fig = plt.figure()
         # To handle masked values properly, need polespice. (might this work if use_weights & weight values set appropriately?)
         # But this will work when comparing two different angular power spectra calculated in the same way, with the same (incomplete) footprint.
-        cl = hp.anafast(metricValue)
+        if removeDipole:
+            cl = hp.anafast(hp.remove_dipole(metricValue))
+        else:
+            cl = hp.anafast(metricValue)
         l=np.arange(np.size(cl))
         # Plot the results.
         condition = (l < maxl)

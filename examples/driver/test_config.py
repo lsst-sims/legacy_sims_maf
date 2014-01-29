@@ -7,7 +7,7 @@ root.dbAddress = 'mssql+pymssql://LSST-2:L$$TUser@fatboy.npl.washington.edu:1433
 root.opsimNames = ['output_opsim3_61_forLynne']
 
 
-constraints = ["filter = \'r\' and night < 100+49353", "filter = \'i\' and night < 100+49353"]
+constraints = ["filter = \'r\' and night < 750+49353", "filter = \'i\' and night < 750+49353"]
 
 
 root.constraints = constraints
@@ -17,7 +17,8 @@ binner1.binner = 'HealpixBinner'
 binner1.kwargs = {"nside":128}
 m1 = makeMetricConfig('MeanMetric', params=['5sigma_modified'])
 m2 = makeMetricConfig('RmsMetric', params=['seeing'])
-binner1.metricDict = makeDict(m1,m2 )
+m3 = makeMetricConfig('Coaddm5Metric')
+binner1.metricDict = makeDict(m1,m2,m3 )
 binner1.spatialKey1 = "fieldRA"
 binner1.spatialKey2 = "fieldDec"
 binner1.leafsize = 50000
