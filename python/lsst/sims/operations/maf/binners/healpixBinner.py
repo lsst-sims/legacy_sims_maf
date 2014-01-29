@@ -23,7 +23,7 @@ class HealpixBinner(BaseSpatialBinner):
         # Check validity of nside:
         if not(hp.isnsideok(nside)):
             raise Exception('Valid values of nside are powers of 2.')
-        self.nside = nside
+        self.nside = int(nside) #argle bargle
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
             print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
@@ -108,7 +108,7 @@ class HealpixBinner(BaseSpatialBinner):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          legendLabel=None, addLegend=False):
+                          legendLabel=None, addLegend=False, removeDipole=True):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -116,6 +116,7 @@ class HealpixBinner(BaseSpatialBinner):
         fignum = figure number (default None and create new plot)
         legendLabel = label to add in figure legend (default None)
         addLegend = flag to add legend (default False).
+        removeDipole = remove dipole when calculating power spectrum (default True) (monopole removed automatically.)
         """
         if fignum:
             fig = plt.figure(fignum)
@@ -124,6 +125,10 @@ class HealpixBinner(BaseSpatialBinner):
         # To handle masked values properly, need polespice. (might this work if use_weights & weight values set appropriately?)
         # But this will work when comparing two different angular power spectra calculated in the same way, with the same (incomplete) footprint.
         cl = hp.anafast(metricValue)
+        if removeDipole:
+            cl = hp.anafast(hp.remove_dipole(metricValue))
+        else:
+            cl = hp.anafast(metricValue)
         l = np.arange(np.size(cl))
         # Plot the results.
         condition = (l < maxl)

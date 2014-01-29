@@ -60,15 +60,16 @@ class ProperMotionMetric(BaseMetric):
         for f in filters:
             observations = np.where(dataslice['filter'] == f)
             if np.size(observations[0]) < 2:
-                result = self.badval
+                precis[observations] = self.badval
             else:
                 snr = m52snr(self.mags[f],
                    dataslice['5sigma_modified'][observations])
                 precis[observations] = astrom_precision(
                     dataslice['seeing'][observations], snr)
-                precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2) 
-                result = sigma_slope(dataslice['expMJD'][observations], precis)
-                result = result*365.25*1e3 #convert to mas/yr
+                precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
+        good = np.where(precis != self.badval)
+        result = sigma_slope(dataslice['expMJD'][good], precis[good])
+        result = result[good]*365.25*1e3 #convert to mas/yr
         # Observations that are very close together can still fail
         if np.isnan(result):
             result = self.badval 
