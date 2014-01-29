@@ -131,7 +131,10 @@ class HealpixBinner(BaseSpatialBinner):
             cl = hp.anafast(metricValue)
         l = np.arange(np.size(cl))
         # Plot the results.
-        condition = (l < maxl)
+        if removeDipole:
+            condition = ((l < maxl) & (l > 1))
+        else:
+            condition = (l < maxl)
         plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=legendLabel)
         plt.yscale('log')
         plt.xlabel(r'$l$')

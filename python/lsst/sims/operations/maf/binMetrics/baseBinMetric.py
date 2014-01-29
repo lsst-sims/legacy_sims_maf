@@ -443,7 +443,7 @@ class BaseBinMetric(object):
                   + ' ' + self._dupeMetricName(m)
                 psfignum = self.binner.plotPowerSpectrum(self.metricValues[m].filled(),
                                                          addLegend=addLegend,
-                                                         fignum = psfignum, maxl = maxl,
+                                                         fignum = psfignum, maxl = maxl, 
                                                          legendLabel=legendLabel, title=plotTitle)
             if savefig:
                 outfile = self._buildOutfileName(plotTitle, 
