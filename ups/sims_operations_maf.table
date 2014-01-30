@@ -1,1 +1,14 @@
+setupRequired(base)
+setupRequired(numpy)
+setupRequired(matplotlib)
+setupRequired(scipy)
+setupRequired(pyfits)
+setupRequired(catalogs_generation)
+setupRequired(pex_config)
+# other requirements (not in LSST stack)
+# healpy (if using healpix binner)
+# sqlalchemy 
+# your choice of sql python driver for your sql db with opsim tables
+# pyslalib (if doing astrometry metrics)
+
 envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python)
