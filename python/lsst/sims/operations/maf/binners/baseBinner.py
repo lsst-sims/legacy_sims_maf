@@ -46,7 +46,7 @@ class BaseBinner(object):
         result = 'P'+convert_dict[pydtype.name]+'()'
         return result
         
-    def sliceSimData(self, binpoint, **kwargs):
+    def sliceSimData(self, binpoint):
         """Slice the simulation data appropriately for the binner.
 
         This slice of data should be the indices of the numpy rec array (the simData)

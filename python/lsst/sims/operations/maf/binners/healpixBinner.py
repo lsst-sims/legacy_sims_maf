@@ -23,7 +23,7 @@ class HealpixBinner(BaseSpatialBinner):
         # Check validity of nside:
         if not(hp.isnsideok(nside)):
             raise Exception('Valid values of nside are powers of 2.')
-        self.nside = int(nside) #argle bargle
+        self.nside = int(nside) 
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
             print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
@@ -71,10 +71,10 @@ class HealpixBinner(BaseSpatialBinner):
         # Generate a Mollweide full-sky plot.
         if clims!=None:
             hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
-                        format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180))
+                        format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180))
         else:
             hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
-                        format=cbarFormat, rot=(0,0,180))
+                        format=cbarFormat, rot=(180,0,180))
         fig = plt.gcf()
         return fig.number
 
@@ -122,8 +122,6 @@ class HealpixBinner(BaseSpatialBinner):
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        # To handle masked values properly, need polespice. (might this work if use_weights & weight values set appropriately?)
-        # But this will work when comparing two different angular power spectra calculated in the same way, with the same (incomplete) footprint.
         cl = hp.anafast(metricValue)
         if removeDipole:
             cl = hp.anafast(hp.remove_dipole(metricValue))

@@ -21,7 +21,7 @@ def getData(dbTable, dbAddress, bandpass):
                                                      'fieldRA', 'fieldDec', 'airmass',
                                                      '5sigma_modified', 'seeing',
                                                      'skybrightness_modified', 'altitude',
-                                                     'hexdithra', 'hexdithdec'], 
+                                                     'hexdithra', 'hexdithdec', 'fieldID'], 
                                                      groupByCol='expMJD')
     dt, t = dtime(t)
     print 'Query complete: %f s' %(dt)
