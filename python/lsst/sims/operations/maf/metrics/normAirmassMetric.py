@@ -2,7 +2,10 @@ import numpy as np
 from .baseMetric import BaseMetric
 
 class NormAirmassMetric(BaseMetric):
-    """Calculate the normalized airmass """
+    """Calculate the normalized airmass
+
+    This metric is currently only formally correct when run
+    using points centered on pointings (not arbitrary HEALpix points).  """
     def __init__(self, metricName='normAirmass', airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388, reducer=np.mean):
         self.telescope_lat = telescope_lat
         self.dec = decCol
