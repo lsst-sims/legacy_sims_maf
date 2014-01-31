@@ -37,17 +37,17 @@ class MafDriver(object):
                                        (*metric.params, **metric.kwargs) )
             self.metricList.append(sub_metricList)
 
-        self.constraints = self.config.constraints
+        #self.constraints = self.config.constraints
         
     def _binKey(self,binner):
         """Take a binner and return the correct type of binMetric"""
         if binner.binnertype == "UNI":
             result = binMetrics.BaseBinMetric()
-        elif binner.binnertype == "SPATIAL":
+        elif (binner.binnertype == "SPATIAL") | (binner.binnertype == "Healpix") :
             result = binMetrics.BaseBinMetric()
         return result
     
-    def getData(self, tableName,constraint, colnames=[], groupBy='expmjd'):
+    def getData(self, tableName,constraint, colnames=[], groupBy='expMJD'):
         """Pull required data from DB """
         #XXX-temporary kludge. Need to decide how to make this intelligent.
         dbTable = tableName 
@@ -58,20 +58,20 @@ class MafDriver(object):
     def run(self):
         """Loop over each binner and calc metrics for that binner. """
         for opsimName in self.config.opsimNames:
-            for j,constr in enumerate(self.constraints):
-                for i,binner in enumerate(self.binList):
+            for i,binner in enumerate(self.binList):
+                for j, constr in enumerate(self.config.binners[i].constraints): #this means if we have binners w/identical constaints we end up pulling the data more than once.  If this matters, we could just build a list of unique constraints, pull the data for each constraint and then run the binners that match that constraint I guess.
                     colnames = []
                     for m in self.metricList[i]:
                         for cn in m.colNameList:
                             colnames.append(cn)
-                    if binner.binnertype == 'SPATIAL': 
+                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'Healpix'): 
                         colnames.append(binner.spatialKey1) 
                         colnames.append(binner.spatialKey2)
                     colnames = list(set(colnames))
                     self.getData(opsimName,constr, colnames=colnames)
                     #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)
                     gm = self._binKey(binner)
-                    if binner.binnertype == 'SPATIAL':
+                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'Healpix') :
                         binner.setupBinner(self.data[binner.spatialKey1],
                                        self.data[binner.spatialKey2], leafsize=binner.leafsize)
                     if binner.binnertype == 'UNI':

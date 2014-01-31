@@ -123,10 +123,7 @@ class HealpixBinner(BaseSpatialBinner):
         binner = HealpixBinner(nside=header['nside'.upper()])
         binner.badval = header['badval'.upper()]
         binner.int_badval = header['int_badval']
-        binner.comment = header['comment'.upper()]
-        binner.simDataName=header['simDataName']
-        binner.metadata = header['metadata'.upper()]
-        return metricValues, binner
+        return metricValues, binner, header
         
     def plotSkyMap(self, metricValue, metricLabel, title='',
                    clims=None, cbarFormat='%.2g'):

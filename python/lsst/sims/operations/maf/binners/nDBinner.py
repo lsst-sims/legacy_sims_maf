@@ -138,11 +138,8 @@ class NDBinner(BaseBinner):
         binner.bins = self.bins
         binner.badval = header['badval'.upper()]
         binner.int_badval = header['int_badval']
-        binner.comment = header['comment'.upper()]
-        binner.simDataName=header['simDataName']
-        binner.metadata = header['metadata'.upper()]
         binner.nD = header['ND']
         _setupAllbins()
         
-        return metricValues, binner
+        return metricValues, binner, header
 
