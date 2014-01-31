@@ -3,14 +3,16 @@
 import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import pyfits as pyf
+from .baseBinner import BaseBinner
 
 from .baseSpatialBinner import BaseSpatialBinner
 
-class opsimFieldBinner(BaseSpatialBinner):
+class OpsimFieldBinner(BaseSpatialBinner):
     """Opsim Field based binner."""
     def __init__(self, ra, dec, verbose=True):
         """Set up opsim field binner object."""
-        super(opsimFieldBinner, self).__init__(verbose=verbose)
+        super(OpsimFieldBinner, self).__init__(verbose=verbose)
         self.ra = ra
         self.dec = dec
         self.npix = len(self.ra)
@@ -44,9 +46,9 @@ class opsimFieldBinner(BaseSpatialBinner):
 
     def __eq__(self, otherBinner):
         """Evaluate if two grids are equivalent."""
-        if isinstance(otherBinner, opsimFieldBinner):
+        if isinstance(otherBinner, OpsimFieldBinner):
             return ((np.all(otherBinner.ra == self.ra)) 
-                    and (np.all(otherBinner.dec) == self.dec))
+                    and (np.all(otherBinner.dec == self.dec)))
         else:
             return False
 
@@ -107,3 +109,58 @@ class opsimFieldBinner(BaseSpatialBinner):
         return fig.number
    
 
+    def writeMetricData(self, outfilename, metricValues,
+                        comment='', metricName='',
+                        simDataName='', metadata='', 
+                        int_badval=-666, badval=-666., dt=np.dtype('float64')):
+        """Write metric data and bin data in a fits file """
+
+        header_dict = dict(comment=comment, metricName=metricName,
+                           simDataName=simDataName,
+                           metadata=metadata, binnertype=self.binnertype,
+                           dt=dt.name, badval=badval, int_badval=int_badval)
+        base = BaseBinner()
+        base.writeMetricDataGeneric(outfilename=outfilename,
+                        metricValues=metricValues,
+                        comment=comment, metricName=metricName,
+                        simDataName=simDataName, metadata=metadata, 
+                        int_badval=int_badval, badval=badval, dt=dt)
+        #update the header
+        hdulist = pyf.open(outfilename, mode='update')
+        for key in header_dict.keys():
+            hdulist[0].header[key] = header_dict[key]
+        hdulist.close()
+
+        #append the bins
+        hdulist = pyf.open(outfilename, mode='append')
+        raHDU = pyf.PrimaryHDU(data=self.ra)
+        decHDU =  pyf.PrimaryHDU(data=self.dec)
+        hdulist.append(raHDU)
+        hdulist.append(decHDU)
+        hdulist.flush()
+        hdulist.close()
+        
+        return outfilename
+
+    def readMetricData(self, infilename):
+        """Read metric values back in and restore the binner"""
+
+        #restore the bins first
+        hdulist = pyf.open(infilename)
+        if hdulist[0].header['binnertype'] != self.binnertype:
+             raise Exception('Binnertypes do not match.')
+        
+        ra = hdulist[1].data.copy()
+        dec = hdulist[2].data.copy()        
+        base = BaseBinner()
+        metricValues, header = base.readMetricDataGeneric(infilename)
+        
+        binner = OpsimFieldBinner(ra, dec)
+       
+        binner.badval = header['badval'.upper()]
+        binner.int_badval = header['int_badval']
+        binner.comment = header['comment'.upper()]
+        binner.simDataName=header['simDataName']
+        binner.metadata = header['metadata'.upper()]
+                
+        return metricValues, binner
