@@ -119,7 +119,7 @@ class HealpixBinner(BaseSpatialBinner):
             base = BaseBinner()
             metricValues, header = base.readMetricDataGeneric(infilename)
         
-        #wtf is with the case of header keywords?  Looks like if the case is uniform, it gets set to upper, but mixed case or including a '_' and the case gets preserved.
+        #wtf is with the case of header keywords?  Ah, long keywords use HIERATCH cards and preserve case.
         binner = HealpixBinner(nside=header['nside'.upper()])
         binner.badval = header['badval'.upper()]
         binner.int_badval = header['int_badval']
