@@ -30,14 +30,20 @@ class MafDriver(object):
             temp_binner.spatialKey1 = binner.spatialKey1
             temp_binner.spatialKey2 = binner.spatialKey2
             temp_binner.leafsize = binner.leafsize
+            temp_binner.constraints = binner.constraints
             self.binList.append(temp_binner)
             sub_metricList=[]
             for i,metric in binner.metricDict.iteritems():
                 sub_metricList.append(getattr(metrics,metric.metric)
                                        (*metric.params, **metric.kwargs) )
             self.metricList.append(sub_metricList)
-
-        #self.constraints = self.config.constraints
+        # Make a unique list of all SQL constraints
+        self.constraints = []
+        for b in self.binList:
+            for c in b.constraints:
+                self.constraints.append(c)
+        self.constraints = list(set(self.constraints))
+        
         
     def _binKey(self,binner):
         """Take a binner and return the correct type of binMetric"""
@@ -58,8 +64,13 @@ class MafDriver(object):
     def run(self):
         """Loop over each binner and calc metrics for that binner. """
         for opsimName in self.config.opsimNames:
-            for i,binner in enumerate(self.binList):
-                for j, constr in enumerate(self.config.binners[i].constraints): #this means if we have binners w/identical constaints we end up pulling the data more than once.  If this matters, we could just build a list of unique constraints, pull the data for each constraint and then run the binners that match that constraint I guess.
+            for j, constr in enumerate(self.constraints):
+                # Find which binners have a matching constraint
+                matchingBinners=[]
+                for b in self.binList:
+                    if constr in b.constraints:
+                        matchingBinners.append(b)
+                for i,binner in enumerate(matchingBinners):
                     colnames = []
                     for m in self.metricList[i]:
                         for cn in m.colNameList:
