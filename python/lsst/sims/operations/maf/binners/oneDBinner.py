@@ -20,11 +20,10 @@ class OneDBinner(BaseBinner):
         or can be left 'None' in which case nbins will be used together with data min/max values
         to slice data in 'sliceDataCol'. """
         self.sliceDataColName = sliceDataColName
-        sliceDataCol = simData[self.sliceDataColName]
+        self.sliceDataCol = simData[sliceDataColName]
         if bins == None:
-            binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, 
-                             binsize, 'float') 
+            binsize = (self.sliceDataCol.max() - self.sliceDataCol.min()) / float(nbins)
+            bins = np.arange(self.sliceDataCol.min(), self.sliceDataCol.max() + binsize, binsize, 'float') 
         self.bins = np.sort(bins)
         self.nbins = len(self.bins)
         # Set up data slicing.
