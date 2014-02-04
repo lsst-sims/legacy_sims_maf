@@ -79,7 +79,7 @@ class MafDriver(object):
                     for m in self.metricList[i]:
                         for cn in m.colNameList:
                             colnames.append(cn)
-                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'Healpix'): 
+                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX'): 
                         colnames.append(binner.setupParams[0]) 
                         colnames.append(binner.setupParams[1])
                     if binner.binnertype == 'ONED':
