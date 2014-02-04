@@ -7,8 +7,10 @@
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
+import pyfits as pyf
 
 from .baseSpatialBinner import BaseSpatialBinner
+from .baseBinner import BaseBinner
 
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
@@ -65,7 +67,64 @@ class HealpixBinner(BaseSpatialBinner):
         # Move dec to +/- 90 degrees
         dec -= np.pi/2.0
         return ra, dec  
-    
+
+    def writeMetricData(self, outfilename, metricValues,
+                        comment='', metricName='',
+                        simDataName='', metadata='', 
+                        int_badval=-666, badval=-666., dt=np.dtype('float64')):
+        """Write metric data and bin data in a fits file """
+
+        header_dict = dict(comment=comment, metricName=metricName, simDataName=simDataName,
+                           metadata=metadata, nside=self.nside, binnertype=self.binnertype,
+                           dt=dt.name, badval=badval, int_badval=int_badval)
+        if metricValues.dtype != 'object': #make a fits file that can be read by ds9
+            hp.write_map(outfilename, metricValues)
+            hdu=1
+            
+        else: #if this is a variable length metric, fall back on the generic fits writing
+            base = BaseBinner()
+            hdu=0
+            base.writeMetricDataGeneric(outfilename=outfilename,
+                        metricValues=metricValues,
+                        comment=comment, metricName=metricName,
+                        simDataName=simDataName, metadata=metadata, 
+                        int_badval=int_badval, badval=badval, dt=dt)
+        #update the header
+        hdulist = pyf.open(outfilename, mode='update')
+        for key in header_dict.keys():
+            hdulist[hdu].header[key] = header_dict[key]
+        hdulist.close()
+        return outfilename
+
+    def readMetricData(self, infilename):
+        """Read metric values back in and restore the binner"""
+
+        hdulist = pyf.open(infilename)
+        if 'DT' in hdulist[0].header.keys():
+            hdu = 0
+        else:
+            hdu=1
+        dt = hdulist[hdu].header['dt']
+        if 'PIXTYPE' in hdulist[hdu].header.keys():
+            pixtype = hdulist[hdu].header['PIXTYPE']
+        else:
+            pixtype=None
+        if hdulist[hdu].header['binnertype'] != self.binnertype:
+             raise Exception('Binnertypes do not match.')
+        hdulist.close()
+        if pixtype == 'HEALPIX':
+            metricValues, header = hp.read_map(infilename, h=True)
+            header = dict(header)
+        else:
+            base = BaseBinner()
+            metricValues, header = base.readMetricDataGeneric(infilename)
+        
+        #wtf is with the case of header keywords?  Ah, long keywords use HIERATCH cards and preserve case.
+        binner = HealpixBinner(nside=header['nside'.upper()])
+        binner.badval = header['badval'.upper()]
+        binner.int_badval = header['int_badval']
+        return metricValues, binner, header
+        
     def plotSkyMap(self, metricValue, metricLabel, title='',
                    clims=None, cbarFormat='%.2g'):
         """Plot the sky map of metricValue using healpy Mollweide plot."""

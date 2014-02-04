@@ -221,19 +221,16 @@ class BaseBinMetric(object):
             except KeyError:
                 pass
 
-    def writeAll(self, outDir=None, outfileRoot=None, comment='',  binnerfile='binner.obj'):
+    def writeAll(self, outDir=None, outfileRoot=None, comment=''):
         """Write all metric values to disk."""
         for mk in self.metricValues.keys():
             dt = self.metricValues[mk].dtype
-            binnerfilename = self._buildOutfileName(binnerfile, outDir=outDir, 
-                                                    outfileRoot=outfileRoot)
             self.writeMetric(mk, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
-                             binnerfile=binnerfilename, dt=dt)
-        self.writeBinner(binnerfile=binnerfile, outfileRoot=outfileRoot,outDir=outDir)
+                             dt=dt)
 
         
     def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, 
-                    dt='float', binnerfile=None):
+                    dt='float'):
         """Write metric values 'metricName' to disk.
 
         comment = any additional comments to add to output file (beyond 
@@ -241,24 +238,25 @@ class BaseBinMetric(object):
         outfileRoot = root of the output files (default simDataName).
         outDir = directory to write output data (default '.').
         dt = data type.
-        binnerfile = the filename for the pickled binner object"""
+       """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.binner.writeMetricData(outfile, self.metricValues[metricName],
+        self.binner.writeMetricData(outfile+'.fits', self.metricValues[metricName],
                                     metricName = metricName,
                                     simDataName = self.simDataName[metricName],
                                     metadata = self.metadata[metricName],
-                                    comment = comment, dt=dt, binnerfile=binnerfile,
+                                    comment = comment, dt=dt, 
                                     badval = self.binner.badval)
-        
-    def writeBinner(self,  binnerfile='binner.obj', outfileRoot=None, outDir=None):
-        """Write a pickle of the binner to disk."""
-        outfile = self._buildOutfileName(binnerfile, outDir=outDir, outfileRoot=outfileRoot)
-        modbinner = self.binner
-        if hasattr(modbinner,'opsimtree'):  delattr(modbinner,'opsimtree') 
-        pickle.dump(modbinner, open(outfile,'w'))
 
-    def readBinner(self, binnerfile='binner.obj'):
-       self.binner = pickle.load(open(binnerfile, 'r'))
+        #depreciated, now binner data written with metric
+ #   def writeBinner(self,  binnerfile='binner.obj', outfileRoot=None, outDir=None):
+ #       """Write a pickle of the binner to disk."""
+ #       outfile = self._buildOutfileName(binnerfile, outDir=outDir, outfileRoot=outfileRoot)
+ #       modbinner = self.binner
+ #       if hasattr(modbinner,'opsimtree'):  delattr(modbinner,'opsimtree') 
+ #       pickle.dump(modbinner, open(outfile,'w'))
+
+ #   def readBinner(self, binnerfile='binner.obj'):
+ #      self.binner = pickle.load(open(binnerfile, 'r'))
     
     def readMetric(self, filenames, checkBinner=True):
         """Read metric values and binner (pickle object) from disk.
@@ -267,17 +265,16 @@ class BaseBinMetric(object):
           properties of self.binner"""
         # Read metrics from disk
         for f in filenames:
-            metricValues, metricName, simDataName, metadata, \
-              comment, binnerfile, binnertype \
+            metricValues, binner, header \
               = self.binner.readMetricData(f)
             # Dedupe the metric name, if needed.
             metricName = self._deDupeMetricName(metricName)
             # Store the header values in variables
             self.metricValues[metricName] = metricValues
             self.metricValues[metricName].fill_value = self.binner.badval
-            self.simDataName[metricName] = simDataName
-            self.metadata[metricName] = metadata
-            self.comment[metricName] = comment
+            self.simDataName[metricName] = header['simDataName']
+            self.metadata[metricName] = header['metadata'.upper()]
+            self.comment[metricName] = header['comment'.upper()]
             if checkBinner:
                 if binnertype != self.binner.binnertype:
                     raise Exception('Metrics not computed on currently loaded binner type.')           

@@ -2,6 +2,7 @@
 
 import numpy as np
 from .baseBinner import BaseBinner
+import pyfits as pyf
 
 class NDBinner(BaseBinner):
     """Nd binner (N dimensions)"""
@@ -33,18 +34,22 @@ class NDBinner(BaseBinner):
                 if len(nbinsList) != self.nD:
                     raise Exception('nbinsList must be same length as sliceDataColList if providing a list')
             else: # have a number of bins, but it's just a single number to be applied to all cols
-                nbinsList = [nbinsList for i in range(self.nd)]
-            self.bins = []
+                nbinsList = [nbinsList for i in range(self.nD)]
+            self.bins = [ [] for i in range(self.nD)]
             for i in range(self.nD):
                 binsize = (self.sliceDataCols[i].max() - self.sliceDataCols[i].min()) \
                     / float(nbinsList[i])
                 self.bins[i] = np.arange(self.sliceDataCols[i].min(), 
                                          self.sliceDataCols[i].max() + binsize,
                                          binsize, 'float')
+        _setupAllbins()
+
+    def _setupAllbins(self):
         self.allbins = []
         for i in range(self.nD):
             self.allbins.append(np.meshgrid(*self.bins)[i].flatten())
         self.nbins = np.array(map(len, self.bins)).prod()
+        return
     
     def __iter__(self):
         """Iterate over the binpoints."""
@@ -91,3 +96,53 @@ class NDBinner(BaseBinner):
             condition = (condition & (self.simDataCols[i] >= binpoint[0][i])
                          & (self.simDataCols[i] < binpoint[1][i]))
         return condition
+
+    def writeMetricData(self, outfilename, metricValues,
+                        comment='', metricName='',
+                        simDataName='', metadata='', 
+                        int_badval=-666, badval=-666., dt=np.dtype('float64')):
+        """Write metric data and bin data in a fits file """
+
+        header_dict = dict(comment=comment, metricName=metricName, simDataName=simDataName,
+                           metadata=metadata, binnertype=self.binnertype,
+                           dt=dt.name, badval=badval, int_badval=int_badval, nD=self.nD)
+        base = BaseBinner()
+        base.writeMetricDataGeneric(outfilename=outfilename,
+                        metricValues=metricValues,
+                        comment=comment, metricName=metricName,
+                        simDataName=simDataName, metadata=metadata, 
+                        int_badval=int_badval, badval=badval, dt=dt)
+        hdulist = pyf.open(outfilename, mode='update')
+        for key in header_dict.keys():
+            hdulist[0].header[key] = header_dict[key]
+        hdulist.close()
+        #now to append the bins
+        hdulist = pyf.open(outfilename,mode='append')
+        binHDU = pyf.PrimaryHDU(data=self.bins)
+        hdulist.append(binHDU)
+        hdulist.flush()
+        hdulist.close()
+        return outfilename
+
+    def readMetricData(self, infilename):
+        """Read metric values back in and restore the binner"""
+
+        #restore the bins first
+        hdulist = pyf.open(infilename)
+        if hdulist[0].header['binnertype'] != self.binnertype:
+             raise Exception('Binnertypes do not match.')
+        
+        self.bins = hdulist[1].data.copy()
+        
+        base = BaseBinner()
+        metricValues, header = base.readMetricDataGeneric(infilename)
+        
+        binner = NDBinner()
+        binner.bins = self.bins
+        binner.badval = header['badval'.upper()]
+        binner.int_badval = header['int_badval']
+        binner.nD = header['ND']
+        _setupAllbins()
+        
+        return metricValues, binner, header
+

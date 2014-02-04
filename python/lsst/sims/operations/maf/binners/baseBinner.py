@@ -54,16 +54,16 @@ class BaseBinner(object):
         which are appropriate for the metric to be working on, for that bin."""
         raise NotImplementedError()
 
-    def writeMetricData(self, outfilename, metricValues,
+    def writeMetricDataGeneric(self, outfilename, metricValues,
                         comment='', metricName='',
-                        simDataName='', metadata='', binnerfile='', 
-                        int_badval=-666, badval=-666, dt=np.dtype('float64')):
+                        simDataName='', metadata='', 
+                        int_badval=-666, badval=-666, dt=np.dtype('float64'), clobber=True):
         """Write metric data values to outfilename, preserving metadata. """
         head = pyf.Header()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             head.update(comment=comment, metricName=metricName,
-                        simDataName=simDataName, metadata=metadata, binnerfile=binnerfile,
+                        simDataName=simDataName, metadata=metadata,
                         binnertype=self.binnertype, int_badval=int_badval, badval=badval)
         if dt == 'object':
             try:
@@ -100,7 +100,7 @@ class BaseBinner(object):
             tbhdu = pyf.new_table(cols)
             # Append the info from head.
             for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
-            tbhdu.writeto(outfilename+'.fits')
+            tbhdu.writeto(outfilename)
         else:
             head.update(dtype = dt.name)
             if dt.name[0:3] == 'int':
@@ -108,10 +108,12 @@ class BaseBinner(object):
             else:
                 use_badval = badval
             tt = ma.filled(metricValues, use_badval)
-            pyf.writeto(outfilename+'.fits', tt.astype(dt), head) 
+            pyf.writeto(outfilename, tt.astype(dt), head, clobber=clobber) 
     
-    def readMetricData(self, infilename):
-        """Read metric data values from file 'infilename'."""
+    def readMetricDataGeneric(self, infilename):
+        """Read metric data values from file 'infilename'.
+        return the metric values and the header.  The info in the header
+        can then be used to re-construct the binner that goes with the metricValues"""
         f = pyf.open(infilename)
         if f[0].header['NAXIS'] == 0:
             f = pyf.open(infilename)
@@ -144,6 +146,4 @@ class BaseBinner(object):
         metricValues = ma.MaskedArray(data = metricValues,
                                       mask = mask,
                                       fill_value = self.badval)
-        return metricValues, head['metricName'], \
-            head['simDataName'],head['metadata'], head['comment'], \
-            head['binnerfile'], head['binnertype']
+        return metricValues, head

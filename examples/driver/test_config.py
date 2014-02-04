@@ -10,7 +10,6 @@ root.opsimNames = ['output_opsim3_61_forLynne']
 constraints = ["filter = \'r\' and night < 750+49353", "filter = \'i\' and night < 750+49353"]
 
 
-root.constraints = constraints
 
 binner1 = BinnerConfig()
 binner1.binner = 'HealpixBinner'
@@ -22,12 +21,14 @@ binner1.metricDict = makeDict(m1,m2,m3 )
 binner1.spatialKey1 = "fieldRA"
 binner1.spatialKey2 = "fieldDec"
 binner1.leafsize = 50000
+binner1.constraints = constraints
 
 binner2 = BinnerConfig()
 binner2.binner = 'UniBinner'
 m1 = makeMetricConfig('MeanMetric', params=['5sigma_modified'])
 m2 = makeMetricConfig('RmsMetric', params=['seeing'])
 binner2.metricDict = makeDict(m1,m2 )
+binner2.constraints=[constraints[1]]
 
 root.binners = makeDict(binner1,binner2)
 
