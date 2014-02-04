@@ -51,7 +51,7 @@ class MafDriver(object):
         """Take a binner and return the correct type of binMetric"""
         if binner.binnertype == "UNI":
             result = binMetrics.BaseBinMetric()
-        elif (binner.binnertype == "SPATIAL") | (binner.binnertype == "Healpix") :
+        elif (binner.binnertype == "SPATIAL") | (binner.binnertype == "HEALPIX") :
             result = binMetrics.BaseBinMetric()
         else:
             result = binMetrics.BaseBinMetric()
