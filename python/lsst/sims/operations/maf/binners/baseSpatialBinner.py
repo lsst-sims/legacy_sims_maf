@@ -5,7 +5,9 @@
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes. 
 
 import numpy as np
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse   
 from matplotlib.ticker import FuncFormatter
 
 try:
@@ -29,11 +31,13 @@ class BaseSpatialBinner(BaseBinner):
 
     def setupBinner(self, simData, spatialkey1,
                     spatialkey2, leafsize=100, radius=1.8):
-        """Use simDataRA and simDataDec (in radians) to set up KDTree. 
+        """Use simData['spatialkey1'] and simData['spatialkey2']
+        (in radians) to set up KDTree. 
 
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
-        'radius' (in radians) is distance at which matches between the simData KDtree 
-          and binpoint RA/Dec values will be produced."""
+        'radius' (in degrees) is distance at which matches between
+        the simData KDtree 
+        and binpoint RA/Dec values will be produced."""
         self._buildTree(simData[spatialkey1], simData[spatialkey2], leafsize)
         self._setRad(radius)    
     
@@ -78,6 +82,7 @@ class BaseSpatialBinner(BaseBinner):
                                                       self.rad)
         return indices
 
+    ## Plot histogram (base spatial binner method).
         
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
@@ -123,3 +128,59 @@ class BaseSpatialBinner(BaseBinner):
         # Return figure number (so we can reuse this if desired).         
         return fig.number
             
+    ### Generate sky map (base spatial binner methods, using ellipses for each RA/Dec value)
+    ### a healpix binner will not have self.ra / self.dec functions, but plotSkyMap is overriden.
+    
+    def _plot_tissot_ellipse(self, longitude, latitude, radius, ax=None, **kwargs):
+        """Plot Tissot Ellipse/Tissot Indicatrix
+        
+        Parameters
+        ----------
+        longitude : float or array_like
+        longitude of ellipse centers (radians)
+        latitude : float or array_like
+        latitude of ellipse centers (radians)
+        radius : float or array_like
+        radius of ellipses
+        ax : Axes object (optional)
+        matplotlib axes instance on which to draw ellipses.
+        
+        Other Parameters
+        ----------------
+        other keyword arguments will be passed to matplotlib.patches.Ellipse.
+
+        # The code in this method adapted from astroML, which is BSD-licensed. 
+        # See http://github.com/astroML/astroML for details.
+        """
+        # Code adapted from astroML, which is BSD-licensed. 
+        # See http://github.com/astroML/astroML for details.
+        ellipses = []
+        if ax is None:
+            ax = plt.gca()            
+        for long, lat, rad in np.broadcast(longitude, latitude, radius*2.0):
+            el = Ellipse((long, lat), radius / np.cos(lat), radius, **kwargs)
+            ellipses.append(el)
+        return ellipses
+
+        
+    def plotSkyMap(self, metricValue, metricLabel, title=None, projection='aitoff',
+                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None):
+        """Plot the sky map of metricValue."""
+        from matplotlib.collections import PatchCollection
+        if fignum==None:
+            fig = plt.figure()
+        ax = plt.subplot(projection=projection)
+        # other projections available include 
+        # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
+        radius = 1.75 * np.pi / 180.
+        ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius,
+                                             ax=ax, linewidth=0)
+        p = PatchCollection(ellipses, cmap=cmap, alpha=0.3)
+        p.set_array(metricValue)
+        ax.add_collection(p)
+        if clims != None:
+            p.set_clim(clims)
+        cb = plt.colorbar(p, orientation='horizontal', format=cbarFormat)
+        if title != None:
+            plt.title(title)
+        return fig.number

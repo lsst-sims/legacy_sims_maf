@@ -17,8 +17,8 @@ class HealpixBinner(BaseSpatialBinner):
     def __init__(self, nside=256, verbose=True):
         """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose)
-        self.badval = hp.UNSEEN
-        self.binnertype = 'Healpix'
+        self.binnertype = 'HEALPIX'
+        self.badval = hp.UNSEEN 
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)

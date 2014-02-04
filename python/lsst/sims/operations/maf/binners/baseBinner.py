@@ -18,6 +18,7 @@ class BaseBinner(object):
 
     def setupBinner(self, *args, **kwargs):
         """Set up internal parameters and bins for binner. """
+        # often args will be simData / sliceDataColName(s) / kwargs
         raise NotImplementedError()
     
     def __len__(self):

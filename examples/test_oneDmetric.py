@@ -6,10 +6,12 @@ import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binMetrics as binMetrics
 import glob
 
+seeing = 'seeing'
+#seeing = 'finSeeing'  #if new opsim outputs 
+
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
-
 
 
 def getData(dbTable, dbAddress, bandpass):
@@ -19,7 +21,7 @@ def getData(dbTable, dbAddress, bandpass):
                                            constraint="filter = \'%s\'" %(bandpass), 
                                            colnames=['filter', 'expMJD',  'night',
                                                      'fieldRA', 'fieldDec', 'airmass',
-                                                     '5sigma_modified', 'seeing',
+                                                     '5sigma_modified', seeing,
                                                      'skybrightness_modified', 'altitude',
                                                      'hexdithra', 'hexdithdec'], 
                                                      groupByCol='expMJD')
@@ -39,8 +41,8 @@ def getBinner(simdata, slicecolname, nbins=100):
 
 def getMetrics():
     t = time.time()
-    count = metrics.CountMetric('seeing')
-    rmsseeing = metrics.RmsMetric('seeing')
+    count = metrics.CountMetric(seeing)
+    rmsseeing = metrics.RmsMetric(seeing)
     
     metricList = [count, rmsseeing]
 
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     dbAddress = 'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock'
         
     simdata = getData(dbTable, dbAddress, bandpass)
-    bb = getBinner(simdata['seeing'], 'seeing')
+    bb = getBinner(simdata, seeing)
     metricList = getMetrics()
 
     gm = goBin(dbTable, bandpass, simdata, bb, metricList)
@@ -118,11 +120,9 @@ if __name__ == '__main__':
     print 'Round 2 (different bandpass)'
     
     bandpass = 'i'
-    #dbTable = 'output_opsimblitz2_1007'
-    dbTable = 'output_opsim3_61'
 
     simdata = getData(dbTable, dbAddress, bandpass)
-    bb = getBinner(simdata['seeing'], 'seeing')
+    bb = getBinner(simdata, seeing)
     metricList = getMetrics()
 
     gm = goBin(dbTable, bandpass, simdata, bb, metricList)

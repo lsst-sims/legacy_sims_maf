@@ -11,7 +11,8 @@ class NDBinner(BaseBinner):
         super(NDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ND'
     
-    def setupBinner(self, data, sliceDataColList=None, binsList=None, nbinsList=100):
+
+    def setupBinner(self, simdata, sliceDataColList=None, binsList=None, nbinsList=100):
         """Set up bins.
 
         data is the input data. Does not need to be passed, but keeps API same for all binners.
@@ -19,14 +20,19 @@ class NDBinner(BaseBinner):
         binsList can be a list of numpy arrays with the respective binpoints for sliceDataColList,
         or can be left 'None' (default) in which case nbinsList will be used together with data 
         min/max values to set bins. """
+
         if sliceDataColList == None:
-            sliceDataColList = data.keys()
+            sliceDataColList = simdata.keys()
         self.nD = len(sliceDataColList)
         self.sliceDataCols = sliceDataColList
+        self.sliceDataCols = []
+        for colname in self.sliceDataColNames:
+            self.sliceDataCols.append(simData[colname])
+
         if binsList != None:
             # User set the bins themselves.
             if len(binsList) != self.nD:
-                raise Exception('binsList must be same length as sliceDataColList')
+                raise Exception('binsList must be same length as sliceDataColNames')
             self.bins = binsList
         else:
             # We should set the bins.
