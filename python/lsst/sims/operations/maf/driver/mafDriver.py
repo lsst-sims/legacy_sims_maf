@@ -74,7 +74,6 @@ class MafDriver(object):
                 for b in self.binList:
                     if constr in b.constraints:
                         matchingBinners.append(b)
-                import pdb ; pdb.set_trace()
                 for i,binner in enumerate(matchingBinners):
                     colnames = []
                     for m in self.metricList[i]:
@@ -87,7 +86,7 @@ class MafDriver(object):
                         colnames.append(binner.setupParams[0])
                     colnames = list(set(colnames)) #unique elements
                     self.getData(opsimName,constr, colnames=colnames)
-                    #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)
+                    #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)--actually, fold this into binMetric
                     gm = self._binKey(binner)
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
