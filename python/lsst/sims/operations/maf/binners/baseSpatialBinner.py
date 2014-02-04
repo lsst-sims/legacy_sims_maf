@@ -84,7 +84,7 @@ class BaseSpatialBinner(BaseBinner):
     def plotHistogram(self, metricValue, metricLabel, title=None, 
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
-                      scale=1.0):
+                      scale=1.0, yaxisformat='%.3f'):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
@@ -110,7 +110,7 @@ class BaseSpatialBinner(BaseBinner):
                            cumulative=cumulative, range=histRange, label=legendLabel)        
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(x,  pos):        
-            return "%.3f" % (x * scale)
+            return yaxisformat % (x * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         plt.xlabel(metricLabel)
@@ -155,7 +155,7 @@ class BaseSpatialBinner(BaseBinner):
         if ax is None:
             ax = plt.gca()            
         for long, lat, rad in np.broadcast(longitude, latitude, radius*2.0):
-            el = Ellipse((long, lat), radius / np.cos(lat), radius, **kwargs)
+            el = Ellipse((long, lat), rad / np.cos(lat), rad)
             ellipses.append(el)
         return ellipses
 
@@ -166,18 +166,18 @@ class BaseSpatialBinner(BaseBinner):
         from matplotlib.collections import PatchCollection
         if fignum==None:
             fig = plt.figure()
-        ax = plt.subplot(projection=projection)
+        ax = plt.subplot(projection=projection)        
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        radius = 1.75 * np.pi / 180.
-        ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius,
-                                             ax=ax, linewidth=0)
-        p = PatchCollection(ellipses, cmap=cmap, alpha=0.3)
+        radius = 1.8 * np.pi / 180.
+        ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius, ax=ax)
+        p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
         p.set_array(metricValue)
         ax.add_collection(p)
         if clims != None:
             p.set_clim(clims)
         cb = plt.colorbar(p, orientation='horizontal', format=cbarFormat)
         if title != None:
-            plt.title(title)
+            plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)
+        ax.grid()
         return fig.number

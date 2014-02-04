@@ -10,7 +10,7 @@ from .baseSpatialBinner import BaseSpatialBinner
 class OpsimFieldBinner(BaseSpatialBinner):
     """Opsim Field based binner."""
     def __init__(self, verbose=True):
-        super(opsimFieldBinner, self).__init__(verbose=verbose)
+        super(OpsimFieldBinner, self).__init__(verbose=verbose)
         self.binnertype = 'OPSIMFIELDS'
 
     def setupBinner(self, simData, simFIdColName, 
@@ -18,9 +18,9 @@ class OpsimFieldBinner(BaseSpatialBinner):
         """Set up opsim field binner object.
 
         simData = numpy rec array with simulation pointing history,
-        simFIdColName = the column name of the fieldIDs (in simData)
-        fieldData = numpy recarray with fieldID information
-        fieldFIdColName = the column name with the fieldIDs (in fieldData)
+        simFIdColName = the column name of the fieldIds (in simData)
+        fieldData = numpy recarray with fieldId information
+        fieldFIdColName = the column name with the fieldIds (in fieldData)
         fieldRaColName = the column name with the RA values (in fieldData)
         fieldDecColname = the column name with the Dec values (in fieldData)."""
         # Set basic properties for tracking field information, in sorted order.
@@ -28,7 +28,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.fieldId = fieldData[fieldFIdColName][idxs]
         self.ra = fieldData[fieldRaColName][idxs]
         self.dec = fieldData[fieldDecColName][idxs]
-        self.nbins = len(self.fieldID)
+        self.nbins = len(self.fieldId)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[simFIdColName])
         simFieldsSorted = np.sort(simData[simFIdColName])
@@ -43,14 +43,14 @@ class OpsimFieldBinner(BaseSpatialBinner):
     def next(self):
         """Return RA/Dec values when iterating over binpoints."""
         # This returns RA/Dec (in radians) of points in the grid. 
-        if self.ipix >= self.npix:
+        if self.ipix >= self.nbins:
             raise StopIteration
-        fieldidradec = self.fieldid[self.ipix], self.ra[self.ipix], self.dec[self.ipix]
+        fieldidradec = self.fieldId[self.ipix], self.ra[self.ipix], self.dec[self.ipix]
         self.ipix += 1
         return fieldidradec
 
     def __getitem__(self, ipix):
-        fieldidradec = self.fieldid[ipix], self.ra[self.ipix], self.dec[self.ipix]
+        fieldidradec = self.fieldId[ipix], self.ra[self.ipix], self.dec[self.ipix]
         return fieldidradec
     
     def __eq__(self, otherBinner):
@@ -62,7 +62,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
             return False
 
     def sliceSimData(self, binpoint):
-        """Slice simData on fieldID, to return relevant indexes for binpoint."""
+        """Slice simData on fieldId, to return relevant indexes for binpoint."""
         i = np.where(binpoint[0] == self.fieldId)
         return self.simIdxs[self.left[i]:self.right[i]]   
 
@@ -117,3 +117,30 @@ class OpsimFieldBinner(BaseSpatialBinner):
         binner.int_badval = header['int_badval']
                 
         return metricValues, binner,header
+
+    # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
+    def plotHistogram(self, metricValue, metricLabel, title=None, 
+                      fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
+                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
+                      scale=None):
+        """Histogram metricValue over the healpix bin points.
+
+        If scale == None, sets 'scale' by the healpix area per binpoint.
+        title = the title for the plot (default None)
+        fignum = the figure number to use (default None - will generate new figure)
+        legendLabel = the label to use for the figure legend (default None)
+        addLegend = flag for whether or not to add a legend (default False)
+        bins = bins for histogram (numpy array or # of bins) (default 100)
+        cumulative = make histogram cumulative (default False)
+        histRange = histogram range (default None, set by matplotlib hist)
+        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        fignum = super(OpsimFieldBinner, self).plotHistogram(metricValue, metricLabel, 
+                                                             title=title, fignum=fignum, 
+                                                             legendLabel=legendLabel, 
+                                                             addLegend=addLegend, legendloc=legendloc,
+                                                             bins=bins, cumulative=cumulative,
+                                                             histRange=histRange, 
+                                                             flipXaxis=flipXaxis, 
+                                                             scale=1, yaxisformat='%d')
+        plt.ylabel('Number of fields')
+        return fignum
