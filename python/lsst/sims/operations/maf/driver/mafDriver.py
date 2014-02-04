@@ -49,7 +49,7 @@ class MafDriver(object):
         """Take a binner and return the correct type of binMetric"""
         if binner.binnertype == "UNI":
             result = binMetrics.BaseBinMetric()
-        elif (binner.binnertype == "SPATIAL") | (binner.binnertype == "Healpix") :
+        elif (binner.binnertype == "SPATIAL") | (binner.binnertype == "HEALPIX") :
             result = binMetrics.BaseBinMetric()
         return result
     
@@ -75,14 +75,14 @@ class MafDriver(object):
                     for m in self.metricList[i]:
                         for cn in m.colNameList:
                             colnames.append(cn)
-                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'Healpix'): 
+                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX'): 
                         colnames.append(binner.spatialKey1) 
                         colnames.append(binner.spatialKey2)
                     colnames = list(set(colnames))
                     self.getData(opsimName,constr, colnames=colnames)
                     #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)
                     gm = self._binKey(binner)
-                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'Healpix') :
+                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX') :
                         binner.setupBinner(self.data[binner.spatialKey1],
                                        self.data[binner.spatialKey2], leafsize=binner.leafsize)
                     if binner.binnertype == 'UNI':
