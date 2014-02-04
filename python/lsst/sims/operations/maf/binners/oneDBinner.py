@@ -12,19 +12,25 @@ class OneDBinner(BaseBinner):
         super(OneDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ONED'
 
-    def setupBinner(self, sliceDataCol, sliceDataColName, bins=None, nbins=100):
+    def setupBinner(self, simData, sliceDataColName, bins=None, nbins=100):
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
         or can be left 'None' in which case nbins will be used together with data min/max values
         to slice data in 'sliceDataCol'. """
         self.sliceDataColName = sliceDataColName
-        self.sliceDataCol = sliceDataCol
+        sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, binsize, 'float') 
-        self.bins = bins
-        self.nbins = len(bins)
+            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, 
+                             binsize, 'float') 
+        self.bins = np.sort(bins)
+        self.nbins = len(self.bins)
+        # Set up data slicing.
+        self.simIdxs = np.argsort(simData[self.sliceDataColName])
+        simFieldsSorted = np.sort(simData[self.sliceDataColName])
+        self.left = np.searchsorted(simFieldsSorted, self.bins, 'left')
+        self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
 
     def __iter__(self):
         self.ipix = 0
@@ -32,15 +38,15 @@ class OneDBinner(BaseBinner):
 
     def next(self):
         """Return the binvalues for this binpoint."""
-        if self.ipix >= self.nbins-1:
+        if self.ipix >= self.nbins:
             raise StopIteration
-        (binlo, binhi) = (self.bins[self.ipix], self.bins[self.ipix+1])
+        binlo = self.bins[self.ipix]
         self.ipix += 1
-        return (binlo, binhi)
+        return binlo
 
     def __getitem__(self, ipix):
-        (binlo, binhi) = (self.bins[ipix], self.bins[ipix+1])
-        return (binlo, binhi)
+        binlo = self.bins[ipix]
+        return binlo
     
     def __eq__(self, otherBinner):
         """Evaluate if binners are equivalent."""
@@ -51,8 +57,8 @@ class OneDBinner(BaseBinner):
             
     def sliceSimData(self, binpoint):
         """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
-        indices = np.where((self.sliceDataCol >= binpoint[0]) & (self.sliceDataCol < binpoint[1]))
-        return indices
+        i = (np.where(binpoint == self.bins))[0]
+        return self.simIdxs[self.left[i]:self.left[i+1]]
 
     def plotBinnedData(self, metricValues, metricLabel, title=None, fignum=None,
                        legendLabel=None, addLegend=False, legendloc='upper left', 

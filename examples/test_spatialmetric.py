@@ -15,11 +15,13 @@ def dtime(time_prev):
 def getData(dbTable, dbAddress, bandpass):
     t = time.time()
     table = db.Table(dbTable, 'obsHistID', dbAddress)
+    seeing = 'seeing'
+    #seeing = 'finSeeing'
     simdata = table.query_columns_RecArray(chunk_size=10000000, 
                                            constraint="filter = \'%s\'" %(bandpass), 
                                            colnames=['filter', 'expMJD',  'night',
                                                      'fieldRA', 'fieldDec', 'airmass',
-                                                     '5sigma_modified', 'seeing',
+                                                     '5sigma_modified', seeing,
                                                      'skybrightness_modified', 'altitude',
                                                      'hexdithra', 'hexdithdec', 'fieldID'], 
                                                      groupByCol='expMJD')
@@ -104,8 +106,9 @@ def printSummary(gm, metricList):
         try:
             mean = gm.computeSummaryStatistics(m.name, metrics.MeanMetric)
             print 'SummaryNumber for', m.name, ':', mean
-        except ValueError:
-            pass
+        except Exception as e:
+            # Probably have a metric data value which does not 'work' for the mean metric.
+            print ' Cannot compute mean for metric values', m.name
     dt, t = dtime(t)
     print 'Computed summaries %f s' %(dt)
 
@@ -134,11 +137,7 @@ if __name__ == '__main__':
     
     print 'Round 2 (dithered)'
     
-    bandpass = 'r'
-    #dbTable = 'output_opsimblitz2_1007'
-    dbTable = 'output_opsim3_61'
-
-    simdata = getData(dbTable, dbAddress, bandpass)
+    #simdata = getData(dbTable, dbAddress, bandpass)
     bb = getBinner(simdata['hexdithra'], simdata['hexdithdec'], nside=nside)
     metricList = getMetrics()
 
