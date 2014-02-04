@@ -13,17 +13,17 @@ class OneDBinner(BaseBinner):
         super(OneDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ONED'
 
-    def setupBinner(self, sliceDataCol, sliceDataColName, bins=None, nbins=100):
+    def setupBinner(self, simData, sliceDataColName, bins=None, nbins=100):
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
         or can be left 'None' in which case nbins will be used together with data min/max values
         to slice data in 'sliceDataCol'. """
         self.sliceDataColName = sliceDataColName
-        self.sliceDataCol = sliceDataCol
+        self.sliceDataCol = simData[sliceDataColName]
         if bins == None:
-            binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize, binsize, 'float') 
+            binsize = (self.sliceDataCol.max() - self.sliceDataCol.min()) / float(nbins)
+            bins = np.arange(self.sliceDataCol.min(), self.sliceDataCol.max() + binsize, binsize, 'float') 
         self.bins = bins
         self.nbins = len(self.bins)
 

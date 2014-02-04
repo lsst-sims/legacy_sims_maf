@@ -11,13 +11,16 @@ class NDBinner(BaseBinner):
         super(NDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ND'
     
-    def setupBinner(self, sliceDataColList, binsList=None, nbinsList=100):
+    def setupBinner(self, data, sliceDataColList=None, binsList=None, nbinsList=100):
         """Set up bins.
 
+        data is the input data. Does not need to be passed, but keeps API same for all binners.
         sliceDataColList is a list of the columns for slicing data. 
         binsList can be a list of numpy arrays with the respective binpoints for sliceDataColList,
         or can be left 'None' (default) in which case nbinsList will be used together with data 
         min/max values to set bins. """
+        if sliceDataColList == None:
+            sliceDataColList = data.keys()
         self.nD = len(sliceDataColList)
         self.sliceDataCols = sliceDataColList
         if binsList != None:

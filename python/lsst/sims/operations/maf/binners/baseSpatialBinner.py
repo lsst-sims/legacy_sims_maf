@@ -27,13 +27,14 @@ class BaseSpatialBinner(BaseBinner):
         super(BaseSpatialBinner, self).__init__(verbose=verbose)
         self.binnertype = 'SPATIAL'
 
-    def setupBinner(self, simDataRA, simDataDec, leafsize=100, radius=1.8):
+    def setupBinner(self, simData, spatialkey1,
+                    spatialkey2, leafsize=100, radius=1.8):
         """Use simDataRA and simDataDec (in radians) to set up KDTree. 
 
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in radians) is distance at which matches between the simData KDtree 
           and binpoint RA/Dec values will be produced."""
-        self._buildTree(simDataRA, simDataDec, leafsize)
+        self._buildTree(simData[spatialkey1], simData[spatialkey2], leafsize)
         self._setRad(radius)    
     
     def _treexyz(self, ra, dec):
