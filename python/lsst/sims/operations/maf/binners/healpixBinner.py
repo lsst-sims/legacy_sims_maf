@@ -135,6 +135,7 @@ class HealpixBinner(BaseSpatialBinner):
         else:
             hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
                         format=cbarFormat, rot=(180,0,180))
+        hp.graticule(dpar=20., dmer=20.)
         fig = plt.gcf()
         return fig.number
 

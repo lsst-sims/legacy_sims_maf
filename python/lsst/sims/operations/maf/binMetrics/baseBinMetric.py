@@ -85,7 +85,7 @@ class BaseBinMetric(object):
         try:
             self.metadata[metricName]    
             if len(self.metadata[metricName]) > 0:        
-                oname = oname + '_' + self.metadata[metricName][:5]
+                oname = oname + '_' + self.metadata[metricName]#[:5]
         except KeyError:
             pass
         # Add letter to distinguish binner types
@@ -303,7 +303,7 @@ class BaseBinMetric(object):
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
         plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-        plotTitle += ' ' + mname
+        plotTitle += ' : ' + mname
         plotLabel = mname
         # Plot the binned metric data, if relevant (oneD binners). 
         if hasattr(self.binner, 'plotBinnedData'):
