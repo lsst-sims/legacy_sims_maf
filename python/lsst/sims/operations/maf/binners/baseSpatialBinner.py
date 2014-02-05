@@ -172,7 +172,7 @@ class BaseSpatialBinner(BaseBinner):
         ax = plt.subplot(projection=projection)        
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        radius = 1.8 * np.pi / 180.
+        radius = 1.75 * np.pi / 180.
         ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius, ax=ax)
         p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
         p.set_array(metricValue)

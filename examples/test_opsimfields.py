@@ -179,9 +179,7 @@ if __name__ == '__main__':
     bb = getBinner(simdata, fielddata)
     
     # Okay, go calculate the metrics.
-    metadata = sqlconstraint.strip('=')
-    metadata.replace('filter', '')
-    metadata.replace("'", "")
+    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
     gm = goBin(dbTable, metadata, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.

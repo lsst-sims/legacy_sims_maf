@@ -1,5 +1,5 @@
 ## EXAMPLE
-# example test script for unibinner metrics. 
+# example test script for oneD metrics. 
 # Note that this is not expected to function as the driver! It just has some command line options.
 
 import sys, os, argparse
@@ -9,6 +9,7 @@ import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binMetrics as binMetrics
+import glob
 
 from lsst.sims.catalogs.generation.db.utils import make_engine
 from lsst.sims.operations.maf.utils import getData
@@ -32,64 +33,44 @@ def getMetrics(seeingcol):
     # Set up metrics.
     metricList = []
     # Simple metrics: 
-    metricList.append(metrics.MeanMetric(seeingcol))
-    metricList.append(metrics.RmsMetric(seeingcol))
-    metricList.append(metrics.MedianMetric('airmass'))
-    metricList.append(metrics.RmsMetric('airmass'))
-    metricList.append(metrics.MeanMetric('5sigma_modified'))
-    metricList.append(metrics.RmsMetric('5sigma_modified'))
-    metricList.append(metrics.MeanMetric('skybrightness_modified'))
+    metricList.append(metrics.CountMetric(seeingcol))
+    metricList.append(metrics.CountMetric('airmass'))
+    metricList.append(metrics.CountMetric('5sigma_modified'))
+    metricList.append(metrics.CountMetric('skybrightness_modified'))
     metricList.append(metrics.CountMetric('expMJD'))
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
 
-def getBinner(simdata):
+def getBinner(simdata, metricList, nbins=100):
     t = time.time()
-    bb = binners.UniBinner()
-    bb.setupBinner(simdata)
-    
-    dt, t = dtime(t)
-    print 'Set up binner %f s' %(dt)
-    return bb
-
-def goBin(dbTable, metadata, simdata, bb, metricList):
-    t = time.time()
-    gm = binMetrics.BaseBinMetric()
-    gm.setBinner(bb)
-
-    gm.runBins(metricList, simdata, simDataName=dbTable, metadata = metadata)
-    dt, t = dtime(t)
-    print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
-                    
-    gm.reduceAll()
-    
-    dt, t = dtime(t)
-    print 'Ran reduce functions %f s' %(dt)
-
-    return gm
-
-
-def write(gm):
-    t= time.time()
-    gm.writeAll()
-    dt, t = dtime(t)
-    print 'Wrote outputs %f s' %(dt)
-
-def printSummary(gm, metricList):
-    t = time.time()
+    binnerList = []
     for m in metricList:
-        try:
-            value = gm.computeSummaryStatistics(m.name, None)
-            print 'Summary for', m.name, ':', value
-        except ValueError:
-            pass
+        bb = binners.OneDBinner()
+        bb.setupBinner(simdata, m.colname, nbins=nbins)
+        binnerList.append(bb)
     dt, t = dtime(t)
-    print 'Computed summaries %f s' %(dt)
+    print 'Set up binners %f s' %(dt)
+    return binnerList
 
-    
+
+def goBinPlotWrite(dbTable, metadata, simdata, binnerList, metricList):
+    t = time.time()
+    for bb, mm in zip(binnerList, metricList):
+        gm = binMetrics.BaseBinMetric()
+        gm.setBinner(bb)
+        gm.runBins([mm,], simdata, simDataName=dbTable, metadata = metadata)
+        mean = gm.computeSummaryStatistics(mm.name, metrics.MeanMetric)
+        print 'SummaryNumber (mean) for', mm.name, ':', mean
+        gm.plotAll(savefig=True, closefig=True)
+        gm.writeAll()
+        dt, t = dtime(t)
+        print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len([mm,]), dt)
+    return 
+
+
 if __name__ == '__main__':
-    
+
     # Parse command line arguments for database connection info.
     parser = argparse.ArgumentParser()
     parser.add_argument("simDataTable", type=str, help="Name of opsim visit table in database")
@@ -99,7 +80,7 @@ if __name__ == '__main__':
                        help="Key for the connection string to use in your dbLogin file -- "\
                             "Default is SQLITE_OPSIM")
     args = parser.parse_args()
-
+    
     # Get db connection info.
     authDictionary = getDbAddress()
     dbAddress = authDictionary[args.connectionName]
@@ -127,22 +108,13 @@ if __name__ == '__main__':
 
     # Find columns that are required.
     colnames = list(metricList[0].classRegistry.uniqueCols())
-    
+
     # Get opsim simulation data
     simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
     
     # And set up binner.
-    bb = getBinner(simdata)
+    binnerList = getBinner(simdata, metricList)
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-    gm = goBin(dbTable, metadata, simdata, bb, metricList)
-
-    # Generate some summary statistics and plots.
-    printSummary(gm, metricList)
-
-    # No plots for unibinner (these are single number results).
-    
-    # Write the data to file.
-    write(gm)
-    
+    gm = goBinPlotWrite(dbTable, metadata, simdata, binnerList, metricList)

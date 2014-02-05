@@ -60,7 +60,7 @@ class OneDBinner(BaseBinner):
         i = (np.where(binpoint == self.bins))[0]
         return self.simIdxs[self.left[i]:self.left[i+1]]
 
-    def plotBinnedData(self, metricValues, metricLabel, title=None, fignum=None,
+    def plotBinnedData(self, metricValues, metricLabel, title=None, histRange=None, fignum=None, 
                        legendLabel=None, addLegend=False, legendloc='upper left', 
                        filled=False, alpha=0.5):
         """Plot a set of oneD binned metric data.
@@ -86,6 +86,8 @@ class OneDBinner(BaseBinner):
             plt.plot(x, y, label=legendLabel)
         plt.ylabel(metricLabel)
         plt.xlabel(self.sliceDataColName)
+        if histRange:
+            plt.xlim(histRange)
         if addLegend:
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if title!=None:
