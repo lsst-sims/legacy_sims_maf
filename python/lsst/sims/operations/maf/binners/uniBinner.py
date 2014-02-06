@@ -66,8 +66,10 @@ class UniBinner(BaseBinner):
                         int_badval=int_badval, badval=badval, dt=dt)
         #update the header
         hdulist = pyf.open(outfilename, mode='update')
-        for key in header_dict.keys():
-            hdulist[0].header[key] = header_dict[key]
+        with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                for key in header_dict.keys():
+                    hdulist[0].header[key] = header_dict[key]
         hdulist.close()
         return outfilename
 

@@ -9,7 +9,7 @@ class SimpleScalarMetric(BaseMetric):
     def __init__(self, colname, metricName=None, *args, **kwargs):
         """Intantiate simple metric. """
         # Use base class init to register columns.
-        super(SimpleScalarMetric, self).__init__(colname, metricName)
+        super(SimpleScalarMetric, self).__init__(colname, metricName, **kwargs)
         # Check incoming columns have only one value.
         if len(self.colNameList) > 1:
             raise Exception('Simple metrics should be passed single column. Got %s' %(colname))

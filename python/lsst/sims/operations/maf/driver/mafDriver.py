@@ -56,6 +56,19 @@ class MafDriver(object):
         else:
             result = binMetrics.BaseBinMetric()
         return result
+
+    def _addCols(self, colname):
+        """add columns to the opsim data if needed """
+        if colname == 'normairmass':
+            from lsst.sims.operations.maf.utils.normAMStack import normAMStack
+            self.data = normAMStack(self.data)
+        elif colname == 'ra_pi_amp':
+            from lsst.sims.operations.maf.utils.opsimStack import opsimStack
+            self.data = opsimStack(self.data)
+        elif colname == 'dec_pi_amp':
+            pass # Don't double add column
+        else:
+            print 'unknown column to add'
     
     def getData(self, tableName,constraint, colnames=[], groupBy='expMJD'):
         """Pull required data from DB """
@@ -76,17 +89,26 @@ class MafDriver(object):
                         matchingBinners.append(b)
                 for i,binner in enumerate(matchingBinners):
                     colnames = []
+                    extraCols=[]
                     for m in self.metricList[i]:
-                        for cn in m.colNameList:
-                            colnames.append(cn)
+                        for cn in m.colNameList:  colnames.append(cn)
+                        extraCols.append(m.extraColname)                            
                     if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX'): 
                         colnames.append(binner.setupParams[0]) 
                         colnames.append(binner.setupParams[1])
                     if binner.binnertype == 'ONED':
                         colnames.append(binner.setupParams[0])
                     colnames = list(set(colnames)) #unique elements
+                    extraCols = list(set(extraCols))
+                    extraCols.remove(None)
+                    # Remove colnames that are in extraCols
+                    for col in extraCols:
+                        if col in colnames:
+                            colnames.remove(col)
                     self.getData(opsimName,constr, colnames=colnames)
-                    #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)--actually, fold this into binMetric
+                    # Add any pre-calc columns that are needed
+                    for col in extraCols:
+                        self._addCols(col)                    
                     gm = self._binKey(binner)
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)

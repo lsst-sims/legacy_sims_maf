@@ -3,7 +3,7 @@ import lsst.pex.config as pexConfig
 
 class MetricConfig(pexConfig.Config):
     metric = pexConfig.Field("", dtype=str, default='')
-    kwargs = pexConfig.DictField("", keytype=str, itemtype=float, default={}) 
+    kwargs = pexConfig.DictField("", keytype=str, itemtype=str, default={}) 
     params = pexConfig.ListField("", dtype=str, default=[])
 
 class BinnerConfig(pexConfig.Config):
