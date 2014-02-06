@@ -1,16 +1,17 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-
-
-def sigma_slope(x,sigma_y):
+def sigma_slope(x,sigma_y): #move this inside the class to use badval, or just punt a nan?
     """For fitting a line, the uncertainty in the slope
        is given by the spread in x values and the uncertainties
        in the y values.  Resulting units are x/sigma_y"""
     w = 1./sigma_y**2
     denom = np.sum(w)*np.sum(w*x**2)-np.sum(w*x)**2
-    result = np.sqrt(np.sum(w)/denom )
-    return result
+    if denom <= 0:
+        return np.nan
+    else:
+        result = np.sqrt(np.sum(w)/denom )
+        return result
 
 def m52snr(m,m5):
     """find the SNR for a star of magnitude m obsreved
@@ -32,7 +33,7 @@ class ProperMotionMetric(BaseMetric):
                  m5col='5sigma_modified', mjdcol='expMJD',
                  filtercol='filter', seeingcol='seeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01):
+                 stellarType=None, atm_err=0.01, units='mas/yr'):
         """ Instantiate metric.
 
         m5col = column name for inidivual visit m5
@@ -69,7 +70,7 @@ class ProperMotionMetric(BaseMetric):
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
         result = sigma_slope(dataslice['expMJD'][good], precis[good])
-        result = result[good]*365.25*1e3 #convert to mas/yr
+        result = result*365.25*1e3 #convert to mas/yr
         # Observations that are very close together can still fail
         if np.isnan(result):
             result = self.badval 
