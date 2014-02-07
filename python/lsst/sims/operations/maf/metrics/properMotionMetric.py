@@ -30,7 +30,7 @@ class ProperMotionMetric(BaseMetric):
     """
 
     def __init__(self, metricName='properMotion',
-                 m5col='5sigma_modified', mjdcol='expMJD',
+                 m5col='5sigma_modified', mjdcol='expMJD', units='mas/yr'
                  filtercol='filter', seeingcol='seeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
                  stellarType=None, atm_err=0.01):
