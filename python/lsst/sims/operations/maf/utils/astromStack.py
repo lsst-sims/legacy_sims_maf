@@ -13,7 +13,7 @@ def gnomonic_project_toxy(RA1, Dec1, RAcen, Deccen):
     y = (np.cos(Deccen)*np.sin(Dec1) - np.sin(Deccen)*np.cos(Dec1)*np.cos(RA1-RAcen)) / cosc
     return x, y
 
-def astroStack(opsim):
+def astromStack(opsim):
     """Compute the parallax factors for each Opsim pointing and
     add the ra and dec parallax columns to the numpy rec array.
     returns the parallax amplitude (in radians) for an object with 1 arcsec parallax"""
