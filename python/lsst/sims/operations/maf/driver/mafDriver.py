@@ -70,11 +70,12 @@ class MafDriver(object):
         if 'normairmass' in colnames:
             normairmass = True
             colnames.remove('normairmass')
-            colnames.append('airmass')
+            colnames.append('airmass') #need to add this to be sure it's pulled
         if 'ra_pi_amp' in colnames:
             pi_amp = True
             colnames.remove('ra_pi_amp')
             colnames.remove('dec_pi_amp')
+            # Note that astromStack is currently only using fieldRA and fieldDec positions
         colnames=list(set(colnames))
         self.data = table.query_columns_RecArray(constraint=constraint, colnames=colnames, groupByCol=groupBy)
         if normairmass: 
