@@ -172,7 +172,7 @@ class HealpixBinner(BaseSpatialBinner):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          legendLabel=None, addLegend=False, removeDipole=True):
+                          legendLabel=None, addLegend=False, removeDipole=True, verbose=False):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -188,7 +188,7 @@ class HealpixBinner(BaseSpatialBinner):
             fig = plt.figure()
         cl = hp.anafast(metricValue)
         if removeDipole:
-            cl = hp.anafast(hp.remove_dipole(metricValue))
+            cl = hp.anafast(hp.remove_dipole(metricValue, verbose=verbose))
         else:
             cl = hp.anafast(metricValue)
         l = np.arange(np.size(cl))

@@ -41,7 +41,7 @@ class BaseMetric(object):
     # Add ClassRegistry to keep track of columns needed for metrics. 
     classRegistry = ClassRegistry()
     
-    def __init__(self, cols, metricName=None, units=None, 
+    def __init__(self, cols, metricName=None, units='', 
                  *args, **kwargs):
         """Instantiate metric. """
         # Turn cols into numpy array (so we know it's iterable).
@@ -64,11 +64,10 @@ class BaseMetric(object):
                 allcols += '_' + i
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
         # Set physical units, mostly for plotting purposes.
-        if units:
-            self.units = units
-        else:
+        self.units = units
+#        else:
             # Else look up units in dictionary lookup table. 
-            self.units = 'TODO'
+#            self.units = 'TODO'
         return
 
     def registerCols(self, cols):
