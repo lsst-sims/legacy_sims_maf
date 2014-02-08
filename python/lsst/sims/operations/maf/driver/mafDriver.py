@@ -62,7 +62,7 @@ class MafDriver(object):
   
     def getData(self, tableName,constraint, colnames=[], groupBy='expMJD'):
         """Pull required data from DB """
-        #XXX-temporary kludge. Need to decide how to make this intelligent.
+        
         dbTable = tableName 
         table = db.Table(dbTable, 'obsHistID', self.config.dbAddress)
         pi_amp = False
@@ -70,7 +70,7 @@ class MafDriver(object):
         if 'normairmass' in colnames:
             normairmass = True
             colnames.remove('normairmass')
-            colnames.append('airmass') #need to add this to be sure it's pulled
+            colnames.append('airmass') # Need to add this b/c required by normAMStack
         if 'ra_pi_amp' in colnames:
             pi_amp = True
             colnames.remove('ra_pi_amp')
