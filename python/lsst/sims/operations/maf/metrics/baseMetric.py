@@ -15,7 +15,7 @@ class ClassRegistry(dict):
         #Promote scalar to array.  Solution from:
         #http://stackoverflow.com/questions/12653120/how-can-i-make-a-numpy-function-that-accepts-a-numpy-array-an-iterable-or-a-sc
         return np.array(cols, copy=False, ndmin=1)
-    # Contents of the dictionary look like {metricClassName: 'set' of [simData columns]}
+    # Contents of the classRegistry dictionary look like {metricClassName: 'set' of [simData columns]}
     def __str__(self):
         # Print the contents of the registry nicely.
         retstr = "----------------------------\n"
@@ -30,7 +30,7 @@ class ClassRegistry(dict):
         super(ClassRegistry, self).__setitem__(i,y)
     def uniqueCols(self):
         colset = set()
-        for k in self.keys():
+        for k in self:
             for col in self[k]:
                 colset.add(col)
         return colset    

@@ -25,7 +25,7 @@ class SimpleScalarMetric(BaseMetric):
 
 class Coaddm5Metric(SimpleScalarMetric):
     """Calculate the coadded m5 value at this gridpoint."""
-    def __init__(self, m5col = '5sigma_modified', metricName = 'coaddm5'):
+    def __init__(self, m5col = '5sigma_modified', metricName = 'CoaddedM5'):
         """Instantiate metric.
         
         m5col = the column name of the individual visit m5 data. """

@@ -151,7 +151,8 @@ if __name__ == '__main__':
     colnames = list(metricList[0].classRegistry.uniqueCols())
     fieldcols = ['fieldRA', 'fieldDec', 'hexdithra', 'hexdithdec']
     colnames = colnames + fieldcols
-
+    colnames = list(set(colnames))
+    
     # Get opsim simulation data
     simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
     

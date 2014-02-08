@@ -42,6 +42,8 @@ def getMetrics(seeingcol, docomplex=False):
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
     metricList.append(metrics.Coaddm5Metric('5sigma_modified'))
     metricList.append(metrics.CountMetric('expMJD'))
+    metricList.append(metrics.NormAirmassMetric(metricName='Minimum Normalized Airmass', 
+                                                reducer=np.min))
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.
@@ -159,6 +161,7 @@ if __name__ == '__main__':
     colnames = list(metricList[0].classRegistry.uniqueCols())
     fieldcols = ['fieldID', 'fieldRA', 'fieldDec']
     colnames = colnames + fieldcols
+    colnames = list(set(colnames))
     
     # Get opsim simulation data
     simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
