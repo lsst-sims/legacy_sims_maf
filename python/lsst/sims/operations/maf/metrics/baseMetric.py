@@ -41,7 +41,9 @@ class BaseMetric(object):
     # Add ClassRegistry to keep track of columns needed for metrics. 
     classRegistry = ClassRegistry()
     
-    def __init__(self, cols, metricName=None, units=None,
+    def __init__(self, cols, metricName=None, units='',
+                 plotTitle=None, plotLog=False, plotHistLog=False,
+                 plotMin=None, plotMax=None, plotPercentileClip=95., 
                  *args, **kwargs):
         """Instantiate metric. """
         # Turn cols into numpy array (so we know it's iterable).
@@ -64,11 +66,14 @@ class BaseMetric(object):
                 allcols += '_' + i
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
         # Set physical units, mostly for plotting purposes.
-        if units:
-            self.units = units
-        else:
-            # Else look up units in dictionary lookup table. 
-            self.units = 'TODO'
+        self.units = units
+        # Set more plotting preferences
+        self.plotTitle = plotTitle # Plot Title.  If none, one gets auto-generated
+        self.plotLog = plotLog # Log-scale the color bar for data values
+        self.plotHistLog = plotHistLog # Make the y-scale log in histograms
+        self.plotMin = plotMin # Min data value for color-bars and hist ranges
+        self.plotMax = plotMax # Max data value
+        self.plotPercentileClip = plotPercentileClip # set min/max data range for display after percentile clipping.  Over-ridden by self.plotMin and self.plotMax
         return
 
     def registerCols(self, cols):

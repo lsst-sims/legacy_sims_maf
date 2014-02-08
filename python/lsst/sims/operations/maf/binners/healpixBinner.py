@@ -8,6 +8,7 @@ import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 import pyfits as pyf
+import warnings
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
@@ -91,8 +92,10 @@ class HealpixBinner(BaseSpatialBinner):
                         int_badval=int_badval, badval=badval, dt=dt)
         #update the header
         hdulist = pyf.open(outfilename, mode='update')
-        for key in header_dict.keys():
-            hdulist[hdu].header[key] = header_dict[key]
+        with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                for key in header_dict.keys():
+                    hdulist[hdu].header[key] = header_dict[key]
         hdulist.close()
         return outfilename
 
@@ -169,7 +172,7 @@ class HealpixBinner(BaseSpatialBinner):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          legendLabel=None, addLegend=False, removeDipole=True):
+                          legendLabel=None, addLegend=False, removeDipole=True, verbose=False):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -185,7 +188,7 @@ class HealpixBinner(BaseSpatialBinner):
             fig = plt.figure()
         cl = hp.anafast(metricValue)
         if removeDipole:
-            cl = hp.anafast(hp.remove_dipole(metricValue))
+            cl = hp.anafast(hp.remove_dipole(metricValue, verbose=verbose))
         else:
             cl = hp.anafast(metricValue)
         l = np.arange(np.size(cl))

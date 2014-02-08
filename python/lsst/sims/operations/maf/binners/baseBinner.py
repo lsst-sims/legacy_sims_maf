@@ -99,10 +99,14 @@ class BaseBinner(object):
                     cols.append(column)
             tbhdu = pyf.new_table(cols)
             # Append the info from head.
-            for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
             tbhdu.writeto(outfilename)
         else:
-            head.update(dtype = dt.name)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                head.update(dtype = dt.name)
             if dt.name[0:3] == 'int':
                 use_badval = int_badval
             else:

@@ -3,7 +3,12 @@ import lsst.pex.config as pexConfig
 
 class MetricConfig(pexConfig.Config):
     metric = pexConfig.Field("", dtype=str, default='')
-    kwargs = pexConfig.DictField("", keytype=str, itemtype=float, default={}) 
+    # Dictfields can only have one data type, so splitting up potential kwargs to support multiple
+    kwargs_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
+    kwargs_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
+    kwargs_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    kwargs_bool = pexConfig.DictField("", keytype=str, itemtype=bool, default={})
+    
     params = pexConfig.ListField("", dtype=str, default=[])
 
 class BinnerConfig(pexConfig.Config):
@@ -30,8 +35,19 @@ def makeDict(*args):
 def makeMetricConfig(name, params=[], kwargs={}):
     mc = MetricConfig()
     mc.metric = name
-    mc.kwargs=kwargs
     mc.params=params
+    # Break the kwargs by data type
+    for key in kwargs.keys():
+        if type(kwargs[key]) is str:
+            mc.kwargs_str[key] = kwargs[key]
+        elif type(kwargs[key]) is float:
+            mc.kwargs_float[key] = kwargs[key]
+        elif type(kwargs[key]) is int:
+            mc.kwargs_float[key] = kwargs[key]
+        elif type(kwargs[key]) is bool:
+            mc.kwargs_bool[key] = kwargs[key]
+        else:
+            raise Exception('Unsupported kwarg data type')
     return mc
 
  

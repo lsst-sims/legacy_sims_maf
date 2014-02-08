@@ -4,6 +4,7 @@ import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binMetrics as binMetrics
+import lsst.sims.operations.maf.utils as utils
 
 
 class MafDriver(object):
@@ -29,15 +30,17 @@ class MafDriver(object):
             temp_binner = getattr(binners,binner.binner)(*binner.params, **binner.kwargs )
             temp_binner.setupParams = binner.setupParams
             temp_binner.setupKwargs = binner.setupKwargs
-            #temp_binner.spatialKey1 = binner.spatialKey1
-            #temp_binner.spatialKey2 = binner.spatialKey2
-            #temp_binner.leafsize = binner.leafsize
             temp_binner.constraints = binner.constraints
             self.binList.append(temp_binner)
             sub_metricList=[]
             for i,metric in binner.metricDict.iteritems():
+                kwargs = {}
+                for key in metric.kwargs_str.keys():  kwargs[key] = metric.kwargs_str[key]
+                for key in metric.kwargs_int.keys():  kwargs[key] = metric.kwargs_int[key]
+                for key in metric.kwargs_float.keys():  kwargs[key] = metric.kwargs_float[key]
+                for key in metric.kwargs_bool.keys():  kwargs[key] = metric.kwargs_bool[key]
                 sub_metricList.append(getattr(metrics,metric.metric)
-                                       (*metric.params, **metric.kwargs) )
+                                       (*metric.params, **kwargs) )
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
         self.constraints = []
@@ -56,13 +59,29 @@ class MafDriver(object):
         else:
             result = binMetrics.BaseBinMetric()
         return result
-    
+  
     def getData(self, tableName,constraint, colnames=[], groupBy='expMJD'):
         """Pull required data from DB """
-        #XXX-temporary kludge. Need to decide how to make this intelligent.
+        
         dbTable = tableName 
         table = db.Table(dbTable, 'obsHistID', self.config.dbAddress)
+        pi_amp = False
+        normairmass = False
+        if 'normairmass' in colnames:
+            normairmass = True
+            colnames.remove('normairmass')
+            colnames.append('airmass') # Need to add this b/c required by normAMStack
+        if 'ra_pi_amp' in colnames:
+            pi_amp = True
+            colnames.remove('ra_pi_amp')
+            colnames.remove('dec_pi_amp')
+            # Note that astromStack is currently only using fieldRA and fieldDec positions
+        colnames=list(set(colnames))
         self.data = table.query_columns_RecArray(constraint=constraint, colnames=colnames, groupByCol=groupBy)
+        if normairmass: 
+            self.data = utils.normAMStack(self.data)
+        if pi_amp:
+            self.data = utils.astromStack(self.data)
         return 
 
     def run(self):
@@ -77,16 +96,14 @@ class MafDriver(object):
                 for i,binner in enumerate(matchingBinners):
                     colnames = []
                     for m in self.metricList[i]:
-                        for cn in m.colNameList:
-                            colnames.append(cn)
+                        for cn in m.colNameList:  colnames.append(cn)                            
                     if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX'): 
                         colnames.append(binner.setupParams[0]) 
                         colnames.append(binner.setupParams[1])
                     if binner.binnertype == 'ONED':
                         colnames.append(binner.setupParams[0])
                     colnames = list(set(colnames)) #unique elements
-                    self.getData(opsimName,constr, colnames=colnames)
-                    #need to add a bit here to calc any needed post-processing columns (e.g., astrometry)--actually, fold this into binMetric
+                    self.getData(opsimName,constr, colnames=colnames)     
                     gm = self._binKey(binner)
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)

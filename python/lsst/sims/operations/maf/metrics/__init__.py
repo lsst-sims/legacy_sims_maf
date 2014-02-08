@@ -5,3 +5,4 @@ from .visitPairsMetric import *
 from .fftMetric import *
 from .properMotionMetric import *
 from .normAirmassMetric import *
+from .parallaxMetric import *

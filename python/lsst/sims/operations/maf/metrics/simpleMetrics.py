@@ -1,21 +1,25 @@
 import numpy as np
 from .baseMetric import BaseMetric
+from lsst.sims.operations.maf.utils.getUnits import getUnits
 
 # Base class for simple metrics. 
 class SimpleScalarMetric(BaseMetric):
     """This is the base class for the simplist metrics: ones that calculate one
        number on one column of data and return a scalar. 
     """
-    def __init__(self, colname, metricName=None, *args, **kwargs):
+    def __init__(self, colname, metricName=None, units='', *args, **kwargs):
         """Intantiate simple metric. """
         # Use base class init to register columns.
-        super(SimpleScalarMetric, self).__init__(colname, metricName)
+        super(SimpleScalarMetric, self).__init__(colname, metricName, **kwargs)
         # Check incoming columns have only one value.
         if len(self.colNameList) > 1:
             raise Exception('Simple metrics should be passed single column. Got %s' %(colname))
         self.colname = self.colNameList[0]
         # Set return type.
         self.metricDtype = 'float'
+        self.units = units
+        if self.units == '':
+            self.units=getUnits(colname)
         
     def run(self, dataSlice):
         raise NotImplementedError()
@@ -29,7 +33,7 @@ class Coaddm5Metric(SimpleScalarMetric):
         """Instantiate metric.
         
         m5col = the column name of the individual visit m5 data. """
-        super(Coaddm5Metric, self).__init__(m5col, metricName)            
+        super(Coaddm5Metric, self).__init__(m5col, metricName, units='mag')            
     def run(self, dataSlice):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
 
