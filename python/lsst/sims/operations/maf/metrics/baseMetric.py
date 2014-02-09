@@ -7,17 +7,20 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
+from lsst.sims.operations.maf.utils.getColInfo import ColInfo
 
-# ClassRegistry adds some extras to a normal dictionary.
+# ClassRegistry adds some extras to a normal dictionary and serves as a way to 
+#  keep track of what columns are needed for what metrics. 
 class ClassRegistry(dict):
+    # Contents of the classRegistry dictionary look like: 
+    #    {metricClassName: 'set' of [simData columns]}
     @staticmethod
     def makeColArr(cols):
         #Promote scalar to array.  Solution from:
         #http://stackoverflow.com/questions/12653120/how-can-i-make-a-numpy-function-that-accepts-a-numpy-array-an-iterable-or-a-sc
         return np.array(cols, copy=False, ndmin=1)
-    # Contents of the classRegistry dictionary look like {metricClassName: 'set' of [simData columns]}
     def __str__(self):
-        # Print the contents of the registry nicely.
+        # Print the entire contents of the registry nicely.
         retstr = "----------------------------\n"
         retstr += "Registry Contents\n"
         for k in self:
@@ -40,10 +43,9 @@ class BaseMetric(object):
     """Base class for the metrics."""
     # Add ClassRegistry to keep track of columns needed for metrics. 
     classRegistry = ClassRegistry()
+    colInfo = ColInfo()
     
-    def __init__(self, cols, metricName=None, units='',
-                 plotTitle=None, plotLog=False, plotHistLog=False,
-                 plotMin=None, plotMax=None, plotPercentileClip=95., 
+    def __init__(self, cols, metricName=None, units=None, plotParams=None,
                  *args, **kwargs):
         """Instantiate metric. """
         # Turn cols into numpy array (so we know it's iterable).
@@ -66,15 +68,20 @@ class BaseMetric(object):
                 allcols += '_' + i
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
         # Set physical units, mostly for plotting purposes.
+        if units == None:
+            units = ''.join([self.colInfo.getUnits(col) for col in self.colNameList])
         self.units = units
         # Set more plotting preferences
-        self.plotTitle = plotTitle # Plot Title.  If none, one gets auto-generated
-        self.plotLog = plotLog # Log-scale the color bar for data values
-        self.plotHistLog = plotHistLog # Make the y-scale log in histograms
-        self.plotMin = plotMin # Min data value for color-bars and hist ranges
-        self.plotMax = plotMax # Max data value
-        self.plotPercentileClip = plotPercentileClip # set min/max data range for display after percentile clipping.  Over-ridden by self.plotMin and self.plotMax
-        return
+        if plotParams:
+            self.plotParams = plotParams
+        else:
+            self.plotParams = {}
+        if 'plotLabel' not in self.plotParams:
+            self.plotParams['plotLabel'] = self.units
+        # Example options for plotting parameters: plotTitle, plotMin, plotMax,
+        #  plotPercentiles (overriden by plotMin/Max). 
+        #  These plotParams are used by the binMetric, passed to the binner plotting utilities.
+    
 
     def registerCols(self, cols):
         """Add cols to the column registry. """
@@ -84,8 +91,9 @@ class BaseMetric(object):
             #Add a set to the registry if the key doesn't exist.
             self.classRegistry[myName] = set()
         # Add the columns to the registry.
-        for col in cols:
+        for col in cols:            
             self.classRegistry[myName].add(col)
+
 
     def validateData(self, simData):
         """Check that simData has necessary columns for this particular metric."""

@@ -122,7 +122,7 @@ class HealpixBinner(BaseSpatialBinner):
             base = BaseBinner()
             metricValues, header = base.readMetricDataGeneric(infilename)
         
-        #wtf is with the case of header keywords?  Ah, long keywords use HIERATCH cards and preserve case.
+        #Long keywords use HIERARCH cards and preserve case.
         binner = HealpixBinner(nside=header['nside'.upper()])
         binner.badval = header['badval'.upper()]
         binner.int_badval = header['int_badval']

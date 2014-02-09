@@ -42,8 +42,9 @@ def getMetrics(seeingcol, docomplex=False):
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
     metricList.append(metrics.Coaddm5Metric('5sigma_modified'))
     metricList.append(metrics.CountMetric('expMJD'))
-    metricList.append(metrics.NormAirmassMetric(metricName='Minimum Normalized Airmass', 
-                                                reducer=np.min))
+    #metricList.append(metrics.NormAirmassMetric(metricName='Minimum Normalized Airmass', 
+    #                                            reducer=np.min))
+
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.
@@ -71,7 +72,8 @@ def goBin(dbTable, metadata, simdata, bb, metricList):
     dt, t = dtime(t)
     print 'Set up gridMetric %f s' %(dt)
 
-    gm.runBins(metricList, simdata, simDataName=dbTable, metadata = metadata)
+    gm.setMetrics(metricList)
+    gm.runBins(simdata, simDataName=dbTable, metadata = metadata)
     dt, t = dtime(t)
     print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
                     

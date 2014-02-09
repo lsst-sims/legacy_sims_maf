@@ -59,7 +59,8 @@ def goBinPlotWrite(dbTable, metadata, simdata, binnerList, metricList):
     for bb, mm in zip(binnerList, metricList):
         gm = binMetrics.BaseBinMetric()
         gm.setBinner(bb)
-        gm.runBins([mm,], simdata, simDataName=dbTable, metadata = metadata)
+        gm.setMetrics(mm)
+        gm.runBins(simdata, simDataName=dbTable, metadata = metadata)
         mean = gm.computeSummaryStatistics(mm.name, metrics.MeanMetric)
         print 'SummaryNumber (mean) for', mm.name, ':', mean
         gm.plotAll(savefig=True, closefig=True)

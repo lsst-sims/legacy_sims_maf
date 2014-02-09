@@ -49,15 +49,16 @@ def dtime(time_prev):
 class BaseBinMetric(object):
     def __init__(self, figformat='png'):
         """Instantiate binMetric object and set up (empty) dictionaries."""
-        # Set up dictionaries to hold metric values, reduced metric values,
-        #   simDataName(s) and metadata(s). All dictionary keys should be
-        #   metric name (reduced metric data is originalmetricName.reduceFuncName). 
+        # Set figure format for output plot files.
+        self.figformat = figformat
+        self.metricNames = []   
+        self.metricObjs = {}
+        self.plotParams = {}
         self.metricValues = {}
         self.simDataName = {}
         self.metadata = {}
         self.comment={}
-        # Set figure format for output plot files.
-        self.figformat = figformat
+        self.binner = None
 
     def _buildOutfileName(self, metricName,
                           outDir=None, outfileRoot=None, plotType=None):
@@ -67,30 +68,26 @@ class BaseBinMetric(object):
             outDir = '.'
         # Start building output file name.
         if outfileRoot == None:
-            try:
-                # If given appropriate metric name, use simDataName associated with that.
+            if metricName in self.simDataName:
+                # If metricName is the name of an actual metric, use its associated simdata ID.
                 outfileRoot = self.simDataName[metricName]
-            except KeyError:
-                # (we weren't given a metricName in the dictionary .. a plot title, for example).
-                try:
-                    # Then use the simDataName associated with the first metric.
-                    outfileRoot = self.simDataName[self.metrics[0].name]
-                except AttributeError: 
-                    # (the binMetric doesn't have self.metrics set .. perhaps because have just
-                    #  read back in the metric values.)
+            else:
+                # metricName may have been a plot title, so try to find a good compromise.
+                outfileRoot = list(set(self.simDataName.values()))
+                if len(outfileRoot) > 1:
                     outfileRoot = 'comparison'
+                else:
+                    outfileRoot = outfileRoot[0]
         # Start building output file name. Strip trailing numerals from metricName.
         oname = outfileRoot + '_' + self._dupeMetricName(metricName)
         # Add summary of the metadata if it exists.
-        try:
-            self.metadata[metricName]    
-            if len(self.metadata[metricName]) > 0:        
-                oname = oname + '_' + self.metadata[metricName]#[:5]
-        except KeyError:
-            pass
+        if metricName in self.metadata:
+            metadata_summary = self.metadata[metricName]
+            if len(metadata_summary) > 0:        
+                oname = oname + '_' + metadata_summary
         # Add letter to distinguish binner types
         #   (which otherwise might have the same output name).
-        oname = oname + '_' + self.binner.binnertype[:2]
+        oname = oname + '_' + self.binner.binnertype[:3]
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
@@ -115,40 +112,79 @@ class BaseBinMetric(object):
         else:
             return metricName
 
-    def setBinner(self, binner):
-        """Set binner for binMetric."""
-        self.binner = binner
+    def setBinner(self, binner, override=False):
+        """Set binner for binMetric.
+
+        If override = False (default), checks if binner already set, and if the two are equal."""
+        if (self.binner == None) or (override):
+            self.binner = binner
+            return True        
+        return (self.binner == binner)            
+
+    def setMetrics(self, metricList):
+        """Sets dictionaries for the metric objects and their plotting parameters."""
+        # Keeping track of metric data values, plotting parameters, and metadata must
+        # be done without depending on having the metric objects themselves, as the binMetric
+        # may be populated with data by reading values from disk instead of calculating them.
+        # All dictionaries are keyed by metric name
+        #   (reduced metric data is originalmetricName.reduceFuncName). 
+        if not hasattr(metricList, '__iter__'):
+            metricList = [metricList,]
+        for m in metricList:
+            print m
+            self.metricNames.append(self._deDupeMetricName(m.name))
+        for m, mname in zip(metricList, self.metricNames):
+            self.metricObjs[mname] = m
+            self.plotParams[mname] = m.plotParams
+
+    def readMetrics(self, filenames, checkBinner=True):
+        """Given a list of filenames, reads metric values and metadata from disk.
+        
+        checkBinner =  check that self.binner and the binner generated from the file are equal."""
+        if not hasattr(filenames, '__iter__'):
+            filenames = [filenames, ]        
+        for f in filenames:
+            metricValues, binner, header = self.binner.readMetricData(f)
+            if checkBinner:
+                if not(self.setBinner(binner, override=False)):
+                    raise Exception('Binner for metric %s does not match existing binner.' 
+                                    % (header['metricName']))
+            # Dedupe the metric name, if needed.
+            metricName = self._deDupeMetricName(header['metricName'])
+            self.metricNames.append(metricName)
+            self.metricValues[metricName] = metricValues
+            self.metricValues[metricName].fill_value = self.binner.badval
+            self.simDataName[metricName] = header['simDataName']
+            self.metadata[metricName] = header['metadata'.upper()]
+            self.comment[metricName] = header['comment'.upper()]
+            self.plotParams[metricName] = {}
+            for pp in header['plotParams']:
+                self.plotParams[metricName][pp] = header['plotParams'][pp]
     
-    def validateMetricData(self, metricList, simData):
-        """Validate that simData has the required data values for the metrics in metricList."""
-        simCols = metricList[0].classReigstry.uniqueCols()
+    def validateMetricData(self, simData):
+        """Validate that simData has the required data values for the metrics in self.metricObjs."""
+        simCols = self.metricObjs[self.metricNames[0]].classRegistry.uniqueCols()
         for c in simCols:
             if c not in simData.dtype.names:
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n',
                                 metricList[0].classRegistry)
 
-    def runBins(self, metricList, simData, 
-                simDataName='opsim', metadata=''):
-        """Run metric generation over binner.
+    def runBins(self, simData, simDataName='opsim', metadata=''):
+        """Run metric generation over binner, for metric objects in self.metricObjs.
 
-        metricList = list of metric objects
         simData = numpy recarray holding simulated data
         simDataName = identifier for simulated data
         metadata = further information from config files ('WFD', 'r band', etc.) """
-        # Set metrics (convert to list if not iterable). 
-        if hasattr(metricList, '__iter__'):
-            self.metrics = metricList
-        else:
-            self.metrics = [metricList,]
         # Set metadata for each metric.
-        for m in self.metrics:
-            self.simDataName[m.name] = simDataName
-            self.metadata[m.name] = metadata
+        for mname in self.metricObjs:
+            self.simDataName[mname] = simDataName
+            self.metadata[mname] = metadata
         # Set up (masked) arrays to store metric data. 
-        for m in self.metrics:
-            self.metricValues[m.name] = ma.MaskedArray(data = np.empty(len(self.binner), m.metricDtype),
-                                                       mask = np.zeros(len(self.binner), 'bool'),
-                                                       fill_value=self.binner.badval)
+        for mname in self.metricObjs:
+            self.metricValues[mname] = ma.MaskedArray(data = np.empty(len(self.binner), 
+                                                      self.metricObjs[mname].metricDtype),
+                                                      mask = np.zeros(len(self.binner), 'bool'),
+                                                      fill_value=self.binner.badval)
         # Run through all binpoints and calculate metrics 
         #    (slicing the data once per binpoint for all metrics).
         for i, b in enumerate(self.binner):
@@ -156,32 +192,29 @@ class BaseBinMetric(object):
             slicedata = simData[idxs]
             if len(slicedata)==0:
                 # No data at this binpoint. Mask data values.
-                for m in self.metrics:
-                    self.metricValues[m.name].mask[i] = True
+                for mname in self.metricObjs:
+                    self.metricValues[mname].mask[i] = True
             else:
-                for m in self.metrics:
-                    self.metricValues[m.name].data[i] = m.run(slicedata)
+                for mname in self.metricObjs:
+                    self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
         # Mask data where metrics could not be computed (according to metric bad value).
-        for m in self.metrics:
-            self.metricValues[m.name] = ma.masked_where(self.metricValues[m.name] == m.badval, 
-                                                        self.metricValues[m.name], copy=False)
+        for mname in self.metricObjs:
+            self.metricValues[mname] = ma.masked_where(self.metricValues[mname] == 
+                                                       self.metricObjs[mname].badval, 
+                                                       self.metricValues[mname], copy=False)
             # For some reason, the mask fill value is not preserved, so reset.
-            self.metricValues[m.name].fill_value = self.binner.badval
+            self.metricValues[mname].fill_value = self.binner.badval
 
-    def reduceAll(self, metricList=None):
-        """Run all reduce functions on all (complex) metrics.
-
-        Optional: provide a list of metric classes on which to run reduce functions."""
-        if metricList == None:
-            metricList = self.metrics
-        for m in metricList:
+    def reduceAll(self):
+        """Run all reduce functions on all (complex) metrics."""
+        for mname in self.metricObjs:
             # Check if there are reduce functions to apply.
             try:
-                m.reduceFuncs
-            except: 
+                self.metricObjs[mname].reduceFuncs
+            except Exception as e: 
                 continue
             # Apply reduce functions
-            self.reduceMetric(m.name, m.reduceFuncs.values())            
+            self.reduceMetric(mname, self.metricObjs[mname].reduceFuncs.values())            
                 
     def reduceMetric(self, metricName, reduceFunc):
         """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. 
@@ -192,7 +225,7 @@ class BaseBinMetric(object):
         # Set up metric reduced value names.
         rNames = []
         for r in reduceFunc:
-            rNames.append(metricName + '_' + r.__name__.lstrip('reduce'))
+            rNames.append(metricName + '_' + r.__name__.replace('reduce',''))
         # Set up reduced metric values masked arrays, copying metricName's mask.
         for rName in rNames:
             self.metricValues[rName] = ma.MaskedArray(data = np.empty(len(self.binner), 'float'),
@@ -208,24 +241,20 @@ class BaseBinMetric(object):
                     self.metricValues[rName].data[i] = rFunc(metricValuesPt)
         # Copy simdataName, metadata and comments for this reduced version of the metric data.
         for rName in rNames:
-            try:
+            if metricName in self.simDataName:
                 self.simDataName[rName] = self.simDataName[metricName]
-            except KeyError:
-                pass
-            try:
+            if metricName in self.metadata:
                 self.metadata[rName] = self.metadata[metricName]
-            except KeyError:
-                pass
-            try:
+            if metricName in self.comment:
                 self.comment[rName] = self.comment[metricName]
-            except KeyError:
-                pass
+            if metricName in self.plotParams:
+                self.plotParams[rName] = self.plotParams[metricName]
 
     def writeAll(self, outDir=None, outfileRoot=None, comment=''):
         """Write all metric values to disk."""
-        for mk in self.metricValues.keys():
-            dt = self.metricValues[mk].dtype
-            self.writeMetric(mk, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
+        for mname in self.metricValues:
+            dt = self.metricValues[mname].dtype
+            self.writeMetric(mname, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
                              dt=dt)
 
         
@@ -241,52 +270,19 @@ class BaseBinMetric(object):
        """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         self.binner.writeMetricData(outfile+'.fits', self.metricValues[metricName],
-                                    metricName = metricName,
+                                    metricName = self._dupeMetricName(metricName),
                                     simDataName = self.simDataName[metricName],
                                     metadata = self.metadata[metricName],
                                     comment = comment, dt=dt, 
                                     badval = self.binner.badval)
-
-        #depreciated, now binner data written with metric
- #   def writeBinner(self,  binnerfile='binner.obj', outfileRoot=None, outDir=None):
- #       """Write a pickle of the binner to disk."""
- #       outfile = self._buildOutfileName(binnerfile, outDir=outDir, outfileRoot=outfileRoot)
- #       modbinner = self.binner
- #       if hasattr(modbinner,'opsimtree'):  delattr(modbinner,'opsimtree') 
- #       pickle.dump(modbinner, open(outfile,'w'))
-
- #   def readBinner(self, binnerfile='binner.obj'):
- #      self.binner = pickle.load(open(binnerfile, 'r'))
-    
-    def readMetric(self, filenames, checkBinner=True):
-        """Read metric values and binner (pickle object) from disk.
-
-        checkBinner =  check the binnertype and number of binpoints match the 
-          properties of self.binner"""
-        # Read metrics from disk
-        for f in filenames:
-            metricValues, binner, header \
-              = self.binner.readMetricData(f)
-            # Dedupe the metric name, if needed.
-            metricName = self._deDupeMetricName(metricName)
-            # Store the header values in variables
-            self.metricValues[metricName] = metricValues
-            self.metricValues[metricName].fill_value = self.binner.badval
-            self.simDataName[metricName] = header['simDataName']
-            self.metadata[metricName] = header['metadata'.upper()]
-            self.comment[metricName] = header['comment'.upper()]
-            if checkBinner:
-                if binnertype != self.binner.binnertype:
-                    raise Exception('Metrics not computed on currently loaded binner type.')           
-                if np.size(metricValues) != self.binner.nbins:
-                    raise Exception('Metric does not have the same number of points as loaded binner.')
+        # Update this to write self.comment and self.plotParams
 
                 
     def plotAll(self, outDir='./', savefig=True, closefig=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
-        for mk in self.metricValues.keys():
+        for mname in self.metricValues:
             try:
-                self.plotMetric(mk, outDir=outDir, savefig=savefig)
+                self.plotMetric(mname, outDir=outDir, savefig=savefig)
                 if closefig:
                    plt.close('all')
             except ValueError:
@@ -300,15 +296,37 @@ class BaseBinMetric(object):
                 (self.metricValues[metricName].dtype=='int')):
             raise ValueError('Metric data in %s is not float or int type (%s).' 
                              %(metricName, self.metricValues[metricName].dtype))
+        if metricName in self.plotParams:
+            pParams = self.plotParams[metricName]
+        else:
+            pParams = None
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
-        plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-        plotTitle += ' : ' + mname
-        plotLabel = mname
+        if 'plotTitle' in pParams:
+            plotTitle = pParams['plotTitle']
+        else:
+            plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
+            plotTitle += ' : ' + mname
+        if 'plotLabel' in pParams:
+            plotLabel = pParams['plotLabel']
+        else:
+            plotLabel = mname
+        # Use plot limits if they're set. 
+        if 'plotMin' in pParams:
+            plotMin = pParams['plotMin']
+        else:
+            # ADD PERCENTILE CLIPPING HERE IF SET
+            plotMin = self.metricValues[metricName].compressed().min()
+        if 'plotMax' in pParams:
+            plotMax = pParams['plotMax']
+        else:
+            plotMax = self.metricValues[metricName].compressed().max()
+        # Use percentile values to set plot limits, if they were set.
         # Plot the binned metric data, if relevant (oneD binners). 
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
-                                                    plotLabel, title=plotTitle)
+                                                    plotLabel, title=plotTitle, 
+                                                    histRange = [plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
@@ -317,7 +335,8 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             histfignum = self.binner.plotHistogram(self.metricValues[metricName].compressed(), 
-                                                   plotLabel, title=plotTitle)
+                                                   plotLabel, title=plotTitle, 
+                                                   histRange = [plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
@@ -326,7 +345,7 @@ class BaseBinMetric(object):
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
             skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),
-                                               plotLabel, title=plotTitle)
+                                               plotLabel, title=plotTitle, clims=[plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
@@ -341,132 +360,6 @@ class BaseBinMetric(object):
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='ps')
-                plt.savefig(outfile, figformat=self.figformat)
-
-    
-    def plotComparisons(self, metricNameList, histBins=100, histRange=None, maxl=500.,
-                        plotTitle=None, legendloc='upper left',
-                        savefig=False, outDir=None, outfileRoot=None):
-        """Create comparison plots of all metricValues in metricNameList.
-
-        Will create one histogram or binned data plot with all values from metricNameList,
-        similarly for power spectra if applicable.
-        Will create skymap difference plots if only two metrics: skymap is intersection of 2 areas."""
-        # Check if 'metricName' is plottable data.
-        for m in metricNameList:
-            # Remove if an 'object' type. 
-            if self.metricValues[m].dtype == 'object':
-                metricNameList.remove(m)
-            # Remove if a numpy rec array or anything else longer than float.
-            if len(self.metricValues[m].dtype) > 0: 
-                metricNameList.remove(m)
-        # If there is only one metric remaining, just plot.
-        if len(metricNameList) < 2:
-            print 'Only one metric left in metricNameList - %s - so defaulting to plotMetric.' \
-              %(metricNameList)
-            self.plotMetric(metricNameList[0], savefig=savefig, 
-                            outDir=outDir, outfileRoot=outfileRoot)
-            return
-        # Else build plot titles. 
-        simDataNames = set()
-        metadatas = set()
-        metricNames = set()
-        for m in metricNameList:
-            simDataNames.add(self.simDataName[m])
-            metadatas.add(self.metadata[m])
-            metricNames.add(self._dupeMetricName(m))
-        # Create a plot title from the unique parts of the simData/metadata/metric names.
-        if plotTitle == None:
-            plotTitle = ''
-            if len(simDataNames) == 1:
-                plotTitle += ' ' + list(simDataNames)[0]
-            if len(metadatas) == 1:
-                plotTitle += ' ' + list(metadatas)[0]
-            if len(metricNames) == 1:
-                plotTitle += ' ' + list(metricNames)[0]
-            if plotTitle == '':
-                # If there were more than one of everything above, join metricNames with commas. 
-                plotTitle = ', '.join(metricNames)
-        # Create a plot x-axis label (metricLabel)
-        plotLabel = ', '.join(metricNames)
-        # Plot the binned data if applicable. 
-        if hasattr(self.binner, 'plotBinnedData'):
-            histfignum = None
-            addLegend = False
-            for i, m in enumerate(metricNameList):
-                if i == (len(metricNameList)-1):
-                    addLegend = True
-                legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
-                    + ' ' + self._dupeMetricName(m)
-                histfignum = self.binner.plotBinnedData(self.metricValues[m].filled(0), 
-                                                        plotLabel, title=plotTitle, 
-                                                        fignum=histfignum,
-                                                        alpha=0.3,
-                                                        legendLabel=legendLabel, addLegend=addLegend, 
-                                                        legendloc=legendloc)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='hist')
-                plt.savefig(outfile, figformat=self.figformat)        
-        # Plot the histogram if applicable.
-        if hasattr(self.binner, 'plotHistogram'):
-            histfignum = None
-            addLegend = False
-            for i,m in enumerate(metricNameList):
-                if i == (len(metricNameList)-1):
-                    addLegend = True
-                legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
-                  + ' ' + self._dupeMetricName(m)
-                histfignum = self.binner.plotHistogram(self.metricValues[m].compressed(),
-                                                     metricLabel=plotLabel,
-                                                     fignum = histfignum, addLegend=addLegend, 
-                                                     legendloc=legendloc,
-                                                     bins = histBins, histRange = histRange,
-                                                     legendLabel=legendLabel, title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='hist')
-                plt.savefig(outfile, figformat=self.figformat)        
-        # Plot the power spectrum, if applicable.
-        if hasattr(self.binner, 'plotPowerSpectrum'):
-            psfignum = None
-            addLegend = False
-            for i,m in enumerate(metricNameList):
-                if i == (len(metricNameList)-1):
-                    addLegend = True
-                legendLabel = self.simDataName[m] + ' '+  self.metadata[m] \
-                  + ' ' + self._dupeMetricName(m)
-                psfignum = self.binner.plotPowerSpectrum(self.metricValues[m].filled(),
-                                                         addLegend=addLegend,
-                                                         fignum = psfignum, maxl = maxl, 
-                                                         legendLabel=legendLabel, title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='ps')
-                plt.savefig(outfile, figformat=self.figformat)
-        # Plot the sky map, if only two metricNames.
-        if len(metricNameList) == 2:
-            # Mask areas where either metric has bad data values, take difference elsewhere.
-            mask = self.metricValues[metricNameList[0]].mask
-            mask = np.where(self.metricValues[metricNameList[1]].mask == True, True, mask)
-            diff = ma.MaskedArray(data = (self.metricValues[metricNameList[0]] - 
-                                          self.metricValues[metricNameList[1]]), 
-                                          mask=mask,
-                                          filled_value = self.binner.badval)            
-            # Make color bar label.
-            if self._dupeMetricName(metricNameList[0]) == self._dupeMetricName(metricNameList[1]):
-                plotLabel = 'Delta ' + self._dupeMetricName(metricNameList[0])
-                plotLabel += ' (' + self.metadata[metricNameList[0]] + ' - ' + self.metadata[metricNameList[1]] + ')'
-            else:
-                plotLabel = metricNameList[0] + ' - ' + metricNameList[1]
-            skyfignum = self.binner.plotSkyMap(diff, plotLabel, title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='sky')
                 plt.savefig(outfile, figformat=self.figformat)
                     
     

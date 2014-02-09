@@ -58,7 +58,8 @@ def goBin(dbTable, metadata, simdata, bb, metricList):
     gm = binMetrics.BaseBinMetric()
     gm.setBinner(bb)
 
-    gm.runBins(metricList, simdata, simDataName=dbTable, metadata = metadata)
+    gm.setMetrics(metricList)
+    gm.runBins(simdata, simDataName=dbTable, metadata = metadata)
     dt, t = dtime(t)
     print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
                     

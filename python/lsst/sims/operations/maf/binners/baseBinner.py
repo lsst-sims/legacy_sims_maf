@@ -116,8 +116,10 @@ class BaseBinner(object):
     
     def readMetricDataGeneric(self, infilename):
         """Read metric data values from file 'infilename'.
-        return the metric values and the header.  The info in the header
-        can then be used to re-construct the binner that goes with the metricValues"""
+        
+        Return the metric values and the header, not the binner.  
+        Note that this method does NOT automatically reconstruct the binner by itself, the
+        readMetricData methods in each class does that using information read by this method."""
         f = pyf.open(infilename)
         if f[0].header['NAXIS'] == 0:
             f = pyf.open(infilename)
