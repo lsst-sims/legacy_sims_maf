@@ -27,20 +27,16 @@ class MafDriver(object):
         self.binList = []
         self.metricList = []
         for i,binner in self.config.binners.iteritems():
-            temp_binner = getattr(binners,binner.binner)(*binner.params, **binner.kwargs )
+            temp_binner = getattr(binners,binner.name)(*binner.params, **binner.kwargs )
             temp_binner.setupParams = binner.setupParams
             temp_binner.setupKwargs = binner.setupKwargs
             temp_binner.constraints = binner.constraints
             self.binList.append(temp_binner)
             sub_metricList=[]
             for i,metric in binner.metricDict.iteritems():
-                kwargs = {}
-                for key in metric.kwargs_str.keys():  kwargs[key] = metric.kwargs_str[key]
-                for key in metric.kwargs_int.keys():  kwargs[key] = metric.kwargs_int[key]
-                for key in metric.kwargs_float.keys():  kwargs[key] = metric.kwargs_float[key]
-                for key in metric.kwargs_bool.keys():  kwargs[key] = metric.kwargs_bool[key]
-                sub_metricList.append(getattr(metrics,metric.metric)
-                                       (*metric.params, **kwargs) )
+                name,params,kwargs = config2dict(metric)
+                sub_metricList.append(getattr(metrics,metric.name)
+                                      (*params, **kwargs) )
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
         self.constraints = []
@@ -65,6 +61,13 @@ class MafDriver(object):
         
         dbTable = tableName 
         table = db.Table(dbTable, 'obsHistID', self.config.dbAddress)
+
+        #new idea.  Also pass in any column stacking configs
+        #1) loop through the column list, split into a list to pull from DB and post-process list
+        #2) initialize the stacking classes, using the config params if present
+        #3) add required columns to the db list
+        #4) 
+        
         pi_amp = False
         normairmass = False
         if 'normairmass' in colnames:
@@ -88,7 +91,7 @@ class MafDriver(object):
         """Loop over each binner and calc metrics for that binner. """
         for opsimName in self.config.opsimNames:
             for j, constr in enumerate(self.constraints):
-                # Find which binners have a matching constraint
+                # Find which binners have a matching constraint XXX-need to update to be matching constraint and stacking params
                 matchingBinners=[]
                 for b in self.binList:
                     if constr in b.constraints:

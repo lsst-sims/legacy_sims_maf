@@ -1,0 +1,66 @@
+XXX -- uncompleted and untested Draft --XXX
+
+Installation instructions for the Metric Analysis Framework:
+
+Requirements:
+---------------------------------------
+Python
+    numpy
+    scipy
+    matplotlib
+    pyfits
+    healpy: https://github.com/healpy/healpy 
+    SQLAlchemy:  http://www.sqlalchemy.org/download.html
+    pyslalib (for astrometric metrics):  https://github.com/scottransom/pyslalib
+
+LSST Stack:  
+    Base
+    pexConfig
+    catalogs
+    maf
+
+
+Recommendation for install:
+---------------------------
+If you are installing on a Mac, we recommend using one of the common Python package managers.  It is important to build all the MAF dependencies consistently so there are not conflicts between compilers and linked libraries.
+
+Example installing Python requirements with Anaconda (recommended?):
+-----------------------
+1) Install the anaconda package.  Anaconda includes numpy, scipy, matplotlib, sqlalchemy, and pyfits (via astropy).  Anaconda is available from:  https://store.continuum.io/cshop/anaconda/
+
+2) Set your path to ensure the anaconda tools are first in your path.  For example, add the following line to your .bashrc file:
+PATH=~/anaconda/bin:PATH
+
+3) Check that you have the anaconda install tools first in your path:
+>which easy_install
+/Users/<you>/anaconda/bin/easy_install
+
+4) Use easy_install to get healpy:
+>easy_install healpy
+
+5) (optional) install pyslalib from source
+
+
+
+Example installing Python requirements with macports:
+-----------------------
+1) Install macports from:  http://www.macports.org/install.php
+
+2) Use macports to install python and python packages:
+>sudo port install python27
+>sudo port install py-matplotlib
+>sudo port install py27-pyfits 
+>sudo port install XXX
+
+XXX
+XXX) Use easy_install to get healpy:
+>easy_install healpy
+
+
+Installing the LSST Stack:
+------------------------
+https://dev.lsstcorp.org/trac/wiki/Installing
+
+
+ LocalWords:  matplotlib sqlalchemy pyfits astropy bashrc healpy pyslalib sudo
+ LocalWords:  macports python27 py py27 LSST
