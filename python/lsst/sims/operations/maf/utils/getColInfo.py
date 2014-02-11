@@ -1,5 +1,5 @@
 import numpy as np
-from addCols import *
+import addCols 
 
 class ColInfo(object):
     def __init__(self):
