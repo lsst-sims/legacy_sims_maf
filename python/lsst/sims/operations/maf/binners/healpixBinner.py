@@ -12,6 +12,8 @@ import warnings
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
+from lsst.sims.operations.maf.utils.percentileClip import percentileClip
+
 
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
@@ -129,9 +131,13 @@ class HealpixBinner(BaseSpatialBinner):
         return metricValues, binner, header
         
     def plotSkyMap(self, metricValue, metricLabel, title='',
-                   clims=None, cbarFormat='%.2g'):
+                   clims=None, cbarFormat='%.2g', perClip=0.95):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a Mollweide full-sky plot.
+        if perClip:
+            clims=np.zeros(2.)
+            good = np.where(metricValue != self.badval)
+            clims[0],clims[1] = percentileClip(metricValue[good])
         if clims!=None:
             hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180))
