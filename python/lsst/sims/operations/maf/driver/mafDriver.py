@@ -1,5 +1,5 @@
 import numpy as np #segfault if numpy not imported 1st, argle bargle!
-from mafConfig import MafConfig, config2dict
+from mafConfig import MafConfig, config2dict, readMetricConfig
 import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
@@ -32,14 +32,15 @@ class MafDriver(object):
             temp_binner.setupKwargs = binner.setupKwargs
             temp_binner.constraints = binner.constraints
             stackers = []
-            for colS in binner.stackCols:
-                name, params, kwargs = config2dict(colS)
-                stackers.append(getattr(utils.addCols, name, *params, **kwargs))
+            for key in binner.stackCols.keys():
+                name, params, kwargs = config2dict(binner.stackCols[key])
+                stackers.append(getattr(utils.addCols, name)(*params, **kwargs))
             temp_binner.stackers = stackers
             self.binList.append(temp_binner)
             sub_metricList=[]
             for i,metric in binner.metricDict.iteritems():
-                name,params,kwargs = config2dict(metric)
+                name,params,kwargs,plotDict = readMetricConfig(metric)
+                kwargs['plotParams'] = plotDict
                 sub_metricList.append(getattr(metrics,metric.name)
                                       (*params, **kwargs) )
             self.metricList.append(sub_metricList)

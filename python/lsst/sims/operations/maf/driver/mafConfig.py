@@ -8,6 +8,10 @@ class MetricConfig(pexConfig.Config):
     kwargs_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
     kwargs_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     kwargs_bool = pexConfig.DictField("", keytype=str, itemtype=bool, default={})
+    plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
+    plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
+    plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
     params = pexConfig.ListField("", dtype=str, default=[])
 
 class ColStackConfig(pexConfig.Config):
@@ -44,7 +48,7 @@ def makeDict(*args):
     """
     return dict((ind, config) for ind, config in enumerate(args))
 
-def makeMetricConfig(name, params=[], kwargs={}):
+def makeMetricConfig(name, params=[], kwargs={}, plotDict={}):
     mc = MetricConfig()
     mc.name = name
     mc.params=params
@@ -60,7 +64,28 @@ def makeMetricConfig(name, params=[], kwargs={}):
             mc.kwargs_bool[key] = kwargs[key]
         else:
             raise Exception('Unsupported kwarg data type')
+    for key in plotDict.keys():
+        if type(plotDict[key]) is str:
+            mc.plot_str[key] = ploDictt[key]
+        elif type(plotDict[key]) is float:
+            mc.plot_int[key] = plotDict[key]
+        elif type(plotDict[key]) is int:
+            mc.plot_float[key] = plotDict[key]
+        elif type(plotDict[key]) is bool:
+            mc.plot_bool[key] = plotDict[key]
+        else:
+            raise Exception('Unsupported kwarg data type')
     return mc
+
+def readMetricConfig(config):
+    name, params,kwargs = config2dict(config)
+    plotDict={}
+    for key in config.plot_str:  plotDict[key] = config.plot_str[key]
+    for key in config.plot_int:  plotDict[key] = config.plot_int[key]
+    for key in config.plot_float:  plotDict[key] = config.plot_float[key]
+    for key in config.plot_bool:  plotDict[key] = config.plot_bool[key]
+    return name,params,kwargs,plotDict
+
 
 def config2dict(config):
     kwargs={}

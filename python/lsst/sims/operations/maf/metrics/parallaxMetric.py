@@ -7,10 +7,10 @@ class ParallaxMetric(BaseMetric):
     given a serries of observations"""
 
     def __init__(self, metricName='parallax', m5col='5sigma_modified',
-                 mjdcol='expMJD', units = 'arcsec',
+                 mjdcol='expMJD', units = 'mas',
                  filtercol='filter', seeingcol='seeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01):
+                 stellarType=None, atm_err=0.01, plotParams=None):
         
         """ Instantiate metric.
 
@@ -22,11 +22,11 @@ class ParallaxMetric(BaseMetric):
         atm_err = centroiding error due to atmosphere in arcsec
         """
         cols = [m5col, mjdcol,filtercol,seeingcol, 'ra_pi_amp', 'dec_pi_amp']
-        super(ParallaxMetric, self).__init__(cols, metricName)
+        super(ParallaxMetric, self).__init__(cols, metricName, units=units)
         # set return type
         self.m5col = m5col
         self.metricDtype = 'float'
-        self.units = 'mas'
+        self.units = units
         self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
         self.badval = badval
         self.atm_err = atm_err

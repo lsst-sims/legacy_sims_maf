@@ -25,11 +25,11 @@ class SimpleScalarMetric(BaseMetric):
 
 class Coaddm5Metric(SimpleScalarMetric):
     """Calculate the coadded m5 value at this gridpoint."""
-    def __init__(self, m5col = '5sigma_modified', metricName = 'CoaddedM5'):
+    def __init__(self, m5col = '5sigma_modified', metricName = 'CoaddedM5', plotParams=None):
         """Instantiate metric.
         
         m5col = the column name of the individual visit m5 data. """
-        super(Coaddm5Metric, self).__init__(m5col, metricName)            
+        super(Coaddm5Metric, self).__init__(m5col, metricName, plotParams=plotParams)            
     def run(self, dataSlice):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
 
