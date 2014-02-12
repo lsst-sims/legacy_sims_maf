@@ -43,6 +43,7 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import pickle
 import pyfits as pyf
+import lsst.sims.operations.maf.binners as binners
 from lsst.sims.operations.maf.utils.percentileClip import percentileClip
 
 
@@ -159,9 +160,12 @@ class BaseBinMetric(object):
                 if (header['NAXIS'] == 0):
                     header = hdulist[1].header
                 binnertype = header['binnertype']
-                f.close()
+                hdulist.close()
                 #  Instantiate a binner of the right type, and use its native read methods.
-                self.binner = binnertypeDict[binnertype]()
+                if binnertype == 'HEALPIX':
+                    self.binner = binnertypeDict[binnertype](nside=header['NSIDE'])
+                else:
+                    self.binner = binnertypeDict[binnertype]()
             metricValues, binner, header = self.binner.readMetricData(f)
             # Check that the binner from this file matches self.binner
             if not(self.setBinner(binner, override=False)):

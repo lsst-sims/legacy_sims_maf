@@ -5,6 +5,7 @@
 # Also requires numpy and pylab (for histogram and power spectrum plotting)
 
 import numpy as np
+import numpy.ma as ma
 import healpy as hp
 import matplotlib.pyplot as plt
 import pyfits as pyf
@@ -118,11 +119,16 @@ class HealpixBinner(BaseSpatialBinner):
         hdulist.close()
         if pixtype == 'HEALPIX':
             metricValues, header = hp.read_map(infilename, h=True)
+            # Convert metric values to MASKED ARRAY (matches returned value from 
+            #  base.readMetricDataGeneric)
+            mask = np.where(metricValues == self.badval, True, False)
+            metricValues = ma.MaskedArray(data = metricValues,
+                                          mask = mask,
+                                          fill_value = self.badval)
             header = dict(header)
         else:
             base = BaseBinner()
             metricValues, header = base.readMetricDataGeneric(infilename)
-        
         #Long keywords use HIERARCH cards and preserve case.
         binner = HealpixBinner(nside=header['nside'.upper()])
         binner.badval = header['badval'.upper()]
