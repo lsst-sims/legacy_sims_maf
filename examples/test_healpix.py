@@ -59,7 +59,7 @@ def getBinner(simdata, racol, deccol, nside=128):
     return bb
 
 
-def goBin(dbTable, metadata, simdata, bb, metricList):
+def goBin(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
     gm = binMetrics.BaseBinMetric()
     gm.setBinner(bb)
@@ -68,7 +68,7 @@ def goBin(dbTable, metadata, simdata, bb, metricList):
     print 'Set up gridMetric %f s' %(dt)
 
     gm.setMetrics(metricList)
-    gm.runBins(simdata, simDataName=dbTable, metadata = metadata)
+    gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
     dt, t = dtime(t)
     print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
                     
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     dbAddress = authDictionary[args.connectionName]
     
     dbTable = args.simDataTable
-    opsimrun = args.simDataTable.lstrip('output_')
+    opsimrun = args.simDataTable.replace('output_', '')
 
     sqlconstraint = args.sqlConstraint
     
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
     if args.dither:
         metadata = metadata + ' hexdither'
-    gm = goBin(dbTable, metadata, simdata, bb, metricList)
+    gm = goBin(opsimrun, metadata, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.
     printSummary(gm, metricList)

@@ -4,8 +4,11 @@
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
-import pyfits as pyf
 import warnings
+try:
+    import astropy.io.fits as pyf
+except ImportError:
+    import pyfits as pyf
 
 class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""

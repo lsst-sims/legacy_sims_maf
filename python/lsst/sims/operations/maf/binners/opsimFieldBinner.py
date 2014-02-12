@@ -2,8 +2,12 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pyfits as pyf
 import warnings
+try:
+    import astropy.io.fits as pyf
+except ImportError:
+    import pyfits as pyf
+    
 from .baseBinner import BaseBinner
 
 from .baseSpatialBinner import BaseSpatialBinner
@@ -13,6 +17,10 @@ class OpsimFieldBinner(BaseSpatialBinner):
     def __init__(self, verbose=True):
         super(OpsimFieldBinner, self).__init__(verbose=verbose)
         self.binnertype = 'OPSIMFIELDS'
+        self.fieldId = None
+        self.ra = None
+        self.dec = None
+        self.nbins = None
 
     def setupBinner(self, simData, simFIdColName, 
                     fieldData, fieldFIdColName, fieldRaColName, fieldDecColName):
@@ -58,7 +66,9 @@ class OpsimFieldBinner(BaseSpatialBinner):
         """Evaluate if two grids are equivalent."""
         if isinstance(otherBinner, OpsimFieldBinner):
             return ((np.all(otherBinner.ra == self.ra)) 
-                    and (np.all(otherBinner.dec == self.dec)))
+                    and (np.all(otherBinner.dec == self.dec))
+                    and (np.all(otherBinner.fieldID == self.fieldID)))
+        
         else:
             return False
 
@@ -92,34 +102,30 @@ class OpsimFieldBinner(BaseSpatialBinner):
 
         #append the bins
         hdulist = pyf.open(outfilename, mode='append')
+        fieldIdHDU = pyf.PrimaryHDU(data=self.fieldId)
         raHDU = pyf.PrimaryHDU(data=self.ra)
         decHDU =  pyf.PrimaryHDU(data=self.dec)
+        hdulist.append(fieldHDU)
         hdulist.append(raHDU)
         hdulist.append(decHDU)
         hdulist.flush()
         hdulist.close()
-        
         return outfilename
 
-    def readMetricData(self, infilename):
+    def readMetricData(self, infilename, verbose=False):
         """Read metric values back in and restore the binner"""
 
         #restore the bins first
         hdulist = pyf.open(infilename)
         if hdulist[0].header['binnertype'] != self.binnertype:
              raise Exception('Binnertypes do not match.')
-        
-        ra = hdulist[1].data.copy()
-        dec = hdulist[2].data.copy()        
+        self.fieldId = hdulist[1].data.copy()
+        self.ra = hdulist[2].data.copy()
+        self.dec = hdulist[3].data.copy() 
+        self.nbins = len(self.ra)       
         base = BaseBinner()
-        metricValues, header = base.readMetricDataGeneric(infilename)
-        
-        binner = OpsimFieldBinner(ra, dec)
-       
-        binner.badval = header['badval'.upper()]
-        binner.int_badval = header['int_badval']
-                
-        return metricValues, binner,header
+        metricValues, header = base.readMetricDataGeneric(infilename)                
+        return metricValues, self, header
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, metricLabel, title=None, 

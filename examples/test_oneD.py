@@ -54,20 +54,19 @@ def getBinner(simdata, metricList, nbins=100):
     return binnerList
 
 
-def goBinPlotWrite(dbTable, metadata, simdata, binnerList, metricList):
+def goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList):
     t = time.time()
     for bb, mm in zip(binnerList, metricList):
         gm = binMetrics.BaseBinMetric()
         gm.setBinner(bb)
         gm.setMetrics(mm)
-        gm.runBins(simdata, simDataName=dbTable, metadata = metadata)
-        mean = gm.computeSummaryStatistics(mm.name, metrics.MeanMetric)
-        print 'SummaryNumber (mean) for', mm.name, ':', mean
+        gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
+        mean = gm.computeSummaryStatistics(mm.name, metrics.SumMetric)
+        print 'SummaryNumber (sum) for', mm.name, ':', mean
         gm.plotAll(savefig=True, closefig=True)
         gm.writeAll()
         dt, t = dtime(t)
         print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len([mm,]), dt)
-    return 
 
 
 if __name__ == '__main__':
@@ -87,7 +86,7 @@ if __name__ == '__main__':
     dbAddress = authDictionary[args.connectionName]
     
     dbTable = args.simDataTable
-    opsimrun = args.simDataTable.lstrip('output_')
+    opsimrun = args.simDataTable.replace('output_', '')
 
     sqlconstraint = args.sqlConstraint
     
@@ -118,4 +117,4 @@ if __name__ == '__main__':
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-    gm = goBinPlotWrite(dbTable, metadata, simdata, binnerList, metricList)
+    gm = goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList)

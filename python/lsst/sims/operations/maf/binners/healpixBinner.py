@@ -8,8 +8,11 @@ import numpy as np
 import numpy.ma as ma
 import healpy as hp
 import matplotlib.pyplot as plt
-import pyfits as pyf
 import warnings
+try:
+    import astropy.io.fits as pyf
+except ImportError:
+    import pyfits as pyf
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
@@ -101,7 +104,7 @@ class HealpixBinner(BaseSpatialBinner):
         hdulist.close()
         return outfilename
 
-    def readMetricData(self, infilename):
+    def readMetricData(self, infilename, verbose=False):
         """Read metric values back in and restore the binner"""
 
         hdulist = pyf.open(infilename)
@@ -118,7 +121,7 @@ class HealpixBinner(BaseSpatialBinner):
              raise Exception('Binnertypes do not match.')
         hdulist.close()
         if pixtype == 'HEALPIX':
-            metricValues, header = hp.read_map(infilename, h=True)
+            metricValues, header = hp.read_map(infilename, h=True, verbose=verbose)
             # Convert metric values to MASKED ARRAY (matches returned value from 
             #  base.readMetricDataGeneric)
             mask = np.where(metricValues == self.badval, True, False)
@@ -130,7 +133,9 @@ class HealpixBinner(BaseSpatialBinner):
             base = BaseBinner()
             metricValues, header = base.readMetricDataGeneric(infilename)
         #Long keywords use HIERARCH cards and preserve case.
-        binner = HealpixBinner(nside=header['nside'.upper()])
+        binner = HealpixBinner(nside=header['nside'.upper()], verbose=verbose)
+        binner.nside = int(header['nside'.upper()])
+        binner.nbins = hp.nside2npix(header['nside'.upper()])
         binner.badval = header['badval'.upper()]
         binner.int_badval = header['int_badval']
         return metricValues, binner, header

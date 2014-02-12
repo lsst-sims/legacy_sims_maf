@@ -42,7 +42,10 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import pickle
-import pyfits as pyf
+try:
+    import astropy.io.fits as pyf
+except ImportError:
+    import pyfits as pyf
 import lsst.sims.operations.maf.binners as binners
 from lsst.sims.operations.maf.utils.percentileClip import percentileClip
 
@@ -143,13 +146,12 @@ class BaseBinMetric(object):
         if not hasattr(metricList, '__iter__'):
             metricList = [metricList,]
         for m in metricList:
-            print m
             self.metricNames.append(self._deDupeMetricName(m.name))
         for m, mname in zip(metricList, self.metricNames):
             self.metricObjs[mname] = m
             self.plotParams[mname] = m.plotParams
 
-    def readMetrics(self, filenames):
+    def readMetricValues(self, filenames, verbose=False):
         """Given a list of filenames, reads metric values and metadata from disk. """
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
@@ -163,10 +165,11 @@ class BaseBinMetric(object):
                 hdulist.close()
                 #  Instantiate a binner of the right type, and use its native read methods.
                 if binnertype == 'HEALPIX':
-                    self.binner = binnertypeDict[binnertype](nside=header['NSIDE'])
+                    self.binner = binnertypeDict[binnertype](nside=header['NSIDE'], 
+                                                             verbose=verbose)
                 else:
                     self.binner = binnertypeDict[binnertype]()
-            metricValues, binner, header = self.binner.readMetricData(f)
+            metricValues, binner, header = self.binner.readMetricData(f, verbose=verbose)
             # Check that the binner from this file matches self.binner
             if not(self.setBinner(binner, override=False)):
                 raise Exception('Binner for metric %s does not match existing binner.' 

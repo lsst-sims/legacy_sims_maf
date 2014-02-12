@@ -2,8 +2,11 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pyfits as pyf
 import warnings
+try:
+    import astropy.io.fits as pyf
+except ImportError:
+    import pyfits as pyf
 
 from .baseBinner import BaseBinner
 
@@ -13,6 +16,8 @@ class OneDBinner(BaseBinner):
         """Instantiate. """
         super(OneDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ONED'
+        self.bins = None
+        self.nbins = None
 
     def setupBinner(self, simData, sliceDataColName, bins=None, nbins=100):
         """Set up bins in binner.        
@@ -127,7 +132,7 @@ class OneDBinner(BaseBinner):
         
         return outfilename
 
-    def readMetricData(self, infilename):
+    def readMetricData(self, infilename, verbose=False):
         """Read metric values back in and restore the binner"""
 
         #restore the bins first
@@ -140,10 +145,11 @@ class OneDBinner(BaseBinner):
         base = BaseBinner()
         metricValues, header = base.readMetricDataGeneric(infilename)
         
-        binner = OneDBinner()
-        binner.bins = bins
-        binner.nbins = len(self.bins)
-        binner.badval = header['badval'.upper()]
-        binner.int_badval = header['int_badval']
+        self.bins = bins
+        self.nbins = len(self.bins)
+        self.badval = header['badval'.upper()]
+        self.int_badval = header['int_badval']
+        if verbose:
+            print '(Re)set bins with data from %s' %(infilename)
                 
-        return metricValues, binner, header
+        return metricValues, self, header
