@@ -32,7 +32,10 @@
 #  at a time but a convenience method to run over all metrics is provided (i.e. reduceAll)
 #
 # Metric data values, as well as metadata for each metric, are stored in
-#  dictionaries keyed by the metric names (a property of the metric). 
+#  dictionaries keyed by the metric name.
+
+##   todo ... swap metric name for a running index? but then how to indicate which value we mean
+##   (have to track number externally, or specify which dictionary, as metricName could be duplicated)
 
 import os
 import numpy as np
@@ -45,13 +48,19 @@ import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
+binnertypeDict = {'UNI': binners.UniBinner,
+                  'ONED': binners.OneDBinner,
+                  'ND': binners.NDBinner,
+                  'OPSIMFIELDS': binners.OpsimFieldBinner, 
+                  'HEALPIX': binners.HealpixBinner}
+
 
 class BaseBinMetric(object):
     def __init__(self, figformat='png'):
         """Instantiate binMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
-        self.metricNames = []   
+        self.metricNames = []
         self.metricObjs = {}
         self.plotParams = {}
         self.metricValues = {}
@@ -137,18 +146,25 @@ class BaseBinMetric(object):
             self.metricObjs[mname] = m
             self.plotParams[mname] = m.plotParams
 
-    def readMetrics(self, filenames, checkBinner=True):
-        """Given a list of filenames, reads metric values and metadata from disk.
-        
-        checkBinner =  check that self.binner and the binner generated from the file are equal."""
+    def readMetrics(self, filenames):
+        """Given a list of filenames, reads metric values and metadata from disk. """
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
+            if self.binner == None:            
+                hdulist = pyf.open(f)
+                header = hdulist[0].header
+                if (header['NAXIS'] == 0):
+                    header = hdulist[1].header
+                binnertype = header['binnertype']
+                f.close()
+                #  Instantiate a binner of the right type, and use its native read methods.
+                self.binner = binnertypeDict[binnertype]()
             metricValues, binner, header = self.binner.readMetricData(f)
-            if checkBinner:
-                if not(self.setBinner(binner, override=False)):
-                    raise Exception('Binner for metric %s does not match existing binner.' 
-                                    % (header['metricName']))
+            # Check that the binner from this file matches self.binner
+            if not(self.setBinner(binner, override=False)):
+                raise Exception('Binner for metric %s does not match existing binner.' 
+                                % (header['metricName']))
             # Dedupe the metric name, if needed.
             metricName = self._deDupeMetricName(header['metricName'])
             self.metricNames.append(metricName)
@@ -158,8 +174,10 @@ class BaseBinMetric(object):
             self.metadata[metricName] = header['metadata'.upper()]
             self.comment[metricName] = header['comment'.upper()]
             self.plotParams[metricName] = {}
-            for pp in header['plotParams']:
-                self.plotParams[metricName][pp] = header['plotParams'][pp]
+            if 'plotParams' in header:
+                for pp in header['plotParams']:
+                    self.plotParams[metricName][pp] = header['plotParams'][pp]
+
     
     def validateMetricData(self, simData):
         """Validate that simData has the required data values for the metrics in self.metricObjs."""

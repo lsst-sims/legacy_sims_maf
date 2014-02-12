@@ -14,7 +14,7 @@ class BaseBinner(object):
         """Instantiate the base binner object."""
         self.verbose = verbose
         self.badval = -666 
-        self.binnertype = None
+        self.binnertype = 'BASE'
 
     def setupBinner(self, *args, **kwargs):
         """Set up internal parameters and bins for binner. """

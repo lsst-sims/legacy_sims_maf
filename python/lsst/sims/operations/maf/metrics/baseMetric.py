@@ -70,6 +70,8 @@ class BaseMetric(object):
         # Set physical units, mostly for plotting purposes.
         if units == None:
             units = ''.join([self.colInfo.getUnits(col) for col in self.colNameList])
+            if len(units.replace(' ', '')) == 0:
+                units = self.name
         self.units = units
         # Set more plotting preferences
         if plotParams:

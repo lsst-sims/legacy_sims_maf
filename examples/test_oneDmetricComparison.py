@@ -29,7 +29,7 @@ gm.readBinner(binfile)
 
 filenames = glob.glob('output_opsim3_61*ON.fits')
 
-gm.readMetric(filenames, checkBinner=False)
+gm.readMetric(filenames)
 
 dt, t = dtime(t)
 print 'Read metric files and set up/unpickled grid %f s' %(dt)
