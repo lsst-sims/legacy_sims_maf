@@ -33,7 +33,7 @@ class ProperMotionMetric(BaseMetric):
                  m5col='5sigma_modified', mjdcol='expMJD', units='mas/yr',
                  filtercol='filter', seeingcol='seeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01):
+                 stellarType=None, atm_err=0.01, plotParams=None):
         """ Instantiate metric.
 
         m5col = column name for inidivual visit m5
@@ -44,10 +44,10 @@ class ProperMotionMetric(BaseMetric):
         atm_err = centroiding error due to atmosphere in arcsec
         """
         cols = [m5col, mjdcol,filtercol,seeingcol]
-        super(ProperMotionMetric, self).__init__(cols, metricName)
+        super(ProperMotionMetric, self).__init__(cols, metricName, units=units)
         # set return type
         self.metricDtype = 'float'
-        self.units = 'mas/yr'
+        self.units = units
         self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
         self.badval = badval
         self.atm_err = atm_err
