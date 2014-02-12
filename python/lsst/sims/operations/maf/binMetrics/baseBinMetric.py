@@ -43,6 +43,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import pickle
 import pyfits as pyf
+from lsst.sims.operations.maf.utils.percentileClip import percentileClip
+
 
 import time
 def dtime(time_prev):
@@ -329,16 +331,17 @@ class BaseBinMetric(object):
             plotLabel = pParams['plotLabel']
         else:
             plotLabel = mname
-        # Use plot limits if they're set. 
+        # Set up for plot limits.
+        plotMin = self.metricValues[metricName].compressed().min()
+        plotMax = self.metricValues[metricName].compressed().max()
+        # If percentile clipping is set, use it. 
+        if 'percentileClip' in pParams:
+            plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed())
+        # Use plot limits if they're set (min/max overrides percentile clipping).
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
-        else:
-            # ADD PERCENTILE CLIPPING HERE IF SET
-            plotMin = self.metricValues[metricName].compressed().min()
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
-        else:
-            plotMax = self.metricValues[metricName].compressed().max()
         # Use percentile values to set plot limits, if they were set.
         # Plot the binned metric data, if relevant (oneD binners). 
         if hasattr(self.binner, 'plotBinnedData'):
