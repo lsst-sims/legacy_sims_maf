@@ -90,8 +90,8 @@ class OneDBinner(BaseBinner):
             x = np.ravel(zip(left, left+width))
             y = np.ravel(zip(metricValues[:-1], metricValues[:-1]))
             plt.plot(x, y, label=legendLabel)
-        plt.ylabel(metricLabel)
-        plt.xlabel(self.sliceDataColName)
+        plt.ylabel('#')
+        plt.xlabel(metricLabel+' '+self.sliceDataColName)
         if histRange:
             plt.xlim(histRange)
         if addLegend:

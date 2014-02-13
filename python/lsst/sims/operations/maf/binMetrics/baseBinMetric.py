@@ -350,11 +350,14 @@ class BaseBinMetric(object):
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
         # Use percentile values to set plot limits, if they were set.
-        # Plot the binned metric data, if relevant (oneD binners). 
+        # Plot the binned metric data, if relevant (oneD binners).
+        histRange=None
+        if 'histmax' in pParams:
+            histRange = [pParams['histMin'],pParams['histMax']]
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     plotLabel, title=plotTitle, 
-                                                    histRange = [plotMin, plotMax])
+                                                    histRange = histRange)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
