@@ -164,7 +164,7 @@ class BaseSpatialBinner(BaseBinner):
 
         
     def plotSkyMap(self, metricValue, metricLabel, title=None, projection='aitoff',
-                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None):
+                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None, zp=0.):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         if fignum==None:
@@ -175,7 +175,7 @@ class BaseSpatialBinner(BaseBinner):
         radius = 1.75 * np.pi / 180.
         ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius, ax=ax)
         p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
-        p.set_array(metricValue)
+        p.set_array(metricValue-zp)
         ax.add_collection(p)
         if clims != None:
             p.set_clim(clims)

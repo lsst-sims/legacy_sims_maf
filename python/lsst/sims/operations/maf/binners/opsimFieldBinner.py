@@ -67,7 +67,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         if isinstance(otherBinner, OpsimFieldBinner):
             return ((np.all(otherBinner.ra == self.ra)) 
                     and (np.all(otherBinner.dec == self.dec))
-                    and (np.all(otherBinner.fieldID == self.fieldID)))
+                    and (np.all(otherBinner.fieldId == self.fieldId)))
         
         else:
             return False
@@ -102,7 +102,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
 
         #append the bins
         hdulist = pyf.open(outfilename, mode='append')
-        fieldIdHDU = pyf.PrimaryHDU(data=self.fieldId)
+        fieldHDU = pyf.PrimaryHDU(data=self.fieldId)
         raHDU = pyf.PrimaryHDU(data=self.ra)
         decHDU =  pyf.PrimaryHDU(data=self.dec)
         hdulist.append(fieldHDU)

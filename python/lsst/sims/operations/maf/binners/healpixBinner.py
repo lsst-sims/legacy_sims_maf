@@ -141,14 +141,14 @@ class HealpixBinner(BaseSpatialBinner):
         return metricValues, binner, header
         
     def plotSkyMap(self, metricValue, metricLabel, title='',
-                   clims=None, cbarFormat='%.2g'):
+                   clims=None, cbarFormat='%.2g', zp=0.):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a Mollweide full-sky plot.
         if clims!=None:
-            hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
+            hp.mollview(metricValue-zp, title=title, cbar=True, unit=metricLabel, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180))
         else:
-            hp.mollview(metricValue, title=title, cbar=True, unit=metricLabel, 
+            hp.mollview(metricValue-zp, title=title, cbar=True, unit=metricLabel, 
                         format=cbarFormat, rot=(180,0,180))
         hp.graticule(dpar=20., dmer=20.)
         fig = plt.gcf()

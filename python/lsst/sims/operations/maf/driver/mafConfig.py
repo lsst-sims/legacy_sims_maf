@@ -66,11 +66,11 @@ def makeMetricConfig(name, params=[], kwargs={}, plotDict={}):
             raise Exception('Unsupported kwarg data type')
     for key in plotDict.keys():
         if type(plotDict[key]) is str:
-            mc.plot_str[key] = ploDictt[key]
+            mc.plot_str[key] = plotDict[key]
         elif type(plotDict[key]) is float:
-            mc.plot_int[key] = plotDict[key]
-        elif type(plotDict[key]) is int:
             mc.plot_float[key] = plotDict[key]
+        elif type(plotDict[key]) is int:
+            mc.plot_int[key] = plotDict[key]
         elif type(plotDict[key]) is bool:
             mc.plot_bool[key] = plotDict[key]
         else:

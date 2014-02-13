@@ -7,7 +7,7 @@ class SimpleScalarMetric(BaseMetric):
        number on one column of data and return a scalar. 
     """
     def __init__(self, colname, *args, **kwargs):
-        """Intantiate simple metric. """
+        """Intantiate simple metric."""
         # Use base class init to register columns.
         super(SimpleScalarMetric, self).__init__(colname, **kwargs)
         # Check incoming columns have only one value.
@@ -16,6 +16,7 @@ class SimpleScalarMetric(BaseMetric):
         self.colname = self.colNameList[0]
         # Set return type.
         self.metricDtype = 'float'
+        
         
     def run(self, dataSlice):
         raise NotImplementedError()
@@ -28,22 +29,22 @@ class Coaddm5Metric(SimpleScalarMetric):
     def __init__(self, m5col = '5sigma_modified', metricName = 'CoaddedM5', plotParams=None):
         """Instantiate metric.
         
-        m5col = the column name of the individual visit m5 data. """
-        super(Coaddm5Metric, self).__init__(m5col, metricName, plotParams=plotParams)            
+        m5col = the column name of the individual visit m5 data."""
+        super(Coaddm5Metric, self).__init__(m5col, metricName, plotParams=plotParams)
     def run(self, dataSlice):
-        return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
+        return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname]))) 
 
 
 class MaxMetric(SimpleScalarMetric):
     """Calculate the maximum of a simData column slice."""
     def run(self, dataSlice):
-        return np.max(dataSlice[self.colname])
+        return np.max(dataSlice[self.colname]) 
 
 
 class MeanMetric(SimpleScalarMetric):
     """Calculate the mean of a simData column slice."""
     def run(self, dataSlice):
-        return np.mean(dataSlice[self.colname])
+        return np.mean(dataSlice[self.colname]) 
 
 class MedianMetric(SimpleScalarMetric):
     """Calculate the median of a simData column slice."""
@@ -54,23 +55,34 @@ class MedianMetric(SimpleScalarMetric):
 class MinMetric(SimpleScalarMetric):
     """Calculate the minimum of a simData column slice."""
     def run(self, dataSlice):
-        return np.min(dataSlice[self.colname])
+        return np.min(dataSlice[self.colname]) 
 
 
 class RmsMetric(SimpleScalarMetric):
     """Calculate the standard deviation of a simData column slice."""
     def run(self, dataSlice):
-        return np.std(dataSlice[self.colname])
+        return np.std(dataSlice[self.colname]) 
 
 
 class SumMetric(SimpleScalarMetric):
     """Calculate the sum of a simData column slice."""
     def run(self, dataSlice):
-        return np.sum(dataSlice[self.colname])
+        return np.sum(dataSlice[self.colname]) 
 
 class CountMetric(SimpleScalarMetric):
     """Count the length of a simData column slice. """
     def run(self, dataSlice):
-        return len(dataSlice[self.colname])
+        return len(dataSlice[self.colname]) 
 
+class CountRatioMetric(SimpleScalarMetric):
+    """Count the length of a simData column slice and normalize by some value. """
+    def __init__(self,  col='expMJD', normVal=10., metricName = 'ratio', plotParams=None):
+        """Instantiate metric.
 
+        normVal = value to divide the 
+         """
+        self.normVal=normVal
+        super(CountRatioMetric, self).__init__(col,metricName, normVal=normVal,  plotParams=plotParams)
+        self.units ='Ratio'
+    def run(self, dataSlice):
+        return len(dataSlice[self.colname])/self.normVal

@@ -41,8 +41,11 @@ class MafDriver(object):
             for i,metric in binner.metricDict.iteritems():
                 name,params,kwargs,plotDict = readMetricConfig(metric)
                 kwargs['plotParams'] = plotDict
+                #try:
                 sub_metricList.append(getattr(metrics,metric.name)
                                       (*params, **kwargs) )
+                #except:
+                #    import pdb ; pdb.set_trace()
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
         self.constraints = []

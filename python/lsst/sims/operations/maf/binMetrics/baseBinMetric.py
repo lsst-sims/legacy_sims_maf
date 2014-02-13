@@ -372,8 +372,15 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-            skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),
-                                               plotLabel, title=plotTitle, clims=[plotMin, plotMax])
+            if 'zp' in pParams: # Subtract off a zeropoint
+                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]-pParams['zp']).filled(self.binner.badval),
+                                                   plotLabel, title=plotTitle, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
+            elif 'normVal' in pParams: # Normalize by some value
+                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']).filled(self.binner.badval),
+                                                   plotLabel, title=plotTitle, clims=[plotMin/pParams['normVal'], plotMax/pParams['normVal']])
+            else: # Just plot raw values
+                skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),
+                                                   plotLabel, title=plotTitle, clims=[plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
