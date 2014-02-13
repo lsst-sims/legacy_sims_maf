@@ -68,7 +68,7 @@ class OneDBinner(BaseBinner):
 
     def plotBinnedData(self, metricValues, metricLabel, title=None, histRange=None, fignum=None, 
                        legendLabel=None, addLegend=False, legendloc='upper left', 
-                       filled=False, alpha=0.5):
+                       filled=False, alpha=0.5, ylog='auto'):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -79,19 +79,32 @@ class OneDBinner(BaseBinner):
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
-        alpha = alpha value for plot bins if filled (default 0.5). """
+        alpha = alpha value for plot bins if filled (default 0.5).
+        ylog = make the y-axis log. 'auto' will handle things if things span more than 3 orders of mag"""
+        # Should we use ylog?
+        if ylog =='auto':
+            good = np.where((metricValues > 0) & (metricValues != self.badval) )
+            logvals = np.log10(metricValues[good])
+            decades = logvals.max()-logvals.min()
+            if decades > 3:
+                ylog = True
+            else:
+                ylog = False
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         left = self.bins[:-1]
         width = np.diff(self.bins)
         if filled:
-            plt.bar(left, metricValues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha)
+            plt.bar(left, metricValues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha, log=ylog)
         else:
             x = np.ravel(zip(left, left+width))
             y = np.ravel(zip(metricValues[:-1], metricValues[:-1]))
-            plt.plot(x, y, label=legendLabel)
+            if ylog:
+                plt.semilogy(x, y, label=legendLabel)
+            else:
+                plt.plot(x, y, label=legendLabel)
         plt.ylabel('#')
-        plt.xlabel(metricLabel+' '+self.sliceDataColName)
+        plt.xlabel(self.sliceDataColName+' ('+metricLabel+')')
         if histRange:
             plt.xlim(histRange)
         if addLegend:
