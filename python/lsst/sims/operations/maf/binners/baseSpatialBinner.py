@@ -164,12 +164,12 @@ class BaseSpatialBinner(BaseBinner):
 
         
     def plotSkyMap(self, metricValue, metricLabel, title=None, projection='aitoff',
-                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None, zp=0.):
+                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None, zp=0., units=None):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         if fignum==None:
             fig = plt.figure()
-        ax = plt.subplot(projection=projection)        
+        ax = plt.subplot(111,projection=projection)        
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         radius = 1.75 * np.pi / 180.
@@ -180,6 +180,8 @@ class BaseSpatialBinner(BaseBinner):
         if clims != None:
             p.set_clim(clims)
         cb = plt.colorbar(p, orientation='horizontal', format=cbarFormat)
+        if units == None:  units = metricLabel
+        cb.set_label(units)
         if title != None:
             plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)
         ax.grid()

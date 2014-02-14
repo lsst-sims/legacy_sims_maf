@@ -58,8 +58,9 @@ def getBinner(simData, fieldData):
     # Setting up the binner will be slightly different for each binner.
     t = time.time()
     bb = binners.OpsimFieldBinner()
-    bb.setupBinner(simData, 'fieldID', 
-                   fieldData, 'fieldID', 'fieldRA', 'fieldDec')
+    #bb.setupBinner(simData, 'fieldID', 
+    #               fieldData, 'fieldID', 'fieldRA', 'fieldDec')
+    bb.setupBinner(simData, 'fieldID','fieldRA', 'fieldDec' )
     dt, t = dtime(t)
     print 'Set up binner %f s' %(dt)
     return bb

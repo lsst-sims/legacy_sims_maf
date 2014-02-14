@@ -109,6 +109,10 @@ class MafDriver(object):
                         colnames.append(binner.setupParams[1])
                     if binner.binnertype == 'ONED':
                         colnames.append(binner.setupParams[0])
+                    if binner.binnertype == 'OPSIMFIELDS':
+                        colnames.append(binner.setupParams[0])
+                        colnames.append(binner.setupParams[1])
+                        colnames.append(binner.setupParams[2])
                     colnames = list(set(colnames)) #unique elements
                     self.getData(opsimName,constr, colnames=colnames, stackers=binner.stackers)     
                     gm = self._binKey(binner)

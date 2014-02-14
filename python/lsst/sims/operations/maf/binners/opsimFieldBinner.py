@@ -22,8 +22,9 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.dec = None
         self.nbins = None
 
-    def setupBinner(self, simData, simFIdColName, 
-                    fieldData, fieldFIdColName, fieldRaColName, fieldDecColName):
+#    def setupBinner(self, simData, simFIdColName, 
+#                    fieldData, fieldFIdColName, fieldRaColName, fieldDecColName#):
+    def setupBinner(self, simData, fieldFIdColName, fieldRaColName, fieldDecColName):
         """Set up opsim field binner object.
 
         simData = numpy rec array with simulation pointing history,
@@ -33,14 +34,18 @@ class OpsimFieldBinner(BaseSpatialBinner):
         fieldRaColName = the column name with the RA values (in fieldData)
         fieldDecColname = the column name with the Dec values (in fieldData)."""
         # Set basic properties for tracking field information, in sorted order.
-        idxs = np.argsort(fieldData[fieldFIdColName])
-        self.fieldId = fieldData[fieldFIdColName][idxs]
-        self.ra = fieldData[fieldRaColName][idxs]
-        self.dec = fieldData[fieldDecColName][idxs]
+        self.fieldId,idx = np.unique(simData[fieldFIdColName], return_index=True)
+        self.ra = simData[fieldRaColName][idx]
+        self.dec = simData[fieldDecColName][idx]
+        
+        #idxs = np.argsort(fieldData[fieldFIdColName])
+        #self.fieldId = fieldData[fieldFIdColName][idxs]
+        #self.ra = fieldData[fieldRaColName][idxs]
+        #self.dec = fieldData[fieldDecColName][idxs]
         self.nbins = len(self.fieldId)
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[simFIdColName])
-        simFieldsSorted = np.sort(simData[simFIdColName])
+        self.simIdxs = np.argsort(simData[fieldFIdColName])
+        simFieldsSorted = np.sort(simData[fieldFIdColName])
         self.left = np.searchsorted(simFieldsSorted, self.fieldId, 'left')
         self.right = np.searchsorted(simFieldsSorted, self.fieldId, 'right')        
 

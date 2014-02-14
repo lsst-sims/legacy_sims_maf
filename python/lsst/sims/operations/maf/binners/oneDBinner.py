@@ -68,7 +68,7 @@ class OneDBinner(BaseBinner):
 
     def plotBinnedData(self, metricValues, metricLabel, title=None, histRange=None, fignum=None, 
                        legendLabel=None, addLegend=False, legendloc='upper left', 
-                       filled=False, alpha=0.5, ylog='auto'):
+                       filled=False, alpha=0.5, ylog='auto', ylabel=None, xlabel=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -103,8 +103,10 @@ class OneDBinner(BaseBinner):
                 plt.semilogy(x, y, label=legendLabel)
             else:
                 plt.plot(x, y, label=legendLabel)
-        plt.ylabel('#')
-        plt.xlabel(self.sliceDataColName+' ('+metricLabel+')')
+        if ylabel == None:  ylabel = 'Count_'+metricLabel
+        plt.ylabel(ylabel)
+        if xlabel == None: xlabel=self.sliceDataColName+' ('+metricLabel+')'
+        plt.xlabel(xlabel)
         if histRange:
             plt.xlim(histRange)
         if addLegend:
