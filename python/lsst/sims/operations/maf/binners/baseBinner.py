@@ -80,8 +80,8 @@ class BaseBinner(object):
                     use_badval = int_badval
                 else:
                     use_badval = badval
-                column = ma.filled(metricValues, use_badval)                
-                column = pyf.Column(name='c'+str(0), format=self._py2fitsFormat(dt), array=column)
+                #column = ma.filled(metricValues, use_badval)                
+                column = pyf.Column(name='c'+str(0), format=self._py2fitsFormat(dt), array=metricValues)
                 cols.append(column)
             else:
                 for i in np.arange(ncols):
@@ -100,12 +100,12 @@ class BaseBinner(object):
                     column = pyf.Column(name='c'+str(i), 
                                         format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
-            tbhdu = pyf.new_table(cols)
+            tbhdu = pyf.new_table(pyf.ColDefs(cols))
             # Append the info from head.
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
-            tbhdu.writeto(outfilename)
+            tbhdu.writeto(outfilename, clobber=clobber)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
