@@ -66,13 +66,15 @@ class OneDBinner(BaseBinner):
         i = (np.where(binpoint == self.bins))[0]
         return self.simIdxs[self.left[i]:self.left[i+1]]
 
-    def plotBinnedData(self, metricValues, metricLabel, title=None, histRange=None, fignum=None, 
-                       legendLabel=None, addLegend=False, legendloc='upper left', 
-                       filled=False, alpha=0.5, ylog='auto', ylabel=None, xlabel=None):
+    def plotBinnedData(self, metricValues, title=None,
+                       histRange=None, fignum=None, units=None,
+                       legendLabel=None, addLegend=False,
+                       legendloc='upper left', 
+                       filled=False, alpha=0.5, ylog='auto',
+                       ylabel=None, xlabel=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
-        metricLabel = metric label (label for x axis)
         title = title for the plot (default None)
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
@@ -103,9 +105,9 @@ class OneDBinner(BaseBinner):
                 plt.semilogy(x, y, label=legendLabel)
             else:
                 plt.plot(x, y, label=legendLabel)
-        if ylabel == None:  ylabel = 'Count_'+metricLabel
+        if ylabel == None:  ylabel = 'Count'
         plt.ylabel(ylabel)
-        if xlabel == None: xlabel=self.sliceDataColName+' ('+metricLabel+')'
+        if xlabel == None: xlabel=self.sliceDataColName+' ('+units+')'
         plt.xlabel(xlabel)
         if histRange:
             plt.xlim(histRange)

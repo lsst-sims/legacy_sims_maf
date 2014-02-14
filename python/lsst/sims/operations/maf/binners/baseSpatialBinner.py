@@ -84,7 +84,7 @@ class BaseSpatialBinner(BaseBinner):
 
     ## Plot histogram (base spatial binner method).
         
-    def plotHistogram(self, metricValue, metricLabel, title=None, 
+    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f'):
@@ -116,7 +116,8 @@ class BaseSpatialBinner(BaseBinner):
             return yaxisformat % (x * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        plt.xlabel(metricLabel)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         if flipXaxis:
             # Might be useful for magnitude scales.
             x0, x1 = plt.xlim()
@@ -163,8 +164,8 @@ class BaseSpatialBinner(BaseBinner):
         return ellipses
 
         
-    def plotSkyMap(self, metricValue, metricLabel, title=None, projection='aitoff',
-                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None, zp=0., units=None):
+    def plotSkyMap(self, metricValue, title=None, projection='aitoff',
+                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None, units=None):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         if fignum==None:
@@ -175,12 +176,11 @@ class BaseSpatialBinner(BaseBinner):
         radius = 1.75 * np.pi / 180.
         ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius, ax=ax)
         p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
-        p.set_array(metricValue-zp)
+        p.set_array(metricValue)
         ax.add_collection(p)
         if clims != None:
             p.set_clim(clims)
         cb = plt.colorbar(p, orientation='horizontal', format=cbarFormat)
-        if units == None:  units = metricLabel
         cb.set_label(units)
         if title != None:
             plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)

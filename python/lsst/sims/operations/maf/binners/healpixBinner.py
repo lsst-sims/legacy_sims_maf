@@ -140,21 +140,21 @@ class HealpixBinner(BaseSpatialBinner):
         binner.int_badval = header['int_badval']
         return metricValues, binner, header
         
-    def plotSkyMap(self, metricValue, metricLabel, title='',
-                   clims=None, cbarFormat='%.2g', zp=0.):
+    def plotSkyMap(self, metricValue, units=None, title='',
+                   clims=None, cbarFormat='%.2g'):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a Mollweide full-sky plot.
         if clims!=None:
-            hp.mollview(metricValue-zp, title=title, cbar=True, unit=metricLabel, 
+            hp.mollview(metricValue, title=title, cbar=True, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180))
         else:
-            hp.mollview(metricValue-zp, title=title, cbar=True, unit=metricLabel, 
+            hp.mollview(metricValue, title=title, cbar=True, unit=units, 
                         format=cbarFormat, rot=(180,0,180))
         hp.graticule(dpar=20., dmer=20.)
         fig = plt.gcf()
         return fig.number
 
-    def plotHistogram(self, metricValue, metricLabel, title=None, 
+    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Area (1000s of square degrees)',
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=None):
@@ -172,7 +172,7 @@ class HealpixBinner(BaseSpatialBinner):
         # Simply overrides scale and y axis plot label of base plotHistogram. 
         if scale == None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
-        fignum = super(HealpixBinner, self).plotHistogram(metricValue, metricLabel, 
+        fignum = super(HealpixBinner, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
                                                         title=title, fignum=fignum, 
                                                         legendLabel=legendLabel, 
                                                         addLegend=addLegend, legendloc=legendloc,
@@ -180,7 +180,6 @@ class HealpixBinner(BaseSpatialBinner):
                                                         histRange=histRange, 
                                                         flipXaxis=flipXaxis,
                                                         scale=scale)
-        plt.ylabel('Area (1000s of square degrees)')
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 

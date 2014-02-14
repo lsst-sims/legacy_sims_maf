@@ -133,7 +133,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         return metricValues, self, header
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
-    def plotHistogram(self, metricValue, metricLabel, title=None, 
+    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of fields',
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, flipXaxis=False,
                       scale=None):
@@ -148,7 +148,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        fignum = super(OpsimFieldBinner, self).plotHistogram(metricValue, metricLabel, 
+        fignum = super(OpsimFieldBinner, self).plotHistogram(metricValue,  xlabel=xlabel, ylabel=ylabel,
                                                              title=title, fignum=fignum, 
                                                              legendLabel=legendLabel, 
                                                              addLegend=addLegend, legendloc=legendloc,
@@ -156,5 +156,4 @@ class OpsimFieldBinner(BaseSpatialBinner):
                                                              histRange=histRange, 
                                                              flipXaxis=flipXaxis, 
                                                              scale=1, yaxisformat='%d')
-        plt.ylabel('Number of fields')
         return fignum

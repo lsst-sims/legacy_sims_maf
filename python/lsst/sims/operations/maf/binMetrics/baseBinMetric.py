@@ -356,7 +356,7 @@ class BaseBinMetric(object):
             histRange = [pParams['histMin'],pParams['histMax']]
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
-                                                    plotLabel, title=plotTitle, 
+                                                    xlabel=plotLabel, title=plotTitle, 
                                                     histRange = histRange)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -366,7 +366,7 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             histfignum = self.binner.plotHistogram(self.metricValues[metricName].compressed(), 
-                                                   plotLabel, title=plotTitle, 
+                                                   xlabel=plotLabel, title=plotTitle, 
                                                    histRange = [plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -377,13 +377,13 @@ class BaseBinMetric(object):
         if hasattr(self.binner, 'plotSkyMap'):
             if 'zp' in pParams: # Subtract off a zeropoint
                 skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]-pParams['zp']).filled(self.binner.badval),
-                                                   plotLabel, title=plotTitle, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
+                                                   units=plotLabel, title=plotTitle, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
             elif 'normVal' in pParams: # Normalize by some value
                 skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']).filled(self.binner.badval),
-                                                   plotLabel, title=plotTitle, clims=[plotMin/pParams['normVal'], plotMax/pParams['normVal']])
+                                                   units=plotLabel, title=plotTitle, clims=[plotMin/pParams['normVal'], plotMax/pParams['normVal']])
             else: # Just plot raw values
                 skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),
-                                                   plotLabel, title=plotTitle, clims=[plotMin, plotMax])
+                                                   units=plotLabel, title=plotTitle, clims=[plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
