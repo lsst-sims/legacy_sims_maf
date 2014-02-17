@@ -56,11 +56,13 @@ for i,f in enumerate(filters):
                                     
         
 
+binList=[]
+        
 # Slew histograms
 binner= BinnerConfig()
 binner.name='OneDBinner'
 binner.setupParams=['slewTime']
-m1 = makeMetricConfig('CountMetric', params=['slewTime'])
+m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
 binner.metricDict=makeDict(m1)
 binner.constraints=['']
 binList.append(binner)
@@ -68,7 +70,7 @@ binList.append(binner)
 binner= BinnerConfig()
 binner.name='OneDBinner'
 binner.setupParams=['slewDist']
-m1 = makeMetricConfig('CountMetric', params=['slewDist'])
+m1 = makeMetricConfig('CountMetric', params=['slewDist'],kwargs={'metadata':'dist'} )
 binner.metricDict=makeDict(m1)
 binner.constraints=['']
 binList.append(binner)

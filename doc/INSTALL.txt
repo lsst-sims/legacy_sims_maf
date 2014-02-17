@@ -62,5 +62,19 @@ Installing the LSST Stack:
 https://dev.lsstcorp.org/trac/wiki/Installing
 
 
+
+
+
+
+
+
+Known Issues:
+-------------
+Healpy can fail to install if there is an old version of Xcode present. 
+The latest version of Xcode does not need the /Developer directory, so try 
+moving that and installing again.  Also in Xcode, go to 
+Xcode->preferences->Downloads and get the latest Command Line Tools
+
+
  LocalWords:  matplotlib sqlalchemy pyfits astropy bashrc healpy pyslalib sudo
  LocalWords:  macports python27 py py27 LSST

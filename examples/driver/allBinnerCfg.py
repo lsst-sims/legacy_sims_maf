@@ -43,4 +43,15 @@ m7 = makeMetricConfig('CountMetric', params=['expMJD'])
 binner.metricDict = makeDict(m1,m3,m4,m7)
 binList.append(binner)
 
+binList=[]
+
+binner= BinnerConfig()
+binner.name='UniBinner'
+m1 = makeMetricConfig('ObservEfficMetric')
+binner.metricDict=makeDict(m1)
+binner.constraints=['night < 750+49353']
+binList.append(binner)
+
+
+
 root.binners=makeDict(*binList)
