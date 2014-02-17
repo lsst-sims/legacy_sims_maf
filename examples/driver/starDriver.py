@@ -56,7 +56,6 @@ for i,f in enumerate(filters):
                                     
         
 
-binList=[]
         
 # Slew histograms
 binner= BinnerConfig()
@@ -80,7 +79,7 @@ binner= BinnerConfig()
 binner.name='UniBinner'
 m1 = makeMetricConfig('ObservEfficMetric')
 binner.metricDict=makeDict(m1)
-binner.constraints=['']
+binner.constraints=['night < 49353+730', '']
 binList.append(binner)
 
 
