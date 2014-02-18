@@ -38,31 +38,31 @@ PATH=~/anaconda/bin:PATH
 4) Use easy_install to get healpy:
 >easy_install healpy
 
-5) (optional) install pyslalib from source
-
-
-
-Example installing Python requirements with macports:
------------------------
-1) Install macports from:  http://www.macports.org/install.php
-
-2) Use macports to install python and python packages:
->sudo port install python27
->sudo port install py-matplotlib
->sudo port install py27-pyfits 
->sudo port install XXX
-
-XXX
-XXX) Use easy_install to get healpy:
->easy_install healpy
+5) (optional) install pyslalib from source.  https://github.com/scottransom/pyslalib
 
 
 Installing the LSST Stack:
 ------------------------
+Follow the instructions at:
 https://dev.lsstcorp.org/trac/wiki/Installing
 
+Installing MAF:
+---------------
+After installing the LSST stack and setting up your environment (by sourcing loadLSST.sh).
+cd
+mkdir LSST_box
+cd LSST_box
+mkdir sandbox
+cd DarwinX86 #or whatever platform you happen to be on
+git clone git@git.lsstcorp.org:LSST/sims/operations/maf.git LSST/sims/operations/maf
+git clone git@git.lsstcorp.org:LSST/sims/operations/catalogs/generation.git LSST/sims/operations/generation
+git clone git@git.lsstcorp.org:LSST/sims/operations/catalogs/measures.git LSST/sims/operations/measures
 
+XXX-in each dir run:
+setup -j -r .
+scons opt=3
 
+XXX-eups declare?
 
 
 
@@ -70,10 +70,36 @@ https://dev.lsstcorp.org/trac/wiki/Installing
 
 Known Issues:
 -------------
-Healpy can fail to install if there is an old version of Xcode present. 
-The latest version of Xcode does not need the /Developer directory, so try 
-moving that and installing again.  Also in Xcode, go to 
-Xcode->preferences->Downloads and get the latest Command Line Tools
+*Healpy can fail to install if there is an old version of Xcode present.  The latest version of Xcode does not need the /Developer directory, so try moving that and installing again.  Also in Xcode, go to Xcode->preferences->Downloads and get the latest Command Line Tools
+*The LSST stack does not yet compile on OSX 9.  
+
+
+Running Examples:
+-----------------
+For the test scripts, we assume a ~/dbLogin file.  If you are using opsim sqlite files, just issue the following:
+>echo SQLITE_OPSIM sqlite:///opsim.sqlite >> ~/dbLogin
+
+go to the examples directory:
+>cd sandbox/DarwinX86/LSST/sims/operations/maf/examples
+
+copy an opsim sqlite file
+>curl XXX
+
+run the example scripts:
+>python test_healpix.py opsim3_61
+>python test_opsimfields.py opsim3_61
+>python time_metrics.dat opsim3_61
+
+try out the driver script:
+>cd driver
+>ln -s ../opsim.sqlite .
+>python runConfig.py allBinnerCfg.py
+
+
+
+
+
+
 
 
  LocalWords:  matplotlib sqlalchemy pyfits astropy bashrc healpy pyslalib sudo
