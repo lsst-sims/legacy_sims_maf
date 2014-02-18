@@ -29,7 +29,11 @@ class MafDriver(object):
         for i,binner in self.config.binners.iteritems():
             temp_binner = getattr(binners,binner.name)(*binner.params, **binner.kwargs )
             temp_binner.setupParams = binner.setupParams
-            temp_binner.setupKwargs = binner.setupKwargs
+            temp_binner.setupKwargs = {}
+            for key in binner.setupKwargs_float.keys():
+                temp_binner.setupKwargs[key] =  binner.setupKwargs_float[key]
+            for key in binner.setupKwargs_str.keys():
+                temp_binner.setupKwargs[key] =  binner.setupKwargs_str[key]
             temp_binner.constraints = binner.constraints
             stackers = []
             for key in binner.stackCols.keys():

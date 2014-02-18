@@ -18,7 +18,7 @@ binner.kwargs = {"nside":nside}
 m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'plotLabel':'#'})
 m2 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':True, 'plotLabel':'Co-add m5 - %.1f'%27.} )           
 binner.metricDict = makeDict(m1,m2)
-binner.setupKwargs={ "leafsize":50000}
+binner.setupKwargs_float={ "leafsize":50000}
 binner.setupParams=["fieldRA","fieldDec"]
 binner.constraints=constraints
 binList.append(binner)

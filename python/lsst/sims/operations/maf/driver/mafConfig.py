@@ -28,7 +28,8 @@ class BinnerConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
     kwargs =  pexConfig.DictField("", keytype=str, itemtype=float, default={}) 
     params =  pexConfig.ListField("", dtype=str, default=[]) 
-    setupKwargs = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    setupKwargs_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    setupKwargs_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
     setupParams = pexConfig.ListField("", dtype=str, default=[])
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[''])
@@ -85,6 +86,7 @@ def readMetricConfig(config):
     for key in config.plot_float:  plotDict[key] = config.plot_float[key]
     for key in config.plot_bool:  plotDict[key] = config.plot_bool[key]
     return name,params,kwargs,plotDict
+   
 
 
 def config2dict(config):
