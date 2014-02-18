@@ -3,6 +3,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+import lsst.sims.operations.maf.utils as utils
+
 try:
     import astropy.io.fits as pyf
 except ImportError:
@@ -24,7 +26,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
 
 #    def setupBinner(self, simData, simFIdColName, 
 #                    fieldData, fieldFIdColName, fieldRaColName, fieldDecColName#):
-    def setupBinner(self, simData, fieldFIdColName, fieldRaColName, fieldDecColName):
+    def setupBinner(self, simData, fieldFIdColName, fieldRaColName, fieldDecColName, fieldTable=None, dbAdress=None, sessionID=None, proposalTable='tProposal_Field', proposalID=None):
         """Set up opsim field binner object.
 
         simData = numpy rec array with simulation pointing history,
@@ -34,14 +36,20 @@ class OpsimFieldBinner(BaseSpatialBinner):
         fieldRaColName = the column name with the RA values (in fieldData)
         fieldDecColname = the column name with the Dec values (in fieldData)."""
         # Set basic properties for tracking field information, in sorted order.
-        self.fieldId,idx = np.unique(simData[fieldFIdColName], return_index=True)
-        self.ra = simData[fieldRaColName][idx]
-        self.dec = simData[fieldDecColName][idx]
-        
-        #idxs = np.argsort(fieldData[fieldFIdColName])
-        #self.fieldId = fieldData[fieldFIdColName][idxs]
-        #self.ra = fieldData[fieldRaColName][idxs]
-        #self.dec = fieldData[fieldDecColName][idxs]
+        if fieldTable == None: # If we are just using the fields in the simData
+            self.fieldId,idx = np.unique(simData[fieldFIdColName], return_index=True)
+            self.ra = simData[fieldRaColName][idx]
+            self.dec = simData[fieldDecColName][idx]
+        else: # If we are just using the fields in the simData
+            fieldData = utils.fetchFieldsFromFieldTable(fieldTable, dbAdress, sessionID=sessionID,
+                                                        proposalTable=proposalTable, proposalID=proposalID)
+            fieldFIdColName = 'fieldID'
+            fieldRaColName = 'fieldRA'
+            fieldDecColName = 'fieldDec'
+            idxs = np.argsort(fieldData[fieldFIdColName])
+            self.fieldId = fieldData[fieldFIdColName][idxs]
+            self.ra = fieldData[fieldRaColName][idxs]
+            self.dec = fieldData[fieldDecColName][idxs]
         self.nbins = len(self.fieldId)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[fieldFIdColName])
