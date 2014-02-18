@@ -55,14 +55,14 @@ After installing the LSST stack and setting up your environment (by sourcing loa
 
 If you have setup ssh keys, you can clone the code from git with the following commands, otherwise use the read-only commands below:
 >git clone git@git.lsstcorp.org:LSST/sims/operations/maf.git LSST/sims/operations/maf
->git clone git@git.lsstcorp.org:LSST/sims/operations/catalogs/generation.git LSST/sims/operations/generation
->git clone git@git.lsstcorp.org:LSST/sims/operations/catalogs/measures.git LSST/sims/operations/measures
+>git clone git@git.lsstcorp.org:LSST/sims/catalogs/generation.git LSST/sims/operations/generation
+>git clone git@git.lsstcorp.org:LSST/sims/catalogs/measures.git LSST/sims/operations/measures
 >git clone git@git.lsstcorp.org:LSST/sims/throughputs.git LSST/sims/operations/throughputs
 
 For read-only access to the code:
 >git clone http://dev.lsstcorp.org/git/LSST/sims/operations/maf.git LSST/sims/operations/maf
->git clone http://dev.lsstcorp.org/git/LSST/sims/operations/catalogs/generation.git LSST/sims/operations/generation
->git clone http://dev.lsstcorp.org/git/LSST/sims/operations/catalogs/measures.git LSST/sims/operations/measures
+>git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/generation.git LSST/sims/operations/generation
+>git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/measures.git LSST/sims/operations/measures
 >git clone http://dev.lsstcorp.org/git/LSST/sims/throughputs.git LSST/sims/operations/throughputs
 
 
