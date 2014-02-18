@@ -12,7 +12,7 @@ class SummaryStatsMetric(BaseMetric):
         self.col = ['slewTime', 'expMJD', 'filter', 'night']
         self.visitTime = visitTime
         self.visitExpTime = visitExpTime
-        super(ObservEfficMetric,self).__init__(self.col, metricName, plotParams=plotParams)
+        super(SummaryStatsMetric,self).__init__(self.col, metricName, plotParams=plotParams)
     def run(self, dataSlice):
         slewTime = np.sum(dataSlice[self.col[0]])
         expTime = self.visitExpTime*len(dataSlice)
