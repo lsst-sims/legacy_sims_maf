@@ -77,7 +77,7 @@ binList.append(binner)
 # Compute what fraction of possible observing time the shutter is open
 binner= BinnerConfig()
 binner.name='UniBinner'
-m1 = makeMetricConfig('ObservEfficMetric')
+m1 = makeMetricConfig('SummaryStatsMetric')
 binner.metricDict=makeDict(m1)
 binner.constraints=['night < 49353+730', '']
 binList.append(binner)
