@@ -55,15 +55,15 @@ After installing the LSST stack and setting up your environment (by sourcing loa
 
 If you have setup ssh keys, you can clone the code from git with the following commands, otherwise use the read-only commands below:
 >git clone git@git.lsstcorp.org:LSST/sims/operations/maf.git LSST/sims/operations/maf
->git clone git@git.lsstcorp.org:LSST/sims/catalogs/generation.git LSST/sims/operations/generation
->git clone git@git.lsstcorp.org:LSST/sims/catalogs/measures.git LSST/sims/operations/measures
->git clone git@git.lsstcorp.org:LSST/sims/throughputs.git LSST/sims/operations/throughputs
+>git clone git@git.lsstcorp.org:LSST/sims/catalogs/generation.git LSST/sims/catalogs/generation
+>git clone git@git.lsstcorp.org:LSST/sims/catalogs/measures.git LSST/sims/catalogs/measures
+>git clone git@git.lsstcorp.org:LSST/sims/throughputs.git LSST/sims/throughputs
 
 For read-only access to the code:
 >git clone http://dev.lsstcorp.org/git/LSST/sims/operations/maf.git LSST/sims/operations/maf
->git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/generation.git LSST/sims/operations/generation
->git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/measures.git LSST/sims/operations/measures
->git clone http://dev.lsstcorp.org/git/LSST/sims/throughputs.git LSST/sims/operations/throughputs
+>git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/generation.git LSST/sims/catalogs/generation
+>git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/measures.git LSST/sims/catalogs/measures
+>git clone http://dev.lsstcorp.org/git/LSST/sims/throughputs.git LSST/sims/throughputs
 
 
 Setup the code from git:
@@ -84,12 +84,6 @@ Declare the packages:
 >eups declare -r ~/LSST_box/DarwinX86/LSST/sims/catalogs/measures sims_catalogs_measures 1.0 --nolock
 >eups declare -r ~/LSST_box/DarwinX86/LSST/sims/throughputs throughputs 1.0 --nolock
 >eups declare -r ~/LSST_box/DarwinX86/LSST/sims/operations/maf sims_operations_maf 1.0 --nolock
-
-
-Known Issues:
--------------
-*Healpy can fail to install if there is an old version of Xcode present.  The latest version of Xcode does not need the /Developer directory, so try moving that and installing again.  Also in Xcode, go to Xcode->preferences->Downloads and get the latest Command Line Tools
-*The LSST stack does not yet compile on OSX 9.  This should be solved shortly.
 
 
 Running Examples:
@@ -119,6 +113,10 @@ try out the driver script.  Output plots and save-files are put in the Plots dir
 >python runConfig.py starDriver.py #This replicates most SSTAR plots and takes ~6 hr to run
 
 
+Known Issues:
+-------------
+*Healpy can fail to install if there is an old version of Xcode present.  The latest version of Xcode does not need the /Developer directory, so try moving that and installing again.  Also in Xcode, go to Xcode->preferences->Downloads and get the latest Command Line Tools
+*The LSST stack does not yet compile on OSX 9.  This should be solved shortly.
 
 
 
