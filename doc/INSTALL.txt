@@ -90,6 +90,9 @@ Declare the packages:
 >eups declare -r ~/LSST_box/DarwinX86/LSST/sims/throughputs throughputs 1.0 --nolock
 >eups declare -r ~/LSST_box/DarwinX86/LSST/sims/operations/maf sims_operations_maf 1.0 --nolock
 
+If you have scipy installed as part of your python package (like with anaconda):
+>eups declare -c scipy 1.0 -m none -r none --nolock
+
 
 Running Examples:
 -----------------
@@ -98,7 +101,7 @@ Make sure your environment is set up (it can be handy to add the following to yo
 >source /path/to/lsst/stuff/loadLSST.sh
 >setup lsst
 >setup base
->setup maf
+>setup sims_operations_maf
 
 For the test scripts, we assume a ~/dbLogin file.  If you are using opsim sqlite files, just issue the following (this only needs to be done once):
 >echo SQLITE_OPSIM sqlite:///opsim.sqlite >> ~/dbLogin

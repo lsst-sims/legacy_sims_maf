@@ -32,7 +32,7 @@ class BinnerConfig(pexConfig.Config):
     setupKwargs_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
     setupParams = pexConfig.ListField("", dtype=str, default=[])
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
-    constraints = pexConfig.ListField("", dtype=str, default=[''])
+    constraints = pexConfig.ListField("", dtype=str, default=[])
     stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig, default={}) 
 
 class MafConfig(pexConfig.Config):

@@ -305,11 +305,11 @@ class BaseBinMetric(object):
         # Update this to write self.comment and self.plotParams
 
                 
-    def plotAll(self, outDir='./', savefig=True, closefig=False):
+    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:
             try:
-                self.plotMetric(mname, outDir=outDir, savefig=savefig)
+                self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
                 if closefig:
                    plt.close('all')
             except ValueError:

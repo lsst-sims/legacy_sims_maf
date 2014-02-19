@@ -35,6 +35,7 @@ class MafDriver(object):
             for key in binner.setupKwargs_str.keys():
                 temp_binner.setupKwargs[key] =  binner.setupKwargs_str[key]
             temp_binner.constraints = binner.constraints
+            temp_binner.index=i
             stackers = []
             for key in binner.stackCols.keys():
                 name, params, kwargs = config2dict(binner.stackCols[key])
@@ -42,14 +43,11 @@ class MafDriver(object):
             temp_binner.stackers = stackers
             self.binList.append(temp_binner)
             sub_metricList=[]
-            for i,metric in binner.metricDict.iteritems():
+            for j,metric in binner.metricDict.iteritems():
                 name,params,kwargs,plotDict = readMetricConfig(metric)
                 kwargs['plotParams'] = plotDict
-                #try:
                 sub_metricList.append(getattr(metrics,metric.name)
                                       (*params, **kwargs) )
-                #except:
-                #    import pdb ; pdb.set_trace()
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
         self.constraints = []
@@ -99,14 +97,15 @@ class MafDriver(object):
         """Loop over each binner and calc metrics for that binner. """
         for opsimName in self.config.opsimNames:
             for j, constr in enumerate(self.constraints):
-                # Find which binners have a matching constraint XXX-need to update to be matching constraint and stacking params
+                # Find which binners have a matching constraint 
                 matchingBinners=[]
                 for b in self.binList:
                     if constr in b.constraints:
                         matchingBinners.append(b)
                 for i,binner in enumerate(matchingBinners):
+                    #print 'constraint = ', constr,'binnertype =', binner.binnertype 
                     colnames = []
-                    for m in self.metricList[i]:
+                    for m in self.metricList[binner.index]:
                         for cn in m.colNameList:  colnames.append(cn)                            
                     if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX'): 
                         colnames.append(binner.setupParams[0]) 
@@ -122,11 +121,11 @@ class MafDriver(object):
                     gm = self._binKey(binner)
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
-                    gm.setMetrics(self.metricList[i])
-                    gm.runBins(self.data, simDataName=opsimName+'%i'%j, metadata=constr)
+                    gm.setMetrics(self.metricList[binner.index])
+                    gm.runBins(self.data, simDataName=opsimName+'%i'%j)
                     gm.reduceAll()
-                    gm.plotAll(outDir=self.config.outputDir, savefig=True)
-                    gm.writeAll(outDir=self.config.outputDir)
+                    gm.plotAll(outDir=self.config.outputDir, savefig=True, outfileRoot=constr)
+                    gm.writeAll(outDir=self.config.outputDir, outfileRoot=constr)
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
                     

@@ -1,7 +1,7 @@
 setupRequired(base)
 setupRequired(numpy)
 setupRequired(matplotlib)
-#setupRequired(scipy) #I think I can take this out so anaconda people can run?
+setupRequired(scipy) 
 setupRequired(pyfits)
 setupRequired(sims_catalogs_generation)
 setupOptional(pex_config)
