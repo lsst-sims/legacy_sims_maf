@@ -50,6 +50,9 @@ After installing the LSST stack and setting up your environment (by sourcing loa
 >cd
 >mkdir LSST_box
 >cd LSST_box
+>LSST_DEVEL=~/LSST_box
+>setup lsst
+>setup base
 >mksandbox
 >cd DarwinX86 #or whatever platform you happen to be on
 
@@ -59,24 +62,26 @@ If you have setup ssh keys, you can clone the code from git with the following c
 >git clone git@git.lsstcorp.org:LSST/sims/catalogs/measures.git LSST/sims/catalogs/measures
 >git clone git@git.lsstcorp.org:LSST/sims/throughputs.git LSST/sims/throughputs
 
-For read-only access to the code:
+For anonymous access to the code (you can't check in changes you make):
 >git clone http://dev.lsstcorp.org/git/LSST/sims/operations/maf.git LSST/sims/operations/maf
 >git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/generation.git LSST/sims/catalogs/generation
 >git clone http://dev.lsstcorp.org/git/LSST/sims/catalogs/measures.git LSST/sims/catalogs/measures
 >git clone http://dev.lsstcorp.org/git/LSST/sims/throughputs.git LSST/sims/throughputs
 
-
 Setup the code from git:
 >cd ~/LSST_box/DarwinX86/LSST/sims/catalogs/generation
 >setup -j -r .
+>setup lsst
 >scons opt=3
 >cd ~/LSST_box/DarwinX86/LSST/sims/catalogs/measures
 >setup -j -r .
+>setup lsst
 >scons opt=3
 >cd ~/LSST_box/DarwinX86/LSST/sims/throughputs
 >setup -j -r .
 >cd ~/LSST_box/DarwinX86/LSST/sims/operations/maf
 >setup -j -r .
+>setup lsst
 >scons opt=3
 
 Declare the packages:
@@ -88,17 +93,20 @@ Declare the packages:
 
 Running Examples:
 -----------------
-Make sure your environment is set up:
+Make sure your environment is set up (it can be handy to add the following to your .bashrc):
+>LSST_DEVEL=~/LSST_box
 >source /path/to/lsst/stuff/loadLSST.sh
+>setup lsst
+>setup base
 >setup maf
 
-For the test scripts, we assume a ~/dbLogin file.  If you are using opsim sqlite files, just issue the following:
+For the test scripts, we assume a ~/dbLogin file.  If you are using opsim sqlite files, just issue the following (this only needs to be done once):
 >echo SQLITE_OPSIM sqlite:///opsim.sqlite >> ~/dbLogin
 
 go to the examples directory:
 >cd ~/LSST_box/DarwinX86/LSST/sims/operations/maf/examples
 
-copy an opsim sqlite file
+copy an opsim 3.61 sqlite file
 >curl XXX
 
 run the example scripts:
