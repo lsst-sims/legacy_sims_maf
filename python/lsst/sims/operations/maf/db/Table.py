@@ -109,5 +109,9 @@ class Table(DBObject):
             chunkList.append(result)
             rescount += 1
         # Merge results of chunked queries.
-        simdata = np.hstack(chunkList)
+        if rescount > 0:
+            simdata = np.hstack(chunkList)
+        else: # If there were no results from query, return an empty array
+            dt = ['float']*len(colnames)
+            simdata = np.zeros(0, dtype=zip(colnames,dt))
         return simdata

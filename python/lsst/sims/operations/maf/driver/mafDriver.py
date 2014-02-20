@@ -103,7 +103,7 @@ class MafDriver(object):
                     if constr in b.constraints:
                         matchingBinners.append(b)
                 for i,binner in enumerate(matchingBinners):
-                    #print 'constraint = ', constr,'binnertype =', binner.binnertype 
+                    print 'running constraint:', constr,' with binnertype =', binner.binnertype 
                     colnames = []
                     for m in self.metricList[binner.index]:
                         for cn in m.colNameList:  colnames.append(cn)                            
