@@ -16,6 +16,7 @@ LSST Stack:
     pexConfig
     catalogs
     maf
+    sqlite3
 
 
 Recommendation for install:
@@ -93,7 +94,6 @@ Declare the packages:
 If you have scipy installed as part of your python package (like with anaconda):
 >eups declare -c scipy 1.0 -m none -r none --nolock
 
-
 Running Examples:
 -----------------
 Make sure your environment is set up (it can be handy to add the following to your .bashrc):
@@ -141,4 +141,5 @@ Known Issues:
  LocalWords:  macports python27 py py27 LSST numpy scipy SQLAlchemy astrometric
  LocalWords:  pexConfig maf loadLSST cd mkdir DarwinX86 scons eups sims nolock
  LocalWords:  throughputs Xcode OSX opsim sqlite healpix opsim3 opsimfields dat
- LocalWords:  ln runConfig allBinnerCfg starDriver SSTAR
+ LocalWords:  ln runConfig allBinnerCfg starDriver SSTAR DEVEL lsst mksandbox
+ LocalWords:  gunzip opsimblitz1
