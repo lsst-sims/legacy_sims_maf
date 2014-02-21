@@ -4,7 +4,7 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 # Setup Database access
 root.outputDir = './Plots'
 root.dbAddress ='sqlite:///opsim.sqlite'
-root.opsimNames = ['opsim3_61']
+root.opsimNames = ['opsim']
 
 
 binList=[]

@@ -109,13 +109,17 @@ For the test scripts, we assume a ~/dbLogin file.  If you are using opsim sqlite
 go to the examples directory:
 >cd ~/LSST_box/DarwinX86/LSST/sims/operations/maf/examples
 
-copy an opsim 3.61 sqlite file
->curl XXX
+copy an opsim output file 
+>curl -O http://opsimcvs.tuc.noao.edu/runs/opsimblitz1.1053/design/opsimblitz1_1053_output.dat.gz 
+>gunzip opsimblitz1_1053_output.dat.gz 
+
+convert the data file to sqlite
+>~/LSST_box/DarwinX86/LSST/sims/operations/maf/python/lsst/sims/operations/maf/utils/opsimOutput2sqlite.sh opsimblitz1_1053_output.dat opsim.sqlite opsim
 
 run the example scripts:
->python test_healpix.py opsim3_61
->python test_opsimfields.py opsim3_61
->python time_metrics.dat opsim3_61
+>python test_healpix.py opsim
+>python test_opsimfields.py opsim
+>python time_metrics.dat opsim
 
 try out the driver script.  Output plots and save-files are put in the Plots directory:
 >cd driver

@@ -50,10 +50,10 @@ def getMetrics(seeingcol, docomplex=False):
     print 'Set up metrics %f s' %(dt)
     return metricList
 
-def getBinner(simdata, racol, deccol, nside=128):
+def getBinner(simdata, racol, deccol, nside=128, leafsize=100):
     t = time.time()
     bb = binners.HealpixBinner(nside=nside)    
-    bb.setupBinner(simdata, racol, deccol)
+    bb.setupBinner(simdata, racol, deccol, leafsize=leafsize)
     dt, t = dtime(t)
     print 'Set up binner and built kdtree %f s' %(dt)
     return bb
@@ -164,7 +164,13 @@ if __name__ == '__main__':
     else:
         racol = 'fieldRA'
         deccol = 'fieldDec'
-    bb = getBinner(simdata, racol, deccol, args.nside)
+    # Check which kdtree is available and set leafsize
+    from scipy.spatial import cKDTree as kdtree
+    if not hasattr(kdtree,'query_ball_point'):
+       leafsize=50000
+    else:
+       leafsize=100
+    bb = getBinner(simdata, racol, deccol, args.nside, leafsize=leafsize)
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
