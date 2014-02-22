@@ -15,8 +15,8 @@ constraints = ["filter = \'%s\'"%'r']
 binner = BinnerConfig()
 binner.name = 'HealpixBinner'
 binner.kwargs = {"nside":nside}
-m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'plotLabel':'#'})
-m2 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':True, 'plotLabel':'Co-add m5 - %.1f'%27.} )           
+m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'})
+m2 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.} )           
 binner.metricDict = makeDict(m1,m2)
 binner.setupKwargs_float={ "leafsize":50000}
 binner.setupParams=["fieldRA","fieldDec"]
@@ -36,10 +36,10 @@ binner=BinnerConfig()
 binner.name='OpsimFieldBinner'
 binner.setupParams=["fieldID","fieldRA","fieldDec"]
 binner.constraints = constraints
-m1 = makeMetricConfig('MinMetric', params=['airmass'])
+m1 = makeMetricConfig('MinMetric', params=['airmass'], plotDict={'cmap':'RdBu'})
 m4 = makeMetricConfig('MeanMetric', params=['normairmass'])
 m3 = makeMetricConfig('Coaddm5Metric')
-m7 = makeMetricConfig('CountMetric', params=['expMJD'])
+m7 = makeMetricConfig('CountMetric', params=['expMJD'], plotDict={'units':"#", 'percentileClip':80.})
 binner.metricDict = makeDict(m1,m3,m4,m7)
 binList.append(binner)
 

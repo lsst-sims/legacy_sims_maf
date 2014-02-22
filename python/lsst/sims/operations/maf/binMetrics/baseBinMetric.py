@@ -41,6 +41,7 @@ import os
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import pickle
 try:
     import astropy.io.fits as pyf
@@ -329,21 +330,33 @@ class BaseBinMetric(object):
             pParams = None
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
-        if 'plotTitle' in pParams:
-            plotTitle = pParams['plotTitle']
+        if 'title' in pParams:
+            title = pParams['title']
         else:
-            plotTitle = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-            plotTitle += ' : ' + mname
-        if 'plotLabel' in pParams:
-            plotLabel = pParams['plotLabel']
+            title = self.simDataName[metricName] + ' ' + self.metadata[metricName]
+            title += ' : ' + mname
+        if 'xlabel' in pParams:
+            xlabel = pParams['xlabel']
         else:
-            plotLabel = mname
+            xlabel = mname
+        if 'units' in pParams:
+            units = pParams['units']
+        else:
+            units = mname
+        if 'legendLabel' in pParams:
+            legendLabel =  pParams['legendLabel']
+        else:
+            legendLabel = None
+        if 'cmap' in pParams:
+            cmap = getattr(cm,pParams['cmap'])
+        else:
+            cmap = cm.jet
         # Set up for plot limits.
         plotMin = self.metricValues[metricName].compressed().min()
         plotMax = self.metricValues[metricName].compressed().max()
         # If percentile clipping is set, use it. 
         if 'percentileClip' in pParams:
-            plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed())
+            plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(), percentile=pParams['percentileClip'])
         # Use plot limits if they're set (min/max overrides percentile clipping).
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
@@ -352,11 +365,11 @@ class BaseBinMetric(object):
         # Use percentile values to set plot limits, if they were set.
         # Plot the binned metric data, if relevant (oneD binners).
         histRange=None
-        if 'histmax' in pParams:
+        if 'histMax' in pParams:
             histRange = [pParams['histMin'],pParams['histMax']]
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
-                                                    xlabel=plotLabel, title=plotTitle, 
+                                                    xlabel=xlabel, title=title, 
                                                     histRange = histRange)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -366,7 +379,7 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             histfignum = self.binner.plotHistogram(self.metricValues[metricName].compressed(), 
-                                                   xlabel=plotLabel, title=plotTitle, 
+                                                   xlabel=xlabel, title=title, 
                                                    histRange = [plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -375,15 +388,19 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
+            # Make sure the color map leaves background white in healpy plots
+            cmap0 = cmap
+            cmap0.set_under('w')
+            cmap0.set_bad('gray')
             if 'zp' in pParams: # Subtract off a zeropoint
-                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]-pParams['zp']).filled(self.binner.badval),
-                                                   units=plotLabel, title=plotTitle, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
+                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]-pParams['zp']).filled(self.binner.badval),cmap=cmap,
+                                                   units=units, title=title, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
             elif 'normVal' in pParams: # Normalize by some value
-                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']).filled(self.binner.badval),
-                                                   units=plotLabel, title=plotTitle, clims=[plotMin/pParams['normVal'], plotMax/pParams['normVal']])
+                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']).filled(self.binner.badval),cmap=cmap,
+                                                   units=units, title=title, clims=[plotMin/pParams['normVal'], plotMax/pParams['normVal']])
             else: # Just plot raw values
-                skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),
-                                                   units=plotLabel, title=plotTitle, clims=[plotMin, plotMax])
+                skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),cmap=cmap,
+                                                   units=units, title=title, clims=[plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
@@ -392,8 +409,8 @@ class BaseBinMetric(object):
         # Plot the angular power spectrum, if able. (healpix binners)
         if hasattr(self.binner, 'plotPowerSpectrum'):
             psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName].filled(),
-                                                     title=plotTitle, 
-                                                     legendLabel=plotLabel)
+                                                     title=title, 
+                                                     legendLabel=legendLabel)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 

@@ -37,6 +37,8 @@ class ColInfo(object):
                     '5sigma_modified':'mag',
                     '5sigma_ps' : 'mag'}
         unitDict['normairmass'] = 'airmass/(minimum possible airmass)'
+        unitDict['ra_pi_amp'] = 'arcsec'
+        unitDict['dec_pi_amp'] = 'arcsec'
         if colName in unitDict:
             return unitDict[colName]
         else:

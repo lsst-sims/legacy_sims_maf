@@ -9,6 +9,7 @@ import numpy.ma as ma
 import healpy as hp
 import matplotlib.pyplot as plt
 import warnings
+import matplotlib.cm as cm
 try:
     import astropy.io.fits as pyf
 except ImportError:
@@ -141,15 +142,15 @@ class HealpixBinner(BaseSpatialBinner):
         return metricValues, binner, header
         
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, cbarFormat='%.2g'):
+                   clims=None, cbarFormat='%.2g', cmap=cm.jet):
         """Plot the sky map of metricValue using healpy Mollweide plot."""
         # Generate a Mollweide full-sky plot.
         if clims!=None:
             hp.mollview(metricValue, title=title, cbar=True, unit=units, 
-                        format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180))
+                        format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap)
         else:
             hp.mollview(metricValue, title=title, cbar=True, unit=units, 
-                        format=cbarFormat, rot=(180,0,180))
+                        format=cbarFormat, rot=(180,0,180), cmap=cmap)
         hp.graticule(dpar=20., dmer=20.)
         fig = plt.gcf()
         return fig.number
