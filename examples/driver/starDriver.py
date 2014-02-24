@@ -30,7 +30,7 @@ for i,f in enumerate(filters):
     m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
     m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[i], 'percentileClip':95., 'units':'Co-add m5 - %.1f'%mag_zpoints[i]} )             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[i]})
-    m6 = makeMetricConfig('MedianMetric', params=['seeing'], plotDict={'normVal':seeing_norm[i], 'units':'median seeing/expected zenith seeing'})
+    m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[i], 'units':'median seeing/expected zenith seeing'})
     m7 = makeMetricConfig('MedianMetric', params=['airmass'])
     m8 = makeMetricConfig('MaxMetric', params=['airmass'])
     binner.metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
@@ -79,7 +79,7 @@ binner= BinnerConfig()
 binner.name='UniBinner'
 m1 = makeMetricConfig('SummaryStatsMetric')
 binner.metricDict=makeDict(m1)
-binner.constraints=['night < 49353+730', '']
+binner.constraints=['night < 730', '']
 binList.append(binner)
 
 
