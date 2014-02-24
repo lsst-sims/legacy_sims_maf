@@ -46,6 +46,10 @@ class MafDriver(object):
             for j,metric in binner.metricDict.iteritems():
                 name,params,kwargs,plotDict = readMetricConfig(metric)
                 kwargs['plotParams'] = plotDict
+                # If just one parameter, look up units
+                if (len(params) == 1):
+                    info = utils.ColInfo()
+                    plotDict['_unit'] = info.getUnits(params[0])
                 sub_metricList.append(getattr(metrics,metric.name)
                                       (*params, **kwargs) )
             self.metricList.append(sub_metricList)

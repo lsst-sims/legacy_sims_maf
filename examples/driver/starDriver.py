@@ -28,27 +28,27 @@ for i,f in enumerate(filters):
     m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'})
     m2 = makeMetricConfig('CountRatioMetric', params=['expMJD'], kwargs={'normVal':nvisitBench[i]},plotDict={'percentileClip':80.})
     m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
-    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[i], 'percentileClip':True, 'plotLabel':'Co-add m5 - %.1f'%mag_zpoints[i]} )             
+    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[i], 'percentileClip':95., 'units':'Co-add m5 - %.1f'%mag_zpoints[i]} )             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[i]})
-    m6 = makeMetricConfig('MedianMetric', params=['seeing'], plotDict={'normVal':seeing_norm[i], 'plotLabel':'median seeing/expected zenith seeing'})
+    m6 = makeMetricConfig('MedianMetric', params=['seeing'], plotDict={'normVal':seeing_norm[i], 'units':'median seeing/expected zenith seeing'})
     m7 = makeMetricConfig('MedianMetric', params=['airmass'])
     m8 = makeMetricConfig('MaxMetric', params=['airmass'])
     binner.metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
     binner.setupKwargs_float={ "leafsize":50000}
     binner.setupParams=["fieldRA","fieldDec"]
-    binner.constraints = ["filter = \'%s\' and propID = 218"%f, "filter = \'%s\'"%f]
+    binner.constraints = ["filter = \'%s\' and propID = 188"%f, "filter = \'%s\'"%f]
     binList.append(binner)
 
 
 # Visits per observing mode:
-modes = [214,215,216,217,218,219]
+modes = [186,187,188,189,190]
 for i,f in enumerate(filters):
         binner = BinnerConfig()
         binner.name='HealpixBinner'
         binner.kwargs = {"nside":nside}
         m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':95., 'units':'#'})
         binner.metricDict = makeDict(m1)
-        binner.setupKwargs={ "leafsize":50000}
+        binner.setupKwargs_float={ "leafsize":50000}
         binner.setupParams=["fieldRA","fieldDec"]
         for mode in modes:
             binner.constraints.append("filter = \'%s\' and propID = %s"%(f,mode))

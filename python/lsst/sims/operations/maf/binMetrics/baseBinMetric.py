@@ -337,10 +337,14 @@ class BaseBinMetric(object):
             title += ' : ' + mname
         if 'xlabel' in pParams:
             xlabel = pParams['xlabel']
+        elif '_unit' in pParams:
+            xlabel = mname+'('+pParams['_unit']+')'
         else:
             xlabel = mname
         if 'units' in pParams:
             units = pParams['units']
+        elif '_unit' in pParams:
+            units = mname+'('+pParams['_unit']+')'
         else:
             units = mname
         if 'legendLabel' in pParams:
@@ -350,7 +354,7 @@ class BaseBinMetric(object):
         if 'cmap' in pParams:
             cmap = getattr(cm,pParams['cmap'])
         else:
-            cmap = cm.jet
+            cmap = None
         # Set up for plot limits.
         plotMin = self.metricValues[metricName].compressed().min()
         plotMax = self.metricValues[metricName].compressed().max()
@@ -388,10 +392,11 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-            # Make sure the color map leaves background white in healpy plots
-            cmap0 = cmap
-            cmap0.set_under('w')
-            cmap0.set_bad('gray')
+            # Make sure the color map leaves background white in healpy plots.  Need to debug this some more I think...
+            if cmap:
+                cmap0 = cmap
+                cmap0.set_under('w')
+                cmap0.set_bad('gray')
             if 'zp' in pParams: # Subtract off a zeropoint
                 skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]-pParams['zp']).filled(self.binner.badval),cmap=cmap,
                                                    units=units, title=title, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
