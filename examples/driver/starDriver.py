@@ -34,7 +34,7 @@ for i,f in enumerate(filters):
     m7 = makeMetricConfig('MedianMetric', params=['airmass'])
     m8 = makeMetricConfig('MaxMetric', params=['airmass'])
     binner.metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
-    binner.setupKwargs={ "leafsize":50000}
+    binner.setupKwargs_float={ "leafsize":50000}
     binner.setupParams=["fieldRA","fieldDec"]
     binner.constraints = ["filter = \'%s\' and propID = 218"%f, "filter = \'%s\'"%f]
     binList.append(binner)
