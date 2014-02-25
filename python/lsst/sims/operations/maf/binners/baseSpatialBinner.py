@@ -59,7 +59,10 @@ class BaseSpatialBinner(BaseBinner):
             raise Exception('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x,y,z)
-        self.opsimtree = kdtree(data, leafsize=leafsize)
+        if np.size(data) > 0:
+            self.opsimtree = kdtree(data, leafsize=leafsize)
+        else:
+            self.opsimtree = []
 
     def _setRad(self, radius=1.8):
         """Set radius (in degrees) for kdtree search.
@@ -72,6 +75,9 @@ class BaseSpatialBinner(BaseBinner):
     def sliceSimData(self, binpoint):
         """Return indexes for relevant opsim data at binpoint (binpoint=ra/dec value)."""
         binx, biny, binz = self._treexyz(binpoint[0], binpoint[1])
+        # If there is no data, there is no tree to query, return an empty list
+        if self.opsimtree == []:
+            return []
         # If we were given more than one binpoint, try multiple query against the tree.
         if isinstance(binx, np.ndarray):
             indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), 
