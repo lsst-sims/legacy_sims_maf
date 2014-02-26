@@ -373,6 +373,8 @@ class BaseBinMetric(object):
             histRange = [pParams['histMin'],pParams['histMax']]
         if 'ylog' in pParams:
             ylog = pParams['ylog']
+        else:
+            ylog='auto'
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, title=title, 
