@@ -2,7 +2,7 @@ import numpy as np
 from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access
-root.outputDir = './Plots'
+root.outputDir = './Allbinners'
 root.dbAddress ='sqlite:///opsim.sqlite'
 root.opsimNames = ['opsim']
 
@@ -47,7 +47,7 @@ binner= BinnerConfig()
 binner.name='UniBinner'
 m1 = makeMetricConfig('SummaryStatsMetric')
 binner.metricDict=makeDict(m1)
-binner.constraints=['night < 750+49353']
+binner.constraints=['night < 750']
 binList.append(binner)
 
 

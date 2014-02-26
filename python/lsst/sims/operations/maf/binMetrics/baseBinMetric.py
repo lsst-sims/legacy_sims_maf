@@ -371,10 +371,12 @@ class BaseBinMetric(object):
         histRange=None
         if 'histMax' in pParams:
             histRange = [pParams['histMin'],pParams['histMax']]
+        if 'ylog' in pParams:
+            ylog = pParams['ylog']
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, title=title, 
-                                                    histRange = histRange)
+                                                    histRange = histRange, ylog=ylog, legendLabel=legendLabel)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
