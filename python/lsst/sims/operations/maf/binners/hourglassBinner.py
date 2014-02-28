@@ -22,23 +22,27 @@ class HourglassBinner(UniBinner):
         
         pernight, perfilter = metricValue
         
-        plt.plot(pernight['mjd'], (pernight['twi6_rise']-pernight['midnight'])*24., 'blue' )
-        plt.plot(pernight['mjd'], (pernight['twi6_set']-pernight['midnight'])*24. , 'blue' )
-        
-        plt.plot(pernight['mjd'], (pernight['twi12_rise']-pernight['midnight'])*24., 'yellow' )
-        plt.plot(pernight['mjd'], (pernight['twi12_set']-pernight['midnight'])*24. , 'yellow' )
-
-        plt.plot(pernight['mjd'], (pernight['twi18_rise']-pernight['midnight'])*24., 'red' )
-        plt.plot(pernight['mjd'], (pernight['twi18_set']-pernight['midnight'])*24., 'red'  )
-
-        plt.plot(pernight['mjd'], pernight['moonPer']/100.-5.5, 'black')
         y = (perfilter['mjd']-perfilter['midnight'])*24.
+        dmin = np.floor(np.min(perfilter['mjd']))
         for i in np.arange(0,perfilter.size,2):
-            plt.plot([perfilter['mjd'][i],perfilter['mjd'][i+1] ],[y[i],y[i+1]] , filter2color[perfilter['filter'][i]] )
+            plt.plot([perfilter['mjd'][i]-dmin,perfilter['mjd'][i+1]-dmin ],[y[i],y[i+1]] , filter2color[perfilter['filter'][i]] )
         
         for i,key in enumerate(['u','g','r','i','z','y']):
             plt.text(1.05,.9-i*.07, key, color=filter2color[key], transform = ax.transAxes)
 
+        plt.plot(pernight['mjd']-dmin, (pernight['twi6_rise']-pernight['midnight'])*24., 'blue', label=r'6$^\circ$ twilight' )
+        plt.plot(pernight['mjd']-dmin, (pernight['twi6_set']-pernight['midnight'])*24. , 'blue' )
+        
+        plt.plot(pernight['mjd']-dmin, (pernight['twi12_rise']-pernight['midnight'])*24., 'yellow', label=r'12$^\circ$ twilight' )
+        plt.plot(pernight['mjd']-dmin, (pernight['twi12_set']-pernight['midnight'])*24. , 'yellow' )
+
+        plt.plot(pernight['mjd']-dmin, (pernight['twi18_rise']-pernight['midnight'])*24., 'red', label=r'18$^\circ$ twilight' )
+        plt.plot(pernight['mjd']-dmin, (pernight['twi18_set']-pernight['midnight'])*24., 'red'  )
+
+        plt.plot(pernight['mjd']-dmin, pernight['moonPer']/100.-7, 'black', label='Moon')
+        #plt.legend()
+
+            
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)

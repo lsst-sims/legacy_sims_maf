@@ -51,5 +51,13 @@ binner.constraints=['night < 750']
 binList.append(binner)
 
 
+binner=BinnerConfig()
+binner.name='HourglassBinner'
+m1=makeMetricConfig('HourglassMetric')
+binner.metricDict=makeDict(m1)
+binner.constraints=['night < 750','']
+binList.append(binner)
+
+
 
 root.binners=makeDict(*binList)

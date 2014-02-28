@@ -8,7 +8,8 @@ def nearestVal(A, val):
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time """
     
-    def __init__(self, metricName='hourglass', lat='-30:14:40.7', lon='-70:44:57.9', alt=2662.75):
+    def __init__(self, metricName='hourglass', lat='-30:14:40.7', lon='-70:44:57.9',
+                 alt=2662.75, plotParams=None):
 
         filtercol = "filter"
         mjdcol = "expMJD"
@@ -65,9 +66,9 @@ class HourglassMetric(BaseMetric):
             pernight['moonPer'][i] = moon.phase
             for j,obs in enumerate(obsList):
                 #mjd = pernight['midnight'][i]-doff
-                pernight[key[j]+'_rise'][i] = obs.previous_rising(S, start=mjd, use_center=True) + doff#nearestVal([obs.previous_rising(S, start=mjd, use_center=True),
+                pernight[key[j]+'_rise'][i] = obs.next_rising(S, start=pernight['midnight'][i]-doff, use_center=True) + doff#nearestVal([obs.previous_rising(S, start=mjd, use_center=True),
                                            #obs.next_rising(S, start=mjd, use_center=True) ], mjd )+doff
-                pernight[key[j]+'_set'][i] = obs.next_setting(S, start=mjd, use_center=True) + doff#nearestVal([obs.previous_setting(S, start=mjd, use_center=True),
+                pernight[key[j]+'_set'][i] = obs.previous_setting(S, start=pernight['midnight'][i]-doff, use_center=True) + doff#nearestVal([obs.previous_setting(S, start=mjd, use_center=True),
                                            #obs.next_setting(S, start=mjd, use_center=True) ], mjd )+doff
         
 
