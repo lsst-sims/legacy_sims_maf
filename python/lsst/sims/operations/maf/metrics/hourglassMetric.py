@@ -54,20 +54,19 @@ class HourglassMetric(BaseMetric):
 
         # Oh for fuck's sake...pyephem uses 1899 as it's zero-day, and MJD has Nov 17 1858 as zero-day.
         doff = ephem.Date(0)-ephem.Date('1858/17/11')
-        
-            
+
         for i,mjd in enumerate(pernight['mjd']):
-            mjd = mjd+doff
+            mjd = mjd-doff
             
             pernight['midnight'][i] = nearestVal([lsstObs.previous_antitransit(S, start=mjd),
-                                           lsstObs.next_antitransit(S, start=mjd)], mjd )
+                                           lsstObs.next_antitransit(S, start=mjd)], mjd )+doff
             moon.compute(mjd)
             pernight['moonPer'][i] = moon.phase
             for j,obs in enumerate(obsList):
                 pernight[key[j]+'_rise'][i] = nearestVal([obs.previous_rising(S, start=mjd, use_center=True),
-                                           obs.next_rising(S, start=mjd, use_center=True) ], mjd )
+                                           obs.next_rising(S, start=mjd, use_center=True) ], mjd )+doff
                 pernight[key[j]+'_set'][i] = nearestVal([obs.previous_setting(S, start=mjd, use_center=True),
-                                           obs.next_setting(S, start=mjd, use_center=True) ], mjd )
+                                           obs.next_setting(S, start=mjd, use_center=True) ], mjd )+doff
         
 
         # Define the breakpoints as where either the filter changes OR there's more than a 2 minute gap in observing
@@ -85,9 +84,9 @@ class HourglassMetric(BaseMetric):
         perfilter['mjd'] = dataSlice['expMJD'][good]
         perfilter['filter'] = dataSlice['filter'][good]
         for i,mjd in enumerate(perfilter['mjd']):
-            mjd=mjd+doff
+            mjd=mjd-doff
             perfilter['midnight'][i] = nearestVal([lsstObs.previous_antitransit(S, start=mjd),
-                                           lsstObs.next_antitransit(S, start=mjd)], mjd )-doff
+                                           lsstObs.next_antitransit(S, start=mjd)], mjd )+doff
                                                   
                                       
         return (pernight, perfilter)

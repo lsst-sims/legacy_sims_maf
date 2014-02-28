@@ -14,8 +14,6 @@ class HourglassBinner(UniBinner):
         super(HourglassBinner,self).__init__(verbose=verbose)
         self.binnertype='HOUR'
         self.nbins=1
-
-
         
     def plotHour(self, metricValue, title='', xlabel='MJD (day)', ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """
@@ -38,8 +36,6 @@ class HourglassBinner(UniBinner):
         for i in np.arange(0,perfilter.size,2):
             plt.plot([perfilter['mjd'][i],perfilter['mjd'][i+1] ],[y[i],y[i+1]] , filter2color[perfilter['filter'][i]] )
         
-        
-        #need to make a legend of some kind.
         for i,key in enumerate(['u','g','r','i','z','y']):
             plt.text(1.05,.9-i*.07, key, color=filter2color[key], transform = ax.transAxes)
 
