@@ -1,5 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
+from lsst.sims.operations.maf.utils.telescopeInfo import TelescopeInfo
 
 def nearestVal(A, val):
     return A[np.argmin(np.abs(np.array(A)-val))]
@@ -8,8 +9,8 @@ def nearestVal(A, val):
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time """
     
-    def __init__(self, metricName='hourglass', lat='-30:14:40.7', lon='-70:44:57.9',
-                 alt=2662.75, plotParams=None):
+    def __init__(self, metricName='hourglass', lat=None, lon=None,
+                 elev=None, plotParams=None, telescope='LSST'):
 
         filtercol = "filter"
         mjdcol = "expMJD"
@@ -19,9 +20,10 @@ class HourglassMetric(BaseMetric):
         self.nightcol = nightcol
         self.mjdcol = mjdcol
         self.filtercol = filtercol
-        self.lat = lat
-        self.lon = lon
-        self.alt = alt
+        self.telescope = TelescopeInfo(telescope)
+        if lat != None:  self.telescope.lat = lat
+        if lon != None:  self.telescope.lon = lon
+        if elev != None: self.telescope.elev = elev
    
     def run(self, dataSlice):
 
@@ -39,9 +41,9 @@ class HourglassMetric(BaseMetric):
         left = np.searchsorted(dataSlice[self.nightcol], unights)
         
         lsstObs = ephem.Observer()
-        lsstObs.lat = self.lat
-        lsstObs.lon = self.lon
-        lsstObs.elevation = self.alt
+        lsstObs.lat = self.telescope.lat
+        lsstObs.lon = self.telescope.lon
+        lsstObs.elevation = self.telescope.elev
         horizons = ['-6', '-12', '-18']
         key = ['twi6','twi12','twi18']
         
@@ -50,7 +52,7 @@ class HourglassMetric(BaseMetric):
         moon = ephem.Moon()
         for h in horizons:
             obs = ephem.Observer()
-            obs.lat, obs.lon, obs.elevation = self.lat, self.lon, self.alt
+            obs.lat, obs.lon, obs.elevation = self.telescope.lat, self.telescope.lon, self.telescope.elev
             obs.horizon = h
             obsList.append(obs)
 
