@@ -6,3 +6,4 @@ from .fftMetric import *
 from .properMotionMetric import *
 from .parallaxMetric import *
 from .summaryStatsMetric import *
+from .hourglassMetric import *

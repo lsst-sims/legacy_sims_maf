@@ -321,7 +321,7 @@ class BaseBinMetric(object):
         """Create all plots for 'metricName' ."""
         # Check that metricName refers to plottable ('float') data.
         if not ((self.metricValues[metricName].dtype == 'float') or 
-                (self.metricValues[metricName].dtype=='int')):
+                (self.metricValues[metricName].dtype=='int') or (metricName == 'hourglass')):
             raise ValueError('Metric data in %s is not float or int type (%s).' 
                              %(metricName, self.metricValues[metricName].dtype))
         if metricName in self.plotParams:
@@ -341,6 +341,10 @@ class BaseBinMetric(object):
             xlabel = mname+'('+pParams['_unit']+')'
         else:
             xlabel = mname
+        if 'ylabel' in pParams:
+            ylabel=pParams['ylabel']
+        else:
+            ylabel=None
         if 'units' in pParams:
             units = pParams['units']
         elif '_unit' in pParams:
@@ -425,7 +429,19 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='ps')
                 plt.savefig(outfile, figformat=self.figformat)
-                    
+
+        # Plot the hourglass plot
+        if hasattr(self.binner, 'plotHour'):
+            if xlabel == None:
+                xlabel='MJD (day)'
+            if ylabel == None:
+                ylabel = 'Hours from local midnight'
+            psfignum = self.binner.plotHour(self.metricValues[metricName][0], title=title, xlabel=xlabel,ylabel=ylabel )
+            if savefig:
+                outfile = self._buildOutfileName(metricName, 
+                                                 outDir=outDir, outfileRoot=outfileRoot, 
+                                                 plotType='hr')
+                plt.savefig(outfile, figformat=self.figformat)
     
     def computeSummaryStatistics(self, metricName, summaryMetric):
         """Compute single number summary of metric values in metricName, using summaryMetric."""
