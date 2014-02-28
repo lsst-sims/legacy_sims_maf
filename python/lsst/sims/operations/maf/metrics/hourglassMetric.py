@@ -8,7 +8,7 @@ def nearestVal(A, val):
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time """
     
-    def __init__(self, metricName='hourglass', lat='-30:14:40.7', lon='-70:44:57.9'):
+    def __init__(self, metricName='hourglass', lat='-30:14:40.7', lon='-70:44:57.9', alt=2662.75):
 
         filtercol = "filter"
         mjdcol = "expMJD"
@@ -20,7 +20,7 @@ class HourglassMetric(BaseMetric):
         self.filtercol = filtercol
         self.lat = lat
         self.lon = lon
-
+        self.alt = alt
    
     def run(self, dataSlice):
 
@@ -40,6 +40,7 @@ class HourglassMetric(BaseMetric):
         lsstObs = ephem.Observer()
         lsstObs.lat = self.lat
         lsstObs.lon = self.lon
+        lsstObs.elevation = self.alt
         horizons = ['-6', '-12', '-18']
         key = ['twi6','twi12','twi18']
         
@@ -48,12 +49,12 @@ class HourglassMetric(BaseMetric):
         moon = ephem.Moon()
         for h in horizons:
             obs = ephem.Observer()
-            obs.lat, obs.lon = self.lat, self.lon
+            obs.lat, obs.lon, obs.elevation = self.lat, self.lon, self.alt
             obs.horizon = h
             obsList.append(obs)
 
         # Oh for fuck's sake...pyephem uses 1899 as it's zero-day, and MJD has Nov 17 1858 as zero-day.
-        doff = ephem.Date(0)-ephem.Date('1858/17/11')
+        doff = ephem.Date(0)-ephem.Date('1858/11/17')
 
         for i,mjd in enumerate(pernight['mjd']):
             mjd = mjd-doff
@@ -63,10 +64,11 @@ class HourglassMetric(BaseMetric):
             moon.compute(mjd)
             pernight['moonPer'][i] = moon.phase
             for j,obs in enumerate(obsList):
-                pernight[key[j]+'_rise'][i] = nearestVal([obs.previous_rising(S, start=mjd, use_center=True),
-                                           obs.next_rising(S, start=mjd, use_center=True) ], mjd )+doff
-                pernight[key[j]+'_set'][i] = nearestVal([obs.previous_setting(S, start=mjd, use_center=True),
-                                           obs.next_setting(S, start=mjd, use_center=True) ], mjd )+doff
+                #mjd = pernight['midnight'][i]-doff
+                pernight[key[j]+'_rise'][i] = obs.previous_rising(S, start=mjd, use_center=True) + doff#nearestVal([obs.previous_rising(S, start=mjd, use_center=True),
+                                           #obs.next_rising(S, start=mjd, use_center=True) ], mjd )+doff
+                pernight[key[j]+'_set'][i] = obs.next_setting(S, start=mjd, use_center=True) + doff#nearestVal([obs.previous_setting(S, start=mjd, use_center=True),
+                                           #obs.next_setting(S, start=mjd, use_center=True) ], mjd )+doff
         
 
         # Define the breakpoints as where either the filter changes OR there's more than a 2 minute gap in observing
