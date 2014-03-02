@@ -24,18 +24,23 @@ class OneDBinner(BaseBinner):
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
         or can be left 'None' in which case nbins will be used together with data min/max values
-        to slice data in 'sliceDataCol'. """
+        to slice data in 'sliceDataCol'.
+        All bins are half-open (except the last bin) - like numpy's histogram."""
         self.sliceDataColName = sliceDataColName
-        self.sliceDataCol = simData[sliceDataColName]
+        sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
-            binsize = (self.sliceDataCol.max() - self.sliceDataCol.min()) / float(nbins)
-            bins = np.arange(self.sliceDataCol.min(), self.sliceDataCol.max() + binsize, binsize, 'float') 
-        self.bins = np.sort(bins)
-        self.nbins = len(self.bins)
+            binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
+            bins = np.arange(sliceDataCol.min(), sliceDataCol.max()+binsize, binsize, 'float')
+            self.bins = bins[:-1]
+        else:
+            self.bins = np.sort(bins)
+        self.nbins = len(self.bins) 
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceDataColName])
         simFieldsSorted = np.sort(simData[self.sliceDataColName])
+        # "left" values are location where simdata == bin value
         self.left = np.searchsorted(simFieldsSorted, self.bins, 'left')
+        # Add extra value to end to make last 'interval' open-ended for data slicing.
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
 
     def __iter__(self):
@@ -82,25 +87,30 @@ class OneDBinner(BaseBinner):
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
-        ylog = make the y-axis log. 'auto' will handle things if things span more than 3 orders of mag"""
+        ylog = make the y-axis log. 'auto' will use log if positive data values span >3 orders of mag.
+        """
         # Should we use ylog?
         if ylog =='auto':
             good = np.where((metricValues > 0) & (metricValues != self.badval) )
-            logvals = np.log10(metricValues[good])
-            decades = logvals.max()-logvals.min()
-            if decades > 3:
-                ylog = True
-            else:
+            if len(metricValues[good]) == 0:
                 ylog = False
+            else:
+                logvals = np.log10(metricValues[good])
+                decades = logvals.max()-logvals.min()
+                if decades > 3:
+                    ylog = True
+                else:
+                    ylog = False
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
-        left = self.bins[:-1]
+        leftedge = self.bins
         width = np.diff(self.bins)
+        width = np.concatenate((width, width[-1:]))
         if filled:
-            plt.bar(left, metricValues[:-1], width, label=legendLabel, linewidth=0, alpha=alpha, log=ylog)
+            plt.bar(leftedge, metricValues, width, label=legendLabel, linewidth=0, alpha=alpha, log=ylog)
         else:
-            x = np.ravel(zip(left, left+width))
-            y = np.ravel(zip(metricValues[:-1], metricValues[:-1]))
+            x = np.ravel(zip(leftedge, leftedge+width))
+            y = np.ravel(zip(metricValues, metricValues))
             if ylog:
                 plt.semilogy(x, y, label=legendLabel)
             else:
