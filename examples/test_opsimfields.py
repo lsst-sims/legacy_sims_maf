@@ -54,13 +54,17 @@ def getMetrics(seeingcol, docomplex=False):
     print 'Set up metrics %f s' %(dt)
     return metricList
     
-def getBinner(simData, fieldData):
+def getBinner(simData, fieldDataInfo):
     # Setting up the binner will be slightly different for each binner.
     t = time.time()
     bb = binners.OpsimFieldBinner()
-    #bb.setupBinner(simData, 'fieldID', 
-    #               fieldData, 'fieldID', 'fieldRA', 'fieldDec')
-    bb.setupBinner(simData, 'fieldID','fieldRA', 'fieldDec' )
+    print fieldDataInfo
+    bb.setupBinner(simData, useFieldTable=fieldDataInfo['useFieldTable'],
+                   dbAddress=fieldDataInfo['dbAddress'],
+                   sessionID = fieldDataInfo['sessionID'],
+                   fieldTable = fieldDataInfo['fieldTable'],
+                   proposalTable = fieldDataInfo['proposalTable'],
+                   proposalID = fieldDataInfo['proposalID'])
     dt, t = dtime(t)
     print 'Set up binner %f s' %(dt)
     return bb
@@ -140,8 +144,11 @@ if __name__ == '__main__':
     dbAddress = authDictionary[args.connectionName]
     
     dbTable = args.simDataTable
-    opsimrun = args.simDataTable.lstrip('output_')
-
+    opsimrun = args.simDataTable.replace('output_', '')
+    sessionID = opsimrun.split('_')[-1:][0]
+    if args.propID == -666:
+        args.propID = None
+    
     sqlconstraint = args.sqlConstraint
     
     # Bit of a kludge to set seeing column name. 
@@ -168,21 +175,16 @@ if __name__ == '__main__':
     
     # Get opsim simulation data
     simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
-    
-    # Get field data (fieldID/etc)
-    if args.useFieldTable:
-        if args.propID > 0:
-            sessionID = opsimrun.split('_')[-1:]
-            fielddata = getData.fetchFieldsFromFieldTable(args.fieldDataTable, dbAddress, 
-                                                        sessionID=sessionID, 
-                                                        proposalTable=args.proposalFieldTable,
-                                                        proposalID=args.propID)
-        else:
-            fielddata = getData.fetchFieldsFromFieldTable(args.fieldDataTable, dbAddress)
-    else:
-        fielddata = getData.fetchFieldsFromOutputTable(dbTable, dbAddress, sqlconstraint)
+
     # And set up binner.
-    bb = getBinner(simdata, fielddata)
+    fieldDataInfo = {}
+    fieldDataInfo['useFieldTable'] = args.useFieldTable
+    fieldDataInfo['dbAddress'] = dbAddress
+    fieldDataInfo['fieldTable'] = args.fieldDataTable
+    fieldDataInfo['sessionID'] = sessionID
+    fieldDataInfo['proposalTable'] = args.proposalFieldTable
+    fieldDataInfo['proposalID'] = args.propID
+    bb = getBinner(simdata, fieldDataInfo)
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')

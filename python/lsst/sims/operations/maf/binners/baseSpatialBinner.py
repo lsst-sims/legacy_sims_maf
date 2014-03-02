@@ -32,8 +32,9 @@ class BaseSpatialBinner(BaseBinner):
     def setupBinner(self, simData, spatialkey1,
                     spatialkey2, leafsize=100, radius=1.8):
         """Use simData['spatialkey1'] and simData['spatialkey2']
-        (in radians) to set up KDTree. 
+        (in radians) to set up KDTree.
 
+        spatialkey1 = ra, spatialkey2 = dec, typically: but must match order in binpoint.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
         the simData KDtree 
@@ -73,7 +74,8 @@ class BaseSpatialBinner(BaseBinner):
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     
     def sliceSimData(self, binpoint):
-        """Return indexes for relevant opsim data at binpoint (binpoint=ra/dec value)."""
+        """Return indexes for relevant opsim data at binpoint
+         (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
         binx, biny, binz = self._treexyz(binpoint[0], binpoint[1])
         # If there is no data, there is no tree to query, return an empty list
         if self.opsimtree == []:
