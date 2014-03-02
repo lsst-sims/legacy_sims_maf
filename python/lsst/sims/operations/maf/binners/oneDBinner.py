@@ -24,8 +24,7 @@ class OneDBinner(BaseBinner):
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
         or can be left 'None' in which case nbins will be used together with data min/max values
-        to slice data in 'sliceDataCol'.
-        All bins are half-open (except the last bin) - like numpy's histogram."""
+        to slice data in 'sliceDataCol'. """
         self.sliceDataColName = sliceDataColName
         sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
