@@ -31,7 +31,7 @@ class OneDBinner(BaseBinner):
         sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max()+binsize/2, binsize, 'float')
+            bins = np.arange(sliceDataCol.min(), sliceDataCol.max()+binsize/2.0, binsize, 'float')
             self.bins = bins
         else:
             self.bins = np.sort(bins)
