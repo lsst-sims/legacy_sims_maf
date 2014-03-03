@@ -24,24 +24,26 @@ class OneDBinner(BaseBinner):
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
         or can be left 'None' in which case nbins will be used together with data min/max values
-        to slice data in 'sliceDataCol'. """
+        to slice data in 'sliceDataCol'.
+        Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
+          all bins except for last bin are half-open ([a, b>), the last one is ([a, b])."""
         self.sliceDataColName = sliceDataColName
         sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max()+binsize, binsize, 'float')
-            self.bins = bins[:-1]
+            bins = np.arange(sliceDataCol.min(), sliceDataCol.max()+binsize/2, binsize, 'float')
+            self.bins = bins
         else:
             self.bins = np.sort(bins)
-        self.nbins = len(self.bins) 
+        # Set nbins to be one less than # of bins because last binvalue is RH edge only
+        self.nbins = len(self.bins) - 1
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceDataColName])
         simFieldsSorted = np.sort(simData[self.sliceDataColName])
         # "left" values are location where simdata == bin value
-        self.left = np.searchsorted(simFieldsSorted, self.bins, 'left')
-        # Add extra value to end to make last 'interval' open-ended for data slicing.
+        self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
-
+        
     def __iter__(self):
         self.ipix = 0
         return self
@@ -67,6 +69,8 @@ class OneDBinner(BaseBinner):
             
     def sliceSimData(self, binpoint):
         """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
+        # Find the index of this binpoint in the bins array, then use this to identify
+        #  the relevant 'left' values, then return values of indexes in original data array
         i = (np.where(binpoint == self.bins))[0]
         return self.simIdxs[self.left[i]:self.left[i+1]]
 
@@ -102,11 +106,11 @@ class OneDBinner(BaseBinner):
                     ylog = False
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
-        leftedge = self.bins
+        leftedge = self.bins[:-1]
         width = np.diff(self.bins)
-        width = np.concatenate((width, width[-1:]))
         if filled:
-            plt.bar(leftedge, metricValues, width, label=legendLabel, linewidth=0, alpha=alpha, log=ylog)
+            plt.bar(leftedge, metricValues, width, label=legendLabel,
+                    linewidth=0, alpha=alpha, log=ylog)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(metricValues, metricValues))
