@@ -22,7 +22,6 @@ binList=[]
 nside = 128
 
 for i,f in enumerate(filters):
-    binner.kwargs = {"nside":nside}
     m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'})
     m2 = makeMetricConfig('CountRatioMetric', params=['expMJD'], kwargs={'normVal':nvisitBench[i]},plotDict={'percentileClip':80.})
     m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
@@ -41,13 +40,12 @@ for i,f in enumerate(filters):
 # Visits per observing mode:
 modes = [186,187,188,189,190]
 for i,f in enumerate(filters):
-        binner.kwargs = {"nside":nside}
         m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':95., 'units':'#'})
         metricDict = makeDict(m1)
         constraints = []
         for mode in modes:
             constraints.append("filter = \'%s\' and propID = %s"%(f,mode))
-        binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},setupKwargs={"leafsize":50000},constraints=constraints)
+        binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},setupKwargs={"leafsize":50000},constraints=constraints, metricDict=metricDict)
         binList.append(binner)
                                     
         

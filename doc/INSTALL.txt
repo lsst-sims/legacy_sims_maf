@@ -10,6 +10,7 @@ Python
     healpy: https://github.com/healpy/healpy 
     SQLAlchemy:  http://www.sqlalchemy.org/download.html
     pyslalib (for astrometric metrics):  https://github.com/scottransom/pyslalib
+    pyephem:  http://rhodesmill.org/pyephem/
 
 LSST Stack:  
     Base
@@ -39,6 +40,8 @@ PATH=~/anaconda/bin:PATH
 
 5) (optional) install pyslalib from source.  https://github.com/scottransom/pyslalib
 
+6) (optional, for filter hourglass metric) install pyephem:
+>easy_install pyephem
 
 Installing the LSST Stack:
 ------------------------
