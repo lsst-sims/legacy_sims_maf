@@ -7,3 +7,4 @@ from .properMotionMetric import *
 from .parallaxMetric import *
 from .summaryStatsMetric import *
 from .hourglassMetric import *
+from .completenessMetric import *

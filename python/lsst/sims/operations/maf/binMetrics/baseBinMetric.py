@@ -261,7 +261,11 @@ class BaseBinMetric(object):
                                                       fill_value=self.binner.badval)
         # Run through binpoints, applying all reduce functions.
         for i, b in enumerate(self.binner):
-            if not self.metricValues[metricName].mask[i]:
+            if np.array(self.metricValues[metricName].mask).size == 1:
+                maskval = self.metricValues[metricName].mask
+            else:
+                maskval = self.metricValues[metricName].mask[i]
+            if not maskval:
                 # Get (complex) metric values for this binpoint. 
                 metricValuesPt = self.metricValues[metricName][i]
                 # Evaluate reduced version of metric values.

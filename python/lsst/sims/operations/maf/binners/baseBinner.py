@@ -86,7 +86,7 @@ class BaseBinner(object):
                 cols.append(column)
             else:
                 for i in np.arange(ncols):
-                    dt = metricValues.compressed()[0][i].dtype
+                    dt = np.array(metricValues.compressed()[0][i]).dtype
                     if dt.name[0:3] == 'int':
                         use_badval = int_badval
                     else:
@@ -96,8 +96,9 @@ class BaseBinner(object):
                     for j in idx[0]:
                         column[j] = np.array([use_badval,])
                     idx = np.where(~metricValues.mask)
+                    if np.array(metricValues.mask).size == 1:  idx = np.where(metricValues.data != use_badval)
                     for j in idx[0]:
-                        column[j] = metricValues.data[j][i]
+                        column[j] = np.array([metricValues.data[j][i],])
                     column = pyf.Column(name='c'+str(i), 
                                         format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
