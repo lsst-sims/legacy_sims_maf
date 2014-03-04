@@ -52,8 +52,8 @@ def getMetrics(seeingcol, docomplex=False):
 
 def getBinner(simdata, racol, deccol, nside=128, leafsize=100):
     t = time.time()
-    bb = binners.HealpixBinner(nside=nside)    
-    bb.setupBinner(simdata, racol, deccol, leafsize=leafsize)
+    bb = binners.HealpixBinner(nside=nside, spatialkey1=racol, spatialkey2=deccol)    
+    bb.setupBinner(simdata, leafsize=leafsize)
     dt, t = dtime(t)
     print 'Set up binner and built kdtree %f s' %(dt)
     return bb
