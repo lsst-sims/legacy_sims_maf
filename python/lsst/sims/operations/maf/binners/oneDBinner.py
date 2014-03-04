@@ -12,14 +12,16 @@ from .baseBinner import BaseBinner
 
 class OneDBinner(BaseBinner):
     """oneD Binner."""
-    def __init__(self,  verbose=True):
+    def __init__(self,  verbose=True, sliceDataColName=None):
         """Instantiate. """
         super(OneDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ONED'
         self.bins = None
         self.nbins = None
+        self.sliceDataColName = sliceDataColName
+        self.columnsNeeded = [sliceDataColName]
 
-    def setupBinner(self, simData, sliceDataColName, bins=None, nbins=100):
+    def setupBinner(self, simData, bins=None, nbins=100):
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
@@ -27,7 +29,6 @@ class OneDBinner(BaseBinner):
         to slice data in 'sliceDataCol'.
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b])."""
-        self.sliceDataColName = sliceDataColName
         sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)

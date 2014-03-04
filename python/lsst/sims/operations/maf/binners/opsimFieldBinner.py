@@ -18,7 +18,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
 
     Note that this binner uses the fieldID of the opsim fields to generate spatial matches, thus this
     binner is not generally suitable for use in evaluating dithering or high resolution metrics. """
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=True, fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',useFieldTable=False):
         super(OpsimFieldBinner, self).__init__(verbose=verbose)
         self.binnertype = 'OPSIMFIELDS'
         self.fieldId = None
@@ -26,9 +26,14 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.dec = None
         self.nbins = None
 
+        self.useFieldTable = useFieldTable
+        self.fieldIdColName = fieldIdColName
+        self.fieldRaColName = fieldRaColName
+        self.fieldDecColName = fieldDecColName
+        if not self.useFieldTable:
+            self.columnsNeeded=[fieldIdColName,fieldRaColName,fieldDecColName]
+
     def setupBinner(self, simData,
-                    fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
-                    useFieldTable=False,
                     dbAddress=None, sessionID=None, fieldTable='Field',
                     proposalTable='tProposal_Field', proposalID=None):
         """Set up opsim field binner object.
@@ -45,12 +50,12 @@ class OpsimFieldBinner(BaseSpatialBinner):
         proposalID = the proposal ID number (if restricting field choice by fields requested for a proposal) (default = None)
         """
         # Set basic properties for tracking field information, in sorted order.
-        if not useFieldTable:
+        if not self.useFieldTable:
             if self.verbose:
                 print 'Using simData to set field information.'
-            self.fieldId, idx = np.unique(simData[fieldIdColName], return_index=True)
-            self.ra = simData[fieldRaColName][idx]
-            self.dec = simData[fieldDecColName][idx]
+            self.fieldId, idx = np.unique(simData[self.fieldIdColName], return_index=True)
+            self.ra = simData[self.fieldRaColName][idx]
+            self.dec = simData[self.fieldDecColName][idx]
         else:
             if self.verbose:
                 print 'Using Field tables to set field information.'
@@ -58,14 +63,14 @@ class OpsimFieldBinner(BaseSpatialBinner):
                                                                 sessionID=sessionID,
                                                                 proposalTable=proposalTable,
                                                                 proposalID=proposalID)
-            idxs = np.argsort(fieldData[fieldIdColName])
-            self.fieldId = fieldData[fieldIdColName][idxs]
-            self.ra = fieldData[fieldRaColName][idxs]
-            self.dec = fieldData[fieldDecColName][idxs]
+            idxs = np.argsort(fieldData[self.fieldIdColName])
+            self.fieldId = fieldData[self.fieldIdColName][idxs]
+            self.ra = fieldData[self.fieldRaColName][idxs]
+            self.dec = fieldData[self.fieldDecColName][idxs]
         self.nbins = len(self.fieldId)
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[fieldIdColName])
-        simFieldsSorted = np.sort(simData[fieldIdColName])
+        self.simIdxs = np.argsort(simData[self.fieldIdColName])
+        simFieldsSorted = np.sort(simData[self.fieldIdColName])
         self.left = np.searchsorted(simFieldsSorted, self.fieldId, 'left')
         self.right = np.searchsorted(simFieldsSorted, self.fieldId, 'right')        
 

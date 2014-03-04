@@ -18,6 +18,7 @@ class BaseBinner(object):
         self.verbose = verbose
         self.badval = -666 
         self.binnertype = 'BASE'
+        self.columnsNeeded=[]
 
     def setupBinner(self, *args, **kwargs):
         """Set up internal parameters and bins for binner. """

@@ -22,8 +22,6 @@ binList=[]
 nside = 128
 
 for i,f in enumerate(filters):
-    binner = BinnerConfig()
-    binner.name = 'OpsimFieldBinner'
     m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'percentileClip':75., 'units':'#'})
     m2 = makeMetricConfig('CountRatioMetric', params=['expMJD'], kwargs={'normVal':nvisitBench[i]},plotDict={'title': 'filter = %s'%f, 'percentileClip':80.})
     m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'],plotDict={'title': 'filter = %s'%f})
@@ -32,51 +30,36 @@ for i,f in enumerate(filters):
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'title': 'filter = %s'%f, 'normVal':seeing_norm[i], 'units':'median seeing/expected zenith seeing'})
     m7 = makeMetricConfig('MedianMetric', params=['airmass'],plotDict={'title': 'filter = %s'%f})
     m8 = makeMetricConfig('MaxMetric', params=['airmass'],plotDict={'title': 'filter = %s'%f} )
-    binner.metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
-    binner.setupParams=['fieldID', "fieldRA","fieldDec"]
-    binner.constraints = ["filter = \'%s\' and propID = 188"%f, "filter = \'%s\'"%f]
+    metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
+    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and propID = 188"%f, "filter = \'%s\'"%f])
     binList.append(binner)
 
 
 # Visits per observing mode:
 modes = [186,187,188,189,190]
 for i,f in enumerate(filters):
-        binner = BinnerConfig()
-        binner.name='OpsimFieldBinner'
         m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'units':'#'})
-        binner.metricDict = makeDict(m1)
-        binner.setupParams=['fieldID',"fieldRA","fieldDec"]
+        metricDict = makeDict(m1)
+        constraints=[]
         for mode in modes:
-            binner.constraints.append("filter = \'%s\' and propID = %s"%(f,mode))
+            constraints.append("filter = \'%s\' and propID = %s"%(f,mode))
+        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints )
         binList.append(binner)
                                     
         
-       
 # Slew histograms
-binner= BinnerConfig()
-binner.name='OneDBinner'
-binner.setupParams=['slewTime']
 m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-binner.metricDict=makeDict(m1)
-binner.constraints=['']
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
 binList.append(binner)
 
-binner= BinnerConfig()
-binner.name='OneDBinner'
-binner.setupParams=['slewDist']
-m1 = makeMetricConfig('CountMetric', params=['slewDist'],kwargs={'metadata':'dist'} )
-binner.metricDict=makeDict(m1)
-binner.constraints=['']
+m1 = makeMetricConfig('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
 binList.append(binner)
-
 
 
 # Compute what fraction of possible observing time the shutter is open
-binner= BinnerConfig()
-binner.name='UniBinner'
 m1 = makeMetricConfig('SummaryStatsMetric')
-binner.metricDict=makeDict(m1)
-binner.constraints=['night < 730', '']
+binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
 binList.append(binner)
 
 

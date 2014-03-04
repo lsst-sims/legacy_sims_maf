@@ -1,5 +1,5 @@
 import numpy as np #segfault if numpy not imported 1st, argle bargle!
-from mafConfig import MafConfig, config2dict, readMetricConfig
+from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig
 import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
@@ -27,18 +27,15 @@ class MafDriver(object):
         self.binList = []
         self.metricList = []
         for i,binner in self.config.binners.iteritems():
-            temp_binner = getattr(binners,binner.name)(*binner.params, **binner.kwargs )
-            temp_binner.setupParams = binner.setupParams
-            temp_binner.setupKwargs = {}
-            for key in binner.setupKwargs_float.keys():
-                temp_binner.setupKwargs[key] =  binner.setupKwargs_float[key]
-            for key in binner.setupKwargs_str.keys():
-                temp_binner.setupKwargs[key] =  binner.setupKwargs_str[key]
+            name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols = readBinnerConfig(binner)
+            temp_binner = getattr(binners,binner.name)(*params, **kwargs )
+            temp_binner.setupParams = setupParams
+            temp_binner.setupKwargs = setupKwargs
             temp_binner.constraints = binner.constraints
             temp_binner.index=i
             stackers = []
-            for key in binner.stackCols.keys():
-                name, params, kwargs = config2dict(binner.stackCols[key])
+            for key in stackCols.keys():
+                name, params, kwargs = config2dict(stackCols[key])
                 stackers.append(getattr(utils.addCols, name)(*params, **kwargs))
             temp_binner.stackers = stackers
             self.binList.append(temp_binner)
@@ -54,6 +51,7 @@ class MafDriver(object):
                                       (*params, **kwargs) )
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
+        #import pdb ; pdb.set_trace()
         self.constraints = []
         for b in self.binList:
             for c in b.constraints:
@@ -110,19 +108,13 @@ class MafDriver(object):
                     print 'running constraint:', constr,' with binnertype =', binner.binnertype 
                     colnames = []
                     for m in self.metricList[binner.index]:
-                        for cn in m.colNameList:  colnames.append(cn)                            
-                    if (binner.binnertype == 'SPATIAL') | (binner.binnertype == 'HEALPIX'): 
-                        colnames.append(binner.setupParams[0]) 
-                        colnames.append(binner.setupParams[1])
-                    if binner.binnertype == 'ONED':
-                        colnames.append(binner.setupParams[0])
-                    if binner.binnertype == 'OPSIMFIELDS':
-                        colnames.append(binner.setupParams[0])
-                        colnames.append(binner.setupParams[1])
-                        colnames.append(binner.setupParams[2])
+                        for cn in m.colNameList:  colnames.append(cn)
+                    for cn in binner.columnsNeeded:
+                        colnames.append(cn)
                     colnames = list(set(colnames)) #unique elements
                     self.getData(opsimName,constr, colnames=colnames, stackers=binner.stackers)     
                     gm = self._binKey(binner)
+                    #import pdb ; pdb.set_trace()
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
                     gm.setMetrics(self.metricList[binner.index])
