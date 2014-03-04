@@ -46,8 +46,8 @@ def getBinner(simdata, metricList, nbins=100):
     t = time.time()
     binnerList = []
     for m in metricList:
-        bb = binners.OneDBinner()
-        bb.setupBinner(simdata, m.colname, nbins=nbins)
+        bb = binners.OneDBinner(sliceDataColName=m.colname)
+        bb.setupBinner(simdata, nbins=nbins)
         binnerList.append(bb)
     dt, t = dtime(t)
     print 'Set up binners %f s' %(dt)

@@ -21,9 +21,10 @@ from .baseBinner import BaseBinner
 
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
-    def __init__(self, nside=256, verbose=True):
+    def __init__(self, nside=256, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
         """Instantiate and set up healpix binner object."""
-        super(HealpixBinner, self).__init__(verbose=verbose)
+        super(HealpixBinner, self).__init__(verbose=verbose,
+                                            spatialkey1=spatialkey1,spatialkey2=spatialkey2)
         self.binnertype = 'HEALPIX'
         self.badval = hp.UNSEEN 
         # Valid values of nside are powers of 2. 

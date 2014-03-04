@@ -57,9 +57,9 @@ def getMetrics(seeingcol, docomplex=False):
 def getBinner(simData, fieldDataInfo):
     # Setting up the binner will be slightly different for each binner.
     t = time.time()
-    bb = binners.OpsimFieldBinner()
+    bb = binners.OpsimFieldBinner(useFieldTable=fieldDataInfo['useFieldTable'])
     print fieldDataInfo
-    bb.setupBinner(simData, useFieldTable=fieldDataInfo['useFieldTable'],
+    bb.setupBinner(simData, 
                    dbAddress=fieldDataInfo['dbAddress'],
                    sessionID = fieldDataInfo['sessionID'],
                    fieldTable = fieldDataInfo['fieldTable'],

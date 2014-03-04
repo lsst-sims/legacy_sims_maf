@@ -14,6 +14,7 @@ class HourglassBinner(UniBinner):
         super(HourglassBinner,self).__init__(verbose=verbose)
         self.binnertype='HOUR'
         self.nbins=1
+        self.columnsNeeded=[]
         
     def plotHour(self, metricValue, title='', xlabel='MJD (day)', ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """

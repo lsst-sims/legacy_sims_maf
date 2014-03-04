@@ -24,13 +24,15 @@ from .baseBinner import BaseBinner
 
 class BaseSpatialBinner(BaseBinner):
     """Base binner object, with added slicing functions for spatial binner."""
-    def __init__(self, verbose=True, *args, **kwargs):
+    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec'):
         """Instantiate the base spatial binner object."""
         super(BaseSpatialBinner, self).__init__(verbose=verbose)
         self.binnertype = 'SPATIAL'
+        self.spatialkey1 = spatialkey1
+        self.spatialkey2 = spatialkey2
+        self.columnsNeeded = [spatialkey1,spatialkey2]
 
-    def setupBinner(self, simData, spatialkey1,
-                    spatialkey2, leafsize=100, radius=1.8):
+    def setupBinner(self, simData, leafsize=100, radius=1.8):
         """Use simData['spatialkey1'] and simData['spatialkey2']
         (in radians) to set up KDTree.
 
@@ -39,7 +41,7 @@ class BaseSpatialBinner(BaseBinner):
         'radius' (in degrees) is distance at which matches between
         the simData KDtree 
         and binpoint RA/Dec values will be produced."""
-        self._buildTree(simData[spatialkey1], simData[spatialkey2], leafsize)
+        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], leafsize)
         self._setRad(radius)    
     
     def _treexyz(self, ra, dec):
