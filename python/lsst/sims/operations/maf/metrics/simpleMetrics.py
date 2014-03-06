@@ -30,7 +30,7 @@ class Coaddm5Metric(SimpleScalarMetric):
         """Instantiate metric.
         
         m5col = the column name of the individual visit m5 data."""
-        super(Coaddm5Metric, self).__init__(m5col, metricName, plotParams=plotParams)
+        super(Coaddm5Metric, self).__init__(m5col, metricName=metricName, plotParams=plotParams)
     def run(self, dataSlice):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname]))) 
 
