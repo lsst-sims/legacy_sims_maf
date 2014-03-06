@@ -14,7 +14,7 @@ class FftMetric(ComplexMetric):
         'timesCol' = column with the time of the visit (default expmjd), 
         'nCoeffs' = number of coefficients of the (real) FFT to keep."""
         self.times = timesCol   
-        super(FftMetric, self).__init__([self.times,], metricName)
+        super(FftMetric, self).__init__([self.times,], metricName=metricName)
         # Set up length of return values.
         self.nCoeffs = nCoeffs
         return

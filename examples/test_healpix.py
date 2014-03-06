@@ -29,7 +29,7 @@ def getDbAddress():
         authDictionary[els[0]] = els[1]
     return authDictionary
 
-def getMetrics(seeingcol, docomplex=False):
+def getMetrics(seeingcol, docomplex=True):
     t = time.time()
     # Set up metrics.
     metricList = []
