@@ -24,6 +24,13 @@ class ColStackConfig(pexConfig.Config):
     params = pexConfig.ListField("", dtype=str, default=[])
 
 
+class PlotConfig(pexConfig.Config):
+    plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
+    plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
+    plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
+    
+    
 class BinnerConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
 
@@ -57,7 +64,7 @@ class MafConfig(pexConfig.Config):
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
     opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={}) 
-    
+    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=PlotConfig, default={})
     
     
 def makeDict(*args):
@@ -190,6 +197,31 @@ def makeMetricConfig(name, params=[], kwargs={}, plotDict={}):
             raise Exception('Unsupported kwarg data type')
     return mc
 
+
+def makePlotConfig(plotDict):
+    mc = PlotConfig()
+    for key in plotDict.keys():
+        if type(plotDict[key]) is str:
+            mc.plot_str[key] = plotDict[key]
+        elif type(plotDict[key]) is float:
+            mc.plot_float[key] = plotDict[key]
+        elif type(plotDict[key]) is int:
+            mc.plot_int[key] = plotDict[key]
+        elif type(plotDict[key]) is bool:
+            mc.plot_bool[key] = plotDict[key]
+        else:
+            raise Exception('Unsupported kwarg data type')
+    return mc
+
+def readPlotConfig(config):
+    plotDict={}
+    for key in config.plot_str:  plotDict[key] = config.plot_str[key]
+    for key in config.plot_int:  plotDict[key] = config.plot_int[key]
+    for key in config.plot_float:  plotDict[key] = config.plot_float[key]
+    for key in config.plot_bool:  plotDict[key] = config.plot_bool[key]
+    return plotDict
+ 
+    
 def readMetricConfig(config):
     name, params,kwargs = config2dict(config)
     plotDict={}

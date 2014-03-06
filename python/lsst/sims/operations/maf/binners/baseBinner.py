@@ -98,7 +98,10 @@ class BaseBinner(object):
                     idx = np.where(~metricValues.mask)
                     if np.array(metricValues.mask).size == 1:  idx = np.where(metricValues.data != use_badval)
                     for j in idx[0]:
-                        column[j] =np.array(metricValues.data[j][i])
+                        if type(metricValues.data[j][i]) != np.ndarray:
+                            column[j] =np.array([metricValues.data[j][i],])
+                        else:
+                            column[j] =np.array(metricValues.data[j][i])
                     column = pyf.Column(name='c'+str(i), 
                                         format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
