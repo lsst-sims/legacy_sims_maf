@@ -57,14 +57,15 @@ class BinnerConfig(pexConfig.Config):
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
     stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig, default={}) 
-
+    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=PlotConfig, default={})
+    
 class MafConfig(pexConfig.Config):
     """Using pexConfig to set MAF configuration parameters"""
     dbAddress = pexConfig.Field("Address to the database to query." , str, '')
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
     opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={}) 
-    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=PlotConfig, default={})
+    
     
     
 def makeDict(*args):
@@ -73,12 +74,13 @@ def makeDict(*args):
     return dict((ind, config) for ind, config in enumerate(args))
 
 
-def makeBinnerConfig(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None):
+def makeBinnerConfig(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None, plotConfigs=None):
     binner = BinnerConfig()
     binner.name = name
     if metricDict:  binner.metricDict=metricDict
     binner.constraints=constraints
     if stackCols: binner.stackCols = stackCols
+    if plotConfigs:  binner.plotConfigs = plotConfigs
     binner.params_str=[]
     binner.params_float=[]
     binner.params_int = []
@@ -166,7 +168,8 @@ def readBinnerConfig(config):
     metricDict = config.metricDict    
     constraints=config.constraints
     stackCols= config.stackCols
-    return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols
+    plotConfigs = config.plotConfigs
+    return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs
         
 def makeMetricConfig(name, params=[], kwargs={}, plotDict={}):
     mc = MetricConfig()
