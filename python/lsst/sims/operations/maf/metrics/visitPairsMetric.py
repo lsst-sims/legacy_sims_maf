@@ -9,7 +9,7 @@ from .complexMetrics import ComplexMetric
 class VisitPairsMetric(ComplexMetric):
     """Count the number of pairs of visits per night within deltaTmin and deltaTmax."""
     def __init__(self, timesCol='expMJD', nightsCol='night', metricName='VisitPairs',
-                 deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0):
+                 deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, nPairs=2, window=30):
         """Instantiate metric.
         
         'timesCol' = column with the time of the visit (default expmjd),
@@ -20,6 +20,8 @@ class VisitPairsMetric(ComplexMetric):
         self.nights = nightsCol
         self.deltaTmin = deltaTmin
         self.deltaTmax = deltaTmax
+        self.nPairs = nPairs
+        self.window = window
         super(VisitPairsMetric, self).__init__([self.times, self.nights], metricName)
 
     def run(self, dataSlice):
@@ -57,21 +59,27 @@ class VisitPairsMetric(ComplexMetric):
         """Reduce to std dev of number of pairs per night."""
         return pairs.std()
 
-    def reduceNNightsWithPairs(self, (pairs, nights), nPairs=2):
+    def reduceNNightsWithPairs(self, (pairs, nights), nPairs=None):
         """Reduce to number of nights with more than 'nPairs' (default=2) visits."""
+        if not nPairs:
+            nPairs = self.nPairs
         condition = (pairs >= nPairs)
         return len(pairs[condition])
 
-    def reduceNPairsInWindow(self, (pairs, nights), window=30.):
+    def reduceNPairsInWindow(self, (pairs, nights), window=None):
         """Reduce to max number of pairs within 'window' (default=30 nights) of time."""
+        if not window:
+            window = self.window
         maxnpairs = 0
         for n in nights:
             condition = ((nights >= n) & (nights <= n+window))
             maxnpairs = max((pairs[condition].sum(), maxnpairs))
         return maxnpairs
 
-    def reduceNNightsInWindow(self, (pairs, nights), window=30.):
+    def reduceNNightsInWindow(self, (pairs, nights), window=None):
         """Reduce to max number of nights with a pair (or more) of visits, within 'window'."""
+        if not window:
+            window=self.window
         maxnights = 0
         for n in nights:
             condition = ((nights >=n) & (nights<=n+window))

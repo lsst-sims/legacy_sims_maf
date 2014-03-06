@@ -81,7 +81,6 @@ class HealpixBinner(BaseSpatialBinner):
                         simDataName='', metadata='', 
                         int_badval=-666, badval=-666., dt=np.dtype('float64')):
         """Write metric data and bin data in a fits file """
-
         header_dict = dict(comment=comment, metricName=metricName, simDataName=simDataName,
                            metadata=metadata, nside=self.nside, binnertype=self.binnertype,
                            dt=dt.name, badval=badval, int_badval=int_badval)

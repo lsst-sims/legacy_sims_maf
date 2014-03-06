@@ -24,6 +24,13 @@ class ColStackConfig(pexConfig.Config):
     params = pexConfig.ListField("", dtype=str, default=[])
 
 
+class PlotConfig(pexConfig.Config):
+    plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
+    plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
+    plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
+    
+    
 class BinnerConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
 
@@ -50,7 +57,8 @@ class BinnerConfig(pexConfig.Config):
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
     stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig, default={}) 
-
+    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=PlotConfig, default={})
+    
 class MafConfig(pexConfig.Config):
     """Using pexConfig to set MAF configuration parameters"""
     dbAddress = pexConfig.Field("Address to the database to query." , str, '')
@@ -66,12 +74,13 @@ def makeDict(*args):
     return dict((ind, config) for ind, config in enumerate(args))
 
 
-def makeBinnerConfig(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None):
+def makeBinnerConfig(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None, plotConfigs=None):
     binner = BinnerConfig()
     binner.name = name
     if metricDict:  binner.metricDict=metricDict
     binner.constraints=constraints
     if stackCols: binner.stackCols = stackCols
+    if plotConfigs:  binner.plotConfigs = plotConfigs
     binner.params_str=[]
     binner.params_float=[]
     binner.params_int = []
@@ -159,7 +168,8 @@ def readBinnerConfig(config):
     metricDict = config.metricDict    
     constraints=config.constraints
     stackCols= config.stackCols
-    return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols
+    plotConfigs = config.plotConfigs
+    return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs
         
 def makeMetricConfig(name, params=[], kwargs={}, plotDict={}):
     mc = MetricConfig()
@@ -190,6 +200,31 @@ def makeMetricConfig(name, params=[], kwargs={}, plotDict={}):
             raise Exception('Unsupported kwarg data type')
     return mc
 
+
+def makePlotConfig(plotDict):
+    mc = PlotConfig()
+    for key in plotDict.keys():
+        if type(plotDict[key]) is str:
+            mc.plot_str[key] = plotDict[key]
+        elif type(plotDict[key]) is float:
+            mc.plot_float[key] = plotDict[key]
+        elif type(plotDict[key]) is int:
+            mc.plot_int[key] = plotDict[key]
+        elif type(plotDict[key]) is bool:
+            mc.plot_bool[key] = plotDict[key]
+        else:
+            raise Exception('Unsupported kwarg data type')
+    return mc
+
+def readPlotConfig(config):
+    plotDict={}
+    for key in config.plot_str:  plotDict[key] = config.plot_str[key]
+    for key in config.plot_int:  plotDict[key] = config.plot_int[key]
+    for key in config.plot_float:  plotDict[key] = config.plot_float[key]
+    for key in config.plot_bool:  plotDict[key] = config.plot_bool[key]
+    return plotDict
+ 
+    
 def readMetricConfig(config):
     name, params,kwargs = config2dict(config)
     plotDict={}

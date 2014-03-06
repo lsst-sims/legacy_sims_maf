@@ -98,15 +98,18 @@ class BaseBinner(object):
                     idx = np.where(~metricValues.mask)
                     if np.array(metricValues.mask).size == 1:  idx = np.where(metricValues.data != use_badval)
                     for j in idx[0]:
-                        column[j] = np.array([metricValues.data[j][i],])
+                        if type(metricValues.data[j][i]) != np.ndarray:
+                            column[j] =np.array([metricValues.data[j][i],])
+                        else:
+                            column[j] =np.array(metricValues.data[j][i])
                     column = pyf.Column(name='c'+str(i), 
                                         format=self._py2fitsFormat(dt), array=column) 
                     cols.append(column)
-            tbhdu = pyf.new_table(pyf.ColDefs(cols))
+            tbhdu = pyf.new_table(pyf.ColDefs(cols), header=head)
             # Append the info from head.
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
+            #with warnings.catch_warnings():
+            #    warnings.simplefilter("ignore")
+            #    for i in range(len(head)):  tbhdu.header[head.keys()[i]]=head[i]
             tbhdu.writeto(outfilename, clobber=clobber)
         else:
             with warnings.catch_warnings():

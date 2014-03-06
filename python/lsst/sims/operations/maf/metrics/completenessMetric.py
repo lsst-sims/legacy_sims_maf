@@ -6,7 +6,7 @@ class CompletenessMetric(ComplexMetric):
     def __init__(self, plotParams=None,metricName='completeness', u=0., g=0.,r=0.,i=0.,z=0.,y=0.):
         """compute the (joint)completeness for the given filters.  Any filter with a value greater than zero gets computed """
         self.filtercol = 'filter'
-        super(CompletenessMetric,self).__init__(self.filtercol,metricName=metricName)
+        super(CompletenessMetric,self).__init__(self.filtercol,metricName=metricName, plotParams=plotParams)
         self.filters = np.array(['u','g','r','i','z','y'])
         self.cvals = np.array([u,g,r,i,z,y])
         good = np.where(self.cvals > 0)
