@@ -215,8 +215,8 @@ class BaseBinMetric(object):
                                                       fill_value=self.binner.badval)
         # Run through all binpoints and calculate metrics 
         #    (slicing the data once per binpoint for all metrics).
-        for i, b in enumerate(self.binner):
-            idxs = self.binner.sliceSimData(b)
+        for i, binpoint in enumerate(self.binner):
+            idxs = self.binner.sliceSimData(binpoint)
             slicedata = simData[idxs]
             if len(slicedata)==0:
                 # No data at this binpoint. Mask data values.
@@ -224,7 +224,10 @@ class BaseBinMetric(object):
                     self.metricValues[mname].mask[i] = True
             else:
                 for mname in self.metricObjs:
-                    self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
+                    if hasattr(self.metricObjs[mname], 'needRADec'):
+                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, binpoint[1], binpoint[2])
+                    else:
+                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
         # Mask data where metrics could not be computed (according to metric bad value).
         for mname in self.metricObjs:
             self.metricValues[mname] = ma.masked_where(self.metricValues[mname] == 
