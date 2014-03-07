@@ -78,7 +78,7 @@ class BaseSpatialBinner(BaseBinner):
     def sliceSimData(self, binpoint):
         """Return indexes for relevant opsim data at binpoint
          (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-        binx, biny, binz = self._treexyz(binpoint[0], binpoint[1])
+        binx, biny, binz = self._treexyz(binpoint[1], binpoint[2])
         # If there is no data, there is no tree to query, return an empty list
         if self.opsimtree == []:
             return []
