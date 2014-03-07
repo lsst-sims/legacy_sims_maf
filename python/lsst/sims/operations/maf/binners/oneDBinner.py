@@ -12,7 +12,7 @@ from .baseBinner import BaseBinner
 
 class OneDBinner(BaseBinner):
     """oneD Binner."""
-    def __init__(self,  verbose=True, sliceDataColName=None):
+    def __init__(self, sliceDataColName=None, verbose=True):
         """Instantiate. """
         super(OneDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ONED'

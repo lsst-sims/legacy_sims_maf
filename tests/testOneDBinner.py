@@ -18,7 +18,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
 
 class TestOneDBinnerSetup(unittest.TestCase):    
     def setUp(self):
-        self.testbinner = OneDBinner()
+        self.testbinner = OneDBinner(sliceDataColName='testdata')
         
     def tearDown(self):
         del self.testbinner
@@ -36,7 +36,7 @@ class TestOneDBinnerSetup(unittest.TestCase):
         bins = np.arange(dvmin, dvmax, 0.1)
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         # Used right bins?
-        self.testbinner.setupBinner(dv, 'testdata', bins=bins)
+        self.testbinner.setupBinner(dv, bins=bins)
         np.testing.assert_equal(self.testbinner.bins, bins)
         self.assertEqual(self.testbinner.nbins, len(bins)-1)
         
@@ -49,7 +49,7 @@ class TestOneDBinnerSetup(unittest.TestCase):
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=False)
                 # Right number of bins? 
                 # expect one more 'bin' to accomodate last right edge), but nbins accounts for this
-                self.testbinner.setupBinner(dv, 'testdata', nbins=nbins)
+                self.testbinner.setupBinner(dv, nbins=nbins)
                 self.assertEqual(self.testbinner.nbins, nbins)
                 # Bins of the right size?
                 bindiff = np.diff(self.testbinner.bins)
@@ -66,13 +66,13 @@ class TestOneDBinnerSetup(unittest.TestCase):
             bins = bins['testdata']
             for nvalues in (100, 1000, 10000):
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-                self.testbinner.setupBinner(dv, 'testdata', nbins=nbins)
+                self.testbinner.setupBinner(dv, nbins=nbins)
                 np.testing.assert_allclose(self.testbinner.bins, bins)
 
 
 class TestOneDBinnerIteration(unittest.TestCase):
     def setUp(self):
-        self.testbinner = OneDBinner()
+        self.testbinner = OneDBinner(sliceDataColName='testdata')
 
     def tearDown(self):
         del self.testbinner
@@ -84,14 +84,14 @@ class TestOneDBinnerIteration(unittest.TestCase):
         nvalues = 1000
         bins = np.arange(dvmin, dvmax, 0.01)        
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        self.testbinner.setupBinner(dv, 'testdata', bins=bins)
+        self.testbinner.setupBinner(dv, bins=bins)
         for b, ib in zip(self.testbinner, bins):
             self.assertEqual(b, ib)
 
 
 class TestOneDBinnerSlicing(unittest.TestCase):            
     def setUp(self):
-        self.testbinner = OneDBinner()
+        self.testbinner = OneDBinner(sliceDataColName='testdata')
 
     def tearDown(self):
         del self.testbinner
@@ -104,7 +104,7 @@ class TestOneDBinnerSlicing(unittest.TestCase):
         binsize = (dvmax - dvmin) / (float(nbins))
         for nvalues in (1000, 10000, 100000):
             dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-            self.testbinner.setupBinner(dv, 'testdata', nbins=nbins)
+            self.testbinner.setupBinner(dv, nbins=nbins)
             for i, b in enumerate(self.testbinner):
                 idxs = self.testbinner.sliceSimData(b)
                 dataslice = dv['testdata'][idxs]
@@ -120,7 +120,7 @@ class TestOneDBinnerSlicing(unittest.TestCase):
 
 class TestOneDBinnerFunction(unittest.TestCase):
     def setUp(self):
-        self.testbinner = OneDBinner()
+        self.testbinner = OneDBinner(sliceDataColName='testdata')
 
     def tearDown(self):
         del self.testbinner
@@ -133,7 +133,7 @@ class TestOneDBinnerFunction(unittest.TestCase):
         for nbins in [10, 20, 30, 75, 100, 33]:
             for nvalues in [1000, 10000, 250000]:
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-                self.testbinner.setupBinner(dv, 'testdata', nbins=nbins)
+                self.testbinner.setupBinner(dv, nbins=nbins)
                 metricval = np.zeros(len(self.testbinner), 'float')
                 for i, b in enumerate(self.testbinner):
                     idxs = self.testbinner.sliceSimData(b)
@@ -145,13 +145,13 @@ class TestOneDBinnerFunction(unittest.TestCase):
     @unittest.skip("Run interactively")
     def testPlotting(self):
         """Test plotting."""
-        testbinner = OneDBinner()
+        testbinner = OneDBinner(sliceDataColName='testdata')
         dvmin = 0 
         dvmax = 1
         nbins = 100
         nvalues = 10000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        testbinner.setupBinner(dv, 'testdata', nbins=nbins)
+        testbinner.setupBinner(dv, nbins=nbins)
         metricval = np.zeros(len(testbinner), 'float')
         for i, b in enumerate(testbinner):
             idxs = testbinner.sliceSimData(b)
