@@ -49,7 +49,8 @@ class HealpixBinner(BaseSpatialBinner):
         # This returns RA/Dec (in radians) of the binpoints. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        idradec = self.ipix, self._pix2radec(self.ipix)
+        radec = self._pix2radec(self.ipix)
+        idradec = self.ipix, radec[0], radec[1]
         self.ipix += 1
         return idradec
 
