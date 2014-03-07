@@ -49,14 +49,14 @@ class HealpixBinner(BaseSpatialBinner):
         # This returns RA/Dec (in radians) of the binpoints. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        radec = self._pix2radec(self.ipix)
+        idradec = self.ipix, self._pix2radec(self.ipix)
         self.ipix += 1
-        return radec
+        return idradec
 
     def __getitem__(self, ipix):
         """Make healpix binner indexable."""
-        radec = self._pix2radec(ipix)
-        return radec
+        idradec = ipix, self._pix2radec(ipix)
+        return idradec
 
     def __eq__(self, otherBinner):
         """Evaluate if two binners are equivalent."""
