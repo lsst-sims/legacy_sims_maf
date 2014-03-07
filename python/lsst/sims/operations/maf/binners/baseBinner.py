@@ -85,6 +85,10 @@ class BaseBinner(object):
                 column = pyf.Column(name='c'+str(0), format=self._py2fitsFormat(dt), array=metricValues)
                 cols.append(column)
             else:
+                good =np.where(metricValues.mask != True)[0][0]
+                if type(metricValues[good][0]) != np.array: #I think this is right?  If not all data is getting saved, this line is probably the problem!  Maybe we should just numpy-save the arrays...could make the headers into simple dictionaries...
+                    ncols = 1
+                        
                 for i in np.arange(ncols):
                     dt = np.array(metricValues.compressed()[0][i]).dtype
                     if dt.name[0:3] == 'int':

@@ -3,8 +3,8 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access
 root.outputDir = './Allbinners'
-root.dbAddress ='sqlite:///opsim.sqlite'
-root.opsimNames = ['opsim']
+root.dbAddress ='sqlite:///../opsim_small.sqlite'
+root.opsimNames = ['opsim_small']
 
 
 binList=[]
