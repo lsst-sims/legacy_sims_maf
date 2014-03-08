@@ -31,7 +31,7 @@ class ProperMotionMetric(BaseMetric):
 
     def __init__(self, metricName='properMotion',
                  m5col='5sigma_modified', mjdcol='expMJD', units='mas/yr',
-                 filtercol='filter', seeingcol='seeing', u=20.,
+                 filtercol='filter', seeingcol='finSeeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
                  stellarType=None, atm_err=0.01, plotParams=None):
         """ Instantiate metric.
@@ -46,6 +46,8 @@ class ProperMotionMetric(BaseMetric):
         cols = [m5col, mjdcol,filtercol,seeingcol]
         super(ProperMotionMetric, self).__init__(cols, metricName, units=units)
         # set return type
+        self.seeingcol = seeingcol
+        self.m5col = m5col
         self.metricDtype = 'float'
         self.units = units
         self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
@@ -63,9 +65,9 @@ class ProperMotionMetric(BaseMetric):
                 precis[observations] = self.badval
             else:
                 snr = m52snr(self.mags[f],
-                   dataslice['5sigma_modified'][observations])
+                   dataslice[self.m5col][observations])
                 precis[observations] = astrom_precision(
-                    dataslice['seeing'][observations], snr)
+                    dataslice[self.seeingcol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
         result = sigma_slope(dataslice['expMJD'][good], precis[good])
