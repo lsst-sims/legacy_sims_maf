@@ -85,7 +85,7 @@ class TestOneDBinnerIteration(unittest.TestCase):
         bins = np.arange(dvmin, dvmax, 0.01)        
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         self.testbinner.setupBinner(dv, bins=bins)
-        for b, ib in zip(self.testbinner, bins):
+        for b, ib in zip(self.testbinner, bins[:-1]):
             self.assertEqual(b, ib)
 
 
@@ -105,9 +105,11 @@ class TestOneDBinnerSlicing(unittest.TestCase):
         for nvalues in (1000, 10000, 100000):
             dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
             self.testbinner.setupBinner(dv, nbins=nbins)
+            sum = 0
             for i, b in enumerate(self.testbinner):
                 idxs = self.testbinner.sliceSimData(b)
                 dataslice = dv['testdata'][idxs]
+                sum += len(idxs)
                 if len(dataslice)>0:
                     self.assertGreaterEqual((dataslice.min() - b), 0)
                     if i < self.testbinner.nbins-1:
@@ -117,6 +119,7 @@ class TestOneDBinnerSlicing(unittest.TestCase):
                     self.assertTrue(len(dataslice), nvalues/float(nbins))
                 else:
                     self.assertTrue(len(dataslice) > 0, 'Data in test case expected to always be > 0 len after slicing.')
+            self.assertTrue(sum, nvalues)
 
 class TestOneDBinnerFunction(unittest.TestCase):
     def setUp(self):

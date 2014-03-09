@@ -1,87 +1,99 @@
 # nd Binner slices data on N columns in simData
 
 import numpy as np
-from .baseBinner import BaseBinner
-import pyfits as pyf
+import matplotlib.pyplot as plt
+import itertools
+try:
+    import astropy.io.fits as pyf
+except ImportError:
+    import pyfits as pyf
 
+from .baseBinner import BaseBinner
+
+    
 class NDBinner(BaseBinner):
     """Nd binner (N dimensions)"""
-    def __init__(self, verbose=True):  
+    def __init__(self, sliceDataColList=None, verbose=True):  
         """Instantiate object."""
         super(NDBinner, self).__init__(verbose=verbose)
         self.binnertype = 'ND'
-    
+        self.bins = None 
+        self.nbins = None
+        self.sliceDataColList = sliceDataColList
+        self.columnsNeeded = self.sliceDataColList
+        if self.sliceDataColList != None:
+            self.nD = len(self.sliceDataColList)
+        else:
+            self.nD = None
 
-    def setupBinner(self, simdata, sliceDataColList=None, binsList=None, nbinsList=100):
+    def setupBinner(self, simData, binsList=None, nbinsList=100):
         """Set up bins.
 
-        data is the input data. Does not need to be passed, but keeps API same for all binners.
-        sliceDataColList is a list of the columns for slicing data. 
         binsList can be a list of numpy arrays with the respective binpoints for sliceDataColList,
-        or can be left 'None' (default) in which case nbinsList will be used together with data 
-        min/max values to set bins. """
-
-        if sliceDataColList == None:
-            sliceDataColList = simdata.keys()
-        self.nD = len(sliceDataColList)
-        self.sliceDataCols = sliceDataColList
-        self.sliceDataCols = []
-        for colname in self.sliceDataColNames:
-            self.sliceDataCols.append(simData[colname])
-
+            (default 'None' uses nbinsList together with data min/max values to set bins). """
+        # Parse input bins choices.
         if binsList != None:
-            # User set the bins themselves.
             if len(binsList) != self.nD:
-                raise Exception('binsList must be same length as sliceDataColNames')
+                raise Exception('BinsList must be same length as sliceDataColNames')
             self.bins = binsList
+            for b in self.bins:
+                b = np.sort(b)
         else:
-            # We should set the bins.
             if isinstance(nbinsList, list):
                 if len(nbinsList) != self.nD:
-                    raise Exception('nbinsList must be same length as sliceDataColList if providing a list')
-            else: # have a number of bins, but it's just a single number to be applied to all cols
+                        raise Exception('nbinsList must be same length as sliceDataColList')
+            else:  # we have an nbins but it's a single number to apply to all cols
                 nbinsList = [nbinsList for i in range(self.nD)]
-            self.bins = [ [] for i in range(self.nD)]
-            for i in range(self.nD):
-                binsize = (self.sliceDataCols[i].max() - self.sliceDataCols[i].min()) \
-                    / float(nbinsList[i])
-                self.bins[i] = np.arange(self.sliceDataCols[i].min(), 
-                                         self.sliceDataCols[i].max() + binsize,
-                                         binsize, 'float')
-        _setupAllbins()
-
-    def _setupAllbins(self):
-        self.allbins = []
-        for i in range(self.nD):
-            self.allbins.append(np.meshgrid(*self.bins)[i].flatten())
-        self.nbins = np.array(map(len, self.bins)).prod()
-        return
-    
+            # Set the bins.
+            self.bins = []
+            for sliceColName, nbins in zip(self.sliceDataColList, nbinsList):
+                sliceDataCol = simData[sliceColName]
+                binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
+                bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize/2.0,
+                                 binsize, 'float')
+                self.bins.append(bins)
+        # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDBinner).
+        self.nbins = (np.array(map(len, self.bins))-1).prod()
+        # Set up data slicing.
+        self.simIdxs = []
+        self.lefts = []
+        for sliceColName, bins in zip(self.sliceDataColList, self.bins):
+            simIdxs = np.argsort(simData[sliceColName])
+            simFieldsSorted = np.sort(simData[sliceColName])
+            # "left" values are location where simdata == bin value
+            left = np.searchsorted(simFieldsSorted, bins[:-1], 'left')
+            left = np.concatenate((left, np.array([len(simIdxs),])))
+            # Add these calculated values into the class lists of simIdxs and lefts.
+            self.simIdxs.append(simIdxs)
+            self.lefts.append(left)
+            
     def __iter__(self):
         """Iterate over the binpoints."""
+        # Order of iteration over bins: go through bins in each sliceCol in the sliceColList in order.
         self.ipix = 0
+        binsForIteration = []
+        for b in self.bins:
+            binsForIteration.append(b[:-1])
+        self.biniterator = itertools.product(*binsForIteration)
         return self
 
     def next(self):
         """Return the binvalues at this binpoint."""
-        ### This is not correctly implemented yet (binpoints not being properly defined)
-        if self.ipix >= self.nbins-1:
+        if self.ipix >= self.nbins:
             raise StopIteration
-        binlo = np.zeros(self.nD, 'float')
-        binhi = np.zeros(self.nD, 'float')
-        for i in range(self.nD):
-            binlo[i] = self.allbins[i][self.ipix]
-            binhi[i] = self.allbins[i][self.ipix+1]
-        self.ipix += 1
-        return (binlo, binhi)
+        binlo = self.biniterator.next()
+        self.ipix += 1        
+        return binlo
 
     def __getitem__(self, ipix):
-        binlo = np.zeros(self.nD, 'float')
-        binhi = np.zeros(self.nD, 'float')
-        for i in range(self.nD):
-            binlo[i] = self.allbins[i][ipix]
-            binhi[i] = self.allbins[i][ipix+1]
-        return (binlo, binhi)
+        # There's probably a better way to do this.
+        binsForIteration = []
+        for b in self.bins:
+            binsForIteration.append(b[:-1])
+        biniterator = itertools.product(*binsForIteration)
+        for i, b in zip(range(ipix), biniterator):
+            pass
+        return b
     
     def __eq__(self, otherBinner):
         """Evaluate if grids are equivalent."""
@@ -97,12 +109,13 @@ class NDBinner(BaseBinner):
             
     def sliceSimData(self, binpoint):
         """Slice simData to return relevant indexes for binpoint."""
-        condition = True
-        for i in range(self.nD):
-            condition = (condition & (self.simDataCols[i] >= binpoint[0][i])
-                         & (self.simDataCols[i] < binpoint[1][i]))
-        return condition
-
+        # Identify relevant pointings in each dimension.
+        simIdxsList = []
+        for d in range(self.nD):
+            i = (np.where(binpoint[d] == self.bins[d]))[0]
+            simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
+        return list(set.intersection(*simIdxsList))
+    
     def writeMetricData(self, outfilename, metricValues,
                         comment='', metricName='',
                         simDataName='', metadata='', 
