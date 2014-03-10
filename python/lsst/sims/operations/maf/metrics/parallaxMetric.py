@@ -22,7 +22,7 @@ class ParallaxMetric(BaseMetric):
         atm_err = centroiding error due to atmosphere in arcsec
         """
         cols = [m5col, mjdcol,filtercol,seeingcol, 'ra_pi_amp', 'dec_pi_amp']
-        super(ParallaxMetric, self).__init__(cols, metricName, units=units)
+        super(ParallaxMetric, self).__init__(cols, metricName=metricName, units=units)
         # set return type
         self.m5col = m5col
         self.seeingcol = seeingcol
