@@ -8,7 +8,7 @@ class ParallaxMetric(BaseMetric):
 
     def __init__(self, metricName='parallax', m5col='5sigma_modified',
                  mjdcol='expMJD', units = 'mas',
-                 filtercol='filter', seeingcol='seeing', u=20.,
+                 filtercol='filter', seeingcol='finSeeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
                  stellarType=None, atm_err=0.01, plotParams=None):
         
@@ -25,6 +25,8 @@ class ParallaxMetric(BaseMetric):
         super(ParallaxMetric, self).__init__(cols, metricName, units=units)
         # set return type
         self.m5col = m5col
+        self.seeingcol = seeingcol
+        self.filtercol = filtercol
         self.metricDtype = 'float'
         self.units = units
         self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
@@ -34,12 +36,12 @@ class ParallaxMetric(BaseMetric):
             raise NotImplementedError('Spot to add colors for different stars')
 
     def run(self, dataslice):
-        filters = np.unique(dataslice['filter'])
+        filters = np.unique(dataslice[self.filtercol])
         snr = np.zeros(len(dataslice), dtype='float')
         for f in filters:
-            good = np.where(dataslice['filter'] ==f)
+            good = np.where(dataslice[self.filtercol] ==f)
             snr[good] = m52snr(self.mags[f], dataslice[self.m5col][good])
-        position_errors = np.sqrt(astrom_precision(dataslice['seeing'], snr)**2+self.atm_err**2)
+        position_errors = np.sqrt(astrom_precision(dataslice[self.seeingcol], snr)**2+self.atm_err**2)
 
         sigma_A = position_errors/dataslice['ra_pi_amp'] 
         sigma_B = position_errors/dataslice['dec_pi_amp']

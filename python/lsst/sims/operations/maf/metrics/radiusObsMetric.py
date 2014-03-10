@@ -19,11 +19,12 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 class RadiusObsMetric(ComplexMetric):
     """find the radius in the focal plane. """
 
-    def __init__(self, plotParams=None, metricName='radiusObs', racol='fieldRA',deccol='fieldDec'):
+    def __init__(self, plotParams=None, metricName='radiusObs', racol='fieldRA',deccol='fieldDec', units='radians'):
         self.needRADec = True #so the binMetric knows to pass enough data
         cols = [racol,deccol]
         self.racol = racol
         self.deccol=deccol
+        self.units=units
         super(RadiusObsMetric,self).__init__(cols,metricName=metricName, plotParams=plotParams)
 
     def run(self, dataSlice, ra,dec):
