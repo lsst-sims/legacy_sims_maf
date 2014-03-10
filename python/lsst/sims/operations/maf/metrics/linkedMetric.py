@@ -13,7 +13,9 @@ except:
 
 
 class LinkedMetric(BaseMetric):
-    """Calculate how many other healpixels a given observation is linked to.  This is a fairly crude measure of how well the observations are linked for self-calibration pruposes.  An even better metric would look at the chip level since that's how large calibration patches will be. """
+    """Calculate how many other healpixels a given observation is linked to.  This is a fairly crude measure of how well the observations are linked for self-calibration pruposes.  An even better metric would look at the chip level since that's how large calibration patches will be.
+
+    Maybe even better would be to find the common co-added depth of a pixel with all it's neighboring healpixels!  Maybe a complex metric with min and max reduce functions...Do I grab the 4 nearest pixels or 8?"""
 
     def __init__(self, metricName='linked', plotParams=None, raCol='fieldRA', decCol='fieldDec', nside=128, fovRad=1.8):
         """nside = healpixel nside
