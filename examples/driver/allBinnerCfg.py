@@ -1,6 +1,8 @@
 # to run:
 # python runConfig.py allBinnerCfg.py
 
+# Example MAF config file which runs each type of available binner.
+
 import numpy as np
 from lsst.sims.operations.maf.driver.mafConfig import *
 
@@ -42,7 +44,7 @@ metricDict = makeDict(m1,m2)
 binner = makeBinnerConfig('HealpixBinner',
                           kwargs={"nside":nside,'spatialkey1':"hexdithra", 'spatialkey2':"hexdithdec"},
                           metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
-# Add the binner to the list of binners
+# Add this binner to the list of binners
 binList.append(binner)
 
 

@@ -60,7 +60,14 @@ m1 = makeMetricConfig('CountMetric', params=['slewDist'], kwargs={'metadata':'di
 binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
 binList.append(binner)
 
+# Filter Hourglass plots
+m1=makeMetricConfig('HourglassMetric')
+binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750',''])
+binList.append(binner)
 
+
+
+# XXX-metric still in development
 # Compute what fraction of possible observing time the shutter is open
 m1 = makeMetricConfig('SummaryStatsMetric')
 binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
