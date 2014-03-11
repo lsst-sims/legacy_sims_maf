@@ -36,7 +36,7 @@ binner = makeBinnerConfig('HealpixBinner',
 binList.append(binner)
 
 # Run the same metrics, but now use the hexdither field positions:
-# Add new metricNames to prevent the previous calcs from being overwritten
+# Add new metricNames to prevent the outputs from the no-dither case being overwritten
 m1 = makeMetricConfig('CountMetric', params=['expMJD'],kwargs={'metricName':'Count_hex'},plotDict={'percentileClip':80., 'units':'#'})
 m2 = makeMetricConfig('Coaddm5Metric',kwargs={'metricName':'Coaddm5_hex'}, plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.})
 metricDict = makeDict(m1,m2)
