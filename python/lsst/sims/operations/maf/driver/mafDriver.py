@@ -27,12 +27,13 @@ class MafDriver(object):
         self.binList = []
         self.metricList = []
         for i,binner in self.config.binners.iteritems():
-            name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols,plotDict = readBinnerConfig(binner)
+            name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols,plotDict,metadata = readBinnerConfig(binner)
             temp_binner = getattr(binners,binner.name)(*params, **kwargs )
             temp_binner.setupParams = setupParams
             temp_binner.setupKwargs = setupKwargs
             temp_binner.constraints = binner.constraints
             temp_binner.plotConfigs = binner.plotConfigs
+            temp_binner.metadata = metadata
             temp_binner.index=i
             stackers = []
             for key in stackCols.keys():
@@ -119,7 +120,7 @@ class MafDriver(object):
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
                     gm.setMetrics(self.metricList[binner.index])
-                    gm.runBins(self.data, simDataName=opsimName+'%i'%j)
+                    gm.runBins(self.data, simDataName=opsimName+'%i'%j, metadata=binner.metadata)
                     gm.reduceAll()
                     # Replace the plotParams for selected metricNames
                     for mName in binner.plotConfigs:

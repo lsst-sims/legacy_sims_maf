@@ -21,7 +21,6 @@ nside=64
 # List of SQL constraints.  If multiple constraints are listed, they are looped over.  
 constraints = ["filter = \'%s\'"%'r']
 
-
 # Configure a Healpix binner:
 # Configure 2 metrics to run on the Healpix binner.  
 m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'})
@@ -36,14 +35,10 @@ binner = makeBinnerConfig('HealpixBinner',
 binList.append(binner)
 
 # Run the same metrics, but now use the hexdither field positions:
-# Add new metricNames to prevent the outputs from the no-dither case being overwritten
-m1 = makeMetricConfig('CountMetric', params=['expMJD'],kwargs={'metricName':'Count_hex'},plotDict={'percentileClip':80., 'units':'#'})
-m2 = makeMetricConfig('Coaddm5Metric',kwargs={'metricName':'Coaddm5_hex'}, plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.})
-metricDict = makeDict(m1,m2)
-# As before, but new spatialkeys
+# As before, but new spatialkeys and add a metadata keyword so the previous files don't get overwritten
 binner = makeBinnerConfig('HealpixBinner',
                           kwargs={"nside":nside,'spatialkey1':"hexdithra", 'spatialkey2':"hexdithdec"},
-                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
+                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints, metadata='dith')
 # Add this binner to the list of binners
 binList.append(binner)
 
@@ -80,3 +75,6 @@ binList.append(binner)
 
 # Save all the binners to the config
 root.binners=makeDict(*binList)
+
+# Optional comment string
+root.comment = 'Example script that runs each of the binners'
