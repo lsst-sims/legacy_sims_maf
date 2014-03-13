@@ -65,6 +65,18 @@ m1=makeMetricConfig('HourglassMetric')
 binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750',''])
 binList.append(binner)
 
+#binList=[]
+
+# Completeness and Joint Completeness
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits / # WFD','units':'# visits / # WFD','plotMin':.5, 'plotMax':5.}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+# For just WFD proposals
+binner = makeBinnerConfig('HealpixBinner',kwargs={'nside':nside}, setupKwargs={"leafsize":50000}, metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
+binList.append(binner)
+# For all Observations
+binner = makeBinnerConfig('HealpixBinner', kwargs={'nside':nside}, setupKwargs={"leafsize":50000},metricDict=makeDict(m1),constraints=[""])
+binList.append(binner)
+
+                          
 
 
 # XXX-metric still in development

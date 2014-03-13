@@ -8,8 +8,8 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
-root.dbAddress ='sqlite:///../opsim_small.sqlite'
-root.opsimNames = ['opsim_small']
+root.dbAddress ='sqlite:///opsim.sqlite'
+root.opsimNames = ['opsim']
 
 
 # Setup a list to hold all the binners we want to run
@@ -18,7 +18,7 @@ binList=[]
 # How many Healpix sides to use
 nside=64
 
-# List of SQL constraints.  If multiple constraints are listed, they are looped over.  
+# List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy.  
 constraints = ["filter = \'%s\'"%'r']
 
 # Configure a Healpix binner:

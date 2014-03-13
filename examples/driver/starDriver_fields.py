@@ -62,6 +62,16 @@ binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraint
 binList.append(binner)
 
 
+# Completeness and Joint Completeness
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits / # WFD','units':'# visits / # WFD','plotMin':.5, 'plotMax':5.}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+# For just WFD proposals
+binner = makeBinnerConfig('OpsimBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
+binList.append(binner)
+# For all Observations
+binner = makeBinnerConfig('OpsimBinner',metricDict=makeDict(m1),constraints=[""])
+binList.append(binner)
+
+
 # Compute what fraction of possible observing time the shutter is open
 m1 = makeMetricConfig('SummaryStatsMetric')
 binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
