@@ -6,9 +6,9 @@ from .baseMetric import BaseMetric
 
 class ComplexMetric(BaseMetric):
     """Base class for complex metrics containing reduce methods."""
-    def __init__(self, cols, metricName=None, plotParams=None,*args, **kwargs):
+    def __init__(self, cols, *args, **kwargs):
         """Instantiate complex metric."""
-        super(ComplexMetric, self).__init__(cols, metricName=metricName,plotParams=plotParams)
+        super(ComplexMetric, self).__init__(cols, *args, **kwargs)
         # Create dictionary of reduce functions.
         self.reduceFuncs = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):

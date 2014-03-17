@@ -3,8 +3,9 @@ from .baseMetric import BaseMetric
 
 class SummaryStatsMetric(BaseMetric):
     """ Calculate how efficent the survey is at keeping the shutter open"""
-    def __init__(self, metricName='observeEfficency', visitTime=34., visitExpTime=30., visitSlewTime=2., plotParams=None, units=''):
-        """ visitTime = time telescope is stationary durring a visit
+    def __init__(self, metricName='observeEfficency', visitTime=34.,
+                 visitExpTime=30., visitSlewTime=2., units='', **kwargs):
+        """ visitTime = time telescope is stationary during a visit
             visitExpTime = total time shutter is open
         """
         # I assume Opsim slewtime includes settle time?!?!
@@ -12,7 +13,8 @@ class SummaryStatsMetric(BaseMetric):
         self.col = ['slewTime', 'expMJD', 'filter', 'night']
         self.visitTime = visitTime
         self.visitExpTime = visitExpTime
-        super(SummaryStatsMetric,self).__init__(self.col, metricName, plotParams=plotParams)
+        super(SummaryStatsMetric,self).__init__(self.col, metricName, **kwargs)
+        
     def run(self, dataSlice):
         slewTime = np.sum(dataSlice[self.col[0]])
         expTime = self.visitExpTime*len(dataSlice)

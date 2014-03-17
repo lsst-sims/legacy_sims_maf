@@ -17,12 +17,13 @@ class LinkedMetric(BaseMetric):
 
     Maybe even better would be to find the common co-added depth of a pixel with all it's neighboring healpixels!  Maybe a complex metric with min and max reduce functions...Do I grab the 4 nearest pixels or 8?"""
 
-    def __init__(self, metricName='linked', plotParams=None, raCol='fieldRA', decCol='fieldDec', nside=128, fovRad=1.8):
+    def __init__(self, metricName='linked', raCol='fieldRA', decCol='fieldDec',
+                 nside=128, fovRad=1.8, **kwargs):
         """nside = healpixel nside
            fovRad = radius of the field of view in degrees"""
         cols = [raCol, decCol]
         self.needRADec = True #flag so binMetric will pass ra,dec of point
-        super(ParallaxMetric, self).__init__(cols, metricName=metricName)
+        super(ParallaxMetric, self).__init__(cols, metricName=metricName, **kwargs)
         self.raCol = raCol
         self.decCol = decCol
 

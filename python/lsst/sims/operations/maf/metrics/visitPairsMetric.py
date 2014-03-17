@@ -9,7 +9,8 @@ from .complexMetrics import ComplexMetric
 class VisitPairsMetric(ComplexMetric):
     """Count the number of pairs of visits per night within deltaTmin and deltaTmax."""
     def __init__(self, timesCol='expMJD', nightsCol='night', metricName='VisitPairs',
-                 deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, nPairs=2, window=30):
+                 deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, nPairs=2, window=30,
+                 **kwargs):
         """Instantiate metric.
         
         'timesCol' = column with the time of the visit (default expmjd),
@@ -22,7 +23,8 @@ class VisitPairsMetric(ComplexMetric):
         self.deltaTmax = deltaTmax
         self.nPairs = nPairs
         self.window = window
-        super(VisitPairsMetric, self).__init__([self.times, self.nights], metricName)
+        super(VisitPairsMetric, self).__init__([self.times, self.nights],
+                                               metricName=metricName, **kwargs)
 
     def run(self, dataSlice):
         # Identify the nights with any visits.

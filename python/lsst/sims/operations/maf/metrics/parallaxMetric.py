@@ -10,7 +10,7 @@ class ParallaxMetric(BaseMetric):
                  mjdcol='expMJD', units = 'mas',
                  filtercol='filter', seeingcol='finSeeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01, plotParams=None):
+                 stellarType=None, atm_err=0.01, **kwargs):
         
         """ Instantiate metric.
 
@@ -22,7 +22,7 @@ class ParallaxMetric(BaseMetric):
         atm_err = centroiding error due to atmosphere in arcsec
         """
         cols = [m5col, mjdcol,filtercol,seeingcol, 'ra_pi_amp', 'dec_pi_amp']
-        super(ParallaxMetric, self).__init__(cols, metricName=metricName, units=units)
+        super(ParallaxMetric, self).__init__(cols, metricName=metricName, units=units, **kwargs)
         # set return type
         self.m5col = m5col
         self.seeingcol = seeingcol

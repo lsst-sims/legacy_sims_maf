@@ -3,10 +3,10 @@ from .complexMetrics import ComplexMetric
 
 class CompletenessMetric(ComplexMetric):
     """compute the completeness and joint completeness """
-    def __init__(self, plotParams=None,metricName='completeness', u=0., g=0.,r=0.,i=0.,z=0.,y=0.):
+    def __init__(self, metricName='completeness', u=0., g=0.,r=0.,i=0.,z=0.,y=0., **kwargs):
         """compute the (joint)completeness for the given filters.  Any filter with a value greater than zero gets computed """
         self.filtercol = 'filter'
-        super(CompletenessMetric,self).__init__(self.filtercol,metricName=metricName, plotParams=plotParams)
+        super(CompletenessMetric,self).__init__(self.filtercol, metricName=metricName, **kwargs)
         self.filters = np.array(['u','g','r','i','z','y'])
         self.cvals = np.array([u,g,r,i,z,y])
         good = np.where(self.cvals > 0)
