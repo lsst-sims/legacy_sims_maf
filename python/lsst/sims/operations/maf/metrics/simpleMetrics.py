@@ -57,6 +57,10 @@ class MinMetric(SimpleScalarMetric):
     def run(self, dataSlice):
         return np.min(dataSlice[self.colname]) 
 
+class FullRangeMetric(SimpleScalarMetric):
+    """Calculate the minimum of a simData column slice."""
+    def run(self, dataSlice):
+        return np.max(dataSlice[self.colname])-np.min(dataSlice[self.colname]) 
 
 class RmsMetric(SimpleScalarMetric):
     """Calculate the standard deviation of a simData column slice."""
