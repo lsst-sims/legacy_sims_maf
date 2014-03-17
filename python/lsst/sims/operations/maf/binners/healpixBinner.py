@@ -143,33 +143,47 @@ class HealpixBinner(BaseSpatialBinner):
         return metricValues, binner, header
         
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, cbarFormat='%.2g', cmap=cm.jet):
-        """Plot the sky map of metricValue using healpy Mollweide plot."""
+                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet):
+        """Plot the sky map of metricValue using healpy Mollweide plot.
+
+        metricValue = metric values
+        units = units for metric color-bar label
+        title = title for plot
+        
+        cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)"""
         # Generate a Mollweide full-sky plot.
+        norm = None
+        if ylog:
+            norm = 'log'
         if clims!=None:
-            hp.mollview(metricValue, title=title, cbar=True, unit=units, 
-                        format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap)
+            hp.mollview(metricValue.filled(self.badval), title=title, cbar=True, unit=units, 
+                        format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap,
+                        norm=norm)
         else:
-            hp.mollview(metricValue, title=title, cbar=True, unit=units, 
-                        format=cbarFormat, rot=(180,0,180), cmap=cmap)
+            hp.mollview(metricValue.filled(self.badval), title=title, cbar=True, unit=units, 
+                        format=cbarFormat, rot=(180,0,180), cmap=cmap, norm=norm)
         hp.graticule(dpar=20., dmer=20.)
         fig = plt.gcf()
         return fig.number
 
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Area (1000s of square degrees)',
+    def plotHistogram(self, metricValue, title=None, xlabel=None,
+                      ylabel='Area (1000s of square degrees)',
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
+                      bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
                       scale=None):
         """Histogram metricValue over the healpix bin points.
 
         If scale == None, sets 'scale' by the healpix area per binpoint.
         title = the title for the plot (default None)
+        xlabel = x axis label (default None)
+        ylabel = y axis label (default 'Area (1000's of square degrees))**
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
+        ylog = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         # Simply overrides scale and y axis plot label of base plotHistogram. 
         if scale == None:
@@ -179,7 +193,7 @@ class HealpixBinner(BaseSpatialBinner):
                                                         legendLabel=legendLabel, 
                                                         addLegend=addLegend, legendloc=legendloc,
                                                         bins=bins, cumulative=cumulative,
-                                                        histRange=histRange, 
+                                                        histRange=histRange, ylog=ylog,
                                                         flipXaxis=flipXaxis,
                                                         scale=scale)
         return fignum
@@ -199,11 +213,11 @@ class HealpixBinner(BaseSpatialBinner):
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        cl = hp.anafast(metricValue)
+        cl = hp.anafast(metricValue.filled(self.badval))
         if removeDipole:
-            cl = hp.anafast(hp.remove_dipole(metricValue, verbose=verbose))
+            cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
         else:
-            cl = hp.anafast(metricValue)
+            cl = hp.anafast(metricValue.filled(self.badval))
         l = np.arange(np.size(cl))
         # Plot the results.
         if removeDipole:

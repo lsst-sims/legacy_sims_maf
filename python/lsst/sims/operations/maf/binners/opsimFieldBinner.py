@@ -160,25 +160,28 @@ class OpsimFieldBinner(BaseSpatialBinner):
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of fields',
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
+                      bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
                       scale=None):
         """Histogram metricValue over the healpix bin points.
 
-        If scale == None, sets 'scale' by the healpix area per binpoint.
         title = the title for the plot (default None)
+        xlabel = x axis label (default None)
+        ylabel = y axis label (default 'Number of Fields')** 
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
         histRange = histogram range (default None, set by matplotlib hist)
+        ylog = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        fignum = super(OpsimFieldBinner, self).plotHistogram(metricValue,  xlabel=xlabel, ylabel=ylabel,
+        fignum = super(OpsimFieldBinner, self).plotHistogram(metricValue,  xlabel=xlabel,
+                                                             ylabel=ylabel,
                                                              title=title, fignum=fignum, 
                                                              legendLabel=legendLabel, 
                                                              addLegend=addLegend, legendloc=legendloc,
                                                              bins=bins, cumulative=cumulative,
-                                                             histRange=histRange, 
+                                                             histRange=histRange, ylog=ylog,
                                                              flipXaxis=flipXaxis, 
                                                              scale=1, yaxisformat='%d')
         return fignum

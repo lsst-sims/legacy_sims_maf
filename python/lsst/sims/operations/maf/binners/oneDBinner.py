@@ -79,32 +79,23 @@ class OneDBinner(BaseBinner):
                        histRange=None, fignum=None, units=None,
                        legendLabel=None, addLegend=False,
                        legendloc='upper left', 
-                       filled=False, alpha=0.5, ylog='auto',
+                       filled=False, alpha=0.5, ylog=False,
                        ylabel=None, xlabel=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
         title = title for the plot (default None)
+        xlabel = x axis label (default None)
+        ylabel =  y axis label (default None)
+        histRange = x axis min/max values (default None, use plot defaults)
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
-        ylog = make the y-axis log. 'auto' will use log if positive data values span >3 orders of mag.
+        ylog = make the y-axis log (default False)
         """
-        # Should we use ylog?
-        if ylog =='auto':
-            good = np.where((metricValues > 0) & (metricValues != self.badval) )
-            if len(metricValues[good]) == 0:
-                ylog = False
-            else:
-                logvals = np.log10(metricValues[good])
-                decades = logvals.max()-logvals.min()
-                if decades > 3:
-                    ylog = True
-                else:
-                    ylog = False
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.bins[:-1]
@@ -119,15 +110,19 @@ class OneDBinner(BaseBinner):
                 plt.semilogy(x, y, label=legendLabel)
             else:
                 plt.plot(x, y, label=legendLabel)
-        if ylabel == None:  ylabel = 'Count'
+        if ylabel == None:
+            ylabel = 'Count'
         plt.ylabel(ylabel)
-        if xlabel == None: xlabel=self.sliceDataColName+' ('+units+')'
+        if xlabel == None:
+            xlabel=self.sliceDataColName
+            if units != None:
+                xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
-        if histRange:
+        if (histRange != None):
             plt.xlim(histRange)
-        if addLegend:
+        if (addLegend != None):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
-        if title!=None:
+        if (title!=None):
             plt.title(title)
         return fig.number
 

@@ -1,7 +1,9 @@
 # nd Binner slices data on N columns in simData
 
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
+from matplotlib import colors
 import itertools
 try:
     import astropy.io.fits as pyf
@@ -30,7 +32,9 @@ class NDBinner(BaseBinner):
         """Set up bins.
 
         binsList can be a list of numpy arrays with the respective binpoints for sliceDataColList,
-            (default 'None' uses nbinsList together with data min/max values to set bins). """
+            (default 'None' uses nbinsList together with data min/max values to set bins).
+        nbinsList can be a list of values (one per column in sliceDataColList) or a single value
+            (repeated for all columns, default=100). """
         # Parse input bins choices.
         if binsList != None:
             if len(binsList) != self.nD:
@@ -75,6 +79,8 @@ class NDBinner(BaseBinner):
         for b in self.bins:
             binsForIteration.append(b[:-1])
         self.biniterator = itertools.product(*binsForIteration)
+        # Note that this iterates from 'right' to 'left'
+        #  (i.e. bins[0] moves slowest, bins[N] moves fastest)
         return self
 
     def next(self):
@@ -115,6 +121,116 @@ class NDBinner(BaseBinner):
             i = (np.where(binpoint[d] == self.bins[d]))[0]
             simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
         return list(set.intersection(*simIdxsList))
+
+    def plotBinnedData2D(self, metricValues,
+                        xaxis, yaxis, xlabel=None, ylabel=None,
+                        title=None, fignum=None, ylog=False):
+        """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
+        binpoints [sums over non-visible axes]. 
+
+        metricValues = the metric data (as calculated when iterating through binner)
+        xaxis, yaxis = the x and y dimensions to plot (i.e. 0/1 would plot binsList[0] and
+            binsList[1] data values, with other axis )
+        title = title for the plot (default None)
+        xlabel/ylabel = labels for the x and y axis (default None, uses sliceColList names). 
+        fignum = the figure number to use (default None - will generate new figure)
+        ylog = make the y-axis log. 'auto' will use log if positive data values span >3 orders of mag.
+        """
+        # Reshape the metric data so we can isolate the values to plot
+        # (just new view of data, not copy).
+        newshape = []
+        for b in self.bins:
+            newshape.append(len(b)-1)
+        md = metricValues.reshape(newshape.reverse()) 
+        # Sum over other dimensions. Note that masked values are not included in sum.
+        sumaxes = range(self.nD)
+        sumaxes.remove(xaxis)
+        sumaxes.remove(yaxis)
+        sumaxes = tuple(sumaxes)
+        md = md.sum(sumaxes)
+        # Plot the histogrammed data.
+        fig = plt.figure(fignum)
+        # Plot data.
+        x, y = np.meshgrid(self.bins[xaxis][:-1], self.bins[yaxis][:-1])
+        if ylog:
+            norml = colors.LogNorm()
+            plt.contourf(x, y, md, norm=norml)
+        else:
+            plt.contourf(x, y, md, norm=norml)
+        if xlabel == None:
+            xlabel = self.sliceDataColName[xaxis]
+        plt.xlabel(xlabel)
+        if ylabel == None:
+            ylabel= self.sliceDataColList[yaxis]
+        plt.ylabel(ylabel)
+        if title!=None:
+            plt.title(title)
+        return fig.number
+
+    def plotBinnedData1D(self, metricValues, axis, xlabel=None, ylabel=None,
+                         title=None, fignum=None, 
+                         histRange=None, units=None,
+                         legendLabel=None, addLegend=False, legendloc='upper left',
+                         filled=False, alpha=0.5, ylog=False):
+        """Plot a single axes from the sliceColList, identified by axis, given the metricValues at all
+        binpoints [sums over non-visible axes]. 
+
+        metricValues = the values to be plotted at each bin
+        axis = the dimension to plot (i.e. 0 would plot binsList[0])
+        title = title for the plot (default None)
+        xlabel = x axis label (default None)
+        ylabel =  y axis label (default None)
+        histRange = x axis min/max values (default None, use plot defaults)
+        fignum = the figure number to use (default None - will generate new figure)
+        legendLabel = the label to use for the figure legend (default None)
+        addLegend = flag for whether or not to add a legend (default False)
+        legendloc = location for legend (default 'upper left')
+        filled = flag to plot histogram as filled bars or lines (default False = lines)
+        alpha = alpha value for plot bins if filled (default 0.5).
+        ylog = make the y-axis log (default False)
+        """
+        # Reshape the metric data so we can isolate the values to plot
+        # (just new view of data, not copy).
+        newshape = []
+        for b in self.bins:
+            newshape.append(len(b)-1)
+        md = metricValues.reshape(newshape.reverse()) 
+        # Sum over other dimensions. Note that masked values are not included in sum.
+        sumaxes = range(self.nD)
+        sumaxes.remove(axis)
+        sumaxes = tuple(sumaxes)
+        md = md.sum(sumaxes)
+        # Plot the histogrammed data.
+        fig = plt.figure(fignum)
+        # Plot data.
+        leftedge = self.bins[axis][:-1]
+        width = np.diff(self.bins[axis])
+        if filled:
+            plt.bar(leftedge, md, width, label=legendLabel,
+                    linewidth=0, alpha=alpha, log=ylog)
+        else:
+            x = np.ravel(zip(leftedge, leftedge+width))
+            y = np.ravel(zip(md, md))
+            if ylog:
+                plt.semilogy(x, y, label=legendLabel)
+            else:
+                plt.plot(x, y, label=legendLabel)
+        if ylabel == None:
+            ylabel = 'Count'
+        plt.ylabel(ylabel)
+        if xlabel == None:
+            xlabel=self.sliceDataColName[axis]
+            if units != None:
+                xlabel += ' (' + units + ')'
+        plt.xlabel(xlabel)
+        if (histRange != None):
+            plt.xlim(histRange)
+        if (addLegend != None):
+            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
+        if (title!=None):
+            plt.title(title)
+        return fig.number
+    
     
     def writeMetricData(self, outfilename, metricValues,
                         comment='', metricName='',
@@ -161,7 +277,7 @@ class NDBinner(BaseBinner):
         binner.badval = header['badval'.upper()]
         binner.int_badval = header['int_badval']
         binner.nD = header['ND']
-        _setupAllbins()
         
         return metricValues, binner, header
+
 

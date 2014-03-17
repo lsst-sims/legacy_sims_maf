@@ -40,11 +40,10 @@ def getMetrics(seeingcol, docomplex=False):
     metricList.append(metrics.MinMetric('airmass'))
     metricList.append(metrics.MeanMetric('5sigma_modified'))
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
-    metricList.append(metrics.Coaddm5Metric('5sigma_modified'))
-    metricList.append(metrics.CountMetric('expMJD'))
-    #metricList.append(metrics.NormAirmassMetric(metricName='Minimum Normalized Airmass', 
-    #                                            reducer=np.min))
-
+    metricList.append(metrics.Coaddm5Metric('5sigma_modified'))    
+    metricList.append(metrics.CountMetric('expMJD', plotParams={'ylog':True}))
+    metricList.append(metrics.CountMetric('expMJD', metricName='CountMJD',
+                                          plotParams={'ylog':False, 'plotMin':0, 'plotMax':300}))
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.

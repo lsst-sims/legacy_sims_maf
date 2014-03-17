@@ -96,7 +96,7 @@ class BaseSpatialBinner(BaseBinner):
         
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histRange=None, flipXaxis=False,
+                      bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f'):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
@@ -112,18 +112,18 @@ class BaseSpatialBinner(BaseBinner):
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         # Histogram metricValues. 
         fig = plt.figure(fignum)
-        # Need to only use 'good' values in histogram.
-        good = np.where(metricValue != self.badval)
-        if metricValue[good].min() >= metricValue[good].max():
+        # Need to only use 'good' values in histogram,
+        # but metricValue is masked array (so bad values masked when calculating max/min).
+        if metricValue.min() >= metricValue.max():
             if histRange==None:
-                histRange = [metricValue[good].min() , metricValue[good].min() + 1]
+                histRange = [metricValue.min() , metricValue.min() + 1]
                 raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.' 
-                                    % (metricValue[good].max(), metricValue[good].min()))
-        n, b, p = plt.hist(metricValue[good], bins=bins, histtype='step', 
+                                    % (metricValue.max(), metricValue.min()))
+        n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
                            cumulative=cumulative, range=histRange, label=legendLabel)        
         # Option to use 'scale' to turn y axis into area or other value.
-        def mjrFormatter(x,  pos):        
-            return yaxisformat % (x * scale)
+        def mjrFormatter(y,  pos):        
+            return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         plt.xlabel(xlabel)
@@ -175,9 +175,10 @@ class BaseSpatialBinner(BaseBinner):
 
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff',
-                   clims=None, cbarFormat='%.2g', cmap=cm.jet, fignum=None, units=None):
+                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=None):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
+        from matplotlib import colors
         if fignum==None:
             fig = plt.figure()
         ax = plt.subplot(111,projection=projection)        
@@ -185,8 +186,13 @@ class BaseSpatialBinner(BaseBinner):
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         radius = 1.75 * np.pi / 180.
         ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius, ax=ax)
-        p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
-        p.set_array(metricValue)
+        if ylog:
+            norml = colors.LogNorm()
+            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
+                                norm=norml)
+        else:
+            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
+        p.set_array(metricValue.filled(self.badval))
         ax.add_collection(p)
         if clims != None:
             p.set_clim(clims)

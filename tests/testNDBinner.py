@@ -58,7 +58,7 @@ class TestNDBinnerSetup(unittest.TestCase):
             for nbins in (5, 10, 25, 75):
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=False)
                 # Right number of bins? 
-                # expect one more 'bin' to accomodate last right edge), but nbins accounts for this
+                # expect one more 'bin' to accomodate last right edge, but nbins accounts for this
                 self.testbinner.setupBinner(dv, nbinsList=nbins)
                 self.assertEqual(self.testbinner.nbins, nbins**self.nd)
                 # Bins of the right size?
@@ -66,7 +66,14 @@ class TestNDBinnerSetup(unittest.TestCase):
                     bindiff = np.diff(self.testbinner.bins[i])
                     expectedbindiff = (self.dvmax - self.dvmin) / float(nbins)
                     np.testing.assert_allclose(bindiff, expectedbindiff)
-            
+                # Can we use a list of nbins too and get the right number of bins?
+                nbinsList = []
+                expectednbins = 1
+                for d in range(self.nd):
+                    nbinsList.append(nbins + d)
+                    expectednbins *= (nbins + d)
+                self.testbinner.setupBinner(dv, nbinsList=nbinsList)
+                self.assertEqual(self.testbinner.nbins, expectednbins)
 
     def testSetupBinnerEquivalent(self):
         """Test setting up binner using defined bins and nbins is equal where expected."""
@@ -184,7 +191,7 @@ class TestNDBinnerPlotting(unittest.TestCase):
         self.dvmin = 0
         self.dvmax = 1
         nvalues = 1000
-        self.nd = 2
+        self.nd = 3
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
         self.testbinner = NDBinner(self.dvlist)
@@ -203,7 +210,7 @@ class TestNDBinnerPlotting(unittest.TestCase):
         for i, b in enumerate(testbinner):
             idxs = testbinner.sliceSimData(b)
             metricval[i] = len(idxs)
-        testbinner.plotBinnedData(metricval, xlabel='xrange', ylabel='count')
+        testbinner.plotBinnedData2D(metricval, xaxis=0, yaxis=1, xlabel='xrange', ylabel='count')
         plt.show()
 
 

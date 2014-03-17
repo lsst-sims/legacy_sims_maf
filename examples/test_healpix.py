@@ -40,12 +40,16 @@ def getMetrics(seeingcol, docomplex=True):
     metricList.append(metrics.MeanMetric('5sigma_modified'))
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
     metricList.append(metrics.Coaddm5Metric('5sigma_modified'))
-    metricList.append(metrics.CountMetric('expMJD'))
+    metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
+                                          plotParams={'ylog':False, 'plotMin':0, 'plotMax':300,
+                                                      'cbarFormat': '%d'}))
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.
         dtmax = 360./60./24.
-        metricList.append(metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax))
+        metricList.append(metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax,
+                                                   plotParams={'plotMin':0, 'plotMax':20}))
+
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
@@ -81,7 +85,7 @@ def goBin(opsimrun, metadata, simdata, bb, metricList):
 
 def plot(gm):
     t = time.time()
-    gm.plotAll(savefig=True, closefig=True)
+    gm.plotAll(savefig=True, closefig=True, verbose=True)
     
     dt, t = dtime(t)
     print 'Made plots %f s' %(dt)
@@ -146,7 +150,7 @@ if __name__ == '__main__':
     print 'Using %s for seeing column name.' %(seeingcol)
     
     # Set up metrics. 
-    metricList = getMetrics(seeingcol)
+    metricList = getMetrics(seeingcol, docomplex=False)
 
     # Find columns that are required.
     colnames = list(metricList[0].classRegistry.uniqueCols())

@@ -313,9 +313,11 @@ class BaseBinMetric(object):
         # Update this to write self.comment and self.plotParams
 
                 
-    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None):
+    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:
+            if verbose:
+                print 'Plotting %s' %(mname)
             try:
                 self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
                 if closefig:
@@ -363,10 +365,14 @@ class BaseBinMetric(object):
         else:
             legendLabel = None
         if 'cmap' in pParams:
-            cmap = getattr(cm,pParams['cmap'])
+            cmap = getattr(cm, pParams['cmap'])
         else:
             cmap = None
-        # Set up for plot limits.
+        if 'cbarFormat' in pParams:
+            cbarFormat = pParams['cbarFormat']
+        else:
+            cbarFormat = None
+        # Set up for plot limits (used directly for clims for skyMaps, indirectly for histRange).
         plotMin = self.metricValues[metricName].compressed().min()
         plotMax = self.metricValues[metricName].compressed().max()
         # If percentile clipping is set, use it. 
@@ -377,19 +383,27 @@ class BaseBinMetric(object):
             plotMin = pParams['plotMin']
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
-        # Use percentile values to set plot limits, if they were set.
-        # Plot the binned metric data, if relevant (oneD binners).
-        histRange=None
+        # Set 'histRange' parameter from pParams, if available.
         if 'histMax' in pParams:
-            histRange = [pParams['histMin'],pParams['histMax']]
+            histRange = [pParams['histMin'], pParams['histMax']]
+        else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
+            histRange = [plotMin, plotMax]
+        # Determine if should data using log scale, using pParams if available
         if 'ylog' in pParams:
             ylog = pParams['ylog']
-        else:
-            ylog='auto'
+        else: # or if data spans > 3 decades if not.
+            ylog = False
+            if (np.log10(self.metricValues[metricName].max() -
+                         self.metricValues[metricName].min()) > 3):
+                ylog = True
+                if self.metricValues[metricName].max() <= 0:
+                    ylog = False
+        # Okay, now that's all set .. go plot some data! 
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, title=title, 
-                                                    histRange = histRange, ylog=ylog, legendLabel=legendLabel)
+                                                    histRange=histRange, ylog=ylog,
+                                                    legendLabel=legendLabel)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
@@ -397,9 +411,9 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
-            histfignum = self.binner.plotHistogram(self.metricValues[metricName].compressed(), 
+            histfignum = self.binner.plotHistogram(self.metricValues[metricName], 
                                                    xlabel=xlabel, title=title, 
-                                                   histRange = [plotMin, plotMax])
+                                                   histRange=histRange, ylog=ylog)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
@@ -413,14 +427,22 @@ class BaseBinMetric(object):
                 cmap0.set_under('w')
                 cmap0.set_bad('gray')
             if 'zp' in pParams: # Subtract off a zeropoint
-                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]-pParams['zp']).filled(self.binner.badval),cmap=cmap,
-                                                   units=units, title=title, clims=[plotMin-pParams['zp'], plotMax-pParams['zp']])
+                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
+                                                   cmap=cmap, cbarFormat=cbarFormat,
+                                                   units=units, title=title,
+                                                   clims=[plotMin-pParams['zp'],
+                                                          plotMax-pParams['zp']], ylog=ylog)
             elif 'normVal' in pParams: # Normalize by some value
-                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']).filled(self.binner.badval),cmap=cmap,
-                                                   units=units, title=title, clims=[plotMin/pParams['normVal'], plotMax/pParams['normVal']])
+                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
+                                                   cmap=cmap, cbarFormat=cbarFormat,
+                                                   units=units, title=title,
+                                                   clims=[plotMin/pParams['normVal'],
+                                                          plotMax/pParams['normVal']], ylog=ylog)
             else: # Just plot raw values
-                skyfignum = self.binner.plotSkyMap(self.metricValues[metricName].filled(self.binner.badval),cmap=cmap,
-                                                   units=units, title=title, clims=[plotMin, plotMax])
+                skyfignum = self.binner.plotSkyMap(self.metricValues[metricName],
+                                                   cmap=cmap, cbarFormat=cbarFormat,
+                                                   units=units, title=title,
+                                                   clims=[plotMin, plotMax], ylog=ylog)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
@@ -428,7 +450,7 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the angular power spectrum, if able. (healpix binners)
         if hasattr(self.binner, 'plotPowerSpectrum'):
-            psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName].filled(),
+            psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName],
                                                      title=title, 
                                                      legendLabel=legendLabel)
             if savefig:
