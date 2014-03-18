@@ -175,7 +175,7 @@ class BaseSpatialBinner(BaseBinner):
 
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff',
-                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=None):
+                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=''):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -196,7 +196,7 @@ class BaseSpatialBinner(BaseBinner):
         ax.add_collection(p)
         if clims != None:
             p.set_clim(clims)
-        cb = plt.colorbar(p, orientation='horizontal', format=cbarFormat)
+        cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
         cb.set_label(units)
         if title != None:
             plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)

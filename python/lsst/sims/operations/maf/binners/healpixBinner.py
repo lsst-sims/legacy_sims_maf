@@ -143,7 +143,7 @@ class HealpixBinner(BaseSpatialBinner):
         return metricValues, binner, header
         
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet):
+                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -156,13 +156,19 @@ class HealpixBinner(BaseSpatialBinner):
         if ylog:
             norm = 'log'
         if clims!=None:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=True, unit=units, 
+            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap,
                         norm=norm)
         else:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=True, unit=units, 
+            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, rot=(180,0,180), cmap=cmap, norm=norm)
         hp.graticule(dpar=20., dmer=20.)
+        # Add colorbar (not using healpy default colorbar because want more tickmarks).
+        ax = plt.gca()
+        im = ax.get_images()[0]
+        cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
+                          extend='both', format=cbarFormat)
+        cb.set_label(units)
         fig = plt.gcf()
         return fig.number
 

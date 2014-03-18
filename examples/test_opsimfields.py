@@ -30,7 +30,7 @@ def getDbAddress():
         authDictionary[els[0]] = els[1]
     return authDictionary
 
-def getMetrics(seeingcol, docomplex=False):
+def getMetrics(seeingcol, docomplex=True):
     t = time.time()
     # Set up metrics.
     metricList = []
@@ -42,8 +42,9 @@ def getMetrics(seeingcol, docomplex=False):
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
     metricList.append(metrics.Coaddm5Metric('5sigma_modified'))    
     metricList.append(metrics.CountMetric('expMJD', plotParams={'ylog':True}))
-    metricList.append(metrics.CountMetric('expMJD', metricName='CountMJD',
-                                          plotParams={'ylog':False, 'plotMin':0, 'plotMax':300}))
+    metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
+                                          plotParams={'ylog':False, 'title':'Number of visits',
+                                                      'plotMin':0, 'plotMax':300}))
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.
@@ -68,7 +69,7 @@ def getBinner(simData, fieldDataInfo):
     print 'Set up binner %f s' %(dt)
     return bb
 
-def goBin(dbTable, metadata, simdata, bb, metricList):
+def goBin(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
     gm = binMetrics.BaseBinMetric()
     gm.setBinner(bb)
@@ -77,7 +78,7 @@ def goBin(dbTable, metadata, simdata, bb, metricList):
     print 'Set up gridMetric %f s' %(dt)
 
     gm.setMetrics(metricList)
-    gm.runBins(simdata, simDataName=dbTable, metadata = metadata)
+    gm.runBins(simdata, simDataName=opsimrun, metadata = metadata)
     dt, t = dtime(t)
     print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
                     
@@ -164,7 +165,7 @@ if __name__ == '__main__':
     print 'Using %s for seeing column name.' %(seeingcol)
     
     # Set up metrics. 
-    metricList = getMetrics(seeingcol)
+    metricList = getMetrics(seeingcol, docomplex=True)
 
     # Find columns that are required.
     colnames = list(metricList[0].classRegistry.uniqueCols())
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-    gm = goBin(dbTable, metadata, simdata, bb, metricList)
+    gm = goBin(opsimrun, metadata, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.
     printSummary(gm, metricList)

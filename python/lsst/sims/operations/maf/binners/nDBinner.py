@@ -124,7 +124,8 @@ class NDBinner(BaseBinner):
 
     def plotBinnedData2D(self, metricValues,
                         xaxis, yaxis, xlabel=None, ylabel=None,
-                        title=None, fignum=None, ylog=False):
+                        title=None, fignum=None, ylog=False, units='',
+                        clims=None, cmap=None, cbarFormat=None):
         """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
         binpoints [sums over non-visible axes]. 
 
@@ -134,14 +135,15 @@ class NDBinner(BaseBinner):
         title = title for the plot (default None)
         xlabel/ylabel = labels for the x and y axis (default None, uses sliceColList names). 
         fignum = the figure number to use (default None - will generate new figure)
-        ylog = make the y-axis log. 'auto' will use log if positive data values span >3 orders of mag.
+        ylog = make the colorscale log.
         """
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
         newshape = []
         for b in self.bins:
             newshape.append(len(b)-1)
-        md = metricValues.reshape(newshape.reverse()) 
+        newshape.reverse()
+        md = metricValues.reshape(newshape)
         # Sum over other dimensions. Note that masked values are not included in sum.
         sumaxes = range(self.nD)
         sumaxes.remove(xaxis)
@@ -153,16 +155,22 @@ class NDBinner(BaseBinner):
         # Plot data.
         x, y = np.meshgrid(self.bins[xaxis][:-1], self.bins[yaxis][:-1])
         if ylog:
-            norml = colors.LogNorm()
-            plt.contourf(x, y, md, norm=norml)
+            norm = colors.LogNorm()
         else:
-            plt.contourf(x, y, md, norm=norml)
+            norm = None
+        if clims == None:
+            im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap)
+        else:
+            im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap,
+                              vmin=clims[0], vmax=clims[1])
         if xlabel == None:
-            xlabel = self.sliceDataColName[xaxis]
+            xlabel = self.sliceDataColList[xaxis]
         plt.xlabel(xlabel)
         if ylabel == None:
             ylabel= self.sliceDataColList[yaxis]
         plt.ylabel(ylabel)
+        cb = plt.colorbar(im, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
+        cb.set_label(units)
         if title!=None:
             plt.title(title)
         return fig.number
@@ -194,7 +202,8 @@ class NDBinner(BaseBinner):
         newshape = []
         for b in self.bins:
             newshape.append(len(b)-1)
-        md = metricValues.reshape(newshape.reverse()) 
+        newshape.reverse()
+        md = metricValues.reshape(newshape) 
         # Sum over other dimensions. Note that masked values are not included in sum.
         sumaxes = range(self.nD)
         sumaxes.remove(axis)
@@ -225,7 +234,7 @@ class NDBinner(BaseBinner):
         plt.xlabel(xlabel)
         if (histRange != None):
             plt.xlim(histRange)
-        if (addLegend != None):
+        if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
             plt.title(title)

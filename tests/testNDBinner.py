@@ -20,7 +20,7 @@ def makeDataValues(size=100, min=0., max=1., nd=3, random=True):
         data.append(datavalues)
     data = rfn.merge_arrays(data, flatten=True, usemask=False)
     return data
-    
+
 
 class TestNDBinnerSetup(unittest.TestCase):    
     def setUp(self):
@@ -190,11 +190,6 @@ class TestNDBinnerPlotting(unittest.TestCase):
     def setUp(self):
         self.dvmin = 0
         self.dvmax = 1
-        nvalues = 1000
-        self.nd = 3
-        self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-        self.dvlist = self.dv.dtype.names
-        self.testbinner = NDBinner(self.dvlist)
 
     def tearDown(self):
         del self.testbinner
@@ -202,17 +197,38 @@ class TestNDBinnerPlotting(unittest.TestCase):
         
     def testPlotting(self):
         """Test plotting."""
-        nbins = 100
-        nvalues = 10000
-        dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-        testbinner.setupBinner(dv, nbinsLits=nbins)
-        metricval = np.zeros(len(testbinner), 'float')
-        for i, b in enumerate(testbinner):
-            idxs = testbinner.sliceSimData(b)
+        nvalues = 100
+        nd = 3
+        dv = makeDataValues(nvalues, self.dvmin, self.dvmax, nd, random=True)
+        dvlist = dv.dtype.names
+        condition = (dv[dvlist[0]] < .5)
+        dv[dvlist[0]][condition] = 0.25
+        dv[dvlist[2]][condition] = 0.5
+        bins = np.arange(0, 1+0.01, 0.01)        
+        binsList = []
+        for d in range(nd):
+            binsList.append(bins)
+        print ''
+        self.testbinner = NDBinner(dvlist)
+        self.testbinner.setupBinner(dv, binsList=binsList)
+        metricval = np.zeros(len(self.testbinner), 'float')
+        for i, b in enumerate(self.testbinner):
+            idxs = self.testbinner.sliceSimData(b)
             metricval[i] = len(idxs)
-        testbinner.plotBinnedData2D(metricval, xaxis=0, yaxis=1, xlabel='xrange', ylabel='count')
+        self.testbinner.plotBinnedData1D(metricval, axis=0, xlabel='xrange', ylabel='count')
+        self.testbinner.plotBinnedData1D(metricval, axis=0, xlabel='xrange', ylabel='count',
+                                         filled=True, ylog=True)
+        self.testbinner.plotBinnedData1D(metricval, axis=0, xlabel='xrange', ylabel='count',
+                                         filled=True, title='axis with hump')
+        self.testbinner.plotBinnedData1D(metricval, axis=1, xlabel='xrange', ylabel='count',
+                                         filled=True, title='axis with flat distro')
+        self.testbinner.plotBinnedData1D(metricval, axis=2, xlabel='xrange', ylabel='count',
+                                        filled=True, title='axis with hump based on axis 0')
+        self.testbinner.plotBinnedData2D(metricval, xaxis=0, yaxis=1)
+        self.testbinner.plotBinnedData2D(metricval, xaxis=0, yaxis=2)
+        self.testbinner.plotBinnedData2D(metricval, xaxis=1, yaxis=2)
         plt.show()
-
+        
 
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestNDBinnerSetup)

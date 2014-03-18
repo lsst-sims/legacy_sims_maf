@@ -377,7 +377,8 @@ class BaseBinMetric(object):
         plotMax = self.metricValues[metricName].compressed().max()
         # If percentile clipping is set, use it. 
         if 'percentileClip' in pParams:
-            plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(), percentile=pParams['percentileClip'])
+            plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
+                                              percentile=pParams['percentileClip'])
         # Use plot limits if they're set (min/max overrides percentile clipping).
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
