@@ -9,7 +9,7 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
 root.dbAddress ='sqlite:///opsim.sqlite'
-root.opsimNames = ['opsim_small']
+root.opsimNames = ['opsim']
 
 
 # Setup a list to hold all the binners we want to run
@@ -63,7 +63,7 @@ binList.append(binner)
 
 
 # Configure a UniBinner.  Note new SQL constraints are passed
-m1 = makeMetricConfig('SummaryStatsMetric')
+m1 = makeMetricConfig('ObserveEfficiencyMetric')
 binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 750'] )
 binList.append(binner)
 

@@ -5,7 +5,7 @@ from .visitPairsMetric import *
 from .fftMetric import *
 from .properMotionMetric import *
 from .parallaxMetric import *
-from .summaryStatsMetric import *
+from .observeEfficiencyMetric import *
 from .hourglassMetric import *
 from .completenessMetric import *
 from .radiusObsMetric import *

@@ -1,7 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-class SummaryStatsMetric(BaseMetric):
+class ObserveEfficiencyMetric(BaseMetric):
     """ Calculate how efficent the survey is at keeping the shutter open"""
     def __init__(self, metricName='observeEfficency', visitTime=34.,
                  visitExpTime=30., visitSlewTime=2., units='', **kwargs):
@@ -9,11 +9,12 @@ class SummaryStatsMetric(BaseMetric):
             visitExpTime = total time shutter is open
         """
         # I assume Opsim slewtime includes settle time?!?!
+        # Looks like the slewtime might also include filter change time, so I'm double charging there
         # Need to double check that the filter change time is charged properly  
         self.col = ['slewTime', 'expMJD', 'filter', 'night']
         self.visitTime = visitTime
         self.visitExpTime = visitExpTime
-        super(SummaryStatsMetric,self).__init__(self.col, metricName, **kwargs)
+        super(ObserveEfficiencyMetric,self).__init__(self.col, metricName, **kwargs)
         
     def run(self, dataSlice):
         slewTime = np.sum(dataSlice[self.col[0]])
