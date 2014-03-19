@@ -19,7 +19,7 @@ binList=[]
 nside=64
 
 # List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy.  
-constraints = ["filter = \'%s\'"%'r']
+constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 # Configure a Healpix binner:
 # Configure 2 metrics to run on the Healpix binner.  
