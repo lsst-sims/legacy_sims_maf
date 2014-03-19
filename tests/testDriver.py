@@ -12,18 +12,20 @@ from lsst.sims.operations.maf.driver.mafConfig import MafConfig
 class TestDriver(unittest.TestCase):
     
     def setUp(self):
-        self.cfgFile = 'mafconfigTest.py'
+        self.cfgFiles = ['mafconfigTest.py', 'mafconfig2Test.py']
+        
         
     def test_driver(self):
-        testDriver = driver.MafDriver(configOverrideFilename=self.cfgFile)
-        testDriver.run()
+        for filename in self.cfgFiles:
+            testDriver = driver.MafDriver(configOverrideFilename=filename)
+            testDriver.run()
 
-    def test_outputConfig(self):
-        configIn = MafConfig()
-        configIn.load(self.cfgFile )
-        configOut = MafConfig()
-        configOut.load(configIn.outputDir+'/maf_config_asRan.py')
-        assert(configIn == configOut)
-        
+            configIn = MafConfig()
+            configIn.load(filename)
+            configOut = MafConfig()
+            configOut.load(configIn.outputDir+'/maf_config_asRan.py')
+            assert(configIn == configOut)
+
+       
 if __name__ == '__main__':
     unittest.main()
