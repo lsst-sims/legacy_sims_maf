@@ -97,8 +97,8 @@ class MafDriver(object):
         dbcolnames=list(set(dbcolnames))
         self.data = table.query_columns_RecArray(constraint=constraint, colnames=dbcolnames, groupByCol=groupBy)
 
-        #for stacker in stackers:
-        #    self.data = stacker.run(self.data)
+        for stacker in stackers:
+            self.data = stacker.run(self.data)
             
         
     def run(self):
