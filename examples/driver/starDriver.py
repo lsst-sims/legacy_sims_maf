@@ -4,7 +4,7 @@ import numpy as np
 from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access
-root.outputDir = './Plots'
+root.outputDir = './StarOut'
 root.dbAddress ='sqlite:///opsim.sqlite'
 root.opsimNames = ['opsim']
 
@@ -81,7 +81,7 @@ binList.append(binner)
 
 # XXX-metric still in development
 # Compute what fraction of possible observing time the shutter is open
-m1 = makeMetricConfig('SummaryStatsMetric')
+m1 = makeMetricConfig('ObserveEfficiencyMetric')
 binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
 binList.append(binner)
 

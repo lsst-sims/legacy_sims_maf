@@ -4,7 +4,7 @@ import numpy as np
 from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access
-root.outputDir = './Plots_SD'
+root.outputDir = './StarOut_Fields'
 root.dbAddress ='sqlite:///opsim.sqlite'
 root.opsimNames = ['opsim']
 
@@ -65,15 +65,15 @@ binList.append(binner)
 # Completeness and Joint Completeness
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits / # WFD','units':'# visits / # WFD','plotMin':.5, 'plotMax':5.}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
 # For just WFD proposals
-binner = makeBinnerConfig('OpsimBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
+binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
 binList.append(binner)
 # For all Observations
-binner = makeBinnerConfig('OpsimBinner',metricDict=makeDict(m1),constraints=[""])
+binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 binList.append(binner)
 
 
 # Compute what fraction of possible observing time the shutter is open
-m1 = makeMetricConfig('SummaryStatsMetric')
+m1 = makeMetricConfig('ObserveEfficiencyMetric')
 binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
 binList.append(binner)
 
