@@ -124,6 +124,7 @@ class MafDriver(object):
                 print 'fetching constraint:', constr#,' with binnertype =', binner.binnertype
                 self.getData(opsimName,constr, colnames=colnames)#, stackers=binner.stackers)
                 for i,binner in enumerate(matchingBinners):
+                    # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric?  
                     print 'running constraint:', constr,' with binnertype =', binner.binnertype 
                     for stacker in binner.stackers:
                         self.data = stacker.run(self.data)
