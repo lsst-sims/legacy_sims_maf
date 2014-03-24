@@ -23,7 +23,11 @@ class NormAirmass(object):
         min_airmass_possible = 1./np.cos(min_z_possible)
         norm_airmass = np.array(simData[self.airmassCol] / min_airmass_possible, 
                             dtype=[('normairmass', 'float')])
-        return opsimStack([simData, norm_airmass])
+        if 'normairmass' in simData.dtype.names:
+            simData['normairmass'] = norm_airmass
+        else:
+            simData = opsimStack([simData, norm_airmass])
+        return simData
 
 ### Parallax factors
 
@@ -63,4 +67,9 @@ class ParallaxFactor(object):
         x_geo, y_geo = self._gnomonic_project_toxy(ra_geo, dec_geo, simData[self.raCol], simData[self.decCol])
         ra_pi_amp[:] = x_geo1-x_geo
         dec_pi_amp[:] = y_geo1-y_geo
-        return opsimStack([simData,ra_pi_amp,dec_pi_amp]) 
+        if 'ra_pi_amp' in simData.dtype.names:
+            simData['ra_pi_amp'] = ra_pi_amp
+            simData['dec_pi_amp'] = dec_pi_amp
+        else:
+            simData = opsimStack([simData,ra_pi_amp,dec_pi_amp]) 
+        return simData

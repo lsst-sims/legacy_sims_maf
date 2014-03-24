@@ -394,11 +394,12 @@ class BaseBinMetric(object):
             ylog = pParams['ylog']
         else: # or if data spans > 3 decades if not.
             ylog = False
-            if (np.log10(self.metricValues[metricName].max() -
-                         self.metricValues[metricName].min()) > 3):
-                ylog = True
-                if self.metricValues[metricName].max() <= 0:
-                    ylog = False
+            if metricName != 'hourglass':
+                if (np.log10(self.metricValues[metricName].max() -
+                             self.metricValues[metricName].min()) > 3):
+                    ylog = True
+                    if self.metricValues[metricName].max() <= 0:
+                        ylog = False
         # Okay, now that's all set .. go plot some data! 
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],

@@ -8,6 +8,8 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
+#root.dbAddress ='sqlite:///../opsim_small.sqlite'
+#root.opsimNames = ['opsim_small']
 root.dbAddress ='sqlite:///opsim.sqlite'
 root.opsimNames = ['opsim_small']
 
@@ -19,7 +21,7 @@ binList=[]
 nside=64
 
 # List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy.  
-constraints = ["filter = \'%s\'"%'r']
+constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 # Configure a Healpix binner:
 # Configure 2 metrics to run on the Healpix binner.  
@@ -63,7 +65,7 @@ binList.append(binner)
 
 
 # Configure a UniBinner.  Note new SQL constraints are passed
-m1 = makeMetricConfig('SummaryStatsMetric')
+m1 = makeMetricConfig('ObserveEfficiencyMetric')
 binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 750'] )
 binList.append(binner)
 

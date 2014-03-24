@@ -90,6 +90,10 @@ class MafDriver(object):
                     stacker_names.append(source.name)
             else:
                 dbcolnames.append(name)
+        # If we need stackers, make sure they get columns they need
+        for stacker in stackers:
+            for col in stacker.cols:
+                dbcolnames.append(col)
         dbcolnames=list(set(dbcolnames))
         self.data = table.query_columns_RecArray(constraint=constraint, colnames=dbcolnames, groupByCol=groupBy)
 
@@ -106,17 +110,24 @@ class MafDriver(object):
                 for b in self.binList:
                     if constr in b.constraints:
                         matchingBinners.append(b)
+                colnames=[]
                 for i,binner in enumerate(matchingBinners):
-                    print 'running constraint:', constr,' with binnertype =', binner.binnertype 
-                    colnames = []
                     for m in self.metricList[binner.index]:
                         for cn in m.colNameList:  colnames.append(cn)
                     for cn in binner.columnsNeeded:
                         colnames.append(cn)
+                    for stacker in binner.stackers:
+                        for col in stacker.cols:
+                            colnames.append(col)
                     colnames = list(set(colnames)) #unique elements
-                    self.getData(opsimName,constr, colnames=colnames, stackers=binner.stackers)     
+                    
+                print 'fetching constraint:', constr#,' with binnertype =', binner.binnertype
+                self.getData(opsimName,constr, colnames=colnames)#, stackers=binner.stackers)
+                for i,binner in enumerate(matchingBinners):
+                    print 'running constraint:', constr,' with binnertype =', binner.binnertype 
+                    for stacker in binner.stackers:
+                        self.data = stacker.run(self.data)
                     gm = self._binKey(binner)
-                    #import pdb ; pdb.set_trace()
                     binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
                     gm.setMetrics(self.metricList[binner.index])
