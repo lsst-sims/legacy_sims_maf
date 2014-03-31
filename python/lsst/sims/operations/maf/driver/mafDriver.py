@@ -123,8 +123,11 @@ class MafDriver(object):
                     
                 print 'fetching constraint:', constr#,' with binnertype =', binner.binnertype
                 self.getData(opsimName,constr, colnames=colnames)#, stackers=binner.stackers)
+                # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                 for i,binner in enumerate(matchingBinners):
-                    # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric?  
+                    # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
+                    # what could I do--write a function that takes:  simdata, binners, metriclist, dbAdress.
+                    # could use the config file to set how many processors to use in the pool.
                     print 'running constraint:', constr,' with binnertype =', binner.binnertype 
                     for stacker in binner.stackers:
                         self.data = stacker.run(self.data)
