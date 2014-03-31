@@ -126,8 +126,10 @@ class BaseSpatialBinner(BaseBinner):
             return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        if xlabel != None:
+            plt.xlabel(xlabel)
+        if ylabel != None:
+            plt.ylabel(ylabel)
         if flipXaxis:
             # Might be useful for magnitude scales.
             x0, x1 = plt.xlim()

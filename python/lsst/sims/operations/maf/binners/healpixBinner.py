@@ -33,7 +33,7 @@ class HealpixBinner(BaseSpatialBinner):
         # nside=1024 gives about 3' resolution
         # Check validity of nside:
         if not(hp.isnsideok(nside)):
-            raise Exception('Valid values of nside are powers of 2.')
+            raise ValueError('Valid values of nside are powers of 2.')
         self.nside = int(nside) 
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:

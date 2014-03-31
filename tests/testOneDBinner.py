@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import unittest
 from lsst.sims.operations.maf.binners.oneDBinner import OneDBinner
+from lsst.sims.operations.maf.binners.uniBinner import UniBinner
 
 def makeDataValues(size=100, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
@@ -88,7 +89,43 @@ class TestOneDBinnerIteration(unittest.TestCase):
         for b, ib in zip(self.testbinner, bins[:-1]):
             self.assertEqual(b, ib)
 
+class TestOneDBinnerEqual(unittest.TestCase):
+    def setUp(self):
+        self.testbinner = OneDBinner(sliceDataColName='testdata')
 
+    def tearDown(self):
+        del self.testbinner
+        self.testbinner = None
+
+    def testEquivalence(self):
+        """Test equals method."""
+        # Note that two OneD binners will be considered equal if they are both the same kind of
+        # binner AND have the same bins.
+        # Set up self..
+        dvmin = 0
+        dvmax = 1
+        nvalues = 1000
+        bins = np.arange(dvmin, dvmax, 0.01)        
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        self.testbinner.setupBinner(dv, bins=bins)
+
+        # Set up another binner to match (same bins, although not the same data).
+        testbinner2 = OneDBinner(sliceDataColName='testdata')
+        dv2 = makeDataValues(nvalues+100, dvmin, dvmax, random=True)
+        testbinner2.setupBinner(dv2, bins=bins)
+        self.assertEqual(self.testbinner, testbinner2)
+        # Set up another binner that should not match (different bins)
+        testbinner2 = OneDBinner(sliceDataColName='testdata')
+        dv2 = makeDataValues(nvalues, dvmin+1, dvmax+1, random=True)
+        testbinner2.setupBinner(dv2, nbins=len(bins))
+        self.assertNotEqual(self.testbinner, testbinner2)
+        # Set up a different kind of binner that should not match.
+        testbinner2 = UniBinner()
+        dv2 = makeDataValues(100, 0, 1, random=True)
+        testbinner2.setupBinner(dv2)
+        self.assertNotEqual(self.testbinner, testbinner2)
+
+            
 class TestOneDBinnerSlicing(unittest.TestCase):            
     def setUp(self):
         self.testbinner = OneDBinner(sliceDataColName='testdata')
@@ -121,7 +158,7 @@ class TestOneDBinnerSlicing(unittest.TestCase):
                     self.assertTrue(len(dataslice) > 0, 'Data in test case expected to always be > 0 len after slicing.')
             self.assertTrue(sum, nvalues)
 
-class TestOneDBinnerFunction(unittest.TestCase):
+class TestOneDBinnerHistogram(unittest.TestCase):
     def setUp(self):
         self.testbinner = OneDBinner(sliceDataColName='testdata')
 
@@ -168,7 +205,9 @@ if __name__ == "__main__":
     unittest.TextTestRunner(verbosity=2).run(suite)
     suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerIteration)
     unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerEqual)
+    unittest.TextTestRunner(verbosity=2).run(suite)
     suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerSlicing)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerFunction)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerHistogram)
     unittest.TextTestRunner(verbosity=2).run(suite)

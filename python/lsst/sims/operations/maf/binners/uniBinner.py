@@ -20,7 +20,7 @@ class UniBinner(BaseBinner):
     def setupBinner(self, simData):
         """Use simData to set indexes to return."""
         simDataCol = simData.dtype.names[0]
-        self.indices = np.where(simData[simDataCol])
+        self.indices = np.ones(len(simData[simDataCol]),  dtype='bool')
         
     def __iter__(self):
         """Iterate over the binpoints."""

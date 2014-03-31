@@ -29,6 +29,8 @@ class OneDBinner(BaseBinner):
         to slice data in 'sliceDataCol'.
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b])."""
+        if self.sliceDataColName == None:
+            raise Exception('sliceDataColName was not defined when binner instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
         if bins == None:
             binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
