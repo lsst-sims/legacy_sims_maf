@@ -59,7 +59,14 @@ class MafDriver(object):
             for c in b.constraints:
                 self.constraints.append(c)
         self.constraints = list(set(self.constraints))
-        
+        # Check that all filenames will be unique
+        filenames=[]
+        for i,binner in enumerate(self.binList):
+            for constraint in binner.constraints:
+                for metric in self.metricList[i]:
+                    filenames.append(constraint+metric.name+binner.metadata+binner.binnertype)
+        if len(filenames) != len(set(filenames)):
+            raise Exception('Filenames for metrics will not be unique.  Add binner metadata or change metric names.')
         
     def _binKey(self,binner): #XXX-looks like BaseBinMetric does everything.  Should we just call it BinnerMetricContainer?
         """Take a binner and return the correct type of binMetric"""

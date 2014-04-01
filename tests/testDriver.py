@@ -17,7 +17,12 @@ class TestDriver(unittest.TestCase):
     def setUp(self):
         self.cfgFiles = ['mafconfigTest.py', 'mafconfig2Test.py']
         
-        
+    def test_overwrite(self):
+        filename='mafconfigTest3.cfg'
+        configIn = MafConfig()
+        configIn.load(filename)
+        self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
+    
     def test_driver(self):
         for filename in self.cfgFiles:
             configIn = MafConfig()
@@ -37,10 +42,8 @@ class TestDriver(unittest.TestCase):
                 if configIn.binners[i].name != 'HourglassBinner':
                     nout += len(configIn.binners[i].constraints)*len(configIn.binners[i].metricDict)
             nfits = glob.glob(configIn.outputDir+'/*.fits')
-            print len(nfits), nout
             assert(nout == len(nfits))
             
-            #could test to make sure the correct number of plots and fits got generated so nothing got over-written.
 
        
 if __name__ == '__main__':

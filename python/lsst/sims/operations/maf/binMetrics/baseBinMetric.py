@@ -225,7 +225,10 @@ class BaseBinMetric(object):
             else:
                 for mname in self.metricObjs:
                     if hasattr(self.metricObjs[mname], 'needRADec'):
-                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, binpoint[1], binpoint[2])
+                        if self.metricObjs[mname].needRADec:
+                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, binpoint[1], binpoint[2])
+                        else:
+                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
                     else:
                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
         # Mask data where metrics could not be computed (according to metric bad value).
