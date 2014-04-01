@@ -410,7 +410,7 @@ class BaseBinMetric(object):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, title=title, 
                                                     histRange=histRange, ylog=ylog,
-                                                    legendLabel=legendLabel)
+                                                    legendLabel=legendLabel, plotMin=plotMin,plotMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,

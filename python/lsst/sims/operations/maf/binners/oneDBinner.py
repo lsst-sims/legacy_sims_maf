@@ -82,7 +82,7 @@ class OneDBinner(BaseBinner):
                        legendLabel=None, addLegend=False,
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
-                       ylabel=None, xlabel=None, plotMin=None, plotMax=None):
+                       ylabel=None, xlabel=None, plotMin=None, plotMax=None, histRange=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -98,6 +98,7 @@ class OneDBinner(BaseBinner):
         ylog = make the y-axis log (default False)
         plotMin = min for y-axis
         plotMax = max for y-axis
+        histRange = ignored
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
