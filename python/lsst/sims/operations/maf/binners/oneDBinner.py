@@ -32,9 +32,9 @@ class OneDBinner(BaseBinner):
         if self.sliceDataColName == None:
             raise Exception('sliceDataColName was not defined when binner instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
-        if not binMin:
+        if binMin is None:
             binMin = sliceDataCol.min()
-        if not binMax:
+        if binMax is None:
             binMax = sliceDataCol.max()
        
         if bins == None:

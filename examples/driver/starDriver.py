@@ -35,7 +35,9 @@ for i,f in enumerate(filters):
     binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                               metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
     binList.append(binner)
-
+    binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside, 'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'},
+                              metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints, metadata='dith')
+    binList.append(binner)
 
 # Visits per observing mode:
 modes = [186,187,188,189,190]
@@ -45,7 +47,7 @@ for i,f in enumerate(filters):
         constraints = []
         for mode in modes:
             constraints.append("filter = \'%s\' and propID = %s"%(f,mode))
-        binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},setupKwargs={"leafsize":50000},constraints=constraints, metricDict=metricDict)
+        binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},setupKwargs={"leafsize":50000},constraints=constraints, metricDict=metricDict, metadata='permode')
         binList.append(binner)
                                     
         
