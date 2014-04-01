@@ -21,7 +21,7 @@ class OneDBinner(BaseBinner):
         self.sliceDataColName = sliceDataColName
         self.columnsNeeded = [sliceDataColName]
 
-    def setupBinner(self, simData, bins=None, nbins=100): #can't pass bins with driver, add binMin, binMax
+    def setupBinner(self, simData, bins=None, nbins=100, binMin=None, binMax=None): 
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
@@ -32,9 +32,14 @@ class OneDBinner(BaseBinner):
         if self.sliceDataColName == None:
             raise Exception('sliceDataColName was not defined when binner instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
+        if not binMin:
+            binMin = sliceDataCol.min()
+        if not binMax:
+            binMax = sliceDataCol.max()
+       
         if bins == None:
-            binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-            bins = np.arange(sliceDataCol.min(), sliceDataCol.max()+binsize/2.0, binsize, 'float')
+            binsize = (binMax - binMin) / float(nbins)
+            bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
             self.bins = bins
         else:
             self.bins = np.sort(bins)
