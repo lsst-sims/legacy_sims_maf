@@ -21,7 +21,7 @@ class OneDBinner(BaseBinner):
         self.sliceDataColName = sliceDataColName
         self.columnsNeeded = [sliceDataColName]
 
-    def setupBinner(self, simData, bins=None, nbins=100):
+    def setupBinner(self, simData, bins=None, nbins=100): #can't pass bins with driver, add binMin, binMax
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
@@ -78,18 +78,17 @@ class OneDBinner(BaseBinner):
         return self.simIdxs[self.left[i]:self.left[i+1]]
 
     def plotBinnedData(self, metricValues, title=None,
-                       histRange=None, fignum=None, units=None,
+                       fignum=None, units=None,
                        legendLabel=None, addLegend=False,
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
-                       ylabel=None, xlabel=None):
+                       ylabel=None, xlabel=None, plotMin=None, plotMax=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
         title = title for the plot (default None)
         xlabel = x axis label (default None)
         ylabel =  y axis label (default None)
-        histRange = x axis min/max values (default None, use plot defaults)
         fignum = the figure number to use (default None - will generate new figure)
         legendLabel = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
@@ -97,6 +96,8 @@ class OneDBinner(BaseBinner):
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
         ylog = make the y-axis log (default False)
+        plotMin = min for y-axis
+        plotMax = max for y-axis
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
@@ -120,8 +121,8 @@ class OneDBinner(BaseBinner):
             if units != None:
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
-        if (histRange != None):
-            plt.xlim(histRange)
+        if plotMin:
+            plt.ylim([plotMin,plotMax])
         if (addLegend != None):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
