@@ -84,10 +84,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
     def __eq__(self, otherBinner):
         """Evaluate if two grids are equivalent."""
         if isinstance(otherBinner, OpsimFieldBinner):
-            return ((np.all(otherBinner.ra == self.ra)) 
-                    and (np.all(otherBinner.dec == self.dec))
-                    and (np.all(otherBinner.fieldId == self.fieldId)))
-        
+            return (np.all(otherBinner.fieldId == self.fieldId))        
         else:
             return False
 
