@@ -1,6 +1,30 @@
+import os
 import numpy as np
 import lsst.sims.operations.maf.db as db
 
+def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
+    """Utility to get the dbAddress info corresponding to 'connectionName' from a dbLogin file.
+
+    connectionName is the name given to a sqlalchemy connection string in the file
+        (default 'SQLITE_OPSIM').
+    dbLoginFile is the file location (default None will try to use $HOME/dbLogin). """
+    # The dbLogin file is a file containing simple 'names' corresponding to sqlite connection engine
+    #  strings.
+    # Example:
+    # SQLITE_OPSIM sqlite:///opsim.sqlite
+    # MYSQL_OPSIM mysql://lsst:lsst@localhost/opsim
+    #  More information on sqlalchemy connection strings can be found at
+    #  http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
+    if dbLoginFile == None:
+        # Try default location in home directory.
+        dbLoginFile = os.path.join(os.getenv("HOME"), 'dbLogin')
+    f = open(dbLoginFile, 'r')
+    for l in f:
+        els = l.rstrip().split()
+        if els[0] == connectionName:
+            dbAddress = els[1]
+    return dbAddress
+            
 def fetchSimData(dbTable, dbAddress, sqlconstraint, colnames, distinctExpMJD=True):
     """Utility to fetch opsim simulation data (colnames). 
 
