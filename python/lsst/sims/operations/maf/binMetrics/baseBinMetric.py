@@ -225,7 +225,10 @@ class BaseBinMetric(object):
             else:
                 for mname in self.metricObjs:
                     if hasattr(self.metricObjs[mname], 'needRADec'):
-                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, binpoint[1], binpoint[2])
+                        if self.metricObjs[mname].needRADec:
+                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, binpoint[1], binpoint[2])
+                        else:
+                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
                     else:
                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
         # Mask data where metrics could not be computed (according to metric bad value).
@@ -387,10 +390,10 @@ class BaseBinMetric(object):
         # Set 'histRange' parameter from pParams, if available.
         if 'histMax' in pParams:
             histRange = [pParams['histMin'], pParams['histMax']]
-        else:
-            histRange = None
-        #else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
-        #    histRange = [plotMin, plotMax]
+        #else:
+        #    histRange = None
+        else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
+            histRange = [plotMin, plotMax]
         # Determine if should data using log scale, using pParams if available
         if 'ylog' in pParams:
             ylog = pParams['ylog']
@@ -407,7 +410,7 @@ class BaseBinMetric(object):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, title=title, 
                                                     histRange=histRange, ylog=ylog,
-                                                    legendLabel=legendLabel)
+                                                    legendLabel=legendLabel, plotMin=plotMin,plotMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,

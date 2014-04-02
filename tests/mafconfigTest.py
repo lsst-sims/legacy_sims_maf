@@ -24,7 +24,7 @@ constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 # Configure a Healpix binner:
 m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'})
 m2 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.})
-m3 = makeMetricConfig('ParallaxMetric') #this should auto
+#m3 = makeMetricConfig('ParallaxMetric') #this should auto
 # Combine metrics in a dictionary
 metricDict = makeDict(m1,m2)
 # Generate the binner configuration, passing in the metric configurations and SQL constraints
@@ -90,6 +90,7 @@ binList.append(binner)
 
 # Save all the binners to the config
 root.binners=makeDict(*binList)
+
 
 # Optional comment string
 root.comment = 'a config file that tries to exercise everything in the driver as a unit test'

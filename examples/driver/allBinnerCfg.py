@@ -8,10 +8,10 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
-#root.dbAddress ='sqlite:///../opsim_small.sqlite'
-#root.opsimNames = ['opsim_small']
-root.dbAddress ='sqlite:///opsim.sqlite'
+root.dbAddress ='sqlite:///../opsim_small.sqlite'
 root.opsimNames = ['opsim_small']
+#root.dbAddress ='sqlite:///opsim.sqlite'
+#root.opsimNames = ['opsim_small']
 
 
 # Setup a list to hold all the binners we want to run

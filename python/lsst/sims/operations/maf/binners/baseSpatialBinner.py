@@ -126,6 +126,9 @@ class BaseSpatialBinner(BaseBinner):
             return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
+        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allBinner.Cfg.py
+        if plt.axis()[2] == max(n):
+            plt.ylim([n.min(),n.max()]) 
         if xlabel != None:
             plt.xlabel(xlabel)
         if ylabel != None:
