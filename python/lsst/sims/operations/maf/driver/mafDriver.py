@@ -112,12 +112,13 @@ class MafDriver(object):
     def getFieldData(self, binner):
         """Given an opsim binner, generate the FieldData """
         if self.config.fieldDataInfo['useFieldTable']:
-            fieldDataInfo = self.config.fieldDataInfo
-            self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
-                                                            fieldDataInfo['dbAddress'],
-                                                            sessionID=fieldDataInfo['sessionID'],
-                                                            proposalTable=fieldDataInfo['proposalTable'],
-                                                            proposalID=fieldDataInfo['proposalID'])
+            if not hasattr(self, fieldData): # Only pull the data once if using external
+                fieldDataInfo = self.config.fieldDataInfo
+                self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
+                                                                fieldDataInfo['dbAddress'],
+                                                                sessionID=fieldDataInfo['sessionID'],
+                                                                proposalTable=fieldDataInfo['proposalTable'],
+                                                                proposalID=fieldDataInfo['proposalID'])
         else:
             fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
             ra = self.data[binner.fieldRaColName][idx]
