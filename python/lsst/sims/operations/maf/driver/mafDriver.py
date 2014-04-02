@@ -107,16 +107,37 @@ class MafDriver(object):
         for stacker in stackers:
             self.data = stacker.run(self.data)
             
-        
+
+
+    def getFieldData(self, binner):
+        """Given an opsim binner, generate the FieldData """
+        if self.config.fieldDataInfo['useFieldTable']:
+            fieldDataInfo = self.config.fieldDataInfo
+            self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
+                                                            fieldDataInfo['dbAddress'],
+                                                            sessionID=fieldDataInfo['sessionID'],
+                                                            proposalTable=fieldDataInfo['proposalTable'],
+                                                            proposalID=fieldDataInfo['proposalID'])
+        else:
+            fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
+            ra = self.data[binner.fieldRaColName][idx]
+            dec = self.data[binner.fieldDecColName][idx]
+            self.fieldData = np.core.records.fromarrays([fieldID, ra, dec],
+                                               names=['fieldID', 'fieldRA', 'fieldDec'])
+     
+            
+    
     def run(self):
         """Loop over each binner and calc metrics for that binner. """
         for opsimName in self.config.opsimNames:
             for j, constr in enumerate(self.constraints):
                 # Find which binners have a matching constraint 
                 matchingBinners=[]
+                binnertypes=[]
                 for b in self.binList:
                     if constr in b.constraints:
                         matchingBinners.append(b)
+                        binnertypes.append(b.binnertype)
                 colnames=[]
                 for i,binner in enumerate(matchingBinners):
                     for m in self.metricList[binner.index]:
@@ -126,10 +147,12 @@ class MafDriver(object):
                     for stacker in binner.stackers:
                         for col in stacker.cols:
                             colnames.append(col)
-                    colnames = list(set(colnames)) #unique elements
+                colnames = list(set(colnames)) #unique elements
                     
-                print 'fetching constraint:', constr#,' with binnertype =', binner.binnertype
-                self.getData(opsimName,constr, colnames=colnames)#, stackers=binner.stackers)
+                print 'fetching constraint:', constr
+                self.getData(opsimName,constr, colnames=colnames)
+                if 'OPSIMFIELDS' in binnertypes:
+                    self.getFieldData(matchingBinners[binnertypes.index('OPSIMFIELDS')])
                 # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                 for i,binner in enumerate(matchingBinners):
                     # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
@@ -139,7 +162,11 @@ class MafDriver(object):
                     for stacker in binner.stackers:
                         self.data = stacker.run(self.data)
                     gm = self._binKey(binner)
-                    binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
+                    if binner.binnertype == 'OPSIMFIELDS':
+                        # Need to pass in fieldData as well
+                        binner.setupBinner(self.data, self.fieldData,*binner.setupParams, **binner.setupKwargs )
+                    else:
+                        binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
                     gm.setMetrics(self.metricList[binner.index])
                     gm.runBins(self.data, simDataName=opsimName+'%i'%j, metadata=binner.metadata)

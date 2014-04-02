@@ -66,9 +66,10 @@ class MafConfig(pexConfig.Config):
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
     opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
+    fieldDataInfo = pexConfig.DictField(doc="", keytype=str, itemtype=str, default={'useFieldTable':'', 'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
     comment =  pexConfig.Field("", dtype=str, default='')
     
-    
+
     
 def makeDict(*args):
     """Make a dict of index: config from a list of configs
