@@ -3,7 +3,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
-import lsst.sims.operations.maf.utils as utils
 
 try:
     import astropy.io.fits as pyf
@@ -14,63 +13,53 @@ from .baseBinner import BaseBinner
 from .baseSpatialBinner import BaseSpatialBinner
 
 class OpsimFieldBinner(BaseSpatialBinner):
-    """Opsim Field based binner.
+    """Index-based binner, matched ID's between simData and fieldData.
 
-    Note that this binner uses the fieldID of the opsim fields to generate spatial matches, thus this
-    binner is not generally suitable for use in evaluating dithering or high resolution metrics. """
-    def __init__(self, verbose=True, fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',useFieldTable=False):
+    Binner uses fieldData RA and Dec values to do sky map plotting, but could be used more
+    generally for any kind of data slicing where the match is based on a simple ID value.
+     
+    Note that this binner uses the fieldID of the opsim fields to generate spatial matches,
+    thus this binner is not suitable for use in evaluating dithering or high resolution metrics
+    (use the healpix binner instead for those use-cases). """
+    
+    def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
+                 fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec'):
+        """Instantiate opsim field binner (an index-based binner that can do spatial plots).
+
+        simDataFieldIdColName = the column name in simData for the field ID
+        fieldIdcolName = the column name in the fieldData for the field ID (to match with simData)
+        fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
+        fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
+        """
         super(OpsimFieldBinner, self).__init__(verbose=verbose)
         self.binnertype = 'OPSIMFIELDS'
         self.fieldId = None
         self.ra = None
         self.dec = None
         self.nbins = None
-
-        self.useFieldTable = useFieldTable
+        self.simDataFieldIdColName = simDataFieldIdColName
         self.fieldIdColName = fieldIdColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
-        if not self.useFieldTable:
-            self.columnsNeeded=[fieldIdColName,fieldRaColName,fieldDecColName]
+        self.columnsNeeded = [simDataFieldIdColName,]
+        self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
 
-    def setupBinner(self, simData,
-                    dbAddress=None, sessionID=None, fieldTable='Field',
-                    proposalTable='tProposal_Field', proposalID=None):
+    def setupBinner(self, simData, fieldData):
         """Set up opsim field binner object.
-
-        If useFieldTable ==True (default is False), then fetch field information directly from
-        Fields (and potentially Fields + Proposal_Field tables) in the opsim (v3) tables, using
-        utils.getData.fetchFieldsFromFieldTable.
         
         simData = numpy rec array with simulation pointing history,
-        dbAddress = the db connection string
-        sessionID = the session ID (numeral section of opsim run name) to use to identify fields, if requesting fields from a particular proposal only
-        fieldTable = the name of the db table with the field information (default 'Fields')
-        proposalTable = the name of the db table with the proposal information (default 'tProposal_Field')
-        proposalID = the proposal ID number (if restricting field choice by fields requested for a proposal) (default = None)
+        fieldData = numpy rec array with the field information (ID, RA, Dec),
+        Values for the column names are set during 'init'. 
         """
         # Set basic properties for tracking field information, in sorted order.
-        if not self.useFieldTable:
-            if self.verbose:
-                print 'Using simData to set field information.'
-            self.fieldId, idx = np.unique(simData[self.fieldIdColName], return_index=True)
-            self.ra = simData[self.fieldRaColName][idx]
-            self.dec = simData[self.fieldDecColName][idx]
-        else:
-            if self.verbose:
-                print 'Using Field tables to set field information.'
-            fieldData = utils.getData.fetchFieldsFromFieldTable(fieldTable, dbAddress,
-                                                                sessionID=sessionID,
-                                                                proposalTable=proposalTable,
-                                                                proposalID=proposalID)
-            idxs = np.argsort(fieldData[self.fieldIdColName])
-            self.fieldId = fieldData[self.fieldIdColName][idxs]
-            self.ra = fieldData[self.fieldRaColName][idxs]
-            self.dec = fieldData[self.fieldDecColName][idxs]
+        idxs = np.argsort(fieldData[self.fieldIdColName])
+        self.fieldId = fieldData[self.fieldIdColName][idxs]
+        self.ra = fieldData[self.fieldRaColName][idxs]
+        self.dec = fieldData[self.fieldDecColName][idxs]
         self.nbins = len(self.fieldId)
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[self.fieldIdColName])
-        simFieldsSorted = np.sort(simData[self.fieldIdColName])
+        self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
+        simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
         self.left = np.searchsorted(simFieldsSorted, self.fieldId, 'left')
         self.right = np.searchsorted(simFieldsSorted, self.fieldId, 'right')        
 

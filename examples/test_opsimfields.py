@@ -9,6 +9,7 @@ import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binMetrics as binMetrics
+import lsst.sims.operations.maf.utils as utils
 
 from lsst.sims.catalogs.generation.db.utils import make_engine
 from lsst.sims.operations.maf.utils import getData
@@ -56,15 +57,23 @@ def getMetrics(seeingcol, docomplex=True):
     
 def getBinner(simData, fieldDataInfo):
     # Setting up the binner will be slightly different for each binner.
-    t = time.time()
-    bb = binners.OpsimFieldBinner(useFieldTable=fieldDataInfo['useFieldTable'])
-    print fieldDataInfo
-    bb.setupBinner(simData, 
-                   dbAddress=fieldDataInfo['dbAddress'],
-                   sessionID = fieldDataInfo['sessionID'],
-                   fieldTable = fieldDataInfo['fieldTable'],
-                   proposalTable = fieldDataInfo['proposalTable'],
-                   proposalID = fieldDataInfo['proposalID'])
+    t = time.time()    
+    bb = binners.OpsimFieldBinner(simDataFieldIdColName='fieldID', fieldIdColName='fieldID',
+                                  fieldRaColName='fieldRA', fieldDecColName='fieldDec')
+    if not(fieldDataInfo['useFieldTable']): # use simData / output table for fieldData
+        fieldID, idx = np.unique(simData['fieldID'], return_index=True)
+        ra = simData['fieldRA'][idx]
+        dec = simData['fieldDec'][idx]
+        fieldData = np.core.records.fromarrays([fieldID, ra, dec],
+                                               names=['fieldID', 'fieldRA', 'fieldDec'])
+    if (fieldDataInfo['useFieldTable']): # use field table to get Field Data
+        fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
+                                                            fieldDataInfo['dbAddress'],
+                                                            sessionID=fieldDataInfo['sessionID'],
+                                                            proposalTable=fieldDataInfo['proposalTable'],
+                                                            proposalID=fieldDataInfo['proposalID'])
+    # SetUp binner.
+    bb.setupBinner(simData, fieldData)
     dt, t = dtime(t)
     print 'Set up binner %f s' %(dt)
     return bb
@@ -166,7 +175,7 @@ if __name__ == '__main__':
     
     # Set up metrics. 
     metricList = getMetrics(seeingcol, docomplex=True)
-
+    
     # Find columns that are required.
     colnames = list(metricList[0].classRegistry.uniqueCols())
     fieldcols = ['fieldID', 'fieldRA', 'fieldDec']
@@ -176,7 +185,7 @@ if __name__ == '__main__':
     # Get opsim simulation data
     simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
 
-    # And set up binner.
+    # Set up binner.
     fieldDataInfo = {}
     fieldDataInfo['useFieldTable'] = args.useFieldTable
     fieldDataInfo['dbAddress'] = dbAddress
