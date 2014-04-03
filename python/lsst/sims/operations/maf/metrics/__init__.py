@@ -9,3 +9,4 @@ from .observeEfficiencyMetric import *
 from .hourglassMetric import *
 from .completenessMetric import *
 from .radiusObsMetric import *
+from .astroPrecMetric import *
