@@ -78,8 +78,8 @@ class BaseMetric(object):
             self.plotParams = plotParams
         else:
             self.plotParams = {}
-        if 'plotLabel' not in self.plotParams:
-            self.plotParams['plotLabel'] = self.units
+        if '_unit' not in self.plotParams:
+            self.plotParams['_unit'] = self.units
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the binMetric, passed to the binner plotting utilities.
