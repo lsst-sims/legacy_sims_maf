@@ -53,7 +53,6 @@ class MafDriver(object):
                                       (*params, **kwargs) )
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
-        #import pdb ; pdb.set_trace()
         self.constraints = []
         for b in self.binList:
             for c in b.constraints:
@@ -112,7 +111,7 @@ class MafDriver(object):
     def getFieldData(self, binner):
         """Given an opsim binner, generate the FieldData """
         if self.config.fieldDataInfo['useFieldTable']:
-            if not hasattr(self, fieldData): # Only pull the data once if using external
+            if not hasattr(self, fieldData): # Only pull the data once if getting it from the database
                 fieldDataInfo = self.config.fieldDataInfo
                 self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
                                                                 fieldDataInfo['dbAddress'],
