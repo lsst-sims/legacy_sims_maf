@@ -15,7 +15,7 @@ def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
     # MYSQL_OPSIM mysql://lsst:lsst@localhost/opsim
     #  More information on sqlalchemy connection strings can be found at
     #  http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
-    if dbLoginFile == None:
+    if dbLoginFile is None:
         # Try default location in home directory.
         dbLoginFile = os.path.join(os.getenv("HOME"), 'dbLogin')
     f = open(dbLoginFile, 'r')

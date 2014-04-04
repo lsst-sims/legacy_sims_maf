@@ -80,10 +80,10 @@ class BaseBinMetric(object):
                           outDir=None, outfileRoot=None, plotType=None):
         """Builds an automatic output file name for metric data or plots."""
         # Set output directory and root 
-        if outDir == None:
+        if outDir is None:
             outDir = '.'
         # Start building output file name.
-        if outfileRoot == None:
+        if outfileRoot is None:
             if metricName in self.simDataName:
                 # If metricName is the name of an actual metric, use its associated simdata ID.
                 outfileRoot = self.simDataName[metricName]
@@ -132,7 +132,7 @@ class BaseBinMetric(object):
         """Set binner for binMetric.
 
         If override = False (default), checks if binner already set, and if the two are equal."""
-        if (self.binner == None) or (override):
+        if (self.binner is None) or (override):
             self.binner = binner
             return True        
         return (self.binner == binner)            
@@ -157,7 +157,7 @@ class BaseBinMetric(object):
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
-            if self.binner == None:            
+            if self.binner is None:            
                 hdulist = pyf.open(f)
                 header = hdulist[0].header
                 if (header['NAXIS'] == 0):
@@ -468,9 +468,9 @@ class BaseBinMetric(object):
 
         # Plot the hourglass plot
         if hasattr(self.binner, 'plotHour'):
-            if xlabel == None:
+            if xlabel is None:
                 xlabel='MJD (day)'
-            if ylabel == None:
+            if ylabel is None:
                 ylabel = 'Hours from local midnight'
             psfignum = self.binner.plotHour(self.metricValues[metricName][0], title=title, xlabel=xlabel,ylabel=ylabel )
             if savefig:

@@ -115,7 +115,7 @@ class BaseSpatialBinner(BaseBinner):
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if metricValue.min() >= metricValue.max():
-            if histRange==None:
+            if histRange is None:
                 histRange = [metricValue.min() , metricValue.min() + 1]
                 raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.' 
                                     % (metricValue.max(), metricValue.min()))
@@ -184,7 +184,7 @@ class BaseSpatialBinner(BaseBinner):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
-        if fignum==None:
+        if fignum is None:
             fig = plt.figure()
         ax = plt.subplot(111,projection=projection)        
         # other projections available include 

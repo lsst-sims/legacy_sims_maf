@@ -29,7 +29,7 @@ class OneDBinner(BaseBinner):
         to slice data in 'sliceDataCol'.
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b])."""
-        if self.sliceDataColName == None:
+        if self.sliceDataColName is None:
             raise Exception('sliceDataColName was not defined when binner instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
         if binMin is None:
@@ -37,7 +37,7 @@ class OneDBinner(BaseBinner):
         if binMax is None:
             binMax = sliceDataCol.max()
        
-        if bins == None:
+        if bins is None:
             binsize = (binMax - binMin) / float(nbins)
             bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
             self.bins = bins
@@ -119,10 +119,10 @@ class OneDBinner(BaseBinner):
                 plt.semilogy(x, y, label=legendLabel)
             else:
                 plt.plot(x, y, label=legendLabel)
-        if ylabel == None:
+        if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)
-        if xlabel == None:
+        if xlabel is None:
             xlabel=self.sliceDataColName
             if units != None:
                 xlabel += ' (' + units + ')'

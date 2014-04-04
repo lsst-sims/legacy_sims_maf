@@ -19,16 +19,6 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-def getDbAddress():
-    # Get the database connection information from the dbLogin file in the user's home directory.
-    home_path = os.getenv("HOME")
-    f=open("%s/dbLogin"%(home_path),"r")
-    authDictionary = {}
-    for l in f:
-        els = l.rstrip().split()
-        authDictionary[els[0]] = els[1]
-    return authDictionary
-
 def getMetrics(seeingcol, docomplex=True):
     t = time.time()
     # Set up metrics.
@@ -129,8 +119,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Get db connection info.
-    authDictionary = getDbAddress()
-    dbAddress = authDictionary[args.connectionName]
+    dbAddress = getData.getDbAddress(connectionName = args.connectionName)
     
     dbTable = args.simDataTable
     opsimrun = args.simDataTable.replace('output_', '')
