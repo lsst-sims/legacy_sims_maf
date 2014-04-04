@@ -179,7 +179,7 @@ class HealpixBinner(BaseSpatialBinner):
                       scale=None):
         """Histogram metricValue over the healpix bin points.
 
-        If scale == None, sets 'scale' by the healpix area per binpoint.
+        If scale is None, sets 'scale' by the healpix area per binpoint.
         title = the title for the plot (default None)
         xlabel = x axis label (default None)
         ylabel = y axis label (default 'Area (1000's of square degrees))**
@@ -192,7 +192,7 @@ class HealpixBinner(BaseSpatialBinner):
         ylog = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         # Simply overrides scale and y axis plot label of base plotHistogram. 
-        if scale == None:
+        if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixBinner, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
                                                         title=title, fignum=fignum, 

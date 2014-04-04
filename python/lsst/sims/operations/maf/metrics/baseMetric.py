@@ -68,7 +68,7 @@ class BaseMetric(object):
                 allcols += '_' + i
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
         # Set physical units, mostly for plotting purposes.
-        if units == None:
+        if units is None:
             units = ''.join([self.colInfo.getUnits(col) for col in self.colNameList])
             if len(units.replace(' ', '')) == 0:
                 units = self.name

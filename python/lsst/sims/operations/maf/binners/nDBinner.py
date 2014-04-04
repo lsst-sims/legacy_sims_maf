@@ -158,15 +158,15 @@ class NDBinner(BaseBinner):
             norm = colors.LogNorm()
         else:
             norm = None
-        if clims == None:
+        if clims is None:
             im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap)
         else:
             im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap,
                               vmin=clims[0], vmax=clims[1])
-        if xlabel == None:
+        if xlabel is None:
             xlabel = self.sliceDataColList[xaxis]
         plt.xlabel(xlabel)
-        if ylabel == None:
+        if ylabel is None:
             ylabel= self.sliceDataColList[yaxis]
         plt.ylabel(ylabel)
         cb = plt.colorbar(im, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
@@ -224,10 +224,10 @@ class NDBinner(BaseBinner):
                 plt.semilogy(x, y, label=legendLabel)
             else:
                 plt.plot(x, y, label=legendLabel)
-        if ylabel == None:
+        if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)
-        if xlabel == None:
+        if xlabel is None:
             xlabel=self.sliceDataColName[axis]
             if units != None:
                 xlabel += ' (' + units + ')'
