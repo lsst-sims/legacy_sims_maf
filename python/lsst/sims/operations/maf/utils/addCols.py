@@ -50,7 +50,7 @@ class ParallaxFactor(object):
         return x, y
 
     def run(self,simData):
-        from pyslalib import slalib as sla
+        import palpy
         ra_pi_amp = np.zeros(np.size(simData), dtype=[('ra_pi_amp','float')])
         dec_pi_amp = np.zeros(np.size(simData), dtype=[('dec_pi_amp','float')])
         ra_geo1 = np.zeros(np.size(simData), dtype='float')
@@ -58,10 +58,10 @@ class ParallaxFactor(object):
         ra_geo = np.zeros(np.size(simData), dtype='float')
         dec_geo = np.zeros(np.size(simData), dtype='float')
         for i,ack in enumerate(simData):
-            mtoa_params = sla.sla_mappa(2000., simData[self.dateCol][i])
-            ra_geo1[i],dec_geo1[i] = sla.sla_mapqk(simData[self.raCol][i],simData[self.decCol][i],
+            mtoa_params = palpy.mappa(2000., simData[self.dateCol][i])
+            ra_geo1[i],dec_geo1[i] = palpy.mapqk(simData[self.raCol][i],simData[self.decCol][i],
                                                    0.,0.,1.,0.,mtoa_params)
-            ra_geo[i],dec_geo[i] = sla.sla_mapqk(simData[self.raCol][i],simData[self.decCol][i],
+            ra_geo[i],dec_geo[i] = palpy.mapqk(simData[self.raCol][i],simData[self.decCol][i],
                                                  0.,0.,0.,0.,mtoa_params)
         x_geo1,y_geo1 = self._gnomonic_project_toxy(ra_geo1, dec_geo1, simData[self.raCol],simData[self.decCol])
         x_geo, y_geo = self._gnomonic_project_toxy(ra_geo, dec_geo, simData[self.raCol], simData[self.decCol])
