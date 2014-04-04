@@ -9,7 +9,7 @@ def m52snr(m,m5):
 
 class AstroPrecMetric(BaseMetric):
     """Calculate the average astrometric precision given a set of observations """
-    def __init__(self, metricName='AtroPrecMetric', m5col='5sigma_modified', seeingcol='finSeeing', units='mas', mag=20., atm_limit=0.01, **kwargs):
+    def __init__(self, metricName='AstroPrecMetric', m5col='5sigma_modified', seeingcol='finSeeing', units='mas', mag=20., atm_limit=0.01, **kwargs):
         """ """
         cols=[m5col,seeingcol]
         super(AstroPrecMetric,self).__init__(cols,metricName,units=units, **kwargs)
