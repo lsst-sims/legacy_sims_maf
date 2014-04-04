@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from lsst.sims.operations.maf.metrics import SimpleMetrics as sm
+#from lsst.sims.operations.maf.metrics import SimpleMetrics as sm
 import lsst.sims.operations.maf.binners as binners
 import healpy as hp
 import numpy.ma as ma
@@ -50,10 +50,10 @@ class TestBinners(unittest.TestCase):
 
 
     def test_oneDBinner(self):
-        binner=binners.OneDBinner()
+        binner=binners.OneDBinner(sliceDataColName='poop')
         dataValues = np.zeros(10000, dtype=[('poop','float')])
         dataValues['poop'] = np.random.rand(10000)
-        binner.setupBinner(dataValues, 'poop')
+        binner.setupBinner(dataValues)
         filename = 'oned_test.fits'
         binner.writeMetricData(filename, dataValues[:100])
 
@@ -75,8 +75,7 @@ class TestBinners(unittest.TestCase):
         simData = np.zeros(100, dtype=zip(names,dt))
         simData['data1'] = np.random.rand(100)
         simData['fieldID'] = np.arange(100)
-        binner.setupBinner(simData,'fieldID',fieldData,
-                           'fieldID', 'fieldRA','fieldDec')
+        binner.setupBinner(simData,fieldData)
         filename = 'opsimbinner_test.fits'
         binner.writeMetricData(filename, metricValues)
         metricBack, binnerBack,header = binner.readMetricData(filename)
@@ -97,6 +96,8 @@ class TestBinners(unittest.TestCase):
         np.testing.assert_almost_equal(dataBack,metricValue)
 
 
+
+        
 #    def test_nDBinner(self):
 #        colnames = ['ack1','ack2','poop']
 #        types = ['float','float','int']
