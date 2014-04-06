@@ -129,7 +129,7 @@ class OneDBinner(BaseBinner):
         plt.xlabel(xlabel)
         if plotMin:
             plt.ylim([plotMin,plotMax])
-        if (addLegend != None):
+        if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
             plt.title(title)
