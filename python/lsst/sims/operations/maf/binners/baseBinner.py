@@ -10,6 +10,8 @@ try:
 except ImportError:
     import pyfits as pyf
 
+import lsst.sims.operations.maf.binners as binners
+    
 class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""
 
@@ -19,6 +21,8 @@ class BaseBinner(object):
         self.badval = -666 
         self.binnertype = 'BASE'
         self.columnsNeeded=[]
+        # Create a dict that saves how to re-init the binner
+        self.binner_init = {'badval': self.badval}
 
     def setupBinner(self, *args, **kwargs):
         """Set up internal parameters and bins for binner. """
@@ -58,11 +62,29 @@ class BaseBinner(object):
         which are appropriate for the metric to be working on, for that bin."""
         raise NotImplementedError()
 
-    def writeData(self, outfilename, metricValues):
+    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', comment='', metadata=''):
+        """Save a set of metric values along with the information required to re-build the binner."""
+        header = {}
+        header['metricName']=metricName
+        header['comment'] = comment
+        header['metadata'] = metadata
+        header['simDataName'] = simDataName
+        
+        binnerName=self.binnerName
+        
+        binner_init = self.binner_init
+        binner_setup = self.binner_setup
 
-        pass
-    def readData(self, infilename)
-    pass
+        binner_bins = self.bins
+        
+        np.savez(outfilename, header=header, metricValues=metricValues, binner_init=binner_init, binner_setup=binner_setup, binnerName=binnerName, binner_bins=binner_bins)
+      
+    def readData(self, infilename):
+        restored = np.load(infilename)
+        metricValues, header, binner_init, binner_setup, binner_bins, binnerName = restored['metricValues'], restored['header'][()], restored['binner_init'][()], restored['binner_setup'][()], restored[binner_bins], restored['binnerName'][()]
+        binner = getattr(binners,binnerName)(**binner_init)
+        binner.bins = binner_bins
+        return metricValues, binner, header
 
 
     def writeMetricDataGeneric(self, outfilename, metricValues,

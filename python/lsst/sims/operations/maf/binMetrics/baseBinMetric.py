@@ -43,10 +43,10 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pickle
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
+#try:
+#    import astropy.io.fits as pyf
+#except ImportError:
+#    import pyfits as pyf
 import lsst.sims.operations.maf.binners as binners
 from lsst.sims.operations.maf.utils.percentileClip import percentileClip
 
@@ -157,22 +157,6 @@ class BaseBinMetric(object):
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
-            if self.binner is None:
-                binnertype = None
-                hdulist = pyf.open(f)
-                header = hdulist[0].header
-                if header['NAXIS'] == 0:
-                    header = hdulist[1].header
-                    if header['binnertype'] == 'BASE':
-                        header = hdulist[0].header
-                binnertype = header['binnertype']
-                hdulist.close()
-                #  Instantiate a binner of the right type, and use its native read methods.
-                if (binnertype == 'HEALPIX'):
-                    self.binner = binnertypeDict[binnertype](nside=header['NSIDE'], 
-                                                             verbose=verbose)
-                else:
-                    self.binner = binnertypeDict[binnertype]()
             metricValues, binner, header = self.binner.readMetricData(f, verbose=verbose)
             # Check that the binner from this file matches self.binner
             if not(self.setBinner(binner, override=False)):
@@ -295,27 +279,24 @@ class BaseBinMetric(object):
         """Write all metric values to disk."""
         for mname in self.metricValues:
             dt = self.metricValues[mname].dtype
-            self.writeMetric(mname, comment=comment, outDir=outDir, outfileRoot=outfileRoot, \
-                             dt=dt)
+            self.writeMetric(mname, comment=comment, outDir=outDir, outfileRoot=outfileRoot)
 
         
-    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None, 
-                    dt='float'):
+    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None):
         """Write metric values 'metricName' to disk.
 
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
         outDir = directory to write output data (default '.').
-        dt = data type.
        """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.binner.writeMetricData(outfile+'.fits', self.metricValues[metricName],
+        self.binner.writeData(outfile+'.fits', self.metricValues[metricName],
                                     metricName = self._dupeMetricName(metricName),
                                     simDataName = self.simDataName[metricName],
                                     metadata = self.metadata[metricName],
-                                    comment = comment, dt=dt, 
-                                    badval = self.binner.badval)
+                                    comment = comment)#, dt=dt, 
+                                    #badval = self.binner.badval)
         # Update this to write self.comment and self.plotParams
 
                 

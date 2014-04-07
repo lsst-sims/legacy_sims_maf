@@ -27,6 +27,8 @@ class NDBinner(BaseBinner):
             self.nD = len(self.sliceDataColList)
         else:
             self.nD = None
+        self.binnerName ='NDBinner'
+        self.binner_init={'sliceDataColList':sliceDataColList}
 
     def setupBinner(self, simData, binsList=None, nbinsList=100):
         """Set up bins.
@@ -35,6 +37,8 @@ class NDBinner(BaseBinner):
             (default 'None' uses nbinsList together with data min/max values to set bins).
         nbinsList can be a list of values (one per column in sliceDataColList) or a single value
             (repeated for all columns, default=100). """
+        # For save-file
+        self.binner_setup={'binsList':binsList, 'nbinsList':nbinsList}
         # Parse input bins choices.
         if binsList != None:
             if len(binsList) != self.nD:
@@ -238,8 +242,7 @@ class NDBinner(BaseBinner):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
             plt.title(title)
-        return fig.number
-    
+        return fig.number    
     
     def writeMetricData(self, outfilename, metricValues,
                         comment='', metricName='',

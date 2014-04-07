@@ -31,6 +31,8 @@ class BaseSpatialBinner(BaseBinner):
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1,spatialkey2]
+        self.binner_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
+        
 
     def setupBinner(self, simData, leafsize=100, radius=1.8):
         """Use simData['spatialkey1'] and simData['spatialkey2']
@@ -42,7 +44,8 @@ class BaseSpatialBinner(BaseBinner):
         the simData KDtree 
         and binpoint RA/Dec values will be produced."""
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], leafsize)
-        self._setRad(radius)    
+        self._setRad(radius)
+        self.binner_setup = {'leafsize':leafsize,'radius':radius}
     
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""

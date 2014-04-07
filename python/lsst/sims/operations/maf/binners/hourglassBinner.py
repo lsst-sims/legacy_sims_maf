@@ -15,6 +15,8 @@ class HourglassBinner(UniBinner):
         self.binnertype='HOUR'
         self.nbins=1
         self.columnsNeeded=[]
+        self.binnerName='HourglassBinner'
+        self.binner_init={}
         
     def plotHour(self, metricValue, title='', xlabel='MJD (day)', ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """
@@ -50,10 +52,7 @@ class HourglassBinner(UniBinner):
         fig=plt.gcf()
         return fig.number
     
-    def writeMetricData(self, outfilename, metricValues,
-                        comment='', metricName='',
-                        simDataName='', metadata='', 
-                        int_badval=-666, badval=-666., dt=np.dtype('float64')):
+    def writeData(self, outfilename, metricValues, metricName='', comment='', metadata=''):
         pass
     def readMetricData(self, infilename):
         pass

@@ -43,6 +43,8 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.fieldDecColName = fieldDecColName
         self.columnsNeeded = [simDataFieldIdColName,]
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
+        self.binnerName='OpsimFieldBinner'
+        
 
     def setupBinner(self, simData, fieldData):
         """Set up opsim field binner object.
