@@ -10,6 +10,7 @@ import healpy as hp
 import matplotlib.pyplot as plt
 import warnings
 import matplotlib.cm as cm
+from matplotlib import colors
 try:
     import astropy.io.fits as pyf
 except ImportError:
@@ -97,6 +98,12 @@ class HealpixBinner(BaseSpatialBinner):
             norm = 'log'
         if cmap is None:
             cmap = cm.jet
+        # Make colormap compatible withe healpy
+        cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
+        cmap.set_over(cmap(1.0))
+        cmap.set_under('w')
+        cmap.set_bad('gray')
+        
         if clims is not None:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap,
