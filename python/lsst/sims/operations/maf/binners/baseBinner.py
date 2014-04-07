@@ -58,6 +58,13 @@ class BaseBinner(object):
         which are appropriate for the metric to be working on, for that bin."""
         raise NotImplementedError()
 
+    def writeData(self, outfilename, metricValues):
+
+        pass
+    def readData(self, infilename)
+    pass
+
+
     def writeMetricDataGeneric(self, outfilename, metricValues,
                         comment='', metricName='',
                         simDataName='', metadata='', 
