@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.binMetrics as binMetrics
@@ -87,16 +88,20 @@ print 'all dicts: ', cbm.findDictNums()
 print 'dicts with simname', uniqueSimDataNames[0], '=', cbm.findDictNums(simDataName = uniqueSimDataNames[0])
 print 'dicts with metadata', uniqueMetadata[0], '=',  cbm.findDictNums(metadata = uniqueMetadata[0])
 print 'dicts with metric', uniqueMetrics[0], '=', cbm.findDictNums(metricNames = uniqueMetrics[0])
-
+print 'dicts with oneD binner =', cbm.findDictNums(binnertype='ONED')
 
 print ''
 
 print 'oneD comparisons'
-oneDcomparisons = []
-oneDmetrics = []
-for d in dictnums:
-    if cbm.binmetrics[d].binner.binnertype == 'ONED':    
-        oneDcomparisons.append(d)
-        oneDmetrics.append(cbm.binmetrics[d].metricValues.keys()[0])
-for d in oneDcomparisons:
-    print cbm.binmetrics[d].simDataName.values(), cbm.binmetrics[d].metadata.values(), cbm.binmetrics[d].metricValues.keys()
+# Find the dict nums with oneD binners
+oneDDicts = cbm.findDictNums(binnertype='ONED')
+# Find the metric names associated with those oneD binmetrics 
+oneDmetrics = cbm.uniqueMetrics(dictNums=oneDDicts)
+# Plot the same metrics on the same plot
+for mname in oneDmetrics:
+    dicts = cbm.findDictNums(metricNames=mname, binnertype='ONED')
+    metricnames = [mname for d in dicts]
+    cbm.plotHistograms(dicts, metricnames)
+
+plt.show()
+    

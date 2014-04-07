@@ -6,6 +6,7 @@ import os
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
+import warnings
 
 import lsst.sims.operations.maf.binners as binners
 from .baseBinMetric import BaseBinMetric
@@ -107,9 +108,9 @@ class ComparisonBinMetric(object):
         """Return metric names associated with a particular baseBinMetric identified by 'dictNum'."""
         return self.binmetrics[dictNum].metricValues.keys()
                             
-    def findDictNums(self, simDataName=None, metricNames=None, metadata=None, moreverbose=False):
+    def findDictNums(self, simDataName=None, metricNames=None, metadata=None, binnertype=None):
         """Identify dictionary keys of baseBinMetrics, potentially restricted by
-        simDataName/metricName/metadata (which can be lists)."""
+        simDataName/metricName/metadata (which can be lists) and binnertype (single binnertype)."""
         def makeList(name):
             if name is not None:
                 if not hasattr(name, '__iter__'):
@@ -121,45 +122,49 @@ class ComparisonBinMetric(object):
         metricNames = makeList(metricNames)
         metadata = makeList(metadata)
         dictlist = self.binmetrics.keys()
-        if moreverbose:
-            print ''
-        for d in self.binmetrics:
-            for s in simDataName:
+        for s in simDataName:
+            for d in dictlist:
                 if s not in self.binmetrics[d].simDataName.values():
-                    if moreverbose:
-                        print 'removing %d for %s (not %s)' %(d, str(self.binmetrics[d].simDataName.values()), s)
                     dictlist.remove(d)
-            for m in metadata:
+        for m in metadata:
+            for d in dictlist:
                 if m not in self.binmetrics[d].metadata.values():
-                    if moreverbose:
-                        print 'removing %d for %s not %s' %(d, str(self.binmetrics[d].metadata.values()), m)
                     dictlist.remove(d)
-            for mname in metricNames:
+        for mname in metricNames:
+            for d in dictlist:
                 if mname not in self.binmetrics[d].metricValues:
-                    if moreverbose:
-                        print 'removing %d, for %s not %s' %(d, str(self.binmetrics[d].metricValues.keys()), mname)
+                    dictlist.remove(d)
+        if binnertype is not None:
+            for d in dictlist:
+                if (self.binmetrics[d].binner.binnertype != binnertype):
                     dictlist.remove(d)
         return dictlist
                         
     def _checkPlottable(self, dictNums, metricNames):
-        """Given dictNums and metricNames lists, checks whether the values are plottable and
+        """Given dictNums and metricNames lists, checks if there exists a metric 'metricName'
+        in binMetric, checks if the values are plottable and
         returns updated lists of dictNums and metricNames containing only plottable values."""
-        # Check if 'metricName' refers to plottable data (or remove from list).
-        for i, d, m in enumerate(zip(dictNums, metricNames)):
+        for i, (d, m) in enumerate(zip(dictNums, metricNames)):
+            # Remove if metric m is not part of binmetric[d]
+            if m not in self.binmetrics[d].metricValues:
+                dictNums[i] = None
+                metricNames[i] = None
             # Remove if an 'object' type. 
-            if self.binmetrics[d].metricValues[m].dtype == 'object':
-                del dictNums[i]
-                del metricNames[i]
+            elif self.binmetrics[d].metricValues[m].dtype == 'object':
+                dictNums[i] = None
+                metricNames[i] = None
             # Remove if a numpy rec array or anything else longer than float.
-            if len(self.metricValues[m].dtype) > 0:
-                del dictNums[i]
-                del metricNames[i]
+            elif len(self.binmetrics[d].metricValues[m].dtype) > 0:
+                dictNums[i] = None
+                metricNames[i] = None
+        dictNums = [x for x in dictNums if (x is not None)]
+        metricNames = [x for x in metricNames if (x is not None)]
         return dictNums, metricNames
 
-    def __buildPlotTitle(self, dictNums, metricNames):
+    def _buildPlotTitle(self, dictNums, metricNames):
         """Build a plot title from the simDataName, metadata and metric names."""
         usimDataNames = self.uniqueSimDataNames(dictNums)
-        umetadatas = self.uniqueMetaData(dictNums)
+        umetadatas = self.uniqueMetadata(dictNums)
         umetricNames = list(set(metricNames))
         # Create a plot title from the unique parts of the simData/metadata/metric names.
         plotTitle = ''
@@ -176,41 +181,49 @@ class ComparisonBinMetric(object):
     
     def plotHistograms(self, dictNums, metricNames, 
                         histBins=100, histRange=None,
-                        title=None, xLabel=None,                    
+                        title=None, xlabel=None,                    
                         legendloc='upper left', 
                         savefig=False, outDir=None, outfileRoot=None):
         """Create a plot containing the histogram visualization from all possible metrics in dictNum +
                        metricNames.
 
         dictNums (a list) identifies which binMetrics to use to create the comparison plots,
-        while metricNames identifies which metric data within each binMetric to use."""
+        while metricNames (a list) identifies which metric data within each binMetric to use."""
         if len(dictNums) != len(metricNames):
             raise Exception('dictNums must be same length as metricNames list')                                
         dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
         # Check if the binner has a histogram type visualization (or remove from list).
         for i, d in enumerate(dictNums):
-            binner = self.binmetric[d].binner
+            binner = self.binmetrics[d].binner
             if (not hasattr(binner, 'plotBinnedData')) or (not hasattr(binner, 'plotHistogram')):
                 del dictNums[i]
                 del metricNames[i]
+        if len(dictNums) == 0:
+            warnings.warn('Removed all dictNums and metricNames from list, due to binnertype, metricname absence or type of metric data.')
+            return
         if title is None:
             title = self._buildPlotTitle(dictNums, metricNames)
         # Create a plot x-axis label (metricLabel)
         if xlabel is None:
-            xlabel = ', '.join(metricNames)
+            if self.binmetrics[d].binner.binnertype == 'ONED':
+                tmpMnames = [''.join(m.split()[1:]) for m in metricNames]
+                print tmpMnames, metricNames
+                xlabel = ', '.join(list(set(tmpMnames)))
+            else:
+                xlabel = ', '.join(list(set(metricNames)))
         # Plot the data.
         fignum = None
         addLegend = False
-        for i, d, m in enumerate(zip(dictNums, metricNames)):
+        for i, (d, m) in enumerate(zip(dictNums, metricNames)):
             # If we're at the end of the list, add the legend.
             if i == len(metricNames) - 1:
                 addLegend = True
             # Build legend label for this dictNum/metricName.
-            legendLabel = (self.binmetric[d].simDataName[m] + ' ' + self.binmetric[d].metadata[m]
-                           + ' ' + self.binmetric[d]._dupeMetricName(m))    
+            legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
+                           + self.binmetrics[d]._dupeMetricName(m) + ' ' + self.binmetrics[d].binner.binnertype)    
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
-            if hasattr(self.binmetric[d].binner, 'plotBinnedData'):
-                fignum = self.binmetric[d].binner.plotBinnedData(self.binmetric[d].metricValues[m],
+            if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
+                fignum = self.binmetrics[d].binner.plotBinnedData(self.binmetrics[d].metricValues[m],
                                                                  xlabel=xlabel,
                                                                  yRange=histRange,
                                                                  title=title,
@@ -219,8 +232,8 @@ class ComparisonBinMetric(object):
                                                                  addLegend=addLegend,
                                                                  legendloc=legendloc)
             # Plot data using 'plotHistogram' if that method available (any spatial binner)
-            if hasattr(self.binmetric[d].binner, 'plotHistogram'):
-                fignum = self.binmetric[d].binner.plotHistogram(self.binmetric[d].metricValues[m],
+            if hasattr(self.binmetrics[d].binner, 'plotHistogram'):
+                fignum = self.binmetrics[d].binner.plotHistogram(self.binmetrics[d].metricValues[m],
                                                                 xlabel=xlabel,
                                                                 histRange=histRange,
                                                                 bins=histBins,
@@ -230,7 +243,7 @@ class ComparisonBinMetric(object):
                                                                 addLegend=addLegend,
                                                                 legendloc=legendloc)
         if savefig:
-            outfile = self.binmetric[d]._buildOutfileName(title,
+            outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
             plt.savefig(outfile, figformat=self.figformat)        
@@ -249,31 +262,34 @@ class ComparisonBinMetric(object):
         dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
         # Check if the binner has a histogram type visualization (or remove from list).
         for i, d in enumerate(dictNums):
-            binner = self.binmetric[d].binner
+            binner = self.binmetrics[d].binner
             if (not hasattr(binner, 'plotPowerSpectrum')):
                 del dictNums[i]
                 del metricNames[i]
+        if len(dictNums) == 0:
+            warnings.warn('Removed all dictNums and metricNames from list, due to binnertype, metricname absence or type of metric data.')
+            return
         if plotTitle is None:
             plotTitle = self._buildPlotTitle(dictNums, metricNames)
         # Plot the data.
         fignum = None
         addLegend = False
-        for i, d, m in enumerate(zip(dictNums, metricNames)):
+        for i, (d, m) in enumerate(zip(dictNums, metricNames)):
             # If we're at the end of the list, add the legend.
             if i == len(metricNames) - 1:
                 addLegend = True
             # Build legend label for this dictNum/metricName.
-            legendLabel = (self.binmetric[d].simDataName[m] + ' ' + self.binmetric[d].metadata[m]
-                           + ' ' + self.binmetric[d]._dupeMetricName(m))    
+            legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
+                           + self.binmetrics[d]._dupeMetricName(m) + ' ' + self.binmetrics[d].binner.binnertype)    
             # Plot data.
-            fignum = self.binmetric[d].binner.plotPowerSpectrum(self.binmetric[d].metricValues[m],
+            fignum = self.binmetrics[d].binner.plotPowerSpectrum(self.binmetrics[d].metricValues[m],
                                                                 maxl=maxl, removeDipole=removeDipole,
                                                                 title=title,
                                                                 fignum=fignum,
                                                                 legendLabel=legendLabel,
                                                                 addLegend=addLegend)
         if savefig:
-            outfile = self.binmetric[d]._buildOutfileName(title,
+            outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
             plt.savefig(outfile, figformat=self.figformat)        
@@ -293,12 +309,12 @@ class ComparisonBinMetric(object):
             raise Exception('Binners must be equal')
         dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
         for i, d in enumerate(dictNums):
-            binner = self.binmetric[d].binner
+            binner = self.binmetrics[d].binner
             if not hasattr(binner, 'plotSkyMap'):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) != 2:
-            raise Exception('Both dictNums/metricNames must be plottable')
+            warnings.warn('Removed one or more of the dictNums/metricNames due to metric absence, binner type or metric data type.')
         if plotTitle is None:
             plotTitle = self._buildPlotTitle(dictNums, metricNames)
         # Plot the data.
@@ -316,10 +332,10 @@ class ComparisonBinMetric(object):
             mname0 = self.binmetrics[dictNum[0]]._dupeMetricName(metricNames[0])
             mname1 = self.binmetrics[dictNum[1]]._dupeMetricName(metricNames[1])
             if (mname0 == mname1):
-                plotLabel = (mname0 + ' (' + self.binmetrics[dictNum[0]].metadata[metricNames[0]]
+                units = (mname0 + ' (' + self.binmetrics[dictNum[0]].metadata[metricNames[0]]
                             + ' - ' + self.binmetrics[dictNum[1]].metadata[metricNames[1]])                
             else:
-                plotLabel = mname0 + ' - ' + mname1
+                units = mname0 + ' - ' + mname1
         # Plot data.
         fignum = self.binmetric[dictNums[0]].binner.plotSkyMap(diff, units=units, title=title,
                                                                clims=clims, cmap=cmap, cbarFormat=cbarFormat)
