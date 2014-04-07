@@ -64,7 +64,7 @@ if readBinMetrics:
     filelist = []
     for f in filenames:
         print 'working on %s' %(f)
-        if f.startswith('opsimblitz2_1007') and ('VisitPairs' not in f):
+        if ('UNI' not in f) and ('VisitPairs' not in f):
             dictnum = cbm.readMetricData(f)
             dictnums.append(dictnum)
             dictnames.append(f)
@@ -89,4 +89,14 @@ print 'dicts with metadata', uniqueMetadata[0], '=',  cbm.findDictNums(metadata 
 print 'dicts with metric', uniqueMetrics[0], '=', cbm.findDictNums(metricNames = uniqueMetrics[0])
 
 
+print ''
 
+print 'oneD comparisons'
+oneDcomparisons = []
+oneDmetrics = []
+for d in dictnums:
+    if cbm.binmetrics[d].binner.binnertype == 'ONED':    
+        oneDcomparisons.append(d)
+        oneDmetrics.append(cbm.binmetrics[d].metricValues.keys()[0])
+for d in oneDcomparisons:
+    print cbm.binmetrics[d].simDataName.values(), cbm.binmetrics[d].metadata.values(), cbm.binmetrics[d].metricValues.keys()

@@ -167,7 +167,7 @@ if __name__ == '__main__':
     bb = getBinner(simdata, racol, deccol, args.nside, leafsize=leafsize)
     
     # Okay, go calculate the metrics.
-    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
+    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','')
     if args.dither:
         metadata = metadata + ' hexdither'
     gm = goBin(opsimrun, metadata, simdata, bb, metricList)

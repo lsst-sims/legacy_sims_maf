@@ -21,16 +21,6 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-def getDbAddress():
-    # Get the database connection information from the dbLogin file in the user's home directory.
-    home_path = os.getenv("HOME")
-    f=open("%s/dbLogin"%(home_path),"r")
-    authDictionary = {}
-    for l in f:
-        els = l.rstrip().split()
-        authDictionary[els[0]] = els[1]
-    return authDictionary
-
 def getMetrics(seeingcol, docomplex=True):
     t = time.time()
     # Set up metrics.
@@ -42,9 +32,8 @@ def getMetrics(seeingcol, docomplex=True):
     metricList.append(metrics.MeanMetric('5sigma_modified'))
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
     metricList.append(metrics.Coaddm5Metric('5sigma_modified'))    
-    metricList.append(metrics.CountMetric('expMJD', plotParams={'ylog':True}))
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'ylog':False, 'title':'Number of visits',
+                                          plotParams={'ylog':False, '_units':'Number of visits',
                                                       'plotMin':0, 'plotMax':300}))
     if docomplex:
         # More complex metrics.    
@@ -149,8 +138,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Get db connection info.
-    authDictionary = getDbAddress()
-    dbAddress = authDictionary[args.connectionName]
+    dbAddress = getData.getDbAddress(connectionName = args.connectionName)
     
     dbTable = args.simDataTable
     opsimrun = args.simDataTable.replace('output_', '')
@@ -196,7 +184,7 @@ if __name__ == '__main__':
     bb = getBinner(simdata, fieldDataInfo)
     
     # Okay, go calculate the metrics.
-    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
+    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"', '')
     gm = goBin(opsimrun, metadata, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.

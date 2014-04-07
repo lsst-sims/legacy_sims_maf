@@ -116,5 +116,5 @@ if __name__ == '__main__':
     binnerList = getBinner(simdata, metricList)
     
     # Okay, go calculate the metrics.
-    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
+    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','')
     gm = goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList)

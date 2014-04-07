@@ -73,7 +73,7 @@ class UniBinner(BaseBinner):
         hdulist.close()
         return outfilename
 
-    def readMetricData(self, infilename):
+    def readMetricData(self, infilename, verbose=False):
         """Read metric values back in and restore the binner"""
 
         #restore the bins first
