@@ -127,9 +127,9 @@ class OneDBinner(BaseBinner):
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
         if yRange is not None:
-            plt.ylim([yRange[0], yRange[1])
+            plt.ylim(yRange[0], yRange[1])
         if histRange is not None:
-            plt.xlim([histRange[0], histRange[1])
+            plt.xlim(histRange[0], histRange[1])
         if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):

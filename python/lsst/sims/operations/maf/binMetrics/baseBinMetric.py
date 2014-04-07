@@ -345,36 +345,36 @@ class BaseBinMetric(object):
             pParams = None
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
-        if 'title' in pParams:
+        if 'title' in pParams: # title used for all plot titles
             title = pParams['title']
         else:
             title = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-            title += ' : ' + mname
-        if 'xlabel' in pParams:
+            title += ': ' + mname
+        if 'xlabel' in pParams:  # xlabel used for histograms
             xlabel = pParams['xlabel']
         elif '_unit' in pParams:
-            xlabel = mname+'('+pParams['_unit']+')'
+            xlabel = mname + ' (' + pParams['_unit'] + ')'
         else:
-            xlabel = mname
-        if 'ylabel' in pParams:
+            xlabel = mname 
+        if 'ylabel' in pParams:  # ylabel used for histograms
             ylabel=pParams['ylabel']
         else:
             ylabel=None
-        if 'units' in pParams:
+        if 'units' in pParams: # units used for colorbar for skymap plots (this comes from metric setup)
             units = pParams['units']
-        elif '_unit' in pParams:
-            units = mname+'('+pParams['_unit']+')'
+        elif '_unit' in pParams:  # these are set from metric column units automatically
+            units = mname+' ('+ pParams['_unit'] + ')'
         else:
             units = mname
-        if 'legendLabel' in pParams:
+        if 'legendLabel' in pParams:  # passed to plotting routines, but typically addLegend is False (so remove?)
             legendLabel =  pParams['legendLabel']
         else:
             legendLabel = None
-        if 'cmap' in pParams:
+        if 'cmap' in pParams:  # set cmap for skymap plots
             cmap = getattr(cm, pParams['cmap'])
         else:
             cmap = None
-        if 'cbarFormat' in pParams:
+        if 'cbarFormat' in pParams:  # color bar format for skymap plots
             cbarFormat = pParams['cbarFormat']
         else:
             cbarFormat = None
@@ -410,7 +410,7 @@ class BaseBinMetric(object):
         # Okay, now that's all set .. go plot some data! 
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
-                                                    xlabel=xlabel, title=title, 
+                                                    xlabel=xlabel, ylabel=ylabel, title=title, 
                                                     ylog=ylog,
                                                     legendLabel=legendLabel,
                                                     yRange=[plotMin, plotMax])
@@ -422,7 +422,7 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             histfignum = self.binner.plotHistogram(self.metricValues[metricName], 
-                                                   xlabel=xlabel, title=title, 
+                                                   xlabel=xlabel, ylabel=ylabel, title=title, 
                                                    histRange=histRange, ylog=ylog)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -431,7 +431,8 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-            # Make sure the color map leaves background white in healpy plots.  Need to debug this some more I think...
+            # Make sure the color map leaves background white in healpy plots.
+            # This may need some more debugging?
             if cmap:
                 cmap0 = cmap
                 cmap0.set_under('w')
