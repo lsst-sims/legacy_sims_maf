@@ -87,7 +87,7 @@ class OneDBinner(BaseBinner):
                        legendLabel=None, addLegend=False,
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
-                       ylabel=None, xlabel=None, plotMin=None, plotMax=None, histRange=None):
+                       ylabel=None, xlabel=None, yRange=None, histRange=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -101,9 +101,8 @@ class OneDBinner(BaseBinner):
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
         ylog = make the y-axis log (default False)
-        plotMin = min for y-axis
-        plotMax = max for y-axis
-        histRange = ignored
+        yRange = min/max for y-axis 
+        histRange = min/max for x-axis (typically set by bin values though)
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
@@ -127,8 +126,10 @@ class OneDBinner(BaseBinner):
             if units != None:
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
-        if plotMin:
-            plt.ylim([plotMin,plotMax])
+        if yRange is not None:
+            plt.ylim([yRange[0], yRange[1])
+        if histRange is not None:
+            plt.xlim([histRange[0], histRange[1])
         if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):

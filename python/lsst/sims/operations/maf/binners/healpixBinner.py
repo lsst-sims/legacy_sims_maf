@@ -155,7 +155,9 @@ class HealpixBinner(BaseSpatialBinner):
         norm = None
         if ylog:
             norm = 'log'
-        if clims!=None:
+        if cmap is None:
+            cmap = cm.jet
+        if clims is not None:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap,
                         norm=norm)

@@ -157,15 +157,18 @@ class BaseBinMetric(object):
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
-            if self.binner is None:            
+            if self.binner is None:
+                binnertype = None
                 hdulist = pyf.open(f)
                 header = hdulist[0].header
-                if (header['NAXIS'] == 0):
+                if header['NAXIS'] == 0:
                     header = hdulist[1].header
+                    if header['binnertype'] == 'BASE':
+                        header = hdulist[0].header
                 binnertype = header['binnertype']
                 hdulist.close()
                 #  Instantiate a binner of the right type, and use its native read methods.
-                if binnertype == 'HEALPIX':
+                if (binnertype == 'HEALPIX'):
                     self.binner = binnertypeDict[binnertype](nside=header['NSIDE'], 
                                                              verbose=verbose)
                 else:
@@ -375,23 +378,22 @@ class BaseBinMetric(object):
             cbarFormat = pParams['cbarFormat']
         else:
             cbarFormat = None
-        # Set up for plot limits (used directly for clims for skyMaps, indirectly for histRange).
+        # Set up for plot data limits (used for clims for skyMaps and histRange for histograms).
         plotMin = self.metricValues[metricName].compressed().min()
         plotMax = self.metricValues[metricName].compressed().max()
-        # If percentile clipping is set, use it. 
+        # If percentile clipping is set, use it. (override plotMin/Max above).
         if 'percentileClip' in pParams:
             plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
                                               percentile=pParams['percentileClip'])
-        # Use plot limits if they're set (min/max overrides percentile clipping).
+        # But then if plotting min/max values are set in plotParams, override percentile clipping.
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
-        # Set 'histRange' parameter from pParams, if available.
+        # Set 'histRange' parameter from pParams, if available (allows user to set histogram x range
+        #  in histogram separately from clims for skymap)
         if 'histMax' in pParams:
             histRange = [pParams['histMin'], pParams['histMax']]
-        #else:
-        #    histRange = None
         else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
             histRange = [plotMin, plotMax]
         # Determine if should data using log scale, using pParams if available
@@ -409,8 +411,9 @@ class BaseBinMetric(object):
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, title=title, 
-                                                    histRange=histRange, ylog=ylog,
-                                                    legendLabel=legendLabel, plotMin=plotMin,plotMax=plotMax)
+                                                    ylog=ylog,
+                                                    legendLabel=legendLabel,
+                                                    yRange=[plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,

@@ -30,16 +30,16 @@ class ComparisonBinMetric(object):
         """Read metric data values and binners from a (single) filename
 
         Reads data one file at a time so that it can return the dict # to the user."""
-        dictnum = len(self.bbmDict) 
+        dictnum = len(self.binmetrics) 
         bbm = BaseBinMetric(figformat=self.figformat)
         # Read the metric data value and binner into a baseBinMetric.
         bbm.readMetricValues(filename)
         self.binmetrics[dictnum] = bbm
         self.bbmNames[dictnum] = filename
         if self.verbose:
-            print '%d (%s) Read metrics %s from %s with binner %s' %(dictnum, self.bbmNames[dictnum],
-                                                                    bbm.metricNames,  filename, 
-                                                                    bbm.binner.binnertype)
+            print '%d (name %s) Read metrics %s from %s with binner %s' %(dictnum, self.bbmNames[dictnum],
+                                                                        bbm.metricNames,  filename, 
+                                                                        bbm.binner.binnertype)
         return dictnum
 
     def setMetricData(self, bbm, nametag=None):
@@ -47,7 +47,7 @@ class ComparisonBinMetric(object):
 
         Run metrics in baseBinMetric and pass the whole thing directly here, if it's still in memory.
         Returns dict # to the user."""
-        dictnum = len(self.bbmDict)
+        dictnum = len(self.binmetrics)
         self.binmetrics[dictnum] = bbm
         self.bbmNames[dictnum] = nametag    
         if self.verbose:
@@ -107,62 +107,44 @@ class ComparisonBinMetric(object):
         """Return metric names associated with a particular baseBinMetric identified by 'dictNum'."""
         return self.binmetrics[dictNum].metricValues.keys()
                             
-    def findDictNums(self, simDataName=None, metricNames=None, metadata=None):
+    def findDictNums(self, simDataName=None, metricNames=None, metadata=None, moreverbose=False):
         """Identify dictionary keys of baseBinMetrics, potentially restricted by
-        simDataName/metricName/metadata (which can be lists). WORK IN PROGRESS."""
-        if simDataName is not None:
-            if not hasattr(simDataName, '__iter__'):
-                simDataName = [simDataName, ]
-        else:
-            simDataName = []
-        if metricNames != None:
-            if not hasattr(metricNames, '__iter__'):
-                metricNames = [metricNames, ]
-        else:
-            metricNames = []
-        if metadata != None:
-            if not hasattr(metadata, '__iter__'):
-                metadata = [metadata, ]
-        else:
-            metadata = []
-        dictlist = self.bbmList
-        for d in self.bbmList:
-            print d, self.bbmDict[d].simDataName, s
+        simDataName/metricName/metadata (which can be lists)."""
+        def makeList(name):
+            if name is not None:
+                if not hasattr(name, '__iter__'):
+                    name = [name,]
+            else:
+                name = []
+            return name
+        simDataName = makeList(simDataName)
+        metricNames = makeList(metricNames)
+        metadata = makeList(metadata)
+        dictlist = self.binmetrics.keys()
+        if moreverbose:
+            print ''
+        for d in self.binmetrics:
             for s in simDataName:
-                if s not in self.bbmDict[d].simDataName.values():
-                    print 'removing %d for s' %(d, s)
+                if s not in self.binmetrics[d].simDataName.values():
+                    if moreverbose:
+                        print 'removing %d for %s (not %s)' %(d, str(self.binmetrics[d].simDataName.values()), s)
                     dictlist.remove(d)
             for m in metadata:
-                if m not in self.bbmDict[d].metadata.values():
-                    print 'removing %d for m' %(d, m)
+                if m not in self.binmetrics[d].metadata.values():
+                    if moreverbose:
+                        print 'removing %d for %s not %s' %(d, str(self.binmetrics[d].metadata.values()), m)
                     dictlist.remove(d)
             for mname in metricNames:
-                if mname not in self.bbmMetricNames[d]:
-                    print 'removing %d, for %s' %(d, mname)
+                if mname not in self.binmetrics[d].metricValues:
+                    if moreverbose:
+                        print 'removing %d, for %s not %s' %(d, str(self.binmetrics[d].metricValues.keys()), mname)
                     dictlist.remove(d)
-                    #for d in dictlist:
-                    #           print self.bbmFiles[d], self.bbmMetricNames[d]
         return dictlist
                         
-    # Maybe go through and find sets of metrics to compare? 
-    # Otherwise, how do we know which ones to compare, in the next step? 
-    # Also, have to do some work to make sure that binners for things to compare are compatible
-    
-    def plotComparisons(self, dictNums, metricNames, 
-                        histBins=100, histRange=None, maxl=500.,
-                        plotTitle=None, legendloc='upper left',
-                        savefig=False, outDir=None, outfileRoot=None):
-        """Create comparison plots.
-
-        dictNums (a list) identifies which binMetrics to use to create the comparison plots,
-        while metricNames identifies which metric data within each binMetric to use.
-
-        Will create one histogram or binned data plot with all values from metricNameList,
-        similarly for power spectra if applicable.
-        Will create skymap difference plots if only two metrics: skymap is intersection of 2 areas."""
-        if len(dictNums) != len(metricNames):
-            raise Exception('dictNums must be same length as metricNames list')                                
-        # Check if 'metricName' is plottable data.
+    def _checkPlottable(self, dictNums, metricNames):
+        """Given dictNums and metricNames lists, checks whether the values are plottable and
+        returns updated lists of dictNums and metricNames containing only plottable values."""
+        # Check if 'metricName' refers to plottable data (or remove from list).
         for i, d, m in enumerate(zip(dictNums, metricNames)):
             # Remove if an 'object' type. 
             if self.binmetrics[d].metricValues[m].dtype == 'object':
@@ -172,113 +154,178 @@ class ComparisonBinMetric(object):
             if len(self.metricValues[m].dtype) > 0:
                 del dictNums[i]
                 del metricNames[i]
-        # Check that binners are compatible (for plotting)
+        return dictNums, metricNames
 
-        
-        # If there is only one metric remaining, just plot.
-        if len(metricNames) < 2:
-            print 'Only one metric left in metricNameList - %s - so defaulting to plotMetric.' \
-              %(metricNames)
-            self.binmetrics[d].plotMetric(metricNames[0], savefig=savefig,
-                                          outDir=outDir, outfileRoot=outfileRoot)
-            return
-        # Else build plot titles. 
-        simDataNames = self.uniqueSimDataNames(dictNums)
-        metadatas = self.uniqueMetaData(dictNums)
-        metricNames = self.uniqueMetrics(dictNums)
+    def __buildPlotTitle(self, dictNums, metricNames):
+        """Build a plot title from the simDataName, metadata and metric names."""
+        usimDataNames = self.uniqueSimDataNames(dictNums)
+        umetadatas = self.uniqueMetaData(dictNums)
+        umetricNames = list(set(metricNames))
         # Create a plot title from the unique parts of the simData/metadata/metric names.
-        if plotTitle is None:
-            plotTitle = ''
-            if len(simDataNames) == 1:
-                plotTitle += ' ' + list(simDataNames)[0]
-            if len(metadatas) == 1:
-                plotTitle += ' ' + list(metadatas)[0]
-            if len(metricNames) == 1:
-                plotTitle += ' ' + list(metricNames)[0]
-            if plotTitle == '':
-                # If there were more than one of everything above, join metricNames with commas. 
-                plotTitle = ', '.join(metricNames)
+        plotTitle = ''
+        if len(usimDataNames) == 1:
+            plotTitle += ' ' + list(usimDataNames)[0]
+        if len(umetadatas) == 1:
+            plotTitle += ' ' + list(umetadatas)[0]
+        if len(umetricNames) == 1:
+            plotTitle += ' ' + list(umetricNames)[0]
+        if plotTitle == '':
+            # If there were more than one of everything above, join metricNames with commas. 
+            plotTitle = ', '.join(umetricNames)
+        return plotTitle
+    
+    def plotHistograms(self, dictNums, metricNames, 
+                        histBins=100, histRange=None,
+                        title=None, xLabel=None,                    
+                        legendloc='upper left', 
+                        savefig=False, outDir=None, outfileRoot=None):
+        """Create a plot containing the histogram visualization from all possible metrics in dictNum +
+                       metricNames.
+
+        dictNums (a list) identifies which binMetrics to use to create the comparison plots,
+        while metricNames identifies which metric data within each binMetric to use."""
+        if len(dictNums) != len(metricNames):
+            raise Exception('dictNums must be same length as metricNames list')                                
+        dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
+        # Check if the binner has a histogram type visualization (or remove from list).
+        for i, d in enumerate(dictNums):
+            binner = self.binmetric[d].binner
+            if (not hasattr(binner, 'plotBinnedData')) or (not hasattr(binner, 'plotHistogram')):
+                del dictNums[i]
+                del metricNames[i]
+        if title is None:
+            title = self._buildPlotTitle(dictNums, metricNames)
         # Create a plot x-axis label (metricLabel)
-        plotLabel = ', '.join(metricNames)
+        if xlabel is None:
+            xlabel = ', '.join(metricNames)
+        # Plot the data.
+        fignum = None
+        addLegend = False
+        for i, d, m in enumerate(zip(dictNums, metricNames)):
+            # If we're at the end of the list, add the legend.
+            if i == len(metricNames) - 1:
+                addLegend = True
+            # Build legend label for this dictNum/metricName.
+            legendLabel = (self.binmetric[d].simDataName[m] + ' ' + self.binmetric[d].metadata[m]
+                           + ' ' + self.binmetric[d]._dupeMetricName(m))    
+            # Plot data using 'plotBinnedData' if that method available (oneDBinner)
+            if hasattr(self.binmetric[d].binner, 'plotBinnedData'):
+                fignum = self.binmetric[d].binner.plotBinnedData(self.binmetric[d].metricValues[m],
+                                                                 xlabel=xlabel,
+                                                                 yRange=histRange,
+                                                                 title=title,
+                                                                 fignum=fignum, alpha=0.3,
+                                                                 legendLabel=legendLabel,
+                                                                 addLegend=addLegend,
+                                                                 legendloc=legendloc)
+            # Plot data using 'plotHistogram' if that method available (any spatial binner)
+            if hasattr(self.binmetric[d].binner, 'plotHistogram'):
+                fignum = self.binmetric[d].binner.plotHistogram(self.binmetric[d].metricValues[m],
+                                                                xlabel=xlabel,
+                                                                histRange=histRange,
+                                                                bins=histBins,
+                                                                title=title,
+                                                                fignum=fignum,
+                                                                legendLabel=legendLabel,
+                                                                addLegend=addLegend,
+                                                                legendloc=legendloc)
+        if savefig:
+            outfile = self.binmetric[d]._buildOutfileName(title,
+                                                          outDir=outDir, outfileRoot=outfileRoot,
+                                                          plotType='hist')
+            plt.savefig(outfile, figformat=self.figformat)        
+        return fignum
 
+    def plotPowerSpectra(self, dictNums, metricNames, maxl=500., removeDipole=True,
+                         title=None, legendloc='upper left',
+                         savefig=False, outDir=None, outfileRoot=None):
+        """Create a plot containing the power spectrum visualization from all possible metrics in dictNum +
+                       metricNames.
 
+        dictNums (a list) identifies which binMetrics to use to create the comparison plots,
+        while metricNames identifies which metric data within each binMetric to use."""
+        if len(dictNums) != len(metricNames):
+            raise Exception('dictNums must be same length as metricNames list')                                
+        dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
+        # Check if the binner has a histogram type visualization (or remove from list).
+        for i, d in enumerate(dictNums):
+            binner = self.binmetric[d].binner
+            if (not hasattr(binner, 'plotPowerSpectrum')):
+                del dictNums[i]
+                del metricNames[i]
+        if plotTitle is None:
+            plotTitle = self._buildPlotTitle(dictNums, metricNames)
+        # Plot the data.
+        fignum = None
+        addLegend = False
+        for i, d, m in enumerate(zip(dictNums, metricNames)):
+            # If we're at the end of the list, add the legend.
+            if i == len(metricNames) - 1:
+                addLegend = True
+            # Build legend label for this dictNum/metricName.
+            legendLabel = (self.binmetric[d].simDataName[m] + ' ' + self.binmetric[d].metadata[m]
+                           + ' ' + self.binmetric[d]._dupeMetricName(m))    
+            # Plot data.
+            fignum = self.binmetric[d].binner.plotPowerSpectrum(self.binmetric[d].metricValues[m],
+                                                                maxl=maxl, removeDipole=removeDipole,
+                                                                title=title,
+                                                                fignum=fignum,
+                                                                legendLabel=legendLabel,
+                                                                addLegend=addLegend)
+        if savefig:
+            outfile = self.binmetric[d]._buildOutfileName(title,
+                                                          outDir=outDir, outfileRoot=outfileRoot,
+                                                          plotType='hist')
+            plt.savefig(outfile, figformat=self.figformat)        
+        return fignum
+    
 
-        # Plot the binned data if applicable. 
-        if hasattr(self.binner, 'plotBinnedData'):
-            histfignum = None
-            addLegend = False
-            for i, m in enumerate(metricNameList):
-                if i == (len(metricNameList)-1):
-                    addLegend = True
-                legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
-                    + ' ' + self._dupeMetricName(m)
-                histfignum = self.binner.plotBinnedData(self.metricValues[m].filled(0), 
-                                                        plotLabel, title=plotTitle, 
-                                                        fignum=histfignum,
-                                                        alpha=0.3,
-                                                        legendLabel=legendLabel, addLegend=addLegend, 
-                                                        legendloc=legendloc)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='hist')
-                plt.savefig(outfile, figformat=self.figformat)        
-        # Plot the histogram if applicable.
-        if hasattr(self.binner, 'plotHistogram'):
-            histfignum = None
-            addLegend = False
-            for i,m in enumerate(metricNameList):
-                if i == (len(metricNameList)-1):
-                    addLegend = True
-                legendLabel = self.simDataName[m] + ' ' + self.metadata[m] \
-                  + ' ' + self._dupeMetricName(m)
-                histfignum = self.binner.plotHistogram(self.metricValues[m].compressed(),
-                                                     metricLabel=plotLabel,
-                                                     fignum = histfignum, addLegend=addLegend, 
-                                                     legendloc=legendloc,
-                                                     bins = histBins, histRange = histRange,
-                                                     legendLabel=legendLabel, title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='hist')
-                plt.savefig(outfile, figformat=self.figformat)        
-        # Plot the power spectrum, if applicable.
-        if hasattr(self.binner, 'plotPowerSpectrum'):
-            psfignum = None
-            addLegend = False
-            for i,m in enumerate(metricNameList):
-                if i == (len(metricNameList)-1):
-                    addLegend = True
-                legendLabel = self.simDataName[m] + ' '+  self.metadata[m] \
-                  + ' ' + self._dupeMetricName(m)
-                psfignum = self.binner.plotPowerSpectrum(self.metricValues[m].filled(),
-                                                         addLegend=addLegend,
-                                                         fignum = psfignum, maxl = maxl, 
-                                                         legendLabel=legendLabel, title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='ps')
-                plt.savefig(outfile, figformat=self.figformat)
-        # Plot the sky map, if only two metricNames.
-        if len(metricNameList) == 2:
-            # Mask areas where either metric has bad data values, take difference elsewhere.
-            mask = self.metricValues[metricNameList[0]].mask
-            mask = np.where(self.metricValues[metricNameList[1]].mask == True, True, mask)
-            diff = ma.MaskedArray(data = (self.metricValues[metricNameList[0]] - 
-                                          self.metricValues[metricNameList[1]]), 
-                                          mask=mask,
-                                          filled_value = self.binner.badval)            
-            # Make color bar label.
-            if self._dupeMetricName(metricNameList[0]) == self._dupeMetricName(metricNameList[1]):
-                plotLabel = 'Delta ' + self._dupeMetricName(metricNameList[0])
-                plotLabel += ' (' + self.metadata[metricNameList[0]] + ' - ' + self.metadata[metricNameList[1]] + ')'
+    def plotSkyMaps(self, dictNums, metricNames, units=None, title=None,
+                    clims=None, cmap=None, cbarFormat='%.2g', 
+                    savefig=False, outDir=None, outfileRoot=None):
+        """Create a skymap plot of the difference between two dictNum/metricNames.
+
+        dictNums (a list) identifies which binMetrics to use to create the comparison plots,
+        while metricNames identifies which metric data within each binMetric to use."""
+        if (len(dictNums) != 2) & (len(metricName) != 2):
+            raise Exception('Pass only two values for dictNums/metricNames to create skymap difference.')
+        if (self.binmetrics[dictNums[0]].binner) != (self.binmetrics[dictNums[1]].binner):
+            raise Exception('Binners must be equal')
+        dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
+        for i, d in enumerate(dictNums):
+            binner = self.binmetric[d].binner
+            if not hasattr(binner, 'plotSkyMap'):
+                del dictNums[i]
+                del metricNames[i]
+        if len(dictNums) != 2:
+            raise Exception('Both dictNums/metricNames must be plottable')
+        if plotTitle is None:
+            plotTitle = self._buildPlotTitle(dictNums, metricNames)
+        # Plot the data.
+        fignum = None
+        addLegend = False
+        # Mask areas where either metric has bad data values, take difference elsewhere.
+        mask = self.binmetrics[dictNums[0]].metricValues[metricNames[0]].mask
+        mask = np.where(self.binmetrics[dictNums[1]].metricValues[metricNames[1]].mask == True, True, mask)
+        diff = ma.MaskedArray(data = (self.binmetrics[dictNums[0]].metricValues[metricNames[0]] -
+                                      self.binmetrics[dictNums[1]].metricValues[metricNames[1]]),
+                                      mask=mask,
+                                      filled_value = self.binmetrics[dictNum[0]].binner.badval)            
+        # Make color bar label.
+        if units is None:
+            mname0 = self.binmetrics[dictNum[0]]._dupeMetricName(metricNames[0])
+            mname1 = self.binmetrics[dictNum[1]]._dupeMetricName(metricNames[1])
+            if (mname0 == mname1):
+                plotLabel = (mname0 + ' (' + self.binmetrics[dictNum[0]].metadata[metricNames[0]]
+                            + ' - ' + self.binmetrics[dictNum[1]].metadata[metricNames[1]])                
             else:
-                plotLabel = metricNameList[0] + ' - ' + metricNameList[1]
-            skyfignum = self.binner.plotSkyMap(diff, plotLabel, title=plotTitle)
-            if savefig:
-                outfile = self._buildOutfileName(plotTitle, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='sky')
-                plt.savefig(outfile, figformat=self.figformat)
+                plotLabel = mname0 + ' - ' + mname1
+        # Plot data.
+        fignum = self.binmetric[dictNums[0]].binner.plotSkyMap(diff, units=units, title=title,
+                                                               clims=clims, cmap=cmap, cbarFormat=cbarFormat)
+        if savefig:
+            outfile = self.binmetric[dictNums[0]]._buildOutfileName(title, 
+                                                                    outDir=outDir, outfileRoot=outfileRoot, 
+                                                                    plotType='sky')
+            plt.savefig(outfile, figformat=self.figformat)
+        return fignum
