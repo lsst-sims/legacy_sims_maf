@@ -291,7 +291,7 @@ class BaseBinMetric(object):
         outDir = directory to write output data (default '.').
        """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.binner.writeData(outfile+'.fits', self.metricValues[metricName],
+        self.binner.writeData(outfile+'.npz', self.metricValues[metricName],
                                     metricName = self._dupeMetricName(metricName),
                                     simDataName = self.simDataName[metricName],
                                     metadata = self.metadata[metricName],

@@ -41,7 +41,8 @@ class HealpixBinner(BaseSpatialBinner):
         # set variables so binner can be re-constructed
         self.binnerName = 'HealpixBinner'
         self.binner_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
-    
+        self.bins=np.array([0.])
+        
     def __iter__(self):
         """Iterate over the binner."""
         self.ipix = 0

@@ -32,7 +32,7 @@ class BaseSpatialBinner(BaseBinner):
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1,spatialkey2]
         self.binner_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
-        
+        self.bins=np.array([0.])
 
     def setupBinner(self, simData, leafsize=100, radius=1.8):
         """Use simData['spatialkey1'] and simData['spatialkey2']

@@ -52,7 +52,7 @@ class HourglassBinner(UniBinner):
         fig=plt.gcf()
         return fig.number
     
-    def writeData(self, outfilename, metricValues, metricName='', comment='', metadata=''):
+    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', comment='', metadata=''):
         pass
     def readMetricData(self, infilename):
         pass

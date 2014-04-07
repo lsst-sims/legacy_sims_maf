@@ -5,16 +5,16 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import warnings
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
+#try:
+#    import astropy.io.fits as pyf
+#except ImportError:
+#    import pyfits as pyf
 
-import lsst.sims.operations.maf.binners as binners
+# import lsst.sims.operations.maf.binners as binners
     
 class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""
-
+    
     def __init__(self, verbose=True, *args, **kwargs):
         """Instantiate the base binner object."""
         self.verbose = verbose
@@ -73,20 +73,24 @@ class BaseBinner(object):
         binnerName=self.binnerName
         
         binner_init = self.binner_init
-        binner_setup = self.binner_setup
 
         binner_bins = self.bins
-        
-        np.savez(outfilename, header=header, metricValues=metricValues, binner_init=binner_init, binner_setup=binner_setup, binnerName=binnerName, binner_bins=binner_bins)
+        np.savez(outfilename, header=header, metricValues=metricValues.data, mask=metricValues.mask, fill=metricValues.fill_value, binner_init=binner_init, binnerName=binnerName, binner_bins=binner_bins)
       
     def readData(self, infilename):
+        import lsst.sims.operations.maf.binners as binners
         restored = np.load(infilename)
-        metricValues, header, binner_init, binner_setup, binner_bins, binnerName = restored['metricValues'], restored['header'][()], restored['binner_init'][()], restored['binner_setup'][()], restored[binner_bins], restored['binnerName'][()]
+        metricValues, mask, fill, header, binner_init, binner_bins, binnerName = restored['metricValues'],restored['mask'], restored['fill'], restored['header'][()], restored['binner_init'][()], restored['binner_bins'], restored['binnerName'][()]
+        metricValues = ma.MaskedArray(data=metricValues, mask=mask, fill_value=fill)
         binner = getattr(binners,binnerName)(**binner_init)
         binner.bins = binner_bins
         return metricValues, binner, header
 
 
+
+
+
+    
     def writeMetricDataGeneric(self, outfilename, metricValues,
                         comment='', metricName='',
                         simDataName='', metadata='', 

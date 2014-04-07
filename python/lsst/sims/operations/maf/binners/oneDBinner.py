@@ -20,6 +20,7 @@ class OneDBinner(BaseBinner):
         self.nbins = None
         self.sliceDataColName = sliceDataColName
         self.columnsNeeded = [sliceDataColName]
+        self.binnerName='OneDBinner'
 
     def setupBinner(self, simData, bins=None, nbins=100, binMin=None, binMax=None): 
         """Set up bins in binner.        
