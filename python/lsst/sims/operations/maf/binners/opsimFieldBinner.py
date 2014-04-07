@@ -44,6 +44,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.columnsNeeded = [simDataFieldIdColName,]
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
         self.binnerName='OpsimFieldBinner'
+        self.binner_init={'simDataFieldIdColName':simDataFieldIdColName,'fieldIdColName':fieldIdColName, 'fieldRaColName':fieldRaColName,'fieldDecColName':fieldDecColName}
         
 
     def setupBinner(self, simData, fieldData):
@@ -97,55 +98,6 @@ class OpsimFieldBinner(BaseSpatialBinner):
         i = np.where(binpoint[0] == self.fieldId)
         return self.simIdxs[self.left[i]:self.right[i]]   
 
-    def writeMetricData(self, outfilename, metricValues,
-                        comment='', metricName='',
-                        simDataName='', metadata='', 
-                        int_badval=-666, badval=-666., dt=np.dtype('float64')):
-        """Write metric data and bin data in a fits file """
-        header_dict = dict(comment=comment, metricName=metricName,
-                           simDataName=simDataName,
-                           metadata=metadata, binnertype=self.binnertype,
-                           dt=dt.name, badval=badval, int_badval=int_badval)
-        base = BaseBinner()
-        base.writeMetricDataGeneric(outfilename=outfilename,
-                        metricValues=metricValues,
-                        comment=comment, metricName=metricName,
-                        simDataName=simDataName, metadata=metadata, 
-                        int_badval=int_badval, badval=badval, dt=dt)
-        #update the header
-        hdulist = pyf.open(outfilename, mode='update')
-        with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                for key in header_dict.keys():
-                    hdulist[0].header[key] = header_dict[key]
-        hdulist.close()
-
-        #append the bins
-        hdulist = pyf.open(outfilename, mode='append')
-        fieldHDU = pyf.PrimaryHDU(data=self.fieldId)
-        raHDU = pyf.PrimaryHDU(data=self.ra)
-        decHDU =  pyf.PrimaryHDU(data=self.dec)
-        hdulist.append(fieldHDU)
-        hdulist.append(raHDU)
-        hdulist.append(decHDU)
-        hdulist.flush()
-        hdulist.close()
-        return outfilename
-
-    def readMetricData(self, infilename, verbose=False):
-        """Read metric values back in and restore the binner"""
-
-        #restore the bins first
-        hdulist = pyf.open(infilename)
-        if hdulist[0].header['binnertype'] != self.binnertype:
-             raise Exception('Binnertypes do not match.')
-        self.fieldId = hdulist[1].data.copy()
-        self.ra = hdulist[2].data.copy()
-        self.dec = hdulist[3].data.copy() 
-        self.nbins = len(self.ra)       
-        base = BaseBinner()
-        metricValues, header = base.readMetricDataGeneric(infilename)                
-        return metricValues, self, header
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of fields',

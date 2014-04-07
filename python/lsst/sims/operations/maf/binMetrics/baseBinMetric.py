@@ -168,8 +168,8 @@ class BaseBinMetric(object):
             self.metricValues[metricName] = metricValues
             self.metricValues[metricName].fill_value = self.binner.badval
             self.simDataName[metricName] = header['simDataName']
-            self.metadata[metricName] = header['metadata'.upper()]
-            self.comment[metricName] = header['comment'.upper()]
+            self.metadata[metricName] = header['metadata']
+            self.comment[metricName] = header['comment']
             self.plotParams[metricName] = {}
             if 'plotParams' in header:
                 for pp in header['plotParams']:
