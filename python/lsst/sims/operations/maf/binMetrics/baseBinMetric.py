@@ -157,15 +157,18 @@ class BaseBinMetric(object):
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
-            if self.binner is None:            
+            if self.binner is None:
+                binnertype = None
                 hdulist = pyf.open(f)
                 header = hdulist[0].header
-                if (header['NAXIS'] == 0):
+                if header['NAXIS'] == 0:
                     header = hdulist[1].header
+                    if header['binnertype'] == 'BASE':
+                        header = hdulist[0].header
                 binnertype = header['binnertype']
                 hdulist.close()
                 #  Instantiate a binner of the right type, and use its native read methods.
-                if binnertype == 'HEALPIX':
+                if (binnertype == 'HEALPIX'):
                     self.binner = binnertypeDict[binnertype](nside=header['NSIDE'], 
                                                              verbose=verbose)
                 else:
@@ -342,56 +345,55 @@ class BaseBinMetric(object):
             pParams = None
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
-        if 'title' in pParams:
+        if 'title' in pParams: # title used for all plot titles
             title = pParams['title']
         else:
             title = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-            title += ' : ' + mname
-        if 'xlabel' in pParams:
+            title += ': ' + mname
+        if 'xlabel' in pParams:  # xlabel used for histograms
             xlabel = pParams['xlabel']
         elif '_unit' in pParams:
-            xlabel = mname+'('+pParams['_unit']+')'
+            xlabel = mname + ' (' + pParams['_unit'] + ')'
         else:
-            xlabel = mname
-        if 'ylabel' in pParams:
+            xlabel = mname 
+        if 'ylabel' in pParams:  # ylabel used for histograms
             ylabel=pParams['ylabel']
         else:
             ylabel=None
-        if 'units' in pParams:
+        if 'units' in pParams: # units used for colorbar for skymap plots (this comes from metric setup)
             units = pParams['units']
-        elif '_unit' in pParams:
-            units = mname+'('+pParams['_unit']+')'
+        elif '_unit' in pParams:  # these are set from metric column units automatically
+            units = mname+' ('+ pParams['_unit'] + ')'
         else:
             units = mname
-        if 'legendLabel' in pParams:
+        if 'legendLabel' in pParams:  # passed to plotting routines, but typically addLegend is False (so remove?)
             legendLabel =  pParams['legendLabel']
         else:
             legendLabel = None
-        if 'cmap' in pParams:
+        if 'cmap' in pParams:  # set cmap for skymap plots
             cmap = getattr(cm, pParams['cmap'])
         else:
             cmap = None
-        if 'cbarFormat' in pParams:
+        if 'cbarFormat' in pParams:  # color bar format for skymap plots
             cbarFormat = pParams['cbarFormat']
         else:
             cbarFormat = None
-        # Set up for plot limits (used directly for clims for skyMaps, indirectly for histRange).
+        # Set up for plot data limits (used for clims for skyMaps and histRange for histograms).
         plotMin = self.metricValues[metricName].compressed().min()
         plotMax = self.metricValues[metricName].compressed().max()
-        # If percentile clipping is set, use it. 
+        # If percentile clipping is set, use it. (override plotMin/Max above).
         if 'percentileClip' in pParams:
             plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
                                               percentile=pParams['percentileClip'])
-        # Use plot limits if they're set (min/max overrides percentile clipping).
+        # But then if plotting min/max values are set in plotParams, override percentile clipping.
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
-        # Set 'histRange' parameter from pParams, if available.
+        # Set 'histRange' parameter from pParams, if available (allows user to set histogram x range
+        #  in histogram separately from clims for skymap)
         if 'histMax' in pParams:
             histRange = [pParams['histMin'], pParams['histMax']]
-        #else:
-        #    histRange = None
         else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
             histRange = [plotMin, plotMax]
         # Determine if should data using log scale, using pParams if available
@@ -408,9 +410,10 @@ class BaseBinMetric(object):
         # Okay, now that's all set .. go plot some data! 
         if hasattr(self.binner, 'plotBinnedData'):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
-                                                    xlabel=xlabel, title=title, 
-                                                    histRange=histRange, ylog=ylog,
-                                                    legendLabel=legendLabel, plotMin=plotMin,plotMax=plotMax)
+                                                    xlabel=xlabel, ylabel=ylabel, title=title, 
+                                                    ylog=ylog,
+                                                    legendLabel=legendLabel,
+                                                    yRange=[plotMin, plotMax])
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
@@ -419,7 +422,7 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             histfignum = self.binner.plotHistogram(self.metricValues[metricName], 
-                                                   xlabel=xlabel, title=title, 
+                                                   xlabel=xlabel, ylabel=ylabel, title=title, 
                                                    histRange=histRange, ylog=ylog)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -428,7 +431,8 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-            # Make sure the color map leaves background white in healpy plots.  Need to debug this some more I think...
+            # Make sure the color map leaves background white in healpy plots.
+            # This may need some more debugging?
             if cmap:
                 cmap0 = cmap
                 cmap0.set_under('w')

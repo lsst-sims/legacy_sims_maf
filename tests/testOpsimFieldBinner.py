@@ -72,7 +72,7 @@ class TestOpsimFieldBinnerEqual(unittest.TestCase):
 
     def testBinnerEquivalence(self):
         """Test that binners are marked equal when appropriate, and unequal when appropriate."""
-        # Note that opsimfield binners are considered 'equal' when all fieldID's match. (RA/Dec do not have to).
+        # Note that opsimfield binners are considered 'equal' when all fieldID's, RA and Decs match. 
         testbinner2 = OpsimFieldBinner()
         fieldData2 = np.copy(self.fieldData)
         testbinner2.setupBinner(self.simData, fieldData2)
