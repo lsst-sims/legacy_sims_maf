@@ -63,9 +63,9 @@ class BaseMetric(object):
             self.name = metricName
         else:
             # Else construct our own name from the class name and the data columns.
-            allcols = ''
-            for i in self.colNameList:
-                allcols += '_' + i
+            allcols = ' ' + self.colNameList[0]
+            for i in range(1, len(self.colNameList)):
+                allcols += ', ' + self.colNameList[i]
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
         # Set physical units, mostly for plotting purposes.
         if units is None:
