@@ -18,8 +18,9 @@ class HourglassBinner(UniBinner):
         self.binnerName='HourglassBinner'
         self.binner_init={}
         
-    def plotHour(self, metricValue, title='', xlabel='MJD (day)', ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}):
+    def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """
+        xlabel = 'Night - min(Night)' # Currently not able to override.
         f = plt.figure()
         ax = f.add_subplot(111)
         
