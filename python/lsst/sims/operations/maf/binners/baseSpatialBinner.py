@@ -197,10 +197,12 @@ class BaseSpatialBinner(BaseBinner):
         from matplotlib import colors
         if fignum is None:
             fig = plt.figure()
-        ax = plt.subplot(111,projection=projection)        
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        ellipses = self._plot_tissot_ellipse(self.bins['ra'], self.bins['dec'], radius, ax=ax)
+        ax = plt.subplot(111,projection=projection)        
+        # Add points for RA/Dec locations
+        lon = -(self.bins['ra'] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'], radius, ax=ax)
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
@@ -209,9 +211,11 @@ class BaseSpatialBinner(BaseBinner):
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
         p.set_array(metricValue.filled(self.badval))
         ax.add_collection(p)
-        # Add lines for ra/dec grid and ecliptic
-        ax.grid()        
-        self._plot_ecliptic(ax=ax)    
+        # Add ecliptic
+        self._plot_ecliptic(ax=ax)
+        ax.grid(True)
+        ax.xaxis.set_ticklabels([])
+        # Add color bar
         if clims != None:
             p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
