@@ -68,6 +68,8 @@ class MafDriver(object):
                 for metric in self.metricList[i]:
                     filenames.append(constraint+metric.name+binner.metadata+binner.binnertype)
         if len(filenames) != len(set(filenames)):
+            duplicates = set([x for x in filenames if filenames.count(x) > 1])
+            print duplicates
             raise Exception('Filenames for metrics will not be unique.  Add binner metadata or change metric names.')
         
   
