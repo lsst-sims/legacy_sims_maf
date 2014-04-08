@@ -168,7 +168,7 @@ class MafDriver(object):
                     # Replace the plotParams for selected metricNames
                     for mName in binner.plotConfigs:
                         gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
-                    gm.plotAll(outDir=self.config.outputDir, savefig=True, outfileRoot=constr)
+                    gm.plotAll(outDir=self.config.outputDir, savefig=True, outfileRoot=constr, closefig=True)
                     gm.writeAll(outDir=self.config.outputDir, outfileRoot=constr)
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
