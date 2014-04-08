@@ -14,10 +14,8 @@ class UniBinner(BaseBinner):
     def __init__(self, verbose=True):
         """Instantiate unibinner. """
         super(UniBinner, self).__init__(verbose=verbose)
-        self.binnertype = 'UNI'
         self.nbins = 1
-        self.binnerName='UniBinner'
-        self.bins=np.array([0.])
+        self.bins = None
 
     def setupBinner(self, simData):
         """Use simData to set indexes to return."""

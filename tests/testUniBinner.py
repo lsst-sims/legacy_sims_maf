@@ -27,7 +27,8 @@ class TestUniBinnerSetup(unittest.TestCase):
 
     def testBinnertype(self):
         """Test instantiation of binner sets binner type as expected."""        
-        self.assertEqual(self.testbinner.binnertype, 'UNI')
+        self.assertEqual(self.testbinner.binnerName, self.testbinner.__class__.__name__)
+        self.assertEqual(self.testbinner.binnerName, 'UniBinner')
 
     def testBinnerNbins(self):
         self.assertEqual(self.testbinner.nbins, 1)

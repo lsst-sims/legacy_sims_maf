@@ -103,7 +103,7 @@ class BaseBinMetric(object):
                 oname = oname + '_' + metadata_summary
         # Add letter to distinguish binner types
         #   (which otherwise might have the same output name).
-        oname = oname + '_' + self.binner.binnertype[:3]
+        oname = oname + '_' + self.binner.binnerName[:4].upper()
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
@@ -157,15 +157,16 @@ class BaseBinMetric(object):
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
-            metricValues, binner, header = self.binner.readMetricData(f, verbose=verbose)
-            # Check that the binner from this file matches self.binner
+            basebinner = binners.BaseBinner()
+            metricData, binner, header = basebinner.readData(f)
+            # Check that the binner from this file matches self.binner (ok if self.binner is None)
             if not(self.setBinner(binner, override=False)):
                 raise Exception('Binner for metric %s does not match existing binner.' 
                                 % (header['metricName']))
             # Dedupe the metric name, if needed.
             metricName = self._deDupeMetricName(header['metricName'])
             self.metricNames.append(metricName)
-            self.metricValues[metricName] = metricValues
+            self.metricValues[metricName] = metricData
             self.metricValues[metricName].fill_value = self.binner.badval
             self.simDataName[metricName] = header['simDataName']
             self.metadata[metricName] = header['metadata']
@@ -174,6 +175,8 @@ class BaseBinMetric(object):
             if 'plotParams' in header:
                 for pp in header['plotParams']:
                     self.plotParams[metricName][pp] = header['plotParams'][pp]
+            if verbose:
+                print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
 
     
     def validateMetricData(self, simData):
@@ -326,32 +329,46 @@ class BaseBinMetric(object):
             pParams = None
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
-        if 'title' in pParams: # title used for all plot titles
+        # title used for all plot titles
+        if 'title' in pParams: 
             title = pParams['title']
         else:
             title = self.simDataName[metricName] + ' ' + self.metadata[metricName]
             title += ': ' + mname
-        if 'xlabel' in pParams:  # xlabel used for histograms
+        # xlabel is used for x label in histograms
+        if 'xlabel' in pParams:  
             xlabel = pParams['xlabel']
-        elif '_unit' in pParams:
-            xlabel = mname + ' (' + pParams['_unit'] + ')'
         else:
-            xlabel = mname 
-        if 'ylabel' in pParams:  # ylabel used for histograms
+            if self.binner.binnerName == 'OneDBinner':
+                xlabel = None  #use sliceColName
+            else:
+                if '_unit' in pParams:
+                    xlabel = mname + ' (' + pParams['_unit'] + ')'
+                else:            
+                    xlabel = mname 
+        # ylabel used for y label in histograms
+        if 'ylabel' in pParams:  
             ylabel=pParams['ylabel']
         else:
-            ylabel=None
-        if 'units' in pParams: # units used for colorbar for skymap plots (this comes from metric setup)
+            if self.binner.binnerName == 'OneDBinner':
+                if mname.startswith('Count'):
+                    ylabel = 'Number of Visits'
+            else:
+                ylabel=None
+        # units used for colorbar for skymap plots (this comes from metric setup)
+        if 'units' in pParams: 
             units = pParams['units']
         elif '_unit' in pParams:  # these are set from metric column units automatically
             units = mname+' ('+ pParams['_unit'] + ')'
         else:
             units = mname
-        if 'legendLabel' in pParams:  # passed to plotting routines, but typically addLegend is False (so remove?)
+        # passed to plotting routines, but typically addLegend is False (so remove?)
+        if 'legendLabel' in pParams:  
             legendLabel =  pParams['legendLabel']
         else:
             legendLabel = None
-        if 'cmap' in pParams:  # set cmap for skymap plots
+        # set cmap for skymap plots
+        if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
         else:
             cmap = None

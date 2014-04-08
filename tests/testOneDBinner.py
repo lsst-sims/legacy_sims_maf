@@ -27,7 +27,8 @@ class TestOneDBinnerSetup(unittest.TestCase):
 
     def testBinnertype(self):
         """Test instantiation of binner sets binner type as expected."""        
-        self.assertEqual(self.testbinner.binnertype, 'ONED')
+        self.assertEqual(self.testbinner.binnerName, self.testbinner.__class__.__name__)
+        self.assertEqual(self.testbinner.binnerName, 'OneDBinner')        
 
     def testSetupBinnerBins(self):
         """Test setting up binner using defined bins."""

@@ -11,10 +11,6 @@ import matplotlib.pyplot as plt
 import warnings
 import matplotlib.cm as cm
 from matplotlib import colors
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
@@ -26,7 +22,6 @@ class HealpixBinner(BaseSpatialBinner):
         """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1,spatialkey2=spatialkey2)
-        self.binnertype = 'HEALPIX'
         self.badval = hp.UNSEEN 
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
@@ -40,9 +35,8 @@ class HealpixBinner(BaseSpatialBinner):
         if self.verbose:
             print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
         # set variables so binner can be re-constructed
-        self.binnerName = 'HealpixBinner'
         self.binner_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
-        self.bins=np.array([0.])
+        self.bins = None 
         
     def __iter__(self):
         """Iterate over the binner."""

@@ -50,7 +50,8 @@ class TestOpsimFieldBinnerSetup(unittest.TestCase):
         
     def testBinnertype(self):
         """Test instantiation of binner sets binner type as expected."""
-        self.assertEqual(self.testbinner.binnertype, 'OPSIMFIELDS')
+        self.assertEqual(self.testbinner.binnerName, self.testbinner.__class__.__name__)
+        self.assertEqual(self.testbinner.binnerName, 'OpsimFieldBinner')
 
     def testBinnerNbins(self):
         """Test that generate expected number of bins for a given set of fields."""

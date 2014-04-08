@@ -60,15 +60,14 @@ if runBinMetrics:
 # Read some metric data in from files.
 readBinMetrics = True
 if readBinMetrics:
-    filenames = glob.glob('*.fits')
+    filenames = glob.glob('*.npz')
     dictnums = []
     filelist = []
     for f in filenames:
         print 'working on %s' %(f)
-        if ('UNI' not in f) and ('VisitPairs' not in f):
-            dictnum = cbm.readMetricData(f)
-            dictnums.append(dictnum)
-            dictnames.append(f)
+        dictnum = cbm.readMetricData(f)
+        dictnums.append(dictnum)
+        dictnames.append(f)
 
 ####            
 for num, name in zip(dictnums, dictnames):
@@ -88,18 +87,18 @@ print 'all dicts: ', cbm.findDictNums()
 print 'dicts with simname', uniqueSimDataNames[0], '=', cbm.findDictNums(simDataName = uniqueSimDataNames[0])
 print 'dicts with metadata', uniqueMetadata[0], '=',  cbm.findDictNums(metadata = uniqueMetadata[0])
 print 'dicts with metric', uniqueMetrics[0], '=', cbm.findDictNums(metricNames = uniqueMetrics[0])
-print 'dicts with oneD binner =', cbm.findDictNums(binnertype='ONED')
+print 'dicts with oneD binner =', cbm.findDictNums(binnerName = 'OneDBinner')
 
 print ''
 
 print 'oneD comparisons'
 # Find the dict nums with oneD binners
-oneDDicts = cbm.findDictNums(binnertype='ONED')
+oneDDicts = cbm.findDictNums(binnerName='OneDBinner')
 # Find the metric names associated with those oneD binmetrics 
 oneDmetrics = cbm.uniqueMetrics(dictNums=oneDDicts)
 # Plot the same metrics on the same plot
 for mname in oneDmetrics:
-    dicts = cbm.findDictNums(metricNames=mname, binnertype='ONED')
+    dicts = cbm.findDictNums(metricNames=mname, binnerName='OneDBinner')
     metricnames = [mname for d in dicts]
     cbm.plotHistograms(dicts, metricnames)
 

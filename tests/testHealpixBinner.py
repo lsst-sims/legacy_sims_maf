@@ -61,7 +61,8 @@ class TestHealpixBinnerSetup(unittest.TestCase):
     def testBinnertype(self):
         """Test instantiation of binner sets binner type as expected."""
         testbinner = HealpixBinner(nside=16, verbose=False)
-        self.assertEqual(testbinner.binnertype, 'HEALPIX')
+        self.assertEqual(testbinner.binnerName, testbinner.__class__.__name__)
+        self.assertEqual(testbinner.binnerName, 'HealpixBinner')
 
     def testNsidesNbins(self):
         """Test that number of sides passed to binner produces expected number of bins."""

@@ -3,10 +3,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
 
 from .baseBinner import BaseBinner
 
@@ -15,13 +11,12 @@ class OneDBinner(BaseBinner):
     def __init__(self, sliceDataColName=None, verbose=True):
         """Instantiate. """
         super(OneDBinner, self).__init__(verbose=verbose)
-        self.binnertype = 'ONED'
         self.bins = None
         self.nbins = None
         self.sliceDataColName = sliceDataColName
         self.columnsNeeded = [sliceDataColName]
-        self.binnerName='OneDBinner'
-
+        self.binner_init = {'sliceDataColName':self.sliceDataColName}
+        
     def setupBinner(self, simData, bins=None, nbins=100, binMin=None, binMax=None): 
         """Set up bins in binner.        
 

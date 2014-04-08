@@ -39,7 +39,8 @@ class TestNDBinnerSetup(unittest.TestCase):
 
     def testBinnertype(self):
         """Test instantiation of binner sets binner type as expected."""        
-        self.assertEqual(self.testbinner.binnertype, 'ND')
+        self.assertEqual(self.testbinner.binnerName, self.testbinner.__class__.__name__)
+        self.assertEqual(self.testbinner.binnerName, 'NDBinner')
 
     def testSetupBinnerBins(self):
         """Test setting up binner using defined bins."""
@@ -101,7 +102,7 @@ class TestNDBinnerEqual(unittest.TestCase):
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
         self.testbinner = NDBinner(self.dvlist)
-        self.testbinner.setupBinner(dv, nbinsList=100)
+        self.testbinner.setupBinner(self.dv, nbinsList=100)
         
     def tearDown(self):
         del self.testbinner

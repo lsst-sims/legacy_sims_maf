@@ -32,10 +32,10 @@ class OpsimFieldBinner(BaseSpatialBinner):
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
         super(OpsimFieldBinner, self).__init__(verbose=verbose)
-        self.binnertype = 'OPSIMFIELDS'
-        self.fieldId = None
-        self.ra = None
-        self.dec = None
+        self.bins = {}
+        self.bins['fieldId'] = None
+        self.bins['ra'] = None
+        self.bins['dec'] = None
         self.nbins = None
         self.simDataFieldIdColName = simDataFieldIdColName
         self.fieldIdColName = fieldIdColName
@@ -43,8 +43,9 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.fieldDecColName = fieldDecColName
         self.columnsNeeded = [simDataFieldIdColName,]
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
-        self.binnerName='OpsimFieldBinner'
-        self.binner_init={'simDataFieldIdColName':simDataFieldIdColName,'fieldIdColName':fieldIdColName, 'fieldRaColName':fieldRaColName,'fieldDecColName':fieldDecColName}
+        self.binner_init={'simDataFieldIdColName':simDataFieldIdColName,
+                          'fieldIdColName':fieldIdColName,
+                          'fieldRaColName':fieldRaColName, 'fieldDecColName':fieldDecColName}
         
 
     def setupBinner(self, simData, fieldData):
@@ -56,15 +57,15 @@ class OpsimFieldBinner(BaseSpatialBinner):
         """
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIdColName])
-        self.fieldId = fieldData[self.fieldIdColName][idxs]
-        self.ra = fieldData[self.fieldRaColName][idxs]
-        self.dec = fieldData[self.fieldDecColName][idxs]
-        self.nbins = len(self.fieldId)
+        self.bins['fieldId'] = fieldData[self.fieldIdColName][idxs]
+        self.bins['ra'] = fieldData[self.fieldRaColName][idxs]
+        self.bins['dec'] = fieldData[self.fieldDecColName][idxs]
+        self.nbins = len(self.bins['fieldId'])
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
-        self.left = np.searchsorted(simFieldsSorted, self.fieldId, 'left')
-        self.right = np.searchsorted(simFieldsSorted, self.fieldId, 'right')        
+        self.left = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'left')
+        self.right = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'right')        
 
     def __iter__(self):
         """Iterate over the binpoints."""
@@ -76,26 +77,26 @@ class OpsimFieldBinner(BaseSpatialBinner):
         # This returns RA/Dec (in radians) of points in the grid. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        fieldidradec = self.fieldId[self.ipix], self.ra[self.ipix], self.dec[self.ipix]
+        fieldidradec = self.bins['fieldId'][self.ipix], self.bins['ra'][self.ipix], self.bins['dec'][self.ipix]
         self.ipix += 1
         return fieldidradec
 
     def __getitem__(self, ipix):
-        fieldidradec = self.fieldId[ipix], self.ra[self.ipix], self.dec[self.ipix]
+        fieldidradec = self.bins['fieldId'][ipix], self.bins['ra'][ipix], self.bins['dec'][ipix]
         return fieldidradec
     
     def __eq__(self, otherBinner):
         """Evaluate if two grids are equivalent."""
         if isinstance(otherBinner, OpsimFieldBinner):
-            return (np.all(otherBinner.fieldId == self.fieldId) and
-                    np.all(otherBinner.ra == self.ra) and
-                    np.all(otherBinner.dec == self.dec))        
+            return (np.all(otherBinner.bins['fieldId'] == self.bins['fieldId']) and
+                    np.all(otherBinner.bins['ra'] == self.bins['ra']) and
+                    np.all(otherBinner.bins['dec'] == self.bins['dec']))        
         else:
             return False
 
     def sliceSimData(self, binpoint):
         """Slice simData on fieldId, to return relevant indexes for binpoint."""
-        i = np.where(binpoint[0] == self.fieldId)
+        i = np.where(binpoint[0] == self.bins['fieldId'])
         return self.simIdxs[self.left[i]:self.right[i]]   
 
 

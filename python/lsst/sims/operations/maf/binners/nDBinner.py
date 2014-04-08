@@ -5,10 +5,6 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import itertools
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
 
 from .baseBinner import BaseBinner
 
@@ -18,7 +14,6 @@ class NDBinner(BaseBinner):
     def __init__(self, sliceDataColList=None, verbose=True):  
         """Instantiate object."""
         super(NDBinner, self).__init__(verbose=verbose)
-        self.binnertype = 'ND'
         self.bins = None 
         self.nbins = None
         self.sliceDataColList = sliceDataColList
@@ -27,7 +22,6 @@ class NDBinner(BaseBinner):
             self.nD = len(self.sliceDataColList)
         else:
             self.nD = None
-        self.binnerName ='NDBinner'
         self.binner_init={'sliceDataColList':sliceDataColList}
 
     def setupBinner(self, simData, binsList=None, nbinsList=100):

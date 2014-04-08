@@ -27,7 +27,6 @@ class BaseSpatialBinner(BaseBinner):
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec'):
         """Instantiate the base spatial binner object."""
         super(BaseSpatialBinner, self).__init__(verbose=verbose)
-        self.binnertype = 'SPATIAL'
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1,spatialkey2]
@@ -193,7 +192,7 @@ class BaseSpatialBinner(BaseBinner):
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         radius = 1.75 * np.pi / 180.
-        ellipses = self._plot_tissot_ellipse((self.ra - np.pi), self.dec, radius, ax=ax)
+        ellipses = self._plot_tissot_ellipse((self.bins['ra'] - np.pi), self.bins['dec'], radius, ax=ax)
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,

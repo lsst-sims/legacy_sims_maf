@@ -40,7 +40,7 @@ class ComparisonBinMetric(object):
         if self.verbose:
             print '%d (name %s) Read metrics %s from %s with binner %s' %(dictnum, self.bbmNames[dictnum],
                                                                         bbm.metricNames,  filename, 
-                                                                        bbm.binner.binnertype)
+                                                                        bbm.binner.binnerName)
         return dictnum
 
     def setMetricData(self, bbm, nametag=None):
@@ -55,7 +55,7 @@ class ComparisonBinMetric(object):
             print '%d (%s) Added metrics %s from basebinmetric with binner %s' %(dictnum,
                                                                                  self.bbmNames[dictnum],
                                                                                  bbm.metricNames,
-                                                                                 bbm.binner.binnertype)
+                                                                                 bbm.binner.binnerName)
         return dictnum
 
     def uniqueMetrics(self, dictNums=None):
@@ -108,9 +108,9 @@ class ComparisonBinMetric(object):
         """Return metric names associated with a particular baseBinMetric identified by 'dictNum'."""
         return self.binmetrics[dictNum].metricValues.keys()
                             
-    def findDictNums(self, simDataName=None, metricNames=None, metadata=None, binnertype=None):
+    def findDictNums(self, simDataName=None, metricNames=None, metadata=None, binnerName=None):
         """Identify dictionary keys of baseBinMetrics, potentially restricted by
-        simDataName/metricName/metadata (which can be lists) and binnertype (single binnertype)."""
+        simDataName/metricName/metadata (which can be lists) and binnerName (single binnerName)."""
         def makeList(name):
             if name is not None:
                 if not hasattr(name, '__iter__'):
@@ -134,9 +134,9 @@ class ComparisonBinMetric(object):
             for d in dictlist:
                 if mname not in self.binmetrics[d].metricValues:
                     dictlist.remove(d)
-        if binnertype is not None:
+        if binnerName is not None:
             for d in dictlist:
-                if (self.binmetrics[d].binner.binnertype != binnertype):
+                if (self.binmetrics[d].binner.binnerName != binnerName):
                     dictlist.remove(d)
         return dictlist
                         
@@ -145,6 +145,7 @@ class ComparisonBinMetric(object):
         in binMetric, checks if the values are plottable and
         returns updated lists of dictNums and metricNames containing only plottable values."""
         for i, (d, m) in enumerate(zip(dictNums, metricNames)):
+            print d, m, self.binmetrics[d].metricValues[m].dtype
             # Remove if metric m is not part of binmetric[d]
             if m not in self.binmetrics[d].metricValues:
                 dictNums[i] = None
@@ -190,7 +191,7 @@ class ComparisonBinMetric(object):
         dictNums (a list) identifies which binMetrics to use to create the comparison plots,
         while metricNames (a list) identifies which metric data within each binMetric to use."""
         if len(dictNums) != len(metricNames):
-            raise Exception('dictNums must be same length as metricNames list')                                
+            raise Exception('dictNums must be same length as metricNames list')
         dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
         # Check if the binner has a histogram type visualization (or remove from list).
         for i, d in enumerate(dictNums):
@@ -199,13 +200,13 @@ class ComparisonBinMetric(object):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) == 0:
-            warnings.warn('Removed all dictNums and metricNames from list, due to binnertype, metricname absence or type of metric data.')
+            warnings.warn('Removed all dictNums and metricNames from list, due to binnerName, metricname absence or type of metric data.')
             return
         if title is None:
             title = self._buildPlotTitle(dictNums, metricNames)
         # Create a plot x-axis label (metricLabel)
         if xlabel is None:
-            if self.binmetrics[d].binner.binnertype == 'ONED':
+            if self.binmetrics[d].binner.binnerName == 'OneDBinner':
                 tmpMnames = [''.join(m.split()[1:]) for m in metricNames]
                 print tmpMnames, metricNames
                 xlabel = ', '.join(list(set(tmpMnames)))
@@ -220,7 +221,8 @@ class ComparisonBinMetric(object):
                 addLegend = True
             # Build legend label for this dictNum/metricName.
             legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
-                           + self.binmetrics[d]._dupeMetricName(m) + ' ' + self.binmetrics[d].binner.binnertype)    
+                           + self.binmetrics[d]._dupeMetricName(m) +
+                           ' ' + self.binmetrics[d].binner.binnerName[:3])    
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
                 fignum = self.binmetrics[d].binner.plotBinnedData(self.binmetrics[d].metricValues[m],
@@ -267,7 +269,7 @@ class ComparisonBinMetric(object):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) == 0:
-            warnings.warn('Removed all dictNums and metricNames from list, due to binnertype, metricname absence or type of metric data.')
+            warnings.warn('Removed all dictNums and metricNames from list, due to binnerName, metricname absence or type of metric data.')
             return
         if plotTitle is None:
             plotTitle = self._buildPlotTitle(dictNums, metricNames)
@@ -280,7 +282,8 @@ class ComparisonBinMetric(object):
                 addLegend = True
             # Build legend label for this dictNum/metricName.
             legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
-                           + self.binmetrics[d]._dupeMetricName(m) + ' ' + self.binmetrics[d].binner.binnertype)    
+                           + self.binmetrics[d]._dupeMetricName(m) +
+                           ' ' + self.binmetrics[d].binner.binnerName[:3])    
             # Plot data.
             fignum = self.binmetrics[d].binner.plotPowerSpectrum(self.binmetrics[d].metricValues[m],
                                                                 maxl=maxl, removeDipole=removeDipole,
