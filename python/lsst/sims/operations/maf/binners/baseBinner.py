@@ -17,14 +17,14 @@ class BaseBinner(object):
         # 
         # Args will include sliceDataCols and other data names that must be fetched from DB
         self.verbose = verbose
+        self.badval = -666
         self.nbins = None
         self.bins = None
-        self.badval = -666
         self.binnerName = self.__class__.__name__
         self.columnsNeeded = []
         # Create a dict that saves how to re-init the binner (all args & kwargs for binner 'init' method)
         # Will generally be overwritten by individual binner binner_init dictionaries.
-        self.binner_init = {'badval': self.badval}
+        self.binner_init = {}
 
     def setupBinner(self, *args, **kwargs):
         """Set up internal parameters and bins for binner. """

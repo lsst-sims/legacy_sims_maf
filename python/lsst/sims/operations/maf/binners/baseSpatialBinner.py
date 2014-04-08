@@ -149,17 +149,17 @@ class BaseSpatialBinner(BaseBinner):
     ### Generate sky map (base spatial binner methods, using ellipses for each RA/Dec value)
     ### a healpix binner will not have self.ra / self.dec functions, but plotSkyMap is overriden.
     
-    def _plot_tissot_ellipse(self, longitude, latitude, radius, ax=None, **kwargs):
+    def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
         
         Parameters
         ----------
-        longitude : float or array_like
-        longitude of ellipse centers (radians)
-        latitude : float or array_like
-        latitude of ellipse centers (radians)
+        lon : float or array_like
+        longitude-like of ellipse centers (radians)
+        lat : float or array_like
+        latitude-like of ellipse centers (radians)
         radius : float or array_like
-        radius of ellipses
+        radius of ellipses (radians)
         ax : Axes object (optional)
         matplotlib axes instance on which to draw ellipses.
         
@@ -175,13 +175,22 @@ class BaseSpatialBinner(BaseBinner):
         ellipses = []
         if ax is None:
             ax = plt.gca()            
-        for long, lat, rad in np.broadcast(longitude, latitude, radius*2.0):
-            el = Ellipse((long, lat), rad / np.cos(lat), rad)
+        for l, b, diam in np.broadcast(lon, lat, radius*2.0):
+            el = Ellipse((l, b), diam / np.cos(b), diam)
             ellipses.append(el)
         return ellipses
 
+    def _plot_ecliptic(self, ax=None):
+        """Plot a red line at location of ecliptic"""
+        if ax is None:
+            ax = plt.gca()
+        ecinc = 23.439291*(np.pi/180.0)
+        x_ec = np.arange(0, np.pi*2., (np.pi*2./360))
+        ra = x_ec - np.pi
+        y_ec = np.sin(x_ec) * ecinc
+        plt.plot(ra, y_ec, 'r-')        
         
-    def plotSkyMap(self, metricValue, title=None, projection='aitoff',
+    def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
                    clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=''):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
@@ -191,8 +200,7 @@ class BaseSpatialBinner(BaseBinner):
         ax = plt.subplot(111,projection=projection)        
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        radius = 1.75 * np.pi / 180.
-        ellipses = self._plot_tissot_ellipse((self.bins['ra'] - np.pi), self.bins['dec'], radius, ax=ax)
+        ellipses = self._plot_tissot_ellipse(self.bins['ra'], self.bins['dec'], radius, ax=ax)
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
@@ -201,11 +209,13 @@ class BaseSpatialBinner(BaseBinner):
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
         p.set_array(metricValue.filled(self.badval))
         ax.add_collection(p)
+        # Add lines for ra/dec grid and ecliptic
+        ax.grid()        
+        self._plot_ecliptic(ax=ax)    
         if clims != None:
             p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
         cb.set_label(units)
         if title != None:
             plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)
-        ax.grid()
         return fig.number

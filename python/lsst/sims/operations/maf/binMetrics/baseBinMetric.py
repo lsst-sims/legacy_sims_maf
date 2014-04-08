@@ -429,12 +429,6 @@ class BaseBinMetric(object):
                 plt.savefig(outfile, figformat=self.figformat)
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-            # Make sure the color map leaves background white in healpy plots.
-            # This may need some more debugging?
-            if cmap:
-                cmap0 = cmap
-                cmap0.set_under('w')
-                cmap0.set_bad('gray')
             if 'zp' in pParams: # Subtract off a zeropoint
                 skyfignum = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
                                                    cmap=cmap, cbarFormat=cbarFormat,
