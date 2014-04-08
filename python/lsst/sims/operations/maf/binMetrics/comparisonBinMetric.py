@@ -103,7 +103,6 @@ class ComparisonBinMetric(object):
         """Return corresponding filename or 'nametag' for a given dictNum."""
         return self.bbmNames.get(dictnum)
 
-
     def metricNamesInDictNum(self, dictNum):
         """Return metric names associated with a particular baseBinMetric identified by 'dictNum'."""
         return self.binmetrics[dictNum].metricValues.keys()
@@ -121,23 +120,21 @@ class ComparisonBinMetric(object):
         simDataName = makeList(simDataName)
         metricNames = makeList(metricNames)
         metadata = makeList(metadata)
-        dictlist = self.binmetrics.keys()
-        for s in simDataName:
-            for d in dictlist:
-                if s not in self.binmetrics[d].simDataName.values():
-                    dictlist.remove(d)
-        for m in metadata:
-            for d in dictlist:
+        dictlist = list(self.binmetrics.keys())
+        for i,d in enumerate(dictlist):
+            for s in simDataName:
+                if s not in self.binmetrics[d].simDataName.values():                
+                    dictlist[i] = None
+            for m in metadata:
                 if m not in self.binmetrics[d].metadata.values():
-                    dictlist.remove(d)
-        for mname in metricNames:
-            for d in dictlist:
+                    dictlist[i] = None
+            for mname in metricNames:
                 if mname not in self.binmetrics[d].metricValues:
-                    dictlist.remove(d)
-        if binnerName is not None:
-            for d in dictlist:
+                    dictlist[i] = None
+            if binnerName is not None:
                 if (self.binmetrics[d].binner.binnerName != binnerName):
-                    dictlist.remove(d)
+                    dictlist[i] = None
+        dictlist = [x for x in dictlist if (x is not None)]
         return dictlist
                         
     def _checkPlottable(self, dictNums, metricNames):
@@ -183,7 +180,7 @@ class ComparisonBinMetric(object):
     def plotHistograms(self, dictNums, metricNames, 
                         histBins=100, histRange=None,
                         title=None, xlabel=None,                    
-                        legendloc='upper left', 
+                        legendloc='upper left', bnamelen=4,
                         savefig=False, outDir=None, outfileRoot=None):
         """Create a plot containing the histogram visualization from all possible metrics in dictNum +
                        metricNames.
@@ -222,7 +219,7 @@ class ComparisonBinMetric(object):
             # Build legend label for this dictNum/metricName.
             legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
                            + self.binmetrics[d]._dupeMetricName(m) +
-                           ' ' + self.binmetrics[d].binner.binnerName[:3])    
+                           ' ' + self.binmetrics[d].binner.binnerName[:bnamelen])    
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
                 fignum = self.binmetrics[d].binner.plotBinnedData(self.binmetrics[d].metricValues[m],
@@ -252,7 +249,7 @@ class ComparisonBinMetric(object):
         return fignum
 
     def plotPowerSpectra(self, dictNums, metricNames, maxl=500., removeDipole=True,
-                         title=None, legendloc='upper left',
+                         title=None, legendloc='upper left', bnamelen=4,
                          savefig=False, outDir=None, outfileRoot=None):
         """Create a plot containing the power spectrum visualization from all possible metrics in dictNum +
                        metricNames.
@@ -283,7 +280,7 @@ class ComparisonBinMetric(object):
             # Build legend label for this dictNum/metricName.
             legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
                            + self.binmetrics[d]._dupeMetricName(m) +
-                           ' ' + self.binmetrics[d].binner.binnerName[:3])    
+                           ' ' + self.binmetrics[d].binner.binnerName[:bnamelen])    
             # Plot data.
             fignum = self.binmetrics[d].binner.plotPowerSpectrum(self.binmetrics[d].metricValues[m],
                                                                 maxl=maxl, removeDipole=removeDipole,

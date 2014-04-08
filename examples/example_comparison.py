@@ -64,10 +64,11 @@ if readBinMetrics:
     dictnums = []
     filelist = []
     for f in filenames:
-        print 'working on %s' %(f)
-        dictnum = cbm.readMetricData(f)
-        dictnums.append(dictnum)
-        dictnames.append(f)
+        if 'VisitPairs' not in f:
+            print 'working on %s' %(f)
+            dictnum = cbm.readMetricData(f)
+            dictnums.append(dictnum)
+            dictnames.append(f)
 
 ####            
 for num, name in zip(dictnums, dictnames):
@@ -88,6 +89,7 @@ print 'dicts with simname', uniqueSimDataNames[0], '=', cbm.findDictNums(simData
 print 'dicts with metadata', uniqueMetadata[0], '=',  cbm.findDictNums(metadata = uniqueMetadata[0])
 print 'dicts with metric', uniqueMetrics[0], '=', cbm.findDictNums(metricNames = uniqueMetrics[0])
 print 'dicts with oneD binner =', cbm.findDictNums(binnerName = 'OneDBinner')
+
 
 print ''
 
