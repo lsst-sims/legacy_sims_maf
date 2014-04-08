@@ -2,10 +2,15 @@ import numpy as np
 from lsst.sims.operations.maf.driver.mafConfig import *
 
 # A drive config for the plots on https://confluence.lsstcorp.org/display/SIM/MAF+documentation
+# and https://confluence.lsstcorp.org/display/SIM/MAF%3A++Writing+a+new+metric
 
 root.outputDir = './Doc'
-root.dbAddress ='sqlite:///opsim.sqlite'
-root.opsimNames = ['opsim']
+root.dbAddress ='sqlite:///../opsim_small.sqlite'
+root.opsimNames = ['opsim_small']
+#root.dbAddress ='sqlite:///opsim.sqlite'
+#root.opsimNames = ['opsim']
+
+
 
 binList=[]
 
@@ -49,6 +54,37 @@ binList.append(binner)
 m1=makeMetricConfig('HourglassMetric')
 binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750'] )
 binList.append(binner)
+
+
+
+
+
+
+
+# How many Healpix sides to use
+nside=64
+# List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy. 
+constraints = ["filter = \'%s\'"%'r']
+m1 = makeMetricConfig('RmsMetric', params=['finSeeing'], plotDict={'plotMin':0., 'plotMax':0.6})
+m2 =  makeMetricConfig('RobustRmsMetric', params=['finSeeing'], plotDict={'plotMin':0., 'plotMax':0.6})
+metricDict = makeDict(m1,m2)
+binner = makeBinnerConfig('HealpixBinner',
+                          kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
+                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
+binList.append(binner)
+
+
+
+m1 = makeMetricConfig('AstroPrecMetric')
+m2 = makeMetricConfig('AstroPrecMetricComplex')
+binner = makeBinnerConfig('HealpixBinner',
+                          kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
+                          metricDict = makeDict(m1,m2),setupKwargs={"leafsize":50000},constraints=constraints)
+binList.append(binner)
+
+
+
+
 
 
 root.binners=makeDict(*binList)
