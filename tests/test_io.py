@@ -16,9 +16,9 @@ class TestBinners(unittest.TestCase):
         metricValues = np.random.rand(hp.nside2npix(nside)).astype('object')
         metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
         metricName = 'Noise'
-        filename = 'healpix_test.fits'
-        binner.writeMetricData(filename, metricValues, metadata='poop')
-        metricValuesBack,binnerBack,header = binner.readMetricData(filename)
+        filename = 'healpix_test.npz'
+        binner.writeData(filename, metricValues, metadata='poop')
+        metricValuesBack,binnerBack,header = binner.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(binner == binnerBack) #I don't think this is the right way to compare
 
@@ -28,9 +28,9 @@ class TestBinners(unittest.TestCase):
         binner = binners.HealpixBinner(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside))
         metricName = 'Noise'
-        filename = 'healpix_test.fits'
-        binner.writeMetricData(filename, metricValues, metadata='poop')
-        metricValuesBack,binnerBack,header = binner.readMetricData(filename)
+        filename = 'healpix_test.npz'
+        binner.writeData(filename, metricValues, metadata='poop')
+        metricValuesBack,binnerBack,header = binner.readData(filename)
 
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(binner == binnerBack) #I don't think this is the right way to compare
@@ -41,9 +41,9 @@ class TestBinners(unittest.TestCase):
         metricValues = np.random.rand(hp.nside2npix(nside))
         metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
         metricName = 'Noise'
-        filename = 'healpix_test.fits'
-        binner.writeMetricData(filename, metricValues, metadata='poop')
-        metricValuesBack,binnerBack,header = binner.readMetricData(filename)
+        filename = 'healpix_test.npz'
+        binner.writeData(filename, metricValues, metadata='poop')
+        metricValuesBack,binnerBack,header = binner.readData(filename)
 
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(binner == binnerBack) #I don't think this is the right way to compare
@@ -54,10 +54,10 @@ class TestBinners(unittest.TestCase):
         dataValues = np.zeros(10000, dtype=[('poop','float')])
         dataValues['poop'] = np.random.rand(10000)
         binner.setupBinner(dataValues)
-        filename = 'oned_test.fits'
-        binner.writeMetricData(filename, dataValues[:100])
+        filename = 'oned_test.npz'
+        binner.writeData(filename, dataValues[:100])
 
-        dataBack,binnerBack,header = binner.readMetricData(filename)
+        dataBack,binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
         assert(np.all(binner.bins == binnerBack.bins))
         #np.testing.assert_almost_equal(dataBack,dataValues[:100])
@@ -76,9 +76,9 @@ class TestBinners(unittest.TestCase):
         simData['data1'] = np.random.rand(100)
         simData['fieldID'] = np.arange(100)
         binner.setupBinner(simData,fieldData)
-        filename = 'opsimbinner_test.fits'
-        binner.writeMetricData(filename, metricValues)
-        metricBack, binnerBack,header = binner.readMetricData(filename)
+        filename = 'opsimbinner_test.npz'
+        binner.writeData(filename, metricValues)
+        metricBack, binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
 
@@ -88,10 +88,10 @@ class TestBinners(unittest.TestCase):
         data = np.zeros(1, dtype=[('poop','float')])
         data[:] = np.random.rand(1)
         binner.setupBinner(data)
-        filename='unibinner_test.fits'
+        filename='unibinner_test.npz'
         metricValue=np.array([25.])
-        binner.writeMetricData(filename, metricValue)
-        dataBack, binnerBack,header = binner.readMetricData(filename)
+        binner.writeData(filename, metricValue)
+        dataBack, binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
         np.testing.assert_almost_equal(dataBack,metricValue)
 
@@ -104,9 +104,9 @@ class TestBinners(unittest.TestCase):
 #        data = np.zeros(1000, dtype=zip(colnames,types))
 #        binner = binners.NDBinner()
 #        binner.setupBinner([data['ack1'], data['ack2'], data['poop']])
-#        filename = 'nDBInner_test.fits'
-#        binner.writeMetricData(filename,data)
-#        dataBack,binnerBack,header = binner.readMetricData(filename)
+#        filename = 'nDBInner_test.npz'
+#        binner.writeData(filename,data)
+#        dataBack,binnerBack,header = binner.readData(filename)
 #        assert(binner == binnerBack)
 #        np.testing.assert_almost_equal(dataBack,data)
        

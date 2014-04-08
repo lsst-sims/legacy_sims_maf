@@ -1,4 +1,4 @@
-import numpy as np #segfault if numpy not imported 1st, argle bargle!
+import numpy as np 
 from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
@@ -35,6 +35,7 @@ class MafDriver(object):
             temp_binner.plotConfigs = binner.plotConfigs
             temp_binner.metadata = metadata
             temp_binner.index=i
+            temp_binner.binnertype = temp_binner.binnerName[:4].upper() # Matching baseBinMetric
             stackers = []
             for key in stackCols.keys():
                 name, params, kwargs = config2dict(stackCols[key])
@@ -67,15 +68,6 @@ class MafDriver(object):
         if len(filenames) != len(set(filenames)):
             raise Exception('Filenames for metrics will not be unique.  Add binner metadata or change metric names.')
         
-    def _binKey(self,binner): #XXX-looks like BaseBinMetric does everything.  Should we just call it BinnerMetricContainer?
-        """Take a binner and return the correct type of binMetric"""
-        if binner.binnertype == "UNI":
-            result = binMetrics.BaseBinMetric()
-        elif (binner.binnertype == "SPATIAL") | (binner.binnertype == "HEALPIX") :
-            result = binMetrics.BaseBinMetric()
-        else:
-            result = binMetrics.BaseBinMetric()
-        return result
   
     def getData(self, tableName,constraint, colnames=[], stackers=[], groupBy='expMJD'):
         """Pull required data from DB """
@@ -151,8 +143,8 @@ class MafDriver(object):
                     
                 print 'fetching constraint:', constr
                 self.getData(opsimName,constr, colnames=colnames)
-                if 'OPSIMFIELDS' in binnertypes:
-                    self.getFieldData(matchingBinners[binnertypes.index('OPSIMFIELDS')])
+                if 'OPSI' in binnertypes:
+                    self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
                 # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                 for i,binner in enumerate(matchingBinners):
                     # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
@@ -161,8 +153,8 @@ class MafDriver(object):
                     print 'running constraint:', constr,' with binnertype =', binner.binnertype 
                     for stacker in binner.stackers:
                         self.data = stacker.run(self.data)
-                    gm = self._binKey(binner)
-                    if binner.binnertype == 'OPSIMFIELDS':
+                    gm = binMetrics.BaseBinMetric() 
+                    if binner.binnertype == 'OPSI':
                         # Need to pass in fieldData as well
                         binner.setupBinner(self.data, self.fieldData,*binner.setupParams, **binner.setupKwargs )
                     else:

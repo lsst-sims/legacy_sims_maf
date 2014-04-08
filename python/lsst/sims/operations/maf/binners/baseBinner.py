@@ -65,12 +65,20 @@ class BaseBinner(object):
         header['comment'] = comment
         header['metadata'] = metadata
         header['simDataName'] = simDataName
+        if hasattr(metricValues, 'mask'): # If it is a masked array
+            data = metricValues.data
+            mask = metricValues.mask
+            fill = metricValues.fill_value
+        else:
+            data = metricValues
+            mask = None
+            fill = None
         # npz file acts like dictionary: each keyword/value pair below acts as a dictionary in loaded NPZ file.
         np.savez(outfilename,
                  header = header, # header saved as dictionary
-                 metricValues = metricValues.data, # metric data values
-                 mask = metricValues.mask, # metric mask values
-                 fill = metricValues.fill_value, # metric badval/fill val
+                 metricValues = data, # metric data values
+                 mask = mask, # metric mask values
+                 fill = fill, # metric badval/fill val
                  binner_init = self.binner_init, # dictionary of instantiation parameters
                  binnerName = self.binnerName, # class name
                  binnerBins = self.bins, # bins to match end of 'setupBinner'
@@ -80,9 +88,12 @@ class BaseBinner(object):
         import lsst.sims.operations.maf.binners as binners
         restored = np.load(infilename)
         # Get metric data set
-        metricValues = ma.MaskedArray(data=restored['metricValues'],
-                                      mask=restored['mask'],
-                                      fill_value=restored['fill'])
+        if restored['mask'][()] is None:
+            metricValues = ma.MaskedArray(data=restored['metricValues'])
+        else:
+            metricValues = ma.MaskedArray(data=restored['metricValues'],
+                                          mask=restored['mask'],
+                                          fill_value=restored['fill'])
         # Get Metadata & other simData info
         header = restored['header'][()]  # extra brackets restore dictionary to dictionary status
         # Get binner set up

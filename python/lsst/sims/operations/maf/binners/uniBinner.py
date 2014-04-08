@@ -11,9 +11,9 @@ from .baseBinner import BaseBinner
 
 class UniBinner(BaseBinner):
     """UniBinner."""
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=True, **kwargs):
         """Instantiate unibinner. """
-        super(UniBinner, self).__init__(verbose=verbose)
+        super(UniBinner, self).__init__(verbose=verbose, **kwargs)
         self.nbins = 1
         self.bins = None
 
