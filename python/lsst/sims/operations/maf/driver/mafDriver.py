@@ -6,6 +6,8 @@ import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binMetrics as binMetrics
 import lsst.sims.operations.maf.utils as utils
 
+import warnings
+warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """

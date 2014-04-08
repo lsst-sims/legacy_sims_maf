@@ -2,13 +2,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import warnings
 
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
-    
+   
 from .baseBinner import BaseBinner
 from .baseSpatialBinner import BaseSpatialBinner
 

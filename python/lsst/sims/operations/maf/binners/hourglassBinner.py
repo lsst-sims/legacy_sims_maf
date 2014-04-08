@@ -1,9 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-try:
-    import astropy.io.fits as pyf
-except ImportError:
-    import pyfits as pyf
     
 from .uniBinner import UniBinner
 

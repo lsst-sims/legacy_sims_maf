@@ -8,7 +8,6 @@ import numpy as np
 import numpy.ma as ma
 import healpy as hp
 import matplotlib.pyplot as plt
-import warnings
 import matplotlib.cm as cm
 from matplotlib import colors
 
