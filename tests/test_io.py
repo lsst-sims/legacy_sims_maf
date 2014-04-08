@@ -1,9 +1,9 @@
 import numpy as np
+import numpy.ma as ma
 import unittest
 #from lsst.sims.operations.maf.metrics import SimpleMetrics as sm
 import lsst.sims.operations.maf.binners as binners
 import healpy as hp
-import numpy.ma as ma
 
 
 class TestBinners(unittest.TestCase):
@@ -95,8 +95,21 @@ class TestBinners(unittest.TestCase):
         assert(binner == binnerBack)
         np.testing.assert_almost_equal(dataBack,metricValue)
 
-
-
+    def test_complex(self):
+        """Test case where there is a complex metric """
+        nside = 32
+        binner = binners.HealpixBinner(nside=nside)
+        data = np.zeros(binner.nbins, dtype='object')
+        for i,ack in enumerate(data):
+            n_el = np.random.rand(1)*4 # up to 4 elements
+            data[i] = np.arange(n_el)
+        filename = 'heal_complex.npz'
+        binner.writeData(filename,data)
+        dataBack,binnerBack,header = binner.readData(filename)
+        assert(binner == binnerBack)
+        # This is a crazy slow loop!  
+        for i, ack in enumerate(data):
+            np.testing.assert_almost_equal(dataBack[i],data[i])
         
 #    def test_nDBinner(self):
 #        colnames = ['ack1','ack2','poop']
