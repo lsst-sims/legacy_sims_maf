@@ -27,9 +27,9 @@ class TestDriver(unittest.TestCase):
         for filename in self.cfgFiles:
             configIn = MafConfig()
             configIn.load(filename)
-            nfits = glob.glob(configIn.outputDir+'/*.fits')
-            if len(nfits) > 0:
-                ack = Popen('rm '+configIn.outputDir+'/*.fits', shell=True).wait()
+            nnpz = glob.glob(configIn.outputDir+'/*.npz')
+            if len(nnpz) > 0:
+                ack = Popen('rm '+configIn.outputDir+'/*.npz', shell=True).wait()
             
             testDriver = driver.MafDriver(configOverrideFilename=filename)
             testDriver.run()
@@ -41,8 +41,8 @@ class TestDriver(unittest.TestCase):
             for i,binner in enumerate(configIn.binners):
                 if configIn.binners[i].name != 'HourglassBinner':
                     nout += len(configIn.binners[i].constraints)*len(configIn.binners[i].metricDict)
-            nfits = glob.glob(configIn.outputDir+'/*.fits')
-            assert(nout == len(nfits))
+            nnpz = glob.glob(configIn.outputDir+'/*.npz')
+            assert(nout == len(nnpz))
             
 
        

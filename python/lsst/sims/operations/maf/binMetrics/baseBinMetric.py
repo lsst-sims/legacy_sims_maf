@@ -347,14 +347,13 @@ class BaseBinMetric(object):
                 else:            
                     xlabel = mname 
         # ylabel used for y label in histograms
+        ylabel=None # Default to None
         if 'ylabel' in pParams:  
             ylabel=pParams['ylabel']
         else:
             if self.binner.binnerName == 'OneDBinner':
                 if mname.startswith('Count'):
                     ylabel = 'Number of Visits'
-            else:
-                ylabel=None
         # units used for colorbar for skymap plots (this comes from metric setup)
         if 'units' in pParams: 
             units = pParams['units']
