@@ -71,9 +71,11 @@ class HealpixBinner(BaseSpatialBinner):
         # Calculate RA/Dec in RADIANS of pixel in this healpix binner.
         # Note that ipix could be an array, 
         # in which case RA/Dec values will be an array also. 
-        dec, ra = hp.pix2ang(self.nside, ipix)
+        lat, lon = hp.pix2ang(self.nside, ipix)
         # Move dec to +/- 90 degrees
-        dec -= np.pi/2.0
+        dec = lat - np.pi/2.0
+        # Flip ra from latitude to RA (increasing eastward rather than westward)
+        ra = -lon % (np.pi*2)
         return ra, dec  
 
         
@@ -92,20 +94,23 @@ class HealpixBinner(BaseSpatialBinner):
             norm = 'log'
         if cmap is None:
             cmap = cm.jet
-        # Make colormap compatible withe healpy
+        # Make colormap compatible with healpy
         cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
-        cmap.set_bad('gray')
-        
+        cmap.set_bad('gray')        
         if clims is not None:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
-                        format=cbarFormat, min=clims[0], max=clims[1], rot=(180,0,180), cmap=cmap,
-                        norm=norm)
+                        format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
+                        cmap=cmap, norm=norm)
         else:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
-                        format=cbarFormat, rot=(180,0,180), cmap=cmap, norm=norm)
+                        format=cbarFormat, rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
         hp.graticule(dpar=20., dmer=20.)
+        #ecinc = 23.439291 
+        #x_ec = np.arange(0, 359., (1.))
+        #y_ec = -1*np.sin(x_ec*np.pi/180.) * ecinc
+        #hp.projplot(y_ec, x_ec, 'r-', lonlat=True, rot=(180,0,180))
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
