@@ -17,11 +17,15 @@ class TestBinners(unittest.TestCase):
         metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
-        binner.writeData(filename, metricValues, metadata='poop')
+        metadata = 'poop'
+        binner.writeData(filename, metricValues, metadata=metadata)
         metricValuesBack,binnerBack,header = binner.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(binner == binnerBack) #I don't think this is the right way to compare
-
+        assert(binner == binnerBack) 
+        assert(metadata == header['metadata'])
+        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        for att in attr2check:
+            assert(getattr(binner,att) == getattr(binnerBack,att))
         
     def test_healpixBinner_floats(self):
         nside = 128
@@ -31,10 +35,13 @@ class TestBinners(unittest.TestCase):
         filename = 'healpix_test.npz'
         binner.writeData(filename, metricValues, metadata='poop')
         metricValuesBack,binnerBack,header = binner.readData(filename)
-
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(binner == binnerBack) #I don't think this is the right way to compare
-
+        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        for att in attr2check:
+            assert(getattr(binner,att) == getattr(binnerBack,att))
+       
+        
     def test_healpixBinner_masked(self):
         nside = 128
         binner = binners.HealpixBinner(nside=nside)
@@ -47,6 +54,9 @@ class TestBinners(unittest.TestCase):
 
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(binner == binnerBack) #I don't think this is the right way to compare
+        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        for att in attr2check:
+            assert(getattr(binner,att) == getattr(binnerBack,att))
 
 
     def test_oneDBinner(self):
@@ -61,6 +71,12 @@ class TestBinners(unittest.TestCase):
         assert(binner == binnerBack)
         assert(np.all(binner.bins == binnerBack.bins))
         #np.testing.assert_almost_equal(dataBack,dataValues[:100])
+        attr2check = ['nbins', 'columnsNeeded', 'bins']
+        for att in attr2check:
+            if type(getattr(binner,att)).__module__ == 'numpy':
+                np.testing.assert_almost_equal(getattr(binner,att), getattr(binnerBack,att))
+            else:
+                assert(getattr(binner,att) == getattr(binnerBack,att))
 
     def test_opsimFieldBinner(self):
         binner=binners.OpsimFieldBinner(np.arange(100))
@@ -81,7 +97,13 @@ class TestBinners(unittest.TestCase):
         metricBack, binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
-
+        attr2check = ['nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2','simDataFieldIdColName']
+        for att in attr2check:
+            if type(getattr(binner,att)).__name__ == 'dict':
+                for key in getattr(binner,att).keys():
+                    np.testing.assert_almost_equal(getattr(binner,att)[key], getattr(binnerBack,att)[key])
+            else:
+                assert(getattr(binner,att) == getattr(binnerBack,att))
 
     def test_unibinner(self):
         binner = binners.UniBinner()
@@ -94,6 +116,10 @@ class TestBinners(unittest.TestCase):
         dataBack, binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
         np.testing.assert_almost_equal(dataBack,metricValue)
+        attr2check = ['nbins', 'columnsNeeded', 'bins']
+        for att in attr2check:
+            assert(getattr(binner,att) == getattr(binnerBack,att))
+
 
     def test_complex(self):
         """Test case where there is a complex metric """
