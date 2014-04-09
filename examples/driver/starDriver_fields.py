@@ -36,14 +36,14 @@ for i,f in enumerate(filters):
 
 
 # Visits per observing mode:
-modes = [186,187,188,189,190]
+modes = [186,187,189,190]
 for i,f in enumerate(filters):
         m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'units':'#'})
         metricDict = makeDict(m1)
         constraints=[]
         for mode in modes:
             constraints.append("filter = \'%s\' and propID = %s"%(f,mode))
-        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints )
+        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints, metadata='per mode' )
         binList.append(binner)
                                     
         
@@ -63,11 +63,12 @@ binList.append(binner)
 
 
 # Completeness and Joint Completeness
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits / # WFD','units':'# visits / # WFD','plotMin':.5, 'plotMax':5.}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
 # For just WFD proposals
 binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
 binList.append(binner)
 # For all Observations
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 binList.append(binner)
 
