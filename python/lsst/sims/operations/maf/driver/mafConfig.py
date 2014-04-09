@@ -62,11 +62,9 @@ class BinnerConfig(pexConfig.Config):
     
 class MafConfig(pexConfig.Config):
     """Using pexConfig to set MAF configuration parameters"""
-    #dbAddress = pexConfig.Field("Address to the database to query." , str, '')
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
     opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
-    #fieldDataInfo = pexConfig.DictField(doc="", keytype=str, itemtype=str, default={'useFieldTable':'', 'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
     comment =  pexConfig.Field("", dtype=str, default='')
     dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
     

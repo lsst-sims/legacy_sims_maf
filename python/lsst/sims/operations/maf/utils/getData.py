@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import warnings
+warnings.simplefilter("ignore", UserWarning) # Ignore db warning
 import lsst.sims.operations.maf.db as db
 
 def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):

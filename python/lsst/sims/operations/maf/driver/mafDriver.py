@@ -1,13 +1,14 @@
 import numpy as np 
 from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
+import warnings
+warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
+warnings.simplefilter("ignore", UserWarning) # Ignore db warning
 import lsst.sims.operations.maf.db as db
 import lsst.sims.operations.maf.binners as binners
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binMetrics as binMetrics
 import lsst.sims.operations.maf.utils as utils
 
-import warnings
-warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
