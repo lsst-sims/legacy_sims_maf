@@ -47,14 +47,15 @@ class MafDriver(object):
             self.binList.append(temp_binner)
             sub_metricList=[]
             for j,metric in binner.metricDict.iteritems():
-                name,params,kwargs,plotDict = readMetricConfig(metric)
+                name,params,kwargs,plotDict,summaryStats = readMetricConfig(metric)
                 kwargs['plotParams'] = plotDict
                 # If just one parameter, look up units
                 if (len(params) == 1):
                     info = utils.ColInfo()
                     plotDict['_unit'] = info.getUnits(params[0])
-                sub_metricList.append(getattr(metrics,metric.name)
-                                      (*params, **kwargs) )
+                temp_metric = getattr(metrics,metric.name)(*params, **kwargs)
+                temp_metric.summaryStats = summaryStats
+                sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
         self.constraints = []
@@ -172,6 +173,12 @@ class MafDriver(object):
                     for mName in binner.plotConfigs:
                         gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
                     gm.plotAll(outDir=self.config.outputDir, savefig=True, outfileRoot=constr, closefig=True)
+                    # Loop through the metrics and calc any summary statistics
+                    for metric in self.metricList[binner.index]:
+                        if hasattr(metric, 'summaryStats'):
+                            for stat in metric.summaryStats:
+                                summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
+                                print binner.binnertype, constr, metric.name, stat, summary
                     gm.writeAll(outDir=self.config.outputDir, outfileRoot=constr)
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
