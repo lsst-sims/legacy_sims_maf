@@ -127,6 +127,8 @@ class MafDriver(object):
     
     def run(self):
         """Loop over each binner and calc metrics for that binner. """
+        summary_stats=[]
+        summary_stats.append('opsimname,binnertype,sql where, metric name, summary stat name, value')
         for opsimName in self.config.opsimNames:
             for j, constr in enumerate(self.constraints):
                 # Find which binners have a matching constraint 
@@ -178,8 +180,12 @@ class MafDriver(object):
                         if hasattr(metric, 'summaryStats'):
                             for stat in metric.summaryStats:
                                 summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
-                                print binner.binnertype, constr, metric.name, stat, summary
+                                summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
                     gm.writeAll(outDir=self.config.outputDir, outfileRoot=constr)
+        f = open(self.config.outputDir+'/summaryStats.dat','w')
+        for stat in summary_stats:
+            print >>f, stat
+        f.close()
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
                     
