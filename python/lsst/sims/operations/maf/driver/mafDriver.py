@@ -77,7 +77,7 @@ class MafDriver(object):
         """Pull required data from DB """
         
         dbTable = tableName 
-        table = db.Table(dbTable, 'obsHistID', self.config.dbAddress)
+        table = db.Table(dbTable, 'obsHistID', self.config.dbAddress['dbAddress'])
 
         stacker_names = [s.name for s in stackers ]
         dbcolnames = []
@@ -106,9 +106,9 @@ class MafDriver(object):
 
     def getFieldData(self, binner):
         """Given an opsim binner, generate the FieldData """
-        if self.config.fieldDataInfo['useFieldTable']:
+        if 'fieldTable' in self.config.dbAddress.keys():
             if not hasattr(self, fieldData): # Only pull the data once if getting it from the database
-                fieldDataInfo = self.config.fieldDataInfo
+                fieldDataInfo = self.config.dbAddress
                 self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
                                                                 fieldDataInfo['dbAddress'],
                                                                 sessionID=fieldDataInfo['sessionID'],

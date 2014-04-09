@@ -5,7 +5,7 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 # and https://confluence.lsstcorp.org/display/SIM/MAF%3A++Writing+a+new+metric
 
 root.outputDir = './Doc'
-root.dbAddress ='sqlite:///../opsim_small.sqlite'
+root.dbAddress ='sqlite:///opsim.sqlite'
 root.opsimNames = ['opsim_small']
 #root.dbAddress ='sqlite:///opsim.sqlite'
 #root.opsimNames = ['opsim']

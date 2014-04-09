@@ -5,7 +5,7 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access
 root.outputDir = './StarOut'
-root.dbAddress ='sqlite:///opsim.sqlite'
+root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
 root.opsimNames = ['opsim']
 
 filters = ['u','g','r','i','z','y']
