@@ -18,10 +18,13 @@ class OpsimFieldBinner(BaseSpatialBinner):
     (use the healpix binner instead for those use-cases). """
     
     def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
+                 simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec'):
         """Instantiate opsim field binner (an index-based binner that can do spatial plots).
 
         simDataFieldIdColName = the column name in simData for the field ID
+        simDataFieldRaColName = the column name in simData for the field RA 
+        simDataFieldDecColName = the column name in simData for the field Dec
         fieldIdcolName = the column name in the fieldData for the field ID (to match with simData)
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
@@ -36,11 +39,14 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.fieldIdColName = fieldIdColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
-        self.columnsNeeded = [simDataFieldIdColName,fieldIdColName, fieldRaColName, fieldDecColName]
+        self.columnsNeeded = [simDataFieldIdColName, simDataFieldRaColName, simDataFieldDecColName]
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
         self.binner_init={'simDataFieldIdColName':simDataFieldIdColName,
+                          'simDataFieldRaColName':simDataFieldRaColName,
+                          'simDataFieldDecColName':simDataFieldDecColName,
                           'fieldIdColName':fieldIdColName,
-                          'fieldRaColName':fieldRaColName, 'fieldDecColName':fieldDecColName}
+                          'fieldRaColName':fieldRaColName,
+                          'fieldDecColName':fieldDecColName}
         
 
     def setupBinner(self, simData, fieldData):
