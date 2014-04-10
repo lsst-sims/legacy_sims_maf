@@ -69,7 +69,7 @@ class BaseMetric(object):
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
         # Set physical units, mostly for plotting purposes.
         if units is None:
-            units = ''.join([self.colInfo.getUnits(col) for col in self.colNameList])
+            units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
             if len(units.replace(' ', '')) == 0:
                 units = self.name
         self.units = units
@@ -90,7 +90,7 @@ class BaseMetric(object):
         # Set myName to be name of the metric class.
         myName = self.__class__.__name__
         if myName not in self.classRegistry:
-            #Add a set to the registry if the key doesn't exist.
+            # Add a set to the registry if the key doesn't exist.
             self.classRegistry[myName] = set()
         # Add the columns to the registry.
         for col in cols:            
@@ -103,8 +103,9 @@ class BaseMetric(object):
         for col in self.colNameList:
             try:
                 simData[col]
-            except KeyError:
-                raise KeyError('Could not find data column for metric: %s' %(col))
+            except ValueError:
+                raise ValueError('Could not find data column for metric: %s' %(col))
+        return True
     
     def run(self, dataSlice):
         raise NotImplementedError('Please implement your metric calculation.')
