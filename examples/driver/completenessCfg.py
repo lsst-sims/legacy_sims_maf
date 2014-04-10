@@ -21,15 +21,15 @@ binList=[]
 
 
 # Completeness and Joint Completeness
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats=['mean'])
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats=['MeanMetric'])
 
 # For just WFD proposals
-binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
-binList.append(binner)
+#binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
+#binList.append(binner)
 
 # For all Observations
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats=['mean'])
-binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats=['meanMetric'])
+binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=["night < 730"])
 binList.append(binner)
 
 
