@@ -1,4 +1,5 @@
-import numpy as np 
+import numpy as np
+import os
 from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
@@ -26,6 +27,10 @@ class MafDriver(object):
         self.config.validate()
         self.config.freeze()
 
+        # Check for output directory, make if needed
+        if not os.path.isdir(self.config.outputDir):
+            os.makedirs(self.config.outputDir)
+        
         # Construct the binners and metric objects
         self.binList = []
         self.metricList = []

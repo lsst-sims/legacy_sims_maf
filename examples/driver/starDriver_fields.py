@@ -12,18 +12,20 @@ filters = ['u','g','r','i','z','y']
 #filters=['r']
 
 # 10 year Design Specs
+#XXX - change these to dict keyed on filter name.
 nvisitBench=[56,80,184,184,160,160] 
 mag_zpoints=[26.1,27.4,27.5,26.8,26.1,24.9] 
 sky_zpoints = [21.8,22.,21.3,20.0,19.1,17.5]
 seeing_norm = [0.77,0.73,0.7,0.67,0.65,0.63]
 
 binList=[]
-# Healpix resolution
-nside = 128
+
+#XXX-move info on WFD propIDs up to here, and remove hard-coding.
 
 for i,f in enumerate(filters):
     m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'percentileClip':75., 'units':'#'})
-    m2 = makeMetricConfig('CountRatioMetric', params=['expMJD'], kwargs={'normVal':nvisitBench[i]},plotDict={'title': 'filter = %s'%f, 'percentileClip':80.})
+#    m2 = makeMetricConfig('CountRatioMetric', params=['expMJD'], kwargs={'normVal':nvisitBench[i]},plotDict={'title': 'filter = %s'%f, 'percentileClip':80.})
+    m2 = makeMetricConfig('CountMetric', params=['expMJD'],kwargs={'metricName':'CountMetricNorm'}, plotDict={'title': 'filter = %s'%f, 'normVal':nvisitBench[i],'percentileClip':80., 'units':'N observations /Benchmark (%i)'%nvisitBench[i]})
     m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'],plotDict={'title': 'filter = %s'%f})
     m4 = makeMetricConfig('Coaddm5Metric', plotDict={'title': 'filter = %s'%f,'zp':mag_zpoints[i], 'percentileClip':95., 'units':'Co-add m5 - %.1f'%mag_zpoints[i]} )             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'title': 'filter = %s'%f, 'zp':sky_zpoints[i]})
@@ -38,7 +40,7 @@ for i,f in enumerate(filters):
 # Visits per observing mode:
 modes = [186,187,189,190]
 for i,f in enumerate(filters):
-        m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'units':'#'})
+        m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'units':'Number of Observations'})
         metricDict = makeDict(m1)
         constraints=[]
         for mode in modes:

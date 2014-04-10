@@ -10,7 +10,7 @@ from lsst.sims.operations.maf.driver.mafConfig import *
 root.outputDir = './Output2'
 #root.dbAddress ='sqlite:///../opsim_small.sqlite'
 #root.opsimNames = ['opsim_small']
-root.dbAddress ='sqlite:///../examples/opsim_small.sqlite'
+root.dbAddress = {'dbAddress':'sqlite:///../examples/opsim_small.sqlite'}
 root.opsimNames = ['opsim_small']
 
 
