@@ -176,11 +176,17 @@ class MafDriver(object):
                         gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
                     gm.plotAll(outDir=self.config.outputDir, savefig=True, outfileRoot=constr, closefig=True)
                     # Loop through the metrics and calc any summary statistics
-                    for metric in self.metricList[binner.index]:
+                    #import pdb ; pdb.set_trace()
+                    for i,metric in enumerate(self.metricList[binner.index]):
                         if hasattr(metric, 'summaryStats'):
                             for stat in metric.summaryStats:
-                                summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
-                                summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
+                                if metric.metricDtype == 'object':
+                                    baseName = gm.metricNames[i]
+                                    #figure out what the reduced names are and loop over them
+                                    pass
+                                else:
+                                    summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
+                                    summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
                     gm.writeAll(outDir=self.config.outputDir, outfileRoot=constr)
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:

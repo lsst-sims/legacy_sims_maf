@@ -36,7 +36,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.fieldIdColName = fieldIdColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
-        self.columnsNeeded = [simDataFieldIdColName,]
+        self.columnsNeeded = [simDataFieldIdColName,fieldIdColName, fieldRaColName, fieldDecColName]
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
         self.binner_init={'simDataFieldIdColName':simDataFieldIdColName,
                           'fieldIdColName':fieldIdColName,
