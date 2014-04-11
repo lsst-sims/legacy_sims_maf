@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 import numpy as np 
 import os
 from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
@@ -209,10 +208,3 @@ class MafDriver(object):
         f.close()
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
-                    
-if __name__ == "__main__":
-    import sys
-    driver = MafDriver(sys.argv[1])
-    driver.run()
-
-
