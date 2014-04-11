@@ -98,10 +98,9 @@ class BaseBinMetric(object):
         # Start building output file name. Strip trailing numerals from metricName.
         oname = outfileRoot + '_' + self._dupeMetricName(metricName)
         # Add summary of the metadata if it exists.
-        if metricName in self.metadata:
-            metadata_summary = self.metadata[metricName]
-            if len(metadata_summary) > 0:        
-                oname = oname + '_' + metadata_summary
+        if metricName in self.comment:
+            if len(self.comment[metricName]) > 0:        
+                oname = oname + '_' + self.comment[metricName]
         # Add letter to distinguish binner types
         #   (which otherwise might have the same output name).
         oname = oname + '_' + self.binner.binnerName[:4].upper()
@@ -209,7 +208,10 @@ class BaseBinMetric(object):
         for mname in self.metricObjs:
             self.simDataName[mname] = simDataName
             self.metadata[mname] = metadata
-            self.comment[mname] = comment
+            if len(comment) == 0:
+                self.comment[mname] = metadata
+            else:
+                self.comment[mname] = comment
         # Set up (masked) arrays to store metric data. 
         for mname in self.metricObjs:
             self.metricValues[mname] = ma.MaskedArray(data = np.empty(len(self.binner), 
@@ -340,7 +342,7 @@ class BaseBinMetric(object):
         if 'title' in pParams: 
             title = pParams['title']
         else:
-            title = self.simDataName[metricName] + ' ' + self.metadata[metricName]
+            title = self.simDataName[metricName] + ' ' + self.comment[metricName]
             title += ': ' + mname
         # xlabel is used for x label in histograms
         if 'xlabel' in pParams:  
@@ -502,11 +504,11 @@ class BaseBinMetric(object):
         If 'verbose' then prints in somewhat pretty fashion to stdout."""
         if verbose:
             keys = ['filename', 'filetype', 'metricName', 'binner', 'simDataName', 'metadata', 'comment']
-            writestring = ' '.join(keys)
+            writestring = ' || '.join(keys)
             print writestring
             for o in self.outputFiles:
                 writestring = ''
                 for k in keys:
-                    writestring += o[k] + ' '
+                    writestring += o[k] + ' || '
                 print writestring
         return self.outputFiles
