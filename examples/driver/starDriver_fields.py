@@ -4,9 +4,11 @@ import numpy as np
 from lsst.sims.operations.maf.driver.mafConfig import *
 
 # Setup Database access
-root.outputDir = './StarOut_Fields'
-root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-root.opsimNames = ['opsim']
+root.outputDir ='ack'# './StarOut_Fields'
+#root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
+#root.opsimNames = ['opsim']
+root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
+root.opsimNames = ['opsim_small']
 
 filters = ['u','g','r','i','z','y']
 #filters=['r']
