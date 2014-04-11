@@ -58,7 +58,7 @@ class MinMetric(SimpleScalarMetric):
         return np.min(dataSlice[self.colname]) 
 
 class FullRangeMetric(SimpleScalarMetric):
-    """Calculate the minimum of a simData column slice."""
+    """Calculate the range of a simData column slice."""
     def run(self, dataSlice):
         return np.max(dataSlice[self.colname])-np.min(dataSlice[self.colname]) 
 
@@ -66,7 +66,6 @@ class RmsMetric(SimpleScalarMetric):
     """Calculate the standard deviation of a simData column slice."""
     def run(self, dataSlice):
         return np.std(dataSlice[self.colname]) 
-
 
 class SumMetric(SimpleScalarMetric):
     """Calculate the sum of a simData column slice."""
@@ -77,19 +76,6 @@ class CountMetric(SimpleScalarMetric):
     """Count the length of a simData column slice. """
     def run(self, dataSlice):
         return len(dataSlice[self.colname]) 
-
-class CountRatioMetric(SimpleScalarMetric):
-    """Count the length of a simData column slice and normalize by some value. """
-    def __init__(self, col='expMJD', normVal=10., metricName = 'Ratio', **kwargs):
-        """Instantiate metric.
-
-        normVal = value to by which to divide the counts.
-         """
-        self.normVal=normVal
-        super(CountRatioMetric, self).__init__(colname=col, metricName=metricName, **kwargs)
-        self.units ='Ratio'
-    def run(self, dataSlice):
-        return len(dataSlice[self.colname])/self.normVal
 
 class RobustRmsMetric(SimpleScalarMetric):
     """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation does not include outliers in the distribution"""
