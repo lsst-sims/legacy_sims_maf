@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import numpy as np 
 import os
 from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
@@ -211,8 +212,7 @@ class MafDriver(object):
                     
 if __name__ == "__main__":
     import sys
-    configOverrideFilename = sys.argv[1]
-    driver = MafDriver(configOverrideFilename=configOverrideFilename)
+    driver = MafDriver(sys.argv[1])
     driver.run()
 
 
