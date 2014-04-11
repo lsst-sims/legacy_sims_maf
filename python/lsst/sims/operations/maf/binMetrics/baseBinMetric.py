@@ -351,7 +351,9 @@ class BaseBinMetric(object):
             if self.binner.binnerName == 'OneDBinner':
                 xlabel = None  #use sliceColName
             else:
-                if '_unit' in pParams:
+                if 'units' in pParams:
+                    xlabel = pParams['units']
+                elif '_unit' in pParams:
                     xlabel = mname + ' (' + pParams['_unit'] + ')'
                 else:            
                     xlabel = mname 
