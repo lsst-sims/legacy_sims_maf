@@ -12,40 +12,50 @@ filters = ['u','g','r','i','z','y']
 #filters=['r']
 
 # 10 year Design Specs
-#XXX - change these to dict keyed on filter name.
-nvisitBench=[56,80,184,184,160,160] 
-mag_zpoints=[26.1,27.4,27.5,26.8,26.1,24.9] 
-sky_zpoints = [21.8,22.,21.3,20.0,19.1,17.5]
-seeing_norm = [0.77,0.73,0.7,0.67,0.65,0.63]
+nvisitBench={'u':56,'g':80, 'r':184, 'i':184, 'z':160, 'y':160} 
+nVisits_plotRange = {'all': 
+                     {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200], 'z':[100, 250], 'y':[100,250]},
+                     'DDpropid': 
+                     {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],  'z':[7000, 10000], 'y':[5000, 8000]},
+                     '216':
+                     {'u':[20, 40], 'g':[20, 40], 'r':[20, 40], 'i':[20, 40], 'z':[20, 40], 'y':[20, 40]}}
+mag_zpoints={'u':26.1,'g':27.4, 'r':27.5, 'i':26.8, 'z':26.1, 'y':24.9}
+sky_zpoints = {'u':21.8, 'g':22., 'r':21.3, 'i':20.0, 'z':19.1, 'y':17.5}
+seeing_norm = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63}
 
 binList=[]
 
-#XXX-move info on WFD propIDs up to here, and remove hard-coding.
+propids = [215, 216, 217, 218, 219]
+WFDpropid = 217
+DDpropid = 219
+
+# Metrics per filter and for WFD propID
 
 for i,f in enumerate(filters):
-    m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'percentileClip':75., 'units':'#'})
-#    m2 = makeMetricConfig('CountRatioMetric', params=['expMJD'], kwargs={'normVal':nvisitBench[i]},plotDict={'title': 'filter = %s'%f, 'percentileClip':80.})
-    m2 = makeMetricConfig('CountMetric', params=['expMJD'],kwargs={'metricName':'CountMetricNorm'}, plotDict={'title': 'filter = %s'%f, 'normVal':nvisitBench[i],'percentileClip':80., 'units':'N observations /Benchmark (%i)'%nvisitBench[i]})
-    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'],plotDict={'title': 'filter = %s'%f})
-    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'title': 'filter = %s'%f,'zp':mag_zpoints[i], 'percentileClip':95., 'units':'Co-add m5 - %.1f'%mag_zpoints[i]} )             
-    m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'title': 'filter = %s'%f, 'zp':sky_zpoints[i]})
-    m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'title': 'filter = %s'%f, 'normVal':seeing_norm[i], 'units':'median seeing/expected zenith seeing'})
-    m7 = makeMetricConfig('MedianMetric', params=['airmass'],plotDict={'title': 'filter = %s'%f})
-    m8 = makeMetricConfig('MaxMetric', params=['airmass'],plotDict={'title': 'filter = %s'%f} )
+    m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
+                          plotDict={'percentileClip':75., 'units':'Number of Visits', 
+                                    'histMin':nVisits_plotRange['all'][f][0], 'histMax':nVisits_plotRange['all'][f][1]})
+    m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'}, plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
+    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]} )             
+    m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
+    m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
+    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
+    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
     metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
-    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and propID = 188"%f, "filter = \'%s\'"%f])
+    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and propID = %d"%(f, WFDpropid), "filter = \'%s\'"%f])
     binList.append(binner)
 
 
-# Visits per observing mode:
-modes = [186,187,189,190]
-for i,f in enumerate(filters):
-        m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'title': 'filter = %s'%f, 'units':'Number of Observations'})
+# Number of Visits per observing mode:
+
+for i,f in enumerate(filters):    
+        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits (full range)'}, plotDict={'units':'Number of Visits', 'histBins':50})
         metricDict = makeDict(m1)
         constraints=[]
-        for mode in modes:
-            constraints.append("filter = \'%s\' and propID = %s"%(f,mode))
-        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints, metadata='per mode' )
+        for propid in propids:
+            constraints.append("filter = \'%s\' and propID = %s" %(f,propid))
+        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints)
         binList.append(binner)
                                     
         
@@ -65,12 +75,12 @@ binList.append(binner)
 
 
 # Completeness and Joint Completeness
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
 # For just WFD proposals
-binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = 188"])
+binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
 binList.append(binner)
 # For all Observations
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits / # WFD','plotMin':.5, 'plotMax':1.5}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 binList.append(binner)
 
