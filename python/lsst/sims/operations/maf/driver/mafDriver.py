@@ -191,7 +191,11 @@ class MafDriver(object):
                             for stat in metric.summaryStats:
                                 if metric.metricDtype == 'object':
                                     baseName = gm.metricNames[i]
-                                    #figure out what the reduced names are and loop over them
+                                    all_names = gm.metricValues.keys()
+                                    matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
+                                    for mm in matching_metrics:
+                                        summary = gm.computeSummaryStatistics(mm, getattr(metrics,stat))
+                                        summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+mm +','+stat+','+ np.array_str(summary))
                                     pass
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
