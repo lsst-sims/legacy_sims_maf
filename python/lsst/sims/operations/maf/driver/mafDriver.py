@@ -42,7 +42,7 @@ class MafDriver(object):
             temp_binner.constraints = binner.constraints
             temp_binner.plotConfigs = binner.plotConfigs
             temp_binner.metadata = metadata
-            temp_binner.index=i
+            temp_binner.index = i
             temp_binner.binnertype = temp_binner.binnerName[:4].upper() # Matching baseBinMetric
             stackers = []
             for key in stackCols.keys():
