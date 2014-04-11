@@ -435,19 +435,19 @@ class BaseBinMetric(object):
             if 'zp' in pParams:
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['histBins'],
+                                                       #bins = pParams['histBins'],
                                                        histRange=[histRange[0]-pParams['zp'],
                                                                   histRange[1]-pParams['zp']], ylog=ylog)
             elif 'normVal' in pParams:
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['histBins'],
+                                                       #bins = pParams['histBins'],
                                                        histRange=[histRange[0]/pParams['normVal'],
                                                                   histRange[1]/pParams['normVal']], ylog=ylog)
             else:
                 histfignum = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['histBins'],
+                                                       #bins = pParams['histBins'],
                                                        histRange=histRange, ylog=ylog)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 

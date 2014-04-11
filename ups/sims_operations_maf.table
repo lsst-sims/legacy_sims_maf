@@ -14,3 +14,4 @@ setupRequired(sims_catalogs_generation)
 # sqlalchemy 
 
 envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python)
+envPrepend(PATH, ${PRODUCT_DIR}/python/lsst/sims/operations/maf/driver )

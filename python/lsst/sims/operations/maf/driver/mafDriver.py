@@ -1,4 +1,5 @@
 import numpy as np 
+import os
 from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
@@ -26,6 +27,10 @@ class MafDriver(object):
         self.config.validate()
         self.config.freeze()
 
+        # Check for output directory, make if needed
+        if not os.path.isdir(self.config.outputDir):
+            os.makedirs(self.config.outputDir)
+
         # Construct the binners and metric objects
         self.binList = []
         self.metricList = []
@@ -37,7 +42,7 @@ class MafDriver(object):
             temp_binner.constraints = binner.constraints
             temp_binner.plotConfigs = binner.plotConfigs
             temp_binner.metadata = metadata
-            temp_binner.index=i
+            temp_binner.index = i
             temp_binner.binnertype = temp_binner.binnerName[:4].upper() # Matching baseBinMetric
             stackers = []
             for key in stackCols.keys():
@@ -68,10 +73,13 @@ class MafDriver(object):
         for i,binner in enumerate(self.binList):
             for constraint in binner.constraints:
                 for metric in self.metricList[i]:
-                    filenames.append(constraint+metric.name+binner.metadata+binner.binnertype)
+                    # Approximate what output filename will be 
+                    comment = constraint.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
+                    filenames.append('_'.join([metric.name, comment, binner.binnertype]))
         if len(filenames) != len(set(filenames)):
-            duplicates = set([x for x in filenames if filenames.count(x) > 1])
-            print duplicates
+            duplicates = list(set([x for x in filenames if filenames.count(x) > 1]))
+            counts = [filenames.count(x) for x in duplicates]
+            print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add binner metadata or change metric names.')
         
   
@@ -149,8 +157,8 @@ class MafDriver(object):
                             colnames.append(col)
                 colnames = list(set(colnames)) #unique elements
                     
-                print 'fetching constraint:', constr
-                self.getData(opsimName,constr, colnames=colnames)
+                print 'Running SQLconstraint:', constr
+                self.getData(opsimName, constr, colnames=colnames)
                 if 'OPSI' in binnertypes:
                     self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
                 # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
@@ -158,7 +166,7 @@ class MafDriver(object):
                     # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
                     # what could I do--write a function that takes:  simdata, binners, metriclist, dbAdress.
                     # could use the config file to set how many processors to use in the pool.
-                    print 'running constraint:', constr,' with binnertype =', binner.binnertype 
+                    print '  with binnertype =', binner.binnertype, 'metrics:', ', '.join([m.name for m in self.metricList[binner.index]])
                     for stacker in binner.stackers:
                         self.data = stacker.run(self.data)
                     gm = binMetrics.BaseBinMetric() 
@@ -169,12 +177,13 @@ class MafDriver(object):
                         binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
                     gm.setMetrics(self.metricList[binner.index])
-                    gm.runBins(self.data, simDataName=opsimName+'%i'%j, metadata=binner.metadata)
+                    comment = constr.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
+                    gm.runBins(self.data, simDataName=opsimName, metadata=binner.metadata, comment=comment)
                     gm.reduceAll()
                     # Replace the plotParams for selected metricNames
                     for mName in binner.plotConfigs:
                         gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
-                    gm.plotAll(outDir=self.config.outputDir, savefig=True, outfileRoot=constr, closefig=True)
+                    gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True)
                     # Loop through the metrics and calc any summary statistics
                     #import pdb ; pdb.set_trace()
                     for i,metric in enumerate(self.metricList[binner.index]):
@@ -182,31 +191,20 @@ class MafDriver(object):
                             for stat in metric.summaryStats:
                                 if metric.metricDtype == 'object':
                                     baseName = gm.metricNames[i]
-                                    #figure out what the reduced names are and loop over them
+                                    all_names = gm.metricValues.keys()
+                                    matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
+                                    for mm in matching_metrics:
+                                        summary = gm.computeSummaryStatistics(mm, getattr(metrics,stat))
+                                        summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+mm +','+stat+','+ np.array_str(summary))
                                     pass
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
                                     summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
-                    gm.writeAll(outDir=self.config.outputDir, outfileRoot=constr)
+                    gm.writeAll(outDir=self.config.outputDir)
+                    gm.returnOutputFiles(verbose=True)
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
             print >>f, stat
         f.close()
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
-                    
-if __name__ == "__main__":
-    import sys
-    configOverrideFilename = sys.argv[1]
-    driver = MafDriver(configOverrideFilename=configOverrideFilename)
-    driver.run()
-
-
-
-
-
-    
-
-
-
- 
