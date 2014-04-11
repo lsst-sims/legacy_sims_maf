@@ -195,3 +195,4 @@ if __name__ == '__main__':
     # Write the data to file.
     write(gm)
     
+    gm.returnOutputFiles(verbose=True)
