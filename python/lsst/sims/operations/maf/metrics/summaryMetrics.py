@@ -1,6 +1,6 @@
 import numpy as np
 from .simpleMetrics import SimpleScalarMetric
-
+from .baseMetric import BaseMetric
 
 class SummaryMetrics(BaseMetric):
     """A class for metrics which are intended to be primarily used as summary statistics on other metrics.  SimpleScalarMetrics can be used as well, but since they can return more than a scalar, they should not be placed with the SimpleMetrics."""
