@@ -84,7 +84,24 @@ binList.append(binner)
 
 
 
+# Let's show how the plotting dictionary works:
 
 
 
 root.binners=makeDict(*binList)
+
+m3 = makeMetricConfig('Coaddm5Metric',kwargs={'metricName':'PlotExamples1'}, plotDict={'zp':27., 'percentileClip':95, 'units':'units', 'title':'title'})
+metricDict = makeDict(m3)
+binner = makeBinnerConfig('HealpixBinner',
+                          kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
+                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
+binList.append(binner)
+
+
+m2 = makeMetricConfig('CountMetric', kwargs={'metricName':'plotExample2'},plotDict={'untis':'units', 'title':'title', 'legendLabel':'legendLabel', 'xlabel':'xlabel', 'ylabel':'ylabel'}, params=['slewDist'])
+metricDict=makeDict(m2)
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'},
+                          metricDict=metricDict, constraints=constraints)
+binList.append(binner)
+
+

@@ -1,8 +1,10 @@
 import os
 import numpy as np
 import warnings
-warnings.simplefilter("ignore", UserWarning) # Ignore db warning
-import lsst.sims.operations.maf.db as db
+with warnings.catch_warnings() as w:
+    warnings.simplefilter("ignore", UserWarning) # Ignore db warning
+    import lsst.sims.operations.maf.db as db
+
 
 def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
     """Utility to get the dbAddress info corresponding to 'connectionName' from a dbLogin file.
