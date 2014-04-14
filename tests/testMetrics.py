@@ -83,7 +83,7 @@ class TestBaseMetric(unittest.TestCase):
         testmetric = metrics.BaseMetric(cols)
         self.assertTrue(isinstance(testmetric.plotParams, dict))
         self.assertEqual(testmetric.plotParams.keys(), ['_unit'])
-        # Set plot parameters - are they present in dictionary and dictionary contains only needed values?
+        # Set some plot parameters - are they present in dictionary and dictionary contains only needed values?
         plotParams = {'title':'mytitle'}
         testmetric = metrics.BaseMetric(cols, plotParams=plotParams)
         self.assertTrue(isinstance(testmetric.plotParams, dict))
@@ -96,8 +96,74 @@ class TestBaseMetric(unittest.TestCase):
         self.assertTrue(testmetric.validateData(testdata))
         testmetric = metrics.BaseMetric(cols='nottestdata')
         self.assertRaises(ValueError, testmetric.validateData, testdata)
-    
 
+class TestSimpleMetric(unittest.TestCase):
+    def setUp(self):
+        dv = np.arange(0, 10, .5)
+        self.dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        
+    def testBaseSimpleScalar(self):
+        """Test base simple scalar metric."""
+        # Check that metric works as expected with single column.
+        testmetric = metrics.SimpleScalarMetric('testdata')
+        self.assertEqual(testmetric.metricDtype, 'float')
+        self.assertEqual(testmetric.colname, 'testdata')
+        # Check that metric raises exception if given more than one column.
+        self.assertRaises(Exception, metrics.SimpleScalarMetric, ['testdata1', 'testdata2'])
+
+    def testMaxMetric(self):
+        """Test max metric."""
+        testmetric = metrics.MaxMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), self.dv['testdata'].max())
+
+    def testMinMetric(self):
+        """Test min metric."""
+        testmetric = metrics.MinMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), self.dv['testdata'].min())
+
+    def testMeanMetric(self):
+        """Test mean metric."""
+        testmetric = metrics.MeanMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), self.dv['testdata'].mean())
+
+    def testMedianMetric(self):
+        """Test median metric."""
+        testmetric = metrics.MedianMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), np.median(self.dv['testdata']))
+
+    def testFullRangeMetric(self):
+        """Test full range metric."""
+        testmetric = metrics.FullRangeMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), self.dv['testdata'].max()-self.dv['testdata'].min())
+
+    def testCoaddm5Metric(self):
+        """Test coaddm5 metric."""
+        testmetric = metrics.Coaddm5Metric(m5col='testdata')
+        self.assertEqual(testmetric.run(self.dv), 1.25 * np.log10(np.sum(10.**(.8*self.dv['testdata']))))
+
+    def testRmsMetric(self):
+        """Test rms metric."""
+        testmetric = metrics.RmsMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), np.std(self.dv['testdata']))
+
+    def testSumMetric(self):
+        """Test Sum metric."""
+        testmetric = metrics.SumMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), self.dv['testdata'].sum())
+
+    def testCountMetric(self):
+        """Test count metric."""
+        testmetric = metrics.CountMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), np.size(self.dv['testdata']))
+
+    def testRobustRmsMetric(self):
+        """Test Robust RMS metric."""
+        testmetric = metrics.RobustRmsMetric('testdata')
+        rms_approx = (np.percentile(self.dv['testdata'], 75) - np.percentile(self.dv['testdata'], 25)) / 1.349
+        self.assertEqual(testmetric.run(self.dv), rms_approx)
+                
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBaseMetric)
+    unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleMetric)
     unittest.TextTestRunner(verbosity=2).run(suite)
