@@ -1,4 +1,3 @@
-import numpy as np
 import lsst.pex.config as pexConfig
    
 

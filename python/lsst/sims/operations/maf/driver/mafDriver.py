@@ -1,6 +1,6 @@
 import numpy as np 
 import os
-from mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
+from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
@@ -207,7 +207,8 @@ class MafDriver(object):
                                     summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
                                     summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
                     gm.writeAll(outDir=self.config.outputDir)
-                    gm.returnOutputFiles(verbose=True)
+                    # Return Output Files - get file output key back. Verbose=True, prints to screen.
+                    gm.returnOutputFiles(verbose=False)
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
             print >>f, stat
