@@ -120,7 +120,7 @@ class MafDriver(object):
     def getFieldData(self, binner):
         """Given an opsim binner, generate the FieldData """
         if 'fieldTable' in self.config.dbAddress.keys():
-            if not hasattr(self, fieldData): # Only pull the data once if getting it from the database
+            if not hasattr(self, 'fieldData'): # Only pull the data once if getting it from the database
                 fieldDataInfo = self.config.dbAddress
                 self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
                                                                 fieldDataInfo['dbAddress'],
@@ -160,10 +160,13 @@ class MafDriver(object):
                             colnames.append(col)
                 colnames = list(set(colnames)) #unique elements
                     
-                print 'Running SQLconstraint:', constr
-                self.getData(opsimName, constr, colnames=colnames)
                 if 'OPSI' in binnertypes:
                     self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
+                if hasattr(self, 'fieldData'): #if I have field data, don't try to pull it from the main DB
+                    if 'fieldRA' in colnames: colnames.remove('fieldRA')
+                    if 'fieldDec' in colnames: colnames.remove('fieldDec')
+                print 'Running SQLconstraint:', constr
+                self.getData(opsimName, constr, colnames=colnames)
                 # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                 for i,binner in enumerate(matchingBinners):
                     # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
