@@ -1,6 +1,9 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+# SIMPLE SCALAR METRICS are just that - they are metrics that operate on a single column of simData
+#  and return a SINGLE SCALAR value.
+
 # Base class for simple metrics. 
 class SimpleScalarMetric(BaseMetric):
     """This is the base class for the simplist metrics: ones that calculate one

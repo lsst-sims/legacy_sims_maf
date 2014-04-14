@@ -401,7 +401,7 @@ class BaseBinMetric(object):
         # Set 'histRange' parameter from pParams, if available (allows user to set histogram x range
         #  in histogram separately from clims for skymap)
         if 'histBins' not in pParams:
-            pParams['histBins'] = None
+            pParams['histBins'] = 100
         if 'histMin' and 'histMax' in pParams:
             histRange = [pParams['histMin'], pParams['histMax']]
         else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
