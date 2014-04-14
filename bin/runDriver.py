@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import numpy as np
 import lsst.sims.operations.maf.driver as driver
 import sys
 
