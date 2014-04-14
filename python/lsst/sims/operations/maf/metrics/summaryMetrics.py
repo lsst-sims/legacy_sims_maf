@@ -1,6 +1,16 @@
 import numpy as np
 from .simpleMetrics import SimpleScalarMetric
 
+
+class SummaryMetrics(BaseMetric):
+    """A class for metrics which are intended to be primarily used as summary statistics on other metrics.  SimpleScalarMetrics can be used as well, but since they can return more than a scalar, they should not be placed with the SimpleMetrics."""
+    def __init__(self, cols, *args,**kwargs):
+        super(SummaryMetrics, self).__init__(cols,*args,**kwargs)
+
+    def run(self, dataSlice):
+        raise NotImplementedError()
+
+
 class TableFractionMetric(SimpleScalarMetric):
     # Using SimpleScalarMetric, but returning a histogram.
     """This metric is meant to be used as a summary statistic on something like the completeness metric.  """
