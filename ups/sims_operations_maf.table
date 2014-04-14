@@ -1,7 +1,6 @@
 setupRequired(base)
 setupRequired(numpy)
 setupRequired(matplotlib)
-setupRequired(pyfits)
 setupRequired(pyephem)
 setupRequired(palpy)
 setupRequired(healpy)
