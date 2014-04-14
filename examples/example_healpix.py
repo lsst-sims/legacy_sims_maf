@@ -19,7 +19,7 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-def getMetrics(seeingcol, docomplex=True):
+def getMetrics(seeingcol, docomplex=False):
     t = time.time()
     # Set up metrics.
     metricList = []
