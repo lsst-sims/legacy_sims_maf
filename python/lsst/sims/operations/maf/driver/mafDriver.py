@@ -160,13 +160,10 @@ class MafDriver(object):
                             colnames.append(col)
                 colnames = list(set(colnames)) #unique elements
                     
-                if 'OPSI' in binnertypes:
-                    self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
-                if hasattr(self, 'fieldData'): #if I have field data, don't try to pull it from the main DB
-                    if 'fieldRA' in colnames: colnames.remove('fieldRA')
-                    if 'fieldDec' in colnames: colnames.remove('fieldDec')
                 print 'Running SQLconstraint:', constr
                 self.getData(opsimName, constr, colnames=colnames)
+                if 'OPSI' in binnertypes:
+                    self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
                 # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                 for i,binner in enumerate(matchingBinners):
                     # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
@@ -201,8 +198,9 @@ class MafDriver(object):
                                     matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         summary = gm.computeSummaryStatistics(mm, getattr(metrics,stat))
+                                        if type(summary).__name__ == 'float' or type(summary).__name__ == 'int':
+                                            summary = np.array(summary)
                                         summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+mm +','+stat+','+ np.array_str(summary))
-                                    pass
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
                                     summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))

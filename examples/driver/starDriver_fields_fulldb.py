@@ -43,7 +43,7 @@ for i,f in enumerate(filters):
     m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
     m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
     metricDict = makeDict(m1,m2,m6,m7,m8)
-    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' "%(f), "filter = \'%s\'"%f], kwargs={'simDataFieldDecColName':'', 'simDataFieldDecColName':'', 'simDataFieldIdColName':'Field_fieldID'}, )
+    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' "%(f), "filter = \'%s\'"%f], kwargs={'simDataFieldRaColName':'', 'simDataFieldDecColName':'', 'simDataFieldIdColName':'Field_fieldID'}, )
     binList.append(binner)
 
 
