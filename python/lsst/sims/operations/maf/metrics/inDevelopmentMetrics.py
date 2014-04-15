@@ -23,7 +23,7 @@ class LinkedMetric(BaseMetric):
            fovRad = radius of the field of view in degrees"""
         cols = [raCol, decCol]
         self.needRADec = True #flag so binMetric will pass ra,dec of point
-        super(ParallaxMetric, self).__init__(cols, metricName=metricName, **kwargs)
+        super(LionkedMetric, self).__init__(cols, metricName=metricName, **kwargs)
         self.raCol = raCol
         self.decCol = decCol
 
