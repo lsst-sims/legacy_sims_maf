@@ -19,7 +19,8 @@ class VisitPairsMetric(ComplexMetric):
         'deltaTmax' = maximum time of window."""
         self.times = timesCol   
         self.nights = nightsCol
-        self.deltaTmin = deltaTmin
+        eps = 1e-10
+        self.deltaTmin = deltaTmin - eps
         self.deltaTmax = deltaTmax
         self.nPairs = nPairs
         self.window = window
@@ -35,13 +36,14 @@ class VisitPairsMetric(ComplexMetric):
         for i, n in enumerate(uniquenights):
             condition = (dataSlice[self.nights] == n)
             times = dataSlice[self.times][condition]
+            pairnum = 0
             for t in times:
                 dt = times - t
-                condition = ((dt >= self.deltaTmin) & (dt <= self.deltaTmax))
-                pairnum = len(dt[condition])
-                if pairnum > 0:
-                    visitPairs.append(pairnum)
-                    nights.append(n)
+                condition2 = ((dt >= self.deltaTmin) & (dt <= self.deltaTmax))
+                pairnum += len(dt[condition2])
+            if pairnum > 0:
+                visitPairs.append(pairnum)
+                nights.append(n)
         # Convert to numpy arrays.
         visitPairs = np.array(visitPairs)
         nights = np.array(nights)
@@ -62,9 +64,10 @@ class VisitPairsMetric(ComplexMetric):
         return pairs.std()
 
     def reduceNNightsWithPairs(self, (pairs, nights), nPairs=None):
-        """Reduce to number of nights with more than 'nPairs' (default=2) visits."""
+        """Reduce to number of nights with more than 'nPairs' (default=1) visits."""
         if not nPairs:
-            nPairs = self.nPairs
+            # Number of PAIRS (i.e. two visits = 1 pair)
+            nPairs = 1
         condition = (pairs >= nPairs)
         return len(pairs[condition])
 

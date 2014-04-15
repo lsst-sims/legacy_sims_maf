@@ -42,11 +42,6 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import pickle
-#try:
-#    import astropy.io.fits as pyf
-#except ImportError:
-#    import pyfits as pyf
 import lsst.sims.operations.maf.binners as binners
 from lsst.sims.operations.maf.utils.percentileClip import percentileClip
 
@@ -54,12 +49,6 @@ from lsst.sims.operations.maf.utils.percentileClip import percentileClip
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
-
-binnertypeDict = {'UNI': binners.UniBinner,
-                  'ONED': binners.OneDBinner,
-                  'ND': binners.NDBinner,
-                  'OPSIMFIELDS': binners.OpsimFieldBinner, 
-                  'HEALPIX': binners.HealpixBinner}
 
 
 class BaseBinMetric(object):
@@ -125,8 +114,8 @@ class BaseBinMetric(object):
     def _deDupeMetricName(self, metricName):
         """In case of multiple metrics having the same 'metricName', add additional characters to de-dupe."""
         mname = metricName
-        i =0 
-        while mname in self.metricValues.keys():
+        i = 0 
+        while mname in self.metricNames:
             mname = metricName + '__' + str(i)
             i += 1
         return mname
@@ -157,9 +146,11 @@ class BaseBinMetric(object):
         #   (reduced metric data is originalmetricName.reduceFuncName). 
         if not hasattr(metricList, '__iter__'):
             metricList = [metricList,]
+        newmetricNames = []
         for m in metricList:
-            self.metricNames.append(self._deDupeMetricName(m.name))
-        for m, mname in zip(metricList, self.metricNames):
+            newmetricNames.append(self._deDupeMetricName(m.name))
+        for m, mname in zip(metricList, newmetricNames):
+            self.metricNames.append(mname)
             self.metricObjs[mname] = m
             self.plotParams[mname] = m.plotParams
 

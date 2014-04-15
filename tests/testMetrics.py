@@ -97,7 +97,7 @@ class TestBaseMetric(unittest.TestCase):
         testmetric = metrics.BaseMetric(cols='nottestdata')
         self.assertRaises(ValueError, testmetric.validateData, testdata)
 
-class TestSimpleMetric(unittest.TestCase):
+class TestSimpleMetrics(unittest.TestCase):
     def setUp(self):
         dv = np.arange(0, 10, .5)
         self.dv = np.array(zip(dv), dtype=[('testdata', 'float')])
@@ -105,7 +105,7 @@ class TestSimpleMetric(unittest.TestCase):
     def testBaseSimpleScalar(self):
         """Test base simple scalar metric."""
         # Check that metric works as expected with single column.
-        testmetric = metrics.SimpleScalarMetric('testdata')
+        testmetric = metrics.SimpleScalarMetric(colname='testdata')
         self.assertEqual(testmetric.metricDtype, 'float')
         self.assertEqual(testmetric.colname, 'testdata')
         # Check that metric raises exception if given more than one column.
@@ -161,9 +161,50 @@ class TestSimpleMetric(unittest.TestCase):
         testmetric = metrics.RobustRmsMetric('testdata')
         rms_approx = (np.percentile(self.dv['testdata'], 75) - np.percentile(self.dv['testdata'], 25)) / 1.349
         self.assertEqual(testmetric.run(self.dv), rms_approx)
-                
+
+class TestComplexMetrics(unittest.TestCase):
+    def testBaseComplex(self):
+        """Test the base class for complex metrics."""
+        testmetric = metrics.ComplexMetric(cols='testdata')
+        # Test that 'reduceFuncs' dictionary set up (although will be empty for 'base')
+        self.assertEqual(testmetric.reduceFuncs.keys(), [])
+
+    def testVisitPairs(self):
+        """Test visit pairs metric."""
+        # Set up some simple test data.
+        tmin = 15.0/60./24.0
+        tmax = 90./60./24.0
+        tstart = 49406.00
+        night = np.array([0, 0, 0, 0, 1, 1, 2, 3, 3], 'int')
+        expmjd = np.array([tstart, tstart+tmin+tmin/10.0, tstart+tmin+tmin/2.0, tstart+tmax,
+                           tstart, tstart+tmax, tstart, tstart, tstart+tmin], 'float')
+        expmjd = expmjd + night
+        testdata = np.core.records.fromarrays([expmjd, night], names=['expmjd', 'night'])
+        # Set up metric.
+        testmetric = metrics.VisitPairsMetric(timesCol='expmjd', nightsCol='night',
+                                            deltaTmin=tmin, deltaTmax=tmax, nPairs=2, window=30)
+        # Run metric for expected results.
+        numpairs, nightpairs = testmetric.run(testdata)
+        expected_nightpairs = np.array([0, 1, 3])
+        expected_numpairs = np.array([5, 1, 1])
+        np.testing.assert_equal(nightpairs, expected_nightpairs)
+        np.testing.assert_equal(numpairs, expected_numpairs)
+        # Test reduce methods.
+        self.assertEqual(testmetric.reduceMedian((numpairs, nightpairs)), np.median(expected_numpairs))
+        self.assertEqual(testmetric.reduceMean((numpairs, nightpairs)), np.mean(expected_numpairs))
+        self.assertEqual(testmetric.reduceRms((numpairs, nightpairs)), np.std(expected_numpairs))
+        self.assertEqual(testmetric.reduceNNightsWithPairs((numpairs, nightpairs)), len(expected_nightpairs))
+        self.assertEqual(testmetric.reduceNNightsWithPairs((numpairs, nightpairs), nPairs=3), 1)
+        self.assertEqual(testmetric.reduceNPairsInWindow((numpairs, nightpairs)), 7)
+        self.assertEqual(testmetric.reduceNPairsInWindow((numpairs, nightpairs), window=2), 6)
+        self.assertEqual(testmetric.reduceNNightsInWindow((numpairs, nightpairs)), 3)
+        self.assertEqual(testmetric.reduceNNightsInWindow((numpairs, nightpairs), window=2), 2)
+
+                                
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBaseMetric)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleMetric)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleMetrics)
+    unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestComplexMetrics)
     unittest.TextTestRunner(verbosity=2).run(suite)
