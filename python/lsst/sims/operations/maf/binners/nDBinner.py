@@ -5,6 +5,7 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import itertools
+from functools import wraps
 
 from .baseBinner import BaseBinner
 
@@ -68,7 +69,18 @@ class NDBinner(BaseBinner):
             # Add these calculated values into the class lists of simIdxs and lefts.
             self.simIdxs.append(simIdxs)
             self.lefts.append(left)
-            
+        # Build slicing method for ND binner.
+        @wraps(self.sliceSimData)
+        def sliceSimData(binpoint):
+            """Slice simData to return relevant indexes for binpoint."""
+            # Identify relevant pointings in each dimension.
+            simIdxsList = []
+            for d in range(self.nD):
+                i = (np.where(binpoint[d] == self.bins[d]))[0]
+                simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
+            return list(set.intersection(*simIdxsList))
+        setattr(self, 'sliceSimData', sliceSimData)
+        
     def __iter__(self):
         """Iterate over the binpoints."""
         # Order of iteration over bins: go through bins in each sliceCol in the sliceColList in order.
@@ -110,15 +122,6 @@ class NDBinner(BaseBinner):
             return True
         else:
             return False
-            
-    def sliceSimData(self, binpoint):
-        """Slice simData to return relevant indexes for binpoint."""
-        # Identify relevant pointings in each dimension.
-        simIdxsList = []
-        for d in range(self.nD):
-            i = (np.where(binpoint[d] == self.bins[d]))[0]
-            simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
-        return list(set.intersection(*simIdxsList))
 
     def plotBinnedData2D(self, metricValues,
                         xaxis, yaxis, xlabel=None, ylabel=None,

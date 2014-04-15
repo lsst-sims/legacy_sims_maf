@@ -9,6 +9,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse   
 from matplotlib.ticker import FuncFormatter
+from functools import wraps
 
 try:
     # Try cKDTree first, as it's supposed to be faster.
@@ -45,6 +46,15 @@ class BaseSpatialBinner(BaseBinner):
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], leafsize)
         self._setRad(radius)
         self.binner_setup = {'leafsize':leafsize,'radius':radius}
+        @wraps(self.sliceSimData)
+        def sliceSimData(binpoint):
+            """Return indexes for relevant opsim data at binpoint
+            (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+            binx, biny, binz = self._treexyz(binpoint[1], binpoint[2])
+            # Query against tree.
+            indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
+            return indices
+        setattr(self, 'sliceSimData', sliceSimData)        
     
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
@@ -61,13 +71,13 @@ class BaseSpatialBinner(BaseBinner):
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node."""
         if np.any(simDataRa > np.pi*2.0) or np.any(simDataDec> np.pi*2.0):
-            raise Exception('Expecting RA and Dec values to be in radians.')
+            raise ValueError('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x,y,z)
         if np.size(data) > 0:
             self.opsimtree = kdtree(data, leafsize=leafsize)
         else:
-            self.opsimtree = []
+            raise ValueError('SimDataRA and Dec should have length greater than 0.')
 
     def _setRad(self, radius=1.8):
         """Set radius (in degrees) for kdtree search.
@@ -77,23 +87,12 @@ class BaseSpatialBinner(BaseBinner):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     
-    def sliceSimData(self, binpoint):
-        """Return indexes for relevant opsim data at binpoint
-         (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-        binx, biny, binz = self._treexyz(binpoint[1], binpoint[2])
-        # If there is no data, there is no tree to query, return an empty list
-        if self.opsimtree == []:
-            return []
-        # If we were given more than one binpoint, try multiple query against the tree.
-        if isinstance(binx, np.ndarray):
-            indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), 
-                                                      self.rad)
-        # If we were given one binpoint, do a single query against the tree.
-        else:
-            indices = self.opsimtree.query_ball_point((binx, biny, binz), 
-                                                      self.rad)
+    def sliceSimDataMultiBinpoint(self, binpoints):
+        """Return indexes for opsim data at multiple binpoints (rarely used). """
+        binx, biny, binz=self._treexyz(binpoints[1], binpoints[2])
+        indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
         return indices
-
+    
     ## Plot histogram (base spatial binner method).
         
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,

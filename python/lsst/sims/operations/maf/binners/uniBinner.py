@@ -3,7 +3,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from functools import wraps
 
 from .baseBinner import BaseBinner
 
@@ -19,6 +19,12 @@ class UniBinner(BaseBinner):
         """Use simData to set indexes to return."""
         simDataCol = simData.dtype.names[0]
         self.indices = np.ones(len(simData[simDataCol]),  dtype='bool')
+        # Build sliceSimData method here.
+        @wraps(self.sliceSimData)
+        def sliceSimData(binpoint):
+            """Return all indexes in simData. """
+            return self.indices
+        setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
         """Iterate over the binpoints."""
@@ -43,7 +49,5 @@ class UniBinner(BaseBinner):
         else:
             return False
             
-    def sliceSimData(self, binpoint):
-        """Return all indexes in simData. """
-        return self.indices
+
 

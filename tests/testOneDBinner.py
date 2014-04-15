@@ -81,6 +81,7 @@ class TestOneDBinnerIteration(unittest.TestCase):
         self.testbinner = None
 
     def testIteration(self):
+        """Test iteration."""
         dvmin = 0
         dvmax = 1
         nvalues = 1000
@@ -109,7 +110,6 @@ class TestOneDBinnerEqual(unittest.TestCase):
         bins = np.arange(dvmin, dvmax, 0.01)        
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         self.testbinner.setupBinner(dv, bins=bins)
-
         # Set up another binner to match (same bins, although not the same data).
         testbinner2 = OneDBinner(sliceDataColName='testdata')
         dv2 = makeDataValues(nvalues+100, dvmin, dvmax, random=True)
@@ -136,10 +136,14 @@ class TestOneDBinnerSlicing(unittest.TestCase):
         self.testbinner = None
     
     def testSlicing(self):
+        """Test slicing."""
         dvmin = 0
         dvmax = 1
         nbins = 100
         binsize = (dvmax - dvmin) / (float(nbins))
+        # Test that testbinner raises appropriate error before it's set up (first time)
+        for b in self.testbinner:
+            self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, b)
         for nvalues in (1000, 10000, 100000):
             dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
             self.testbinner.setupBinner(dv, nbins=nbins)

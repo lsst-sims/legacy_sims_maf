@@ -35,11 +35,14 @@ class TestUniBinnerSetup(unittest.TestCase):
         
     def testSetupBinnerIndices(self):
         """Test binner returns correct indices (all) after setup. Note this also tests slicing."""
+        for b in self.testbinner:
+            self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, b)
         dvmin = 0
         dvmax = 1        
         nvalues = 1000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         self.testbinner.setupBinner(dv)
+        # test slicing
         self.assertEqual(len(self.testbinner.indices), len(dv['testdata']))
         np.testing.assert_equal(dv[self.testbinner.indices], dv)
 

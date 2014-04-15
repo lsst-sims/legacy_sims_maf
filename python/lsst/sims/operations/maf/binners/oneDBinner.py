@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from functools import wraps
 
 from .baseBinner import BaseBinner
 
@@ -20,8 +21,9 @@ class OneDBinner(BaseBinner):
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
-        or can be left 'None' in which case nbins will be used together with data min/max values
-        to slice data in 'sliceDataCol'.
+         or can be left 'None' in which case nbins will be used together with data min/max (or binMin/binMax)
+         values to slice data in 'sliceDataCol'.
+
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b])."""
         if self.sliceDataColName is None:
@@ -31,7 +33,6 @@ class OneDBinner(BaseBinner):
             binMin = sliceDataCol.min()
         if binMax is None:
             binMax = sliceDataCol.max()
-       
         if bins is None:
             binsize = (binMax - binMin) / float(nbins)
             bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
@@ -46,6 +47,15 @@ class OneDBinner(BaseBinner):
         # "left" values are location where simdata == bin value
         self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
+        # Set up sliceSimData method for this class.
+        @wraps(self.sliceSimData)
+        def sliceSimData(binpoint):
+            """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
+            # Find the index of this binpoint in the bins array, then use this to identify
+            #  the relevant 'left' values, then return values of indexes in original data array
+            i = (np.where(binpoint == self.bins))[0]
+            return self.simIdxs[self.left[i]:self.left[i+1]]
+        setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
         self.ipix = 0
@@ -69,13 +79,6 @@ class OneDBinner(BaseBinner):
             return np.all(otherBinner.bins == self.bins)
         else:
             return False
-            
-    def sliceSimData(self, binpoint):
-        """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
-        # Find the index of this binpoint in the bins array, then use this to identify
-        #  the relevant 'left' values, then return values of indexes in original data array
-        i = (np.where(binpoint == self.bins))[0]
-        return self.simIdxs[self.left[i]:self.left[i+1]]
 
     def plotBinnedData(self, metricValues, title=None,
                        fignum=None, units=None,

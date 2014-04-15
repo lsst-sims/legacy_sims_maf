@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from functools import wraps
    
 from .baseBinner import BaseBinner
 from .baseSpatialBinner import BaseSpatialBinner
@@ -67,8 +67,15 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
         self.left = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'left')
-        self.right = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'right')        
-
+        self.right = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'right')
+        # Build slicing method.     
+        @wraps(self.sliceSimData)
+        def sliceSimData(binpoint):
+            """Slice simData on fieldId, to return relevant indexes for binpoint."""
+            i = np.where(binpoint[0] == self.bins['fieldId'])
+            return self.simIdxs[self.left[i]:self.right[i]]   
+        setattr(self, 'sliceSimData', sliceSimData)
+        
     def __iter__(self):
         """Iterate over the binpoints."""
         self.ipix = 0
@@ -95,12 +102,6 @@ class OpsimFieldBinner(BaseSpatialBinner):
                     np.all(otherBinner.bins['dec'] == self.bins['dec']))        
         else:
             return False
-
-    def sliceSimData(self, binpoint):
-        """Slice simData on fieldId, to return relevant indexes for binpoint."""
-        i = np.where(binpoint[0] == self.bins['fieldId'])
-        return self.simIdxs[self.left[i]:self.right[i]]   
-
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of fields',

@@ -54,9 +54,9 @@ class BaseBinner(object):
     def sliceSimData(self, binpoint):
         """Slice the simulation data appropriately for the binner.
 
-        This slice of data should be the indices of the numpy rec array (the simData)
+        The slice of data returned will be the indices of the numpy rec array (the simData)
         which are appropriate for the metric to be working on, for that bin."""
-        raise NotImplementedError()
+        raise NotImplementedError('This method is set up by "setupBinner" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='', simDataName ='', comment='', metadata=''):
         """Save a set of metric values along with the information required to re-build the binner."""
