@@ -8,6 +8,7 @@ import glob
 from subprocess import Popen
 import os
 import inspect
+import shutil
 
 
 #things to make sure I exercise
@@ -50,7 +51,11 @@ class TestDriver(unittest.TestCase):
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
             assert(nout == len(nnpz))
             
-
+    def tearDown(self):
+        if os.path.isdir('Output'):
+            shutil.rmtree('Output')
+        if os.path.isdir('Output2'):
+            shutil.rmtree('Output2')
        
 if __name__ == '__main__':
     unittest.main()

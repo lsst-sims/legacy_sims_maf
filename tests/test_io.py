@@ -4,11 +4,12 @@ import unittest
 #from lsst.sims.operations.maf.metrics import SimpleMetrics as sm
 import lsst.sims.operations.maf.binners as binners
 import healpy as hp
+import os
 
 
 class TestBinners(unittest.TestCase):
     def setUp(self):
-        pass
+        self.filenames=[]
 
     def test_healpixBinner_obj(self):
         nside = 128
@@ -17,6 +18,7 @@ class TestBinners(unittest.TestCase):
         metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
+        self.filenames.append(filename)
         metadata = 'poop'
         binner.writeData(filename, metricValues, metadata=metadata)
         metricValuesBack,binnerBack,header = binner.readData(filename)
@@ -33,6 +35,7 @@ class TestBinners(unittest.TestCase):
         metricValues = np.random.rand(hp.nside2npix(nside))
         metricName = 'Noise'
         filename = 'healpix_test.npz'
+        self.filenames.append(filename)
         binner.writeData(filename, metricValues, metadata='poop')
         metricValuesBack,binnerBack,header = binner.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
@@ -49,6 +52,7 @@ class TestBinners(unittest.TestCase):
         metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
+        self.filenames.append(filename)
         binner.writeData(filename, metricValues, metadata='poop')
         metricValuesBack,binnerBack,header = binner.readData(filename)
 
@@ -65,6 +69,7 @@ class TestBinners(unittest.TestCase):
         dataValues['poop'] = np.random.rand(10000)
         binner.setupBinner(dataValues)
         filename = 'oned_test.npz'
+        self.filenames.append(filename)
         binner.writeData(filename, dataValues[:100])
 
         dataBack,binnerBack,header = binner.readData(filename)
@@ -93,6 +98,7 @@ class TestBinners(unittest.TestCase):
         simData['fieldID'] = np.arange(100)
         binner.setupBinner(simData,fieldData)
         filename = 'opsimbinner_test.npz'
+        self.filenames.append(filename)
         binner.writeData(filename, metricValues)
         metricBack, binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
@@ -111,6 +117,7 @@ class TestBinners(unittest.TestCase):
         data[:] = np.random.rand(1)
         binner.setupBinner(data)
         filename='unibinner_test.npz'
+        self.filenames.append(filename)
         metricValue=np.array([25.])
         binner.writeData(filename, metricValue)
         dataBack, binnerBack,header = binner.readData(filename)
@@ -130,6 +137,7 @@ class TestBinners(unittest.TestCase):
             n_el = np.random.rand(1)*4 # up to 4 elements
             data[i] = np.arange(n_el)
         filename = 'heal_complex.npz'
+        self.filenames.append(filename)
         binner.writeData(filename,data)
         dataBack,binnerBack,header = binner.readData(filename)
         assert(binner == binnerBack)
@@ -149,7 +157,11 @@ class TestBinners(unittest.TestCase):
 #        assert(binner == binnerBack)
 #        np.testing.assert_almost_equal(dataBack,data)
        
-        
+
+    def tearDown(self):
+        for filename in self.filenames:
+            os.remove(filename)
+    
 if __name__ == '__main__':
     unittest.main()
  
