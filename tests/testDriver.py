@@ -15,7 +15,7 @@ from subprocess import Popen
 class TestDriver(unittest.TestCase):
     
     def setUp(self):
-        self.cfgFiles = ['mafconfigTest.py', 'mafconfig2Test.py']
+        self.cfgFiles = ['mafconfigTest.cfg', 'mafconfig2Test.cfg']
         
     def test_overwrite(self):
         filename='mafconfigTest3.cfg'
