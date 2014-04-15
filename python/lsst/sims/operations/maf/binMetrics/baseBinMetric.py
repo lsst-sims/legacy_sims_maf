@@ -50,7 +50,6 @@ import pickle
 import lsst.sims.operations.maf.binners as binners
 from lsst.sims.operations.maf.utils.percentileClip import percentileClip
 
-
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())

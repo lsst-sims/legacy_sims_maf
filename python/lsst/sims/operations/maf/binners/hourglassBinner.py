@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-    
+
 from .uniBinner import UniBinner
 
 class HourglassBinner(UniBinner):
