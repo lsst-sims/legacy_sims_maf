@@ -38,9 +38,9 @@ class ParallaxMetric(BaseMetric):
     def run(self, dataslice):
         filters = np.unique(dataslice[self.filtercol])
         snr = np.zeros(len(dataslice), dtype='float')
-        for f in filters:
-            good = np.where(dataslice[self.filtercol] ==f)
-            snr[good] = m52snr(self.mags[f], dataslice[self.m5col][good])
+        for filt in filters:
+            good = np.where(dataslice[self.filtercol] == filt)
+            snr[good] = m52snr(self.mags[filt], dataslice[self.m5col][good])
         position_errors = np.sqrt(astrom_precision(dataslice[self.seeingcol], snr)**2+self.atm_err**2)
 
         sigma_A = position_errors/dataslice['ra_pi_amp'] 
