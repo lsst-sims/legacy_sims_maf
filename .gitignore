@@ -9,7 +9,9 @@ config.log
 doc/htmlDir
 tests/.tests
 ups/*.cfgc
-python/lsst/sims/operations/maf/version.py
+python/lsst/sims/maf/version.py
 *.png
 *.fits
 *.npz
+*tmp.sqlite
+*maf_config_asRan.py
