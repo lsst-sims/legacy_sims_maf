@@ -1,37 +1,43 @@
-import numpy as np #to stop seg fault!
+import numpy as np 
+import matplotlib
+matplotlib.use('Agg')
 import unittest
 import lsst.sims.operations.maf.driver as driver
 from lsst.sims.operations.maf.driver.mafConfig import MafConfig
 import glob
 from subprocess import Popen
+import os
+import inspect
+
 
 #things to make sure I exercise
 
 #multiple binners--with kwargs, params, setupkwrd, setupParams, constraints, stackCols, plotCOnfigs, metadata
 
-#test all the convienence functions
+# Need to test all the convienence functions
 
 
 class TestDriver(unittest.TestCase):
     
     def setUp(self):
-        self.cfgFiles = ['mafconfigTest.py', 'mafconfig2Test.py']
-        
+        self.cfgFiles = ['mafconfigTest.cfg', 'mafconfig2Test.cfg']
+        self.filepath = os.environ['SIMS_OPERATIONS_MAF_DIR']+'/tests/'
+        #self.filepath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))+'/'
     def test_overwrite(self):
         filename='mafconfigTest3.cfg'
         configIn = MafConfig()
-        configIn.load(filename)
+        configIn.load(self.filepath+filename)
         self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
     
     def test_driver(self):
         for filename in self.cfgFiles:
             configIn = MafConfig()
-            configIn.load(filename)
+            configIn.load(self.filepath+filename)
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
             if len(nnpz) > 0:
                 ack = Popen('rm '+configIn.outputDir+'/*.npz', shell=True).wait()
             
-            testDriver = driver.MafDriver(configOverrideFilename=filename)
+            testDriver = driver.MafDriver(configOverrideFilename=self.filepath+filename)
             testDriver.run()
 
             configOut = MafConfig()
