@@ -75,6 +75,12 @@ class TestOneDBinnerSetup(unittest.TestCase):
 class TestOneDBinnerIteration(unittest.TestCase):
     def setUp(self):
         self.testbinner = OneDBinner(sliceDataColName='testdata')
+        dvmin = 0
+        dvmax = 1
+        nvalues = 1000
+        self.bins = np.arange(dvmin, dvmax, 0.01)        
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        self.testbinner.setupBinner(dv, bins=self.bins)
 
     def tearDown(self):
         del self.testbinner
@@ -82,14 +88,12 @@ class TestOneDBinnerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration."""
-        dvmin = 0
-        dvmax = 1
-        nvalues = 1000
-        bins = np.arange(dvmin, dvmax, 0.01)        
-        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        self.testbinner.setupBinner(dv, bins=bins)
-        for b, ib in zip(self.testbinner, bins[:-1]):
+        for b, ib in zip(self.testbinner, self.bins[:-1]):
             self.assertEqual(b, ib)
+            
+    def testGetItem(self):
+        """Test that can return an individual indexed values of the binner."""
+        self.assertEqual(self.testbinner[0], self.bins[0])
 
 class TestOneDBinnerEqual(unittest.TestCase):
     def setUp(self):
@@ -142,8 +146,7 @@ class TestOneDBinnerSlicing(unittest.TestCase):
         nbins = 100
         binsize = (dvmax - dvmin) / (float(nbins))
         # Test that testbinner raises appropriate error before it's set up (first time)
-        for b in self.testbinner:
-            self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, b)
+        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
         for nvalues in (1000, 10000, 100000):
             dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
             self.testbinner.setupBinner(dv, nbins=nbins)

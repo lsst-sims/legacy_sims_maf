@@ -194,11 +194,11 @@ class BaseBinMetric(object):
         simData = numpy recarray holding simulated data
         simDataName = identifier for simulated data
         metadata = further information from config files ('WFD', 'r band', etc.) """
-        # Set metadata for each metric.
+        # Set provenance information for each metric.
         for mname in self.metricObjs:
             self.simDataName[mname] = simDataName
             self.metadata[mname] = metadata
-            if len(comment) == 0:
+            if len(comment) == 0:                
                 self.comment[mname] = metadata
             else:
                 self.comment[mname] = comment

@@ -17,7 +17,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     return datavalues
     
 
-class TestUniBinnerSetup(unittest.TestCase):    
+class TestUniBinnerSetupAndSlice(unittest.TestCase):    
     def setUp(self):
         self.testbinner = UniBinner()
         
@@ -35,8 +35,7 @@ class TestUniBinnerSetup(unittest.TestCase):
         
     def testSetupBinnerIndices(self):
         """Test binner returns correct indices (all) after setup. Note this also tests slicing."""
-        for b in self.testbinner:
-            self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, b)
+        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
         dvmin = 0
         dvmax = 1        
         nvalues = 1000
@@ -66,6 +65,10 @@ class TestUniBinnerIteration(unittest.TestCase):
             pass
         self.assertEqual(i, 0)
 
+    def testGetItem(self):
+        """Test that can return an individual indexed values of the binner."""
+        self.assertEqual(self.testbinner[0], 0)
+        
 class TestUniBinnerEqual(unittest.TestCase):
     def setUp(self):
         self.testbinner = UniBinner()
@@ -95,7 +98,7 @@ class TestUniBinnerEqual(unittest.TestCase):
         self.assertNotEqual(self.testbinner, testbinner2)
             
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerSetup)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerSetupAndSlice)
     unittest.TextTestRunner(verbosity=2).run(suite)
     suite = unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerIteration)
     unittest.TextTestRunner(verbosity=2).run(suite)
