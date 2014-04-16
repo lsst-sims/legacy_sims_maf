@@ -117,6 +117,11 @@ class TestHealpixBinnerIteration(unittest.TestCase):
         #  so add one to check end point
         self.assertEqual(i+1, npix)
 
+    def testGetItem(self):
+        """Test getting indexed value."""
+        for i, b in enumerate(self.testbinner):
+            np.testing.assert_equal(self.testbinner[i], b)
+
 class TestHealpixBinnerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialBinner, as slicing is done there for healpix grid
     def setUp(self):
@@ -129,7 +134,7 @@ class TestHealpixBinnerSlicing(unittest.TestCase):
                                 decmin=-np.pi, decmax=0,
                                 random=True)
         self.radius = 1.8
-        self.testbinner.setupBinner(self.dv, radius=self.radius)
+
 
     def tearDown(self):
         del self.testbinner
@@ -137,6 +142,9 @@ class TestHealpixBinnerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
+        # Test that slicing fails before setupBinner
+        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
+        self.testbinner.setupBinner(self.dv, radius=self.radius)
         for b in self.testbinner:
             binra = b[1]
             bindec = b[2]

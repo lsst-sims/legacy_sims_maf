@@ -102,14 +102,15 @@ class NDBinner(BaseBinner):
         return binlo
 
     def __getitem__(self, ipix):
-        # There's probably a better way to do this.
+        """Return binpoint at index ipix."""
         binsForIteration = []
         for b in self.bins:
             binsForIteration.append(b[:-1])
         biniterator = itertools.product(*binsForIteration)
-        for i, b in zip(range(ipix), biniterator):
-            pass
-        return b
+        binlo = biniterator.next()
+        for i, b in zip(range(1, ipix+1), biniterator):
+            binlo = b
+        return binlo
     
     def __eq__(self, otherBinner):
         """Evaluate if grids are equivalent."""

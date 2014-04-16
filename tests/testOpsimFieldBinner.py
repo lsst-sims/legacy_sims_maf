@@ -97,9 +97,9 @@ class TestOpsimFieldBinnerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
-        for id, ra, dec, b in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
+        for fid, ra, dec, b in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
                                   self.fieldData['fieldDec'], self.testbinner):
-            self.assertEqual(id, b[0])
+            self.assertEqual(fid, b[0])
             self.assertEqual(ra, b[1])
             self.assertEqual(dec, b[2])
             self.assertGreaterEqual(b[0], 0)
@@ -107,14 +107,25 @@ class TestOpsimFieldBinnerIteration(unittest.TestCase):
             self.assertGreaterEqual(b[2], -np.pi)
             self.assertLessEqual(b[2], np.pi)
 
-
+    def testGetItem(self):
+        """Test getting indexed value."""
+        for i, b in enumerate(self.testbinner):
+            self.assertEqual(self.testbinner[i], b)
+        n = 0
+        self.assertEqual(self.testbinner[n], (self.fieldData['fieldID'][n],
+                                              self.fieldData['fieldRA'][n],
+                                              self.fieldData['fieldDec'][n]))
+        n = len(self.testbinner) - 1
+        self.assertEqual(self.testbinner[n], (self.fieldData['fieldID'][n],
+                                              self.fieldData['fieldRA'][n],
+                                              self.fieldData['fieldDec'][n]))
+            
 class TestOpsimFieldBinnerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialBinner, as slicing is done there for healpix grid
     def setUp(self):
         self.testbinner = OpsimFieldBinner()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)        
-        self.testbinner.setupBinner(self.simData, self.fieldData)
 
     def tearDown(self):
         del self.testbinner
@@ -122,6 +133,10 @@ class TestOpsimFieldBinnerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which match fieldID values."""
+        # Test that slicing fails before setupBinner
+        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
+        # Set up binner.
+        self.testbinner.setupBinner(self.simData, self.fieldData)
         for b in self.testbinner:
             didxs = np.where(self.simData['fieldID'] == b[0])
             binidxs = self.testbinner.sliceSimData(b)

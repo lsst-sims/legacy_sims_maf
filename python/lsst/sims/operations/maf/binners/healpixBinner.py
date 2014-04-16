@@ -54,7 +54,8 @@ class HealpixBinner(BaseSpatialBinner):
 
     def __getitem__(self, ipix):
         """Make healpix binner indexable."""
-        idradec = ipix, self._pix2radec(ipix)
+        radec = self._pix2radec(ipix)
+        idradec = ipix, radec[0], radec[1]
         return idradec
 
     def __eq__(self, otherBinner):

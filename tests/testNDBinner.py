@@ -145,25 +145,31 @@ class TestNDBinnerIteration(unittest.TestCase):
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
         self.testbinner = NDBinner(self.dvlist)
-
+        nvalues = 1000
+        bins = np.arange(self.dvmin, self.dvmax, 0.1)
+        binsList = []
+        self.iterlist = []
+        for i in range(self.nd):
+            binsList.append(bins)
+            # (remember iteration doesn't use the very last bin in 'bins')
+            self.iterlist.append(bins[:-1])  
+        dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
+        self.testbinner.setupBinner(dv, binsList=binsList)
+        
     def tearDown(self):
         del self.testbinner
         self.testbinner = None
 
     def testIteration(self):
-        nvalues = 1000
-        bins = np.arange(self.dvmin, self.dvmax, 0.1)
-        binsList = []
-        iterlist = []
-        for i in range(self.nd):
-            binsList.append(bins)
-            # (remember iteration doesn't use the very last bin in 'bins')
-            iterlist.append(bins[:-1])  
-        dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-        self.testbinner.setupBinner(dv, binsList=binsList)
-        for b, ib in zip(self.testbinner, itertools.product(*iterlist)):
+        """Test iteration."""
+        for b, ib in zip(self.testbinner, itertools.product(*self.iterlist)):
             self.assertEqual(b, ib)
 
+    def testGetItem(self):
+        """Test getting indexed binpoint."""
+        for i, b in enumerate(self.testbinner):
+            self.assertEqual(self.testbinner[i], b)
+        self.assertEqual(self.testbinner[0], (0.0, 0.0, 0.0))
 
 class TestNDBinnerSlicing(unittest.TestCase):
     def setUp(self):
@@ -180,7 +186,9 @@ class TestNDBinnerSlicing(unittest.TestCase):
         self.testbinner = None
     
     def testSlicing(self):
-        print ''
+        """Test slicing."""
+        # Test get error if try to slice before setup.
+        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
         nbins = 10
         binsize = (self.dvmax - self.dvmin) / (float(nbins))
         for nvalues in (1000, 10000, 100000):
