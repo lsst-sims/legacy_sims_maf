@@ -18,7 +18,7 @@ root.opsimNames = ['opsim_small']
 binList=[]
 
 # How many Healpix sides to use
-nside=64
+nside=256
 
 # List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy.  
 constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']

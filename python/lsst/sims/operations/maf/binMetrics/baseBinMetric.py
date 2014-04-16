@@ -302,7 +302,7 @@ class BaseBinMetric(object):
                               comment = self.comment[metricName] + comment)
         self.addOutputFiles(outfile+'.npz', metricName, 'metricData')
                 
-    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=True):
+    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:
             if verbose:
@@ -388,8 +388,10 @@ class BaseBinMetric(object):
         # But then if plotting min/max values are set in plotParams, override percentile clipping.
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
+            histRange = [plotMin, None]
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
+            histRange[1] = plotMax
         # Set 'histRange' parameter from pParams, if available (allows user to set histogram x range
         #  in histogram separately from clims for skymap)
         if 'histBins' not in pParams:
@@ -428,17 +430,19 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             if 'zp' in pParams:
+                if histRange != None:
+                   histRange = [histRange[0]-pParams['zp'], histRange[1]-pParams['zp']]
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
                                                        bins = pParams['histBins'],
-                                                       histRange=[histRange[0]-pParams['zp'],
-                                                                  histRange[1]-pParams['zp']], ylog=ylog)
+                                                       histRange=histRange, ylog=ylog)
             elif 'normVal' in pParams:
+                if histRange != None:
+                    histRange=[histRange[0]/pParams['normVal'],histRange[1]/pParams['normVal']]
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
                                                        bins = pParams['histBins'],
-                                                       histRange=[histRange[0]/pParams['normVal'],
-                                                                  histRange[1]/pParams['normVal']], ylog=ylog)
+                                                       histRange=histRange, ylog=ylog)
             else:
                 histfignum = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
