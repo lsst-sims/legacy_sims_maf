@@ -193,7 +193,7 @@ class ComparisonBinMetric(object):
         # Check if the binner has a histogram type visualization (or remove from list).
         for i, d in enumerate(dictNums):
             binner = self.binmetrics[d].binner
-            if (not hasattr(binner, 'plotBinnedData')) or (not hasattr(binner, 'plotHistogram')):
+            if (not hasattr(binner, 'plotBinnedData')) and (not hasattr(binner, 'plotHistogram')):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) == 0:
