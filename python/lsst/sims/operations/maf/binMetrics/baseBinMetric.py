@@ -302,7 +302,7 @@ class BaseBinMetric(object):
                               comment = self.comment[metricName] + comment)
         self.addOutputFiles(outfile+'.npz', metricName, 'metricData')
                 
-    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
+    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:
             if verbose:
@@ -312,6 +312,8 @@ class BaseBinMetric(object):
                 if closefig:
                    plt.close('all')
             except ValueError:
+                if verbose:
+                   print 'Not plotting %s'%mname
                 continue 
 
     def plotMetric(self, metricName, 
@@ -394,9 +396,12 @@ class BaseBinMetric(object):
             pParams['histBins'] = 100
         if 'histMin' and 'histMax' in pParams:
             histRange = [pParams['histMin'], pParams['histMax']]
-        else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
-            histRange = [plotMin, plotMax]
+        # This seems to be causing a Valuerror in some cases.  
+        #else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
+        #    histRange = [plotMin, plotMax]
         # Determine if should data using log scale, using pParams if available
+        else:
+           histRange = None
         if 'ylog' in pParams:
             ylog = pParams['ylog']
         else: # or if data spans > 3 decades if not.
@@ -439,6 +444,7 @@ class BaseBinMetric(object):
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
                                                        bins = pParams['histBins'],
                                                        histRange=histRange, ylog=ylog)
+            
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
