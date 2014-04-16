@@ -302,7 +302,7 @@ class BaseBinMetric(object):
                               comment = self.comment[metricName] + comment)
         self.addOutputFiles(outfile+'.npz', metricName, 'metricData')
                 
-    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=True):
+    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:
             if verbose:
