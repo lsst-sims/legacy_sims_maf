@@ -152,6 +152,7 @@ class BaseBinMetric(object):
             self.metricNames.append(mname)
             self.metricObjs[mname] = m
             self.plotParams[mname] = m.plotParams
+        return newmetricNames
 
     def readMetricValues(self, filenames, verbose=False):
         """Given a list of filenames, reads metric values and metadata from disk. """

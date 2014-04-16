@@ -72,7 +72,7 @@ binList.append(binner)
 # Configure an Hourglass filter binner/metric
 m1=makeMetricConfig('HourglassMetric')
 binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750',''])
-binList.append(binner)
+#binList.append(binner)
 
 
 # Save all the binners to the config

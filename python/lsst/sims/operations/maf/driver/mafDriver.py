@@ -179,7 +179,7 @@ class MafDriver(object):
                     else:
                         binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                     gm.setBinner(binner)
-                    gm.setMetrics(self.metricList[binner.index])
+                    metricNames_in_gm = gm.setMetrics(self.metricList[binner.index])
                     comment = constr.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
                     gm.runBins(self.data, simDataName=opsimName, metadata=binner.metadata, comment=comment)
                     gm.reduceAll()
@@ -206,10 +206,14 @@ class MafDriver(object):
                                     summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
                     gm.writeAll(outDir=self.config.outputDir)
                     # Return Output Files - get file output key back. Verbose=True, prints to screen.
-                    gm.returnOutputFiles(verbose=False)
+                    outFiles = gm.returnOutputFiles(verbose=False)
+                    # XXX - loop through the outFiles and attach them to the correct metric in self.metricList.  
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
             print >>f, stat
         f.close()
+        # Merge any histograms that need merging.  While doing a write/read is not efficient, it will make it easier to convert the big loop above to parallel later. 
+        
+        
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
    
