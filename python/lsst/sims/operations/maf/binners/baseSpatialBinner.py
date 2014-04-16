@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse   
 from matplotlib.ticker import FuncFormatter
 from functools import wraps
+import warnings
+
 
 try:
     # Try cKDTree first, as it's supposed to be faster.
@@ -118,8 +120,7 @@ class BaseSpatialBinner(BaseBinner):
         if metricValue.min() >= metricValue.max():
             if histRange is None:
                 histRange = [metricValue.min() , metricValue.min() + 1]
-                raise warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.' 
-                                    % (metricValue.max(), metricValue.min()))
+                warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
         n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
                            cumulative=cumulative, range=histRange, label=legendLabel)        
         # Option to use 'scale' to turn y axis into area or other value.
