@@ -13,6 +13,7 @@ class MetricConfig(pexConfig.Config):
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
     params = pexConfig.ListField("", dtype=str, default=[])
     summaryStats=pexConfig.ListField("Summary Stats to run", dtype=str, default=[])
+    histMerge = pexConfig.DictField("", keytype=str, itemtype=str, default={})
 
 class ColStackConfig(pexConfig.Config):
     """If there are extra columns that need to be added, this config can be used to pass keyword paramters"""
@@ -173,11 +174,12 @@ def readBinnerConfig(config):
     metadata=config.metadata
     return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs, metadata
         
-def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats=[]):
+def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats=[], histMerge={}):
     mc = MetricConfig()
     mc.name = name
     mc.params=params
     mc.summaryStats = summaryStats
+    mc.histMerge=histMerge
     # Break the kwargs by data type
     for key in kwargs.keys():
         if type(kwargs[key]) is str:
@@ -232,11 +234,12 @@ def readMetricConfig(config):
     name, params,kwargs = config2dict(config)
     plotDict={}
     summaryStats = config.summaryStats
+    histMerge = config.histMerge
     for key in config.plot_str:  plotDict[key] = config.plot_str[key]
     for key in config.plot_int:  plotDict[key] = config.plot_int[key]
     for key in config.plot_float:  plotDict[key] = config.plot_float[key]
     for key in config.plot_bool:  plotDict[key] = config.plot_bool[key]
-    return name,params,kwargs,plotDict,summaryStats
+    return name,params,kwargs,plotDict,summaryStats, histMerge
    
 
 
