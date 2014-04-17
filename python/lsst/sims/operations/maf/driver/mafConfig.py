@@ -23,15 +23,14 @@ class ColStackConfig(pexConfig.Config):
     kwargs_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     kwargs_bool = pexConfig.DictField("", keytype=str, itemtype=bool, default={})
     params = pexConfig.ListField("", dtype=str, default=[])
-
-
+    
 class PlotConfig(pexConfig.Config):
     plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
     plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
     plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
-    
-    
+        
+
 class BinnerConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
 
@@ -68,6 +67,7 @@ class MafConfig(pexConfig.Config):
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='')
     dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
+    hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig)
     
 def makeDict(*args):
     """Make a dict of index: config from a list of configs
@@ -220,6 +220,20 @@ def makePlotConfig(plotDict):
         else:
             raise Exception('Unsupported kwarg data type')
     return mc
+
+
+def makeHist2MergeConfig(inDict):
+    outDict={}
+    for key in inDict:
+        outDict[key] = makePlotConfig(inDict[key])
+    return outDict
+
+def readHist2MergeConfig(config):
+    outDict={}
+    for key in config.hist2merge:
+        outDict[key] = readPlotConfig(config.hist2merge[key])
+    return outDict
+        
 
 def readPlotConfig(config):
     plotDict={}

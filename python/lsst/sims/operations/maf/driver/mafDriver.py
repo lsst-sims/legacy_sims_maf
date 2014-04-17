@@ -1,6 +1,6 @@
 import numpy as np 
 import os
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
+from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig, readHist2MergeConfig
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
@@ -211,13 +211,38 @@ class MafDriver(object):
                         gm.writeAll(outDir=self.config.outputDir)
                         # Return Output Files - get file output key back. Verbose=True, prints to screen.
                         outFiles = gm.returnOutputFiles(verbose=False)
-                        # XXX - loop through the outFiles and attach them to the correct metric in self.metricList.  
+                        # Loop through the outFiles and attach them to the correct metric in self.metricList.  This would probably be better with a dict.
+                        outfile_names = []
+                        outfile_metricNames = []
+                        for outfile in outFiles:
+                            if outfile['filename'][-3:] == 'npz':
+                                outfile_names.append(outfile['filename'])
+                                outfile_metricNames.append(outfile['metricName'])
+                        for i,m in enumerate(self.metricList[binner.index]):
+                            good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
+                            m.saveFile = outfile_names[good]
+                            
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
             print >>f, stat
         f.close()
-        # Merge any histograms that need merging.  While doing a write/read is not efficient, it will make it easier to convert the big loop above to parallel later. 
+        # Merge any histograms that need merging.  While doing a write/read is not efficient, it will make it easier to convert the big loop above to parallel later.  
+        hist2merge = readHist2MergeConfig(self.config)
+        for key in hist2merge:
+            hist2merge[key]['files'] = []
+            hist2merge[key]['colors'] = []
+            hist2merge[key]['labels'] = []
         
+#        for m1 in self.metricList:
+#            for m in m1:
+#                if hasattr(m,'histMerge'):
+#                    key = int(m.histMerge['histNum'])
+#                    hist2merge[key]['files'].append(m.saveFile)
+#                    for key2 in m.histMerge:
+#                        hist2merge[key][key2].append(m.histMerge[key2])
+#    
+#        import pdb ; pdb.set_trace()
         
+        # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
-   
+        
