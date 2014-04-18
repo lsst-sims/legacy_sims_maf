@@ -85,7 +85,7 @@ class BaseBinner(object):
                  binnerNbins = self.nbins)
                                  
     def readData(self, infilename):
-        import lsst.sims.operations.maf.binners as binners
+        import lsst.sims.maf.binners as binners
         restored = np.load(infilename)
         # Get metric data set
         if restored['mask'][()] is None:

@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
-import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.utils as utils
+import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.utils as utils
 
 class TestMoreMetrics(unittest.TestCase):
 

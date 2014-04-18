@@ -1,11 +1,11 @@
 import numpy as np
 import unittest
 import os
-import lsst.sims.operations.maf.db as db
+import lsst.sims.maf.db as db
 
 class TestDB(unittest.TestCase):
     def setUp(self):
-        filepath = os.environ['SIMS_OPERATIONS_MAF_DIR']+'/examples/'
+        filepath = os.environ['SIMS_MAF_DIR']+'/examples/'
         self.dbAddress = 'sqlite:///'+filepath+'opsim_small.sqlite'
         self.tableName = 'opsim_small'
 

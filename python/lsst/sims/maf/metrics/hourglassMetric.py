@@ -1,6 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from lsst.sims.operations.maf.utils.telescopeInfo import TelescopeInfo
+from lsst.sims.maf.utils.telescopeInfo import TelescopeInfo
 
 def nearestVal(A, val):
     return A[np.argmin(np.abs(np.array(A)-val))]

@@ -42,8 +42,8 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import lsst.sims.operations.maf.binners as binners
-from lsst.sims.operations.maf.utils.percentileClip import percentileClip
+import lsst.sims.maf.binners as binners
+from lsst.sims.maf.utils.percentileClip import percentileClip
 
 import time
 def dtime(time_prev):

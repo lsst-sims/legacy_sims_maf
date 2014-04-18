@@ -5,14 +5,14 @@
 import sys, os, argparse
 import numpy as np
 import matplotlib.pyplot as plt
-import lsst.sims.operations.maf.db as db
-import lsst.sims.operations.maf.binners as binners
-import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.binMetrics as binMetrics
+import lsst.sims.maf.db as db
+import lsst.sims.maf.binners as binners
+import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.binMetrics as binMetrics
 import glob
 
 from lsst.sims.catalogs.generation.db.utils import make_engine
-from lsst.sims.operations.maf.utils import getData
+from lsst.sims.maf.utils import getData
 
 import time
 def dtime(time_prev):

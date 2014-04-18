@@ -6,12 +6,12 @@ warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
 with warnings.catch_warnings() as w:
     warnings.simplefilter("ignore", UserWarning) # Ignore db warning
-    import lsst.sims.operations.maf.db as db
+    import lsst.sims.maf.db as db
 
-import lsst.sims.operations.maf.binners as binners
-import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.binMetrics as binMetrics
-import lsst.sims.operations.maf.utils as utils
+import lsst.sims.maf.binners as binners
+import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.utils as utils
 
 
 class MafDriver(object):

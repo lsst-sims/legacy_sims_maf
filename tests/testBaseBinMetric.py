@@ -1,8 +1,8 @@
 import numpy as np
 import unittest
-import lsst.sims.operations.maf.binMetrics as binMetrics
-import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.binners as binners
+import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.binners as binners
 
 def makeDataValues(size=100, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
@@ -70,7 +70,7 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.assertTrue(self.testbbm.setBinner(binner2, override=True))
 
     def testSetMetrics(self):
-        """Test setting metrics."""
+        """Test setting metrics and de-dupe/dupe metric names."""
         self.testbbm.setMetrics([self.m1, self.m2])
         # Test metricNames list is as expected.
         self.assertEqual(self.testbbm.metricNames, ['Mean testdata', 'Count testdata'])
@@ -91,14 +91,44 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         m3 = metrics.MeanMetric('testdata')
         testbbm2.setMetrics(m3)
         self.assertEqual(testbbm2.metricNames, ['Mean testdata', 'Mean testdata__0'])
+        # And that we can de-dupe name as expected.
+        self.assertEqual(testbbm2._dupeMetricName('Mean testdata__0'), 'Mean testdata')
         
     def testValidateMetricData(self):
         """Test validation of metric data."""
         dv = makeDataValues()
         self.testbbm.setMetrics([self.m1, self.m2])
         self.assertTrue(self.testbbm.validateMetricData(dv))
-                
 
+
+class TestRunBaseBinMetric(unittest.TestCase):        
+    def setUp(self):
+        self.testbbm = binMetrics.BaseBinMetric()
+        self.m1 = metrics.MeanMetric('testdata', plotParams={'units':'meanunits'})
+        self.m2 = metrics.CountMetric('testdata', plotParams={'units':'countunits',
+                                                            'title':'count_title'})
+        self.binner = binners.OneDBinner('testdata')
+        self.dv = makeDataValues(size=1000)
+        self.binner.setupBinner(self.dv)
+        self.testbbm.setBinner(self.binner)
+        self.testbbm.setMetrics([self.m1, self.m2])
+
+    def tearDown(self):
+        del self.testbbm
+        del self.m1
+        del self.m2
+        del self.binner
+        self.testbbm = None
+        self.m1 = None
+        self.m2 = None
+        self.binner = None
+
+    def testRunBins(self):
+        opsimname = 'opsim1000'
+        metadata = 'created fake testdata'
+        comment = 'created data'
+        
+        
         
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSetupBaseBinMetric)

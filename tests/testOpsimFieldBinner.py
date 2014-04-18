@@ -2,8 +2,8 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import unittest
-from lsst.sims.operations.maf.binners.opsimFieldBinner import OpsimFieldBinner
-from lsst.sims.operations.maf.binners.uniBinner import UniBinner
+from lsst.sims.maf.binners.opsimFieldBinner import OpsimFieldBinner
+from lsst.sims.maf.binners.uniBinner import UniBinner
 
 
 def makeFieldData():

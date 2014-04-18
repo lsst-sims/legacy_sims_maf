@@ -7,7 +7,7 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
-from lsst.sims.operations.maf.utils.getColInfo import ColInfo
+from lsst.sims.maf.utils.getColInfo import ColInfo
 
 # ClassRegistry adds some extras to a normal dictionary and serves as a way to 
 #  keep track of what columns are needed for what metrics. 

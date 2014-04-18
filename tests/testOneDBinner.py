@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import unittest
-from lsst.sims.operations.maf.binners.oneDBinner import OneDBinner
-from lsst.sims.operations.maf.binners.uniBinner import UniBinner
+from lsst.sims.maf.binners.oneDBinner import OneDBinner
+from lsst.sims.maf.binners.uniBinner import UniBinner
 
 def makeDataValues(size=100, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    

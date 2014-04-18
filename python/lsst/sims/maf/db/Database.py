@@ -1,6 +1,6 @@
 __author__ = 'schandra'
 
-from lsst.sims.operations.maf.db.Table import Table
+from .Table import Table
 
 class Database:
     def __init__(self, dbAddress, sessionID, tables=[['Config','configID'],

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import lsst.sims.operations.maf.driver as driver
+import lsst.sims.maf.driver as driver
 import sys, os, argparse
 
 
