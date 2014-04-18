@@ -85,10 +85,6 @@ binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints
 binList.append(binner)
 
 
-# Compute what fraction of possible observing time the shutter is open
-m1 = makeMetricConfig('ObserveEfficiencyMetric')
-binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
-binList.append(binner)
 
 
 

@@ -81,12 +81,6 @@ binList.append(binner)
                           
 
 
-# XXX-metric still in development
-# Compute what fraction of possible observing time the shutter is open
-m1 = makeMetricConfig('ObserveEfficiencyMetric')
-binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 730', ''])
-binList.append(binner)
-
 
 
 root.binners=makeDict(*binList)

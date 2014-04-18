@@ -67,7 +67,7 @@ class MafConfig(pexConfig.Config):
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='')
     dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
-    hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig)
+    hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig, default={})
     
 def makeDict(*args):
     """Make a dict of index: config from a list of configs
