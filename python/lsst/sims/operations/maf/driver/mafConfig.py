@@ -1,5 +1,25 @@
 import lsst.pex.config as pexConfig
    
+class PlotConfig(pexConfig.Config):
+    plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
+    plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
+    plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
+    plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
+  
+def makePlotConfig(plotDict):
+    mc = PlotConfig()
+    for key in plotDict.keys():
+        if type(plotDict[key]) is str:
+            mc.plot_str[key] = plotDict[key]
+        elif type(plotDict[key]) is float:
+            mc.plot_float[key] = plotDict[key]
+        elif type(plotDict[key]) is int:
+            mc.plot_int[key] = plotDict[key]
+        elif type(plotDict[key]) is bool:
+            mc.plot_bool[key] = plotDict[key]
+        else:
+            raise Exception('Unsupported kwarg data type')
+    return mc
 
 class MetricConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='')   
@@ -13,7 +33,7 @@ class MetricConfig(pexConfig.Config):
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
     params = pexConfig.ListField("", dtype=str, default=[])
     summaryStats=pexConfig.ListField("Summary Stats to run", dtype=str, default=[])
-    histMerge = pexConfig.DictField("", keytype=str, itemtype=str, default={})
+    histMerge = pexConfig.ConfigField("", dtype=PlotConfig, default=None)
 
 class ColStackConfig(pexConfig.Config):
     """If there are extra columns that need to be added, this config can be used to pass keyword paramters"""
@@ -24,12 +44,6 @@ class ColStackConfig(pexConfig.Config):
     kwargs_bool = pexConfig.DictField("", keytype=str, itemtype=bool, default={})
     params = pexConfig.ListField("", dtype=str, default=[])
     
-class PlotConfig(pexConfig.Config):
-    plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
-    plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
-    plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
-    plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
-        
 
 class BinnerConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
@@ -67,7 +81,7 @@ class MafConfig(pexConfig.Config):
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='')
     dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
-    hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig, default={})
+    #hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig, default={})
     
 def makeDict(*args):
     """Make a dict of index: config from a list of configs
@@ -179,7 +193,7 @@ def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats=[], h
     mc.name = name
     mc.params=params
     mc.summaryStats = summaryStats
-    mc.histMerge=histMerge
+    mc.histMerge=makePlotConfig(histMerge)
     # Break the kwargs by data type
     for key in kwargs.keys():
         if type(kwargs[key]) is str:
@@ -206,33 +220,19 @@ def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats=[], h
     return mc
 
 
-def makePlotConfig(plotDict):
-    mc = PlotConfig()
-    for key in plotDict.keys():
-        if type(plotDict[key]) is str:
-            mc.plot_str[key] = plotDict[key]
-        elif type(plotDict[key]) is float:
-            mc.plot_float[key] = plotDict[key]
-        elif type(plotDict[key]) is int:
-            mc.plot_int[key] = plotDict[key]
-        elif type(plotDict[key]) is bool:
-            mc.plot_bool[key] = plotDict[key]
-        else:
-            raise Exception('Unsupported kwarg data type')
-    return mc
 
 
-def makeHist2MergeConfig(inDict):
-    outDict={}
-    for key in inDict:
-        outDict[key] = makePlotConfig(inDict[key])
-    return outDict
+#def makeHist2MergeConfig(inDict):
+#    outDict={}
+#    for key in inDict:
+#        outDict[key] = makePlotConfig(inDict[key])
+#    return outDict
 
-def readHist2MergeConfig(config):
-    outDict={}
-    for key in config.hist2merge:
-        outDict[key] = readPlotConfig(config.hist2merge[key])
-    return outDict
+#def readHist2MergeConfig(config):
+#    outDict={}
+#    for key in config.hist2merge:
+#        outDict[key] = readPlotConfig(config.hist2merge[key])
+#    return outDict
         
 
 def readPlotConfig(config):
@@ -248,7 +248,7 @@ def readMetricConfig(config):
     name, params,kwargs = config2dict(config)
     plotDict={}
     summaryStats = config.summaryStats
-    histMerge = config.histMerge
+    histMerge = readPlotConfig(config.histMerge)
     for key in config.plot_str:  plotDict[key] = config.plot_str[key]
     for key in config.plot_int:  plotDict[key] = config.plot_int[key]
     for key in config.plot_float:  plotDict[key] = config.plot_float[key]
