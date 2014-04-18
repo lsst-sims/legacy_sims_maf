@@ -1,8 +1,8 @@
 import numpy as np
 import numpy.ma as ma
 import unittest
-#from lsst.sims.operations.maf.metrics import SimpleMetrics as sm
-import lsst.sims.operations.maf.binners as binners
+#from lsst.sims.maf.metrics import SimpleMetrics as sm
+import lsst.sims.maf.binners as binners
 import healpy as hp
 import os
 

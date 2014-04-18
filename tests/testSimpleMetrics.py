@@ -1,6 +1,6 @@
 import numpy as np #to stop seg fault!
-import lsst.sims.operations.maf.metrics.simpleMetrics as sm
-import lsst.sims.operations.maf.utils.testUtils as tu
+import lsst.sims.maf.metrics.simpleMetrics as sm
+import lsst.sims.maf.utils.testUtils as tu
 testdata = tu.makeSimpleTestSet()
 metrics = []
 metrics.append(sm.Coaddm5Metric('m5', 'm5Metric'))

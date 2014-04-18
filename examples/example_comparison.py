@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import lsst.sims.operations.maf.metrics as metrics
-import lsst.sims.operations.maf.binners as binners
-import lsst.sims.operations.maf.binMetrics as binMetrics
-import lsst.sims.operations.maf.utils.getData as getData
+import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.binners as binners
+import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.utils.getData as getData
 import glob
 
 

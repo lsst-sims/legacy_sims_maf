@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import unittest
-import lsst.sims.operations.maf.driver as driver
-from lsst.sims.operations.maf.driver.mafConfig import MafConfig
+import lsst.sims.maf.driver as driver
+from lsst.sims.maf.driver.mafConfig import MafConfig
 import glob
 from subprocess import Popen
 import os
@@ -22,7 +22,7 @@ class TestDriver(unittest.TestCase):
     
     def setUp(self):
         self.cfgFiles = ['mafconfigTest.cfg', 'mafconfig2Test.cfg']
-        self.filepath = os.environ['SIMS_OPERATIONS_MAF_DIR']+'/tests/'
+        self.filepath = os.environ['SIMS_MAF_DIR']+'/tests/'
         #self.filepath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))+'/'
     def test_overwrite(self):
         filename='mafconfigTest3.cfg'

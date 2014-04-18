@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 with warnings.catch_warnings() as w:
     warnings.simplefilter("ignore", UserWarning) # Ignore db warning
-    import lsst.sims.operations.maf.db as db
+    import lsst.sims.maf.db as db
 
 
 def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):

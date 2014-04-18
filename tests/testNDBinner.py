@@ -3,8 +3,8 @@ import numpy.lib.recfunctions as rfn
 import matplotlib.pyplot as plt
 import itertools
 import unittest
-from lsst.sims.operations.maf.binners.nDBinner import NDBinner
-from lsst.sims.operations.maf.binners.uniBinner import UniBinner
+from lsst.sims.maf.binners.nDBinner import NDBinner
+from lsst.sims.maf.binners.uniBinner import UniBinner
 
 def makeDataValues(size=100, min=0., max=1., nd=3, random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, in nd dimensions, but (optional) random order."""

@@ -8,7 +8,7 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import warnings
 
-import lsst.sims.operations.maf.binners as binners
+import lsst.sims.maf.binners as binners
 from .baseBinMetric import BaseBinMetric
 
 

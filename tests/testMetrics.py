@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-import lsst.sims.operations.maf.metrics as metrics
+import lsst.sims.maf.metrics as metrics
 
 class TestBaseMetric(unittest.TestCase):
     def testMetricName(self):

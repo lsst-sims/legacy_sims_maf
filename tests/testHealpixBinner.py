@@ -4,8 +4,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import unittest
 import healpy as hp
-from lsst.sims.operations.maf.binners.healpixBinner import HealpixBinner
-from lsst.sims.operations.maf.binners.uniBinner import UniBinner
+from lsst.sims.maf.binners.healpixBinner import HealpixBinner
+from lsst.sims.maf.binners.uniBinner import UniBinner
 
 
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
