@@ -255,3 +255,4 @@ class MafDriver(object):
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         
+
