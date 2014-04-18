@@ -228,20 +228,22 @@ class MafDriver(object):
         f.close()
         # Merge any histograms that need merging.  While doing a write/read is not efficient, it will make it easier to convert the big loop above to parallel later.  
         hist2merge = readHist2MergeConfig(self.config)
-        for key in hist2merge:
-            hist2merge[key]['files'] = []
-            hist2merge[key]['colors'] = []
-            hist2merge[key]['labels'] = []
-        
-#        for m1 in self.metricList:
-#            for m in m1:
-#                if hasattr(m,'histMerge'):
-#                    key = int(m.histMerge['histNum'])
-#                    hist2merge[key]['files'].append(m.saveFile)
-#                    for key2 in m.histMerge:
-#                        hist2merge[key][key2].append(m.histMerge[key2])
-#    
-#        import pdb ; pdb.set_trace()
+        if hist2merge != {}:
+            for key in hist2merge:
+                hist2merge[key]['files'] = []
+                hist2merge[key]['colors'] = []
+                hist2merge[key]['labels'] = []
+
+            for m1 in self.metricList:
+                for m in m1:
+                    if 'histNum' in m.histMerge.keys():
+                        key = int(m.histMerge['histNum'])
+                        if hasattr(m,'saveFile') and key in hist2merge.keys():  #Could be there was no data, then it got skipped
+                            hist2merge[key]['files'].append(m.saveFile)
+                            hist2merge[key]['colors'].append(m.histMerge['color'])
+                            hist2merge[key]['labels'].append(m.histMerge['label'])
+
+            
         
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
