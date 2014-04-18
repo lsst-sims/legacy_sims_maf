@@ -100,12 +100,12 @@ class BaseSpatialBinner(BaseBinner):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f'):
+                      scale=1.0, yaxisformat='%.3f', color=None):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
         fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
+        legendLabel = the label to use in the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         bins = bins for histogram (numpy array or # of bins) (default 100)
@@ -122,7 +122,7 @@ class BaseSpatialBinner(BaseBinner):
                 histRange = [metricValue.min() , metricValue.min() + 1]
                 warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
         n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
-                           cumulative=cumulative, range=histRange, label=legendLabel)        
+                           cumulative=cumulative, range=histRange, label=legendLabel, color=color)        
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):        
             return yaxisformat % (y * scale)

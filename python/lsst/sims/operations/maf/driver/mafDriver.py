@@ -243,7 +243,14 @@ class MafDriver(object):
                             hist2merge[key]['colors'].append(m.histMerge['color'])
                             hist2merge[key]['labels'].append(m.histMerge['label'])
 
-            
+        
+        for key in hist2merge.keys():
+            cbm = binMetrics.ComparisonBinMetric()
+            for filename in hist2merge[key]['files']:
+                cbm.readMetricData(filename)
+            dictNums = cbm.binmetrics.keys()
+            dictNums.sort()
+            cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums), colors= hist2merge[key]['colors'], legendLabels=hist2merge[key]['labels'], outDir=self.config.outputDir, savefig=True)
         
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')

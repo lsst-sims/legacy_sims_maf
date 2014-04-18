@@ -124,7 +124,7 @@ class HealpixBinner(BaseSpatialBinner):
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
-                      scale=None):
+                      scale=None, color=None):
         """Histogram metricValue over the healpix bin points.
 
         If scale is None, sets 'scale' by the healpix area per binpoint.
@@ -149,7 +149,7 @@ class HealpixBinner(BaseSpatialBinner):
                                                         bins=bins, cumulative=cumulative,
                                                         histRange=histRange, ylog=ylog,
                                                         flipXaxis=flipXaxis,
-                                                        scale=scale)
+                                                        scale=scale,color=color)
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
