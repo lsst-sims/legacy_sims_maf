@@ -188,6 +188,7 @@ class BaseBinMetric(object):
             if c not in simData.dtype.names:
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n',
                                 metricList[0].classRegistry)
+        return True
 
     def runBins(self, simData, simDataName='opsim', metadata='', comment=''):
         """Run metric generation over binner, for metric objects in self.metricObjs.

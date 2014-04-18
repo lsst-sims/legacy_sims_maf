@@ -4,6 +4,18 @@ import lsst.sims.operations.maf.binMetrics as binMetrics
 import lsst.sims.operations.maf.metrics as metrics
 import lsst.sims.operations.maf.binners as binners
 
+def makeDataValues(size=100, min=0., max=1., random=True):
+    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
+    datavalues = np.arange(0, size, dtype='float')
+    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
+    datavalues += min
+    if random:
+        randorder = np.random.rand(size)        
+        randind = np.argsort(randorder)
+        datavalues = datavalues[randind]
+    datavalues = np.array(zip(datavalues), dtype=[('testdata', 'float')])
+    return datavalues
+
 class TestSetupBaseBinMetric(unittest.TestCase):
     """Unit tests relating to setting up the baseBinMetric"""
     def setUp(self):
@@ -50,7 +62,7 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.testbbm.setBinner(self.binner)
         # Test can set/check binner (when = previous binner)
         binner2 = binners.UniBinner()
-        self.assertTrue(self.testbbm.setBinner(binner, override=False))
+        self.assertTrue(self.testbbm.setBinner(binner2, override=False))
         # Test can not set/override binner (when != previous binner)
         binner2 = binners.HealpixBinner(nside=16, verbose=False)
         self.assertFalse(self.testbbm.setBinner(binner2, override=False))
@@ -80,9 +92,12 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         testbbm2.setMetrics(m3)
         self.assertEqual(testbbm2.metricNames, ['Mean testdata', 'Mean testdata__0'])
         
-    
-        
-        
+    def testValidateMetricData(self):
+        """Test validation of metric data."""
+        dv = makeDataValues()
+        self.testbbm.setMetrics([self.m1, self.m2])
+        self.assertTrue(self.testbbm.validateMetricData(dv))
+                
 
         
 if __name__ == '__main__':
