@@ -99,7 +99,7 @@ class BaseSpatialBinner(BaseBinner):
         
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
+                      bins=100, cumulative=False, histMin=None, histMax=None,ylog=False, flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color=None):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
@@ -110,7 +110,7 @@ class BaseSpatialBinner(BaseBinner):
         legendloc = location for legend (default 'upper left')
         bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by matplotlib hist)
+        histMin/Max = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)"""
         # Histogram metricValues. 
@@ -118,9 +118,11 @@ class BaseSpatialBinner(BaseBinner):
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if metricValue.min() >= metricValue.max():
-            if histRange is None:
+            if histMin is None:
                 histRange = [metricValue.min() , metricValue.min() + 1]
                 warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
+            else:
+                histRange = [histMin,histMax]
         n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
                            cumulative=cumulative, range=histRange, label=legendLabel, color=color)        
         # Option to use 'scale' to turn y axis into area or other value.

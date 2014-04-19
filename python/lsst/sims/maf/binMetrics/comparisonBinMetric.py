@@ -178,9 +178,9 @@ class ComparisonBinMetric(object):
         return plotTitle
     
     def plotHistograms(self, dictNums, metricNames, 
-                        histBins=100, histRange=None,
+                        bins=100, histMin=None,histMax=None,
                         title=None, xlabel=None,                    
-                        legendloc='upper left', bnamelen=4, alpha=0.3
+                        legendloc='upper left', bnamelen=4, alpha=0.3,
                         savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
         """Create a plot containing the histogram visualization from all possible metrics in dictNum +
                        metricNames.
@@ -226,7 +226,7 @@ class ComparisonBinMetric(object):
                               ' ' + self.binmetrics[d].binner.binnerName[:bnamelen])
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
-                plotParams = {'xlabel':xlabel, 'yRange':histRange, 'title':title,
+                plotParams = {'xlabel':xlabel, 'title':title,
                               'alpha':alpha, 'legendLabel':legendLabel, 'legenedloc':legenedloc,
                               'color':color}
                 if plotkwargs is not None:
@@ -236,15 +236,12 @@ class ComparisonBinMetric(object):
                                                                  fignum=fignum, **plotParams)
             # Plot data using 'plotHistogram' if that method available (any spatial binner)
             if hasattr(self.binmetrics[d].binner, 'plotHistogram'):
+                plotParams = {'xlabel':xlabel, 'histMin':histMin, 'histMax':histMax, 'bins':bins, 'title':title, 'legendLabel':legendLabel, 'addLegend':addLegend, 'legendloc':legendloc, 'color':color}
+                if plotkwargs is not None:
+                   for key in plotkwargs[i].keys():
+                      plotParams[key] = plotkwargs[i][key]
                 fignum = self.binmetrics[d].binner.plotHistogram(self.binmetrics[d].metricValues[m],
-                                                                xlabel=xlabel,
-                                                                histRange=histRange,
-                                                                bins=histBins,
-                                                                title=title,
-                                                                fignum=fignum,
-                                                                legendLabel=legendLabel,
-                                                                addLegend=addLegend,
-                                                                legendloc=legendloc, color=colors)
+                                                                 fignum=fignum, **plotParams)
         if savefig:
             outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
