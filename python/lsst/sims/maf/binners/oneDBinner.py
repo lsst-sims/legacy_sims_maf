@@ -114,9 +114,9 @@ class OneDBinner(BaseBinner):
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(metricValues, metricValues))
             if ylog:
-                plt.semilogy(x, y, label=label)
+                plt.semilogy(x, y, label=label, color=color, alpha=alpha)
             else:
-                plt.plot(x, y, label=label)
+                plt.plot(x, y, label=label, color=color, alpha=alpha)
         if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)

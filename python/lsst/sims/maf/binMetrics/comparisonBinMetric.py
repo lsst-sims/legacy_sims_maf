@@ -180,7 +180,7 @@ class ComparisonBinMetric(object):
     def plotHistograms(self, dictNums, metricNames, 
                         bins=100, histMin=None,histMax=None,
                         title=None, xlabel=None,color=None, labels=None,
-                        legendloc='upper left', bnamelen=4, alpha=0.3,
+                        legendloc='upper left', bnamelen=4, alpha=1.0,
                         savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
         """Create a plot containing the histogram visualization from all possible metrics in dictNum +
                        metricNames.
@@ -225,7 +225,7 @@ class ComparisonBinMetric(object):
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
-                              'alpha':alpha, 'label':label, 'legendloc':legendloc,
+                              'alpha':alpha, 'label':label, 'addLegend':addLegend,'legendloc':legendloc,
                               'color':color}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
