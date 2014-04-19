@@ -367,10 +367,10 @@ class BaseBinMetric(object):
         else:
             units = mname
         # passed to plotting routines, but typically addLegend is False (so remove?)
-        if 'legendLabel' in pParams:  
-            legendLabel =  pParams['legendLabel']
+        if 'label' in pParams:  
+            label =  pParams['label']
         else:
-            legendLabel = None
+            label = None
         # set cmap for skymap plots
         if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
@@ -425,7 +425,7 @@ class BaseBinMetric(object):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, ylabel=ylabel, title=title, 
                                                     ylog=ylog,
-                                                    legendLabel=legendLabel,
+                                                    label=label,
                                                     yMin=plotMin, yMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -494,7 +494,7 @@ class BaseBinMetric(object):
         if hasattr(self.binner, 'plotPowerSpectrum'):
             psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName],
                                                      title=title, 
-                                                     legendLabel=legendLabel)
+                                                     label=label)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 

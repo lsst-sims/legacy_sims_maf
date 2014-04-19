@@ -225,7 +225,7 @@ class ComparisonBinMetric(object):
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
-                              'alpha':alpha, 'label':label, 'legenedloc':legenedloc,
+                              'alpha':alpha, 'label':label, 'legendloc':legendloc,
                               'color':color}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
@@ -279,7 +279,7 @@ class ComparisonBinMetric(object):
             if i == len(metricNames) - 1:
                 addLegend = True
             # Build legend label for this dictNum/metricName.
-            legendLabel = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
+            label = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
                            + self.binmetrics[d]._dupeMetricName(m) +
                            ' ' + self.binmetrics[d].binner.binnerName[:bnamelen])    
             # Plot data.
@@ -287,7 +287,7 @@ class ComparisonBinMetric(object):
                                                                 maxl=maxl, removeDipole=removeDipole,
                                                                 title=title,
                                                                 fignum=fignum,
-                                                                legendLabel=legendLabel,
+                                                                label=label,
                                                                 addLegend=addLegend)
         if savefig:
             outfile = self.binmetrics[d]._buildOutfileName(title,
