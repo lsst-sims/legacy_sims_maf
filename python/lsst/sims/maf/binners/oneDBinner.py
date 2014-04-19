@@ -82,7 +82,7 @@ class OneDBinner(BaseBinner):
 
     def plotBinnedData(self, metricValues, title=None,
                        fignum=None, units=None,
-                       legendLabel=None, addLegend=False,
+                       label=None, addLegend=False,
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
                        ylabel=None, xlabel=None, yMin=None, yMax=None,
@@ -94,7 +94,7 @@ class OneDBinner(BaseBinner):
         xlabel = x axis label (default None)
         ylabel =  y axis label (default None)
         fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
+        label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
@@ -108,15 +108,15 @@ class OneDBinner(BaseBinner):
         leftedge = self.bins[:-1]
         width = np.diff(self.bins)
         if filled:
-            plt.bar(leftedge, metricValues, width, label=legendLabel,
+            plt.bar(leftedge, metricValues, width, label=label,
                     linewidth=0, alpha=alpha, log=ylog, color=color)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(metricValues, metricValues))
             if ylog:
-                plt.semilogy(x, y, label=legendLabel)
+                plt.semilogy(x, y, label=label)
             else:
-                plt.plot(x, y, label=legendLabel)
+                plt.plot(x, y, label=label)
         if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)
@@ -125,9 +125,9 @@ class OneDBinner(BaseBinner):
             if units != None:
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
-        if yRange is not None:
+        if (yMin is not None) or (yMax is not None):
             plt.ylim(yMin, yMax)
-        if histRange is not None:
+        if (histMin is not None) or (histMax is not None):
             plt.xlim(histMin, histMax)
         if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)

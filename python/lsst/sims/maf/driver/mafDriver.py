@@ -262,7 +262,7 @@ class MafDriver(object):
             dictNums.sort()
             cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
                                outDir=self.config.outputDir, savefig=True,
-                               **histDict[key]['plotkwargs'])
+                               plotkwargs=histDict[key]['plotkwargs'])
         
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')

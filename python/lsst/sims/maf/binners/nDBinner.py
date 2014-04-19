@@ -180,7 +180,7 @@ class NDBinner(BaseBinner):
     def plotBinnedData1D(self, metricValues, axis, xlabel=None, ylabel=None,
                          title=None, fignum=None, 
                          histRange=None, units=None,
-                         legendLabel=None, addLegend=False, legendloc='upper left',
+                         label=None, addLegend=False, legendloc='upper left',
                          filled=False, alpha=0.5, ylog=False):
         """Plot a single axes from the sliceColList, identified by axis, given the metricValues at all
         binpoints [sums over non-visible axes]. 
@@ -192,7 +192,7 @@ class NDBinner(BaseBinner):
         ylabel =  y axis label (default None)
         histRange = x axis min/max values (default None, use plot defaults)
         fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
+        label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
@@ -217,15 +217,15 @@ class NDBinner(BaseBinner):
         leftedge = self.bins[axis][:-1]
         width = np.diff(self.bins[axis])
         if filled:
-            plt.bar(leftedge, md, width, label=legendLabel,
+            plt.bar(leftedge, md, width, label=label,
                     linewidth=0, alpha=alpha, log=ylog)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(md, md))
             if ylog:
-                plt.semilogy(x, y, label=legendLabel)
+                plt.semilogy(x, y, label=label)
             else:
-                plt.plot(x, y, label=legendLabel)
+                plt.plot(x, y, label=label)
         if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)
