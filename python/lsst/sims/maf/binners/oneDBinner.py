@@ -85,7 +85,7 @@ class OneDBinner(BaseBinner):
                        legendLabel=None, addLegend=False,
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
-                       ylabel=None, xlabel=None, yRange=None, histRange=None):
+                       ylabel=None, xlabel=None, yRange=None, histRange=None, color=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -108,7 +108,7 @@ class OneDBinner(BaseBinner):
         width = np.diff(self.bins)
         if filled:
             plt.bar(leftedge, metricValues, width, label=legendLabel,
-                    linewidth=0, alpha=alpha, log=ylog)
+                    linewidth=0, alpha=alpha, log=ylog, color=color)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(metricValues, metricValues))

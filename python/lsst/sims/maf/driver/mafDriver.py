@@ -1,6 +1,6 @@
 import numpy as np 
 import os
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig, readHist2MergeConfig
+from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
@@ -227,24 +227,44 @@ class MafDriver(object):
             print >>f, stat
         f.close()
         # Merge any histograms that need merging.  While doing a write/read is not efficient, it will make it easier to convert the big loop above to parallel later.  
-        hist2merge = readHist2MergeConfig(self.config)
-        if hist2merge != {}:
-            for key in hist2merge:
-                hist2merge[key]['files'] = []
-                hist2merge[key]['colors'] = []
-                hist2merge[key]['labels'] = []
-
+        
+        #Loop through all the metrics and find which histograms need to be merged
+        histList = []
+        for m1 in self.metricList:
+            for m in m1:
+                if 'histNum' in m.histMerge.keys():
+                    histList.append(m.histMerge['histNum'])
+        
+        histList = list(set(histList))
+        histList.sort()
+        histDict={}
+        for item in histList:
+            histDict[item] = {}
+            histDict[item]['files']=[]
+            histDict[item]['plotkwargs']=[]
+                        
             for m1 in self.metricList:
                 for m in m1:
                     if 'histNum' in m.histMerge.keys():
-                        key = int(m.histMerge['histNum'])
-                        if hasattr(m,'saveFile') and key in hist2merge.keys():  #Could be there was no data, then it got skipped
-                            hist2merge[key]['files'].append(m.saveFile)
-                            hist2merge[key]['colors'].append(m.histMerge['color'])
-                            hist2merge[key]['labels'].append(m.histMerge['label'])
+                        key = m.histMerge['histNum']
+                        if hasattr(m,'saveFile') and key in histDict.keys():  #Could be there was no data, then it got skipped
+                            histDict[key]['files'].append(m.saveFile)
+                            temp_dict = m.histMerge
+                            del temp_dict['histNum']
+                            histDict[key]['plotkwargs'].append(temp_dict)
 
-            
+        
+        for key in histDict.keys():
+            cbm = binMetrics.ComparisonBinMetric()
+            for filename in histDict[key]['files']:
+                cbm.readMetricData(filename)
+            dictNums = cbm.binmetrics.keys()
+            dictNums.sort()
+            cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                               outDir=self.config.outputDir, savefig=True,
+                               **histDict[key]['plotkwargs'])
         
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         
+
