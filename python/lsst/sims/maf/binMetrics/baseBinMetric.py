@@ -524,8 +524,8 @@ class BaseBinMetric(object):
             # Create numpy rec array from metric data, with bad values removed. 
             rarr = np.array(zip(self.metricValues[metricName].compressed()), 
                             dtype=[('metricdata', self.metricValues[metricName].dtype)])
-            metric = summaryMetric('metricdata')
-            return metric.run(rarr)
+            summaryMetric.colname = 'metricdata'
+            return summaryMetric.run(rarr)
         
     def returnOutputFiles(self, verbose=True):
         """Return list of output file information (which is a list of dictionaries)

@@ -25,7 +25,7 @@ constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 # Configure a Healpix binner:
 # Configure 2 metrics to run on the Healpix binner.  
-m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'}, summaryStats=['MeanMetric','RmsMetric'])
+m1 = makeMetricConfig('CountMetric', params=['expMJD'],plotDict={'percentileClip':80., 'units':'#'}, summaryStats={'MeanMetric':{},'RmsMetric':{}})
 m2 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.})
 # Combine metrics in a dictionary
 metricDict = makeDict(m1,m2)
