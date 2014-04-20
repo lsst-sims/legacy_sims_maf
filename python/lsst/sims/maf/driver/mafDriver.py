@@ -265,14 +265,13 @@ class MafDriver(object):
             cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
                                outDir=self.config.outputDir, savefig=True,
                                plotkwargs=histDict[key]['plotkwargs'])
-        version_file = os.environ['SIMS_MAF_DIR']+'/python/lsst/sims/maf/'+'version.py'
-        execfile(version_file, globals()) # Creates variables: __all__ = ('__version__', '__repo_version__', '__repo_version__', '__fingerprint__', '__dependency_versions__')
-        today_date = time.strftime("%x")
+
+        today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.
         datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
         print >>datefile, 'date, version, fingerprint '
         #import pdb ; pdb.set_trace()
-        print >>datefile, '%s,%s,%s'%(today_date,__version__,__fingerprint__)
+        print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],versionInfo['__fingerprint__'])
         datefile.close()
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
