@@ -1,6 +1,6 @@
 import numpy as np 
 import os
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig, readHist2MergeConfig
+from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
@@ -12,7 +12,7 @@ import lsst.sims.maf.binners as binners
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binMetrics as binMetrics
 import lsst.sims.maf.utils as utils
-
+import time
 
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
@@ -55,14 +55,16 @@ class MafDriver(object):
             self.binList.append(temp_binner)
             sub_metricList=[]
             for j,metric in binner.metricDict.iteritems():
-                name,params,kwargs,plotDict,summaryStats,histMerge = readMetricConfig(metric)
+                name,params,kwargs,plotDict,summaryStats,histMerge = readMetricConfig(metric) # Need to make summaryStats a dict with keys of metric names and items of kwarg dicts.
                 kwargs['plotParams'] = plotDict
                 # If just one parameter, look up units
                 if (len(params) == 1):
                     info = utils.ColInfo()
                     plotDict['_unit'] = info.getUnits(params[0])
                 temp_metric = getattr(metrics,metric.name)(*params, **kwargs)
-                temp_metric.summaryStats = summaryStats
+                temp_metric.summaryStats = []
+                for key in summaryStats.keys():
+                    temp_metric.summaryStats.append(getattr(metrics,key)('metricdata',**readPlotConfig(summaryStats[key])))
                 temp_metric.histMerge = histMerge
                 sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
@@ -192,22 +194,22 @@ class MafDriver(object):
                             gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
                         gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True)
                         # Loop through the metrics and calc any summary statistics
-                        #import pdb ; pdb.set_trace()
                         for i,metric in enumerate(self.metricList[binner.index]):
                             if hasattr(metric, 'summaryStats'):
                                 for stat in metric.summaryStats:
+                                    # If it's a complex metric, run summary stats on each reduced metric
                                     if metric.metricDtype == 'object':
                                         baseName = gm.metricNames[i]
                                         all_names = gm.metricValues.keys()
                                         matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
                                         for mm in matching_metrics:
-                                            summary = gm.computeSummaryStatistics(mm, getattr(metrics,stat))
+                                            summary = gm.computeSummaryStatistics(mm, stat)
                                             if type(summary).__name__ == 'float' or type(summary).__name__ == 'int':
                                                 summary = np.array(summary)
-                                            summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+mm +','+stat+','+ np.array_str(summary))
+                                            summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+mm +','+stat.name+','+ np.array_str(summary))
                                     else:
-                                        summary = gm.computeSummaryStatistics(metric.name, getattr(metrics,stat))
-                                        summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat+','+ np.array_str(summary))
+                                        summary = gm.computeSummaryStatistics(metric.name, stat)
+                                        summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat.name+','+ np.array_str(summary))
                         gm.writeAll(outDir=self.config.outputDir)
                         # Return Output Files - get file output key back. Verbose=True, prints to screen.
                         outFiles = gm.returnOutputFiles(verbose=False)
@@ -227,24 +229,51 @@ class MafDriver(object):
             print >>f, stat
         f.close()
         # Merge any histograms that need merging.  While doing a write/read is not efficient, it will make it easier to convert the big loop above to parallel later.  
-        hist2merge = readHist2MergeConfig(self.config)
-        if hist2merge != {}:
-            for key in hist2merge:
-                hist2merge[key]['files'] = []
-                hist2merge[key]['colors'] = []
-                hist2merge[key]['labels'] = []
-
+        
+        # Loop through all the metrics and find which histograms need to be merged
+        histList = []
+        for m1 in self.metricList:
+            for m in m1:
+                if 'histNum' in m.histMerge.keys():
+                    histList.append(m.histMerge['histNum'])
+        
+        histList = list(set(histList))
+        histList.sort()
+        histDict={}
+        for item in histList:
+            histDict[item] = {}
+            histDict[item]['files']=[]
+            histDict[item]['plotkwargs']=[]
+                        
             for m1 in self.metricList:
                 for m in m1:
                     if 'histNum' in m.histMerge.keys():
-                        key = int(m.histMerge['histNum'])
-                        if hasattr(m,'saveFile') and key in hist2merge.keys():  #Could be there was no data, then it got skipped
-                            hist2merge[key]['files'].append(m.saveFile)
-                            hist2merge[key]['colors'].append(m.histMerge['color'])
-                            hist2merge[key]['labels'].append(m.histMerge['label'])
+                        key = m.histMerge['histNum']
+                        if hasattr(m,'saveFile') and key in histDict.keys():  # Could be there was no data, then it got skipped
+                            histDict[key]['files'].append(m.saveFile)
+                            temp_dict = m.histMerge
+                            del temp_dict['histNum']
+                            histDict[key]['plotkwargs'].append(temp_dict)
 
-            
         
+        for key in histDict.keys():
+            cbm = binMetrics.ComparisonBinMetric()
+            for filename in histDict[key]['files']:
+                cbm.readMetricData(filename)
+            dictNums = cbm.binmetrics.keys()
+            dictNums.sort()
+            cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                               outDir=self.config.outputDir, savefig=True,
+                               plotkwargs=histDict[key]['plotkwargs'])
+
+        today_date, versionInfo = utils.getDateVersion()
+        # Open up a file and print the results of verison and date.
+        datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
+        print >>datefile, 'date, version, fingerprint '
+        #import pdb ; pdb.set_trace()
+        print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],versionInfo['__fingerprint__'])
+        datefile.close()
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         
+

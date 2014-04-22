@@ -5,7 +5,8 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import warnings
-    
+from lsst.sims.maf.utils import getDateVersion
+
 class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""
     
@@ -65,6 +66,10 @@ class BaseBinner(object):
         header['comment'] = comment
         header['metadata'] = metadata
         header['simDataName'] = simDataName
+        date, versionInfo = getDateVersion()
+        header['dateRan'] = date
+        for key in versionInfo.keys():
+            header[key] = versionInfo[key]
         if hasattr(metricValues, 'mask'): # If it is a masked array
             data = metricValues.data
             mask = metricValues.mask

@@ -122,9 +122,9 @@ class HealpixBinner(BaseSpatialBinner):
 
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
-                      fignum=None, legendLabel=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histRange=None, ylog=False, flipXaxis=False,
-                      scale=None):
+                      fignum=None, label=None, addLegend=False, legendloc='upper left',
+                      bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
+                      scale=None, color=None):
         """Histogram metricValue over the healpix bin points.
 
         If scale is None, sets 'scale' by the healpix area per binpoint.
@@ -132,11 +132,11 @@ class HealpixBinner(BaseSpatialBinner):
         xlabel = x axis label (default None)
         ylabel = y axis label (default 'Area (1000's of square degrees))**
         fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
+        label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default 100)
         cumulative = make histogram cumulative (default False)
-        histRange = histogram range (default None, set by matplotlib hist)
+        histMin/Max = histogram range (default None, set by matplotlib hist)
         ylog = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         # Simply overrides scale and y axis plot label of base plotHistogram. 
@@ -144,22 +144,22 @@ class HealpixBinner(BaseSpatialBinner):
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixBinner, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
                                                         title=title, fignum=fignum, 
-                                                        legendLabel=legendLabel, 
+                                                        label=label, 
                                                         addLegend=addLegend, legendloc=legendloc,
                                                         bins=bins, cumulative=cumulative,
-                                                        histRange=histRange, ylog=ylog,
+                                                        histMin=histMin,histMax=histMax, ylog=ylog,
                                                         flipXaxis=flipXaxis,
-                                                        scale=scale)
+                                                        scale=scale,color=color)
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          legendLabel=None, addLegend=False, removeDipole=True, verbose=False):
+                          label=None, addLegend=False, removeDipole=True, verbose=False):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
         title = plot Title (default None)
         fignum = figure number (default None and create new plot)
-        legendLabel = label to add in figure legend (default None)
+        label = label to add in figure legend (default None)
         addLegend = flag to add legend (default False).
         removeDipole = remove dipole when calculating power spectrum (default True) (monopole removed automatically.)
         """
@@ -178,7 +178,7 @@ class HealpixBinner(BaseSpatialBinner):
             condition = ((l < maxl) & (l > 1))
         else:
             condition = (l < maxl)
-        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=legendLabel)
+        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=label)
         plt.yscale('log')
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')

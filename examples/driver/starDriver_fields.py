@@ -5,8 +5,12 @@ from lsst.sims.maf.driver.mafConfig import *
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
-root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-root.opsimNames = ['opsim']
+#root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
+#root.opsimNames = ['opsim']
+root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
+root.opsimNames = ['opsim_small']
+
+
 
 filters = ['u','g','r','i','z','y']
 #filters=['r']
@@ -75,12 +79,12 @@ binList.append(binner)
 
 
 # Completeness and Joint Completeness
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats=['TableFractionMetric','ExactCompleteMetric'])
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{},'ExactCompleteMetric':{}})
 # For just WFD proposals
 binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
 binList.append(binner)
 # For all Observations
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats=['TableFractionMetric','ExactCompleteMetric'])
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{},'ExactCompleteMetric':{}})
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 binList.append(binner)
 

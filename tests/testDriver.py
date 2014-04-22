@@ -50,7 +50,9 @@ class TestDriver(unittest.TestCase):
                     nout += len(configIn.binners[i].constraints)*len(configIn.binners[i].metricDict)
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
             assert(nout == len(nnpz))
-            
+            assert(os.path.isfile(configIn.outputDir+'/date_version_ran.dat'))
+            assert(os.path.isfile(configIn.outputDir+'/summaryStats.dat'))
+
     def tearDown(self):
         if os.path.isdir('Output'):
             shutil.rmtree('Output')

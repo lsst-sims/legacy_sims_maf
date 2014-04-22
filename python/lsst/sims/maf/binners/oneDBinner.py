@@ -82,10 +82,11 @@ class OneDBinner(BaseBinner):
 
     def plotBinnedData(self, metricValues, title=None,
                        fignum=None, units=None,
-                       legendLabel=None, addLegend=False,
+                       label=None, addLegend=False,
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
-                       ylabel=None, xlabel=None, yRange=None, histRange=None):
+                       ylabel=None, xlabel=None, yMin=None, yMax=None,
+                       histMin=None,histMax=None, color=None):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -93,29 +94,29 @@ class OneDBinner(BaseBinner):
         xlabel = x axis label (default None)
         ylabel =  y axis label (default None)
         fignum = the figure number to use (default None - will generate new figure)
-        legendLabel = the label to use for the figure legend (default None)
+        label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
         ylog = make the y-axis log (default False)
-        yRange = min/max for y-axis 
-        histRange = min/max for x-axis (typically set by bin values though)
+        yMin/Max = min/max for y-axis 
+        histMin/Max = min/max for x-axis (typically set by bin values though)
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.bins[:-1]
         width = np.diff(self.bins)
         if filled:
-            plt.bar(leftedge, metricValues, width, label=legendLabel,
-                    linewidth=0, alpha=alpha, log=ylog)
+            plt.bar(leftedge, metricValues, width, label=label,
+                    linewidth=0, alpha=alpha, log=ylog, color=color)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(metricValues, metricValues))
             if ylog:
-                plt.semilogy(x, y, label=legendLabel)
+                plt.semilogy(x, y, label=label, color=color, alpha=alpha)
             else:
-                plt.plot(x, y, label=legendLabel)
+                plt.plot(x, y, label=label, color=color, alpha=alpha)
         if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)
@@ -124,10 +125,10 @@ class OneDBinner(BaseBinner):
             if units != None:
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
-        if yRange is not None:
-            plt.ylim(yRange[0], yRange[1])
-        if histRange is not None:
-            plt.xlim(histRange[0], histRange[1])
+        if (yMin is not None) or (yMax is not None):
+            plt.ylim(yMin, yMax)
+        if (histMin is not None) or (histMax is not None):
+            plt.xlim(histMin, histMax)
         if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
