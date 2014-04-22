@@ -84,24 +84,24 @@ binList.append(binner)
 
 
 
-# Let's show how the plotting dictionary works:
+# Example of doing summary stats:
+m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time', 'metricName':'slew_w_summary'},summaryStats={'MeanMetric':{}, 'MedianMetric':{}})
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=['']  )
+root.binners=makeDict(binner)
+binList.append(binner)
+
+
+# Example of merging histograms
+filters = ['u','g','r','i','z','y']
+filter_colors=['m','b','g','y','r','k']
+for i,f in enumerate(filters):
+    m1 = makeMetricConfig('CountMetric', params=['airmass'], histMerge={'histNum':1, 'legendloc':'upper right', 'color':filter_colors[i],'label':'%s'%f} )
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'airmass'},  metricDict=makeDict(m1), constraints=["filter = '%s'"%f])
+    binList.append(binner)
 
 
 
 root.binners=makeDict(*binList)
 
-m3 = makeMetricConfig('Coaddm5Metric',kwargs={'metricName':'PlotExamples1'}, plotDict={'zp':27., 'percentileClip':95, 'units':'units', 'title':'title'})
-metricDict = makeDict(m3)
-binner = makeBinnerConfig('HealpixBinner',
-                          kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
-                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
-binList.append(binner)
-
-
-m2 = makeMetricConfig('CountMetric', kwargs={'metricName':'plotExample2'},plotDict={'untis':'units', 'title':'title', 'legendLabel':'legendLabel', 'xlabel':'xlabel', 'ylabel':'ylabel'}, params=['slewDist'])
-metricDict=makeDict(m2)
-binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'},
-                          metricDict=metricDict, constraints=constraints)
-binList.append(binner)
 
 
