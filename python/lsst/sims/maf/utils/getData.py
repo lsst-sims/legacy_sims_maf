@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import warnings
-with warnings.catch_warnings() as w:
+
+with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning) # Ignore db warning
     import lsst.sims.maf.db as db
 
