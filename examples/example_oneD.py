@@ -11,8 +11,11 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binMetrics as binMetrics
 import glob
 
-from lsst.sims.catalogs.generation.db.utils import make_engine
-from lsst.sims.maf.utils import getData
+import warnings
+with warnings.catch_warnings():
+   warnings.simplefilter("ignore", UserWarning) # Ignore db warning
+   from lsst.sims.catalogs.generation.db.utils import make_engine
+   from lsst.sims.maf.utils import getData
 
 import time
 def dtime(time_prev):
@@ -61,7 +64,7 @@ def goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList):
         gm.setBinner(bb)
         gm.setMetrics(mm)
         gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
-        mean = gm.computeSummaryStatistics(mm.name, metrics.SumMetric)
+        mean = gm.computeSummaryStatistics(mm.name, metrics.SumMetric(''))
         print 'SummaryNumber (sum) for', mm.name, ':', mean
         gm.plotAll(savefig=True, closefig=True)
         gm.writeAll()
