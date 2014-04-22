@@ -32,7 +32,8 @@ class MetricConfig(pexConfig.Config):
     plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
     params = pexConfig.ListField("", dtype=str, default=[])
-    summaryStats=pexConfig.ListField("Summary Stats to run", dtype=str, default=[])
+    summaryStats=pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
+                                      itemtype=PlotConfig,default={})
     histMerge = pexConfig.ConfigField("", dtype=PlotConfig, default=None)
 
 class ColStackConfig(pexConfig.Config):
@@ -188,11 +189,13 @@ def readBinnerConfig(config):
     metadata=config.metadata
     return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs, metadata
         
-def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats=[], histMerge={}):
+def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
     mc = MetricConfig()
     mc.name = name
     mc.params=params
-    mc.summaryStats = summaryStats
+    mc.summaryStats = {}
+    for key in summaryStats:
+        mc.summaryStats[key] = makePlotConfig(summaryStats[key])
     mc.histMerge=makePlotConfig(histMerge)
     # Break the kwargs by data type
     for key in kwargs.keys():

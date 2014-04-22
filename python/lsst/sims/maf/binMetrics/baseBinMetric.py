@@ -367,10 +367,10 @@ class BaseBinMetric(object):
         else:
             units = mname
         # passed to plotting routines, but typically addLegend is False (so remove?)
-        if 'legendLabel' in pParams:  
-            legendLabel =  pParams['legendLabel']
+        if 'label' in pParams:  
+            label =  pParams['label']
         else:
-            legendLabel = None
+            label = None
         # set cmap for skymap plots
         if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
@@ -390,22 +390,26 @@ class BaseBinMetric(object):
         # But then if plotting min/max values are set in plotParams, override percentile clipping.
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
-            histRange = [plotMin, None]
         if 'plotMax' in pParams:
             plotMax = pParams['plotMax']
-            histRange[1] = plotMax
         # Set 'histRange' parameter from pParams, if available (allows user to set histogram x range
         #  in histogram separately from clims for skymap)
-        if 'histBins' not in pParams:
-            pParams['histBins'] = 100
-        if 'histMin' and 'histMax' in pParams:
-            histRange = [pParams['histMin'], pParams['histMax']]
+        if 'bins' not in pParams:
+            pParams['bins'] = 100
+        histMin = None
+        histMax = None
+        if 'histMin' in pParams:
+           histMin = pParams['histMin']
+        if 'histMax' in pParams:
+           histMax = pParams['histMax']
+        #if 'histMin' and 'histMax' in pParams:
+        #    histRange = [pParams['histMin'], pParams['histMax']]
         # This seems to be causing a Valuerror in some cases.  
         #else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
         #    histRange = [plotMin, plotMax]
         # Determine if should data using log scale, using pParams if available
-        else:
-           histRange = None
+        #else:
+        #   histRange = None
         if 'ylog' in pParams:
             ylog = pParams['ylog']
         else: # or if data spans > 3 decades if not.
@@ -421,8 +425,8 @@ class BaseBinMetric(object):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, ylabel=ylabel, title=title, 
                                                     ylog=ylog,
-                                                    legendLabel=legendLabel,
-                                                    yRange=[plotMin, plotMax])
+                                                    label=label,
+                                                    yMin=plotMin, yMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
@@ -432,24 +436,28 @@ class BaseBinMetric(object):
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             if 'zp' in pParams:
-                if histRange != None:
-                   histRange = [histRange[0]-pParams['zp'], histRange[1]-pParams['zp']]
+                if histMin != None:
+                   histMin = histMin-pParams['zp']
+                if histMax != None:
+                   histMax = histMax-pParams['zp']
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['histBins'],
-                                                       histRange=histRange, ylog=ylog)
+                                                       bins = pParams['bins'],
+                                                       histMin=histMin, histMax=histMax, ylog=ylog)
             elif 'normVal' in pParams:
-                if histRange != None:
-                    histRange=[histRange[0]/pParams['normVal'],histRange[1]/pParams['normVal']]
+                if histMin != None:
+                    histMin = histMin/pParams['normVal']
+                if histMax != None:
+                    histmax = histMax/pParams['normVal']
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['histBins'],
-                                                       histRange=histRange, ylog=ylog)
+                                                       bins = pParams['bins'],
+                                                       histMin=histMin, histMax=histMax, ylog=ylog)
             else:
                 histfignum = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['histBins'],
-                                                       histRange=histRange, ylog=ylog)
+                                                       bins = pParams['bins'],
+                                                       histMin=histMin, histMax=histMax, ylog=ylog)
             
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -486,7 +494,7 @@ class BaseBinMetric(object):
         if hasattr(self.binner, 'plotPowerSpectrum'):
             psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName],
                                                      title=title, 
-                                                     legendLabel=legendLabel)
+                                                     label=label)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
@@ -516,8 +524,8 @@ class BaseBinMetric(object):
             # Create numpy rec array from metric data, with bad values removed. 
             rarr = np.array(zip(self.metricValues[metricName].compressed()), 
                             dtype=[('metricdata', self.metricValues[metricName].dtype)])
-            metric = summaryMetric('metricdata')
-            return metric.run(rarr)
+            summaryMetric.colname = 'metricdata'
+            return summaryMetric.run(rarr)
         
     def returnOutputFiles(self, verbose=True):
         """Return list of output file information (which is a list of dictionaries)
