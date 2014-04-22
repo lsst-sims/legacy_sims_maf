@@ -57,8 +57,6 @@ def goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList):
         gm.setBinner(bb)
         gm.setMetrics(mm)
         gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
-        #mean = gm.computeSummaryStatistics(mm.name, metrics.SumMetric)
-        #print 'SummaryNumber (sum) for', mm.name, ':', mean
         gm.plotAll(savefig=True, closefig=True)
         gm.writeAll()
         dt, t = dtime(t)

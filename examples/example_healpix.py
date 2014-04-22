@@ -91,8 +91,8 @@ def printSummary(gm, metricList):
     t = time.time()
     for m in metricList:
         try:
-            mean = gm.computeSummaryStatistics(m.name, metrics.MeanMetric)
-            rms = gm.computeSummaryStatistics(m.name, metrics.RmsMetric)
+            mean = gm.computeSummaryStatistics(m.name, metrics.MeanMetric(''))
+            rms = gm.computeSummaryStatistics(m.name, metrics.RmsMetric(''))
             print 'Summary for', m.name, ':\t Mean', mean, '\t rms', rms
         except Exception as e:
             # Probably have a metric data value which does not 'work' for the mean metric.

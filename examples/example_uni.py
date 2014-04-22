@@ -81,7 +81,7 @@ def printSummary(gm, metricList):
     t = time.time()
     for m in metricList:
         try:
-            value = gm.computeSummaryStatistics(m.name, None)
+            value = gm.computeSummaryStatistics(m.name, metrics.MeanMetric(''))
             print 'Summary for', m.name, ':', value
         except ValueError:
             pass
