@@ -306,7 +306,7 @@ class BaseBinMetric(object):
                 
     def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
-        for mname in self.metricValues:
+        for mname in self.metricValues:            
             if verbose:
                 print 'Plotting %s' %(mname)
             try:
