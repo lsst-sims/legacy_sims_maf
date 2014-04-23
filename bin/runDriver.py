@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+import matplotlib
+matplotlib.use('Agg') # May want to change in the future if we want to display plots on-screen
 import lsst.sims.maf.driver as driver
 import sys, os, argparse
 
