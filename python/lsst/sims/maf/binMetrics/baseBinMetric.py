@@ -306,7 +306,7 @@ class BaseBinMetric(object):
                 
     def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
-        for mname in self.metricValues:
+        for mname in self.metricValues:            
             if verbose:
                 print 'Plotting %s' %(mname)
             try:
@@ -359,6 +359,10 @@ class BaseBinMetric(object):
             if self.binner.binnerName == 'OneDBinner':
                 if mname.startswith('Count'):
                     ylabel = 'Number of Visits'
+            if self.binner.binnerName == 'OpsimFieldBinner':
+               ylabel = 'Number of fields'
+            if self.binner.binnerName == 'HealpixBinner':
+               ylabel = 'Area (1000s of square degrees)'
         # units used for colorbar for skymap plots (this comes from metric setup)
         if 'units' in pParams: 
             units = pParams['units']

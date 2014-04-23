@@ -21,7 +21,10 @@ import shutil
 class TestDriver(unittest.TestCase):
     
     def setUp(self):
-        self.cfgFiles = ['mafconfigTest.cfg', 'mafconfig2Test.cfg']
+        # Files to loop over
+        self.cfgFiles = ['mafconfigTest.cfg', 'mafconfigTest2.cfg']
+        # Files that get created by those configs
+        self.outputFiles= [['date_version_ran.dat','maf_config_asRan.py','opsim_small_CoaddedM5__r_HEAL.npz','opsim_small_CoaddedM5__r_HEAL_hist.png','opsim_small_CoaddedM5__r_HEAL_ps.png','opsim_small_CoaddedM5__r_HEAL_sky.png','opsim_small_CoaddedM5__r_OPSI.npz','opsim_small_CoaddedM5__r_OPSI_hist.png','opsim_small_CoaddedM5__r_OPSI_sky.png','opsim_small_CoaddedM5__r_and_night_<_730_HEAL.npz','opsim_small_CoaddedM5__r_and_night_<_730_HEAL_hist.png','opsim_small_CoaddedM5__r_and_night_<_730_HEAL_ps.png','opsim_small_CoaddedM5__r_and_night_<_730_HEAL_sky.png','opsim_small_CoaddedM5__r_and_night_<_730_OPSI.npz','opsim_small_CoaddedM5__r_and_night_<_730_OPSI_hist.png','opsim_small_CoaddedM5__r_and_night_<_730_OPSI_sky.png','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL.npz','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL_hist.png','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL_ps.png','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL_sky.png','opsim_small_CoaddedM5__rdith_HEAL.npz','opsim_small_CoaddedM5__rdith_HEAL_hist.png','opsim_small_CoaddedM5__rdith_HEAL_ps.png','opsim_small_CoaddedM5__rdith_HEAL_sky.png','opsim_small_Count_expMJD__r_HEAL.npz','opsim_small_Count_expMJD__r_HEAL_hist.png','opsim_small_Count_expMJD__r_HEAL_ps.png','opsim_small_Count_expMJD__r_HEAL_sky.png','opsim_small_Count_expMJD__r_OPSI.npz','opsim_small_Count_expMJD__r_OPSI_hist.png','opsim_small_Count_expMJD__r_OPSI_sky.png','opsim_small_Count_expMJD__r_and_night_<_730_HEAL.npz','opsim_small_Count_expMJD__r_and_night_<_730_HEAL_hist.png','opsim_small_Count_expMJD__r_and_night_<_730_HEAL_ps.png','opsim_small_Count_expMJD__r_and_night_<_730_HEAL_sky.png','opsim_small_Count_expMJD__r_and_night_<_730_OPSI.npz','opsim_small_Count_expMJD__r_and_night_<_730_OPSI_hist.png','opsim_small_Count_expMJD__r_and_night_<_730_OPSI_sky.png','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL.npz','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL_hist.png','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL_ps.png','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL_sky.png','opsim_small_Count_expMJD__rdith_HEAL.npz','opsim_small_Count_expMJD__rdith_HEAL_hist.png','opsim_small_Count_expMJD__rdith_HEAL_ps.png','opsim_small_Count_expMJD__rdith_HEAL_sky.png','opsim_small_Count_normairmass__r_ONED.npz','opsim_small_Count_normairmass__r_ONED_hist.png','opsim_small_Count_normairmass__r_and_night_<_730_ONED.npz','opsim_small_Count_normairmass__r_and_night_<_730_ONED_hist.png','opsim_small_Count_slewDist__r_ONED.npz','opsim_small_Count_slewDist__r_ONED_hist.png','opsim_small_Count_slewDist__r_and_night_<_730_ONED.npz','opsim_small_Count_slewDist__r_and_night_<_730_ONED_hist.png','opsim_small_Mean_airmass_night_<_750_UNIB.npz','opsim_small_Mean_normairmass__r_OPSI.npz','opsim_small_Mean_normairmass__r_OPSI_hist.png','opsim_small_Mean_normairmass__r_OPSI_sky.png','opsim_small_Mean_normairmass__r_and_night_<_730_OPSI.npz','opsim_small_Mean_normairmass__r_and_night_<_730_OPSI_hist.png','opsim_small_Mean_normairmass__r_and_night_<_730_OPSI_sky.png','opsim_small_Min_airmass__r_OPSI.npz','opsim_small_Min_airmass__r_OPSI_hist.png','opsim_small_Min_airmass__r_OPSI_sky.png','opsim_small_Min_airmass__r_and_night_<_730_OPSI.npz','opsim_small_Min_airmass__r_and_night_<_730_OPSI_hist.png','opsim_small_Min_airmass__r_and_night_<_730_OPSI_sky.png','opsim_small_hourglass_HOUR_hr.png','opsim_small_hourglass_night_<_750_HOUR_hr.png','opsim_small_normAir_hex__r_ONED.npz','opsim_small_normAir_hex__r_ONED_hist.png','opsim_small_normAir_hex__r_and_night_<_730_ONED.npz','opsim_small_normAir_hex__r_and_night_<_730_ONED_hist.png','summaryStats.dat'],['date_version_ran.dat','maf_config_asRan.py','opsim_small_CoaddedM5__r_HEAL.npz','opsim_small_CoaddedM5__r_HEAL_hist.png','opsim_small_CoaddedM5__r_HEAL_ps.png','opsim_small_CoaddedM5__r_HEAL_sky.png','opsim_small_CoaddedM5__r_OPSI.npz','opsim_small_CoaddedM5__r_OPSI_hist.png','opsim_small_CoaddedM5__r_OPSI_sky.png','opsim_small_CoaddedM5__r_and_night_<_730_HEAL.npz','opsim_small_CoaddedM5__r_and_night_<_730_HEAL_hist.png','opsim_small_CoaddedM5__r_and_night_<_730_HEAL_ps.png','opsim_small_CoaddedM5__r_and_night_<_730_HEAL_sky.png','opsim_small_CoaddedM5__r_and_night_<_730_OPSI.npz','opsim_small_CoaddedM5__r_and_night_<_730_OPSI_hist.png','opsim_small_CoaddedM5__r_and_night_<_730_OPSI_sky.png','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL.npz','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL_hist.png','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL_ps.png','opsim_small_CoaddedM5__r_and_night_<_730dith_HEAL_sky.png','opsim_small_CoaddedM5__rdith_HEAL.npz','opsim_small_CoaddedM5__rdith_HEAL_hist.png','opsim_small_CoaddedM5__rdith_HEAL_ps.png','opsim_small_CoaddedM5__rdith_HEAL_sky.png','opsim_small_Count_expMJD__r_HEAL.npz','opsim_small_Count_expMJD__r_HEAL_hist.png','opsim_small_Count_expMJD__r_HEAL_ps.png','opsim_small_Count_expMJD__r_HEAL_sky.png','opsim_small_Count_expMJD__r_OPSI.npz','opsim_small_Count_expMJD__r_OPSI_hist.png','opsim_small_Count_expMJD__r_OPSI_sky.png','opsim_small_Count_expMJD__r_and_night_<_730_HEAL.npz','opsim_small_Count_expMJD__r_and_night_<_730_HEAL_hist.png','opsim_small_Count_expMJD__r_and_night_<_730_HEAL_ps.png','opsim_small_Count_expMJD__r_and_night_<_730_HEAL_sky.png','opsim_small_Count_expMJD__r_and_night_<_730_OPSI.npz','opsim_small_Count_expMJD__r_and_night_<_730_OPSI_hist.png','opsim_small_Count_expMJD__r_and_night_<_730_OPSI_sky.png','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL.npz','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL_hist.png','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL_ps.png','opsim_small_Count_expMJD__r_and_night_<_730dith_HEAL_sky.png','opsim_small_Count_expMJD__rdith_HEAL.npz','opsim_small_Count_expMJD__rdith_HEAL_hist.png','opsim_small_Count_expMJD__rdith_HEAL_ps.png','opsim_small_Count_expMJD__rdith_HEAL_sky.png','opsim_small_Count_slewDist__r_ONED.npz','opsim_small_Count_slewDist__r_ONED_hist.png','opsim_small_Count_slewDist__r_and_night_<_730_ONED.npz','opsim_small_Count_slewDist__r_and_night_<_730_ONED_hist.png','opsim_small_Mean_airmass_night_<_750_UNIB.npz','opsim_small_Mean_normairmass__r_OPSI.npz','opsim_small_Mean_normairmass__r_OPSI_hist.png','opsim_small_Mean_normairmass__r_OPSI_sky.png','opsim_small_Mean_normairmass__r_and_night_<_730_OPSI.npz','opsim_small_Mean_normairmass__r_and_night_<_730_OPSI_hist.png','opsim_small_Mean_normairmass__r_and_night_<_730_OPSI_sky.png','opsim_small_Min_airmass__r_OPSI.npz','opsim_small_Min_airmass__r_OPSI_hist.png','opsim_small_Min_airmass__r_OPSI_sky.png','opsim_small_Min_airmass__r_and_night_<_730_OPSI.npz','opsim_small_Min_airmass__r_and_night_<_730_OPSI_hist.png','opsim_small_Min_airmass__r_and_night_<_730_OPSI_sky.png','opsim_small_hourglass_HOUR_hr.png','opsim_small_hourglass_night_<_750_HOUR_hr.png','summaryStats.dat']]
         self.filepath = os.environ['SIMS_MAF_DIR']+'/tests/'
         #self.filepath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))+'/'
     def test_overwrite(self):
@@ -31,7 +34,7 @@ class TestDriver(unittest.TestCase):
         self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
     
     def test_driver(self):
-        for filename in self.cfgFiles:
+        for i,filename in enumerate(self.cfgFiles):
             configIn = MafConfig()
             configIn.load(self.filepath+filename)
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
@@ -45,13 +48,16 @@ class TestDriver(unittest.TestCase):
             configOut.load(configIn.outputDir+'/maf_config_asRan.py')
             assert(configIn == configOut)
             nout=0
-            for i,binner in enumerate(configIn.binners):
-                if configIn.binners[i].name != 'HourglassBinner':
-                    nout += len(configIn.binners[i].constraints)*len(configIn.binners[i].metricDict)
+            for j,binner in enumerate(configIn.binners):
+                if configIn.binners[j].name != 'HourglassBinner':
+                    nout += len(configIn.binners[j].constraints)*len(configIn.binners[j].metricDict)
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
             assert(nout == len(nnpz))
             assert(os.path.isfile(configIn.outputDir+'/date_version_ran.dat'))
             assert(os.path.isfile(configIn.outputDir+'/summaryStats.dat'))
+            filelist = self.outputFiles[i]
+            for filename in filelist:
+                assert(os.path.isfile(configIn.outputDir+'/'+filename))
 
     def tearDown(self):
         if os.path.isdir('Output'):
@@ -61,3 +67,6 @@ class TestDriver(unittest.TestCase):
        
 if __name__ == '__main__':
     unittest.main()
+
+
+

@@ -86,7 +86,7 @@ class OneDBinner(BaseBinner):
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
                        ylabel=None, xlabel=None, yMin=None, yMax=None,
-                       histMin=None,histMax=None, color=None):
+                       histMin=None,histMax=None, color='b'):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
