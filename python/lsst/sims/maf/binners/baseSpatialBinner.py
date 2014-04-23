@@ -100,7 +100,7 @@ class BaseSpatialBinner(BaseBinner):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog=False, flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f', color=None):
+                      scale=1.0, yaxisformat='%.3f', color='b'):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)

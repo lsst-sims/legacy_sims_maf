@@ -93,9 +93,9 @@ binList.append(binner)
 
 # Example of merging histograms
 filters = ['u','g','r','i','z','y']
-filter_colors=['m','b','g','y','r','k']
+colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 for i,f in enumerate(filters):
-    m1 = makeMetricConfig('CountMetric', params=['airmass'], histMerge={'histNum':1, 'legendloc':'upper right', 'color':filter_colors[i],'label':'%s'%f} )
+    m1 = makeMetricConfig('CountMetric', params=['airmass'], histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'airmass'},  metricDict=makeDict(m1), constraints=["filter = '%s'"%f])
     binList.append(binner)
 
