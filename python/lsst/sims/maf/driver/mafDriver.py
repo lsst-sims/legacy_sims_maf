@@ -263,7 +263,7 @@ class MafDriver(object):
         
         for key in histDict.keys():
             cbm = binMetrics.ComparisonBinMetric()
-            if len(histDict[key]['files']) < 0:
+            if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
                     cbm.readMetricData(filename)
                 dictNums = cbm.binmetrics.keys()
