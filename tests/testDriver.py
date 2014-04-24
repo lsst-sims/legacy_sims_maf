@@ -28,9 +28,11 @@ class TestDriver(unittest.TestCase):
         self.filepath = os.environ['SIMS_MAF_DIR']+'/tests/'
         #self.filepath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))+'/'
     def test_overwrite(self):
-        filename='mafconfigTest3.cfg'
+        filename = 'mafconfigTest3.cfg'
         configIn = MafConfig()
         configIn.load(self.filepath+filename)
+        self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
+        filename = 'mafconfigTest5.cfg'
         self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
     
     def test_driver(self):

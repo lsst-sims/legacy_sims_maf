@@ -43,6 +43,11 @@ class MafDriver(object):
             temp_binner.setupParams = setupParams
             temp_binner.setupKwargs = setupKwargs
             temp_binner.constraints = binner.constraints
+            #check that constraints in binner are unique
+            if len(temp_binner.constraints) > len(set(temp_binner.constraints)):
+                print 'Binner %s has repeated constraints'%binner.name
+                print 'Constraints:  ', binner.constraints
+                raise Exception('Binner constraints are not unique')
             temp_binner.plotConfigs = binner.plotConfigs
             temp_binner.metadata = metadata
             temp_binner.index = i
