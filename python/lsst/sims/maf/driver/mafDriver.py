@@ -263,13 +263,14 @@ class MafDriver(object):
         
         for key in histDict.keys():
             cbm = binMetrics.ComparisonBinMetric()
-            for filename in histDict[key]['files']:
-                cbm.readMetricData(filename)
-            dictNums = cbm.binmetrics.keys()
-            dictNums.sort()
-            cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
-                               outDir=self.config.outputDir, savefig=True,
-                               plotkwargs=histDict[key]['plotkwargs'])
+            if len(histDict[key]['files']) < 0:
+                for filename in histDict[key]['files']:
+                    cbm.readMetricData(filename)
+                dictNums = cbm.binmetrics.keys()
+                dictNums.sort()
+                cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                                   outDir=self.config.outputDir, savefig=True,
+                                   plotkwargs=histDict[key]['plotkwargs'])
 
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.

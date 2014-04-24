@@ -13,6 +13,7 @@ root.opsimNames = ['opsim_small']
 
 
 filters = ['u','g','r','i','z','y']
+colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 #filters=['r']
 
 # 10 year Design Specs
@@ -89,7 +90,31 @@ binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints
 binList.append(binner)
 
 
+# The merged histograms for basics 
+for i,f in enumerate(filters):
+    m1 = makeMetricConfig('CountMetric', params=['5sigma_modified'],
+                          histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_modified'},
+                              metricDict=makeDict(m1), constraints=["filter = '%s'"%f])
+    binList.append(binner)
 
+    m1 = makeMetricConfig('CountMetric', params=['perry_skybrightness'],
+                          histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'perry_skybrightness'},
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
+    binList.append(binner)
+    
+    m1 = makeMetricConfig('CountMetric', params=['finSeeing'],
+                          histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'finSeeing'},
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
+    binList.append(binner)
+
+    m1 = makeMetricConfig('CountMetric', params=['airmass'],
+                          histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'airmass'},
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
+    binList.append(binner)
 
 
 root.binners=makeDict(*binList)
