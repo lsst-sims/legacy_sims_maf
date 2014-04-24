@@ -37,11 +37,11 @@ DDpropid = 219
 # Metrics per filter 
 for i,f in enumerate(filters):
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
-                          plotDict={'percentileClip':75., 'units':'Number of Visits', 
+                          plotDict={'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0],
                                     'histMax':nVisits_plotRange['all'][f][1]})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+                          plotDict={'normVal':nvisitBench[f], 'ylog':False, 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
     m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
     m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]} )             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
