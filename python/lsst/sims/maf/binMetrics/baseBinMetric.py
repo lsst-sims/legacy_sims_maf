@@ -419,8 +419,12 @@ class BaseBinMetric(object):
         else: # or if data spans > 3 decades if not.
             ylog = False
             if metricName != 'hourglass':
-                if (np.log10(self.metricValues[metricName].max() -
-                             self.metricValues[metricName].min()) > 3):
+                if 'normVal' in pParams:
+                   norm = pParams['normVal']
+                else:
+                   norm = 1.
+                if (np.log10((self.metricValues[metricName].max() -
+                             self.metricValues[metricName].min())/norm) > 3):
                     ylog = True
                     if self.metricValues[metricName].max() <= 0:
                         ylog = False
@@ -453,6 +457,7 @@ class BaseBinMetric(object):
                     histMin = histMin/pParams['normVal']
                 if histMax != None:
                     histmax = histMax/pParams['normVal']
+
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
                                                        bins = pParams['bins'],
