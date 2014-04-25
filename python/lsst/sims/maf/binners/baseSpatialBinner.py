@@ -127,7 +127,7 @@ class BaseSpatialBinner(BaseBinner):
                 histRange = [metricValue.min() , metricValue.min() + 1]
                 warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
         if label is not None and plotPercentiles:
-            for i,per in enumerate(self.percentiles):
+            for i,per in enumerate(percentiles):
                 if i ==0:
                     sep = ' '
                 else:
