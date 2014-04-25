@@ -392,7 +392,7 @@ class BaseBinMetric(object):
             plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
                                               percentile=pParams['percentileClip'])
         # Make sure there is a little dynamic range
-        if plotMin == plotMax:
+        if plotMin == plotMax and type(plotMin) != type(()):
            plotMin = plotMin-1
            plotMax = plotMax+1
 
