@@ -1,6 +1,4 @@
 # A MAF config that replicates the SSTAR plots
-
-import numpy as np
 from lsst.sims.maf.driver.mafConfig import *
 
 # Setup Database access
