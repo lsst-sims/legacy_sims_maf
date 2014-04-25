@@ -32,55 +32,17 @@ propids = [215, 216, 217, 218, 219]
 WFDpropid = 217
 DDpropid = 219
 
-
-
-# Metrics per filter 
-for i,f in enumerate(filters):
-    m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
-                          plotDict={'units':'Number of Visits', 
-                                    'histMin':nVisits_plotRange['all'][f][0],
-                                    'histMax':nVisits_plotRange['all'][f][1]},
-                          histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
-    m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitBench[f], 'ylog':False, 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
-    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
-                                                     'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
-                          histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )             
-    m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
-    m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
-    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
-    metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
-    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\'"%f])
-    binList.append(binner)
-
-
-# The merged histograms for basics 
-for i,f in enumerate(filters):
-    m1 = makeMetricConfig('CountMetric', params=['5sigma_modified'],
-                          histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_modified'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s'"%f])
-    binList.append(binner)
-
-    m1 = makeMetricConfig('CountMetric', params=['perry_skybrightness'],
-                          histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'perry_skybrightness'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s' "%f]) #and propID = %i"%(f,WFDpropid)])
-    binList.append(binner)
-    
-    m1 = makeMetricConfig('CountMetric', params=['finSeeing'],
-                          histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'finSeeing'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s' "%f]) #and propID = %i"%(f,WFDpropid)])
-    binList.append(binner)
-
-    m1 = makeMetricConfig('CountMetric', params=['airmass'],
-                          histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'airmass'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s' "%f]) #and propID = %i"%(f,WFDpropid)])
-    binList.append(binner)
-
+# Number of Visits per observing mode:
+for i,f in enumerate(filters):    
+        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisitsperprop'}, plotDict={'units':'Number of Visits', 'histBins':50})
+        metricDict = makeDict(m1)
+        constraints=[]
+        for propid in propids:
+            constraints.append("filter = \'%s\' and propID = %s" %(f,propid))
+        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints)
+        binList.append(binner)
+                                    
 
 root.binners=makeDict(*binList)
+
+
