@@ -423,8 +423,7 @@ class BaseBinMetric(object):
                    norm = pParams['normVal']
                 else:
                    norm = 1.
-                if (np.log10((self.metricValues[metricName].max() -
-                             self.metricValues[metricName].min())/norm) > 3):
+                if (np.log10((plotMax - plotMin)/norm) > 3):
                     ylog = True
                     if self.metricValues[metricName].max() <= 0:
                         ylog = False
