@@ -56,7 +56,7 @@ for i,f in enumerate(filters):
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                           plotDict={'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0],
-                                    'histMax':nVisits_plotRange['all'][f][1]
+                                    'histMax':nVisits_plotRange['all'][f][1],
                                     'plotMin':nVisits_plotRange['visits'][f][0], 'plotMax':nVisits_plotRange['visits'][f][1]})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                           plotDict={'normVal':nvisitBench[f], 'plotMin':0.5, 'plotMax':1.2,
@@ -83,9 +83,9 @@ for i,f in enumerate(filters):
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                           plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
     m3 = makeMetricConfig('MedianMetric', params=['5sigma'])
-    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'5sigma', metricName='Coaddm5WFD'},
+    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'5sigma', 'metricName':'Coaddm5WFD'},
                           plotDict={'zp':mag_zpoints[f], 'plotMin':-0.8, 'plotMax':0.8, 'percentileClip':95.,
-                                    'units':'Co-add (m5 - %.1f)'%mag_zpoints[f], 'histMin':23, 'histMax':28}
+                                    'units':'Co-add (m5 - %.1f)'%mag_zpoints[f], 'histMin':23, 'histMax':28},
                            histMerge={'histNum':7, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
