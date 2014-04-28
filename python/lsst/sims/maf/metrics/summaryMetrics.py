@@ -15,8 +15,9 @@ class TableFractionMetric(SimpleScalarMetric):
     # Using SimpleScalarMetric, but returning a histogram.
     """This metric is meant to be used as a summary statistic on something like the completeness metric.  """
     def run(self, dataSlice):    
-        bins = np.arange(0,1.1,.1)
+        bins = np.arange(0,1.2,.1)
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
+        hist[-1] = np.size(np.where(dataSlice[dataSlice.dtype.names[0]] >= 1. )[0])
         return hist
     
 
