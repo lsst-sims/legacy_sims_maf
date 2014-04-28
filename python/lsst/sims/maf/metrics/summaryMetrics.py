@@ -19,6 +19,7 @@ class TableFractionMetric(SimpleScalarMetric):
         bins = np.arange(0,1.2,.1)
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
         hist[-1] = np.size(np.where(dataSlice[dataSlice.dtype.names[0]] >= 1. )[0])
+        hist[0] = np.size(np.where( (dataSlice[dataSlice.dtype.names[0]] > 0.) & (dataSlice[dataSlice.dtype.names[0]] < 0.1) ) #clip off fields that were not observed, matching SSTAR table
         return hist
     
 
