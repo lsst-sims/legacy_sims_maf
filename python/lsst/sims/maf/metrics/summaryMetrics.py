@@ -13,7 +13,8 @@ class SummaryMetrics(BaseMetric):
 
 class TableFractionMetric(SimpleScalarMetric):
     # Using SimpleScalarMetric, but returning a histogram.
-    """This metric is meant to be used as a summary statistic on something like the completeness metric.  """
+    """This metric is meant to be used as a summary statistic on something like the completeness metric.
+    This table matches the SSTAR table where the last value gives the number of elements >= 1.0 """
     def run(self, dataSlice):    
         bins = np.arange(0,1.2,.1)
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
