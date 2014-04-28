@@ -61,8 +61,8 @@ for i,f in enumerate(filters):
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                           plotDict={'normVal':nvisitBench[f], 'plotMin':0.5, 'plotMax':1.2,
                                     'ylog':False, 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-    m3 = makeMetricConfig('MedianMetric', params=['5sigma'])
-    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'5sigma'},
+    m3 = makeMetricConfig('MedianMetric', params=['5sigma_ps'])
+    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'5sigma_ps'},
                           plotDict={'zp':mag_zpoints[f], 'plotMin':-0.8, 'plotMax':0.8,
                                     'units':'Co-add (m5 - %.1f)'%mag_zpoints[f], 'histMin':23, 'histMax':28},
                           histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )             
@@ -82,8 +82,8 @@ for i,f in enumerate(filters):
                           histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                           plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-    m3 = makeMetricConfig('MedianMetric', params=['5sigma'])
-    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'5sigma', 'metricName':'Coaddm5WFD'},
+    m3 = makeMetricConfig('MedianMetric', params=['5sigma_ps'])
+    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'5sigma_ps', 'metricName':'Coaddm5WFD'},
                           plotDict={'zp':mag_zpoints[f], 'plotMin':-0.8, 'plotMax':0.8, 'percentileClip':95.,
                                     'units':'Co-add (m5 - %.1f)'%mag_zpoints[f], 'histMin':23, 'histMax':28},
                            histMerge={'histNum':7, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})             
@@ -136,9 +136,9 @@ binList.append(binner)
 
 # The merged histograms for basics 
 for i,f in enumerate(filters):
-    m1 = makeMetricConfig('CountMetric', params=['5sigma'], plotDict={'histMin':20, 'histMax':26},
+    m1 = makeMetricConfig('CountMetric', params=['5sigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma'},
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_ps'},
                               metricDict=makeDict(m1), constraints=["filter = '%s'and propID = %i"%(f,WFDpropid)]) 
     binList.append(binner)
 
