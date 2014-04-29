@@ -495,7 +495,7 @@ class BaseBinMetric(object):
                  clims = [plotMin/pParams['normVal'],plotMax/pParams['normVal']]
               else:
                  clims = [plotMin, plotMax]
-                 skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
+              skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
                                                    cmap=cmap, cbarFormat=cbarFormat,
                                                    units=units, title=title,
                                                    clims=clims, ylog=ylog)
