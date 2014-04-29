@@ -14,9 +14,17 @@ class SummaryMetrics(BaseMetric):
 class TableFractionMetric(SimpleScalarMetric):
     # Using SimpleScalarMetric, but returning a histogram.
     """This metric is meant to be used as a summary statistic on something like the completeness metric.
-    This table matches the SSTAR table where the last value gives the number of elements >= 1.0 """
+    This table matches the SSTAR table of the format:
+    element   matching values
+    0         0 < P < 10
+    1         10 <= P < 20
+    2         20 <= P < 30
+    ...
+    9         90 <= P < 100
+    10        100 <= P
+    Note the 1st and last elements do NOT obey the numpy histogram conventions."""
     def run(self, dataSlice):    
-        bins = np.arange(0,1.2,.1)
+        bins = np.arange(0,12,1)/10. # Use int step sizes to try and avoid floating point round-off errors.
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
         hist[-1] = np.size(np.where(dataSlice[dataSlice.dtype.names[0]] >= 1. )[0])
         hist[0] = np.size(np.where( (dataSlice[dataSlice.dtype.names[0]] > 0.) & (dataSlice[dataSlice.dtype.names[0]] < 0.1))[0] ) #clip off fields that were not observed, matching SSTAR table
