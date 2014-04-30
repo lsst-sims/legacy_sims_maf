@@ -391,6 +391,11 @@ class BaseBinMetric(object):
         if 'percentileClip' in pParams:
             plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
                                               percentile=pParams['percentileClip'])
+        # Make sure there is a little dynamic range
+        if plotMin == plotMax and type(plotMin) != type(()):
+           plotMin = plotMin-1
+           plotMax = plotMax+1
+
         # But then if plotting min/max values are set in plotParams, override percentile clipping.
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
@@ -419,8 +424,11 @@ class BaseBinMetric(object):
         else: # or if data spans > 3 decades if not.
             ylog = False
             if metricName != 'hourglass':
-                if (np.log10(self.metricValues[metricName].max() -
-                             self.metricValues[metricName].min()) > 3):
+                if 'normVal' in pParams:
+                   norm = pParams['normVal']
+                else:
+                   norm = 1.
+                if (np.log10((plotMax - plotMin)/norm) > 3):
                     ylog = True
                     if self.metricValues[metricName].max() <= 0:
                         ylog = False
@@ -453,6 +461,7 @@ class BaseBinMetric(object):
                     histMin = histMin/pParams['normVal']
                 if histMax != None:
                     histmax = histMax/pParams['normVal']
+
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
                                                        bins = pParams['bins'],

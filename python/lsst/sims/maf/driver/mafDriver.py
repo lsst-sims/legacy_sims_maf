@@ -43,6 +43,11 @@ class MafDriver(object):
             temp_binner.setupParams = setupParams
             temp_binner.setupKwargs = setupKwargs
             temp_binner.constraints = binner.constraints
+            #check that constraints in binner are unique
+            if len(temp_binner.constraints) > len(set(temp_binner.constraints)):
+                print 'Binner %s has repeated constraints'%binner.name
+                print 'Constraints:  ', binner.constraints
+                raise Exception('Binner constraints are not unique')
             temp_binner.plotConfigs = binner.plotConfigs
             temp_binner.metadata = metadata
             temp_binner.index = i
@@ -258,13 +263,14 @@ class MafDriver(object):
         
         for key in histDict.keys():
             cbm = binMetrics.ComparisonBinMetric()
-            for filename in histDict[key]['files']:
-                cbm.readMetricData(filename)
-            dictNums = cbm.binmetrics.keys()
-            dictNums.sort()
-            cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
-                               outDir=self.config.outputDir, savefig=True,
-                               plotkwargs=histDict[key]['plotkwargs'])
+            if len(histDict[key]['files']) > 0:
+                for filename in histDict[key]['files']:
+                    cbm.readMetricData(filename)
+                dictNums = cbm.binmetrics.keys()
+                dictNums.sort()
+                cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                                   outDir=self.config.outputDir, savefig=True,
+                                   plotkwargs=histDict[key]['plotkwargs'])
 
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.

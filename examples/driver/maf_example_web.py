@@ -57,10 +57,6 @@ binList.append(binner)
 
 
 
-
-
-
-
 # How many Healpix sides to use
 nside=64
 # List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy. 
@@ -85,10 +81,23 @@ binList.append(binner)
 
 
 # Example of doing summary stats:
-m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time', 'metricName':'slew_w_summary'},summaryStats={'MeanMetric':{}, 'MedianMetric':{}})
-binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=['']  )
+nside=64
+constraints = ["filter = \'%s\'"%'r']
+m2 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.}, kwargs={'metricName':'coadd_w_summary'}, summaryStats={'MeanMetric':{}, 'MinMetric':{}, 'MaxMetric':{}, 'RmsMetric':{}} )          
+metricDict = makeDict(m2
+binner = makeBinnerConfig('HealpixBinner',
+                          kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
+                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
 root.binners=makeDict(binner)
 binList.append(binner)
+
+
+
+# XXX-summary stats are not intuitive with OneDbinner.  
+#m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time', 'metricName':'slew_w_summary'},summaryStats={'MeanMetric':{}, 'MedianMetric':{}})
+#binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=['']  )
+#root.binners=makeDict(binner)
+#binList.append(binner)
 
 
 # Example of merging histograms

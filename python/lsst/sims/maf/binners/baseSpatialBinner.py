@@ -100,7 +100,8 @@ class BaseSpatialBinner(BaseBinner):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog=False, flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f', color='b'):
+                      scale=1.0, yaxisformat='%.3f', color='b', percentiles=[25,50,75],
+                      percentileFormat='%.3g',  plotPercentiles=True):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
@@ -123,8 +124,16 @@ class BaseSpatialBinner(BaseBinner):
             histRange=[histMin,histMax]
         if metricValue.min() >= metricValue.max():
             if histMin is None:
-                histRange = [metricValue.min() , metricValue.min() + 1]
+                histRange = [metricValue.min()-1 , metricValue.min() + 1]
                 warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
+        if label is not None and plotPercentiles:
+            for i,per in enumerate(percentiles):
+                if i == 0:
+                    sep = ' '
+                else:
+                    sep = ','
+                label = label+sep+percentileFormat%np.percentile(metricValue,per)
+
         n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
                            cumulative=cumulative, range=histRange, label=label, color=color)        
         # Option to use 'scale' to turn y axis into area or other value.
