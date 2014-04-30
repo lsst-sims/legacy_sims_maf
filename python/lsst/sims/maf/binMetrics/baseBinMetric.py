@@ -375,6 +375,10 @@ class BaseBinMetric(object):
             label =  pParams['label']
         else:
             label = None
+        if 'addLegend' in pParams:
+           addLegend = pParams['addLegend']
+        else:
+           addLegend = False
         # set cmap for skymap plots
         if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
@@ -437,7 +441,7 @@ class BaseBinMetric(object):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, ylabel=ylabel, title=title, 
                                                     ylog=ylog,
-                                                    label=label,
+                                                    label=label, addLegend=addLegend, 
                                                     yMin=plotMin, yMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -454,7 +458,7 @@ class BaseBinMetric(object):
                    histMax = histMax-pParams['zp']
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'], label=label,addLegend=addLegend, 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             elif 'normVal' in pParams:
                 if histMin != None:
@@ -464,12 +468,12 @@ class BaseBinMetric(object):
 
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'],label=label,addLegend=addLegend, 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             else:
                 histfignum = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'],label=label,addLegend=addLegend, 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             
             if savefig:
