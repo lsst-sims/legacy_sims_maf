@@ -375,6 +375,10 @@ class BaseBinMetric(object):
             label =  pParams['label']
         else:
             label = None
+        if 'addLegend' in pParams:
+           addLegend = pParams['addLegend']
+        else:
+           addLegend = False
         # set cmap for skymap plots
         if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
@@ -437,7 +441,7 @@ class BaseBinMetric(object):
             histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, ylabel=ylabel, title=title, 
                                                     ylog=ylog,
-                                                    label=label,
+                                                    label=label, addLegend=addLegend, 
                                                     yMin=plotMin, yMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
@@ -454,7 +458,7 @@ class BaseBinMetric(object):
                    histMax = histMax-pParams['zp']
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'], label=label,addLegend=addLegend, 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             elif 'normVal' in pParams:
                 if histMin != None:
@@ -464,12 +468,12 @@ class BaseBinMetric(object):
 
                 histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'],label=label,addLegend=addLegend, 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             else:
                 histfignum = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'],label=label,addLegend=addLegend, 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             
             if savefig:
@@ -480,24 +484,31 @@ class BaseBinMetric(object):
                 self.addOutputFiles(outfile, metricName, 'histogramPlot')
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-            if 'zp' in pParams: # Subtract off a zeropoint
-                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
+           if 'zp' in pParams: # Subtract off a zeropoint
+              if 'plotMin' not in pParams:
+                 clims = [plotMin-pParams['zp'],plotMax-pParams['zp']]
+              else:
+                 clims = [plotMin, plotMax]
+ 
+              skyfignum = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
                                                    cmap=cmap, cbarFormat=cbarFormat,
                                                    units=units, title=title,
-                                                   clims=[plotMin-pParams['zp'],
-                                                          plotMax-pParams['zp']], ylog=ylog)
-            elif 'normVal' in pParams: # Normalize by some value
-                skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
+                                                   clims=clims, ylog=ylog)
+           elif 'normVal' in pParams: # Normalize by some value
+              if 'plotMin' not in pParams:
+                 clims = [plotMin/pParams['normVal'],plotMax/pParams['normVal']]
+              else:
+                 clims = [plotMin, plotMax]
+              skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
                                                    cmap=cmap, cbarFormat=cbarFormat,
                                                    units=units, title=title,
-                                                   clims=[plotMin/pParams['normVal'],
-                                                          plotMax/pParams['normVal']], ylog=ylog)
-            else: # Just plot raw values
+                                                   clims=clims, ylog=ylog)
+           else: # Just plot raw values
                 skyfignum = self.binner.plotSkyMap(self.metricValues[metricName],
                                                    cmap=cmap, cbarFormat=cbarFormat,
                                                    units=units, title=title,
                                                    clims=[plotMin, plotMax], ylog=ylog)
-            if savefig:
+           if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='sky')

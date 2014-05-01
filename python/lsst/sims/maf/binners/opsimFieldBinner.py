@@ -104,7 +104,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
             return False
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of fields',
+    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
                       scale=None, color='b'):
