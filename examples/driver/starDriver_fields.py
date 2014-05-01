@@ -87,7 +87,9 @@ for f in filters:
         binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints)
         binList.append(binner)
                                     
-        
+
+
+
 # Slew histograms
 m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
 binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
@@ -112,6 +114,12 @@ binList.append(binner)
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{}})
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 binList.append(binner)
+
+
+for f in filters:
+    m1 = makeMetricConfig('MeanMetric', params=['finSeeing'], summaryStats={'IdentityMetric':{}}) # Use IdentityMetric to pass the results to the summaryStats file.
+    binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['filter = "%s"'%f])
+    binList.append(binner)
 
 
 # The merged histograms for basics 

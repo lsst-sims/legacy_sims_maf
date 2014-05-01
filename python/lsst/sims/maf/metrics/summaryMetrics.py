@@ -11,6 +11,14 @@ class SummaryMetrics(BaseMetric):
         raise NotImplementedError()
 
 
+
+class IdentityMetric(BaseMetric):
+    """The metric just returns any data.  Helpful for passing uniBinner results through to the summaryStats file. """
+
+    def run(self, dataSlice):
+        return dataSlice
+
+    
 class TableFractionMetric(SimpleScalarMetric):
     def __init__(self, colname, nbins=10):
         """nbins = number of bins between 0 and 100.  100 must be evenly divisable by nbins. """
