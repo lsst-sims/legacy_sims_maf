@@ -2,6 +2,7 @@
 
 import numpy as np
 from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.utils import runInfo
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields_full'
@@ -11,26 +12,37 @@ root.opsimNames = ['ObsHistory']
 #filters = ['u','g','r','i','z','y']
 filters=['r']
 
-# 10 year Design Specs
-nvisitBench={'u':56,'g':80, 'r':184, 'i':184, 'z':160, 'y':160} 
+binList=[]
+
+# Fetch the proposal ID values from the database
+propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
+
+# Fetch design and strech specs from DB and scale to the length of the observing run if not 10 years
+nvisitBench, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessBench, seeingBench = runInfo.fetchBenchmarks(root.dbAddress['dbAddress'])
+
+# Plotting ranges and normalizations
+mag_zpoints = coaddedDepthDesign
+seeing_norm = seeingBench
+sky_zpoints = skyBrighntessBench
 nVisits_plotRange = {'all': 
                      {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200], 'z':[100, 250], 'y':[100,250]},
                      'DDpropid': 
                      {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],  'z':[7000, 10000], 'y':[5000, 8000]},
                      '216':
                      {'u':[20, 40], 'g':[20, 40], 'r':[20, 40], 'i':[20, 40], 'z':[20, 40], 'y':[20, 40]}}
-mag_zpoints={'u':26.1,'g':27.4, 'r':27.5, 'i':26.8, 'z':26.1, 'y':24.9}
-sky_zpoints = {'u':21.8, 'g':22., 'r':21.3, 'i':20.0, 'z':19.1, 'y':17.5}
-seeing_norm = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63}
 
-binList=[]
 
-propids = [215, 216, 217, 218, 219]
-WFDpropid = 217
-DDpropid = 219
+# Construct a WFD SQL where clause:
+wfdWhere = ''
+for i,propid in enumerate(WFDpropid):
+    if i == 0:
+        wfdWhere = wfdWhere+'('+'propID = %s'%propid
+    else:
+        wfdWhere = wfdWhere+'or propID = %s'%propid
+    wfdWhere = wfdWhere+')'
+
 
 # Metrics per filter and for WFD propID
-
 for i,f in enumerate(filters):
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                           plotDict={'percentileClip':75., 'units':'Number of Visits', 
@@ -43,7 +55,7 @@ for i,f in enumerate(filters):
     m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
     m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
     metricDict = makeDict(m1,m2,m6,m7,m8)
-    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' "%(f), "filter = \'%s\'"%f], kwargs={'simDataFieldRaColName':'', 'simDataFieldDecColName':'', 'simDataFieldIdColName':'Field_fieldID'}, )
+    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and "%(f)+wfdWhere, "filter = \'%s\'"%f], kwargs={'simDataFieldRaColName':'', 'simDataFieldDecColName':'', 'simDataFieldIdColName':'Field_fieldID'}, )
     binList.append(binner)
 
 
@@ -77,7 +89,7 @@ for i,f in enumerate(filters):
 # Completeness and Joint Completeness
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
 # For just WFD proposals
-binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
+binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=[""+wfdWhere])
 #binList.append(binner)
 # For all Observations
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
