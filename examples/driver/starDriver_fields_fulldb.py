@@ -3,10 +3,11 @@
 import numpy as np
 from lsst.sims.maf.driver.mafConfig import *
 from lsst.sims.maf.utils import runInfo
+from lsst.sims.maf.utils.getData import fetchFieldsFromFieldTable
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields_full'
-root.dbAddress ={'dbAddress':'sqlite:///opsim_hewelhog_1016.sqlite', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field', 'proposalID':'55'}
+root.dbAddress ={'dbAddress':'sqlite:///opsim_hewelhog_1016.sqlite', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field'}
 root.opsimNames = ['ObsHistory']
 
 #filters = ['u','g','r','i','z','y']
@@ -19,6 +20,9 @@ propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
 
 # Fetch design and strech specs from DB and scale to the length of the observing run if not 10 years
 nvisitBench, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessBench, seeingBench = runInfo.fetchBenchmarks(root.dbAddress['dbAddress'])
+
+# Check how many fields are requested per propID and for all proposals
+#nFields= fetchFieldsFromFieldTable(root.dbAddress['fieldTable'],root.dbAddress['dbAddress'], sessionID=root.dbAddress['sessionID'],proposalID=, proposalTable=root.dbAddress['proposalTable'])
 
 # Plotting ranges and normalizations
 mag_zpoints = coaddedDepthDesign
@@ -87,12 +91,12 @@ for i,f in enumerate(filters):
 
 
 # Completeness and Joint Completeness
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# Benchmark)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs=nvisitBench)
 # For just WFD proposals
 binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=[""+wfdWhere])
 #binList.append(binner)
 # For all Observations
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# Benchmark)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs=nvisitBench)
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 #binList.append(binner)
 

@@ -4,19 +4,19 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning) # Ignore db warning
     import lsst.sims.maf.db as db
 
-def fetchPropIDs(dbAddress):
+def fetchPropIDs(dbAddress, tableName='Proposal'):
     """Fetch the proposal IDs from the full opsim run database.  Return the full list as well as a list of proposal IDs that are wide-fast-deep (currently identified as proposal config files that contain "Universal") and Deep drilling proposals (config files containing "deep" )"""
-    table = db.Table('Proposal', 'propID', dbAddress)
+    table = db.Table(tableName, 'propID', dbAddress)
     propData = table.query_columns_RecArray(colnames=['propID', 'propConf', 'propName'], constraint='')
     propIDs = list(propData['propID'])
     wfdIDs = []
     ddIDs = []
     # This section needs to be updated when Opsim adds flags identifing which proposals are WFD, until then, parse on name
-    for i,name in enumerate(propData['propConf']):
+    for name,propid in zip(propData['propConf'],propData['propID']):
         if 'Universal' in name:
-            wfdIDs.append(propData['propID'][i])
-        if 'deep' in name:
-            ddIDs.append(propData['propID'][i])
+            wfdIDs.append(propid)
+        if ('deep' in name) or ("Deep" in name):
+            ddIDs.append(propid)
     return propIDs, wfdIDs, ddIDs
 
 def fetchBenchmarks(dbAddress):
