@@ -19,6 +19,16 @@ def fetchPropIDs(dbAddress, tableName='Proposal'):
             ddIDs.append(propid)
     return propIDs, wfdIDs, ddIDs
 
+def fetchNFields(dbAddress, propIDs, tableName='Proposal_Field' ):
+    """Find the number of fields for a given proposal ID """
+    table = db.Table(tableName, 'proposal_field_id', dbAddress)
+    nFields = []
+    for propid in propIDs:
+        fields = table.query_columns_RecArray(colnames=['Proposal_propID'], constraint='Proposal_propID = %s'%propid)
+        nFields.append(np.size(fields))
+    return nFields
+    
+
 def fetchBenchmarks(dbAddress):
     """Grab the configured run length and scale selected benchmarks to match.
     Note that number of visits is truncated (floor) not rounded."""

@@ -4,21 +4,6 @@ from lsst.sims.maf.driver.mafConfig import *
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
 
-small = True # Use the small database included in the repo
-
-if small:
-    root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-    root.opsimNames = ['opsim_small']
-    propids = [186,187,188,189]
-    WFDpropid = 188
-    DDpropid = 189 #?
-else:
-    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-    root.opsimNames = ['opsim']
-    propids = [215, 216, 217, 218, 219]
-    WFDpropid = 217
-    DDpropid = 219
-
 
 root.dbAddress ={'dbAddress':'mysql://www:zxcvbnm@localhost/OpsimDB'}
 root.opsimNames = ['output_opsimblitz2_1020']
@@ -52,7 +37,7 @@ binList=[]
 
 
 # Metrics per filter 
-for i,f in enumerate(filters):
+for f in filters:
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                           plotDict={'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0],
@@ -75,7 +60,7 @@ for i,f in enumerate(filters):
     binList.append(binner)
 
 # Metrics per filter, WFD only
-for i,f in enumerate(filters):
+for f in filters:
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                           plotDict={'percentileClip':75., 'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0], 'histMax':nVisits_plotRange['all'][f][1]},
@@ -98,7 +83,7 @@ for i,f in enumerate(filters):
 
     
 # Number of Visits per observing mode:
-for i,f in enumerate(filters):    
+for f in filters:    
         m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisitsperprop'}, plotDict={'units':'Number of Visits', 'histBins':50})
         metricDict = makeDict(m1)
         constraints=[]
@@ -135,7 +120,7 @@ binList.append(binner)
 
 
 # The merged histograms for basics 
-for i,f in enumerate(filters):
+for f in filters:
     m1 = makeMetricConfig('CountMetric', params=['5sigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_ps'},

@@ -3,7 +3,7 @@
 import numpy as np
 from lsst.sims.maf.driver.mafConfig import *
 from lsst.sims.maf.utils import runInfo
-from lsst.sims.maf.utils.getData import fetchFieldsFromFieldTable
+#from lsst.sims.maf.utils.getData import fetchFieldsFromFieldTable
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields_full'
@@ -22,7 +22,9 @@ propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
 nvisitBench, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessBench, seeingBench = runInfo.fetchBenchmarks(root.dbAddress['dbAddress'])
 
 # Check how many fields are requested per propID and for all proposals
-#nFields= fetchFieldsFromFieldTable(root.dbAddress['fieldTable'],root.dbAddress['dbAddress'], sessionID=root.dbAddress['sessionID'],proposalID=, proposalTable=root.dbAddress['proposalTable'])
+# Not sure I actually need to use this anywhere...
+#nFields = runInfo.fetchNFields(root.dbAddress['dbAddress'], propids)
+
 
 # Plotting ranges and normalizations
 mag_zpoints = coaddedDepthDesign
