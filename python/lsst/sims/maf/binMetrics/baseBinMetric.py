@@ -542,14 +542,10 @@ class BaseBinMetric(object):
     def computeSummaryStatistics(self, metricName, summaryMetric):
         """Compute single number summary of metric values in metricName, using summaryMetric."""
         # Because of the way the metrics are built, summaryMetric will require a numpy rec array.
-        if len(self.metricValues[metricName]) == 1:
-            return self.metricValues[metricName]
-        else:
-            # Create numpy rec array from metric data, with bad values removed. 
-            rarr = np.array(zip(self.metricValues[metricName].compressed()), 
-                            dtype=[('metricdata', self.metricValues[metricName].dtype)])
-            summaryMetric.colname = 'metricdata'
-            return summaryMetric.run(rarr)
+        rarr = np.array(zip(self.metricValues[metricName].compressed()), 
+                        dtype=[('metricdata', self.metricValues[metricName].dtype)])
+        summaryMetric.colname = 'metricdata'
+        return summaryMetric.run(rarr)
         
     def returnOutputFiles(self, verbose=True):
         """Return list of output file information (which is a list of dictionaries)
