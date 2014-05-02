@@ -162,6 +162,11 @@ class TestSimpleMetrics(unittest.TestCase):
         rms_approx = (np.percentile(self.dv['testdata'], 75) - np.percentile(self.dv['testdata'], 25)) / 1.349
         self.assertEqual(testmetric.run(self.dv), rms_approx)
 
+    def testIdentityMetric(self):
+        """Test identity metric."""
+        testmetric = metrics.IdentityMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv[0]), self.dv[0]['testdata'])
+
 class TestComplexMetrics(unittest.TestCase):
     def testBaseComplex(self):
         """Test the base class for complex metrics."""
