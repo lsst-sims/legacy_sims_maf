@@ -36,16 +36,19 @@ class TestMoreMetrics(unittest.TestCase):
         assert(metric.reducey(completeness) == 0.5)
         assert(metric.reduceJoint(completeness) == 0.5)
         # Test completeness metric when some filters not observed at all. 
-        metric = metrics.CompletenessMetric(u=0, g=100, r=100, i=100, z=100, y=100)
-        data['filter'][550:600] = 'z' 
+        metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
+        data['filter'][550:600] = 'z'
+        data['filter'][:100] = 'g'
         completeness = metric.run(data)
-        assert(metric.reduceu(completeness) == 1)
-        assert(metric.reduceg(completeness) == 1)
+        assert(metric.reduceu(completeness) == 0)
+        assert(metric.reduceg(completeness) == 2)
         assert(metric.reducer(completeness) == 1)
         assert(metric.reducei(completeness) == 1)
         assert(metric.reducez(completeness) == 2)
         assert(metric.reducey(completeness) == 0)
         assert(metric.reduceJoint(completeness) == 0)
+        # And test that if you forget to set any requested visits, that you get the useful error message
+        self.assertRaises(ValueError, metrics.CompletenessMetric, 'filter')        
 
         
     def testHourglassMetric(self):
@@ -144,4 +147,6 @@ class TestMoreMetrics(unittest.TestCase):
 
         
 if __name__ == '__main__':
-    unittest.main()
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)
+    unittest.TextTestRunner(verbosity=2).run(suite)
+
