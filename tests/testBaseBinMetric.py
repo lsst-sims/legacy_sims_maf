@@ -87,8 +87,8 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
         self.assertEqual(self.testbbm.plotParams.keys(), ['Mean testdata', 'Count testdata', 'Completeness'])
-        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units', '_unit'])
-        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', '_unit', 'title'])
+        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units', '_units'])
+        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', '_units', 'title'])
         self.assertEqual(self.testbbm.plotParams['Count testdata'].values(),
                          ['countunits', 'Count testdata', 'count_title'])
         # Test that can set metrics using a single metric (not a list)

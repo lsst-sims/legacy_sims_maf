@@ -99,7 +99,7 @@ class BaseBinMetric(object):
         outfile = os.path.join(outDir, oname.replace(' ', '_'))
         return outfile
 
-    def addOutputFileList(self, outfilename, metricName, filetype):
+    def _addOutputFileList(self, outfilename, metricName, filetype):
         """Add outputfilename to internal list of dictionaries with output filenames,
         filetype, metricName, binnerName, simDataName, metadata, comment."""
         self.outputFiles.append({'filename':outfilename,
@@ -321,7 +321,7 @@ class BaseBinMetric(object):
                               simDataName = self.simDataName[metricName],
                               metadata = self.metadata[metricName],
                               comment = self.comment[metricName] + comment)
-        self.addOutputFileList(outfile+'.npz', metricName, 'metricData')
+        self._addOutputFileList(outfile+'.npz', metricName, 'metricData')
 
                   
     def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
@@ -330,7 +330,7 @@ class BaseBinMetric(object):
             if verbose:
                 print 'Plotting %s' %(mname)
             try:
-                self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
+                plotfigs = self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
                 if closefig:
                    plt.close('all')
             except ValueError:
@@ -367,8 +367,8 @@ class BaseBinMetric(object):
             else:
                 if 'units' in pParams:
                     xlabel = pParams['units']
-                elif '_unit' in pParams:
-                    xlabel = mname + ' (' + pParams['_unit'] + ')'
+                elif '_units' in pParams:
+                    xlabel = mname + ' (' + pParams['_units'] + ')'
                 else:            
                     xlabel = mname 
         # ylabel used for y label in histograms
@@ -386,8 +386,8 @@ class BaseBinMetric(object):
         # units used for colorbar for skymap plots (this comes from metric setup)
         if 'units' in pParams: 
             units = pParams['units']
-        elif '_unit' in pParams:  # these are set from metric column units automatically
-            units = mname+' ('+ pParams['_unit'] + ')'
+        elif '_units' in pParams:  # these are set from metric column units automatically
+            units = mname+' ('+ pParams['_units'] + ')'
         else:
             units = mname
         # passed to plotting routines, but typically addLegend is False (so remove?)
@@ -464,7 +464,7 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot,
                                                  plotType='hist')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFileList(outfile, metricName, 'binnedDataPlot')                                
+                self._addOutputFileList(outfile, metricName, 'binnedDataPlot')                                
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
             if 'zp' in pParams:
@@ -497,7 +497,7 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='hist')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFileList(outfile, metricName, 'histogramPlot')
+                self._addOutputFileList(outfile, metricName, 'histogramPlot')
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
             if 'zp' in pParams: # Subtract off a zeropoint
@@ -522,7 +522,7 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='sky')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFileList(outfile, metricName, 'skymapPlot')                
+                self._addOutputFileList(outfile, metricName, 'skymapPlot')                
         # Plot the angular power spectrum, if able. (healpix binners)
         if hasattr(self.binner, 'plotPowerSpectrum'):
             psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName],
@@ -533,7 +533,7 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='ps')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFileList(outfile, metricName, 'powerspectrumPlot')
+                self._addOutputFileList(outfile, metricName, 'powerspectrumPlot')
         # Plot the hourglass plot
         if hasattr(self.binner, 'plotHour'):
             if xlabel is None:
@@ -546,5 +546,5 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='hr')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFileList(outfile, metricName, 'hourglassPlot')
+                self._addOutputFileList(outfile, metricName, 'hourglassPlot')
                         
