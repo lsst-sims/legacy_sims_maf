@@ -35,7 +35,7 @@ for f in filters:
     binner = makeBinnerConfig('HealpixBinner',
                               kwargs={"nside":nside},
                               metricDict=makeDict(m1),
-                              constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),'night < 730 and filter = "%s and finSeeing < %s"'%(f,seeing_limit), 'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
+                              constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit), 'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
                               setupKwargs={"leafsize":50000})
     binList.append(binner)
 

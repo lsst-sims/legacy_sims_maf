@@ -18,11 +18,11 @@ binList=[]
 # Fetch the proposal ID values from the database
 propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
 
-# Fetch design and strech specs from DB and scale to the length of the observing run if not 10 years
+# Fetch design and strech specs from DB and scale to the length of the observing run if requested sim is <10 years
 nvisitBench, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessBench, seeingBench = runInfo.fetchBenchmarks(root.dbAddress['dbAddress'])
 
 # Check how many fields are requested per propID and for all proposals
-# Not sure I actually need to use this anywhere...
+# Not sure I actually need to use this anywhere yet...
 #nFields = runInfo.fetchNFields(root.dbAddress['dbAddress'], propids)
 
 
