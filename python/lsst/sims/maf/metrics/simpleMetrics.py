@@ -87,3 +87,8 @@ class RobustRmsMetric(SimpleScalarMetric):
         rms = iqr/1.349 #approximation
         return rms
     
+class BinaryMetric(SimpleScalarMetric):
+    """Return 1 if there is data. """
+    def run(self, dataSlice):
+        return 1
+    

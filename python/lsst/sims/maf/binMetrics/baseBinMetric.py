@@ -415,6 +415,7 @@ class BaseBinMetric(object):
            histMin = pParams['histMin']
         if 'histMax' in pParams:
            histMax = pParams['histMax']
+        
         #if 'histMin' and 'histMax' in pParams:
         #    histRange = [pParams['histMin'], pParams['histMax']]
         # This seems to be causing a Valuerror in some cases.  
