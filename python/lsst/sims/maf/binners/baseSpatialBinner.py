@@ -204,17 +204,19 @@ class BaseSpatialBinner(BaseBinner):
             fig = plt.figure()
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        ax = plt.subplot(111,projection=projection)        
+        ax = plt.subplot(111,projection=projection)
+        # Only include points that are not masked
+        goodPts = np.where(metricValue.mask == False)[0]
         # Add points for RA/Dec locations
-        lon = -(self.bins['ra'] - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'], radius, ax=ax)
+        lon = -(self.bins['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'][goodPts], radius, ax=ax)
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
                                 norm=norml)
         else:
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
-        p.set_array(metricValue.filled(self.badval))
+        p.set_array(metricValue.filled(self.badval)[goodPts])
         ax.add_collection(p)
         # Add ecliptic
         self._plot_ecliptic(ax=ax)

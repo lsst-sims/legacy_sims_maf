@@ -7,8 +7,8 @@ from lsst.sims.maf.utils import runInfo
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields_full'
-root.dbAddress ={'dbAddress':'sqlite:///opsim_hewelhog_1016.sqlite', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field'}
-root.opsimNames = ['ObsHistory']
+root.dbAddress ={'dbAddress':'sqlite:///hewelhog_1016_sqlite.db', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field'}
+root.opsimNames = ['Output']
 
 #filters = ['u','g','r','i','z','y']
 filters=['r']
@@ -38,7 +38,7 @@ nVisits_plotRange = {'all':
                      {'u':[20, 40], 'g':[20, 40], 'r':[20, 40], 'i':[20, 40], 'z':[20, 40], 'y':[20, 40]}}
 
 
-# Construct a WFD SQL where clause:
+# Construct a WFD SQL where clause so multiple propIDs can by WFD:
 wfdWhere = ''
 for i,propid in enumerate(WFDpropid):
     if i == 0:
@@ -54,14 +54,14 @@ for i,f in enumerate(filters):
                           plotDict={'percentileClip':75., 'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0], 'histMax':nVisits_plotRange['all'][f][1]})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'}, plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-#    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
-#    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]} )             
-#    m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
+    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
+    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]} )             
+    m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
     m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
     m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
     metricDict = makeDict(m1,m2,m6,m7,m8)
-    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and "%(f)+wfdWhere, "filter = \'%s\'"%f], kwargs={'simDataFieldRaColName':'', 'simDataFieldDecColName':'', 'simDataFieldIdColName':'Field_fieldID'}, )
+    binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and "%(f)+wfdWhere, "filter = \'%s\'"%f], )
     binList.append(binner)
 
 
@@ -74,22 +74,22 @@ for i,f in enumerate(filters):
         for propid in propids:
             constraints.append("filter = \'%s\' and propID = %s" %(f,propid))
         binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints)
-        #binList.append(binner)
+        binList.append(binner)
                                     
         
 # Slew histograms
-#m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-#binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
-#binList.append(binner)
+m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
+binList.append(binner)
 
-#m1 = makeMetricConfig('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
-#binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
-#binList.append(binner)
+m1 = makeMetricConfig('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
+binList.append(binner)
 
 # Filter Hourglass plots
-#m1=makeMetricConfig('HourglassMetric')
-#binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750',''])
-#binList.append(binner)
+m1=makeMetricConfig('HourglassMetric')
+binner = makeBinnerConfig('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750',''])
+binList.append(binner)
 
 
 # Completeness and Joint Completeness
@@ -100,7 +100,7 @@ binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata=
 # For all Observations
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# Benchmark)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs=nvisitBench)
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
-#binList.append(binner)
+binList.append(binner)
 
 
 
