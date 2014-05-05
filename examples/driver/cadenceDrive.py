@@ -40,3 +40,4 @@ for f in filters:
     binList.append(binner)
 
 root.binners = makeDict(*binList)
+
