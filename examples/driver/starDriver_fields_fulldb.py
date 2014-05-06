@@ -59,8 +59,8 @@ for f in filters:
                                     'histMax':nVisits_plotRange['all'][f][1]})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                           plotDict={'normVal':nvisitBench[f], 'ylog':False, 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
-    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
+    m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
+    m4 = makeMetricConfig('Coaddm5Metric',kwargs={'m5col':'fivesigma_modified'}, plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
                           histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
@@ -80,8 +80,8 @@ for f in filters:
                           histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                           plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-    m3 = makeMetricConfig('MedianMetric', params=['5sigma_modified'])
-    m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
+    m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
+    m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'},plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
     m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
@@ -122,7 +122,7 @@ binList.append(binner)
 # Completeness and Joint Completeness
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{}})
 # For just WFD proposals
-binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
+binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=[wfdWhere])
 binList.append(binner)
 # For all Observations
 m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{}})
@@ -138,28 +138,28 @@ for f in filters:
 
 # The merged histograms for basics 
 for f in filters:
-    m1 = makeMetricConfig('CountMetric', params=['5sigma_modified'],
+    m1 = makeMetricConfig('CountMetric', params=['fivesigma_modified'],
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_modified'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s'and propID = %i"%(f,WFDpropid)]) 
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'fivesigma_modified'},
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and "%(f)+wfdWhere]) 
     binList.append(binner)
 
     m1 = makeMetricConfig('CountMetric', params=['perry_skybrightness'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'perry_skybrightness'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and "%(f)+wfdWhere])
     binList.append(binner)
     
     m1 = makeMetricConfig('CountMetric', params=['finSeeing'],
                           histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'finSeeing'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and "%(f) + wfdWhere])
     binList.append(binner)
 
     m1 = makeMetricConfig('CountMetric', params=['airmass'],
                           histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'airmass'},
-                              metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
+                              metricDict=makeDict(m1), constraints=["filter = '%s' and "%(f) + wfdWhere])
     binList.append(binner)
 
 
