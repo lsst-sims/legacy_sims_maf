@@ -65,7 +65,7 @@ class MafDriver(object):
                 # If just one parameter, look up units
                 if (len(params) == 1):
                     info = utils.ColInfo()
-                    plotDict['_unit'] = info.getUnits(params[0])
+                    plotDict['_units'] = info.getUnits(params[0])
                 temp_metric = getattr(metrics,metric.name)(*params, **kwargs)
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():

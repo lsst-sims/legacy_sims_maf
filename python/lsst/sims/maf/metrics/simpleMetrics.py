@@ -37,7 +37,7 @@ class Coaddm5Metric(SimpleScalarMetric):
     def run(self, dataSlice):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname]))) 
 
-
+        
 class MaxMetric(SimpleScalarMetric):
     """Calculate the maximum of a simData column slice."""
     def run(self, dataSlice):
@@ -87,3 +87,8 @@ class RobustRmsMetric(SimpleScalarMetric):
         rms = iqr/1.349 #approximation
         return rms
     
+
+class IdentityMetric(SimpleScalarMetric):
+    """Return the metric value itself .. this is primarily useful as a summary statistic for UniBinner metrics."""
+    def run(self, dataSlice):
+        return dataSlice[self.colname]

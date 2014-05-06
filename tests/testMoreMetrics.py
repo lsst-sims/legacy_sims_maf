@@ -6,8 +6,8 @@ import lsst.sims.maf.utils as utils
 class TestMoreMetrics(unittest.TestCase):
 
     def testCompletenessMetric(self):
-        """Test the completeness metric"""
-        metric = metrics.CompletenessMetric( u=100,g=100,r=100,i=100,z=100,y=100)
+        """Test the completeness metric."""
+        # Generate some test data.
         data = np.zeros(600, dtype=zip(['filter'],['|S1']))
         data['filter'][:100] = 'u'
         data['filter'][100:200] = 'g'
@@ -15,17 +15,42 @@ class TestMoreMetrics(unittest.TestCase):
         data['filter'][300:400] = 'i'
         data['filter'][400:550] = 'z'
         data['filter'][550:600] = 'y'
+        # Test completeness metric when requesting all filters.
+        metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
+        completeness = metric.run(data)
+        assert(metric.reduceu(completeness) == 1)
+        assert(metric.reduceg(completeness) == 1)
+        assert(metric.reducer(completeness) == 1)
+        assert(metric.reducei(completeness) == 1)
+        assert(metric.reducez(completeness) == 1.5)
+        assert(metric.reducey(completeness) == 0.5)
+        assert(metric.reduceJoint(completeness) == 0.5)
+        # Test completeness metric when requesting only some filters. 
+        metric = metrics.CompletenessMetric(u=0, g=100, r=100, i=100, z=100, y=100)
+        completeness = metric.run(data)
+        assert(metric.reduceu(completeness) == 1)
+        assert(metric.reduceg(completeness) == 1)
+        assert(metric.reducer(completeness) == 1)
+        assert(metric.reducei(completeness) == 1)
+        assert(metric.reducez(completeness) == 1.5)
+        assert(metric.reducey(completeness) == 0.5)
+        assert(metric.reduceJoint(completeness) == 0.5)
+        # Test completeness metric when some filters not observed at all. 
+        metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
+        data['filter'][550:600] = 'z'
+        data['filter'][:100] = 'g'
+        completeness = metric.run(data)
+        assert(metric.reduceu(completeness) == 0)
+        assert(metric.reduceg(completeness) == 2)
+        assert(metric.reducer(completeness) == 1)
+        assert(metric.reducei(completeness) == 1)
+        assert(metric.reducez(completeness) == 2)
+        assert(metric.reducey(completeness) == 0)
+        assert(metric.reduceJoint(completeness) == 0)
+        # And test that if you forget to set any requested visits, that you get the useful error message
+        self.assertRaises(ValueError, metrics.CompletenessMetric, 'filter')        
 
-        complete = metric.run(data)
-        assert(metric.reduceU(complete) == 1)
-        assert(metric.reduceG(complete) == 1)
-        assert(metric.reduceR(complete) == 1)
-        assert(metric.reduceI(complete) == 1)
-        assert(metric.reduceZ(complete) == 1.5)
-        assert(metric.reduceY(complete) == 0.5)
-        assert(metric.reduceJoint(complete) == 0.5)
         
-
     def testHourglassMetric(self):
         """Test the hourglass metric """
         names = [ 'expMJD', 'night','filter']
@@ -122,4 +147,6 @@ class TestMoreMetrics(unittest.TestCase):
 
         
 if __name__ == '__main__':
-    unittest.main()
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)
+    unittest.TextTestRunner(verbosity=2).run(suite)
+
