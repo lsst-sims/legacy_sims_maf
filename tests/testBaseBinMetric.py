@@ -17,7 +17,10 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     half = int(size/2)
     filtervalues[0:half] = 'g'
     filtervalues[half:size] = 'r'
-    datavalues = np.core.records.fromarrays([datavalues, filtervalues], names=['testdata', 'filter'])
+    ra = np.random.rand(size) * (360.0) * (np.pi/180.)
+    dec = np.random.rand(size) * (-90.0) * (np.pi/180.)
+    datavalues = np.core.records.fromarrays([datavalues, filtervalues, ra, dec],
+                                            names=['testdata', 'filter', 'ra', 'dec'])    
     return datavalues
 
 
@@ -341,19 +344,26 @@ class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
             
 class TestPlottingBaseBinMetric(unittest.TestCase):
     def setUp(self):
-        self.testbbm = binMetrics.BaseBinMetric()
-        self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
-                                     plotParams={'units':'meanunits'})
+        # Set up dictionary of all plotting parameters to test.
+        self.plotParams = {'_units': 'testunits',
+                        'title': 'my test title',  # plot titles
+                        'xlabel': 'my xlabel',  # plot x labels
+                        'ylabel': 'my ylabel',  # plot y labels
+                        # For 1-d binner: set hist x min/max vals via bins when setting, then y vals via plotMin/Max
+                        # For spatial binners: set hist x min/max vals via histMin/Max & number of bins via 'bins'
+                        #   then for skymap, set colorbar min/max vals via plotMin/Max
+                        'plotMin': -0.5,  # plot minimum values for skymap clims and y value for 1-d histograms
+                        'plotMax': 1.5,   # plot maximum values for skymap clims and y value for 1-d histograms
+                        'histMin': -0.5,  # histogram x minimum value for spatial binner
+                        'histMax': 1.5,   # histogram x maximum value for spatial binner
+                        # No way to set y value limits for spatial binner histogram?
+                        'bins': 50       # parameter for number of bins for spatial binner histograms
+                        }
+        self.m1 = metrics.MeanMetric('testdata', metricName='Test labels', plotParams = self.plotParams)
         self.dv = makeDataValues(size=1000, min=0, max=1)
-
-        self.binner = binners.OneDBinner('testdata')
-        self.binner.setupBinner(self.dv, bins=np.arange(0, 1.25, .1))
-        self.testbbm.setBinner(self.binner)
-        self.testbbm.setMetrics([self.m1,])
         self.opsimname = 'opsim1000'
         self.metadata = 'created fake testdata'
         self.comment = 'testing fake data run'
-        self.testbbm.runBins(self.dv, simDataName=self.opsimname, metadata=self.metadata, comment=self.comment)
                         
     def tearDown(self):
         del self.testbbm
@@ -363,9 +373,57 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         self.m1 = None
         self.binner = None
 
-    def testPlotting(self):
+    def testPlotting(self):        
         """Test plotting."""
-
+        import matplotlib.pyplot as plt    
+        # Test OneDBinner.
+        self.binner = binners.OneDBinner('testdata')
+        bins = np.arange(0, 1.25, .1)
+        self.testbbm = binMetrics.BaseBinMetric()
+        self.testbbm.setMetrics([self.m1,])
+        self.binner.setupBinner(self.dv, bins=bins)
+        self.testbbm.setBinner(self.binner)
+        self.testbbm.runBins(self.dv, simDataName=self.opsimname, metadata=self.metadata, comment=self.comment)
+        fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
+        fig = plt.figure(fignums['hist'])
+        ax = plt.gca()
+        # Check x and y limits
+        xlims = plt.xlim()
+        np.testing.assert_almost_equal(xlims, (bins.min(), bins.max()))
+        ylims = plt.ylim()
+        np.testing.assert_almost_equal(ylims, (self.plotParams['plotMin'], self.plotParams['plotMax']))
+        # Check x and y labels
+        self.assertEqual(ax.get_xlabel(), self.plotParams['xlabel'])
+        self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
+        # Check title
+        self.assertEqual(ax.get_title(), self.plotParams['title'])
+        # Test a spatial binner.
+        self.testbbm = binMetrics.BaseBinMetric()
+        self.testbbm.setMetrics([self.m1, ])
+        self.binner = binners.HealpixBinner(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
+        self.binner.setupBinner(self.dv)
+        self.testbbm.setBinner(self.binner)
+        self.testbbm.runBins(self.dv, simDataName=self.opsimname, metadata=self.metadata, comment=self.comment)
+        fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
+        # Test histogram.
+        fig = plt.figure(fignums['hist'])
+        ax = plt.gca()
+        # Check x limits.
+        xlims = plt.xlim()
+        np.testing.assert_almost_equal(xlims, (self.plotParams['histMin'], self.plotParams['histMax']))
+        # Check x and y labels.
+        self.assertEqual(ax.get_xlabel(), self.plotParams['xlabel'])
+        self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
+        # Check title.
+        self.assertEqual(ax.get_title(), self.plotParams['title'])
+        # Test sky map.
+        fig = plt.figure(fignums['sky'])
+        ax = plt.gca()
+        # Not sure how to check clims of color bar.
+        # Check title.
+        self.assertEqual(ax.get_title(), self.plotParams['title'])
+        
+        
         
                                                                     
 if __name__ == '__main__':
