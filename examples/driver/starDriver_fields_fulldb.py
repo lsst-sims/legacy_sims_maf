@@ -3,7 +3,6 @@
 import numpy as np
 from lsst.sims.maf.driver.mafConfig import *
 from lsst.sims.maf.utils import runInfo
-#from lsst.sims.maf.utils.getData import fetchFieldsFromFieldTable
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields_full'
@@ -20,7 +19,7 @@ binList=[]
 propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
 
 # Fetch design and strech specs from DB and scale to the length of the observing run if not 10 years
-nvisitBench, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessBench, seeingBench = runInfo.fetchBenchmarks(root.dbAddress['dbAddress'])
+nvisitDesign, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessDesign, seeingDesign = runInfo.scaleStretchDesign(root.dbAddress['dbAddress'])
 
 # Check how many fields are requested per propID and for all proposals
 # Not sure I actually need to use this anywhere...
@@ -29,8 +28,8 @@ nvisitBench, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighnte
 
 # Plotting ranges and normalizations
 mag_zpoints = coaddedDepthDesign
-seeing_norm = seeingBench
-sky_zpoints = skyBrighntessBench
+seeing_norm = seeingDesign
+sky_zpoints = skyBrighntessDesign
 nVisits_plotRange = {'all': 
                      {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200], 'z':[100, 250], 'y':[100,250]},
                      'DDpropid': 
@@ -58,14 +57,14 @@ for f in filters:
                                     'histMin':nVisits_plotRange['all'][f][0],
                                     'histMax':nVisits_plotRange['all'][f][1]})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitBench[f], 'ylog':False, 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+                          plotDict={'normVal':nvisitDesign[f], 'ylog':False, 'units':'Number of Visits/Designmark (%d)' %(nvisitDesign[f])})
     m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
     m4 = makeMetricConfig('Coaddm5Metric',kwargs={'m5col':'fivesigma_modified'}, plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
                           histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
-    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
+    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_units':'X'})
+    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_units':'X'})
     metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
     binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\'"%f])
     binList.append(binner)
@@ -79,13 +78,13 @@ for f in filters:
                                     'histMin':nVisits_plotRange['all'][f][0], 'histMax':nVisits_plotRange['all'][f][1]},
                           histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitBench[f], 'percentileClip':80., 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+                          plotDict={'normVal':nvisitDesign[f], 'percentileClip':80., 'units':'Number of Visits/Designmark (%d)' %(nvisitDesign[f])})
     m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
     m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'},plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
     m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
-    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
+    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_units':'X'})
+    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_units':'X'})
     metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
     binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and "%(f)+wfdWhere])
     binList.append(binner)
