@@ -79,14 +79,14 @@ class HealpixBinner(BaseSpatialBinner):
 
         
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet):
+                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet, plotMaskedValues=False):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
         units = units for metric color-bar label
         title = title for plot
-        
-        cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)"""
+        cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
+        plotMaskedValues = ignored, here to be consistent with OpsimFieldBinner."""
         # Generate a Mollweide full-sky plot.
         norm = None
         if ylog:
