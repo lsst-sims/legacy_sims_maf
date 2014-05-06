@@ -27,9 +27,9 @@ from .baseBinner import BaseBinner
 
 class BaseSpatialBinner(BaseBinner):
     """Base binner object, with added slicing functions for spatial binner."""
-    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec'):
+    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', badval=-666):
         """Instantiate the base spatial binner object."""
-        super(BaseSpatialBinner, self).__init__(verbose=verbose)
+        super(BaseSpatialBinner, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1,spatialkey2]
@@ -196,7 +196,7 @@ class BaseSpatialBinner(BaseBinner):
         plt.plot(ra, y_ec, 'r-')        
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
-                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=''):
+                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units='', plotMaskedValues=False):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -206,7 +206,10 @@ class BaseSpatialBinner(BaseBinner):
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
         # Only include points that are not masked
-        goodPts = np.where(metricValue.mask == False)[0]
+        if plotMaskedValues:
+            goodPts = np.arange(metricValue.size)
+        else:
+            goodPts = np.where(metricValue.mask == False)[0]
         # Add points for RA/Dec locations
         lon = -(self.bins['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'][goodPts], radius, ax=ax)
