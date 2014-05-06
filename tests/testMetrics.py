@@ -78,16 +78,16 @@ class TestBaseMetric(unittest.TestCase):
     def testPlotParams(self):
         """Test plot parameter setting"""
         cols = 'onecolumn'
-        # Don't set any plot parameters - is dictionary present and contains only _unit?
-        #  (_unit is default unit)
+        # Don't set any plot parameters - is dictionary present and contains only _units?
+        #  (_units is default unit)
         testmetric = metrics.BaseMetric(cols)
         self.assertTrue(isinstance(testmetric.plotParams, dict))
-        self.assertEqual(testmetric.plotParams.keys(), ['_unit'])
+        self.assertEqual(testmetric.plotParams.keys(), ['_units'])
         # Set some plot parameters - are they present in dictionary and dictionary contains only needed values?
         plotParams = {'title':'mytitle'}
         testmetric = metrics.BaseMetric(cols, plotParams=plotParams)
         self.assertTrue(isinstance(testmetric.plotParams, dict))
-        self.assertEqual(set(testmetric.plotParams.keys()), set(['title', '_unit']))
+        self.assertEqual(set(testmetric.plotParams.keys()), set(['title', '_units']))
         
     def testValidateData(self):
         """Test 'validateData' method"""
@@ -161,6 +161,12 @@ class TestSimpleMetrics(unittest.TestCase):
         testmetric = metrics.RobustRmsMetric('testdata')
         rms_approx = (np.percentile(self.dv['testdata'], 75) - np.percentile(self.dv['testdata'], 25)) / 1.349
         self.assertEqual(testmetric.run(self.dv), rms_approx)
+
+    def testIdentityMetric(self):
+        """Test identity metric."""
+        testmetric = metrics.IdentityMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv[0]), self.dv[0]['testdata'])
+        np.testing.assert_equal(testmetric.run(self.dv), self.dv['testdata'])
 
 class TestComplexMetrics(unittest.TestCase):
     def testBaseComplex(self):

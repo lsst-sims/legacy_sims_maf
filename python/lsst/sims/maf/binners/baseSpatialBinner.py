@@ -72,7 +72,7 @@ class BaseSpatialBinner(BaseBinner):
 
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node."""
-        if np.any(simDataRa > np.pi*2.0) or np.any(simDataDec> np.pi*2.0):
+        if np.any(np.abs(simDataRa) > np.pi*2.0) or np.any(np.abs(simDataDec) > np.pi*2.0):
             raise ValueError('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x,y,z)
