@@ -4,7 +4,7 @@ from lsst.sims.maf.driver.mafConfig import *
 root.outputDir ='./Cadence'
 
 
-small = True # Use the small database included in the repo
+small = False # Use the small database included in the repo
 
 if small:
     root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
@@ -39,5 +39,12 @@ for f in filters:
                               setupKwargs={"leafsize":50000})
     binList.append(binner)
 
+
+m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified'})
+binner =  makeBinnerConfig('HealpixBinner',
+                              kwargs={"nside":nside},
+                              metricDict=makeDict(m1), constraints=[''], setupKwargs={"leafsize":50000})
+binList.append(binner)
+    
 root.binners = makeDict(*binList)
 
