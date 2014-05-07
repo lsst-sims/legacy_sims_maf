@@ -27,9 +27,9 @@ from .baseBinner import BaseBinner
 
 class BaseSpatialBinner(BaseBinner):
     """Base binner object, with added slicing functions for spatial binner."""
-    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec'):
+    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', badval=-666):
         """Instantiate the base spatial binner object."""
-        super(BaseSpatialBinner, self).__init__(verbose=verbose)
+        super(BaseSpatialBinner, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1,spatialkey2]
@@ -72,7 +72,7 @@ class BaseSpatialBinner(BaseBinner):
 
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node."""
-        if np.any(simDataRa > np.pi*2.0) or np.any(simDataDec> np.pi*2.0):
+        if np.any(np.abs(simDataRa) > np.pi*2.0) or np.any(np.abs(simDataDec) > np.pi*2.0):
             raise ValueError('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x,y,z)
@@ -196,7 +196,7 @@ class BaseSpatialBinner(BaseBinner):
         plt.plot(ra, y_ec, 'r-')        
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
-                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=''):
+                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units='', plotMaskedValues=False):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -204,17 +204,22 @@ class BaseSpatialBinner(BaseBinner):
             fig = plt.figure()
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        ax = plt.subplot(111,projection=projection)        
+        ax = plt.subplot(111,projection=projection)
+        # Only include points that are not masked
+        if plotMaskedValues:
+            goodPts = np.arange(metricValue.size)
+        else:
+            goodPts = np.where(metricValue.mask == False)[0]
         # Add points for RA/Dec locations
-        lon = -(self.bins['ra'] - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'], radius, ax=ax)
+        lon = -(self.bins['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'][goodPts], radius, ax=ax)
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
                                 norm=norml)
         else:
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
-        p.set_array(metricValue.filled(self.badval))
+        p.set_array(metricValue.filled(self.badval)[goodPts])
         ax.add_collection(p)
         # Add ecliptic
         self._plot_ecliptic(ax=ax)

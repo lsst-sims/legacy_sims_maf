@@ -10,7 +10,7 @@ from lsst.sims.maf.utils import getDateVersion
 class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""
     
-    def __init__(self, verbose=True, *args, **kwargs):
+    def __init__(self, verbose=True, badval=-666, *args,  **kwargs):
         """Instantiate the base binner object."""
         # After init: everything necessary for using binner for plotting or saving/restoring metric
         #   data should be present (although binner does not need to be able to slice data again).
@@ -18,7 +18,7 @@ class BaseBinner(object):
         # 
         # Args will include sliceDataCols and other data names that must be fetched from DB
         self.verbose = verbose
-        self.badval = -666
+        self.badval = badval
         self.nbins = None
         self.bins = None
         self.binnerName = self.__class__.__name__

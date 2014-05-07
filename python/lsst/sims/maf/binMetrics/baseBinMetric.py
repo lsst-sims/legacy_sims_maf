@@ -11,11 +11,13 @@
 #  understanding what the metric means, and should be presented in plots & saved in the
 #  output files. 
 #
-# Instantiate the binMetric object by providing a binner object. 
-# Then, Metric data can enter the binMetric through either running metrics on simData,
-#  or reading metric values from files. 
-# To run metrics on simData, 
-#  runBins - pass list of metrics, simData, and metadata for the metric run;
+# Instantiate the binMetric object and set the binner and (potentially) metrics.
+# Only one binner per baseBinMetric!
+# Then, the actual metric data can enter the binMetric through either running metrics on simData,
+#  or reading metric values from files.
+#
+#  'runBins' - generates metric data by running metrics over binpoints in binner.
+#      pass list of metrics, simData, and metadata for the metric run;
 #      validates that simData has needed cols, then runs metrics over the binpoints in the binner. 
 #      Stores the results in a dictionary keyed by the metric names.
 #
@@ -34,8 +36,6 @@
 # Metric data values, as well as metadata for each metric, are stored in
 #  dictionaries keyed by the metric name.
 
-##   todo ... swap metric name for a running index? but then how to indicate which value we mean
-##   (have to track number externally, or specify which dictionary, as metricName could be duplicated)
 
 import os
 import numpy as np
@@ -99,7 +99,7 @@ class BaseBinMetric(object):
         outfile = os.path.join(outDir, oname.replace(' ', '_'))
         return outfile
 
-    def addOutputFiles(self, outfilename, metricName, filetype):
+    def _addOutputFileList(self, outfilename, metricName, filetype):
         """Add outputfilename to internal list of dictionaries with output filenames,
         filetype, metricName, binnerName, simDataName, metadata, comment."""
         self.outputFiles.append({'filename':outfilename,
@@ -154,33 +154,6 @@ class BaseBinMetric(object):
             self.plotParams[mname] = m.plotParams
         return newmetricNames
 
-    def readMetricValues(self, filenames, verbose=False):
-        """Given a list of filenames, reads metric values and metadata from disk. """
-        if not hasattr(filenames, '__iter__'):
-            filenames = [filenames, ]        
-        for f in filenames:
-            basebinner = binners.BaseBinner()
-            metricData, binner, header = basebinner.readData(f)
-            # Check that the binner from this file matches self.binner (ok if self.binner is None)
-            if not(self.setBinner(binner, override=False)):
-                raise Exception('Binner for metric %s does not match existing binner.' 
-                                % (header['metricName']))
-            # Dedupe the metric name, if needed.
-            metricName = self._deDupeMetricName(header['metricName'])
-            self.metricNames.append(metricName)
-            self.metricValues[metricName] = metricData
-            self.metricValues[metricName].fill_value = self.binner.badval
-            self.simDataName[metricName] = header['simDataName']
-            self.metadata[metricName] = header['metadata']
-            self.comment[metricName] = header['comment']
-            self.plotParams[metricName] = {}
-            if 'plotParams' in header:
-                for pp in header['plotParams']:
-                    self.plotParams[metricName][pp] = header['plotParams'][pp]
-            if verbose:
-                print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
-
-    
     def validateMetricData(self, simData):
         """Validate that simData has the required data values for the metrics in self.metricObjs."""
         simCols = self.metricObjs[self.metricNames[0]].classRegistry.uniqueCols()
@@ -223,18 +196,17 @@ class BaseBinMetric(object):
                 for mname in self.metricObjs:
                     if hasattr(self.metricObjs[mname], 'needRADec'):
                         if self.metricObjs[mname].needRADec:
-                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, binpoint[1], binpoint[2])
+                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
+                                                                                          binpoint[1], binpoint[2])
                         else:
                             self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
                     else:
                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
         # Mask data where metrics could not be computed (according to metric bad value).
-        for mname in self.metricObjs:
-            self.metricValues[mname] = ma.masked_where(self.metricValues[mname] == 
-                                                       self.metricObjs[mname].badval, 
-                                                       self.metricValues[mname], copy=False)
-            # For some reason, the mask fill value is not preserved, so reset.
-            self.metricValues[mname].fill_value = self.binner.badval
+        for mname in self.metricObjs:            
+            self.metricValues[mname].mask = np.where(self.metricValues[mname].data==self.metricObjs[mname].badval,
+                                                     self.binner.badval, self.metricValues[mname].mask)
+
 
     def reduceAll(self):
         """Run all reduce functions on all (complex) metrics."""
@@ -264,11 +236,7 @@ class BaseBinMetric(object):
                                                       fill_value=self.binner.badval)
         # Run through binpoints, applying all reduce functions.
         for i, b in enumerate(self.binner):
-            if np.array(self.metricValues[metricName].mask).size == 1:
-                maskval = self.metricValues[metricName].mask
-            else:
-                maskval = self.metricValues[metricName].mask[i]
-            if not maskval:
+            if not self.metricValues[metricName].mask[i]:
                 # Get (complex) metric values for this binpoint. 
                 metricValuesPt = self.metricValues[metricName][i]
                 # Evaluate reduced version of metric values.
@@ -281,6 +249,57 @@ class BaseBinMetric(object):
             self.comment[rName] = self.comment[metricName]
             self.plotParams[rName] = self.plotParams[metricName]
 
+    def computeSummaryStatistics(self, metricName, summaryMetric):
+        """Compute single number summary of metric values in metricName, using summaryMetric."""
+        # To get (clear, non-confusing) result from unibinner, try running this with 'Identity' metric.
+        # Because of the way the metrics are built, summaryMetric will require a numpy rec array.
+        # Create numpy rec array from metric data, with bad values removed. 
+        rarr = np.array(zip(self.metricValues[metricName].compressed()), 
+                dtype=[('metricdata', self.metricValues[metricName].dtype)])
+        # The summary metric colname should already be set to 'metricdata', but in case it's not:
+        summaryMetric.colname = 'metricdata'
+        return summaryMetric.run(rarr)
+        
+    def returnOutputFiles(self, verbose=True):
+        """Return list of output file information (which is a list of dictionaries)
+        If 'verbose' then prints in somewhat pretty fashion to stdout."""
+        if verbose:
+            keys = ['filename', 'filetype', 'metricName', 'binner', 'simDataName', 'metadata', 'comment']
+            writestring = ' || '.join(keys)
+            print writestring
+            for o in self.outputFiles:
+                writestring = ''
+                for k in keys:
+                    writestring += o[k] + ' || '
+                print writestring
+        return self.outputFiles      
+                        
+    def readMetricValues(self, filenames, verbose=False):
+        """Given a list of filenames, reads metric values and metadata from disk. """
+        if not hasattr(filenames, '__iter__'):
+            filenames = [filenames, ]        
+        for f in filenames:
+            basebinner = binners.BaseBinner()
+            metricData, binner, header = basebinner.readData(f)
+            # Check that the binner from this file matches self.binner (ok if self.binner is None)
+            if not(self.setBinner(binner, override=False)):
+                raise Exception('Binner for metric %s does not match existing binner.' 
+                                % (header['metricName']))
+            # Dedupe the metric name, if needed.
+            metricName = self._deDupeMetricName(header['metricName'])
+            self.metricNames.append(metricName)
+            self.metricValues[metricName] = metricData
+            self.metricValues[metricName].fill_value = self.binner.badval
+            self.simDataName[metricName] = header['simDataName']
+            self.metadata[metricName] = header['metadata']
+            self.comment[metricName] = header['comment']
+            self.plotParams[metricName] = {}
+            if 'plotParams' in header:
+                for pp in header['plotParams']:
+                    self.plotParams[metricName][pp] = header['plotParams'][pp]
+            if verbose:
+                print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
+            
     def writeAll(self, outDir=None, outfileRoot=None, comment=''):
         """Write all metric values to disk."""
         for mname in self.metricValues:
@@ -302,15 +321,16 @@ class BaseBinMetric(object):
                               simDataName = self.simDataName[metricName],
                               metadata = self.metadata[metricName],
                               comment = self.comment[metricName] + comment)
-        self.addOutputFiles(outfile+'.npz', metricName, 'metricData')
-                
+        self._addOutputFileList(outfile+'.npz', metricName, 'metricData')
+
+                  
     def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:            
             if verbose:
                 print 'Plotting %s' %(mname)
             try:
-                self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
+                plotfigs = self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
                 if closefig:
                    plt.close('all')
             except ValueError:
@@ -318,12 +338,11 @@ class BaseBinMetric(object):
                    print 'Not plotting %s'%mname
                 continue 
 
-    def plotMetric(self, metricName, 
-                   savefig=True, outDir=None, outfileRoot=None):
+    def plotMetric(self, metricName, savefig=True, outDir=None, outfileRoot=None):
         """Create all plots for 'metricName' ."""
         # Check that metricName refers to plottable ('float') data.
         if not ((self.metricValues[metricName].dtype == 'float') or 
-                (self.metricValues[metricName].dtype=='int') or (metricName == 'hourglass')):
+                (self.metricValues[metricName].dtype=='int') or (self.binner.binnerName == 'HourglassBinner')):
             raise ValueError('Metric data in %s is not float or int type (%s).' 
                              %(metricName, self.metricValues[metricName].dtype))
         if metricName in self.plotParams:
@@ -347,8 +366,8 @@ class BaseBinMetric(object):
             else:
                 if 'units' in pParams:
                     xlabel = pParams['units']
-                elif '_unit' in pParams:
-                    xlabel = mname + ' (' + pParams['_unit'] + ')'
+                elif '_units' in pParams:
+                    xlabel = mname + ' (' + pParams['_units'] + ')'
                 else:            
                     xlabel = mname 
         # ylabel used for y label in histograms
@@ -366,19 +385,14 @@ class BaseBinMetric(object):
         # units used for colorbar for skymap plots (this comes from metric setup)
         if 'units' in pParams: 
             units = pParams['units']
-        elif '_unit' in pParams:  # these are set from metric column units automatically
-            units = mname+' ('+ pParams['_unit'] + ')'
+        elif '_units' in pParams:  # these are set from metric column units automatically
+            units = mname+' ('+ pParams['_units'] + ')'
         else:
             units = mname
-        # passed to plotting routines, but typically addLegend is False (so remove?)
-        if 'label' in pParams:  
-            label =  pParams['label']
-        else:
-            label = None
-        if 'addLegend' in pParams:
-           addLegend = pParams['addLegend']
-        else:
-           addLegend = False
+        # Should the masked values be plotted
+        plotMaskedValues=False
+        if 'plotMaskedValues' in pParams:
+           plotMaskedValues = pParams['plotMaskedValues']
         # set cmap for skymap plots
         if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
@@ -396,10 +410,9 @@ class BaseBinMetric(object):
             plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
                                               percentile=pParams['percentileClip'])
         # Make sure there is a little dynamic range
-        if plotMin == plotMax and type(plotMin) != type(()):
+        if plotMin == plotMax and self.binner.binnerName != 'HourglassBinner':
            plotMin = plotMin-1
            plotMax = plotMax+1
-
         # But then if plotting min/max values are set in plotParams, override percentile clipping.
         if 'plotMin' in pParams:
             plotMin = pParams['plotMin']
@@ -415,20 +428,11 @@ class BaseBinMetric(object):
            histMin = pParams['histMin']
         if 'histMax' in pParams:
            histMax = pParams['histMax']
-        
-        #if 'histMin' and 'histMax' in pParams:
-        #    histRange = [pParams['histMin'], pParams['histMax']]
-        # This seems to be causing a Valuerror in some cases.  
-        #else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
-        #    histRange = [plotMin, plotMax]
-        # Determine if should data using log scale, using pParams if available
-        #else:
-        #   histRange = None
         if 'ylog' in pParams:
             ylog = pParams['ylog']
         else: # or if data spans > 3 decades if not.
             ylog = False
-            if metricName != 'hourglass':
+            if self.binner.binnerName != 'HourglassBinner':
                 if 'normVal' in pParams:
                    norm = pParams['normVal']
                 else:
@@ -438,43 +442,41 @@ class BaseBinMetric(object):
                     if self.metricValues[metricName].max() <= 0:
                         ylog = False
         # Okay, now that's all set .. go plot some data!
+        figs = {}
         if hasattr(self.binner, 'plotBinnedData'):
-            histfignum = self.binner.plotBinnedData(self.metricValues[metricName],
+            figs['hist'] = self.binner.plotBinnedData(self.metricValues[metricName],
                                                     xlabel=xlabel, ylabel=ylabel, title=title, 
-                                                    ylog=ylog,
-                                                    label=label, addLegend=addLegend, 
-                                                    yMin=plotMin, yMax=plotMax)
+                                                    ylog=ylog, yMin=plotMin, yMax=plotMax)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot,
                                                  plotType='hist')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFiles(outfile, metricName, 'binnedDataPlot')                                
+                self._addOutputFileList(outfile, metricName, 'binnedDataPlot')                                
         # Plot the histogram, if relevant. (spatial binners)
         if hasattr(self.binner, 'plotHistogram'):
-            if 'zp' in pParams:
+            if 'zp' in pParams:  # Subtract off zeropoint zp
                 if histMin != None:
                    histMin = histMin-pParams['zp']
                 if histMax != None:
                    histMax = histMax-pParams['zp']
-                histfignum = self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
+                figs['hist']= self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'], label=label,addLegend=addLegend, 
+                                                       bins = pParams['bins'], 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
-            elif 'normVal' in pParams:
+            elif 'normVal' in pParams:  # Normalize by normVal
                 if histMin != None:
                     histMin = histMin/pParams['normVal']
                 if histMax != None:
                     histmax = histMax/pParams['normVal']
-
-                histfignum = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
+                figs['hist'] = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],label=label,addLegend=addLegend, 
+                                                       bins = pParams['bins'],
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
-            else:
-                histfignum = self.binner.plotHistogram(self.metricValues[metricName],
+            else:  # Regular plotting of metric values.
+                figs['hist'] = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],label=label,addLegend=addLegend, 
+                                                       bins = pParams['bins'], 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             
             if savefig:
@@ -482,82 +484,59 @@ class BaseBinMetric(object):
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='hist')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFiles(outfile, metricName, 'histogramPlot')
+                self._addOutputFileList(outfile, metricName, 'histogramPlot')
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
-           if 'zp' in pParams: # Subtract off a zeropoint
-              if 'plotMin' not in pParams:
-                 clims = [plotMin-pParams['zp'],plotMax-pParams['zp']]
-              else:
-                 clims = [plotMin, plotMax]
- 
-              skyfignum = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
+            if 'zp' in pParams: # Subtract off a zeropoint
+               if 'plotMin' not in pParams:
+                  clims = [plotMin-pParams['zp'],plotMax-pParams['zp']]
+               else:
+                  clims = [plotMin, plotMax]
+               figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
+                                                    cmap=cmap, cbarFormat=cbarFormat,
+                                                    units=units, title=title,
+                                                    clims=clims, ylog=ylog, plotMaskedValues=plotMaskedValues)
+            elif 'normVal' in pParams: # Normalize by some value
+               if 'plotMin' not in pParams:
+                  clims = [plotMin/pParams['normVal'],plotMax/pParams['normVal']]
+               else:
+                  clims = [plotMin, plotMax]                            
+               figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
+                                                    cmap=cmap, cbarFormat=cbarFormat,
+                                                    units=units, title=title,
+                                                    clims=clims, ylog=ylog, plotMaskedValues=plotMaskedValues)
+            else: # Just plot metric values
+                figs['sky'] = self.binner.plotSkyMap(self.metricValues[metricName],
                                                    cmap=cmap, cbarFormat=cbarFormat,
                                                    units=units, title=title,
-                                                   clims=clims, ylog=ylog)
-           elif 'normVal' in pParams: # Normalize by some value
-              if 'plotMin' not in pParams:
-                 clims = [plotMin/pParams['normVal'],plotMax/pParams['normVal']]
-              else:
-                 clims = [plotMin, plotMax]
-              skyfignum = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
-                                                   cmap=cmap, cbarFormat=cbarFormat,
-                                                   units=units, title=title,
-                                                   clims=clims, ylog=ylog)
-           else: # Just plot raw values
-                skyfignum = self.binner.plotSkyMap(self.metricValues[metricName],
-                                                   cmap=cmap, cbarFormat=cbarFormat,
-                                                   units=units, title=title,
-                                                   clims=[plotMin, plotMax], ylog=ylog)
-           if savefig:
-                outfile = self._buildOutfileName(metricName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='sky')
-                plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFiles(outfile, metricName, 'skymapPlot')                
+                                                   clims=[plotMin, plotMax], ylog=ylog, plotMaskedValues=plotMaskedValues)
+            if savefig:
+               outfile = self._buildOutfileName(metricName, 
+                                                outDir=outDir, outfileRoot=outfileRoot, 
+                                                plotType='sky')
+               plt.savefig(outfile, figformat=self.figformat)
+               self._addOutputFileList(outfile, metricName, 'skymapPlot')                
         # Plot the angular power spectrum, if able. (healpix binners)
         if hasattr(self.binner, 'plotPowerSpectrum'):
-            psfignum = self.binner.plotPowerSpectrum(self.metricValues[metricName],
-                                                     title=title, 
-                                                     label=label)
+            figs['ps'] = self.binner.plotPowerSpectrum(self.metricValues[metricName],
+                                                     title=title)
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='ps')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFiles(outfile, metricName, 'powerspectrumPlot')
+                self._addOutputFileList(outfile, metricName, 'powerspectrumPlot')
         # Plot the hourglass plot
         if hasattr(self.binner, 'plotHour'):
             if xlabel is None:
                 xlabel='MJD (day)'
             if ylabel is None:
                 ylabel = 'Hours from local midnight'
-            psfignum = self.binner.plotHour(self.metricValues[metricName][0], title=title, xlabel=xlabel,ylabel=ylabel )
+            figs['hourglass'] = self.binner.plotHour(self.metricValues[metricName][0], title=title, xlabel=xlabel,ylabel=ylabel )
             if savefig:
                 outfile = self._buildOutfileName(metricName, 
                                                  outDir=outDir, outfileRoot=outfileRoot, 
                                                  plotType='hr')
                 plt.savefig(outfile, figformat=self.figformat)
-                self.addOutputFiles(outfile, metricName, 'hourglassPlot')
-                        
-    def computeSummaryStatistics(self, metricName, summaryMetric):
-        """Compute single number summary of metric values in metricName, using summaryMetric."""
-        # Because of the way the metrics are built, summaryMetric will require a numpy rec array.
-        rarr = np.array(zip(self.metricValues[metricName].compressed()), 
-                        dtype=[('metricdata', self.metricValues[metricName].dtype)])
-        summaryMetric.colname = 'metricdata'
-        return summaryMetric.run(rarr)
-        
-    def returnOutputFiles(self, verbose=True):
-        """Return list of output file information (which is a list of dictionaries)
-        If 'verbose' then prints in somewhat pretty fashion to stdout."""
-        if verbose:
-            keys = ['filename', 'filetype', 'metricName', 'binner', 'simDataName', 'metadata', 'comment']
-            writestring = ' || '.join(keys)
-            print writestring
-            for o in self.outputFiles:
-                writestring = ''
-                for k in keys:
-                    writestring += o[k] + ' || '
-                print writestring
-        return self.outputFiles
+                self._addOutputFileList(outfile, metricName, 'hourglassPlot')
+        return figs

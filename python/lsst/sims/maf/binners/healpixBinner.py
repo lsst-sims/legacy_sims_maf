@@ -20,8 +20,7 @@ class HealpixBinner(BaseSpatialBinner):
     def __init__(self, nside=256, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
         """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose,
-                                            spatialkey1=spatialkey1,spatialkey2=spatialkey2)
-        self.badval = hp.UNSEEN 
+                                            spatialkey1=spatialkey1,spatialkey2=spatialkey2, badval=hp.UNSEEN) 
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -80,14 +79,14 @@ class HealpixBinner(BaseSpatialBinner):
 
         
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet):
+                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet, plotMaskedValues=False):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
         units = units for metric color-bar label
         title = title for plot
-        
-        cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)"""
+        cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
+        plotMaskedValues = ignored, here to be consistent with OpsimFieldBinner."""
         # Generate a Mollweide full-sky plot.
         norm = None
         if ylog:

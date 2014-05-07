@@ -29,7 +29,7 @@ seeing_limit = 0.7 # Demand seeing better than this
 
 
 
-# Example looking for the existence of a quality refernce image in each filter after 1 year and 2 years and 10 years
+# Example looking for the existence of a quality refernce image in each filter after 1 year, 2 years and 10 years
 for f in filters:
     m1 = makeMetricConfig('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
     binner = makeBinnerConfig('HealpixBinner',
