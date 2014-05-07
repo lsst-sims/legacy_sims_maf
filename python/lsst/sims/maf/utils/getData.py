@@ -98,8 +98,8 @@ def fetchFieldsFromFieldTable(fieldTable, dbAddress,
     return fielddata
 
 
-def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal'):
-    """Utility to fetch config data from configTable, match proposal IDs with proposal names,
+def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', proposalFieldTable='Proposal_Field'):
+    """Utility to fetch config data from configTable, match proposal IDs with proposal names and some field data,
        and do a little manipulation of the data to make it easier to add to the presentation layer.
     
     Returns dictionary keyed by proposals and module names, and within each of these is another dictionary
@@ -113,7 +113,11 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal'):
     table = db.Table(proposalTable, 'propID', dbAddress)
     cols = ['propID', 'propConf', 'propName']
     propdata = table.query_columns_RecArray(colnames=cols)
-    # Test that proposal ids are present in both proposal and config table.
+    # Get counts of fields from proposal_field data.
+    table = db.Table(proposalFieldTable, 'proposal_field_id', dbAddress)
+    cols = ['proposal_field_id', 'Proposal_propID']
+    propfielddata = table.query_columns_RecArray(colnames=cols)    
+    # Test that proposal ids are present in both proposal and config tables.
     configPropIDs = set(configdata['nonPropID'])
     configPropIDs.remove(0)
     propPropIDs = set(propdata['propID'])
@@ -130,13 +134,13 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal'):
     for name in longNames:
         configDict[name] = {}
         moduleName = name.split('__')[0]
-        propID = name.split('__')[1]
+        propID = int(name.split('__')[1])
         # Add propID and module name.
         configDict[name]['propID'] = propID
         configDict[name]['moduleName'] = moduleName
         # Add key/value pairs to dictionary containing paramName/paramValue for most parameters in module.        
         condition = ((np.where(configdata['moduleName'] == moduleName)) and
-                     (np.where(configdata['nonPropID'] == int(propID))))
+                     (np.where(configdata['nonPropID'] == propID)))
         for key, value in zip(configdata['paramName'][condition], configdata['paramValue'][condition]):
             if key != 'userRegion':
                 configDict[name][key] = value
@@ -144,7 +148,11 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal'):
         condition2 = (configdata['paramName'][condition] == 'userRegion')
         numberUserRegions = configdata['paramName'][condition2].size
         if numberUserRegions > 0:
-            configDict[name]['numberUserRegions'] = numberUserRegions
+            configDict[name]['numUserRegions'] = numberUserRegions
+        # And add a count of the numer of actual fields used in proposal.
+        if propID != 0:
+            condition3 = (propfielddata['Proposal_propID'] == propID)
+            configDict[name]['numFields'] = propfielddata[condition3].size
         # Add full proposal names.
         condition3 = (propdata['propID'] == propID)
         configDict[name]['proposalFile'] = propdata['propConf'][condition3]
