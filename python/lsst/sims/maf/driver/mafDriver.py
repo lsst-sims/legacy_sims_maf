@@ -130,11 +130,11 @@ class MafDriver(object):
         if 'fieldTable' in self.config.dbAddress.keys():
             if not hasattr(self, 'fieldData'): # Only pull the data once if getting it from the database
                 fieldDataInfo = self.config.dbAddress
-                self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
-                                                                fieldDataInfo['dbAddress'],
-                                                                sessionID=fieldDataInfo['sessionID'],
-                                                                proposalTable=fieldDataInfo['proposalTable'],
-                                                                proposalID=fieldDataInfo['proposalID'])
+                self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['dbAddress'],
+                                                                         fieldTable=fieldDataInfo['fieldTable'],
+                                                                         proposalFieldTable=fieldDataInfo['proposalTable'],
+                                                                         proposalID=fieldDataInfo['proposalID'],
+                                                                         sessionID=fieldDataInfo['sessionID'])
         else:
             fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
             ra = self.data[binner.fieldRaColName][idx]
