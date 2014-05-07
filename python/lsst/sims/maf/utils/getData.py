@@ -13,6 +13,7 @@ def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
     connectionName is the name given to a sqlalchemy connection string in the file
         (default 'SQLITE_OPSIM').
     dbLoginFile is the file location (default None will try to use $HOME/dbLogin). """
+    ## This is actually replicating functionality already in catalogs.generation, so should go away
     # The dbLogin file is a file containing simple 'names' corresponding to sqlite connection engine
     #  strings.
     # Example:
@@ -62,7 +63,7 @@ def fetchFieldsFromOutputTable(dbTable, dbAddress, sqlconstraint):
 
 
 def fetchFieldsFromFieldTable(fieldTable, dbAddress, 
-                              sessionID=None, proposalTable='tProposal_Field', proposalID=None,
+                              sessionID=None, proposalTable='Proposal_Field', proposalID=None,
                               degreesToRadians=True):
     """Utility to fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
 
@@ -95,3 +96,60 @@ def fetchFieldsFromFieldTable(fieldTable, dbAddress,
         fielddata['fieldRA'] = fielddata['fieldRA'] * np.pi / 180.
         fielddata['fieldDec'] = fielddata['fieldDec'] * np.pi / 180.
     return fielddata
+
+
+def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal'):
+    """Utility to fetch config data from configTable, match proposal IDs with proposal names,
+       and do a little manipulation of the data to make it easier to add to the presentation layer.
+    
+    Returns dictionary keyed by proposals and module names, and within each of these is another dictionary
+    containing the paramNames and paramValues relevant for that module or proposal.
+    """
+    # Get config table data.
+    table = db.Table(configTable, 'configID', dbAddress)
+    cols = ['moduleName', 'paramName', 'paramValue', 'nonPropID']
+    configdata = table.query_columns_RecArray(colnames=cols)
+    # Get proposal table data.
+    table = db.Table(proposalTable, 'propID', dbAddress)
+    cols = ['propID', 'propConf', 'propName']
+    propdata = table.query_columns_RecArray(colnames=cols)
+    # Test that proposal ids are present in both proposal and config table.
+    configPropIDs = set(configdata['nonPropID'])
+    configPropIDs.remove(0)
+    propPropIDs = set(propdata['propID'])
+    if configPropIDs.intersection(propPropIDs) != propPropIDs:
+        raise Exception('Found proposal IDs in proposal table which are not present in config table.')
+    if configPropIDs.intersection(propPropIDs) != configPropIDs:
+        raise Exception('Found proposal IDs in config table which are not present in propsal table.')
+    # Identify unique proposals and modules by joining moduleName and nonPropID.
+    longNames = ['__'.join([x[0], str(x[1])]) for x in zip(list(configdata['moduleName']),
+                                                           list(configdata['nonPropID']))]
+    longNames = set(longNames)
+    configDict = {}
+    # Group module data together.
+    for name in longNames:
+        configDict[name] = {}
+        moduleName = name.split('__')[0]
+        propID = name.split('__')[1]
+        # Add propID and module name.
+        configDict[name]['propID'] = propID
+        configDict[name]['moduleName'] = moduleName
+        # Add key/value pairs to dictionary containing paramName/paramValue for most parameters in module.        
+        condition = ((np.where(configdata['moduleName'] == moduleName)) and
+                     (np.where(configdata['nonPropID'] == int(propID))))
+        for key, value in zip(configdata['paramName'][condition], configdata['paramValue'][condition]):
+            if key != 'userRegion':
+                configDict[name][key] = value
+        # Just count user regions and add summary to config info.
+        condition2 = (configdata['paramName'][condition] == 'userRegion')
+        numberUserRegions = configdata['paramName'][condition2].size
+        if numberUserRegions > 0:
+            configDict[name]['numberUserRegions'] = numberUserRegions
+        # Add full proposal names.
+        condition3 = (propdata['propID'] == propID)
+        configDict[name]['proposalFile'] = propdata['propConf'][condition3]
+        configDict[name]['proposalType'] = propdata['propName'][condition3]
+    return configDict
+    
+        
+        

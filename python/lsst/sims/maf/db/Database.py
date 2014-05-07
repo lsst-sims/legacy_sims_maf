@@ -3,26 +3,27 @@ __author__ = 'schandra'
 from .Table import Table
 
 class Database:
-    def __init__(self, dbAddress, sessionID, tables=[['Config','configID'],
-						     ['Session', 'sessionID'],
-						     ['Proposal', 'propID'], 
-						     ['Config_File', 'config_fileID'],
-						     ['Log', 'logID'],
-                             ['TimeHistory', 'timeHistID'], 
-						     ['Cloud', 'cloudID'],
-						     ['Seeing', 'seeingID'],
-						     ['Proposal_Field', 'proposal_field_id'],
-                             ['Field', 'fieldID'], 
-						     ['SeqHistory', 'sequenceID'],
-                             ['MissedHistory', 'missedHistID'],
-                             ['ObsHistory', 'obsHistID'],
-						     ['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
-						     ['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
-                             ['ObsHistory_Proposal', 'obsHistory_propID'],
-						     ['SlewActivities', 'slewActivityID'],
-						     ['SlewHistory', 'slewID'],
-                             ['SlewMaxSpeeds', 'slewMaxSpeedID'],
-						     ['SlewState', 'slewIniStatID']]):
+    def __init__(self, dbAddress, sessionID,
+                 tables=[['Config','configID'],
+                         ['Session', 'sessionID'],
+                         ['Proposal', 'propID'],
+                         ['Config_File', 'config_fileID'],
+                         ['Log', 'logID'],
+                         ['TimeHistory', 'timeHistID'],
+                         ['Cloud', 'cloudID'],
+                         ['Seeing', 'seeingID'],
+                         ['Proposal_Field', 'proposal_field_id'],
+                         ['Field', 'fieldID'],
+                         ['SeqHistory', 'sequenceID'],
+                         ['MissedHistory', 'missedHistID'],
+                         ['ObsHistory', 'obsHistID'],
+                         ['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
+                         ['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
+                         ['ObsHistory_Proposal', 'obsHistory_propID'],
+                         ['SlewActivities', 'slewActivityID'],
+                         ['SlewHistory', 'slewID'],
+                         ['SlewMaxSpeeds', 'slewMaxSpeedID'],
+                         ['SlewState', 'slewIniStatID']]):
         self.dbAddress = dbAddress
         self.sessionID = sessionID
         self.tableRegistry = {}

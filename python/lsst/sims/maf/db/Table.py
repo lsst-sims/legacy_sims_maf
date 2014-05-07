@@ -13,7 +13,8 @@ class Table(DBObject):
         Initialize an object for querying OpSim databases
 
         Keyword arguments:
-        @param runtable: Name of the table to query
+        @param tableName: Name of the table to query
+        @param idColKey:  Primary key for table 
         @param dbAddress: A string indicating the location of the data to query.
                           This should be a database connection string.
         """
@@ -56,7 +57,7 @@ class Table(DBObject):
 
         #SQL server requires an aggregate on all columns if a group by clause is used.
         #Modify the columnMap to take care of this.  The default is MIN, but it shouldn't
-        #matter since the entries are almost identical (except for proposalId???)
+        #matter since the entries are almost identical (except for proposalId).
         #Added double-quotes to handle column names that start with a number.
         if doGroupBy:
             query = self.session.query(aggregate(self.table.c[idColName]).label(idLabel))
