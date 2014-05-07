@@ -8,9 +8,9 @@ from .baseBinner import BaseBinner
 
 class OneDBinner(BaseBinner):
     """oneD Binner."""
-    def __init__(self, sliceDataColName=None, verbose=True):
+    def __init__(self, sliceDataColName=None, verbose=True, badval=-666):
         """Instantiate. """
-        super(OneDBinner, self).__init__(verbose=verbose)
+        super(OneDBinner, self).__init__(verbose=verbose, badval=badval)
         self.bins = None
         self.nbins = None
         self.sliceDataColName = sliceDataColName

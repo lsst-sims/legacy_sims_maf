@@ -57,7 +57,7 @@ for f in filters:
                                     'histMin':nVisits_plotRange['all'][f][0],
                                     'histMax':nVisits_plotRange['all'][f][1]})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitDesign[f], 'ylog':False, 'units':'Number of Visits/Designmark (%d)' %(nvisitDesign[f])})
+                          plotDict={'normVal':nvisitDesign[f], 'ylog':False, 'units':'Number of Visits/Design (%d)' %(nvisitDesign[f])})
     m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
     m4 = makeMetricConfig('Coaddm5Metric',kwargs={'m5col':'fivesigma_modified'}, plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
                           histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )             
@@ -78,7 +78,7 @@ for f in filters:
                                     'histMin':nVisits_plotRange['all'][f][0], 'histMax':nVisits_plotRange['all'][f][1]},
                           histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
     m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitDesign[f], 'percentileClip':80., 'units':'Number of Visits/Designmark (%d)' %(nvisitDesign[f])})
+                          plotDict={'normVal':nvisitDesign[f], 'percentileClip':80., 'units':'Number of Visits/Design (%d)' %(nvisitDesign[f])})
     m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
     m4 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'},plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
     m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
