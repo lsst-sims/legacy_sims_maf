@@ -37,13 +37,13 @@ for f in filters:
                               metricDict=makeDict(m1),
                               constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit), 'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
                               setupKwargs={"leafsize":50000})
-    binList.append(binner)
+#    binList.append(binner)
 
 
 m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified'})
 binner =  makeBinnerConfig('HealpixBinner',
                               kwargs={"nside":nside},
-                              metricDict=makeDict(m1), constraints=[''], setupKwargs={"leafsize":50000})
+                              metricDict=makeDict(m1), constraints=['night < 730'], setupKwargs={"leafsize":50000})
 binList.append(binner)
     
 root.binners = makeDict(*binList)

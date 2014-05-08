@@ -196,7 +196,7 @@ class MafDriver(object):
                         # Replace the plotParams for selected metricNames
                         for mName in binner.plotConfigs:
                             gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
-                        gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True)
+                        gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
                         # Loop through the metrics and calc any summary statistics
                         for i,metric in enumerate(self.metricList[binner.index]):
                             if hasattr(metric, 'summaryStats'):
