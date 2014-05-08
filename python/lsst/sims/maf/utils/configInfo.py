@@ -81,7 +81,32 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', prop
             condition3 = (propdata['propID'] == propID)
             configDict[name]['proposalFile'] = propdata['propConf'][condition3][0]
             configDict[name]['proposalType'] = propdata['propName'][condition3][0]
-            # Add the number of visits in a clear, non-varying 
+            # Add the number of visits requested per filter
+            # Note that similarly to other multiple filter items ('Filter_MaxBr', etc.) these
+            #   values follow the same order as the 'Filter' list.
+            if 'Filter_Visits' in configDict[name]:
+                # This is a 'normal' WLprop type, simple request of visits per filter.
+                configDict[name]['numVisits'] = configDict[name]['Filter_Visits']
+            else:
+                # This is one of the other types of proposals and must look at subsequences.
+                configDict[name]['numVisits'] = []
+                for f in configDict[name]['Filter']:
+                    configDict[name]['numVisits'].append(0)
+                for subevents, subexposures, subfilters in zip(configDict[name]['SubSeqEvents'],
+                                                               configDict[name]['SubSeqExposures'],
+                                                               configDict[name]['SubSeqFilters']):
+                    # If non-multi-filter subsequence (i.e. just one filter per subseq)
+                    if subfilters in configDict[name]['Filter']:
+                        idx = configDict[name]['Filter'].index(subfilters)
+                        configDict[name]['numVisits'][idx] = int(subevents) * int(subexposures)
+                    # Else we may have multiple filters in this subsequence, so split.
+                    else:
+                        splitsubfilters = subfilters.split(',')
+                        splitsubexposures = subexposures.split(',')
+                        for f, exp in zip(splitsubfilters, splitsubexposures):
+                            if f in configDict[name]['Filter']:
+                                idx = configDict[name]['Filter'].index(f)
+                                configDict[name]['numVisits'][idx] = int(subevents) * int(exp)
         # Find a pretty name to label each group of configs.
         if propID == 0:
             groupName = moduleName
@@ -96,38 +121,60 @@ def _printformat(args, delimiter=' '):
     for a in args:
         if isinstance(a, list):
             if len(a) > 1:
-                ap = ','.join(a)
+                ap = ','.join(map(str, a))
             else:
-                ap = ''.join(a)
+                ap = ''.join(map(str, a))
             writestring += '%s%s' %(ap, delimiter)
         else:
             writestring += '%s%s' %(a, delimiter)
     return writestring
 
-def printConfigs(configDict, outfile, delimiter=' '):
+def printConfigs(configDict, outfile, delimiter=' ', printPropConfig=True, printGeneralConfig=True):
     """Utility to pretty print the configDict, grouping data from different modules and proposals and providing some
     ordering to the proposal information.
-    Writes config data out to 'outfile', using 'delimiter' between entries. """
+    Writes config data out to 'outfile', using 'delimiter' between parameter entries.
+    
+    'printProposalConfig' (default True) toggles detailed proposal config info on/off.
+    'printGeneralConfig' (default True) toggles detailed general config info on/off. """
     # Summarize proposals in run.
+    print '## Proposal summary information'
+    print '## '
     line = _printformat(['ProposalName', 'PropID', 'PropType', 'RelativePriority',
-                  'NumUserRegions', 'NumFields', 'Filters'], delimiter=delimiter)
+                  'NumUserRegions', 'NumFields', 'Filters', 'TotalVisitsPerFilter(Req)'], delimiter=delimiter)
     print line
     for k in configDict:
         if configDict[k]['propID'] != 0:            
             line = _printformat([configDict[k]['groupName'], configDict[k]['propID'],
                                 configDict[k]['proposalType'], configDict[k]['RelativeProposalPriority'],
                                 configDict[k]['numUserRegions'], configDict[k]['numFields'],
-                                configDict[k]['Filter']], delimiter=delimiter)
+                                configDict[k]['Filter'], configDict[k]['numVisits']], delimiter=delimiter)
             print line
-    # Print general config info.
-    groupOrder = ['LSST', 'site', 'filters', 'instrument', 'scheduler', 'schedulingData', 'schedDown', 'unschedDown']
-    for g in groupOrder:
-        for k in configDict.keys():
-            if g in k:
-                break
-        for param in configDict[k]:
-            print param, configDict[k][param] 
     # Print general info for each proposal.
-    
-    
+    if printPropConfig:
+        print '## Detailed proposal information'
+        for k in configDict:
+            if configDict[k]['propID'] != 0:
+                print '## '
+                print '## Information for proposal %s : propID %d' %(configDict[k]['groupName'], configDict[k]['propID'])
+                print '## '
+                # This is a proposal; print the information in alphabetical order.
+                propkeys = sorted(configDict[k].keys())        
+                for p in propkeys:
+                    line = _printformat([p, configDict[k][p]], delimiter=delimiter)
+                    print line
+            
+    # Print general config info.
+    if printGeneralConfig:
+        groupOrder = ['LSST', 'site', 'filters', 'instrument', 'scheduler', 'schedulingData', 'schedDown', 'unschedDown']
+        for g in groupOrder:
+            print '## '
+            print '## Printing config information for %s group' %(g)
+            print '## '
+            # Identify correct dictionary item to print (dictionary names are longer than group names)
+            for k in configDict.keys():
+                if g in k:
+                    break
+            for param in configDict[k]:
+                line = _printformat([param, configDict[k][param]], delimiter=delimiter)
+                print line
     
