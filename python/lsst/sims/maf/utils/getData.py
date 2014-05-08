@@ -1,3 +1,6 @@
+# Utilities for fetching simData and fieldData from the opsim database
+#  (these should probably be put into the DB section)
+
 import os
 import numpy as np
 import warnings
@@ -103,67 +106,6 @@ def fetchFieldsFromFieldTable(dbAddress, fieldTable='Field', proposalFieldTable=
         fielddata['fieldDec'] = fielddata['fieldDec'] * np.pi / 180.
     return fielddata
 
-
-def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', proposalFieldTable='Proposal_Field'):
-    """Utility to fetch config data from configTable, match proposal IDs with proposal names and some field data,
-       and do a little manipulation of the data to make it easier to add to the presentation layer.
-    
-    Returns dictionary keyed by proposals and module names, and within each of these is another dictionary
-    containing the paramNames and paramValues relevant for that module or proposal.
-    """
-    # Get config table data.
-    table = db.Table(configTable, 'configID', dbAddress)
-    cols = ['moduleName', 'paramName', 'paramValue', 'nonPropID']
-    configdata = table.query_columns_RecArray(colnames=cols)
-    # Get proposal table data.
-    table = db.Table(proposalTable, 'propID', dbAddress)
-    cols = ['propID', 'propConf', 'propName']
-    propdata = table.query_columns_RecArray(colnames=cols)
-    # Get counts of fields from proposal_field data.
-    table = db.Table(proposalFieldTable, 'proposal_field_id', dbAddress)
-    cols = ['proposal_field_id', 'Proposal_propID']
-    propfielddata = table.query_columns_RecArray(colnames=cols)    
-    # Test that proposal ids are present in both proposal and config tables.
-    configPropIDs = set(configdata['nonPropID'])
-    configPropIDs.remove(0)
-    propPropIDs = set(propdata['propID'])
-    if configPropIDs.intersection(propPropIDs) != propPropIDs:
-        raise Exception('Found proposal IDs in proposal table which are not present in config table.')
-    if configPropIDs.intersection(propPropIDs) != configPropIDs:
-        raise Exception('Found proposal IDs in config table which are not present in propsal table.')
-    # Identify unique proposals and modules by joining moduleName and nonPropID.
-    longNames = ['__'.join([x[0], str(x[1])]) for x in zip(list(configdata['moduleName']),
-                                                           list(configdata['nonPropID']))]
-    longNames = set(longNames)
-    configDict = {}
-    # Group module data together.
-    for name in longNames:
-        configDict[name] = {}
-        moduleName = name.split('__')[0]
-        propID = int(name.split('__')[1])
-        # Add propID and module name.
-        configDict[name]['propID'] = propID
-        configDict[name]['moduleName'] = moduleName
-        # Add key/value pairs to dictionary containing paramName/paramValue for most parameters in module.        
-        condition = ((np.where(configdata['moduleName'] == moduleName)) and
-                     (np.where(configdata['nonPropID'] == propID)))
-        for key, value in zip(configdata['paramName'][condition], configdata['paramValue'][condition]):
-            if key != 'userRegion':
-                configDict[name][key] = value
-        # Just count user regions and add summary to config info.
-        condition2 = (configdata['paramName'][condition] == 'userRegion')
-        numberUserRegions = configdata['paramName'][condition2].size
-        if numberUserRegions > 0:
-            configDict[name]['numUserRegions'] = numberUserRegions
-        # And add a count of the numer of actual fields used in proposal.
-        if propID != 0:
-            condition3 = (propfielddata['Proposal_propID'] == propID)
-            configDict[name]['numFields'] = propfielddata[condition3].size
-        # Add full proposal names.
-        condition3 = (propdata['propID'] == propID)
-        configDict[name]['proposalFile'] = propdata['propConf'][condition3]
-        configDict[name]['proposalType'] = propdata['propName'][condition3]
-    return configDict
     
         
         
