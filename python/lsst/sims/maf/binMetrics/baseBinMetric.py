@@ -205,7 +205,7 @@ class BaseBinMetric(object):
         # Mask data where metrics could not be computed (according to metric bad value).
         for mname in self.metricObjs:            
             self.metricValues[mname].mask = np.where(self.metricValues[mname].data==self.metricObjs[mname].badval,
-                                                     self.binner.badval, self.metricValues[mname].mask)
+                                                     True, self.metricValues[mname].mask)
 
 
     def reduceAll(self):
