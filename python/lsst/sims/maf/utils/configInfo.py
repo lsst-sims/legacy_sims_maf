@@ -181,13 +181,12 @@ def printConfigs(configDict, outfileRoot=None, delimiter=' ', printPropConfig=Tr
             f = open(outfileRoot+'_configGeneral.txt', 'w')
         else:
             f = sys.stdout
-        groupOrder = ['LSST', 'site', 'filters', 'instrument', 'scheduler', 'schedulingData',
-                      'schedDown', 'unschedDown']
+        groupOrder = ['LSST', 'site', 'filters', 'instrument', 'scheduler', 'schedulingData', 'schedDown', 'unschedDown']
         keyOrder = []
         # Identify dictionary key name that goes with group name.
         for g in groupOrder:
             for k in configDict:
-                if configDict[k]['groupName'] == g:
+                if g in k:
                     keyOrder.append(k)
         for g, k in zip(groupOrder, keyOrder):
             print >>f, '## '
