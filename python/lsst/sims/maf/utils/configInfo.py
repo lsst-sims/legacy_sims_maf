@@ -1,6 +1,6 @@
 # Utilities for dealing with the opsim config files (reading the config parameters and pretty printing them)
 
-import os
+import os, sys
 import numpy as np
 import warnings
 
@@ -44,7 +44,7 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', prop
     if configPropIDs.intersection(propPropIDs) != propPropIDs:
         raise Exception('Found proposal IDs in proposal table which are not present in config table.')
     if configPropIDs.intersection(propPropIDs) != configPropIDs:
-        raise Exception('Found proposal IDs in config table which are not present in propsal table.')
+        raise Exception('Found proposal IDs in config table which are not present in proposal table.')
     # Identify unique proposals and modules by joining moduleName and nonPropID.
     longNames = []
     for modName, propID in zip(list(configdata['moduleName']), list(configdata['nonPropID'])):
@@ -58,9 +58,10 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', prop
         # Add propID and module name.
         configDict[name]['propID'] = propID
         configDict[name]['moduleName'] = moduleName
-        # Add key/value pairs to dictionary containing paramName/paramValue for most parameters in module.        
-        condition = ((np.where(configdata['moduleName'] == moduleName)) and
-                     (np.where(configdata['nonPropID'] == propID)))
+        # Add key/value pairs to dictionary for most paramName/paramValue pairs in module.
+        condition1 = np.where(configdata['moduleName'] == moduleName, True, False)
+        condition2 = np.where(configdata['nonPropID'] == propID, True, False)
+        condition = condition1 * condition2
         for key, value in zip(configdata['paramName'][condition], configdata['paramValue'][condition]):
             if key != 'userRegion':
                 if key not in configDict[name]:           
@@ -81,24 +82,22 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', prop
             condition3 = (propdata['propID'] == propID)
             configDict[name]['proposalFile'] = propdata['propConf'][condition3][0]
             configDict[name]['proposalType'] = propdata['propName'][condition3][0]
-            # Add the number of visits requested per filter
-            # Note that similarly to other multiple filter items ('Filter_MaxBr', etc.) these
-            #   values follow the same order as the 'Filter' list.
+            # Calculate the number of visits requested per filter
             if 'Filter_Visits' in configDict[name]:
                 # This is a 'normal' WLprop type, simple request of visits per filter.
-                configDict[name]['numVisits'] = configDict[name]['Filter_Visits']
+                configDict[name]['numVisitsReq'] = configDict[name]['Filter_Visits']
             else:
                 # This is one of the other types of proposals and must look at subsequences.
-                configDict[name]['numVisits'] = []
+                configDict[name]['numVisitsReq'] = []
                 for f in configDict[name]['Filter']:
-                    configDict[name]['numVisits'].append(0)
+                    configDict[name]['numVisitsReq'].append(0)
                 for subevents, subexposures, subfilters in zip(configDict[name]['SubSeqEvents'],
                                                                configDict[name]['SubSeqExposures'],
                                                                configDict[name]['SubSeqFilters']):
                     # If non-multi-filter subsequence (i.e. just one filter per subseq)
                     if subfilters in configDict[name]['Filter']:
                         idx = configDict[name]['Filter'].index(subfilters)
-                        configDict[name]['numVisits'][idx] = int(subevents) * int(subexposures)
+                        configDict[name]['numVisitsReq'][idx] = int(subevents) * int(subexposures)
                     # Else we may have multiple filters in this subsequence, so split.
                     else:
                         splitsubfilters = subfilters.split(',')
@@ -106,7 +105,7 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', prop
                         for f, exp in zip(splitsubfilters, splitsubexposures):
                             if f in configDict[name]['Filter']:
                                 idx = configDict[name]['Filter'].index(f)
-                                configDict[name]['numVisits'][idx] = int(subevents) * int(exp)
+                                configDict[name]['numVisitsReq'][idx] = int(subevents) * int(exp)
         # Find a pretty name to label each group of configs.
         if propID == 0:
             groupName = moduleName
@@ -116,7 +115,7 @@ def fetchConfigs(dbAddress, configTable='Config', proposalTable='Proposal', prop
             configDict[name]['groupName'] = os.path.split(groupName)[1]
     return configDict
 
-def _printformat(args, delimiter=' '):
+def _myformat(args, delimiter=' '):
     writestring = ''
     for a in args:
         if isinstance(a, list):
@@ -129,52 +128,76 @@ def _printformat(args, delimiter=' '):
             writestring += '%s%s' %(a, delimiter)
     return writestring
 
-def printConfigs(configDict, outfile, delimiter=' ', printPropConfig=True, printGeneralConfig=True):
+def printConfigs(configDict, outfileRoot=None, delimiter=' ', printPropConfig=True, printGeneralConfig=True):
     """Utility to pretty print the configDict, grouping data from different modules and proposals and providing some
     ordering to the proposal information.
-    Writes config data out to 'outfile', using 'delimiter' between parameter entries.
+    Writes config data out to 'outfile' (default stdout), using 'delimiter' between parameter entries.
     
     'printProposalConfig' (default True) toggles detailed proposal config info on/off.
     'printGeneralConfig' (default True) toggles detailed general config info on/off. """
+    if outfileRoot != None:
+        f = open(outfileRoot+'_configSummary.txt', 'w')
+    else:
+        f = sys.stdout
     # Summarize proposals in run.
-    print '## Proposal summary information'
-    print '## '
-    line = _printformat(['ProposalName', 'PropID', 'PropType', 'RelativePriority',
-                  'NumUserRegions', 'NumFields', 'Filters', 'TotalVisitsPerFilter(Req)'], delimiter=delimiter)
-    print line
+    print >>f, '## Proposal summary information'
+    print >>f, '## '
+    line = _myformat(['ProposalName', 'PropID', 'PropType', 'RelativePriority',
+                  'NumUserRegions', 'NumFields', 'Filters', 'VisitsPerFilter(Req)'], delimiter=delimiter)
+    print >>f, line
     for k in configDict:
         if configDict[k]['propID'] != 0:            
-            line = _printformat([configDict[k]['groupName'], configDict[k]['propID'],
+            line = _myformat([configDict[k]['groupName'], configDict[k]['propID'],
                                 configDict[k]['proposalType'], configDict[k]['RelativeProposalPriority'],
                                 configDict[k]['numUserRegions'], configDict[k]['numFields'],
-                                configDict[k]['Filter'], configDict[k]['numVisits']], delimiter=delimiter)
-            print line
+                                configDict[k]['Filter'], configDict[k]['numVisitsReq']], delimiter=delimiter)
+            print >>f, line
+    if outfileRoot != None:
+        f.close()
     # Print general info for each proposal.
     if printPropConfig:
-        print '## Detailed proposal information'
+        if outfileRoot != None:
+            f = open(outfileRoot+'_configProps.txt', 'w')
+        else:
+            f = sys.stdout
+        print >>f, '## Detailed proposal information'
         for k in configDict:
             if configDict[k]['propID'] != 0:
-                print '## '
-                print '## Information for proposal %s : propID %d' %(configDict[k]['groupName'], configDict[k]['propID'])
-                print '## '
+                print >>f, '## '
+                print >>f, '## Information for proposal %s : propID %d (%s)' %(configDict[k]['groupName'],
+                                                                          configDict[k]['propID'], k)
+                print >>f, '## '
                 # This is a proposal; print the information in alphabetical order.
-                propkeys = sorted(configDict[k].keys())        
+                propkeys = sorted(configDict[k].keys())
+                propkeys.remove('groupName')
                 for p in propkeys:
-                    line = _printformat([p, configDict[k][p]], delimiter=delimiter)
-                    print line
-            
+                    line = _myformat([p, configDict[k][p]], delimiter=delimiter)
+                    print >>f, line
+        if outfileRoot != None:
+            f.close()
     # Print general config info.
     if printGeneralConfig:
-        groupOrder = ['LSST', 'site', 'filters', 'instrument', 'scheduler', 'schedulingData', 'schedDown', 'unschedDown']
+        if outfileRoot != None:
+            f = open(outfileRoot+'_configGeneral.txt', 'w')
+        else:
+            f = sys.stdout
+        groupOrder = ['LSST', 'site', 'filters', 'instrument', 'scheduler', 'schedulingData',
+                      'schedDown', 'unschedDown']
+        keyOrder = []
+        # Identify dictionary key name that goes with group name.
         for g in groupOrder:
-            print '## '
-            print '## Printing config information for %s group' %(g)
-            print '## '
-            # Identify correct dictionary item to print (dictionary names are longer than group names)
-            for k in configDict.keys():
-                if g in k:
-                    break
-            for param in configDict[k]:
-                line = _printformat([param, configDict[k][param]], delimiter=delimiter)
-                print line
-    
+            for k in configDict:
+                if configDict[k]['groupName'] == g:
+                    keyOrder.append(k)
+        for g, k in zip(groupOrder, keyOrder):
+            print >>f, '## '
+            print >>f, '## Printing config information for %s group (%s)' %(g, k)
+            print >>f, '## '
+            paramkeys = sorted(configDict[k].keys())
+            paramkeys.remove('groupName')
+            paramkeys.remove('propID')
+            for param in paramkeys:
+                line = _myformat([param, configDict[k][param]], delimiter=delimiter)
+                print >>f, line
+        if outfileRoot != None:
+            f.close()
