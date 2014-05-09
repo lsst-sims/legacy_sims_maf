@@ -4,7 +4,7 @@ from lsst.sims.maf.driver.mafConfig import *
 root.outputDir ='./Cadence'
 
 
-small = True # Use the small database included in the repo
+small = False # Use the small database included in the repo
 
 if small:
     root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
@@ -23,7 +23,7 @@ filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 
 binList=[]
-nside=64
+nside=128
 
 seeing_limit = 0.7 # Demand seeing better than this
 
@@ -32,18 +32,17 @@ seeing_limit = 0.7 # Demand seeing better than this
 # Example looking for the existence of a quality refernce image in each filter after 1 year, 2 years and 10 years
 for f in filters:
     m1 = makeMetricConfig('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
-    binner = makeBinnerConfig('HealpixBinner',
-                              kwargs={"nside":nside},
-                              metricDict=makeDict(m1),
-                              constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit), 'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
+    binner = makeBinnerConfig('HealpixBinner',kwargs={"nside":nside},metricDict=makeDict(m1),
+                              constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
+                                           'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
+                                           'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
                               setupKwargs={"leafsize":50000})
     binList.append(binner)
 
 
-m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified'})
-binner =  makeBinnerConfig('HealpixBinner',
-                              kwargs={"nside":nside},
-                              metricDict=makeDict(m1), constraints=['night < 730'], setupKwargs={"leafsize":50000})
+m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.})
+binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
+                              metricDict=makeDict(m1), constraints=[''], setupKwargs={"leafsize":50000})
 binList.append(binner)
     
 root.binners = makeDict(*binList)
