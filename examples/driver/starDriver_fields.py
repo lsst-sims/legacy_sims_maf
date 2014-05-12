@@ -39,7 +39,7 @@ binList=[]
 
 
 # Metrics per filter 
-for i,f in enumerate(filters):
+for f in filters:
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                           plotDict={'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0],
@@ -58,7 +58,7 @@ for i,f in enumerate(filters):
     binList.append(binner)
 
 # Metrics per filter, WFD only
-for i,f in enumerate(filters):
+for f in filters:
     m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                           plotDict={'percentileClip':75., 'units':'Number of Visits', 
                                     'histMin':nVisits_plotRange['all'][f][0], 'histMax':nVisits_plotRange['all'][f][1]},
@@ -78,7 +78,7 @@ for i,f in enumerate(filters):
 
     
 # Number of Visits per observing mode:
-for i,f in enumerate(filters):    
+for f in filters:    
         m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisitsperprop'}, plotDict={'units':'Number of Visits', 'histBins':50})
         metricDict = makeDict(m1)
         constraints=[]
@@ -87,7 +87,9 @@ for i,f in enumerate(filters):
         binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints)
         binList.append(binner)
                                     
-        
+
+
+
 # Slew histograms
 m1 = makeMetricConfig('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
 binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
@@ -104,18 +106,24 @@ binList.append(binner)
 
 
 # Completeness and Joint Completeness
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{},'ExactCompleteMetric':{}})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{}})
 # For just WFD proposals
 binner = makeBinnerConfig('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
 binList.append(binner)
 # For all Observations
-m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{},'ExactCompleteMetric':{}})
+m1 = makeMetricConfig('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{}})
 binner = makeBinnerConfig('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
 binList.append(binner)
 
 
+for f in filters:
+    m1 = makeMetricConfig('MeanMetric', params=['finSeeing'], summaryStats={'IdentityMetric':{}}) # Use IdentityMetric to pass the results to the summaryStats file.
+    binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['filter = "%s"'%f])
+    binList.append(binner)
+
+
 # The merged histograms for basics 
-for i,f in enumerate(filters):
+for f in filters:
     m1 = makeMetricConfig('CountMetric', params=['5sigma_modified'],
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_modified'},

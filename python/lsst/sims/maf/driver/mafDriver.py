@@ -133,8 +133,7 @@ class MafDriver(object):
                 self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
                                                                 fieldDataInfo['dbAddress'],
                                                                 sessionID=fieldDataInfo['sessionID'],
-                                                                proposalTable=fieldDataInfo['proposalTable'],
-                                                                proposalID=fieldDataInfo['proposalID'])
+                                                                proposalTable=fieldDataInfo['proposalTable'])
         else:
             fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
             ra = self.data[binner.fieldRaColName][idx]

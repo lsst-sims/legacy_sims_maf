@@ -27,9 +27,9 @@ from .baseBinner import BaseBinner
 
 class BaseSpatialBinner(BaseBinner):
     """Base binner object, with added slicing functions for spatial binner."""
-    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec'):
+    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', badval=-666):
         """Instantiate the base spatial binner object."""
-        super(BaseSpatialBinner, self).__init__(verbose=verbose)
+        super(BaseSpatialBinner, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1,spatialkey2]
@@ -100,8 +100,7 @@ class BaseSpatialBinner(BaseBinner):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog=False, flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f', color='b', percentiles=[25,50,75],
-                      percentileFormat='%.3g',  plotPercentiles=True):
+                      scale=1.0, yaxisformat='%.3f', color='b'):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
@@ -126,13 +125,6 @@ class BaseSpatialBinner(BaseBinner):
             if histMin is None:
                 histRange = [metricValue.min()-1 , metricValue.min() + 1]
                 warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
-        if label is not None and plotPercentiles:
-            for i,per in enumerate(percentiles):
-                if i == 0:
-                    sep = ' '
-                else:
-                    sep = ','
-                label = label+sep+percentileFormat%np.percentile(metricValue,per)
 
         n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
                            cumulative=cumulative, range=histRange, label=label, color=color)        
@@ -204,7 +196,7 @@ class BaseSpatialBinner(BaseBinner):
         plt.plot(ra, y_ec, 'r-')        
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
-                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units=''):
+                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units='', plotMaskedValues=False):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -212,17 +204,22 @@ class BaseSpatialBinner(BaseBinner):
             fig = plt.figure()
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        ax = plt.subplot(111,projection=projection)        
+        ax = plt.subplot(111,projection=projection)
+        # Only include points that are not masked
+        if plotMaskedValues:
+            goodPts = np.arange(metricValue.size)
+        else:
+            goodPts = np.where(metricValue.mask == False)[0]
         # Add points for RA/Dec locations
-        lon = -(self.bins['ra'] - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'], radius, ax=ax)
+        lon = -(self.bins['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'][goodPts], radius, ax=ax)
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
                                 norm=norml)
         else:
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
-        p.set_array(metricValue.filled(self.badval))
+        p.set_array(metricValue.filled(self.badval)[goodPts])
         ax.add_collection(p)
         # Add ecliptic
         self._plot_ecliptic(ax=ax)

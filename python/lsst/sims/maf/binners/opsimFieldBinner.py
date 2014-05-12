@@ -19,7 +19,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
     
     def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
-                 fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec'):
+                 fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec', badval=-666):
         """Instantiate opsim field binner (an index-based binner that can do spatial plots).
 
         simDataFieldIdColName = the column name in simData for the field ID
@@ -29,7 +29,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
-        super(OpsimFieldBinner, self).__init__(verbose=verbose)
+        super(OpsimFieldBinner, self).__init__(verbose=verbose, badval=badval)
         self.bins = {}
         self.bins['fieldId'] = None
         self.bins['ra'] = None
@@ -104,7 +104,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
             return False
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of fields',
+    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
                       scale=None, color='b'):

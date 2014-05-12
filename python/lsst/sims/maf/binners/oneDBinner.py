@@ -8,16 +8,16 @@ from .baseBinner import BaseBinner
 
 class OneDBinner(BaseBinner):
     """oneD Binner."""
-    def __init__(self, sliceDataColName=None, verbose=True):
+    def __init__(self, sliceDataColName=None, verbose=True, badval=-666):
         """Instantiate. """
-        super(OneDBinner, self).__init__(verbose=verbose)
+        super(OneDBinner, self).__init__(verbose=verbose, badval=badval)
         self.bins = None
         self.nbins = None
         self.sliceDataColName = sliceDataColName
         self.columnsNeeded = [sliceDataColName]
         self.binner_init = {'sliceDataColName':self.sliceDataColName}
         
-    def setupBinner(self, simData, bins=None, nbins=100, binMin=None, binMax=None, percentiles=[25,50,75]): 
+    def setupBinner(self, simData, bins=None, nbins=100, binMin=None, binMax=None): 
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol 
@@ -26,8 +26,7 @@ class OneDBinner(BaseBinner):
 
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
-          percentiles = percentiles to label the plot with.
-          Since percentiles is a list, it can't be changed from the driver via pexConfig"""
+          """
         if self.sliceDataColName is None:
             raise Exception('sliceDataColName was not defined when binner instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
@@ -43,10 +42,6 @@ class OneDBinner(BaseBinner):
             self.bins = np.sort(bins)
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nbins = len(self.bins) - 1
-        # Save the percentile information of the input data
-        self.percentiles = []
-        for per in percentiles:
-            self.percentiles.append(np.percentile(simData[self.sliceDataColName], per))
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceDataColName])
         simFieldsSorted = np.sort(simData[self.sliceDataColName])
@@ -92,7 +87,7 @@ class OneDBinner(BaseBinner):
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
                        ylabel=None, xlabel=None, yMin=None, yMax=None,
-                       histMin=None,histMax=None, color='b', plotPercentiles=True, percentileFormat='%.3g'):
+                       histMin=None,histMax=None, color='b'):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -108,20 +103,11 @@ class OneDBinner(BaseBinner):
         ylog = make the y-axis log (default False)
         yMin/Max = min/max for y-axis 
         histMin/Max = min/max for x-axis (typically set by bin values though
-        plotPercentiles = add the percentile values to the label (if the label is set
-        percentileFormat = how to format the percentiles when they are put on the plot))
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.bins[:-1]
         width = np.diff(self.bins)
-        if label is not None and plotPercentiles:
-            for i,per in enumerate(self.percentiles):
-                if i ==0:
-                    sep = ' '
-                else:
-                    sep = ','
-                label = label+sep+percentileFormat%per
         if filled:
             plt.bar(leftedge, metricValues, width, label=label,
                     linewidth=0, alpha=alpha, log=ylog, color=color)

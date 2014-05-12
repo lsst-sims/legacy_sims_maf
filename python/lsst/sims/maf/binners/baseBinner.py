@@ -10,7 +10,7 @@ from lsst.sims.maf.utils import getDateVersion
 class BaseBinner(object):
     """Base class for all binners: sets required methods and implements common functionality."""
     
-    def __init__(self, verbose=True, *args, **kwargs):
+    def __init__(self, verbose=True, badval=-666, *args,  **kwargs):
         """Instantiate the base binner object."""
         # After init: everything necessary for using binner for plotting or saving/restoring metric
         #   data should be present (although binner does not need to be able to slice data again).
@@ -18,7 +18,7 @@ class BaseBinner(object):
         # 
         # Args will include sliceDataCols and other data names that must be fetched from DB
         self.verbose = verbose
-        self.badval = -666
+        self.badval = badval
         self.nbins = None
         self.bins = None
         self.binnerName = self.__class__.__name__
@@ -78,10 +78,6 @@ class BaseBinner(object):
             data = metricValues
             mask = None
             fill = None
-        if hasattr(self, 'percentiles'):
-            percentiles = self.percentiles
-        else:
-            percentiles = None
         # npz file acts like dictionary: each keyword/value pair below acts as a dictionary in loaded NPZ file.
         np.savez(outfilename,
                  header = header, # header saved as dictionary
@@ -91,8 +87,7 @@ class BaseBinner(object):
                  binner_init = self.binner_init, # dictionary of instantiation parameters
                  binnerName = self.binnerName, # class name
                  binnerBins = self.bins, # bins to match end of 'setupBinner'
-                 binnerNbins = self.nbins,
-                 binnerPercentiles = percentiles)
+                 binnerNbins = self.nbins)
                                  
     def readData(self, infilename):
         import lsst.sims.maf.binners as binners
@@ -112,6 +107,4 @@ class BaseBinner(object):
         # Sometimes bins are a dictionary, sometimes a numpy array, and sometimes None
         binner.bins = restored['binnerBins'][()]
         binner.nbins = restored['binnerNbins']
-        if restored['binnerPercentiles'][()] is not None:
-            binner.percentiles = restored['binnerPercentiles'][()]
         return metricValues, binner, header

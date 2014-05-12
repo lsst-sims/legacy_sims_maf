@@ -389,6 +389,10 @@ class BaseBinMetric(object):
             units = mname+' ('+ pParams['_units'] + ')'
         else:
             units = mname
+        # Should the masked values be plotted
+        plotMaskedValues=False
+        if 'plotMaskedValues' in pParams:
+           plotMaskedValues = pParams['plotMaskedValues']
         # set cmap for skymap plots
         if 'cmap' in pParams:  
             cmap = getattr(cm, pParams['cmap'])
@@ -463,7 +467,7 @@ class BaseBinMetric(object):
                    histMax = histMax-pParams['zp']
                 figs['hist']= self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'], 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             elif 'normVal' in pParams:  # Normalize by normVal
                 if histMin != None:
@@ -477,7 +481,7 @@ class BaseBinMetric(object):
             else:  # Regular plotting of metric values.
                 figs['hist'] = self.binner.plotHistogram(self.metricValues[metricName],
                                                        xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
+                                                       bins = pParams['bins'], 
                                                        histMin=histMin, histMax=histMax, ylog=ylog)
             
             if savefig:
@@ -489,28 +493,34 @@ class BaseBinMetric(object):
         # Plot the sky map, if able. (spatial binners)
         if hasattr(self.binner, 'plotSkyMap'):
             if 'zp' in pParams: # Subtract off a zeropoint
-                figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
-                                                   cmap=cmap, cbarFormat=cbarFormat,
-                                                   units=units, title=title,
-                                                   clims=[plotMin-pParams['zp'],
-                                                          plotMax-pParams['zp']], ylog=ylog)
+               if 'plotMin' not in pParams:
+                  clims = [plotMin-pParams['zp'],plotMax-pParams['zp']]
+               else:
+                  clims = [plotMin, plotMax]
+               figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
+                                                    cmap=cmap, cbarFormat=cbarFormat,
+                                                    units=units, title=title,
+                                                    clims=clims, ylog=ylog, plotMaskedValues=plotMaskedValues)
             elif 'normVal' in pParams: # Normalize by some value
-                figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
-                                                   cmap=cmap, cbarFormat=cbarFormat,
-                                                   units=units, title=title,
-                                                   clims=[plotMin/pParams['normVal'],
-                                                          plotMax/pParams['normVal']], ylog=ylog)
+               if 'plotMin' not in pParams:
+                  clims = [plotMin/pParams['normVal'],plotMax/pParams['normVal']]
+               else:
+                  clims = [plotMin, plotMax]                            
+               figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
+                                                    cmap=cmap, cbarFormat=cbarFormat,
+                                                    units=units, title=title,
+                                                    clims=clims, ylog=ylog, plotMaskedValues=plotMaskedValues)
             else: # Just plot metric values
                 figs['sky'] = self.binner.plotSkyMap(self.metricValues[metricName],
                                                    cmap=cmap, cbarFormat=cbarFormat,
                                                    units=units, title=title,
-                                                   clims=[plotMin, plotMax], ylog=ylog)
+                                                   clims=[plotMin, plotMax], ylog=ylog, plotMaskedValues=plotMaskedValues)
             if savefig:
-                outfile = self._buildOutfileName(metricName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='sky')
-                plt.savefig(outfile, figformat=self.figformat)
-                self._addOutputFileList(outfile, metricName, 'skymapPlot')                
+               outfile = self._buildOutfileName(metricName, 
+                                                outDir=outDir, outfileRoot=outfileRoot, 
+                                                plotType='sky')
+               plt.savefig(outfile, figformat=self.figformat)
+               self._addOutputFileList(outfile, metricName, 'skymapPlot')                
         # Plot the angular power spectrum, if able. (healpix binners)
         if hasattr(self.binner, 'plotPowerSpectrum'):
             figs['ps'] = self.binner.plotPowerSpectrum(self.metricValues[metricName],
