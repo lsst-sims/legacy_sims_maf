@@ -1,5 +1,6 @@
 import numpy as np
 from .complexMetrics import ComplexMetric
+from baseMetric import BaseMetric
 
 class SupernovaMetric(ComplexMetric):
     """Measure how many time serries meet a given time and filter distribution requirement """
@@ -82,9 +83,9 @@ class SupernovaMetric(ComplexMetric):
             if i <= right_side:
                 pass
             else:
-                inWindow = np.where((time >=  finetime[index]) & (time <=  finetime[index]+self.Tmax-self.Tmin ))
-                visits = dataSlice[inWindow]
-                t = time[inWindow]
+                #inWindow = np.where((time >=  finetime[index]) & (time <=  finetime[index]+self.Tmax-self.Tmin ))
+                visits = dataSlice[left[i]:right[i]]
+                t = time[left[i]:right[i]]
                 t = t-finetime[index]+self.Tmin
                 
                 if np.size(np.where(t < self.Tless)[0]) > self.Nless:
@@ -130,6 +131,26 @@ class SupernovaMetric(ComplexMetric):
         return result
     
                                 
+class TemplateExistsMetric(BaseMetric):
+    """See what fraction of images have a previous template image of desired quality.  Note, one could consider adding additional requirements such as making sure a template exists within a given paralactic angle. """
+    def __init__(self, seeingCol = 'finSeeing', units='fraction', **kwargs):
+        cols = [seeingCol]
+        super(TemplateExistsMetric,self).__init__(cols, units='fraction', **kwargs)
+        self.seeingCol = seeingCol
+        self.metricDtype = float
+        
+
+    def run(self,dataSlice):
+        seeing_array = np.zeros((dataSlice.size,dataSlice.size), dtype = float) + np.max(dataSlice[self.seeingCol])
+        # Doesn't seem to be a cumulative minimum function in numpy.  Might be a smarter/faster way to slice this up--trying to avoid a slow python loop and failing
+        for i,temp in enumerate(dataSlice[self.seeingCol]):
+            seeing_array[i][i:] = dataSlice[0:dataSlice[self.seeingCol].size-i]
+        seeing_mins = np.amin(seeing_array, axis=0)
+
+        seeing_diff = dataSlice[self.seeingCol] - seeing_mins
+        good = np.where(seeing_diff >= 0.)[0]
+        frac = good.size/float(dataSlice[self.seeingCol].size)
+        return frac
     
             
         
