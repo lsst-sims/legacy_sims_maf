@@ -103,7 +103,7 @@ class FracAboveMetric(SimpleScalarMetric):
         self.cutoff = cutoff
     def run(self, dataSlice):
         good = np.where(dataSlice[self.colname] >= self.cutoff)[0]
-        fracAbove = np.size(good)/float(np.size(dataSlice))
+        fracAbove = np.size(good)/float(np.size(dataSlice[self.colname]))
         return fracAbove
 
 class FracBelowMetric(SimpleScalarMetric):
@@ -112,5 +112,5 @@ class FracBelowMetric(SimpleScalarMetric):
         self.cutoff = cutoff
     def run(self, dataSlice):
         good = np.where(dataSlice[self.colname] <= self.cutoff)[0]
-        fracBelow = np.size(good)/float(np.size(dataSlice))
+        fracBelow = np.size(good)/float(np.size(dataSlice[self.colname]))
         return fracBelow
