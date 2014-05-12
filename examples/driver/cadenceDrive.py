@@ -25,6 +25,7 @@ filters=['r']
 
 binList=[]
 nside=128
+leafsize = 50000 # For KD-tree
 
 seeing_limit = 0.7 # Demand seeing better than this
 
@@ -37,7 +38,7 @@ for f in filters:
                               constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
                                            'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
                                            'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
-                              setupKwargs={"leafsize":50000})
+                              setupKwargs={"leafsize":leafsize})
     binList.append(binner)
 
 # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
@@ -48,7 +49,7 @@ for f in filters:
                               constraints=['night < 365 and filter = "%s"'%(f),
                                            'night < 730 and filter = "%s"'%(f),
                                            'filter = "%s"'%(f)],
-                              setupKwargs={"leafsize":50000})
+                              setupKwargs={"leafsize":leafsize})
     binList.append(binner)
 
 

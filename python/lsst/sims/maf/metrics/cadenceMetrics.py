@@ -68,21 +68,21 @@ class SupernovaMetric(ComplexMetric):
         time = time/(1.+ self.redshift) # Now days in SN rest frame
         finetime = np.arange(0.,np.ceil(np.max(time)),self.resolution) # Creat time steps to evaluate at
         ind = np.arange(finetime.size) #index for each time point
-        right = np.searchsorted(time, finetime+self.Tmax-self.Tmin, side='right') #index for each time point + Tmax
-        good = np.where( (right - ind) > self.Nbetween)[0] # Demand enough visits in window
+        right = np.searchsorted( time, finetime+self.Tmax-self.Tmin, side='right') #index for each time point + Tmax - Tmin
+        left = np.searchsorted(time, finetime, side='left')
+        good = np.where( (right - left) > self.Nbetween)[0] # Demand enough visits in window
         ind = ind[good]
         right = right[good]
-                
+        left = left[good]
         result = 0
         maxGap = [] # Record the maximum gap near the peak (in rest-frame days)
         Nobs = [] # Record the total number of observations in a sequence.
-        
         right_side = -1
         for i,index in enumerate(ind):
             if i <= right_side:
                 pass
             else:
-                inWindow = np.where((time >=  finetime[index:right[i]].min()) & (time <=  finetime[index:right[i]].max()))
+                inWindow = np.where((time >=  finetime[index]) & (time <=  finetime[index]+self.Tmax-self.Tmin ))
                 visits = dataSlice[inWindow]
                 t = time[inWindow]
                 t = t-finetime[index]+self.Tmin
@@ -91,14 +91,14 @@ class SupernovaMetric(ComplexMetric):
                     if np.size(np.where(t > self.Tmore)[0]) > self.Nmore:
                         if np.size(t) > self.Nbetween:
                             ufilters = np.unique(visits[self.filtercol])
-                            if np.size(ufilters) > self.Nfilt: #XXX need to add snr cut here
+                            if np.size(ufilters) >= self.Nfilt: #XXX need to add snr cut here
                                 filtersBrightEnough = 0
                                 nearPeak = np.where((t > self.Tless) & (t < self.Tmore))
                                 ufilters = np.unique(visits[self.filtercol][nearPeak])
                                 for f in ufilters:
                                     if np.max(visits[self.m5col][nearPeak][np.where(visits[self.filtercol][nearPeak] == f)]) > self.singleDepthLimit:
                                         filtersBrightEnough += 1
-                                if filtersBrightEnough > self.Nfilt:
+                                if filtersBrightEnough >= self.Nfilt:
                                     if np.size(nearPeak) >= 2:
                                         gaps = t[nearPeak][1:]-np.roll(t[nearPeak],1)[1:]
                                     else:
