@@ -12,6 +12,7 @@ dictnums = []
 dictnames = []
 
 # Generate some metric data from two binMetrics (dithered & nondithered)
+#
 runBinMetrics = False
 if runBinMetrics:
     dbAddress = getData.getDbAddress(connectionName='LYNNE_OPSIM')
