@@ -4,7 +4,7 @@ from lsst.sims.maf.driver.mafConfig import *
 root.outputDir ='./Cadence'
 
 
-small = False # Use the small database included in the repo
+small = True # Use the small database included in the repo
 
 if small:
     root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
@@ -21,10 +21,10 @@ else:
 
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
-#filters=['r']
+filters=['r']
 
 binList=[]
-nside=64
+nside=128
 
 seeing_limit = 0.7 # Demand seeing better than this
 
