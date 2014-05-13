@@ -163,10 +163,11 @@ class TestMoreMetrics(unittest.TestCase):
 
     def testTemplateExists(self):
         """Test the TemplateExistsMetric """
-        names = ['finSeeing']
-        types=[float]
+        names = ['finSeeing', 'expMJD']
+        types=[float,float]
         data = np.zeros(10,dtype=zip(names,types))
         data['finSeeing'] = [2.,2.,3.,1.,1.,1.,0.5,1.,0.4,1.]
+        data['expMJD'] = np.arange(10)
         # so here we have 4 images w/o good previous templates
         metric = metrics.TemplateExistsMetric()
         result = metric.run(data)
