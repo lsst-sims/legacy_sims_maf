@@ -20,6 +20,8 @@ class ParallaxMetric(BaseMetric):
         seeingcol = column name for seeing (assumed FWHM)
         u,g,r,i,z = mag of fiducial star in each filter
         atm_err = centroiding error due to atmosphere in arcsec
+
+        return uncertainty in mas.
         """
         cols = [m5col, mjdcol,filtercol,seeingcol, 'ra_pi_amp', 'dec_pi_amp']
         super(ParallaxMetric, self).__init__(cols, metricName=metricName, units=units, **kwargs)
@@ -42,11 +44,10 @@ class ParallaxMetric(BaseMetric):
             good = np.where(dataslice[self.filtercol] == filt)
             snr[good] = m52snr(self.mags[filt], dataslice[self.m5col][good])
         position_errors = np.sqrt(astrom_precision(dataslice[self.seeingcol], snr)**2+self.atm_err**2)
-
         sigma_A = position_errors/dataslice['ra_pi_amp'] 
         sigma_B = position_errors/dataslice['dec_pi_amp']
         sigma_ra = np.sqrt(1./np.sum(1./sigma_A**2))
         sigma_dec = np.sqrt(1./np.sum(1./sigma_B**2))
-        sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2)) #combine RA and Dec uncertainties
+        sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2))*1e3 #combine RA and Dec uncertainties, convert to mas
         return sigma
         

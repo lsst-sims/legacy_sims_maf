@@ -32,7 +32,7 @@ class NormAirmass(object):
 ### Parallax factors
 
 class ParallaxFactor(object):
-    """Calculate the parallax factors for each opsim pointing. """
+    """Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds"""
     def __init__(self, raCol='fieldRA', decCol='fieldDec', dateCol='expMJD'):
         self.name='parallaxfactor'
         self.cols = [raCol,decCol,dateCol]
@@ -65,8 +65,8 @@ class ParallaxFactor(object):
                                                  0.,0.,0.,0.,mtoa_params)
         x_geo1,y_geo1 = self._gnomonic_project_toxy(ra_geo1, dec_geo1, simData[self.raCol],simData[self.decCol])
         x_geo, y_geo = self._gnomonic_project_toxy(ra_geo, dec_geo, simData[self.raCol], simData[self.decCol])
-        ra_pi_amp[:] = x_geo1-x_geo
-        dec_pi_amp[:] = y_geo1-y_geo
+        ra_pi_amp[:] = np.degrees(x_geo1-x_geo)*3600.
+        dec_pi_amp[:] = np.degrees(y_geo1-y_geo)*3600.
         if 'ra_pi_amp' in simData.dtype.names:
             simData['ra_pi_amp'] = ra_pi_amp
             simData['dec_pi_amp'] = dec_pi_amp
