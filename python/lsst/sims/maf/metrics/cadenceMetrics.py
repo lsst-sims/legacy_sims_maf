@@ -133,9 +133,9 @@ class SupernovaMetric(ComplexMetric):
                                 
 class TemplateExistsMetric(BaseMetric):
     """See what fraction of images have a previous template image of desired quality.  Note, one could consider adding additional requirements such as making sure a template exists within a given paralactic angle. """
-    def __init__(self, seeingCol = 'finSeeing', units='fraction', **kwargs):
+    def __init__(self, seeingCol = 'finSeeing', units='fraction', metricName='TemplateExistsMetric', **kwargs):
         cols = [seeingCol]
-        super(TemplateExistsMetric,self).__init__(cols, units='fraction', **kwargs)
+        super(TemplateExistsMetric,self).__init__(cols, metricName, units='fraction', **kwargs)
         self.seeingCol = seeingCol
         self.metricDtype = float
         

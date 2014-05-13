@@ -3,7 +3,6 @@ from lsst.sims.maf.driver.mafConfig import *
 
 root.outputDir ='./Cadence'
 
-
 small = False # Use the small database included in the repo
 
 if small:
@@ -27,11 +26,9 @@ binList=[]
 nside=128
 leafsize = 50000 # For KD-tree
 
+
+########### Early Seeing Metrics ################
 seeing_limit = 0.7 # Demand seeing better than this
-
-
-
-# Example looking for the existence of a quality refernce image in each filter after 1 year, 2 years and 10 years
 for f in filters:
     m1 = makeMetricConfig('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
     binner = makeBinnerConfig('HealpixBinner',kwargs={"nside":nside},metricDict=makeDict(m1),
@@ -53,18 +50,16 @@ for f in filters:
                               setupKwargs={"leafsize":leafsize})
     binList.append(binner)
 
-   
+
+#########  Supernova Metric ############
 m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
+########   Parallax and Proper Motion ########
 m2 = makeMetricConfig('ParallaxMetric')
-m3 = makeMetricConfig('ProperMotionMetric')
+m3 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1,m2,m3),
-                           constraints=[''], setupKwargs={"leafsize":50000})
+                           constraints=[''], setupKwargs={"leafsize":leafsize})
 binList.append(binner)
-
-
-
-#XXX -- add in the parallax and proper motion examples
 
 
 
