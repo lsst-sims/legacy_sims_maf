@@ -160,7 +160,18 @@ class TestMoreMetrics(unittest.TestCase):
         np.testing.assert_array_almost_equal(metric.reduceMedianMaxGap(result),  1/7.)
         assert(metric.reduceNsequences(result) == 10)
         assert((metric.reduceMedianNobs(result) <  561) & (metric.reduceMedianNobs(result) >  385) )
-        
+
+    def testTemplateExists(self):
+        """Test the TemplateExistsMetric """
+        names = ['finSeeing']
+        types=[float]
+        data = np.zeros(10,dtype=zip(names,types))
+        data['finSeeing'] = [2.,2.,3.,1.,1.,1.,0.5,1.,0.4,1.]
+        # so here we have 4 images w/o good previous templates
+        metric = metrics.TemplateExistsMetric()
+        result = metric.run(data)
+        assert(result == 6./10.)
+                            
         
         
 if __name__ == '__main__':

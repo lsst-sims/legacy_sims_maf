@@ -141,15 +141,11 @@ class TemplateExistsMetric(BaseMetric):
         
 
     def run(self,dataSlice):
-        seeing_array = np.zeros((dataSlice.size,dataSlice.size), dtype = float) + np.max(dataSlice[self.seeingCol])
-        # Doesn't seem to be a cumulative minimum function in numpy.  Might be a smarter/faster way to slice this up--trying to avoid a slow python loop and failing
-        for i,temp in enumerate(dataSlice[self.seeingCol]):
-            seeing_array[i][i:] = dataSlice[0:dataSlice[self.seeingCol].size-i]
-        seeing_mins = np.amin(seeing_array, axis=0)
-
-        seeing_diff = dataSlice[self.seeingCol] - seeing_mins
-        good = np.where(seeing_diff >= 0.)[0]
-        frac = good.size/float(dataSlice[self.seeingCol].size)
+        # Minimum seeing up to a given time
+        seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol]) 
+        seeing_diff = dataSlice[self.seeingCol] - np.roll(seeing_mins,1)
+        good = np.where(seeing_diff[1:] >= 0.)[0] # 1st image never has a template
+        frac = (good.size)/float(dataSlice[self.seeingCol].size)
         return frac
     
             

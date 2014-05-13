@@ -21,7 +21,7 @@ else:
 
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
-#filters=['r']
+filters=['r']
 
 binList=[]
 nside=128
@@ -55,9 +55,18 @@ for f in filters:
 
    
 m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
+m2 = makeMetricConfig('ParallaxMetric')
+m3 = makeMetricConfig('ProperMotionMetric')
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
-                              metricDict=makeDict(m1), constraints=[''], setupKwargs={"leafsize":50000})
+                           metricDict=makeDict(m1,m2,m3),
+                           constraints=[''], setupKwargs={"leafsize":50000})
 binList.append(binner)
-    
+
+
+
+#XXX -- add in the parallax and proper motion examples
+
+
+
 root.binners = makeDict(*binList)
 
