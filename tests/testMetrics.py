@@ -175,38 +175,65 @@ class TestComplexMetrics(unittest.TestCase):
         # Test that 'reduceFuncs' dictionary set up (although will be empty for 'base')
         self.assertEqual(testmetric.reduceFuncs.keys(), [])
 
-    def testVisitPairs(self):
-        """Test visit pairs metric."""
+    def testVisitGroups(self):
+        """Test visit groups (solar system groups) metric."""
         # Set up some simple test data.
         tmin = 15.0/60./24.0
         tmax = 90./60./24.0
         tstart = 49406.00
-        night = np.array([0, 0, 0, 0, 1, 1, 2, 3, 3], 'int')
-        expmjd = np.array([tstart, tstart+tmin+tmin/10.0, tstart+tmin+tmin/2.0, tstart+tmax,
-                           tstart, tstart+tmax, tstart, tstart, tstart+tmin], 'float')
+        night = np.array([0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 3, 31, 31, 32, 32, 33, 33, 34, 34, 34, 34,
+                          35, 35, 35, 36, 36, 36, 37, 37, 37, 38, 38, 38], 'int')
+        expmjd = np.array([tstart, tstart+tmin/10.0, tstart+tmin+tmin/2.0, tstart+tmin*2+tmax, tstart+2*tmax, tstart+2*tmax+tmin/2.0,
+                           tstart, tstart+tmax, # 2
+                           tstart, # 0
+                           tstart, tstart+tmin, #2
+                           tstart, tstart+tmin, tstart, tstart+tmin, tstart, tstart+tmin, #2 each night
+                           tstart, tstart+tmin/10.0, tstart+tmax*2, tstart+tmax*2+tmin/10.0, # 0
+                           tstart, tstart+tmin/10.0, tstart+tmax, #2.5 (too close at start)
+                           tstart, tstart+tmax, tstart+tmax+tmin/10.0, #2.5  (too close at end)
+                           tstart, tstart+tmin, tstart+tmax, #3 (regular 3)
+                           tstart, tstart+tmax, tstart+tmax*2 #3 (long three)
+                           ], 'float')
         expmjd = expmjd + night
         testdata = np.core.records.fromarrays([expmjd, night], names=['expmjd', 'night'])
         # Set up metric.
-        testmetric = metrics.VisitPairsMetric(timesCol='expmjd', nightsCol='night',
-                                            deltaTmin=tmin, deltaTmax=tmax, nPairs=2, window=30)
+        testmetric = metrics.VisitGroupsMetric(timesCol='expmjd', nightsCol='night',
+                                                deltaTmin=tmin, deltaTmax=tmax, minNVisits=2,
+                                                window=5, minNNights=3)
         # Run metric for expected results.
-        numpairs, nightpairs = testmetric.run(testdata)
-        expected_nightpairs = np.array([0, 1, 3])
-        expected_numpairs = np.array([5, 1, 1])
-        np.testing.assert_equal(nightpairs, expected_nightpairs)
-        np.testing.assert_equal(numpairs, expected_numpairs)
+        numvisits, nights = testmetric.run(testdata)
+        expected_nights = np.array([0, 1, 3, 31, 32, 33, 35, 36, 37, 38])
+        expected_numvisits = np.array([5.0, 2, 2, 2, 2, 2, 2.5, 2.5, 3, 3])
+        np.testing.assert_equal(numvisits, expected_numvisits)
+        np.testing.assert_equal(nights, expected_nights)
         # Test reduce methods.
-        self.assertEqual(testmetric.reduceMedian((numpairs, nightpairs)), np.median(expected_numpairs))
-        self.assertEqual(testmetric.reduceMean((numpairs, nightpairs)), np.mean(expected_numpairs))
-        self.assertEqual(testmetric.reduceRms((numpairs, nightpairs)), np.std(expected_numpairs))
-        self.assertEqual(testmetric.reduceNNightsWithPairs((numpairs, nightpairs)), len(expected_nightpairs))
-        self.assertEqual(testmetric.reduceNNightsWithPairs((numpairs, nightpairs), nPairs=3), 1)
-        self.assertEqual(testmetric.reduceNPairsInWindow((numpairs, nightpairs)), 7)
-        self.assertEqual(testmetric.reduceNPairsInWindow((numpairs, nightpairs), window=2), 6)
-        self.assertEqual(testmetric.reduceNNightsInWindow((numpairs, nightpairs)), 3)
-        self.assertEqual(testmetric.reduceNNightsInWindow((numpairs, nightpairs), window=2), 2)
+        self.assertEqual(testmetric.reduceMedian((numvisits, nights)), np.median(expected_numvisits))
+        self.assertEqual(testmetric.reduceNNightsWithNVisits((numvisits, nights), minNVisits=2),
+                         len(expected_nights))
+        self.assertEqual(testmetric.reduceNNightsWithNVisits((numvisits, nights), minNVisits=3), 3)
+        self.assertEqual(testmetric.reduceNVisitsInWindow((numvisits, nights), window=5), 11)
+        self.assertEqual(testmetric.reduceNVisitsInWindow((numvisits, nights), window=2), 7)
+        self.assertEqual(testmetric.reduceNNightsInWindow((numvisits, nights), window=10), 7)
+        self.assertEqual(testmetric.reduceNNightsInWindow((numvisits, nights), window=2), 2)
+        self.assertEqual(testmetric.reduceNNightsInWindow((numvisits, nights), window=5, minNVisits=3), 2)
+        self.assertEqual(testmetric.reduceNLunations((numvisits, nights), window=5, minNVisits=2, minNNights=3), 2)
+        self.assertEqual(testmetric.reduceMaxSeqLunations((numvisits, nights), window=5, minNVisits=2, minNNights=3), 2)
+        # Test with a longer (but simpler) date range.
+        indnight = np.array([0, 1, 2, 3, 4, 5, 31, 32, 33, 34, 61, 62, 63, 121, 122, 123], 'int')
+        indtimes = np.array([tstart, tstart+tmin, tstart+tmax], 'float')
+        expmjd = []
+        night = []
+        for n in indnight:
+            for t in indtimes:            
+                expmjd.append(float(n + t))
+                night.append(n)
+        expmjd = np.array(expmjd)
+        night = np.array(night)
+        testdata = np.core.records.fromarrays([expmjd, night], names=['expmjd', 'night'])
+        numvisits, nights = testmetric.run(testdata)
+        self.assertEqual(testmetric.reduceNLunations((numvisits, nights), window=5, minNVisits=2, minNNights=3), 4)
+        self.assertEqual(testmetric.reduceMaxSeqLunations((numvisits, nights), window=5, minNVisits=2, minNNights=3), 3)
 
-                                
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBaseMetric)
     unittest.TextTestRunner(verbosity=2).run(suite)
