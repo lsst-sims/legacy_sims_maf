@@ -145,6 +145,35 @@ class TestMoreMetrics(unittest.TestCase):
         assert(worse3 > worse2)
         assert(worse4 > worse3)
 
+
+    def testSNMetric(self):
+        """Test the SN Cadence Metric """
+        names = ['expMJD', 'filter', 'fivesigma_modified']
+        types = [float,'|S1', float]
+        data = np.zeros(700, dtype=zip(names,types))
+        data['expMJD'] = np.arange(0.,100.,1/7.) # So, 100 days are well sampled in 2 filters
+        data['filter'] = 'r'
+        data['filter'][np.arange(0,700,2)] = 'g'
+        data['fivesigma_modified'] = 30.
+        metric = metrics.SupernovaMetric()
+        result = metric.run(data)
+        np.testing.assert_array_almost_equal(metric.reduceMedianMaxGap(result),  1/7.)
+        assert(metric.reduceNsequences(result) == 10)
+        assert((metric.reduceMedianNobs(result) <  561) & (metric.reduceMedianNobs(result) >  385) )
+
+    def testTemplateExists(self):
+        """Test the TemplateExistsMetric """
+        names = ['finSeeing', 'expMJD']
+        types=[float,float]
+        data = np.zeros(10,dtype=zip(names,types))
+        data['finSeeing'] = [2.,2.,3.,1.,1.,1.,0.5,1.,0.4,1.]
+        data['expMJD'] = np.arange(10)
+        # so here we have 4 images w/o good previous templates
+        metric = metrics.TemplateExistsMetric()
+        result = metric.run(data)
+        assert(result == 6./10.)
+                            
+        
         
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)

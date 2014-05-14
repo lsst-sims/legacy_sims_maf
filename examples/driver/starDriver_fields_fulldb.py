@@ -1,7 +1,6 @@
 # A MAF config that replicates the SSTAR plots
 
-import numpy as np
-from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 from lsst.sims.maf.utils import runInfo
 
 # Setup Database access
@@ -18,11 +17,12 @@ binList=[]
 # Fetch the proposal ID values from the database
 propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
 
+
 # Fetch design and strech specs from DB and scale to the length of the observing run if not 10 years
 nvisitDesign, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessDesign, seeingDesign = runInfo.scaleStretchDesign(root.dbAddress['dbAddress'])
 
 # Check how many fields are requested per propID and for all proposals
-# Not sure I actually need to use this anywhere...
+# Not sure I actually need to use this anywhere yet...
 #nFields = runInfo.fetchNFields(root.dbAddress['dbAddress'], propids)
 
 

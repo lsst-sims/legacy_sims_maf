@@ -87,8 +87,32 @@ class RobustRmsMetric(SimpleScalarMetric):
         rms = iqr/1.349 #approximation
         return rms
     
-
+class BinaryMetric(SimpleScalarMetric):
+    """Return 1 if there is data. """
+    def run(self, dataSlice):
+        if dataSlice.size > 0:
+            return 1
+        else:
+            return self.badval
 class IdentityMetric(SimpleScalarMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniBinner metrics."""
     def run(self, dataSlice):
         return dataSlice[self.colname]
+
+class FracAboveMetric(SimpleScalarMetric):
+    def __init__(self, colname, cutoff=0.5, **kwargs):
+        super(FracAboveMetric, self).__init__(colname, **kwargs)
+        self.cutoff = cutoff
+    def run(self, dataSlice):
+        good = np.where(dataSlice[self.colname] >= self.cutoff)[0]
+        fracAbove = np.size(good)/float(np.size(dataSlice[self.colname]))
+        return fracAbove
+
+class FracBelowMetric(SimpleScalarMetric):
+    def __init__(self, colname, cutoff=0.5, **kwargs):
+        super(FracBelowMetric, self).__init__(colname, **kwargs)
+        self.cutoff = cutoff
+    def run(self, dataSlice):
+        good = np.where(dataSlice[self.colname] <= self.cutoff)[0]
+        fracBelow = np.size(good)/float(np.size(dataSlice[self.colname]))
+        return fracBelow

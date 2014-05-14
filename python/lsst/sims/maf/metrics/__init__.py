@@ -11,3 +11,4 @@ from .radiusObsMetric import *
 from .astroPrecMetric import *
 from .astroPrecMetricComplex import *
 from .summaryMetrics import *
+from .cadenceMetrics import *
