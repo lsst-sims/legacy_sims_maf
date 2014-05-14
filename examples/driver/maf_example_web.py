@@ -1,6 +1,5 @@
 import numpy as np
-from lsst.sims.maf.driver.mafConfig import *
-
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 # A drive config for the plots on https://confluence.lsstcorp.org/display/SIM/MAF+documentation
 # and https://confluence.lsstcorp.org/display/SIM/MAF%3A++Writing+a+new+metric
 

@@ -1,7 +1,6 @@
 # A MAF config that replicates the SSTAR plots
 
-import numpy as np
-from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 from lsst.sims.maf.utils import runInfo
 
 # Setup Database access

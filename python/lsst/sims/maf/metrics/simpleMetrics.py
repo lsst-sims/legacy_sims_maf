@@ -90,8 +90,10 @@ class RobustRmsMetric(SimpleScalarMetric):
 class BinaryMetric(SimpleScalarMetric):
     """Return 1 if there is data. """
     def run(self, dataSlice):
-        return 1
-    
+        if dataSlice.size > 0:
+            return 1
+        else:
+            return self.badval
 class IdentityMetric(SimpleScalarMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniBinner metrics."""
     def run(self, dataSlice):

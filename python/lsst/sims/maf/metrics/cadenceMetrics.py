@@ -21,19 +21,28 @@ class SupernovaMetric(ComplexMetric):
         Nmore = number of observations to demand after Tmore
         peakGap = maximum gap alowed between observations in the 'near peak' time
         snrCut = require snr above this limit when counting Nfilt XXX-not yet implemented
-        singleDepthLimit = require observations in Nfilt different filters to be this deep near the peak.  This is a rough approximation for the Science Book requirements for a SNR cut.  Ideally, one would import a time-variable SN SED, redshift it, and make filter-keyed dictionary of interpolation objects so the magnitude of the SN could be calculated at each observation and then use the m5col to compute a SNR.
+        singleDepthLimit = require observations in Nfilt different filters to be this
+        deep near the peak.  This is a rough approximation for the Science Book
+        requirements for a SNR cut.  Ideally, one would import a time-variable SN SED,
+        redshift it, and make filter-keyed dictionary of interpolation objects so the
+        magnitude of the SN could be calculated at each observation and then use the m5col
+        to compute a SNR.
         resolution = time step (days) to consider when calculating observing windows
-        uniqueBlocks = should the code count the number of unique sequences that meet the requirements (True), or should all sequences that meet the conditions be counted (False).
+        uniqueBlocks = should the code count the number of unique sequences that meet
+        the requirements (True), or should all sequences that meet the conditions
+        be counted (False).
 
-        The filter centers are shifted to the SN restframe and only observations with filters between 300 < lam_rest < 900 nm are included
+        The filter centers are shifted to the SN restframe and only observations
+        with filters between 300 < lam_rest < 900 nm are included
 
-        In the science book, the metric demands Nfilt observations above a SNR cut.  Here, we demand Nfilt observations near the peak with a given singleDepthLimt."""
+        In the science book, the metric demands Nfilt observations above a SNR cut.
+        Here, we demand Nfilt observations near the peak with a given singleDepthLimt."""
         
         cols=[mjdcol,filtercol,m5col]
         self.mjdcol = mjdcol
         self.m5col = m5col
         self.filtercol = filtercol
-        super(SupernovaMetric, self).__init__(cols,metricName, units=units,**kwargs)
+        super(SupernovaMetric, self).__init__(cols, metricName, units=units, **kwargs)
         self.metricDtype = 'object'
         self.units = units
         self.redshift = redshift
@@ -83,7 +92,6 @@ class SupernovaMetric(ComplexMetric):
             if i <= right_side:
                 pass
             else:
-                #inWindow = np.where((time >=  finetime[index]) & (time <=  finetime[index]+self.Tmax-self.Tmin ))
                 visits = dataSlice[left[i]:right[i]]
                 t = time[left[i]:right[i]]
                 t = t-finetime[index]+self.Tmin
@@ -112,20 +120,20 @@ class SupernovaMetric(ComplexMetric):
                                         Nobs.append(np.size(t))
         maxGap = np.array(maxGap)
         Nobs=np.array(Nobs)
-        return (result, maxGap, Nobs)
+        return {'result':result, 'maxGap':maxGap, 'Nobs':Nobs}
 
-    def reduceMedianMaxGap(self, (result, maxGap, Nobs)):
+    def reduceMedianMaxGap(self,data):
         """The median maximum gap near the peak of the light curve """
-        result = np.median(maxGap)
+        result = np.median(data['maxGap'])
         if np.isnan(result):
             result = self.badval
         return result
-    def reduceNsequences(self,(result, maxGap, Nobs)):
+    def reduceNsequences(self,data):
         """The number of sequences that met the requirements """
-        return result
-    def reduceMedianNobs(self,(result, maxGap, Nobs)):
+        return data['result']
+    def reduceMedianNobs(self,data):
         """Median number of observations covering the entire light curve """
-        result = np.median(Nobs)
+        result = np.median(data['Nobs'])
         if np.isnan(result):
             result = self.badval
         return result
@@ -133,7 +141,10 @@ class SupernovaMetric(ComplexMetric):
                                 
 class TemplateExistsMetric(BaseMetric):
     """See what fraction of images have a previous template image of desired quality.  Note, one could consider adding additional requirements such as making sure a template exists within a given paralactic angle. """
-    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD', units='fraction', metricName='TemplateExistsMetric', **kwargs):
+    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD',
+                 units='fraction', metricName='TemplateExistsMetric', **kwargs):
+        """seeingCol = column with final seeing value (arcsec)
+           expMJDcol = column with exposure MJD. """
         cols = [seeingCol, expMJDcol]
         super(TemplateExistsMetric,self).__init__(cols, metricName, units='fraction', **kwargs)
         self.seeingCol = seeingCol

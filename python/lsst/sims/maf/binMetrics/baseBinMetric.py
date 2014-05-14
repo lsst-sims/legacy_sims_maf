@@ -207,7 +207,7 @@ class BaseBinMetric(object):
             toMask = np.where( (self.metricValues[mname].data == self.metricObjs[mname].badval) | 
                                (self.metricValues[mname].data == self.binner.badval))
             self.metricValues[mname].mask[toMask] = True
-            self.metricValues[mname].metricValues = self.binner.badval
+            self.metricValues[mname].data[toMask] = self.binner.badval
 
     def reduceAll(self):
         """Run all reduce functions on all (complex) metrics."""

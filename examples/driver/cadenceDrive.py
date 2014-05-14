@@ -1,5 +1,6 @@
 # Test out new cadence metrics
-from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+
 
 root.outputDir ='./Cadence'
 

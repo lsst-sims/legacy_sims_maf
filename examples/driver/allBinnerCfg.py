@@ -4,7 +4,7 @@
 # Example MAF config file which runs each type of available binner.
 
 import numpy as np
-from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'

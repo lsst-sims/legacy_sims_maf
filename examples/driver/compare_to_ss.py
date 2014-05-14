@@ -1,5 +1,5 @@
 # A MAF config that replicates the SSTAR plots
-from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
