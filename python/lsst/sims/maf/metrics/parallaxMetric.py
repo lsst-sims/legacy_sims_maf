@@ -58,6 +58,7 @@ class ParallaxMetric(BaseMetric):
         position_errors = np.sqrt(astrom_precision(dataslice[self.seeingcol], snr)**2+self.atm_err**2)
         sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp'],dataslice['dec_pi_amp'] )
         if self.normalize:
-            sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp']*0+1.,dataslice['dec_pi_amp']*0+1. )/sigma
+            # Leave the dec parallax as zero since one can't have ra and dec maximized at the same time.
+            sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp']*0+1.,dataslice['dec_pi_amp']*0 )/sigma
         return sigma
         
