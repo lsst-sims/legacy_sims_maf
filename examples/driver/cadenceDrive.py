@@ -55,10 +55,12 @@ for f in filters:
 #########  Supernova Metric ############
 m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
 ########   Parallax and Proper Motion ########
-m2 = makeMetricConfig('ParallaxMetric')
-m3 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
+m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
+m3 = makeMetricConfig('ParallaxMetric')
+m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
+m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
-                           metricDict=makeDict(m1,m2,m3),
+                           metricDict=makeDict(m2,m3,m4,m5),
                            constraints=[''], setupKwargs={"leafsize":leafsize})
 binList.append(binner)
 

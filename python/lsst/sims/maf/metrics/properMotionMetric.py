@@ -33,7 +33,8 @@ class ProperMotionMetric(BaseMetric):
                  m5col='5sigma_modified', mjdcol='expMJD', units='mas/yr',
                  filtercol='filter', seeingcol='finSeeing', u=20.,
                  g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01, **kwargs):
+                 stellarType=None, atm_err=0.01, normalize=False,
+                 baseline=10., **kwargs):
         """ Instantiate metric.
 
         m5col = column name for inidivual visit m5
@@ -42,8 +43,14 @@ class ProperMotionMetric(BaseMetric):
         seeingcol = column name for seeing (assumed FWHM)
         u,g,r,i,z = mag of fiducial star in each filter
         atm_err = centroiding error due to atmosphere in arcsec
+        normalize = divide by the uncertainty that would result if half
+        the observations were taken at the start of the survey and half
+        at the end.
+        baseline = The length of the survey used for the normalization (years)
         """
         cols = [m5col, mjdcol,filtercol,seeingcol]
+        if normalize:
+            units = 'ratio'
         super(ProperMotionMetric, self).__init__(cols, metricName, units=units, **kwargs)
         # set return type
         self.seeingcol = seeingcol
@@ -53,6 +60,8 @@ class ProperMotionMetric(BaseMetric):
         self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
         self.badval = badval
         self.atm_err = atm_err
+        self.normalize = normalize
+        self.baseline = baseline
         if stellarType != None:
             raise NotImplementedError('Spot to add colors for different stars')
 
@@ -72,6 +81,11 @@ class ProperMotionMetric(BaseMetric):
         good = np.where(precis != self.badval)
         result = sigma_slope(dataslice['expMJD'][good], precis[good])
         result = result*365.25*1e3 #convert to mas/yr
+        if (self.normalize) & (good[0].size > 0):
+            new_dates=dataslice['expMJD'][good]*0
+            nDates = new_dates.size
+            new_dates[nDates/2:] = self.baseline*365.25
+            result = (sigma_slope(new_dates,  precis[good])*365.25*1e3)/result 
         # Observations that are very close together can still fail
         if np.isnan(result):
             result = self.badval 
