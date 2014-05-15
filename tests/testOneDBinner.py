@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 import unittest
 from lsst.sims.maf.binners.oneDBinner import OneDBinner
 from lsst.sims.maf.binners.uniBinner import UniBinner
@@ -43,7 +44,7 @@ class TestOneDBinnerSetup(unittest.TestCase):
         self.assertEqual(self.testbinner.nbins, len(bins)-1)
         
     def testSetupBinnerNbins(self):
-        """Test setting up binner using nbins."""
+        """Test setting up binner using bins as integer."""
         for nvalues in (100, 1000, 10000):
             for nbins in (5, 10, 25, 75):
                 dvmin = 0
@@ -51,7 +52,7 @@ class TestOneDBinnerSetup(unittest.TestCase):
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=False)
                 # Right number of bins? 
                 # expect one more 'bin' to accomodate last right edge), but nbins accounts for this
-                self.testbinner.setupBinner(dv, nbins=nbins)
+                self.testbinner.setupBinner(dv, bins=nbins)
                 self.assertEqual(self.testbinner.nbins, nbins)
                 # Bins of the right size?
                 bindiff = np.diff(self.testbinner.bins)
@@ -68,10 +69,39 @@ class TestOneDBinnerSetup(unittest.TestCase):
             bins = bins['testdata']
             for nvalues in (100, 1000, 10000):
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-                self.testbinner.setupBinner(dv, nbins=nbins)
+                self.testbinner.setupBinner(dv, bins=nbins)
                 np.testing.assert_allclose(self.testbinner.bins, bins)
 
+    def testSetupBinnerLimits(self):
+        """Test setting up binner using binMin/Max."""
+        binMin = .1
+        binMax = .8
+        dvmin = 0
+        dvmax = 1
+        dv = makeDataValues(1000, dvmin, dvmax, random=True)
+        self.testbinner.setupBinner(dv, binMin=binMin, binMax=binMax)
+        self.assertAlmostEqual(self.testbinner.bins.min(), binMin)
+        self.assertAlmostEqual(self.testbinner.bins.max(), binMax)
 
+    def testSetupBinnerBinsize(self):
+        """Test setting up binner using binsize."""
+        dvmin = 0
+        dvmax = 1
+        dv = makeDataValues(1000, dvmin, dvmax, random=True)
+        # Test basic use.
+        binsize=0.5
+        self.testbinner.setupBinner(dv, binsize=binsize)
+        self.assertEqual(self.testbinner.bins.min(), dvmin)
+        self.assertEqual(self.testbinner.bins.max(), dvmax)
+        self.assertEqual(self.testbinner.nbins, (dvmax-dvmin)/binsize)
+        # Test that warning works.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.testbinner.setupBinner(dv, bins=200, binsize=binsize)
+            # Verify some things
+            self.assertTrue("binsize" in str(w[-1].message))
+
+                
 class TestOneDBinnerIteration(unittest.TestCase):
     def setUp(self):
         self.testbinner = OneDBinner(sliceDataColName='testdata')
@@ -122,7 +152,7 @@ class TestOneDBinnerEqual(unittest.TestCase):
         # Set up another binner that should not match (different bins)
         testbinner2 = OneDBinner(sliceDataColName='testdata')
         dv2 = makeDataValues(nvalues, dvmin+1, dvmax+1, random=True)
-        testbinner2.setupBinner(dv2, nbins=len(bins))
+        testbinner2.setupBinner(dv2, bins=len(bins))
         self.assertNotEqual(self.testbinner, testbinner2)
         # Set up a different kind of binner that should not match.
         testbinner2 = UniBinner()
@@ -149,7 +179,7 @@ class TestOneDBinnerSlicing(unittest.TestCase):
         self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
         for nvalues in (1000, 10000, 100000):
             dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-            self.testbinner.setupBinner(dv, nbins=nbins)
+            self.testbinner.setupBinner(dv, bins=nbins)
             sum = 0
             for i, b in enumerate(self.testbinner):
                 idxs = self.testbinner.sliceSimData(b)
@@ -181,7 +211,7 @@ class TestOneDBinnerHistogram(unittest.TestCase):
         for nbins in [10, 20, 30, 75, 100, 33]:
             for nvalues in [1000, 10000, 250000]:
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-                self.testbinner.setupBinner(dv, nbins=nbins)
+                self.testbinner.setupBinner(dv, bins=nbins)
                 metricval = np.zeros(len(self.testbinner), 'float')
                 for i, b in enumerate(self.testbinner):
                     idxs = self.testbinner.sliceSimData(b)
@@ -199,7 +229,7 @@ class TestOneDBinnerHistogram(unittest.TestCase):
         nbins = 100
         nvalues = 10000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        testbinner.setupBinner(dv, nbins=nbins)
+        testbinner.setupBinner(dv, bins=nbins)
         metricval = np.zeros(len(testbinner), 'float')
         for i, b in enumerate(testbinner):
             idxs = testbinner.sliceSimData(b)
@@ -207,15 +237,13 @@ class TestOneDBinnerHistogram(unittest.TestCase):
         testbinner.plotBinnedData(metricval, xlabel='xrange', ylabel='count')
         plt.show()
 
-
+        
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerSetup)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerIteration)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerEqual)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerSlicing)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerHistogram)
+    suitelist = []
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerSetup))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerIteration))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerEqual))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerSlicing))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDBinnerHistogram))
+    suite = unittest.TestSuite(suitelist)
     unittest.TextTestRunner(verbosity=2).run(suite)
