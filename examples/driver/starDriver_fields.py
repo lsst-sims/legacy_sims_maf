@@ -1,5 +1,5 @@
 # A MAF config that replicates the SSTAR plots
-rom lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
@@ -124,25 +124,25 @@ for f in filters:
 
 # The merged histograms for basics 
 for f in filters:
-    m1 = makeMetricConfig('CountMetric', params=['5sigma_modified'],
+    m1 = makeMetricConfig('CountMetric', params=['5sigma_modified'], kwargs={'binsize':10},
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_modified'},
                               metricDict=makeDict(m1), constraints=["filter = '%s'and propID = %i"%(f,WFDpropid)]) 
     binList.append(binner)
 
-    m1 = makeMetricConfig('CountMetric', params=['perry_skybrightness'],
+    m1 = makeMetricConfig('CountMetric', params=['perry_skybrightness'], kwargs={'binsize':0.1},
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'perry_skybrightness'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
     binList.append(binner)
     
-    m1 = makeMetricConfig('CountMetric', params=['finSeeing'],
+    m1 = makeMetricConfig('CountMetric', params=['finSeeing'], kwargs={'binsize':0.03},
                           histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'finSeeing'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
     binList.append(binner)
 
-    m1 = makeMetricConfig('CountMetric', params=['airmass'],
+    m1 = makeMetricConfig('CountMetric', params=['airmass'], kwargs={'binsize':0.01},
                           histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'airmass'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
