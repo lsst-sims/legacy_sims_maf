@@ -1,135 +1,68 @@
-__author__ = 'schandra'
+import warnings
+from .table import Table
 
-from .Table import Table
+def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
+    """Utility to get the dbAddress info corresponding to 'connectionName' from a dbLogin file.
 
-class Database:
-    def __init__(self, dbAddress, sessionID,
-                 tables=[['Config','configID'],
-                         ['Session', 'sessionID'],
-                         ['Proposal', 'propID'],
-                         ['Config_File', 'config_fileID'],
-                         ['Log', 'logID'],
-                         ['TimeHistory', 'timeHistID'],
-                         ['Cloud', 'cloudID'],
-                         ['Seeing', 'seeingID'],
-                         ['Proposal_Field', 'proposal_field_id'],
-                         ['Field', 'fieldID'],
-                         ['SeqHistory', 'sequenceID'],
-                         ['MissedHistory', 'missedHistID'],
-                         ['ObsHistory', 'obsHistID'],
-                         ['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
-                         ['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
-                         ['ObsHistory_Proposal', 'obsHistory_propID'],
-                         ['SlewActivities', 'slewActivityID'],
-                         ['SlewHistory', 'slewID'],
-                         ['SlewMaxSpeeds', 'slewMaxSpeedID'],
-                         ['SlewState', 'slewIniStatID']]):
+    connectionName is the name given to a sqlalchemy connection string in the file
+        (default 'SQLITE_OPSIM').
+    dbLoginFile is the file location (default None will try to use $HOME/dbLogin). """
+    # The dbLogin file is a file containing simple 'names' corresponding to sqlite connection engine
+    #  strings.
+    # Example:
+    # SQLITE_OPSIM sqlite:///opsim.sqlite
+    # MYSQL_OPSIM mysql://lsst:lsst@localhost/opsim
+    #  More information on sqlalchemy connection strings can be found at
+    #  http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
+    if dbLoginFile is None:
+        # Try default location in home directory.
+        dbLoginFile = os.path.join(os.getenv("HOME"), 'dbLogin')
+    f = open(dbLoginFile, 'r')
+    for l in f:
+        els = l.rstrip().split()
+        if els[0] == connectionName:
+            dbAddress = els[1]
+    return dbAddress
+
+
+class Database():
+    """Base class for database access."""
+    def __init__(self, dbAddress, dbTables=None, dbTablesIdKey=None, defaultdbTables=None, defaultdbTablesIdKey=None,
+                 chunksize=1000000, **kwargs):
+        """Initiate database object to handle queries of the database.
+
+        dbAddress = sqlalchemy connection string to database
+        dbTables = dictionary of (names of tables in the code) : (names of tables in the database)
+        dbTableIDKey = dictionary of (names of tables in the code) : (primary key column name)
+        Note that for the dbTables and dbTableIDKey there are defaults in the init --
+          you can override (specific key:value pairs only if desired) by passing a dictionary
+        """
         self.dbAddress = dbAddress
-        self.sessionID = sessionID
-        self.tableRegistry = {}
-        for table in tables:
-            print "Creating registry entry for [%s %s]" % (table[0], table[1])
-            self.tableRegistry[table[0]] = Table(table[0], table[1], dbAddress)
-            
-    # ObsHistory Table functions
-    def getObservations(self):
-        constraint = 'Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['ObsHistory'].query_columns(constraint = constraint)
+        self.chunksize = chunksize
+        # Add default values to provided input dictionaries (if not present in input dictionaries)
+        for k in defaultdbTables:
+            if k not in dbTables:
+                dbTables[k] = defaultdbTables[k]
+        for k in defaultdbTablesIdKey:
+            if k not in dbTablesIdKey:
+                dbTablesIdKey[k] = defaultdbTablesIdKey[k]
+        # Connect to database tables and store connections.
+        self.tables = {}
+        for k in dbTables:
+            self.tables[k] = Table(dbTable[k], dbTableIDKey[k], dbAddress)
 
-    # ObsHistory_Proposal Table functions
-    def getObservationsForPropID(self, propID):
-        pass
+    def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
+        """Get data from database that is destined to be used for metric evaluation."""
+        raise NotImplementedError('Implement in subclass')
 
-    # SlewHistory Table functions
-    def getSlews(self):
-        constraint = 'ObsHistory_Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['SlewHistory'].query_columns(constraint = constraint)
-
-    def getSlewForObsHistID(self, obsHistID):
-        constraint = 'ObsHistory_Session_sessionID = %d and ObsHistory_obsHistID = %d' % (self.sessionID, obsHistID)
-        return self.tableRegistry['SlewHistory'].query_columns(constraint = constraint)
-
-    # SlewState Table functions
-    def getSlewStates(self):
-        pass
-
-    def getSlewStatesForSlewID(self, slewID):
-        pass
-
-    # SlewMaxSpeeds Table functions
-    def getSlewMaxSpeeds(self):
-        pass
-
-    def getSlewMaxSpeedsForSlewID(self, slewID):
-        pass
-
-    # SlewActivities Table functions
-    def getSlewActivities(self):
-        pass
-
-    def getSlewActivitiesForSlewID(self, slewID):
-        pass
-
-    # Proposal Table functions
-    def getProposals(self):
-        constraint = 'Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['Proposal'].query_columns(constraint = constraint)
-
-    # Session Table functions
-    def getSession(self):
-        constraint = 'sessionID = %d' % self.sessionID
-        return self.tableRegistry['Session'].query_columns(constraint = constraint)
-
-    # Config Table functions
-    def getConfig(self):
-        constraint = 'Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['Config'].query_columns(constraint = constraint)
-
-    # Config_File Table functions
-    def getConfigFile(self):
-        pass
-    
-    # Log Table functions
-    def getLog(self):
-        pass
-
-    # TimeHistory Table functions
-    def getTimeHistory(self):
-        constraint = 'Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['TimeHistory'].query_columns(constraint = constraint)
-    
-    # Proposal_Field Table functions
-    def getFieldsForPropID(self, propID):
-        pass
-    
-    # Field Table functions
-    def getAllFields(self):
-        
-        return self.tableRegistry['Field'].query_columns()
-
-    # MissedHistory functions
-    def getMissedObservations(self):
-        constraint = 'Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['MissedHistory'].query_columns(constraint = constraint)
-
-    # SeqHistory functions
-    def getSequences(self):
-        constraint = 'Session_sessionID = %d' % self.sessionID
-        return self.tableRegistry['SeqHistory'].query_columns(constraint = constraint)
-    
-    def getObservationsForSeqID(self, seqID):
-        pass
-    
-    def getMissedObservationsForSeqID(self, seqID):
-        pass
-
-    # Cloud
-    def getCloudData(self):
-        return self.tableRegistry['Cloud'].query_columns()
-
-    # Seeing
-    def getSeeingData(self):
-        return self.tableRegistry['Seeing'].query_columns()
-
-    def execute(self, tableName, colnames=None, chunk_size=None, constraint=None, numLimit=None):
-        return self.tableRegistry[tableName].query_columns(colnames, chunk_size, constraint, numLimit)
+    def fetchConfig(self, *args, **kwargs):
+        """Get config (metadata) info on source of data for metric calculation."""
+        raise NotImplementedError('Implement in subclass')
+                
+    def queryDatabase(self, sqlQuery):
+        """Execute a general sql query (useful for arbitary joins or queries not in convenience functions).
+        Returns numpy recarray with results."""
+        table = self.tables[self.tables.keys()[0]]
+        results = table.engine.execute(sqlQuery)
+        data = table._postprocess_results(results.fetchall())
+        return data
