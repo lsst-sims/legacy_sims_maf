@@ -56,11 +56,11 @@ def getBinner(simData, fieldDataInfo):
         fieldData = np.core.records.fromarrays([fieldID, ra, dec],
                                                names=['fieldID', 'fieldRA', 'fieldDec'])
     if (fieldDataInfo['useFieldTable']): # use field table to get Field Data
-        fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
-                                                            fieldDataInfo['dbAddress'],
-                                                            sessionID=fieldDataInfo['sessionID'],
-                                                            proposalTable=fieldDataInfo['proposalTable'],
-                                                            proposalID=fieldDataInfo['proposalID'])
+        fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['dbAddress'],
+                                                            fieldTable=fieldDataInfo['fieldTable'],
+                                                            proposalFieldTable=fieldDataInfo['proposalTable'],
+                                                            proposalID=fieldDataInfo['proposalID'],
+                                                            sessionID=fieldDataInfo['sessionID'])
     # SetUp binner.
     bb.setupBinner(simData, fieldData)
     dt, t = dtime(t)

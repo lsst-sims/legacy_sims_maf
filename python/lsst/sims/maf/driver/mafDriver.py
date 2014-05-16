@@ -130,10 +130,11 @@ class MafDriver(object):
         if 'fieldTable' in self.config.dbAddress.keys():
             if not hasattr(self, 'fieldData'): # Only pull the data once if getting it from the database
                 fieldDataInfo = self.config.dbAddress
-                self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['fieldTable'],
-                                                                fieldDataInfo['dbAddress'],
-                                                                sessionID=fieldDataInfo['sessionID'],
-                                                                proposalTable=fieldDataInfo['proposalTable'])
+                self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['dbAddress'],
+                                                                         fieldTable=fieldDataInfo['fieldTable'],
+                                                                         proposalFieldTable=fieldDataInfo['proposalTable'],
+                                                                         proposalID=fieldDataInfo['proposalID'],
+                                                                         sessionID=fieldDataInfo['sessionID'])
         else:
             fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
             ra = self.data[binner.fieldRaColName][idx]
@@ -196,7 +197,7 @@ class MafDriver(object):
                         # Replace the plotParams for selected metricNames
                         for mName in binner.plotConfigs:
                             gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
-                        gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
+                        gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True)
                         # Loop through the metrics and calc any summary statistics
                         for i,metric in enumerate(self.metricList[binner.index]):
                             if hasattr(metric, 'summaryStats'):

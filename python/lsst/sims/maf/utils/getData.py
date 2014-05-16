@@ -1,3 +1,6 @@
+# Utilities for fetching simData and fieldData from the opsim database
+#  (these should probably be put into the DB section)
+
 import os
 import numpy as np
 import warnings
@@ -13,6 +16,7 @@ def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
     connectionName is the name given to a sqlalchemy connection string in the file
         (default 'SQLITE_OPSIM').
     dbLoginFile is the file location (default None will try to use $HOME/dbLogin). """
+    ## This is actually replicating functionality already in catalogs.generation, so should go away
     # The dbLogin file is a file containing simple 'names' corresponding to sqlite connection engine
     #  strings.
     # Example:
@@ -61,30 +65,36 @@ def fetchFieldsFromOutputTable(dbTable, dbAddress, sqlconstraint):
     return fielddata
 
 
-def fetchFieldsFromFieldTable(fieldTable, dbAddress, 
-                              sessionID=None, proposalTable='tProposal_Field', proposalID=None,
-                              degreesToRadians=True):
+def fetchFieldsFromFieldTable(dbAddress, fieldTable='Field', proposalFieldTable='Proposal_Field',
+                              proposalID=None, sessionID=None, degreesToRadians=True):
     """Utility to fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
 
-    dbTable = the Field table
     dbAddress = the sqlalchemy connection string
-    sessionID = the opsim session ID, needed if proposalID != None
-    proposalTable = the Proposal_Field table
-    proposalID = the proposal ID (default None), if selecting particular proposal
+    dbTable = the Field table
+    proposalFieldTable = the Proposal_Field table
+    proposalID = the proposal ID (default None), if selecting particular proposal - can be a list
+    sessionID = the opsim session ID (generally not actually needed)
     degreesToRadians = RA/Dec values are in degrees in the Field table (so convert to radians) -- HACK """
     # Fetch field information from the Field table, plus Proposal_Field table if proposalID != None.
     # Note that you can't select any other sql constraints (such as filter). 
-    # This will select fields which were requested by a particular proposal (or which were part of
-    # the simulation), even if they didn't get any observations. 
+    # This will select fields which were requested by a particular proposal or proposals,
+    #   even if they didn't get any observations. 
     table = db.Table(fieldTable, 'fieldID', dbAddress)
     if proposalID != None:
-        query = 'select f.fieldID, f.fieldRA, f.fieldDec from %s as f, %s as p' \
-        %(fieldTable, proposalTable)
+        query = 'select f.fieldID, f.fieldRA, f.fieldDec from %s as f' %(fieldTable)
+        if proposalID != None:
+            query += ', %s as p where (p.Field_fieldID = f.fieldID) ' %(proposalFieldTable)
+            if hasattr(proposalID, '__iter__'): # list of propIDs
+                query += ' and ('
+                for propID in proposalID:
+                    query += '(p.Proposal_propID = %d) or ' %(int(propID))
+                # Remove the trailing 'or' and add a closing parenthesis.
+                query = query[:-3]
+                query += ')'
+            else: # single proposal ID.
+                query += ' and (p.Proposal_propID = %d) ' %(int(proposalID))
         if sessionID != None:
-            query += ' where (p.Field_fieldID=f.fieldID) and (p.Session_sessionID=%d) and (p.Proposal_propID=%d)' \
-              %(int(sessionID), int(proposalID))
-        else:
-            query += ' where (p.Field_fieldID=f.fieldID) and (p.Proposal_propID=%d)' %(proposalID)
+            query += ' and (p.Session_sessionID=%d)' %(int(sessionID))
         results = table.engine.execute(query)
         fielddata = table._postprocess_results(results.fetchall())
     else:
@@ -95,3 +105,7 @@ def fetchFieldsFromFieldTable(fieldTable, dbAddress,
         fielddata['fieldRA'] = fielddata['fieldRA'] * np.pi / 180.
         fielddata['fieldDec'] = fielddata['fieldDec'] * np.pi / 180.
     return fielddata
+
+    
+        
+        
