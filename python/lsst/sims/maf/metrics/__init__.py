@@ -12,3 +12,4 @@ from .astroPrecMetric import *
 from .astroPrecMetricComplex import *
 from .summaryMetrics import *
 from .cadenceMetrics import *
+from .uniformityMetrics import *

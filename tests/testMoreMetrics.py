@@ -172,8 +172,25 @@ class TestMoreMetrics(unittest.TestCase):
         metric = metrics.TemplateExistsMetric()
         result = metric.run(data)
         assert(result == 6./10.)
-                            
-        
+
+    def testUniformityMetric(self):
+        names = ['expMJD']
+        types=[float]
+        data = np.zeros(100, dtype=zip(names,types))
+        metric = metrics.UniformityMetric(dayStart=0.)
+        result1 = metric.run(data)
+        # If all the observations are on the 1st day, should be 1
+        assert(result1 == 1)
+        data['expMJD'] = data['expMJD']+365.25*10
+        result2 = metric.run(data)
+        # all on last day should be +0.5
+        assert(result1 == 1)
+        data['expMJD'] = np.arange(0.,365.25*10,365.25*10/100)
+        result3 = metric.run(data)
+        np.testing.assert_almost_equal(result3, 0.)
+        data = np.zeros(1, dtype=zip(names,types))
+        result4 = metric.run(data)
+        assert(result4 == 1)
         
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)
