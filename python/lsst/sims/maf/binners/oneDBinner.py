@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
+import warnings
 
 from .baseBinner import BaseBinner
 
@@ -17,12 +18,14 @@ class OneDBinner(BaseBinner):
         self.columnsNeeded = [sliceDataColName]
         self.binner_init = {'sliceDataColName':self.sliceDataColName}
         
-    def setupBinner(self, simData, bins=None, nbins=100, binMin=None, binMax=None): 
+    def setupBinner(self, simData, bins=100, binMin=None, binMax=None, binsize=None): 
         """Set up bins in binner.        
 
-        'bins' can be a numpy array with the binpoints for sliceDataCol 
-         or can be left 'None' in which case nbins will be used together with data min/max (or binMin/binMax)
-         values to slice data in 'sliceDataCol'.
+        'bins' can be a numpy array with the binpoints for sliceDataCol or a single integer value
+          (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
+          as in numpy's histogram function.
+        If 'binsize' is used, this will override the bins value and will be used together with the data min/max
+         (or binMin/Max) to set the binpoint values.
 
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
@@ -30,16 +33,27 @@ class OneDBinner(BaseBinner):
         if self.sliceDataColName is None:
             raise Exception('sliceDataColName was not defined when binner instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
+        # Set bin min/max values.
         if binMin is None:
             binMin = sliceDataCol.min()
         if binMax is None:
             binMax = sliceDataCol.max()
-        if bins is None:
-            binsize = (binMax - binMin) / float(nbins)
-            bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
-            self.bins = bins
+        # Set bins.
+        # Using binsize.
+        if binsize is not None:  
+            if bins != 100:
+                warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(binsize))
+            self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
+        # Using bins value.
         else:
-            self.bins = np.sort(bins)
+            # Bins was a sequence (np array or list)
+            if hasattr(bins, '__iter__'):  
+                self.bins = np.sort(bins)
+            # Or bins was a single value.
+            else:
+                nbins = int(bins)
+                binsize = (binMax - binMin) / float(nbins)
+                self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nbins = len(self.bins) - 1
         # Set up data slicing.

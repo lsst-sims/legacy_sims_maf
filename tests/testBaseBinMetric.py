@@ -334,7 +334,7 @@ class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
         self.testbbm = binMetrics.BaseBinMetric()
         self.testbbm.setMetrics([self.m1,])
         self.binner = binners.OneDBinner('testdata')
-        self.binner.setupBinner(self.dv, nbins=100)
+        self.binner.setupBinner(self.dv, bins=100)
         self.testbbm.setBinner(self.binner)
         self.testbbm.runBins(self.dv, simDataName=self.opsimname, metadata=self.metadata, comment=self.comment)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
@@ -427,13 +427,11 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         
                                                                     
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSetupBaseBinMetric)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestRunBaseBinMetric)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestReadWriteBaseBinMetric)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSummaryStatisticBaseBinMetric)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestPlottingBaseBinMetric)
+    suitelist = []
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestSetupBaseBinMetric))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestRunBaseBinMetric))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestReadWriteBaseBinMetric))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestSummaryStatisticBaseBinMetric))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestPlottingBaseBinMetric))
+    suite = unittest.TestSuite(suitelist)
     unittest.TextTestRunner(verbosity=2).run(suite)        
