@@ -8,9 +8,9 @@ class ParallaxMetric(BaseMetric):
 
     def __init__(self, metricName='parallax', m5col='5sigma_modified',
                  mjdcol='expMJD', units = 'mas',
-                 filtercol='filter', seeingcol='finSeeing', u=20.,
-                 g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01, normalize=False,**kwargs):
+                 filtercol='filter', seeingcol='finSeeing',rmag=20.,
+                 SedTemplate='flat', badval= -666,
+                 atm_err=0.01, normalize=False,**kwargs):
         
         """ Instantiate metric.
 
@@ -18,7 +18,7 @@ class ParallaxMetric(BaseMetric):
         mjdcol = column name for exposure time dates
         filtercol = column name for filter
         seeingcol = column name for seeing (assumed FWHM)
-        u,g,r,i,z = mag of fiducial star in each filter
+        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         atm_err = centroiding error due to atmosphere in arcsec
         normalize = Compare to a survey that has all observations with maximum parallax factor.
         An optimally scheduled survey would be expected to have a normalized value close to unity,
@@ -35,14 +35,17 @@ class ParallaxMetric(BaseMetric):
         self.seeingcol = seeingcol
         self.filtercol = filtercol
         self.metricDtype = 'float'
-        self.units = units
-        self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
+        filters=['u','g','r','i','z','y']
+        self.mags={}
+        if SedTemplate == 'flat':
+            for f in filters:
+                self.mags[f] = rmag
+        else:
+            raise NotImplementedError('Spot to add colors for different stars')
         self.badval = badval
         self.atm_err = atm_err
         self.normalize = normalize
-        if stellarType != None:
-            raise NotImplementedError('Spot to add colors for different stars')
-
+        
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
         """Assume parallax in RA and DEC are fit independently, then combined.
         All inputs assumed to be arcsec """

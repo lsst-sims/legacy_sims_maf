@@ -9,9 +9,9 @@ class ProperMotionMetric(BaseMetric):
 
     def __init__(self, metricName='properMotion',
                  m5col='5sigma_modified', mjdcol='expMJD', units='mas/yr',
-                 filtercol='filter', seeingcol='finSeeing', u=20.,
-                 g=20., r=20., i=20., z=20., y=20., badval= -666,
-                 stellarType=None, atm_err=0.01, normalize=False,
+                 filtercol='filter', seeingcol='finSeeing',  rmag=20.,
+                 SedTemplate='flat', badval= -666,
+                 atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
         """ Instantiate metric.
 
@@ -19,7 +19,8 @@ class ProperMotionMetric(BaseMetric):
         mjdcol = column name for exposure time dates
         filtercol = column name for filter
         seeingcol = column name for seeing (assumed FWHM)
-        u,g,r,i,z = mag of fiducial star in each filter
+        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
+        sedTemplate = template to use (currently only 'flat' is implamented)
         atm_err = centroiding error due to atmosphere in arcsec
         normalize = Compare to the uncertainty that would result if half
         the observations were taken at the start of the survey and half
@@ -35,14 +36,17 @@ class ProperMotionMetric(BaseMetric):
         self.seeingcol = seeingcol
         self.m5col = m5col
         self.metricDtype = 'float'
-        self.units = units
-        self.mags={'u':u, 'g':g,'r':r,'i':i,'z':z,'y':y}
+        filters=['u','g','r','i','z','y']
+        self.mags={}
+        if SedTemplate == 'flat':
+            for f in filters:
+                self.mags[f] = rmag
+        else:
+            raise NotImplementedError('Spot to add colors for different stars')
         self.badval = badval
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
-        if stellarType != None:
-            raise NotImplementedError('Spot to add colors for different stars')
 
     def run(self, dataslice):
         filters = np.unique(dataslice['filter'])
