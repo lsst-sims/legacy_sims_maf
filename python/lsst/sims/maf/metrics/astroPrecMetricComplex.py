@@ -1,11 +1,7 @@
 import numpy as np
 from .complexMetrics import ComplexMetric
+from lsst.sims.maf.utils.astrometryUtils import  m52snr
 
-def m52snr(m,m5):
-    """find the SNR for a star of magnitude m obsreved
-    under conditions of 5-sigma limiting depth m5 """
-    snr = 5.*10.**(-0.4*(m-m5))
-    return snr
 
 class AstroPrecMetricComplex(ComplexMetric):
     """Calculate the average astrometric precision given a set of observations """

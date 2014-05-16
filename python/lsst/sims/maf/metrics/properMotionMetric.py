@@ -1,28 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
-
-def sigma_slope(x,sigma_y): #move this inside the class to use badval, or just punt a nan?
-    """For fitting a line, the uncertainty in the slope
-       is given by the spread in x values and the uncertainties
-       in the y values.  Resulting units are x/sigma_y"""
-    w = 1./sigma_y**2
-    denom = np.sum(w)*np.sum(w*x**2)-np.sum(w*x)**2
-    if denom <= 0:
-        return np.nan
-    else:
-        result = np.sqrt(np.sum(w)/denom )
-        return result
-
-def m52snr(m,m5):
-    """find the SNR for a star of magnitude m obsreved
-    under conditions of 5-sigma limiting depth m5 """
-    snr = 5.*10.**(-0.4*(m-m5))
-    return snr
-
-def astrom_precision(fwhm,snr):
-    """approx precision of astrometric measure given seeing and SNR """
-    result = fwhm/(snr) #sometimes a factor of 2 in denomenator, whatever.  
-    return result
+from lsst.sims.maf.utils.astrometryUtils import sigma_slope, m52snr,astrom_precision
 
 class ProperMotionMetric(BaseMetric):
     """Calculate the uncertainty in the returned proper
@@ -43,9 +21,10 @@ class ProperMotionMetric(BaseMetric):
         seeingcol = column name for seeing (assumed FWHM)
         u,g,r,i,z = mag of fiducial star in each filter
         atm_err = centroiding error due to atmosphere in arcsec
-        normalize = divide by the uncertainty that would result if half
+        normalize = Compare to the uncertainty that would result if half
         the observations were taken at the start of the survey and half
-        at the end.
+        at the end.  A 'perfect' survey will have a value close to unity,
+        while a poorly scheduled survey will be close to zero.
         baseline = The length of the survey used for the normalization (years)
         """
         cols = [m5col, mjdcol,filtercol,seeingcol]

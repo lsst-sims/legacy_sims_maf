@@ -1,6 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from .properMotionMetric import m52snr, astrom_precision
+from lsst.sims.maf.utils.astrometryUtils import m52snr, astrom_precision
 
 class ParallaxMetric(BaseMetric):
     """Calculaute the uncertainty in a parallax measure
@@ -20,9 +20,11 @@ class ParallaxMetric(BaseMetric):
         seeingcol = column name for seeing (assumed FWHM)
         u,g,r,i,z = mag of fiducial star in each filter
         atm_err = centroiding error due to atmosphere in arcsec
-        normalize = divide by the uncertainty if the 
+        normalize = Compare to a survey that has all observations with maximum parallax factor.
+        An optimally scheduled survey would be expected to have a normalized value close to unity,
+        and zero for a survey where the parallax can not be measured.
 
-        return uncertainty in mas.
+        return uncertainty in mas. Or normalized map as a fraction
         """
         cols = [m5col, mjdcol,filtercol,seeingcol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
@@ -42,6 +44,8 @@ class ParallaxMetric(BaseMetric):
             raise NotImplementedError('Spot to add colors for different stars')
 
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
+        """Assume parallax in RA and DEC are fit independently, then combined.
+        All inputs assumed to be arcsec """
         sigma_A = position_errors/ra_pi_amp
         sigma_B = position_errors/dec_pi_amp
         sigma_ra = np.sqrt(1./np.sum(1./sigma_A**2))
@@ -52,6 +56,7 @@ class ParallaxMetric(BaseMetric):
     def run(self, dataslice):
         filters = np.unique(dataslice[self.filtercol])
         snr = np.zeros(len(dataslice), dtype='float')
+        # compute SNR for all observations
         for filt in filters:
             good = np.where(dataslice[self.filtercol] == filt)
             snr[good] = m52snr(self.mags[filt], dataslice[self.m5col][good])
