@@ -37,7 +37,7 @@ for f in filters:
                                            'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
                                            'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
                               setupKwargs={"leafsize":leafsize})
-#    binList.append(binner)
+    binList.append(binner)
 
 # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
 for f in filters:
@@ -49,7 +49,7 @@ for f in filters:
                                            'night < 730 and filter = "%s"'%(f),
                                            'filter = "%s"'%(f)],
                               setupKwargs={"leafsize":leafsize})
-#    binList.append(binner)
+    binList.append(binner)
 
 
 #########  Supernova Metric ############
@@ -60,7 +60,7 @@ m3 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1,m2,m3),
                            constraints=[''], setupKwargs={"leafsize":leafsize})
-#binList.append(binner)
+binList.append(binner)
 
 
 ########### Time Uniformity Metric ###########
@@ -68,10 +68,10 @@ constraints=[]
 for f in filters:
     constraints.append('filter = "%s"'%f)
 constraints.append('')
-m1 = makeMetricConfig('UniformityMetric', plotDict={'plotMin':-1., 'plotMax':1.})
+m1 = makeMetricConfig('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
 binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1),
-                           constraints=constriants, setupKwargs={"leafsize":leafsize})
+                           constraints=constraints, setupKwargs={"leafsize":leafsize})
 binList.append(binner)
 
 
