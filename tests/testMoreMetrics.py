@@ -183,11 +183,14 @@ class TestMoreMetrics(unittest.TestCase):
         assert(result1 == 1)
         data['expMJD'] = data['expMJD']+365.25*10
         result2 = metric.run(data)
-        # all on last day should be +0.5
+        # All on last day should also be 1
         assert(result1 == 1)
+        # Make a perfectly uniform dist
         data['expMJD'] = np.arange(0.,365.25*10,365.25*10/100)
         result3 = metric.run(data)
+        # Result should be zero for uniform
         np.testing.assert_almost_equal(result3, 0.)
+        # A single obseravtion should give a result of 1
         data = np.zeros(1, dtype=zip(names,types))
         result4 = metric.run(data)
         assert(result4 == 1)
