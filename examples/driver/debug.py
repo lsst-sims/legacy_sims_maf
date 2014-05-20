@@ -1,85 +1,70 @@
-# A MAF config that replicates the SSTAR plots
+# Test out new cadence metrics
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 
-import numpy as np
-from lsst.sims.maf.driver.mafConfig import *
-from lsst.sims.maf.utils import runInfo
 
-# Setup Database access
 root.outputDir ='./Debug'
-root.dbAddress ={'dbAddress':'sqlite:///hewelhog_1016_sqlite.db', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field'}
-root.opsimNames = ['Output']
+
+small = False # Use the small database included in the repo
+
+if small:
+    root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
+    root.opsimNames = ['opsim_small']
+    propids = [186,187,188,189]
+    WFDpropid = 188
+    DDpropid = 189 #?
+else:
+    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
+    root.opsimNames = ['opsim']
+    propids = [215, 216, 217, 218, 219]
+    WFDpropid = 217
+    DDpropid = 219
 
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 filters=['r']
 
 binList=[]
-
-# Fetch the proposal ID values from the database
-propids, WFDpropid, DDpropid = runInfo.fetchPropIDs(root.dbAddress['dbAddress'])
-
-# Fetch design and strech specs from DB and scale to the length of the observing run if not 10 years
-nvisitDesign, nvisitStretch, coaddedDepthDesign, coaddedDepthStretch, skyBrighntessDesign, seeingDesign = runInfo.scaleStretchDesign(root.dbAddress['dbAddress'])
-
-# Check how many fields are requested per propID and for all proposals
-# Not sure I actually need to use this anywhere...
-#nFields = runInfo.fetchNFields(root.dbAddress['dbAddress'], propids)
+nside=128
+leafsize = 50000 # For KD-tree
 
 
-# Plotting ranges and normalizations
-mag_zpoints = coaddedDepthDesign
-seeing_norm = seeingDesign
-sky_zpoints = skyBrighntessDesign
-nVisits_plotRange = {'all': 
-                     {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200], 'z':[100, 250], 'y':[100,250]},
-                     'DDpropid': 
-                     {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],  'z':[7000, 10000], 'y':[5000, 8000]},
-                     '216':
-                     {'u':[20, 40], 'g':[20, 40], 'r':[20, 40], 'i':[20, 40], 'z':[20, 40], 'y':[20, 40]}}
-
-
-# Construct a WFD SQL where clause so multiple propIDs can by WFD:
-wfdWhere = ''
-for i,propid in enumerate(WFDpropid):
-    if i == 0:
-        wfdWhere = wfdWhere+'('+'propID = %s'%propid
-    else:
-        wfdWhere = wfdWhere+'or propID = %s'%propid
-    wfdWhere = wfdWhere+')'
-
-
-
-
-# Metrics per filter 
+########### Early Seeing Metrics ################
+seeing_limit = 0.7 # Demand seeing better than this
 for f in filters:
-    m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
-                          plotDict={'units':'Number of Visits', 
-                                    'histMin':nVisits_plotRange['all'][f][0],
-                                    'histMax':nVisits_plotRange['all'][f][1]})
-    m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                          plotDict={'normVal':nvisitDesign[f], 'ylog':False, 'units':'Number of Visits/Designmark (%d)' %(nvisitDesign[f])})
-    m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
-    m4 = makeMetricConfig('Coaddm5Metric',kwargs={'m5col':'fivesigma_modified'}, plotDict={'zp':float(mag_zpoints[f]), 'percentileClip':95., 'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
-                          histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )             
-    m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'], plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
-    m6 = makeMetricConfig('MedianMetric', params=['finSeeing'], plotDict={'normVal':seeing_norm[f], 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-    m7 = makeMetricConfig('MedianMetric', params=['airmass'], plotDict={'_units':'X'})
-    m8 = makeMetricConfig('MaxMetric', params=['airmass'], plotDict={'_units':'X'})
-    m9 = makeMetricConfig('MaxMetric', params=['airmass'], kwargs={'metricName':'airmass_plus_masked'}, plotDict={'plotMaskedValues':True,'_units':'X'})
-    metricDict = makeDict(m1,m8,m9)
-    binner = makeBinnerConfig('OpsimFieldBinner', kwargs={'badval':0}, metricDict=metricDict, constraints=["filter = \'%s\'"%f])
-    binList.append(binner)
+    m1 = makeMetricConfig('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
+    binner = makeBinnerConfig('HealpixBinner',kwargs={"nside":nside},metricDict=makeDict(m1),
+                              constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
+                                           'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
+                                           'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
+                              setupKwargs={"leafsize":leafsize})
+    #binList.append(binner)
+
+# Look at the minimum seeing per field, and the fraction of observations below the "good" limit
+for f in filters:
+    m1 = makeMetricConfig('TemplateExistsMetric')
+    m2 = makeMetricConfig('MinMetric', params=['finSeeing'])
+    m3 = makeMetricConfig('FracBelowMetric', params=['finSeeing'], kwargs={'cutoff':seeing_limit})
+    binner = makeBinnerConfig('HealpixBinner',kwargs={"nside":nside},metricDict=makeDict(m1,m2,m3),
+                              constraints=['night < 365 and filter = "%s"'%(f),
+                                           'night < 730 and filter = "%s"'%(f),
+                                           'filter = "%s"'%(f)],
+                              setupKwargs={"leafsize":leafsize})
+    #binList.append(binner)
+
+
+#########  Supernova Metric ############
+m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
+########   Parallax and Proper Motion ########
+m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
+m3 = makeMetricConfig('ParallaxMetric')
+m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
+m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
+binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
+                           metricDict=makeDict(m2,m3,m4,m5),
+                           constraints=[''], setupKwargs={"leafsize":leafsize})
+binList.append(binner)
 
 
 
-
-root.binners=makeDict(*binList)
-
-
-
-
-
-
-
-
+root.binners = makeDict(*binList)
 
