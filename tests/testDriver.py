@@ -59,6 +59,8 @@ class TestDriver(unittest.TestCase):
             assert(os.path.isfile(configIn.outputDir+'/summaryStats.dat'))
             filelist = self.outputFiles[i]
             for filename in filelist:
+                if not os.path.isfile(configIn.outputDir+'/'+filename):
+                    print 'missing file %s'%filename
                 assert(os.path.isfile(configIn.outputDir+'/'+filename))
 
     def tearDown(self):

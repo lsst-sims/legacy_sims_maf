@@ -11,6 +11,7 @@ from matplotlib.patches import Ellipse
 from matplotlib.ticker import FuncFormatter
 from functools import wraps
 import warnings
+from lsst.sims.maf.utils.percentileClip import percentileClip as pc
 
 
 try:
@@ -128,7 +129,7 @@ class BaseSpatialBinner(BaseBinner):
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
-                      zp=None, normVal=None, units='', _units=None, **kwargs):
+                      zp=None, normVal=None, units='', _units=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
@@ -154,7 +155,11 @@ class BaseSpatialBinner(BaseBinner):
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if histMin is None and histMax is None:
-            histRange = None
+            if percentileClip:
+                plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
+                histRange = [plotMin, plotMax]
+            else:
+                histRange = None
         else:
             histRange=[histMin,histMax]
         if metricValue.min() >= metricValue.max():
@@ -237,7 +242,7 @@ class BaseSpatialBinner(BaseBinner):
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
                    clims=None, ylog='auto', cbarFormat=None, cmap=cm.jet, fignum=None, units='',
-                   plotMaskedValues=False, zp=None, normVal=None, **kwargs):
+                   plotMaskedValues=False, zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -245,10 +250,8 @@ class BaseSpatialBinner(BaseBinner):
             fig = plt.figure()
         if zp:
             metricValue = metricValue-zp
-            units = units+'-%f'%zp
         if normVal:
             metricValue = metricValue/normVal
-            units = units+'/%f'%normval
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
@@ -277,6 +280,10 @@ class BaseSpatialBinner(BaseBinner):
         self._plot_ecliptic(ax=ax)
         ax.grid(True)
         ax.xaxis.set_ticklabels([])
+        if percentileClip:
+            plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
+            if not clims:
+                clims = [plotMin,plotMax]
         # Add color bar
         if clims != None:
             p.set_clim(clims)

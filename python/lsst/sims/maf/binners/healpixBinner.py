@@ -10,6 +10,7 @@ import healpy as hp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
+from lsst.sims.maf.utils.percentileClip import percentileClip as pc
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
@@ -114,7 +115,9 @@ class HealpixBinner(BaseSpatialBinner):
         
     
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet, plotMaskedValues=False, **kwargs):
+                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet,
+                   percentileClip=None, plotMaskedValues=False, zp=None, normVal=None,
+                   **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -132,7 +135,15 @@ class HealpixBinner(BaseSpatialBinner):
         cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
-        cmap.set_bad('gray')        
+        cmap.set_bad('gray')
+        if zp:
+            metricValue = metricValue-zp
+        if normVal:
+            metricValue = metricValue/normVal
+        if percentileClip:
+            plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
+            if not clims:
+                clims = [plotMin,plotMax]
         if clims is not None:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',

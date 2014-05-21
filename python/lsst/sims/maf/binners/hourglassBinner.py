@@ -24,7 +24,7 @@ class HourglassBinner(UniBinner):
             return False
         figs['hourglass'] = self.plotHour(metricValues, **kwargs)
         if savefig:
-            outfile = filename+'hr'+'.'+figformat
+            outfile = filename+'_hr'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
             filenames.append(outfile)
             filetypes.append('hourglassPlot')
