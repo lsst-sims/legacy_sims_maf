@@ -33,6 +33,6 @@ m1 = makeMetricConfig('CountMetric', params=['expMJD'],
 binner = makeBinnerConfig('f0Binner', kwargs={"nside":nside},
                           metricDict=makeDict(m1),
                           setupKwargs={"leafsize":leafsize},
-                          constriants=['','propID = %s'%WFDpropid])
+                          constraints=['','propID = %s'%WFDpropid])
 
 root.binners = makeDict(binner)

@@ -1,6 +1,7 @@
 import numpy as np
 from .simpleMetrics import SimpleScalarMetric
 from .baseMetric import BaseMetric
+import healpy as hp
 
 class SummaryMetrics(BaseMetric):
     """A class for metrics which are intended to be primarily used as summary statistics on other metrics.  SimpleScalarMetrics can be used as well, but since they can return more than a scalar, they should not be placed with the SimpleMetrics."""
@@ -12,14 +13,42 @@ class SummaryMetrics(BaseMetric):
 
     
 class f0Area(SummaryMetrics):
-    def __init__(self, cols, Asky=18000., **kwargs):
-        super(f0Area, self).__init__(cols,**kwargs)
-        self.Asky
+    def __init__(self, cols, Asky=18000., Nvisit=825, metricName='f0Area', **kwargs):
+        """Asky = square degrees """
+        super(f0Area, self).__init__(cols,metricName=metricName,**kwargs)
+        self.Asky = Asky
+        self.Nvisit=Nvisit
     def run(self, dataSlice):
         dataSlice.sort()
-        cumulativeArea = np.arange(1,metricValue.size+1)[::-1]*scale
+        scale = hp.nside2pixarea(hp.npix2nside(dataSlice.size), degrees=True)
+        cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
+        good = np.where(cumulativeArea >= self.Asky)[0]
+        if good.size > 0:
+            good = np.max(good)
+            nv = dataSlice[good]/self.Nvisit
+            return nv
+        else:
+            return self.badval
         
-        
+
+class f0Nv(SummaryMetrics):
+    def __init__(self, cols, Asky=18000., metricName='f0Nv', Nvisit=825, **kwargs):
+        """Asky = square degrees """
+        super(f0Nv, self).__init__(cols,metricName=metricName,**kwargs)
+        self.Asky = Asky
+        self.Nvisit=Nvisit
+    def run(self, dataSlice):
+        dataSlice.sort()
+        scale = hp.nside2pixarea(hp.npix2nside(dataSlice.size), degrees=True)
+        cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
+        good = np.where(dataSlice >= self.Nvisit)[0]
+        if good.size > 0:
+            good = np.max(good)
+            area = cumulativeArea[good]/self.Asky
+            return area
+        else:
+            return self.badval
+    
 
 class TableFractionMetric(SimpleScalarMetric):
     def __init__(self, colname, nbins=10):
