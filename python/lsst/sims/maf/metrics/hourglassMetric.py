@@ -95,5 +95,5 @@ class HourglassMetric(BaseMetric):
                                            lsstObs.next_antitransit(S, start=mjd)], mjd )+doff
                                                   
                                       
-        return (pernight, perfilter)
+        return {'pernight':pernight, 'perfilter':perfilter}
     

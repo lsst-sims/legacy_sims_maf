@@ -77,9 +77,44 @@ class HealpixBinner(BaseSpatialBinner):
         ra = -lon % (np.pi*2)
         return ra, dec  
 
+    def plotData(self, metricValues, figformat='png', filename=None,
+                 savefig=True, **kwargs):
+        """Call all plotting methods."""
+        filenames=[]
+        filetypes=[]
+        figs={}
+        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+            warnings.warn('metric data type not float or int, returning False')
+            return False
         
+        figs['hist'] = self.plotHistogram(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'_hist'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            filenames.append(outfile)
+            filetypes.append('histogramPlot')
+
+        figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'_sky'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            filenames.append(outfile)
+            filetypes.append('histogramPlot')
+
+        figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'_ps'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            filenames.append(outfile)
+            filetypes.append('powerspectrumPlot')
+
+            
+        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
+
+        
+    
     def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet, plotMaskedValues=False):
+                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet, plotMaskedValues=False, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -123,7 +158,7 @@ class HealpixBinner(BaseSpatialBinner):
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
-                      scale=None, color='b'):
+                      scale=None, color='b', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
         If scale is None, sets 'scale' by the healpix area per binpoint.
@@ -148,11 +183,11 @@ class HealpixBinner(BaseSpatialBinner):
                                                         bins=bins, cumulative=cumulative,
                                                         histMin=histMin,histMax=histMax, ylog=ylog,
                                                         flipXaxis=flipXaxis,
-                                                        scale=scale,color=color)
+                                                        scale=scale,color=color, **kwargs)
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          label=None, addLegend=False, removeDipole=True, verbose=False):
+                          label=None, addLegend=False, removeDipole=True, verbose=False, **kwargs):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)

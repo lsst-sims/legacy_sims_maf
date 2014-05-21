@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 from .uniBinner import UniBinner
 
@@ -13,14 +14,30 @@ class HourglassBinner(UniBinner):
         self.columnsNeeded=[]
         self.binnerName='HourglassBinner'
         self.binner_init={}
+
+    def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
+        filenames=[]
+        filetypes=[]
+        figs={}
+        if not isinstance(metricValues[0], dict):
+            warnings.warn('HourglassBinner did not get dict to plot, returning False')
+            return False
+        figs['hourglass'] = self.plotHour(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'hr'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            filenames.append(outfile)
+            filetypes.append('hourglassPlot')
+        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
         
-    def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}):
+    def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}, **kwargs):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """
         xlabel = 'Night - min(Night)' # Currently not able to override.
         f = plt.figure()
         ax = f.add_subplot(111)
         
-        pernight, perfilter = metricValue
+        pernight =  metricValue[0]['pernight']
+        perfilter = metricValue[0]['perfilter']
         
         y = (perfilter['mjd']-perfilter['midnight'])*24.
         dmin = np.floor(np.min(perfilter['mjd']))

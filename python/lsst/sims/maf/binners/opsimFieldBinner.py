@@ -107,7 +107,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
-                      scale=None, color='b'):
+                      scale=None, color='b', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
         title = the title for the plot (default None)
@@ -129,5 +129,5 @@ class OpsimFieldBinner(BaseSpatialBinner):
                                                              bins=bins, cumulative=cumulative,
                                                              histMin=histMin,histMax=histMax, ylog=ylog,
                                                              flipXaxis=flipXaxis, 
-                                                             scale=1, yaxisformat='%d', color=color)
+                                                             scale=1, yaxisformat='%d', color=color, **kwargs)
         return fignum

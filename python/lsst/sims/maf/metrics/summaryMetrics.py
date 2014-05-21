@@ -13,7 +13,7 @@ class SummaryMetrics(BaseMetric):
     
 class f0Area(SummaryMetrics):
     def __init__(self, cols, Asky=18000., **kwargs):
-        super(f0Area, self).__init__(cols,*args,**kwargs)
+        super(f0Area, self).__init__(cols,**kwargs)
         self.Asky
     def run(self, dataSlice):
         dataSlice.sort()

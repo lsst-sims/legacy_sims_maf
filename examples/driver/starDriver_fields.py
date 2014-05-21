@@ -4,7 +4,7 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
 
-small = True # Use the small database included in the repo
+small = False # Use the small database included in the repo
 
 if small:
     root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}

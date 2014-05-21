@@ -94,13 +94,41 @@ class BaseSpatialBinner(BaseBinner):
         binx, biny, binz=self._treexyz(binpoints[1], binpoints[2])
         indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
         return indices
-    
-    ## Plot histogram (base spatial binner method).
+
+       
+    def plotData(self, metricValues, figformat='png',
+                 filename=None, savefig=True, **kwargs):
+        """Call all plotting methods."""
+        filenames=[]
+        filetypes=[]
+        figs={}
+        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+            warnings.warn('metric data type not float or int, returning False')
+            return False
         
+        figs['hist'] = self.plotHistogram(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'_hist'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            filenames.append(outfile)
+            filetypes.append('histogramPlot')
+
+        figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'_sky'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            filenames.append(outfile)
+            filetypes.append('histogramPlot')
+        
+        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
+
+        
+    ## Plot histogram (base spatial binner method).
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histMin=None, histMax=None,ylog=False, flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f', color='b'):
+                      bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
+                      scale=1.0, yaxisformat='%.3f', color='b',
+                      zp=None, normVal=None, units='', _units=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
@@ -112,9 +140,17 @@ class BaseSpatialBinner(BaseBinner):
         cumulative = make histogram cumulative (default False)
         histMin/Max = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
-        scale = scale y axis by 'scale' (i.e. to translate to area)"""
+        scale = scale y axis by 'scale' (i.e. to translate to area)
+        zp = zeropoing to subtract off metricVals
+        normVal = normalization value to divide metric values by"""
         # Histogram metricValues. 
         fig = plt.figure(fignum)
+        if not xlabel:
+            xlabel = units
+        if zp:
+            metricValue = metricValue-zp
+        if normVal:
+            metricValue = metricValue/normVal
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if histMin is None and histMax is None:
@@ -125,7 +161,11 @@ class BaseSpatialBinner(BaseBinner):
             if histMin is None:
                 histRange = [metricValue.min()-1 , metricValue.min() + 1]
                 warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
-
+        if ylog == 'auto':
+            if (np.log10(np.max(histRange)-np.min(histRange)) > 3 ) & (np.min(histRange) > 0):
+                ylog = True
+            else:
+                ylog = False
         n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
                            cumulative=cumulative, range=histRange, label=label, color=color)        
         # Option to use 'scale' to turn y axis into area or other value.
@@ -196,12 +236,19 @@ class BaseSpatialBinner(BaseBinner):
         plt.plot(ra, y_ec, 'r-')        
         
     def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
-                   clims=None, ylog=False, cbarFormat=None, cmap=cm.jet, fignum=None, units='', plotMaskedValues=False):
+                   clims=None, ylog='auto', cbarFormat=None, cmap=cm.jet, fignum=None, units='',
+                   plotMaskedValues=False, zp=None, normVal=None, **kwargs):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
         if fignum is None:
             fig = plt.figure()
+        if zp:
+            metricValue = metricValue-zp
+            units = units+'-%f'%zp
+        if normVal:
+            metricValue = metricValue/normVal
+            units = units+'/%f'%normval
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
@@ -213,6 +260,11 @@ class BaseSpatialBinner(BaseBinner):
         # Add points for RA/Dec locations
         lon = -(self.bins['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'][goodPts], radius, ax=ax)
+        if ylog == 'auto':
+            if (np.log10(np.max(metricValue[goodPts])-np.min(metricValue[goodPts])) > 3 ) & (np.min(metricValue[goodPts]) > 0):
+                ylog = True
+            else:
+                ylog = False
         if ylog:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
