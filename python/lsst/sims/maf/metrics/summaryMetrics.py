@@ -11,6 +11,16 @@ class SummaryMetrics(BaseMetric):
         raise NotImplementedError()
 
     
+class f0Area(SummaryMetrics):
+    def __init__(self, cols, Asky=18000., **kwargs):
+        super(f0Area, self).__init__(cols,*args,**kwargs)
+        self.Asky
+    def run(self, dataSlice):
+        dataSlice.sort()
+        cumulativeArea = np.arange(1,metricValue.size+1)[::-1]*scale
+        
+        
+
 class TableFractionMetric(SimpleScalarMetric):
     def __init__(self, colname, nbins=10):
         """nbins = number of bins between 0 and 100.  100 must be evenly divisable by nbins. """
