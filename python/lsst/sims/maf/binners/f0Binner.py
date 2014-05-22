@@ -38,19 +38,21 @@ class f0Binner(HealpixBinner):
         else:
             fig = plt.figure()
         # Expect metricValue to be something like number of visits
-        metricValue.sort()
-        cumulativeArea = np.arange(1,metricValue.size+1)[::-1]*scale
-        plt.plot(metricValue, cumulativeArea,'k-')
-        f0Area_value = f0Area(None,Asky=Asky, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
+        
+        cumulativeArea = np.arange(1,metricValue.compressed().size+1)[::-1]*scale
+        plt.plot(np.sort(metricValue.compressed()), cumulativeArea,'k-')
+        f0Area_value = f0Area(None,Asky=Asky, nside=self.nside).run(np.array(metricValue.compressed(),
+                                                                             dtype=[('blah', metricValue.dtype)]))
         f0Nv_value = f0Nv(None,Nvisit=Nvisit, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
+
         plt.axvline(x=Nvisit, linewidth=3, color='b')
         plt.axhline(y=Asky/1000., linewidth=3,color='r')
         
-        plt.axvline(x=f0Nv_value, linewidth=3, color='b', 
-                    alpha=.5, label=r'f$_0$ Nvisits=%i'%f0Nv_value)
-        plt.axhline(y=f0Area_value/1000., linewidth=3,color='r', 
-                    alpha=.5, label='f$_0$ Area=%f'%f0Area_value)
-        plt.legend(loc='lower left')
+        plt.axvline(x=f0Nv_value*Nvisit, linewidth=3, color='b', 
+                    alpha=.5, label=r'f$_0$ Nvisits=%.3g'%f0Nv_value)
+        plt.axhline(y=f0Area_value*Asky/1000. , linewidth=3,color='r', 
+                    alpha=.5, label='f$_0$ Area=%.3g'%f0Area_value)
+        plt.legend(loc='upper right')
 
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)

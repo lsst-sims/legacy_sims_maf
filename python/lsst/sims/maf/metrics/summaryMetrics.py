@@ -27,8 +27,7 @@ class f0Area(SummaryMetrics):
         cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
         good = np.where(cumulativeArea >= self.Asky)[0]
         if good.size > 0:
-            good = np.max(good)
-            nv = dataSlice[name][good]/self.Nvisit
+            nv = np.max(dataSlice[name][good])/float(self.Nvisit)
             return np.array([nv])
         else:
             return np.array([self.badval])
@@ -49,8 +48,7 @@ class f0Nv(SummaryMetrics):
         cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
         good = np.where(dataSlice[name] >= self.Nvisit)[0]
         if good.size > 0:
-            good = np.max(good)
-            area = cumulativeArea[good]/self.Asky
+            area = np.max(cumulativeArea[good])/float(self.Asky)
             return np.array([area])
         else:
             return np.array([self.badval])
