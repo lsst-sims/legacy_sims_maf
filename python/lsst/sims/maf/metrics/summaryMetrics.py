@@ -13,41 +13,47 @@ class SummaryMetrics(BaseMetric):
 
     
 class f0Area(SummaryMetrics):
-    def __init__(self, cols, Asky=18000., Nvisit=825, metricName='f0Area', **kwargs):
+    def __init__(self, cols, Asky=18000., Nvisit=825, 
+                 metricName='f0Area', nside=128, **kwargs):
         """Asky = square degrees """
         super(f0Area, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
-        self.Nvisit=Nvisit
+        self.Nvisit = Nvisit
+        self.nside = nside
     def run(self, dataSlice):
         dataSlice.sort()
-        scale = hp.nside2pixarea(hp.npix2nside(dataSlice.size), degrees=True)
+        name = dataSlice.dtype.names[0]
+        scale = hp.nside2pixarea(self.nside, degrees=True)
         cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
         good = np.where(cumulativeArea >= self.Asky)[0]
         if good.size > 0:
             good = np.max(good)
-            nv = dataSlice[good]/self.Nvisit
-            return nv
+            nv = dataSlice[name][good]/self.Nvisit
+            return np.array([nv])
         else:
-            return self.badval
+            return np.array([self.badval])
         
 
 class f0Nv(SummaryMetrics):
-    def __init__(self, cols, Asky=18000., metricName='f0Nv', Nvisit=825, **kwargs):
+    def __init__(self, cols, Asky=18000., metricName='f0Nv', Nvisit=825, 
+                 nside=128, **kwargs):
         """Asky = square degrees """
         super(f0Nv, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
-        self.Nvisit=Nvisit
+        self.Nvisit = Nvisit
+        self.nside = nside
     def run(self, dataSlice):
         dataSlice.sort()
-        scale = hp.nside2pixarea(hp.npix2nside(dataSlice.size), degrees=True)
+        name = dataSlice.dtype.names[0]
+        scale = hp.nside2pixarea(self.nside, degrees=True)
         cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
-        good = np.where(dataSlice >= self.Nvisit)[0]
+        good = np.where(dataSlice[name] >= self.Nvisit)[0]
         if good.size > 0:
             good = np.max(good)
             area = cumulativeArea[good]/self.Asky
-            return area
+            return np.array([area])
         else:
-            return self.badval
+            return np.array([self.badval])
     
 
 class TableFractionMetric(SimpleScalarMetric):

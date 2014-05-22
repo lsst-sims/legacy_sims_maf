@@ -41,8 +41,8 @@ class f0Binner(HealpixBinner):
         metricValue.sort()
         cumulativeArea = np.arange(1,metricValue.size+1)[::-1]*scale
         plt.plot(metricValue, cumulativeArea,'k-')
-        f0Area_value = f0Area(None,Asky=Asky).run(metricValue)
-        f0Nv_value = f0Nv(None,Nvisit=Nvisit).run(metricValue)
+        f0Area_value = f0Area(None,Asky=Asky, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
+        f0Nv_value = f0Nv(None,Nvisit=Nvisit, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
         plt.axvline(x=Nvisit, linewidth=3, color='b')
         plt.axhline(y=Asky/1000., linewidth=3,color='r')
         
