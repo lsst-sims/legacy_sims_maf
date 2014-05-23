@@ -28,7 +28,8 @@ class f0Binner(HealpixBinner):
     
     def plotF0(self, metricValue, title=None, xlabel='Number of Visits',
                ylabel='Area (1000s of square degrees)', fignum=None,
-               scale=None, Asky=18000., Nvisit=825, **kwargs):
+               scale=None, Asky=18000., Nvisit=825, 
+               xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
         """ 
         Note that Asky and Nvisit need to be set for both the binner and the summary statistic for the plot and returned summary stat values to be consistent!"""
         if scale is None:
@@ -41,17 +42,18 @@ class f0Binner(HealpixBinner):
         
         cumulativeArea = np.arange(1,metricValue.compressed().size+1)[::-1]*scale
         plt.plot(np.sort(metricValue.compressed()), cumulativeArea,'k-')
-        f0Area_value = f0Area(None,Asky=Asky, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                             dtype=[('blah', metricValue.dtype)]))
-        f0Nv_value = f0Nv(None,Nvisit=Nvisit, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
+        f0Area_value = f0Area(None,Asky=Asky, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),dtype=[('blah', metricValue.dtype)]))
+        f0Nv_value = f0Nv(None,Nvisit=Nvisit, norm=False, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
+        f0Area_value_n = f0Area(None,Asky=Asky, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),dtype=[('blah', metricValue.dtype)]))
+        f0Nv_value_n = f0Nv(None,Nvisit=Nvisit, norm=True, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
 
         plt.axvline(x=Nvisit, linewidth=3, color='b')
         plt.axhline(y=Asky/1000., linewidth=3,color='r')
         
-        plt.axvline(x=f0Nv_value*Nvisit, linewidth=3, color='b', 
-                    alpha=.5, label=r'f$_0$ Nvisits=%.3g'%f0Nv_value)
-        plt.axhline(y=f0Area_value*Asky/1000. , linewidth=3,color='r', 
-                    alpha=.5, label='f$_0$ Area=%.3g'%f0Area_value)
+        plt.axhline(y=f0Nv_value/1000., linewidth=3, color='b', 
+                    alpha=.5, label=r'f$_0$ Nvisits=%.3g'%f0Nv_value_n)
+        plt.axvline(x=f0Area_value , linewidth=3,color='r', 
+                    alpha=.5, label='f$_0$ Area=%.3g'%f0Area_value_n)
         plt.legend(loc='upper right')
 
         plt.xlabel(xlabel)
@@ -59,5 +61,10 @@ class f0Binner(HealpixBinner):
 
         if title is not None:
             plt.title(title)
+
+        if (xMin is not None) & (xMax is not None):
+            plt.xlim([xMin,xMax])
+        if (yMin is not None) & (yMax is not None):
+            plt.ylim([yMin,yMax])
         
         return fig.number

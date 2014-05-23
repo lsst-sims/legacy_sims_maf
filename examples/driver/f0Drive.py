@@ -28,7 +28,8 @@ leafsize = 50000 # For KD-tree
 
 m1 = makeMetricConfig('CountMetric', params=['expMJD'], 
                       kwargs={'metricName':'f0'}, 
-                      plotDict={'units':'Number of Visits'},
+                      plotDict={'units':'Number of Visits', 'xMin':0, 
+                                'xMax':1500},
                       summaryStats={'f0Area':{'nside':nside},
                                     'f0Nv':{'nside':nside}})
 binner = makeBinnerConfig('f0Binner', kwargs={"nside":nside},

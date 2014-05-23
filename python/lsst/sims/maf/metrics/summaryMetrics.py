@@ -14,12 +14,13 @@ class SummaryMetrics(BaseMetric):
     
 class f0Area(SummaryMetrics):
     def __init__(self, cols, Asky=18000., Nvisit=825, 
-                 metricName='f0Area', nside=128, **kwargs):
+                 metricName='f0Area', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(f0Area, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
+        self.norm = norm
     def run(self, dataSlice):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
@@ -27,7 +28,9 @@ class f0Area(SummaryMetrics):
         cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
         good = np.where(cumulativeArea >= self.Asky)[0]
         if good.size > 0:
-            nv = np.max(dataSlice[name][good])/float(self.Nvisit)
+            nv = np.max(dataSlice[name][good])
+            if self.norm:
+                nv = nv/float(self.Nvisit)
             return np.array([nv])
         else:
             return np.array([self.badval])
@@ -35,12 +38,13 @@ class f0Area(SummaryMetrics):
 
 class f0Nv(SummaryMetrics):
     def __init__(self, cols, Asky=18000., metricName='f0Nv', Nvisit=825, 
-                 nside=128, **kwargs):
+                 nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(f0Nv, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
+        self.norm = norm
     def run(self, dataSlice):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
@@ -48,7 +52,9 @@ class f0Nv(SummaryMetrics):
         cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
         good = np.where(dataSlice[name] >= self.Nvisit)[0]
         if good.size > 0:
-            area = np.max(cumulativeArea[good])/float(self.Asky)
+            area = np.max(cumulativeArea[good])
+            if self.norm:
+                area = area/float(self.Asky)
             return np.array([area])
         else:
             return np.array([self.badval])
