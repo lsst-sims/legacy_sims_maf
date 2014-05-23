@@ -40,9 +40,11 @@ class f0Binner(HealpixBinner):
         else:
             fig = plt.figure()
         # Expect metricValue to be something like number of visits
-        
         cumulativeArea = np.arange(1,metricValue.compressed().size+1)[::-1]*scale
         plt.plot(np.sort(metricValue.compressed()), cumulativeArea,'k-', linewidth=2, zorder = 0)
+        # This is breaking the rules and calculating the summary stats in two places.
+        # One way to possibly clean this up in the future would be to change the order
+        # things are done in the driver so that summary stats get computed first and passed along to the plotting.
         f0Area_value = f0Area(None,Asky=Asky, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),dtype=[('blah', metricValue.dtype)]))
         f0Nv_value = f0Nv(None,Nvisit=Nvisit, norm=False, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
         f0Area_value_n = f0Area(None,Asky=Asky, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),dtype=[('blah', metricValue.dtype)]))
