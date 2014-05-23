@@ -32,6 +32,7 @@ class f0Binner(HealpixBinner):
                xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
         """ 
         Note that Asky and Nvisit need to be set for both the binner and the summary statistic for the plot and returned summary stat values to be consistent!"""
+        colorlinewidth = 2
         if scale is None:
             scale = (hp.nside2pixarea(hp.npix2nside(metricValue.size), degrees=True)  / 1000.0)
         if fignum:
@@ -41,18 +42,18 @@ class f0Binner(HealpixBinner):
         # Expect metricValue to be something like number of visits
         
         cumulativeArea = np.arange(1,metricValue.compressed().size+1)[::-1]*scale
-        plt.plot(np.sort(metricValue.compressed()), cumulativeArea,'k-')
+        plt.plot(np.sort(metricValue.compressed()), cumulativeArea,'k-', linewidth=2, zorder = 0)
         f0Area_value = f0Area(None,Asky=Asky, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),dtype=[('blah', metricValue.dtype)]))
         f0Nv_value = f0Nv(None,Nvisit=Nvisit, norm=False, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
         f0Area_value_n = f0Area(None,Asky=Asky, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),dtype=[('blah', metricValue.dtype)]))
         f0Nv_value_n = f0Nv(None,Nvisit=Nvisit, norm=True, nside=self.nside).run(np.array(metricValue.compressed(), dtype=[('blah', metricValue.dtype)]))
 
-        plt.axvline(x=Nvisit, linewidth=3, color='b')
-        plt.axhline(y=Asky/1000., linewidth=3,color='r')
+        plt.axvline(x=Nvisit, linewidth=colorlinewidth, color='b')
+        plt.axhline(y=Asky/1000., linewidth=colorlinewidth,color='r')
         
-        plt.axhline(y=f0Nv_value/1000., linewidth=3, color='b', 
+        plt.axhline(y=f0Nv_value/1000., linewidth=colorlinewidth, color='b', 
                     alpha=.5, label=r'f$_0$ Nvisits=%.3g'%f0Nv_value_n)
-        plt.axvline(x=f0Area_value , linewidth=3,color='r', 
+        plt.axvline(x=f0Area_value , linewidth=colorlinewidth,color='r', 
                     alpha=.5, label='f$_0$ Area=%.3g'%f0Area_value_n)
         plt.legend(loc='upper right')
 
