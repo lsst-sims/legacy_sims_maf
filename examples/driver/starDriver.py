@@ -4,10 +4,10 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 # Setup Database access
 root.outputDir ='./StarOut'
-#root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-#root.opsimNames = ['opsim']
-root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-root.opsimNames = ['opsim_small']
+root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
+root.opsimNames = ['opsim']
+#root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
+#root.opsimNames = ['opsim_small']
 
 
 
