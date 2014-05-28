@@ -146,87 +146,87 @@ class MafDriver(object):
     def run(self):
         """Loop over each binner and calc metrics for that binner. """
         summary_stats=[]
-        summary_stats.append('opsimname,binnertype,sql where, metric name, summary stat name, value')
-        for opsimName in self.config.opsimNames:
-            for j, constr in enumerate(self.constraints):
-                # Find which binners have a matching constraint 
-                matchingBinners=[]
-                binnertypes=[]
-                for b in self.binList:
-                    if constr in b.constraints:
-                        matchingBinners.append(b)
-                        binnertypes.append(b.binnertype)
-                colnames=[]
+        summary_stats.append('##opsimname,binner_name,sql_where,metric_name,summary_stat_name,value')
+        #for opsimName in self.config.opsimNames:
+        for j, constr in enumerate(self.constraints):
+            # Find which binners have a matching constraint 
+            matchingBinners=[]
+            binnertypes=[]
+            for b in self.binList:
+                if constr in b.constraints:
+                    matchingBinners.append(b)
+                    binnertypes.append(b.binnertype)
+            colnames=[]
+            for i,binner in enumerate(matchingBinners):
+                for m in self.metricList[binner.index]:
+                    for cn in m.colNameList:  colnames.append(cn)
+                for cn in binner.columnsNeeded:
+                    colnames.append(cn)
+                for stacker in binner.stackers:
+                    for col in stacker.cols:
+                        colnames.append(col)
+            colnames = list(set(colnames)) #unique elements
+
+            print 'Running SQLconstraint:', constr
+            self.getData(self.config.dbAddress['OutputTable'], constr, colnames=colnames)
+            if len(self.data) == 0:
+                print 'No data matching constraint:   %s'%constr
+            else:
+                if 'OPSI' in binnertypes:
+                    self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
+                # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                 for i,binner in enumerate(matchingBinners):
-                    for m in self.metricList[binner.index]:
-                        for cn in m.colNameList:  colnames.append(cn)
-                    for cn in binner.columnsNeeded:
-                        colnames.append(cn)
+                    # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
+                    # what could I do--write a function that takes:  simdata, binners, metriclist, dbAdress.
+                    # could use the config file to set how many processors to use in the pool.
+                    print '  with binnertype =', binner.binnertype, 'metrics:', ', '.join([m.name for m in self.metricList[binner.index]])
                     for stacker in binner.stackers:
-                        for col in stacker.cols:
-                            colnames.append(col)
-                colnames = list(set(colnames)) #unique elements
-                    
-                print 'Running SQLconstraint:', constr
-                self.getData(opsimName, constr, colnames=colnames)
-                if len(self.data) == 0:
-                    print 'No data matching constraint:   %s'%constr
-                else:
-                    if 'OPSI' in binnertypes:
-                        self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
-                    # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
-                    for i,binner in enumerate(matchingBinners):
-                        # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
-                        # what could I do--write a function that takes:  simdata, binners, metriclist, dbAdress.
-                        # could use the config file to set how many processors to use in the pool.
-                        print '  with binnertype =', binner.binnertype, 'metrics:', ', '.join([m.name for m in self.metricList[binner.index]])
-                        for stacker in binner.stackers:
-                            self.data = stacker.run(self.data)
-                        gm = binMetrics.BaseBinMetric() 
-                        if binner.binnertype == 'OPSI':
-                            # Need to pass in fieldData as well
-                            binner.setupBinner(self.data, self.fieldData,*binner.setupParams, **binner.setupKwargs )
-                        else:
-                            binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
-                        gm.setBinner(binner)
-                        metricNames_in_gm = gm.setMetrics(self.metricList[binner.index])
-                        comment = constr.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
-                        gm.runBins(self.data, simDataName=opsimName, metadata=binner.metadata, comment=comment)
-                        gm.reduceAll()
-                        # Replace the plotParams for selected metricNames
-                        for mName in binner.plotConfigs:
-                            gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
-                        gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
-                        # Loop through the metrics and calc any summary statistics
-                        for i,metric in enumerate(self.metricList[binner.index]):
-                            if hasattr(metric, 'summaryStats'):
-                                for stat in metric.summaryStats:
-                                    # If it's a complex metric, run summary stats on each reduced metric
-                                    if metric.metricDtype == 'object':
-                                        baseName = gm.metricNames[i]
-                                        all_names = gm.metricValues.keys()
-                                        matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
-                                        for mm in matching_metrics:
-                                            summary = gm.computeSummaryStatistics(mm, stat)
-                                            if type(summary).__name__ == 'float' or type(summary).__name__ == 'int':
-                                                summary = np.array(summary)
-                                            summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+mm +','+stat.name+','+ np.array_str(summary))
-                                    else:
-                                        summary = gm.computeSummaryStatistics(metric.name, stat)
-                                        summary_stats.append(opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat.name+','+ np.array_str(summary))
-                        gm.writeAll(outDir=self.config.outputDir)
-                        # Return Output Files - get file output key back. Verbose=True, prints to screen.
-                        outFiles = gm.returnOutputFiles(verbose=False)
-                        # Loop through the outFiles and attach them to the correct metric in self.metricList.  This would probably be better with a dict.
-                        outfile_names = []
-                        outfile_metricNames = []
-                        for outfile in outFiles:
-                            if outfile['filename'][-3:] == 'npz':
-                                outfile_names.append(outfile['filename'])
-                                outfile_metricNames.append(outfile['metricName'])
-                        for i,m in enumerate(self.metricList[binner.index]):
-                            good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
-                            m.saveFile = outfile_names[good]
+                        self.data = stacker.run(self.data)
+                    gm = binMetrics.BaseBinMetric() 
+                    if binner.binnertype == 'OPSI':
+                        # Need to pass in fieldData as well
+                        binner.setupBinner(self.data, self.fieldData,*binner.setupParams, **binner.setupKwargs )
+                    else:
+                        binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
+                    gm.setBinner(binner)
+                    metricNames_in_gm = gm.setMetrics(self.metricList[binner.index])
+                    comment = constr.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
+                    gm.runBins(self.data, simDataName=self.config.opsimName, metadata=binner.metadata, comment=comment)
+                    gm.reduceAll()
+                    # Replace the plotParams for selected metricNames
+                    for mName in binner.plotConfigs:
+                        gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
+                    gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
+                    # Loop through the metrics and calc any summary statistics
+                    for i,metric in enumerate(self.metricList[binner.index]):
+                        if hasattr(metric, 'summaryStats'):
+                            for stat in metric.summaryStats:
+                                # If it's a complex metric, run summary stats on each reduced metric
+                                if metric.metricDtype == 'object':
+                                    baseName = gm.metricNames[i]
+                                    all_names = gm.metricValues.keys()
+                                    matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
+                                    for mm in matching_metrics:
+                                        summary = gm.computeSummaryStatistics(mm, stat)
+                                        if type(summary).__name__ == 'float' or type(summary).__name__ == 'int':
+                                            summary = np.array(summary)
+                                        summary_stats.append(self.config.opsimName+','+binner.binnerName+','+constr+','+mm +','+stat.name+','+ np.array_str(summary))
+                                else:
+                                    summary = gm.computeSummaryStatistics(metric.name, stat)
+                                    summary_stats.append(self.config.opsimName+','+binner.binnertype+','+constr+','+ metric.name +','+stat.name+','+ np.array_str(summary))
+                    gm.writeAll(outDir=self.config.outputDir)
+                    # Return Output Files - get file output key back. Verbose=True, prints to screen.
+                    outFiles = gm.returnOutputFiles(verbose=False)
+                    # Loop through the outFiles and attach them to the correct metric in self.metricList.  This would probably be better with a dict.
+                    outfile_names = []
+                    outfile_metricNames = []
+                    for outfile in outFiles:
+                        if outfile['filename'][-3:] == 'npz':
+                            outfile_names.append(outfile['filename'])
+                            outfile_metricNames.append(outfile['metricName'])
+                    for i,m in enumerate(self.metricList[binner.index]):
+                        good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
+                        m.saveFile = outfile_names[good]
                             
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:

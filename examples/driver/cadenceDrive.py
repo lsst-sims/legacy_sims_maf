@@ -4,17 +4,17 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 root.outputDir ='./Cadence'
 
-small = False # Use the small database included in the repo
+small = True # Use the small database included in the repo
 
 if small:
-    root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-    root.opsimNames = ['opsim_small']
+    root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
+    root.opsimName = 'opsim_small'
     propids = [186,187,188,189]
     WFDpropid = 188
     DDpropid = 189 #?
 else:
-    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-    root.opsimNames = ['opsim']
+    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite', 'OutputTable':'opsim'}
+    root.opsimName = 'opsim'
     propids = [215, 216, 217, 218, 219]
     WFDpropid = 217
     DDpropid = 219
@@ -25,7 +25,7 @@ filters=['r']
 
 binList=[]
 nside=128
-leafsize = 50000 # For KD-tree
+leafsize = 100 # For KD-tree
 
 
 ########### Early Seeing Metrics ################

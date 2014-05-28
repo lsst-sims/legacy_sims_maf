@@ -9,9 +9,9 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 # Set the output directory
 root.outputDir = './Complex_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite'}
+root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
 # Name of the output table in the database
-root.opsimNames = ['opsim_small']
+root.opsimName = 'example'
 
 # Make an empty list to hold all the binner configs
 binList = []

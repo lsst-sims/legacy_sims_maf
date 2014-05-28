@@ -10,16 +10,16 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 # Set the output directory
 root.outputDir = './Most_simple_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite'}
+root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
 # Name of the output table in the database
-root.opsimNames = ['opsim_small']
+root.opsimName = 'example'
 
-# Configure a metric to run. Compute the mean on the final delivered seeing.  Use the IdentityMetric as a summary stat to pass the result to the summaryStats file.
+# Configure a metric to run. Compute the mean on the final delivered seeing.  
 metric = makeMetricConfig('MeanMetric', params=['finSeeing'],
-                          summaryStats={'IdentityMetric':{}})
+                          summaryStats={'RmsMetric':{}})
 
-# Configure a binner.  Use the UniBinner to simply take all the data.
-binner = makeBinnerConfig('UniBinner', metricDict=makeDict(metric),
+# Configure a binner.  Use the Healpixbinner to compute the metric at points in the sky.  Set the constraint as an empty string so all data is returned.
+binner = makeBinnerConfig('HealpixBinner', metricDict=makeDict(metric),
                           constraints=[''])
 
 root.binners = makeDict(binner)

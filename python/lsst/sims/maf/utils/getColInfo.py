@@ -39,6 +39,7 @@ class ColInfo(object):
         unitDict['normairmass'] = 'airmass/(minimum possible airmass)'
         unitDict['ra_pi_amp'] = 'arcsec'
         unitDict['dec_pi_amp'] = 'arcsec'
+        unitDict['decOnlyDither'] = 'rad'
         if colName in unitDict:
             return unitDict[colName]
         else:
@@ -54,7 +55,8 @@ class ColInfo(object):
         #  methods, at whatever point the derived data columns will be calculated.
         sourceDict = {'normairmass': addCols.NormAirmass(),
                       'ra_pi_amp': addCols.ParallaxFactor(),
-                      'dec_pi_amp': addCols.ParallaxFactor()}
+                      'dec_pi_amp': addCols.ParallaxFactor(),
+                      'decOnlyDither':addCols.DecOnlyDither()}
         if colName in sourceDict:
             return sourceDict[colName]
         else:

@@ -18,7 +18,7 @@ from .baseBinner import BaseBinner
 
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
-    def __init__(self, nside=256, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
+    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
         """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1,spatialkey2=spatialkey2, badval=hp.UNSEEN) 
@@ -212,7 +212,6 @@ class HealpixBinner(BaseSpatialBinner):
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        cl = hp.anafast(metricValue.filled(self.badval))
         if removeDipole:
             cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
         else:

@@ -6,6 +6,9 @@ def opsimStack(arrays):
     """Given a list of numpy rec arrays, it returns the merged result. """
     return rfn.merge_arrays(arrays, flatten=True, usemask=False)
 
+# If adding a new column, be sure to update getUnits and getDataSource in .getColInfo so the mafDriver can find it.  Should this be changed so that all the stackers know their units and it's done automatically?
+
+
 ### Normalized airmass
 
 class NormAirmass(object):
@@ -73,3 +76,33 @@ class ParallaxFactor(object):
         else:
             simData = opsimStack([simData,ra_pi_amp,dec_pi_amp]) 
         return simData
+
+# Add a new dither pattern
+
+class DecOnlyDither(object):
+    """Dither the position of pointings in dec only.  """
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
+                 nightStep=1, nSteps=5, stepSize=0.2):
+        self.name='decDither'
+        self.cols=[raCol,decCol,nightCol]
+        self.raCol = raCol
+        self.decCol = decCol
+        self.nightCol = nightCol
+        self.nightStep=nightStep
+        self.nSteps = nSteps
+        self.stepSize = stepSize
+        
+    def run(self, simData):
+        off1 = np.arange(self.nSteps+1)*self.stepSize
+        off2 = off1[::-1][1:]
+        off3 = -1.*off1[1:]
+        off4 = off3[::-1][1:]
+        offsets = np.radians(np.concatenate((off1,off2,off3,off4) ))
+        uoffsets = np.size(offsets)
+        nightIndex = simData[self.nightCol]%uoffsets
+        decDither = np.zeros(np.size(simData), dtype=[('decOnlyDither','float')])
+        decDither['decOnlyDither'] = simData[self.decCol]+offsets[nightIndex]
+        simData = opsimStack([simData, decDither])
+        return simData
+    
+                             

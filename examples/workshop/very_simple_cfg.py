@@ -10,9 +10,9 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 # Set the output directory
 root.outputDir = './Very_simple_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite'}
+root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
 # Name of the output table in the database
-root.opsimNames = ['opsim_small']
+root.opsimName = 'example'
 
 # Make an empty list to hold all the binner configs
 binList = []
@@ -22,7 +22,7 @@ constraints = ["filter = '%s'"%f for f in ['u','g','r','i','z','y'] ]
 
 # Configure a metric to run. Compute the mean on the final delivered seeing.  Use the IdentityMetric as a summary stat to pass the result to the summaryStats file.
 metric1 = makeMetricConfig('MeanMetric', params=['finSeeing'])
-metric2 = makeMetricConfig('Coaddm5Metric', params=[])
+metric2 = makeMetricConfig('Coaddm5Metric')
 
 # Configure a binner.  Use the Healpix binner to make sky maps and power spectra.
 binner = makeBinnerConfig('HealpixBinner', metricDict=makeDict(metric1,metric2),

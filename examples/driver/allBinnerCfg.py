@@ -8,8 +8,8 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
-root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-root.opsimNames = ['opsim_small']
+root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
+root.opsimName = 'example'
 #root.dbAddress ='sqlite:///opsim.sqlite'
 #root.opsimNames = ['opsim_small']
 
