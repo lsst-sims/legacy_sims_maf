@@ -11,10 +11,10 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 root.outputDir = './Most_simple_out'
 # Set the database to use (the example db included in the git repo)
 root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
-# Name of the output table in the database
+# Name of this run (filename base)
 root.opsimName = 'example'
 
-# Configure a metric to run. Compute the mean on the final delivered seeing.  
+# Configure a metric to run. Compute the mean on the final delivered seeing.  Once the mean seeing has been computed everywhere on the sky, compute the RMS as a summary statistic.
 metric = makeMetricConfig('MeanMetric', params=['finSeeing'],
                           summaryStats={'RmsMetric':{}})
 
