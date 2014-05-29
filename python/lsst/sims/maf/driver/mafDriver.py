@@ -147,6 +147,7 @@ class MafDriver(object):
         """Loop over each binner and calc metrics for that binner. """
         summary_stats=[]
         summary_stats.append('opsimname,binnertype,sql where, metric name, summary stat name, value')
+        allOutfiles = [] # list to hold all the npz and png files
         for opsimName in self.config.opsimNames:
             for j, constr in enumerate(self.constraints):
                 # Find which binners have a matching constraint 
@@ -190,10 +191,10 @@ class MafDriver(object):
                             binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                         gm.setBinner(binner)
                         metricNames_in_gm = gm.setMetrics(self.metricList[binner.index])
-                        comment = constr.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
+                        comment = constr#.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
                         gm.runBins(self.data, simDataName=opsimName, metadata=binner.metadata, comment=comment)
                         gm.reduceAll()
-                        # Replace the plotParams for selected metricNames
+                        # Replace the plotParams for selected metricNames.  Maybe I did this as a way to clobber plotDicts for reduced complex metric plots?
                         for mName in binner.plotConfigs:
                             gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
                         gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
@@ -218,6 +219,9 @@ class MafDriver(object):
                         # Return Output Files - get file output key back. Verbose=True, prints to screen.
                         outFiles = gm.returnOutputFiles(verbose=False)
                         # Loop through the outFiles and attach them to the correct metric in self.metricList.  This would probably be better with a dict.
+                        for filedict in outFiles:
+                            allOutfiles.append(filedict)
+                        
                         outfile_names = []
                         outfile_metricNames = []
                         for outfile in outFiles:
@@ -275,9 +279,10 @@ class MafDriver(object):
         # Open up a file and print the results of verison and date.
         datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
         print >>datefile, 'date, version, fingerprint '
-        #import pdb ; pdb.set_trace()
         print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],versionInfo['__fingerprint__'])
         datefile.close()
+        # Save the list of output files
+        np.save(self.config.outputDir+'/'+'outputFiles.npy', allOutfiles)
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         
