@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.stats as stats
 from .complexMetrics import ComplexMetric
 from baseMetric import BaseMetric
 
@@ -176,7 +175,7 @@ class UniformityMetric(BaseMetric):
 
 
     def run(self,dataSlice):
-        """Based on how a KS-Test _actually_ works...
+        """Based on how a KS-Test works:
         Look at the cumulative distribution of observations dates,
         and compare to a uniform cumulative distribution.
         Perfectly uniform observations will score a 0, while pure non-uniformity is 1."""
