@@ -14,6 +14,7 @@ from lsst.sims.maf.utils.percentileClip import percentileClip as pc
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
+import warnings
 
 
 class HealpixBinner(BaseSpatialBinner):
@@ -84,8 +85,8 @@ class HealpixBinner(BaseSpatialBinner):
         filenames=[]
         filetypes=[]
         figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('metric data type not float or int, returning False')
+        if not ((metricValues.dtype == 'float') or (metricValues.dtype == 'int') ) or (metricValues.compressed().size == 0):
+            warnings.warn('metric data type not float or int, or no unmasked data, returning False')
             return False
         
         figs['hist'] = self.plotHistogram(metricValues, **kwargs)

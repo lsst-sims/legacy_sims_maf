@@ -24,7 +24,7 @@ colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 filters=['r']
 
 binList=[]
-nside=128
+nside=64
 leafsize = 100 # For KD-tree
 
 
@@ -60,7 +60,7 @@ m3 = makeMetricConfig('ParallaxMetric')
 m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
 m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
-                           metricDict=makeDict(m2,m3,m4,m5),
+                           metricDict=makeDict(m1,m2,m3,m4,m5),
                            constraints=[''], setupKwargs={"leafsize":leafsize})
 binList.append(binner)
 
