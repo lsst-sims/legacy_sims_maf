@@ -171,8 +171,13 @@ class BaseSpatialBinner(BaseBinner):
                 ylog = True
             else:
                 ylog = False
-        n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
-                           cumulative=cumulative, range=histRange, label=label, color=color)        
+        if metricValue.compressed().size > 0:
+            n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
+                               cumulative=cumulative, range=histRange, label=label, color=color)  
+        else:
+            n,b,p = plt.hist([0], bins=bins, histtype='step', log=ylog,
+                               cumulative=cumulative, range=histRange, label=label, color=color)
+
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):        
             return yaxisformat % (y * scale)

@@ -24,7 +24,7 @@ colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 filters=['r']
 
 binList=[]
-nside=128
+nside=64
 leafsize = 100 # For KD-tree
 
 
