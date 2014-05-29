@@ -25,7 +25,7 @@ def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
     return dbAddress
 
 
-class Database():
+class Database(object):
     """Base class for database access."""
     def __init__(self, dbAddress, dbTables=None, dbTablesIdKey=None, defaultdbTables=None, defaultdbTablesIdKey=None,
                  chunksize=1000000, **kwargs):
@@ -40,16 +40,27 @@ class Database():
         self.dbAddress = dbAddress
         self.chunksize = chunksize
         # Add default values to provided input dictionaries (if not present in input dictionaries)
-        for k in defaultdbTables:
-            if k not in dbTables:
-                dbTables[k] = defaultdbTables[k]
-        for k in defaultdbTablesIdKey:
-            if k not in dbTablesIdKey:
-                dbTablesIdKey[k] = defaultdbTablesIdKey[k]
+        if dbTables == None:
+            self.dbTables = defaultdbTables
+        else:
+            self.dbTables = dbTables
+            if defaultdbTables is not None:
+                for k in defaultdbTables:
+                    if k not in dbTables:
+                        self.dbTables[k] = defaultdbTables[k]
+        if dbTablesIdKey == None:
+            dbTablesIdKey = defaultdbTablesIdKey
+        else:
+            if defaultdbTablesIdKey is not None:
+                for k in defaultdbTablesIdKey:
+                    if k not in dbTablesIdKey:
+                        dbTablesIdKey[k] = defaultdbTablesIdKey[k]
         # Connect to database tables and store connections.
         self.tables = {}
-        for k in dbTables:
-            self.tables[k] = Table(dbTable[k], dbTableIDKey[k], dbAddress)
+        for k in self.dbTables:
+            if k not in dbTablesIdKey:
+                raise Exception('Trying to create db table %s but have no dbTableIdKey to match' %(k))
+            self.tables[k] = Table(self.dbTables[k], dbTablesIdKey[k], dbAddress)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
         """Get data from database that is destined to be used for metric evaluation."""
@@ -59,10 +70,11 @@ class Database():
         """Get config (metadata) info on source of data for metric calculation."""
         raise NotImplementedError('Implement in subclass')
                 
-    def queryDatabase(self, sqlQuery):
+    def queryDatabase(self, table, sqlQuery):
         """Execute a general sql query (useful for arbitary joins or queries not in convenience functions).
-        Returns numpy recarray with results."""
-        table = self.tables[self.tables.keys()[0]]
+        At present, table must be specified and all columns returned by query must be part of 'table'.
+        Returns numpy recarray with results.
+        """
         results = table.engine.execute(sqlQuery)
         data = table._postprocess_results(results.fetchall())
         return data

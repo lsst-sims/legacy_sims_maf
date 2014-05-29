@@ -1,9 +1,13 @@
 __author__ = 'simon'
 
-from lsst.sims.catalogs.generation.db import DBObject, ChunkIterator
 import numpy as np
 from sqlalchemy import func
 from sqlalchemy.sql import expression
+
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", UserWarning)
+    from lsst.sims.catalogs.generation.db import DBObject, ChunkIterator
 
 class Table(DBObject):
     skipRegistration = True
@@ -82,7 +86,7 @@ class Table(DBObject):
                     query = query.add_column(expression.literal_column(val).label(col))
         return query
 
-    def query_columns(self, colnames=None, chunk_size=None, constraint=None, groupByCol=None, numLimit=None):
+    def query_columns_Iterator(self, colnames=None, chunk_size=None, constraint=None, groupByCol=None, numLimit=None):
         doGroupBy = not groupByCol is None
         query = self._get_column_query(doGroupBy, colnames=colnames)
         if constraint is not None:
@@ -96,14 +100,14 @@ class Table(DBObject):
         return ChunkIterator(self, query, chunk_size)
 
 
-    def query_columns_RecArray(self, colnames=None, chunk_size=1000000, constraint=None, 
-                               groupByCol=None, numLimit=None):
+    def query_columns_Array(self, colnames=None, chunk_size=1000000, constraint=None, 
+                            groupByCol=None, numLimit=None):
         """Same as query_columns, but returns a numpy rec array instead. """
         # Query the database, chunk by chunk (to reduce memory footprint). 
         # If colnames == None, then will retrieve all columns in table.
-        results = self.query_columns(colnames=colnames, chunk_size=chunk_size, 
-                                     constraint=constraint, groupByCol=groupByCol, 
-                                     numLimit=numLimit)
+        results = self.query_columns_Iterator(colnames=colnames, chunk_size=chunk_size,
+                                              constraint=constraint, groupByCol=groupByCol,
+                                              numLimit=numLimit)
         rescount = 0
         chunkList = []
         for result in results:

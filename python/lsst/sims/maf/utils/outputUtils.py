@@ -1,6 +1,6 @@
 import os, sys
-import numpy as np
 import warnings
+import numpy as np
 
 # Generic line formatter (to let you specify delimiter between text fields)
 def _myformat(args, delimiter=' '):
@@ -15,6 +15,61 @@ def _myformat(args, delimiter=' '):
         else:
             writestring += '%s%s' %(a, delimiter)
     return writestring
+
+def _printdict(content, label, filehandle=None, level=0, delimiter=' '):
+    # Get set up with basic file output information.
+    if filehandle is None:
+        filehandle = sys.stdout
+    # And set character to use to indent sets of parameters related to a single dictionary.
+    baseindent = '%s' %(delimiter)
+    indent = ''
+    for i in range(level-1):
+        indent += '%s' %(baseindent)    
+    # Print data (this is also the termination of the recursion if given nested dictionaries).
+    if not isinstance(content, dict):
+        if isinstance(content, str) or isinstance(content, float) or isinstance(content, int):
+            print >> filehandle, '%s%s%s%s' %(indent, label, delimiter, str(content))
+        else:
+            if isinstance(content, np.ndarray):
+                if content.dtype.names is not None:
+                    print >> filehandle, '%s%s%s' %(indent, delimiter, label)
+                    for element in content:
+                        print >> filehandle, '%s%s%s%s%s' %(indent, delimiter, indent, delimiter, _myformat(element))
+                else:
+                    print >> filehandle, '%s%s%s%s' %(indent, label, delimiter, _myformat(content))
+            else:
+                print >> filehandle, '%s%s%s%s' %(indent, label, delimiter, _myformat(content))
+        return
+    # Allow user to specify print order of (some or all) items in order via 'keyorder'.
+    #  'keyorder' is list stored in the dictionary.
+    if 'keyorder' in content:
+        orderkeys = content['keyorder']
+        # Check keys in 'keyorder' are actually present in dictionary : remove those which aren't.
+        missingkeys = set(orderkeys).difference(set(content.keys()))
+        for m in missingkeys:
+            orderkeys.remove(m)
+        otherkeys = sorted(list(set(content.keys()).difference(set(orderkeys))))        
+        keys = orderkeys + otherkeys
+        keys.remove('keyorder')
+    else:
+        keys = sorted(content.keys())
+    # Print data from dictionary.
+    print >> filehandle, '%s%s%s' %(indent, delimiter, label)
+    level += 1
+    for k in keys:
+        _printdict(content[k], k, filehandle, level, delimiter)
+    level -= 1
+
+
+
+def pp(config, outfile=None, delimiter=' ', header=None):
+    if outfileRoot != None:
+        f = open(outfileRoot, 'w')
+    else:
+        f = sys.stdout
+    if header is not None:
+        print >>f, header
+
 
 # Save config info (for use in presentation layer)
 def printConfigs(configDict, outfileRoot=None, delimiter=' ', printPropConfig=True, printGeneralConfig=True):
