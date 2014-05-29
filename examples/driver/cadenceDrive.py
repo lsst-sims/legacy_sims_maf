@@ -4,7 +4,7 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 root.outputDir ='./Cadence'
 
-small = True # Use the small database included in the repo
+small = False # Use the small database included in the repo
 
 if small:
     root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
@@ -61,7 +61,7 @@ m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
 m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1,m2,m3,m4,m5),
-                           constraints=[''], setupKwargs={"leafsize":leafsize})
+                           constraints=['night < 365'], setupKwargs={"leafsize":leafsize})
 binList.append(binner)
 
 

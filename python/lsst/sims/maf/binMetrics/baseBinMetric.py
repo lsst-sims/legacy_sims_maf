@@ -351,18 +351,25 @@ class BaseBinMetric(object):
         mname = self._dupeMetricName(metricName)
         # title used for all plot titles
         if 'title' not in pParams:
-           pParams['title'] = self.simDataName[metricName] + ' ' + self.comment[metricName]
-           pParams['title'] += ': ' + mname
+           title = self.simDataName[metricName] + ' ' + self.comment[metricName]
+           title += ': ' + mname
+        else:
+           title = None
         if 'units' not in pParams:
-           pParams['units'] = mname
+           units = mname
            if '_units' in pParams:
-              pParams['units'] += ' ('+ pParams['_units'] + ')'
+              units += ' ('+ pParams['_units'] + ')'
+        else:
+           units = pParams['units']
         if 'xlabel' not in pParams:
-           pParams['xlabel'] = pParams['units']
+           xlabel = units
+        else:
+           xlabel = None
         
         if hasattr(self.binner, 'plotData'):
            plotResults=self.binner.plotData(self.metricValues[metricName], savefig=savefig,
-                                            filename=outfile, **pParams)
+                                            filename=outfile, title=title, units=units, 
+                                            xlabel=xlabel, **pParams)
            if plotResults:
               for filename,filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
                  self._addOutputFileList(filename, metricName, filetype)
