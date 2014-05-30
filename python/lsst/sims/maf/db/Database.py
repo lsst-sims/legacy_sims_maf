@@ -27,15 +27,13 @@ def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
 
 class Database(object):
     """Base class for database access."""
-    def __init__(self, dbAddress, dbTables=None, dbTablesIdKey=None, defaultdbTables=None, defaultdbTablesIdKey=None,
+    def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
                  chunksize=1000000, **kwargs):
-        """Initiate database object to handle queries of the database.
+        """
+        Instantiate database object to handle queries of the database.
 
         dbAddress = sqlalchemy connection string to database
-        dbTables = dictionary of (names of tables in the code) : (names of tables in the database)
-        dbTableIDKey = dictionary of (names of tables in the code) : (primary key column name)
-        Note that for the dbTables and dbTableIDKey there are defaults in the init --
-          you can override (specific key:value pairs only if desired) by passing a dictionary
+        dbTables = dictionary of names of tables in the code : [names of tables in the database, primary keys]
         """
         self.dbAddress = dbAddress
         self.chunksize = chunksize
@@ -48,33 +46,34 @@ class Database(object):
                 for k in defaultdbTables:
                     if k not in dbTables:
                         self.dbTables[k] = defaultdbTables[k]
-        if dbTablesIdKey == None:
-            dbTablesIdKey = defaultdbTablesIdKey
-        else:
-            if defaultdbTablesIdKey is not None:
-                for k in defaultdbTablesIdKey:
-                    if k not in dbTablesIdKey:
-                        dbTablesIdKey[k] = defaultdbTablesIdKey[k]
         # Connect to database tables and store connections.
-        self.tables = {}
-        for k in self.dbTables:
-            if k not in dbTablesIdKey:
-                raise Exception('Trying to create db table %s but have no dbTableIdKey to match' %(k))
-            self.tables[k] = Table(self.dbTables[k], dbTablesIdKey[k], dbAddress)
+        if self.dbTables is None:
+            self.tables = None
+        else:
+            self.tables = {}
+            for k in self.dbTables:
+                if len(self.dbTables[k]) != 2:
+                    raise Exception('Need table name plus primary key for each value in dbTables. Missing data for %s:%s'
+                                    %(k, self.dbTables[k]))
+                self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], dbAddress)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
-        """Get data from database that is destined to be used for metric evaluation."""
+        """Get data from database that is destined to be used for metric evaluation.
+        """
         raise NotImplementedError('Implement in subclass')
 
     def fetchConfig(self, *args, **kwargs):
-        """Get config (metadata) info on source of data for metric calculation."""
+        """Get config (metadata) info on source of data for metric calculation.
+        """
         raise NotImplementedError('Implement in subclass')
                 
-    def queryDatabase(self, table, sqlQuery):
-        """Execute a general sql query (useful for arbitary joins or queries not in convenience functions).
-        At present, table must be specified and all columns returned by query must be part of 'table'.
+    def queryDatabase(self, tableName, sqlQuery):
+        """
+        Execute a general sql query (useful for arbitary joins or queries not in convenience functions).
+        At present, 'table' (name) must be specified and all columns returned by query must be part of 'table'.
         Returns numpy recarray with results.
         """
-        results = table.engine.execute(sqlQuery)
-        data = table._postprocess_results(results.fetchall())
+        t = self.tables[tableName]
+        results = t.engine.execute(sqlQuery)
+        data = t._postprocess_results(results.fetchall())
         return data

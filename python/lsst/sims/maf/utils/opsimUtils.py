@@ -2,7 +2,6 @@
 
 import os, sys
 import numpy as np
-import warnings
 
 def scaleStretchDesign(self, opsimDatabase, runLengthParam='nRun'):
     """Scale the benchmark numbers for total number of visits and coadded depth (both design and stretch goals),

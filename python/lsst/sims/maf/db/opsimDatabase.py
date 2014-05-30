@@ -11,54 +11,34 @@ class OpsimDatabase(Database):
         be any database holding those opsim output tables.).
 
         dbAddress = sqlalchemy connection string to database
-        dbTables = dictionary of (names of tables in the code) : (names of tables in the database)
-        dbTablesIDKey = dictionary of (names of tables in the code) : (primary key column name)
-        Note that for the dbTables and dbTablesIDKey there are defaults in the init --
-          you can override (specific key:value pairs only if desired) by passing a dictionary
+        dbTables = dictionary of names of tables in the code : [names of tables in the database, names of primary keys]
+        Note that for the dbTables there are defaults in the init --
+          you can override (specific key:value pairs only if desired) by passing a dictionary in dbTables.
         """
         self.dbAddress = dbAddress
         # Default dbTables and dbTableIDKey values:
-        defaultdbTables={'outputTable':'Output',
-                  'cloudTable':'Cloud',
-                  'seeingTable':'Seeing',
-                  'fieldTable':'Field',
-                  'sessionTable':'Session',
-                  'configTable':'Config',
-                  'proposalTable':'Proposal',
-                  'proposalFieldTable':'Proposal_Field',
-                  'obsHistoryTable':'ObsHistory',
-                  'obsHistoryProposalTable':'Obshistory_Proposal',
-                  'sequenceHistoryTable':'SeqHistory',
-                  'sequenceHistoryObsHistoryTable':'SeqHistory_ObsHistory',
-                  'missedHistoryTable':'MissedHistory',
-                  'sequenceHistoryMissedHistoryTable':'SeqHistory_MissedHistory',
-                  'slewActivitiesTable':'SlewActivities',
-                  'slewHistoryTable':'SlewHistory',
-                  'slewMaxSpeedsTable':'SlewMaxSpeeds',
-                  'slewStateTable':'SlewState'
-                  }
-        defaultdbTablesIdKey = {'outputTable':'obsHistID',
-                        'cloudTable':'cloudID',
-                        'seeingTable':'seeingID',
-                        'fieldTable':'fieldID',
-                        'sessionTable':'sessionID',
-                        'configTable':'configID',
-                        'proposalTable':'propID',
-                        'proposalFieldTable':'proposal_field_id',
-                        'obsHistoryTable':'obsHistID',
-                        'obsHistoryProposalTable':'obsHistory_propID',
-                        'sequenceHistoryTable':'sequenceID',
-                        'sequenceHistoryObsHistoryTable':'seqhitsory_obsHistID',
-                        'sequenceHistoryMissedHistoryTable':'seqhistory_missedHistID',
-                        'missedHistoryTable':'missedHistID',
-                        'slewActivitiesTable':'slewActivityID',
-                        'slewHistoryTable':'slewID',
-                        'slewMaxSpeedsTable':'slewMaxSpeedID',
-                        'slewStateTable':'slewIniStatID'
-                        }
+        defaultdbTables={'outputTable':['Output', 'obsHistID'],
+                         'cloudTable':['Cloud', 'cloudID'],
+                         'seeingTable':['Seeing', 'seeingID'],
+                         'fieldTable':['Field', 'fieldID'],
+                         'sessionTable':['Session', 'sessionID'],
+                         'configTable':['Config', 'configID'],
+                         'proposalTable':['Proposal', 'propID'],
+                         'proposalFieldTable':['Proposal_Field', 'proposal_field_id'],
+                         'obsHistoryTable':['ObsHistory', 'obsHistID'],
+                         'obsHistoryProposalTable':['Obshistory_Proposal', 'obsHistory_propID'],
+                         'sequenceHistoryTable':['SeqHistory', 'sequenceID'],
+                         'sequenceHistoryObsHistoryTable':['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
+                         'missedHistoryTable':['MissedHistory', 'missedHistID'],
+                         'sequenceHistoryMissedHistoryTable':['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
+                         'slewActivitiesTable':['SlewActivities', 'slewActivityID'],
+                         'slewHistoryTable':['SlewHistory', 'slewID'],
+                         'slewMaxSpeedsTable':['SlewMaxSpeeds', 'slewMaxSpeedID'],
+                         'slewStateTable':['SlewState', 'slewIniStatID']
+                         }
         # Call base init method to set up all tables and place default values into dbTable/dbTablesIdKey if not overriden.
-        super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables, dbTablesIdKey=dbTablesIdKey,
-                                            defaultdbTables=defaultdbTables, defaultdbTablesIdKey=defaultdbTablesIdKey,
+        super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
+                                            defaultdbTables=defaultdbTables, 
                                             *args, **kwargs)
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         
@@ -78,10 +58,10 @@ class OpsimDatabase(Database):
                                                     colnames = colnames, 
                                                     groupByCol = 'expMJD')
         else:
-            simdata = table.query_columns_Array(chunk_size=self.chunksize, 
-                                                constraint = sqlconstraint,
-                                                colnames = colnames)
-        return simdata
+            metricdata = table.query_columns_Array(chunk_size=self.chunksize,
+                                                   constraint = sqlconstraint,
+                                                   colnames = colnames)
+        return metricdata
 
 
     def fetchFieldsFromOutputTable(self, sqlconstraint, raColName='fieldID', decColName='fieldDec'):
@@ -103,11 +83,11 @@ class OpsimDatabase(Database):
         # Note that you can't select any other sql constraints (such as filter). 
         # This will select fields which were requested by a particular proposal or proposals,
         #   even if they didn't get any observations. 
-        table = self.tables['fieldTable']
+        tableName = 'fieldTable'
         if propID != None:
-            query = 'select f.fieldID, f.fieldRA, f.fieldDec from %s as f' %(self.dbTables['fieldTable'])
+            query = 'select f.fieldID, f.fieldRA, f.fieldDec from %s as f' %(self.dbTables['fieldTable'][0])
             if propID != None:
-                query += ', %s as p where (p.Field_fieldID = f.fieldID) ' %(self.dbTables['proposalFieldTable'])
+                query += ', %s as p where (p.Field_fieldID = f.fieldID) ' %(self.dbTables['proposalFieldTable'][0])
                 if hasattr(propID, '__iter__'): # list of propIDs
                     query += ' and ('
                     for pID in propID:
@@ -117,8 +97,9 @@ class OpsimDatabase(Database):
                     query += ')'
                 else: # single proposal ID.
                     query += ' and (p.Proposal_propID = %d) ' %(int(propID))
-            fielddata = self.queryDatabase(table, query)
+            fielddata = self.queryDatabase(tableName, query)
         else:
+            table = self.tables[tableName]
             fielddata = table.query_columns_Array(colnames=['fieldID', 'fieldRA', 'fieldDec'],
                                                   groupByCol = 'fieldID')
         if degreesToRadians:
@@ -155,7 +136,7 @@ class OpsimDatabase(Database):
         runLength = float(runLength['paramValue'][0]) # Years
         return runLength
 
-    def getSeeingColName(self):
+    def fetchSeeingColName(self):
         """Check whether the seeing column is 'seeing' or 'finSeeing' (v2.x simulator vs v3.0 simulator)."""
         # Really this is just a bit of a hack to see whether we should be using seeing or finseeing.
         # With time, this should probably just go away.
@@ -172,11 +153,11 @@ class OpsimDatabase(Database):
         print 'Using %s for seeing column name.' %(seeingcol)
         return seeingcol
 
-    def getOpsimRunName(self):
+    def fetchOpsimRunName(self):
         """Pull opsim run name (machine name + session ID) from Session table. Return string."""
         table = self.tables['sessionTable']
         res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
-        runName = str(res['sessionHost'][0]) + str(res['sessionID'][0])
+        runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
         return runName
     
     def fetchConfig(self):
@@ -201,7 +182,7 @@ class OpsimDatabase(Database):
             '  RunDate %s' %(results['sessionDate'][0])
         configSummary['RunInfo'] = {}        
         configSummary['RunInfo']['RunComment'] = results['runComment']
-        configSummary['RunInfo']['RunName'] = self.getOpsimRunName()
+        configSummary['RunInfo']['RunName'] = self.fetchOpsimRunName()
         # Pull out a few special values to put into summary.
         table = self.tables['configTable']
         constraint = 'moduleName="instrument" and paramName="Telescope_AltMin"'
@@ -225,7 +206,7 @@ class OpsimDatabase(Database):
         #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
         # Match proposal IDs with names.
         query = 'select propID, propConf, propName from Proposal group by propID'
-        propdata = self.queryDatabase(self.tables['proposalTable'], query)
+        propdata = self.queryDatabase('proposalTable', query)
         # Make 'nice' proposal names
         propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata['propConf']])
         # Get 'nice' module names
