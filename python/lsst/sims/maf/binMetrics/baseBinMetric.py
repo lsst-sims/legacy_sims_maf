@@ -344,32 +344,28 @@ class BaseBinMetric(object):
         """Create all plots for 'metricName' ."""
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         if metricName in self.plotParams:
-           pParams = self.plotParams[metricName]
+           pParams = self.plotParams[metricName].copy()
         else:
            pParams = {}
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
         # title used for all plot titles
         if 'title' not in pParams:
-           title = self.simDataName[metricName] + ' ' + self.comment[metricName]
-           title += ': ' + mname
+           pParams['title'] = self.simDataName[metricName] + ' ' + self.comment[metricName]
+           pParams['title'] += ': ' + mname
         else:
            title = None
         if 'units' not in pParams:
-           units = mname
+           pParams['units'] = mname
            if '_units' in pParams:
-              units += ' ('+ pParams['_units'] + ')'
-        else:
-           units = pParams['units']
+              pParams['units'] += ' ('+ pParams['_units'] + ')'
         if 'xlabel' not in pParams:
-           xlabel = units
-        else:
-           xlabel = None
+           pParams['xlabel'] = pParams['units']
+         
         
         if hasattr(self.binner, 'plotData'):
            plotResults=self.binner.plotData(self.metricValues[metricName], savefig=savefig,
-                                            filename=outfile, title=title, units=units, 
-                                            xlabel=xlabel, **pParams)
+                                            filename=outfile, **pParams)
            if plotResults:
               for filename,filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
                  self._addOutputFileList(filename, metricName, filetype)
