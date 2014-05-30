@@ -81,7 +81,8 @@ class MafConfig(pexConfig.Config):
     opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='')
-    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':'','fieldTable':'',  'sessionID':'' , 'proposalTable':'' , 'proposalID':'' })
+    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str,
+                                    default={'dbAddress':'','outputTable':''})
     #hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig, default={})
     
 def makeDict(*args):

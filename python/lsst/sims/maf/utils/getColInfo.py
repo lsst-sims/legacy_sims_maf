@@ -35,7 +35,10 @@ class ColInfo(object):
                     'skybrightness_modified': 'mag/sq arcsec',
                     '5sigma': 'mag',
                     '5sigma_modified':'mag',
-                    '5sigma_ps' : 'mag'}
+                    '5sigma_ps' : 'mag',
+                    'fivesigma':'mag',
+                    'fivesigma_modified':'mag',
+                    'fivesigma_ps':'mag'}
         unitDict['normairmass'] = 'airmass/(minimum possible airmass)'
         unitDict['ra_pi_amp'] = 'arcsec'
         unitDict['dec_pi_amp'] = 'arcsec'

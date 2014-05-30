@@ -3,15 +3,13 @@
 import os, sys
 import numpy as np
 
-def scaleStretchDesign(self, opsimDatabase, runLengthParam='nRun'):
+def scaleStretchDesign(runLength):
     """Scale the benchmark numbers for total number of visits and coadded depth (both design and stretch goals),
-    based on the length of the opsim run.
+    based on the length of the opsim run (runLength, in years).
 
     (i.e. design and stretch goals have default values: scale these from the nominal 10 years to whatever is the
     length of the current opsim run).
     Note that the number of visits is scaled to a truncated (floor) number, not rounded. """
-    # Get the run length from the opsim database.
-    runLength = opsimDatabase.fetchRunLength(runLengthParam=runLengthParam)
     # Set baseline (default) numbers.
     baseline = 10. # Baseline length (Years)
     nvisitDesign={'u':56,'g':80, 'r':184, 'i':184, 'z':160, 'y':160} # 10-year Design Specs
@@ -23,7 +21,7 @@ def scaleStretchDesign(self, opsimDatabase, runLengthParam='nRun'):
     # Scale the number of visits.
     if runLength != baseline:
         for key in nvisitDesign:
-            nvisitsDesign[key] = np.floor(nvisitsDesign[key] * runLength / baseline)
+            nvisitDesign[key] = np.floor(nvisitDesign[key] * runLength / baseline)
             nvisitStretch[key] = np.floor(nvisitStretch[key]* runLength / baseline)
     # Scale the coaddded depth.
     coaddedDepthDesign={}

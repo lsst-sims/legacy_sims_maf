@@ -1,11 +1,12 @@
 import os, sys
 import numpy as np
+import warnings
 from .table import Table
 from .database import Database
 from lsst.sims.maf.utils.getDateVersion import getDateVersion
 
 class OpsimDatabase(Database):
-    def __init__(self, dbAddress, dbTables=None, dbTablesIdKey=None, *args, **kwargs):
+    def __init__(self, dbAddress, dbTables=None, *args, **kwargs):
         """Instantiate object to handle queries of the opsim database.
         (In general these will be the sqlite database files produced by opsim, but could
         be any database holding those opsim output tables.).
@@ -40,6 +41,7 @@ class OpsimDatabase(Database):
         super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
                                             defaultdbTables=defaultdbTables, 
                                             *args, **kwargs)
+        # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         
             
@@ -58,7 +60,7 @@ class OpsimDatabase(Database):
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
                                                    constraint = sqlconstraint,
-                                                   colnames = colnames, groupBy = groupBy)
+                                                   colnames = colnames, groupByCol = groupBy)
         elif distinctExpMJD:
             metricdata = table.query_columns_Array(chunk_size = self.chunksize, 
                                                     constraint = sqlconstraint,

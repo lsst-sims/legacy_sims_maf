@@ -17,6 +17,8 @@ class MafDriver(object):
 
     def __init__(self, configOverrideFilename=None):
         """Load up the configuration and set the bin and metric lists """
+        # Read configuration parameters, using MafConfig to interpret from
+        #  python-y config file to pex_config self.config.VALUE 
         self.config=MafConfig()
         # Load any config file
         if configOverrideFilename is not None:
@@ -28,9 +30,21 @@ class MafDriver(object):
         self.config.validate()
         self.config.freeze()
 
-        # Check for output directory, make if needed
+        # Check for output directory, make if needed.
         if not os.path.isdir(self.config.outputDir):
             os.makedirs(self.config.outputDir)
+
+        # Set up database connection.
+        if 'outputTable' in self.config.dbAddress:
+            # Connect to just the output table.
+            self.opsimdb = db.OpsimDatabase(self.config.dbAddress['dbAddress'],
+                                            dbTables={'outputTable':[self.config.dbAddress['outputTable'], 'obsHistID']},
+                                            defaultdbTables = None)
+        else:
+            # For a basic db connection to the sqlite db files. 
+            self.opsimdb = db.OpsimDatabase(self.config.dbAddress['dbAddress'])
+
+        self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
 
         # Construct the binners and metric objects
         self.binList = []
@@ -114,18 +128,45 @@ class MafDriver(object):
             for col in stacker.cols:
                 dbcolnames.append(col)
         dbcolnames=list(set(dbcolnames))
-        self.data = self.opsimdb.fetchMetricData(constraint=constraint, colnames=dbcolnames, groupBy = groupBy)
+        self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint, colnames=dbcolnames, groupBy = groupBy)
 
         for stacker in stackers:
             self.data = stacker.run(self.data)
             
 
 
-    def getFieldData(self, binner):
+    def getFieldData(self, binner, sqlconstraint):
         """Given an opsim binner, generate the FieldData """
-        if 'fieldTable' in self.config.dbAddress.keys():
-            if not hasattr(self, 'fieldData'): # Only pull the data once if getting it from the database
-                self.fieldData = self.opsimdb.fetchFieldsFromFieldTable(proposalID=fieldDataInfo['proposalID'])
+        if 'propID' not in sqlconstraint:
+            propids = self.allpropids
+        else:
+            # example sqlconstraint: filter = r and (propid = 219 or propid = 155) and propid!= 90
+            sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
+            # Allow for choosing all but a particular proposal.
+            sqlconstraint = sqlconstraint.replace('! =' , ' !=')
+            sqlconstraint = sqlconstraint.replace('  ', ' ')
+            sqllist = sqlconstraint.split(' ')
+            propids = []
+            nonpropids = []
+            i = 0
+            while i < len(sqllist):
+                if sqllist[i].lower() == 'propid':
+                    i += 1
+                    if sqllist[i] == "=":
+                        i += 1
+                        propids.append(int(sqllist[i]))
+                    elif sqllist[i] == '!=':
+                        i += 1
+                        nonpropids.append(int(sqllist[i]))
+                i += 1
+            if len(propids) == 0:
+                propids = self.allpropids
+            if len(nonpropids) > 0:
+                for nonpropid in nonpropids:
+                    if nonpropid in propids:
+                        propids.remove(nonpropid)
+        if 'fieldTable' in self.opsimdb.tables:
+            self.fieldData = self.opsimdb.fetchFieldsFromFieldTable(propids)
         else:
             fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
             ra = self.data[binner.fieldRaColName][idx]
@@ -165,7 +206,7 @@ class MafDriver(object):
                     print 'No data matching constraint:   %s'%constr
                 else:
                     if 'OPSI' in binnertypes:
-                        self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
+                        self.getFieldData(matchingBinners[binnertypes.index('OPSI')], constr)
                     # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
                     for i,binner in enumerate(matchingBinners):
                         # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
