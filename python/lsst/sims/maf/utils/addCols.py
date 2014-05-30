@@ -2,12 +2,10 @@ import numpy as np
 import numpy.lib.recfunctions as rfn
 
 
-def opsimStack(arrays):
+
+def _opsimStack(self, arrays):
     """Given a list of numpy rec arrays, it returns the merged result. """
     return rfn.merge_arrays(arrays, flatten=True, usemask=False)
-
-# If adding a new column, be sure to update getUnits and getDataSource in .getColInfo so the mafDriver can find it.  Should this be changed so that all the stackers know their units and it's done automatically?
-
 
 ### Normalized airmass
 
@@ -19,7 +17,10 @@ class NormAirmass(object):
         self.airmassCol=airmassCol
         self.decCol=decCol
         self.telescope_lat = telescope_lat
-        self.cols=[airmassCol, decCol] 
+        self.cols=[airmassCol, decCol]
+        
+        self.units = 'airmass/(minimum possible airmass)'
+        self.colsAdded = ['normairmass']
 
     def run(self, simData):
         min_z_possible = np.abs(simData[self.decCol] - np.radians(self.telescope_lat))
@@ -29,7 +30,7 @@ class NormAirmass(object):
         if 'normairmass' in simData.dtype.names:
             simData['normairmass'] = norm_airmass
         else:
-            simData = opsimStack([simData, norm_airmass])
+            simData = _opsimStack([simData, norm_airmass])
         return simData
 
 ### Parallax factors
@@ -42,6 +43,9 @@ class ParallaxFactor(object):
         self.raCol = raCol
         self.decCol = decCol
         self.dateCol = dateCol
+
+        self.units = 'arcsec'
+        self.colsAdded = ['ra_pi_amp','dec_pi_amp']
 
     def _gnomonic_project_toxy(self, RA1, Dec1, RAcen, Deccen):
         """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccenp.
@@ -74,7 +78,7 @@ class ParallaxFactor(object):
             simData['ra_pi_amp'] = ra_pi_amp
             simData['dec_pi_amp'] = dec_pi_amp
         else:
-            simData = opsimStack([simData,ra_pi_amp,dec_pi_amp]) 
+            simData = _opsimStack([simData,ra_pi_amp,dec_pi_amp]) 
         return simData
 
 # Add a new dither pattern
@@ -83,6 +87,7 @@ class DecOnlyDither(object):
     """Dither the position of pointings in dec only.  """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
                  nightStep=1, nSteps=5, stepSize=0.2):
+        """stepsize in degrees """
         self.name='decDither'
         self.cols=[raCol,decCol,nightCol]
         self.raCol = raCol
@@ -91,7 +96,10 @@ class DecOnlyDither(object):
         self.nightStep=nightStep
         self.nSteps = nSteps
         self.stepSize = stepSize
-        
+
+        self.units = 'rad'
+        self.colsAdded = ['decOnlyDither']
+
     def run(self, simData):
         off1 = np.arange(self.nSteps+1)*self.stepSize
         off2 = off1[::-1][1:]
@@ -102,7 +110,7 @@ class DecOnlyDither(object):
         nightIndex = simData[self.nightCol]%uoffsets
         decDither = np.zeros(np.size(simData), dtype=[('decOnlyDither','float')])
         decDither['decOnlyDither'] = simData[self.decCol]+offsets[nightIndex]
-        simData = opsimStack([simData, decDither])
+        simData = _opsimStack([simData, decDither])
         return simData
     
                              
