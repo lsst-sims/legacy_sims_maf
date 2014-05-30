@@ -43,22 +43,29 @@ class OpsimDatabase(Database):
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         
             
-    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True):
+    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy=None):
         """Fetch 'colnames' from 'Output' table. 
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").
-        distinctExpMJD = group by expMJD to get unique observations only (default True)."""
+        distinctExpMJD = group by expMJD to get unique observations only (default True).
+        groupBy = group by col 'groupBy' (will override group by expMJD)."""
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint. 
         table = self.tables['outputTable']
-        if distinctExpMJD:
-            metricdata = table.query_columns_Array(chunk_size=self.chunksize, 
+        if groupBy is not None:
+            if distinctExpMJD:
+                warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
+            metricdata = table.query_columns_Array(chunk_size = self.chunksize,
+                                                   constraint = sqlconstraint,
+                                                   colnames = colnames, groupBy = groupBy)
+        elif distinctExpMJD:
+            metricdata = table.query_columns_Array(chunk_size = self.chunksize, 
                                                     constraint = sqlconstraint,
                                                     colnames = colnames, 
                                                     groupByCol = 'expMJD')
         else:
-            metricdata = table.query_columns_Array(chunk_size=self.chunksize,
+            metricdata = table.query_columns_Array(chunk_size = self.chunksize,
                                                    constraint = sqlconstraint,
                                                    colnames = colnames)
         return metricdata

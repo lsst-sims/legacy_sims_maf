@@ -4,9 +4,7 @@ from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfi
 import warnings
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
-with warnings.catch_warnings() as w:
-    warnings.simplefilter("ignore", UserWarning) # Ignore db warning
-    import lsst.sims.maf.db as db
+import lsst.sims.maf.db as db
 
 import lsst.sims.maf.binners as binners
 import lsst.sims.maf.metrics as metrics
@@ -38,7 +36,7 @@ class MafDriver(object):
         self.binList = []
         self.metricList = []
         for i,binner in self.config.binners.iteritems():
-            name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols,plotDict,metadata = readBinnerConfig(binner)
+            name, params, kwargs, setupParams, setupKwargs, metricDict, constraints, stackCols, plotDict, metadata = readBinnerConfig(binner)
             temp_binner = getattr(binners,binner.name)(*params, **kwargs )
             temp_binner.setupParams = setupParams
             temp_binner.setupKwargs = setupKwargs
@@ -94,19 +92,17 @@ class MafDriver(object):
             raise Exception('Filenames for metrics will not be unique.  Add binner metadata or change metric names.')
         
   
-    def getData(self, tableName,constraint, colnames=[], stackers=[], groupBy='expMJD'):
+    def getData(self, constraint, colnames=[], stackers=[], groupBy='expMJD'):
         """Pull required data from DB """
         
-        dbTable = tableName 
-        table = db.Table(dbTable, 'obsHistID', self.config.dbAddress['dbAddress'])
-
         stacker_names = [s.name for s in stackers ]
         dbcolnames = []
         sourceLookup = utils.getColInfo.ColInfo()
         for name in colnames:
             source = sourceLookup.getDataSource(name)
             if source:
-                for col in source.cols:  dbcolnames.append(col)
+                for col in source.cols:  
+                    dbcolnames.append(col)
                 # If we don't have a configured stacker, make a default one
                 if source.name not in stacker_names: 
                     stackers.append(source)
@@ -118,7 +114,7 @@ class MafDriver(object):
             for col in stacker.cols:
                 dbcolnames.append(col)
         dbcolnames=list(set(dbcolnames))
-        self.data = table.query_columns_RecArray(constraint=constraint, colnames=dbcolnames, groupByCol=groupBy)
+        self.data = self.opsimdb.fetchMetricData(constraint=constraint, colnames=dbcolnames, groupBy = groupBy)
 
         for stacker in stackers:
             self.data = stacker.run(self.data)
@@ -129,12 +125,7 @@ class MafDriver(object):
         """Given an opsim binner, generate the FieldData """
         if 'fieldTable' in self.config.dbAddress.keys():
             if not hasattr(self, 'fieldData'): # Only pull the data once if getting it from the database
-                fieldDataInfo = self.config.dbAddress
-                self.fieldData = utils.getData.fetchFieldsFromFieldTable(fieldDataInfo['dbAddress'],
-                                                                         fieldTable=fieldDataInfo['fieldTable'],
-                                                                         proposalFieldTable=fieldDataInfo['proposalTable'],
-                                                                         proposalID=fieldDataInfo['proposalID'],
-                                                                         sessionID=fieldDataInfo['sessionID'])
+                self.fieldData = self.opsimdb.fetchFieldsFromFieldTable(proposalID=fieldDataInfo['proposalID'])
         else:
             fieldID, idx = np.unique(self.data[binner.simDataFieldIdColName], return_index=True)
             ra = self.data[binner.fieldRaColName][idx]
@@ -169,7 +160,7 @@ class MafDriver(object):
                 colnames = list(set(colnames)) #unique elements
                     
                 print 'Running SQLconstraint:', constr
-                self.getData(opsimName, constr, colnames=colnames)
+                self.getData(constr, colnames=colnames)
                 if len(self.data) == 0:
                     print 'No data matching constraint:   %s'%constr
                 else:
