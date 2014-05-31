@@ -62,8 +62,6 @@ class TestDriver(unittest.TestCase):
                 if not os.path.isfile(configIn.outputDir+'/'+filename):
                     print 'missing file %s'%filename
                 assert(os.path.isfile(configIn.outputDir+'/'+filename))
-            if nout != len(nnpz):
-                import pdb ; pdb.set_trace()
             assert(nout == len(nnpz))
 
     def tearDown(self):

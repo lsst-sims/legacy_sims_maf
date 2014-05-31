@@ -191,7 +191,7 @@ class MafDriver(object):
                             binner.setupBinner(self.data, *binner.setupParams, **binner.setupKwargs)
                         gm.setBinner(binner)
                         metricNames_in_gm = gm.setMetrics(self.metricList[binner.index])
-                        comment = constr#.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
+                        comment = constr.replace('=','').replace('filter','').replace("'",'').replace('"', '').replace('  ',' ') + binner.metadata
                         gm.runBins(self.data, simDataName=opsimName, metadata=binner.metadata, comment=comment)
                         gm.reduceAll()
                         # Replace the plotParams for selected metricNames.  Maybe I did this as a way to clobber plotDicts for reduced complex metric plots?
