@@ -53,8 +53,8 @@ class TestDriver(unittest.TestCase):
             for j,binner in enumerate(configIn.binners):
                 if configIn.binners[j].name != 'HourglassBinner':
                     nout += len(configIn.binners[j].constraints)*len(configIn.binners[j].metricDict)
+                        
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
-            assert(nout == len(nnpz))
             assert(os.path.isfile(configIn.outputDir+'/date_version_ran.dat'))
             assert(os.path.isfile(configIn.outputDir+'/summaryStats.dat'))
             filelist = self.outputFiles[i]
@@ -62,6 +62,9 @@ class TestDriver(unittest.TestCase):
                 if not os.path.isfile(configIn.outputDir+'/'+filename):
                     print 'missing file %s'%filename
                 assert(os.path.isfile(configIn.outputDir+'/'+filename))
+            if nout != len(nnpz):
+                import pdb ; pdb.set_trace()
+            assert(nout == len(nnpz))
 
     def tearDown(self):
         if os.path.isdir('Output'):

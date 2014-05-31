@@ -190,7 +190,6 @@ class TestMoreMetrics(unittest.TestCase):
         metric = metrics.TemplateExistsMetric()
         result = metric.run(data)
         assert(result == 6./10.)
-                            
 
     def testf0Nv(self):
         """Test the f0Nv metric """
@@ -226,6 +225,27 @@ class TestMoreMetrics(unittest.TestCase):
         result2 =  metric.run(data)
         
 
+    def testUniformityMetric(self):
+        names = ['expMJD']
+        types=[float]
+        data = np.zeros(100, dtype=zip(names,types))
+        metric = metrics.UniformityMetric(dayStart=0.)
+        result1 = metric.run(data)
+        # If all the observations are on the 1st day, should be 1
+        assert(result1 == 1)
+        data['expMJD'] = data['expMJD']+365.25*10
+        result2 = metric.run(data)
+        # All on last day should also be 1
+        assert(result1 == 1)
+        # Make a perfectly uniform dist
+        data['expMJD'] = np.arange(0.,365.25*10,365.25*10/100)
+        result3 = metric.run(data)
+        # Result should be zero for uniform
+        np.testing.assert_almost_equal(result3, 0.)
+        # A single obseravtion should give a result of 1
+        data = np.zeros(1, dtype=zip(names,types))
+        result4 = metric.run(data)
+        assert(result4 == 1)
         
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)
