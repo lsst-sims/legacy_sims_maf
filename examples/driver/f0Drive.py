@@ -16,9 +16,9 @@ if small:
 else:
     root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite', 'OutputTable':'opsim'}
     root.opsimName = 'opsim'
-    propids = [215, 216, 217, 218, 219]
-    WFDpropid = 217
-    DDpropid = 219
+    propids = [186,187,188,189]
+    WFDpropid = 188
+    DDpropid = 189
 
 
 
