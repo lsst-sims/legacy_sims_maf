@@ -100,28 +100,24 @@ class BaseSpatialBinner(BaseBinner):
     def plotData(self, metricValues, figformat='png',
                  filename=None, savefig=True, **kwargs):
         """Call all plotting methods."""
-        filenames=[]
-        filetypes=[]
-        figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('metric data type not float or int, returning False')
-            return False
+        super(BaseSpatialBinner,self).plotData(metricValues,**kwargs)
         
-        figs['hist'] = self.plotHistogram(metricValues, **kwargs)
+        self.figs['hist'] = self.plotHistogram(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_hist'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
+            self.filenames.append(outfile)
+            self.filetypes.append('histogramPlot')
 
-        figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
+        self.figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_sky'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
+            self.filenames.append(outfile)
+            self.filetypes.append('histogramPlot')
         
-        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
+        return {'figs':self.figs,'filenames':self.filenames,
+                'filetypes':self.filetypes}
 
         
     ## Plot histogram (base spatial binner method).

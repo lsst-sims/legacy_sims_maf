@@ -81,36 +81,20 @@ class HealpixBinner(BaseSpatialBinner):
     def plotData(self, metricValues, figformat='png', filename=None,
                  savefig=True, **kwargs):
         """Call all plotting methods."""
-        filenames=[]
-        filetypes=[]
-        figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('metric data type not float or int, returning False')
-            return False
-        
-        figs['hist'] = self.plotHistogram(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_hist'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
+        super(HealpixBinner,self).plotData(metricValues, 
+                                           figformat=figformat, 
+                                           filename=filename,savefig=savefig,**kwargs)
 
-        figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_sky'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
-
-        figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
+        self.figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_ps'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('powerspectrumPlot')
+            self.filenames.append(outfile)
+            self.filetypes.append('powerspectrumPlot')
 
             
-        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
+        return {'figs':self.figs,'filenames':self.filenames,
+                'filetypes':self.filetypes}
 
         
     
