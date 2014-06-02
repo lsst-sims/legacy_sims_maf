@@ -96,55 +96,119 @@ class TestMoreMetrics(unittest.TestCase):
         names = ['expMJD','finSeeing', '5sigma_modified', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
-        data['expMJD'] = np.arange(700)+56762
-        data['finSeeing'] = 0.7
-        data['filter'] = 'r'
-        data['5sigma_modified'] = 24.
-        stacker = utils.ParallaxFactor()
-        data = stacker.run(data)
-        baseline = metrics.ParallaxMetric().run(data)
-        
-
-        data['finSeeing'] = data['finSeeing']+.3
-        worse1 = metrics.ParallaxMetric().run(data)
-        worse2 = metrics.ParallaxMetric(r=22.).run(data)
-        worse3 = metrics.ParallaxMetric(r=22.).run(data[0:300])
-        data['5sigma_modified'] = data['5sigma_modified']-1.
-        worse4 = metrics.ParallaxMetric(r=22.).run(data[0:300])
-        
-        # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
-        assert(worse1 > baseline)
-        assert(worse2 > worse1)
-        assert(worse3 > worse2)
-        assert(worse4 > worse3)
+        normFlags = [False, True]
+        for flag in normFlags:
+            data['expMJD'] = np.arange(700)+56762
+            data['finSeeing'] = 0.7
+            data['filter'][0:100] = 'r'
+            data['filter'][100:200] = 'u'
+            data['filter'][200:] = 'g'
+            data['5sigma_modified'] = 24.
+            stacker = utils.ParallaxFactor()
+            data = stacker.run(data)
+            baseline = metrics.ParallaxMetric(normalize=flag).run(data)
+            data['finSeeing'] = data['finSeeing']+.3
+            worse1 = metrics.ParallaxMetric(normalize=flag).run(data)
+            worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data)
+            worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300])
+            data['5sigma_modified'] = data['5sigma_modified']-1.
+            worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300])
+            # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
+            if flag:
+                pass
+                # hmm, I need to think how to test the scheduling
+                #assert(worse1 < baseline)
+                #assert(worse2 < worse1)
+                #assert(worse3 < worse2) 
+                #assert(worse4 < worse3)
+            else:
+                assert(worse1 > baseline)
+                assert(worse2 > worse1)
+                assert(worse3 > worse2)
+                assert(worse4 > worse3)
 
     def testProperMotionMetric(self):
         """Test the ProperMotion metric """
         names = ['expMJD','finSeeing', '5sigma_modified', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
-        data['expMJD'] = np.arange(700)+56762
-        data['finSeeing'] = 0.7
-        data['filter'] = 'r'
-        data['5sigma_modified'] = 24.
-        stacker = utils.ParallaxFactor()
-        data = stacker.run(data)
-        baseline = metrics.ProperMotionMetric().run(data)
-        
+        normFlags = [False, True]
+        for flag in normFlags:
+            data['expMJD'] = np.arange(700)+56762
+            data['finSeeing'] = 0.7
+            data['filter'][0:100] = 'r'
+            data['filter'][100:200] = 'u'
+            data['filter'][200:] = 'g'
+            data['5sigma_modified'] = 24.
+            stacker = utils.ParallaxFactor()
+            data = stacker.run(data)
+            baseline = metrics.ProperMotionMetric(normalize=flag).run(data)
+            data['finSeeing'] = data['finSeeing']+.3
+            worse1 = metrics.ProperMotionMetric(normalize=flag).run(data)
+            worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data)
+            worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300])
+            data['5sigma_modified'] = data['5sigma_modified']-1.
+            worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300])
+            # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
+            if flag:
+                #assert(worse1 < baseline)
+                #assert(worse2 < worse1) # When normalized, 'perfect' survey assumed to have same seeing and limiting mags.
+                assert(worse3 < worse2)
+                assert(worse4 < worse3)
+            else:
+                assert(worse1 > baseline)
+                assert(worse2 > worse1)
+                assert(worse3 > worse2)
+                assert(worse4 > worse3)
 
-        data['finSeeing'] = data['finSeeing']+.3
-        worse1 = metrics.ProperMotionMetric().run(data)
-        worse2 = metrics.ProperMotionMetric(r=22.).run(data)
-        worse3 = metrics.ProperMotionMetric(r=22.).run(data[0:300])
-        data['5sigma_modified'] = data['5sigma_modified']-1.
-        worse4 = metrics.ProperMotionMetric(r=22.).run(data[0:300])
-        
-        # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
-        assert(worse1 > baseline)
-        assert(worse2 > worse1)
-        assert(worse3 > worse2)
-        assert(worse4 > worse3)
+    def testSNMetric(self):
+        """Test the SN Cadence Metric """
+        names = ['expMJD', 'filter', 'fivesigma_modified']
+        types = [float,'|S1', float]
+        data = np.zeros(700, dtype=zip(names,types))
+        data['expMJD'] = np.arange(0.,100.,1/7.) # So, 100 days are well sampled in 2 filters
+        data['filter']= 'r'
+        data['filter'][np.arange(0,700,2)] = 'g'
+        data['fivesigma_modified'] = 30.
+        metric = metrics.SupernovaMetric()
+        result = metric.run(data)
+        np.testing.assert_array_almost_equal(metric.reduceMedianMaxGap(result),  1/7.)
+        assert(metric.reduceNsequences(result) == 10)
+        assert((metric.reduceMedianNobs(result) <  561) & (metric.reduceMedianNobs(result) >  385) )
 
+    def testTemplateExists(self):
+        """Test the TemplateExistsMetric """
+        names = ['finSeeing', 'expMJD']
+        types=[float,float]
+        data = np.zeros(10,dtype=zip(names,types))
+        data['finSeeing'] = [2.,2.,3.,1.,1.,1.,0.5,1.,0.4,1.]
+        data['expMJD'] = np.arange(10)
+        # so here we have 4 images w/o good previous templates
+        metric = metrics.TemplateExistsMetric()
+        result = metric.run(data)
+        assert(result == 6./10.)
+
+    def testUniformityMetric(self):
+        names = ['expMJD']
+        types=[float]
+        data = np.zeros(100, dtype=zip(names,types))
+        metric = metrics.UniformityMetric(dayStart=0.)
+        result1 = metric.run(data)
+        # If all the observations are on the 1st day, should be 1
+        assert(result1 == 1)
+        data['expMJD'] = data['expMJD']+365.25*10
+        result2 = metric.run(data)
+        # All on last day should also be 1
+        assert(result1 == 1)
+        # Make a perfectly uniform dist
+        data['expMJD'] = np.arange(0.,365.25*10,365.25*10/100)
+        result3 = metric.run(data)
+        # Result should be zero for uniform
+        np.testing.assert_almost_equal(result3, 0.)
+        # A single obseravtion should give a result of 1
+        data = np.zeros(1, dtype=zip(names,types))
+        result4 = metric.run(data)
+        assert(result4 == 1)
         
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)

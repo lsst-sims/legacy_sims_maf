@@ -173,6 +173,16 @@ class TestSimpleMetrics(unittest.TestCase):
         self.assertEqual(testmetric.run(self.dv[0]), self.dv[0]['testdata'])
         np.testing.assert_equal(testmetric.run(self.dv), self.dv['testdata'])
 
+    def testFracAboveMetric(self):
+        cutoff = 5.1
+        testmetric=metrics.FracAboveMetric('testdata', cutoff = cutoff)
+        self.assertEqual(testmetric.run(self.dv), np.size(np.where(self.dv['testdata'] >= cutoff)[0])/float(np.size(self.dv)))
+
+    def testFracBelowMetric(self):
+        cutoff = 5.1
+        testmetric=metrics.FracBelowMetric('testdata', cutoff = cutoff)
+        self.assertEqual(testmetric.run(self.dv), np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
+
     def testVisitGroups(self):
         """Test visit groups (solar system groups) metric."""
         # Set up some simple test data.

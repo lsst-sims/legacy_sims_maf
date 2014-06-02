@@ -94,15 +94,14 @@ class TestUniBinnerEqual(unittest.TestCase):
         self.assertEqual(self.testbinner, testbinner2)
         # these will not be the same, as different binner type.
         testbinner2 = OneDBinner(sliceDataColName='testdata')
-        testbinner2.setupBinner(dv2, nbins=10)
+        testbinner2.setupBinner(dv2, bins=10)
         self.assertNotEqual(self.testbinner, testbinner2)
             
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerSetupAndSlice)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerIteration)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerEqual)
+    suitelist = [unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerSetupAndSlice),]
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerIteration))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestUniBinnerEqual))
+    suite = unittest.TestSuite(suitelist)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
     # slicing tested as part of setup here, and 'function' is identity function

@@ -1,5 +1,5 @@
 # A MAF config that replicates the SSTAR plots
-from lsst.sims.maf.driver.mafConfig import *
+from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
@@ -84,7 +84,7 @@ for f in filters:
     
 # Number of Visits per observing mode:
 for f in filters:    
-        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisitsperprop'}, plotDict={'units':'Number of Visits', 'histBins':50})
+        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisitsperprop'}, plotDict={'units':'Number of Visits', 'histBins':50}, summaryStats={'MedianMetric':{}, 'MeanMetric':{}, 'RmsMetric':{}, 'CountMetric':{}})
         metricDict = makeDict(m1)
         constraints=[]
         for propid in propids:

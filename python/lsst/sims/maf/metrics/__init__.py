@@ -7,6 +7,5 @@ from .parallaxMetric import *
 from .hourglassMetric import *
 from .completenessMetric import *
 from .radiusObsMetric import *
-from .astroPrecMetric import *
-from .astroPrecMetricComplex import *
 from .summaryMetrics import *
+from .cadenceMetrics import *

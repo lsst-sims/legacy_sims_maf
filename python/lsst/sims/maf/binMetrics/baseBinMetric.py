@@ -95,8 +95,8 @@ class BaseBinMetric(object):
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile (with path) and strip white spaces (replace with underscores). 
-        outfile = os.path.join(outDir, oname.replace(' ', '_'))
+        # Build outfile (with path) and strip white spaces (replace with underscores) and strip quotes. 
+        outfile = os.path.join(outDir, oname.replace(' ', '_').replace("'",'').replace('"',''))
         return outfile
 
     def _addOutputFileList(self, outfilename, metricName, filetype):
@@ -203,10 +203,11 @@ class BaseBinMetric(object):
                     else:
                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
         # Mask data where metrics could not be computed (according to metric bad value).
-        for mname in self.metricObjs:            
-            self.metricValues[mname].mask = np.where(self.metricValues[mname].data==self.metricObjs[mname].badval,
-                                                     True, self.metricValues[mname].mask)
-
+        for mname in self.metricObjs:
+            toMask = np.where( (self.metricValues[mname].data == self.metricObjs[mname].badval) | 
+                               (self.metricValues[mname].data == self.binner.badval))
+            self.metricValues[mname].mask[toMask] = True
+            self.metricValues[mname].data[toMask] = self.binner.badval
 
     def reduceAll(self):
         """Run all reduce functions on all (complex) metrics."""
@@ -217,9 +218,9 @@ class BaseBinMetric(object):
             except Exception as e: 
                 continue
             # Apply reduce functions
-            self.reduceMetric(mname, self.metricObjs[mname].reduceFuncs.values())            
+            self.reduceMetric(mname, self.metricObjs[mname].reduceFuncs.values(), badval =self.metricObjs[mname].badval )            
                 
-    def reduceMetric(self, metricName, reduceFunc):
+    def reduceMetric(self, metricName, reduceFunc, badval=-666):
         """Run 'reduceFunc' (method on metric object) on metric data 'metricName'. 
 
         reduceFunc can be a list of functions to be applied to the same metric data."""
@@ -242,6 +243,10 @@ class BaseBinMetric(object):
                 # Evaluate reduced version of metric values.
                 for rName, rFunc in zip(rNames, reduceFunc):
                     self.metricValues[rName].data[i] = rFunc(metricValuesPt)
+                    # Mask if it returned a badval or nan
+                    if (self.metricValues[rName].data[i] == badval) | (np.isnan(self.metricValues[rName].data[i])):
+                       self.metricValues[rName].data[i] = self.binner.badval
+                       self.metricValues[rName].mask[i] = True
         # Copy simdataName, metadata and comments for this reduced version of the metric data.
         for rName in rNames:
             self.simDataName[rName] = self.simDataName[metricName]
@@ -428,11 +433,6 @@ class BaseBinMetric(object):
            histMin = pParams['histMin']
         if 'histMax' in pParams:
            histMax = pParams['histMax']
-        #else: # Otherwise use data from plotMin/Max or percentileClipping, if those were set.
-        #    histRange = [plotMin, plotMax]
-        # Determine if should data using log scale, using pParams if available
-        #else:
-        #   histRange = None
         if 'ylog' in pParams:
             ylog = pParams['ylog']
         else: # or if data spans > 3 decades if not.
