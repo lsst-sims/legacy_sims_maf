@@ -98,7 +98,7 @@ class HealpixBinner(BaseSpatialBinner):
 
         
     
-    def plotSkyMap(self, metricValue, units=None, title='',
+    def plotSkyMap(self, metricValueIn, units=None, title='',
                    clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet,
                    percentileClip=None, plotMaskedValues=False, zp=None, normVal=None,
                    **kwargs):
@@ -120,10 +120,14 @@ class HealpixBinner(BaseSpatialBinner):
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
-        if zp:
-            metricValue = metricValue-zp
-        if normVal:
-            metricValue = metricValue/normVal
+        if zp or normVal:
+            if zp:
+                metricValue = metricValueIn - zp
+            if normVal:
+                metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
+
         if percentileClip:
             plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
             if not clims:

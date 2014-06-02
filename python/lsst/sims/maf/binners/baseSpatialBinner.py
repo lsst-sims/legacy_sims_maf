@@ -121,7 +121,7 @@ class BaseSpatialBinner(BaseBinner):
 
         
     ## Plot histogram (base spatial binner method).
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
+    def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
@@ -144,10 +144,13 @@ class BaseSpatialBinner(BaseBinner):
         fig = plt.figure(fignum)
         if not xlabel:
             xlabel = units
-        if zp:
-            metricValue = metricValue-zp
-        if normVal:
-            metricValue = metricValue/normVal
+        if zp or normVal:
+            if zp:
+                metricValue = metricValueIn - zp
+            if normVal:
+                metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if histMin is None and histMax is None:
@@ -236,7 +239,7 @@ class BaseSpatialBinner(BaseBinner):
         y_ec = np.sin(x_ec) * ecinc
         plt.plot(ra, y_ec, 'r-')        
         
-    def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
+    def plotSkyMap(self, metricValueIn, title=None, projection='aitoff', radius=1.75/180.*np.pi,
                    clims=None, ylog='auto', cbarFormat=None, cmap=cm.jet, fignum=None, units='',
                    plotMaskedValues=False, zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot the sky map of metricValue."""
@@ -244,10 +247,13 @@ class BaseSpatialBinner(BaseBinner):
         from matplotlib import colors
         if fignum is None:
             fig = plt.figure()
-        if zp:
-            metricValue = metricValue-zp
-        if normVal:
-            metricValue = metricValue/normVal
+        if zp or normVal:
+            if zp:
+                metricValue = metricValueIn - zp
+            if normVal:
+                metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
