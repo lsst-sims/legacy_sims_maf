@@ -1,6 +1,5 @@
 from .baseMetric import *
 from .simpleMetrics import *
-from .complexMetrics import *
 from .visitGroupsMetric import *
 from .fftMetric import *
 from .properMotionMetric import *

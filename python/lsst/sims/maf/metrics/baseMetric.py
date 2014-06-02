@@ -7,6 +7,7 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
+import inspect
 from lsst.sims.maf.utils.getColInfo import ColInfo
 
 # ClassRegistry adds some extras to a normal dictionary and serves as a way to 
@@ -67,6 +68,12 @@ class BaseMetric(object):
             for i in range(1, len(self.colNameList)):
                 allcols += ', ' + self.colNameList[i]
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
+        # Set up dictionary of reduce functions (may be empty).
+        self.reduceFuncs = {}
+        for r in inspect.getmembers(self, predicate=inspect.ismethod):
+            if r[0].startswith('reduce'):
+                reducename = r[0].replace('reduce', '', 1)
+                self.reduceFuncs[reducename] = r[1]
         # Set physical units, mostly for plotting purposes.
         if units is None:
             units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
