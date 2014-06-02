@@ -106,6 +106,7 @@ class OpsimDatabase(Database):
                     query += ')'
                 else: # single proposal ID.
                     query += ' and (p.Proposal_propID = %d) ' %(int(propID))
+                query += ' group by f.fieldID'
             fielddata = self.queryDatabase(tableName, query)
         else:
             table = self.tables[tableName]

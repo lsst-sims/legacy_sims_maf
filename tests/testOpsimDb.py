@@ -2,12 +2,12 @@ import os
 import unittest
 import numpy as np
 import lsst.sims.maf.db as db
+import lsst.sims.maf.utils.outputUtils as out
 
 class TestOpsimDb(unittest.TestCase):
     """Test opsim specific database class."""
     def setUp(self):
-        filepath = os.environ['SIMS_MAF_DIR']+'/examples/'
-        self.dbAddress = 'sqlite:///'+filepath+'opsimblitz2_1039_sqlite.db'
+        self.dbAddress = 'sqlite:///opsimblitz1_1131_sqlite.db'
         self.oo = db.OpsimDatabase(self.dbAddress)
 
     def tearDown(self):
@@ -53,23 +53,26 @@ class TestOpsimDb(unittest.TestCase):
         # Fetch field data for all fields requested by all proposals.
         dataPropAll = self.oo.fetchFieldsFromFieldTable(propID=propids)
         self.assertTrue(dataProp1.size < dataPropAll.size)
+        # And check that did not return multiple copies of the same field.
+        self.assertEqual(len(dataPropAll['fieldID']), len(np.unique(dataPropAll['fieldID'])))
         
     def testOpsimDbRunLength(self):
         """Test query for length of opsim run."""
         nrun = self.oo.fetchRunLength()
-        self.assertEqual(nrun, 10.0)    
+        self.assertEqual(nrun, 1.)    
 
     def testOpsimDbSimName(self):
         """Test query for opsim name."""
         simname = self.oo.fetchOpsimRunName()
         self.assertTrue(isinstance(simname, str))
-        self.assertEqual(simname, 'opsimblitz2_1039')
+        self.assertEqual(simname, 'opsimblitz1_1131')
 
     def testOpsimDbSeeingColName(self):
         """Test query to pull out column name for seeing (seeing or finSeeing)."""
         seeingcol = self.oo.fetchSeeingColName()
         self.assertTrue(seeingcol, 'finSeeing')
 
+    '''
     def testOpsimDbConfig(self):
         """Test generation of config data. """
         configsummary, configdetails = self.oo.fetchConfig()
@@ -82,6 +85,9 @@ class TestOpsimDb(unittest.TestCase):
             if propname != 'keyorder':            
                 propidsSummary.append(configsummary['Proposals'][propname]['PropID'])
         self.assertEqual(set(propidsSummary), set(propids))
+        out.printDict(configsummary, 'Summary')
+        out.printDict(configdetails, 'Details')
+    '''
                 
 if __name__ == "__main__":
     unittest.main()
