@@ -8,7 +8,7 @@ from sqlalchemy.sql import expression
 class Table(DBObject):
     skipRegistration = True
 
-    def __init__(self, tableName, idColKey, dbAddress):
+    def __init__(self, tableName, idColKey, dbAddress, verbose=False):
         """
         Initialize an object for querying OpSim databases
 
@@ -20,7 +20,7 @@ class Table(DBObject):
 
         if dbAddress is None:
             dbAddress = self.getDbAddress()
-
+        self.verbose = verbose
         self.idColKey = idColKey
         self.dbAddress = dbAddress
         self.tableid = tableName
