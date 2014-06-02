@@ -1,11 +1,10 @@
 import numpy as np
 from scipy import fftpack
-from .complexMetrics import ComplexMetric
+from .baseMetric import BaseMetric
 
 # Example class for multi-value (constant length vector) metrics. 
-# Based on complexMetrics because want to use 'reduce' function dictionary implemented there.
 
-class FftMetric(ComplexMetric):
+class FftMetric(BaseMetric):
     """Calculate a truncated FFT of the exposure times."""
     def __init__(self, timesCol='expmjd', metricName='Fft',
                  nCoeffs=100):

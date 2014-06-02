@@ -1,8 +1,7 @@
 import numpy as np
-from .complexMetrics import ComplexMetric
-from baseMetric import BaseMetric
+from .baseMetric import BaseMetric
 
-class SupernovaMetric(ComplexMetric):
+class SupernovaMetric(BaseMetric):
     """Measure how many time serries meet a given time and filter distribution requirement """
     def __init__(self, metricName='SupernovaMetric', mjdcol='expMJD', filtercol='filter',
                  m5col='fivesigma_modified', units='', redshift=0.,

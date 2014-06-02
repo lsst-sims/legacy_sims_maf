@@ -1,9 +1,9 @@
 import numpy as np
-from .complexMetrics import ComplexMetric
+from .baseMetric import BaseMetric
 from lsst.sims.maf.utils.astrometryUtils import  m52snr
 
 
-class AstroPrecMetricComplex(ComplexMetric):
+class AstroPrecMetricComplex(BaseMetric):
     """Calculate the average astrometric precision given a set of observations """
     def __init__(self, metricName='AstroPrecMetricComplex', m5col='5sigma_modified', seeingcol='finSeeing', units='mas', mag=20., atm_limit=0.01, **kwargs):
         """ """
