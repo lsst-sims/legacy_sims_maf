@@ -144,11 +144,10 @@ class BaseSpatialBinner(BaseBinner):
         fig = plt.figure(fignum)
         if not xlabel:
             xlabel = units
-        if zp or normVal:
-            if zp:
-                metricValue = metricValueIn - zp
-            if normVal:
-                metricValue = metricValueIn/normVal
+        if zp:
+            metricValue = metricValueIn - zp
+        elif normVal:
+            metricValue = metricValueIn/normVal
         else:
             metricValue = metricValueIn
         # Need to only use 'good' values in histogram,

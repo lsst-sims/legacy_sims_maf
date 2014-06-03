@@ -120,11 +120,10 @@ class HealpixBinner(BaseSpatialBinner):
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
-        if zp or normVal:
-            if zp:
-                metricValue = metricValueIn - zp
-            if normVal:
-                metricValue = metricValueIn/normVal
+        if zp:
+            metricValue = metricValueIn - zp
+        elif normVal:
+            metricValue = metricValueIn/normVal
         else:
             metricValue = metricValueIn
 
