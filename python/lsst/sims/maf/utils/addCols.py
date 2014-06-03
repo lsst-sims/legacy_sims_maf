@@ -3,7 +3,7 @@ import numpy.lib.recfunctions as rfn
 
 
 
-def _opsimStack(self, arrays):
+def _opsimStack(arrays):
     """Given a list of numpy rec arrays, it returns the merged result. """
     return rfn.merge_arrays(arrays, flatten=True, usemask=False)
 

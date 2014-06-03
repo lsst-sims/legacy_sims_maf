@@ -59,12 +59,11 @@ class ColInfo(object):
         #  methods, at whatever point the derived data columns will be calculated.
         sourceDict = {}
         stackers = inspect.getmembers(addCols, inspect.isclass)
-        stackers = [m[0] for m in stackers if m[1].__module__ == 'addCols']
+        stackers = [m[0] for m in stackers if m[1].__module__ == 'lsst.sims.maf.utils.addCols']
         for stacker in stackers:
             stack = getattr(addCols, stacker)()
             for col in stack.colsAdded:
-                sourceDict[col] = getattr(addCols, stack)
-        
+                sourceDict[col] = stacker
         if colName in sourceDict:
             return sourceDict[colName]
         else:

@@ -106,6 +106,7 @@ class MafDriver(object):
         for name in colnames:
             source = sourceLookup.getDataSource(name)
             if source:
+                source = getattr(utils.addCols,source)()
                 for col in source.cols:  dbcolnames.append(col)
                 # If we don't have a configured stacker, make a default one
                 if source.name not in stacker_names: 
@@ -166,7 +167,7 @@ class MafDriver(object):
                     for col in stacker.cols:
                         colnames.append(col)
             colnames = list(set(colnames)) #unique elements
-
+            
             print 'Running SQLconstraint:', constr
             self.getData(self.config.dbAddress['OutputTable'], constr, colnames=colnames)
             if len(self.data) == 0:
