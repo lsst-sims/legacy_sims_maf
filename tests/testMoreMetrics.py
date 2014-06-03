@@ -1,4 +1,5 @@
 import numpy as np
+import healpy as hp
 import unittest
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.utils as utils
@@ -61,9 +62,11 @@ class TestMoreMetrics(unittest.TestCase):
         data['filter'] = 'r'
 
         metric = metrics.HourglassMetric()
-        pernight,perfilter = metric.run(data)
+        result = metric.run(data)
+        pernight = result['pernight']
+        perfilter = result['perfilter']
         # Check that the format is right at least
-        assert(perfilter.size == 2*data.size)
+        assert(np.size(perfilter) == 2*data.size)
         assert(len(pernight.dtype.names) == 9)
     
     def testinDevelopmentMetrics(self):
@@ -187,6 +190,40 @@ class TestMoreMetrics(unittest.TestCase):
         metric = metrics.TemplateExistsMetric()
         result = metric.run(data)
         assert(result == 6./10.)
+
+    def testf0Nv(self):
+        """Test the f0Nv metric """
+        nside=128
+        metric = metrics.f0Nv('ack',nside=nside, Nvisit=825,Asky=18000.)
+        npix = hp.nside2npix(nside)
+        names=['blah']
+        types = [float]
+        data = np.zeros(npix, dtype=zip(names,types))
+        # Set all the pixels to have 826 counts
+        data['blah'] = data['blah']+826
+        result1 = metric.run(data)
+        deginsph = 129600./np.pi
+        np.testing.assert_almost_equal(result1*18000., deginsph)
+        data['blah'][:data.size/2]=0
+        result2 =  metric.run(data)
+        np.testing.assert_almost_equal(result2*18000., deginsph/2.)
+
+    def testf0Area(self):
+        """Test f0Area metric """
+        nside=128
+        metric = metrics.f0Area('ack',nside=nside, Nvisit=825,Asky=18000.)
+        npix = hp.nside2npix(nside)
+        names=['blah']
+        types = [float]
+        data = np.zeros(npix, dtype=zip(names,types))
+        # Set all the pixels to have 826 counts
+        data['blah'] = data['blah']+826
+        result1 = metric.run(data)
+        
+        np.testing.assert_almost_equal(result1*825, 826)
+        data['blah'][:data.size/2]=0
+        result2 =  metric.run(data)
+        
 
     def testUniformityMetric(self):
         names = ['expMJD']

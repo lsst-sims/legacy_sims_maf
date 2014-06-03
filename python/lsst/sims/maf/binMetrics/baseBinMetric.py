@@ -334,214 +334,41 @@ class BaseBinMetric(object):
         for mname in self.metricValues:            
             if verbose:
                 print 'Plotting %s' %(mname)
-            try:
-                plotfigs = self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
-                if closefig:
-                   plt.close('all')
-            except ValueError:
-                if verbose:
-                   print 'Not plotting %s'%mname
-                continue 
-
+            plotfigs = self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
+            if closefig:
+               plt.close('all')
+            if (not plotfigs) & (verbose):
+               print 'Not plotting %s'%mname
+            
     def plotMetric(self, metricName, savefig=True, outDir=None, outfileRoot=None):
         """Create all plots for 'metricName' ."""
-        # Check that metricName refers to plottable ('float') data.
-        if not ((self.metricValues[metricName].dtype == 'float') or 
-                (self.metricValues[metricName].dtype=='int') or (self.binner.binnerName == 'HourglassBinner')):
-            raise ValueError('Metric data in %s is not float or int type (%s).' 
-                             %(metricName, self.metricValues[metricName].dtype))
+        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
         if metricName in self.plotParams:
-            pParams = self.plotParams[metricName]
+           pParams = self.plotParams[metricName]
         else:
-            pParams = None
+           pParams = {}
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
         # title used for all plot titles
-        if 'title' in pParams: 
-            title = pParams['title']
+        if 'title' not in pParams:
+           pParams['title'] = self.simDataName[metricName] + ' ' + self.comment[metricName]
+           pParams['title'] += ': ' + mname
+        if 'units' not in pParams:
+           pParams['units'] = mname
+           if '_units' in pParams:
+              pParams['units'] += ' ('+ pParams['_units'] + ')'
+        if 'xlabel' not in pParams:
+           pParams['xlabel'] = pParams['units']
+        
+        if hasattr(self.binner, 'plotData'):
+           plotResults=self.binner.plotData(self.metricValues[metricName], savefig=savefig,
+                                            filename=outfile, **pParams)
+           if plotResults:
+              for filename,filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
+                 self._addOutputFileList(filename, metricName, filetype)
+              return plotResults['figs']
+           else:
+              return False
         else:
-            title = self.simDataName[metricName] + ' ' + self.comment[metricName]
-            title += ': ' + mname
-        # xlabel is used for x label in histograms
-        if 'xlabel' in pParams:  
-            xlabel = pParams['xlabel']
-        else:
-            if self.binner.binnerName == 'OneDBinner':
-                xlabel = None  #use sliceColName
-            else:
-                if 'units' in pParams:
-                    xlabel = pParams['units']
-                elif '_units' in pParams:
-                    xlabel = mname + ' (' + pParams['_units'] + ')'
-                else:            
-                    xlabel = mname 
-        # ylabel used for y label in histograms
-        ylabel=None # Default to None
-        if 'ylabel' in pParams:  
-            ylabel=pParams['ylabel']
-        else:
-            if self.binner.binnerName == 'OneDBinner':
-                if mname.startswith('Count'):
-                    ylabel = 'Number of Visits'
-            if self.binner.binnerName == 'OpsimFieldBinner':
-               ylabel = 'Number of fields'
-            if self.binner.binnerName == 'HealpixBinner':
-               ylabel = 'Area (1000s of square degrees)'
-        # units used for colorbar for skymap plots (this comes from metric setup)
-        if 'units' in pParams: 
-            units = pParams['units']
-        elif '_units' in pParams:  # these are set from metric column units automatically
-            units = mname+' ('+ pParams['_units'] + ')'
-        else:
-            units = mname
-        # Should the masked values be plotted
-        plotMaskedValues=False
-        if 'plotMaskedValues' in pParams:
-           plotMaskedValues = pParams['plotMaskedValues']
-        # set cmap for skymap plots
-        if 'cmap' in pParams:  
-            cmap = getattr(cm, pParams['cmap'])
-        else:
-            cmap = None
-        if 'cbarFormat' in pParams:  # color bar format for skymap plots
-            cbarFormat = pParams['cbarFormat']
-        else:
-            cbarFormat = None
-        # Set up for plot data limits (used for clims for skyMaps and histRange for histograms).
-        plotMin = self.metricValues[metricName].compressed().min()
-        plotMax = self.metricValues[metricName].compressed().max()
-        # If percentile clipping is set, use it. (override plotMin/Max above).
-        if 'percentileClip' in pParams:
-            plotMin, plotMax = percentileClip(self.metricValues[metricName].compressed(),
-                                              percentile=pParams['percentileClip'])
-        # Make sure there is a little dynamic range
-        if plotMin == plotMax and self.binner.binnerName != 'HourglassBinner':
-           plotMin = plotMin-1
-           plotMax = plotMax+1
-        # But then if plotting min/max values are set in plotParams, override percentile clipping.
-        if 'plotMin' in pParams:
-            plotMin = pParams['plotMin']
-        if 'plotMax' in pParams:
-            plotMax = pParams['plotMax']
-        # Set 'histRange' parameter from pParams, if available (allows user to set histogram x range
-        #  in histogram separately from clims for skymap)
-        if 'bins' not in pParams:
-            pParams['bins'] = 100
-        histMin = None
-        histMax = None
-        if 'histMin' in pParams:
-           histMin = pParams['histMin']
-        if 'histMax' in pParams:
-           histMax = pParams['histMax']
-        if 'ylog' in pParams:
-            ylog = pParams['ylog']
-        else: # or if data spans > 3 decades if not.
-            ylog = False
-            if self.binner.binnerName != 'HourglassBinner':
-                if 'normVal' in pParams:
-                   norm = pParams['normVal']
-                else:
-                   norm = 1.
-                if (np.log10((plotMax - plotMin)/norm) > 3):
-                    ylog = True
-                    if self.metricValues[metricName].max() <= 0:
-                        ylog = False
-        # Okay, now that's all set .. go plot some data!
-        figs = {}
-        if hasattr(self.binner, 'plotBinnedData'):
-            figs['hist'] = self.binner.plotBinnedData(self.metricValues[metricName],
-                                                    xlabel=xlabel, ylabel=ylabel, title=title, 
-                                                    ylog=ylog, yMin=plotMin, yMax=plotMax)
-            if savefig:
-                outfile = self._buildOutfileName(metricName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot,
-                                                 plotType='hist')
-                plt.savefig(outfile, figformat=self.figformat)
-                self._addOutputFileList(outfile, metricName, 'binnedDataPlot')                                
-        # Plot the histogram, if relevant. (spatial binners)
-        if hasattr(self.binner, 'plotHistogram'):
-            if 'zp' in pParams:  # Subtract off zeropoint zp
-                if histMin != None:
-                   histMin = histMin-pParams['zp']
-                if histMax != None:
-                   histMax = histMax-pParams['zp']
-                figs['hist']= self.binner.plotHistogram((self.metricValues[metricName]-pParams['zp']),
-                                                       xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'], 
-                                                       histMin=histMin, histMax=histMax, ylog=ylog)
-            elif 'normVal' in pParams:  # Normalize by normVal
-                if histMin != None:
-                    histMin = histMin/pParams['normVal']
-                if histMax != None:
-                    histmax = histMax/pParams['normVal']
-                figs['hist'] = self.binner.plotHistogram((self.metricValues[metricName]/pParams['normVal']),
-                                                       xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'],
-                                                       histMin=histMin, histMax=histMax, ylog=ylog)
-            else:  # Regular plotting of metric values.
-                figs['hist'] = self.binner.plotHistogram(self.metricValues[metricName],
-                                                       xlabel=xlabel, ylabel=ylabel, title=title,
-                                                       bins = pParams['bins'], 
-                                                       histMin=histMin, histMax=histMax, ylog=ylog)
-            
-            if savefig:
-                outfile = self._buildOutfileName(metricName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='hist')
-                plt.savefig(outfile, figformat=self.figformat)
-                self._addOutputFileList(outfile, metricName, 'histogramPlot')
-        # Plot the sky map, if able. (spatial binners)
-        if hasattr(self.binner, 'plotSkyMap'):
-            if 'zp' in pParams: # Subtract off a zeropoint
-               if 'plotMin' not in pParams:
-                  clims = [plotMin-pParams['zp'],plotMax-pParams['zp']]
-               else:
-                  clims = [plotMin, plotMax]
-               figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName] - pParams['zp']),
-                                                    cmap=cmap, cbarFormat=cbarFormat,
-                                                    units=units, title=title,
-                                                    clims=clims, ylog=ylog, plotMaskedValues=plotMaskedValues)
-            elif 'normVal' in pParams: # Normalize by some value
-               if 'plotMin' not in pParams:
-                  clims = [plotMin/pParams['normVal'],plotMax/pParams['normVal']]
-               else:
-                  clims = [plotMin, plotMax]                            
-               figs['sky'] = self.binner.plotSkyMap((self.metricValues[metricName]/pParams['normVal']),
-                                                    cmap=cmap, cbarFormat=cbarFormat,
-                                                    units=units, title=title,
-                                                    clims=clims, ylog=ylog, plotMaskedValues=plotMaskedValues)
-            else: # Just plot metric values
-                figs['sky'] = self.binner.plotSkyMap(self.metricValues[metricName],
-                                                   cmap=cmap, cbarFormat=cbarFormat,
-                                                   units=units, title=title,
-                                                   clims=[plotMin, plotMax], ylog=ylog, plotMaskedValues=plotMaskedValues)
-            if savefig:
-               outfile = self._buildOutfileName(metricName, 
-                                                outDir=outDir, outfileRoot=outfileRoot, 
-                                                plotType='sky')
-               plt.savefig(outfile, figformat=self.figformat)
-               self._addOutputFileList(outfile, metricName, 'skymapPlot')                
-        # Plot the angular power spectrum, if able. (healpix binners)
-        if hasattr(self.binner, 'plotPowerSpectrum'):
-            figs['ps'] = self.binner.plotPowerSpectrum(self.metricValues[metricName],
-                                                     title=title)
-            if savefig:
-                outfile = self._buildOutfileName(metricName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='ps')
-                plt.savefig(outfile, figformat=self.figformat)
-                self._addOutputFileList(outfile, metricName, 'powerspectrumPlot')
-        # Plot the hourglass plot
-        if hasattr(self.binner, 'plotHour'):
-            if xlabel is None:
-                xlabel='MJD (day)'
-            if ylabel is None:
-                ylabel = 'Hours from local midnight'
-            figs['hourglass'] = self.binner.plotHour(self.metricValues[metricName][0], title=title, xlabel=xlabel,ylabel=ylabel )
-            if savefig:
-                outfile = self._buildOutfileName(metricName, 
-                                                 outDir=outDir, outfileRoot=outfileRoot, 
-                                                 plotType='hr')
-                plt.savefig(outfile, figformat=self.figformat)
-                self._addOutputFileList(outfile, metricName, 'hourglassPlot')
-        return figs
+           return False
+    

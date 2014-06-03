@@ -108,3 +108,13 @@ class BaseBinner(object):
         binner.bins = restored['binnerBins'][()]
         binner.nbins = restored['binnerNbins']
         return metricValues, binner, header
+
+    def plotData(self, metricValues, **kwargs):
+        """Call all plotting methods."""
+        self.filenames=[]
+        self.filetypes=[]
+        self.figs={}
+        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+            warnings.warn('metric data type not float or int, returning False')
+            return False
+        

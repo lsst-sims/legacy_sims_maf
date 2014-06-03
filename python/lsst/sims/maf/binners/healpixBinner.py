@@ -10,6 +10,7 @@ import healpy as hp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
+from lsst.sims.maf.utils.percentileClip import percentileClip as pc
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
@@ -77,9 +78,30 @@ class HealpixBinner(BaseSpatialBinner):
         ra = -lon % (np.pi*2)
         return ra, dec  
 
+    def plotData(self, metricValues, figformat='png', filename=None,
+                 savefig=True, **kwargs):
+        """Call all plotting methods."""
+        super(HealpixBinner,self).plotData(metricValues, 
+                                           figformat=figformat, 
+                                           filename=filename,savefig=savefig,**kwargs)
+
+        self.figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
+        if savefig:
+            outfile = filename+'_ps'+'.'+figformat
+            plt.savefig(outfile, figformat=figformat)
+            self.filenames.append(outfile)
+            self.filetypes.append('powerspectrumPlot')
+
+            
+        return {'figs':self.figs,'filenames':self.filenames,
+                'filetypes':self.filetypes}
+
         
-    def plotSkyMap(self, metricValue, units=None, title='',
-                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet, plotMaskedValues=False):
+    
+    def plotSkyMap(self, metricValueIn, units=None, title='',
+                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet,
+                   percentileClip=None, plotMaskedValues=False, zp=None, normVal=None,
+                   **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -97,7 +119,18 @@ class HealpixBinner(BaseSpatialBinner):
         cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
-        cmap.set_bad('gray')        
+        cmap.set_bad('gray')
+        if zp:
+            metricValue = metricValueIn - zp
+        elif normVal:
+            metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
+
+        if percentileClip:
+            plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
+            if not clims:
+                clims = [plotMin,plotMax]
         if clims is not None:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
@@ -123,7 +156,7 @@ class HealpixBinner(BaseSpatialBinner):
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
-                      scale=None, color='b'):
+                      scale=None, color='b', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
         If scale is None, sets 'scale' by the healpix area per binpoint.
@@ -148,11 +181,11 @@ class HealpixBinner(BaseSpatialBinner):
                                                         bins=bins, cumulative=cumulative,
                                                         histMin=histMin,histMax=histMax, ylog=ylog,
                                                         flipXaxis=flipXaxis,
-                                                        scale=scale,color=color)
+                                                        scale=scale,color=color, **kwargs)
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          label=None, addLegend=False, removeDipole=True, verbose=False):
+                          label=None, addLegend=False, removeDipole=True, verbose=False, **kwargs):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)

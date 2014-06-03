@@ -1,70 +1,48 @@
-# Test out new cadence metrics
+# to run:
+# python runConfig.py allBinnerCfg.py
+
+# Example MAF config file which runs each type of available binner.
+
+import numpy as np
 from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 
+# Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
+root.outputDir = './Allbinners'
+root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
+root.opsimNames = ['opsim_small']
+#root.dbAddress ='sqlite:///opsim.sqlite'
+#root.opsimNames = ['opsim_small']
 
-root.outputDir ='./Debug'
 
-small = False # Use the small database included in the repo
-
-if small:
-    root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-    root.opsimNames = ['opsim_small']
-    propids = [186,187,188,189]
-    WFDpropid = 188
-    DDpropid = 189 #?
-else:
-    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-    root.opsimNames = ['opsim']
-    propids = [215, 216, 217, 218, 219]
-    WFDpropid = 217
-    DDpropid = 219
-
-filters = ['u','g','r','i','z','y']
-colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
-filters=['r']
-
+# Setup a list to hold all the binners we want to run
 binList=[]
-nside=128
-leafsize = 50000 # For KD-tree
+
+# How many Healpix sides to use
+nside=256
+
+# List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy.  
+constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 
-########### Early Seeing Metrics ################
-seeing_limit = 0.7 # Demand seeing better than this
-for f in filters:
-    m1 = makeMetricConfig('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
-    binner = makeBinnerConfig('HealpixBinner',kwargs={"nside":nside},metricDict=makeDict(m1),
-                              constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
-                                           'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
-                                           'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
-                              setupKwargs={"leafsize":leafsize})
-    #binList.append(binner)
-
-# Look at the minimum seeing per field, and the fraction of observations below the "good" limit
-for f in filters:
-    m1 = makeMetricConfig('TemplateExistsMetric')
-    m2 = makeMetricConfig('MinMetric', params=['finSeeing'])
-    m3 = makeMetricConfig('FracBelowMetric', params=['finSeeing'], kwargs={'cutoff':seeing_limit})
-    binner = makeBinnerConfig('HealpixBinner',kwargs={"nside":nside},metricDict=makeDict(m1,m2,m3),
-                              constraints=['night < 365 and filter = "%s"'%(f),
-                                           'night < 730 and filter = "%s"'%(f),
-                                           'filter = "%s"'%(f)],
-                              setupKwargs={"leafsize":leafsize})
-    #binList.append(binner)
-
-
-#########  Supernova Metric ############
-m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
-########   Parallax and Proper Motion ########
-m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
-m3 = makeMetricConfig('ParallaxMetric')
-m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
-m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
-binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
-                           metricDict=makeDict(m2,m3,m4,m5),
-                           constraints=[''], setupKwargs={"leafsize":leafsize})
+# Configure a OneDBinner:
+# Configure a new metric
+m1 = makeMetricConfig('CountMetric', params=['slewDist'])
+metricDict=makeDict(m1)
+binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'},
+                          metricDict=metricDict, constraints=constraints)
 binList.append(binner)
 
 
 
-root.binners = makeDict(*binList)
+# Configure a UniBinner.  Note new SQL constraints are passed
+m1 = makeMetricConfig('MeanMetric', params=['airmass'])
+binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 750'] )
+binList.append(binner)
 
+
+
+# Save all the binners to the config
+root.binners=makeDict(*binList)
+
+# Optional comment string
+root.comment = 'Example script that runs each of the binners'
