@@ -1,8 +1,8 @@
 import os, sys
 import numpy as np
 import warnings
-from .table import Table
-from .database import Database
+from .Table import Table
+from .Database import Database
 from lsst.sims.maf.utils.getDateVersion import getDateVersion
 
 class OpsimDatabase(Database):
@@ -231,6 +231,9 @@ class OpsimDatabase(Database):
             config[propname] = table.query_columns_Array(colnames=cols,
                                                          constraint='nonPropID="%s" and paramName!="userRegion"' %(propid))
             config[propname] = config[propname][['paramName', 'paramValue', 'comment']]
+        config['keyorder'] = ['Comment', 'LSST', 'site', 'instrument', 'filters',
+                              'AstronomicalSky', 'File', 'scheduler',
+                              'schedulingData', 'schedDown', 'unschedDown']
         # Now finish building the summary to add proposal information.
         def _matchParamNameValue(configarray, keyword):
             return configarray['paramValue'][np.where(configarray['paramName']==keyword)]
@@ -243,59 +246,120 @@ class OpsimDatabase(Database):
             configSummary['Proposals']['keyorder'].append(propnames[np.where(propdata['propID'] == propid)][0])
         for propid, propname in zip(propdata['propID'], propnames):
             configSummary['Proposals'][propname] = {}            
-            thisdict = configSummary['Proposals'][propname]
-            thisdict['keyorder'] = ['PropID', 'PropName',  'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
-            thisdict['PropName'] = propname
-            thisdict['PropID'] = propid
-            thisdict['PropType'] = propdata['propName'][np.where(propnames == propname)]
-            thisdict['RelPriority'] = _matchParamNameValue(config[propname], 'RelativeProposalPriority')
+            propdict = configSummary['Proposals'][propname]
+            propdict['keyorder'] = ['PropID', 'PropName',  'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
+            propdict['PropName'] = propname
+            propdict['PropID'] = propid
+            propdict['PropType'] = propdata['propName'][np.where(propnames == propname)]
+            propdict['RelPriority'] = _matchParamNameValue(config[propname], 'RelativeProposalPriority')
             # Get the number of user regions.
             constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)
             result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)            
-            thisdict['NumUserRegions'] = result.size
+            propdict['NumUserRegions'] = result.size
             # Get the number of fields requested in the proposal (all filters). 
-            thisdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
+            propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
             # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
             #   The order of these entries in the config array matters. 
-            thisdict['PerFilter'] = {}
+            propdict['PerFilter'] = {}
             for key, keyword in zip(['Filters', 'MaxSeeing', 'MinSky', 'MaxSky'],
                                     ['Filter', 'Filter_MaxSeeing', 'Filter_MinBrig', 'Filter_MaxBrig']):
                 temp = _matchParamNameValue(config[propname], keyword)
                 if len(temp) > 0:
-                    thisdict['PerFilter'][key] = temp
+                    propdict['PerFilter'][key] = temp
             # And count how many total exposures are requested per filter.
-            numVisits = np.array(_matchParamNameValue(config[propname], 'Filter_Visits'), int)
-            if len(numVisits) > 0:
-                # This is a weak lensing type, simple request of visit numbers per filter.
-                thisdict['PerFilter']['NumVisits'] = numVisits
-            else:
-                # This is one of the other types of proposals and we must look at subsequences.
-                numVisits = np.zeros(len(thisdict['PerFilter']['Filters']), int)
-                allsubevents = np.array(_matchParamNameValue(config[propname], 'SubSeqEvents'), int)
-                allsubexposures = _matchParamNameValue(config[propname], 'SubSeqExposures')
-                allsubfilters = np.array(_matchParamNameValue(config[propname], 'SubSeqFilters'), str)
-                for subevents, subexposures, subfilters in zip(allsubevents, allsubexposures, allsubfilters):
-                    # If non multi-filter subsequence (i.e. just one filter per subseq):
-                    if len(subfilters) < 2:
-                        # Match this filter to list of filters.
-                        idx = (thisdict['PerFilter']['Filters'] == subfilters)
-                        numVisits[idx] += int(subevents) * int(subexposures)
-                    # Else we may have multiple filters in this subsequence, so split apart. 
-                    else: 
-                        splitsubfilters = subfilters.split(',')
-                        splitsubexposures = subexposures.split(',')
-                        for f, exp in zip(splitsubfilters, splitsubexposures):
-                            idx = (thisdict['PerFilter']['Filters'] == f)
-                            numVisits[idx] += int(subevents) * int(exp)
-                thisdict['PerFilter']['NumVisits'] = numVisits
+            if propdict['PropType'] == 'WL':
+                # Simple 'Filter_Visits' request for number of observations.
+                propdict['PerFilter']['NumVisits'] = np.array(_matchParamNameValue(config[propname],
+                                                                                   'Filter_Visits'), int)
+            elif propdict['PropType'] == 'WLTSS':
+                # Proposal contains subsequences and possible nested subseq, so must delve further.
+                # Make a dictionary to hold the subsequence info (keyed per subsequence).
+                propdict['SubSeq'] = {}
+                # Identify where subsequences start in config[propname] arrays.
+                seqidxs = np.where(config[propname]['paramName'] == 'SubSeqName')[0]
+                # Assign subsequence info to configSummary['Proposals'][propname]['SubSeq'][subseqname]
+                for sidx in seqidxs:
+                    # This is fragile and depends on order from database query. However, it's the
+                    #  best I think we can do with the current method of storing these values in the Config table.
+                    i = sidx                    
+                    seqname = config[propname]['paramValue'][i]
+                    # Check if seqname is a nested subseq of an existing sequence:
+                    nestedsubseq = False
+                    prevseqs = propdict['SubSeq'].keys()
+                    for ps in prevseqs:
+                        if 'SubSeqNested' in propdict['SubSeq'][ps]:
+                            if seqname in propdict['SubSeq'][ps]['SubSeqNested']:
+                                seqdict = propdict['SubSeq'][ps]['SubSeqNested'][seqname]
+                                nestedsubseq = True
+                    # If not, then create a new subseqence key/dictionary for this subseq.
+                    if not nestedsubseq:
+                        propdict['SubSeq'][seqname] = {}
+                        seqdict = propdict['SubSeq'][seqname]
+                    # And move on to next parameters within subsequence set.
+                    i += 1
+                    if config[propname]['paramName'][i] == 'SubSeqNested':
+                        subseqnestedname = config[propname]['paramValue'][i]
+                        if subseqnestedname != '.':
+                            # Have nested subsequence, so keep track of that here
+                            #  but will fill in info later.
+                            seqdict['SubSeqNested'] = {}
+                            # Set up nested dictionary for nested subsequence.
+                            seqdict['SubSeqNested'][subseqnestedname] = {}
+                        i += 1
+                    subseqfilters = config[propname]['paramValue'][i]
+                    if subseqfilters != '.':
+                        seqdict['Filters'] = subseqfilters
+                    i += 1
+                    subseqexp = config[propname]['paramValue'][i]
+                    if subseqexp != '.':
+                        seqdict['Visits'] = subseqexp
+                    i+= 1
+                    subseqevents = config[propname]['paramValue'][i]
+                    seqdict['Events'] = int(subseqevents)
+                # End of assigning subsequence info - move on to counting number of visits.
+                propdict['PerFilter']['NumVisits'] = np.zeros(len(propdict['PerFilter']['Filters']), int)
+                subseqs = propdict['SubSeq'].keys()
+                for subseq in subseqs:
+                    subevents = propdict['SubSeq'][subseq]['Events']
+                    # Count visits from direct subsequences.
+                    if 'Visits' in propdict['SubSeq'][subseq] and 'Filters' in propdict['SubSeq'][subseq]:
+                        subfilters = propdict['SubSeq'][subseq]['Filters']
+                        subexp = propdict['SubSeq'][subseq]['Visits']
+                        # If just one filter ..
+                        if len(subfilters) == 1:
+                            idx = (propdict['PerFilter']['Filters'] == subfilters)
+                            propdict['PerFilter']['NumVisits'][idx] += subevents * int(subexp)
+                        else:
+                            splitsubfilters = subfilters.split(',')
+                            splitsubexp = subexp.split(',')
+                            for f, exp in zip(splitsubfilters, splitsubexp):
+                                idx = (propdict['PerFilter']['Filters'] == f)
+                                propdict['PerFilter']['NumVisits'][idx] += subevents * int(exp)
+                    # Count visits if have nested subsequences.
+                    if 'SubSeqNested' in propdict['SubSeq'][subseq]:
+                        for subseqnested in propdict['SubSeq'][subseq]['SubSeqNested']:
+                            events = subevents * propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
+                            subfilters = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Filters']
+                            subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Visits']
+                            # If just one filter .. 
+                            if len(subfilters) == 1:
+                                idx = (propdict['PerFilter']['Filters'] == subfilters)
+                                propdict['PerFilter']['NumVisits'][idx] += events * int(subexp)
+                            # Else may have multiple filters in the subsequence, so must split.
+                            splitsubfilters = subfilters.split(',')
+                            splitsubexp = subexp.split(',')
+                            for f, exp in zip(splitsubfilters, splitsubexp):
+                                idx = (propdict['PerFilter']['Filters'] == f)
+                                propdict['PerFilter']['NumVisits'][idx] += int(exp) * events
+                    propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events']
             # Sort the filter information so it's ugrizy instead of order in opsim config db.
             idx = []
             for f in self.filterlist:
-                filterpos = np.where(thisdict['PerFilter']['Filters'] == f)
+                filterpos = np.where(propdict['PerFilter']['Filters'] == f)
                 if len(filterpos[0]) > 0:
                     idx.append(filterpos[0][0])
             idx = np.array(idx, int)
-            for k in thisdict['PerFilter']:
-                thisdict['PerFilter'][k] = thisdict['PerFilter'][k][idx]
+            for k in propdict['PerFilter']:
+                propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
         return configSummary, config

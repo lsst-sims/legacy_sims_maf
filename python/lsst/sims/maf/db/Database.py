@@ -1,5 +1,5 @@
 import warnings
-from .table import Table
+from .Table import Table
 
 def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
     """Utility to get the dbAddress info corresponding to 'connectionName' from a dbLogin file.

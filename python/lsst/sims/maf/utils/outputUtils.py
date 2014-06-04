@@ -33,7 +33,7 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     # And set character to use to indent sets of parameters related to a single dictionary.
     baseindent = '%s' %(delimiter)
     indent = ''
-    for i in range(level-1):
+    for i in range(_level-1):
         indent += '%s' %(baseindent)    
     # Print data (this is also the termination of the recursion if given nested dictionaries).
     if not isinstance(content, dict):
@@ -64,8 +64,8 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     else:
         keys = sorted(content.keys())
     # Print data from dictionary.
-    print >> filehandle, '%s%s%s' %(indent, delimiter, label)
-    _level += 1
+    print >> filehandle, '%s%s%s:' %(indent, delimiter, label)
+    _level += 2
     for k in keys:
-        _printdict(content[k], k, filehandle, _level, delimiter)
-    _level -= 1
+        printDict(content[k], k, filehandle, delimiter, _level)
+    _level -= 2

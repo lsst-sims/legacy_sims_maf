@@ -11,25 +11,23 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binMetrics as binMetrics
 import glob
 
-from lsst.sims.catalogs.generation.db.utils import make_engine
-from lsst.sims.maf.utils import getData
 
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-def getMetrics(seeingcol, docomplex=False):
+def getMetrics(docomplex=False):
     t = time.time()
     # Set up metrics.
     metricList = []
     # Simple metrics: 
-    metricList.append(metrics.MeanMetric(seeingcol))
+    metricList.append(metrics.MeanMetric('finSeeing'))
     metricList.append(metrics.MedianMetric('airmass'))
     metricList.append(metrics.MinMetric('airmass'))
-    metricList.append(metrics.MeanMetric('5sigma_modified'))
+    metricList.append(metrics.MeanMetric('fivesigma_modified'))
     metricList.append(metrics.MeanMetric('skybrightness_modified'))
-    metricList.append(metrics.Coaddm5Metric('5sigma_modified'))
+    metricList.append(metrics.Coaddm5Metric('fivesigma_modified'))
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
                                           plotParams={'ylog':False, 'title':'Number of visits',
                                                       'plotMin':0, 'plotMax':300,
@@ -105,7 +103,7 @@ if __name__ == '__main__':
 
     # Parse command line arguments for database connection info.
     parser = argparse.ArgumentParser()
-    parser.add_argument("simDataTable", type=str, help="Name of opsim visit table in database")
+    parser.add_argument("opsimDb", type=str, help="Filename for opsim sqlite db file")
     parser.add_argument("--sqlConstraint", type=str, default="filter='r'",
                         help="SQL constraint, such as filter='r' or propID=182")
     parser.add_argument("--nside", type=int, default=128,
@@ -113,34 +111,19 @@ if __name__ == '__main__':
     parser.add_argument("--dither", dest='dither', action='store_true',
                         help="Use hexdither RA/Dec values.")
     parser.set_defaults(dither=False)
-    parser.add_argument("--connectionName", type=str, default='SQLITE_OPSIM', 
-                       help="Key for the connection string to use in your dbLogin file -- "\
-                            "Default is SQLITE_OPSIM")
     args = parser.parse_args()
     
     # Get db connection info.
-    dbAddress = getData.getDbAddress(connectionName = args.connectionName)
-    
-    dbTable = args.simDataTable
-    opsimrun = args.simDataTable.replace('output_', '')
+    dbAddress = 'sqlite:///' + args.opsimDb
+    oo = db.OpsimDatabase(dbAddress)
+
+    opsimrun = oo.fetchOpsimRunName()
 
     sqlconstraint = args.sqlConstraint
     
-    # Bit of a kludge to set seeing column name. 
-    table = db.Table(dbTable, 'obsHistID', dbAddress)
-    try:
-        table.query_columns_RecArray(colnames=['seeing',], numLimit=1)
-        seeingcol = 'seeing'
-    except ValueError:
-        try:
-            table.query_columns_RecArray(colnames=['finSeeing',], numLimit=1)
-            seeingcol = 'finSeeing'
-        except ValueError:
-            raise ValueError('Cannot find appropriate column name for seeing.')
-    print 'Using %s for seeing column name.' %(seeingcol)
     
     # Set up metrics. 
-    metricList = getMetrics(seeingcol, docomplex=True)
+    metricList = getMetrics(docomplex=False)
 
     # Find columns that are required.
     colnames = list(metricList[0].classRegistry.uniqueCols())
@@ -149,7 +132,7 @@ if __name__ == '__main__':
     colnames = list(set(colnames))
     
     # Get opsim simulation data
-    simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
+    simdata = oo.fetchMetricData(colnames, sqlconstraint)
     
     # And set up binner.
     if args.dither:

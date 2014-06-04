@@ -1,3 +1,3 @@
-from .table import *
-from .database import *
+from .Table import *
+from .Database import *
 from .opsimDatabase import *
