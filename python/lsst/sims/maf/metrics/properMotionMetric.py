@@ -8,7 +8,7 @@ class ProperMotionMetric(BaseMetric):
     """
 
     def __init__(self, metricName='properMotion',
-                 m5col='5sigma_modified', mjdcol='expMJD', units='mas/yr',
+                 m5col='fivesigma_modified', mjdcol='expMJD', units='mas/yr',
                  filtercol='filter', seeingcol='finSeeing',  rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
