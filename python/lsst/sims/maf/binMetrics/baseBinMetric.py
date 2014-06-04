@@ -95,8 +95,8 @@ class BaseBinMetric(object):
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile (with path) and strip white spaces (replace with underscores). 
-        outfile = os.path.join(outDir, oname.replace(' ', '_'))
+        # Build outfile (with path) and strip white spaces (replace with underscores) and strip quotes. 
+        outfile = os.path.join(outDir, oname.replace(' ', '_').replace("'",'').replace('"',''))
         return outfile
 
     def _addOutputFileList(self, outfilename, metricName, filetype):

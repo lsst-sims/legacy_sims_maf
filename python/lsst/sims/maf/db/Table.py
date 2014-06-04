@@ -20,7 +20,7 @@ class Table(DBObject):
         self.verbose = verbose
         if dbAddress is None:
             dbAddress = self.getDbAddress()
-
+        self.verbose = verbose
         self.idColKey = idColKey
         self.dbAddress = dbAddress
         self.tableid = tableName

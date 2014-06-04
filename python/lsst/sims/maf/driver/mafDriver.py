@@ -176,6 +176,7 @@ class MafDriver(object):
                 if 'OPSI' in binnertypes:
                     self.getFieldData(matchingBinners[binnertypes.index('OPSI')])
                 # so maybe here pool.apply_async(runBinMetric, constriant=const, colnames=colnames, binners=matchingBinners, metricList=self.metricList, dbAdress=self.config.dbAddress, outdir=self.config.outputDir)
+
                 for i,binner in enumerate(matchingBinners):
                     # Thinking about how to run in parallel...I think this loop would be a good place (although there wouldn't be any speedup for querries that only use one binner...If we run the getData's in parallel, run the risk of hammering the database and/or running out of memory. Maybe run things in parallel inside the binMetric? 
                     # what could I do--write a function that takes:  simdata, binners, metriclist, dbAdress.
@@ -228,7 +229,7 @@ class MafDriver(object):
                     for i,m in enumerate(self.metricList[binner.index]):
                         good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
                         m.saveFile = outfile_names[good]
-                            
+
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
             print >>f, stat
@@ -276,9 +277,10 @@ class MafDriver(object):
         # Open up a file and print the results of verison and date.
         datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
         print >>datefile, 'date, version, fingerprint '
-        #import pdb ; pdb.set_trace()
         print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],versionInfo['__fingerprint__'])
         datefile.close()
+        # Save the list of output files
+        np.save(self.config.outputDir+'/'+'outputFiles.npy', allOutfiles)
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         

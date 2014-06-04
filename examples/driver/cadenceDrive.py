@@ -65,6 +65,18 @@ binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
 binList.append(binner)
 
 
+########### Time Uniformity Metric ###########
+constraints=[]
+for f in filters:
+    constraints.append('filter = "%s"'%f)
+constraints.append('')
+m1 = makeMetricConfig('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
+binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
+                           metricDict=makeDict(m1),
+                           constraints=constraints, setupKwargs={"leafsize":leafsize})
+binList.append(binner)
+
+
 
 root.binners = makeDict(*binList)
 

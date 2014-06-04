@@ -100,32 +100,28 @@ class BaseSpatialBinner(BaseBinner):
     def plotData(self, metricValues, figformat='png',
                  filename=None, savefig=True, **kwargs):
         """Call all plotting methods."""
-        filenames=[]
-        filetypes=[]
-        figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('metric data type not float or int, returning False')
-            return False
+        super(BaseSpatialBinner,self).plotData(metricValues,**kwargs)
         
-        figs['hist'] = self.plotHistogram(metricValues, **kwargs)
+        self.figs['hist'] = self.plotHistogram(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_hist'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
+            self.filenames.append(outfile)
+            self.filetypes.append('histogramPlot')
 
-        figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
+        self.figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_sky'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
+            self.filenames.append(outfile)
+            self.filetypes.append('histogramPlot')
         
-        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
+        return {'figs':self.figs,'filenames':self.filenames,
+                'filetypes':self.filetypes}
 
         
     ## Plot histogram (base spatial binner method).
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
+    def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
@@ -149,9 +145,11 @@ class BaseSpatialBinner(BaseBinner):
         if not xlabel:
             xlabel = units
         if zp:
-            metricValue = metricValue-zp
-        if normVal:
-            metricValue = metricValue/normVal
+            metricValue = metricValueIn - zp
+        elif normVal:
+            metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if histMin is None and histMax is None:
@@ -245,7 +243,7 @@ class BaseSpatialBinner(BaseBinner):
         y_ec = np.sin(x_ec) * ecinc
         plt.plot(ra, y_ec, 'r-')        
         
-    def plotSkyMap(self, metricValue, title=None, projection='aitoff', radius=1.75/180.*np.pi,
+    def plotSkyMap(self, metricValueIn, title=None, projection='aitoff', radius=1.75/180.*np.pi,
                    clims=None, ylog='auto', cbarFormat=None, cmap=cm.jet, fignum=None, units='',
                    plotMaskedValues=False, zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot the sky map of metricValue."""
@@ -253,10 +251,13 @@ class BaseSpatialBinner(BaseBinner):
         from matplotlib import colors
         if fignum is None:
             fig = plt.figure()
-        if zp:
-            metricValue = metricValue-zp
-        if normVal:
-            metricValue = metricValue/normVal
+        if zp or normVal:
+            if zp:
+                metricValue = metricValueIn - zp
+            if normVal:
+                metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
         # other projections available include 
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)

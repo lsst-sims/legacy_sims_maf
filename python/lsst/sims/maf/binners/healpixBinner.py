@@ -82,40 +82,25 @@ class HealpixBinner(BaseSpatialBinner):
     def plotData(self, metricValues, figformat='png', filename=None,
                  savefig=True, **kwargs):
         """Call all plotting methods."""
-        filenames=[]
-        filetypes=[]
-        figs={}
-        if not ((metricValues.dtype == 'float') or (metricValues.dtype == 'int') ) or (metricValues.compressed().size == 0):
-            warnings.warn('metric data type not float or int, or no unmasked data, returning False')
-            return False
-        
-        figs['hist'] = self.plotHistogram(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_hist'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
 
-        figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_sky'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('histogramPlot')
+        super(HealpixBinner,self).plotData(metricValues, 
+                                           figformat=figformat, 
+                                           filename=filename,savefig=savefig,**kwargs)
 
-        figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
+        self.figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_ps'+'.'+figformat
             plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('powerspectrumPlot')
+            self.filenames.append(outfile)
+            self.filetypes.append('powerspectrumPlot')
 
             
-        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
+        return {'figs':self.figs,'filenames':self.filenames,
+                'filetypes':self.filetypes}
 
         
     
-    def plotSkyMap(self, metricValue, units=None, title='',
+    def plotSkyMap(self, metricValueIn, units=None, title='',
                    clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet,
                    percentileClip=None, plotMaskedValues=False, zp=None, normVal=None,
                    **kwargs):
@@ -138,9 +123,12 @@ class HealpixBinner(BaseSpatialBinner):
         cmap.set_under('w')
         cmap.set_bad('gray')
         if zp:
-            metricValue = metricValue-zp
-        if normVal:
-            metricValue = metricValue/normVal
+            metricValue = metricValueIn - zp
+        elif normVal:
+            metricValue = metricValueIn/normVal
+        else:
+            metricValue = metricValueIn
+
         if percentileClip:
             plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
             if not clims:

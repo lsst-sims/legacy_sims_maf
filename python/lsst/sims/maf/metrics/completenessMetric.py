@@ -1,7 +1,7 @@
 import numpy as np
-from .complexMetrics import ComplexMetric
+from .baseMetric import BaseMetric
 
-class CompletenessMetric(ComplexMetric):
+class CompletenessMetric(BaseMetric):
     """Compute the completeness and joint completeness """
     def __init__(self, filterColName='filter', metricName='Completeness', u=0, g=0, r=0, i=0, z=0, y=0, **kwargs):
         """Compute the completeness for the each of the given filters and the joint completeness across all filters.
