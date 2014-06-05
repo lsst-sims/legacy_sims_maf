@@ -59,11 +59,11 @@ class BaseBinner(object):
         which are appropriate for the metric to be working on, for that bin."""
         raise NotImplementedError('This method is set up by "setupBinner" - run that first.')
 
-    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', comment='', metadata=''):
+    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', sqlconstraint='', metadata=''):
         """Save a set of metric values along with the information required to re-build the binner."""
         header = {}
         header['metricName']=metricName
-        header['comment'] = comment
+        header['sqlconstraint'] = sqlconstraint
         header['metadata'] = metadata
         header['simDataName'] = simDataName
         date, versionInfo = getDateVersion()
@@ -108,3 +108,13 @@ class BaseBinner(object):
         binner.bins = restored['binnerBins'][()]
         binner.nbins = restored['binnerNbins']
         return metricValues, binner, header
+
+    def plotData(self, metricValues, **kwargs):
+        """Call all plotting methods."""
+        self.filenames=[]
+        self.filetypes=[]
+        self.figs={}
+        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+            warnings.warn('metric data type not float or int, returning False')
+            return None
+        

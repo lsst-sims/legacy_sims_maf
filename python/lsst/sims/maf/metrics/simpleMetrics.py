@@ -94,10 +94,6 @@ class BinaryMetric(SimpleScalarMetric):
             return 1
         else:
             return self.badval
-class IdentityMetric(SimpleScalarMetric):
-    """Return the metric value itself .. this is primarily useful as a summary statistic for UniBinner metrics."""
-    def run(self, dataSlice):
-        return dataSlice[self.colname]
 
 class FracAboveMetric(SimpleScalarMetric):
     def __init__(self, colname, cutoff=0.5, **kwargs):

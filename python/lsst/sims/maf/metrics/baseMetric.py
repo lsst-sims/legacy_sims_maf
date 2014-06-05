@@ -7,6 +7,7 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
+import inspect
 from lsst.sims.maf.utils.getColInfo import ColInfo
 
 # ClassRegistry adds some extras to a normal dictionary and serves as a way to 
@@ -47,7 +48,12 @@ class BaseMetric(object):
     
     def __init__(self, cols, metricName=None, units=None, plotParams=None,
                  *args, **kwargs):
-        """Instantiate metric. """
+        """Instantiate metric.
+        After inheriting from this base metric (and using, perhaps via 'super' this __init__):
+          * every metric object will have the data columns it requires added to the column registry
+            (so the driver can know which columns to pull from the database)
+          * every metric object will contain a plotParams dictionary, which may contain only the units.
+        """
         # Turn cols into numpy array (so we know it's iterable).
         self.colNameList = ClassRegistry.makeColArr(cols)
         # Register the columns in the classRegistry.
@@ -67,13 +73,19 @@ class BaseMetric(object):
             for i in range(1, len(self.colNameList)):
                 allcols += ', ' + self.colNameList[i]
             self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
+        # Set up dictionary of reduce functions (may be empty).
+        self.reduceFuncs = {}
+        for r in inspect.getmembers(self, predicate=inspect.ismethod):
+            if r[0].startswith('reduce'):
+                reducename = r[0].replace('reduce', '', 1)
+                self.reduceFuncs[reducename] = r[1]
         # Set physical units, mostly for plotting purposes.
         if units is None:
             units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
             if len(units.replace(' ', '')) == 0:
                 units = self.name
         self.units = units
-        # Set more plotting preferences
+        # Set more plotting preferences (at the very least, the units).
         if plotParams:
             self.plotParams = plotParams
         else:

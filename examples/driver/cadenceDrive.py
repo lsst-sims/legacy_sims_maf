@@ -7,14 +7,14 @@ root.outputDir ='./Cadence'
 small = False # Use the small database included in the repo
 
 if small:
-    root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-    root.opsimNames = ['opsim_small']
+    root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
+    root.opsimName = 'opsim_small'
     propids = [186,187,188,189]
     WFDpropid = 188
     DDpropid = 189 #?
 else:
-    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite'}
-    root.opsimNames = ['opsim']
+    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite', 'OutputTable':'opsim'}
+    root.opsimName = 'opsim'
     propids = [215, 216, 217, 218, 219]
     WFDpropid = 217
     DDpropid = 219
@@ -24,8 +24,8 @@ colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 filters=['r']
 
 binList=[]
-nside=128
-leafsize = 50000 # For KD-tree
+nside=64
+leafsize = 100 # For KD-tree
 
 
 ########### Early Seeing Metrics ################
@@ -55,11 +55,25 @@ for f in filters:
 #########  Supernova Metric ############
 m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
 ########   Parallax and Proper Motion ########
-m2 = makeMetricConfig('ParallaxMetric')
-m3 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
+m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
+m3 = makeMetricConfig('ParallaxMetric')
+m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
+m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
-                           metricDict=makeDict(m1,m2,m3),
-                           constraints=[''], setupKwargs={"leafsize":leafsize})
+                           metricDict=makeDict(m1,m2,m3,m4,m5),
+                           constraints=['night < 365'], setupKwargs={"leafsize":leafsize})
+binList.append(binner)
+
+
+########### Time Uniformity Metric ###########
+constraints=[]
+for f in filters:
+    constraints.append('filter = "%s"'%f)
+constraints.append('')
+m1 = makeMetricConfig('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
+binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
+                           metricDict=makeDict(m1),
+                           constraints=constraints, setupKwargs={"leafsize":leafsize})
 binList.append(binner)
 
 

@@ -5,8 +5,8 @@ from lsst.sims.maf.utils import runInfo
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields_full'
-root.dbAddress ={'dbAddress':'sqlite:///hewelhog_1016_sqlite.db', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field'}
-root.opsimNames = ['Output']
+root.dbAddress ={'dbAddress':'sqlite:///hewelhog_1016_sqlite.db', 'OutputTable':'Output', 'fieldTable':'Field', 'sessionID':'1016', 'proposalTable': 'Proposal_Field'}
+root.opsimName = 'Output'
 
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}

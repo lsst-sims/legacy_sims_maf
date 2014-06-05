@@ -78,11 +78,10 @@ class BinnerConfig(pexConfig.Config):
 class MafConfig(pexConfig.Config):
     """Using pexConfig to set MAF configuration parameters"""
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
-    opsimNames = pexConfig.ListField("Which opsim runs should be analyzed", str, ['opsim_3_61'])
+    opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
     binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
-    comment =  pexConfig.Field("", dtype=str, default='')
-    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str,
-                                    default={'dbAddress':'','outputTable':''})
+    comment =  pexConfig.Field("", dtype=str, default='runName')
+    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
     #hist2merge = pexConfig.ConfigDictField("", keytype=int, itemtype=PlotConfig, default={})
     
 def makeDict(*args):

@@ -1,5 +1,5 @@
 import numpy as np
-from .complexMetrics import ComplexMetric                               
+from .baseMetric import BaseMetric
 
 
 def calcDist_cosines(RA1, Dec1, RA2, Dec2):
@@ -16,7 +16,7 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 
 
 
-class RadiusObsMetric(ComplexMetric):
+class RadiusObsMetric(BaseMetric):
     """find the radius in the focal plane. """
 
     def __init__(self, metricName='radiusObs', racol='fieldRA',deccol='fieldDec',

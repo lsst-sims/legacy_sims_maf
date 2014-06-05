@@ -8,8 +8,8 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
-root.dbAddress ={'dbAddress':'sqlite:///../opsim_small.sqlite'}
-root.opsimNames = ['opsim_small']
+root.dbAddress = {'dbAddress':'sqlite:///../opsimblitz1_1131_sqlite.db', 'OutputTable':'output'}
+root.opsimName = 'example'
 #root.dbAddress ='sqlite:///opsim.sqlite'
 #root.opsimNames = ['opsim_small']
 
@@ -58,7 +58,7 @@ binList.append(binner)
 m1 = makeMetricConfig('MinMetric', params=['airmass'], plotDict={'cmap':'RdBu'})
 m4 = makeMetricConfig('MeanMetric', params=['normairmass'])
 m3 = makeMetricConfig('Coaddm5Metric')
-m7 = makeMetricConfig('CountMetric', params=['expMJD'], plotDict={'units':"#", 'percentileClip':80.})
+m7 = makeMetricConfig('CountMetric', params=['expMJD'], plotDict={'units':"Number of Observations", 'percentileClip':80.})
 metricDict = makeDict(m1,m3,m4,m7)
 binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=constraints )
 binList.append(binner)

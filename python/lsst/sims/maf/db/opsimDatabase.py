@@ -87,26 +87,25 @@ class OpsimDatabase(Database):
     def fetchFieldsFromFieldTable(self, propID=None, degreesToRadians=True):
         """Fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
     
-        proposalID = the proposal ID (default None), if selecting particular proposal - can be a list
+        propID = the proposal ID (default None), if selecting particular proposal - can be a list
         degreesToRadians = RA/Dec values are in degrees in the Field table (so convert to radians) """
         # Note that you can't select any other sql constraints (such as filter). 
         # This will select fields which were requested by a particular proposal or proposals,
         #   even if they didn't get any observations. 
         tableName = 'fieldTable'
-        if propID != None:
+        if propID is not None:
             query = 'select f.fieldID, f.fieldRA, f.fieldDec from %s as f' %(self.dbTables['fieldTable'][0])
-            if propID != None:
-                query += ', %s as p where (p.Field_fieldID = f.fieldID) ' %(self.dbTables['proposalFieldTable'][0])
-                if hasattr(propID, '__iter__'): # list of propIDs
-                    query += ' and ('
-                    for pID in propID:
-                        query += '(p.Proposal_propID = %d) or ' %(int(pID))
-                    # Remove the trailing 'or' and add a closing parenthesis.
-                    query = query[:-3]
-                    query += ')'
-                else: # single proposal ID.
-                    query += ' and (p.Proposal_propID = %d) ' %(int(propID))
-                query += ' group by f.fieldID'
+            query += ', %s as p where (p.Field_fieldID = f.fieldID) ' %(self.dbTables['proposalFieldTable'][0])
+            if hasattr(propID, '__iter__'): # list of propIDs
+                query += ' and ('
+                for pID in propID:
+                    query += '(p.Proposal_propID = %d) or ' %(int(pID))
+                # Remove the trailing 'or' and add a closing parenthesis.
+                query = query[:-3]
+                query += ')'
+            else: # single proposal ID.
+                query += ' and (p.Proposal_propID = %d) ' %(int(propID))
+            query += ' group by f.fieldID'
             fielddata = self.queryDatabase(tableName, query)
         else:
             table = self.tables[tableName]
@@ -145,6 +144,28 @@ class OpsimDatabase(Database):
         runLength = table.query_columns_Array(colnames=['paramValue'], constraint=" paramName = '%s'"%runLengthParam)
         runLength = float(runLength['paramValue'][0]) # Years
         return runLength
+
+    def fetchNVisits(self, propID=None):
+        """Fetch the total number of visits in the simulation (or total number of visits for a particular propoal).
+        Convenience function for setting user-defined benchmark values.
+        
+        propID = the proposal ID (default None), if selecting particular proposal - can be a list
+        """
+        tableName = 'obsHistoryTable'
+        query = 'select expMJD from %s' %(self.dbTables[tableName][0])
+        if propID is not None:
+            query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['obsHistoryProposalTable'][0])
+            if hasattr(propID, '__iter__'): # list of propIDs
+                query += ' and ('
+                for pID in propID:
+                    query += '(Proposal_propID = %d) or ' %(int(pID))
+                # Remove the trailing 'or' and add a closing parenthesis.
+                query = query[:-3]
+                query += ')'
+            else: # single proposal ID.
+                query += ' and (Proposal_propID = %d) ' %(int(propID))
+        data = self.queryDatabase(tableName, query)
+        return data.size
 
     def fetchSeeingColName(self):
         """Check whether the seeing column is 'seeing' or 'finSeeing' (v2.x simulator vs v3.0 simulator)."""

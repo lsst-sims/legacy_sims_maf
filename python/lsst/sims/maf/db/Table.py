@@ -12,7 +12,7 @@ with warnings.catch_warnings():
 class Table(DBObject):
     skipRegistration = True
 
-    def __init__(self, tableName, idColKey, dbAddress):
+    def __init__(self, tableName, idColKey, dbAddress, verbose=False):
         """
         Initialize an object for querying OpSim databases
 
@@ -22,10 +22,10 @@ class Table(DBObject):
         @param dbAddress: A string indicating the location of the data to query.
                           This should be a database connection string.
         """
-
+        self.verbose = verbose
         if dbAddress is None:
             dbAddress = self.getDbAddress()
-
+        self.verbose = verbose
         self.idColKey = idColKey
         self.dbAddress = dbAddress
         self.tableid = tableName

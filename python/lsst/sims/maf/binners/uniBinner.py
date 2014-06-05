@@ -49,5 +49,12 @@ class UniBinner(BaseBinner):
         else:
             return False
             
+    def plotData(self, metricValues, figformat='png', filename=None,
+                 savefig=True, **kwargs):
+        """Override plotData, to be sure it returns None (no plots available)."""
 
-
+        super(UniBinner, self).plotData(metricValues, 
+                                        figformat=figformat, 
+                                        filename=filename, savefig=savefig, **kwargs)
+            
+        return None
