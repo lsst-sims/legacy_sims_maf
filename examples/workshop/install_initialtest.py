@@ -3,7 +3,7 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 root.outputDir = './InitialTest'
 root.dbAddress ={'dbAddress':'sqlite:///opsimblitz2_1039_sqlite.db'}
-root.opsimNames = ['Output']
+root.opsimNames = ['opsimblitz2_1039']
 
 
 binList=[]

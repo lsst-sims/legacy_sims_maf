@@ -1,35 +1,58 @@
 # A MAF config that replicates the SSTAR plots
 
 from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+import lsst.sims.maf.utils as utils
 
 # Setup Database access
 root.outputDir ='./BiggerTest'
 root.dbAddress ={'dbAddress':'sqlite:///opsimblitz2_1039_sqlite.db'}
-root.opsimNames = ['Output']
+root.opsimNames = ['opsimblitz2_1039']
 
+# Connect to the database to fetch some values we're using to help configure the driver.
+opsimdb = utils.connectOpsimDb(root.dbAddress)
+
+# Fetch the proposal ID values from the database
+propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
+
+# Construct a WFD SQL where clause so multiple propIDs can by WFD:
+wfdWhere = ''
+if len(WFDpropid) == 1:
+    wfdWhere = "propID = '%s'"%WFDpropid[0]
+else: 
+    for i,propid in enumerate(WFDpropid):
+        if i == 0:
+            wfdWhere = wfdWhere+'('+'propID = %s'%propid
+        else:
+            wfdWhere = wfdWhere+'or propID = %s'%propid
+        wfdWhere = wfdWhere+')'
+
+
+# Fetch the total number of visits (to create fraction)
+totalNVisits = opsimdb.fetchNVisits()
 
 
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 
-# 10 year Design Specs
-nvisitBench={'u':56,'g':80, 'r':184, 'i':184, 'z':160, 'y':160} 
+# Set up benchmark values for Stretch and Design, scaled to length of opsim run.
+runLength = opsimdb.fetchRunLength()
+design, stretch = utils.scaleStretchDesign(runLength)
+
+# Set zeropoints and normalization for plots below (and range for nvisits plots).
+sky_zpoints = design['skybrightness']
+seeing_norm = design['seeing']
+
+mag_zpoints = design['coaddedDepth']
+nvisitsBench = design['nvisits']
+
 nVisits_plotRange = {'all': 
                      {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200], 'z':[100, 250], 'y':[100,250]},
                      'DDpropid': 
                      {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],  'z':[7000, 10000], 'y':[5000, 8000]},
                      '216':
                      {'u':[20, 40], 'g':[20, 40], 'r':[20, 40], 'i':[20, 40], 'z':[20, 40], 'y':[20, 40]}}
-mag_zpoints={'u':26.1,'g':27.4, 'r':27.5, 'i':26.8, 'z':26.1, 'y':24.9}
-sky_zpoints = {'u':21.8, 'g':22., 'r':21.3, 'i':20.0, 'z':19.1, 'y':17.5}
-seeing_norm = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63}
 
 binList=[]
-
-propids = [148, 149, 150, 151, 152]
-WFDpropid = 150
-DDpropid = 152
-
 nside = 128
 
 # Metrics per filter 
