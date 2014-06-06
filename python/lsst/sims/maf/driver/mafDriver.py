@@ -294,7 +294,7 @@ class MafDriver(object):
                             hashkey = hashkey + '_%d' %(i)
                             i += 1
                         allOutDict[hashkey] = outFiles[metrickey]
-                        allOutfiles.append(outfiles[metrickey]['dataFile'])
+                        allOutfiles.append(outFiles[metrickey]['dataFile'])
                     # And keep track of which output files hold metric data (for merging histograms)
                     outfile_names = []
                     outfile_metricNames = []
