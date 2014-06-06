@@ -1,11 +1,11 @@
-import numpy as np 
 import os
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 import warnings
+import numpy as np 
+
+from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
 import lsst.sims.maf.db as db
-
 import lsst.sims.maf.binners as binners
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binMetrics as binMetrics
@@ -35,14 +35,16 @@ class MafDriver(object):
             os.makedirs(self.config.outputDir)
 
         # Set up database connection.
-        if 'outputTable' in self.config.dbAddress:
-            # Connect to just the output table.
-            self.opsimdb = db.OpsimDatabase(self.config.dbAddress['dbAddress'],
-                                            dbTables={'outputTable':[self.config.dbAddress['outputTable'], 'obsHistID']},
-                                            defaultdbTables = None)
-        else:
-            # For a basic db connection to the sqlite db files. 
-            self.opsimdb = db.OpsimDatabase(self.config.dbAddress['dbAddress'])
+        self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
+
+        # Grab config info and write to disk.
+        configSummary, configDetails = self.opsimdb.fetchConfig()
+        f = open(os.path.join(self.config.outputDir,'configSummary.txt'), 'w')
+        utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
+        f.close()
+        f = open(os.path.join(self.config.outputDir, 'configDetails.txt'), 'w')
+        utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
+        f.close()
 
         self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
 
@@ -256,7 +258,7 @@ class MafDriver(object):
                     # And plot all metric values.
                     gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
                     # Loop through the metrics and calculate any summary statistics
-                    for metric in self.metricList[binner.index]:
+                    for i, metric in enumerate(self.metricList[binner.index]):
                         if hasattr(metric, 'summaryStats'):
                             for stat in metric.summaryStats:
                                 # If it's metric returning an OBJECT, run summary stats on each reduced metric

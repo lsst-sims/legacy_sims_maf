@@ -17,7 +17,7 @@ class TestOpsimDb(unittest.TestCase):
         
     def testOpsimDbSetup(self):
         """Test opsim specific database class setup/instantiation."""
-        # Test tables were created.
+        # Test tables were connected to.
         self.assertTrue(isinstance(self.oo.tables, dict))
         self.assertEqual(self.oo.dbTables['outputTable'][0], 'Output')
         # Test can override default table name/id keys if needed.
@@ -88,6 +88,6 @@ class TestOpsimDb(unittest.TestCase):
         out.printDict(configsummary, 'Summary')
         out.printDict(configdetails, 'Details')
     '''
-                
+       
 if __name__ == "__main__":
     unittest.main()

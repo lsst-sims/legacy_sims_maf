@@ -31,7 +31,8 @@ class f0Binner(HealpixBinner):
                scale=None, Asky=18000., Nvisit=825, 
                xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
         """ 
-        Note that Asky and Nvisit need to be set for both the binner and the summary statistic for the plot and returned summary stat values to be consistent!"""
+        Note that Asky and Nvisit need to be set for both the binner and the summary statistic
+          for the plot and returned summary stat values to be consistent!"""
         colorlinewidth = 2
         if scale is None:
             scale = (hp.nside2pixarea(hp.npix2nside(metricValue.size), degrees=True)  / 1000.0)
@@ -57,7 +58,7 @@ class f0Binner(HealpixBinner):
                     alpha=.5, label=r'f$_0$ Nvisits=%.3g'%f0Nv_value_n)
         plt.axvline(x=f0Area_value , linewidth=colorlinewidth,color='r', 
                     alpha=.5, label='f$_0$ Area=%.3g'%f0Area_value_n)
-        plt.legend(loc='upper right')
+        plt.legend(loc='lower left', fontsize='small', numpoints=1)
 
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)

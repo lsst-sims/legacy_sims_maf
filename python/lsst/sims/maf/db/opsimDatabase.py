@@ -231,8 +231,10 @@ class OpsimDatabase(Database):
         constraint = 'moduleName="scheduler" and paramName="MinDistance2Moon"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
+        totalvisits = self.fetchNVisits()
+        configSummary['RunInfo']['TotalVisits'] = totalvisits
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinDist2Moon', 'MinAlt', 'MaxAlt',
-                                                'TimeFilterChange', 'TimeReadout']
+                                                'TimeFilterChange', 'TimeReadout', 'TotalVisits']
         # Now build up config dict with 'nice' group names (proposal name and short module name)
         #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
         # Match proposal IDs with names.
@@ -279,6 +281,8 @@ class OpsimDatabase(Database):
             propdict['NumUserRegions'] = result.size
             # Get the number of fields requested in the proposal (all filters). 
             propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
+            propvisits = self.fetchNVisits(propID=propid)
+            propdict['ProposalVisits'] = [propvisits, '(%.0f%s)' %(propvisits/totalvisits*100., '%')]
             # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
             #   The order of these entries in the config array matters. 

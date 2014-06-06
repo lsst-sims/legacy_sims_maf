@@ -252,6 +252,9 @@ class BaseBinMetric(object):
     def computeSummaryStatistics(self, metricName, summaryMetric):
         """Compute single number summary of metric values in metricName, using summaryMetric."""
         # To get (clear, non-confusing) result from unibinner, try running this with 'Identity' metric.
+        # Most of the summary metrics are simpleScalarMetrics:
+        #   so, for metrics which have an 'object' datatype, this can cause problems.
+                
         # Because of the way the metrics are built, summaryMetric will require a numpy rec array.
         # Create numpy rec array from metric data, with bad values removed. 
         rarr = np.array(zip(self.metricValues[metricName].compressed()), 
