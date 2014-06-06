@@ -232,7 +232,12 @@ class OpsimDatabase(Database):
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
         totalvisits = self.fetchNVisits()
+        allprops, wfd, dd = self.fetchPropIDs()
+        attributedvisits = self.fetchNVisits(allprops)
         configSummary['RunInfo']['TotalVisits'] = totalvisits
+        configSummary['RunInfo']['AttributedVisits'] = '%d (%.1f%s)' %(attributedvisits,
+                                                                    float(attributedvisits)/float(totalvisits)*100.0,
+                                                                    '%')
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinDist2Moon', 'MinAlt', 'MaxAlt',
                                                 'TimeFilterChange', 'TimeReadout', 'TotalVisits']
         # Now build up config dict with 'nice' group names (proposal name and short module name)
@@ -282,7 +287,7 @@ class OpsimDatabase(Database):
             # Get the number of fields requested in the proposal (all filters). 
             propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
             propvisits = self.fetchNVisits(propID=propid)
-            propdict['ProposalVisits'] = [propvisits, '(%.0f%s)' %(propvisits/totalvisits*100., '%')]
+            propdict['ProposalVisits'] = [propvisits, '(%.0f%s)' %(float(propvisits)/float(totalvisits)*100., '%')]
             # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
             #   The order of these entries in the config array matters. 
@@ -292,6 +297,14 @@ class OpsimDatabase(Database):
                 temp = _matchParamNameValue(config[propname], keyword)
                 if len(temp) > 0:
                     propdict['PerFilter'][key] = temp
+            # Add exposure time, potentially looking for scaling per filter.
+            exptime = float(_matchParamNameValue(config[propname], 'ExposureTime')[0])
+            temp = _matchParamNameValue(config[propname], 'Filter_ExpFactor')
+            if len(temp) > 0:
+                propdict['PerFilter']['ExpTime'] = temp * exptime
+            else:
+                propdict['PerFilter']['ExpTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
+                propdict['PerFilter']['ExpTime'] *= exptime
             # And count how many total exposures are requested per filter.
             if propdict['PropType'] == 'WL':
                 # Simple 'Filter_Visits' request for number of observations.
@@ -387,4 +400,5 @@ class OpsimDatabase(Database):
             idx = np.array(idx, int)
             for k in propdict['PerFilter']:
                 propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
+            propdict['PerFilter']['keyorder'] = ['Filters', 'ExpTime', 'MaxSeeing', 'MinSky', 'MaxSky', 'NumVisits']
         return configSummary, config

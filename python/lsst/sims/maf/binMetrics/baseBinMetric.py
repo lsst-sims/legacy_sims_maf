@@ -44,7 +44,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import lsst.sims.maf.binners as binners
-from lsst.sims.maf.utils.percentileClip import percentileClip
+import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.utils.outputUtils as outputUtils
 
 import time
 def dtime(time_prev):
@@ -61,10 +62,10 @@ class BaseBinMetric(object):
         self.plotParams = {}
         self.metricValues = {}
         self.simDataName = {}
-        self.sqlconstraint={}
+        self.sqlconstraint = {}
         self.metadata = {}
         self.binner = None
-        self.outputFiles = []
+        self.outputFiles = {}
 
     def _buildOutfileName(self, metricName,
                           outDir=None, outfileRoot=None, plotType=None):
@@ -100,16 +101,28 @@ class BaseBinMetric(object):
         outfile = os.path.join(outDir, oname.replace(' ', '_').replace("'",'').replace('"',''))
         return outfile
 
-    def _addOutputFileList(self, outfilename, metricName, filetype):
-        """Add outputfilename to internal list of dictionaries with output filenames,
-        filetype, metricName, binnerName, simDataName, metadata, comment."""
-        self.outputFiles.append({'filename':outfilename,
-                                 'filetype':filetype,
-                                 'metricName':self._dupeMetricName(metricName),
-                                 'binner':self.binner.binnerName,
-                                 'simDataName':self.simDataName[metricName],
-                                 'sqlconstraint':self.sqlconstraint[metricName],
-                                 'metadata':self.metadata[metricName]})
+    def _addOutputFiles(self, metricName, key, value):
+        """Add outputfilename to internal dictionary of dictionaries (keyed per metricName)
+        with output filenames (plus plots) and summary metrics.
+
+        Expected keys for each metricName dictionary are:
+        metricName (de-duped), binnerName, sqlconstraint, metadata, simDataName,
+        dataFile (for metric data), histFile, skyFile, psFile, (other plots),
+        summary metric - metricName / summaryValue  [can be repeated]
+        """
+        if metricName not in self.outputFiles:
+            self.outputFiles[metricName] = {}
+            self.outputFiles[metricName]['metricName'] = self._dupeMetricName(metricName)
+            self.outputFiles[metricName]['binnerName'] = self.binner.binnerName
+            self.outputFiles[metricName]['simDataName'] = self.simDataName[metricName]
+            self.outputFiles[metricName]['sqlconstraint'] = self.sqlconstraint[metricName]
+            self.outputFiles[metricName]['metadata'] = self.metadata[metricName]
+        if key == 'summaryStat':
+            if 'summaryStat' not in self.outputFiles[metricName]:
+                self.outputFiles[metricName]['summaryStat'] = {}
+            self.outputFiles[metricName]['summaryStat'][value[0]] = value[1]
+        else:
+            self.outputFiles[metricName][key] = value
 
     def _deDupeMetricName(self, metricName):
         """In case of multiple metrics having the same 'metricName', add additional characters to de-dupe."""
@@ -250,31 +263,37 @@ class BaseBinMetric(object):
             self.plotParams[rName] = self.plotParams[metricName]
 
     def computeSummaryStatistics(self, metricName, summaryMetric):
-        """Compute single number summary of metric values in metricName, using summaryMetric."""
+        """Compute single number summary of metric values in metricName, using summaryMetric.
+        summaryMetric must be an object (not a class), already instantiated.
+         """
         # To get (clear, non-confusing) result from unibinner, try running this with 'Identity' metric.
-        # Most of the summary metrics are simpleScalarMetrics:
-        #   so, for metrics which have an 'object' datatype, this can cause problems.
-                
+        # Most of the summary metrics are simpleScalarMetrics: test if this is the case, and if
+        #  metricValue is compatible, in order to avoid exceptions.
+        if issubclass(summaryMetric.__class__, metrics.SimpleScalarMetric):
+            if self.metricValues[metricName].dtype == 'object':
+                warnings.warn('Cannot compute simple scalar summary metric %s on "object" type metric value for %s'
+                              % (summaryMetric.name, metricName))
+                return None
         # Because of the way the metrics are built, summaryMetric will require a numpy rec array.
         # Create numpy rec array from metric data, with bad values removed. 
         rarr = np.array(zip(self.metricValues[metricName].compressed()), 
                 dtype=[('metricdata', self.metricValues[metricName].dtype)])
         # The summary metric colname should already be set to 'metricdata', but in case it's not:
         summaryMetric.colname = 'metricdata'
-        return summaryMetric.run(rarr)
+        summaryValue = summaryMetric.run(rarr)
+        # Convert to numpy array if not, for uniformity in final use.
+        if isinstance(summaryValue, float) or isinstance(summaryValue, int):
+            summaryValue = np.array(summaryValue)
+        # Add summary metric info to outputFiles.
+        self._addOutputFiles(metricName, 'summaryStat', [summaryMetric.name.replace(' metricdata', ''), summaryValue])
+        return summaryValue
         
     def returnOutputFiles(self, verbose=True):
         """Return list of output file information (which is a list of dictionaries)
         If 'verbose' then prints in somewhat pretty fashion to stdout."""
         if verbose:
-            keys = ['filename', 'filetype', 'metricName', 'binner', 'simDataName', 'metadata', 'comment']
-            writestring = ' || '.join(keys)
-            print writestring
-            for o in self.outputFiles:
-                writestring = ''
-                for k in keys:
-                    writestring += o[k] + ' || '
-                print writestring
+            subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
+            outputUtils.printSimpleDict(self.outputFiles, subkeyorder)
         return self.outputFiles      
                         
     def readMetricValues(self, filenames, verbose=False):
@@ -324,7 +343,7 @@ class BaseBinMetric(object):
                               simDataName = self.simDataName[metricName],
                               sqlconstraint = self.sqlconstraint[metricName],
                               metadata = self.metadata[metricName] + comment)
-        self._addOutputFileList(outfile+'.npz', metricName, 'metricData')
+        self._addOutputFiles(metricName, 'dataFile', outfile+'.npz')
 
                   
     def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
@@ -352,13 +371,13 @@ class BaseBinMetric(object):
               pParams['units'] += ' ('+ pParams['_units'] + ')'
         if 'xlabel' not in pParams:
            pParams['xlabel'] = pParams['units']
-        # Plot the data. Plotdata for each binner returns a 
+        # Plot the data. Plotdata for each binner returns a dictionary with the filenames, filetypes, and fig nums.
         plotResults=self.binner.plotData(self.metricValues[metricName], savefig=savefig,
                                          filename=outfile, **pParams)
         if plotResults:
             # Save information about the plotted files into the output file list.
-            for filename,filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
-                self._addOutputFileList(filename, metricName, filetype)
+            for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
+                self._addOutputFiles(metricName, filetype, filename)
             return plotResults['figs']
         else:
             return None

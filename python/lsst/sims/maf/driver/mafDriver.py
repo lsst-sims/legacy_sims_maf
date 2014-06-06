@@ -185,6 +185,9 @@ class MafDriver(object):
     
     def run(self):
         """Loop over each binner and calculate metrics for that binner. """
+        # Open a file to hold the metric output file names & summary stats.
+        summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
+        
         # Start a list to hold the output file names.
         allOutfiles = []
         
@@ -270,8 +273,6 @@ class MafDriver(object):
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         summary = gm.computeSummaryStatistics(mm, stat)
-                                        if type(summary).__name__ == 'float' or type(summary).__name__ == 'int':
-                                            summary = np.array(summary)
                                         statstring = self.config.opsimName + ',' + binner.binnerName + ',' + sqlconstraint 
                                         statstring += ',' + ',' + mm + ',' + stat.name + ',' + np.array_str(summary)
                                         summary_stats.append(statstring)
@@ -285,25 +286,26 @@ class MafDriver(object):
                     gm.writeAll(outDir=self.config.outputDir)
                     # Grab output Files - get file output key back. Verbose=True, prints to screen.
                     outFiles = gm.returnOutputFiles(verbose=False)
+                    subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
+                    utils.outputUtils.printSimpleDict(outFiles, subkeyorder, summaryfile, delimiter=',\t')
                     # Build continual dictionary of all output info over multiple sqlconstraints.
                     for filedict in outFiles:
                         allOutfiles.append(filedict)
                     # And keep track of which output files hold metric data (for merging histograms)
                     outfile_names = []
                     outfile_metricNames = []
-                    for outfile in outFiles:
-                        if outfile['filename'][-3:] == 'npz':
-                            outfile_names.append(outfile['filename'])
-                            outfile_metricNames.append(outfile['metricName'])
+                    for key in outFiles:
+                        outfile_names.append(outFiles[key]['dataFile'])
+                        outfile_metricNames.append(outFiles[key]['metricName'])
                     for i,m in enumerate(self.metricList[binner.index]):
                         good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
                         m.saveFile = outfile_names[good]
-                    
         # Save summary statistics to file.
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
             print >>f, stat
         f.close()
+        summaryfile.close()
         
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged

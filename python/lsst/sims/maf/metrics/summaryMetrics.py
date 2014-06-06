@@ -25,9 +25,9 @@ class f0Area(BaseMetric):
             nv = np.max(dataSlice[name][good])
             if self.norm:
                 nv = nv/float(self.Nvisit)
-            return np.array([nv])
+            return nv
         else:
-            return np.array([self.badval])
+            return self.badval
         
 
 class f0Nv(BaseMetric):
@@ -50,9 +50,9 @@ class f0Nv(BaseMetric):
             area = np.max(cumulativeArea[good])
             if self.norm:
                 area = area/float(self.Asky)
-            return np.array([area])
+            return area
         else:
-            return np.array([self.badval])
+            return self.badval
     
 
 class TableFractionMetric(SimpleScalarMetric):
@@ -119,6 +119,5 @@ class NormalizeMetric(SimpleScalarMetric):
     def __init__(self, colname, normVal=1):
         super(NormalizeMetric, self).__init__(colname)
         self.normVal = normVal
-
     def run(self, dataSlice):
         return dataSlice[self.colname]/self.normVal

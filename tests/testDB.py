@@ -5,7 +5,8 @@ import lsst.sims.maf.db as db
 
 class TestDb(unittest.TestCase):
     def setUp(self):
-        self.dbAddress = 'sqlite:///opsimblitz1_1131_sqlite.db'
+        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
+        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1131_sqlite.db'
 
     def tearDown(self):
         self.dbAddress = None

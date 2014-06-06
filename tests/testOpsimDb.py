@@ -7,7 +7,8 @@ import lsst.sims.maf.utils.outputUtils as out
 class TestOpsimDb(unittest.TestCase):
     """Test opsim specific database class."""
     def setUp(self):
-        self.dbAddress = 'sqlite:///opsimblitz1_1131_sqlite.db'
+        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
+        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1131_sqlite.db'
         self.oo = db.OpsimDatabase(self.dbAddress)
 
     def tearDown(self):

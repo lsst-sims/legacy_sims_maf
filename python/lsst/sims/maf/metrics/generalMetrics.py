@@ -20,7 +20,7 @@ class OpenShutterMetric(SimpleScalarMetric):
        return result
 
 class OpenShutterFracMetric(BaseMetric):
-   """Compute the amount of time the shutter is open. """
+   """Compute the fraction of time the shutter is open compared to the total time spent observing. """
    def __init__(self, readTime=2., shutterTime=2,
                 metricName='OpenShutterFracMetric',
                 slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):

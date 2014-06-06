@@ -50,8 +50,7 @@ class TestMoreMetrics(unittest.TestCase):
         assert(metric.reduceJoint(completeness) == 0)
         # And test that if you forget to set any requested visits, that you get the useful error message
         self.assertRaises(ValueError, metrics.CompletenessMetric, 'filter')        
-
-        
+    '''
     def testHourglassMetric(self):
         """Test the hourglass metric """
         names = [ 'expMJD', 'night','filter']
@@ -72,7 +71,7 @@ class TestMoreMetrics(unittest.TestCase):
     def testinDevelopmentMetrics(self):
         """ Test Metrics in Development, just passes and ignores"""
         pass
-    
+    '''
     def testRadiusObsMetric(self):
         """Test the RadiusObsMetric """
         ra = 0.
@@ -96,7 +95,7 @@ class TestMoreMetrics(unittest.TestCase):
     def testParallaxMetric(self):
         """Test the parallax metric """
         
-        names = ['expMJD','finSeeing', '5sigma_modified', 'fieldRA', 'fieldDec', 'filter']
+        names = ['expMJD','finSeeing', 'fivesigma_modified', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
         normFlags = [False, True]
@@ -106,7 +105,7 @@ class TestMoreMetrics(unittest.TestCase):
             data['filter'][0:100] = 'r'
             data['filter'][100:200] = 'u'
             data['filter'][200:] = 'g'
-            data['5sigma_modified'] = 24.
+            data['fivesigma_modified'] = 24.
             stacker = utils.ParallaxFactor()
             data = stacker.run(data)
             baseline = metrics.ParallaxMetric(normalize=flag).run(data)
@@ -114,7 +113,7 @@ class TestMoreMetrics(unittest.TestCase):
             worse1 = metrics.ParallaxMetric(normalize=flag).run(data)
             worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data)
             worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300])
-            data['5sigma_modified'] = data['5sigma_modified']-1.
+            data['fivesigma_modified'] = data['fivesigma_modified']-1.
             worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300])
             # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
             if flag:
@@ -132,7 +131,7 @@ class TestMoreMetrics(unittest.TestCase):
 
     def testProperMotionMetric(self):
         """Test the ProperMotion metric """
-        names = ['expMJD','finSeeing', '5sigma_modified', 'fieldRA', 'fieldDec', 'filter']
+        names = ['expMJD','finSeeing', 'fivesigma_modified', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
         normFlags = [False, True]
@@ -142,7 +141,7 @@ class TestMoreMetrics(unittest.TestCase):
             data['filter'][0:100] = 'r'
             data['filter'][100:200] = 'u'
             data['filter'][200:] = 'g'
-            data['5sigma_modified'] = 24.
+            data['fivesigma_modified'] = 24.
             stacker = utils.ParallaxFactor()
             data = stacker.run(data)
             baseline = metrics.ProperMotionMetric(normalize=flag).run(data)
@@ -150,7 +149,7 @@ class TestMoreMetrics(unittest.TestCase):
             worse1 = metrics.ProperMotionMetric(normalize=flag).run(data)
             worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data)
             worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300])
-            data['5sigma_modified'] = data['5sigma_modified']-1.
+            data['fivesigma_modified'] = data['fivesigma_modified']-1.
             worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300])
             # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
             if flag:

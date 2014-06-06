@@ -1,4 +1,6 @@
 import numpy as np
+import numpy.ma as ma
+import warnings
 import unittest
 import lsst.sims.maf.binMetrics as binMetrics
 import lsst.sims.maf.metrics as metrics
@@ -59,8 +61,8 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metadata.keys(), [])
         # Test that binner is set to None
         self.assertEqual(self.testbbm.binner, None)
-        # Test that output file list is set to empty list
-        self.assertEqual(self.testbbm.outputFiles, [])
+        # Test that output file list is set to empty dict
+        self.assertEqual(self.testbbm.outputFiles, {})
         # Test that figformat is set to default (png)
         self.assertEqual(self.testbbm.figformat, 'png')
         # Test that can set figformat to alternate value
@@ -280,20 +282,21 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
         #self.assertEqual(testbbm2.plotParams['Completeness']['xlabel'], 'Completeness')
 
     def testOutputFileKey(self):
-        """Test that the output file key is being generated as expected."""
+        """Test that the output file dict is being generated as expected."""
         outkeys = self.testbbm.returnOutputFiles(verbose=False)
         # Check data in outkeys is valid
         for o in outkeys:
-            self.assertEqual(o['metadata'], self.metadata)
-            self.assertEqual(o['simDataName'], self.opsimname)
-            self.assertEqual(o['sqlconstraint'], self.sqlconstraint)
-            self.assertTrue(o['filename'].replace('./', '') in self.expectedfiles)
-            self.assertEqual(o['binner'], self.binner.binnerName)
-            self.assertTrue((o['metricName'] in self.metricNames) or (o['metricName'] in self.reduceNames)) 
+            self.assertEqual(outkeys[o]['metadata'], self.metadata)
+            self.assertEqual(outkeys[o]['simDataName'], self.opsimname)
+            self.assertEqual(outkeys[o]['sqlconstraint'], self.sqlconstraint)
+            self.assertTrue(outkeys[o]['dataFile'].replace('./', '') in self.expectedfiles)
+            self.assertEqual(outkeys[o]['binnerName'], self.binner.binnerName)
+            self.assertTrue((outkeys[o]['metricName'] in self.metricNames) or
+                            (outkeys[o]['metricName'] in self.reduceNames)) 
         # Check data in outkeys is complete
         outkeysMetricNames = []
         for o in outkeys:
-            outkeysMetricNames.append(o['metricName'])
+            outkeysMetricNames.append(o)
         for m in self.metricNames:
             self.assertTrue(m in outkeysMetricNames)
         for m in self.reduceNames:
@@ -330,7 +333,7 @@ class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', metrics.IdentityMetric('metricdata'))
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
-        # Try oneD binner
+        # Try oneD binner: other binners should behave similarly.
         self.testbbm = binMetrics.BaseBinMetric()
         self.testbbm.setMetrics([self.m1,])
         self.binner = binners.OneDBinner('testdata')
@@ -339,9 +342,18 @@ class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
         self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'].mean())
-        # Other binners (spatial binner, etc) should be similar to oneD binner.
-
-            
+        # Test get warning if calculating summary statistics on 'object' data using simple scalar metric.
+        fakemetricdata = ma.MaskedArray(data = np.empty(len(self.binner), 'object'),
+                                        mask = np.zeros(len(self.binner), 'bool'),
+                                        fill_value = self.binner.badval)
+        self.testbbm.metricValues['objecttest'] = fakemetricdata
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            summary = self.testbbm.computeSummaryStatistics('objecttest', self.summaryStat)
+            self.assertTrue('objecttest' in str(w[-1].message))
+            self.assertEqual(summary, None)
+                            
+        
 class TestPlottingBaseBinMetric(unittest.TestCase):
     def setUp(self):
         # Set up dictionary of all plotting parameters to test.

@@ -18,6 +18,20 @@ def _myformat(args, delimiter=' '):
             writestring += '%s%s' %(a, delimiter)
     return writestring
 
+def _myformatdict(adict, delimiter=' '):
+    writestring = ''
+    for k,v in adict.iteritems():
+        if isinstance(v, list):
+            if len(v) > 1:
+                vp = ','.join(map(str, v))
+            else:
+                vp = ''.join(map(str, v))
+            writestring += '%s:%s%s' %(k, vp, delimiter)
+        else:
+            writestring += '%s:%s%s' %(k, v, delimiter)
+    return writestring
+
+
 def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     """
     Print dictionaries (and/or nested dictionaries) nicely.
@@ -69,3 +83,46 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     for k in keys:
         printDict(content[k], k, filehandle, delimiter, _level)
     _level -= 2
+
+
+def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
+    """
+    Print a simple one-level nested dictionary nicely across the screen,
+     with one line per top-level key and all sub-level keys aligned. 
+    
+    filehandle = the file object for output .. if 'None' (default) prints to standard out.
+    delimiter = the user specified delimiter between fields.
+    """
+    # Get set up with basic file output information.
+    if filehandle is None:
+        filehandle = sys.stdout
+    # Get all sub-level keys.
+    subkeys = []
+    for key in topdict:
+        subkeys += topdict[key].keys()
+    subkeys = list(set(subkeys))
+    # Align subkeys with 'subkeyorder' and then alphabetize any remaining.
+    missingkeys = set(subkeyorder).difference(set(subkeys))
+    for m in missingkeys:
+        subkeyorder.remove(m)
+    otherkeys = sorted(list(set(subkeys).difference(set(subkeyorder))))        
+    subkeys = subkeyorder + otherkeys
+    # Print header.
+    writestring = '#'
+    for s in subkeys:
+        writestring += '%s%s' %(s, delimiter)
+    print >> filehandle, writestring
+    # Now go through and print.
+    for k in topdict:
+        writestring = ''
+        for s in subkeys:
+            if s in topdict[k]:
+                if isinstance(topdict[k][s], str) or isinstance(topdict[k][s], float) or isinstance(topdict[k][s], int):
+                    writestring += '%s%s' %(topdict[k][s], delimiter)
+                elif isinstance(topdict[k][s], dict):
+                    writestring += '%s%s' %(_myformatdict(topdict[k][s], delimiter=delimiter), delimiter)
+                else:
+                    writestring += '%s%s' %(_myformat(topdict[k][s]), delimiter)
+            else:
+                writestring += '%s' %(delimiter)
+    print >> filehandle, writestring
