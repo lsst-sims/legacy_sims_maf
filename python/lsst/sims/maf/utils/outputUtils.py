@@ -125,4 +125,4 @@ def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
                     writestring += '%s%s' %(_myformat(topdict[k][s]), delimiter)
             else:
                 writestring += '%s' %(delimiter)
-    print >> filehandle, writestring
+        print >> filehandle, writestring

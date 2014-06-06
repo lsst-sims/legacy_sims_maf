@@ -185,11 +185,10 @@ class MafDriver(object):
     
     def run(self):
         """Loop over each binner and calculate metrics for that binner. """
-        # Open a file to hold the metric output file names & summary stats.
-        summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
         
         # Start a list to hold the output file names.
         allOutfiles = []
+        allOutDict = {}
         
         # Start up summary stats running commentary.
         summary_stats=[]
@@ -286,11 +285,16 @@ class MafDriver(object):
                     gm.writeAll(outDir=self.config.outputDir)
                     # Grab output Files - get file output key back. Verbose=True, prints to screen.
                     outFiles = gm.returnOutputFiles(verbose=False)
-                    subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
-                    utils.outputUtils.printSimpleDict(outFiles, subkeyorder, summaryfile, delimiter=',\t')
                     # Build continual dictionary of all output info over multiple sqlconstraints.
-                    for filedict in outFiles:
-                        allOutfiles.append(filedict)
+                    for metrickey in outFiles:
+                        hashkey = '%d_%s' %(binner.index, metrickey)
+                        # Shouldn't overwrite previous keys, but let's check.
+                        i = 0
+                        while hashkey in allOutDict:
+                            hashkey = hashkey + '_%d' %(i)
+                            i += 1
+                        allOutDict[hashkey] = outFiles[metrickey]
+                        allOutfiles.append(outfiles[metrickey]['dataFile'])
                     # And keep track of which output files hold metric data (for merging histograms)
                     outfile_names = []
                     outfile_metricNames = []
@@ -305,6 +309,11 @@ class MafDriver(object):
         for stat in summary_stats:
             print >>f, stat
         f.close()
+
+        # Save metric filekey & summary stats output. 
+        summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
+        subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
+        utils.outputUtils.printSimpleDict(allOutDict, subkeyorder, summaryfile, delimiter=',\t')
         summaryfile.close()
         
         # Create any 'merge' histograms that need merging.

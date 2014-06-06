@@ -122,6 +122,10 @@ class BaseBinMetric(object):
                 self.outputFiles[metricName]['summaryStat'] = {}
             self.outputFiles[metricName]['summaryStat'][value[0]] = value[1]
         else:
+            # Strip out directories and leave only final file name if relevant
+            if key.endswith('File') or key.endswith('Plot'):
+                head, tail = os.path.split(value)
+                value = tail
             self.outputFiles[metricName][key] = value
 
     def _deDupeMetricName(self, metricName):
