@@ -125,11 +125,12 @@ class OpsimDatabase(Database):
         #  when opsim adds flags to the config tables.
         table = self.tables['proposalTable']
         propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName'], constraint='')
-        propIDs = list(propData['propID'])
+        propIDs = np.array(propData['propID'], int)
+        propIDs = list(propIDs)
         wfdIDs = []
         ddIDs = []
         # Parse on name for now.
-        for name, propid in zip(propData['propConf'],propData['propID']):
+        for name, propid in zip(propData['propConf'], propIDs):
             if 'Universal' in name:
                 wfdIDs.append(propid)
             if ('deep' in name) or ('Deep' in name) or ('DD' in name) or ('dd' in name):

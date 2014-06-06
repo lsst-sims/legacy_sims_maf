@@ -19,7 +19,9 @@ class TestOpsimUtils(unittest.TestCase):
                 self.assertTrue(f in stretch[k].keys())
             
         for runLength in ([1, 5, 10]):
-            design, stretch = opsimUtils.scaleStretchDesign(10.0)
+            design, stretch = opsimUtils.scaleStretchDesign(runLength)
+            for f in expectedfilters:
+                print runLength, design['nvisits']
             ## Need update from opsim team to check what these should be compared to.
 
 if __name__ == "__main__":

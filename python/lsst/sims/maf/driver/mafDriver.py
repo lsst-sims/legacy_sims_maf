@@ -15,16 +15,11 @@ import time
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
 
-    def __init__(self, configOverrideFilename=None):
+    def __init__(self, configvalues):
         """Load up the configuration and set the bin and metric lists """
         # Read configuration parameters, using MafConfig to interpret from
         #  python-y config file to pex_config self.config.VALUE 
-        self.config=MafConfig()
-        # Load any config file
-        if configOverrideFilename is not None:
-            self.config.load(configOverrideFilename)
-
-        # Load any parameters set on the command line
+        self.config = configvalues
 
         # Validate and freeze the config
         self.config.validate()
@@ -148,6 +143,7 @@ class MafDriver(object):
         else:
             # example sqlconstraint: filter = r and (propid = 219 or propid = 155) and propid!= 90
             sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
+            sqlconstraint = sqlconstraint.replace("'", '').replace('"', '')
             # Allow for choosing all but a particular proposal.
             sqlconstraint = sqlconstraint.replace('! =' , ' !=')
             sqlconstraint = sqlconstraint.replace('  ', ' ')

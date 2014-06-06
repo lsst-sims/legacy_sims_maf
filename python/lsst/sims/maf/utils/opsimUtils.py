@@ -47,15 +47,15 @@ def scaleStretchDesign(runLength):
     if runLength != baseline:
         scalefactor = float(runLength) / float(baseline)
         for f in filters:
-            design['nvisits'][f] = np.floor(design['nvisits'][f] * scalefactor)
-            stretch['nvisits'][f] = np.fllor(stretch['nvisits'][f] * scalefactor)
+            design['nvisits'][f] = int(np.floor(design['nvisits'][f] * scalefactor))
+            stretch['nvisits'][f] = int(np.floor(stretch['nvisits'][f] * scalefactor))
     # Scale the coaddded depth.
     design['coaddedDepth'] = {}
     stretch['coaddedDepth'] = {}
     for f in filters:
-        design['coaddedDepth'][f] = 1.25 * np.log10(design['nvisits'][f]
-                                                    * 10.**(0.8*design['singleVisitDepth'][f]))
-        stretch['coaddedDepth'][f] = 1.25 * np.log10(stretch['nvisits'][f]
-                                                     * 10.**(0.8*stretch['singleVisitDepth'][f]))
+        design['coaddedDepth'][f] = float(1.25 * np.log10(design['nvisits'][f]
+                                                    * 10.**(0.8*design['singleVisitDepth'][f])))
+        stretch['coaddedDepth'][f] = float(1.25 * np.log10(stretch['nvisits'][f]
+                                                     * 10.**(0.8*stretch['singleVisitDepth'][f])))
     return design, stretch
 
