@@ -31,19 +31,23 @@ class TestDriver(unittest.TestCase):
         filename = 'mafconfigTest3.cfg'
         configIn = MafConfig()
         configIn.load(self.filepath+filename)
-        self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
+        self.assertRaises(Exception, driver.MafDriver,**{'configvalues':configIn})
         filename = 'mafconfigTest5.cfg'
-        self.assertRaises(Exception, driver.MafDriver,**{'configOverrideFilename':'filename'})
-    
+        configIn = MafConfig()
+        configIn.load(self.filepath+filename)
+        self.assertRaises(Exception, driver.MafDriver,**{'configvalues':configIn})
+
     def test_driver(self):
+        
         for i,filename in enumerate(self.cfgFiles):
             configIn = MafConfig()
             configIn.load(self.filepath+filename)
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
             if len(nnpz) > 0:
                 ack = Popen('rm '+configIn.outputDir+'/*.npz', shell=True).wait()
-            
-            testDriver = driver.MafDriver(configOverrideFilename=self.filepath+filename)
+
+
+            testDriver = driver.MafDriver(configIn)
             testDriver.run()
 
             configOut = MafConfig()
@@ -53,7 +57,7 @@ class TestDriver(unittest.TestCase):
             for j,binner in enumerate(configIn.binners):
                 if configIn.binners[j].name != 'HourglassBinner':
                     nout += len(configIn.binners[j].constraints)*len(configIn.binners[j].metricDict)
-                        
+
             nnpz = glob.glob(configIn.outputDir+'/*.npz')
             assert(os.path.isfile(configIn.outputDir+'/date_version_ran.dat'))
             assert(os.path.isfile(configIn.outputDir+'/summaryStats.dat'))
