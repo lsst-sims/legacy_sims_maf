@@ -49,7 +49,9 @@ class TestMoreMetrics(unittest.TestCase):
         assert(metric.reducey(completeness) == 0)
         assert(metric.reduceJoint(completeness) == 0)
         # And test that if you forget to set any requested visits, that you get the useful error message
-        self.assertRaises(ValueError, metrics.CompletenessMetric, 'filter')        
+        self.assertRaises(ValueError, metrics.CompletenessMetric, 'filter')
+
+# This throws a segfault on macs, but not on my linux box.  Hmmm.
     '''
     def testHourglassMetric(self):
         """Test the hourglass metric """

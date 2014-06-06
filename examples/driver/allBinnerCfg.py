@@ -8,17 +8,15 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
-root.dbAddress = {'dbAddress':'sqlite:///../opsimblitz1_1131_sqlite.db', 'OutputTable':'output'}
+root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}#, 'OutputTable':'output'}
 root.opsimName = 'example'
-#root.dbAddress ='sqlite:///opsim.sqlite'
-#root.opsimNames = ['opsim_small']
 
 
 # Setup a list to hold all the binners we want to run
 binList=[]
 
 # How many Healpix sides to use
-nside=256
+nside=128
 
 # List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy.  
 constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']

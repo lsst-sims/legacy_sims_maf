@@ -4,7 +4,7 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 # and https://confluence.lsstcorp.org/display/SIM/MAF%3A++Writing+a+new+metric
 
 root.outputDir = './Doc'
-root.dbAddress = {'dbAddress':'sqlite:///opsim.sqlite', 'OutputTable':'opsim'}
+root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
 root.opsimName = 'opsim'
 
 

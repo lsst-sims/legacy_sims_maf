@@ -1,22 +1,31 @@
 # A MAF config that replicates the SSTAR plots
 
 from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+import lsst.sims.maf.utils as utils
 
 
-small = True # Use the small database included in the repo
+root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
+root.outputDir = './StarOut'
+# Connect to the database to fetch some values we're using to help configure the driver.                                                             
+opsimdb = utils.connectOpsimDb(root.dbAddress)
+# Fetch the proposal ID values from the database                      
+propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
 
-if small:
-    root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
-    root.opsimName = 'opsim_small'
-    propids = [186,187,188,189]
-    WFDpropid = 188
-    DDpropid = 189 #?
+# Construct a WFD SQL where clause so multiple propIDs can by WFD:                                                     
+wfdWhere = ''
+if len(WFDpropid) == 1:
+    wfdWhere = "propID = '%s'"%WFDpropid[0]
 else:
-    root.dbAddress ={'dbAddress':'sqlite:///opsim.sqlite', 'OutputTable':'opsim'}
-    root.opsimName = 'opsim'
-    propids = [215, 216, 217, 218, 219]
-    WFDpropid = 217
-    DDpropid = 219
+    for i,propid in enumerate(WFDpropid):
+        if i == 0:
+            wfdWhere = wfdWhere+'('+'propID = %s'%propid
+        else:
+            wfdWhere = wfdWhere+'or propID = %s'%propid
+        wfdWhere = wfdWhere+')'
+
+
+# Fetch the total number of visits (to create fraction)                                                                                              
+totalNVisits = opsimdb.fetchNVisits()
 
 
 filters = ['u','g','r','i','z','y']
@@ -37,9 +46,6 @@ seeing_norm = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63}
 
 binList=[]
 
-propids = [215, 216, 217, 218, 219]
-WFDpropid = 217
-DDpropid = 219
 
 nside = 128
 

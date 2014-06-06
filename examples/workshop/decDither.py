@@ -2,7 +2,7 @@
 
 from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 root.outputDir = './DecDith'
-root.dbAddress = {'dbAddress':'sqlite:///../opsim_small.sqlite', 'OutputTable':'opsim_small'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1039_sqlite.db', 'OutputTable':'output'}
 root.opsimName = 'example'
 
 
