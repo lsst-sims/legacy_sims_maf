@@ -145,37 +145,46 @@ class BaseSpatialBinner(BaseBinner):
         if not xlabel:
             xlabel = units
         if zp:
-            metricValue = metricValueIn - zp
+            metricValue = metricValueIn.compressed() - zp
         elif normVal:
-            metricValue = metricValueIn/normVal
+            metricValue = metricValueIn.compressed()/normVal
         else:
-            metricValue = metricValueIn
+            metricValue = metricValueIn.compressed()
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
         if histMin is None and histMax is None:
             if percentileClip:
-                plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
+                plotMin, plotMax = pc(metricValue, percentile=percentileClip)
                 histRange = [plotMin, plotMax]
             else:
                 histRange = None
         else:
-            histRange=[histMin,histMax]
-        if metricValue.min() >= metricValue.max():
-            if histMin is None:
-                histRange = [metricValue.min()-1 , metricValue.min() + 1]
-                warnings.warn('Max (%f) of metric Values was less than or equal to min (%f). Using (min value/min value + 1) as a backup for histRange.'% (metricValue.max(), metricValue.min()))
+            histRange=[histMin, histMax]
+        # See if should use log scale.
         if ylog == 'auto':
             if (np.log10(np.max(histRange)-np.min(histRange)) > 3 ) & (np.min(histRange) > 0):
                 ylog = True
             else:
                 ylog = False
-        if metricValue.compressed().size > 0:
-            n, b, p = plt.hist(metricValue.compressed(), bins=bins, histtype='step', log=ylog,
-                               cumulative=cumulative, range=histRange, label=label, color=color)  
+        # Plot histograms.
+        # Add a test to see if data falls within histogram range.. because otherwise histogram will fail.
+        if histRange is not None:
+            if (histRange[0] is None) and (histRange[1] is not None):
+                condition = (metricValue <= histRange[1])
+            elif (histRange[1] is None) and (histRange[0] is not None):
+                condition = (metricValue >= histRange[0])
+            else:
+                condition = ((metricValue >= histRange[0]) & (metricValue <= histRange[1]))
+            plotValue = metricValue[condition]
         else:
-            n,b,p = plt.hist([0], bins=bins, histtype='step', log=ylog,
-                               cumulative=cumulative, range=histRange, label=label, color=color)
-
+            plotValue = metricValue
+        if plotValue.size == 0:
+            warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %(histRange[0],
+                                                                                               histRange[1]))
+            return fig.number
+        else:
+            n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=ylog,
+                               cumulative=cumulative, range=histRange, label=label, color=color)  
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):        
             return yaxisformat % (y * scale)

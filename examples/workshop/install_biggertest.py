@@ -258,14 +258,20 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
     config.binners=makeDict(*binList)
     return config
 
+#######
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("runName", type=str, help='Root name of the sqlite dbfile (i.e. filename minus _sqlite.db)')
-    parser.add_argument("--filepath", type=str, default='.', help='Filepath to the sqlite dbfile')
-    parser.add_argument("--outputDir", type=str, default='./Out', help='Output directory')
-    parser.add_argument("--binnertype", type=str, default='OpsimFieldBinner',
-                        help='Choose a binnertype for metrics evaluated over the sky (HealpixBinner, OpsimFieldBinner, or HealpixBinnerDithered)')
+    parser.add_argument("--filepath", type=str, default='.', help='Filepath to the sqlite dbfile')    
+    parser.add_argument("--outputDir", type=str, default='Out_[opsimrunname]', help='Output directory')
+    binnertypehelp = 'Choose a binnertype for metrics evaluated over the sky (HealpixBinner, '
+    binnertypehelp += 'OpsimFieldBinner or HealpixBinnerDithered)'
+    parser.add_argument("--binnertype", type=str, default='OpsimFieldBinner', help=binnertypehelp)
     args = parser.parse_args()
+
+    if args.outputDir == 'Out_[opsimrunname]':
+        args.outputDir = 'Out_' + args.runName
 
     config = MafConfig()
     config = configSetup(config, args.runName, args.filepath, args.outputDir, args.binnertype)

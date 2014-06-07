@@ -7,7 +7,8 @@ from lsst.sims.maf.utils.getDateVersion import getDateVersion
 
 class OpsimDatabase(Database):
     def __init__(self, dbAddress, dbTables=None, *args, **kwargs):
-        """Instantiate object to handle queries of the opsim database.
+        """
+        Instantiate object to handle queries of the opsim database.
         (In general these will be the sqlite database files produced by opsim, but could
         be any database holding those opsim output tables.).
 
@@ -15,6 +16,15 @@ class OpsimDatabase(Database):
         dbTables = dictionary of names of tables in the code : [names of tables in the database, names of primary keys]
         Note that for the dbTables there are defaults in the init --
           you can override (specific key:value pairs only if desired) by passing a dictionary in dbTables.
+
+        The dbAddress sqlalchemy string should look like:
+           dialect+driver://username:password@host:port/database
+        Examples:
+           sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
+           mysql://lsst:lsst@localhost/opsim
+        More information on sqlalchemy connection strings can be found at
+          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html     
+          
         """
         self.dbAddress = dbAddress
         # Default dbTables and dbTableIDKey values:
@@ -117,10 +127,12 @@ class OpsimDatabase(Database):
         return fielddata
 
     def fetchPropIDs(self):
-        """Fetch the proposal IDs from the full opsim run database.
+        """
+        Fetch the proposal IDs from the full opsim run database.
         Return the full list of ID numbers as well as a list of
          WFD propIDs (proposals containing 'Universal' in the name),
-         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name)."""
+         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name).
+         """
         # The methods to identify WFD and DD proposals will be updated in the future,
         #  when opsim adds flags to the config tables.
         table = self.tables['proposalTable']
@@ -232,15 +244,8 @@ class OpsimDatabase(Database):
         constraint = 'moduleName="scheduler" and paramName="MinDistance2Moon"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
-        totalvisits = self.fetchNVisits()
-        allprops, wfd, dd = self.fetchPropIDs()
-        attributedvisits = self.fetchNVisits(allprops)
-        configSummary['RunInfo']['TotalVisits'] = totalvisits
-        configSummary['RunInfo']['AttributedVisits'] = '%d (%.1f%s)' %(attributedvisits,
-                                                                    float(attributedvisits)/float(totalvisits)*100.0,
-                                                                    '%')
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinDist2Moon', 'MinAlt', 'MaxAlt',
-                                                'TimeFilterChange', 'TimeReadout', 'TotalVisits']
+                                                'TimeFilterChange', 'TimeReadout']
         # Now build up config dict with 'nice' group names (proposal name and short module name)
         #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
         # Match proposal IDs with names.
@@ -287,8 +292,6 @@ class OpsimDatabase(Database):
             propdict['NumUserRegions'] = result.size
             # Get the number of fields requested in the proposal (all filters). 
             propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
-            propvisits = self.fetchNVisits(propID=propid)
-            propdict['ProposalVisits'] = [propvisits, '(%.0f%s)' %(float(propvisits)/float(totalvisits)*100., '%')]
             # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
             #   The order of these entries in the config array matters. 

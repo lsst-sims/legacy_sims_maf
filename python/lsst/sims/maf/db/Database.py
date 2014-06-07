@@ -1,30 +1,6 @@
 import warnings
 from .Table import Table
 
-def getDbAddress(connectionName='SQLITE_OPSIM', dbLoginFile=None):
-    """Utility to get the dbAddress info corresponding to 'connectionName' from a dbLogin file.
-
-    connectionName is the name given to a sqlalchemy connection string in the file
-        (default 'SQLITE_OPSIM').
-    dbLoginFile is the file location (default None will try to use $HOME/dbLogin). """
-    # The dbLogin file is a file containing simple 'names' corresponding to sqlite connection engine
-    #  strings.
-    # Example:
-    # SQLITE_OPSIM sqlite:///opsim.sqlite
-    # MYSQL_OPSIM mysql://lsst:lsst@localhost/opsim
-    #  More information on sqlalchemy connection strings can be found at
-    #  http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
-    if dbLoginFile is None:
-        # Try default location in home directory.
-        dbLoginFile = os.path.join(os.getenv("HOME"), 'dbLogin')
-    f = open(dbLoginFile, 'r')
-    for l in f:
-        els = l.rstrip().split()
-        if els[0] == connectionName:
-            dbAddress = els[1]
-    return dbAddress
-
-
 class Database(object):
     """Base class for database access."""
     def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
@@ -34,6 +10,15 @@ class Database(object):
 
         dbAddress = sqlalchemy connection string to database
         dbTables = dictionary of names of tables in the code : [names of tables in the database, primary keys]
+
+        The dbAddress sqlalchemy string should look like:
+           dialect+driver://username:password@host:port/database
+
+        Examples:
+           sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
+           mysql://lsst:lsst@localhost/opsim
+        More information on sqlalchemy connection strings can be found at
+          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html        
         """
         self.dbAddress = dbAddress
         self.chunksize = chunksize
@@ -43,9 +28,7 @@ class Database(object):
         else:
             self.dbTables = dbTables
             if defaultdbTables is not None:
-                for k in defaultdbTables:
-                    if k not in dbTables:
-                        self.dbTables[k] = defaultdbTables[k]
+                self.dbTables.update(defaultdbTables)
         # Connect to database tables and store connections.
         if self.dbTables is None:
             self.tables = None
@@ -58,14 +41,19 @@ class Database(object):
                 self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], self.dbAddress)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
-        """Get data from database that is destined to be used for metric evaluation.
+        """
+        Get data from database that is destined to be used for metric evaluation.
         """
         raise NotImplementedError('Implement in subclass')
 
     def fetchConfig(self, *args, **kwargs):
-        """Get config (metadata) info on source of data for metric calculation.
         """
-        raise NotImplementedError('Implement in subclass')
+        Get config (metadata) info on source of data for metric calculation.
+        """
+        # Demo API (for interface with driver). 
+        configSummary = {}
+        configDetails = {}
+        return configSummary, configDetails
                 
     def queryDatabase(self, tableName, sqlQuery):
         """
