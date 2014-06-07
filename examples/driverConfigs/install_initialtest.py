@@ -1,5 +1,9 @@
 # A simple config test.
 
+#To run:
+#curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1039/design/opsimblitz2_1039_sqlite.db #download an OpSim database
+#runDriver.py intall_initialtest.py --runName opsimblitz2_1039
+
 import os
 from lsst.sims.maf.driver.mafConfig import MafConfig, makeBinnerConfig, makeMetricConfig, makeDict
 import lsst.sims.maf.utils as utils
