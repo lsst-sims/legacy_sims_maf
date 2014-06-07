@@ -1,6 +1,4 @@
 ## EXAMPLE
-# example test script for oneD metrics. 
-# Note that this is not expected to function as the driver! It just has some command line options.
 
 import sys, os, argparse
 import numpy as np
@@ -11,24 +9,12 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binMetrics as binMetrics
 import glob
 
-from lsst.sims.catalogs.generation.db.utils import make_engine
-from lsst.sims.maf.utils import getData
-
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
-def getDbAddress():
-    # Get the database connection information from the dbLogin file in the user's home directory.
-    home_path = os.getenv("HOME")
-    f=open("%s/dbLogin"%(home_path),"r")
-    authDictionary = {}
-    for l in f:
-        els = l.rstrip().split()
-        authDictionary[els[0]] = els[1]
-    return authDictionary
 
-def getMetrics(seeingcol):
+def getMetrics():
     t = time.time()
     # Set up metrics.
     metricList = []
@@ -67,44 +53,26 @@ if __name__ == '__main__':
 
     # Parse command line arguments for database connection info.
     parser = argparse.ArgumentParser()
-    parser.add_argument("simDataTable", type=str, help="Name of opsim visit table in database")
-    parser.add_argument("--sqlConstraint", type=str, default="filter='r'",
-                        help="SQL constraint, such as filter='r' or propID=182")
-    parser.add_argument("--connectionName", type=str, default='SQLITE_OPSIM', 
-                       help="Key for the connection string to use in your dbLogin file -- "\
-                            "Default is SQLITE_OPSIM")
+    parser.add_argument("simDataTable", type=str, help="Filename of opsim database")
+    parser.add_argument("--sqlConstraint", type=str, default="", help="SQL constraint")
     args = parser.parse_args()
     
-    # Get db connection info.
-    authDictionary = getDbAddress()
-    dbAddress = authDictionary[args.connectionName]
-    
-    dbTable = args.simDataTable
-    opsimrun = args.simDataTable.replace('output_', '')
+    # Get opsim info / db connection.
+    dbAddress = 'sqlite:///' + args.simDataTable
+    oo = db.OpsimDatabase(dbAddress)
 
+    opsimrun = oo.fetchOpsimRunName()
+    
     sqlconstraint = args.sqlConstraint
     
-    # Bit of a kludge to set seeing column name. 
-    table = db.Table(dbTable, 'obsHistID', dbAddress)
-    try:
-        table.query_columns_RecArray(colnames=['seeing',], numLimit=1)
-        seeingcol = 'seeing'
-    except ValueError:
-        try:
-            table.query_columns_RecArray(colnames=['finSeeing',], numLimit=1)
-            seeingcol = 'finSeeing'
-        except ValueError:
-            raise ValueError('Cannot find appropriate column name for seeing.')
-    print 'Using %s for seeing column name.' %(seeingcol)
-    
     # Set up metrics. 
-    metricList = getMetrics(seeingcol)
+    metricList = getMetrics()
 
     # Find columns that are required.
     colnames = list(metricList[0].classRegistry.uniqueCols())
 
     # Get opsim simulation data
-    simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, colnames)
+    simdata = oo.fetchMetricData(colnames, sqlconstraint)
     
     # And set up binner.
     binnerList = getBinner(simdata, metricList)

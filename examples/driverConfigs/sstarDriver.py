@@ -1,21 +1,21 @@
 # A MAF config that replicates the SSTAR plots
 
-import sys, os, argparse
-# Need to set matplotlib backend here.
-import matplotlib
-matplotlib.use('Agg')
-
+import os
 from lsst.sims.maf.driver.mafConfig import MafConfig, makeBinnerConfig, makeMetricConfig, makeDict
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.driver as driver
 
 
-def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinner'):
-    """Set up the config values."""    
+def mafconfig(config, runName, dbFilepath='.', outputDir='Out', binnerName='OpsimFieldBinner', **kwargs):
+    """
+    Set up a MAF config for SSTAR-like analysis of an opsim run.
+    Use 'binnerName' for metrics where have the option of using [HealpixBinner, OpsimFieldBinner, or HealpixBinnerDither] 
+      (dithered healpix binner uses hexdithra/dec values).
+    """
 
     # Setup Database access
     config.outputDir = outputDir
-    sqlitefile = os.path.join(filepath, runName + '_sqlite.db')
+    sqlitefile = os.path.join(dbFilepath, runName + '_sqlite.db')
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
     config.opsimName = runName
 
@@ -25,7 +25,7 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
     # Fetch the proposal ID values from the database
     propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
 
-    # Construct a WFD SQL where clause so multiple propIDs can by WFD:
+    # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = ''
     if len(WFDpropid) == 1:
         wfdWhere = "propID = %d" %(WFDpropid[0])
@@ -41,7 +41,7 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
     # Fetch the total number of visits (to create fraction)
     totalNVisits = opsimdb.fetchNVisits()
 
-
+    # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
     colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 
@@ -56,59 +56,50 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
     mag_zpoints = design['coaddedDepth']
     nvisitBench = design['nvisits']
     
+    # Set range of values for visits plots.
     nVisits_plotRange = {'all': 
                          {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200],
                           'z':[100, 250], 'y':[100,250]},
                          'DDpropid': 
                          {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],
-                          'z':[7000, 10000], 'y':[5000, 8000]},
-                         '216':
-                             {'u':[20, 40], 'g':[20, 40], 'r':[20, 40], 'i':[20, 40],
-                              'z':[20, 40], 'y':[20, 40]}}
+                          'z':[7000, 10000], 'y':[5000, 8000]}}
 
     binList=[]
 
     if binnertype == 'HealpixBinner':
         nside = 128
-        leafsize = 500
         binnerName = 'HealpixBinner'
         binnerkwargs = {'nside':nside}
-        binnersetupkwargs = {'leafsize':leafsize}
         binnermetadata = ''
     elif binnertype == 'HealpixBinnerDither':
         nside = 128
-        leafsize = 100
         binnerName = 'HealpixBinner'
         binnerkwargs = {'nside':nside, 'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'}
-        binnersetupkwargs = {'leafsize':leafsize}
         binnermetadata = 'dithered'
     elif binnertype == 'OpsimFieldBinner':
         binnerName = 'OpsimFieldBinner'
         binnerkwargs = {}
-        binnersetupkwargs = {}
         binnermetadata = ''
     else:
         raise ValueError('Do not understand binnertype %s' %(binnertype))
-        binner = makeBinnerConfig('HealpixBinner',
-                                  kwargs={"nside":nside, 'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'},
-                                  metricDict=metricDict, setupKwargs={"leafsize":leafsize},
-                                  constraints=["filter = \'%s\'"%f], metadata='dith')
-        binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\'"%f])
 
-    # Metrics per filter 
+
+    # Metrics per filter over sky.
     for f in filters:
         m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
-                            plotDict={'units':'Number of Visits', 
+                              plotDict={'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
-                                        'histMax':nVisits_plotRange['all'][f][1]})
+                                        'histMax':nVisits_plotRange['all'][f][1]}, 
+                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                            plotDict={'normVal':nvisitBench[f], 'ylog':False,
-                                      'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
+                              plotDict={'normVal':nvisitBench[f], 'ylog':False,
+                                        'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+        m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'], summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
                                                          'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
-                                histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})             
+                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                              histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})             
         m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'],
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
         m6 = makeMetricConfig('MedianMetric', params=['finSeeing'],
@@ -125,14 +116,15 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
     # Metrics per filter, WFD only
     for f in filters:
         m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
-                            plotDict={'percentileClip':75., 'units':'Number of Visits', 
+                              plotDict={'percentileClip':75., 'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]},
-                            histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
+                              summaryStats={'MeanMetric':{}},
+                              histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
         m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                            plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
-                                      'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'])
+                              plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
+                                        'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+        m3 = makeMetricConfig('MedianMetric', params=['fivesigma_modified'], summaryStats={'MeanMetric':{}})
         m4 = makeMetricConfig('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
         m5 = makeMetricConfig('MedianMetric', params=['perry_skybrightness'],
@@ -148,11 +140,10 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
                                   setupKwargs=binnersetupkwargs, constraints=constraints, metadata=binnermetadata)
         binList.append(binner)
 
-
     
-    # Number of Visits per observing mode:
+    # Number of Visits per proposal, over sky.
     for f in filters:    
-        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisitsperprop'},
+        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsPerProp'},
                               plotDict={'units':'Number of Visits', 'histBins':50})
         metricDict = makeDict(m1)
         constraints=[]
@@ -162,7 +153,6 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
                                   setupKwargs=binnersetupkwargs, constraints=constraints, metadata=binnermetadata)
         binList.append(binner)
                                     
-
 
 
     # Slew histograms
@@ -187,9 +177,9 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
                           plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
                                     'units':'# visits (WFD only)/ # WFD',
                                     'plotMin':.5, 'plotMax':1.5, 'histBins':50},
-                            kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
-                                    'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
-                            summaryStats={'TableFractionMetric':{}})
+                          kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
+                                  'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
+                          summaryStats={'TableFractionMetric':{}})
     # For just WFD proposals
     metricDict = makeDict(m1)
     constraints = ['%s' %(wfdWhere)]
@@ -201,16 +191,15 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
                           plotDict={'xlabel':'# visits (all) / (# WFD Requested)',
                                     'units':'# visits (all) / # WFD',
                                     'plotMin':.5, 'plotMax':1.5, 'histBins':50},
-                            kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
-                                    'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
-                            summaryStats={'TableFractionMetric':{}})
+                          kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
+                                  'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
+                          summaryStats={'TableFractionMetric':{}})
     constraints = ['']
     binner = makeBinnerConfig('OpsimFieldBinner', metricDict=metricDict,
                               constraints=constraints, metadata=binnermetadata)
 
-    
+    # Calculate some basic summary info about run, per filter.
     for f in filters:
-        # Calculate the mean seeing for all filters.
         m1 = makeMetricConfig('MeanMetric', params=['finSeeing'], summaryStats={'IdentityMetric':{}})
         m2 = makeMetricConfig('MedianMetric', params=['finSeeing'], summaryStats={'IdentityMetric':{}})
         m3 = makeMetricConfig('MedianMetric', params=['airmass'], summaryStats={'IdentityMetric':{}})
@@ -219,15 +208,50 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
         binner = makeBinnerConfig('UniBinner', metricDict=metricDict, constraints=['filter = "%s"'%f])
         binList.append(binner)
 
-    # Some other summary statistics.
+                              
+
+    # Some other summary statistics over all filters.
     m1 = makeMetricConfig('MeanMetric', params=['slewTime'], summaryStats={'IdentityMetric':{}})
-    m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Total Number of Visits'},
-                        summaryStats={'IdentityMetric':{}} )
+    m2 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'TotalNVisits'},
+                          summaryStats={'IdentityMetric':{}})
     m3 = makeMetricConfig('OpenShutterMetric',summaryStats={'IdentityMetric':{}} )
     metricDict = makeDict(m1, m2, m3)
     binner = makeBinnerConfig('UniBinner', metricDict=metricDict, constraints=[''])
     binList.append(binner)
+
+    # And count number of visits per proposal.
+    constraints = ["propID = '%s'"%pid for pid in propids ]
+    m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Number of Visits Per Proposal'},
+                          summaryStats={'IdentityMetric':{}, 'NormalizeMetric':{'normVal':totalNVisits}})
+    binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1),
+                              constraints=constraints)
+    binList.append(binner)
+
+    # Count and plot number of visits per night, and calculate average.
+    m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'Number of visits per night'}, 
+                          summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
+    binner = makeBinnerConfig('OneDBinner', kwargs={'sliceDataColName':'night'},
+                              setupKwargs={'binsize':1}, metricDict=makeDict(m1,m2),
+                              constraints=[''])
+    binList.append(binner)
+
     
+
+    # fO metrics for all and WFD
+    m1 = makeMetricConfig('CountMetric', params=['expMJD'],
+                          kwargs={'metricName':'f0'},
+                          plotDict={'units':'Number of Visits', 'xMin':0,
+                                    'xMax':1500},
+                          summaryStats={'f0Area':{'nside':nside},
+                                        'f0Nv':{'nside':nside}})
+    binner = makeBinnerConfig('f0Binner', kwargs={"nside":nside},
+                              metricDict=makeDict(m1),
+                              constraints=['',wfdWhere])
+    binList.append(binner)
+
+
+
+                              
     # The merged histograms for basics 
     for f in filters:
         m1 = makeMetricConfig('CountMetric', params=['fivesigma_modified'], kwargs={'binsize':10},
@@ -257,26 +281,3 @@ def configSetup(config, runName, filepath, outputDir, binnertype='OpsimFieldBinn
 
     config.binners=makeDict(*binList)
     return config
-
-#######
-
-if __name__=="__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("runName", type=str, help='Root name of the sqlite dbfile (i.e. filename minus _sqlite.db)')
-    parser.add_argument("--filepath", type=str, default='.', help='Filepath to the sqlite dbfile')    
-    parser.add_argument("--outputDir", type=str, default='Out_[opsimrunname]', help='Output directory')
-    binnertypehelp = 'Choose a binnertype for metrics evaluated over the sky (HealpixBinner, '
-    binnertypehelp += 'OpsimFieldBinner or HealpixBinnerDithered)'
-    parser.add_argument("--binnertype", type=str, default='OpsimFieldBinner', help=binnertypehelp)
-    args = parser.parse_args()
-
-    if args.outputDir == 'Out_[opsimrunname]':
-        args.outputDir = 'Out_' + args.runName
-
-    config = MafConfig()
-    config = configSetup(config, args.runName, args.filepath, args.outputDir, args.binnertype)
-    
-    drive = driver.MafDriver(config)
-    drive.run()
-
-

@@ -2,8 +2,8 @@
 
 from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 root.outputDir = './DecDith'
-root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1039_sqlite.db', 'OutputTable':'output'}
-root.opsimName = 'example'
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
+root.opsimName = 'Example'
 
 
 binList = []

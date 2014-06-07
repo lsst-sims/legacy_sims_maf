@@ -1,6 +1,5 @@
 ## EXAMPLE
-# example test script for healpix metrics. 
-# Note that this is not expected to function as the driver! It just has some command line options.
+# example of interacting directly with the python classes, for a healpix binner.
 
 import sys, os, argparse
 import numpy as np
@@ -36,17 +35,17 @@ def getMetrics(docomplex=False):
         # More complex metrics.    
         dtmin = 1./60./24.
         dtmax = 360./60./24.
-        metricList.append(metrics.VisitPairsMetric(deltaTmin=dtmin, deltaTmax=dtmax,
-                                                   plotParams={'ylog':False, 'plotMin':0, 'plotMax':20}))
-
+        metricList.append(metrics.VisitGroupsMetric(deltaTmin=dtmin, deltaTmax=dtmax,
+                                                    plotParams={'ylog':False, 'plotMin':0, 'plotMax':20}))
+        
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
 
-def getBinner(simdata, racol, deccol, nside=128, leafsize=100):
+def getBinner(simdata, racol, deccol, nside=128):
     t = time.time()
     bb = binners.HealpixBinner(nside=nside, spatialkey1=racol, spatialkey2=deccol)    
-    bb.setupBinner(simdata, leafsize=leafsize)
+    bb.setupBinner(simdata)
     dt, t = dtime(t)
     print 'Set up binner and built kdtree %f s' %(dt)
     return bb
@@ -141,13 +140,8 @@ if __name__ == '__main__':
     else:
         racol = 'fieldRA'
         deccol = 'fieldDec'
-    # Check which kdtree is available and set leafsize
-    from scipy.spatial import cKDTree as kdtree
-    if not hasattr(kdtree,'query_ball_point'):
-       leafsize=50000
-    else:
-       leafsize=100
-    bb = getBinner(simdata, racol, deccol, args.nside, leafsize=leafsize)
+
+    bb = getBinner(simdata, racol, deccol, args.nside)
     
     # Okay, go calculate the metrics.
     comment = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')

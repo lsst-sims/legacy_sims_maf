@@ -17,8 +17,7 @@ class MafDriver(object):
 
     def __init__(self, configvalues):
         """Load up the configuration and set the bin and metric lists """
-        # Read configuration parameters, using MafConfig to interpret from
-        #  python-y config file to pex_config self.config.VALUE 
+        # Configvalues passed from runDriver.py
         self.config = configvalues
 
         # Validate and freeze the config
@@ -33,14 +32,13 @@ class MafDriver(object):
         self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
 
         # Grab config info and write to disk.
-        if hasattr(self.config.dbAddress, 'configCopy'):
-            configSummary, configDetails = self.opsimdb.fetchConfig()
-            f = open(os.path.join(self.config.outputDir,'configSummary.txt'), 'w')
-            utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
-            f.close()
-            f = open(os.path.join(self.config.outputDir, 'configDetails.txt'), 'w')
-            utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
-            f.close()
+        configSummary, configDetails = self.opsimdb.fetchConfig()
+        f = open(os.path.join(self.config.outputDir,'configSummary.txt'), 'w')
+        utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
+        f.close()
+        f = open(os.path.join(self.config.outputDir, 'configDetails.txt'), 'w')
+        utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
+        f.close()
 
 
         self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binners as binners
 import lsst.sims.maf.binMetrics as binMetrics
-import lsst.sims.maf.utils.getData as getData
+import lsst.sims.maf.utils.db as db
 import glob
 
 
@@ -15,16 +15,18 @@ dictnames = []
 #
 runBinMetrics = False
 if runBinMetrics:
-    dbAddress = getData.getDbAddress(connectionName='LYNNE_OPSIM')
-    dbTable = 'output_opsimblitz2_1007'
-    opsimrun = dbTable.replace('output_', '')
+    opsimrun = 'opsimblitz1_1131'
+    sqlitepath = '../../tests/opsimblitz1_1131_sqlite.db'
+    dbAddress = 'sqlite:///' + sqlitepath
+    opsimdb = db.OpsimDatabase(dbAddress)
+
     sqlconstraint = 'filter = "r"'
     seeingcol = 'finSeeing'
     metricList = []
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
                                         plotParams={'ylog':False, 'title':'Number of visits',
                                                     'plotMin':0, 'plotMax':300, 'cbarFormat': '%d'}))
-    metricList.append(metrics.Coaddm5Metric('5sigma_modified', metricName='Coadd_m5',
+    metricList.append(metrics.Coaddm5Metric('fivesigma_modified', metricName='Coadd_m5',
                                             plotParams={'title':'Coadded m5'}))
     bb1 = binners.HealpixBinner(nside=16, spatialkey1='fieldRA', spatialkey2='fieldDec')
     bb2 = binners.HealpixBinner(nside=16, spatialkey1='hexdithra', spatialkey2='hexdithdec')
@@ -35,20 +37,20 @@ if runBinMetrics:
     datacolnames = list(set(datacolnames))
     
     print datacolnames
-    simdata = getData.fetchSimData(dbTable, dbAddress, sqlconstraint, datacolnames)
+    simdata = opsimdb.fetchMetricData(datacolnames, sqlconstraint)
     
     print 'setting up binners'
-    bb1.setupBinner(simdata, leafsize=1000)
-    bb2.setupBinner(simdata, leafsize=1000)
+    bb1.setupBinner(simdata)
+    bb2.setupBinner(simdata)
     
     bbm1 = binMetrics.BaseBinMetric()
     bbm1.setBinner(bb1)
     bbm1.setMetrics(metricList)
-    bbm1.runBins(simdata, simDataName=opsimrun, metadata='Nondithered')
+    bbm1.runBins(simdata, simDataName=opsimrun, sqlconstraint=sqlconstraint, metadata='Nondithered')
     bbm2 = binMetrics.BaseBinMetric()
     bbm2.setBinner(bb2)
     bbm2.setMetrics(metricList)
-    bbm2.runBins(simdata, simDataName=opsimrun, metadata='Dithered')
+    bbm2.runBins(simdata, simDataName=opsimrun, sqlconstraint=sqlconstraint, metadata='Dithered')
 
     dnum = cbm.setMetricData(bbm1, nametag='Nondithered')
     dictnums.append(dnum)

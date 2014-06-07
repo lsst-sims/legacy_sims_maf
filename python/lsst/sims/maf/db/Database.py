@@ -28,7 +28,9 @@ class Database(object):
         else:
             self.dbTables = dbTables
             if defaultdbTables is not None:
-                self.dbTables.update(defaultdbTables)
+                # Add defaultdbTables into dbTables
+                defaultdbTables.update(self.dbTables)
+                self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
         if self.dbTables is None:
             self.tables = None

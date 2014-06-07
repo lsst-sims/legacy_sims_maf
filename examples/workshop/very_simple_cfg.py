@@ -10,9 +10,9 @@ from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, m
 # Set the output directory
 root.outputDir = './Very_simple_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1039_sqlite.db', 'OutputTable':'output'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 # Name of this run (filename base)
-root.opsimName = 'example'
+root.opsimName = 'VerySimpleExample'
 
 # Make an empty list to hold all the binner configs
 binList = []
