@@ -1,5 +1,5 @@
 # to run:
-# python runConfig.py allBinnerCfg.py
+# runConfig.py allBinnerCfg.py
 
 # Example MAF config file which runs each type of available binner.
 
