@@ -19,7 +19,8 @@ class OpsimFieldBinner(BaseSpatialBinner):
     
     def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
-                 fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec', badval=-666):
+                 fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
+                 badval=-666):
         """Instantiate opsim field binner (an index-based binner that can do spatial plots).
 
         simDataFieldIdColName = the column name in simData for the field ID

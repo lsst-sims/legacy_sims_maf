@@ -139,6 +139,7 @@ class NDBinner(BaseBinner):
         fignum = the figure number to use (default None - will generate new figure)
         ylog = make the colorscale log.
         """
+        plottype = '2dhist'
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
         newshape = []
@@ -199,6 +200,7 @@ class NDBinner(BaseBinner):
         alpha = alpha value for plot bins if filled (default 0.5).
         ylog = make the y-axis log (default False)
         """
+        plottype = 'hist'
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
         newshape = []

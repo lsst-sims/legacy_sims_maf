@@ -3,10 +3,9 @@
 import os
 from lsst.sims.maf.driver.mafConfig import MafConfig, makeBinnerConfig, makeMetricConfig, makeDict
 import lsst.sims.maf.utils as utils
-import lsst.sims.maf.driver as driver
 
 
-def mafconfig(config, runName, dbFilepath='.', outputDir='Out', binnerName='OpsimFieldBinner', **kwargs):
+def mafConfig(config, runName, dbDir='.', outputDir='Out', binnerName='OpsimFieldBinner', **kwargs):
     """
     Set up a MAF config for SSTAR-like analysis of an opsim run.
     Use 'binnerName' for metrics where have the option of using [HealpixBinner, OpsimFieldBinner, or HealpixBinnerDither] 
@@ -15,7 +14,7 @@ def mafconfig(config, runName, dbFilepath='.', outputDir='Out', binnerName='Opsi
 
     # Setup Database access
     config.outputDir = outputDir
-    sqlitefile = os.path.join(dbFilepath, runName + '_sqlite.db')
+    sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
     config.opsimName = runName
 
@@ -66,23 +65,29 @@ def mafconfig(config, runName, dbFilepath='.', outputDir='Out', binnerName='Opsi
 
     binList=[]
 
-    if binnertype == 'HealpixBinner':
-        nside = 128
+    binnerNames = ['HealpixBinner', 'HealpixBinnerDither', 'OpsimFieldBinner']
+
+    if binnerName == 'HealpixBinner':
         binnerName = 'HealpixBinner'
+        nside = 128
         binnerkwargs = {'nside':nside}
+        binnersetupkwargs = {}
         binnermetadata = ''
-    elif binnertype == 'HealpixBinnerDither':
-        nside = 128
+    elif binnerName == 'HealpixBinnerDither':
         binnerName = 'HealpixBinner'
+        nside = 128
         binnerkwargs = {'nside':nside, 'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'}
+        binnersetupkwargs = {}
         binnermetadata = 'dithered'
-    elif binnertype == 'OpsimFieldBinner':
+    elif binnerName == 'OpsimFieldBinner':
         binnerName = 'OpsimFieldBinner'
         binnerkwargs = {}
+        binnersetupkwargs = {}
         binnermetadata = ''
     else:
-        raise ValueError('Do not understand binnertype %s' %(binnertype))
+        raise ValueError('Do not understand binnerName %s: looking for one of %s' %(binnerName, binnerNames))
 
+    print 'Using %s for generic metrics over the sky.' %(binnerName)
 
     # Metrics per filter over sky.
     for f in filters:
@@ -238,13 +243,14 @@ def mafconfig(config, runName, dbFilepath='.', outputDir='Out', binnerName='Opsi
     
 
     # fO metrics for all and WFD
+    f0nside = 64
     m1 = makeMetricConfig('CountMetric', params=['expMJD'],
                           kwargs={'metricName':'f0'},
                           plotDict={'units':'Number of Visits', 'xMin':0,
                                     'xMax':1500},
-                          summaryStats={'f0Area':{'nside':nside},
-                                        'f0Nv':{'nside':nside}})
-    binner = makeBinnerConfig('f0Binner', kwargs={"nside":nside},
+                          summaryStats={'f0Area':{'nside':f0nside},
+                                        'f0Nv':{'nside':f0nside}})
+    binner = makeBinnerConfig('f0Binner', kwargs={"nside":f0nside},
                               metricDict=makeDict(m1),
                               constraints=['',wfdWhere])
     binList.append(binner)

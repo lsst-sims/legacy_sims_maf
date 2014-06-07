@@ -95,23 +95,6 @@ class OneDBinner(BaseBinner):
         else:
             return False
 
-    def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
-        """Call all plotting methods."""
-        filenames=[]
-        filetypes=[]
-        figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('metric data type not float or int, returning False')
-            return False
-        
-        figs['hist'] = self.plotBinnedData(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_hist'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            filenames.append(outfile)
-            filetypes.append('binnedDataPlot')
-        return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
-        
     def plotBinnedData(self, metricValues, title=None,
                        fignum=None, units=None,
                        label=None, addLegend=False,
@@ -135,6 +118,7 @@ class OneDBinner(BaseBinner):
         yMin/Max = min/max for y-axis 
         histMin/Max = min/max for x-axis (typically set by bin values though)
         """
+        plottype = 'hist'
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.bins[:-1]

@@ -350,7 +350,7 @@ class BaseBinMetric(object):
         self._addOutputFiles(metricName, 'dataFile', outfile+'.npz')
 
                   
-    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=False):
+    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:            
             plotfigs = self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
@@ -376,12 +376,11 @@ class BaseBinMetric(object):
         if 'xlabel' not in pParams:
            pParams['xlabel'] = pParams['units']
         # Plot the data. Plotdata for each binner returns a dictionary with the filenames, filetypes, and fig nums.
-        plotResults=self.binner.plotData(self.metricValues[metricName], savefig=savefig,
-                                         filename=outfile, **pParams)
-        if plotResults:
-            # Save information about the plotted files into the output file list.
-            for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
-                self._addOutputFiles(metricName, filetype, filename)
+        plotResults = self.binner.plotData(self.metricValues[metricName], savefig=savefig,
+                                            filename=outfile, **pParams)
+        # Save information about the plotted files into the output file list.
+        for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
+            self._addOutputFiles(metricName, filetype, filename)
             return plotResults['figs']
         else:
             return None

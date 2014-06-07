@@ -3,17 +3,16 @@
 import os
 from lsst.sims.maf.driver.mafConfig import MafConfig, makeBinnerConfig, makeMetricConfig, makeDict
 import lsst.sims.maf.utils as utils
-import lsst.sims.maf.driver as driver
 
 
-def mafconfig(config, runName, dbFilepath='.', outputDir='Out', **kwargs):
+def mafConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     """
     Set up a MAF config for a very simple, example analysis.
     """
 
     # Setup Database access
     config.outputDir = outputDir
-    sqlitefile = os.path.join(dbFilepath, runName + '_sqlite.db')
+    sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
     config.opsimName = runName
 

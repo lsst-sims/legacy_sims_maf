@@ -33,7 +33,7 @@ class BaseSpatialBinner(BaseBinner):
         super(BaseSpatialBinner, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
-        self.columnsNeeded = [spatialkey1,spatialkey2]
+        self.columnsNeeded = [spatialkey1, spatialkey2]
         self.binner_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
         self.bins=np.array([0.])
 
@@ -96,29 +96,6 @@ class BaseSpatialBinner(BaseBinner):
         indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
         return indices
 
-       
-    def plotData(self, metricValues, figformat='png',
-                 filename=None, savefig=True, **kwargs):
-        """Call all plotting methods."""
-        super(BaseSpatialBinner,self).plotData(metricValues,**kwargs)
-        
-        self.figs['hist'] = self.plotHistogram(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_hist'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            self.filenames.append(outfile)
-            self.filetypes.append('histogramPlot')
-
-        self.figs['sky'] = self.plotSkyMap(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_sky'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            self.filenames.append(outfile)
-            self.filetypes.append('histogramPlot')
-        
-        return {'figs':self.figs,'filenames':self.filenames,
-                'filetypes':self.filetypes}
-
         
     ## Plot histogram (base spatial binner method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
@@ -140,6 +117,7 @@ class BaseSpatialBinner(BaseBinner):
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
         normVal = normalization value to divide metric values by (overrides zp)"""
+        plottype = 'hist'
         # Histogram metricValues. 
         fig = plt.figure(fignum)
         if not xlabel:
@@ -181,10 +159,10 @@ class BaseSpatialBinner(BaseBinner):
         if plotValue.size == 0:
             warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %(histRange[0],
                                                                                                histRange[1]))
-            return fig.number
-        else:
+            return None
+        else:            
             n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=ylog,
-                               cumulative=cumulative, range=histRange, label=label, color=color)  
+                               cumulative=cumulative, range=histRange, label=label, color=color)
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):        
             return yaxisformat % (y * scale)
@@ -257,6 +235,7 @@ class BaseSpatialBinner(BaseBinner):
                    plotMaskedValues=False, zp=None, normVal=None,
                    plotMin=None, plotMax=None, percentileClip=None,  **kwargs):
         """Plot the sky map of metricValue."""
+        plottype = 'sky'
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
         if fignum is None:
