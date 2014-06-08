@@ -71,8 +71,8 @@ class TestDriver(unittest.TestCase):
     def tearDown(self):
         if os.path.isdir('Output'):
             shutil.rmtree('Output')
-        if os.path.isdir('Output2'):
-            shutil.rmtree('Output2')
+        if os.path.isdir('Output_2'):
+            shutil.rmtree('Output_2')
        
 if __name__ == '__main__':
     unittest.main()
