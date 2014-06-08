@@ -380,7 +380,9 @@ class BaseBinMetric(object):
                                             filename=outfile, **pParams)
         # Save information about the plotted files into the output file list.
         for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
-            self._addOutputFiles(metricName, filetype, filename)
-            return plotResults['figs']
+           # filetype = 'Histogram' or 'SkyMap', etc. -- add 'Plot' for output file key.
+           filetype += 'Plot'
+           self._addOutputFiles(metricName, filetype, filename)
+           return plotResults['figs']
         else:
             return None

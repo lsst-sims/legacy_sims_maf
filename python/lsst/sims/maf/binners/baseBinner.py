@@ -119,7 +119,7 @@ class BaseBinner(object):
         binner.nbins = restored['binnerNbins']
         return metricValues, binner, header
     
-    def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
+    def plotData(self, metricValues, figformat='png', filename='fig', savefig=True, **kwargs):
         """
         Call all available plotting methods.
         """
