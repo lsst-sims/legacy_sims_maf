@@ -1,8 +1,13 @@
 # A simple config test.
 
 #To run:
-#curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1039/design/opsimblitz2_1039_sqlite.db #download an OpSim database
-#runDriver.py intall_initialtest.py --runName opsimblitz2_1039
+#  download opsim data (such as run opsimblitz2_1060) using
+#curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1060/design/opsimblitz2_1060_sqlite.db 
+#   then run using the driver (assuming you are in this directory, and you downloaded the opsim run to this directory)
+#runDriver.py install_initialtest.py --runName opsimblitz2_1039
+#  (note you can be in a different directory and run this config by specifying a full pathname to this config)
+#  (note you can also put the opsim dbfile in a different directory and specify its location using --dbDir)
+
 
 import os
 from lsst.sims.maf.driver.mafConfig import MafConfig, makeBinnerConfig, makeMetricConfig, makeDict
@@ -20,12 +25,11 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
     config.opsimName = runName
 
-    # Filter list, and map of colors (for plots) to filters.
-    filters = ['u','g','r','i','z','y']
-    colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 
     binList = []
     nside = 64
+
+    filters = ['g','r']
 
     for f in filters:
         m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisits'}, 

@@ -305,12 +305,6 @@ class MafDriver(object):
         for stat in summary_stats:
             print >>f, stat
         f.close()
-
-        # Save metric filekey & summary stats output. 
-        summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
-        subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
-        utils.outputUtils.printSimpleDict(allOutDict, subkeyorder, summaryfile, delimiter=',\t')
-        summaryfile.close()
         
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged
@@ -341,16 +335,35 @@ class MafDriver(object):
 
         
         for key in histDict.keys():
-            cbm = binMetrics.ComparisonBinMetric()
+            cbm = binMetrics.ComparisonBinMetric(verbose=False)
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
-                    cbm.readMetricData(filename)
+                    fullfilename = os.path.join(self.config.outputDir, filename)
+                    cbm.readMetricData(fullfilename)
                 dictNums = cbm.binmetrics.keys()
                 dictNums.sort()
-                cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
-                                   outDir=self.config.outputDir, savefig=True,
-                                   plotkwargs=histDict[key]['plotkwargs'])
-
+                fignum, title, outfile = cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                                                     outDir=self.config.outputDir, savefig=True,
+                                                     plotkwargs=histDict[key]['plotkwargs'])
+                # Add this plot info to the allOutDict ('ResultsSummary.dat')
+                key = 0
+                while key in allOutDict:
+                    key += 1
+                allOutDict[key] = {}
+                metricName = cbm.binmetrics[0].metricNames[0]
+                allOutDict[key]['metricName'] = metricName
+                allOutDict[key]['simDataName'] = self.config.opsimName
+                allOutDict[key]['binnerName'] = cbm.binmetrics[0].binner.binnerName
+                allOutDict[key]['metadata'] = title
+                allOutDict[key]['sqlconstraint'] = ''
+                allOutDict[key]['comboPlot'] = outfile
+                
+        # Save metric filekey & summary stats output. 
+        summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
+        subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
+        utils.outputUtils.printSimpleDict(allOutDict, subkeyorder, summaryfile, delimiter=', ')
+        summaryfile.close()
+                
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.
         datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')

@@ -19,6 +19,7 @@ if __name__=="__main__":
     # Set up configuration parameters.
     config = MafConfig()
     if args.runName == '':
+        print 'Reading config data from %s' %(args.configFile)
         config.load(args.configFile)
         print 'Finished loading config file: %s' %(args.configFile)
     else:
@@ -33,7 +34,7 @@ if __name__=="__main__":
             sys.path.insert(0, os.getcwd())
 
         # Then import the module.
-        print 'Reading config method from %s in %s directory' %(name, path)
+        print 'Reading mafConfig from %s in %s directory' %(name, path)
         conf = __import__(name)
 
         # Run configuration.
