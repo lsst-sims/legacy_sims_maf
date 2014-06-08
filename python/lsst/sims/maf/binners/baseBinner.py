@@ -1,6 +1,7 @@
 # Base class for all 'Binner' objects. 
 # 
 
+import inspect
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -8,8 +9,9 @@ import warnings
 from lsst.sims.maf.utils import getDateVersion
 
 class BaseBinner(object):
-    """Base class for all binners: sets required methods and implements common functionality."""
-    
+    """
+    Base class for all binners: sets required methods and implements common functionality.
+    """
     def __init__(self, verbose=True, badval=-666, *args,  **kwargs):
         """Instantiate the base binner object."""
         # After init: everything necessary for using binner for plotting or saving/restoring metric
@@ -23,10 +25,18 @@ class BaseBinner(object):
         self.bins = None
         self.binnerName = self.__class__.__name__
         self.columnsNeeded = []
+        # Add dictionary of plotting methods for each binner.
+        self.plotFuncs = {}
+        for p in inspect.getmembers(self, predicate=inspect.ismethod):
+            if p[0].startswith('plot'):
+                if p[0] == 'plotData':
+                    pass
+                else:
+                    self.plotFuncs[p[0]] = p[1]
         # Create a dict that saves how to re-init the binner (all args & kwargs for binner 'init' method)
         # Will generally be overwritten by individual binner binner_init dictionaries.
         self.binner_init = {}
-
+        
     def setupBinner(self, *args, **kwargs):
         """Set up internal parameters and bins for binner. """
         # Typically args will be simData + kwargs can be something about the bin sizes
@@ -59,11 +69,11 @@ class BaseBinner(object):
         which are appropriate for the metric to be working on, for that bin."""
         raise NotImplementedError('This method is set up by "setupBinner" - run that first.')
 
-    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', comment='', metadata=''):
+    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', sqlconstraint='', metadata=''):
         """Save a set of metric values along with the information required to re-build the binner."""
         header = {}
         header['metricName']=metricName
-        header['comment'] = comment
+        header['sqlconstraint'] = sqlconstraint
         header['metadata'] = metadata
         header['simDataName'] = simDataName
         date, versionInfo = getDateVersion()
@@ -108,13 +118,28 @@ class BaseBinner(object):
         binner.bins = restored['binnerBins'][()]
         binner.nbins = restored['binnerNbins']
         return metricValues, binner, header
-
-    def plotData(self, metricValues, **kwargs):
-        """Call all plotting methods."""
-        self.filenames=[]
-        self.filetypes=[]
-        self.figs={}
+    
+    def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
+        """
+        Call all available plotting methods.
+        """
+        # If passed metric data which is not a simple data type, return without plotting.
+        # (thus - override this method if your binner requires plotting complex 'object' data.
+        filenames=[]
+        filetypes=[]
+        figs={}
         if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('metric data type not float or int, returning False')
-            return False
+            warnings.warn('Metric data type not float or int. No plots generated.')
+            return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
+        # Otherwise, plot.
+        for p in self.plotFuncs:
+            self.plotFuncs[p](metricValues, **kwargs)
+            if savefig:
+                plottype = p.replace('plot', '')
+                outfile = filename + '_' + plottype + '.' + figformat
+                plt.savefig(outfile, figformat=figformat)
+                filenames.append(outfile)
+                filetypes.append(plottype)
+        return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
+
         

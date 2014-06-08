@@ -48,7 +48,12 @@ class BaseMetric(object):
     
     def __init__(self, cols, metricName=None, units=None, plotParams=None,
                  *args, **kwargs):
-        """Instantiate metric. """
+        """Instantiate metric.
+        After inheriting from this base metric (and using, perhaps via 'super' this __init__):
+          * every metric object will have the data columns it requires added to the column registry
+            (so the driver can know which columns to pull from the database)
+          * every metric object will contain a plotParams dictionary, which may contain only the units.
+        """
         # Turn cols into numpy array (so we know it's iterable).
         self.colNameList = ClassRegistry.makeColArr(cols)
         # Register the columns in the classRegistry.
@@ -80,7 +85,7 @@ class BaseMetric(object):
             if len(units.replace(' ', '')) == 0:
                 units = self.name
         self.units = units
-        # Set more plotting preferences
+        # Set more plotting preferences (at the very least, the units).
         if plotParams:
             self.plotParams = plotParams
         else:

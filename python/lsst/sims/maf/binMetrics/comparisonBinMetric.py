@@ -142,7 +142,7 @@ class ComparisonBinMetric(object):
         in binMetric, checks if the values are plottable and
         returns updated lists of dictNums and metricNames containing only plottable values."""
         for i, (d, m) in enumerate(zip(dictNums, metricNames)):
-            print d, m, self.binmetrics[d].metricValues[m].dtype
+            ##  print d, m, self.binmetrics[d].metricValues[m].dtype
             # Remove if metric m is not part of binmetric[d]
             if m not in self.binmetrics[d].metricValues:
                 dictNums[i] = None
@@ -182,12 +182,17 @@ class ComparisonBinMetric(object):
                         title=None, xlabel=None,color=None, labels=None,
                         legendloc='upper left', bnamelen=4, alpha=1.0,
                         savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
-        """Create a plot containing the histogram visualization from all possible metrics in dictNum +
-                       metricNames.
+        """
+        Create a plot containing the histogram visualization from all possible metrics in dictNum +
+          metricNames.
 
         dictNums (a list) identifies which binMetrics to use to create the comparison plots,
         while metricNames (a list) identifies which metric data within each binMetric to use.
-        plotkwargs is a list of dicts with plotting parameters that override the defaults"""
+        plotkwargs is a list of dicts with plotting parameters that override the defaults.
+        """
+        ### todo (relevant to all plotting methods)
+        #  consider returning plot info to caller via dictionary (may want set of info on metric names,
+        #    sqlconstraint, metadata, output filename, etc) .. useful for filling in ResultsSummary.dat
         if len(dictNums) != len(metricNames):
             raise Exception('dictNums must be same length as metricNames list')
         dictNums, metricNames = self._checkPlottable(dictNums, metricNames)
@@ -206,7 +211,6 @@ class ComparisonBinMetric(object):
         if xlabel is None:
             if self.binmetrics[d].binner.binnerName == 'OneDBinner':
                 tmpMnames = [''.join(m.split()[1:]) for m in metricNames]
-                print tmpMnames, metricNames
                 xlabel = ', '.join(list(set(tmpMnames)))
             else:
                 xlabel = ', '.join(list(set(metricNames)))
@@ -246,8 +250,10 @@ class ComparisonBinMetric(object):
             outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)        
-        return fignum
+            plt.savefig(outfile, figformat=self.figformat)
+        else:
+            outfile = None
+        return fignum, title, outfile
 
     def plotPowerSpectra(self, dictNums, metricNames, maxl=500., removeDipole=True,
                          title=None, legendloc='upper left', bnamelen=4,
@@ -293,8 +299,10 @@ class ComparisonBinMetric(object):
             outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)        
-        return fignum
+            plt.savefig(outfile, figformat=self.figformat)
+        else:
+            outfile = None
+        return fignum, title, outfile
     
 
     def plotSkyMaps(self, dictNums, metricNames, units=None, title=None,
@@ -345,4 +353,6 @@ class ComparisonBinMetric(object):
                                                                     outDir=outDir, outfileRoot=outfileRoot, 
                                                                     plotType='sky')
             plt.savefig(outfile, figformat=self.figformat)
-        return fignum
+        else:
+            outfile = None
+        return fignum, title, outfile

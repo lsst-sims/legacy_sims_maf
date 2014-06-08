@@ -6,7 +6,7 @@ class ParallaxMetric(BaseMetric):
     """Calculaute the uncertainty in a parallax measure
     given a serries of observations"""
 
-    def __init__(self, metricName='parallax', m5col='5sigma_modified',
+    def __init__(self, metricName='parallax', m5col='fivesigma_modified',
                  mjdcol='expMJD', units = 'mas',
                  filtercol='filter', seeingcol='finSeeing',rmag=20.,
                  SedTemplate='flat', badval= -666,

@@ -1,3 +1,3 @@
-__author__ = 'schandra'
-from Table import *
-from Database import *
+from .Table import *
+from .Database import *
+from .opsimDatabase import *

@@ -14,14 +14,16 @@ from lsst.sims.maf.utils.percentileClip import percentileClip as pc
 
 from .baseSpatialBinner import BaseSpatialBinner
 from .baseBinner import BaseBinner
+import warnings
 
 
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
-    def __init__(self, nside=256, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
+    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
         """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose,
-                                            spatialkey1=spatialkey1,spatialkey2=spatialkey2, badval=hp.UNSEEN) 
+                                            spatialkey1=spatialkey1, spatialkey2=spatialkey2,
+                                            badval=hp.UNSEEN) 
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -78,29 +80,10 @@ class HealpixBinner(BaseSpatialBinner):
         ra = -lon % (np.pi*2)
         return ra, dec  
 
-    def plotData(self, metricValues, figformat='png', filename=None,
-                 savefig=True, **kwargs):
-        """Call all plotting methods."""
-        super(HealpixBinner,self).plotData(metricValues, 
-                                           figformat=figformat, 
-                                           filename=filename,savefig=savefig,**kwargs)
-
-        self.figs['ps'] = self.plotPowerSpectrum(metricValues, **kwargs)
-        if savefig:
-            outfile = filename+'_ps'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
-            self.filenames.append(outfile)
-            self.filetypes.append('powerspectrumPlot')
-
-            
-        return {'figs':self.figs,'filenames':self.filenames,
-                'filetypes':self.filetypes}
-
-        
-    
     def plotSkyMap(self, metricValueIn, units=None, title='',
-                   clims=None, ylog=False, cbarFormat='%.2g', cmap=cm.jet,
-                   percentileClip=None, plotMaskedValues=False, zp=None, normVal=None,
+                   ylog=False, cbarFormat='%.2g', cmap=cm.jet,
+                   percentileClip=None, plotMin=None, plotMax=None,
+                   plotMaskedValues=False, zp=None, normVal=None,
                    **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
@@ -109,6 +92,7 @@ class HealpixBinner(BaseSpatialBinner):
         title = title for plot
         cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
         plotMaskedValues = ignored, here to be consistent with OpsimFieldBinner."""
+        plottype = 'sky'
         # Generate a Mollweide full-sky plot.
         norm = None
         if ylog:
@@ -128,9 +112,16 @@ class HealpixBinner(BaseSpatialBinner):
             metricValue = metricValueIn
 
         if percentileClip:
-            plotMin,plotMax = pc(metricValue.compressed(), percentile=percentileClip)
-            if not clims:
-                clims = [plotMin,plotMax]
+            pcMin, pcMax = pc(metricValue.compressed(), percentile=percentileClip)
+        if plotMin is None and percentileClip:
+            plotMin = pcMin
+        if plotMax is None and percentileClip:
+            plotMax = pcMax
+        if (plotMin is not None) and (plotMax is not None):
+            clims = [plotMin, plotMax]
+        else:
+            clims = None
+            
         if clims is not None:
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
                         format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
@@ -195,11 +186,11 @@ class HealpixBinner(BaseSpatialBinner):
         addLegend = flag to add legend (default False).
         removeDipole = remove dipole when calculating power spectrum (default True) (monopole removed automatically.)
         """
+        plottype = 'ps'
         if fignum:
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        cl = hp.anafast(metricValue.filled(self.badval))
         if removeDipole:
             cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
         else:
