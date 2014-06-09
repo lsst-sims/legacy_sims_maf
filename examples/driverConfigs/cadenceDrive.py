@@ -6,7 +6,7 @@ import lsst.sims.maf.utils as utils
 
 
 root.outputDir ='./Cadence'
-root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}#, 'OutputTable':'output'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}#, 'OutputTable':'output'}
 root.opsimName = 'example'
 
 # Connect to the database to fetch some values we're using to help configure the driver.                                                             
@@ -77,7 +77,7 @@ m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
 m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1,m2,m3,m4,m5),
-                           constraints=['night < 365'], setupKwargs={"leafsize":leafsize})
+                           constraints=['night < 365', ''], setupKwargs={"leafsize":leafsize})
 binList.append(binner)
 
 

@@ -202,7 +202,8 @@ class HealpixBinner(BaseSpatialBinner):
         else:
             condition = (l < maxl)
         plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=label)
-        plt.yscale('log')
+        if cl[condition].max() > 0:
+            plt.yscale('log')
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')
         if addLegend:
