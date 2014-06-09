@@ -13,12 +13,12 @@ class LongGapAGNMetric(BaseMetric):
         cols = [mjdcol]
         super(LongGapAGNMetric, self).__init__(cols, metricName, units=units, **kwargs)
         # set return type
-        self.metricDtype = 'float'
+        self.mjdcol = mjdcol
 	self.xgaps = xgaps
         self.units = units
 
     def run(self, dataslice):
-	metricval = np.diff(dataslice)
+	metricval = np.diff(dataslice[self.mjdcol])
         return metricval
     
     def reduceMaxGap(self, metricval):
