@@ -55,10 +55,10 @@ for filt in filters:
 
 # Look at the single-visit depth and airmass for observations in each filter and merge them into a single histogram
 for f in filters:
-    m1 = makeMetricConfig('CountMetric', params=['5sigma_ps'], plotDict={'histMin':20, 'histMax':26},
+    m1 = makeMetricConfig('CountMetric', params=['fivesigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right',
                                      'color':colors[f],'label':'%s'%f} )
-    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'5sigma_ps'},
+    binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'fivesigma_ps'},
                               setupKwargs={'binsize':0.1},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
     binList.append(binner)
@@ -84,7 +84,7 @@ binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1,m2,m3,m4),
 
 
 # Run some Cadence metrics
-m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'5sigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
+m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
 m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
 m3 = makeMetricConfig('ParallaxMetric')
 m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
@@ -95,7 +95,7 @@ binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
 binList.append(binner)
 
 # Run those same Cadence metrics on the hexdither positions
-m1 = makeMetricConfig('SupernovaMetric', kwargs={'metricName':'SN_dith','m5col':'5sigma_modified',
+m1 = makeMetricConfig('SupernovaMetric', kwargs={'metricName':'SN_dith','m5col':'fivesigma_modified',
                                                  'redshift':0.1, 'resolution':5.},
                       plotDict={'percentileClip':95.})
 m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed_dith', 'normalize':True})
