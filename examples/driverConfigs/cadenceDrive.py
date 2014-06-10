@@ -1,13 +1,10 @@
 # Test out new cadence metrics
 from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
 import lsst.sims.maf.utils as utils
-  
-
-
 
 root.outputDir ='./Cadence'
 root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}#, 'OutputTable':'output'}
-root.opsimName = 'example'
+root.opsimName = 'ob2_1060'
 
 # Connect to the database to fetch some values we're using to help configure the driver.                                                             
 opsimdb = utils.connectOpsimDb(root.dbAddress)
@@ -30,10 +27,6 @@ else:
 
 # Fetch the total number of visits (to create fraction)                                                                                              
 totalNVisits = opsimdb.fetchNVisits()
-
-
-
-
 
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
@@ -73,8 +66,12 @@ m1 = makeMetricConfig('SupernovaMetric', kwargs={'m5col':'fivesigma_modified', '
 ########   Parallax and Proper Motion ########
 m2 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
 m3 = makeMetricConfig('ParallaxMetric')
-m4 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
-m5 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
+m4 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_24', 'rmag':24})
+m5 = makeMetricConfig('ParallaxMetric', kwargs={'metricName':'Parallax_24_normed', 'rmag':24, 'normalize':True})
+m6 = makeMetricConfig('ProperMotionMetric', plotDict={'percentileClip':95})
+m7 = makeMetricConfig('ProperMotionMetric', kwargs={'rmag':24, 'metricName':'PM_24'}, plotDict={'percentileClip':95})
+m8 = makeMetricConfig('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
+m9 = makeMetricConfig('ProperMotionMetric', kwargs={'rmag':24,'normalize':True, 'metricName':'PM_24_normed'})
 binner =  makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1,m2,m3,m4,m5),
                            constraints=['night < 365', ''], setupKwargs={"leafsize":leafsize})
@@ -86,6 +83,7 @@ constraints=[]
 for f in filters:
     constraints.append('filter = "%s"'%f)
 constraints.append('')
+constraints.append('night < 365')
 m1 = makeMetricConfig('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
 binner = makeBinnerConfig('HealpixBinner', kwargs={"nside":nside},
                            metricDict=makeDict(m1),
