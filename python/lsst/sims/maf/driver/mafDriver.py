@@ -12,6 +12,12 @@ import lsst.sims.maf.binMetrics as binMetrics
 import lsst.sims.maf.utils as utils
 import time
 
+
+def dtime(time_prev):
+   return (time.time() - time_prev, time.time())
+
+
+
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
 
@@ -28,21 +34,29 @@ class MafDriver(object):
         if not os.path.isdir(self.config.outputDir):
             os.makedirs(self.config.outputDir)
 
+        self.verbose = self.config.verbose
+            
         # Set up database connection.
         self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
 
+        time_prev = time.time()
         # Grab config info and write to disk.
-        configSummary, configDetails = self.opsimdb.fetchConfig()
-        f = open(os.path.join(self.config.outputDir,'configSummary.txt'), 'w')
-        utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
-        f.close()
-        f = open(os.path.join(self.config.outputDir, 'configDetails.txt'), 'w')
-        utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
-        f.close()
-
+        if self.config.getConfig:
+            configSummary, configDetails = self.opsimdb.fetchConfig()
+            f = open(os.path.join(self.config.outputDir,'configSummary.txt'), 'w')
+            utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
+            f.close()
+            f = open(os.path.join(self.config.outputDir, 'configDetails.txt'), 'w')
+            utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
+            f.close()
+            if self.verbose:
+                dt, time_prev = dtime(time_prev)
+                print 'Got OpSim config info in %.3g s'%dt
 
         self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
-
+        if self.verbose:
+            dt, time_prev = dtime(time_prev)
+            print 'fetched PropID info in %.3g s'%dt
         # Construct the binners and metric objects
         self.binList = []
         self.metricList = []
@@ -219,17 +233,26 @@ class MafDriver(object):
             
             print 'Querying with SQLconstraint:', sqlconstraint
             # Get the data from the database + stacker calculations.
-            self.getData(sqlconstraint, colnames=colnames, stackers=stackers)            
+            if self.verbose:
+                time_prev = time.time()
+            self.getData(sqlconstraint, colnames=colnames, stackers=stackers)
+            if self.verbose:
+                dt, time_prev = dtime(time_prev)
             if len(self.data) == 0:
                 print '  No data matching constraint:   %s'%sqlconstraint
                 
             # Got data, now set up binners.
             else:
-                print '  Found %i matching visits'%len(self.data)
+                if self.verbose:
+                    print '  Found %i matching visits in %.3g s'%(len(self.data),dt)
+                else:
+                    print '  Found %i matching visits'%len(self.data)
                 # Special data requirements for opsim binner.
                 if 'OpsimFieldBinner' in binnerNames:
                     self.getFieldData(matchingBinners[binnerNames.index('OpsimFieldBinner')], sqlconstraint)
                 # Setup each binner, and run through the binpoints (with metrics) in baseBinMetric
+                if self.verbose:
+                    time_prev = time.time()
                 for binner in matchingBinners:
                     print '    running binnerName =', binner.binnerName, \
                       ' run metrics:', ', '.join([m.name for m in self.metricList[binner.index]])
@@ -301,6 +324,9 @@ class MafDriver(object):
                     for i,m in enumerate(self.metricList[binner.index]):
                         good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
                         m.saveFile = outfile_names[good]
+                if self.verbose:
+                    dt,time_prev = dtime(time_prev)
+                    print '    Computed metrics in %.3g s'%dt
         # Save summary statistics to file.
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:
