@@ -26,7 +26,7 @@ class OpsimDatabase(Database):
           http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html     
           
         """
-        self.dbAddress = dbAddress
+        self.dbAddress = dbAddress        
         # Default dbTables and dbTableIDKey values:
         defaultdbTables={'outputTable':['Output', 'obsHistID'],
                          'cloudTable':['Cloud', 'cloudID'],
@@ -310,10 +310,19 @@ class OpsimDatabase(Database):
                 propdict['PerFilter']['ExpTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
                 propdict['PerFilter']['ExpTime'] *= exptime
             # And count how many total exposures are requested per filter.
+            # First check if 'RestartCompleteSequences' are true:
+            #   if both are true, then basically an indefinite number of visits are requested.
+            restartComplete = False
+            temp = _matchParamNameValue(config[propname], 'RestartCompleteSequences')
+            if len(temp) > 0:
+                if temp[0] == 'True':
+                    restartComplete = True
             if propdict['PropType'] == 'WL':
                 # Simple 'Filter_Visits' request for number of observations.
                 propdict['PerFilter']['NumVisits'] = np.array(_matchParamNameValue(config[propname],
                                                                                    'Filter_Visits'), int)
+                if restartComplete:
+                    propdict['PerFilter']['NumVisits'] = 'Indefinite'
             elif propdict['PropType'] == 'WLTSS':
                 # Proposal contains subsequences and possible nested subseq, so must delve further.
                 # Make a dictionary to hold the subsequence info (keyed per subsequence).
@@ -360,41 +369,44 @@ class OpsimDatabase(Database):
                     subseqevents = config[propname]['paramValue'][i]
                     seqdict['Events'] = int(subseqevents)
                 # End of assigning subsequence info - move on to counting number of visits.
-                propdict['PerFilter']['NumVisits'] = np.zeros(len(propdict['PerFilter']['Filters']), int)
-                subseqs = propdict['SubSeq'].keys()
-                for subseq in subseqs:
-                    subevents = propdict['SubSeq'][subseq]['Events']
-                    # Count visits from direct subsequences.
-                    if 'Visits' in propdict['SubSeq'][subseq] and 'Filters' in propdict['SubSeq'][subseq]:
-                        subfilters = propdict['SubSeq'][subseq]['Filters']
-                        subexp = propdict['SubSeq'][subseq]['Visits']
-                        # If just one filter ..
-                        if len(subfilters) == 1:
-                            idx = (propdict['PerFilter']['Filters'] == subfilters)
-                            propdict['PerFilter']['NumVisits'][idx] += subevents * int(subexp)
-                        else:
-                            splitsubfilters = subfilters.split(',')
-                            splitsubexp = subexp.split(',')
-                            for f, exp in zip(splitsubfilters, splitsubexp):
-                                idx = (propdict['PerFilter']['Filters'] == f)
-                                propdict['PerFilter']['NumVisits'][idx] += subevents * int(exp)
-                    # Count visits if have nested subsequences.
-                    if 'SubSeqNested' in propdict['SubSeq'][subseq]:
-                        for subseqnested in propdict['SubSeq'][subseq]['SubSeqNested']:
-                            events = subevents * propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
-                            subfilters = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Filters']
-                            subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Visits']
-                            # If just one filter .. 
+                if restartComplete:
+                    propdict['PerFilter']['NumVisits'] = 'Indefinite'
+                else:
+                    propdict['PerFilter']['NumVisits'] = np.zeros(len(propdict['PerFilter']['Filters']), int)
+                    subseqs = propdict['SubSeq'].keys()
+                    for subseq in subseqs:
+                        subevents = propdict['SubSeq'][subseq]['Events']
+                        # Count visits from direct subsequences.
+                        if 'Visits' in propdict['SubSeq'][subseq] and 'Filters' in propdict['SubSeq'][subseq]:
+                            subfilters = propdict['SubSeq'][subseq]['Filters']
+                            subexp = propdict['SubSeq'][subseq]['Visits']
+                            # If just one filter ..
                             if len(subfilters) == 1:
                                 idx = (propdict['PerFilter']['Filters'] == subfilters)
-                                propdict['PerFilter']['NumVisits'][idx] += events * int(subexp)
-                            # Else may have multiple filters in the subsequence, so must split.
-                            splitsubfilters = subfilters.split(',')
-                            splitsubexp = subexp.split(',')
-                            for f, exp in zip(splitsubfilters, splitsubexp):
-                                idx = (propdict['PerFilter']['Filters'] == f)
-                                propdict['PerFilter']['NumVisits'][idx] += int(exp) * events
-                    propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events']
+                                propdict['PerFilter']['NumVisits'][idx] += subevents * int(subexp)
+                            else:
+                                splitsubfilters = subfilters.split(',')
+                                splitsubexp = subexp.split(',')
+                                for f, exp in zip(splitsubfilters, splitsubexp):
+                                    idx = (propdict['PerFilter']['Filters'] == f)
+                                    propdict['PerFilter']['NumVisits'][idx] += subevents * int(exp)
+                        # Count visits if have nested subsequences.
+                        if 'SubSeqNested' in propdict['SubSeq'][subseq]:
+                            for subseqnested in propdict['SubSeq'][subseq]['SubSeqNested']:
+                                events = subevents * propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
+                                subfilters = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Filters']
+                                subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Visits']
+                                # If just one filter .. 
+                                if len(subfilters) == 1:
+                                    idx = (propdict['PerFilter']['Filters'] == subfilters)
+                                    propdict['PerFilter']['NumVisits'][idx] += events * int(subexp)
+                                # Else may have multiple filters in the subsequence, so must split.
+                                splitsubfilters = subfilters.split(',')
+                                splitsubexp = subexp.split(',')
+                                for f, exp in zip(splitsubfilters, splitsubexp):
+                                    idx = (propdict['PerFilter']['Filters'] == f)
+                                    propdict['PerFilter']['NumVisits'][idx] += int(exp) * events
+                        propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events']
             # Sort the filter information so it's ugrizy instead of order in opsim config db.
             idx = []
             for f in self.filterlist:
@@ -403,6 +415,12 @@ class OpsimDatabase(Database):
                     idx.append(filterpos[0][0])
             idx = np.array(idx, int)
             for k in propdict['PerFilter']:
-                propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
-            propdict['PerFilter']['keyorder'] = ['Filters', 'ExpTime', 'MaxSeeing', 'MinSky', 'MaxSky', 'NumVisits']
+                if k == 'NumVisits':
+                    if not restartComplete:
+                        propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
+                    # else skip reordering because the contents of 'PerFilter''NumVisits' is 'indefinite'
+                else:
+                    propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
+            propdict['PerFilter']['keyorder'] = ['Filters', 'ExpTime', 'MaxSeeing', 'MinSky',
+                                                 'MaxSky', 'NumVisits']
         return configSummary, config
