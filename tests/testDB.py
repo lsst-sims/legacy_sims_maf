@@ -44,8 +44,11 @@ class TestDb(unittest.TestCase):
         query = 'select fieldID, fieldRA, fieldDec from Field where fieldDec>0'
         data = basedb.queryDatabase('fieldTable', query)
         self.assertEqual(data.dtype.names, ('fieldID', 'fieldRA', 'fieldDec'))
-
- 
+    
+    def testSqliteFileNotExists(self):
+        """Test that db gives useful error message if db file doesn't exist."""
+        self.assertRaises(IOError, db.Database, 'sqlite:///thisdatabasedoesntexist_sqlite.db')
+        
 
 if __name__ == "__main__":
     unittest.main()
