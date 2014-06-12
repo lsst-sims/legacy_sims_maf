@@ -217,20 +217,21 @@ class MafDriver(object):
             # Find the unique column names required.
             colnames = list(set(colnames)) 
             
-            print 'Running SQLconstraint:', sqlconstraint
+            print 'Querying with SQLconstraint:', sqlconstraint
             # Get the data from the database + stacker calculations.
             self.getData(sqlconstraint, colnames=colnames, stackers=stackers)            
             if len(self.data) == 0:
-                print 'No data matching constraint:   %s'%sqlconstraint
+                print '  No data matching constraint:   %s'%sqlconstraint
                 
             # Got data, now set up binners.
             else:
+                print '  Found %i matching visits'%len(self.data)
                 # Special data requirements for opsim binner.
                 if 'OpsimFieldBinner' in binnerNames:
                     self.getFieldData(matchingBinners[binnerNames.index('OpsimFieldBinner')], sqlconstraint)
                 # Setup each binner, and run through the binpoints (with metrics) in baseBinMetric
                 for binner in matchingBinners:
-                    print '  with binnerName =', binner.binnerName, \
+                    print '    running binnerName =', binner.binnerName, \
                       ' run metrics:', ', '.join([m.name for m in self.metricList[binner.index]])
                     # Set up binner.
                     if binner.binnerName == 'OpsimFieldBinner':
