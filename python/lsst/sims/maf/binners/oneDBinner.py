@@ -4,8 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
 import warnings
-
+from lsst.sims.maf.utils import optimalBins
 from .baseBinner import BaseBinner
+
 
 class OneDBinner(BaseBinner):
     """oneD Binner."""
@@ -18,7 +19,7 @@ class OneDBinner(BaseBinner):
         self.columnsNeeded = [sliceDataColName]
         self.binner_init = {'sliceDataColName':self.sliceDataColName}
         
-    def setupBinner(self, simData, bins=100, binMin=None, binMax=None, binsize=None): 
+    def setupBinner(self, simData, bins=None, binMin=None, binMax=None, binsize=None): 
         """Set up bins in binner.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol or a single integer value
@@ -41,7 +42,7 @@ class OneDBinner(BaseBinner):
         # Set bins.
         # Using binsize.
         if binsize is not None:  
-            if bins != 100:
+            if bins is not None:
                 warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(binsize))
             self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
         # Using bins value.
@@ -49,8 +50,10 @@ class OneDBinner(BaseBinner):
             # Bins was a sequence (np array or list)
             if hasattr(bins, '__iter__'):  
                 self.bins = np.sort(bins)
-            # Or bins was a single value.
+            # Or bins was a single value. 
             else:
+                if bins is None:
+                    bins = optimalBins(sliceDataCol)
                 nbins = int(bins)
                 binsize = (binMax - binMin) / float(nbins)
                 self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')

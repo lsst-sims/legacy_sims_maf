@@ -5,3 +5,4 @@ from .outputUtils import *
 from .percentileClip import *
 from .opsimUtils import *
 from .telescopeInfo import *
+from .optimalBins import *
