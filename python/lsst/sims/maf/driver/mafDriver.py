@@ -296,14 +296,18 @@ class MafDriver(object):
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         summary = gm.computeSummaryStatistics(mm, stat)
+                                        if np.size(summary) == 1:
+                                           summary = np.asscalar(summary)
                                         statstring = self.config.opsimName + ',' + binner.binnerName + ',' + sqlconstraint 
-                                        statstring += ',' + ',' + mm + ',' + stat.name + ',' + np.array_str(summary)
+                                        statstring += ','  + mm + ',' + stat.name + ',' + np.array_str(summary)
                                         summary_stats.append(statstring)
                                 # Else it's a simple metric value.
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, stat)
+                                    if np.size(summary) == 1:
+                                       summary = np.asscalar(summary)
                                     statstring = self.config.opsimName + ',' + binner.binnerName + ',' + sqlconstraint 
-                                    statstring += ',' + ',' + metric.name + ',' + stat.name + ',' + np.array_str(summary)
+                                    statstring += ',' + metric.name + ',' + stat.name + ',' + np.array_str(summary)
                                     summary_stats.append(statstring)
                     # And write metric data files to disk.
                     gm.writeAll(outDir=self.config.outputDir)
