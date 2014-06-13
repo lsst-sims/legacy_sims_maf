@@ -9,6 +9,57 @@ class MixConfig(pexConfig.Config):
     plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
   
+class MetricConfig(pexConfig.Config):
+    """Config object for MAF metrics """
+    name = pexConfig.Field("", dtype=str, default='')
+    kwargs = pexConfig.ConfigField("kwargs for metrics", dtype=MixConfig, default=None)
+    plot = pexConfig.ConfigField("kwargs for plotting parameters", dtype=MixConfig,default=None)
+    params = pexConfig.ListField("", dtype=str, default=[])
+    summaryStats=pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
+                                      itemtype=MixConfig,default={})
+    histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
+
+class ColStackConfig(pexConfig.Config):
+    """If there are extra columns that need to be added, this config can be used to pass keyword paramters"""
+    name = pexConfig.Field("", dtype=str, default='')
+    kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
+    params = pexConfig.ListField("", dtype=str, default=[])
+    
+class BinnerConfig(pexConfig.Config):
+    """Config object for MAF binners """
+    name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
+
+    kwargs = pexConfig.ConfigField("kwargs for binner", dtype=MixConfig, default=None)
+
+    params_str =  pexConfig.ListField("", dtype=str, default=[]) 
+    params_float =  pexConfig.ListField("", dtype=float, default=[]) 
+    params_int =  pexConfig.ListField("", dtype=int, default=[]) 
+    params_bool =  pexConfig.ListField("", dtype=bool, default=[])
+
+    setupKwargs = pexConfig.ConfigField("setup kwargs for binner", dtype=MixConfig, default=None)
+    
+    setupParams_str = pexConfig.ListField("", dtype=str, default=[])
+    setupParams_float = pexConfig.ListField("", dtype=float, default=[])
+    setupParams_int = pexConfig.ListField("", dtype=int, default=[])
+    setupParams_bool = pexConfig.ListField("", dtype=bool, default=[])
+  
+    metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
+    constraints = pexConfig.ListField("", dtype=str, default=[])
+    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig, default={}) 
+    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=MixConfig, default={})
+    metadata = pexConfig.Field("", dtype=str, default='')
+
+class MafConfig(pexConfig.Config):
+    """Using pexConfig to set MAF configuration parameters"""
+    outputDir = pexConfig.Field("Location to write MAF output", str, '')
+    opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
+    binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
+    comment =  pexConfig.Field("", dtype=str, default='runName')
+    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
+    verbose = pexConfig.Field("", dtype=bool, default=False)
+    getConfig = pexConfig.Field("", dtype=bool, default=True)
+
+    
 def makeMixConfig(plotDict):
     """Helper function to convert a dictionary into a MixConfig.  
     Input dictionary must have str keys and values that are str, float, int, or bool.
@@ -32,61 +83,17 @@ def makeMixConfig(plotDict):
             raise Exception('Unsupported kwarg data type')
     return mc
 
-class MetricConfig(pexConfig.Config):
-    """Config object for MAF metrics """
-    name = pexConfig.Field("", dtype=str, default='')
-    kwargs = pexConfig.ConfigField("kwargs for metrics", dtype=MixConfig, default=None)
-    plot = pexConfig.ConfigField("kwargs for plotting parameters", dtype=MixConfig,default=None)
-    params = pexConfig.ListField("", dtype=str, default=[])
-    summaryStats=pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
-                                      itemtype=MixConfig,default={})
-    histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
-
-class ColStackConfig(pexConfig.Config):
-    """If there are extra columns that need to be added, this config can be used to pass keyword paramters"""
-    name = pexConfig.Field("", dtype=str, default='')
-    kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
-    params = pexConfig.ListField("", dtype=str, default=[])
-    
-
-class BinnerConfig(pexConfig.Config):
-    name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
-
-    kwargs = pexConfig.ConfigField("kwargs for binner", dtype=MixConfig, default=None)
-
-    params_str =  pexConfig.ListField("", dtype=str, default=[]) 
-    params_float =  pexConfig.ListField("", dtype=float, default=[]) 
-    params_int =  pexConfig.ListField("", dtype=int, default=[]) 
-    params_bool =  pexConfig.ListField("", dtype=bool, default=[])
-
-    setupKwargs = pexConfig.ConfigField("setup kwargs for binner", dtype=MixConfig, default=None)
-    
-    setupParams_str = pexConfig.ListField("", dtype=str, default=[])
-    setupParams_float = pexConfig.ListField("", dtype=float, default=[])
-    setupParams_int = pexConfig.ListField("", dtype=int, default=[])
-    setupParams_bool = pexConfig.ListField("", dtype=bool, default=[])
-  
-    metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
-    constraints = pexConfig.ListField("", dtype=str, default=[])
-    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig, default={}) 
-    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=MixConfig, default={})
-    metadata = pexConfig.Field("", dtype=str, default='')
-    
-class MafConfig(pexConfig.Config):
-    """Using pexConfig to set MAF configuration parameters"""
-    outputDir = pexConfig.Field("Location to write MAF output", str, '')
-    opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
-    binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
-    comment =  pexConfig.Field("", dtype=str, default='runName')
-    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
-    verbose = pexConfig.Field("", dtype=bool, default=False)
-    getConfig = pexConfig.Field("", dtype=bool, default=True)
+def configureStacker(name, kwargs={}):
+    """Configure a column stacker."""
+    config = ColStackConfig()
+    config.name = name
+    config.kwargs = makeMixConfig(kwargs)
+    return config
     
 def makeDict(*args):
     """Make a dict of index: config from a list of configs
     """
     return dict((ind, config) for ind, config in enumerate(args))
-
 
 def configureBinner(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
     binner = BinnerConfig()
@@ -169,7 +176,6 @@ def configureMetric(name, params=[], kwargs={}, plotDict={}, summaryStats={}, hi
     mc.plot = makeMixConfig(plotDict)
     return mc
 
-
 def readMixConfig(config):
     plotDict={}
     for key in config.plot_str:  plotDict[key] = config.plot_str[key]
@@ -177,7 +183,6 @@ def readMixConfig(config):
     for key in config.plot_float:  plotDict[key] = config.plot_float[key]
     for key in config.plot_bool:  plotDict[key] = config.plot_bool[key]
     return plotDict
- 
     
 def readMetricConfig(config):
     name, params,kwargs = config2dict(config)
@@ -185,8 +190,6 @@ def readMetricConfig(config):
     histMerge = readMixConfig(config.histMerge)
     plotDict = readMixConfig(config.plot)
     return name,params,kwargs,plotDict,summaryStats, histMerge
-   
-
 
 def config2dict(config):
     kwargs = readMixConfig(config.kwargs)
