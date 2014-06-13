@@ -415,10 +415,9 @@ class OpsimDatabase(Database):
                     idx.append(filterpos[0][0])
             idx = np.array(idx, int)
             for k in propdict['PerFilter']:
-                if k == 'NumVisits':
-                    if not restartComplete:
-                        propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
-                    # else skip reordering because the contents of 'PerFilter''NumVisits' is 'indefinite'
+                # Skip numvisits if restartComplete (because just a string)
+                if restartComplete and k == 'NumVisits':
+                    continue
                 else:
                     propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
             propdict['PerFilter']['keyorder'] = ['Filters', 'ExpTime', 'MaxSeeing', 'MinSky',
