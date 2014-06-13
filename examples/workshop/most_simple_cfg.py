@@ -6,7 +6,7 @@
 #  start with 'root.' are passed on to the driver script.
 
 # Import MAF helper functions 
-from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
 
 # Set the output directory
 root.outputDir = './Most_simple_out'
@@ -16,11 +16,11 @@ root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 root.opsimName = 'MostSimpleExample'
 
 # Configure a metric to run. Compute the mean on the final delivered seeing.  Once the mean seeing has been computed everywhere on the sky, compute the RMS as a summary statistic.
-metric = makeMetricConfig('MeanMetric', params=['finSeeing'],
+metric = configureMetric('MeanMetric', params=['finSeeing'],
                           summaryStats={'RmsMetric':{}})
 
 # Configure a binner.  Use the Healpixbinner to compute the metric at points in the sky.  Set the constraint as an empty string so all data is returned.
-binner = makeBinnerConfig('HealpixBinner', metricDict=makeDict(metric),
+binner = configureBinner('HealpixBinner', metricDict=makeDict(metric),
                           constraints=[''])
 
 root.binners = makeDict(binner)

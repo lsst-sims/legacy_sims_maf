@@ -2,12 +2,17 @@ import lsst.pex.config as pexConfig
 import numpy as np
 
 class MixConfig(pexConfig.Config):
+    """A pexConfig designed to hold a dictionary with string keys and a mix of 
+    value datatypes."""
     plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
     plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
     plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
   
 def makeMixConfig(plotDict):
+    """Helper function to convert a dictionary into a MixConfig.  
+    Input dictionary must have str keys and values that are str, float, int, or bool.
+    If the input dict has numpy data types, they are converted to similar native python types."""
     mc = MixConfig()
     for key in plotDict.keys():
         if type(plotDict[key]).__module__ == np.__name__:
@@ -28,6 +33,7 @@ def makeMixConfig(plotDict):
     return mc
 
 class MetricConfig(pexConfig.Config):
+    """Config object for MAF metrics """
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for metrics", dtype=MixConfig, default=None)
     plot = pexConfig.ConfigField("kwargs for plotting parameters", dtype=MixConfig,default=None)
@@ -53,7 +59,7 @@ class BinnerConfig(pexConfig.Config):
     params_int =  pexConfig.ListField("", dtype=int, default=[]) 
     params_bool =  pexConfig.ListField("", dtype=bool, default=[])
 
-    setup_kwargs = pexConfig.ConfigField("setup kwargs for binner", dtype=MixConfig, default=None)
+    setupKwargs = pexConfig.ConfigField("setup kwargs for binner", dtype=MixConfig, default=None)
     
     setupParams_str = pexConfig.ListField("", dtype=str, default=[])
     setupParams_float = pexConfig.ListField("", dtype=float, default=[])
@@ -82,7 +88,7 @@ def makeDict(*args):
     return dict((ind, config) for ind, config in enumerate(args))
 
 
-def makeBinnerConfig(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
+def configureBinner(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
     binner = BinnerConfig()
     binner.name = name
     binner.metadata=metadata
@@ -151,7 +157,7 @@ def readBinnerConfig(config):
     metadata=config.metadata
     return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs, metadata
         
-def makeMetricConfig(name, params=[], kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
+def configureMetric(name, params=[], kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
     mc = MetricConfig()
     mc.name = name
     mc.params=params
