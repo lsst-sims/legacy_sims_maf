@@ -12,7 +12,7 @@ from matplotlib.ticker import FuncFormatter
 from functools import wraps
 import warnings
 from lsst.sims.maf.utils.percentileClip import percentileClip as pc
-
+from lsst.sims.maf.utils import optimalBins
 
 try:
     # Try cKDTree first, as it's supposed to be faster.
@@ -100,7 +100,7 @@ class BaseSpatialBinner(BaseBinner):
     ## Plot histogram (base spatial binner method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
+                      bins=None, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
                       zp=None, normVal=None, units='', _units=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
@@ -110,7 +110,7 @@ class BaseSpatialBinner(BaseBinner):
         label = the label to use in the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
-        bins = bins for histogram (numpy array or # of bins) (default 100)
+        bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         histMin/Max = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
@@ -118,6 +118,8 @@ class BaseSpatialBinner(BaseBinner):
         zp = zeropoing to subtract off metricVals
         normVal = normalization value to divide metric values by (overrides zp)"""
         plottype = 'hist'
+        if bins is None:
+            bins = optimalBins(metricValueIn)
         # Histogram metricValues. 
         fig = plt.figure(fignum)
         if not xlabel:
