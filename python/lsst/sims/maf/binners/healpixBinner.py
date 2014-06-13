@@ -146,7 +146,7 @@ class HealpixBinner(BaseSpatialBinner):
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
+                      bins=None, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
                       scale=None, color='b', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -157,7 +157,7 @@ class HealpixBinner(BaseSpatialBinner):
         fignum = the figure number to use (default None - will generate new figure)
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default 100)
+        bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         histMin/Max = histogram range (default None, set by matplotlib hist)
         ylog = use log for y axis (default False)

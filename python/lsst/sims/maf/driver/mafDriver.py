@@ -93,6 +93,10 @@ class MafDriver(object):
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
                     temp_metric.summaryStats.append(getattr(metrics,key)('metricdata',**readMixConfig(summaryStats[key])))
+                # If it is a UniBinner, make sure the IdentityMetric is run
+                if temp_binner.binnerName == 'UniBinner':
+                   if 'IdentityMetric' not in summaryStats.keys():
+                      temp_metric.summaryStats.append(getattr(metrics,'IdentityMetric')('metricdata'))
                 temp_metric.histMerge = histMerge
                 sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
