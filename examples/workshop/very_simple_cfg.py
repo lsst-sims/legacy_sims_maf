@@ -5,7 +5,7 @@
 # This script uses the LSST pex_config.  This is executed as a python script, but only things that start with 'root.' are passed on to the driver script.
 
 # Import MAF helper functions 
-from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
 
 # Set the output directory
 root.outputDir = './Very_simple_out'
@@ -21,18 +21,18 @@ binList = []
 constraints = ["filter = '%s'"%f for f in ['u','g','r','i','z','y'] ]
 
 # Run 2 metrics, the mean seeing and the co-added 5-sigma limiting depth.
-metric1 = makeMetricConfig('MeanMetric', params=['finSeeing'])
-metric2 = makeMetricConfig('Coaddm5Metric')
+metric1 = configureMetric('MeanMetric', params=['finSeeing'])
+metric2 = configureMetric('Coaddm5Metric')
 
 # Configure a binner.  Use the Healpix binner to make sky maps and power spectra.
-binner = makeBinnerConfig('HealpixBinner', metricDict=makeDict(metric1,metric2),
+binner = configureBinner('HealpixBinner', metricDict=makeDict(metric1,metric2),
                           constraints=constraints)
 binList.append(binner)
 
-metric = makeMetricConfig('MeanMetric', params=['finSeeing'],
+metric = configureMetric('MeanMetric', params=['finSeeing'],
                           summaryStats={'IdentityMetric':{}})
 # Configure a binner.  Use the UniBinner to simply take all the data.
-binner = makeBinnerConfig('UniBinner', metricDict=makeDict(metric),
+binner = configureBinner('UniBinner', metricDict=makeDict(metric),
                           constraints=constraints)
 binList.append(binner)
 
