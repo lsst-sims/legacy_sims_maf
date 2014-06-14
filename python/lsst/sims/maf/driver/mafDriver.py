@@ -297,7 +297,7 @@ class MafDriver(object):
                                     for mm in matching_metrics:
                                         summary = gm.computeSummaryStatistics(mm, stat)
                                         if np.size(summary) == 1:
-                                           summary = np.asscalar(summary)
+                                           summary = np.array(np.asscalar(summary))
                                         statstring = self.config.opsimName + ',' + binner.binnerName + ',' + sqlconstraint 
                                         statstring += ','  + mm + ',' + stat.name + ',' + np.array_str(summary)
                                         summary_stats.append(statstring)
@@ -305,7 +305,7 @@ class MafDriver(object):
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, stat)
                                     if np.size(summary) == 1:
-                                       summary = np.asscalar(summary)
+                                       summary = np.array(np.asscalar(summary))
                                     statstring = self.config.opsimName + ',' + binner.binnerName + ',' + sqlconstraint 
                                     statstring += ',' + metric.name + ',' + stat.name + ',' + np.array_str(summary)
                                     summary_stats.append(statstring)
