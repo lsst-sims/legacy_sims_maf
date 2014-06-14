@@ -62,12 +62,11 @@ class TestDriver(unittest.TestCase):
             assert(nout == len(nnpz))
 
             #check that there's something in the summary stats file:
-            names = ['opsimname','binner_name','sql_where','blank', 'metric_name','summary_stat_name','value']
-            types = ['|S25','|S25','|S25','|S25','|S25','|S25', float]
+            names = ['opsimname','binner_name','sql_where', 'metric_name','summary_stat_name','value']
+            types = ['|S25','|S25','|S25','|S25','|S25', float]
             ss = np.genfromtxt('Output/summaryStats.dat', delimiter=',', comments='#', dtype=zip(names,types) )
-            for value,bn in zip(ss['value'],ss['binner_name']):
-                if bn != 'UniBinner':
-                    assert(value > 0.)
+            for value in ss['value']:
+                assert(value > 0.)
 
     def tearDown(self):
         if os.path.isdir('Output'):
