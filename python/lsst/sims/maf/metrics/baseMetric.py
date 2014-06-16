@@ -79,6 +79,8 @@ class BaseMetric(object):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
+        # Declare if the metric needs ra/dec metadata from binner
+        self.needRADec = False
         # Set physical units, mostly for plotting purposes.
         if units is None:
             units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
