@@ -218,7 +218,8 @@ class BaseBinMetric(object):
                     self.metricValues[mname].mask[i] = True
             else:
                if cache:
-                  # make the idxs hashable
+                  # make the idxs hashable.  I'm assuming the idxs is already sorted!
+                  # Tests make it look like this is true for kdtree, but it's not technically documented
                   key = str(idxs)[1:-1].replace(' ','')
                   # If key exists, set flag to use it, otherwise add it
                   if key in cacheDict:
