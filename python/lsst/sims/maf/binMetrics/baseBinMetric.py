@@ -226,9 +226,8 @@ class BaseBinMetric(object):
                   else:
                      cacheDict[key] = i
                      useCache = False
-                  # If the cache is getting too large, pop off the 1st item
-                  if len(cacheDict) > self.binner.cacheSize:
-                     pop = cacheDict.popitem(last=False) #remove 1st item
+                     if i > self.binner.cacheSize:
+                        pop = cacheDict.popitem(last=False) #remove 1st item
                   for mname in self.metricObjs:
                      # If the metric needs binner metadata, need to compute
                      if self.metricObjs[mname].needRADec:
