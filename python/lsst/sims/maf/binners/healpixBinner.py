@@ -19,7 +19,7 @@ import warnings
 
 class HealpixBinner(BaseSpatialBinner):
     """Healpix spatial binner."""
-    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
+    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, useCache=True):
         """Instantiate and set up healpix binner object."""
         super(HealpixBinner, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
@@ -35,9 +35,14 @@ class HealpixBinner(BaseSpatialBinner):
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
             print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
-        # set variables so binner can be re-constructed
+        # Set variables so binner can be re-constructed
         self.binner_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
-        self.bins = None 
+        self.bins = None
+        if useCache:
+            binRes = hp.nside2resol(nside) # Pixel size in radians
+            # Set the cache size to be ~2x the cirumfrance
+            self.cacheSize = int(np.round(4.*np.pi/binRes)) 
+        
         
     def __iter__(self):
         """Iterate over the binner."""

@@ -39,6 +39,7 @@
 
 import os
 import warnings
+from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -200,6 +201,12 @@ class BaseBinMetric(object):
                                                       self.metricObjs[mname].metricDtype),
                                                       mask = np.zeros(len(self.binner), 'bool'),
                                                       fill_value=self.binner.badval)
+        # Set up an ordered dictionary to be the cache if needed:
+        if self.binner.cacheSize > 0:
+           cacheDict = OrderedDict()
+           cache = True
+        else:
+           cache = False
         # Run through all binpoints and calculate metrics 
         #    (slicing the data once per binpoint for all metrics).
         for i, binpoint in enumerate(self.binner):
@@ -210,15 +217,39 @@ class BaseBinMetric(object):
                 for mname in self.metricObjs:
                     self.metricValues[mname].mask[i] = True
             else:
-                for mname in self.metricObjs:
-                    if hasattr(self.metricObjs[mname], 'needRADec'):
-                        if self.metricObjs[mname].needRADec:
-                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
-                                                                                          binpoint[1], binpoint[2])
+               if cache:
+                  # make the idxs hashable
+                  key = str(idxs)[1:-1].replace(' ','')
+                  # If key exists, set flag to use it, otherwise add it
+                  if key in cacheDict:
+                     useCache = True 
+                  else:
+                     cacheDict[key] = i
+                     useCache = False
+                  # If the cache is getting too large, pop off the 1st item
+                  if len(cacheDict) > self.binner.cacheSize:
+                     pop = cacheDict.popitem(last=False) #remove 1st item
+                  for mname in self.metricObjs:
+                     # If the metric needs binner metadata, need to compute
+                     if self.metricObjs[mname].needRADec:
+                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
+                                                                                       binpoint[1], binpoint[2])
+                     else:
+                        if useCache:
+                           self.metricValues[mname].data[i] = self.metricValues[mname].data[cacheDict[key]]
                         else:
-                            self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
-                    else:
+                           self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
+               # Not using memoize, just calculate things normally
+               else:
+                  for mname in self.metricObjs:
+                     # Maybe change this to "need meta data"?
+                     if self.metricObjs[mname].needRADec:
+                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
+                                                                                       binpoint[1], binpoint[2])
+                     else:
                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
+    
+           
         # Mask data where metrics could not be computed (according to metric bad value).
         for mname in self.metricObjs:            
             self.metricValues[mname].mask = np.where(self.metricValues[mname].data==self.metricObjs[mname].badval,

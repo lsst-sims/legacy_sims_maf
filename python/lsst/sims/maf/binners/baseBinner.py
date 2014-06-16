@@ -21,6 +21,7 @@ class BaseBinner(object):
         # Args will include sliceDataCols and other data names that must be fetched from DB
         self.verbose = verbose
         self.badval = badval
+        self.cacheSize = 0 # Should the binMetric cache results to speedup?
         self.nbins = None
         self.bins = None
         self.binnerName = self.__class__.__name__
