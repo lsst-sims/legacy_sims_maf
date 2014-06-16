@@ -1,4 +1,4 @@
-import warnings
+import os, warnings
 from .Table import Table
 
 class Database(object):
@@ -20,7 +20,7 @@ class Database(object):
         More information on sqlalchemy connection strings can be found at
           http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html        
         """
-        self.dbAddress = dbAddress
+        self.dbAddress = dbAddress        
         self.chunksize = chunksize
         # Add default values to provided input dictionaries (if not present in input dictionaries)
         if dbTables == None:
@@ -32,6 +32,11 @@ class Database(object):
                 defaultdbTables.update(self.dbTables)
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
+        # Test file exists if connecting to sqlite db.
+        if self.dbAddress.startswith('sqlite:///'):
+            filename = self.dbAddress.replace('sqlite:///', '')
+            if not os.path.isfile(filename):
+                raise IOError('Sqlite database file "%s" not found.' %(filename))
         if self.dbTables is None:
             self.tables = None
         else:

@@ -4,7 +4,8 @@ import os, sys
 import numpy as np
 
 def connectOpsimDb(dbAddressDict):
-    """Convenience function to handle connecting to database
+    """
+    Convenience function to handle connecting to database.
     (because needs to be called both from driver and from config file, with same dbAddress dictionary).
     """
     import lsst.sims.maf.db as db
