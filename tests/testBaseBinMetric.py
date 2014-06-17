@@ -400,13 +400,13 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         self.testbbm.setBinner(self.binner)
         self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m2.name, savefig=False)
-        fig = plt.figure(fignums['hist'])
+        fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()
         # Check x and y limits (x lims set from bins)
         xlims = plt.xlim()
         np.testing.assert_almost_equal(xlims, (bins.min(), bins.max()))
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
-        fig = plt.figure(fignums['hist'])
+        fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()
         # Check x and y limits set from plot params.
         xlims = plt.xlim()
@@ -427,7 +427,7 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
         # Test histogram.
-        fig = plt.figure(fignums['hist'])
+        fig = plt.figure(fignums['Histogram'])
         ax = plt.gca()
         # Check x limits.
         xlims = plt.xlim()
@@ -438,7 +438,7 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         # Check title.
         self.assertEqual(ax.get_title(), self.plotParams['title'])
         # Test sky map.
-        fig = plt.figure(fignums['sky'])
+        fig = plt.figure(fignums['SkyMap'])
         ax = plt.gca()
         # Not sure how to check clims of color bar.
         # Check title.

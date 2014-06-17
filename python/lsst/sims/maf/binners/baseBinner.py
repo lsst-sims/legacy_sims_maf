@@ -133,9 +133,9 @@ class BaseBinner(object):
             return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         # Otherwise, plot.
         for p in self.plotFuncs:
-            self.plotFuncs[p](metricValues, **kwargs)
+            plottype = p.replace('plot', '')
+            figs[plottype] = self.plotFuncs[p](metricValues, **kwargs)
             if savefig:
-                plottype = p.replace('plot', '')
                 outfile = filename + '_' + plottype + '.' + figformat
                 plt.savefig(outfile, figformat=figformat)
                 filenames.append(outfile)
