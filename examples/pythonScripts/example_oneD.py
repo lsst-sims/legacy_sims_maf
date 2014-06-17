@@ -5,9 +5,9 @@ import sys, os, argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
-import lsst.sims.maf.binners as binners
+import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 import glob
 
 import time
@@ -29,31 +29,31 @@ def getMetrics():
     print 'Set up metrics %f s' %(dt)
     return metricList
 
-def getBinner(simdata, metricList, bins=100):
+def getSlicer(simdata, metricList, bins=100):
     t = time.time()
-    binnerList = []
+    slicerList = []
     for m in metricList:
-        bb = binners.OneDBinner(sliceDataColName=m.colname)
-        bb.setupBinner(simdata, bins=bins)
-        binnerList.append(bb)
+        bb = slicers.OneDSlicer(sliceDataColName=m.colname)
+        bb.setupSlicer(simdata, bins=bins)
+        slicerList.append(bb)
     dt, t = dtime(t)
-    print 'Set up binners %f s' %(dt)
-    return binnerList
+    print 'Set up slicers %f s' %(dt)
+    return slicerList
 
 
-def goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList):
+def goBinPlotWrite(opsimrun, metadata, simdata, slicerList, metricList):
     t = time.time()
-    for bb, mm in zip(binnerList, metricList):
-        gm = binMetrics.BaseBinMetric()
-        gm.setBinner(bb)
+    for bb, mm in zip(slicerList, metricList):
+        gm = sliceMetrics.BaseSliceMetric()
+        gm.setSlicer(bb)
         gm.setMetrics(mm)
-        gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
+        gm.runSlices(simdata, simDataName=opsimrun, metadata=metadata)
         mean = gm.computeSummaryStatistics(mm.name, metrics.SumMetric(''))
         print 'SummaryNumber (sum) for', mm.name, ':', mean
         gm.plotAll(savefig=True, closefig=True)
         gm.writeAll()
         dt, t = dtime(t)
-        print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len([mm,]), dt)
+        print 'Ran bins of %d points with %d metrics using sliceMetric %f s' %(len(bb), len([mm,]), dt)
 
 
 if __name__ == '__main__':
@@ -83,9 +83,9 @@ if __name__ == '__main__':
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)
     
-    # And set up binner.
-    binnerList = getBinner(simdata, metricList)
+    # And set up slicer.
+    slicerList = getSlicer(simdata, metricList)
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','')
-    gm = goBinPlotWrite(opsimrun, metadata, simdata, binnerList, metricList)
+    gm = goBinPlotWrite(opsimrun, metadata, simdata, slicerList, metricList)

@@ -1,13 +1,13 @@
 ## EXAMPLE
-# example of interacting directly with the python classes, for a healpix binner.
+# example of interacting directly with the python classes, for a healpix slicer.
 
 import sys, os, argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
-import lsst.sims.maf.binners as binners
+import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 import glob
 
 
@@ -42,27 +42,27 @@ def getMetrics(docomplex=False):
     print 'Set up metrics %f s' %(dt)
     return metricList
 
-def getBinner(simdata, racol, deccol, nside=128):
+def getSlicer(simdata, racol, deccol, nside=128):
     t = time.time()
-    bb = binners.HealpixBinner(nside=nside, spatialkey1=racol, spatialkey2=deccol)    
-    bb.setupBinner(simdata)
+    bb = slicers.HealpixSlicer(nside=nside, spatialkey1=racol, spatialkey2=deccol)    
+    bb.setupSlicer(simdata)
     dt, t = dtime(t)
-    print 'Set up binner and built kdtree %f s' %(dt)
+    print 'Set up slicer and built kdtree %f s' %(dt)
     return bb
 
 
 def goBin(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
-    gm = binMetrics.BaseBinMetric()
-    gm.setBinner(bb)
+    gm = sliceMetrics.BaseSliceMetric()
+    gm.setSlicer(bb)
     
     dt, t = dtime(t)
     print 'Set up gridMetric %f s' %(dt)
 
     gm.setMetrics(metricList)
-    gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
+    gm.runSlices(simdata, simDataName=opsimrun, metadata=metadata)
     dt, t = dtime(t)
-    print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
+    print 'Ran bins of %d points with %d metrics using sliceMetric %f s' %(len(bb), len(metricList), dt)
                     
     gm.reduceAll()
     
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)
     
-    # And set up binner.
+    # And set up slicer.
     if args.dither:
         racol = 'hexdithra'
         deccol = 'hexdithdec'
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         racol = 'fieldRA'
         deccol = 'fieldDec'
 
-    bb = getBinner(simdata, racol, deccol, args.nside)
+    bb = getSlicer(simdata, racol, deccol, args.nside)
     
     # Okay, go calculate the metrics.
     comment = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
