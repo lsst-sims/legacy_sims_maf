@@ -2,8 +2,8 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import unittest
-from lsst.sims.maf.binners.opsimFieldBinner import OpsimFieldBinner
-from lsst.sims.maf.binners.uniBinner import UniBinner
+from lsst.sims.maf.slicers.opsimFieldSlicer import OpsimFieldSlicer
+from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 
 
 def makeFieldData():
@@ -38,67 +38,67 @@ def makeDataValues(fieldData, size=10000, min=0., max=1., random=True):
     return simData
 
 
-class TestOpsimFieldBinnerSetup(unittest.TestCase):
+class TestOpsimFieldSlicerSetup(unittest.TestCase):
     def setUp(self):
-        self.testbinner = OpsimFieldBinner()
+        self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
         
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
         
-    def testBinnertype(self):
-        """Test instantiation of binner sets binner type as expected."""
-        self.assertEqual(self.testbinner.binnerName, self.testbinner.__class__.__name__)
-        self.assertEqual(self.testbinner.binnerName, 'OpsimFieldBinner')
+    def testSlicertype(self):
+        """Test instantiation of slicer sets slicer type as expected."""
+        self.assertEqual(self.testslicer.slicerName, self.testslicer.__class__.__name__)
+        self.assertEqual(self.testslicer.slicerName, 'OpsimFieldSlicer')
 
-    def testBinnerNbins(self):
+    def testSlicerNbins(self):
         """Test that generate expected number of bins for a given set of fields."""
-        self.assertEqual(self.testbinner.nbins, None)
-        self.testbinner.setupBinner(self.simData, self.fieldData)
-        self.assertEqual(self.testbinner.nbins, len(self.fieldData['fieldID']))
+        self.assertEqual(self.testslicer.nbins, None)
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
+        self.assertEqual(self.testslicer.nbins, len(self.fieldData['fieldID']))
 
 
-class TestOpsimFieldBinnerEqual(unittest.TestCase):
+class TestOpsimFieldSlicerEqual(unittest.TestCase):
     def setUp(self):
-        self.testbinner = OpsimFieldBinner()
+        self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
-        self.testbinner.setupBinner(self.simData, self.fieldData)
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
         
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
 
-    def testBinnerEquivalence(self):
-        """Test that binners are marked equal when appropriate, and unequal when appropriate."""
-        # Note that opsimfield binners are considered 'equal' when all fieldID's, RA and Decs match. 
-        testbinner2 = OpsimFieldBinner()
+    def testSlicerEquivalence(self):
+        """Test that slicers are marked equal when appropriate, and unequal when appropriate."""
+        # Note that opsimfield slicers are considered 'equal' when all fieldID's, RA and Decs match. 
+        testslicer2 = OpsimFieldSlicer()
         fieldData2 = np.copy(self.fieldData)
-        testbinner2.setupBinner(self.simData, fieldData2)
-        self.assertEqual(self.testbinner, testbinner2)
+        testslicer2.setupSlicer(self.simData, fieldData2)
+        self.assertEqual(self.testslicer, testslicer2)
         fieldData2['fieldID'] = fieldData2['fieldID'] + 1
-        testbinner2.setupBinner(self.simData, fieldData2)
-        self.assertNotEqual(self.testbinner, testbinner2)
-        testbinner2 = UniBinner()
-        self.assertNotEqual(self.testbinner, testbinner2)
+        testslicer2.setupSlicer(self.simData, fieldData2)
+        self.assertNotEqual(self.testslicer, testslicer2)
+        testslicer2 = UniSlicer()
+        self.assertNotEqual(self.testslicer, testslicer2)
         
-class TestOpsimFieldBinnerIteration(unittest.TestCase):
+class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
-        self.testbinner = OpsimFieldBinner()
+        self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)        
-        self.testbinner.setupBinner(self.simData, self.fieldData)
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
         
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
 
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         for fid, ra, dec, b in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
-                                  self.fieldData['fieldDec'], self.testbinner):
+                                  self.fieldData['fieldDec'], self.testslicer):
             self.assertEqual(fid, b[0])
             self.assertEqual(ra, b[1])
             self.assertEqual(dec, b[2])
@@ -109,79 +109,79 @@ class TestOpsimFieldBinnerIteration(unittest.TestCase):
 
     def testGetItem(self):
         """Test getting indexed value."""
-        for i, b in enumerate(self.testbinner):
-            self.assertEqual(self.testbinner[i], b)
+        for i, b in enumerate(self.testslicer):
+            self.assertEqual(self.testslicer[i], b)
         n = 0
-        self.assertEqual(self.testbinner[n], (self.fieldData['fieldID'][n],
+        self.assertEqual(self.testslicer[n], (self.fieldData['fieldID'][n],
                                               self.fieldData['fieldRA'][n],
                                               self.fieldData['fieldDec'][n]))
-        n = len(self.testbinner) - 1
-        self.assertEqual(self.testbinner[n], (self.fieldData['fieldID'][n],
+        n = len(self.testslicer) - 1
+        self.assertEqual(self.testslicer[n], (self.fieldData['fieldID'][n],
                                               self.fieldData['fieldRA'][n],
                                               self.fieldData['fieldDec'][n]))
             
-class TestOpsimFieldBinnerSlicing(unittest.TestCase):
-    # Note that this is really testing baseSpatialBinner, as slicing is done there for healpix grid
+class TestOpsimFieldSlicerSlicing(unittest.TestCase):
+    # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
     def setUp(self):
-        self.testbinner = OpsimFieldBinner()
+        self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)        
 
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
     
     def testSlicing(self):
         """Test slicing returns (all) data points which match fieldID values."""
-        # Test that slicing fails before setupBinner
-        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
-        # Set up binner.
-        self.testbinner.setupBinner(self.simData, self.fieldData)
-        for b in self.testbinner:
+        # Test that slicing fails before setupSlicer
+        self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
+        # Set up slicer.
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
+        for b in self.testslicer:
             didxs = np.where(self.simData['fieldID'] == b[0])
-            binidxs = self.testbinner.sliceSimData(b)
+            binidxs = self.testslicer.sliceSimData(b)
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
                 didxs = np.sort(didxs[0])
                 binidxs = np.sort(binidxs)
                 np.testing.assert_equal(self.simData['testdata'][didxs], self.simData['testdata'][binidxs])
 
-class TestOpsimFieldBinnerPlotting(unittest.TestCase):
+class TestOpsimFieldSlicerPlotting(unittest.TestCase):
     def setUp(self):
-        self.testbinner = OpsimFieldBinner()
+        self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)        
-        self.testbinner.setupBinner(self.simData, self.fieldData)
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
 
-        self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testbinner), dtype='float'),
-                                         mask = np.zeros(len(self.testbinner), 'bool'),
-                                         fill_value = self.testbinner.badval)
-        for i, b in enumerate(self.testbinner):
-            idxs = self.testbinner.sliceSimData(b)
+        self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testslicer), dtype='float'),
+                                         mask = np.zeros(len(self.testslicer), 'bool'),
+                                         fill_value = self.testslicer.badval)
+        for i, b in enumerate(self.testslicer):
+            idxs = self.testslicer.sliceSimData(b)
             if len(idxs) > 0:
                 self.metricdata.data[i] = np.mean(self.simData['testdata'][idxs])
             else:
                 self.metricdata.mask[i] = True
-        self.metricdata2 = ma.MaskedArray(data = np.random.rand(len(self.testbinner)),
-                                          mask = np.zeros(len(self.testbinner), 'bool'),
-                                          fill_value = self.testbinner.badval)
+        self.metricdata2 = ma.MaskedArray(data = np.random.rand(len(self.testslicer)),
+                                          mask = np.zeros(len(self.testslicer), 'bool'),
+                                          fill_value = self.testslicer.badval)
 
 
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
 
     def testSkyMap(self):
         """Test plotting the sky map (mean of random data)"""
-        self.testbinner.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
+        self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
                         clims=None, ylog=False, cbarFormat='%.2g')
-        self.testbinner.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
+        self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
                         clims=None, ylog=False, cbarFormat='%.2g')
     
         
     def testHistogram(self):
         """Test plotting the histogram (mean of random data)."""
-        self.testbinner.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
+        self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
                                       ylabel='Area (1000s of square degrees)',
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
@@ -190,7 +190,7 @@ class TestOpsimFieldBinnerPlotting(unittest.TestCase):
         plt.figure()
         plt.hist(self.metricdata.compressed(), bins=100)
         plt.title('Histogram straight from metric data')
-        self.testbinner.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
+        self.testslicer.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
                                       ylabel='Area (1000s of square degrees)',
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
@@ -200,15 +200,15 @@ class TestOpsimFieldBinnerPlotting(unittest.TestCase):
                 
                         
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldBinnerSetup)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerSetup)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldBinnerEqual)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerEqual)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldBinnerIteration)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerIteration)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldBinnerSlicing)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerSlicing)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-    #suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldBinnerPlotting)
+    #suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerPlotting)
     #unittest.TextTestRunner(verbosity=2).run(suite)
     #plt.show()

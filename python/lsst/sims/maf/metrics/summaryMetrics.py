@@ -5,11 +5,11 @@ import healpy as hp
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
     
-class f0Area(BaseMetric):
+class fOArea(BaseMetric):
     def __init__(self, cols, Asky=18000., Nvisit=825, 
-                 metricName='f0Area', nside=128, norm=True, **kwargs):
+                 metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(f0Area, self).__init__(cols,metricName=metricName,**kwargs)
+        super(fOArea, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
@@ -30,11 +30,11 @@ class f0Area(BaseMetric):
             return self.badval
         
 
-class f0Nv(BaseMetric):
-    def __init__(self, cols, Asky=18000., metricName='f0Nv', Nvisit=825, 
+class fONv(BaseMetric):
+    def __init__(self, cols, Asky=18000., metricName='fONv', Nvisit=825, 
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(f0Nv, self).__init__(cols,metricName=metricName,**kwargs)
+        super(fONv, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
@@ -109,7 +109,7 @@ class SSTARTableFractionMetric(SimpleScalarMetric):
 
 
 class IdentityMetric(SimpleScalarMetric):
-    """Return the metric value itself .. this is primarily useful as a summary statistic for UniBinner metrics."""
+    """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
     def run(self, dataSlice):
         return dataSlice[self.colname]
 

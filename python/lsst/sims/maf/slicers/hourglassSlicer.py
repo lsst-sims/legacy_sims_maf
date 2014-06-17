@@ -2,24 +2,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
-from .uniBinner import UniBinner
+from .uniSlicer import UniSlicer
 
-class HourglassBinner(UniBinner):
-    """Binner to make the filter hourglass plots """
+class HourglassSlicer(UniSlicer):
+    """Slicer to make the filter hourglass plots """
 
     def __init__(self, verbose=True):
-        super(HourglassBinner,self).__init__(verbose=verbose)
+        super(HourglassSlicer,self).__init__(verbose=verbose)
         self.nbins=1
         self.columnsNeeded=[]
-        self.binnerName='HourglassBinner'
-        self.binner_init={}
+        self.slicerName='HourglassSlicer'
+        self.slicer_init={}
 
     def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
         filenames=[]
         filetypes=[]
         figs={}
         if not isinstance(metricValues[0], dict):
-            warnings.warn('HourglassBinner did not get dict to plot, returning False')
+            warnings.warn('HourglassSlicer did not get dict to plot, returning False')
             return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         figs['hourglass'] = self.plotHour(metricValues, **kwargs)
         if savefig:

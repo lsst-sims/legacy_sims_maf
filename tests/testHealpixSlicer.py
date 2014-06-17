@@ -4,8 +4,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import unittest
 import healpy as hp
-from lsst.sims.maf.binners.healpixBinner import HealpixBinner
-from lsst.sims.maf.binners.uniBinner import UniBinner
+from lsst.sims.maf.slicers.healpixSlicer import HealpixSlicer
+from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 
 
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
@@ -57,55 +57,55 @@ def calcDist_vincenty(RA1, Dec1, RA2, Dec2):
     D = np.arctan2(D1,D2)
     return D
 
-class TestHealpixBinnerSetup(unittest.TestCase):    
-    def testBinnertype(self):
-        """Test instantiation of binner sets binner type as expected."""
-        testbinner = HealpixBinner(nside=16, verbose=False)
-        self.assertEqual(testbinner.binnerName, testbinner.__class__.__name__)
-        self.assertEqual(testbinner.binnerName, 'HealpixBinner')
+class TestHealpixSlicerSetup(unittest.TestCase):    
+    def testSlicertype(self):
+        """Test instantiation of slicer sets slicer type as expected."""
+        testslicer = HealpixSlicer(nside=16, verbose=False)
+        self.assertEqual(testslicer.slicerName, testslicer.__class__.__name__)
+        self.assertEqual(testslicer.slicerName, 'HealpixSlicer')
 
     def testNsidesNbins(self):
-        """Test that number of sides passed to binner produces expected number of bins."""
+        """Test that number of sides passed to slicer produces expected number of bins."""
         nsides = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
         npixx = [12, 48, 192, 768, 3072, 12288, 49152, 196608, 786432, 3145728]
         for nside, npix in zip(nsides, npixx):
-            testbinner = HealpixBinner(nside=nside, verbose=False)
-            self.assertEqual(testbinner.nbins, npix)
+            testslicer = HealpixSlicer(nside=nside, verbose=False)
+            self.assertEqual(testslicer.nbins, npix)
 
     def testNsidesError(self):
         """Test that if passed an incorrect value for nsides that get expected exception."""
-        self.assertRaises(ValueError, HealpixBinner, nside=3)
+        self.assertRaises(ValueError, HealpixSlicer, nside=3)
 
-class TestHealpixBinnerEqual(unittest.TestCase):
+class TestHealpixSlicerEqual(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testbinner = HealpixBinner(nside=self.nside, verbose=False)
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False)
 
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
 
-    def testBinnerEquivalence(self):
-        """Test that binners are marked equal when appropriate, and unequal when appropriate."""
+    def testSlicerEquivalence(self):
+        """Test that slicers are marked equal when appropriate, and unequal when appropriate."""
         # Note that they are judged equal based on nsides (not on data in ra/dec spatial tree).
-        testbinner2 = HealpixBinner(nside=self.nside, verbose=False)
-        self.assertEqual(self.testbinner, testbinner2)
-        testbinner2 = HealpixBinner(nside=self.nside/2.0, verbose=False)
-        self.assertNotEqual(self.testbinner, testbinner2)
+        testslicer2 = HealpixSlicer(nside=self.nside, verbose=False)
+        self.assertEqual(self.testslicer, testslicer2)
+        testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False)
+        self.assertNotEqual(self.testslicer, testslicer2)
         
-class TestHealpixBinnerIteration(unittest.TestCase):
+class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testbinner = HealpixBinner(nside=self.nside, verbose=False)
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False)
 
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
 
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         npix = hp.nside2npix(self.nside)
-        for i, b in enumerate(self.testbinner):
+        for i, b in enumerate(self.testslicer):
             self.assertEqual(i, b[0])
             ra = b[1]
             dec = b[2]
@@ -119,14 +119,14 @@ class TestHealpixBinnerIteration(unittest.TestCase):
 
     def testGetItem(self):
         """Test getting indexed value."""
-        for i, b in enumerate(self.testbinner):
-            np.testing.assert_equal(self.testbinner[i], b)
+        for i, b in enumerate(self.testslicer):
+            np.testing.assert_equal(self.testslicer[i], b)
 
-class TestHealpixBinnerSlicing(unittest.TestCase):
-    # Note that this is really testing baseSpatialBinner, as slicing is done there for healpix grid
+class TestHealpixSlicerSlicing(unittest.TestCase):
+    # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
     def setUp(self):
         self.nside = 16
-        self.testbinner = HealpixBinner(nside=self.nside, verbose=False,
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
                                         spatialkey1='ra', spatialkey2='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -137,30 +137,30 @@ class TestHealpixBinnerSlicing(unittest.TestCase):
 
 
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
     
     def testSlicing(self):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
-        # Test that slicing fails before setupBinner
-        self.assertRaises(NotImplementedError, self.testbinner.sliceSimData, 0)
-        self.testbinner.setupBinner(self.dv, radius=self.radius)
-        for b in self.testbinner:
+        # Test that slicing fails before setupSlicer
+        self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
+        self.testslicer.setupSlicer(self.dv, radius=self.radius)
+        for b in self.testslicer:
             binra = b[1]
             bindec = b[2]
             distances = calcDist_vincenty(binra, bindec, self.dv['ra'], self.dv['dec'])
             didxs = np.where(distances<=np.radians(self.radius))
-            binidxs = self.testbinner.sliceSimData(b)
+            binidxs = self.testslicer.sliceSimData(b)
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
                 didxs = np.sort(didxs[0])
                 binidxs = np.sort(binidxs)
                 np.testing.assert_equal(self.dv['testdata'][didxs], self.dv['testdata'][binidxs])
 
-class TestHealpixBinnerPlotting(unittest.TestCase):
+class TestHealpixSlicerPlotting(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testbinner = HealpixBinner(nside=self.nside, verbose=False,
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
                                         spatialkey1='ra', spatialkey2='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -168,46 +168,46 @@ class TestHealpixBinnerPlotting(unittest.TestCase):
                                 decmin=-np.pi, decmax=0,
                                 random=True)
         self.radius = 1.8
-        self.testbinner.setupBinner(self.dv, radius=self.radius)
-        self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testbinner), dtype='float'),
-                                         mask = np.zeros(len(self.testbinner), 'bool'),
-                                         fill_value = self.testbinner.badval)
-        for i, b in enumerate(self.testbinner):
-            idxs = self.testbinner.sliceSimData(b)
+        self.testslicer.setupSlicer(self.dv, radius=self.radius)
+        self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testslicer), dtype='float'),
+                                         mask = np.zeros(len(self.testslicer), 'bool'),
+                                         fill_value = self.testslicer.badval)
+        for i, b in enumerate(self.testslicer):
+            idxs = self.testslicer.sliceSimData(b)
             if len(idxs) > 0:
                 self.metricdata.data[i] = np.mean(self.dv['testdata'][idxs])
             else:
                 self.metricdata.mask[i] = True
-        self.metricdata2 = ma.MaskedArray(data = np.random.rand(len(self.testbinner)),
-                                          mask = np.zeros(len(self.testbinner), 'bool'),
-                                          fill_value = self.testbinner.badval)
+        self.metricdata2 = ma.MaskedArray(data = np.random.rand(len(self.testslicer)),
+                                          mask = np.zeros(len(self.testslicer), 'bool'),
+                                          fill_value = self.testslicer.badval)
 
 
     def tearDown(self):
-        del self.testbinner
-        self.testbinner = None
+        del self.testslicer
+        self.testslicer = None
 
     def testSkyMap(self):
         """Test plotting the sky map (mean of random data)"""
-        self.testbinner.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
+        self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
                         clims=None, ylog=False, cbarFormat='%.2g')
-        self.testbinner.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
+        self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
                         clims=None, ylog=False, cbarFormat='%.2g')
     
     def testPowerSpectrum(self):
         """Test plotting the power spectrum (mean of random data)."""
-        self.testbinner.plotPowerSpectrum(self.metricdata, title='Mean of random test data',
+        self.testslicer.plotPowerSpectrum(self.metricdata, title='Mean of random test data',
                                           fignum=None, maxl=500.,
                                           legendLabel=None, addLegend=False, removeDipole=True,
                                           verbose=False)
-        self.testbinner.plotPowerSpectrum(self.metricdata2, title='Random test data',
+        self.testslicer.plotPowerSpectrum(self.metricdata2, title='Random test data',
                                           fignum=None, maxl=500.,
                                           legendLabel=None, addLegend=False, removeDipole=True,
                                           verbose=False)
         
     def testHistogram(self):
         """Test plotting the histogram (mean of random data)."""
-        self.testbinner.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
+        self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
                                       ylabel='Area (1000s of square degrees)',
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
@@ -216,7 +216,7 @@ class TestHealpixBinnerPlotting(unittest.TestCase):
         plt.figure()
         plt.hist(self.metricdata.compressed(), bins=100)
         plt.title('Histogram straight from metric data')
-        self.testbinner.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
+        self.testslicer.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
                                       ylabel='Area (1000s of square degrees)',
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
@@ -226,15 +226,15 @@ class TestHealpixBinnerPlotting(unittest.TestCase):
                 
                         
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixBinnerSetup)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerSetup)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixBinnerEqual)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerEqual)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixBinnerIteration)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerIteration)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixBinnerSlicing)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerSlicing)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-    #suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixBinnerPlotting)
+    #suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerPlotting)
     #unittest.TextTestRunner(verbosity=2).run(suite)
     #plt.show()
