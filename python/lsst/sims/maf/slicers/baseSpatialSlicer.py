@@ -28,7 +28,8 @@ from .baseSlicer import BaseSlicer
 
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
-    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', badval=-666):
+    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', 
+                 badval=-666, leafsize=100, radius=1.8):
         """Instantiate the base spatial slicer object."""
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
@@ -36,8 +37,10 @@ class BaseSpatialSlicer(BaseSlicer):
         self.columnsNeeded = [spatialkey1, spatialkey2]
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
         self.bins=np.array([0.])
+        self.radius = radius
+        self.leafsize=leafsize
 
-    def setupSlicer(self, simData, leafsize=100, radius=1.8):
+    def setupSlicer(self, simData):
         """Use simData['spatialkey1'] and simData['spatialkey2']
         (in radians) to set up KDTree.
 
@@ -46,14 +49,13 @@ class BaseSpatialSlicer(BaseSlicer):
         'radius' (in degrees) is distance at which matches between
         the simData KDtree 
         and binpoint RA/Dec values will be produced."""
-        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], leafsize)
-        self._setRad(radius)
-        self.slicer_setup = {'leafsize':leafsize,'radius':radius}
+        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
+        self._setRad(self.radius)
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
             """Return indexes for relevant opsim data at binpoint
             (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            binx, biny, binz = self._treexyz(binpoint[1], binpoint[2])
+            binx, biny, binz = self._treexyz(binpoint[0], binpoint[1])
             # Query against tree.
             indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
             return indices

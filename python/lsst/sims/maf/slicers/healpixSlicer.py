@@ -19,11 +19,12 @@ import warnings
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
-    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, useCache=True):
+    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, 
+                 useCache=True, radius=1.8, leafsize=100):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
-                                            badval=hp.UNSEEN) 
+                                            badval=hp.UNSEEN, radius=radius, leafsize=leafsize) 
         # Valid values of nside are powers of 2. 
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -42,28 +43,33 @@ class HealpixSlicer(BaseSpatialSlicer):
             binRes = hp.nside2resol(nside) # Pixel size in radians
             # Set the cache size to be ~2x the cirumfrance
             self.cacheSize = int(np.round(4.*np.pi/binRes)) 
-        
+        allpix = np.arange(self.nbins)
+        self.ra,self.dec = self._pix2radec(allpix)
         
     def __iter__(self):
         """Iterate over the slicer."""
         self.ipix = 0
         return self
 
+
+    def _resultsDict(self,ipix):
+        """Build a dictionary of metadata and indices to return """
+        metadata = {'ra':self.ra[ipix] , 'dec':self.dec[ipix], 'pix':ipix}
+        idxs = self.sliceSimData( (self.ra[ipix], self.dec[ipix]) )
+        return {'idxs':idxs, 'metadata':metadata}
+                                  
     def next(self):
-        """Return RA/Dec values when iterating over bins."""
+        """ """
         # This returns RA/Dec (in radians) of the binpoints. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        radec = self._pix2radec(self.ipix)
-        idradec = self.ipix, radec[0], radec[1]
+        result = self._resultsDict(self.ipix)
         self.ipix += 1
-        return idradec
+        return result
 
     def __getitem__(self, ipix):
         """Make healpix slicer indexable."""
-        radec = self._pix2radec(ipix)
-        idradec = ipix, radec[0], radec[1]
-        return idradec
+        return self._resultsDict(ipix) 
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
@@ -72,7 +78,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             return (otherSlicer.nside == self.nside)
         else:
             return False
-    
+
     def _pix2radec(self, ipix):
         """Given the pixel number, return the RA/Dec of the pointing, in radians."""
         # Calculate RA/Dec in RADIANS of pixel in this healpix slicer.
@@ -84,7 +90,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Flip ra from latitude to RA (increasing eastward rather than westward)
         ra = -lon % (np.pi*2)
         return ra, dec  
-
+    
     def plotSkyMap(self, metricValueIn, units=None, title='',
                    ylog=False, cbarFormat='%.2g', cmap=cm.jet,
                    percentileClip=None, plotMin=None, plotMax=None,

@@ -126,14 +126,16 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
     def setUp(self):
         self.nside = 16
+        self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec')
+                                        spatialkey1='ra', spatialkey2='dec',
+                                        radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
                                 decmin=-np.pi, decmax=0,
                                 random=True)
-        self.radius = 1.8
+        
 
 
     def tearDown(self):
@@ -144,13 +146,13 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
         # Test that slicing fails before setupSlicer
         self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
-        self.testslicer.setupSlicer(self.dv, radius=self.radius)
+        self.testslicer.setupSlicer(self.dv)
         for b in self.testslicer:
-            binra = b[1]
-            bindec = b[2]
+            binra = b['metadata']['ra']
+            bindec = b['metadata']['dec']
             distances = calcDist_vincenty(binra, bindec, self.dv['ra'], self.dv['dec'])
             didxs = np.where(distances<=np.radians(self.radius))
-            binidxs = self.testslicer.sliceSimData(b)
+            binidxs = b['idxs'] 
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
                 didxs = np.sort(didxs[0])
