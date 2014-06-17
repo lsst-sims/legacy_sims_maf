@@ -383,6 +383,4 @@ class BaseBinMetric(object):
            # filetype = 'Histogram' or 'SkyMap', etc. -- add 'Plot' for output file key.
            filetype += 'Plot'
            self._addOutputFiles(metricName, filetype, filename)
-           return plotResults['figs']
-        else:
-            return None
+        return plotResults['figs']
