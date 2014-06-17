@@ -11,7 +11,8 @@ root.outputDir = './Allbinners'
 root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}#, 'OutputTable':'output'}
 root.opsimName = 'example'
 
-
+root.verbose = True
+root.getConfig = False
 # Setup a list to hold all the binners we want to run
 binList=[]
 
