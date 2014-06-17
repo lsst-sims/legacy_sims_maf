@@ -1,26 +1,26 @@
-# oneDBinner - slices based on values in one data column in simData.
+# oneDSlicer - slices based on values in one data column in simData.
 
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
 import warnings
 from lsst.sims.maf.utils import optimalBins
-from .baseBinner import BaseBinner
+from .baseSlicer import BaseSlicer
 
 
-class OneDBinner(BaseBinner):
-    """oneD Binner."""
+class OneDSlicer(BaseSlicer):
+    """oneD Slicer."""
     def __init__(self, sliceDataColName=None, verbose=True, badval=-666):
         """Instantiate. """
-        super(OneDBinner, self).__init__(verbose=verbose, badval=badval)
+        super(OneDSlicer, self).__init__(verbose=verbose, badval=badval)
         self.bins = None
         self.nbins = None
         self.sliceDataColName = sliceDataColName
         self.columnsNeeded = [sliceDataColName]
-        self.binner_init = {'sliceDataColName':self.sliceDataColName}
+        self.slicer_init = {'sliceDataColName':self.sliceDataColName}
         
-    def setupBinner(self, simData, bins=None, binMin=None, binMax=None, binsize=None): 
-        """Set up bins in binner.        
+    def setupSlicer(self, simData, bins=None, binMin=None, binMax=None, binsize=None): 
+        """Set up bins in slicer.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol or a single integer value
           (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
@@ -32,7 +32,7 @@ class OneDBinner(BaseBinner):
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
           """
         if self.sliceDataColName is None:
-            raise Exception('sliceDataColName was not defined when binner instantiated.')
+            raise Exception('sliceDataColName was not defined when slicer instantiated.')
         sliceDataCol = simData[self.sliceDataColName]
         # Set bin min/max values.
         if binMin is None:
@@ -91,10 +91,10 @@ class OneDBinner(BaseBinner):
         binlo = self.bins[ipix]
         return binlo
     
-    def __eq__(self, otherBinner):
-        """Evaluate if binners are equivalent."""
-        if isinstance(otherBinner, OneDBinner):
-            return np.all(otherBinner.bins == self.bins)
+    def __eq__(self, otherSlicer):
+        """Evaluate if slicers are equivalent."""
+        if isinstance(otherSlicer, OneDSlicer):
+            return np.all(otherSlicer.bins == self.bins)
         else:
             return False
 

@@ -1,7 +1,7 @@
-# The base class for all spatial binners.
-# Binners are 'data slicers' at heart; spatial binners slice data by RA/Dec and 
+# The base class for all spatial slicers.
+# Slicers are 'data slicers' at heart; spatial slicers slice data by RA/Dec and 
 #  return the relevant indices in the simData to the metric. 
-# The primary things added here are the methods to slice the data (for any spatial binner)
+# The primary things added here are the methods to slice the data (for any spatial slicer)
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes. 
 
 import numpy as np
@@ -24,20 +24,20 @@ except:
     # But older scipy may not have cKDTree.
     from scipy.spatial import KDTree as kdtree
 
-from .baseBinner import BaseBinner
+from .baseSlicer import BaseSlicer
 
-class BaseSpatialBinner(BaseBinner):
-    """Base binner object, with added slicing functions for spatial binner."""
+class BaseSpatialSlicer(BaseSlicer):
+    """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', badval=-666):
-        """Instantiate the base spatial binner object."""
-        super(BaseSpatialBinner, self).__init__(verbose=verbose, badval=badval)
+        """Instantiate the base spatial slicer object."""
+        super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1, spatialkey2]
-        self.binner_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
+        self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
         self.bins=np.array([0.])
 
-    def setupBinner(self, simData, leafsize=100, radius=1.8):
+    def setupSlicer(self, simData, leafsize=100, radius=1.8):
         """Use simData['spatialkey1'] and simData['spatialkey2']
         (in radians) to set up KDTree.
 
@@ -48,7 +48,7 @@ class BaseSpatialBinner(BaseBinner):
         and binpoint RA/Dec values will be produced."""
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], leafsize)
         self._setRad(radius)
-        self.binner_setup = {'leafsize':leafsize,'radius':radius}
+        self.slicer_setup = {'leafsize':leafsize,'radius':radius}
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
             """Return indexes for relevant opsim data at binpoint
@@ -97,7 +97,7 @@ class BaseSpatialBinner(BaseBinner):
         return indices
 
         
-    ## Plot histogram (base spatial binner method).
+    ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
@@ -170,7 +170,7 @@ class BaseSpatialBinner(BaseBinner):
             return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allBinner.Cfg.py
+        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
         if plt.axis()[2] == max(n):
             plt.ylim([n.min(),n.max()]) 
         if xlabel != None:
@@ -188,8 +188,8 @@ class BaseSpatialBinner(BaseBinner):
         # Return figure number (so we can reuse this if desired).         
         return fig.number
             
-    ### Generate sky map (base spatial binner methods, using ellipses for each RA/Dec value)
-    ### a healpix binner will not have self.ra / self.dec functions, but plotSkyMap is overriden.
+    ### Generate sky map (base spatial slicer methods, using ellipses for each RA/Dec value)
+    ### a healpix slicer will not have self.ra / self.dec functions, but plotSkyMap is overriden.
     
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix

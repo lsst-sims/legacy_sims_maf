@@ -1,4 +1,4 @@
-# nd Binner slices data on N columns in simData
+# nd Slicer slices data on N columns in simData
 
 import numpy as np
 import numpy.ma as ma
@@ -7,14 +7,14 @@ from matplotlib import colors
 import itertools
 from functools import wraps
 
-from .baseBinner import BaseBinner
+from .baseSlicer import BaseSlicer
 
     
-class NDBinner(BaseBinner):
-    """Nd binner (N dimensions)"""
+class NDSlicer(BaseSlicer):
+    """Nd slicer (N dimensions)"""
     def __init__(self, sliceDataColList=None, verbose=True):  
         """Instantiate object."""
-        super(NDBinner, self).__init__(verbose=verbose)
+        super(NDSlicer, self).__init__(verbose=verbose)
         self.bins = None 
         self.nbins = None
         self.sliceDataColList = sliceDataColList
@@ -23,9 +23,9 @@ class NDBinner(BaseBinner):
             self.nD = len(self.sliceDataColList)
         else:
             self.nD = None
-        self.binner_init={'sliceDataColList':sliceDataColList}
+        self.slicer_init={'sliceDataColList':sliceDataColList}
 
-    def setupBinner(self, simData, binsList=None, nbinsList=100):
+    def setupSlicer(self, simData, binsList=None, nbinsList=100):
         """Set up bins.
 
         binsList can be a list of numpy arrays with the respective binpoints for sliceDataColList,
@@ -33,7 +33,7 @@ class NDBinner(BaseBinner):
         nbinsList can be a list of values (one per column in sliceDataColList) or a single value
             (repeated for all columns, default=100). """
         # For save-file
-        self.binner_setup={'binsList':binsList, 'nbinsList':nbinsList}
+        self.slicer_setup={'binsList':binsList, 'nbinsList':nbinsList}
         # Parse input bins choices.
         if binsList != None:
             if len(binsList) != self.nD:
@@ -55,7 +55,7 @@ class NDBinner(BaseBinner):
                 bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize/2.0,
                                  binsize, 'float')
                 self.bins.append(bins)
-        # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDBinner).
+        # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDSlicer).
         self.nbins = (np.array(map(len, self.bins))-1).prod()
         # Set up data slicing.
         self.simIdxs = []
@@ -69,7 +69,7 @@ class NDBinner(BaseBinner):
             # Add these calculated values into the class lists of simIdxs and lefts.
             self.simIdxs.append(simIdxs)
             self.lefts.append(left)
-        # Build slicing method for ND binner.
+        # Build slicing method for ND slicer.
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
             """Slice simData to return relevant indexes for binpoint."""
@@ -112,13 +112,13 @@ class NDBinner(BaseBinner):
             binlo = b
         return binlo
     
-    def __eq__(self, otherBinner):
+    def __eq__(self, otherSlicer):
         """Evaluate if grids are equivalent."""
-        if isinstance(otherBinner, NDBinner):
-            if otherBinner.nD != self.nD:
+        if isinstance(otherSlicer, NDSlicer):
+            if otherSlicer.nD != self.nD:
                 return False
             for i in range(self.nD):
-                if np.all(otherBinner.bins[i] != self.bins[i]):
+                if np.all(otherSlicer.bins[i] != self.bins[i]):
                     return False                
             return True
         else:
@@ -131,7 +131,7 @@ class NDBinner(BaseBinner):
         """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
         binpoints [sums over non-visible axes]. 
 
-        metricValues = the metric data (as calculated when iterating through binner)
+        metricValues = the metric data (as calculated when iterating through slicer)
         xaxis, yaxis = the x and y dimensions to plot (i.e. 0/1 would plot binsList[0] and
             binsList[1] data values, with other axis )
         title = title for the plot (default None)

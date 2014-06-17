@@ -1,36 +1,36 @@
-# The binMetric class is used for running/generating metric output,
+# The sliceMetric class is used for running/generating metric output,
 #  and can also be used for generating comparisons or summary statistics on 
 #  already calculated metric outputs.
-# In either case, there is only one binner per binMetric, 
+# In either case, there is only one slicer per sliceMetric, 
 #   although there may be many metrics.
 # 
-# An important aspect of the binMetric is handling the metadata about each metric.
+# An important aspect of the sliceMetric is handling the metadata about each metric.
 #  This includes the opsim run name, the sql constraint on the query that pulled the
-#  input data (e.g. 'r band', 'X<1.2', 'WFD prop'), and the binner type that the 
+#  input data (e.g. 'r band', 'X<1.2', 'WFD prop'), and the slicer type that the 
 #  metric was run on. The metadata is important for
 #  understanding what the metric means, and should be presented in plots & saved in the
 #  output files. 
 #
-# Instantiate the binMetric object and set the binner and (potentially) metrics.
-# Only one binner per baseBinMetric!
-# Then, the actual metric data can enter the binMetric through either running metrics on simData,
+# Instantiate the sliceMetric object and set the slicer and (potentially) metrics.
+# Only one slicer per baseSlicemetric!
+# Then, the actual metric data can enter the sliceMetric through either running metrics on simData,
 #  or reading metric values from files.
 #
-#  'runBins' - generates metric data by running metrics over binpoints in binner.
+#  'runSlices' - generates metric data by running metrics over binpoints in slicer.
 #      pass list of metrics, simData, and metadata for the metric run;
-#      validates that simData has needed cols, then runs metrics over the binpoints in the binner. 
+#      validates that simData has needed cols, then runs metrics over the binpoints in the slicer. 
 #      Stores the results in a dictionary keyed by the metric names.
 #
 # 'readMetric' will read metric data from files. In this case, the metadata 
 #   may not be the same for all metrics (e.g. comparing two different opsim runs). 
-# To get multiple metric data into the binMetric, in this case run 'readMetric' 
+# To get multiple metric data into the sliceMetric, in this case run 'readMetric' 
 #   multiple times (once for each metric data file) -- the metrics will be added
 #   to an internal list, along with their metadata. 
-#   Note that all metrics must use the same binner. 
+#   Note that all metrics must use the same slicer. 
 #
-# A mixture of readMetric & runBins can also be used to populate the data in the binMetric.
+# A mixture of readMetric & runSlices can also be used to populate the data in the sliceMetric.
 #
-# runBins applies to multiple metrics at once; most other methods apply to one metric 
+# runSlices applies to multiple metrics at once; most other methods apply to one metric 
 #  at a time but a convenience method to run over all metrics is provided (i.e. reduceAll)
 #
 # Metric data values, as well as metadata for each metric, are stored in
@@ -44,7 +44,7 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import lsst.sims.maf.binners as binners
+import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.utils.outputUtils as outputUtils
 
@@ -53,9 +53,9 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-class BaseBinMetric(object):
+class BaseSliceMetric(object):
     def __init__(self, figformat='png'):
-        """Instantiate binMetric object and set up (empty) dictionaries."""
+        """Instantiate sliceMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
         self.metricNames = []
@@ -65,7 +65,7 @@ class BaseBinMetric(object):
         self.simDataName = {}
         self.sqlconstraint = {}
         self.metadata = {}
-        self.binner = None
+        self.slicer = None
         self.outputFiles = {}
 
     def _buildOutfileName(self, metricName,
@@ -92,9 +92,9 @@ class BaseBinMetric(object):
         if metricName in self.metadata:
             if len(self.metadata[metricName]) > 0:        
                 oname = oname + '_' + self.metadata[metricName]
-        # Add letter to distinguish binner types
+        # Add letter to distinguish slicer types
         #   (which otherwise might have the same output name).
-        oname = oname + '_' + self.binner.binnerName[:4].upper()
+        oname = oname + '_' + self.slicer.slicerName[:4].upper()
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
@@ -107,14 +107,14 @@ class BaseBinMetric(object):
         with output filenames (plus plots) and summary metrics.
 
         Expected keys for each metricName dictionary are:
-        metricName (de-duped), binnerName, sqlconstraint, metadata, simDataName,
+        metricName (de-duped), slicerName, sqlconstraint, metadata, simDataName,
         dataFile (for metric data), histFile, skyFile, psFile, (other plots),
         summary metric - metricName / summaryValue  [can be repeated]
         """
         if metricName not in self.outputFiles:
             self.outputFiles[metricName] = {}
             self.outputFiles[metricName]['metricName'] = self._dupeMetricName(metricName)
-            self.outputFiles[metricName]['binnerName'] = self.binner.binnerName
+            self.outputFiles[metricName]['slicerName'] = self.slicer.slicerName
             self.outputFiles[metricName]['simDataName'] = self.simDataName[metricName]
             self.outputFiles[metricName]['sqlconstraint'] = self.sqlconstraint[metricName]
             self.outputFiles[metricName]['metadata'] = self.metadata[metricName]
@@ -146,19 +146,19 @@ class BaseBinMetric(object):
         else:
             return metricName
 
-    def setBinner(self, binner, override=False):
-        """Set binner for binMetric.
+    def setSlicer(self, slicer, override=False):
+        """Set slicer for sliceMetric.
 
-        If override = False (default), checks if binner already set, and if the two are equal."""
-        if (self.binner is None) or (override):
-            self.binner = binner
+        If override = False (default), checks if slicer already set, and if the two are equal."""
+        if (self.slicer is None) or (override):
+            self.slicer = slicer
             return True        
-        return (self.binner == binner)            
+        return (self.slicer == slicer)            
 
     def setMetrics(self, metricList):
         """Sets dictionaries for the metric objects and their plotting parameters."""
         # Keeping track of metric data values, plotting parameters, and metadata must
-        # be done without depending on having the metric objects themselves, as the binMetric
+        # be done without depending on having the metric objects themselves, as the sliceMetric
         # may be populated with data by reading values from disk instead of calculating them.
         # All dictionaries are keyed by metric name
         #   (reduced metric data is originalmetricName.reduceFuncName). 
@@ -182,8 +182,8 @@ class BaseBinMetric(object):
                                 metricList[0].classRegistry)
         return True
 
-    def runBins(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):
-        """Run metric generation over binner, for metric objects in self.metricObjs.
+    def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):
+        """Run metric generation over slicer, for metric objects in self.metricObjs.
 
         simData = numpy recarray holding simulated data
         simDataName = identifier for simulated data
@@ -197,20 +197,20 @@ class BaseBinMetric(object):
                 self.metadata[mname] = self.sqlconstraint[mname]
         # Set up (masked) arrays to store metric data. 
         for mname in self.metricObjs:
-            self.metricValues[mname] = ma.MaskedArray(data = np.empty(len(self.binner), 
+            self.metricValues[mname] = ma.MaskedArray(data = np.empty(len(self.slicer), 
                                                       self.metricObjs[mname].metricDtype),
-                                                      mask = np.zeros(len(self.binner), 'bool'),
-                                                      fill_value=self.binner.badval)
+                                                      mask = np.zeros(len(self.slicer), 'bool'),
+                                                      fill_value=self.slicer.badval)
         # Set up an ordered dictionary to be the cache if needed:
-        if self.binner.cacheSize > 0:
+        if self.slicer.cacheSize > 0:
            cacheDict = OrderedDict()
            cache = True
         else:
            cache = False
         # Run through all binpoints and calculate metrics 
         #    (slicing the data once per binpoint for all metrics).
-        for i, binpoint in enumerate(self.binner):
-            idxs = self.binner.sliceSimData(binpoint)
+        for i, binpoint in enumerate(self.slicer):
+            idxs = self.slicer.sliceSimData(binpoint)
             slicedata = simData[idxs]
             if len(slicedata)==0:
                 # No data at this binpoint. Mask data values.
@@ -227,10 +227,10 @@ class BaseBinMetric(object):
                   else:
                      cacheDict[key] = i
                      useCache = False
-                     if i > self.binner.cacheSize:
+                     if i > self.slicer.cacheSize:
                         pop = cacheDict.popitem(last=False) #remove 1st item
                   for mname in self.metricObjs:
-                     # If the metric needs binner metadata, need to compute
+                     # If the metric needs slicer metadata, need to compute
                      if self.metricObjs[mname].needRADec:
                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
                                                                                        binpoint[1], binpoint[2])
@@ -279,11 +279,11 @@ class BaseBinMetric(object):
             rNames.append(metricName + '_' + r.__name__.replace('reduce',''))
         # Set up reduced metric values masked arrays, copying metricName's mask.
         for rName in rNames:
-            self.metricValues[rName] = ma.MaskedArray(data = np.empty(len(self.binner), 'float'),
+            self.metricValues[rName] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                       mask = self.metricValues[metricName].mask,
-                                                      fill_value=self.binner.badval)
+                                                      fill_value=self.slicer.badval)
         # Run through binpoints, applying all reduce functions.
-        for i, b in enumerate(self.binner):
+        for i, b in enumerate(self.slicer):
             if not self.metricValues[metricName].mask[i]:
                 # Get (complex) metric values for this binpoint. 
                 metricValuesPt = self.metricValues[metricName][i]
@@ -301,7 +301,7 @@ class BaseBinMetric(object):
         """Compute single number summary of metric values in metricName, using summaryMetric.
         summaryMetric must be an object (not a class), already instantiated.
          """
-        # To get (clear, non-confusing) result from unibinner, try running this with 'Identity' metric.
+        # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
         # Most of the summary metrics are simpleScalarMetrics: test if this is the case, and if
         #  metricValue is compatible, in order to avoid exceptions.
         if issubclass(summaryMetric.__class__, metrics.SimpleScalarMetric):
@@ -327,7 +327,7 @@ class BaseBinMetric(object):
         """Return list of output file information (which is a list of dictionaries)
         If 'verbose' then prints in somewhat pretty fashion to stdout."""
         if verbose:
-            subkeyorder = ['metricName', 'simDataName', 'binnerName', 'metadata', 'sqlconstraint', 'dataFile']
+            subkeyorder = ['metricName', 'simDataName', 'slicerName', 'metadata', 'sqlconstraint', 'dataFile']
             outputUtils.printSimpleDict(self.outputFiles, subkeyorder)
         return self.outputFiles      
                         
@@ -336,17 +336,17 @@ class BaseBinMetric(object):
         if not hasattr(filenames, '__iter__'):
             filenames = [filenames, ]        
         for f in filenames:
-            basebinner = binners.BaseBinner()
-            metricData, binner, header = basebinner.readData(f)
-            # Check that the binner from this file matches self.binner (ok if self.binner is None)
-            if not(self.setBinner(binner, override=False)):
-                raise Exception('Binner for metric %s does not match existing binner.' 
+            baseslicer = slicers.BaseSlicer()
+            metricData, slicer, header = baseslicer.readData(f)
+            # Check that the slicer from this file matches self.slicer (ok if self.slicer is None)
+            if not(self.setSlicer(slicer, override=False)):
+                raise Exception('Slicer for metric %s does not match existing slicer.' 
                                 % (header['metricName']))
             # Dedupe the metric name, if needed.
             metricName = self._deDupeMetricName(header['metricName'])
             self.metricNames.append(metricName)
             self.metricValues[metricName] = metricData
-            self.metricValues[metricName].fill_value = self.binner.badval
+            self.metricValues[metricName].fill_value = self.slicer.badval
             self.simDataName[metricName] = header['simDataName']
             self.metadata[metricName] = header['metadata']
             self.sqlconstraint[metricName] = header['sqlconstraint']
@@ -373,7 +373,7 @@ class BaseBinMetric(object):
         outDir = directory to write output data (default '.').        
        """
         outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.binner.writeData(outfile+'.npz', self.metricValues[metricName],
+        self.slicer.writeData(outfile+'.npz', self.metricValues[metricName],
                               metricName = self._dupeMetricName(metricName),
                               simDataName = self.simDataName[metricName],
                               sqlconstraint = self.sqlconstraint[metricName],
@@ -406,8 +406,8 @@ class BaseBinMetric(object):
               pParams['units'] += ' ('+ pParams['_units'] + ')'
         if 'xlabel' not in pParams:
            pParams['xlabel'] = pParams['units']
-        # Plot the data. Plotdata for each binner returns a dictionary with the filenames, filetypes, and fig nums.
-        plotResults = self.binner.plotData(self.metricValues[metricName], savefig=savefig,
+        # Plot the data. Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
+        plotResults = self.slicer.plotData(self.metricValues[metricName], savefig=savefig,
                                             filename=outfile, **pParams)
         # Save information about the plotted files into the output file list.
         for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):

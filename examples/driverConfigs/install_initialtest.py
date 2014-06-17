@@ -10,7 +10,7 @@
 
 
 import os
-from lsst.sims.maf.driver.mafConfig import MafConfig, configureBinner, configureMetric, makeDict
+from lsst.sims.maf.driver.mafConfig import MafConfig, configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
 
@@ -26,7 +26,7 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     config.opsimName = runName
 
 
-    binList = []
+    slicerList = []
     nside = 64
 
     filters = ['g','r']
@@ -39,11 +39,11 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
         metricDict = makeDict(m1, m2)
         sqlconstraint = 'filter = "%s"' %(f)
-        binner = configureBinner('HealpixBinner',
+        slicer = configureSlicer('HealpixSlicer',
                                   kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec'},
                                 metricDict=metricDict, constraints=[sqlconstraint,])
-        config.binners=makeDict(binner)
-        binList.append(binner)
+        config.slicers=makeDict(slicer)
+        slicerList.append(slicer)
 
-    config.binners=makeDict(*binList)
+    config.slicers=makeDict(*slicerList)
     return config

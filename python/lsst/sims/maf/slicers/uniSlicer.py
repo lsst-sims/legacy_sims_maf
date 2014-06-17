@@ -1,21 +1,21 @@
-# UniBinner class.
-# This binner simply returns the indexes of all data points. No slicing done at all.
+# UniSlicer class.
+# This slicer simply returns the indexes of all data points. No slicing done at all.
 
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
 
-from .baseBinner import BaseBinner
+from .baseSlicer import BaseSlicer
 
-class UniBinner(BaseBinner):
-    """UniBinner."""
+class UniSlicer(BaseSlicer):
+    """UniSlicer."""
     def __init__(self, verbose=True, **kwargs):
-        """Instantiate unibinner. """
-        super(UniBinner, self).__init__(verbose=verbose, **kwargs)
+        """Instantiate unislicer. """
+        super(UniSlicer, self).__init__(verbose=verbose, **kwargs)
         self.nbins = 1
         self.bins = None
 
-    def setupBinner(self, simData):
+    def setupSlicer(self, simData):
         """Use simData to set indexes to return."""
         simDataCol = simData.dtype.names[0]
         self.indices = np.ones(len(simData[simDataCol]),  dtype='bool')
@@ -32,7 +32,7 @@ class UniBinner(BaseBinner):
         return self
 
     def next(self):
-        """Set the binpoints to return when iterating over binner."""
+        """Set the binpoints to return when iterating over slicer."""
         if self.ipix >= self.nbins:
             raise StopIteration
         ipix = self.ipix
@@ -42,9 +42,9 @@ class UniBinner(BaseBinner):
     def __getitem__(self, ipix):
         return ipix
     
-    def __eq__(self, otherBinner):
-        """Evaluate if binners are equivalent."""
-        if isinstance(otherBinner, UniBinner):
+    def __eq__(self, otherSlicer):
+        """Evaluate if slicers are equivalent."""
+        if isinstance(otherSlicer, UniSlicer):
             return True
         else:
             return False

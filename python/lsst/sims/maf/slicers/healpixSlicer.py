@@ -1,4 +1,4 @@
-# Class for HealpixBinner (healpixel-based spatial binner).
+# Class for HealpixSlicer (healpixel-based spatial slicer).
 # User can select resolution using 'NSIDE'
 # Requires healpy
 # See more documentation on healpy here http://healpy.readthedocs.org/en/latest/tutorial.html
@@ -12,16 +12,16 @@ import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils.percentileClip import percentileClip as pc
 
-from .baseSpatialBinner import BaseSpatialBinner
-from .baseBinner import BaseBinner
+from .baseSpatialSlicer import BaseSpatialSlicer
+from .baseSlicer import BaseSlicer
 import warnings
 
 
-class HealpixBinner(BaseSpatialBinner):
-    """Healpix spatial binner."""
+class HealpixSlicer(BaseSpatialSlicer):
+    """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, useCache=True):
-        """Instantiate and set up healpix binner object."""
-        super(HealpixBinner, self).__init__(verbose=verbose,
+        """Instantiate and set up healpix slicer object."""
+        super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
                                             badval=hp.UNSEEN) 
         # Valid values of nside are powers of 2. 
@@ -34,9 +34,9 @@ class HealpixBinner(BaseSpatialBinner):
         self.nside = int(nside) 
         self.nbins = hp.nside2npix(self.nside)
         if self.verbose:
-            print 'Healpix binner using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
-        # Set variables so binner can be re-constructed
-        self.binner_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
+            print 'Healpix slicer using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
+        # Set variables so slicer can be re-constructed
+        self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
         self.bins = None
         if useCache:
             binRes = hp.nside2resol(nside) # Pixel size in radians
@@ -45,7 +45,7 @@ class HealpixBinner(BaseSpatialBinner):
         
         
     def __iter__(self):
-        """Iterate over the binner."""
+        """Iterate over the slicer."""
         self.ipix = 0
         return self
 
@@ -60,22 +60,22 @@ class HealpixBinner(BaseSpatialBinner):
         return idradec
 
     def __getitem__(self, ipix):
-        """Make healpix binner indexable."""
+        """Make healpix slicer indexable."""
         radec = self._pix2radec(ipix)
         idradec = ipix, radec[0], radec[1]
         return idradec
 
-    def __eq__(self, otherBinner):
-        """Evaluate if two binners are equivalent."""
-        # If the two binners are both healpix binners, check nsides value. 
-        if isinstance(otherBinner, HealpixBinner):
-            return (otherBinner.nside == self.nside)
+    def __eq__(self, otherSlicer):
+        """Evaluate if two slicers are equivalent."""
+        # If the two slicers are both healpix slicers, check nsides value. 
+        if isinstance(otherSlicer, HealpixSlicer):
+            return (otherSlicer.nside == self.nside)
         else:
             return False
     
     def _pix2radec(self, ipix):
         """Given the pixel number, return the RA/Dec of the pointing, in radians."""
-        # Calculate RA/Dec in RADIANS of pixel in this healpix binner.
+        # Calculate RA/Dec in RADIANS of pixel in this healpix slicer.
         # Note that ipix could be an array, 
         # in which case RA/Dec values will be an array also. 
         lat, lon = hp.pix2ang(self.nside, ipix)
@@ -96,7 +96,7 @@ class HealpixBinner(BaseSpatialBinner):
         units = units for metric color-bar label
         title = title for plot
         cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
-        plotMaskedValues = ignored, here to be consistent with OpsimFieldBinner."""
+        plotMaskedValues = ignored, here to be consistent with OpsimFieldSlicer."""
         plottype = 'sky'
         # Generate a Mollweide full-sky plot.
         norm = None
@@ -170,7 +170,7 @@ class HealpixBinner(BaseSpatialBinner):
         # Simply overrides scale and y axis plot label of base plotHistogram. 
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
-        fignum = super(HealpixBinner, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
+        fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
                                                         title=title, fignum=fignum, 
                                                         label=label, 
                                                         addLegend=addLegend, legendloc=legendloc,

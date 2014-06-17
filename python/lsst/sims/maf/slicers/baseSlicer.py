@@ -1,4 +1,4 @@
-# Base class for all 'Binner' objects. 
+# Base class for all 'Slicer' objects. 
 # 
 
 import inspect
@@ -8,15 +8,15 @@ import matplotlib.pyplot as plt
 import warnings
 from lsst.sims.maf.utils import getDateVersion
 
-class BaseBinner(object):
+class BaseSlicer(object):
     """
-    Base class for all binners: sets required methods and implements common functionality.
+    Base class for all slicers: sets required methods and implements common functionality.
     """
     def __init__(self, verbose=True, badval=-666, *args,  **kwargs):
-        """Instantiate the base binner object."""
-        # After init: everything necessary for using binner for plotting or saving/restoring metric
-        #   data should be present (although binner does not need to be able to slice data again).
-        #   Variables in this init need to be set for binner to work as such.
+        """Instantiate the base slicer object."""
+        # After init: everything necessary for using slicer for plotting or saving/restoring metric
+        #   data should be present (although slicer does not need to be able to slice data again).
+        #   Variables in this init need to be set for slicer to work as such.
         # 
         # Args will include sliceDataCols and other data names that must be fetched from DB
         self.verbose = verbose
@@ -24,9 +24,9 @@ class BaseBinner(object):
         self.cacheSize = 0 # Should the binMetric cache results to speedup?
         self.nbins = None
         self.bins = None
-        self.binnerName = self.__class__.__name__
+        self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
-        # Add dictionary of plotting methods for each binner.
+        # Add dictionary of plotting methods for each slicer.
         self.plotFuncs = {}
         for p in inspect.getmembers(self, predicate=inspect.ismethod):
             if p[0].startswith('plot'):
@@ -34,17 +34,17 @@ class BaseBinner(object):
                     pass
                 else:
                     self.plotFuncs[p[0]] = p[1]
-        # Create a dict that saves how to re-init the binner (all args & kwargs for binner 'init' method)
-        # Will generally be overwritten by individual binner binner_init dictionaries.
-        self.binner_init = {}
+        # Create a dict that saves how to re-init the slicer (all args & kwargs for slicer 'init' method)
+        # Will generally be overwritten by individual slicer slicer_init dictionaries.
+        self.slicer_init = {}
         
-    def setupBinner(self, *args, **kwargs):
-        """Set up internal parameters and bins for binner. """
+    def setupSlicer(self, *args, **kwargs):
+        """Set up internal parameters and bins for slicer. """
         # Typically args will be simData + kwargs can be something about the bin sizes
         raise NotImplementedError()
     
     def __len__(self):
-        """Return nbins, the number of bins in the binner. ."""
+        """Return nbins, the number of bins in the slicer. ."""
         return self.nbins
 
     def __iter__(self):
@@ -52,26 +52,26 @@ class BaseBinner(object):
         raise NotImplementedError()
 
     def next(self):
-        """Define the bin values (interval or RA/Dec, etc.) to return when iterating over binner."""
+        """Define the bin values (interval or RA/Dec, etc.) to return when iterating over slicer."""
         raise NotImplementedError()
 
     def __getitem__(self):
-        """Make binner indexable."""
+        """Make slicer indexable."""
         raise NotImplementedError()
     
-    def __eq__(self, otherBinner):
-        """Evaluate if two binners are equivalent."""
+    def __eq__(self, otherSlicer):
+        """Evaluate if two slicers are equivalent."""
         raise NotImplementedError()
 
     def sliceSimData(self, binpoint):
-        """Slice the simulation data appropriately for the binner.
+        """Slice the simulation data appropriately for the slicer.
 
         The slice of data returned will be the indices of the numpy rec array (the simData)
         which are appropriate for the metric to be working on, for that bin."""
-        raise NotImplementedError('This method is set up by "setupBinner" - run that first.')
+        raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='', simDataName ='', sqlconstraint='', metadata=''):
-        """Save a set of metric values along with the information required to re-build the binner."""
+        """Save a set of metric values along with the information required to re-build the slicer."""
         header = {}
         header['metricName']=metricName
         header['sqlconstraint'] = sqlconstraint
@@ -95,13 +95,13 @@ class BaseBinner(object):
                  metricValues = data, # metric data values
                  mask = mask, # metric mask values
                  fill = fill, # metric badval/fill val
-                 binner_init = self.binner_init, # dictionary of instantiation parameters
-                 binnerName = self.binnerName, # class name
-                 binnerBins = self.bins, # bins to match end of 'setupBinner'
-                 binnerNbins = self.nbins)
+                 slicer_init = self.slicer_init, # dictionary of instantiation parameters
+                 slicerName = self.slicerName, # class name
+                 slicerBins = self.bins, # bins to match end of 'setupSlicer'
+                 slicerNbins = self.nbins)
                                  
     def readData(self, infilename):
-        import lsst.sims.maf.binners as binners
+        import lsst.sims.maf.slicers as slicers
         restored = np.load(infilename)
         # Get metric data set
         if restored['mask'][()] is None:
@@ -112,20 +112,20 @@ class BaseBinner(object):
                                           fill_value=restored['fill'])
         # Get Metadata & other simData info
         header = restored['header'][()]  # extra brackets restore dictionary to dictionary status
-        # Get binner set up
-        binner_init = restored['binner_init'][()]
-        binner = getattr(binners, str(restored['binnerName']))(**binner_init)
+        # Get slicer set up
+        slicer_init = restored['slicer_init'][()]
+        slicer = getattr(slicers, str(restored['slicerName']))(**slicer_init)
         # Sometimes bins are a dictionary, sometimes a numpy array, and sometimes None
-        binner.bins = restored['binnerBins'][()]
-        binner.nbins = restored['binnerNbins']
-        return metricValues, binner, header
+        slicer.bins = restored['slicerBins'][()]
+        slicer.nbins = restored['slicerNbins']
+        return metricValues, slicer, header
     
     def plotData(self, metricValues, figformat='png', filename='fig', savefig=True, **kwargs):
         """
         Call all available plotting methods.
         """
         # If passed metric data which is not a simple data type, return without plotting.
-        # (thus - override this method if your binner requires plotting complex 'object' data.
+        # (thus - override this method if your slicer requires plotting complex 'object' data.
         filenames=[]
         filetypes=[]
         figs={}

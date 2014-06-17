@@ -1,8 +1,8 @@
-# Example of f_0 metric and driver.
+# Example of f_O metric and driver.
 # To run:
-# runDriver.py f0Drive.py
+# runDriver.py fODrive.py
 
-from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
 
@@ -24,19 +24,19 @@ else:
             wfdWhere = wfdWhere+'or propID = %s'%propid
         wfdWhere = wfdWhere+')'
 
-root.outputDir = './f0out'
+root.outputDir = './fOout'
 nside=128
 leafsize = 50000 # For KD-tree
 
 m1 = configureMetric('CountMetric', params=['expMJD'], 
-                      kwargs={'metricName':'f0'}, 
+                      kwargs={'metricName':'fO'}, 
                       plotDict={'units':'Number of Visits', 'xMin':0, 
                                 'xMax':1500},
-                      summaryStats={'f0Area':{'nside':nside},
-                                    'f0Nv':{'nside':nside}})
-binner = configureBinner('f0Binner', kwargs={"nside":nside},
+                      summaryStats={'fOArea':{'nside':nside},
+                                    'fONv':{'nside':nside}})
+slicer = configureSlicer('fOSlicer', kwargs={"nside":nside},
                           metricDict=makeDict(m1),
                           setupKwargs={"leafsize":leafsize},
                           constraints=['',wfdWhere])
 
-root.binners = makeDict(binner)
+root.slicers = makeDict(slicer)

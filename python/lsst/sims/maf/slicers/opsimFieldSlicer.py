@@ -1,27 +1,27 @@
-# Class for opsim field based binner.
+# Class for opsim field based slicer.
 
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
    
-from .baseBinner import BaseBinner
-from .baseSpatialBinner import BaseSpatialBinner
+from .baseSlicer import BaseSlicer
+from .baseSpatialSlicer import BaseSpatialSlicer
 
-class OpsimFieldBinner(BaseSpatialBinner):
-    """Index-based binner, matched ID's between simData and fieldData.
+class OpsimFieldSlicer(BaseSpatialSlicer):
+    """Index-based slicer, matched ID's between simData and fieldData.
 
-    Binner uses fieldData RA and Dec values to do sky map plotting, but could be used more
+    Slicer uses fieldData RA and Dec values to do sky map plotting, but could be used more
     generally for any kind of data slicing where the match is based on a simple ID value.
      
-    Note that this binner uses the fieldID of the opsim fields to generate spatial matches,
-    thus this binner is not suitable for use in evaluating dithering or high resolution metrics
-    (use the healpix binner instead for those use-cases). """
+    Note that this slicer uses the fieldID of the opsim fields to generate spatial matches,
+    thus this slicer is not suitable for use in evaluating dithering or high resolution metrics
+    (use the healpix slicer instead for those use-cases). """
     
     def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  badval=-666):
-        """Instantiate opsim field binner (an index-based binner that can do spatial plots).
+        """Instantiate opsim field slicer (an index-based slicer that can do spatial plots).
 
         simDataFieldIdColName = the column name in simData for the field ID
         simDataFieldRaColName = the column name in simData for the field RA 
@@ -30,7 +30,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
-        super(OpsimFieldBinner, self).__init__(verbose=verbose, badval=badval)
+        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
         self.bins = {}
         self.bins['fieldId'] = None
         self.bins['ra'] = None
@@ -43,7 +43,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         self.columnsNeeded = [simDataFieldIdColName, simDataFieldRaColName, simDataFieldDecColName]
         while '' in self.columnsNeeded: self.columnsNeeded.remove('')
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
-        self.binner_init={'simDataFieldIdColName':simDataFieldIdColName,
+        self.slicer_init={'simDataFieldIdColName':simDataFieldIdColName,
                           'simDataFieldRaColName':simDataFieldRaColName,
                           'simDataFieldDecColName':simDataFieldDecColName,
                           'fieldIdColName':fieldIdColName,
@@ -51,8 +51,8 @@ class OpsimFieldBinner(BaseSpatialBinner):
                           'fieldDecColName':fieldDecColName}
         
 
-    def setupBinner(self, simData, fieldData):
-        """Set up opsim field binner object.
+    def setupSlicer(self, simData, fieldData):
+        """Set up opsim field slicer object.
         
         simData = numpy rec array with simulation pointing history,
         fieldData = numpy rec array with the field information (ID, RA, Dec),
@@ -95,12 +95,12 @@ class OpsimFieldBinner(BaseSpatialBinner):
         fieldidradec = self.bins['fieldId'][ipix], self.bins['ra'][ipix], self.bins['dec'][ipix]
         return fieldidradec
     
-    def __eq__(self, otherBinner):
+    def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
-        if isinstance(otherBinner, OpsimFieldBinner):
-            return (np.all(otherBinner.bins['fieldId'] == self.bins['fieldId']) and
-                    np.all(otherBinner.bins['ra'] == self.bins['ra']) and
-                    np.all(otherBinner.bins['dec'] == self.bins['dec']))        
+        if isinstance(otherSlicer, OpsimFieldSlicer):
+            return (np.all(otherSlicer.bins['fieldId'] == self.bins['fieldId']) and
+                    np.all(otherSlicer.bins['ra'] == self.bins['ra']) and
+                    np.all(otherSlicer.bins['dec'] == self.bins['dec']))        
         else:
             return False
 
@@ -122,7 +122,7 @@ class OpsimFieldBinner(BaseSpatialBinner):
         histMin/Max = histogram range (default None, set by matplotlib hist)
         ylog = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        fignum = super(OpsimFieldBinner, self).plotHistogram(metricValue,  xlabel=xlabel,
+        fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
                                                              ylabel=ylabel,
                                                              title=title, fignum=fignum, 
                                                              label=label, 

@@ -1,5 +1,5 @@
 # A MAF config that replicates the SSTAR plots
-from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 
 # Setup Database access
 root.outputDir ='./StarOut_Fields'
@@ -33,7 +33,7 @@ mag_zpoints={'u':26.1,'g':27.4, 'r':27.5, 'i':26.8, 'z':26.1, 'y':24.9}
 sky_zpoints = {'u':21.8, 'g':22., 'r':21.3, 'i':20.0, 'z':19.1, 'y':17.5}
 seeing_norm = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63}
 
-binList=[]
+slicerList=[]
 
 
 # Metrics per filter 
@@ -56,8 +56,8 @@ for f in filters:
     m7 = configureMetric('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
     m8 = configureMetric('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
     metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
-    binner = configureBinner('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\'"%f])
-    binList.append(binner)
+    slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=["filter = \'%s\'"%f])
+    slicerList.append(slicer)
 
 # Metrics per filter, WFD only
 for f in filters:
@@ -77,8 +77,8 @@ for f in filters:
     m7 = configureMetric('MedianMetric', params=['airmass'], plotDict={'_unit':'X'})
     m8 = configureMetric('MaxMetric', params=['airmass'], plotDict={'_unit':'X'})
     metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
-    binner = configureBinner('OpsimFieldBinner', metricDict=metricDict, constraints=["filter = \'%s\' and propID = %d"%(f, WFDpropid)])
-    binList.append(binner)
+    slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=["filter = \'%s\' and propID = %d"%(f, WFDpropid)])
+    slicerList.append(slicer)
 
 
     
@@ -89,63 +89,63 @@ for f in filters:
         constraints=[]
         for propid in propids:
             constraints.append("filter = \'%s\' and propID = %s" %(f,propid))
-        binner = configureBinner('OpsimFieldBinner', metricDict=metricDict, constraints=constraints)
-        binList.append(binner)
+        slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=constraints)
+        slicerList.append(slicer)
                                     
         
 # Slew histograms
 m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
-binList.append(binner)
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
+slicerList.append(slicer)
 
 m1 = configureMetric('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
-binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
-binList.append(binner)
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
+slicerList.append(slicer)
 
 # Filter Hourglass plots
 m1=configureMetric('HourglassMetric')
-binner = configureBinner('HourglassBinner', metricDict=makeDict(m1), constraints=['night < 750',''])
-binList.append(binner)
+slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=['night < 750',''])
+slicerList.append(slicer)
 
 
 # Completeness and Joint Completeness
 m1 = configureMetric('CompletenessMetric', plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)','units':'# visits (WFD only)/ # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{},'ExactCompleteMetric':{}})
 # For just WFD proposals
-binner = configureBinner('OpsimFieldBinner', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
-binList.append(binner)
+slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(m1), metadata='WFD', constraints=["propID = %d" %(WFDpropid)])
+slicerList.append(slicer)
 # For all Observations
 m1 = configureMetric('CompletenessMetric', plotDict={'xlabel':'# visits (all) / (# WFD Requested)','units':'# visits (all) / # WFD','plotMin':.5, 'plotMax':1.5, 'histBins':50}, kwargs={'u':56., 'g':80., 'r':184., 'i':184.,"z":160.,"y":160.}, summaryStats={'TableFractionMetric':{},'ExactCompleteMetric':{}})
-binner = configureBinner('OpsimFieldBinner',metricDict=makeDict(m1),constraints=[""])
-binList.append(binner)
+slicer = configureSlicer('OpsimFieldSlicer',metricDict=makeDict(m1),constraints=[""])
+slicerList.append(slicer)
 
 
 # The merged histograms for basics 
 for f in filters:
     m1 = configureMetric('CountMetric', params=['5sigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'5sigma_ps'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'5sigma_ps'},
                               metricDict=makeDict(m1), constraints=["filter = '%s'and propID = %i"%(f,WFDpropid)]) 
-    binList.append(binner)
+    slicerList.append(slicer)
 
     m1 = configureMetric('CountMetric', params=['perry_skybrightness'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'perry_skybrightness'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'perry_skybrightness'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
-    binList.append(binner)
+    slicerList.append(slicer)
     
     m1 = configureMetric('CountMetric', params=['finSeeing'],
                           histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'finSeeing'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'finSeeing'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
-    binList.append(binner)
+    slicerList.append(slicer)
 
     m1 = configureMetric('CountMetric', params=['airmass'],
                           histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'airmass'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'airmass'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
-    binList.append(binner)
+    slicerList.append(slicer)
 
 
-root.binners=makeDict(*binList)
+root.slicers=makeDict(*slicerList)
 
 
