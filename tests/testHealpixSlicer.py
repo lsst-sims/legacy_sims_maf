@@ -79,10 +79,17 @@ class TestHealpixSlicerSetup(unittest.TestCase):
 class TestHealpixSlicerEqual(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False)
-
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
+        nvalues = 10000
+        self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
+                                ramin=0, ramax=2*np.pi,
+                                decmin=-np.pi, decmax=0,
+                                random=True)
+        self.testslicer.setupSlicer(self.dv)
+        
     def tearDown(self):
         del self.testslicer
+        del self.dv
         self.testslicer = None
 
     def testSlicerEquivalence(self):
@@ -96,7 +103,13 @@ class TestHealpixSlicerEqual(unittest.TestCase):
 class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False)
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
+        nvalues = 10000
+        self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
+                                ramin=0, ramax=2*np.pi,
+                                decmin=-np.pi, decmax=0,
+                                random=True)
+        self.testslicer.setupSlicer(self.dv)
 
     def tearDown(self):
         del self.testslicer
@@ -106,9 +119,9 @@ class TestHealpixSlicerIteration(unittest.TestCase):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         npix = hp.nside2npix(self.nside)
         for i, b in enumerate(self.testslicer):
-            self.assertEqual(i, b[0])
-            ra = b[1]
-            dec = b[2]
+            self.assertEqual(i, b['metadata']['pix'])
+            ra = b['metadata']['ra']
+            dec = b['metadata']['dec']
             self.assertGreaterEqual(ra, 0)
             self.assertLessEqual(ra, 2*np.pi)
             self.assertGreaterEqual(dec, -np.pi)

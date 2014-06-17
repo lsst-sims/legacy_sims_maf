@@ -73,7 +73,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
             """Slice simData on fieldId, to return relevant indexes for binpoint."""
-            i = np.where(binpoint[0] == self.bins['fieldId'])
+            i = np.where(self.bins['fieldId'] == binpoint)
             return self.simIdxs[self.left[i]:self.right[i]]   
         setattr(self, 'sliceSimData', sliceSimData)
         
@@ -82,18 +82,22 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.ipix = 0
         return self
     
+    def _resultsDict(self,ipix):
+        metadata = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 'fieldID': self.bins['fieldId'][ipix]}
+        idxs = self.sliceSimData(self.bins['fieldId'][ipix])
+        return {'idxs':idxs, 'metadata':metadata}
+    
     def next(self):
         """Return RA/Dec values when iterating over binpoints."""
         # This returns RA/Dec (in radians) of points in the grid. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        fieldidradec = self.bins['fieldId'][self.ipix], self.bins['ra'][self.ipix], self.bins['dec'][self.ipix]
+        result = self._resultsDict(self.ipix) #self.bins['fieldId'][self.ipix], self.bins['ra'][self.ipix], self.bins['dec'][self.ipix]
         self.ipix += 1
-        return fieldidradec
+        return result
 
     def __getitem__(self, ipix):
-        fieldidradec = self.bins['fieldId'][ipix], self.bins['ra'][ipix], self.bins['dec'][ipix]
-        return fieldidradec
+        return self._resultsDict(ipix)
     
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
