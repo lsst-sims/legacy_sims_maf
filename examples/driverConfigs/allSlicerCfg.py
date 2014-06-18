@@ -31,7 +31,7 @@ metricDict = makeDict(m1,m2)
 # Generate the slicer configuration, passing in the metric configurations and SQL constraints
 slicer = configureSlicer('HealpixSlicer',
                           kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
-                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints)
+                          metricDict = metricDict,constraints=constraints)
 # Add the slicer to the list of slicers
 slicerList.append(slicer)
 
@@ -39,7 +39,7 @@ slicerList.append(slicer)
 # As before, but new spatialkeys and add a metadata keyword so the previous files don't get overwritten
 slicer = configureSlicer('HealpixSlicer',
                           kwargs={"nside":nside,'spatialkey1':"hexdithra", 'spatialkey2':"hexdithdec"},
-                          metricDict = metricDict,setupKwargs={"leafsize":50000},constraints=constraints, metadata='dith')
+                          metricDict = metricDict,constraints=constraints, metadata='dith')
 # Add this slicer to the list of slicers
 slicerList.append(slicer)
 
@@ -48,7 +48,7 @@ slicerList.append(slicer)
 # Configure a new metric
 m1 = configureMetric('CountMetric', params=['slewDist'])
 metricDict=makeDict(m1)
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'slewDist'},
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewDist'},
                           metricDict=metricDict, constraints=constraints)
 slicerList.append(slicer)
 

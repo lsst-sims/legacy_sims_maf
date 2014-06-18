@@ -10,16 +10,20 @@ from .baseSlicer import BaseSlicer
 
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
-    def __init__(self, sliceDataColName=None, verbose=True, badval=-666):
+    def __init__(self, sliceDim=None, verbose=True, badval=-666, bins=None, binMin=None, binMax=None, binsize=None):
         """Instantiate. """
         super(OneDSlicer, self).__init__(verbose=verbose, badval=badval)
         self.bins = None
         self.nbins = None
-        self.sliceDataColName = sliceDataColName
-        self.columnsNeeded = [sliceDataColName]
-        self.slicer_init = {'sliceDataColName':self.sliceDataColName}
+        self.sliceDim = sliceDim
+        self.columnsNeeded = [sliceDim]
+        self.slicer_init = {'sliceDim':self.sliceDim}
+        self.bins = bins
+        self.binMin = binMin
+        self.binMax = binMax
+        self.binsize = binsize
         
-    def setupSlicer(self, simData, bins=None, binMin=None, binMax=None, binsize=None): 
+    def setupSlicer(self, simData): 
         """Set up bins in slicer.        
 
         'bins' can be a numpy array with the binpoints for sliceDataCol or a single integer value
@@ -31,37 +35,37 @@ class OneDSlicer(BaseSlicer):
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
           """
-        if self.sliceDataColName is None:
-            raise Exception('sliceDataColName was not defined when slicer instantiated.')
-        sliceDataCol = simData[self.sliceDataColName]
+        if self.sliceDim is None:
+            raise Exception('sliceDim was not defined when slicer instantiated.')
+        sliceDataCol = simData[self.sliceDim]
         # Set bin min/max values.
-        if binMin is None:
+        if self.binMin is None:
             binMin = sliceDataCol.min()
-        if binMax is None:
+        if self.binMax is None:
             binMax = sliceDataCol.max()
         # Set bins.
         # Using binsize.
-        if binsize is not None:  
-            if bins is not None:
+        if self.binsize is not None:  
+            if self.bins is not None:
                 warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(binsize))
             self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
-            if hasattr(bins, '__iter__'):  
-                self.bins = np.sort(bins)
+            if hasattr(self.bins, '__iter__'):  
+                self.bins = np.sort(self.bins)
             # Or bins was a single value. 
             else:
-                if bins is None:
-                    bins = optimalBins(sliceDataCol)
-                nbins = int(bins)
+                if self.bins is None:
+                    self.bins = optimalBins(sliceDataCol)
+                nbins = int(self.bins)
                 binsize = (binMax - binMin) / float(nbins)
                 self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nbins = len(self.bins) - 1
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[self.sliceDataColName])
-        simFieldsSorted = np.sort(simData[self.sliceDataColName])
+        self.simIdxs = np.argsort(simData[self.sliceDim])
+        simFieldsSorted = np.sort(simData[self.sliceDim])
         # "left" values are location where simdata == bin value
         self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
@@ -71,24 +75,30 @@ class OneDSlicer(BaseSlicer):
             """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
             # Find the index of this binpoint in the bins array, then use this to identify
             #  the relevant 'left' values, then return values of indexes in original data array
-            i = (np.where(binpoint == self.bins))[0]
-            return self.simIdxs[self.left[i]:self.left[i+1]]
+            #i = np.where(binpoint == self.bins)[0]
+            return self.simIdxs[self.left[binpoint]:self.left[binpoint+1]]
         setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
         self.ipix = 0
         return self
 
+    def _resultsDict(self,ipix):
+        metadata={}
+        idxs = self.sliceSimData(ipix)
+        result = {'idxs':idxs, 'metadata':metadata}
+        return result
+
     def next(self):
         """Return the binvalues for this binpoint."""
         if self.ipix >= self.nbins:
             raise StopIteration
-        binlo = self.bins[self.ipix]
+        binlo = self._resultsDict(self.ipix)#self.bins[self.ipix]
         self.ipix += 1
         return binlo
 
     def __getitem__(self, ipix):
-        binlo = self.bins[ipix]
+        binlo = self._resultsDict(ipix) #self.bins[ipix]
         return binlo
     
     def __eq__(self, otherSlicer):
@@ -140,7 +150,7 @@ class OneDSlicer(BaseSlicer):
             ylabel = 'Count'
         plt.ylabel(ylabel)
         if xlabel is None:
-            xlabel=self.sliceDataColName
+            xlabel=self.sliceDim
             if units != None:
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)

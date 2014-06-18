@@ -23,7 +23,7 @@ class UniSlicer(BaseSlicer):
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
             """Return all indexes in simData. """
-            return self.indices
+            return {'idxs':self.indices}
         setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
@@ -37,10 +37,10 @@ class UniSlicer(BaseSlicer):
             raise StopIteration
         ipix = self.ipix
         self.ipix += 1
-        return ipix
+        return {'idxs':self.indices}
 
     def __getitem__(self, ipix):
-        return ipix
+        return {'idxs':self.indices}
     
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""
