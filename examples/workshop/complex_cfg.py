@@ -4,7 +4,7 @@
 # runDriver.py complex_cfg.py
 
 # Import MAF helper functions 
-from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 
 # Set the output directory
 root.outputDir = './Complex_out'
@@ -13,7 +13,7 @@ root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 # Name of the output table in the database
 root.opsimName = 'Example'
 
-# Make an empty list to hold all the binner configs
+# Make an empty list to hold all the slicer configs
 binList = []
 
 # Define the filters we want to loop over
@@ -30,10 +30,10 @@ for filt in filters:
                                summaryStats={'MeanMetric':{}}, plotDict={'cbarFormat':'%.3g'})
     metric2 = configureMetric('MedianMetric', params=['finSeeing'],
                                summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-    binner = configureBinner('HealpixBinner',
+    slicer = configureSlicer('HealpixSlicer',
                               metricDict=makeDict(metric1,metric2),
                               constraints=['filter = "%s"'%filt])
-    binList.append(binner)
+    binList.append(slicer)
 
 # Now do coadd depth and median seeing, but use the hexdither positions.
 # Note the addition of metricName kwargs to make each metric output unique
@@ -44,11 +44,11 @@ for filt in filters:
     metric2 = configureMetric('MedianMetric', params=['finSeeing'],
                                summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
                                kwargs={'metricName':'seeing_dither'})
-    binner = configureBinner('HealpixBinner',
+    slicer = configureSlicer('HealpixSlicer',
                               metricDict=makeDict(metric1,metric2),
                               constraints=['filter = "%s"'%filt],
                               kwargs={'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
-    binList.append(binner)
+    binList.append(slicer)
 
 
 
@@ -58,16 +58,14 @@ for f in filters:
     m1 = configureMetric('CountMetric', params=['fivesigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right',
                                      'color':colors[f],'label':'%s'%f} )
-    binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'fivesigma_ps'},
-                              setupKwargs={'binsize':0.1},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'fivesigma_ps','binsize':0.1,},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
-    binList.append(binner)
+    binList.append(slicer)
     m1 = configureMetric('CountMetric', params=['airmass'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'airmass'},
-                              setupKwargs={'binsize':0.05},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'airmass','binsize':0.05},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)])
-    binList.append(binner)
+    binList.append(slicer)
 
 
 # Stats on airmass and seeing for all observations:
@@ -79,7 +77,7 @@ m3 = configureMetric('RmsMetric', params=['finSeeing'],
                           summaryStats={'IdentityMetric':{}})
 m4 = configureMetric('RmsMetric', params=['airmass'],
                           summaryStats={'IdentityMetric':{}})
-binner = configureBinner('UniBinner', metricDict=makeDict(m1,m2,m3,m4),
+slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1,m2,m3,m4),
                           constraints=[''])
 
 
@@ -89,10 +87,10 @@ m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', '
 m3 = configureMetric('ParallaxMetric')
 m4 = configureMetric('ProperMotionMetric', plotDict={'percentileClip':95})
 m5 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
-binner =  configureBinner('HealpixBinner', kwargs={"nside":nside},
+slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                            metricDict=makeDict(m2,m3,m4,m5),
                            constraints=[''])
-binList.append(binner)
+binList.append(slicer)
 
 # Run those same Cadence metrics on the hexdither positions
 m1 = configureMetric('SupernovaMetric', kwargs={'metricName':'SN_dith','m5col':'fivesigma_modified',
@@ -103,11 +101,11 @@ m3 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_dith'})
 m4 = configureMetric('ProperMotionMetric',kwargs={'metricName':'PM_dith'},
                       plotDict={'percentileClip':95})
 m5 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed_dith'})
-binner =  configureBinner('HealpixBinner',metricDict=makeDict(m2,m3,m4,m5),
+slicer =  configureSlicer('HealpixSlicer',metricDict=makeDict(m2,m3,m4,m5),
                            constraints=[''],
                            kwargs={"nside":nside,'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
-binList.append(binner)
+binList.append(slicer)
 
 
 
-root.binners = makeDict(*binList)
+root.slicers = makeDict(*binList)

@@ -11,13 +11,21 @@ from .baseSlicer import BaseSlicer
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
     def __init__(self, sliceDim=None, verbose=True, badval=-666, bins=None, binMin=None, binMax=None, binsize=None):
-        """Instantiate. """
+        """ 'bins' can be a numpy array with the binpoints for sliceDataCol or a single integer value
+        (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
+        as in numpy's histogram function.
+        If 'binsize' is used, this will override the bins value and will be used together with the data min/max
+        (or binMin/Max) to set the binpoint values.
+
+        Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
+          all bins except for last bin are half-open ([a, b>), the last one is ([a, b]). """
         super(OneDSlicer, self).__init__(verbose=verbose, badval=badval)
         self.bins = None
         self.nbins = None
         self.sliceDim = sliceDim
         self.columnsNeeded = [sliceDim]
-        self.slicer_init = {'sliceDim':self.sliceDim}
+        self.slicer_init = {'sliceDim':self.sliceDim, 'badval':badval, 'bins':bins,
+                            'binMin':binMin, 'binMax':binMax, 'binsize':binsize}
         self.bins = bins
         self.binMin = binMin
         self.binMax = binMax
@@ -25,30 +33,21 @@ class OneDSlicer(BaseSlicer):
         
     def setupSlicer(self, simData): 
         """Set up bins in slicer.        
-
-        'bins' can be a numpy array with the binpoints for sliceDataCol or a single integer value
-          (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
-          as in numpy's histogram function.
-        If 'binsize' is used, this will override the bins value and will be used together with the data min/max
-         (or binMin/Max) to set the binpoint values.
-
-        Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
-          all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
           """
         if self.sliceDim is None:
             raise Exception('sliceDim was not defined when slicer instantiated.')
         sliceDataCol = simData[self.sliceDim]
         # Set bin min/max values.
         if self.binMin is None:
-            binMin = sliceDataCol.min()
+            self.binMin = sliceDataCol.min()
         if self.binMax is None:
-            binMax = sliceDataCol.max()
+            self.binMax = sliceDataCol.max()
         # Set bins.
         # Using binsize.
         if self.binsize is not None:  
             if self.bins is not None:
                 warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(self.binsize))
-            self.bins = np.arange(binMin, binMax+self.binsize/2.0, self.binsize, 'float')
+            self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
@@ -59,8 +58,8 @@ class OneDSlicer(BaseSlicer):
                 if self.bins is None:
                     self.bins = optimalBins(sliceDataCol)
                 nbins = int(self.bins)
-                self.binsize = (binMax - binMin) / float(nbins)
-                self.bins = np.arange(binMin, binMax+self.binsize/2.0, self.binsize, 'float')
+                self.binsize = (self.binMax - self.binMin) / float(nbins)
+                self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nbins = len(self.bins) - 1
         # Set up data slicing.
@@ -69,36 +68,29 @@ class OneDSlicer(BaseSlicer):
         # "left" values are location where simdata == bin value
         self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
-        # Set up sliceSimData method for this class.
-        @wraps(self.sliceSimData)
-        def sliceSimData(binpoint):
-            """Slice simData on oneD sliceDataCol, to return relevant indexes for binpoint."""
-            # Find the index of this binpoint in the bins array, then use this to identify
-            #  the relevant 'left' values, then return values of indexes in original data array
-            #i = np.where(binpoint == self.bins)[0]
-            return self.simIdxs[self.left[binpoint]:self.left[binpoint+1]]
-        setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
         self.ipix = 0
         return self
 
-    def _resultsDict(self,ipix):
-        sliceInfo={}
-        idxs = self.sliceSimData(ipix)
-        result = {'idxs':idxs, 'sliceInfo':sliceInfo}
-        return result
 
+    def _sliceSimData(self, slicepoint):
+         """Slice simData on oneD sliceDataCol, to return relevant indexes for slicepoint."""
+         idxs = self.simIdxs[self.left[slicepoint]:self.left[slicepoint+1]]
+         sliceInfo={'pix':slicepoint, 'left':self.left[slicepoint], 'right':self.left[slicepoint+1]}
+         result ={'idxs':idxs, 'sliceInfo':sliceInfo}
+         return result
+         
     def next(self):
         """Return the binvalues for this binpoint."""
         if self.ipix >= self.nbins:
             raise StopIteration
-        result = self._resultsDict(self.ipix)#self.bins[self.ipix]
+        result = self._sliceSimData(self.ipix)
         self.ipix += 1
         return result
 
     def __getitem__(self, ipix):
-        result = self._resultsDict(ipix) #self.bins[ipix]
+        result = self._sliceSimData(ipix)
         return result
     
     def __eq__(self, otherSlicer):

@@ -212,10 +212,7 @@ class BaseSliceMetric(object):
         #    (slicing the data once per binpoint for all metrics).
         for i, slice_i in enumerate(self.slicer):
             idxs = slice_i['idxs']
-            if 'sliceInfo' in slice_i.keys():
-               sliceInfo = slice_i['sliceInfo']
-            else:
-               sliceInfo = None
+            sliceInfo = slice_i['sliceInfo']
             slicedata = simData[idxs]
             if len(slicedata)==0:
                 # No data at this binpoint. Mask data values.

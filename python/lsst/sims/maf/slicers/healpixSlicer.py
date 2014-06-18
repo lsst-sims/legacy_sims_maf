@@ -37,7 +37,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         if self.verbose:
             print 'Healpix slicer using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
         # Set variables so slicer can be re-constructed
-        self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
+        self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
+                            'useCache':useCache, 'radius':radius, 'leafsize':leafsize}
         self.bins = None
         if useCache:
             binRes = hp.nside2resol(nside) # Pixel size in radians

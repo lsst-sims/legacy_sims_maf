@@ -10,7 +10,7 @@
 
 
 import os
-from lsst.sims.maf.driver.mafConfig import MafConfig, configureSlicer, configureMetric, makeDict
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
 

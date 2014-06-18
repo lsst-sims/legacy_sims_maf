@@ -23,7 +23,7 @@ class UniSlicer(BaseSlicer):
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
             """Return all indexes in simData. """
-            return {'idxs':self.indices}
+            return {'idxs':self.indices, 'sliceInfo':{'pix':self.ipix}}
         setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
@@ -37,7 +37,7 @@ class UniSlicer(BaseSlicer):
             raise StopIteration
         ipix = self.ipix
         self.ipix += 1
-        return {'idxs':self.indices}
+        return {'idxs':self.indices, 'sliceInfo':{'pix':self.ipix}}
 
     def __getitem__(self, ipix):
         return {'idxs':self.indices}

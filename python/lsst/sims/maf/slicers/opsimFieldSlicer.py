@@ -48,7 +48,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'simDataFieldDecColName':simDataFieldDecColName,
                           'fieldIDColName':fieldIDColName,
                           'fieldRaColName':fieldRaColName,
-                          'fieldDecColName':fieldDecColName}
+                          'fieldDecColName':fieldDecColName, 'badval':badval}
         
 
     def setupSlicer(self, simData, fieldData):

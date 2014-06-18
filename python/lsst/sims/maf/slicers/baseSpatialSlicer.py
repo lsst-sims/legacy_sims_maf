@@ -30,25 +30,25 @@ class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', 
                  badval=-666, leafsize=100, radius=1.8):
-        """Instantiate the base spatial slicer object."""
+        """Instantiate the base spatial slicer object.
+        spatialkey1 = ra, spatialkey2 = dec, typically: but must match order in binpoint.
+        'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
+        'radius' (in degrees) is distance at which matches between
+        the simData KDtree 
+        and binpoint RA/Dec values will be produced."""
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1, spatialkey2]
-        self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
+        self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
+                          'leafsize':leafsize, 'radius':radius, 'badval':badval}
         self.bins=np.array([0.])
         self.radius = radius
         self.leafsize=leafsize
 
     def setupSlicer(self, simData):
         """Use simData['spatialkey1'] and simData['spatialkey2']
-        (in radians) to set up KDTree.
-
-        spatialkey1 = ra, spatialkey2 = dec, typically: but must match order in binpoint.
-        'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
-        'radius' (in degrees) is distance at which matches between
-        the simData KDtree 
-        and binpoint RA/Dec values will be produced."""
+        (in radians) to set up KDTree. """
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
         @wraps(self.sliceSimData)
