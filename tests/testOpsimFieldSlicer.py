@@ -99,26 +99,29 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         for fid, ra, dec, b in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
                                   self.fieldData['fieldDec'], self.testslicer):
-            self.assertEqual(fid, b[0])
-            self.assertEqual(ra, b[1])
-            self.assertEqual(dec, b[2])
-            self.assertGreaterEqual(b[0], 0)
-            self.assertLessEqual(b[1], 2*np.pi)
-            self.assertGreaterEqual(b[2], -np.pi)
-            self.assertLessEqual(b[2], np.pi)
+            self.assertEqual(fid, b['metadata']['fieldID'])
+            self.assertEqual(ra, b['metadata']['ra'])
+            self.assertEqual(dec, b['metadata']['dec'])
+            self.assertGreaterEqual(b['metadata']['fieldID'], 0)
+            self.assertLessEqual(b['metadata']['ra'], 2*np.pi)
+            self.assertGreaterEqual(b['metadata']['dec'], -np.pi)
+            self.assertLessEqual(b['metadata']['dec'], np.pi)
 
     def testGetItem(self):
         """Test getting indexed value."""
         for i, b in enumerate(self.testslicer):
-            self.assertEqual(self.testslicer[i], b)
+            dict1 = b
+            dict2 = self.testslicer[i]
+            np.testing.assert_array_equal(dict1['idxs'], dict2['idxs'])
+            self.assertDictEqual(dict1['metadata'], dict2['metadata'])
         n = 0
-        self.assertEqual(self.testslicer[n], (self.fieldData['fieldID'][n],
-                                              self.fieldData['fieldRA'][n],
-                                              self.fieldData['fieldDec'][n]))
+        self.assertEqual(self.testslicer[n]['metadata']['fieldID'], self.fieldData['fieldID'][n])
+        self.assertEqual(self.testslicer[n]['metadata']['ra'], self.fieldData['fieldRA'][n])
+        self.assertEqual(self.testslicer[n]['metadata']['dec'], self.fieldData['fieldDec'][n])
         n = len(self.testslicer) - 1
-        self.assertEqual(self.testslicer[n], (self.fieldData['fieldID'][n],
-                                              self.fieldData['fieldRA'][n],
-                                              self.fieldData['fieldDec'][n]))
+        self.assertEqual(self.testslicer[n]['metadata']['fieldID'], self.fieldData['fieldID'][n])
+        self.assertEqual(self.testslicer[n]['metadata']['ra'], self.fieldData['fieldRA'][n])
+        self.assertEqual(self.testslicer[n]['metadata']['dec'], self.fieldData['fieldDec'][n])
             
 class TestOpsimFieldSlicerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
@@ -138,8 +141,8 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
         # Set up slicer.
         self.testslicer.setupSlicer(self.simData, self.fieldData)
         for b in self.testslicer:
-            didxs = np.where(self.simData['fieldID'] == b[0])
-            binidxs = self.testslicer.sliceSimData(b)
+            didxs = np.where(self.simData['fieldID'] == b['metadata']['fieldID'])
+            binidxs = b['idxs']
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
                 didxs = np.sort(didxs[0])

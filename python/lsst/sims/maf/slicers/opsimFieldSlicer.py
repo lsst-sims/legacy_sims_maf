@@ -19,34 +19,34 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     
     def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
-                 fieldIdColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
+                 fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  badval=-666):
         """Instantiate opsim field slicer (an index-based slicer that can do spatial plots).
 
         simDataFieldIdColName = the column name in simData for the field ID
         simDataFieldRaColName = the column name in simData for the field RA 
         simDataFieldDecColName = the column name in simData for the field Dec
-        fieldIdcolName = the column name in the fieldData for the field ID (to match with simData)
+        fieldIDcolName = the column name in the fieldData for the field ID (to match with simData)
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
         super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
         self.bins = {}
-        self.bins['fieldId'] = None
+        self.bins['fieldID'] = None
         self.bins['ra'] = None
         self.bins['dec'] = None
         self.nbins = None
         self.simDataFieldIdColName = simDataFieldIdColName
-        self.fieldIdColName = fieldIdColName
+        self.fieldIDColName = fieldIDColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
         self.columnsNeeded = [simDataFieldIdColName, simDataFieldRaColName, simDataFieldDecColName]
         while '' in self.columnsNeeded: self.columnsNeeded.remove('')
-        self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
+        self.fieldColumnsNeeded = [fieldIDColName, fieldRaColName, fieldDecColName]
         self.slicer_init={'simDataFieldIdColName':simDataFieldIdColName,
                           'simDataFieldRaColName':simDataFieldRaColName,
                           'simDataFieldDecColName':simDataFieldDecColName,
-                          'fieldIdColName':fieldIdColName,
+                          'fieldIDColName':fieldIDColName,
                           'fieldRaColName':fieldRaColName,
                           'fieldDecColName':fieldDecColName}
         
@@ -59,21 +59,21 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         Values for the column names are set during 'init'. 
         """
         # Set basic properties for tracking field information, in sorted order.
-        idxs = np.argsort(fieldData[self.fieldIdColName])
-        self.bins['fieldId'] = fieldData[self.fieldIdColName][idxs]
+        idxs = np.argsort(fieldData[self.fieldIDColName])
+        self.bins['fieldID'] = fieldData[self.fieldIDColName][idxs]
         self.bins['ra'] = fieldData[self.fieldRaColName][idxs]
         self.bins['dec'] = fieldData[self.fieldDecColName][idxs]
-        self.nbins = len(self.bins['fieldId'])
+        self.nbins = len(self.bins['fieldID'])
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
-        self.left = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'left')
-        self.right = np.searchsorted(simFieldsSorted, self.bins['fieldId'], 'right')
+        self.left = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'left')
+        self.right = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'right')
         # Build slicing method.     
         @wraps(self.sliceSimData)
         def sliceSimData(binpoint):
-            """Slice simData on fieldId, to return relevant indexes for binpoint."""
-            i = np.where(self.bins['fieldId'] == binpoint)
+            """Slice simData on fieldID, to return relevant indexes for binpoint."""
+            i = np.where(self.bins['fieldID'] == binpoint)
             return self.simIdxs[self.left[i]:self.right[i]]   
         setattr(self, 'sliceSimData', sliceSimData)
         
@@ -83,8 +83,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         return self
     
     def _resultsDict(self,ipix):
-        metadata = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 'fieldID': self.bins['fieldId'][ipix]}
-        idxs = self.sliceSimData(self.bins['fieldId'][ipix])
+        metadata = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 'fieldID': self.bins['fieldID'][ipix]}
+        idxs = self.sliceSimData(self.bins['fieldID'][ipix])
         return {'idxs':idxs, 'metadata':metadata}
     
     def next(self):
@@ -92,7 +92,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         # This returns RA/Dec (in radians) of points in the grid. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        result = self._resultsDict(self.ipix) #self.bins['fieldId'][self.ipix], self.bins['ra'][self.ipix], self.bins['dec'][self.ipix]
+        result = self._resultsDict(self.ipix) #self.bins['fieldID'][self.ipix], self.bins['ra'][self.ipix], self.bins['dec'][self.ipix]
         self.ipix += 1
         return result
 
@@ -102,7 +102,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
         if isinstance(otherSlicer, OpsimFieldSlicer):
-            return (np.all(otherSlicer.bins['fieldId'] == self.bins['fieldId']) and
+            return (np.all(otherSlicer.bins['fieldID'] == self.bins['fieldID']) and
                     np.all(otherSlicer.bins['ra'] == self.bins['ra']) and
                     np.all(otherSlicer.bins['dec'] == self.bins['dec']))        
         else:
