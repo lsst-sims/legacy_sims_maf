@@ -103,7 +103,7 @@ class TestSlicers(unittest.TestCase):
         metricBack, slicerBack,header = slicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
-        attr2check = ['nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2','simDataFieldIdColName']
+        attr2check = ['nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2','simDataFieldIDColName']
         for att in attr2check:
             if type(getattr(slicer,att)).__name__ == 'dict':
                 for key in getattr(slicer,att).keys():
