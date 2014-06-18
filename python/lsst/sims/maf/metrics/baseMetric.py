@@ -79,8 +79,6 @@ class BaseMetric(object):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
-        # Declare if the metric needs ra/dec metadata from binner
-        self.needRADec = False
         # Set physical units, mostly for plotting purposes.
         if units is None:
             units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
@@ -121,5 +119,5 @@ class BaseMetric(object):
                 raise ValueError('Could not find data column for metric: %s' %(col))
         return True
     
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         raise NotImplementedError('Please implement your metric calculation.')

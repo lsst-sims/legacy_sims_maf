@@ -21,14 +21,15 @@ class RadiusObsMetric(BaseMetric):
 
     def __init__(self, metricName='radiusObs', racol='fieldRA',deccol='fieldDec',
                  units='radians', **kwargs):
-        self.needRADec = True #so the binMetric knows to pass enough data
         cols = [racol,deccol]
         self.racol = racol
         self.deccol=deccol
         self.units=units
         super(RadiusObsMetric,self).__init__(cols,metricName=metricName, **kwargs)
 
-    def run(self, dataSlice, ra,dec):
+    def run(self, dataSlice, sliceInfo):
+        ra = sliceInfo['ra']
+        dec = sliceInfo['dec']
         distances = calcDist_cosines(ra,dec, dataSlice[self.racol], dataSlice[self.deccol])
         return distances
 

@@ -32,7 +32,7 @@ class VisitGroupsMetric(BaseMetric):
         self.minNNights = minNNights
         super(VisitGroupsMetric, self).__init__([self.times, self.nights], **kwargs)
 
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         """
         Return the number of visits within a night (within delta tmin/tmax of another visit),
          and the nights with visits > minNVisits.

@@ -95,11 +95,11 @@ for f in filters:
         
 # Slew histograms
 m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
 slicerList.append(slicer)
 
 m1 = configureMetric('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
 slicerList.append(slicer)
 
 # Filter Hourglass plots
@@ -123,25 +123,25 @@ slicerList.append(slicer)
 for f in filters:
     m1 = configureMetric('CountMetric', params=['5sigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'5sigma_ps'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'5sigma_ps'},
                               metricDict=makeDict(m1), constraints=["filter = '%s'and propID = %i"%(f,WFDpropid)]) 
     slicerList.append(slicer)
 
     m1 = configureMetric('CountMetric', params=['perry_skybrightness'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'perry_skybrightness'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'perry_skybrightness'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
     slicerList.append(slicer)
     
     m1 = configureMetric('CountMetric', params=['finSeeing'],
                           histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'finSeeing'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'finSeeing'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
     slicerList.append(slicer)
 
     m1 = configureMetric('CountMetric', params=['airmass'],
                           histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'airmass'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'airmass'},
                               metricDict=makeDict(m1), constraints=["filter = '%s' and propID = %i"%(f,WFDpropid)])
     slicerList.append(slicer)
 

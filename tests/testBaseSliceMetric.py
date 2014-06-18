@@ -131,8 +131,8 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
                             'Completeness_z', 'Completeness_y', 'Completeness_Joint']
         self.dv = makeDataValues(size=1000, min=0, max=1)
-        self.slicer = slicers.OneDSlicer('testdata')
-        self.slicer.setupSlicer(self.dv, bins=np.arange(0, 1.25, .1))
+        self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
+        self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.setMetrics([self.m1, self.m2, self.m3])
 
@@ -206,8 +206,8 @@ class TestReadWriteBaseSliceMetric(unittest.TestCase):
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
                             'Completeness_z', 'Completeness_y', 'Completeness_Joint']
         self.dv = makeDataValues(size=1000, min=0, max=1)
-        self.slicer = slicers.OneDSlicer('testdata')
-        self.slicer.setupSlicer(self.dv, bins=np.arange(0, 1.25, .1))
+        self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
+        self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.setMetrics([self.m1, self.m2, self.m3])
         self.opsimname = 'opsim1000'
@@ -336,8 +336,8 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
         # Try oneD slicer: other slicers should behave similarly.
         self.testbbm = sliceMetrics.BaseSliceMetric()
         self.testbbm.setMetrics([self.m1,])
-        self.slicer = slicers.OneDSlicer('testdata')
-        self.slicer.setupSlicer(self.dv, bins=100)
+        self.slicer = slicers.OneDSlicer('testdata', bins=100)
+        self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
@@ -392,11 +392,11 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         """Test plotting."""
         import matplotlib.pyplot as plt    
         # Test OneDSlicer.
-        self.slicer = slicers.OneDSlicer('testdata')
         bins = np.arange(0, 1.25, .1)
+        self.slicer = slicers.OneDSlicer('testdata', bins=bins)
         self.testbbm = sliceMetrics.BaseSliceMetric()
         self.testbbm.setMetrics([self.m1, self.m2])
-        self.slicer.setupSlicer(self.dv, bins=bins)
+        self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m2.name, savefig=False)

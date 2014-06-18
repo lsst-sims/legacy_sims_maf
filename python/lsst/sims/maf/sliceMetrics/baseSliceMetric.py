@@ -202,6 +202,7 @@ class BaseSliceMetric(object):
                                                       mask = np.zeros(len(self.slicer), 'bool'),
                                                       fill_value=self.slicer.badval)
         # Set up an ordered dictionary to be the cache if needed:
+        # Currently using OrderedDict, it might be faster to use 2 regular Dicts instead
         if self.slicer.cacheSize > 0:
            cacheDict = OrderedDict()
            cache = True
@@ -211,6 +212,10 @@ class BaseSliceMetric(object):
         #    (slicing the data once per binpoint for all metrics).
         for i, slice_i in enumerate(self.slicer):
             idxs = slice_i['idxs']
+            if 'sliceInfo' in slice_i.keys():
+               sliceInfo = slice_i['sliceInfo']
+            else:
+               sliceInfo = None
             slicedata = simData[idxs]
             if len(slicedata)==0:
                 # No data at this binpoint. Mask data values.
@@ -218,36 +223,26 @@ class BaseSliceMetric(object):
                     self.metricValues[mname].mask[i] = True
             else:
                if cache:
-                  # make the idxs hashable.  I'm assuming the idxs is already sorted!
-                  # Tests make it look like this is true for kdtree, but it's not technically documented
-                  key = str(idxs)[1:-1].replace(' ','')
+                  # Make the idxs hashable.  
+                  key = str(sorted(idxs))[1:-1].replace(' ','')
                   # If key exists, set flag to use it, otherwise add it
                   if key in cacheDict:
                      useCache = True 
                   else:
                      cacheDict[key] = i
                      useCache = False
+                     # If we are above the cache size, drop the oldest element from the cache dict
                      if i > self.slicer.cacheSize:
                         pop = cacheDict.popitem(last=False) #remove 1st item
                   for mname in self.metricObjs:
-                     # If the metric needs slicer metadata, need to compute
-                     if self.metricObjs[mname].needRADec:
-                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
-                                                                                       binpoint[1], binpoint[2])
+                     if useCache:
+                        self.metricValues[mname].data[i] = self.metricValues[mname].data[cacheDict[key]]
                      else:
-                        if useCache:
-                           self.metricValues[mname].data[i] = self.metricValues[mname].data[cacheDict[key]]
-                        else:
-                           self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
+                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, sliceInfo)
                # Not using memoize, just calculate things normally
                else:
                   for mname in self.metricObjs:
-                     # Maybe change this to "need meta data"?
-                     if self.metricObjs[mname].needRADec:
-                         self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
-                                                                                       binpoint[1], binpoint[2])
-                     else:
-                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata)
+                     self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, sliceInfo)
     
            
         # Mask data where metrics could not be computed (according to metric bad value).

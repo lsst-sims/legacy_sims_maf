@@ -56,7 +56,7 @@ class ParallaxMetric(BaseMetric):
         sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2))*1e3 #combine RA and Dec uncertainties, convert to mas
         return sigma
         
-    def run(self, dataslice):
+    def run(self, dataslice, *args):
         filters = np.unique(dataslice[self.filtercol])
         snr = np.zeros(len(dataslice), dtype='float')
         # compute SNR for all observations

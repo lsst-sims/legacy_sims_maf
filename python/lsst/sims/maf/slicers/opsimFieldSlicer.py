@@ -17,13 +17,13 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     thus this slicer is not suitable for use in evaluating dithering or high resolution metrics
     (use the healpix slicer instead for those use-cases). """
     
-    def __init__(self, verbose=True, simDataFieldIdColName='fieldID',
+    def __init__(self, verbose=True, simDataFieldIDColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  badval=-666):
         """Instantiate opsim field slicer (an index-based slicer that can do spatial plots).
 
-        simDataFieldIdColName = the column name in simData for the field ID
+        simDataFieldIDColName = the column name in simData for the field ID
         simDataFieldRaColName = the column name in simData for the field RA 
         simDataFieldDecColName = the column name in simData for the field Dec
         fieldIDcolName = the column name in the fieldData for the field ID (to match with simData)
@@ -36,14 +36,14 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.bins['ra'] = None
         self.bins['dec'] = None
         self.nbins = None
-        self.simDataFieldIdColName = simDataFieldIdColName
+        self.simDataFieldIDColName = simDataFieldIDColName
         self.fieldIDColName = fieldIDColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
-        self.columnsNeeded = [simDataFieldIdColName, simDataFieldRaColName, simDataFieldDecColName]
+        self.columnsNeeded = [simDataFieldIDColName, simDataFieldRaColName, simDataFieldDecColName]
         while '' in self.columnsNeeded: self.columnsNeeded.remove('')
         self.fieldColumnsNeeded = [fieldIDColName, fieldRaColName, fieldDecColName]
-        self.slicer_init={'simDataFieldIdColName':simDataFieldIdColName,
+        self.slicer_init={'simDataFieldIDColName':simDataFieldIDColName,
                           'simDataFieldRaColName':simDataFieldRaColName,
                           'simDataFieldDecColName':simDataFieldDecColName,
                           'fieldIDColName':fieldIDColName,
@@ -65,8 +65,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.bins['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nbins = len(self.bins['fieldID'])
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
-        simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
+        self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
+        simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
         self.left = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'right')
         # Build slicing method.     
@@ -83,9 +83,9 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         return self
     
     def _resultsDict(self,ipix):
-        metadata = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 'fieldID': self.bins['fieldID'][ipix]}
+        sliceInfo = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 'fieldID': self.bins['fieldID'][ipix]}
         idxs = self.sliceSimData(self.bins['fieldID'][ipix])
-        return {'idxs':idxs, 'metadata':metadata}
+        return {'idxs':idxs, 'sliceInfo':sliceInfo}
     
     def next(self):
         """Return RA/Dec values when iterating over binpoints."""

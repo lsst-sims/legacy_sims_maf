@@ -34,9 +34,8 @@ m1 = configureMetric('CountMetric', params=['expMJD'],
                                 'xMax':1500},
                       summaryStats={'fOArea':{'nside':nside},
                                     'fONv':{'nside':nside}})
-slicer = configureSlicer('fOSlicer', kwargs={"nside":nside},
+slicer = configureSlicer('fOSlicer', kwargs={"nside":nside,"leafsize":leafsize},
                           metricDict=makeDict(m1),
-                          setupKwargs={"leafsize":leafsize},
                           constraints=['',wfdWhere])
 
 root.slicers = makeDict(slicer)

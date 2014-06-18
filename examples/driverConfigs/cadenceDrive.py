@@ -41,11 +41,10 @@ leafsize = 100 # For KD-tree
 seeing_limit = 0.7 # Demand seeing better than this
 for f in filters:
     m1 = configureMetric('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
-    slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside},metricDict=makeDict(m1),
+    slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside,"leafsize":leafsize}},metricDict=makeDict(m1),
                               constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
                                            'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
-                                           'filter = "%s" and finSeeing < %s'%(f,seeing_limit)],
-                              setupKwargs={"leafsize":leafsize})
+                                           'filter = "%s" and finSeeing < %s'%(f,seeing_limit)])
     slicerList.append(slicer)
 
 # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
@@ -56,8 +55,7 @@ for f in filters:
     slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside},metricDict=makeDict(m1,m2,m3),
                               constraints=['night < 365 and filter = "%s"'%(f),
                                            'night < 730 and filter = "%s"'%(f),
-                                           'filter = "%s"'%(f)],
-                              setupKwargs={"leafsize":leafsize})
+                                           'filter = "%s"'%(f)])
     slicerList.append(slicer)
 
 
@@ -74,7 +72,7 @@ m8 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName
 m9 = configureMetric('ProperMotionMetric', kwargs={'rmag':24,'normalize':True, 'metricName':'PM_24_normed'})
 slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                            metricDict=makeDict(m1,m2,m3,m4,m5),
-                           constraints=['night < 365', ''], setupKwargs={"leafsize":leafsize})
+                           constraints=['night < 365', ''])
 slicerList.append(slicer)
 
 
@@ -87,7 +85,7 @@ constraints.append('night < 365')
 m1 = configureMetric('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
 slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                            metricDict=makeDict(m1),
-                           constraints=constraints, setupKwargs={"leafsize":leafsize})
+                           constraints=constraints})
 slicerList.append(slicer)
 
 

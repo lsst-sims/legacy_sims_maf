@@ -1,5 +1,7 @@
 ## EXAMPLE
 # example of interacting directly with the python classes, for a healpix slicer.
+# to run:
+#python example_healpix.py ../../tests/opsimblitz1_1131_sqlite.db
 
 import sys, os, argparse
 import numpy as np

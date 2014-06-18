@@ -47,8 +47,8 @@ class OneDSlicer(BaseSlicer):
         # Using binsize.
         if self.binsize is not None:  
             if self.bins is not None:
-                warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(binsize))
-            self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
+                warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(self.binsize))
+            self.bins = np.arange(binMin, binMax+self.binsize/2.0, self.binsize, 'float')
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
@@ -59,8 +59,8 @@ class OneDSlicer(BaseSlicer):
                 if self.bins is None:
                     self.bins = optimalBins(sliceDataCol)
                 nbins = int(self.bins)
-                binsize = (binMax - binMin) / float(nbins)
-                self.bins = np.arange(binMin, binMax+binsize/2.0, binsize, 'float')
+                self.binsize = (binMax - binMin) / float(nbins)
+                self.bins = np.arange(binMin, binMax+self.binsize/2.0, self.binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nbins = len(self.bins) - 1
         # Set up data slicing.
@@ -84,22 +84,22 @@ class OneDSlicer(BaseSlicer):
         return self
 
     def _resultsDict(self,ipix):
-        metadata={}
+        sliceInfo={}
         idxs = self.sliceSimData(ipix)
-        result = {'idxs':idxs, 'metadata':metadata}
+        result = {'idxs':idxs, 'sliceInfo':sliceInfo}
         return result
 
     def next(self):
         """Return the binvalues for this binpoint."""
         if self.ipix >= self.nbins:
             raise StopIteration
-        binlo = self._resultsDict(self.ipix)#self.bins[self.ipix]
+        result = self._resultsDict(self.ipix)#self.bins[self.ipix]
         self.ipix += 1
-        return binlo
+        return result
 
     def __getitem__(self, ipix):
-        binlo = self._resultsDict(ipix) #self.bins[ipix]
-        return binlo
+        result = self._resultsDict(ipix) #self.bins[ipix]
+        return result
     
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""

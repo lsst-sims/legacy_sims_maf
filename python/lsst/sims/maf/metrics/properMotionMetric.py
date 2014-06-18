@@ -48,7 +48,7 @@ class ProperMotionMetric(BaseMetric):
         self.normalize = normalize
         self.baseline = baseline
 
-    def run(self, dataslice):
+    def run(self, dataslice, *args):
         filters = np.unique(dataslice['filter'])
         precis = np.zeros(dataslice.size, dtype='float')
         for f in filters:

@@ -42,7 +42,7 @@ def getMetrics(docomplex=True):
 def getSlicer(simData, fieldData):
     # Setting up the slicer will be slightly different for each slicer.
     t = time.time()    
-    bb = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID',
+    bb = slicers.OpsimFieldSlicer(simDataFieldIDColName='fieldID', fieldIDColName='fieldID',
                                   fieldRaColName='fieldRA', fieldDecColName='fieldDec')
     # SetUp slicer.
     bb.setupSlicer(simData, fieldData)

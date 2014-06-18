@@ -28,7 +28,7 @@ constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 # Configure a new metric
 m1 = configureMetric('CountMetric', params=['slewDist'])
 metricDict=makeDict(m1)
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDataColName":'slewDist'},
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewDist'},
                           metricDict=metricDict, constraints=constraints)
 slicerList.append(slicer)
 

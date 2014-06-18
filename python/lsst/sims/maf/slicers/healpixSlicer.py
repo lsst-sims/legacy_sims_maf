@@ -53,10 +53,10 @@ class HealpixSlicer(BaseSpatialSlicer):
 
 
     def _resultsDict(self,ipix):
-        """Build a dictionary of metadata and indices to return """
-        metadata = {'ra':self.ra[ipix] , 'dec':self.dec[ipix], 'pix':ipix}
+        """Build a dictionary of sliceInfo and indices to return """
+        sliceInfo = {'ra':self.ra[ipix] , 'dec':self.dec[ipix], 'pix':ipix, 'nside':self.nside}
         idxs = self.sliceSimData( (self.ra[ipix], self.dec[ipix]) )
-        return {'idxs':idxs, 'metadata':metadata}
+        return {'idxs':idxs, 'sliceInfo':sliceInfo}
                                   
     def next(self):
         """ """
