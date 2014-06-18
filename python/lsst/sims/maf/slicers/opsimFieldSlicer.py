@@ -92,7 +92,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         # This returns RA/Dec (in radians) of points in the grid. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        result = self._resultsDict(self.ipix) #self.bins['fieldID'][self.ipix], self.bins['ra'][self.ipix], self.bins['dec'][self.ipix]
+        result = self._resultsDict(self.ipix) 
         self.ipix += 1
         return result
 

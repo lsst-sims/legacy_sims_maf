@@ -122,6 +122,7 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
         self.assertEqual(self.testslicer[n]['metadata']['fieldID'], self.fieldData['fieldID'][n])
         self.assertEqual(self.testslicer[n]['metadata']['ra'], self.fieldData['fieldRA'][n])
         self.assertEqual(self.testslicer[n]['metadata']['dec'], self.fieldData['fieldDec'][n])
+
             
 class TestOpsimFieldSlicerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
