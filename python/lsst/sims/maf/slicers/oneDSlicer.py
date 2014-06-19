@@ -33,6 +33,15 @@ class OneDSlicer(BaseSlicer):
         
     def setupSlicer(self, simData): 
         """Set up bins in slicer.        
+
+        'bins' can be a numpy array with the slicepoints for sliceDataCol or a single integer value
+          (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
+          as in numpy's histogram function.
+        If 'binsize' is used, this will override the bins value and will be used together with the data min/max
+         (or binMin/Max) to set the slicepoint values.
+
+        Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
+          all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
           """
         if self.sliceDim is None:
             raise Exception('sliceDim was not defined when slicer instantiated.')
@@ -73,6 +82,17 @@ class OneDSlicer(BaseSlicer):
         self.ipix = 0
         return self
 
+<<<<<<< HEAD
+=======
+    def _sliceSimData(self, ipix):
+        """Slice simData on oneD sliceDataCol, to return relevant indexes for slicepoint."""
+        # Find the index of this slicepoint in the bins array, then use this to identify
+        #  the relevant 'left' values, then return values of indexes in original data array
+        idxs = self.simIdxs[self.left[ipix]:self.left[ipix+1]]
+        slicePoint = {'pid':ipix, 'left':self.left[ipix],
+                      'right':self.left[ipix+1], 'bin':self.bins[ipix]}
+        return {'idxs':idxs, 'slicePoint':slicePoint}
+>>>>>>> 2521b1b2176c7ce9ff6039bb3551bc734441ab19
 
     def _sliceSimData(self, slicepoint):
          """Slice simData on oneD sliceDataCol, to return relevant indexes for slicepoint."""
@@ -82,7 +102,7 @@ class OneDSlicer(BaseSlicer):
          return result
          
     def next(self):
-        """Return the binvalues for this binpoint."""
+        """Return the binvalues for this slicepoint."""
         if self.ipix >= self.nbins:
             raise StopIteration
         result = self._sliceSimData(self.ipix)
@@ -90,7 +110,11 @@ class OneDSlicer(BaseSlicer):
         return result
 
     def __getitem__(self, ipix):
+<<<<<<< HEAD
         result = self._sliceSimData(ipix)
+=======
+        result = self._sliceSimData(ipix) 
+>>>>>>> 2521b1b2176c7ce9ff6039bb3551bc734441ab19
         return result
     
     def __eq__(self, otherSlicer):

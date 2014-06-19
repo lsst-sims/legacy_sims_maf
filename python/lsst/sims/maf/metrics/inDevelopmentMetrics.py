@@ -29,9 +29,9 @@ class LinkedMetric(BaseMetric):
 
         #build a kdtree for healpixel look-up
 
-    def run(self, dataSlice, sliceInfo):
-        ra = sliceInfo['ra']
-        dec = sliceInfo['dec']
+    def run(self, dataSlice, slicePoint):
+        ra = slicePoint['ra']
+        dec = slicePoint['dec']
         # Cut down to the unique set of ra,dec combinations
 
         pixlist=[]

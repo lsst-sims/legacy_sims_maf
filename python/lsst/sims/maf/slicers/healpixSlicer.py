@@ -52,25 +52,28 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.ipix = 0
         return self
 
-
-    def _resultsDict(self,ipix):
-        """Build a dictionary of sliceInfo and indices to return """
-        sliceInfo = {'ra':self.ra[ipix] , 'dec':self.dec[ipix], 'pix':ipix, 'nside':self.nside}
-        idxs = self.sliceSimData( (self.ra[ipix], self.dec[ipix]) )
-        return {'idxs':idxs, 'sliceInfo':sliceInfo}
-                                  
+    def _sliceSimData(self, ipix):
+        """Return indexes for relevant opsim data at slicepoint
+        (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+        binx, biny, binz = self._treexyz(self.ra[ipix], self.dec[ipix])
+        # Query against tree.
+        indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
+        return {'idxs':indices, 'slicePoint':{'pid':ipix,'ra':self.ra[ipix] , 
+                                              'dec':self.dec[ipix], 'pix':ipix, 
+                                              'nside':self.nside}}
+                                    
     def next(self):
         """ """
-        # This returns RA/Dec (in radians) of the binpoints. 
+        # This returns RA/Dec (in radians) of the slicepoints. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        result = self._resultsDict(self.ipix)
+        result = self._sliceSimData(self.ipix)
         self.ipix += 1
         return result
 
     def __getitem__(self, ipix):
         """Make healpix slicer indexable."""
-        return self._resultsDict(ipix) 
+        return self._sliceSimData(ipix) 
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
@@ -162,7 +165,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                       scale=None, color='b', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
-        If scale is None, sets 'scale' by the healpix area per binpoint.
+        If scale is None, sets 'scale' by the healpix area per slicepoint.
         title = the title for the plot (default None)
         xlabel = x axis label (default None)
         ylabel = y axis label (default 'Area (1000's of square degrees))**

@@ -48,19 +48,26 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def setupSlicer(self, simData):
         """Use simData['spatialkey1'] and simData['spatialkey2']
-        (in radians) to set up KDTree. """
+        (in radians) to set up KDTree.
+        spatialkey1 = ra, spatialkey2 = dec, typically: but must match order in slicepoint.
+        'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
+        'radius' (in degrees) is distance at which matches between
+        the simData KDtree 
+        and slicepoint RA/Dec values will be produced."""
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
-        @wraps(self.sliceSimData)
-        def sliceSimData(binpoint):
-            """Return indexes for relevant opsim data at binpoint
-            (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            binx, biny, binz = self._treexyz(binpoint[0], binpoint[1])
-            # Query against tree.
-            indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
-            return indices
-        setattr(self, 'sliceSimData', sliceSimData)        
+        
+    def _sliceSimData(slicepoint):
+        """Return indexes for relevant opsim data at slicepoint
+        (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+        binx, biny, binz = self._treexyz(slicepoint[0], slicepoint[1])
+        # Query against tree.
+        indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
+        return {'idxs':indices, 'slicePoint':{'pid':slicepoint}}
+        
     
+
+
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
         # Note ra/dec can be arrays.
@@ -92,9 +99,9 @@ class BaseSpatialSlicer(BaseSlicer):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     
-    def sliceSimDataMultiBinpoint(self, binpoints):
-        """Return indexes for opsim data at multiple binpoints (rarely used). """
-        binx, biny, binz=self._treexyz(binpoints[1], binpoints[2])
+    def sliceSimDataMultiBinpoint(self, slicepoints):
+        """Return indexes for opsim data at multiple slicepoints (rarely used). """
+        binx, biny, binz=self._treexyz(slicepoints[1], slicepoints[2])
         indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
         return indices
 

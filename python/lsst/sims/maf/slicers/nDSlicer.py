@@ -28,7 +28,7 @@ class NDSlicer(BaseSlicer):
     def setupSlicer(self, simData, binsList=None, nbinsList=100):
         """Set up bins.
 
-        binsList can be a list of numpy arrays with the respective binpoints for sliceDataColList,
+        binsList can be a list of numpy arrays with the respective slicepoints for sliceDataColList,
             (default 'None' uses nbinsList together with data min/max values to set bins).
         nbinsList can be a list of values (one per column in sliceDataColList) or a single value
             (repeated for all columns, default=100). """
@@ -71,18 +71,18 @@ class NDSlicer(BaseSlicer):
             self.lefts.append(left)
         # Build slicing method for ND slicer.
         @wraps(self.sliceSimData)
-        def sliceSimData(binpoint):
-            """Slice simData to return relevant indexes for binpoint."""
+        def sliceSimData(slicepoint):
+            """Slice simData to return relevant indexes for slicepoint."""
             # Identify relevant pointings in each dimension.
             simIdxsList = []
             for d in range(self.nD):
-                i = (np.where(binpoint[d] == self.bins[d]))[0]
+                i = (np.where(slicepoint[d] == self.bins[d]))[0]
                 simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
             return list(set.intersection(*simIdxsList))
         setattr(self, 'sliceSimData', sliceSimData)
         
     def __iter__(self):
-        """Iterate over the binpoints."""
+        """Iterate over the slicepoints."""
         # Order of iteration over bins: go through bins in each sliceCol in the sliceColList in order.
         self.ipix = 0
         binsForIteration = []
@@ -94,7 +94,7 @@ class NDSlicer(BaseSlicer):
         return self
 
     def next(self):
-        """Return the binvalues at this binpoint."""
+        """Return the binvalues at this slicepoint."""
         if self.ipix >= self.nbins:
             raise StopIteration
         binlo = self.biniterator.next()
@@ -102,7 +102,7 @@ class NDSlicer(BaseSlicer):
         return binlo
 
     def __getitem__(self, ipix):
-        """Return binpoint at index ipix."""
+        """Return slicepoint at index ipix."""
         binsForIteration = []
         for b in self.bins:
             binsForIteration.append(b[:-1])
@@ -129,7 +129,7 @@ class NDSlicer(BaseSlicer):
                         title=None, fignum=None, ylog=False, units='',
                         clims=None, cmap=None, cbarFormat=None):
         """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
-        binpoints [sums over non-visible axes]. 
+        slicepoints [sums over non-visible axes]. 
 
         metricValues = the metric data (as calculated when iterating through slicer)
         xaxis, yaxis = the x and y dimensions to plot (i.e. 0/1 would plot binsList[0] and
@@ -184,7 +184,7 @@ class NDSlicer(BaseSlicer):
                          label=None, addLegend=False, legendloc='upper left',
                          filled=False, alpha=0.5, ylog=False):
         """Plot a single axes from the sliceColList, identified by axis, given the metricValues at all
-        binpoints [sums over non-visible axes]. 
+        slicepoints [sums over non-visible axes]. 
 
         metricValues = the values to be plotted at each bin
         axis = the dimension to plot (i.e. 0 would plot binsList[0])
