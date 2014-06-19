@@ -12,7 +12,7 @@ root.opsimName = 'opsim'
 slicerList=[]
 
 m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
 root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
@@ -43,7 +43,7 @@ slicerList.append(slicer)
 
 
 m1 = configureMetric('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'}, metricDict=makeDict(m1), constraints=[''] )
 root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
@@ -92,7 +92,7 @@ slicerList.append(slicer)
 
 # XXX-summary stats are not intuitive with OneDslicer.  
 #m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time', 'metricName':'slew_w_summary'},summaryStats={'MeanMetric':{}, 'MedianMetric':{}})
-#slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewTime'}, metricDict=makeDict(m1), constraints=['']  )
+#slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime'}, metricDict=makeDict(m1), constraints=['']  )
 #root.slicers=makeDict(slicer)
 #slicerList.append(slicer)
 
@@ -102,7 +102,7 @@ filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 for i,f in enumerate(filters):
     m1 = configureMetric('CountMetric', params=['airmass'], histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'airmass'},  metricDict=makeDict(m1), constraints=["filter = '%s'"%f])
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass'},  metricDict=makeDict(m1), constraints=["filter = '%s'"%f])
     slicerList.append(slicer)
 
 

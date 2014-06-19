@@ -46,6 +46,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             self.cacheSize = int(np.round(4.*np.pi/binRes)) 
         allpix = np.arange(self.nbins)
         self.ra,self.dec = self._pix2radec(allpix)
+        self.pixArea = hp.nside2pixarea(self.nside)
         
     def __iter__(self):
         """Iterate over the slicer."""
@@ -58,9 +59,10 @@ class HealpixSlicer(BaseSpatialSlicer):
         binx, biny, binz = self._treexyz(self.ra[ipix], self.dec[ipix])
         # Query against tree.
         indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
-        return {'idxs':indices, 'slicePoint':{'pid':ipix,'ra':self.ra[ipix] , 
-                                              'dec':self.dec[ipix], 'pix':ipix, 
-                                              'nside':self.nside}}
+        return {'idxs':indices,
+                'slicePoint':{'pid':ipix,'ra':self.ra[ipix] , 
+                              'dec':self.dec[ipix], 'pix':ipix, 
+                              'nside':self.nside, 'pixArea':self.pixArea}}
                                     
     def next(self):
         """ """
@@ -107,7 +109,6 @@ class HealpixSlicer(BaseSpatialSlicer):
         title = title for plot
         cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
         plotMaskedValues = ignored, here to be consistent with OpsimFieldSlicer."""
-        plottype = 'sky'
         # Generate a Mollweide full-sky plot.
         norm = None
         if ylog:
@@ -201,7 +202,6 @@ class HealpixSlicer(BaseSpatialSlicer):
         addLegend = flag to add legend (default False).
         removeDipole = remove dipole when calculating power spectrum (default True) (monopole removed automatically.)
         """
-        plottype = 'ps'
         if fignum:
             fig = plt.figure(fignum)
         else:

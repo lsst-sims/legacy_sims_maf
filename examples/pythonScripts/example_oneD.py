@@ -33,7 +33,7 @@ def getSlicer(simdata, metricList, bins=100):
     t = time.time()
     slicerList = []
     for m in metricList:
-        bb = slicers.OneDSlicer(sliceDim=m.colname, bins=bins)
+        bb = slicers.OneDSlicer(sliceColName=m.colname, bins=bins)
         bb.setupSlicer(simdata)
         slicerList.append(bb)
     dt, t = dtime(t)

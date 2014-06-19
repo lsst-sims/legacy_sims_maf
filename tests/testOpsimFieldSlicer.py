@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import unittest
@@ -99,13 +101,13 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         for fid, ra, dec, b in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
                                   self.fieldData['fieldDec'], self.testslicer):
-            self.assertEqual(fid, b['metadata']['fieldID'])
-            self.assertEqual(ra, b['metadata']['ra'])
-            self.assertEqual(dec, b['metadata']['dec'])
-            self.assertGreaterEqual(b['metadata']['fieldID'], 0)
-            self.assertLessEqual(b['metadata']['ra'], 2*np.pi)
-            self.assertGreaterEqual(b['metadata']['dec'], -np.pi)
-            self.assertLessEqual(b['metadata']['dec'], np.pi)
+            self.assertEqual(fid, b['slicePoint']['fieldID'])
+            self.assertEqual(ra, b['slicePoint']['ra'])
+            self.assertEqual(dec, b['slicePoint']['dec'])
+            self.assertGreaterEqual(b['slicePoint']['fieldID'], 0)
+            self.assertLessEqual(b['slicePoint']['ra'], 2*np.pi)
+            self.assertGreaterEqual(b['slicePoint']['dec'], -np.pi)
+            self.assertLessEqual(b['slicePoint']['dec'], np.pi)
 
     def testGetItem(self):
         """Test getting indexed value."""
@@ -113,15 +115,15 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
             dict1 = b
             dict2 = self.testslicer[i]
             np.testing.assert_array_equal(dict1['idxs'], dict2['idxs'])
-            self.assertDictEqual(dict1['metadata'], dict2['metadata'])
+            self.assertDictEqual(dict1['slicePoint'], dict2['slicePoint'])
         n = 0
-        self.assertEqual(self.testslicer[n]['metadata']['fieldID'], self.fieldData['fieldID'][n])
-        self.assertEqual(self.testslicer[n]['metadata']['ra'], self.fieldData['fieldRA'][n])
-        self.assertEqual(self.testslicer[n]['metadata']['dec'], self.fieldData['fieldDec'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['fieldID'], self.fieldData['fieldID'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
         n = len(self.testslicer) - 1
-        self.assertEqual(self.testslicer[n]['metadata']['fieldID'], self.fieldData['fieldID'][n])
-        self.assertEqual(self.testslicer[n]['metadata']['ra'], self.fieldData['fieldRA'][n])
-        self.assertEqual(self.testslicer[n]['metadata']['dec'], self.fieldData['fieldDec'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['fieldID'], self.fieldData['fieldID'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
 
             
 class TestOpsimFieldSlicerSlicing(unittest.TestCase):
@@ -137,12 +139,10 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which match fieldID values."""
-        # Test that slicing fails before setupSlicer
-        self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
         # Set up slicer.
         self.testslicer.setupSlicer(self.simData, self.fieldData)
         for b in self.testslicer:
-            didxs = np.where(self.simData['fieldID'] == b['metadata']['fieldID'])
+            didxs = np.where(self.simData['fieldID'] == b['slicePoint']['fieldID'])
             binidxs = b['idxs']
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
@@ -161,7 +161,7 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
                                          mask = np.zeros(len(self.testslicer), 'bool'),
                                          fill_value = self.testslicer.badval)
         for i, b in enumerate(self.testslicer):
-            idxs = self.testslicer.sliceSimData(b)
+            idxs = b['idxs']
             if len(idxs) > 0:
                 self.metricdata.data[i] = np.mean(self.simData['testdata'][idxs])
             else:
@@ -216,3 +216,5 @@ if __name__ == "__main__":
     #suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerPlotting)
     #unittest.TextTestRunner(verbosity=2).run(suite)
     #plt.show()
+    unittest.main()
+

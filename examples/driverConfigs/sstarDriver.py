@@ -159,12 +159,12 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFiel
 
     # Slew histograms
     m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewTime'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime'},
                               metricDict=makeDict(m1), constraints=[''] )
     slicerList.append(slicer)
 
     m1 = configureMetric('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewDist'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'},
                               metricDict=makeDict(m1), constraints=[''] )
     slicerList.append(slicer)
 
@@ -232,7 +232,7 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFiel
     # Count and plot number of visits per night, and calculate average.
     m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'Number of visits per night'}, 
                           summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
-    slicer = configureSlicer('OneDSlicer', kwargs={'sliceDim':'night','binsize':1},
+    slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
                              metricDict=makeDict(m1,m2),
                              constraints=[''])
     slicerList.append(slicer)
@@ -259,25 +259,25 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFiel
     for f in filters:
         m1 = configureMetric('CountMetric', params=['fivesigma_modified'], kwargs={'binsize':10},
                             histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-        slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'fivesigma_modified'},
+        slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_modified'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)]) 
         slicerList.append(slicer)
 
         m1 = configureMetric('CountMetric', params=['perry_skybrightness'], kwargs={'binsize':0.1},
                             histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-        slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'perry_skybrightness'},
+        slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'perry_skybrightness'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)
     
         m1 = configureMetric('CountMetric', params=['finSeeing'], kwargs={'binsize':0.03},
                             histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-        slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'finSeeing'},
+        slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'finSeeing'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)
 
         m1 = configureMetric('CountMetric', params=['airmass'], kwargs={'binsize':0.01},
                             histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-        slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'airmass'},
+        slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)
 

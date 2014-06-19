@@ -83,9 +83,9 @@ class TestMoreMetrics(unittest.TestCase):
         
         data = np.zeros(3, dtype=zip(names,dt))
         data['fieldDec'] = [-.1,0,.1]
-
+        slicePoint = {'ra':0.,'dec':0.}
         metric = metrics.RadiusObsMetric()
-        result = metric.run(data,0.,0.)
+        result = metric.run(data,slicePoint)
         for i,r in enumerate(result):
             np.testing.assert_almost_equal(r, abs(data['fieldDec'][i]))
         assert(metric.reduceMean(result) == np.mean(result))
@@ -192,10 +192,10 @@ class TestMoreMetrics(unittest.TestCase):
         result = metric.run(data)
         assert(result == 6./10.)
 
-    def testf0Nv(self):
-        """Test the f0Nv metric """
+    def testfONv(self):
+        """Test the fONv metric """
         nside=128
-        metric = metrics.f0Nv('ack',nside=nside, Nvisit=825,Asky=18000.)
+        metric = metrics.fONv('ack',nside=nside, Nvisit=825,Asky=18000.)
         npix = hp.nside2npix(nside)
         names=['blah']
         types = [float]
@@ -209,10 +209,10 @@ class TestMoreMetrics(unittest.TestCase):
         result2 =  metric.run(data)
         np.testing.assert_almost_equal(result2*18000., deginsph/2.)
 
-    def testf0Area(self):
-        """Test f0Area metric """
+    def testfOArea(self):
+        """Test fOArea metric """
         nside=128
-        metric = metrics.f0Area('ack',nside=nside, Nvisit=825,Asky=18000.)
+        metric = metrics.fOArea('ack',nside=nside, Nvisit=825,Asky=18000.)
         npix = hp.nside2npix(nside)
         names=['blah']
         types = [float]
@@ -249,6 +249,5 @@ class TestMoreMetrics(unittest.TestCase):
         assert(result4 == 1)
         
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestMoreMetrics)
-    unittest.TextTestRunner(verbosity=2).run(suite)
 
+    unittest.main()

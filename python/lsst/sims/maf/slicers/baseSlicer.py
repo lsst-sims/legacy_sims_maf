@@ -38,9 +38,9 @@ class BaseSlicer(object):
         # Will generally be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {}
         
-    def setupSlicer(self, *args, **kwargs):
-        """Set up internal parameters and bins for slicer. """
-        # Typically args will be simData + kwargs can be something about the bin sizes
+    def setupSlicer(self, *args):
+        """Set up internal parameters and slices for slicer. """
+        # Typically args will be simData
         raise NotImplementedError()
     
     def __len__(self):

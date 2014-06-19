@@ -178,8 +178,8 @@ class BaseSliceMetric(object):
         simCols = self.metricObjs[self.metricNames[0]].classRegistry.uniqueCols()
         for c in simCols:
             if c not in simData.dtype.names:
-                raise Exception('Column', c,'not in simData: needed by the metrics.\n',
-                                metricList[0].classRegistry)
+                raise Exception('Column', c,'not in simData: needed by the metrics.\n')#,
+                                #metricList[0].classRegistry)
         return True
 
     def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):

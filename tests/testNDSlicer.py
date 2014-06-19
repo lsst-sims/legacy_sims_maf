@@ -1,5 +1,7 @@
 import numpy as np
 import numpy.lib.recfunctions as rfn
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import itertools
 import unittest
@@ -284,16 +286,5 @@ class TestNDSlicerPlotting(unittest.TestCase):
         
 
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSetup)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerEqual)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerIteration)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSlicing)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerHistogram)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    
-    #suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerPlotting)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()
+

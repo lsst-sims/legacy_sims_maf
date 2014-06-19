@@ -1,10 +1,13 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import numpy.ma as ma
 import warnings
 import unittest
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.utils.tests as utilsTests
 
 def makeDataValues(size=100, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
@@ -444,15 +447,21 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         # Check title.
         self.assertEqual(ax.get_title(), self.plotParams['title'])
         
-        
-        
-                                                                    
-if __name__ == '__main__':
-    suitelist = []
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestSetupBaseSliceMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestRunBaseSliceMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestReadWriteBaseSliceMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestSummaryStatisticBaseSliceMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestPlottingBaseSliceMetric))
-    suite = unittest.TestSuite(suitelist)
-    unittest.TextTestRunner(verbosity=2).run(suite)        
+def suite():
+    """Returns a suite containing all the test cases in this module."""
+    utilsTests.init()
+    suites = []
+    suites += unittest.makeSuite(TestSetupBaseSliceMetric)
+    suites += unittest.makeSuite(TestRunBaseSliceMetric)
+    suites += unittest.makeSuite(TestReadWriteBaseSliceMetric)
+    suites += unittest.makeSuite(TestSummaryStatisticBaseSliceMetric)
+    suites += unittest.makeSuite(TestPlottingBaseSliceMetric)
+
+    return unittest.TestSuite(suites)
+
+def run(shouldExit=False):
+    """Run the tests"""
+    utilsTests.run(suite(), shouldExit)
+
+if __name__ == "__main__":
+    run(True)

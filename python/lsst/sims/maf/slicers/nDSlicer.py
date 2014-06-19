@@ -12,8 +12,12 @@ from .baseSlicer import BaseSlicer
     
 class NDSlicer(BaseSlicer):
     """Nd slicer (N dimensions)"""
-    def __init__(self, sliceDataColList=None, verbose=True):  
-        """Instantiate object."""
+    def __init__(self, sliceDataColList=None, verbose=True, binsList=None, nbinsList=100):  
+        """Instantiate object.
+        binsList can be a list of numpy arrays with the respective slicepoints for sliceDataColList,
+            (default 'None' uses nbinsList together with data min/max values to set bins).
+        nbinsList can be a list of values (one per column in sliceDataColList) or a single value
+            (repeated for all columns, default=100)."""
         super(NDSlicer, self).__init__(verbose=verbose)
         self.bins = None 
         self.nbins = None
@@ -23,15 +27,10 @@ class NDSlicer(BaseSlicer):
             self.nD = len(self.sliceDataColList)
         else:
             self.nD = None
-        self.slicer_init={'sliceDataColList':sliceDataColList}
+        self.slicer_init={'sliceDataColList':sliceDataColList, 'binList':binList, 'nbinsList':nbinsList}
 
-    def setupSlicer(self, simData, binsList=None, nbinsList=100):
-        """Set up bins.
-
-        binsList can be a list of numpy arrays with the respective slicepoints for sliceDataColList,
-            (default 'None' uses nbinsList together with data min/max values to set bins).
-        nbinsList can be a list of values (one per column in sliceDataColList) or a single value
-            (repeated for all columns, default=100). """
+    def setupSlicer(self, simData):
+        """Set up bins. """
         # For save-file
         self.slicer_setup={'binsList':binsList, 'nbinsList':nbinsList}
         # Parse input bins choices.
@@ -69,18 +68,19 @@ class NDSlicer(BaseSlicer):
             # Add these calculated values into the class lists of simIdxs and lefts.
             self.simIdxs.append(simIdxs)
             self.lefts.append(left)
-        # Build slicing method for ND slicer.
-        @wraps(self.sliceSimData)
-        def sliceSimData(slicepoint):
-            """Slice simData to return relevant indexes for slicepoint."""
-            # Identify relevant pointings in each dimension.
-            simIdxsList = []
-            for d in range(self.nD):
-                i = (np.where(slicepoint[d] == self.bins[d]))[0]
-                simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
-            return list(set.intersection(*simIdxsList))
-        setattr(self, 'sliceSimData', sliceSimData)
         
+        
+    def _sliceSimData(slicepoint):
+        """Slice simData to return relevant indexes for slicepoint."""
+        # Identify relevant pointings in each dimension.
+        simIdxsList = []
+        for d in range(self.nD):
+            i = (np.where(slicepoint[d] == self.bins[d]))[0]
+            simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
+        idxs = list(set.intersection(*simIdxsList))
+        slicePoint = {'pid':ipix}
+        return {'idxs':idxs, 'slicePoint':slicePoint}
+                
     def __iter__(self):
         """Iterate over the slicepoints."""
         # Order of iteration over bins: go through bins in each sliceCol in the sliceColList in order.
@@ -139,7 +139,6 @@ class NDSlicer(BaseSlicer):
         fignum = the figure number to use (default None - will generate new figure)
         ylog = make the colorscale log.
         """
-        plottype = '2dhist'
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
         newshape = []
@@ -200,7 +199,6 @@ class NDSlicer(BaseSlicer):
         alpha = alpha value for plot bins if filled (default 0.5).
         ylog = make the y-axis log (default False)
         """
-        plottype = 'hist'
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
         newshape = []

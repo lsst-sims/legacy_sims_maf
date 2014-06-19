@@ -64,7 +64,7 @@ class TestSlicers(unittest.TestCase):
 
 
     def test_oneDSlicer(self):
-        slicer=slicers.OneDSlicer(sliceDim='poop')
+        slicer=slicers.OneDSlicer(sliceColName='poop')
         dataValues = np.zeros(10000, dtype=[('poop','float')])
         dataValues['poop'] = np.random.rand(10000)
         slicer.setupSlicer(dataValues)

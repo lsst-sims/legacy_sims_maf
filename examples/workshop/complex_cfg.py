@@ -58,12 +58,12 @@ for f in filters:
     m1 = configureMetric('CountMetric', params=['fivesigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right',
                                      'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'fivesigma_ps','binsize':0.1,},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_ps','binsize':0.1,},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
     binList.append(slicer)
     m1 = configureMetric('CountMetric', params=['airmass'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'airmass','binsize':0.05},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass','binsize':0.05},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)])
     binList.append(slicer)
 

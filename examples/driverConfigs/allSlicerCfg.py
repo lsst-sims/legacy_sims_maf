@@ -46,9 +46,9 @@ slicerList.append(slicer)
 
 # Configure a OneDSlicer:
 # Configure a new metric
-m1 = configureMetric('CountMetric', params=['slewDist'])
+m1 = configureMetric('CountMetric', params=['slewDist'], plotDict={'ylog':True})
 metricDict=makeDict(m1)
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceDim":'slewDist'},
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'},
                           metricDict=metricDict, constraints=constraints)
 slicerList.append(slicer)
 

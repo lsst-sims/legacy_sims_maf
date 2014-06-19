@@ -31,7 +31,6 @@ class HourglassSlicer(UniSlicer):
         
     def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}, **kwargs):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """
-        plottype = 'hour'
         xlabel = 'Night - min(Night)' # Currently not able to override.
         f = plt.figure()
         ax = f.add_subplot(111)

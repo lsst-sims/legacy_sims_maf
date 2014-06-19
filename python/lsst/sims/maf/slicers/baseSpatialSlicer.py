@@ -47,13 +47,8 @@ class BaseSpatialSlicer(BaseSlicer):
         self.leafsize=leafsize
 
     def setupSlicer(self, simData):
-        """Use simData['spatialkey1'] and simData['spatialkey2']
-        (in radians) to set up KDTree.
-        spatialkey1 = ra, spatialkey2 = dec, typically: but must match order in slicepoint.
-        'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
-        'radius' (in degrees) is distance at which matches between
-        the simData KDtree 
-        and slicepoint RA/Dec values will be produced."""
+        """Use simData[self.spatialkey1] and simData[self.spatialkey2]
+        (in radians) to set up KDTree."""
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
         
@@ -126,7 +121,6 @@ class BaseSpatialSlicer(BaseSlicer):
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
         normVal = normalization value to divide metric values by (overrides zp)"""
-        plottype = 'hist'
         if bins is None:
             bins = optimalBins(metricValueIn)
         # Histogram metricValues. 
@@ -246,7 +240,6 @@ class BaseSpatialSlicer(BaseSlicer):
                    plotMaskedValues=False, zp=None, normVal=None,
                    plotMin=None, plotMax=None, percentileClip=None,  **kwargs):
         """Plot the sky map of metricValue."""
-        plottype = 'sky'
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
         if fignum is None:

@@ -24,7 +24,6 @@ class fOSlicer(HealpixSlicer):
         """ 
         Note that Asky and Nvisit need to be set for both the slicer and the summary statistic
           for the plot and returned summary stat values to be consistent!"""
-        plottype = 'fO'
         colorlinewidth = 2
         if scale is None:
             scale = (hp.nside2pixarea(hp.npix2nside(metricValue.size), degrees=True)  / 1000.0)

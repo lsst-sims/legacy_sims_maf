@@ -1,6 +1,8 @@
 import numpy as np
 import numpy.lib.recfunctions as rfn
 import numpy.ma as ma
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
 import healpy as hp
@@ -119,9 +121,9 @@ class TestHealpixSlicerIteration(unittest.TestCase):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         npix = hp.nside2npix(self.nside)
         for i, b in enumerate(self.testslicer):
-            self.assertEqual(i, b['metadata']['pix'])
-            ra = b['metadata']['ra']
-            dec = b['metadata']['dec']
+            self.assertEqual(i, b['slicePoint']['pid'])
+            ra = b['slicePoint']['ra']
+            dec = b['slicePoint']['dec']
             self.assertGreaterEqual(ra, 0)
             self.assertLessEqual(ra, 2*np.pi)
             self.assertGreaterEqual(dec, -np.pi)
@@ -157,12 +159,10 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
-        # Test that slicing fails before setupSlicer
-        self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
         self.testslicer.setupSlicer(self.dv)
         for b in self.testslicer:
-            binra = b['metadata']['ra']
-            bindec = b['metadata']['dec']
+            binra = b['slicePoint']['ra']
+            bindec = b['slicePoint']['dec']
             distances = calcDist_vincenty(binra, bindec, self.dv['ra'], self.dv['dec'])
             didxs = np.where(distances<=np.radians(self.radius))
             binidxs = b['idxs'] 
@@ -175,20 +175,20 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
 class TestHealpixSlicerPlotting(unittest.TestCase):
     def setUp(self):
         self.nside = 16
+        self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec')
+                                        spatialkey1='ra', spatialkey2='dec', radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
                                 decmin=-np.pi, decmax=0,
                                 random=True)
-        self.radius = 1.8
-        self.testslicer.setupSlicer(self.dv, radius=self.radius)
+        self.testslicer.setupSlicer(self.dv)
         self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testslicer), dtype='float'),
                                          mask = np.zeros(len(self.testslicer), 'bool'),
                                          fill_value = self.testslicer.badval)
         for i, b in enumerate(self.testslicer):
-            idxs = self.testslicer.sliceSimData(b)
+            idxs = b['idxs'] 
             if len(idxs) > 0:
                 self.metricdata.data[i] = np.mean(self.dv['testdata'][idxs])
             else:
@@ -241,15 +241,4 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                 
                         
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerSetup)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerEqual)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerIteration)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerSlicing)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-
-    #suite = unittest.TestLoader().loadTestsFromTestCase(TestHealpixSlicerPlotting)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
-    #plt.show()
+    unittest.main()

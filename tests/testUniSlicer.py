@@ -35,7 +35,6 @@ class TestUniSlicerSetupAndSlice(unittest.TestCase):
         
     def testSetupSlicerIndices(self):
         """Test slicer returns correct indices (all) after setup. Note this also tests slicing."""
-        self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
         dvmin = 0
         dvmax = 1        
         nvalues = 1000
@@ -67,7 +66,12 @@ class TestUniSlicerIteration(unittest.TestCase):
 
     def testGetItem(self):
         """Test that can return an individual indexed values of the slicer."""
-        self.assertEqual(self.testslicer[0], 0)
+        dvmin = 0
+        dvmax = 1
+        nvalues = 1000
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        self.testslicer.setupSlicer(dv)
+        self.assertEqual(self.testslicer[0]['slicePoint']['pid'], 0)
         
 class TestUniSlicerEqual(unittest.TestCase):
     def setUp(self):
@@ -93,16 +97,10 @@ class TestUniSlicerEqual(unittest.TestCase):
         testslicer2.setupSlicer(dv2)
         self.assertEqual(self.testslicer, testslicer2)
         # these will not be the same, as different slicer type.
-        testslicer2 = OneDSlicer(sliceDataColName='testdata')
-        testslicer2.setupSlicer(dv2, bins=10)
+        testslicer2 = OneDSlicer(sliceColName='testdata', bins=10)
+        testslicer2.setupSlicer(dv2)
         self.assertNotEqual(self.testslicer, testslicer2)
             
 if __name__ == "__main__":
-    suitelist = [unittest.TestLoader().loadTestsFromTestCase(TestUniSlicerSetupAndSlice),]
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestUniSlicerIteration))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestUniSlicerEqual))
-    suite = unittest.TestSuite(suitelist)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+   unittest.main()
 
-    # slicing tested as part of setup here, and 'function' is identity function
-    #  so equivalent to slicing. 
