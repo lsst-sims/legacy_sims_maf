@@ -69,35 +69,30 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
         self.left = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'right')
-        # Build slicing method.     
-        @wraps(self.sliceSimData)
-        def sliceSimData(binpoint):
-            """Slice simData on fieldID, to return relevant indexes for binpoint."""
-            i = np.where(self.bins['fieldID'] == binpoint)
-            return self.simIdxs[self.left[i]:self.right[i]]   
-        setattr(self, 'sliceSimData', sliceSimData)
+
         
+    def _sliceSimData(self, ipix):
+        idxs = self.simIdxs[self.left[ipix]:self.right[ipix]]  
+        slicePoint = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 
+                      'fieldID': self.bins['fieldID'][ipix]}
+        return {'idxs':idxs, 'slicePoint':slicePoint}
+
     def __iter__(self):
-        """Iterate over the binpoints."""
+        """Iterate over the slicepoints."""
         self.ipix = 0
         return self
-    
-    def _resultsDict(self,ipix):
-        sliceInfo = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 'fieldID': self.bins['fieldID'][ipix]}
-        idxs = self.sliceSimData(self.bins['fieldID'][ipix])
-        return {'idxs':idxs, 'sliceInfo':sliceInfo}
-    
+        
     def next(self):
-        """Return RA/Dec values when iterating over binpoints."""
+        """Return RA/Dec values when iterating over slicepoints."""
         # This returns RA/Dec (in radians) of points in the grid. 
         if self.ipix >= self.nbins:
             raise StopIteration
-        result = self._resultsDict(self.ipix) 
+        result = self._sliceSimData(self.ipix) 
         self.ipix += 1
         return result
 
     def __getitem__(self, ipix):
-        return self._resultsDict(ipix)
+        return self._sliceSimData(ipix)
     
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
