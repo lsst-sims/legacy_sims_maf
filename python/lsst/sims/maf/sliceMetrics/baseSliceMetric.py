@@ -396,8 +396,15 @@ class BaseSliceMetric(object):
            pParams['units'] = mname
            if '_units' in pParams:
               pParams['units'] += ' ('+ pParams['_units'] + ')'
-        if 'xlabel' not in pParams:
-           pParams['xlabel'] = pParams['units']
+        # For the oneDSlicer, the metric is on the y-axis.
+        if self.slicer.slicerName == 'OneDSlicer':
+           if 'ylabel' not in pParams:
+              pParams['ylabel'] = mname +' ('+ pParams['units'] + ')'
+           if 'xlabel' not in pParams:
+              pParams['xlabel'] = self.slicer.sliceColName+' ('+self.slicer.sliceColUnits + ')'
+        else:
+           if 'xlabel' not in pParams:
+              pParams['xlabel'] = pParams['units']
         # Plot the data. Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
         plotResults = self.slicer.plotData(self.metricValues[metricName], savefig=savefig,
                                             filename=outfile, **pParams)

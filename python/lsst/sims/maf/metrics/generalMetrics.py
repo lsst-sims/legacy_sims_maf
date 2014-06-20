@@ -9,10 +9,9 @@ class OpenShutterMetric(SimpleScalarMetric):
                 metricName='OpenShutterMetric',
                 exptimeCol='visitExpTime', **kwargs):
         self.exptimeCol = exptimeCol
-        super(OpenShutterMetric,self).__init__(self.exptimeCol, metricName=metricName)
+        super(OpenShutterMetric,self).__init__(self.exptimeCol, metricName=metricName, units='sec')
         self.readTime = readTime
         self.shutterTime = shutterTime
-        self.units = 'sec'
         self.metricDtype = float
     
    def run(self, dataSlice, *args):
@@ -26,7 +25,7 @@ class OpenShutterFracMetric(BaseMetric):
                 slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):
        self.exptimeCol = exptimeCol
        self.slewTimeCol = slewTimeCol
-       super(OpenShutterFracMetric,self).__init__([self.exptimeCol, self.slewTimeCol], metricName=metricName)
+       super(OpenShutterFracMetric,self).__init__([self.exptimeCol, self.slewTimeCol], metricName=metricName, units='frac')
        self.metricDtype = float
        self.units = 'OpenShutter/TotalTime'
        self.readTime = readTime

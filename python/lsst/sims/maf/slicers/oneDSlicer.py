@@ -4,13 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
 import warnings
-from lsst.sims.maf.utils import optimalBins
+from lsst.sims.maf.utils import optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 
 
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
-    def __init__(self, sliceColName=None, verbose=True, badval=-666, bins=None, binMin=None, binMax=None, binsize=None):
+    def __init__(self, sliceColName=None, verbose=True, badval=-666, bins=None, binMin=None, binMax=None, binsize=None, sliceColUnits=None):
         """ 'bins' can be a numpy array with the binpoints for sliceCol or a single integer value
         (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
         as in numpy's histogram function.
@@ -30,6 +30,9 @@ class OneDSlicer(BaseSlicer):
         self.binMin = binMin
         self.binMax = binMax
         self.binsize = binsize
+        if sliceColUnits is None:
+            co = ColInfo()
+            self.sliceColUnits = co.getUnits(self.sliceColName)
         
     def setupSlicer(self, simData): 
         """Set up bins in slicer.        

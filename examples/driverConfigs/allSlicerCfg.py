@@ -9,7 +9,7 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allslicers'
 root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}#, 'OutputTable':'output'}
-root.opsimName = 'example'
+root.opsimName = 'opsimblitz1_1131'
 
 root.verbose = True
 root.getConfig = False
