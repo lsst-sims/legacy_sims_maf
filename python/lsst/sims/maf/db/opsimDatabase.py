@@ -27,26 +27,31 @@ class OpsimDatabase(Database):
           
         """
         self.dbAddress = dbAddress        
-        # Default dbTables and dbTableIDKey values:
-        defaultdbTables={'outputTable':['Output', 'obsHistID'],
-                         'cloudTable':['Cloud', 'cloudID'],
-                         'seeingTable':['Seeing', 'seeingID'],
-                         'fieldTable':['Field', 'fieldID'],
-                         'sessionTable':['Session', 'sessionID'],
-                         'configTable':['Config', 'configID'],
-                         'proposalTable':['Proposal', 'propID'],
-                         'proposalFieldTable':['Proposal_Field', 'proposal_field_id'],
-                         'obsHistoryTable':['ObsHistory', 'obsHistID'],
-                         'obsHistoryProposalTable':['Obshistory_Proposal', 'obsHistory_propID'],
-                         'sequenceHistoryTable':['SeqHistory', 'sequenceID'],
-                         'sequenceHistoryObsHistoryTable':['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
-                         'missedHistoryTable':['MissedHistory', 'missedHistID'],
-                         'sequenceHistoryMissedHistoryTable':['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
-                         'slewActivitiesTable':['SlewActivities', 'slewActivityID'],
-                         'slewHistoryTable':['SlewHistory', 'slewID'],
-                         'slewMaxSpeedsTable':['SlewMaxSpeeds', 'slewMaxSpeedID'],
-                         'slewStateTable':['SlewState', 'slewIniStatID']
-                         }
+        # Default dbTables and dbTableIDKey values:        
+        if 'defaultdbTables' in kwargs:
+            defaultdbTables = kwargs.get('defaultdbTables')
+            # Remove this kwarg since we're sending it on explicitly
+            del kwargs['defaultdbTables']
+        else:
+            defaultdbTables={'outputTable':['Output', 'obsHistID'],
+                             'cloudTable':['Cloud', 'cloudID'],
+                             'seeingTable':['Seeing', 'seeingID'],
+                             'fieldTable':['Field', 'fieldID'],
+                             'sessionTable':['Session', 'sessionID'],
+                             'configTable':['Config', 'configID'],
+                             'proposalTable':['Proposal', 'propID'],
+                             'proposalFieldTable':['Proposal_Field', 'proposal_field_id'],
+                             'obsHistoryTable':['ObsHistory', 'obsHistID'],
+                             'obsHistoryProposalTable':['Obshistory_Proposal', 'obsHistory_propID'],
+                             'sequenceHistoryTable':['SeqHistory', 'sequenceID'],
+                             'sequenceHistoryObsHistoryTable':['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
+                             'missedHistoryTable':['MissedHistory', 'missedHistID'],
+                             'sequenceHistoryMissedHistoryTable':['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
+                             'slewActivitiesTable':['SlewActivities', 'slewActivityID'],
+                             'slewHistoryTable':['SlewHistory', 'slewID'],
+                             'slewMaxSpeedsTable':['SlewMaxSpeeds', 'slewMaxSpeedID'],
+                             'slewStateTable':['SlewState', 'slewIniStatID']
+                             }
         # Call base init method to set up all tables and place default values into dbTable/dbTablesIdKey if not overriden.
         super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
                                             defaultdbTables=defaultdbTables, 
@@ -133,20 +138,27 @@ class OpsimDatabase(Database):
          WFD propIDs (proposals containing 'Universal' in the name),
          deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name).
          """
-        # The methods to identify WFD and DD proposals will be updated in the future,
-        #  when opsim adds flags to the config tables.
-        table = self.tables['proposalTable']
-        propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName'], constraint='')
-        propIDs = np.array(propData['propID'], int)
-        propIDs = list(propIDs)
-        wfdIDs = []
-        ddIDs = []
-        # Parse on name for now.
-        for name, propid in zip(propData['propConf'], propIDs):
-            if 'Universal' in name:
-                wfdIDs.append(propid)
-            if ('deep' in name) or ('Deep' in name) or ('DD' in name) or ('dd' in name):
-                ddIDs.append(propid)
+        # Check if using full database; otherwise can only fetch list of all propids. 
+        if 'proposalTable' not in self.tables:
+            propData = self.tables['outputTable'].query_columns_Array(colnames=['propID'])
+            propIDs = np.array(propData['propID'], int)
+            wfdIDs = []
+            ddIDs = []
+        else:
+            # The methods to identify WFD and DD proposals will be updated in the future,
+            #  when opsim adds flags to the config tables.
+            table = self.tables['proposalTable']
+            propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName'], constraint='')
+            propIDs = np.array(propData['propID'], int)
+            propIDs = list(propIDs)
+            wfdIDs = []
+            ddIDs = []
+            # Parse on name for now.
+            for name, propid in zip(propData['propConf'], propIDs):
+                if 'Universal' in name:
+                    wfdIDs.append(propid)
+                if ('deep' in name) or ('Deep' in name) or ('DD' in name) or ('dd' in name):
+                    ddIDs.append(propid)
         return propIDs, wfdIDs, ddIDs
 
     def fetchRunLength(self, runLengthParam='nRun'):
@@ -208,6 +220,10 @@ class OpsimDatabase(Database):
         """Fetch config data from configTable, match proposal IDs with proposal names and some field data,
         and do a little manipulation of the data to make it easier to add to the presentation layer.    
         """
+        # Check to see if we're dealing with a full database or not. If not, just return (no config info to fetch).
+        if 'sessionTable' not in self.tables:
+            warnings.warn('Cannot fetch opsim config info as this is not a full opsim database.')
+            return {}, {}            
         # Create two dictionaries: a summary dict that contains a summary of the run
         configSummary = {}
         configSummary['keyorder'] = ['Version', 'RunInfo', 'Proposals']

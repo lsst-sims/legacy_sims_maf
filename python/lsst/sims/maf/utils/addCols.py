@@ -116,3 +116,43 @@ class DecOnlyDither(object):
         return simData
     
                              
+# Add some random dithers in RA/Dec
+
+class RandomDither(object):
+    """Randomly dither the RA and Dec pointings up to maxDither degrees from center."""
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', maxDither=1.8, randomSeed=None):
+        # Instantiate the RandomDither object and set internal variables. 
+        self.raCol = raCol
+        self.decCol = decCol
+        self.maxDither = maxDither * np.pi / 180.0
+        self.randomSeed = randomSeed
+        # self.units used for plot labels
+        self.units = 'rad'
+        # Values required for framework operation: this specifies the names of the new columns.
+        self.colsAdded = ['randomRADither', 'randomDecDither']
+        # Values required for framework operation: this specifies the data columns required from the database.
+        self.colsReq = [self.raCol, self.decCol]
+
+    def run(self, simData):
+        # Generate random numbers for dither, using defined seed value if desired.
+        if self.randomSeed is not None:
+            np.random.seed(self.randomSeed)
+        dithersRA = np.random.rand(len(simData[self.raCol]))
+        dithersDec = np.random.rand(len(simData[self.decCol]))
+        # np.random.rand returns numbers in [0, 1) interval.
+        # Scale to desired +/- maxDither range.
+        dithersRA = dithersRA*np.cos(simData[self.decCol])*2.0*self.maxDither - self.maxDither
+        dithersDec = dithersDec*2.0*self.maxDither - self.maxDither
+        # Add to RA and Dec and wrap back into expected range.
+        randomRADither = simData[self.raCol] + dithersRA
+        randomRADither = randomRADither % (2.0*np.pi)
+        randomDecDither = simData[self.decCol] + dithersDec
+        # Wrap dec back into +/- 90 using truncate
+        randomDecDither = np.where(randomDecDither < -np.pi/2.0, -np.pi/2.0, randomDecDither)
+        randomDecDither = np.where(randomDecDither > np.pi/2.0, np.pi/2.0, randomDecDither) 
+        stackerInput = np.core.records.fromarrays([randomRADither, randomDecDither],
+                                                  names=['randomRADither', 'randomDecDither'])
+        # Add the new columns into the opsim simulated survey data.
+        simData = _opsimStack([simData, stackerInput])
+        return simData
+        

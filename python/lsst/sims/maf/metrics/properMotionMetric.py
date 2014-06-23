@@ -7,9 +7,9 @@ class ProperMotionMetric(BaseMetric):
     motion.  Assuming Gaussian errors.
     """
 
-    def __init__(self, metricName='properMotion',
-                 m5col='fivesigma_modified', mjdcol='expMJD', units='mas/yr',
-                 filtercol='filter', seeingcol='finSeeing',  rmag=20.,
+    def __init__(self, metricName='ProperMotion',
+                 m5Col='fivesigma_modified', mjdCol='expMJD', units='mas/yr',
+                 filterCol='filter', seeingCol='finSeeing',  rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
@@ -28,13 +28,13 @@ class ProperMotionMetric(BaseMetric):
         while a poorly scheduled survey will be close to zero.
         baseline = The length of the survey used for the normalization (years)
         """
-        cols = [m5col, mjdcol,filtercol,seeingcol]
+        cols = [m5Col, mjdCol, filterCol, seeingCol]
         if normalize:
             units = 'ratio'
         super(ProperMotionMetric, self).__init__(cols, metricName, units=units, **kwargs)
         # set return type
-        self.seeingcol = seeingcol
-        self.m5col = m5col
+        self.seeingCol = seeingCol
+        self.m5Col = m5Col
         self.metricDtype = 'float'
         filters=['u','g','r','i','z','y']
         self.mags={}
@@ -57,9 +57,9 @@ class ProperMotionMetric(BaseMetric):
                 precis[observations] = self.badval
             else:
                 snr = m52snr(self.mags[f],
-                   dataslice[self.m5col][observations])
+                   dataslice[self.m5Col][observations])
                 precis[observations] = astrom_precision(
-                    dataslice[self.seeingcol][observations], snr)
+                    dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
         result = sigma_slope(dataslice['expMJD'][good], precis[good])

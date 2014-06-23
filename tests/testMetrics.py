@@ -253,6 +253,7 @@ class TestSimpleMetrics(unittest.TestCase):
         self.assertEqual(testmetric.reduceNLunations(metricval), 4)
         self.assertEqual(testmetric.reduceMaxSeqLunations(metricval), 3)
 
+
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBaseMetric)
     unittest.TextTestRunner(verbosity=2).run(suite)

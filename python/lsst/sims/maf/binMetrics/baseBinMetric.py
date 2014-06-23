@@ -53,10 +53,11 @@ def dtime(time_prev):
 
 
 class BaseBinMetric(object):
-    def __init__(self, figformat='png'):
+    def __init__(self, figformat='pdf', dpi=600):
         """Instantiate binMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
+        self.dpi = dpi
         self.metricNames = []
         self.metricObjs = {}
         self.plotParams = {}
@@ -93,12 +94,16 @@ class BaseBinMetric(object):
                 oname = oname + '_' + self.metadata[metricName]
         # Add letter to distinguish binner types
         #   (which otherwise might have the same output name).
-        oname = oname + '_' + self.binner.binnerName[:4].upper()
+        oname = oname + '_' + self.binner.binnerName[:4].upper()        
+        # Strip white spaces (replace with underscores) and strip quotes
+        oname = oname.replace('  ', ' ').replace('.', '_').replace(' ', '_').replace('"','').replace("'",'')
+        # Replace <, > and = signs
+        oname = oname.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile (with path) and strip white spaces (replace with underscores) and strip quotes. 
-        outfile = os.path.join(outDir, oname.replace(' ', '_').replace("'",'').replace('"',''))
+        # Build outfile (with path) and . 
+        outfile = os.path.join(outDir, oname)
         return outfile
 
     def _addOutputFiles(self, metricName, key, value):
@@ -377,6 +382,7 @@ class BaseBinMetric(object):
            pParams['xlabel'] = pParams['units']
         # Plot the data. Plotdata for each binner returns a dictionary with the filenames, filetypes, and fig nums.
         plotResults = self.binner.plotData(self.metricValues[metricName], savefig=savefig,
+                                           figformat=self.figformat, dpi=self.dpi,
                                             filename=outfile, **pParams)
         # Save information about the plotted files into the output file list.
         for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):

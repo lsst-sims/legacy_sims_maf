@@ -18,8 +18,9 @@ def dtime(time_prev):
 
 class ComparisonBinMetric(object):
     """ComparisonBinMetric"""
-    def __init__(self, figformat='png', verbose=True):
+    def __init__(self, figformat='pdf', dpi=400, verbose=True):
         self.figformat = figformat
+        self.dpi = dpi
         self.verbose = verbose
         #  The comparison bin metric stores data in dictionaries keyed by (the same) number:
         #     -- the baseBinMetrics (which then hold metric data and the binner),
@@ -179,7 +180,7 @@ class ComparisonBinMetric(object):
     
     def plotHistograms(self, dictNums, metricNames, 
                         bins=100, histMin=None,histMax=None,
-                        title=None, xlabel=None,color=None, labels=None,
+                        title=None, xlabel=None, color=None, labels=None,
                         legendloc='upper left', bnamelen=4, alpha=1.0,
                         savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
         """
@@ -225,7 +226,7 @@ class ComparisonBinMetric(object):
             if labels is None:
                label = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
                               + self.binmetrics[d]._dupeMetricName(m) +
-                              ' ' + self.binmetrics[d].binner.binnerName[:bnamelen])
+                              ' ' + self.binmetrics[d].binner.binnerName[:bnamelen].upper())
             # Plot data using 'plotBinnedData' if that method available (oneDBinner)
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
@@ -249,15 +250,15 @@ class ComparisonBinMetric(object):
         if savefig:
             outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
-                                                          plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)
+                                                          plotType='Histogram')
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile
 
     def plotPowerSpectra(self, dictNums, metricNames, maxl=500., removeDipole=True,
-                         title=None, legendloc='upper left', bnamelen=4,
-                         savefig=False, outDir=None, outfileRoot=None):
+                         title=None, legendloc='upper left', labels=None, xlabel=None, bnamelen=4,
+                         color=None, savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
         """Create a plot containing the power spectrum visualization from all possible metrics in dictNum +
                        metricNames.
 
@@ -275,8 +276,8 @@ class ComparisonBinMetric(object):
         if len(dictNums) == 0:
             warnings.warn('Removed all dictNums and metricNames from list, due to binnerName, metricname absence or type of metric data.')
             return
-        if plotTitle is None:
-            plotTitle = self._buildPlotTitle(dictNums, metricNames)
+        if title is None:
+            title = self._buildPlotTitle(dictNums, metricNames)
         # Plot the data.
         fignum = None
         addLegend = False
@@ -285,21 +286,27 @@ class ComparisonBinMetric(object):
             if i == len(metricNames) - 1:
                 addLegend = True
             # Build legend label for this dictNum/metricName.
-            label = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
-                           + self.binmetrics[d]._dupeMetricName(m) +
-                           ' ' + self.binmetrics[d].binner.binnerName[:bnamelen])    
+            if labels is None:
+                label = (self.binmetrics[d].simDataName[m] + ' ' + self.binmetrics[d].metadata[m] + ' ' 
+                            + self.binmetrics[d]._dupeMetricName(m) +
+                            ' ' + self.binmetrics[d].binner.binnerName[:bnamelen].upper())    
             # Plot data.
-            fignum = self.binmetrics[d].binner.plotPowerSpectrum(self.binmetrics[d].metricValues[m],
-                                                                maxl=maxl, removeDipole=removeDipole,
-                                                                title=title,
-                                                                fignum=fignum,
-                                                                label=label,
-                                                                addLegend=addLegend)
+            plotParams = {'xlabel':xlabel, 'title':title, 'label':label,
+                          'addLegend':addLegend,'legendloc':legendloc, 'color':color}
+            if plotkwargs is not None:
+                   for key in plotkwargs[i].keys():
+                      plotParams[key] = plotkwargs[i][key]
+            try:
+                fignum = self.binmetrics[d].binner.plotPowerSpectrum(self.binmetrics[d].metricValues[m],
+                                                                    maxl=maxl, removeDipole=removeDipole,
+                                                                    fignum=fignum, **plotParams)
+            except AttributeError:
+                warnings.warn('Should have caught this earlier, but there must be a bug. Carry on.')
         if savefig:
             outfile = self.binmetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
-                                                          plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)
+                                                          plotType='PowerSpectrum')
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile
@@ -351,8 +358,8 @@ class ComparisonBinMetric(object):
         if savefig:
             outfile = self.binmetric[dictNums[0]]._buildOutfileName(title, 
                                                                     outDir=outDir, outfileRoot=outfileRoot, 
-                                                                    plotType='sky')
-            plt.savefig(outfile, figformat=self.figformat)
+                                                                    plotType='SkyMap')
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile

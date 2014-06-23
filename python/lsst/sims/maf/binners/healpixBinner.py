@@ -175,8 +175,9 @@ class HealpixBinner(BaseSpatialBinner):
                                                         scale=scale,color=color, **kwargs)
         return fignum
 
-    def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
-                          label=None, addLegend=False, removeDipole=True, verbose=False, **kwargs):
+    def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500.,
+                          label=None, addLegend=False, legendloc='upper right',
+                          removeDipole=True, verbose=False, **kwargs):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -186,7 +187,6 @@ class HealpixBinner(BaseSpatialBinner):
         addLegend = flag to add legend (default False).
         removeDipole = remove dipole when calculating power spectrum (default True) (monopole removed automatically.)
         """
-        plottype = 'ps'
         if fignum:
             fig = plt.figure(fignum)
         else:
@@ -207,7 +207,7 @@ class HealpixBinner(BaseSpatialBinner):
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l$')
         if addLegend:
-            plt.legend(loc='upper right', fancybox=True, prop={'size':'smaller'})
+            plt.legend(loc=legendloc, fancybox=True, prop={'size':'smaller'})
         if title!=None:
             plt.title(title)
         # Return figure number (so we can reuse/add onto/save this figure if desired). 

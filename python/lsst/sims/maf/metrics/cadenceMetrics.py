@@ -1,5 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
+from .simpleMetrics import SimpleScalarMetric
 
 class SupernovaMetric(BaseMetric):
     """Measure how many time serries meet a given time and filter distribution requirement """
@@ -188,6 +189,26 @@ class UniformityMetric(BaseMetric):
         D_max = np.max(np.abs(n_cum-dates-dates[1])) # For a uniform distribution, dates = n_cum
         return D_max
         
+        
+        
+        
+class QuickRevisitMetric(SimpleScalarMetric):
+    """Some kind of metric to investigate how dithering effects short-timescale measurements."""
+    def __init__(self, nightCol='night', nVisitsInNight=6, **kwargs):
+        cols = [nightCol]
+        super(QuickRevisitMetric, self).__init__(cols, **kwargs)        
+        self.nightCol = nightCol
+        self.nVisitsInNight = nVisitsInNight
+        xlabel = 'Number of Nights with >= %d Visits' %(nVisitsInNight)
+        if 'xlabel' not in self.plotParams:
+            self.plotParams['xlabel'] = xlabel
+
+    def run(self, dataSlice):
+        """Count how many nights the dataSlice has >= nVisitsInNight."""
+        nightbins = np.arange(dataSlice[self.nightCol].min(), dataSlice[self.nightCol].max()+0.5, 1)
+        counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
+        condition = (counts >= self.nVisitsInNight)
+        return len(counts[condition])
         
         
         

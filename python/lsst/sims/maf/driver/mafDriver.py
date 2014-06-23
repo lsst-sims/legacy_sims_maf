@@ -53,10 +53,6 @@ class MafDriver(object):
                 dt, time_prev = dtime(time_prev)
                 print 'Got OpSim config info in %.3g s'%dt
 
-        self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
-        if self.verbose:
-            dt, time_prev = dtime(time_prev)
-            print 'fetched PropID info in %.3g s'%dt
         # Construct the binners and metric objects
         self.binList = []
         self.metricList = []
@@ -151,6 +147,8 @@ class MafDriver(object):
 
     def getFieldData(self, binner, sqlconstraint):
         """Given an opsim binner, generate the FieldData """
+        # Get the propid info (only used here in getFieldData).
+        self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
         # Do a bunch of parsing to get the propids out of the sqlconstraint.
         if 'propID' not in sqlconstraint:
             propids = self.allpropids
@@ -369,9 +367,14 @@ class MafDriver(object):
                     cbm.readMetricData(fullfilename)
                 dictNums = cbm.binmetrics.keys()
                 dictNums.sort()
-                fignum, title, outfile = cbm.plotHistograms(dictNums,[cbm.binmetrics[0].metricNames[0]]*len(dictNums),
-                                                     outDir=self.config.outputDir, savefig=True,
-                                                     plotkwargs=histDict[key]['plotkwargs'])
+                fignum, title, outhist = cbm.plotHistograms(dictNums,
+                                                            [cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                                                        outDir=self.config.outputDir, savefig=True,
+                                                        plotkwargs=histDict[key]['plotkwargs'])
+                fignum, title, outps = cbm.plotPowerSpectra(dictNums,
+                                                            [cbm.binmetrics[0].metricNames[0]]*len(dictNums),
+                                                            outDir=self.config.outputDir, savefig=True,
+                                                            plotkwargs=histDict[key]['plotkwargs'])
                 # Add this plot info to the allOutDict ('ResultsSummary.dat')
                 key = 0
                 while key in allOutDict:
@@ -383,7 +386,8 @@ class MafDriver(object):
                 allOutDict[key]['binnerName'] = cbm.binmetrics[0].binner.binnerName
                 allOutDict[key]['metadata'] = title
                 allOutDict[key]['sqlconstraint'] = ''
-                allOutDict[key]['comboPlot'] = outfile
+                allOutDict[key]['comboHist'] = outhist
+                allOutDict[key]['comboPS'] = outps
                 
         # Save metric filekey & summary stats output. 
         summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
