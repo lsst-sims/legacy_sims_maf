@@ -7,6 +7,7 @@
 \usepackage[]{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{xcolor}
 \usepackage{listings}
 \usepackage{hyperref}
 \def\arcsec{$^{\prime\prime}$}
@@ -18,7 +19,8 @@
   H. Cook\supit{c}, {\v Z}eljko Ivezi{\'c}\supit{a},  K. Simon Krughoff\supit{a}, Catherine Petry\supit{d}, Stephen T. Ridgway\supit{b}.
 \skiplinehalf
 \supit{a}University of Washington, Address, Seattle, USA; \\
-\supit{b}National Optical Astronomy Observatory, Address, Tucson, USA\\
+\supit{b}National Optical Astronomy Observatory, Address, Tucson,
+USA\\
 \supit{c}Eureka Scientific, Inc., Address, City, USA\\
 \supit{d}University of Arizona, Address, Tucson, USA\\
 }
@@ -34,12 +36,18 @@
 
 \lstset{
 language=Python,
-showstringspaces=false,
-formfeed=newpage,
-tabsize=4,
 basicstyle=\ttfamily\scriptsize,
-commentstyle=\itshape,
-breaklines=true
+breaklines=true,
+tabsize=4,
+commentstyle=\ttfamily\color{red}\it,
+keywordstyle=\ttfamily\color{blue!90!black}\bf,
+keywords=[2]{True,False, self},
+keywordstyle={[2]\ttfamily\color{yellow!80!black}},
+%emph={Metric,__init__, run},          
+%emphstyle=\ttfamily\color{red!80!black},    
+%identifierstyle=\color{blue},
+stringstyle=\color{green!70!black},
+showstringspaces=false
 }
 
 
@@ -1161,7 +1169,7 @@ class VisitGroupsMetric(BaseMetric):
     def __init__(self, timesCol='expMJD', nightsCol='night', 
                  deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, minNVisits=2, window=30, minNNights=3,
                  **kwargs):
-... <snip> ... # Removed lines setting internal variables to passed values
+  #... <snip> ... # Removed lines setting internal variables to passed values
         super(VisitGroupsMetric, self).__init__([self.times, self.nights], **kwargs)
 
     def run(self, dataSlice):
@@ -1175,7 +1183,7 @@ class VisitGroupsMetric(BaseMetric):
         uniquenights = np.unique(dataSlice[self.nights])
         nights = []
         visitNum = []
- ... <snip> ... # Removed lines with details of calculation
+  #... <snip> ... # Removed lines with details of calculation
         metricval = {'visits':visitNum, 'nights':nights}
         if len(visitNum) == 0:
             return self.badval
@@ -1216,8 +1224,8 @@ MAF has been designed to provide an easy to use, easy to extend
 framework to analyze LSST OpSim simulated surveys. It is a powerful
 tool for evaluating the effects of observing strategies, including
 dithering strategies.  By collaborating with the wider LSST community
-to create new Metrics to cover a wide range of science cases, we hope
-to discover optimal strategies for the scheduling of LSST quantify
+to create new Metrics covering a wide range of science cases, we hope
+to discover optimal strategies for the scheduling of LSST and quantify
 both the overall efficiency of the surveys and their scientific
 potential.
 
