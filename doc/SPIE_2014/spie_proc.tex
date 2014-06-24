@@ -9,6 +9,7 @@
 \usepackage{subcaption}
 \usepackage{listings}
 \usepackage{hyperref}
+\def\arcsec{$^{\prime\prime}$}
 
 \title{The LSST Metrics Analysis Framework (MAF)} 
 
@@ -72,20 +73,21 @@ invested in understanding the effect of telescope scheduling on the
 overall performance of the survey. The LSST Operations Simulations
 group is working towards this goal by producing sets of simulated
 surveys created with a range of observing strategies. These simulated
-surveys are created by the Operations Simulator (OpSim)\cite{opsim3, opsim2, opsim1}. Each
-survey includes a detailed model of the telescope pointing and
-movement capability, weather conditions, scheduled and unscheduled
-downtime, and a scheduler algorithm which can be programmed with
-different sets of requested observations. The output of each simulated
-survey run is a 10-year simulated pointing history for LSST,
-consisting of approximately 3 million visits. The OpSim output
-includes the location of these visits, together
-with the observing conditions (airmass, seeing, sky brightness,
-limiting magnitude, etc.) for each visit, along with records of the
-telescope state over the 10-year simulation and information relevant
-to the internal state of the simulator itself. To help evaluate these
-simulated survey outputs, we have built the LSST Metrics Analysis
-Framework (MAF). 
+surveys are created by the Operations Simulator (OpSim)\cite{opsim3,
+  opsim2, opsim1}. Each survey includes a detailed model of the
+telescope pointing and movement capability, weather conditions,
+scheduled and unscheduled downtime, and a scheduler algorithm which
+can be programmed with different sets of requested observations. The
+output of each simulated survey run is a 10-year simulated pointing
+history for LSST, consisting of approximately 3 million visits. LSST
+plans currently call for each visit to consist of two 15-second
+back-to-back exposures.  The OpSim output includes the location of
+these visits, together with the observing conditions (airmass, seeing,
+sky brightness, limiting magnitude, etc.) for each visit, along with
+records of the telescope state over the 10-year simulation and
+information relevant to the internal state of the simulator itself. To
+help evaluate these simulated survey outputs, we have built the LSST
+Metrics Analysis Framework (MAF).
 
 In broad overview, MAF is an open-source python software framework that
 provides a user-friendly, easily-extensible, easily-customizable set of tools to 
@@ -234,7 +236,7 @@ user-defined resolution level). This Slicer allows calculation of
 metrics with resolution of field overlaps. The HealpixSlicer uses the 
 HEALpix tesselation of a sphere\cite{healpix}, 
 making it possible for the 
-user to set a spatial resultion and rapidly compute power spectra.}
+user to set a spatial resolution and rapidly compute power spectra.}
 \end{itemize}
 Each Slicer provides methods to iterate through all slices and
 understands the definition of the slices. For example, the
@@ -274,7 +276,7 @@ Slicer, applying the multiple Metrics at each slicePoint. It allocates
 and saves the metric values as numpy masked arrays and handles masking
 the metric values when there is either no data at a particular
 slicePoint or the Metric returns a flagged `bad value'. The
-SliceMetric also provides convience methods to plot all metric values,
+SliceMetric also provides convenience methods to plot all metric values,
 save all metric values to disk and read previously saved metric values
 back from disk. The SliceMetric also keeps track of the relevant
 metadata (e.g., which simulation is being analyzed) for each Metric + Slicer combination and adds this to the
@@ -390,12 +392,12 @@ these choices, as well as the flexibility in the configuration scripts
 for the Driver.
 
 Let's start with a very simple analysis: suppose we want to calculate
-the mean and rms of the seeing distribution for visits which were
+the mean and RMS of the seeing distribution for visits which were
 taken in $r$ band, and then also in $i$ band. To find the mean seeing
 for all visits in $r$ band, we would use a SQL constraint to select
 $r$ bands from the OpSim output database, then use a UniSlicer to
 sub-select all visits in the dataSlice, and then use a MeanMetric
-applied to the `seeing' column. To find the rms of the seeing in $r$
+applied to the `seeing' column. To find the RMS of the seeing in $r$
 band, it is similar but using an RmsMetric instead. In order to
 calculate the equivalent values in $i$ band, we do the same but use a
 SQL constraint where we select $i$ band visits instead. Note that MAF
@@ -415,8 +417,8 @@ that set up and configure these Metrics and Slicer (including looping
 over the two filters) are shown in Figure~\ref{fig:simpleDriver}. We
 find that for Opsim3.61 the results are: 
 \begin{itemize}
-\item{Mean seeing in $r$ band: 0.81”, RMS of seeing in $r$ band: 0.21”}
-\item{Mean seeing in $i$ band: 0.79”, RMS of seeing in $i$ band: 0.20”.}
+\item{Mean seeing in $r$ band: 0.81\arcsec, RMS of seeing in $r$ band: 0.21\arcsec}
+\item{Mean seeing in $i$ band: 0.79\arcsec, RMS of seeing in $i$ band: 0.20\arcsec.}
 \end{itemize}
 Of course, this analysis is very simple and could easily be done in
 any number of ways. The interesting thing is that it is very easy to
@@ -471,7 +473,7 @@ the title, x and y labels, x and y ranges, and colors. It also
 provides the option to combine the outputs from multiple OneDSlicers
 (such as we have done here) into one plot. The resulting combined plot
 is shown in Figure~\ref{fig:OneD}, and the additional configuration
-parameters for the driver config file are shown in
+parameters for the driver configuration file are shown in
 Figure~\ref{fig:oneDdriver}. 
 
 \begin{figure}
@@ -503,7 +505,7 @@ for f in filters:
 \caption[]
 {\label{fig:oneDdriver}These configuration lines let us loop over
   several filters, and create a histogram of the airmass distribution
-  in each filter. The 'histMerge' line tells the driver to merge the
+  in each filter. The `histMerge' line tells the driver to merge the
   histograms into a single plot, which is shown in Figure~\ref{fig:OneD}.}
 \end{figure}
 
@@ -662,7 +664,7 @@ pointings and then run the same set of Metrics using a HealpixSlicer
 configured to use the hexdithered pointings. The same is true of any
 RA/Dec-like columns which are added straight into the OpSim database
 file. However, MAF also provides users the capability of adding new
-columns to the OpSim visit data on the fly. We can use this to
+columns to the OpSim visit data after the data has been queried from the database. We can use this to
 evaluate dithering strategies without altering the OpSim database,
 instead simply writing a small amount of additional python code and
 adding it to the MAF utils.addCols module.  Example code written to
@@ -817,7 +819,7 @@ applied to the OpSim FieldRA and FieldDec values. In the no dither and
 hex dither case, the relevant RA/Dec columns are provided by the OpSim
 database; the random dither RA/Dec columns were generated on the fly
 using MAF utilities. Panels~\ref{subfig:nvis_hist},
-\ref{subfig:coadd_hist} and \ref{subfig:coadd_ps} show the histgram
+\ref{subfig:coadd_hist} and \ref{subfig:coadd_ps} show the histogram
 and power spectrum plots created from these metric values. The areas
 with fewer visits (in the plane of the Milky Way, near the south
 celestial pole, and north of
@@ -841,16 +843,17 @@ To continue this evaluation of dithering strategies a little further,
 let us add a few additional Metrics. While there are endless
 possibilities, for reasons of space here we will consider only the
 ProperMotionMetric and the QuickRevisitMetric. The ProperMotionMetric
-calculates the expected error in the proper motion measurement at a
-given RA/Dec, based on the astrometric error in each observation
+calculates the expected final precision in the proper motion measurement at a
+given RA/Dec, based on the astrometric uncertainties in each observation
 (estimated from the user-specified star's magnitude plus the 5-sigma
 limiting magnitude of each visit, including an error floor) and the
 times of the observations (visits spread further apart in time will
 have a lower error in the proper motion), and assuming no parallax.  The
 QuickRevisitMetric simply counts the number of nights that have more
-than a user-defined number of visits. This metric is intended to be a
+than a user-defined number of visits. %XXX-maybe a sentence here on a specific science case where this metric is relevant.
+This metric is intended to be a
 simple way to start looking at the effect of dithering on short
-timescale revisits (as this dithering can affect the field overlap
+time-scale revisits (as this dithering can affect the field overlap
 region, which can act as a source for significant numbers of quick
 revisits). We ran the ProperMotionMetric with stars at 20th and 24th
 magnitude (to evaluate high and low SNR regimes), and looked for
@@ -1017,25 +1020,25 @@ Nvisits g band &  g No dithering & 79.00 & 93.80 & 148.39\\
 Nvisits g band &  g Hex dithering & 98.00 & 92.17 & 106.27\\ 
 Nvisits g band &  g Random dithering & 98.00 & 91.65 & 105.59\\ 
 \hline  
-Coadded m5 g band &  g No dithering & 27.13 & 26.98 & 0.63\\
-Coadded m5 g band &  g Hex dithering & 27.24 & 26.99 & 0.64\\  
-Coadded m5 g band &  g Random dithering & 27.24 & 26.98 & 0.65\\ 
+Coadded m5 g band (mag) &  g No dithering & 27.13 & 26.98 & 0.63\\
+Coadded m5 g band (mag) &  g Hex dithering & 27.24 & 26.99 & 0.64\\  
+Coadded m5 g band (mag) &  g Random dithering & 27.24 & 26.98 & 0.65\\ 
+\hline                  
+Coadded m5 r band (mag) &  r No dithering & 27.34 & 27.04 & 0.84\\  
+Coadded m5 r band (mag) &  r Hex dithering & 27.45 & 27.07 & 0.81\\  
+Coadded m5 r band (mag) &  r Random dithering & 27.45 & 27.05 & 0.85\\
 \hline  
-Coadded m5 r band &  r No dithering & 27.34 & 27.04 & 0.84\\  
-Coadded m5 r band &  r Hex dithering & 27.45 & 27.07 & 0.81\\  
-Coadded m5 r band &  r Random dithering & 27.45 & 27.05 & 0.85\\
+Proper Motion @20 mag  (mas yr$^{-1}$)&   No dithering & 0.16 & - & - \\ 
+Proper Motion @20 mag  (mas yr$^{-1}$)&   Hex dithering & 0.14 & - &  - \\
+Proper Motion @20 mag  (mas yr$^{-1}$)&   Random dithering & 0.14 & - & -\\ 
+\hline                                
+Proper Motion @24 mag  (mas yr$^{-1}$)&   No dithering & 1.54 & -  & - \\
+Proper Motion @24 mag  (mas yr$^{-1}$)&   Hex dithering & 1.42 & - & - \\
+Proper Motion @24 mag  (mas yr$^{-1}$)&   Random dithering & 1.42 &-  & - \\
 \hline  
-Proper Motion @20 mag &   No dithering & 0.16 & - & - \\ 
-Proper Motion @20 mag &   Hex dithering & 0.14 & - &  - \\
-Proper Motion @20 mag &   Random dithering & 0.14 & - & -\\ 
-\hline  
-Proper Motion @24 mag &   No dithering & 1.54 & -  & - \\
-Proper Motion @24 mag &   Hex dithering & 1.42 & - & - \\
-Proper Motion @24 mag &   Random dithering & 1.42 &-  & - \\
-\hline  
-QuickRevisit night &   No dithering & 1.00 & 7.84 & 17.81\\ 
-QuickRevisit night &   Hex dithering & 7.00 & 7.70 & 10.49\\ 
-QuickRevisit night &   Random dithering & 4.00 & 6.36 & 20.42\\ 
+QuickRevisit  (\# nights) &   No dithering & 1.00 & 7.84 & 17.81\\ 
+QuickRevisit  (\# nights) &   Hex dithering & 7.00 & 7.70 & 10.49\\ 
+QuickRevisit  (\# nights) &   Random dithering & 4.00 & 6.36 & 20.42\\ 
 \hline 
 \end{tabular}
 \end{center}
@@ -1048,11 +1051,11 @@ QuickRevisit night &   Random dithering & 4.00 & 6.36 & 20.42\\
 \label{sec:MetricAPI}
 
 We anticipate that many users will want to write their own Metrics.
-The Metric class API is minimal to help accomodate
+The Metric class API is minimal to help accommodate
 this. A base class provides the framework overhead, such as creating a
 column registry (so that the framework can determine what columns to
 fetch from the database) and determining units for each column if not
-provided by the user (so that plots can be properly labelled). This
+provided by the user (so that plots can be properly labeled). This
 leaves the user free to concentrate on the code relevant to their
 particular analysis.
 
@@ -1136,14 +1139,14 @@ achieved and the total number of visits on each of those nights that
 were within the time interval. Then different {\it reduce} methods
 operate on each metric value (corresponding to each original data slice),
 calculating the median number of visits, the number of times that more
-than a threshhold number of visits occured within some larger time
+than a threshold number of visits occurred within some larger time
 interval of number of nights, the number of lunations that received
-more than a threshhold number of nights with multiple visits, and
+more than a threshold number of nights with multiple visits, and
 the number of successive lunations that received more than a
-threshhold number of nights with multiple visits. The reduce methods
+threshold number of nights with multiple visits. The reduce methods
 provide multiple views into the underlying question (how visits are
 paired together for discovering solar system objects) and are all
-desireable; however, the first step is somewhat computationally
+desirable; however, the first step is somewhat computationally
 expensive. By allowing multiple reduce methods, we can take the
 original data slice and end up examining it in multiple ways with
 minimal cost. Code for the VisitGroupsMetric can be found online in
@@ -1391,3 +1394,42 @@ LSST project activities are supported in part by the National Science Foundation
 \bibliographystyle{spiebib}   %>>>> makes bibtex use spiebib.bst
 
 \end{document}
+
+%%  LocalWords:  showstringspaces formfeed newpage tabsize basicstyle
+%%  LocalWords:  commentstyle breaklines MAF OpSim downtime metadata
+%%  LocalWords:  APIs API numpy RA HealpixSlicer Healpixel MeanMetric
+%%  LocalWords:  RobustRMS FullRange HealPixel FieldID OpSimFieldID
+%%  LocalWords:  UniSlicer OneDSlicer Diaconis numpy's NDSlicer kd zp
+%%  LocalWords:  OpSimFieldSlicer FieldIDs Healpix Healpixels HEALpix
+%%  LocalWords:  tesselation slicePoint slicePoints SliceMetric MAF's
+%%  LocalWords:  recarray SQLAlchemy OpsimDatabase sqlite IDs Opsim
+%%  LocalWords:  Stackers sliceMetric dataSlice RmsMetric params 
+%%  LocalWords:  IdentityMetric summaryStats makeMetricConfig sql col
+%%  LocalWords:  makeSlicerConfig metricDict makeDict configList ONED
+%%  LocalWords:  CountMetric OneDSlicers kwargs metricName histMerge
+%%  LocalWords:  histNum legendloc xlabel sliceColName coadded NSIDE
+%%  LocalWords:  pointings Coaddm healpixel SkyMap healpy's anafast
+%%  LocalWords:  PowerSpectrum skymap mags zeropoint plotDict mag Co
+%%  LocalWords:  zpoint fieldRA fieldDec hexdither hexdithra utils np
+%%  LocalWords:  hexdithdec hexdithered addCols spatialkey config def
+%%  LocalWords:  coadd RandomDither maxDither init raCol decCol rad
+%%  LocalWords:  randomSeed colsAdded randomRADither randomDecDither
+%%  LocalWords:  colsReq simData dithersRA len dithersDec cos dec XXX
+%%  LocalWords:  ProperMotionMetric QuickRevisitMetric astrometric vw
+%%  LocalWords:  SNR revis QuickRevisit QuickRevisits skymaps mas csv
+%%  LocalWords:  dithers skybrightness MetricName ResultsSummary grep
+%%  LocalWords:  sed awk OFS ORS SimpleScalarMetric BaseMetric args
+%%  LocalWords:  RobustRmsMetric iqr colname SimpleScalarMetric's nw
+%%  LocalWords:  Python's PercentileMetric VisitGroupsMetric timesCol
+%%  LocalWords:  lunations deltaTmin deltaTmax expMJD nightsCol tmin
+%%  LocalWords:  minNVisits minNNights tmax uniquenights visitNum CSA
+%%  LocalWords:  metricval badval reduceMedian reduceNVisitsInWindow
+%%  LocalWords:  reduceNNightsWithNVisits maxnvisits inWindow nVisits
+%%  LocalWords:  makeBinnerConfig outputDir dbAddress opsimName nside
+%%  LocalWords:  plotRange scaleStretchDesign zpoints coaddedDepth
+%%  LocalWords:  nvisits dithlabels slicerNames HealpixSlicerRandom
+%%  LocalWords:  HealpixSlicerDither dithlabel slicerName elif rmag
+%%  LocalWords:  slicerkwargs slicermetadata nVisitsInNight plotMin
+%%  LocalWords:  plotMax histMin histMax MedianMetric seeingCol Vasey
+%%  LocalWords:  percentileClip cbarFormat healpix AST SLAC LSSTC ref
+%%  LocalWords:  spie bibtex spiebib bst
