@@ -54,7 +54,7 @@ def dtime(time_prev):
 
 
 class BaseSliceMetric(object):
-    def __init__(self, figformat='png'):
+    def __init__(self, figformat='pdf', dpi=None):
         """Instantiate sliceMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
@@ -95,11 +95,15 @@ class BaseSliceMetric(object):
         # Add letter to distinguish slicer types
         #   (which otherwise might have the same output name).
         oname = oname + '_' + self.slicer.slicerName[:4].upper()
+        # Replace <, > and = signs.
+        oname = oname.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
+        # Strip white spaces (replace with underscores), strip '.'s and strip quotes.
+        oname = oname.replace('  ', ' ').replace('.', '_').replace(' ', '_').replace('"','').replace("'",'')
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile (with path) and strip white spaces (replace with underscores) and strip quotes. 
-        outfile = os.path.join(outDir, oname.replace(' ', '_').replace("'",'').replace('"',''))
+        # Build outfile. 
+        outfile = os.path.join(outDir, oname)
         return outfile
 
     def _addOutputFiles(self, metricName, key, value):
@@ -389,25 +393,25 @@ class BaseSliceMetric(object):
         pParams = self.plotParams[metricName].copy()
         # Build plot title and label.
         mname = self._dupeMetricName(metricName)
+        # Units always in pParams, but might be '' (are the physical units). 
         if 'title' not in pParams:
-           pParams['title'] = self.simDataName[metricName] + ' ' + self.metadata[metricName]
-           pParams['title'] += ': ' + mname
-        if 'units' not in pParams:
-           pParams['units'] = mname
-           if '_units' in pParams:
-              pParams['units'] += ' ('+ pParams['_units'] + ')'
-        # For the oneDSlicer, the metric is on the y-axis.
-        if self.slicer.slicerName == 'OneDSlicer':
-           if 'ylabel' not in pParams:
-              pParams['ylabel'] = mname +' ('+ pParams['units'] + ')'
-           if 'xlabel' not in pParams:
-              pParams['xlabel'] = self.slicer.sliceColName+' ('+self.slicer.sliceColUnits + ')'
-        else:
-           if 'xlabel' not in pParams:
-              pParams['xlabel'] = pParams['units']
+            # Build default title. 
+            pParams['title'] = self.simDataName[metricName] + ' ' + self.metadata[metricName]
+            pParams['title'] += ': ' + mname
+        if 'ylabel' not in pParams:
+            # Build default y label if needed (i.e. oneDSlicer)
+            if self.slicer.slicerName == 'OneDSlicer':
+                pParams['ylabel'] = mname + ' (' + pParams['units'] + ')'
+        if 'xlabel' not in pParams:
+            # Build a default x label if needed
+            if self.slicer.slicerName == 'OneDSlicer':
+                pParams['xlabel'] = self.slicer.sliceColName + ' (' + self.slicer.sliceColUnits + ')'
+            else:
+                pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
         # Plot the data. Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
         plotResults = self.slicer.plotData(self.metricValues[metricName], savefig=savefig,
-                                            filename=outfile, **pParams)
+                                           figformat=self.figformat, dpi=self.dpi,
+                                           filename=outfile, **pParams)
         # Save information about the plotted files into the output file list.
         for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
            # filetype = 'Histogram' or 'SkyMap', etc. -- add 'Plot' for output file key.

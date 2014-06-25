@@ -40,7 +40,7 @@ class BaseSlicer(object):
         
     def setupSlicer(self, *args):
         """Set up internal parameters and slices for slicer. """
-        # Typically args will be simData
+        # Typically args will be simData, but opsimFieldSlicer also uses fieldData.
         raise NotImplementedError()
     
     def __len__(self):
@@ -120,7 +120,7 @@ class BaseSlicer(object):
         slicer.nbins = restored['slicerNbins']
         return metricValues, slicer, header
     
-    def plotData(self, metricValues, figformat='png', filename='fig', savefig=True, **kwargs):
+    def plotData(self, metricValues, figformat='png', dpi=None, filename='fig', savefig=True, **kwargs):
         """
         Call all available plotting methods.
         """
@@ -138,7 +138,7 @@ class BaseSlicer(object):
             figs[plottype] = self.plotFuncs[p](metricValues, **kwargs)
             if savefig:
                 outfile = filename + '_' + plottype + '.' + figformat
-                plt.savefig(outfile, figformat=figformat)
+                plt.savefig(outfile, figformat=figformat, dpi=dpi)
                 filenames.append(outfile)
                 filetypes.append(plottype)
         return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
