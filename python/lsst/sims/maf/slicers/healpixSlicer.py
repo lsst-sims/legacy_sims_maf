@@ -115,6 +115,8 @@ class HealpixSlicer(BaseSpatialSlicer):
             norm = 'log'
         if cmap is None:
             cmap = cm.jet
+        if type(cmap) == str:
+            cmap = getattr(cm,cmap)
         # Make colormap compatible with healpy
         cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
         cmap.set_over(cmap(1.0))
