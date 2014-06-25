@@ -51,17 +51,16 @@ class BaseSpatialSlicer(BaseSlicer):
         (in radians) to set up KDTree."""
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
-        
-    def _sliceSimData(slicepoint):
-        """Return indexes for relevant opsim data at slicepoint
-        (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-        binx, biny, binz = self._treexyz(slicepoint[0], slicepoint[1])
-        # Query against tree.
-        indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
-        return {'idxs':indices, 'slicePoint':{'pid':slicepoint}}
-        
+        @wraps(self._sliceSimData)
+        def _sliceSimData(slicePoint):
+            """Return indexes for relevant opsim data at slicepoint
+            (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+            binx, biny, binz = self._treexyz(slicePoint[0], slicePoint[1])
+            # Query against tree.
+            indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
+            return {'idxs':indices, 'slicePoint':{'pid':slicePoint}}
+        setattr(self, '_sliceSimData', _sliceSimData)
     
-
 
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""

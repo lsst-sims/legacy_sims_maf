@@ -6,15 +6,15 @@
 
 import numpy as np
 import numpy.ma as ma
+import warnings
 import healpy as hp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
-from lsst.sims.maf.utils.percentileClip import percentileClip as pc
+from lsst.sims.maf.utils import percentileClipping
 
 from .baseSpatialSlicer import BaseSpatialSlicer
 from .baseSlicer import BaseSlicer
-import warnings
 
 
 class HealpixSlicer(BaseSpatialSlicer):
@@ -130,7 +130,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             metricValue = metricValueIn
 
         if percentileClip:
-            pcMin, pcMax = pc(metricValue.compressed(), percentile=percentileClip)
+            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
         if plotMin is None and percentileClip:
             plotMin = pcMin
         if plotMax is None and percentileClip:

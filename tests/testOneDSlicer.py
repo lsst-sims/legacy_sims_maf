@@ -107,6 +107,21 @@ class TestOneDSlicerSetup(unittest.TestCase):
             # Verify some things
             self.assertTrue("binsize" in str(w[-1].message))
 
+
+    def testSetupSlicerFreedman(self):
+        """Test that setting up the slicer using bins=None works."""
+        dvmin = 0
+        dvmax = 1
+        dv = makeDataValues(1000, dvmin, dvmax, random=True)
+        self.testslicer = OneDSlicer(sliceColName='testdata', bins=None)
+        self.testslicer.setupSlicer(dv)
+        self.assertEqual(self.testslicer.bins.min(), dvmin)
+        self.assertEqual(self.testslicer.bins.max(), dvmax)
+        # How many bins do you expect from optimal binsize?
+        from lsst.sims.maf.utils import optimalBins
+        bins = optimalBins(dv['testdata'])
+        np.testing.assert_equal(self.testslicer.nbins, bins)
+
                 
 class TestOneDSlicerIteration(unittest.TestCase):
     def setUp(self):
@@ -125,12 +140,15 @@ class TestOneDSlicerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration."""
-        for i,b in enumerate(self.testslicer):
-            self.assertEqual(b['slicePoint']['pid'], i)
-            
+        for i,(s, b) in enumerate(zip(self.testslicer, self.bins)):
+            self.assertEqual(s['slicePoint']['pid'], i)
+            self.assertEqual(s['slicePoint']['binLeft'], b)
+
     def testGetItem(self):
         """Test that can return an individual indexed values of the slicer."""
-        self.assertEqual(self.testslicer[0]['slicePoint']['pid'], self.bins[0])
+        for i in ([0, 10, 20]):
+            self.assertEqual(self.testslicer[i]['slicePoint']['pid'], i)
+            self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], self.bins[i])
 
 class TestOneDSlicerEqual(unittest.TestCase):
     def setUp(self):
@@ -188,16 +206,11 @@ class TestOneDSlicerSlicing(unittest.TestCase):
             self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
             self.testslicer.setupSlicer(dv)
             sum = 0
-            for i, b in enumerate(self.testslicer):
-                idxs = b['idxs']
+            for i, s in enumerate(self.testslicer):
+                idxs = s['idxs']
                 dataslice = dv['testdata'][idxs]
                 sum += len(idxs)
                 if len(dataslice)>0:
-                    #self.assertGreaterEqual((idxs.min() - b['slicePoint']['left']), 0)
-                    #if i < self.testslicer.nbins-1:
-                    #    self.assertLessEqual((dataslice.max() - dv[b['slicePoint']['right']]), binsize)
-                    #else:
-                    #    self.assertAlmostEqual((dataslice.max() - dv[b['slicePoint']['right']]), binsize)
                     self.assertTrue(len(dataslice), nvalues/float(nbins))
                 else:
                     self.assertTrue(len(dataslice) > 0, 'Data in test case expected to always be > 0 len after slicing.')

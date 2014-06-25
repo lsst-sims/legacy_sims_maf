@@ -63,7 +63,7 @@ class BaseSlicer(object):
         """Evaluate if two slicers are equivalent."""
         raise NotImplementedError()
 
-    def _sliceSimData(self, slicepoint):
+    def _sliceSimData(self, slicePoint):
         """Slice the simulation data appropriately for the slicer.
 
         The slice of data returned will be the indices of the numpy rec array (the simData)

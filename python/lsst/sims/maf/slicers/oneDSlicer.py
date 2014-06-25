@@ -4,28 +4,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
 import warnings
-from lsst.sims.maf.utils import optimalBins, ColInfo
+from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 
 
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
-    def __init__(self, sliceColName=None, verbose=True, badval=-666, bins=None, binMin=None, binMax=None, binsize=None, sliceColUnits=None):
-        """ 'bins' can be a numpy array with the binpoints for sliceCol or a single integer value
-        (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
+    def __init__(self, sliceColName=None, sliceColUnits=None, 
+                 bins=None, binMin=None, binMax=None, binsize=None,
+                 verbose=True, badval=-666):
+        """
+        'sliceColName' is the name of the data column to use for slicing.
+        'sliceColUnits' lets the user set the units (for plotting purposes) of the slice column.
+        'bins' can be a numpy array with the binpoints for sliceCol or a single integer value
+        (if a single value, this will be used as the number of bins, together with data min/max or binMin/Max),
         as in numpy's histogram function.
         If 'binsize' is used, this will override the bins value and will be used together with the data min/max
-        (or binMin/Max) to set the binpoint values.
+        or binMin/Max to set the binpoint values.
 
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
-          all bins except for last bin are half-open ([a, b>), the last one is ([a, b]). """
+          all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
+        """
         super(OneDSlicer, self).__init__(verbose=verbose, badval=badval)
         self.bins = None
         self.nbins = None
         self.sliceColName = sliceColName
         self.columnsNeeded = [sliceColName]
-        self.slicer_init = {'sliceColName':self.sliceColName, 'badval':badval, 'bins':bins,
-                            'binMin':binMin, 'binMax':binMax, 'binsize':binsize}
         self.bins = bins
         self.binMin = binMin
         self.binMax = binMax
@@ -33,19 +37,15 @@ class OneDSlicer(BaseSlicer):
         if sliceColUnits is None:
             co = ColInfo()
             self.sliceColUnits = co.getUnits(self.sliceColName)
+        self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
+                            'badval':badval, 'bins':bins,
+                            'binMin':binMin, 'binMax':binMax, 'binsize':binsize}
+
         
     def setupSlicer(self, simData): 
-        """Set up bins in slicer.        
-
-        'bins' can be a numpy array with the slicepoints for sliceCol or a single integer value
-          (if a single value, this will be used as the number of bins, together with data min/max (or binMin/Max)),
-          as in numpy's histogram function.
-        If 'binsize' is used, this will override the bins value and will be used together with the data min/max
-         (or binMin/Max) to set the slicepoint values.
-
-        Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
-          all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
-          """
+        """
+        Set up bins in slicer.
+        """
         if self.sliceColName is None:
             raise Exception('sliceColName was not defined when slicer instantiated.')
         sliceCol = simData[self.sliceColName]
@@ -68,7 +68,7 @@ class OneDSlicer(BaseSlicer):
             # Or bins was a single value. 
             else:
                 if self.bins is None:
-                    self.bins = optimalBins(sliceCol)
+                    self.bins = optimalBins(sliceCol, self.binMin, self.binMax)
                 nbins = int(self.bins)
                 self.binsize = (self.binMax - self.binMin) / float(nbins)
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
@@ -80,19 +80,18 @@ class OneDSlicer(BaseSlicer):
         # "left" values are location where simdata == bin value
         self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
-        
+        # Set up _sliceSimData method for this class.
+        @wraps(self._sliceSimData)
+        def _sliceSimData(ipix):
+            """Slice simData on oneD sliceCol, to return relevant indexes for slicepoint."""
+            idxs = self.simIdxs[self.left[ipix]:self.left[ipix+1]]
+            slicePoint = {'pid':ipix, 'binLeft':self.bins[ipix]}
+            return {'idxs':idxs, 'slicePoint':slicePoint}
+        setattr(self, '_sliceSimData', _sliceSimData)
+
     def __iter__(self):
         self.ipix = 0
         return self
-
-    def _sliceSimData(self, ipix):
-        """Slice simData on oneD sliceCol, to return relevant indexes for slicepoint."""
-        # Find the index of this slicepoint in the bins array, then use this to identify
-        #  the relevant 'left' values, then return values of indexes in original data array
-        idxs = self.simIdxs[self.left[ipix]:self.left[ipix+1]]
-        slicePoint = {'pid':ipix, 'left':self.left[ipix],
-                      'right':self.left[ipix+1], 'bin':self.bins[ipix]}
-        return {'idxs':idxs, 'slicePoint':slicePoint}
          
     def next(self):
         """Return the binvalues for this slicepoint."""
@@ -113,14 +112,17 @@ class OneDSlicer(BaseSlicer):
         else:
             return False
 
-    def plotBinnedData(self, metricValues, title=None,
-                       fignum=None, units=None,
+    def plotBinnedData(self, metricValues, fignum=None,
+                       title=None, units=None,
                        label=None, addLegend=False,
                        legendloc='upper left', 
-                       filled=False, alpha=0.5, ylog=False,
-                       ylabel=None, xlabel=None, yMin=None, yMax=None,
-                       histMin=None, histMax=None, color='b', **kwargs):
-        """Plot a set of oneD binned metric data.
+                       filled=False, alpha=0.5,
+                       logScale=False, percentileClip=None,
+                       ylabel=None, xlabel=None,                       
+                       xMin=None, xMax=None, yMin=None, yMax=None,
+                       color='b', linestyle='-', **kwargs):
+        """
+        Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
         title = title for the plot (default None)
@@ -132,36 +134,46 @@ class OneDSlicer(BaseSlicer):
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
-        ylog = make the y-axis log (default False)
-        yMin/Max = min/max for y-axis 
-        histMin/Max = min/max for x-axis (typically set by bin values though)
+        logScale = make the y-axis log (default False)
+        percentileClip = percentile clip hi/low outliers before setting the y axis limits
+        yMin/Max = min/max for y-axis (overrides percentileClip)
+        xMin/Max = min/max for x-axis (typically set by bin values though)
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.bins[:-1]
         width = np.diff(self.bins)
         if filled:
-            plt.bar(leftedge, metricValues, width, label=label,
-                    linewidth=0, alpha=alpha, log=ylog, color=color)
+            plt.bar(leftedge, metricValues.filled(), width, label=label,
+                    linewidth=0, alpha=alpha, log=logScale, color=color)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
-            y = np.ravel(zip(metricValues, metricValues))
-            if ylog:
-                plt.semilogy(x, y, label=label, color=color, alpha=alpha)
+            y = np.ravel(zip(metricValues.filled(), metricValues.filled()))
+            if logScale:
+                plt.semilogy(x, y, label=label, color=color, linestyle=linestyle, alpha=alpha)
             else:
-                plt.plot(x, y, label=label, color=color, alpha=alpha)
-        if ylabel is None:
-            ylabel = 'Count'
-        plt.ylabel(ylabel)
+                plt.plot(x, y, label=label, color=color, linestyle=linestyle, alpha=alpha)
+        # The ylabel will always be built by the sliceMetric.
+        if ylabel is not None:
+            plt.ylabel(ylabel)
+        # The xlabel will always be built by the SliceMetric, so this will generally
+        #  be ignored, but is provided for users who may be working directly with Slicer.
         if xlabel is None:
             xlabel=self.sliceColName
             if units != None:
-                xlabel += ' (' + units + ')'
+                xlabel += ' (' + self.sliceColUnits + ')'
         plt.xlabel(xlabel)
-        if (yMin is not None) or (yMax is not None):
-            plt.ylim(yMin, yMax)
-        if (histMin is not None) or (histMax is not None):
-            plt.xlim(histMin, histMax)
+        # Set y limits (either from values in args, percentileClipping or compressed data values). 
+        if (yMin is None) or (yMax is None):
+            if percentileClip:
+                yMin, yMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
+            else:
+                yMin = metricValue.compressed().min()
+                yMax = metricValue.compressed().max()
+        plt.ylim(yMin, yMax)
+        # Set x limits if given in kwargs.
+        if (xMin is not None) or (xMax is not None):
+            plt.xlim(xMin, xMax)
         if (addLegend):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
