@@ -104,7 +104,7 @@ class TestHealpixSlicerEqual(unittest.TestCase):
         
 class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
-        self.nside = 16
+        self.nside = 8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -140,7 +140,7 @@ class TestHealpixSlicerIteration(unittest.TestCase):
 class TestHealpixSlicerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
     def setUp(self):
-        self.nside = 16
+        self.nside = 8
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
                                         spatialkey1='ra', spatialkey2='dec',

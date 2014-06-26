@@ -403,18 +403,13 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
                                sqlconstraint=self.sqlconstraint, metadata=self.metadata)
-        fignums = self.testbbm.plotMetric(self.m2.name, savefig=False)
-        fig = plt.figure(fignums['BinnedData'])
-        ax = plt.gca()
-        # Check x and y limits (x lims set from bins)
-        xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (bins.min(), bins.max()))
+        # Test plotting oneDslicer, where we've set the plot parameters.
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
         fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()
         # Check x and y limits set from plot params.
         xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (self.plotParams['histMin'], self.plotParams['histMax']))
+        np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
         ylims = plt.ylim()
         np.testing.assert_almost_equal(ylims, (self.plotParams['yMin'], self.plotParams['yMax']))
         # Check x and y labels
@@ -428,14 +423,15 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         self.slicer = slicers.HealpixSlicer(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
-        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
+                               sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
         # Test histogram.
         fig = plt.figure(fignums['Histogram'])
         ax = plt.gca()
         # Check x limits.
         xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (self.plotParams['histMin'], self.plotParams['histMax']))
+        np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
         # Check x and y labels.
         self.assertEqual(ax.get_xlabel(), self.plotParams['xlabel'])
         self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
