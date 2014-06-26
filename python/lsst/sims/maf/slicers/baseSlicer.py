@@ -21,9 +21,14 @@ class BaseSlicer(object):
         # Args will include sliceDataCols and other data names that must be fetched from DB
         self.verbose = verbose
         self.badval = badval
-        self.cacheSize = 0 # Should the binMetric cache results to speedup?
-        self.nbins = None
-        self.bins = None
+        # The sliceMetric has a 'memo-ize' functionality that can save previous indexes & return
+        #  metric data value calculated for same set of previous indexes, if desired.
+        #  CacheSize = 0 effectively turns this off, otherwise cacheSize should be set by the slicer.
+        #  (Most useful for healpix slicer, where many healpixels may have same set of LSST visits). 
+        self.cacheSize = 0
+        # Set length of Slicer.
+        self.nslice = None
+        self.slicePoints = {}
         self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
         # Add dictionary of plotting methods for each slicer.
@@ -39,39 +44,65 @@ class BaseSlicer(object):
         self.slicer_init = {}
         
     def setupSlicer(self, *args):
-        """Set up internal parameters and slices for slicer. """
+        """
+        Set up internal parameters and slices for slicer. Also sets _sliceSimData for a particular slicer.
+        """
         # Typically args will be simData, but opsimFieldSlicer also uses fieldData.
         raise NotImplementedError()
     
     def __len__(self):
-        """Return nbins, the number of bins in the slicer. ."""
-        return self.nbins
+        """
+        Return nbins, the number of bins in the slicer.
+        """
+        return self.nslice
 
     def __iter__(self):
-        """Iterate over the bins."""
-        raise NotImplementedError()
+        """Iterate over the slices.
+        """
+        self.islice = 0
+        return self
 
     def next(self):
-        """Define the bin values (interval or RA/Dec, etc.) to return when iterating over slicer."""
-        raise NotImplementedError()
+        """
+        Returns results of self._sliceSimData when iterating over slicer.
+        Results of self._sliceSimData should be dictionary of
+           {'idxs' - the data indexes relevant for this slice of the slicer,
+           'slicePoint' - the metadata for the slicePoint .. always includes ['sid'] key for ID of slicePoint.}
+        """
+        if self.islice >= self.nslice:
+            raise StopIteration
+        islice = self.islice
+        self.islice += 1
+        return self._sliceSimData(islice)
 
-    def __getitem__(self):
-        """Make slicer indexable."""
-        raise NotImplementedError()
+    def __getitem__(self, islice):
+        return self._sliceSimData(islice)
     
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
         raise NotImplementedError()
 
     def _sliceSimData(self, slicePoint):
-        """Slice the simulation data appropriately for the slicer.
+        """
+        Slice the simulation data appropriately for the slicer.
 
+        Given the identifying slicePoint metadata
         The slice of data returned will be the indices of the numpy rec array (the simData)
-        which are appropriate for the metric to be working on, for that bin."""
+        which are appropriate for the metric to be working on, for that bin.
+        """
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
-    def writeData(self, outfilename, metricValues, metricName='', simDataName ='', sqlconstraint='', metadata=''):
-        """Save a set of metric values along with the information required to re-build the slicer."""
+    def getSlicePoints(self):
+        """
+        Return the slicePoint metadata, for all slice points.
+        """
+        return self.slicePoints
+    
+    def writeData(self, outfilename, metricValues, metricName='',
+                  simDataName ='', sqlconstraint='', metadata=''):
+        """
+        Save metric values along with the information required to re-build the slicer.
+        """
         header = {}
         header['metricName']=metricName
         header['sqlconstraint'] = sqlconstraint
@@ -97,10 +128,13 @@ class BaseSlicer(object):
                  fill = fill, # metric badval/fill val
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
-                 slicerBins = self.bins, # bins to match end of 'setupSlicer'
-                 slicerNbins = self.nbins)
+                 slicerSlicePoints = self.slicePoints, # bins to match end of 'setupSlicer'
+                 slicerNSlice = self.nslice)
                                  
     def readData(self, infilename):
+        """
+        Read metric data from disk, along with the info to rebuild the slicer (minus new slicing capability). 
+        """
         import lsst.sims.maf.slicers as slicers
         restored = np.load(infilename)
         # Get metric data set
@@ -116,8 +150,8 @@ class BaseSlicer(object):
         slicer_init = restored['slicer_init'][()]
         slicer = getattr(slicers, str(restored['slicerName']))(**slicer_init)
         # Sometimes bins are a dictionary, sometimes a numpy array, and sometimes None
-        slicer.bins = restored['slicerBins'][()]
-        slicer.nbins = restored['slicerNbins']
+        slicer.slicePoints = restored['slicerSlicePoints'][()]
+        slicer.nslice = restored['slicerNSlice']
         return metricValues, slicer, header
     
     def plotData(self, metricValues, figformat='png', dpi=None, filename='fig', savefig=True, **kwargs):

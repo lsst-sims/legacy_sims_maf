@@ -57,9 +57,9 @@ class TestOpsimFieldSlicerSetup(unittest.TestCase):
 
     def testSlicerNbins(self):
         """Test that generate expected number of bins for a given set of fields."""
-        self.assertEqual(self.testslicer.nbins, None)
+        self.assertEqual(self.testslicer.nslice, None)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
-        self.assertEqual(self.testslicer.nbins, len(self.fieldData['fieldID']))
+        self.assertEqual(self.testslicer.nslice, len(self.fieldData['fieldID']))
 
 
 class TestOpsimFieldSlicerEqual(unittest.TestCase):
@@ -99,15 +99,15 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
-        for fid, ra, dec, b in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
+        for fid, ra, dec, s in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
                                   self.fieldData['fieldDec'], self.testslicer):
-            self.assertEqual(fid, b['slicePoint']['fieldID'])
-            self.assertEqual(ra, b['slicePoint']['ra'])
-            self.assertEqual(dec, b['slicePoint']['dec'])
-            self.assertGreaterEqual(b['slicePoint']['fieldID'], 0)
-            self.assertLessEqual(b['slicePoint']['ra'], 2*np.pi)
-            self.assertGreaterEqual(b['slicePoint']['dec'], -np.pi)
-            self.assertLessEqual(b['slicePoint']['dec'], np.pi)
+            self.assertEqual(fid, s['slicePoint']['sid'])
+            self.assertEqual(ra, s['slicePoint']['ra'])
+            self.assertEqual(dec, s['slicePoint']['dec'])
+            self.assertGreaterEqual(s['slicePoint']['sid'], 0)
+            self.assertLessEqual(s['slicePoint']['ra'], 2*np.pi)
+            self.assertGreaterEqual(s['slicePoint']['dec'], -np.pi)
+            self.assertLessEqual(s['slicePoint']['dec'], np.pi)
 
     def testGetItem(self):
         """Test getting indexed value."""
@@ -117,11 +117,11 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
             np.testing.assert_array_equal(dict1['idxs'], dict2['idxs'])
             self.assertDictEqual(dict1['slicePoint'], dict2['slicePoint'])
         n = 0
-        self.assertEqual(self.testslicer[n]['slicePoint']['fieldID'], self.fieldData['fieldID'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldID'][n])
         self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
         self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
         n = len(self.testslicer) - 1
-        self.assertEqual(self.testslicer[n]['slicePoint']['fieldID'], self.fieldData['fieldID'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldID'][n])
         self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
         self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
 
@@ -142,7 +142,7 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
         # Set up slicer.
         self.testslicer.setupSlicer(self.simData, self.fieldData)
         for b in self.testslicer:
-            didxs = np.where(self.simData['fieldID'] == b['slicePoint']['fieldID'])
+            didxs = np.where(self.simData['fieldID'] == b['slicePoint']['sid'])
             binidxs = b['idxs']
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
@@ -178,9 +178,9 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
     def testSkyMap(self):
         """Test plotting the sky map (mean of random data)"""
         self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
-                        clims=None, ylog=False, cbarFormat='%.2g')
+                        clims=None, logScale=False, cbarFormat='%.2g')
         self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
-                        clims=None, ylog=False, cbarFormat='%.2g')
+                        clims=None, logScale=False, cbarFormat='%.2g')
     
         
     def testHistogram(self):
@@ -190,7 +190,7 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
                                       bins=100, cumulative=False, histRange=None,
-                                      ylog=False, flipXaxis=False, scale=None)
+                                      logScale=False, flipXaxis=False, scale=None)
         plt.figure()
         plt.hist(self.metricdata.compressed(), bins=100)
         plt.title('Histogram straight from metric data')
@@ -199,7 +199,7 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
                                       bins=100, cumulative=False, histRange=None,
-                                      ylog=False, flipXaxis=False, scale=None)
+                                      logScale=False, flipXaxis=False, scale=None)
 
                 
                         

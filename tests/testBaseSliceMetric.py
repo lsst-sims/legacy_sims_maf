@@ -66,8 +66,8 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.slicer, None)
         # Test that output file list is set to empty dict
         self.assertEqual(self.testbbm.outputFiles, {})
-        # Test that figformat is set to default (png)
-        self.assertEqual(self.testbbm.figformat, 'png')
+        # Test that figformat is set to default (pdf)
+        self.assertEqual(self.testbbm.figformat, 'pdf')
         # Test that can set figformat to alternate value
         testbbm2 = sliceMetrics.BaseSliceMetric(figformat='eps')
         self.assertEqual(testbbm2.figformat, 'eps')
@@ -95,10 +95,10 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
         self.assertEqual(self.testbbm.plotParams.keys(), ['Mean testdata', 'Count testdata', 'Completeness'])
-        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units', '_units'])
-        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', '_units', 'title'])
+        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units'])
+        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', 'title'])
         self.assertEqual(self.testbbm.plotParams['Count testdata'].values(),
-                         ['countunits', 'Count testdata', 'count_title'])
+                         ['countunits', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
         testbbm2 = sliceMetrics.BaseSliceMetric()
         testbbm2.setMetrics(self.m1)
@@ -360,17 +360,17 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
 class TestPlottingBaseSliceMetric(unittest.TestCase):
     def setUp(self):
         # Set up dictionary of all plotting parameters to test.
-        self.plotParams = {'_units': 'testunits',
+        self.plotParams = {'units': 'testunits',
                         'title': 'my test title',  # plot titles
                         'xlabel': 'my xlabel',  # plot x labels
                         'ylabel': 'my ylabel',  # plot y labels
-                        # For 1-d slicer: set x min/max vals via bins OR by histMin/histMax, then y vals via yMin/yMax
-                        # For spatial slicers: set hist x min/max vals via histMin/Max & number of bins via 'bins'
-                        #   then for skymap, set colorbar min/max vals via plotMin/Max
+                        # For 1-d slicer: set x min/max vals via bins OR by xMin/xMax, then y vals via yMin/yMax
+                        # For spatial slicers: set hist x min/max vals via xMin/Max & number of bins via 'bins'
+                        #   then for skymap, set colorbar min/max vals via xMin/xMax
                         'yMin': -0.5,
                         'yMax': 1.5,
-                        'histMin': -0.5,  # histogram x minimum value for spatial slicer
-                        'histMax': 1.5,   # histogram x maximum value for spatial slicer
+                        'xMin': -0.5,  # histogram x minimum value for spatial slicer
+                        'xMax': 1.5,   # histogram x maximum value for spatial slicer
                         # No way to set y value limits for spatial slicer histogram?
                         'bins': 50       # parameter for number of bins for spatial slicer histograms
                         }
@@ -401,7 +401,8 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         self.testbbm.setMetrics([self.m1, self.m2])
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
-        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
+                               sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m2.name, savefig=False)
         fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()

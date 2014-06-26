@@ -8,8 +8,8 @@ class HourglassSlicer(UniSlicer):
     """Slicer to make the filter hourglass plots """
 
     def __init__(self, verbose=True):
+        # Inherits from UniSlicer, so nslice=1 and only one 'slice'.
         super(HourglassSlicer,self).__init__(verbose=verbose)
-        self.nbins=1
         self.columnsNeeded=[]
         self.slicerName='HourglassSlicer'
         self.slicer_init={}
@@ -58,9 +58,7 @@ class HourglassSlicer(UniSlicer):
         plt.plot(pernight['mjd']-dmin, (pernight['twi18_set']-pernight['midnight'])*24.,
                  'red'  )
         plt.plot(pernight['mjd']-dmin, pernight['moonPer']/100.-7, 'black', label='Moon')
-        #plt.legend()
-
-            
+        #plt.legend()            
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)

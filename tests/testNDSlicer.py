@@ -33,16 +33,13 @@ class TestNDSlicerSetup(unittest.TestCase):
         self.nd = 3
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
-        self.testslicer = NDSlicer(self.dvlist)
         
-    def tearDown(self):
-        del self.testslicer
-        self.testslicer = None
 
     def testSlicertype(self):
-        """Test instantiation of slicer sets slicer type as expected."""        
-        self.assertEqual(self.testslicer.slicerName, self.testslicer.__class__.__name__)
-        self.assertEqual(self.testslicer.slicerName, 'NDSlicer')
+        """Test instantiation of slicer sets slicer type as expected."""
+        testslicer = NDSlicer(self.dvlist)      
+        self.assertEqual(testslicer.slicerName, self.testslicer.__class__.__name__)
+        self.assertEqual(testslicer.slicerName, 'NDSlicer')
 
     def testSetupSlicerBins(self):
         """Test setting up slicer using defined bins."""
@@ -51,10 +48,11 @@ class TestNDSlicerSetup(unittest.TestCase):
         binlist = []
         for d in range(self.nd):
             binlist.append(bins)
-        self.testslicer.setupSlicer(self.dv, binsList=binlist)
+        testslicer = NDSlicer(self.dvlist, binsList=binlist)
+        testslicer.setupSlicer(self.dv)
         for d in range(self.nd):
-            np.testing.assert_equal(self.testslicer.bins[d], bins)
-        self.assertEqual(self.testslicer.nbins, (len(bins)-1)**self.nd)
+            np.testing.assert_equal(testslicer.bins[d], bins)
+        self.assertEqual(testslicer.nslice, (len(bins)-1)**self.nd)
         
     def testSetupSlicerNbins(self):
         """Test setting up slicer using nbins."""
@@ -63,11 +61,12 @@ class TestNDSlicerSetup(unittest.TestCase):
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=False)
                 # Right number of bins? 
                 # expect one more 'bin' to accomodate last right edge, but nbins accounts for this
-                self.testslicer.setupSlicer(dv, nbinsList=nbins)
-                self.assertEqual(self.testslicer.nbins, nbins**self.nd)
+                testslicer = NDSlicer(self.dvlist, nbinsList=nbins)        
+                self.testslicer.setupSlicer(dv)
+                self.assertEqual(testslicer.nslice, nbins**self.nd)
                 # Bins of the right size?
                 for i in range(self.nd):
-                    bindiff = np.diff(self.testslicer.bins[i])
+                    bindiff = np.diff(testslicer.bins[i])
                     expectedbindiff = (self.dvmax - self.dvmin) / float(nbins)
                     np.testing.assert_allclose(bindiff, expectedbindiff)
                 # Can we use a list of nbins too and get the right number of bins?
@@ -76,23 +75,24 @@ class TestNDSlicerSetup(unittest.TestCase):
                 for d in range(self.nd):
                     nbinsList.append(nbins + d)
                     expectednbins *= (nbins + d)
-                self.testslicer.setupSlicer(dv, nbinsList=nbinsList)
-                self.assertEqual(self.testslicer.nbins, expectednbins)
+                testslicer.setupSlicer(dv, nbinsList=nbinsList)
+                self.assertEqual(testslicer.nslice, expectednbins)
 
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
         dvmin = 0
         dvmax = 1
         for nbins in (20, 50, 100, 105):
+            testslicer = NDSlicer(self.dvlist, nbinsList=nbins)
             bins = makeDataValues(nbins+1, self.dvmin, self.dvmax, self.nd, random=False)
             binsList = []
             for i in bins.dtype.names:
                 binsList.append(bins[i])
             for nvalues in (100, 1000, 10000):
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-                self.testslicer.setupSlicer(dv, nbinsList=nbins)
+                testslicer.setupSlicer(dv)
                 for i in range(self.nd):
-                    np.testing.assert_allclose(self.testslicer.bins[i], binsList[i])
+                    np.testing.assert_allclose(testslicer.bins[i], binsList[i])
 
                     
 class TestNDSlicerEqual(unittest.TestCase):

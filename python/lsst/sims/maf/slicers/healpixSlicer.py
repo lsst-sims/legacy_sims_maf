@@ -32,50 +32,24 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Check validity of nside:
         if not(hp.isnsideok(nside)):
             raise ValueError('Valid values of nside are powers of 2.')
-        self.nside = int(nside) 
-        self.nbins = hp.nside2npix(self.nside)
+        self.nside = int(nside)
+        self.pixArea = hp.nside2pixarea(self.nside)
+        self.nslice = hp.nside2npix(self.nside)
         if self.verbose:
-            print 'Healpix slicer using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside, hp.nside2resol(self.nside, arcmin=True))
+            print 'Healpix slicer using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside,
+                                                                                          hp.nside2resol(self.nside,
+                                                                                                         arcmin=True))
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                             'useCache':useCache, 'radius':radius, 'leafsize':leafsize}
-        self.bins = None
         if useCache:
+            # useCache set the size of the cache for the memoize function in sliceBinMetric.
             binRes = hp.nside2resol(nside) # Pixel size in radians
             # Set the cache size to be ~2x the cirumfrance
-            self.cacheSize = int(np.round(4.*np.pi/binRes)) 
-        allpix = np.arange(self.nbins)
-        self.ra,self.dec = self._pix2radec(allpix)
-        self.pixArea = hp.nside2pixarea(self.nside)
-        
-    def __iter__(self):
-        """Iterate over the slicer."""
-        self.ipix = 0
-        return self
-
-    def _sliceSimData(self, ipix):
-        """Return indexes for relevant opsim data at slicepoint
-        (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-        binx, biny, binz = self._treexyz(self.ra[ipix], self.dec[ipix])
-        # Query against tree.
-        indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
-        return {'idxs':indices,
-                'slicePoint':{'pid':ipix,'ra':self.ra[ipix] , 
-                              'dec':self.dec[ipix], 'pix':ipix, 
-                              'nside':self.nside, 'pixArea':self.pixArea}}
-                                    
-    def next(self):
-        """ """
-        # This returns RA/Dec (in radians) of the slicepoints. 
-        if self.ipix >= self.nbins:
-            raise StopIteration
-        result = self._sliceSimData(self.ipix)
-        self.ipix += 1
-        return result
-
-    def __getitem__(self, ipix):
-        """Make healpix slicer indexable."""
-        return self._sliceSimData(ipix) 
+            self.cacheSize = int(np.round(4.*np.pi/binRes))
+        # Set up slicePoint metadata.
+        self.slicePoints['sid'] = np.arange(self.nslice)
+        self.slicePoints['ra'], self.slicePoints['dec'] = self._pix2radec(self.slicePoints['sid'])        
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
@@ -85,20 +59,20 @@ class HealpixSlicer(BaseSpatialSlicer):
         else:
             return False
 
-    def _pix2radec(self, ipix):
-        """Given the pixel number, return the RA/Dec of the pointing, in radians."""
+    def _pix2radec(self, islice):
+        """Given the pixel number / sliceID, return the RA/Dec of the pointing, in radians."""
         # Calculate RA/Dec in RADIANS of pixel in this healpix slicer.
         # Note that ipix could be an array, 
         # in which case RA/Dec values will be an array also. 
-        lat, lon = hp.pix2ang(self.nside, ipix)
+        lat, lon = hp.pix2ang(self.nside, islice)
         # Move dec to +/- 90 degrees
         dec = lat - np.pi/2.0
         # Flip ra from latitude to RA (increasing eastward rather than westward)
         ra = -lon % (np.pi*2)
         return ra, dec  
     
-    def plotSkyMap(self, metricValueIn, units=None, title='',
-                   ylog=False, cbarFormat='%.2g', cmap=cm.jet,
+    def plotSkyMap(self, metricValueIn, xlabel=None, title='',
+                   logScale=False, cbarFormat='%.2g', cmap=cm.jet,
                    percentileClip=None, plotMin=None, plotMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
                    **kwargs):
@@ -111,7 +85,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         plotMaskedValues = ignored, here to be consistent with OpsimFieldSlicer."""
         # Generate a Mollweide full-sky plot.
         norm = None
-        if ylog:
+        if logScale:
             norm = 'log'
         if cmap is None:
             cmap = cm.jet
@@ -141,12 +115,12 @@ class HealpixSlicer(BaseSpatialSlicer):
             clims = None
             
         if clims is not None:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
-                        format=cbarFormat, min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
+            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
+                        min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
                         cmap=cmap, norm=norm)
         else:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False, unit=units, 
-                        format=cbarFormat, rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
+            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
+                        rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
         hp.graticule(dpar=20., dmer=20.)
         #ecinc = 23.439291 
         #x_ec = np.arange(0, 359., (1.))
@@ -157,15 +131,15 @@ class HealpixSlicer(BaseSpatialSlicer):
         im = ax.get_images()[0]
         cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
                           extend='both', format=cbarFormat)
-        cb.set_label(units)
+        cb.set_label(xlabel)
         fig = plt.gcf()
         return fig.number
 
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
-                      scale=None, color='b', **kwargs):
+                      bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
         If scale is None, sets 'scale' by the healpix area per slicepoint.
@@ -177,8 +151,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
-        histMin/Max = histogram range (default None, set by matplotlib hist)
-        ylog = use log for y axis (default False)
+        xMin/Max = histogram range (default None, set by matplotlib hist)
+        logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         # Simply overrides scale and y axis plot label of base plotHistogram. 
         if scale is None:
@@ -188,9 +162,9 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                         label=label, 
                                                         addLegend=addLegend, legendloc=legendloc,
                                                         bins=bins, cumulative=cumulative,
-                                                        histMin=histMin,histMax=histMax, ylog=ylog,
+                                                        xMin=xMin, xMax=xMax, logScale=logScale,
                                                         flipXaxis=flipXaxis,
-                                                        scale=scale,color=color, **kwargs)
+                                                        scale=scale, color=color, linestyle=linestyle,**kwargs)
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 

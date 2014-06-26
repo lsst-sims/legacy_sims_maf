@@ -72,7 +72,7 @@ class TestHealpixSlicerSetup(unittest.TestCase):
         npixx = [12, 48, 192, 768, 3072, 12288, 49152, 196608, 786432, 3145728]
         for nside, npix in zip(nsides, npixx):
             testslicer = HealpixSlicer(nside=nside, verbose=False)
-            self.assertEqual(testslicer.nbins, npix)
+            self.assertEqual(testslicer.nslice, npix)
 
     def testNsidesError(self):
         """Test that if passed an incorrect value for nsides that get expected exception."""
@@ -120,10 +120,10 @@ class TestHealpixSlicerIteration(unittest.TestCase):
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
         npix = hp.nside2npix(self.nside)
-        for i, b in enumerate(self.testslicer):
-            self.assertEqual(i, b['slicePoint']['pid'])
-            ra = b['slicePoint']['ra']
-            dec = b['slicePoint']['dec']
+        for i, s in enumerate(self.testslicer):
+            self.assertEqual(i, s['slicePoint']['sid'])
+            ra = s['slicePoint']['ra']
+            dec = s['slicePoint']['dec']
             self.assertGreaterEqual(ra, 0)
             self.assertLessEqual(ra, 2*np.pi)
             self.assertGreaterEqual(dec, -np.pi)
@@ -134,8 +134,8 @@ class TestHealpixSlicerIteration(unittest.TestCase):
 
     def testGetItem(self):
         """Test getting indexed value."""
-        for i, b in enumerate(self.testslicer):
-            np.testing.assert_equal(self.testslicer[i], b)
+        for i, s in enumerate(self.testslicer):
+            np.testing.assert_equal(self.testslicer[i], s)
 
 class TestHealpixSlicerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
@@ -205,9 +205,9 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
     def testSkyMap(self):
         """Test plotting the sky map (mean of random data)"""
         self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
-                        clims=None, ylog=False, cbarFormat='%.2g')
+                        clims=None, logScale=False, cbarFormat='%.2g')
         self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
-                        clims=None, ylog=False, cbarFormat='%.2g')
+                        clims=None, logScale=False, cbarFormat='%.2g')
     
     def testPowerSpectrum(self):
         """Test plotting the power spectrum (mean of random data)."""
@@ -226,8 +226,8 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                       ylabel='Area (1000s of square degrees)',
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
-                                      bins=100, cumulative=False, histRange=None,
-                                      ylog=False, flipXaxis=False, scale=None)
+                                      bins=100, cumulative=False, xMin=None, xMax=None,
+                                      logScale=False, flipXaxis=False, scale=None)
         plt.figure()
         plt.hist(self.metricdata.compressed(), bins=100)
         plt.title('Histogram straight from metric data')
@@ -235,8 +235,8 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                       ylabel='Area (1000s of square degrees)',
                                       fignum=None, legendLabel=None, addLegend=False,
                                       legendloc='upper left',
-                                      bins=100, cumulative=False, histRange=None,
-                                      ylog=False, flipXaxis=False, scale=None)
+                                      bins=100, cumulative=False, xMin=None, xMax=None,
+                                      logScale=False, flipXaxis=False, scale=None)
 
                 
                         

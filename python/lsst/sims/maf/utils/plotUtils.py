@@ -1,6 +1,6 @@
 import numpy as np
 
-def optimalBins(datain, min=None, max=None):
+def optimalBins(datain, binmin=None, binmax=None):
     """Use Freedman-Diaconis rule to set binsize.
     Allow user to pass min/max data values to consider."""
     # if it's a masked array, only use unmasked values
@@ -8,13 +8,13 @@ def optimalBins(datain, min=None, max=None):
         data = datain.compressed()
     else:
         data = datain
-    if min is None:
-        min = data.min()
-    if max is None:
-        max = data.max()
-    condition = ((data >= min)  & (data <= max))
+    if binmin is None:
+        binmin = data.min()
+    if binmax is None:
+        binmax = data.max()
+    condition = ((data >= binmin)  & (data <= binmax))
     binwidth = 2.*(np.percentile(data[condition],75) - np.percentile(data[condition],25))/np.size(data[condition])**(1./3.)
-    nbins = (max - min) / binwidth
+    nbins = (binmax - binmin) / binwidth
     if np.isinf(nbins) or np.isnan(nbins):
         return 1
     else:

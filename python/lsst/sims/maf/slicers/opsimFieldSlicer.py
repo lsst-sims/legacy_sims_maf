@@ -31,11 +31,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
         super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
-        self.bins = {}
-        self.bins['fieldID'] = None
-        self.bins['ra'] = None
-        self.bins['dec'] = None
-        self.nbins = None
+        self.fieldID = None
         self.simDataFieldIDColName = simDataFieldIDColName
         self.fieldIDColName = fieldIDColName
         self.fieldRaColName = fieldRaColName
@@ -60,54 +56,37 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         """
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIDColName])
-        self.bins['fieldID'] = fieldData[self.fieldIDColName][idxs]
-        self.bins['ra'] = fieldData[self.fieldRaColName][idxs]
-        self.bins['dec'] = fieldData[self.fieldDecColName][idxs]
-        self.nbins = len(self.bins['fieldID'])
+        # Set needed values for slice metadata.
+        self.slicePoints['sid'] = fieldData[self.fieldIDColName][idxs]
+        self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
+        self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
+        self.nslice = len(self.slicePoints['sid'])
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
-        self.left = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'left')
-        self.right = np.searchsorted(simFieldsSorted, self.bins['fieldID'], 'right')
+        self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
+        self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
+        @wraps(self._sliceSimData)
+        def _sliceSimData(islice):
+            idxs = self.simIdxs[self.left[islice]:self.right[islice]]  
+            return {'idxs':idxs,
+                    'slicePoint':{'sid':self.slicePoints['sid'][islice],
+                                  'ra':self.slicePoints['ra'][islice], 'dec':self.slicePoints['dec'][islice]}}
+        setattr(self, '_sliceSimData', _sliceSimData)
 
-        
-    def _sliceSimData(self, ipix):
-        idxs = self.simIdxs[self.left[ipix]:self.right[ipix]]  
-        slicePoint = {'ra':self.bins['ra'][ipix], 'dec':self.bins['dec'][ipix], 
-                      'fieldID': self.bins['fieldID'][ipix]}
-        return {'idxs':idxs, 'slicePoint':slicePoint}
-
-    def __iter__(self):
-        """Iterate over the slicepoints."""
-        self.ipix = 0
-        return self
-        
-    def next(self):
-        """Return RA/Dec values when iterating over slicepoints."""
-        # This returns RA/Dec (in radians) of points in the grid. 
-        if self.ipix >= self.nbins:
-            raise StopIteration
-        result = self._sliceSimData(self.ipix) 
-        self.ipix += 1
-        return result
-
-    def __getitem__(self, ipix):
-        return self._sliceSimData(ipix)
-    
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
         if isinstance(otherSlicer, OpsimFieldSlicer):
-            return (np.all(otherSlicer.bins['fieldID'] == self.bins['fieldID']) and
-                    np.all(otherSlicer.bins['ra'] == self.bins['ra']) and
-                    np.all(otherSlicer.bins['dec'] == self.bins['dec']))        
+            return (np.all(otherSlicer.slicePoints['ra'] == self.slicePoints['ra']) and
+                    np.all(otherSlicer.slicePoints['dec'] == self.slicePoints['dec']))        
         else:
             return False
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
-                      scale=None, color='b', **kwargs):
+                      bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
         title = the title for the plot (default None)
@@ -118,8 +97,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
-        histMin/Max = histogram range (default None, set by matplotlib hist)
-        ylog = use log for y axis (default False)
+        xMin/Max = histogram range (default None, set by matplotlib hist)
+        logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
                                                              ylabel=ylabel,
@@ -127,7 +106,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                                                              label=label, 
                                                              addLegend=addLegend, legendloc=legendloc,
                                                              bins=bins, cumulative=cumulative,
-                                                             histMin=histMin,histMax=histMax, ylog=ylog,
+                                                             xMin=xMin, xMax=xMax, logScale=logScale,
                                                              flipXaxis=flipXaxis, 
                                                              scale=1, yaxisformat='%d', color=color, **kwargs)
         return fignum

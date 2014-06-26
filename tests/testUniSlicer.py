@@ -31,7 +31,7 @@ class TestUniSlicerSetupAndSlice(unittest.TestCase):
         self.assertEqual(self.testslicer.slicerName, 'UniSlicer')
 
     def testSlicerNbins(self):
-        self.assertEqual(self.testslicer.nbins, 1)
+        self.assertEqual(self.testslicer.nslice, 1)
         
     def testSetupSlicerIndices(self):
         """Test slicer returns correct indices (all) after setup. Note this also tests slicing."""
@@ -71,7 +71,7 @@ class TestUniSlicerIteration(unittest.TestCase):
         nvalues = 1000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         self.testslicer.setupSlicer(dv)
-        self.assertEqual(self.testslicer[0]['slicePoint']['pid'], 0)
+        self.assertEqual(self.testslicer[0]['slicePoint']['sid'], 0)
         
 class TestUniSlicerEqual(unittest.TestCase):
     def setUp(self):

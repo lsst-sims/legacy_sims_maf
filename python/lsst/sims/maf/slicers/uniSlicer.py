@@ -12,35 +12,20 @@ class UniSlicer(BaseSlicer):
     def __init__(self, verbose=True, **kwargs):
         """Instantiate unislicer. """
         super(UniSlicer, self).__init__(verbose=verbose, **kwargs)
-        self.nbins = 1
-        self.bins = None
-
+        self.nslice = 1
+        self.slicePoints = None
+        
     def setupSlicer(self, simData):
         """Use simData to set indexes to return."""
         simDataCol = simData.dtype.names[0]
         self.indices = np.ones(len(simData[simDataCol]),  dtype='bool')
-                
-    def _sliceSimData(self, ipix):
-        """Return all indexes in simData. """
-        idxs = self.indices
-        slicePoint={'pid':ipix}
-        return {'idxs':idxs, 'slicePoint':slicePoint}
-
-    def __iter__(self):
-        """Iterate over the slicepoints."""
-        self.ipix = 0
-        return self
-
-    def next(self):
-        """Set the slicepoints to return when iterating over slicer."""
-        if self.ipix >= self.nbins:
-            raise StopIteration
-        ipix = self.ipix
-        self.ipix += 1
-        return self._sliceSimData(ipix)
-
-    def __getitem__(self, ipix):
-        return self._sliceSimData(ipix)
+        @wraps(self._sliceSimData)
+        def _sliceSimData(islice):
+            """Return all indexes in simData. """
+            idxs = self.indices
+            return {'idxs':idxs,
+                    'slicePoint':{'sid':islice}}
+        setattr(self, '_sliceSimData', _sliceSimData)        
     
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""

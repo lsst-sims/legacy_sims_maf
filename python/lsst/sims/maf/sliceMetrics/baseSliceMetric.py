@@ -58,6 +58,7 @@ class BaseSliceMetric(object):
         """Instantiate sliceMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
+        self.dpi = dpi
         self.metricNames = []
         self.metricObjs = {}
         self.plotParams = {}

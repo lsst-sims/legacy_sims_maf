@@ -42,7 +42,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         self.testslicer = OneDSlicer(sliceColName='testdata', bins=bins)
         self.testslicer.setupSlicer(dv)
         np.testing.assert_equal(self.testslicer.bins, bins)
-        self.assertEqual(self.testslicer.nbins, len(bins)-1)
+        self.assertEqual(self.testslicer.nslice, len(bins)-1)
         
     def testSetupSlicerNbins(self):
         """Test setting up slicer using bins as integer."""
@@ -55,7 +55,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
                 # expect one more 'bin' to accomodate last right edge), but nbins accounts for this
                 self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
                 self.testslicer.setupSlicer(dv)
-                self.assertEqual(self.testslicer.nbins, nbins)
+                self.assertEqual(self.testslicer.nslice, nbins)
                 # Bins of the right size?
                 bindiff = np.diff(self.testslicer.bins)
                 expectedbindiff = (dvmax - dvmin) / float(nbins)
@@ -98,7 +98,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         self.testslicer.setupSlicer(dv)
         self.assertEqual(self.testslicer.bins.min(), dvmin)
         self.assertEqual(self.testslicer.bins.max(), dvmax)
-        self.assertEqual(self.testslicer.nbins, (dvmax-dvmin)/binsize)
+        self.assertEqual(self.testslicer.nslice, (dvmax-dvmin)/binsize)
         # Test that warning works.
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -120,7 +120,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         # How many bins do you expect from optimal binsize?
         from lsst.sims.maf.utils import optimalBins
         bins = optimalBins(dv['testdata'])
-        np.testing.assert_equal(self.testslicer.nbins, bins)
+        np.testing.assert_equal(self.testslicer.nslice, bins)
 
                 
 class TestOneDSlicerIteration(unittest.TestCase):
@@ -141,13 +141,13 @@ class TestOneDSlicerIteration(unittest.TestCase):
     def testIteration(self):
         """Test iteration."""
         for i,(s, b) in enumerate(zip(self.testslicer, self.bins)):
-            self.assertEqual(s['slicePoint']['pid'], i)
+            self.assertEqual(s['slicePoint']['sid'], i)
             self.assertEqual(s['slicePoint']['binLeft'], b)
 
     def testGetItem(self):
         """Test that can return an individual indexed values of the slicer."""
         for i in ([0, 10, 20]):
-            self.assertEqual(self.testslicer[i]['slicePoint']['pid'], i)
+            self.assertEqual(self.testslicer[i]['slicePoint']['sid'], i)
             self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], self.bins[i])
 
 class TestOneDSlicerEqual(unittest.TestCase):

@@ -3,8 +3,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from .healpixSlicer import HealpixSlicer
 import healpy as hp
+
+from .healpixSlicer import HealpixSlicer
 from lsst.sims.maf.metrics.summaryMetrics import fOArea, fONv
 
 class fOSlicer(HealpixSlicer):

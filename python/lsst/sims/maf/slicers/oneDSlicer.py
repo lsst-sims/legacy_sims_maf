@@ -26,8 +26,6 @@ class OneDSlicer(BaseSlicer):
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
         """
         super(OneDSlicer, self).__init__(verbose=verbose, badval=badval)
-        self.bins = None
-        self.nbins = None
         self.sliceColName = sliceColName
         self.columnsNeeded = [sliceColName]
         self.bins = bins
@@ -73,7 +71,10 @@ class OneDSlicer(BaseSlicer):
                 self.binsize = (self.binMax - self.binMin) / float(nbins)
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
-        self.nbins = len(self.bins) - 1
+        self.nslice = len(self.bins) - 1
+        # Set slicePoint metadata.
+        self.slicePoints['sid'] = np.arange(self.nslice)
+        self.slicePoints['bins'] = self.bins[:-1]
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceColName])
         simFieldsSorted = np.sort(simData[self.sliceColName])
@@ -82,28 +83,12 @@ class OneDSlicer(BaseSlicer):
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
         # Set up _sliceSimData method for this class.
         @wraps(self._sliceSimData)
-        def _sliceSimData(ipix):
+        def _sliceSimData(islice):
             """Slice simData on oneD sliceCol, to return relevant indexes for slicepoint."""
-            idxs = self.simIdxs[self.left[ipix]:self.left[ipix+1]]
-            slicePoint = {'pid':ipix, 'binLeft':self.bins[ipix]}
-            return {'idxs':idxs, 'slicePoint':slicePoint}
+            idxs = self.simIdxs[self.left[islice]:self.left[islice+1]]
+            return {'idxs':idxs,
+                    'slicePoint':{'sid':islice, 'binLeft':self.bins[islice]}}
         setattr(self, '_sliceSimData', _sliceSimData)
-
-    def __iter__(self):
-        self.ipix = 0
-        return self
-         
-    def next(self):
-        """Return the binvalues for this slicepoint."""
-        if self.ipix >= self.nbins:
-            raise StopIteration
-        result = self._sliceSimData(self.ipix)
-        self.ipix += 1
-        return result
-
-    def __getitem__(self, ipix):
-        result = self._sliceSimData(ipix) 
-        return result
     
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""
@@ -166,10 +151,10 @@ class OneDSlicer(BaseSlicer):
         # Set y limits (either from values in args, percentileClipping or compressed data values). 
         if (yMin is None) or (yMax is None):
             if percentileClip:
-                yMin, yMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
+                yMin, yMax = percentileClipping(metricValues.compressed(), percentile=percentileClip)
             else:
-                yMin = metricValue.compressed().min()
-                yMax = metricValue.compressed().max()
+                yMin = metricValues.compressed().min()
+                yMax = metricValues.compressed().max()
         plt.ylim(yMin, yMax)
         # Set x limits if given in kwargs.
         if (xMin is not None) or (xMax is not None):

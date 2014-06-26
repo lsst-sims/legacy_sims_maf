@@ -12,7 +12,7 @@ from .baseSlicer import BaseSlicer
     
 class NDSlicer(BaseSlicer):
     """Nd slicer (N dimensions)"""
-    def __init__(self, sliceDataColList=None, verbose=True, binsList=None, nbinsList=100):  
+    def __init__(self, sliceColList=None, verbose=True, binsList=None, nbinsList=100):  
         """Instantiate object.
         binsList can be a list of numpy arrays with the respective slicepoints for sliceDataColList,
             (default 'None' uses nbinsList together with data min/max values to set bins).
@@ -20,14 +20,14 @@ class NDSlicer(BaseSlicer):
             (repeated for all columns, default=100)."""
         super(NDSlicer, self).__init__(verbose=verbose)
         self.bins = None 
-        self.nbins = None
-        self.sliceDataColList = sliceDataColList
-        self.columnsNeeded = self.sliceDataColList
-        if self.sliceDataColList != None:
-            self.nD = len(self.sliceDataColList)
+        self.nslice = None
+        self.sliceColList = sliceColList
+        self.columnsNeeded = self.sliceColList
+        if self.sliceColList != None:
+            self.nD = len(self.sliceColList)
         else:
             self.nD = None
-        self.slicer_init={'sliceDataColList':sliceDataColList, 'binList':binList, 'nbinsList':nbinsList}
+        self.slicer_init={'sliceColList':sliceColList, 'binList':binsList, 'nbinsList':nbinsList}
 
     def setupSlicer(self, simData):
         """Set up bins. """
@@ -46,20 +46,28 @@ class NDSlicer(BaseSlicer):
                         raise Exception('nbinsList must be same length as sliceDataColList')
             else:  # we have an nbins but it's a single number to apply to all cols
                 nbinsList = [nbinsList for i in range(self.nD)]
-            # Set the bins.
+            # Set the bins. Bins for NDslicer is a list of bins (one for each dimension).
             self.bins = []
-            for sliceColName, nbins in zip(self.sliceDataColList, nbinsList):
-                sliceDataCol = simData[sliceColName]
-                binsize = (sliceDataCol.max() - sliceDataCol.min()) / float(nbins)
-                bins = np.arange(sliceDataCol.min(), sliceDataCol.max() + binsize/2.0,
+            for sliceColName, nbins in zip(self.sliceColList, nbinsList):
+                sliceCol = simData[sliceColName]
+                binsize = (sliceCol.max() - sliceCol.min()) / float(nbins)
+                bins = np.arange(sliceCol.min(), sliceCol.max() + binsize/2.0,
                                  binsize, 'float')
                 self.bins.append(bins)
         # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDSlicer).
-        self.nbins = (np.array(map(len, self.bins))-1).prod()
+        self.nslice = (np.array(map(len, self.bins))-1).prod()
+        self.slicePoints['sid'] = np.arange(self.nslice)
+        binsForIteration = []
+        for b in self.bins:
+            binsForIteration.append(b[:-1])
+        biniterator = itertools.product(*binsForIteration)
+        self.slicePoints['bins'] = []
+        for b in biniterator:
+            self.slicePoints['bins'].append(b)
         # Set up data slicing.
         self.simIdxs = []
         self.lefts = []
-        for sliceColName, bins in zip(self.sliceDataColList, self.bins):
+        for sliceColName, bins in zip(self.sliceColList, self.bins):
             simIdxs = np.argsort(simData[sliceColName])
             simFieldsSorted = np.sort(simData[sliceColName])
             # "left" values are location where simdata == bin value
@@ -68,49 +76,59 @@ class NDSlicer(BaseSlicer):
             # Add these calculated values into the class lists of simIdxs and lefts.
             self.simIdxs.append(simIdxs)
             self.lefts.append(left)
-        
-        
-    def _sliceSimData(slicepoint):
-        """Slice simData to return relevant indexes for slicepoint."""
-        # Identify relevant pointings in each dimension.
-        simIdxsList = []
-        for d in range(self.nD):
-            i = (np.where(slicepoint[d] == self.bins[d]))[0]
-            simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
-        idxs = list(set.intersection(*simIdxsList))
-        slicePoint = {'pid':ipix}
-        return {'idxs':idxs, 'slicePoint':slicePoint}
-                
+        @wraps (self._sliceSimData)
+        def _sliceSimData(islice):
+            """Slice simData to return relevant indexes for slicepoint."""
+            # Identify relevant pointings in each dimension.
+            simIdxsList = []
+            for d, i in zip(range(self.nD), islice):
+                simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
+            idxs = list(set.intersection(*simIdxsList))
+            binLeft = []
+            for b, i in zip(self.bins, islice):
+                binLeft.append(b[i])
+            return {'idxs':idxs,
+                    'slicePoint':{'sid':islice, 'binLeft':binLeft}}
+        setattr(self, '_sliceSimData', _sliceSimData)                
+
     def __iter__(self):
         """Iterate over the slicepoints."""
         # Order of iteration over bins: go through bins in each sliceCol in the sliceColList in order.
-        self.ipix = 0
-        binsForIteration = []
+        self.islice = 0
+        sliceIdsForIteration = []
         for b in self.bins:
-            binsForIteration.append(b[:-1])
-        self.biniterator = itertools.product(*binsForIteration)
+            sliceIdsForiteration.append(np.arange(len(b[:-1])))
+        self.sliceIdIterator = itertools.product(*sliceIdsForIteration)
         # Note that this iterates from 'right' to 'left'
         #  (i.e. bins[0] moves slowest, bins[N] moves fastest)
         return self
 
     def next(self):
-        """Return the binvalues at this slicepoint."""
-        if self.ipix >= self.nbins:
+        """
+        Returns results of self._sliceSimData when iterating over slicer.
+        Results of self._sliceSimData should be dictionary of
+           {'idxs' - the data indexes relevant for this slice of the slicer,
+           'slicePoint' - the metadata for the slicePoint .. always includes ['sid'] key for ID of slicePoint.}
+        """
+        if self.islice >= self.nslice:
             raise StopIteration
-        binlo = self.biniterator.next()
-        self.ipix += 1        
-        return binlo
+        islice = self.sliceIdIterator.next()
+        self.islice += 1        
+        return self._sliceSimData(islice)
 
-    def __getitem__(self, ipix):
+    def __getitem__(self, islice):
         """Return slicepoint at index ipix."""
-        binsForIteration = []
+        # Set up slice iterator again.
+        sliceIdsForIteration = []
         for b in self.bins:
-            binsForIteration.append(b[:-1])
-        biniterator = itertools.product(*binsForIteration)
-        binlo = biniterator.next()
-        for i, b in zip(range(1, ipix+1), biniterator):
-            binlo = b
-        return binlo
+            sliceIdsForiteration.append(np.arange(len(b[:-1])))
+        sliceIdIterator = itertools.product(*sliceIdsForIteration)
+        # And then run through slice iterator until we hit this slice number.
+        #  .. i counts the number of slices.
+        sid = sliceIdIterator.next()
+        for i, si in zip(range(1, islice+1), sliceIdIterator):
+            sid = si
+        return self._sliceSimData(sid)
     
     def __eq__(self, otherSlicer):
         """Evaluate if grids are equivalent."""
@@ -181,7 +199,7 @@ class NDSlicer(BaseSlicer):
                          title=None, fignum=None, 
                          histRange=None, units=None,
                          label=None, addLegend=False, legendloc='upper left',
-                         filled=False, alpha=0.5, ylog=False):
+                         filled=False, alpha=0.5, logScale=False):
         """Plot a single axes from the sliceColList, identified by axis, given the metricValues at all
         slicepoints [sums over non-visible axes]. 
 
@@ -197,7 +215,7 @@ class NDSlicer(BaseSlicer):
         legendloc = location for legend (default 'upper left')
         filled = flag to plot histogram as filled bars or lines (default False = lines)
         alpha = alpha value for plot bins if filled (default 0.5).
-        ylog = make the y-axis log (default False)
+        logScale = make the y-axis log (default False)
         """
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
@@ -222,15 +240,14 @@ class NDSlicer(BaseSlicer):
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(md, md))
-            if ylog:
+            if logScale:
                 plt.semilogy(x, y, label=label)
             else:
                 plt.plot(x, y, label=label)
-        if ylabel is None:
-            ylabel = 'Count'
-        plt.ylabel(ylabel)
+        if ylabel is not None:
+            plt.ylabel(ylabel)
         if xlabel is None:
-            xlabel=self.sliceDataColName[axis]
+            xlabel=self.sliceColName[axis]
             if units != None:
                 xlabel += ' (' + units + ')'
         plt.xlabel(xlabel)
