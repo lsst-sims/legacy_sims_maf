@@ -111,8 +111,8 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
 
     def testGetItem(self):
         """Test getting indexed value."""
-        for i, b in enumerate(self.testslicer):
-            dict1 = b
+        for i, s in enumerate(self.testslicer):
+            dict1 = s
             dict2 = self.testslicer[i]
             np.testing.assert_array_equal(dict1['idxs'], dict2['idxs'])
             self.assertDictEqual(dict1['slicePoint'], dict2['slicePoint'])
@@ -139,11 +139,13 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which match fieldID values."""
+        # Test that slicing fails before setupBinner
+        self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
         # Set up slicer.
         self.testslicer.setupSlicer(self.simData, self.fieldData)
-        for b in self.testslicer:
-            didxs = np.where(self.simData['fieldID'] == b['slicePoint']['sid'])
-            binidxs = b['idxs']
+        for s in self.testslicer:
+            didxs = np.where(self.simData['fieldID'] == s['slicePoint']['sid'])
+            binidxs = s['idxs']
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:
                 didxs = np.sort(didxs[0])
@@ -160,8 +162,8 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
         self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testslicer), dtype='float'),
                                          mask = np.zeros(len(self.testslicer), 'bool'),
                                          fill_value = self.testslicer.badval)
-        for i, b in enumerate(self.testslicer):
-            idxs = b['idxs']
+        for i, s in enumerate(self.testslicer):
+            idxs = s['idxs']
             if len(idxs) > 0:
                 self.metricdata.data[i] = np.mean(self.simData['testdata'][idxs])
             else:

@@ -12,59 +12,63 @@ from .baseSlicer import BaseSlicer
     
 class NDSlicer(BaseSlicer):
     """Nd slicer (N dimensions)"""
-    def __init__(self, sliceColList=None, verbose=True, binsList=None, nbinsList=100):  
+    def __init__(self, sliceColList=None, verbose=True, binsList=100):  
         """Instantiate object.
-        binsList can be a list of numpy arrays with the respective slicepoints for sliceDataColList,
-            (default 'None' uses nbinsList together with data min/max values to set bins).
-        nbinsList can be a list of values (one per column in sliceDataColList) or a single value
+        binsList can be a list of numpy arrays with the respective slicepoints for sliceColList,
+         or a list of integers (one per column in sliceColList) or a single value
             (repeated for all columns, default=100)."""
         super(NDSlicer, self).__init__(verbose=verbose)
         self.bins = None 
         self.nslice = None
         self.sliceColList = sliceColList
         self.columnsNeeded = self.sliceColList
-        if self.sliceColList != None:
+        if self.sliceColList is not None:
             self.nD = len(self.sliceColList)
         else:
             self.nD = None
-        self.slicer_init={'sliceColList':sliceColList, 'binList':binsList, 'nbinsList':nbinsList}
+        self.binsList = binsList
+        if not (isinstance(binsList, float) or isinstance(binsList, int)):
+            if len(self.binsList) != self.nD:
+                raise Exception('BinsList must be same length as sliceColNames, unless it is a single value')
+        self.slicer_init={'sliceColList':sliceColList, 'binList':binsList}
 
     def setupSlicer(self, simData):
         """Set up bins. """
-        # For save-file
-        self.slicer_setup={'binsList':binsList, 'nbinsList':nbinsList}
         # Parse input bins choices.
-        if binsList != None:
-            if len(binsList) != self.nD:
-                raise Exception('BinsList must be same length as sliceDataColNames')
-            self.bins = binsList
-            for b in self.bins:
-                b = np.sort(b)
-        else:
-            if isinstance(nbinsList, list):
-                if len(nbinsList) != self.nD:
-                        raise Exception('nbinsList must be same length as sliceDataColList')
-            else:  # we have an nbins but it's a single number to apply to all cols
-                nbinsList = [nbinsList for i in range(self.nD)]
-            # Set the bins. Bins for NDslicer is a list of bins (one for each dimension).
-            self.bins = []
-            for sliceColName, nbins in zip(self.sliceColList, nbinsList):
-                sliceCol = simData[sliceColName]
-                binsize = (sliceCol.max() - sliceCol.min()) / float(nbins)
-                bins = np.arange(sliceCol.min(), sliceCol.max() + binsize/2.0,
-                                 binsize, 'float')
+        self.bins = []
+        # If we were given a single number for the binsList, convert to list.
+        if isinstance(self.binsList, float) or isinstance(self.binsList, int):
+            self.binsList = [self.binsList for c in self.sliceColList]
+        # And then build bins.
+        for bl, col in zip(self.binsList, self.sliceColList):
+            if isinstance(bl, float) or isinstance(bl, int):
+                sliceCol = simData[col]
+                binsize = (sliceCol.max() - sliceCol.min()) / float(bl)
+                bins = np.arange(sliceCol.min(), sliceCol.max() + binsize/2.0, binsize, 'float')
                 self.bins.append(bins)
+            else:
+                self.bins.append(np.sort(bl))
         # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDSlicer).
         self.nslice = (np.array(map(len, self.bins))-1).prod()
+        # Set up slice metadata. 
         self.slicePoints['sid'] = np.arange(self.nslice)
+        # Including multi-D 'leftmost' bin values
         binsForIteration = []
         for b in self.bins:
             binsForIteration.append(b[:-1])
         biniterator = itertools.product(*binsForIteration)
-        self.slicePoints['bins'] = []
+        self.slicePoints['binLeft'] = []
         for b in biniterator:
-            self.slicePoints['bins'].append(b)
-        # Set up data slicing.
+            self.slicePoints['binLeft'].append(b)
+        # and multi-D 'leftmost' bin indexes corresponding to each sid
+        self.slicePoints['binIdxs'] = []
+        binIdsForIteration = []
+        for b in self.bins:
+            binIdsForIteration.append(np.arange(len(b[:-1])))
+        binIdIterator = itertools.product(*binIdsForIteration)
+        for bidx in binIdIterator:
+            self.slicePoints['binIdxs'].append(bidx)
+        # Set up indexing for data slicing.
         self.simIdxs = []
         self.lefts = []
         for sliceColName, bins in zip(self.sliceColList, self.bins):
@@ -81,55 +85,17 @@ class NDSlicer(BaseSlicer):
             """Slice simData to return relevant indexes for slicepoint."""
             # Identify relevant pointings in each dimension.
             simIdxsList = []
-            for d, i in zip(range(self.nD), islice):
+            # Translate islice into indexes in each bin dimension
+            binIdxs = self.slicePoints['binIdxs'][islice]
+            for d, i in zip(range(self.nD), binIdxs):
                 simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
             idxs = list(set.intersection(*simIdxsList))
-            binLeft = []
-            for b, i in zip(self.bins, islice):
-                binLeft.append(b[i])
             return {'idxs':idxs,
-                    'slicePoint':{'sid':islice, 'binLeft':binLeft}}
+                    'slicePoint':{'sid':islice,
+                                  'binLeft':self.slicePoints['binLeft'][islice],
+                                  'binIdx':self.slicePoints['binIdxs'][islice]}}
         setattr(self, '_sliceSimData', _sliceSimData)                
 
-    def __iter__(self):
-        """Iterate over the slicepoints."""
-        # Order of iteration over bins: go through bins in each sliceCol in the sliceColList in order.
-        self.islice = 0
-        sliceIdsForIteration = []
-        for b in self.bins:
-            sliceIdsForiteration.append(np.arange(len(b[:-1])))
-        self.sliceIdIterator = itertools.product(*sliceIdsForIteration)
-        # Note that this iterates from 'right' to 'left'
-        #  (i.e. bins[0] moves slowest, bins[N] moves fastest)
-        return self
-
-    def next(self):
-        """
-        Returns results of self._sliceSimData when iterating over slicer.
-        Results of self._sliceSimData should be dictionary of
-           {'idxs' - the data indexes relevant for this slice of the slicer,
-           'slicePoint' - the metadata for the slicePoint .. always includes ['sid'] key for ID of slicePoint.}
-        """
-        if self.islice >= self.nslice:
-            raise StopIteration
-        islice = self.sliceIdIterator.next()
-        self.islice += 1        
-        return self._sliceSimData(islice)
-
-    def __getitem__(self, islice):
-        """Return slicepoint at index ipix."""
-        # Set up slice iterator again.
-        sliceIdsForIteration = []
-        for b in self.bins:
-            sliceIdsForiteration.append(np.arange(len(b[:-1])))
-        sliceIdIterator = itertools.product(*sliceIdsForIteration)
-        # And then run through slice iterator until we hit this slice number.
-        #  .. i counts the number of slices.
-        sid = sliceIdIterator.next()
-        for i, si in zip(range(1, islice+1), sliceIdIterator):
-            sid = si
-        return self._sliceSimData(sid)
-    
     def __eq__(self, otherSlicer):
         """Evaluate if grids are equivalent."""
         if isinstance(otherSlicer, NDSlicer):
@@ -144,7 +110,7 @@ class NDSlicer(BaseSlicer):
 
     def plotBinnedData2D(self, metricValues,
                         xaxis, yaxis, xlabel=None, ylabel=None,
-                        title=None, fignum=None, ylog=False, units='',
+                        title=None, fignum=None, logScale=False, units='',
                         clims=None, cmap=None, cbarFormat=None):
         """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
         slicepoints [sums over non-visible axes]. 
@@ -155,7 +121,7 @@ class NDSlicer(BaseSlicer):
         title = title for the plot (default None)
         xlabel/ylabel = labels for the x and y axis (default None, uses sliceColList names). 
         fignum = the figure number to use (default None - will generate new figure)
-        ylog = make the colorscale log.
+        logScale = make the colorscale log.
         """
         # Reshape the metric data so we can isolate the values to plot
         # (just new view of data, not copy).
@@ -174,7 +140,7 @@ class NDSlicer(BaseSlicer):
         fig = plt.figure(fignum)
         # Plot data.
         x, y = np.meshgrid(self.bins[xaxis][:-1], self.bins[yaxis][:-1])
-        if ylog:
+        if logScale:
             norm = colors.LogNorm()
         else:
             norm = None
@@ -184,10 +150,10 @@ class NDSlicer(BaseSlicer):
             im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap,
                               vmin=clims[0], vmax=clims[1])
         if xlabel is None:
-            xlabel = self.sliceDataColList[xaxis]
+            xlabel = self.sliceColList[xaxis]
         plt.xlabel(xlabel)
         if ylabel is None:
-            ylabel= self.sliceDataColList[yaxis]
+            ylabel= self.sliceColList[yaxis]
         plt.ylabel(ylabel)
         cb = plt.colorbar(im, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
         cb.set_label(units)
@@ -236,7 +202,7 @@ class NDSlicer(BaseSlicer):
         width = np.diff(self.bins[axis])
         if filled:
             plt.bar(leftedge, md, width, label=label,
-                    linewidth=0, alpha=alpha, log=ylog)
+                    linewidth=0, alpha=alpha, log=logScale)
         else:
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(md, md))

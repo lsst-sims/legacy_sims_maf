@@ -159,6 +159,9 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
+        # Test that slicing fails before setupBinner
+        self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
+        # Set up and test actual slicing.
         self.testslicer.setupSlicer(self.dv)
         for b in self.testslicer:
             binra = b['slicePoint']['ra']

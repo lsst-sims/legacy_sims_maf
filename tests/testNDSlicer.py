@@ -38,7 +38,7 @@ class TestNDSlicerSetup(unittest.TestCase):
     def testSlicertype(self):
         """Test instantiation of slicer sets slicer type as expected."""
         testslicer = NDSlicer(self.dvlist)      
-        self.assertEqual(testslicer.slicerName, self.testslicer.__class__.__name__)
+        self.assertEqual(testslicer.slicerName, testslicer.__class__.__name__)
         self.assertEqual(testslicer.slicerName, 'NDSlicer')
 
     def testSetupSlicerBins(self):
@@ -61,8 +61,8 @@ class TestNDSlicerSetup(unittest.TestCase):
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=False)
                 # Right number of bins? 
                 # expect one more 'bin' to accomodate last right edge, but nbins accounts for this
-                testslicer = NDSlicer(self.dvlist, nbinsList=nbins)        
-                self.testslicer.setupSlicer(dv)
+                testslicer = NDSlicer(self.dvlist, binsList=nbins)        
+                testslicer.setupSlicer(dv)
                 self.assertEqual(testslicer.nslice, nbins**self.nd)
                 # Bins of the right size?
                 for i in range(self.nd):
@@ -75,15 +75,16 @@ class TestNDSlicerSetup(unittest.TestCase):
                 for d in range(self.nd):
                     nbinsList.append(nbins + d)
                     expectednbins *= (nbins + d)
-                testslicer.setupSlicer(dv, nbinsList=nbinsList)
+                testslicer = NDSlicer(self.dvlist, binsList=nbinsList)
+                testslicer.setupSlicer(dv)
                 self.assertEqual(testslicer.nslice, expectednbins)
 
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
         dvmin = 0
         dvmax = 1
-        for nbins in (20, 50, 100, 105):
-            testslicer = NDSlicer(self.dvlist, nbinsList=nbins)
+        for nbins in (20, 50, 105):
+            testslicer = NDSlicer(self.dvlist, binsList=nbins)
             bins = makeDataValues(nbins+1, self.dvmin, self.dvmax, self.nd, random=False)
             binsList = []
             for i in bins.dtype.names:
@@ -103,8 +104,8 @@ class TestNDSlicerEqual(unittest.TestCase):
         self.nd = 3
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
-        self.testslicer = NDSlicer(self.dvlist)
-        self.testslicer.setupSlicer(self.dv, nbinsList=100)
+        self.testslicer = NDSlicer(self.dvlist, binsList=100)
+        self.testslicer.setupSlicer(self.dv)
         
     def tearDown(self):
         del self.testslicer
@@ -117,18 +118,18 @@ class TestNDSlicerEqual(unittest.TestCase):
         # Set up another slicer to match (same bins, although not the same data).
         dv2 = makeDataValues(100, self.dvmin, self.dvmax, self.nd, random=True)
         dvlist = dv2.dtype.names
-        testslicer2 = NDSlicer(sliceDataColList=dvlist)
-        testslicer2.setupSlicer(dv2, binsList = self.testslicer.bins)
+        testslicer2 = NDSlicer(sliceColList=dvlist, binsList=self.testslicer.bins)
+        testslicer2.setupSlicer(dv2)
         self.assertEqual(self.testslicer, testslicer2)
         # Set up another slicer that should not match (different bins)
         dv2 = makeDataValues(1000, self.dvmin+1, self.dvmax+1, self.nd, random=True)
-        testslicer2 = NDSlicer(sliceDataColList=dvlist)
-        testslicer2.setupSlicer(dv2, nbinsList = 100)
+        testslicer2 = NDSlicer(sliceColList=dvlist, binsList=100)
+        testslicer2.setupSlicer(dv2)
         self.assertNotEqual(self.testslicer, testslicer2)
         # Set up another slicer that should not match (different dimensions)
         dv2 = makeDataValues(1000, self.dvmin, self.dvmax, self.nd-1, random=True)
-        testslicer2 = NDSlicer(dv2.dtype.names)
-        testslicer2.setupSlicer(dv2, nbinsList=100)
+        testslicer2 = NDSlicer(dv2.dtype.names, binsList=100)
+        testslicer2.setupSlicer(dv2)
         self.assertNotEqual(self.testslicer, testslicer2)
         # Set up a different kind of slicer that should not match.
         testslicer2 = UniSlicer()
@@ -146,7 +147,6 @@ class TestNDSlicerIteration(unittest.TestCase):
         self.nd = 3
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
-        self.testslicer = NDSlicer(self.dvlist)
         nvalues = 1000
         bins = np.arange(self.dvmin, self.dvmax, 0.1)
         binsList = []
@@ -156,7 +156,8 @@ class TestNDSlicerIteration(unittest.TestCase):
             # (remember iteration doesn't use the very last bin in 'bins')
             self.iterlist.append(bins[:-1])  
         dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-        self.testslicer.setupSlicer(dv, binsList=binsList)
+        self.testslicer = NDSlicer(self.dvlist, binsList=binsList)
+        self.testslicer.setupSlicer(dv)
         
     def tearDown(self):
         del self.testslicer
@@ -164,14 +165,14 @@ class TestNDSlicerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration."""
-        for b, ib in zip(self.testslicer, itertools.product(*self.iterlist)):
-            self.assertEqual(b, ib)
+        for s, ib in zip(self.testslicer, itertools.product(*self.iterlist)):
+            self.assertEqual(s['slicePoint']['binLeft'], ib)
 
     def testGetItem(self):
         """Test getting indexed binpoint."""
-        for i, b in enumerate(self.testslicer):
-            self.assertEqual(self.testslicer[i], b)
-        self.assertEqual(self.testslicer[0], (0.0, 0.0, 0.0))
+        for i, s in enumerate(self.testslicer):
+            self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], s['slicePoint']['binLeft'])
+        self.assertEqual(self.testslicer[0]['slicePoint']['binLeft'], (0.0, 0.0, 0.0))
 
 class TestNDSlicerSlicing(unittest.TestCase):
     def setUp(self):
@@ -190,24 +191,25 @@ class TestNDSlicerSlicing(unittest.TestCase):
     def testSlicing(self):
         """Test slicing."""
         # Test get error if try to slice before setup.
-        self.assertRaises(NotImplementedError, self.testslicer.sliceSimData, 0)
+        self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
         nbins = 10
         binsize = (self.dvmax - self.dvmin) / (float(nbins))
-        for nvalues in (1000, 10000, 100000):
+        self.testslicer = NDSlicer(self.dvlist, binsList=nbins)
+        for nvalues in (1000, 10000):
             dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-            self.testslicer.setupSlicer(dv, nbinsList=nbins)
+            self.testslicer.setupSlicer(dv)
             sum = 0
-            for i, b in enumerate(self.testslicer):
-                idxs = self.testslicer.sliceSimData(b)
+            for i, s in enumerate(self.testslicer):
+                idxs = s['idxs']
                 dataslice = dv[idxs]
                 sum += len(idxs)
                 if len(dataslice)>0:
-                    for i, dvname in zip(range(self.nd), self.dvlist):
-                        self.assertGreaterEqual((dataslice[dvname].min() - b[i]), 0)
-                    if i < self.testslicer.nbins-1:
-                        self.assertLessEqual((dataslice[dvname].max() - b[i]), binsize)
+                    for i, dvname, b in zip(range(self.nd), self.dvlist, s['slicePoint']['binLeft']):
+                        self.assertGreaterEqual((dataslice[dvname].min() - b), 0)
+                    if i < self.testslicer.nslice-1:
+                        self.assertLessEqual((dataslice[dvname].max() - b), binsize)
                     else:
-                        self.assertAlmostEqual((dataslice[dvname].max() - b[i]), binsize)
+                        self.assertAlmostEqual((dataslice[dvname].max() - b), binsize)
                     self.assertTrue(len(dataslice), nvalues/float(nbins))
             # and check that every data value was assigned somewhere.
             self.assertEqual(sum, nvalues)
@@ -230,12 +232,12 @@ class TestNDSlicerHistogram(unittest.TestCase):
         """Test that histogram values match those generated by numpy hist, when using 1d."""
         for nbins in [10, 20, 30, 75, 100, 33]:
             for nvalues in [1000, 10000, 250000]:
+                self.testslicer = NDSlicer(self.dvlist, binsList=nbins)
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
-                self.testslicer.setupSlicer(dv, nbinsList=nbins)
+                self.testslicer.setupSlicer(dv)
                 metricval = np.zeros(len(self.testslicer), 'float')
-                for i, b in enumerate(self.testslicer):
-                    idxs = self.testslicer.sliceSimData(b)
-                    metricval[i] = len(idxs)
+                for i, s in enumerate(self.testslicer):
+                    metricval[i] = len(s['idxs'])
                 numpycounts, numpybins = np.histogram(dv['testdata0'], bins=nbins)
                 np.testing.assert_equal(numpybins, self.testslicer.bins[0], 'Numpy bins do not match testslicer bins')
                 np.testing.assert_equal(numpycounts, metricval, 'Numpy histogram counts do not match testslicer counts')
@@ -259,20 +261,19 @@ class TestNDSlicerPlotting(unittest.TestCase):
         condition = (dv[dvlist[0]] < .5)
         dv[dvlist[0]][condition] = 0.25
         dv[dvlist[2]][condition] = 0.5
-        bins = np.arange(0, 1+0.01, 0.01)        
+        bins = np.arange(0, 1+0.01, 0.1)        
         binsList = []
         for d in range(nd):
             binsList.append(bins)
         print ''
-        self.testslicer = NDSlicer(dvlist)
-        self.testslicer.setupSlicer(dv, binsList=binsList)
+        self.testslicer = NDSlicer(dvlist, binsList=binsList)
+        self.testslicer.setupSlicer(dv)
         metricval = np.zeros(len(self.testslicer), 'float')
-        for i, b in enumerate(self.testslicer):
-            idxs = self.testslicer.sliceSimData(b)
-            metricval[i] = len(idxs)
+        for i, s in enumerate(self.testslicer):
+            metricval[i] = len(s['idxs'])
         self.testslicer.plotBinnedData1D(metricval, axis=0, xlabel='xrange', ylabel='count')
         self.testslicer.plotBinnedData1D(metricval, axis=0, xlabel='xrange', ylabel='count',
-                                         filled=True, ylog=True)
+                                         filled=True, logScale=True)
         self.testslicer.plotBinnedData1D(metricval, axis=0, xlabel='xrange', ylabel='count',
                                          filled=True, title='axis with hump')
         self.testslicer.plotBinnedData1D(metricval, axis=1, xlabel='xrange', ylabel='count',
@@ -286,5 +287,15 @@ class TestNDSlicerPlotting(unittest.TestCase):
         
 
 if __name__ == "__main__":
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSetup)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerEqual)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerIteration)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSlicing)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerHistogram)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
     unittest.main()
 

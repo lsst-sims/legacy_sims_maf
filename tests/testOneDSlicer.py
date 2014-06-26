@@ -201,6 +201,8 @@ class TestOneDSlicerSlicing(unittest.TestCase):
         dvmax = 1
         nbins = 100
         binsize = (dvmax - dvmin) / (float(nbins))
+        # Test that testbinner raises appropriate error before it's set up (first time)
+        self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
         for nvalues in (1000, 10000, 100000):
             dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
             self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
@@ -213,7 +215,8 @@ class TestOneDSlicerSlicing(unittest.TestCase):
                 if len(dataslice)>0:
                     self.assertTrue(len(dataslice), nvalues/float(nbins))
                 else:
-                    self.assertTrue(len(dataslice) > 0, 'Data in test case expected to always be > 0 len after slicing.')
+                    self.assertTrue(len(dataslice) > 0,
+                                    'Data in test case expected to always be > 0 len after slicing.')
             self.assertTrue(sum, nvalues)
 
 class TestOneDSlicerHistogram(unittest.TestCase):
