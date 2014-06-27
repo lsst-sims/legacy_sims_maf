@@ -8,13 +8,22 @@ root.opsimName =  'ob2_1060'
 nside=16
 slicerList=[]
 
-plotDict={ 'units':'units!', 'title':'title!', 'cmap':'RdBu', 
-           'plotMin':0.6, 'plotMax':1.5, 'histMin':0.5, 'histMax':1.7, 'ylabel':'ylabel!',
-           'label':'label!', 'addLegend':True, 'color':'r', 'bins':150, 'cbarFormat':'%.4g'}
+
+# Healpix sky map:  xlabel, title, logScale, cbarFormat, cmap, percentileClip, plotMin, plotMax, plotMaskedValues, zp,normval
+# Healpix hist:  title, xlabel, ylabel, label, addLegend, legendloc, bins, cumulative, xMin, xMax, logScale, plotXaxis, scale, color, linestyle
+# heal PS:  title, maxl, label, addLengend, removeDipole
+
+#oned:  title, units, label, addLegend, legendloc, filled, alpha, logScale, percentileClip, ylabel, xlabel, xMin,xMax, yMin,yMax, color, linestyle
 
 
-m1 = configureMetric('MeanMetric', params=['finSeeing'], plotDict=plotDict)
-m2 = configureMetric('MeanMetric', params=['finSeeing'], kwargs={'metricName':'mean_default'})
+plotDict={'title':'title!', 'cmap':'RdBu', 'xlabel':'xlabel!', 'ylabel':'ylabel!', 
+           'label':'label!', 'addLegend':True, 'color':'r', 'bins':150,
+          'cbarFormat':'%.4g', 'cumulative':True, 'logScale':True, 'plotMin':0.65,
+          'plotMax':1.5, 'xMin':0.5, 'xMax':1.7, 'linestyle':'--', 'maxl':40, 'removeDipole':False}
+
+
+m1 = configureMetric('MeanMetric', params=['finSeeing'], plotDict=plotDict, kwargs={'metricName':'wplotdict'})
+m2 = configureMetric('MeanMetric', params=['finSeeing'])
 
 metricDict = makeDict(m1,m2)
 
@@ -25,8 +34,9 @@ slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside},
 
 slicerList.append(slicer)
 
-plotDict={ 'units':'units!', 'title':'title!', 'histMin':0.5, 'histMax':1.7, 'ylabel':'ylabel!',
-           'xlabel':'xlabel!', 'label':'label!', 'addLegend':True, 'color':'r', 'yMin':0.,'yMax':10000.}
+plotDict={ 'title':'title!', 'xMin':0.5, 'xMax':1.7, 'ylabel':'ylabel!',
+           'xlabel':'xlabel!', 'label':'label!', 'addLegend':True, 'color':'r',
+           'yMin':0.1,'yMax':10000., 'logScale':True, 'linestyle':'--'}
 
 
 m1 = configureMetric('CountMetric', params=['finSeeing'], kwargs={'metricName':'wplotdict'},plotDict=plotDict)
