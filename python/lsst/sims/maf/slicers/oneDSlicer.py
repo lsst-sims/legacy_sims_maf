@@ -50,6 +50,13 @@ class OneDSlicer(BaseSlicer):
             self.binMin = sliceCol.min()
         if self.binMax is None:
             self.binMax = sliceCol.max()
+        # Give warning if binMin = binMax, and do something at least slightly reasonable.
+        if self.binMin == self.binMax:
+            warnings.warn('binMin = binMax (maybe your data is single-valued?). Increasing binMax by 1 (or 2*binsize, if binsize set).')
+            if self.binsize is not None:
+                self.binMax = self.binMax + 2 * self.binsize
+            else:
+                self.binMax = self.binMax + 1
         # Set bins.
         # Using binsize.
         if self.binsize is not None:  

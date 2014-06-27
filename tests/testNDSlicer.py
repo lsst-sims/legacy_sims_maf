@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import numpy.lib.recfunctions as rfn
 import matplotlib
@@ -56,8 +57,8 @@ class TestNDSlicerSetup(unittest.TestCase):
         
     def testSetupSlicerNbins(self):
         """Test setting up slicer using nbins."""
-        for nvalues in (100, 1000, 10000):
-            for nbins in (5, 10, 25, 75):
+        for nvalues in (100, 1000):
+            for nbins in (5, 25, 74):
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=False)
                 # Right number of bins? 
                 # expect one more 'bin' to accomodate last right edge, but nbins accounts for this
@@ -79,17 +80,32 @@ class TestNDSlicerSetup(unittest.TestCase):
                 testslicer.setupSlicer(dv)
                 self.assertEqual(testslicer.nslice, expectednbins)
 
+    def testSetupSlicerNbinsZeros(self):
+        """Test handling case of data being single values."""
+        dv = makeDataValues(100, 0, 0, self.nd, random=False)
+        nbins = 10
+        testslicer = NDSlicer(self.dvlist, binsList = nbins)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            testslicer.setupSlicer(dv)
+            self.assertTrue('creasing binMax' in str(w[-1].message))
+        expectednbins = 1
+        for d in range(self.nd):
+            expectednbins *= (nbins + d)
+        self.assertTrue(testslicer.nslice, expectednbins)
+
+                
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
         dvmin = 0
         dvmax = 1
-        for nbins in (20, 50, 105):
+        for nbins in (20, 105):
             testslicer = NDSlicer(self.dvlist, binsList=nbins)
             bins = makeDataValues(nbins+1, self.dvmin, self.dvmax, self.nd, random=False)
             binsList = []
             for i in bins.dtype.names:
                 binsList.append(bins[i])
-            for nvalues in (100, 1000, 10000):
+            for nvalues in (100, 10000):
                 dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
                 testslicer.setupSlicer(dv)
                 for i in range(self.nd):
@@ -287,15 +303,13 @@ class TestNDSlicerPlotting(unittest.TestCase):
         
 
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSetup)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerEqual)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerIteration)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSlicing)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerHistogram)
+    suitelist = []
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSetup))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerEqual))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerIteration))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSlicing))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerHistogram))
+    suite = unittest.TestSuite(suitelist)
     #unittest.TextTestRunner(verbosity=2).run(suite)
     unittest.main()
 

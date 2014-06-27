@@ -1,5 +1,6 @@
 # nd Slicer slices data on N columns in simData
 
+import warnings
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -43,8 +44,13 @@ class NDSlicer(BaseSlicer):
         for bl, col in zip(self.binsList, self.sliceColList):
             if isinstance(bl, float) or isinstance(bl, int):
                 sliceCol = simData[col]
-                binsize = (sliceCol.max() - sliceCol.min()) / float(bl)
-                bins = np.arange(sliceCol.min(), sliceCol.max() + binsize/2.0, binsize, 'float')
+                binMin = sliceCol.min()
+                binMax = sliceCol.max()
+                if binMin == binMax:
+                    warnings.warn('BinMin=BinMax for column %s: increasing binMax by 1.' %(col))
+                    binMax = binMax + 1
+                binsize = (binMax - binMin) / float(bl)
+                bins = np.arange(binMin, binMax + binsize/2.0, binsize, 'float')
                 self.bins.append(bins)
             else:
                 self.bins.append(np.sort(bl))

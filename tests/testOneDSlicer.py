@@ -40,14 +40,14 @@ class TestOneDSlicerSetup(unittest.TestCase):
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         # Used right bins?
         self.testslicer = OneDSlicer(sliceColName='testdata', bins=bins)
-        self.testslicer.setupSlicer(dv)
+        self.testslicer.setupSlicer(dv)        
         np.testing.assert_equal(self.testslicer.bins, bins)
         self.assertEqual(self.testslicer.nslice, len(bins)-1)
         
     def testSetupSlicerNbins(self):
         """Test setting up slicer using bins as integer."""
         for nvalues in (100, 1000, 10000):
-            for nbins in (5, 10, 25, 75):
+            for nbins in (5, 25, 75):
                 dvmin = 0
                 dvmax = 1
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=False)
@@ -60,7 +60,20 @@ class TestOneDSlicerSetup(unittest.TestCase):
                 bindiff = np.diff(self.testslicer.bins)
                 expectedbindiff = (dvmax - dvmin) / float(nbins)
                 np.testing.assert_allclose(bindiff, expectedbindiff)
-            
+
+    def testSetupSlicerNbinsZeros(self):
+        """Test what happens if give slicer test data that is all single-value."""
+        dv = np.zeros(100, float)
+        dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        nbins = 10
+        self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.testslicer.setupSlicer(dv)
+            self.assertTrue("creasing binMax" in str(w[-1].message))
+        print len(self.testslicer)
+        self.assertEqual(self.testslicer.nslice, nbins)
+                            
 
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
@@ -270,5 +283,5 @@ if __name__ == "__main__":
     suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSlicing))
     suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerHistogram))
     suite = unittest.TestSuite(suitelist)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
     unittest.main()
