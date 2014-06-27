@@ -20,14 +20,17 @@ class MetricConfig(pexConfig.Config):
     histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
 
 class ColStackConfig(pexConfig.Config):
-    """If there are extra columns that need to be added, this config can be used to pass keyword paramters"""
+    """
+    If there are extra columns that need to be added,
+    this config can be used to pass keyword parameters
+    """
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
     params = pexConfig.ListField("", dtype=str, default=[])
     
 class SlicerConfig(pexConfig.Config):
     """Config object for MAF slicers """
-    name = pexConfig.Field("", dtype=str, default='') # Change this to a choiceField? Or do we expect users to make new bins?
+    name = pexConfig.Field("", dtype=str, default='') 
 
     kwargs = pexConfig.ConfigField("kwargs for slicer", dtype=MixConfig, default=None)
 
@@ -95,7 +98,11 @@ def makeDict(*args):
     """
     return dict((ind, config) for ind, config in enumerate(args))
 
-def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
+def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={},
+                    metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
+    """
+    Helper function to generate a Slicer pex config object
+    """
     slicer = SlicerConfig()
     slicer.name = name
     slicer.metadata=metadata
@@ -107,6 +114,7 @@ def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, 
     slicer.params_float=[]
     slicer.params_int = []
     slicer.params_bool=[]
+
     for p in params:
         if type(p) is str:
             slicer.params_str.append(p)
@@ -142,6 +150,7 @@ def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={}, 
     return slicer
 
 def readSlicerConfig(config):
+    """Read in a Slicer pex config object """
     name = config.name
     params = []
     params.append(config.params_str)
@@ -165,6 +174,9 @@ def readSlicerConfig(config):
     return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs, metadata
         
 def configureMetric(name, params=[], kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
+    """
+    Helper function to generate a metric pex config object.
+    """
     mc = MetricConfig()
     mc.name = name
     mc.params=params
@@ -177,6 +189,10 @@ def configureMetric(name, params=[], kwargs={}, plotDict={}, summaryStats={}, hi
     return mc
 
 def readMixConfig(config):
+    """
+    Read in a pex config object where the different native types have been broken up.
+    Returns a dict.
+    """
     plotDict={}
     for key in config.plot_str:  plotDict[key] = config.plot_str[key]
     for key in config.plot_int:  plotDict[key] = config.plot_int[key]
@@ -185,6 +201,9 @@ def readMixConfig(config):
     return plotDict
     
 def readMetricConfig(config):
+    """
+    Read in a metric pex config object
+    """
     name, params,kwargs = config2dict(config)
     summaryStats = config.summaryStats
     histMerge = readMixConfig(config.histMerge)
