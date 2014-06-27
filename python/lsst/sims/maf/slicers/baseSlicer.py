@@ -12,7 +12,7 @@ class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.
     """
-    def __init__(self, verbose=True, badval=-666, *args,  **kwargs):
+    def __init__(self, verbose=True, badval=-666, *args, **kwargs):
         """Instantiate the base slicer object."""
         # After init: everything necessary for using slicer for plotting or saving/restoring metric
         #   data should be present (although slicer does not need to be able to slice data again).
@@ -39,16 +39,26 @@ class BaseSlicer(object):
                     pass
                 else:
                     self.plotFuncs[p[0]] = p[1]
-        # Create a dict that saves how to re-init the slicer (all args & kwargs for slicer 'init' method)
-        # Will generally be overwritten by individual slicer slicer_init dictionaries.
-        self.slicer_init = {}
+        # Create a dict that saves how to re-init the slicer.
+        #  This may not be the whole set of args/kwargs, but those which carry useful metadata or
+        #   are absolutely necesary for init.
+        # Will often be overwritten by individual slicer slicer_init dictionaries.
+        self.slicer_init = {'badval':badval}
         
     def setupSlicer(self, *args):
         """
-        Set up internal parameters and slices for slicer. Also sets _sliceSimData for a particular slicer.
+        Set up internal parameters necessary for slicer to slice data and generates indexes on simData.
+        Also sets _sliceSimData for a particular slicer.
         """
         # Typically args will be simData, but opsimFieldSlicer also uses fieldData.
         raise NotImplementedError()
+
+
+    def getSlicePoints(self):
+        """
+        Return the slicePoint metadata, for all slice points.
+        """
+        return self.slicePoints
     
     def __len__(self):
         """
@@ -92,12 +102,6 @@ class BaseSlicer(object):
         """
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
-    def getSlicePoints(self):
-        """
-        Return the slicePoint metadata, for all slice points.
-        """
-        return self.slicePoints
-    
     def writeData(self, outfilename, metricValues, metricName='',
                   simDataName ='', sqlconstraint='', metadata=''):
         """
@@ -128,7 +132,7 @@ class BaseSlicer(object):
                  fill = fill, # metric badval/fill val
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
-                 slicerSlicePoints = self.slicePoints, # bins to match end of 'setupSlicer'
+                 slicePoints = self.getSlicePoints(), # slicePoint metadata saved (is a dictionary)
                  slicerNSlice = self.nslice)
                                  
     def readData(self, infilename):
@@ -146,12 +150,12 @@ class BaseSlicer(object):
                                           fill_value=restored['fill'])
         # Get Metadata & other simData info
         header = restored['header'][()]  # extra brackets restore dictionary to dictionary status
-        # Get slicer set up
+        # Get slicer instantiated.
         slicer_init = restored['slicer_init'][()]
         slicer = getattr(slicers, str(restored['slicerName']))(**slicer_init)
-        # Sometimes bins are a dictionary, sometimes a numpy array, and sometimes None
-        slicer.slicePoints = restored['slicerSlicePoints'][()]
+        # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
+        slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
     
     def plotData(self, metricValues, figformat='png', dpi=None, filename='fig', savefig=True, **kwargs):

@@ -7,12 +7,11 @@ from .uniSlicer import UniSlicer
 class HourglassSlicer(UniSlicer):
     """Slicer to make the filter hourglass plots """
 
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=True, badval=-666):
         # Inherits from UniSlicer, so nslice=1 and only one 'slice'.
-        super(HourglassSlicer,self).__init__(verbose=verbose)
+        super(HourglassSlicer,self).__init__(verbose=verbose, badval=badval)
         self.columnsNeeded=[]
         self.slicerName='HourglassSlicer'
-        self.slicer_init={}
 
     def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
         filenames=[]

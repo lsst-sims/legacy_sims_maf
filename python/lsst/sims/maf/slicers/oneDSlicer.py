@@ -36,9 +36,7 @@ class OneDSlicer(BaseSlicer):
             co = ColInfo()
             self.sliceColUnits = co.getUnits(self.sliceColName)
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
-                            'badval':badval, 'bins':bins,
-                            'binMin':binMin, 'binMax':binMax, 'binsize':binsize}
-
+                            'badval':badval}
         
     def setupSlicer(self, simData): 
         """
@@ -93,7 +91,7 @@ class OneDSlicer(BaseSlicer):
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""
         if isinstance(otherSlicer, OneDSlicer):
-            return np.all(otherSlicer.bins == self.bins)
+            return np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
         else:
             return False
 

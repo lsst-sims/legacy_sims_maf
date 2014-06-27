@@ -10,73 +10,77 @@ import os
 class TestSlicers(unittest.TestCase):
     def setUp(self):
         self.filenames=[]
+        self.baseslicer = slicers.BaseSlicer()
 
     def test_healpixSlicer_obj(self):
-        nside = 128
+        nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside)).astype('object')
-        metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=slicer.badval)
+        metricValues = ma.MaskedArray(data=metricValues,
+                                      mask = np.where(metricValues < .1, True, False),
+                                      fill_value=slicer.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
-        metadata = 'poop'
+        metadata = 'testdata'
         slicer.writeData(filename, metricValues, metadata=metadata)
-        metricValuesBack,slicerBack,header = slicer.readData(filename)
+        metricValuesBack, slicerBack, header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(slicer == slicerBack) 
+        assert(slicer == slicerBack)
         assert(metadata == header['metadata'])
-        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
         
     def test_healpixSlicer_floats(self):
-        nside = 128
+        nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside))
         metricName = 'Noise'
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
-        slicer.writeData(filename, metricValues, metadata='poop')
-        metricValuesBack,slicerBack,header = slicer.readData(filename)
+        slicer.writeData(filename, metricValues, metadata='testdata')
+        metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(slicer == slicerBack) #I don't think this is the right way to compare
-        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        assert(slicer == slicerBack) 
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
        
         
     def test_healpixSlicer_masked(self):
-        nside = 128
+        nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside))
-        metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=slicer.badval)
+        metricValues = ma.MaskedArray(data=metricValues,
+                                      mask = np.where(metricValues < .1, True, False),
+                                      fill_value=slicer.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
-        slicer.writeData(filename, metricValues, metadata='poop')
-        metricValuesBack,slicerBack,header = slicer.readData(filename)
-
+        slicer.writeData(filename, metricValues, metadata='testdata')
+        metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(slicer == slicerBack) #I don't think this is the right way to compare
-        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        assert(slicer == slicerBack) 
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
 
-
     def test_oneDSlicer(self):
-        slicer=slicers.OneDSlicer(sliceColName='poop')
-        dataValues = np.zeros(10000, dtype=[('poop','float')])
-        dataValues['poop'] = np.random.rand(10000)
+        slicer=slicers.OneDSlicer(sliceColName='testdata')
+        dataValues = np.zeros(10000, dtype=[('testdata','float')])
+        dataValues['testdata'] = np.random.rand(10000)
         slicer.setupSlicer(dataValues)
         filename = 'oned_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, dataValues[:100])
-
-        dataBack,slicerBack,header = slicer.readData(filename)
+        print "ONED"
+        dataBack, slicerBack, header = self.baseslicer.readData(filename)
+        print slicerBack.slicerName
+        print slicerBack.slicePoints.keys()
         assert(slicer == slicerBack)
-        assert(np.all(slicer.bins == slicerBack.bins))
         #np.testing.assert_almost_equal(dataBack,dataValues[:100])
-        attr2check = ['nbins', 'columnsNeeded', 'bins']
+        attr2check = ['nslice', 'columnsNeeded']
         for att in attr2check:
             if type(getattr(slicer,att)).__module__ == 'numpy':
                 np.testing.assert_almost_equal(getattr(slicer,att), getattr(slicerBack,att))
@@ -100,10 +104,10 @@ class TestSlicers(unittest.TestCase):
         filename = 'opsimslicer_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, metricValues)
-        metricBack, slicerBack,header = slicer.readData(filename)
+        metricBack, slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
-        attr2check = ['nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2','simDataFieldIDColName']
+        attr2check = ['nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2','simDataFieldIDColName']
         for att in attr2check:
             if type(getattr(slicer,att)).__name__ == 'dict':
                 for key in getattr(slicer,att).keys():
@@ -113,51 +117,50 @@ class TestSlicers(unittest.TestCase):
 
     def test_unislicer(self):
         slicer = slicers.UniSlicer()
-        data = np.zeros(1, dtype=[('poop','float')])
+        data = np.zeros(1, dtype=[('testdata','float')])
         data[:] = np.random.rand(1)
         slicer.setupSlicer(data)
         filename='unislicer_test.npz'
         self.filenames.append(filename)
         metricValue=np.array([25.])
         slicer.writeData(filename, metricValue)
-        dataBack, slicerBack,header = slicer.readData(filename)
+        dataBack, slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(dataBack,metricValue)
-        attr2check = ['nbins', 'columnsNeeded', 'bins']
+        attr2check = ['nslice', 'columnsNeeded']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
 
-
     def test_complex(self):
-        """Test case where there is a complex metric """
-        nside = 32
+        #Test case where there is a complex metric 
+        nside = 8
         slicer = slicers.HealpixSlicer(nside=nside)
-        data = np.zeros(slicer.nbins, dtype='object')
+        data = np.zeros(slicer.nslice, dtype='object')
         for i,ack in enumerate(data):
             n_el = np.random.rand(1)*4 # up to 4 elements
             data[i] = np.arange(n_el)
         filename = 'heal_complex.npz'
         self.filenames.append(filename)
         slicer.writeData(filename,data)
-        dataBack,slicerBack,header = slicer.readData(filename)
+        dataBack,slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         # This is a crazy slow loop!  
         for i, ack in enumerate(data):
             np.testing.assert_almost_equal(dataBack[i],data[i])
-        
-#    def test_nDSlicer(self):
-#        colnames = ['ack1','ack2','poop']
-#        types = ['float','float','int']
-#        data = np.zeros(1000, dtype=zip(colnames,types))
-#        slicer = slicers.NDSlicer()
-#        slicer.setupSlicer([data['ack1'], data['ack2'], data['poop']])
-#        filename = 'nDBInner_test.npz'
-#        slicer.writeData(filename,data)
-#        dataBack,slicerBack,header = slicer.readData(filename)
-#        assert(slicer == slicerBack)
-#        np.testing.assert_almost_equal(dataBack,data)
-       
 
+    def test_nDSlicer(self):
+        colnames = ['ack1','ack2','testdata']
+        types = ['float','float','int']
+        data = np.zeros(1000, dtype=zip(colnames,types))
+        slicer = slicers.NDSlicer(data.dtype.names, binsList=10)
+        slicer.setupSlicer(data)
+        filename = 'nDSlicer_test.npz'
+        self.filenames.append(filename)
+        slicer.writeData(filename,data)
+        dataBack,slicerBack,header = self.baseslicer.readData(filename)
+        assert(slicer == slicerBack)
+        np.testing.assert_almost_equal(dataBack,data)
+            
     def tearDown(self):
         for filename in self.filenames:
             os.remove(filename)

@@ -41,7 +41,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                                                                          arcmin=True))
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
-                            'useCache':useCache, 'radius':radius, 'leafsize':leafsize}
+                            'radius':radius}
         if useCache:
             # useCache set the size of the cache for the memoize function in sliceBinMetric.
             binRes = hp.nside2resol(nside) # Pixel size in radians

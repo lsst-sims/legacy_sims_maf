@@ -9,11 +9,11 @@ from .baseSlicer import BaseSlicer
 
 class UniSlicer(BaseSlicer):
     """UniSlicer."""
-    def __init__(self, verbose=True, **kwargs):
+    def __init__(self, verbose=True, badval=-666):
         """Instantiate unislicer. """
-        super(UniSlicer, self).__init__(verbose=verbose, **kwargs)
+        super(UniSlicer, self).__init__(verbose=verbose, badval=badval)
         self.nslice = 1
-        self.slicePoints = None
+        self.slicePoints['sid'] = np.array([0,], int)
         
     def setupSlicer(self, simData):
         """Use simData to set indexes to return."""

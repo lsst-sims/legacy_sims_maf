@@ -30,7 +30,7 @@ class NDSlicer(BaseSlicer):
         if not (isinstance(binsList, float) or isinstance(binsList, int)):
             if len(self.binsList) != self.nD:
                 raise Exception('BinsList must be same length as sliceColNames, unless it is a single value')
-        self.slicer_init={'sliceColList':sliceColList, 'binList':binsList}
+        self.slicer_init={'sliceColList':sliceColList}
 
     def setupSlicer(self, simData):
         """Set up bins. """
@@ -57,9 +57,9 @@ class NDSlicer(BaseSlicer):
         for b in self.bins:
             binsForIteration.append(b[:-1])
         biniterator = itertools.product(*binsForIteration)
-        self.slicePoints['binLeft'] = []
+        self.slicePoints['bins'] = []
         for b in biniterator:
-            self.slicePoints['binLeft'].append(b)
+            self.slicePoints['bins'].append(b)
         # and multi-D 'leftmost' bin indexes corresponding to each sid
         self.slicePoints['binIdxs'] = []
         binIdsForIteration = []
@@ -92,7 +92,7 @@ class NDSlicer(BaseSlicer):
             idxs = list(set.intersection(*simIdxsList))
             return {'idxs':idxs,
                     'slicePoint':{'sid':islice,
-                                  'binLeft':self.slicePoints['binLeft'][islice],
+                                  'binLeft':self.slicePoints['bins'][islice],
                                   'binIdx':self.slicePoints['binIdxs'][islice]}}
         setattr(self, '_sliceSimData', _sliceSimData)                
 
@@ -102,7 +102,7 @@ class NDSlicer(BaseSlicer):
             if otherSlicer.nD != self.nD:
                 return False
             for i in range(self.nD):
-                if np.all(otherSlicer.bins[i] != self.bins[i]):
+                if np.all(otherSlicer.slicePoints['bins'][i] != self.slicePoints['bins'][i]):
                     return False                
             return True
         else:

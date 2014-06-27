@@ -40,7 +40,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1, spatialkey2]
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
-                          'leafsize':leafsize, 'radius':radius, 'badval':badval}
+                          'radius':radius, 'badval':badval}
         self.radius = radius
         self.leafsize=leafsize
         # RA and Dec are required slicePoint info for any spatial slicer.
