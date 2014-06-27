@@ -66,8 +66,8 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.slicer, None)
         # Test that output file list is set to empty dict
         self.assertEqual(self.testbbm.outputFiles, {})
-        # Test that figformat is set to default (pdf)
-        self.assertEqual(self.testbbm.figformat, 'pdf')
+        # Test that figformat is set to default (png)
+        self.assertEqual(self.testbbm.figformat, 'png')
         # Test that can set figformat to alternate value
         testbbm2 = sliceMetrics.BaseSliceMetric(figformat='eps')
         self.assertEqual(testbbm2.figformat, 'eps')

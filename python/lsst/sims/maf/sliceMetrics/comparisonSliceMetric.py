@@ -18,8 +18,9 @@ def dtime(time_prev):
 
 class ComparisonSliceMetric(object):
     """ComparisonSliceMetric"""
-    def __init__(self, figformat='png', verbose=True):
+    def __init__(self, figformat='png', dpi=None, verbose=True):
         self.figformat = figformat
+        self.dpi = dpi
         self.verbose = verbose
         #  The comparison bin metric stores data in dictionaries keyed by (the same) number:
         #     -- the baseSliceMetrics (which then hold metric data and the slicer),
@@ -250,7 +251,7 @@ class ComparisonSliceMetric(object):
             outfile = self.slicemetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile

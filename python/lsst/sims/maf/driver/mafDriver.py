@@ -276,6 +276,9 @@ class MafDriver(object):
                     # Run through binpoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
                                metadata=metadata, sqlconstraint=sqlconstraint)
+                    if self.verbose:
+                       dt,time_prev = dtime(time_prev)
+                       print '    Computed metrics in %.3g s'%dt
                     # And run reduce methods for relevant metrics.
                     gm.reduceAll()
                     # Replace the plotParams for selected metricNames (to allow override from config file).
@@ -283,6 +286,9 @@ class MafDriver(object):
                         gm.plotParams[mName] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
+                    if self.verbose:
+                       dt,time_prev = dtime(time_prev)
+                       print '    plotted metrics in %.3g s'%dt
                     # Loop through the metrics and calculate any summary statistics
                     for i, metric in enumerate(self.metricList[slicer.index]):
                         if hasattr(metric, 'summaryStats'):
@@ -309,8 +315,14 @@ class MafDriver(object):
                                     statstring = self.config.opsimName + ',' + slicer.slicerName + ',' + sqlconstraint 
                                     statstring += ',' + metric.name + ',' + stat.name + ',' + np.array_str(summary)
                                     summary_stats.append(statstring)
+                    if self.verbose:
+                       dt,time_prev = dtime(time_prev)
+                       print '    Computed summarystats in %.3g s'%dt
                     # And write metric data files to disk.
                     gm.writeAll(outDir=self.config.outputDir)
+                    if self.verbose:
+                       dt,time_prev = dtime(time_prev)
+                       print '    wrote output files in %.3g s'%dt
                     # Grab output Files - get file output key back. Verbose=True, prints to screen.
                     outFiles = gm.returnOutputFiles(verbose=False)
                     # Build continual dictionary of all output info over multiple sqlconstraints.
@@ -332,9 +344,9 @@ class MafDriver(object):
                     for i,m in enumerate(self.metricList[slicer.index]):
                         good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
                         m.saveFile = outfile_names[good]
-                if self.verbose:
-                    dt,time_prev = dtime(time_prev)
-                    print '    Computed metrics in %.3g s'%dt
+                #if self.verbose:
+                #    dt,time_prev = dtime(time_prev)
+                #    print '    Computed made plots in %.3g s'%dt
         # Save summary statistics to file.
         f = open(self.config.outputDir+'/summaryStats.dat','w')
         for stat in summary_stats:

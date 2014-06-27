@@ -54,7 +54,7 @@ def dtime(time_prev):
 
 
 class BaseSliceMetric(object):
-    def __init__(self, figformat='pdf', dpi=None):
+    def __init__(self, figformat='png', dpi=None):
         """Instantiate sliceMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
