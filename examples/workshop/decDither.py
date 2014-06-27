@@ -1,6 +1,6 @@
 # Driver for running a declination only dither scheme
 
-from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
 root.outputDir = './DecDith'
 root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 root.opsimName = 'Example'
@@ -8,14 +8,14 @@ root.opsimName = 'Example'
 
 binList = []
 
-metric = makeMetricConfig('Coaddm5Metric')
-binner = makeBinnerConfig('HealpixBinner', metricDict=makeDict(metric),
+metric = configureMetric('Coaddm5Metric')
+binner = configureBinner('HealpixBinner', metricDict=makeDict(metric),
                           constraints=['filter = "r"'])
 
 binList.append(binner)
 
-metric = makeMetricConfig('Coaddm5Metric', kwargs={'metricName':'m5_decdith'})
-binner = makeBinnerConfig('HealpixBinner', metricDict=makeDict(metric),
+metric = configureMetric('Coaddm5Metric', kwargs={'metricName':'m5_decdith'})
+binner = configureBinner('HealpixBinner', metricDict=makeDict(metric),
                           constraints=['filter = "r"'], kwargs={'spatialkey1':'fieldRA', 'spatialkey2':'decOnlyDither'})
 binList.append(binner)
 

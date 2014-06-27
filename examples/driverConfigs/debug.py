@@ -4,7 +4,7 @@
 # Example MAF config file which runs each type of available binner.
 
 import numpy as np
-from lsst.sims.maf.driver.mafConfig import makeBinnerConfig, makeMetricConfig, makeDict
+from lsst.sims.maf.driver.mafConfig import configureBinner, configureMetric, makeDict
 
 # Setup Database access.  Note:  Only the "root.XXX" variables are passed to the driver.
 root.outputDir = './Allbinners'
@@ -26,17 +26,17 @@ constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 # Configure a OneDBinner:
 # Configure a new metric
-m1 = makeMetricConfig('CountMetric', params=['slewDist'])
+m1 = configureMetric('CountMetric', params=['slewDist'])
 metricDict=makeDict(m1)
-binner = makeBinnerConfig('OneDBinner', kwargs={"sliceDataColName":'slewDist'},
+binner = configureBinner('OneDBinner', kwargs={"sliceDataColName":'slewDist'},
                           metricDict=metricDict, constraints=constraints)
 binList.append(binner)
 
 
 
 # Configure a UniBinner.  Note new SQL constraints are passed
-m1 = makeMetricConfig('MeanMetric', params=['airmass'])
-binner = makeBinnerConfig('UniBinner', metricDict=makeDict(m1), constraints=['night < 750'] )
+m1 = configureMetric('MeanMetric', params=['airmass'])
+binner = configureBinner('UniBinner', metricDict=makeDict(m1), constraints=['night < 750'] )
 binList.append(binner)
 
 

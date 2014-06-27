@@ -2,7 +2,7 @@ import os
 import warnings
 import numpy as np 
 
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readPlotConfig
+from .mafConfig import MafConfig, config2dict, readMetricConfig, readBinnerConfig, readMixConfig
 warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
 
 import lsst.sims.maf.db as db
@@ -92,7 +92,7 @@ class MafDriver(object):
                 temp_metric = getattr(metrics,metric.name)(*params, **kwargs)
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
-                    temp_metric.summaryStats.append(getattr(metrics,key)('metricdata',**readPlotConfig(summaryStats[key])))
+                    temp_metric.summaryStats.append(getattr(metrics,key)('metricdata',**readMixConfig(summaryStats[key])))
                 temp_metric.histMerge = histMerge
                 sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
@@ -276,7 +276,7 @@ class MafDriver(object):
                     gm.reduceAll()
                     # Replace the plotParams for selected metricNames (to allow override from config file).
                     for mName in binner.plotConfigs:
-                        gm.plotParams[mName] = readPlotConfig(binner.plotConfigs[mName])
+                        gm.plotParams[mName] = readMixConfig(binner.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
                     # Loop through the metrics and calculate any summary statistics
