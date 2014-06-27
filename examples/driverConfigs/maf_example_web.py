@@ -56,7 +56,8 @@ binList.append(binner)
 
 # How many Healpix sides to use
 nside=64
-# List of SQL constraints.  If multiple constraints are listed in a binner object, they are looped over and each one is executed individualy. 
+# List of SQL constraints.  If multiple constraints are listed in a binner object,
+# they are looped over and each one is executed individualy. 
 constraints = ["filter = \'%s\'"%'r']
 m1 = configureMetric('RmsMetric', params=['finSeeing'], plotDict={'plotMin':0., 'plotMax':0.6})
 m2 =  configureMetric('RobustRmsMetric', params=['finSeeing'], plotDict={'plotMin':0., 'plotMax':0.6})
@@ -80,7 +81,10 @@ binList.append(binner)
 # Example of doing summary stats:
 nside=64
 constraints = ["filter = \'%s\'"%'r']
-m2 = configureMetric('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.}, kwargs={'metricName':'coadd_w_summary'}, summaryStats={'MeanMetric':{}, 'MinMetric':{}, 'MaxMetric':{}, 'RmsMetric':{}} )          
+m2 = configureMetric('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95,
+                                                'units':'Co-add m5 - %.1f'%27.},
+                     kwargs={'metricName':'coadd_w_summary'},
+                     summaryStats={'MeanMetric':{}, 'MinMetric':{}, 'MaxMetric':{}, 'RmsMetric':{}} )          
 metricDict = makeDict(m2
 binner = configureBinner('HealpixBinner',
                           kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
