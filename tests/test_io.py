@@ -74,10 +74,7 @@ class TestSlicers(unittest.TestCase):
         filename = 'oned_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, dataValues[:100])
-        print "ONED"
         dataBack, slicerBack, header = self.baseslicer.readData(filename)
-        print slicerBack.slicerName
-        print slicerBack.slicePoints.keys()
         assert(slicer == slicerBack)
         #np.testing.assert_almost_equal(dataBack,dataValues[:100])
         attr2check = ['nslice', 'columnsNeeded']
@@ -149,17 +146,22 @@ class TestSlicers(unittest.TestCase):
             np.testing.assert_almost_equal(dataBack[i],data[i])
 
     def test_nDSlicer(self):
-        colnames = ['ack1','ack2','testdata']
-        types = ['float','float','int']
-        data = np.zeros(1000, dtype=zip(colnames,types))
-        slicer = slicers.NDSlicer(data.dtype.names, binsList=10)
-        slicer.setupSlicer(data)
+        colnames = ['test1','test2','test3']
+        data = []
+        for c in colnames:
+            data.append(np.random.rand(1000))
+        dv = np.core.records.fromarrays(data, names=colnames)
+        slicer = slicers.NDSlicer(colnames, binsList=10)
+        slicer.setupSlicer(dv)
         filename = 'nDSlicer_test.npz'
         self.filenames.append(filename)
-        slicer.writeData(filename,data)
-        dataBack,slicerBack,header = self.baseslicer.readData(filename)
+        metricdata = np.zeros(slicer.nslice, dtype='float')
+        for i, s in enumerate(slicer):
+            metricdata[i] = i
+        slicer.writeData(filename, metricdata)
+        dataBack, slicerBack, header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
-        np.testing.assert_almost_equal(dataBack,data)
+        np.testing.assert_almost_equal(dataBack, metricdata)
             
     def tearDown(self):
         for filename in self.filenames:
