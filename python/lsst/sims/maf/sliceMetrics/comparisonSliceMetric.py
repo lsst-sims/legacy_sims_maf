@@ -18,7 +18,7 @@ def dtime(time_prev):
 
 class ComparisonSliceMetric(object):
     """ComparisonSliceMetric"""
-    def __init__(self, figformat='pdf', dpi=None, verbose=True):
+    def __init__(self, figformat='png', dpi=None, verbose=True):
         self.figformat = figformat
         self.dpi = dpi
         self.verbose = verbose
