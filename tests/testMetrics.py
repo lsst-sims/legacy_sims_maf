@@ -52,7 +52,7 @@ class TestBaseMetric(unittest.TestCase):
         cols = 'onecolumn'
         # Test for column not in colInfo, units not set by hand.
         testmetric = metrics.BaseMetric(cols)
-        self.assertEqual(testmetric.units, testmetric.name)
+        self.assertEqual(testmetric.units, '')
         # Test for column not in colInfo, units set by hand.
         testmetric = metrics.BaseMetric(cols, units='Test')
         self.assertEqual(testmetric.units, 'Test')
@@ -66,7 +66,7 @@ class TestBaseMetric(unittest.TestCase):
         # Test for multiple columns not in colInfo
         cols = ['onecol', 'twocol']
         testmetric = metrics.BaseMetric(cols)
-        self.assertEqual(testmetric.units, testmetric.name)
+        self.assertEqual(testmetric.units, '')
         # Test for multiple columns in colInfo
         cols = ['seeing', 'skybrightness_modified']
         testmetric = metrics.BaseMetric(cols)
@@ -83,16 +83,14 @@ class TestBaseMetric(unittest.TestCase):
     def testPlotParams(self):
         """Test plot parameter setting"""
         cols = 'onecolumn'
-        # Don't set any plot parameters - is dictionary present and contains only _units?
-        #  (_units is default unit)
         testmetric = metrics.BaseMetric(cols)
         self.assertTrue(isinstance(testmetric.plotParams, dict))
-        self.assertEqual(testmetric.plotParams.keys(), ['_units'])
+        self.assertEqual(testmetric.plotParams.keys(), ['units'])
         # Set some plot parameters - are they present in dictionary and dictionary contains only needed values?
         plotParams = {'title':'mytitle'}
         testmetric = metrics.BaseMetric(cols, plotParams=plotParams)
         self.assertTrue(isinstance(testmetric.plotParams, dict))
-        self.assertEqual(set(testmetric.plotParams.keys()), set(['title', '_units']))
+        self.assertEqual(set(testmetric.plotParams.keys()), set(['title', 'units']))
         
     def testValidateData(self):
         """Test 'validateData' method"""
