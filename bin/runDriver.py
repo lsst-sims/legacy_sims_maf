@@ -12,7 +12,7 @@ if __name__=="__main__":
     parser.add_argument("--runName", type=str, default='', help='Root name of the sqlite dbfile (i.e. filename minus _sqlite.db). If provided, then configuration file is expected to contain a "mafconfig" method to define the configuration parameters. If not, then configuration file is expected to be a pex_config python script - a "one-off" configuration file, without this method.')
     parser.add_argument("--dbDir", type=str, default='.', help='Directory containing the sqlite dbfile.')
     parser.add_argument("--outputDir", type=str, default='./Out', help='Output directory for MAF outputs.')
-    parser.add_argument("--binnerName", type=str, default='HealpixBinner', help='BinnerName, for configuration methods that use this.')
+    parser.add_argument("--slicerName", type=str, default='HealpixSlicer', help='SlicerName, for configuration methods that use this.')
 
     args = parser.parse_args()
 
@@ -39,7 +39,7 @@ if __name__=="__main__":
 
         # Run configuration.
         config = conf.mafConfig(config, runName=args.runName, dbDir=args.dbDir, outputDir=args.outputDir, 
-                                binnerName=args.binnerName)
+                                slicerName=args.slicerName)
         print 'Finished loading config from %s.mafconfig' %(name)
 
     # Run MAF driver.

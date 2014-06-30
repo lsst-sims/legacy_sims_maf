@@ -199,6 +199,8 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFiel
     constraints = ['']
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                               constraints=constraints, metadata=slicermetadata)
+    slicerList.append(slicer)
+
 
     # Calculate some basic summary info about run, per filter.
     for f in filters:
