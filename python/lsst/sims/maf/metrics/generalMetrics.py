@@ -9,13 +9,12 @@ class OpenShutterMetric(SimpleScalarMetric):
                 metricName='OpenShutterMetric',
                 exptimeCol='visitExpTime', **kwargs):
         self.exptimeCol = exptimeCol
-        super(OpenShutterMetric,self).__init__(self.exptimeCol, metricName=metricName)
+        super(OpenShutterMetric,self).__init__(self.exptimeCol, metricName=metricName, units='sec')
         self.readTime = readTime
         self.shutterTime = shutterTime
-        self.units = 'sec'
         self.metricDtype = float
     
-   def run(self, dataSlice):
+   def run(self, dataSlice, *args):
        result = np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
        return result
 
@@ -26,14 +25,14 @@ class OpenShutterFracMetric(BaseMetric):
                 slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):
        self.exptimeCol = exptimeCol
        self.slewTimeCol = slewTimeCol
-       super(OpenShutterFracMetric,self).__init__([self.exptimeCol, self.slewTimeCol], metricName=metricName)
+       super(OpenShutterFracMetric,self).__init__([self.exptimeCol, self.slewTimeCol], metricName=metricName, units='frac')
        self.metricDtype = float
        self.units = 'OpenShutter/TotalTime'
        self.readTime = readTime
        self.shutterTime = shutterTime
 
 
-   def run(self, dataSlice):
+   def run(self, dataSlice, *args):
        result = (np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
                  / np.sum(dataSlice[self.slewTimeCol] + dataSlice[self.exptimeCol]))
        return result
@@ -56,7 +55,7 @@ class CompletenessMetric(BaseMetric):
         if len(self.filters) == 0:
             raise ValueError('Please set the requested number of visits for at least one filter.')
         
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         """Compute the completeness for each filter, and then the minimum (joint) completeness for each slice."""
         allCompleteness = []
         for f, nVis in zip(self.filters, self.nvisitsRequested):

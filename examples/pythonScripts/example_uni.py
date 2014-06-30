@@ -1,14 +1,14 @@
 ## EXAMPLE
-# example test script for unibinner metrics. 
+# example test script for unislicer metrics. 
 
 
 import sys, os, argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
-import lsst.sims.maf.binners as binners
+import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.db as db
 
 import time
@@ -33,24 +33,24 @@ def getMetrics():
     print 'Set up metrics %f s' %(dt)
     return metricList
 
-def getBinner(simdata):
+def getSlicer(simdata):
     t = time.time()
-    bb = binners.UniBinner()
-    bb.setupBinner(simdata)
+    bb = slicers.UniSlicer()
+    bb.setupSlicer(simdata)
     
     dt, t = dtime(t)
-    print 'Set up binner %f s' %(dt)
+    print 'Set up slicer %f s' %(dt)
     return bb
 
 def goBin(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
-    gm = binMetrics.BaseBinMetric()
-    gm.setBinner(bb)
+    gm = sliceMetrics.BaseSliceMetric()
+    gm.setSlicer(bb)
 
     gm.setMetrics(metricList)
-    gm.runBins(simdata, simDataName=opsimrun, metadata=metadata)
+    gm.runSlices(simdata, simDataName=opsimrun, metadata=metadata)
     dt, t = dtime(t)
-    print 'Ran bins of %d points with %d metrics using binMetric %f s' %(len(bb), len(metricList), dt)
+    print 'Ran bins of %d points with %d metrics using sliceMetric %f s' %(len(bb), len(metricList), dt)
                     
     gm.reduceAll()
     
@@ -104,8 +104,8 @@ if __name__ == '__main__':
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)
     
-    # And set up binner.
-    bb = getBinner(simdata)
+    # And set up slicer.
+    bb = getSlicer(simdata)
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"', '')
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     # Generate some summary statistics and plots.
     printSummary(gm, metricList)
 
-    # No plots for unibinner (these are single number results).
+    # No plots for unislicer (these are single number results).
     
     # Write the data to file.
     write(gm)

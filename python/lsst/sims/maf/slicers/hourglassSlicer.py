@@ -2,24 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
-from .uniBinner import UniBinner
+from .uniSlicer import UniSlicer
 
-class HourglassBinner(UniBinner):
-    """Binner to make the filter hourglass plots """
+class HourglassSlicer(UniSlicer):
+    """Slicer to make the filter hourglass plots """
 
-    def __init__(self, verbose=True):
-        super(HourglassBinner,self).__init__(verbose=verbose)
-        self.nbins=1
+    def __init__(self, verbose=True, badval=-666):
+        # Inherits from UniSlicer, so nslice=1 and only one 'slice'.
+        super(HourglassSlicer,self).__init__(verbose=verbose, badval=badval)
         self.columnsNeeded=[]
-        self.binnerName='HourglassBinner'
-        self.binner_init={}
+        self.slicerName='HourglassSlicer'
 
     def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
         filenames=[]
         filetypes=[]
         figs={}
         if not isinstance(metricValues[0], dict):
-            warnings.warn('HourglassBinner did not get dict to plot, returning False')
+            warnings.warn('HourglassSlicer did not get dict to plot, returning False')
             return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         figs['hourglass'] = self.plotHour(metricValues, **kwargs)
         if savefig:
@@ -31,7 +30,6 @@ class HourglassBinner(UniBinner):
         
     def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}, **kwargs):
         """expect a tuple to unpack for the metricValue from hourglassMetric  """
-        plottype = 'hour'
         xlabel = 'Night - min(Night)' # Currently not able to override.
         f = plt.figure()
         ax = f.add_subplot(111)
@@ -59,9 +57,7 @@ class HourglassBinner(UniBinner):
         plt.plot(pernight['mjd']-dmin, (pernight['twi18_set']-pernight['midnight'])*24.,
                  'red'  )
         plt.plot(pernight['mjd']-dmin, pernight['moonPer']/100.-7, 'black', label='Moon')
-        #plt.legend()
-
-            
+        #plt.legend()            
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)

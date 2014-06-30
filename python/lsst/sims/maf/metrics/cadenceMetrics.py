@@ -66,7 +66,7 @@ class SupernovaMetric(BaseMetric):
 
         # It would make sense to put a dict of interpolation functions here keyed on filter that take time and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.  repeat for multiple time steps.  
         
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         """ """
         # Cut down to only include filters in correct wave range.
         goodFilters = np.in1d(dataSlice['filter'],self.filterNames)
@@ -152,7 +152,7 @@ class TemplateExistsMetric(BaseMetric):
         self.metricDtype = float
         
 
-    def run(self,dataSlice):
+    def run(self,dataSlice, *args):
         dataSlice.sort(order=self.expMJDcol)
         # Minimum seeing up to a given time
         seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol]) 
@@ -174,7 +174,7 @@ class UniformityMetric(BaseMetric):
         self.metricDtype=float
 
 
-    def run(self,dataSlice):
+    def run(self,dataSlice, *args):
         """Based on how a KS-Test works:
         Look at the cumulative distribution of observations dates,
         and compare to a uniform cumulative distribution.

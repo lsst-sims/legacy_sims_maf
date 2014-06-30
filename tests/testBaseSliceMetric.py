@@ -1,10 +1,13 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import numpy.ma as ma
 import warnings
 import unittest
-import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.binners as binners
+import lsst.sims.maf.slicers as slicers
+import lsst.utils.tests as utilsTests
 
 def makeDataValues(size=100, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
@@ -26,30 +29,30 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     return datavalues
 
 
-class TestSetupBaseBinMetric(unittest.TestCase):
-    """Unit tests relating to setting up the baseBinMetric"""
+class TestSetupBaseSliceMetric(unittest.TestCase):
+    """Unit tests relating to setting up the baseSliceMetric"""
     def setUp(self):
-        self.testbbm = binMetrics.BaseBinMetric()
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
                                       plotParams={'units':'countunits', 'title':'count_title'})
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=50, r=50)
-        self.binner = binners.UniBinner()
+        self.slicer = slicers.UniSlicer()
 
     def tearDown(self):
         del self.testbbm
         del self.m1
         del self.m2
         del self.m3
-        del self.binner
+        del self.slicer
         self.testbbm = None
         self.m1 = None
         self.m2 = None
-        self.binner = None
+        self.slicer = None
         
     def testInit(self):
-        """Test init setup for baseBinMetric."""
+        """Test init setup for baseSliceMetric."""
         # Test metric Name list set up and empty
         self.assertEqual(self.testbbm.metricNames, [])
         # Test dictionaries set up but empty
@@ -59,28 +62,28 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.simDataName.keys(), [])
         self.assertEqual(self.testbbm.sqlconstraint.keys(), [])
         self.assertEqual(self.testbbm.metadata.keys(), [])
-        # Test that binner is set to None
-        self.assertEqual(self.testbbm.binner, None)
+        # Test that slicer is set to None
+        self.assertEqual(self.testbbm.slicer, None)
         # Test that output file list is set to empty dict
         self.assertEqual(self.testbbm.outputFiles, {})
         # Test that figformat is set to default (png)
         self.assertEqual(self.testbbm.figformat, 'png')
         # Test that can set figformat to alternate value
-        testbbm2 = binMetrics.BaseBinMetric(figformat='eps')
+        testbbm2 = sliceMetrics.BaseSliceMetric(figformat='eps')
         self.assertEqual(testbbm2.figformat, 'eps')
 
-    def testSetBinner(self):
-        """Test setBinner."""
-        # Test can set binner (when bbm binner = None)
-        self.testbbm.setBinner(self.binner)
-        # Test can set/check binner (when = previous binner)
-        binner2 = binners.UniBinner()
-        self.assertTrue(self.testbbm.setBinner(binner2, override=False))
-        # Test can not set/override binner (when != previous binner)
-        binner2 = binners.HealpixBinner(nside=16, verbose=False)
-        self.assertFalse(self.testbbm.setBinner(binner2, override=False))
+    def testSetSlicer(self):
+        """Test setSlicer."""
+        # Test can set slicer (when bbm slicer = None)
+        self.testbbm.setSlicer(self.slicer)
+        # Test can set/check slicer (when = previous slicer)
+        slicer2 = slicers.UniSlicer()
+        self.assertTrue(self.testbbm.setSlicer(slicer2, override=False))
+        # Test can not set/override slicer (when != previous slicer)
+        slicer2 = slicers.HealpixSlicer(nside=16, verbose=False)
+        self.assertFalse(self.testbbm.setSlicer(slicer2, override=False))
         # Unless you really wanted to..
-        self.assertTrue(self.testbbm.setBinner(binner2, override=True))
+        self.assertTrue(self.testbbm.setSlicer(slicer2, override=True))
 
     def testSetMetrics(self):
         """Test setting metrics and de-dupe/dupe metric names."""
@@ -92,12 +95,12 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
         self.assertEqual(self.testbbm.plotParams.keys(), ['Mean testdata', 'Count testdata', 'Completeness'])
-        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units', '_units'])
-        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', '_units', 'title'])
+        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units'])
+        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', 'title'])
         self.assertEqual(self.testbbm.plotParams['Count testdata'].values(),
-                         ['countunits', 'Count testdata', 'count_title'])
+                         ['countunits', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
-        testbbm2 = binMetrics.BaseBinMetric()
+        testbbm2 = sliceMetrics.BaseSliceMetric()
         testbbm2.setMetrics(self.m1)
         self.assertEqual(testbbm2.metricNames, ['Mean testdata',])
         # Test that if add an additional metric, the name is 'de-duped' as expected (and added)
@@ -118,9 +121,9 @@ class TestSetupBaseBinMetric(unittest.TestCase):
         self.testbbm.setMetrics(m4)
         self.assertRaises(Exception, self.testbbm.validateMetricData, dv)
 
-class TestRunBaseBinMetric(unittest.TestCase):        
+class TestRunBaseSliceMetric(unittest.TestCase):        
     def setUp(self):
-        self.testbbm = binMetrics.BaseBinMetric()
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
@@ -131,9 +134,9 @@ class TestRunBaseBinMetric(unittest.TestCase):
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
                             'Completeness_z', 'Completeness_y', 'Completeness_Joint']
         self.dv = makeDataValues(size=1000, min=0, max=1)
-        self.binner = binners.OneDBinner('testdata')
-        self.binner.setupBinner(self.dv, bins=np.arange(0, 1.25, .1))
-        self.testbbm.setBinner(self.binner)
+        self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
+        self.slicer.setupSlicer(self.dv)
+        self.testbbm.setSlicer(self.slicer)
         self.testbbm.setMetrics([self.m1, self.m2, self.m3])
 
     def tearDown(self):
@@ -141,18 +144,18 @@ class TestRunBaseBinMetric(unittest.TestCase):
         del self.m1
         del self.m2
         del self.m3
-        del self.binner
+        del self.slicer
         self.testbbm = None
         self.m1 = None
         self.m2 = None
-        self.binner = None
+        self.slicer = None
 
     def testRunBins(self):
         """Test creating metric data values."""
         opsimname = 'opsim1000'
         sqlconstraint = 'created fake testdata'
         metadata = 'testing fake data run'
-        self.testbbm.runBins(self.dv, simDataName=opsimname, sqlconstraint=sqlconstraint, metadata=metadata)
+        self.testbbm.runSlices(self.dv, simDataName=opsimname, sqlconstraint=sqlconstraint, metadata=metadata)
         # Test that copied opsim name and sqlconstraint and metadata correctly for each metric name.
         for mname in self.metricNames:
             self.assertEqual(self.testbbm.simDataName[mname], opsimname)
@@ -160,9 +163,9 @@ class TestRunBaseBinMetric(unittest.TestCase):
             self.assertEqual(self.testbbm.metadata[mname], metadata)
         # Test that created metric data with expected number of data points.
         for mname in self.metricNames:
-            self.assertEqual(len(self.testbbm.metricValues[mname]), len(self.binner))
+            self.assertEqual(len(self.testbbm.metricValues[mname]), len(self.slicer))
         # Test that metric data was masked where expected (last bin) due to no data in bin.
-        lastbin = len(self.binner) - 1
+        lastbin = len(self.slicer) - 1
         for mname in self.metricNames:
             self.assertEqual(self.testbbm.metricValues[mname].mask[lastbin], True)
 
@@ -172,7 +175,7 @@ class TestRunBaseBinMetric(unittest.TestCase):
         opsimname = 'opsim1000'
         sqlconstraint = 'created fake testdata'
         metadata = 'testing fake data run'
-        self.testbbm.runBins(self.dv, simDataName=opsimname, sqlconstraint=sqlconstraint, metadata=metadata)
+        self.testbbm.runSlices(self.dv, simDataName=opsimname, sqlconstraint=sqlconstraint, metadata=metadata)
         self.testbbm.reduceAll()
         # Check that all metric data values expected exist.
         for m in self.metricNames:
@@ -188,14 +191,14 @@ class TestRunBaseBinMetric(unittest.TestCase):
         for m in self.reduceNames:
             self.assertEqual(self.testbbm.plotParams[m]['xlabel'], 'Completeness')
         # Check that mask carried through properly.
-        lastbin = len(self.binner) - 1
+        lastbin = len(self.slicer) - 1
         for m in self.reduceNames:
             self.assertEqual(self.testbbm.metricValues[m].mask[lastbin], True)
                 
 
-class TestReadWriteBaseBinMetric(unittest.TestCase):        
+class TestReadWriteBaseSliceMetric(unittest.TestCase):        
     def setUp(self):
-        self.testbbm = binMetrics.BaseBinMetric()
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
@@ -206,26 +209,26 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
                             'Completeness_z', 'Completeness_y', 'Completeness_Joint']
         self.dv = makeDataValues(size=1000, min=0, max=1)
-        self.binner = binners.OneDBinner('testdata')
-        self.binner.setupBinner(self.dv, bins=np.arange(0, 1.25, .1))
-        self.testbbm.setBinner(self.binner)
+        self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
+        self.slicer.setupSlicer(self.dv)
+        self.testbbm.setSlicer(self.slicer)
         self.testbbm.setMetrics([self.m1, self.m2, self.m3])
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
         self.metadata = 'testing fake data run'
-        self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         self.testbbm.reduceAll()
-        self.outroot = 'testBaseBinMetric'
+        self.outroot = 'testBaseSliceMetric'
         self.testbbm.writeAll(outDir='.', outfileRoot=self.outroot)
         self.expectedfiles = []
         for m in self.metricNames:
             filename = (self.outroot + ' ' + m + ' ' + self.metadata + ' ' +
-                        self.binner.binnerName[:4].upper() + '.npz')
+                        self.slicer.slicerName[:4].upper() + '.npz')
             filename = filename.replace(' ', '_')
             self.expectedfiles.append(filename)
         for m in self.reduceNames:
             filename = (self.outroot + ' ' + m + ' ' + self.metadata + ' ' +
-                        self.binner.binnerName[:4].upper() + '.npz')
+                        self.slicer.slicerName[:4].upper() + '.npz')
             filename = filename.replace(' ', '_')
             self.expectedfiles.append(filename)
                         
@@ -234,11 +237,11 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
         del self.m1
         del self.m2
         del self.m3
-        del self.binner
+        del self.slicer
         self.testbbm = None
         self.m1 = None
         self.m2 = None
-        self.binner = None
+        self.slicer = None
         import os
         for f in self.expectedfiles:
             os.remove(f)        
@@ -252,9 +255,9 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
 
     def testRead(self):
         """Test reading data back from disk. """
-        # Test with binner already set up in binMetric.
+        # Test with slicer already set up in sliceMetric.
         filename = (self.outroot + '_' + 'Completeness' + '_' + self.metadata + '_' +
-                    self.binner.binnerName[:4].upper() + '.npz')
+                    self.slicer.slicerName[:4].upper() + '.npz')
         filename = filename.replace(' ', '_')
         self.testbbm.readMetricValues(filename)
         # Should be read in and de-duped.
@@ -265,8 +268,8 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
         for m, n in zip(self.testbbm.metricValues['Completeness'].mask,
                         self.testbbm.metricValues['Completeness__0'].mask):
             self.assertEqual(m, n)
-        # Test with new binMetric (with no binner previously set up).
-        testbbm2 = binMetrics.BaseBinMetric()
+        # Test with new sliceMetric (with no slicer previously set up).
+        testbbm2 = sliceMetrics.BaseSliceMetric()
         testbbm2.readMetricValues(filename)
         self.assertTrue('Completeness' in testbbm2.metricValues)
         for m, n in zip(self.testbbm.metricValues['Completeness'].data,
@@ -290,7 +293,7 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
             self.assertEqual(outkeys[o]['simDataName'], self.opsimname)
             self.assertEqual(outkeys[o]['sqlconstraint'], self.sqlconstraint)
             self.assertTrue(outkeys[o]['dataFile'].replace('./', '') in self.expectedfiles)
-            self.assertEqual(outkeys[o]['binnerName'], self.binner.binnerName)
+            self.assertEqual(outkeys[o]['slicerName'], self.slicer.slicerName)
             self.assertTrue((outkeys[o]['metricName'] in self.metricNames) or
                             (outkeys[o]['metricName'] in self.reduceNames)) 
         # Check data in outkeys is complete
@@ -302,9 +305,9 @@ class TestReadWriteBaseBinMetric(unittest.TestCase):
         for m in self.reduceNames:
             self.assertTrue(m in outkeysMetricNames)
 
-class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
+class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
     def setUp(self):
-        self.testbbm = binMetrics.BaseBinMetric()
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.dv = makeDataValues(size=1000, min=0, max=1)
@@ -317,35 +320,35 @@ class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
     def tearDown(self):
         del self.testbbm
         del self.m1
-        del self.binner
+        del self.slicer
         self.testbbm = None
         self.m1 = None
-        self.binner = None
+        self.slicer = None
 
     def testSummaryStatistic(self):
         """Test summary statistic calculation."""
-        # Try unibinner first: expect that summary statistic return will be simply the unibinner value.
-        self.binner = binners.UniBinner()
-        self.binner.setupBinner(self.dv)
-        self.testbbm.setBinner(self.binner)
-        self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        # Try unislicer first: expect that summary statistic return will be simply the unislicer value.
+        self.slicer = slicers.UniSlicer()
+        self.slicer.setupSlicer(self.dv)
+        self.testbbm.setSlicer(self.slicer)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', metrics.IdentityMetric('metricdata'))
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
-        # Try oneD binner: other binners should behave similarly.
-        self.testbbm = binMetrics.BaseBinMetric()
+        # Try oneD slicer: other slicers should behave similarly.
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.testbbm.setMetrics([self.m1,])
-        self.binner = binners.OneDBinner('testdata')
-        self.binner.setupBinner(self.dv, bins=100)
-        self.testbbm.setBinner(self.binner)
-        self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.slicer = slicers.OneDSlicer('testdata', bins=100)
+        self.slicer.setupSlicer(self.dv)
+        self.testbbm.setSlicer(self.slicer)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'].mean())
         # Test get warning if calculating summary statistics on 'object' data using simple scalar metric.
-        fakemetricdata = ma.MaskedArray(data = np.empty(len(self.binner), 'object'),
-                                        mask = np.zeros(len(self.binner), 'bool'),
-                                        fill_value = self.binner.badval)
+        fakemetricdata = ma.MaskedArray(data = np.empty(len(self.slicer), 'object'),
+                                        mask = np.zeros(len(self.slicer), 'bool'),
+                                        fill_value = self.slicer.badval)
         self.testbbm.metricValues['objecttest'] = fakemetricdata
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
@@ -354,22 +357,22 @@ class TestSummaryStatisticBaseBinMetric(unittest.TestCase):
             self.assertEqual(summary, None)
                             
         
-class TestPlottingBaseBinMetric(unittest.TestCase):
+class TestPlottingBaseSliceMetric(unittest.TestCase):
     def setUp(self):
         # Set up dictionary of all plotting parameters to test.
-        self.plotParams = {'_units': 'testunits',
+        self.plotParams = {'units': 'testunits',
                         'title': 'my test title',  # plot titles
                         'xlabel': 'my xlabel',  # plot x labels
                         'ylabel': 'my ylabel',  # plot y labels
-                        # For 1-d binner: set x min/max vals via bins OR by histMin/histMax, then y vals via yMin/yMax
-                        # For spatial binners: set hist x min/max vals via histMin/Max & number of bins via 'bins'
-                        #   then for skymap, set colorbar min/max vals via plotMin/Max
+                        # For 1-d slicer: set x min/max vals via bins OR by xMin/xMax, then y vals via yMin/yMax
+                        # For spatial slicers: set hist x min/max vals via xMin/Max & number of bins via 'bins'
+                        #   then for skymap, set colorbar min/max vals via xMin/xMax
                         'yMin': -0.5,
                         'yMax': 1.5,
-                        'histMin': -0.5,  # histogram x minimum value for spatial binner
-                        'histMax': 1.5,   # histogram x maximum value for spatial binner
-                        # No way to set y value limits for spatial binner histogram?
-                        'bins': 50       # parameter for number of bins for spatial binner histograms
+                        'xMin': -0.5,  # histogram x minimum value for spatial slicer
+                        'xMax': 1.5,   # histogram x maximum value for spatial slicer
+                        # No way to set y value limits for spatial slicer histogram?
+                        'bins': 50       # parameter for number of bins for spatial slicer histograms
                         }
         self.m1 = metrics.MeanMetric('testdata', metricName='Test labels', plotParams = self.plotParams)
         self.m2 = metrics.MeanMetric('testdata', metricName='Test defaults')
@@ -382,35 +385,31 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         del self.testbbm
         del self.m1
         del self.m2
-        del self.binner
+        del self.slicer
         self.testbbm = None
         self.m1 = None
         self.m2 = None
-        self.binner = None
+        self.slicer = None
 
     def testPlotting(self):        
         """Test plotting."""
         import matplotlib.pyplot as plt    
-        # Test OneDBinner.
-        self.binner = binners.OneDBinner('testdata')
+        # Test OneDSlicer.
         bins = np.arange(0, 1.25, .1)
-        self.testbbm = binMetrics.BaseBinMetric()
+        self.slicer = slicers.OneDSlicer('testdata', bins=bins)
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.testbbm.setMetrics([self.m1, self.m2])
-        self.binner.setupBinner(self.dv, bins=bins)
-        self.testbbm.setBinner(self.binner)
-        self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
-        fignums = self.testbbm.plotMetric(self.m2.name, savefig=False)
-        fig = plt.figure(fignums['BinnedData'])
-        ax = plt.gca()
-        # Check x and y limits (x lims set from bins)
-        xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (bins.min(), bins.max()))
+        self.slicer.setupSlicer(self.dv)
+        self.testbbm.setSlicer(self.slicer)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
+                               sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        # Test plotting oneDslicer, where we've set the plot parameters.
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
         fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()
         # Check x and y limits set from plot params.
         xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (self.plotParams['histMin'], self.plotParams['histMax']))
+        np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
         ylims = plt.ylim()
         np.testing.assert_almost_equal(ylims, (self.plotParams['yMin'], self.plotParams['yMax']))
         # Check x and y labels
@@ -418,20 +417,21 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
         # Check title
         self.assertEqual(ax.get_title(), self.plotParams['title'])
-        # Test a spatial binner.
-        self.testbbm = binMetrics.BaseBinMetric()
+        # Test a spatial slicer.
+        self.testbbm = sliceMetrics.BaseSliceMetric()
         self.testbbm.setMetrics([self.m1, ])
-        self.binner = binners.HealpixBinner(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
-        self.binner.setupBinner(self.dv)
-        self.testbbm.setBinner(self.binner)
-        self.testbbm.runBins(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.slicer = slicers.HealpixSlicer(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
+        self.slicer.setupSlicer(self.dv)
+        self.testbbm.setSlicer(self.slicer)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
+                               sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
         # Test histogram.
         fig = plt.figure(fignums['Histogram'])
         ax = plt.gca()
         # Check x limits.
         xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (self.plotParams['histMin'], self.plotParams['histMax']))
+        np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
         # Check x and y labels.
         self.assertEqual(ax.get_xlabel(), self.plotParams['xlabel'])
         self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
@@ -444,15 +444,21 @@ class TestPlottingBaseBinMetric(unittest.TestCase):
         # Check title.
         self.assertEqual(ax.get_title(), self.plotParams['title'])
         
-        
-        
-                                                                    
-if __name__ == '__main__':
-    suitelist = []
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestSetupBaseBinMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestRunBaseBinMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestReadWriteBaseBinMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestSummaryStatisticBaseBinMetric))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestPlottingBaseBinMetric))
-    suite = unittest.TestSuite(suitelist)
-    unittest.TextTestRunner(verbosity=2).run(suite)        
+def suite():
+    """Returns a suite containing all the test cases in this module."""
+    utilsTests.init()
+    suites = []
+    suites += unittest.makeSuite(TestSetupBaseSliceMetric)
+    suites += unittest.makeSuite(TestRunBaseSliceMetric)
+    suites += unittest.makeSuite(TestReadWriteBaseSliceMetric)
+    suites += unittest.makeSuite(TestSummaryStatisticBaseSliceMetric)
+    suites += unittest.makeSuite(TestPlottingBaseSliceMetric)
+
+    return unittest.TestSuite(suites)
+
+def run(shouldExit=False):
+    """Run the tests"""
+    utilsTests.run(suite(), shouldExit)
+
+if __name__ == "__main__":
+    run(True)

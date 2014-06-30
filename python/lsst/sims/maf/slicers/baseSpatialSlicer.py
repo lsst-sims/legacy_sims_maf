@@ -1,7 +1,7 @@
-# The base class for all spatial binners.
-# Binners are 'data slicers' at heart; spatial binners slice data by RA/Dec and 
+# The base class for all spatial slicers.
+# Slicers are 'data slicers' at heart; spatial slicers slice data by RA/Dec and 
 #  return the relevant indices in the simData to the metric. 
-# The primary things added here are the methods to slice the data (for any spatial binner)
+# The primary things added here are the methods to slice the data (for any spatial slicer)
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes. 
 
 import numpy as np
@@ -11,8 +11,7 @@ from matplotlib.patches import Ellipse
 from matplotlib.ticker import FuncFormatter
 from functools import wraps
 import warnings
-from lsst.sims.maf.utils.percentileClip import percentileClip as pc
-
+from lsst.sims.maf.utils import optimalBins, percentileClipping
 
 try:
     # Try cKDTree first, as it's supposed to be faster.
@@ -24,41 +23,50 @@ except:
     # But older scipy may not have cKDTree.
     from scipy.spatial import KDTree as kdtree
 
-from .baseBinner import BaseBinner
+from .baseSlicer import BaseSlicer
 
-class BaseSpatialBinner(BaseBinner):
-    """Base binner object, with added slicing functions for spatial binner."""
-    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', badval=-666):
-        """Instantiate the base spatial binner object."""
-        super(BaseSpatialBinner, self).__init__(verbose=verbose, badval=badval)
-        self.spatialkey1 = spatialkey1
-        self.spatialkey2 = spatialkey2
-        self.columnsNeeded = [spatialkey1, spatialkey2]
-        self.binner_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2}
-        self.bins=np.array([0.])
-
-    def setupBinner(self, simData, leafsize=100, radius=1.8):
-        """Use simData['spatialkey1'] and simData['spatialkey2']
-        (in radians) to set up KDTree.
-
-        spatialkey1 = ra, spatialkey2 = dec, typically: but must match order in binpoint.
+class BaseSpatialSlicer(BaseSlicer):
+    """Base slicer object, with added slicing functions for spatial slicer."""
+    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', 
+                 badval=-666, leafsize=100, radius=1.8):
+        """Instantiate the base spatial slicer object.
+        spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
         the simData KDtree 
         and binpoint RA/Dec values will be produced."""
-        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], leafsize)
-        self._setRad(radius)
-        self.binner_setup = {'leafsize':leafsize,'radius':radius}
-        @wraps(self.sliceSimData)
-        def sliceSimData(binpoint):
-            """Return indexes for relevant opsim data at binpoint
-            (binpoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            binx, biny, binz = self._treexyz(binpoint[1], binpoint[2])
+        super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
+        self.spatialkey1 = spatialkey1
+        self.spatialkey2 = spatialkey2
+        self.columnsNeeded = [spatialkey1, spatialkey2]
+        self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
+                          'radius':radius, 'badval':badval}
+        self.radius = radius
+        self.leafsize=leafsize
+        # RA and Dec are required slicePoint info for any spatial slicer.
+        self.slicePoints['sid'] = None
+        self.slicePoints['ra'] = None
+        self.slicePoints['dec'] = None
+        self.nslice = None
+
+    def setupSlicer(self, simData):
+        """Use simData[self.spatialkey1] and simData[self.spatialkey2]
+        (in radians) to set up KDTree."""
+        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
+        self._setRad(self.radius)
+        @wraps(self._sliceSimData)
+        def _sliceSimData(islice):
+            """Return indexes for relevant opsim data at slicepoint
+            (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+            binx, biny, binz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
             indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
-            return indices
-        setattr(self, 'sliceSimData', sliceSimData)        
-    
+            return {'idxs':indices,
+                    'slicePoint':{'sid':self.slicePoints['sid'][islice],
+                                  'ra':self.slicePoints['ra'][islice],
+                                  'dec':self.slicePoints['dec'][islice]}}
+        setattr(self, '_sliceSimData', _sliceSimData)    
+
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
         # Note ra/dec can be arrays.
@@ -90,19 +98,19 @@ class BaseSpatialBinner(BaseBinner):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     
-    def sliceSimDataMultiBinpoint(self, binpoints):
-        """Return indexes for opsim data at multiple binpoints (rarely used). """
-        binx, biny, binz=self._treexyz(binpoints[1], binpoints[2])
+    def sliceSimDataMultiBinpoint(self, islices):
+        """Return indexes for opsim data at multiple slicepoints (rarely used). """
+        binx, biny, binz=self._treexyz(self.slicePoints['ra'][islices], self.slicePoints['dec'][islices])
         indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
         return indices
 
         
-    ## Plot histogram (base spatial binner method).
-    def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
+    ## Plot histogram (base spatial slicer method).
+    def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f', color='b', linestyle='-',
-                      zp=None, normVal=None, units='', _units=None, percentileClip=None, **kwargs):
+                      bins=None, cumulative=False, xMin=None, xMax=None, logScale='auto', flipXaxis=False,
+                      scale=1.0, yaxisformat='%.3f', color='b',
+                      zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
         title = the title for the plot (default None)
@@ -110,14 +118,15 @@ class BaseSpatialBinner(BaseBinner):
         label = the label to use in the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
-        bins = bins for histogram (numpy array or # of bins) (default 100)
+        bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
-        histMin/Max = histogram range (default None, set by matplotlib hist)
+        xMin/Max = histogram range (default None, set by matplotlib hist)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
         normVal = normalization value to divide metric values by (overrides zp)"""
-        plottype = 'hist'
+        if bins is None:
+            bins = optimalBins(metricValueIn)
         # Histogram metricValues. 
         fig = plt.figure(fignum)
         if not xlabel:
@@ -130,20 +139,20 @@ class BaseSpatialBinner(BaseBinner):
             metricValue = metricValueIn.compressed()
         # Need to only use 'good' values in histogram,
         # but metricValue is masked array (so bad values masked when calculating max/min).
-        if histMin is None and histMax is None:
+        if xMin is None and xMax is None:
             if percentileClip:
-                plotMin, plotMax = pc(metricValue, percentile=percentileClip)
-                histRange = [plotMin, plotMax]
+                xMin, xMax = percentileClipping(metricValue, percentile=percentileClip)
+                histRange = [xMin, xMax]
             else:
                 histRange = None
         else:
-            histRange=[histMin, histMax]
+            histRange=[xMin, xMax]
         # See if should use log scale.
-        if ylog == 'auto':
+        if logScale == 'auto':
             if (np.log10(np.max(histRange)-np.min(histRange)) > 3 ) & (np.min(histRange) > 0):
-                ylog = True
+                logScale = True
             else:
-                ylog = False
+                logScale = False
         # Plot histograms.
         # Add a test to see if data falls within histogram range.. because otherwise histogram will fail.
         if histRange is not None:
@@ -161,19 +170,19 @@ class BaseSpatialBinner(BaseBinner):
                                                                                                histRange[1]))
             return None
         else:            
-            n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=ylog,
-                               cumulative=cumulative, range=histRange, label=label, color=color, linestyle=linestyle)
+            n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
+                               cumulative=cumulative, range=histRange, label=label, color=color)
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):        
             return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allBinner.Cfg.py
+        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
         if plt.axis()[2] == max(n):
             plt.ylim([n.min(),n.max()]) 
-        if xlabel != None:
+        if xlabel is not None:
             plt.xlabel(xlabel)
-        if ylabel != None:
+        if ylabel is not None:
             plt.ylabel(ylabel)
         if flipXaxis:
             # Might be useful for magnitude scales.
@@ -186,8 +195,8 @@ class BaseSpatialBinner(BaseBinner):
         # Return figure number (so we can reuse this if desired).         
         return fig.number
             
-    ### Generate sky map (base spatial binner methods, using ellipses for each RA/Dec value)
-    ### a healpix binner will not have self.ra / self.dec functions, but plotSkyMap is overriden.
+    ### Generate sky map (base spatial slicer methods, using ellipses for each RA/Dec value)
+    ### a healpix slicer will not have self.ra / self.dec functions, but plotSkyMap is overriden.
     
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
@@ -230,12 +239,12 @@ class BaseSpatialBinner(BaseBinner):
         y_ec = np.sin(x_ec) * ecinc
         plt.plot(ra, y_ec, 'r-')        
         
-    def plotSkyMap(self, metricValueIn, title=None, projection='aitoff', radius=1.75/180.*np.pi,
-                   ylog='auto', cbarFormat=None, cmap=cm.jet, fignum=None, units='',
+    def plotSkyMap(self, metricValueIn, title=None, xlabel=None, units=None,
+                   projection='aitoff', radius=1.75/180.*np.pi,
+                   logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   plotMin=None, plotMax=None, percentileClip=None,  **kwargs):
+                   xMin=None, xMax=None, percentileClip=None,  **kwargs):
         """Plot the sky map of metricValue."""
-        plottype = 'sky'
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
         if fignum is None:
@@ -256,14 +265,15 @@ class BaseSpatialBinner(BaseBinner):
         else:
             goodPts = np.where(metricValue.mask == False)[0]
         # Add points for RA/Dec locations
-        lon = -(self.bins['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.bins['dec'][goodPts], radius, ax=ax)
-        if ylog == 'auto':
-            if (np.log10(np.max(metricValue[goodPts])-np.min(metricValue[goodPts])) > 3 ) & (np.min(metricValue[goodPts]) > 0):
-                ylog = True
+        lon = -(self.slicePoints['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][goodPts], radius, ax=ax)
+        if logScale == 'auto':
+            if ((np.log10(np.max(metricValue[goodPts])-np.min(metricValue[goodPts])) > 3 ) &
+                (np.min(metricValue[goodPts]) > 0)):
+                logScale = True
             else:
-                ylog = False
-        if ylog:
+                logScale = False
+        if logScale:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
                                 norm=norml)
@@ -277,17 +287,23 @@ class BaseSpatialBinner(BaseBinner):
         ax.xaxis.set_ticklabels([])
         # Add color bar (with optional setting of limits)
         if percentileClip:
-            pcMin, pcMax = pc(metricValue.compressed(), percentile=percentileClip)
-        if plotMin is None and percentileClip:
-            plotMin = pcMin
-        if plotMax is None and percentileClip:
-            plotMax = pcMax
+            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
+        if xMin is None and percentileClip:
+            xMin = pcMin
+        else:
+            xMin = metricValue.compressed().min()
+        if xMax is None and percentileClip:
+            xMax = pcMax
+        else:
+            xMax = metricValue.compressed().max()
         # Combine to make clims:
-        if (plotMin is not None) and (plotMax is not None):
-            clims = [plotMin, plotMax]
-            p.set_clim(clims)
+        clims = [xMin, xMax]
+        p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
-        cb.set_label(units)
-        if title != None:
+        if xlabel is not None:
+            cb.set_label(xlabel)
+        elif units is not None:
+            cb.set_label(units)
+        if title is not None:
             plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)
         return fig.number

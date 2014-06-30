@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.binners as binners
-import lsst.sims.maf.binMetrics as binMetrics
+import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 
 
 oo = db.OpsimDatabase('sqlite:///opsimblitz1_1131_sqlite.db')
@@ -36,13 +36,13 @@ metriclist.append(metrics.FullRangeMetric('decdith'))
 metriclist.append(metrics.MaxMetric('decdith'))
 metriclist.append(metrics.MinMetric('decdith'))
 
-binner = binners.OpsimFieldBinner()
-binner.setupBinner(simdata, fielddata)
+slicer = slicers.OpsimFieldSlicer()
+slicer.setupSlicer(simdata, fielddata)
 
-gm = binMetrics.BaseBinMetric()
-gm.setBinner(binner)
+gm = sliceMetrics.BaseSliceMetric()
+gm.setSlicer(slicer)
 gm.setMetrics(metriclist)
-gm.runBins(simdata, 'Dither Test')
+gm.runSlices(simdata, 'Dither Test')
 gm.plotAll(savefig=False)
 
 plt.show()

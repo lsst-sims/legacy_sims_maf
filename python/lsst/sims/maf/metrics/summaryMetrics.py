@@ -5,17 +5,17 @@ import healpy as hp
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
     
-class f0Area(BaseMetric):
+class fOArea(BaseMetric):
     def __init__(self, cols, Asky=18000., Nvisit=825, 
-                 metricName='f0Area', nside=128, norm=True, **kwargs):
+                 metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(f0Area, self).__init__(cols,metricName=metricName,**kwargs)
+        super(fOArea, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
         self.norm = norm
 
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
         scale = hp.nside2pixarea(self.nside, degrees=True)
@@ -30,17 +30,17 @@ class f0Area(BaseMetric):
             return self.badval
         
 
-class f0Nv(BaseMetric):
-    def __init__(self, cols, Asky=18000., metricName='f0Nv', Nvisit=825, 
+class fONv(BaseMetric):
+    def __init__(self, cols, Asky=18000., metricName='fONv', Nvisit=825, 
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(f0Nv, self).__init__(cols,metricName=metricName,**kwargs)
+        super(fONv, self).__init__(cols,metricName=metricName,**kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
         self.norm = norm
 
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
         scale = hp.nside2pixarea(self.nside, degrees=True)
@@ -73,7 +73,7 @@ class TableFractionMetric(SimpleScalarMetric):
         12        100 < P
         Note the 1st and last elements do NOT obey the numpy histogram conventions."""
 
-    def run(self, dataSlice):    
+    def run(self, dataSlice, *args):    
         # Use int step sizes to try and avoid floating point round-off errors.
         bins = np.arange(0,100/self.nbins+3,1)/float(self.nbins) 
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
@@ -97,7 +97,7 @@ class SSTARTableFractionMetric(SimpleScalarMetric):
     9         90 <= P < 100
     10        100 <= P
     Note the 1st and last elements do NOT obey the numpy histogram conventions."""
-    def run(self, dataSlice):    
+    def run(self, dataSlice, *args):    
         # Use int step sizes to try and avoid floating point round-off errors.
         bins = np.arange(0,12,1)/10. 
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
@@ -109,8 +109,8 @@ class SSTARTableFractionMetric(SimpleScalarMetric):
 
 
 class IdentityMetric(SimpleScalarMetric):
-    """Return the metric value itself .. this is primarily useful as a summary statistic for UniBinner metrics."""
-    def run(self, dataSlice):
+    """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
+    def run(self, dataSlice, *args):
         return dataSlice[self.colname]
 
 
@@ -119,5 +119,5 @@ class NormalizeMetric(SimpleScalarMetric):
     def __init__(self, colname, normVal=1):
         super(NormalizeMetric, self).__init__(colname)
         self.normVal = normVal
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         return dataSlice[self.colname]/self.normVal

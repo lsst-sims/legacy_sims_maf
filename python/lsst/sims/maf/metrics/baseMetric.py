@@ -80,18 +80,19 @@ class BaseMetric(object):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
         # Set physical units, mostly for plotting purposes.
+        # (If plotParams has 'units' this will be ignored). 
         if units is None:
             units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
             if len(units.replace(' ', '')) == 0:
-                units = self.name
+                units = ''
         self.units = units
         # Set more plotting preferences (at the very least, the units).
         if plotParams:
             self.plotParams = plotParams
         else:
             self.plotParams = {}
-        if '_units' not in self.plotParams:
-            self.plotParams['_units'] = self.units
+        if 'units' not in self.plotParams:
+            self.plotParams['units'] = self.units
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the binMetric, passed to the binner plotting utilities.
@@ -119,5 +120,5 @@ class BaseMetric(object):
                 raise ValueError('Could not find data column for metric: %s' %(col))
         return True
     
-    def run(self, dataSlice):
+    def run(self, dataSlice, *args):
         raise NotImplementedError('Please implement your metric calculation.')

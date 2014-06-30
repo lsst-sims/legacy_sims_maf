@@ -10,7 +10,7 @@
 
 
 import os
-from lsst.sims.maf.driver.mafConfig import MafConfig, makeBinnerConfig, makeMetricConfig, makeDict
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
 
@@ -26,24 +26,24 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     config.opsimName = runName
 
 
-    binList = []
+    slicerList = []
     nside = 64
 
     filters = ['g','r']
 
     for f in filters:
-        m1 = makeMetricConfig('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisits'}, 
+        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisits'}, 
                             plotDict={'plotMin':0, 'plotMax':200, 'units':'N Visits'},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-        m2 = makeMetricConfig('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
+        m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
         metricDict = makeDict(m1, m2)
         sqlconstraint = 'filter = "%s"' %(f)
-        binner = makeBinnerConfig('HealpixBinner',
+        slicer = configureSlicer('HealpixSlicer',
                                   kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec'},
                                 metricDict=metricDict, constraints=[sqlconstraint,])
-        config.binners=makeDict(binner)
-        binList.append(binner)
+        config.slicers=makeDict(slicer)
+        slicerList.append(slicer)
 
-    config.binners=makeDict(*binList)
+    config.slicers=makeDict(*slicerList)
     return config

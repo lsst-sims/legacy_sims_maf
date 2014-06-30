@@ -2,89 +2,90 @@ import numpy as np
 import numpy.ma as ma
 import unittest
 #from lsst.sims.maf.metrics import SimpleMetrics as sm
-import lsst.sims.maf.binners as binners
+import lsst.sims.maf.slicers as slicers
 import healpy as hp
 import os
 
 
-class TestBinners(unittest.TestCase):
+class TestSlicers(unittest.TestCase):
     def setUp(self):
         self.filenames=[]
+        self.baseslicer = slicers.BaseSlicer()
 
-    def test_healpixBinner_obj(self):
-        nside = 128
-        binner = binners.HealpixBinner(nside=nside)
+    def test_healpixSlicer_obj(self):
+        nside = 32
+        slicer = slicers.HealpixSlicer(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside)).astype('object')
-        metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
+        metricValues = ma.MaskedArray(data=metricValues,
+                                      mask = np.where(metricValues < .1, True, False),
+                                      fill_value=slicer.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
-        metadata = 'poop'
-        binner.writeData(filename, metricValues, metadata=metadata)
-        metricValuesBack,binnerBack,header = binner.readData(filename)
+        metadata = 'testdata'
+        slicer.writeData(filename, metricValues, metadata=metadata)
+        metricValuesBack, slicerBack, header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(binner == binnerBack) 
+        assert(slicer == slicerBack)
         assert(metadata == header['metadata'])
-        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
-            assert(getattr(binner,att) == getattr(binnerBack,att))
+            assert(getattr(slicer,att) == getattr(slicerBack,att))
         
-    def test_healpixBinner_floats(self):
-        nside = 128
-        binner = binners.HealpixBinner(nside=nside)
+    def test_healpixSlicer_floats(self):
+        nside = 32
+        slicer = slicers.HealpixSlicer(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside))
         metricName = 'Noise'
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
-        binner.writeData(filename, metricValues, metadata='poop')
-        metricValuesBack,binnerBack,header = binner.readData(filename)
+        slicer.writeData(filename, metricValues, metadata='testdata')
+        metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(binner == binnerBack) #I don't think this is the right way to compare
-        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        assert(slicer == slicerBack) 
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
-            assert(getattr(binner,att) == getattr(binnerBack,att))
+            assert(getattr(slicer,att) == getattr(slicerBack,att))
        
         
-    def test_healpixBinner_masked(self):
-        nside = 128
-        binner = binners.HealpixBinner(nside=nside)
+    def test_healpixSlicer_masked(self):
+        nside = 32
+        slicer = slicers.HealpixSlicer(nside=nside)
         metricValues = np.random.rand(hp.nside2npix(nside))
-        metricValues = ma.MaskedArray(data=metricValues, mask = np.where(metricValues < .1, True, False), fill_value=binner.badval)
+        metricValues = ma.MaskedArray(data=metricValues,
+                                      mask = np.where(metricValues < .1, True, False),
+                                      fill_value=slicer.badval)
         metricName = 'Noise'
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
-        binner.writeData(filename, metricValues, metadata='poop')
-        metricValuesBack,binnerBack,header = binner.readData(filename)
-
+        slicer.writeData(filename, metricValues, metadata='testdata')
+        metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(binner == binnerBack) #I don't think this is the right way to compare
-        attr2check = ['nside', 'nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2']
+        assert(slicer == slicerBack) 
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
-            assert(getattr(binner,att) == getattr(binnerBack,att))
+            assert(getattr(slicer,att) == getattr(slicerBack,att))
 
-
-    def test_oneDBinner(self):
-        binner=binners.OneDBinner(sliceDataColName='poop')
-        dataValues = np.zeros(10000, dtype=[('poop','float')])
-        dataValues['poop'] = np.random.rand(10000)
-        binner.setupBinner(dataValues)
+    def test_oneDSlicer(self):
+        slicer=slicers.OneDSlicer(sliceColName='testdata')
+        dataValues = np.zeros(10000, dtype=[('testdata','float')])
+        dataValues['testdata'] = np.random.rand(10000)
+        slicer.setupSlicer(dataValues)
         filename = 'oned_test.npz'
         self.filenames.append(filename)
-        binner.writeData(filename, dataValues[:100])
-
-        dataBack,binnerBack,header = binner.readData(filename)
-        assert(binner == binnerBack)
-        assert(np.all(binner.bins == binnerBack.bins))
+        slicer.writeData(filename, dataValues[:100])
+        dataBack, slicerBack, header = self.baseslicer.readData(filename)
+        assert(slicer == slicerBack)
         #np.testing.assert_almost_equal(dataBack,dataValues[:100])
-        attr2check = ['nbins', 'columnsNeeded', 'bins']
+        attr2check = ['nslice', 'columnsNeeded']
         for att in attr2check:
-            if type(getattr(binner,att)).__module__ == 'numpy':
-                np.testing.assert_almost_equal(getattr(binner,att), getattr(binnerBack,att))
+            if type(getattr(slicer,att)).__module__ == 'numpy':
+                np.testing.assert_almost_equal(getattr(slicer,att), getattr(slicerBack,att))
             else:
-                assert(getattr(binner,att) == getattr(binnerBack,att))
+                assert(getattr(slicer,att) == getattr(slicerBack,att))
 
-    def test_opsimFieldBinner(self):
-        binner=binners.OpsimFieldBinner(np.arange(100))
+    def test_opsimFieldSlicer(self):
+        slicer=slicers.OpsimFieldSlicer(np.arange(100))
         names=['fieldRA','fieldDec','fieldID',]
         dt = ['float','float','int']
         metricValues = np.random.rand(100)
@@ -96,68 +97,72 @@ class TestBinners(unittest.TestCase):
         simData = np.zeros(100, dtype=zip(names,dt))
         simData['data1'] = np.random.rand(100)
         simData['fieldID'] = np.arange(100)
-        binner.setupBinner(simData,fieldData)
-        filename = 'opsimbinner_test.npz'
+        slicer.setupSlicer(simData,fieldData)
+        filename = 'opsimslicer_test.npz'
         self.filenames.append(filename)
-        binner.writeData(filename, metricValues)
-        metricBack, binnerBack,header = binner.readData(filename)
-        assert(binner == binnerBack)
+        slicer.writeData(filename, metricValues)
+        metricBack, slicerBack,header = self.baseslicer.readData(filename)
+        assert(slicer == slicerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
-        attr2check = ['nbins', 'columnsNeeded', 'bins', 'spatialkey1', 'spatialkey2','simDataFieldIdColName']
+        attr2check = ['nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2','simDataFieldIDColName']
         for att in attr2check:
-            if type(getattr(binner,att)).__name__ == 'dict':
-                for key in getattr(binner,att).keys():
-                    np.testing.assert_almost_equal(getattr(binner,att)[key], getattr(binnerBack,att)[key])
+            if type(getattr(slicer,att)).__name__ == 'dict':
+                for key in getattr(slicer,att).keys():
+                    np.testing.assert_almost_equal(getattr(slicer,att)[key], getattr(slicerBack,att)[key])
             else:
-                assert(getattr(binner,att) == getattr(binnerBack,att))
+                assert(getattr(slicer,att) == getattr(slicerBack,att))
 
-    def test_unibinner(self):
-        binner = binners.UniBinner()
-        data = np.zeros(1, dtype=[('poop','float')])
+    def test_unislicer(self):
+        slicer = slicers.UniSlicer()
+        data = np.zeros(1, dtype=[('testdata','float')])
         data[:] = np.random.rand(1)
-        binner.setupBinner(data)
-        filename='unibinner_test.npz'
+        slicer.setupSlicer(data)
+        filename='unislicer_test.npz'
         self.filenames.append(filename)
         metricValue=np.array([25.])
-        binner.writeData(filename, metricValue)
-        dataBack, binnerBack,header = binner.readData(filename)
-        assert(binner == binnerBack)
+        slicer.writeData(filename, metricValue)
+        dataBack, slicerBack,header = self.baseslicer.readData(filename)
+        assert(slicer == slicerBack)
         np.testing.assert_almost_equal(dataBack,metricValue)
-        attr2check = ['nbins', 'columnsNeeded', 'bins']
+        attr2check = ['nslice', 'columnsNeeded']
         for att in attr2check:
-            assert(getattr(binner,att) == getattr(binnerBack,att))
-
+            assert(getattr(slicer,att) == getattr(slicerBack,att))
 
     def test_complex(self):
-        """Test case where there is a complex metric """
-        nside = 32
-        binner = binners.HealpixBinner(nside=nside)
-        data = np.zeros(binner.nbins, dtype='object')
+        #Test case where there is a complex metric 
+        nside = 8
+        slicer = slicers.HealpixSlicer(nside=nside)
+        data = np.zeros(slicer.nslice, dtype='object')
         for i,ack in enumerate(data):
             n_el = np.random.rand(1)*4 # up to 4 elements
             data[i] = np.arange(n_el)
         filename = 'heal_complex.npz'
         self.filenames.append(filename)
-        binner.writeData(filename,data)
-        dataBack,binnerBack,header = binner.readData(filename)
-        assert(binner == binnerBack)
+        slicer.writeData(filename,data)
+        dataBack,slicerBack,header = self.baseslicer.readData(filename)
+        assert(slicer == slicerBack)
         # This is a crazy slow loop!  
         for i, ack in enumerate(data):
             np.testing.assert_almost_equal(dataBack[i],data[i])
-        
-#    def test_nDBinner(self):
-#        colnames = ['ack1','ack2','poop']
-#        types = ['float','float','int']
-#        data = np.zeros(1000, dtype=zip(colnames,types))
-#        binner = binners.NDBinner()
-#        binner.setupBinner([data['ack1'], data['ack2'], data['poop']])
-#        filename = 'nDBInner_test.npz'
-#        binner.writeData(filename,data)
-#        dataBack,binnerBack,header = binner.readData(filename)
-#        assert(binner == binnerBack)
-#        np.testing.assert_almost_equal(dataBack,data)
-       
 
+    def test_nDSlicer(self):
+        colnames = ['test1','test2','test3']
+        data = []
+        for c in colnames:
+            data.append(np.random.rand(1000))
+        dv = np.core.records.fromarrays(data, names=colnames)
+        slicer = slicers.NDSlicer(colnames, binsList=10)
+        slicer.setupSlicer(dv)
+        filename = 'nDSlicer_test.npz'
+        self.filenames.append(filename)
+        metricdata = np.zeros(slicer.nslice, dtype='float')
+        for i, s in enumerate(slicer):
+            metricdata[i] = i
+        slicer.writeData(filename, metricdata)
+        dataBack, slicerBack, header = self.baseslicer.readData(filename)
+        assert(slicer == slicerBack)
+        np.testing.assert_almost_equal(dataBack, metricdata)
+            
     def tearDown(self):
         for filename in self.filenames:
             os.remove(filename)
