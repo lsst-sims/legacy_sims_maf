@@ -101,7 +101,7 @@ class OneDBinner(BaseBinner):
                        legendloc='upper left', 
                        filled=False, alpha=0.5, ylog=False,
                        ylabel=None, xlabel=None, yMin=None, yMax=None,
-                       histMin=None, histMax=None, color='b', **kwargs):
+                       histMin=None, histMax=None, color='b', linestyle='-', **kwargs):
         """Plot a set of oneD binned metric data.
 
         metricValues = the values to be plotted at each bin
@@ -130,9 +130,9 @@ class OneDBinner(BaseBinner):
             x = np.ravel(zip(leftedge, leftedge+width))
             y = np.ravel(zip(metricValues, metricValues))
             if ylog:
-                plt.semilogy(x, y, label=label, color=color, alpha=alpha)
+                plt.semilogy(x, y, label=label, color=color, alpha=alpha, linestyle=linestyle)
             else:
-                plt.plot(x, y, label=label, color=color, alpha=alpha)
+                plt.plot(x, y, label=label, color=color, alpha=alpha, linestyle=linestyle)
         if ylabel is None:
             ylabel = 'Count'
         plt.ylabel(ylabel)

@@ -19,10 +19,11 @@ simdata = randomdither.run(simdata)
 
 # Add columns showing the actual dither values
 # Note that because RA is wrapped around 360, there will be large values of 'radith' near this point
+basestacker = utils.BaseStacker()
 radith = simdata['randomRADither'] - simdata['fieldRA']
 decdith = simdata['randomDecDither'] - simdata['fieldDec']
-stackIn = np.core.records.fromarrays([radith, decdith], names=['radith', 'decdith'])
-simdata = utils.addCols._opsimStack([simdata, stackIn])
+basestacker.stackerCols = np.core.records.fromarrays([radith, decdith], names=['radith', 'decdith'])
+simdata = basestacker._opsimStack(simdata)
 
 
 metriclist = []
@@ -32,6 +33,8 @@ metriclist.append(metrics.RmsMetric('radith'))
 metriclist.append(metrics.RmsMetric('decdith'))
 metriclist.append(metrics.FullRangeMetric('radith'))
 metriclist.append(metrics.FullRangeMetric('decdith'))
+metriclist.append(metrics.MaxMetric('decdith'))
+metriclist.append(metrics.MinMetric('decdith'))
 
 binner = binners.OpsimFieldBinner()
 binner.setupBinner(simdata, fielddata)
@@ -41,4 +44,5 @@ gm.setBinner(binner)
 gm.setMetrics(metriclist)
 gm.runBins(simdata, 'Dither Test')
 gm.plotAll(savefig=False)
+
 plt.show()

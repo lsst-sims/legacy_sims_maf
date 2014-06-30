@@ -101,7 +101,7 @@ class BaseSpatialBinner(BaseBinner):
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None,ylog='auto', flipXaxis=False,
-                      scale=1.0, yaxisformat='%.3f', color='b',
+                      scale=1.0, yaxisformat='%.3f', color='b', linestyle='-',
                       zp=None, normVal=None, units='', _units=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
 
@@ -162,7 +162,7 @@ class BaseSpatialBinner(BaseBinner):
             return None
         else:            
             n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=ylog,
-                               cumulative=cumulative, range=histRange, label=label, color=color)
+                               cumulative=cumulative, range=histRange, label=label, color=color, linestyle=linestyle)
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):        
             return yaxisformat % (y * scale)

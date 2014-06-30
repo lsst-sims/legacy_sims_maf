@@ -29,6 +29,7 @@ binList=[]
 # Loop through r and i filters, to do some simple analysis.
 filters = ['r', 'i']
 colors = {'r':'b', 'i':'y'}
+linestyles = {'r':':', 'i':'-'}
 for f in filters:
     # Configure a metric that will calculate the mean of the seeing and print the result to our summary stats file.
     m1 = makeMetricConfig('MeanMetric', params=['seeing'], summaryStats={'IdentityMetric':{}})
@@ -47,7 +48,7 @@ for f in filters:
                           # Set up a additional histogram so that the outputs of these count metrics in each
                           #   filter get combined into a single plot (with both r and i band). 
                           histMerge = {'histNum':1, 'legendloc':'upper right', 'label':'%s band' %(f),
-                                       'xlabel':'Airmass', 'color':colors[f]})
+                                       'xlabel':'Airmass', 'color':colors[f], 'linestyle':linestyles[f]})
     # Set up the OneDSlicer, including setting the interval size.
     binner = makeBinnerConfig('OneDBinner', kwargs={'sliceDataColName':'airmass'},
                               setupKwargs={'binsize':.02},
@@ -76,27 +77,27 @@ for dithlabel, binnerName in zip(dithlabels, binnerNames):
     m1 = makeMetricConfig('QuickRevisitMetric', kwargs={'nVisitsInNight':nvisits}, 
                         plotDict={'plotMin':0, 'plotMax':20, 'histMin':0, 'histMax':100,
                                   'xlabel':'Number of nights with more than %d visits' %(nvisits)},
-                        summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RmsMetric':{}},
+                        summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RobustRmsMetric':{}, 'RmsMetric':{}},
                         # Add it to a 'merged' histogram, which will combine metric values from
                         #  all dither patterns.
                         histMerge={'histNum':2, 'legendloc':'upper right', 'label':dithlabel,
-                                    'histMin':0, 'histMax':50,
+                                    'histMin':0, 'histMax':50, 
                                     'xlabel':'Number of Nights with more than %d visits' %(nvisits),
                                     'bins':50})
     # Configure Proper motion metric to analyze expected proper motion accuracy.
     m2 = makeMetricConfig('ProperMotionMetric', kwargs={'m5Col':'5sigma_modified', 'seeingCol':'seeing',
                                                         'metricName':'Proper Motion @20 mag'},
                         plotDict={'percentileClip':95, 'plotMin':0, 'plotMax':2.0},
-                        summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RmsMetric':{}},
+                        summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RobustRmsMetric':{}, 'RmsMetric':{}},
                         histMerge={'histNum':3, 'legendloc':'upper right', 'label':dithlabel,
-                                   'histMin':0, 'histMax':1.5})
+                                   'histMin':0, 'histMax':1.5}
     # Configure another proper motion metric where input star is r=24 rather than r=20.
     m3 = makeMetricConfig('ProperMotionMetric', kwargs={'m5Col':'5sigma_modified', 'seeingCol':'seeing',
                                                         'rmag':24, 'metricName':'Proper Motion @24 mag'},
                         plotDict={'percentileClip':95, 'plotMin':0, 'plotMax':2.0},
-                        summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RmsMetric':{}},
-                        histMerge={'histNum':4, 'legendloc':'upper right', 'label':dithlabel,
-                                   'histMin':0, 'histMax':1.5})
+                        summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RobustRmsMetric':{}, 'RmsMetric':{}},
+                        histMerge={'histNum':4, 'legendloc':'upper left', 'label':dithlabel,
+                                   'histMin':0, 'histMax':1.5}
     # Configure a Healpix slicer that uses either the opsim original pointing, or one of the dithered RA/Dec values.
     binner = makeBinnerConfig(binnerName, kwargs=binnerkwargs, 
                           metricDict=makeDict(m1, m2, m3), constraints=[''], metadata = dithlabel)
@@ -118,7 +119,7 @@ for dithlabel, binnerName in zip(dithlabels, binnerNames):
                                       'plotMax':nVisits_plotRange[f][1],
                                       'histMin':nVisits_plotRange[f][0],
                                       'histMax':nVisits_plotRange[f][1]},
-                                summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RmsMetric':{}},
+                                summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RobustRmsMetric':{}, 'RmsMetric':{}},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                            'histMin':nVisits_plotRange[f][0],
                                            'histMax':nVisits_plotRange[f][1],
@@ -131,7 +132,7 @@ for dithlabel, binnerName in zip(dithlabels, binnerNames):
                                 plotDict={'zp':mag_zpoints[f],
                                           'percentileClip':95., 'plotMin':-1.5, 'plotMax':0.75,
                                           'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
-                                summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RmsMetric':{}},
+                                summaryStats={'MeanMetric':{}, 'MedianMetric':{}, 'RobustRmsMetric':{}, 'RmsMetric':{}},
                                 histMerge={'histNum':histNum, 'legendloc':'upper left', 'bins':150,
                                             'label':dithlabel, 'histMin':24.5, 'histMax':28.5})
         # Configure the binner for these two metrics

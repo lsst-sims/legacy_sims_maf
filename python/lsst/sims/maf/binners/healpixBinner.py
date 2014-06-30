@@ -147,7 +147,7 @@ class HealpixBinner(BaseSpatialBinner):
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=100, cumulative=False, histMin=None, histMax=None, ylog=False, flipXaxis=False,
-                      scale=None, color='b', **kwargs):
+                      scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
         If scale is None, sets 'scale' by the healpix area per binpoint.
@@ -167,7 +167,7 @@ class HealpixBinner(BaseSpatialBinner):
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixBinner, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
                                                         title=title, fignum=fignum, 
-                                                        label=label, 
+                                                        label=label, linestyle=linestyle,
                                                         addLegend=addLegend, legendloc=legendloc,
                                                         bins=bins, cumulative=cumulative,
                                                         histMin=histMin,histMax=histMax, ylog=ylog,
@@ -177,7 +177,7 @@ class HealpixBinner(BaseSpatialBinner):
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500.,
                           label=None, addLegend=False, legendloc='upper right',
-                          removeDipole=True, verbose=False, **kwargs):
+                          removeDipole=True, verbose=False, color='b', linestyle='-', **kwargs):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -201,7 +201,7 @@ class HealpixBinner(BaseSpatialBinner):
             condition = ((l < maxl) & (l > 1))
         else:
             condition = (l < maxl)
-        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=label)
+        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=label, color=color, linestyle=linestyle)
         if cl[condition].max() > 0:
             plt.yscale('log')
         plt.xlabel(r'$l$')

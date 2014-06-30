@@ -44,6 +44,7 @@ class ColInfo(object):
         self.sourceDict = {}
         stackers = inspect.getmembers(addCols, inspect.isclass)
         stackers = [m[0] for m in stackers if m[1].__module__ == 'lsst.sims.maf.utils.addCols']
+        stackers.remove('BaseStacker')
         for stacker in stackers:
             stack = getattr(addCols, stacker)()
             for col in stack.colsAdded:

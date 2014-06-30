@@ -180,7 +180,7 @@ class ComparisonBinMetric(object):
     
     def plotHistograms(self, dictNums, metricNames, 
                         bins=100, histMin=None,histMax=None,
-                        title=None, xlabel=None, color=None, labels=None,
+                        title=None, xlabel=None, colors=None, labels=None, linestyles=None,
                         legendloc='upper left', bnamelen=4, alpha=1.0,
                         savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
         """
@@ -218,6 +218,10 @@ class ComparisonBinMetric(object):
         # Plot the data.
         fignum = None
         addLegend = False
+        if linestyles is None:
+           linestyles = [None for d in dictNums]
+        if colors is None:
+           colors = [None for d in dictNums]
         for i, (d, m) in enumerate(zip(dictNums, metricNames)):
             # If we're at the end of the list, add the legend.
             if i == len(metricNames) - 1:
@@ -231,7 +235,7 @@ class ComparisonBinMetric(object):
             if hasattr(self.binmetrics[d].binner, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
                               'alpha':alpha, 'label':label, 'addLegend':addLegend,'legendloc':legendloc,
-                              'color':color}
+                              'color':colors[i], 'linestyle':linestyles[i]}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key] 
@@ -241,7 +245,7 @@ class ComparisonBinMetric(object):
             if hasattr(self.binmetrics[d].binner, 'plotHistogram'):
                 plotParams = {'xlabel':xlabel, 'histMin':histMin, 'histMax':histMax, 
                               'bins':bins, 'title':title, 'label':label, 
-                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color}
+                              'addLegend':addLegend, 'legendloc':legendloc, 'color':colors[i], 'linestyle':linestyles[i]}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key]
@@ -258,7 +262,7 @@ class ComparisonBinMetric(object):
 
     def plotPowerSpectra(self, dictNums, metricNames, maxl=500., removeDipole=True,
                          title=None, legendloc='upper left', labels=None, xlabel=None, bnamelen=4,
-                         color=None, savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
+                         colors=None, linestyles=None, savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
         """Create a plot containing the power spectrum visualization from all possible metrics in dictNum +
                        metricNames.
 
@@ -278,6 +282,8 @@ class ComparisonBinMetric(object):
             return
         if title is None:
             title = self._buildPlotTitle(dictNums, metricNames)
+        if linestyles is None:
+           linestyles = [None for d in dictNums]
         # Plot the data.
         fignum = None
         addLegend = False
@@ -292,7 +298,7 @@ class ComparisonBinMetric(object):
                             ' ' + self.binmetrics[d].binner.binnerName[:bnamelen].upper())    
             # Plot data.
             plotParams = {'xlabel':xlabel, 'title':title, 'label':label,
-                          'addLegend':addLegend,'legendloc':legendloc, 'color':color}
+                          'addLegend':addLegend,'legendloc':legendloc, 'color':colors[i], 'linestyle':linestyles[i]}
             if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key]
