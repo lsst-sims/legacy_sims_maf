@@ -34,14 +34,12 @@ filters=['r']
 
 slicerList=[]
 nside=64
-leafsize = 100 # For KD-tree
-
 
 ########### Early Seeing Metrics ################
 seeing_limit = 0.7 # Demand seeing better than this
 for f in filters:
     m1 = configureMetric('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
-    slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside,"leafsize":leafsize}},metricDict=makeDict(m1),
+    slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside},metricDict=makeDict(m1),
                               constraints=['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
                                            'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
                                            'filter = "%s" and finSeeing < %s'%(f,seeing_limit)])
@@ -71,7 +69,7 @@ m7 = configureMetric('ProperMotionMetric', kwargs={'rmag':24, 'metricName':'PM_2
 m8 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 m9 = configureMetric('ProperMotionMetric', kwargs={'rmag':24,'normalize':True, 'metricName':'PM_24_normed'})
 slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
-                           metricDict=makeDict(m1,m2,m3,m4,m5),
+                           metricDict=makeDict(m1,m2,m3,m4,m5,m6,m7,m8,m9),
                            constraints=['night < 365', ''])
 slicerList.append(slicer)
 
@@ -85,7 +83,7 @@ constraints.append('night < 365')
 m1 = configureMetric('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
 slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                            metricDict=makeDict(m1),
-                           constraints=constraints})
+                           constraints=constraints)
 slicerList.append(slicer)
 
 

@@ -79,7 +79,7 @@ class OneDSlicer(BaseSlicer):
         self.nslice = len(self.bins) - 1
         # Set slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
-        self.slicePoints['bins'] = self.bins[:-1]
+        self.slicePoints['bins'] = self.bins
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceColName])
         simFieldsSorted = np.sort(simData[self.sliceColName])
@@ -131,8 +131,8 @@ class OneDSlicer(BaseSlicer):
         """
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
-        leftedge = self.bins[:-1]
-        width = np.diff(self.bins)
+        leftedge = self.slicePoints['bins'][:-1]
+        width = np.diff(self.slicePoints['bins'])
         if filled:
             plt.bar(leftedge, metricValues.filled(), width, label=label,
                     linewidth=0, alpha=alpha, log=logScale, color=color)
