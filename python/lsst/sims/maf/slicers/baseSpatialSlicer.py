@@ -276,9 +276,9 @@ class BaseSpatialSlicer(BaseSlicer):
         if logScale:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
-                                norm=norml)
+                                norm=norml, rasterized=True)
         else:
-            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
+            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
         p.set_array(metricValue.filled(self.badval)[goodPts])
         ax.add_collection(p)
         # Add ecliptic

@@ -158,7 +158,7 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
     
-    def plotData(self, metricValues, figformat='png', dpi=None, filename='fig', savefig=True, **kwargs):
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', savefig=True, **kwargs):
         """
         Call all available plotting methods.
         """

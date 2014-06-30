@@ -88,5 +88,14 @@ slicerList.append(slicer)
 
 
 
+#### Visit Group Metric ######
+m1 = configureMetric('VisitGroupsMetric')
+
+slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
+                           metricDict=makeDict(m1),
+                           constraints=['filter = "%s"'%'r'])
+slicerList.append(slicer)
+
+
 root.slicers = makeDict(*slicerList)
 
