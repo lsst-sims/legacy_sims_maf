@@ -53,8 +53,20 @@ class SlicerConfig(pexConfig.Config):
     metadata = pexConfig.Field("", dtype=str, default='')
 
 class MafConfig(pexConfig.Config):
-    """Using pexConfig to set MAF configuration parameters"""
+    """Using pexConfig to set MAF configuration parameters
+    outputDir:  Location where all output files will be written
+    figformat:  output figure format (pdf and png are popular)
+    dpi:  figure dpi
+    opsimName:  string that will be used for output filenames and plot titles
+    slicers:  pexConfig ConfigDictField with slicer configs
+    comment:  string added to the output
+    dbAddress:  slqAlchamey database address
+    verbose:  print out timing results
+    getConfig:  Copy Opsim configuration settings from the database
+    """
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
+    figformat = pexConfig.Field("Figure types (png, pdf are popular)", str, 'pdf')
+    dpi = pexConfig.Field("Figure dpi", int, 600)
     opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
     slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int, itemtype=SlicerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='runName')

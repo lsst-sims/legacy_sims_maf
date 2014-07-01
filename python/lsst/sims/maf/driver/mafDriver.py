@@ -35,6 +35,8 @@ class MafDriver(object):
             os.makedirs(self.config.outputDir)
 
         self.verbose = self.config.verbose
+        self.figformat = self.config.figformat
+        self.dpi = self.config.dpi
             
         # Set up database connection.
         self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
@@ -267,7 +269,7 @@ class MafDriver(object):
                     else:
                         slicer.setupSlicer(self.data, *slicer.setupParams, **slicer.setupKwargs)
                     # Set up baseSliceMetric.
-                    gm = sliceMetrics.BaseSliceMetric() 
+                    gm = sliceMetrics.BaseSliceMetric(figformat=self.figformat, dpi=self.dpi) 
                     gm.setSlicer(slicer)
                     metricNames_in_gm = gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
@@ -382,7 +384,7 @@ class MafDriver(object):
 
         
         for key in histDict.keys():
-            cbm = sliceMetrics.ComparisonSliceMetric(verbose=False)
+            cbm = sliceMetrics.ComparisonSliceMetric(verbose=False, figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
                     fullfilename = os.path.join(self.config.outputDir, filename)

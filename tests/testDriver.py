@@ -32,6 +32,19 @@ class TestDriver(unittest.TestCase):
         configIn.load(self.filepath+filename)
         self.assertRaises(Exception, driver.MafDriver,**{'configvalues':configIn})
 
+    def test_png(self):
+        """Test that a config that specifies png files makes pngs """
+        configIn = MafConfig()
+        configIn.load('mafconfigpng.cfg')
+        expectFiles=['OpsimTest_Count_expMJD__r_HEAL_Histogram.png',
+                     'OpsimTest_Count_expMJD__r_HEAL_PowerSpectrum.png',
+                     'OpsimTest_Count_expMJD__r_HEAL_SkyMap.png']
+        testDriver = driver.MafDriver(configIn)
+        testDriver.run()
+        for filename in expectFiles:
+            assert(os.path.isfile(configIn.outputDir+'/'+filename))
+
+        
     def test_driver(self):
         """Use a large config file to exercise all aspects of the driver. """    
         for filename, outfiles in zip(self.cfgFiles, self.outputFiles):

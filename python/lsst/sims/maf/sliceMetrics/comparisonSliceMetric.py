@@ -300,7 +300,7 @@ class ComparisonSliceMetric(object):
             outfile = self.slicemetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile
@@ -353,7 +353,7 @@ class ComparisonSliceMetric(object):
             outfile = self.slicemetric[dictNums[0]]._buildOutfileName(title, 
                                                                     outDir=outDir, outfileRoot=outfileRoot, 
                                                                     plotType='sky')
-            plt.savefig(outfile, figformat=self.figformat)
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile
