@@ -70,15 +70,6 @@ slicerList.append(slicer)
 
 
 
-m1 = configureMetric('AstroPrecMetric')
-m2 = configureMetric('AstroPrecMetricComplex')
-slicer = configureSlicer('HealpixSlicer',
-                          kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
-                          metricDict = makeDict(m1,m2),constraints=constraints)
-slicerList.append(slicer)
-
-
-
 # Example of doing summary stats:
 nside=64
 constraints = ["filter = \'%s\'"%'r']
@@ -86,7 +77,7 @@ m2 = configureMetric('Coaddm5Metric', plotDict={'zp':27., 'percentileClip':95,
                                                 'units':'Co-add m5 - %.1f'%27.},
                      kwargs={'metricName':'coadd_w_summary'},
                      summaryStats={'MeanMetric':{}, 'MinMetric':{}, 'MaxMetric':{}, 'RmsMetric':{}} )          
-metricDict = makeDict(m2
+metricDict = makeDict(m2)
 slicer = configureSlicer('HealpixSlicer',
                           kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},
                           metricDict = metricDict,constraints=constraints)

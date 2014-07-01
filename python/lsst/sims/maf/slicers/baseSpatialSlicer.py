@@ -243,7 +243,7 @@ class BaseSpatialSlicer(BaseSlicer):
                    projection='aitoff', radius=1.75/180.*np.pi,
                    logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   xMin=None, xMax=None, percentileClip=None,  **kwargs):
+                   xMin=None, xMax=None, percentileClip=None,  cbar_edge=True, **kwargs):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -300,6 +300,9 @@ class BaseSpatialSlicer(BaseSlicer):
         clims = [xMin, xMax]
         p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
+        # If outputing to PDF, this fixes the colorbar white stripes
+        if cbar_edge:
+            cb.solids.set_edgecolor("face")
         if xlabel is not None:
             cb.set_label(xlabel)
         elif units is not None:

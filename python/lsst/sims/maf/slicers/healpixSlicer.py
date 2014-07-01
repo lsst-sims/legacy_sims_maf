@@ -75,7 +75,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                    logScale=False, cbarFormat='%.2g', cmap=cm.jet,
                    percentileClip=None, plotMin=None, plotMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   **kwargs):
+                   cbar_edge=True, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -132,6 +132,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
                           extend='both', format=cbarFormat)
         cb.set_label(xlabel)
+        # If outputing to PDF, this fixes the colorbar white stripes
+        if cbar_edge:
+            cb.solids.set_edgecolor("face")
         fig = plt.gcf()
         return fig.number
 
