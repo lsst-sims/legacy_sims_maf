@@ -120,5 +120,5 @@ class BaseMetric(object):
                 raise ValueError('Could not find data column for metric: %s' %(col))
         return True
     
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint):
         raise NotImplementedError('Please implement your metric calculation.')

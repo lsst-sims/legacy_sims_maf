@@ -312,7 +312,7 @@ class BaseSliceMetric(object):
                 dtype=[('metricdata', self.metricValues[metricName].dtype)])
         # The summary metric colname should already be set to 'metricdata', but in case it's not:
         summaryMetric.colname = 'metricdata'
-        summaryValue = summaryMetric.run(rarr)
+        summaryValue = summaryMetric.run(rarr, None)
         # Convert to numpy array if not, for uniformity in final use.
         if isinstance(summaryValue, float) or isinstance(summaryValue, int):
             summaryValue = np.array(summaryValue)

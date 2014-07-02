@@ -18,7 +18,7 @@ class TestMoreMetrics(unittest.TestCase):
         data['filter'][550:600] = 'y'
         # Test completeness metric when requesting all filters.
         metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
-        completeness = metric.run(data)
+        completeness = metric.run(data, None)
         assert(metric.reduceu(completeness) == 1)
         assert(metric.reduceg(completeness) == 1)
         assert(metric.reducer(completeness) == 1)
@@ -28,7 +28,7 @@ class TestMoreMetrics(unittest.TestCase):
         assert(metric.reduceJoint(completeness) == 0.5)
         # Test completeness metric when requesting only some filters. 
         metric = metrics.CompletenessMetric(u=0, g=100, r=100, i=100, z=100, y=100)
-        completeness = metric.run(data)
+        completeness = metric.run(data, None)
         assert(metric.reduceu(completeness) == 1)
         assert(metric.reduceg(completeness) == 1)
         assert(metric.reducer(completeness) == 1)
@@ -40,7 +40,7 @@ class TestMoreMetrics(unittest.TestCase):
         metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
         data['filter'][550:600] = 'z'
         data['filter'][:100] = 'g'
-        completeness = metric.run(data)
+        completeness = metric.run(data, None)
         assert(metric.reduceu(completeness) == 0)
         assert(metric.reduceg(completeness) == 2)
         assert(metric.reducer(completeness) == 1)
@@ -63,7 +63,7 @@ class TestMoreMetrics(unittest.TestCase):
         data['filter'] = 'r'
 
         metric = metrics.HourglassMetric()
-        result = metric.run(data)
+        result = metric.run(data, None)
         pernight = result['pernight']
         perfilter = result['perfilter']
         # Check that the format is right at least
@@ -110,13 +110,13 @@ class TestMoreMetrics(unittest.TestCase):
             data['fivesigma_modified'] = 24.
             stacker = utils.ParallaxFactor()
             data = stacker.run(data)
-            baseline = metrics.ParallaxMetric(normalize=flag).run(data)
+            baseline = metrics.ParallaxMetric(normalize=flag).run(data, None)
             data['finSeeing'] = data['finSeeing']+.3
-            worse1 = metrics.ParallaxMetric(normalize=flag).run(data)
-            worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data)
-            worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300])
+            worse1 = metrics.ParallaxMetric(normalize=flag).run(data, None)
+            worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data, None)
+            worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300], None)
             data['fivesigma_modified'] = data['fivesigma_modified']-1.
-            worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300])
+            worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300], None)
             # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
             if flag:
                 pass
@@ -146,13 +146,13 @@ class TestMoreMetrics(unittest.TestCase):
             data['fivesigma_modified'] = 24.
             stacker = utils.ParallaxFactor()
             data = stacker.run(data)
-            baseline = metrics.ProperMotionMetric(normalize=flag).run(data)
+            baseline = metrics.ProperMotionMetric(normalize=flag).run(data, None)
             data['finSeeing'] = data['finSeeing']+.3
-            worse1 = metrics.ProperMotionMetric(normalize=flag).run(data)
-            worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data)
-            worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300])
+            worse1 = metrics.ProperMotionMetric(normalize=flag).run(data, None)
+            worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data, None)
+            worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300], None)
             data['fivesigma_modified'] = data['fivesigma_modified']-1.
-            worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300])
+            worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300], None)
             # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
             if flag:
                 #assert(worse1 < baseline)
@@ -175,7 +175,7 @@ class TestMoreMetrics(unittest.TestCase):
         data['filter'][np.arange(0,700,2)] = 'g'
         data['fivesigma_modified'] = 30.
         metric = metrics.SupernovaMetric()
-        result = metric.run(data)
+        result = metric.run(data, None)
         np.testing.assert_array_almost_equal(metric.reduceMedianMaxGap(result),  1/7.)
         assert(metric.reduceNsequences(result) == 10)
         assert((metric.reduceMedianNobs(result) <  561) & (metric.reduceMedianNobs(result) >  385) )
@@ -189,7 +189,7 @@ class TestMoreMetrics(unittest.TestCase):
         data['expMJD'] = np.arange(10)
         # so here we have 4 images w/o good previous templates
         metric = metrics.TemplateExistsMetric()
-        result = metric.run(data)
+        result = metric.run(data, None)
         assert(result == 6./10.)
 
     def testfONv(self):
@@ -202,11 +202,11 @@ class TestMoreMetrics(unittest.TestCase):
         data = np.zeros(npix, dtype=zip(names,types))
         # Set all the pixels to have 826 counts
         data['blah'] = data['blah']+826
-        result1 = metric.run(data)
+        result1 = metric.run(data, None)
         deginsph = 129600./np.pi
         np.testing.assert_almost_equal(result1*18000., deginsph)
         data['blah'][:data.size/2]=0
-        result2 =  metric.run(data)
+        result2 =  metric.run(data, None)
         np.testing.assert_almost_equal(result2*18000., deginsph/2.)
 
     def testfOArea(self):
@@ -219,11 +219,11 @@ class TestMoreMetrics(unittest.TestCase):
         data = np.zeros(npix, dtype=zip(names,types))
         # Set all the pixels to have 826 counts
         data['blah'] = data['blah']+826
-        result1 = metric.run(data)
+        result1 = metric.run(data, None)
         
         np.testing.assert_almost_equal(result1*825, 826)
         data['blah'][:data.size/2]=0
-        result2 =  metric.run(data)
+        result2 =  metric.run(data, None)
         
 
     def testUniformityMetric(self):
@@ -231,21 +231,21 @@ class TestMoreMetrics(unittest.TestCase):
         types=[float]
         data = np.zeros(100, dtype=zip(names,types))
         metric = metrics.UniformityMetric(dayStart=0.)
-        result1 = metric.run(data)
+        result1 = metric.run(data, None)
         # If all the observations are on the 1st day, should be 1
         assert(result1 == 1)
         data['expMJD'] = data['expMJD']+365.25*10
-        result2 = metric.run(data)
+        result2 = metric.run(data, None)
         # All on last day should also be 1
         assert(result1 == 1)
         # Make a perfectly uniform dist
         data['expMJD'] = np.arange(0.,365.25*10,365.25*10/100)
-        result3 = metric.run(data)
+        result3 = metric.run(data, None)
         # Result should be zero for uniform
         np.testing.assert_almost_equal(result3, 0.)
         # A single obseravtion should give a result of 1
         data = np.zeros(1, dtype=zip(names,types))
-        result4 = metric.run(data)
+        result4 = metric.run(data, None)
         assert(result4 == 1)
         
 if __name__ == '__main__':

@@ -35,7 +35,7 @@ class TestDriver(unittest.TestCase):
     def test_png(self):
         """Test that a config that specifies png files makes pngs """
         configIn = MafConfig()
-        configIn.load('mafconfigpng.cfg')
+        configIn.load(self.filepath+'mafconfigpng.cfg')
         expectFiles=['OpsimTest_Count_expMJD__r_HEAL_Histogram.png',
                      'OpsimTest_Count_expMJD__r_HEAL_PowerSpectrum.png',
                      'OpsimTest_Count_expMJD__r_HEAL_SkyMap.png']

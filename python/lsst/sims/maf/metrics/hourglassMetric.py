@@ -26,7 +26,7 @@ class HourglassMetric(BaseMetric):
         if lon != None:  self.telescope.lon = lon
         if elev != None: self.telescope.elev = elev
    
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint):
 
         import ephem
         dataSlice.sort(order=self.mjdcol)
