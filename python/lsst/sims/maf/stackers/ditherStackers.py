@@ -3,7 +3,61 @@ import numpy.lib.recfunctions as rfn
 from .baseStacker import BaseStacker
         
 
-# Add a new dither pattern
+
+def wrapRA(ra):
+    """Wrap RA values so they are between 0 and 2pi """
+    ra = ra % (2.0*np.pi)
+    return ra
+
+def wrapDec(dec):
+    """wrap dec positions to be between -pi/2 and pi/2 """
+    dec = np.where(dec < -np.pi/2.0, -1.*(np.pi + dec), dec)
+    dec = np.where(dec > np.pi/2.0, (np.pi - dec), dec)
+    return dec
+
+# Add some random dithers in RA/Dec
+
+class RandomDitherStacker(BaseStacker):
+    """Randomly dither the RA and Dec pointings up to maxDither degrees from center."""
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', maxDither=1.8, randomSeed=None):
+        # Instantiate the RandomDither object and set internal variables. 
+        self.raCol = raCol
+        self.decCol = decCol
+        self.maxDither = maxDither * np.pi / 180.0
+        self.randomSeed = randomSeed
+        # self.units used for plot labels
+        self.units = 'rad'
+        # Values required for framework operation: this specifies the names of the new columns.
+        self.colsAdded = ['randomRADither', 'randomDecDither']
+        # Values required for framework operation: this specifies the data columns required from the database.
+        self.colsReq = [self.raCol, self.decCol]
+
+    def run(self, simData):
+        # Generate random numbers for dither, using defined seed value if desired.
+        if self.randomSeed is not None:
+            np.random.seed(self.randomSeed)
+        dithersRA = np.random.rand(len(simData[self.raCol]))
+        dithersDec = np.random.rand(len(simData[self.decCol]))
+        # np.random.rand returns numbers in [0, 1) interval.
+        # Scale to desired +/- maxDither range.
+        dithersRA = dithersRA*np.cos(simData[self.decCol])*2.0*self.maxDither - self.maxDither
+        dithersDec = dithersDec*2.0*self.maxDither - self.maxDither
+        # Add to RA and wrap back into expected range.
+        randomRADither = wrapRA(simData[self.raCol] + dithersRA)
+        #randomRADither = randomRADither % (2.0*np.pi)
+        # Add to Dec and wrap back into expected range.
+        randomDecDither = wrapDec(simData[self.decCol] + dithersDec)
+        #randomDecDither = np.where(randomDecDither < -np.pi/2.0, -1.*(np.pi + randomDecDither), randomDecDither)
+        #randomDecDither = np.where(randomDecDither > np.pi/2.0, (np.pi - randomDecDither), randomDecDither) 
+        # Add the new columns into the opsim simulated survey data.
+        simData = self._addStackers(simData)
+        simData['randomRADither'] = randomRADither
+        simData['randomDecDither'] = randomDecDither
+        return simData
+
+
+# Add a new dither pattern (sily example)
+
 class DecOnlyDitherStacker(BaseStacker):
     """Dither the position of pointings in dec only.  """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
