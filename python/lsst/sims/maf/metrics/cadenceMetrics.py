@@ -203,7 +203,7 @@ class QuickRevisitMetric(SimpleScalarMetric):
         if 'xlabel' not in self.plotParams:
             self.plotParams['xlabel'] = xlabel
 
-    def run(self, dataSlice):
+    def run(self, dataSlice, slicePoint):
         """Count how many nights the dataSlice has >= nVisitsInNight."""
         nightbins = np.arange(dataSlice[self.nightCol].min(), dataSlice[self.nightCol].max()+0.5, 1)
         counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
