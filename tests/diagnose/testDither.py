@@ -7,7 +7,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 
 
-oo = db.OpsimDatabase('sqlite:///opsimblitz1_1131_sqlite.db')
+oo = db.OpsimDatabase('sqlite:///../opsimblitz1_1131_sqlite.db')
 
 cols = ['fieldID', 'fieldRA', 'fieldDec']
 simdata = oo.fetchMetricData(cols, '')
@@ -20,10 +20,10 @@ simdata = randomdither.run(simdata)
 # Add columns showing the actual dither values
 # Note that because RA is wrapped around 360, there will be large values of 'radith' near this point
 basestacker = utils.BaseStacker()
-radith = simdata['randomRADither'] - simdata['fieldRA']
-decdith = simdata['randomDecDither'] - simdata['fieldDec']
-basestacker.stackerCols = np.core.records.fromarrays([radith, decdith], names=['radith', 'decdith'])
-simdata = basestacker._opsimStack(simdata)
+basestacker.colsAdded = ['radith', 'decdith']
+simdata = basestacker._addStackers(simdata)
+simdata['radith'] = simdata['randomRADither'] - simdata['fieldRA']
+simdata['decdith'] = simdata['randomDecDither'] - simdata['fieldDec']
 
 
 metriclist = []
