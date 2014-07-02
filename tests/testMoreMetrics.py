@@ -2,7 +2,7 @@ import numpy as np
 import healpy as hp
 import unittest
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.utils as utils
+import lsst.sims.maf.stackers as stackers
 
 class TestMoreMetrics(unittest.TestCase):
 
@@ -99,16 +99,16 @@ class TestMoreMetrics(unittest.TestCase):
         
         names = ['expMJD','finSeeing', 'fivesigma_modified', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
-        data = np.zeros(700, dtype=zip(names,types))
         normFlags = [False, True]
         for flag in normFlags:
+            data = np.zeros(700, dtype=zip(names,types))
             data['expMJD'] = np.arange(700)+56762
             data['finSeeing'] = 0.7
             data['filter'][0:100] = 'r'
             data['filter'][100:200] = 'u'
             data['filter'][200:] = 'g'
             data['fivesigma_modified'] = 24.
-            stacker = utils.ParallaxFactor()
+            stacker = stackers.ParallaxFactorStacker()
             data = stacker.run(data)
             baseline = metrics.ParallaxMetric(normalize=flag).run(data, None)
             data['finSeeing'] = data['finSeeing']+.3
@@ -135,16 +135,16 @@ class TestMoreMetrics(unittest.TestCase):
         """Test the ProperMotion metric """
         names = ['expMJD','finSeeing', 'fivesigma_modified', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
-        data = np.zeros(700, dtype=zip(names,types))
         normFlags = [False, True]
         for flag in normFlags:
+            data = np.zeros(700, dtype=zip(names,types))
             data['expMJD'] = np.arange(700)+56762
             data['finSeeing'] = 0.7
             data['filter'][0:100] = 'r'
             data['filter'][100:200] = 'u'
             data['filter'][200:] = 'g'
             data['fivesigma_modified'] = 24.
-            stacker = utils.ParallaxFactor()
+            stacker = stackers.ParallaxFactorStacker()
             data = stacker.run(data)
             baseline = metrics.ProperMotionMetric(normalize=flag).run(data, None)
             data['finSeeing'] = data['finSeeing']+.3

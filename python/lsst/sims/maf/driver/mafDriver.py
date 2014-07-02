@@ -10,6 +10,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.utils as utils
+import lsst.sims.maf.stackers as stackers
 import time
 
 
@@ -76,11 +77,11 @@ class MafDriver(object):
             temp_slicer.plotConfigs = slicer.plotConfigs
             temp_slicer.metadata = metadata
             temp_slicer.index = i
-            stackers = []
+            stackersList = []
             for key in stackCols.keys():
                 name, params, kwargs = config2dict(stackCols[key])
-                stackers.append(getattr(utils.addCols, name)(*params, **kwargs))
-            temp_slicer.stackers = stackers
+                stackersList.append(getattr(stackers, name)(*params, **kwargs))
+            temp_slicer.stackers = stackersList
             self.binList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
@@ -123,10 +124,10 @@ class MafDriver(object):
             print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add slicer metadata or change metric names.')
   
-    def getData(self, constraint, colnames=[], stackers=[], groupBy='expMJD'):
+    def getData(self, constraint, colnames=[], stackersList=[], groupBy='expMJD'):
         """Pull required data from database and calculate additional columns from stackers. """
         # Stacker_names describe the already-configured (via the config driver) stacker methods.
-        stacker_names = [s.__class__.__name__ for s in stackers ]
+        stacker_names = [s.__class__.__name__ for s in stackersList ]
         dbcolnames = []
         sourceLookup = utils.getColInfo.ColInfo()
         # Go through all columns that the metrics need.
@@ -134,13 +135,13 @@ class MafDriver(object):
             source = sourceLookup.getDataSource(colname)
             # If data source of column is a stacker:
             if source != sourceLookup.defaultDataSource:
-                source = getattr(utils.addCols, source)()
+                source = getattr(stackers, source)()
                 for col in source.colsReq:
                     # Add column names that the stackers need.
                     dbcolnames.append(col)
                 # If not already a configured stacker, instantiate one using defaults
                 if source.__class__.__name__ not in stacker_names: 
-                    stackers.append(source)
+                    stackersList.append(source)
                     stacker_names.append(source.__class__.__name__)
             # Else if data source is just the usual database:
             else:
@@ -150,7 +151,7 @@ class MafDriver(object):
         # Get the data from database.
         self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint, colnames=dbcolnames, groupBy = groupBy)
         # Calculate the data from stackers.
-        for stacker in stackers:
+        for stacker in stackersList:
             self.data = stacker.run(self.data)
         # Done - self.data should now have all required columns.
             
@@ -223,7 +224,7 @@ class MafDriver(object):
                     slicerNames.append(b.slicerName)
             # And for those slicers, find the data columns required.
             colnames=[]
-            stackers = []
+            stackersList = []
             for slicer in matchingSlicers:
                 for m in self.metricList[slicer.index]:
                     for cn in m.colNameList:
@@ -231,7 +232,7 @@ class MafDriver(object):
                 for cn in slicer.columnsNeeded:
                     colnames.append(cn)
                 for stacker in slicer.stackers:
-                    stackers.append(stacker)
+                    stackersList.append(stacker)
                     for col in stacker.colsReq:
                         colnames.append(col)
             # Find the unique column names required.
@@ -241,7 +242,7 @@ class MafDriver(object):
             # Get the data from the database + stacker calculations.
             if self.verbose:
                 time_prev = time.time()
-            self.getData(sqlconstraint, colnames=colnames, stackers=stackers)
+            self.getData(sqlconstraint, colnames=colnames, stackersList=stackersList)
             if self.verbose:
                 dt, time_prev = dtime(time_prev)
             if len(self.data) == 0:

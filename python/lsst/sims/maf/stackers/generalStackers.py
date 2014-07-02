@@ -1,24 +1,16 @@
 import numpy as np
 import numpy.lib.recfunctions as rfn
-
-def _opsimStack(arrays):
-    """Given a list of numpy rec arrays, it returns the merged result. """
-    return rfn.merge_arrays(arrays, flatten=True, usemask=False)
+from .baseStacker import BaseStacker
         
 ### Normalized airmass
-
-class NormAirmass(object):
+class NormAirmassStacker(BaseStacker):
     """Calculate the normalized airmass for each opsim pointing."""
     def __init__(self, airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388):
-        # Set units for stacker created columns (all columns must have same units)
-        #  This unit label is used as a _units label for plotting.
+        
         self.units = 'airmass/(minimum possible airmass)'
-        # Set columns added as a result of running the stacker.
-        #  This is required by getColInfo to understand where columns come from.
         self.colsAdded = ['normairmass']
-        # Set columns required from database to calculate new stacker columns.
-        #  This is required by the driver to know what to query from the database.
         self.colsReq = [airmassCol, decCol]
+        
         self.airmassCol = airmassCol
         self.decCol = decCol
         self.telescope_lat = telescope_lat
@@ -30,17 +22,12 @@ class NormAirmass(object):
         #  then gets data from db and then calculates additional columns (via run methods here). 
         min_z_possible = np.abs(simData[self.decCol] - np.radians(self.telescope_lat))
         min_airmass_possible = 1./np.cos(min_z_possible)
-        norm_airmass = np.array(simData[self.airmassCol] / min_airmass_possible, 
-                            dtype=[('normairmass', 'float')])
-        if 'normairmass' in simData.dtype.names:
-            simData['normairmass'] = norm_airmass
-        else:
-            simData = _opsimStack([simData, norm_airmass])
+        simData=self._addStackers(simData)
+        simData['normairmass'] = simData[self.airmassCol] / min_airmass_possible
         return simData
 
 ### Parallax factors
-
-class ParallaxFactor(object):
+class ParallaxFactorStacker(BaseStacker):
     """Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds"""
     def __init__(self, raCol='fieldRA', decCol='fieldDec', dateCol='expMJD'):
         self.raCol = raCol
@@ -77,16 +64,13 @@ class ParallaxFactor(object):
         x_geo, y_geo = self._gnomonic_project_toxy(ra_geo, dec_geo, simData[self.raCol], simData[self.decCol])
         ra_pi_amp[:] = np.degrees(x_geo1-x_geo)*3600.
         dec_pi_amp[:] = np.degrees(y_geo1-y_geo)*3600.
-        if 'ra_pi_amp' in simData.dtype.names:
-            simData['ra_pi_amp'] = ra_pi_amp
-            simData['dec_pi_amp'] = dec_pi_amp
-        else:
-            simData = _opsimStack([simData,ra_pi_amp,dec_pi_amp]) 
+        simData=self._addStackers(simData)
+        simData['ra_pi_amp'] = ra_pi_amp
+        simData['dec_pi_amp'] = dec_pi_amp
         return simData
 
 # Add a new dither pattern
-
-class DecOnlyDither(object):
+class DecOnlyDitherStacker(BaseStacker):
     """Dither the position of pointings in dec only.  """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
                  nightStep=1, nSteps=5, stepSize=0.2):
@@ -110,9 +94,9 @@ class DecOnlyDither(object):
         offsets = np.radians(np.concatenate((off1,off2,off3,off4) ))
         uoffsets = np.size(offsets)
         nightIndex = simData[self.nightCol]%uoffsets
-        decDither = np.zeros(np.size(simData), dtype=[('decOnlyDither','float')])
-        decDither['decOnlyDither'] = simData[self.decCol]+offsets[nightIndex]
-        simData = _opsimStack([simData, decDither])
+        simData= self._addStackers(simData)
+        simData['decOnlyDither'] = simData[self.decCol]+offsets[nightIndex]
+        
         return simData
     
                              

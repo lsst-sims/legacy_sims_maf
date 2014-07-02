@@ -1,6 +1,6 @@
 import inspect
 import numpy as np
-import addCols
+import lsst.sims.maf.stackers as stackers 
 
 class ColInfo(object):
     def __init__(self):
@@ -42,10 +42,10 @@ class ColInfo(object):
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}
-        stackers = inspect.getmembers(addCols, inspect.isclass)
-        stackers = [m[0] for m in stackers if m[1].__module__ == 'lsst.sims.maf.utils.addCols']
-        for stacker in stackers:
-            stack = getattr(addCols, stacker)()
+        stackersList = inspect.getmembers(stackers, inspect.isclass)
+        stackersList = [m[0] for m in stackersList if m[1].__module__ != 'lsst.sims.maf.stackers.baseStacker']
+        for stacker in stackersList:
+            stack = getattr(stackers, stacker)()
             for col in stack.colsAdded:
                 self.unitDict[col] = stack.units
                 self.sourceDict[col] = stacker        
