@@ -15,10 +15,13 @@ root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 root.opsimName = 'VerySimpleExample'
 
 # Make an empty list to hold all the slicer configs
-binList = []
+sliceList = []
 
 # Make a set of SQL where constraints to only use each filter
-constraints = ["filter = '%s'"%f for f in ['u','g','r','i','z','y'] ]
+constraints = []
+filters = ['u','g','r','i','z','y']
+for f in filters:
+    constraint.append("filter = '%s'"%f)
 
 # Run 2 metrics, the mean seeing and the co-added 5-sigma limiting depth.
 metric1 = configureMetric('MeanMetric', params=['finSeeing'])
@@ -27,16 +30,16 @@ metric2 = configureMetric('Coaddm5Metric')
 # Configure a slicer.  Use the Healpix slicer to make sky maps and power spectra.
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric1,metric2),
                           constraints=constraints)
-binList.append(slicer)
+sliceList.append(slicer)
 
 metric = configureMetric('MeanMetric', params=['finSeeing'],
                           summaryStats={'IdentityMetric':{}})
 # Configure a slicer.  Use the UniSlicer to simply take all the data.
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric),
                           constraints=constraints)
-binList.append(slicer)
+sliceList.append(slicer)
 
 
 
-root.slicers = makeDict(*binList)
+root.slicers = makeDict(*sliceList)
 

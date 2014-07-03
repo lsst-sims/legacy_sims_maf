@@ -14,7 +14,7 @@ root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 root.opsimName = 'Example'
 
 # Make an empty list to hold all the slicer configs
-binList = []
+sliceList = []
 
 # Define the filters we want to loop over
 filters = ['u','g','r','i','z','y']
@@ -33,7 +33,7 @@ for filt in filters:
     slicer = configureSlicer('HealpixSlicer',
                               metricDict=makeDict(metric1,metric2),
                               constraints=['filter = "%s"'%filt])
-    binList.append(slicer)
+    sliceList.append(slicer)
 
 # Now do coadd depth and median seeing, but use the hexdither positions.
 # Note the addition of metricName kwargs to make each metric output unique
@@ -48,7 +48,7 @@ for filt in filters:
                               metricDict=makeDict(metric1,metric2),
                               constraints=['filter = "%s"'%filt],
                               kwargs={'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
-    binList.append(slicer)
+    sliceList.append(slicer)
 
 
 
@@ -60,12 +60,12 @@ for f in filters:
                                      'color':colors[f],'label':'%s'%f} )
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_ps','binsize':0.1,},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
-    binList.append(slicer)
+    sliceList.append(slicer)
     m1 = configureMetric('CountMetric', params=['airmass'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass','binsize':0.05},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)])
-    binList.append(slicer)
+    sliceList.append(slicer)
 
 
 # Stats on airmass and seeing for all observations:
@@ -90,7 +90,7 @@ m5 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName
 slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                            metricDict=makeDict(m2,m3,m4,m5),
                            constraints=[''])
-binList.append(slicer)
+sliceList.append(slicer)
 
 # Run those same Cadence metrics on the hexdither positions
 m1 = configureMetric('SupernovaMetric', kwargs={'metricName':'SN_dith','m5col':'fivesigma_modified',
@@ -104,8 +104,8 @@ m5 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName
 slicer =  configureSlicer('HealpixSlicer',metricDict=makeDict(m2,m3,m4,m5),
                            constraints=[''],
                            kwargs={"nside":nside,'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
-binList.append(slicer)
+sliceList.append(slicer)
 
 
 
-root.slicers = makeDict(*binList)
+root.slicers = makeDict(*sliceList)

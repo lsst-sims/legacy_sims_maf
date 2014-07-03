@@ -5,14 +5,14 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 
 root.outputDir = './Doc'
 root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
-root.opsimName = 'opsim'
+root.opsimName = 'ob1_1131'
 
 
 
 slicerList=[]
 
-m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
-slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime'}, metricDict=makeDict(m1), constraints=[''] )
+m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'}, plotDict={'logScale':True})
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime', 'binsize':5.}, metricDict=makeDict(m1), constraints=[''] )
 root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
