@@ -108,7 +108,8 @@ class BaseSpatialSlicer(BaseSlicer):
     ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, logScale='auto', flipXaxis=False,
+                      bins=None, cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
+                      logScale='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
                       zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
@@ -121,6 +122,7 @@ class BaseSpatialSlicer(BaseSlicer):
         bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
+        yMin/Max = histogram y range
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
@@ -147,6 +149,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 histRange = None
         else:
             histRange=[xMin, xMax]
+        if yMin is not None and yMax is not None:
+            plt.ylim([yMin,yMax])
         # See if should use log scale.
         if logScale == 'auto':
             if (np.log10(np.max(histRange)-np.min(histRange)) > 3 ) & (np.min(histRange) > 0):

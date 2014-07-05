@@ -48,6 +48,10 @@ root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
 
+m1 = configureMetric('CountMetric', params=['expMJD'], plotDict={'ylabel':'Number of Exposures'})
+slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'night','binsize':1.}, metricDict=makeDict(m1), constraints=[''] )
+slicerList.append(slicer)
+
 m1=configureMetric('HourglassMetric')
 slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=['night < 750'] )
 slicerList.append(slicer)

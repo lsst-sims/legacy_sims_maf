@@ -182,7 +182,7 @@ class ComparisonSliceMetric(object):
                         bins=100, histMin=None,histMax=None,
                         title=None, xlabel=None,color=None, labels=None,
                         legendloc='upper left', bnamelen=4, alpha=1.0,
-                        savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
+                        savefig=False, outDir=None, outfileRoot=None, ylabel=None, plotkwargs=None):
         """
         Create a plot containing the histogram visualization from all possible metrics in dictNum +
           metricNames.
@@ -231,7 +231,7 @@ class ComparisonSliceMetric(object):
             if hasattr(self.slicemetrics[d].slicer, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
                               'alpha':alpha, 'label':label, 'addLegend':addLegend,'legendloc':legendloc,
-                              'color':color}
+                              'color':color, 'ylabel':ylabel}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key] 
@@ -241,7 +241,7 @@ class ComparisonSliceMetric(object):
             if hasattr(self.slicemetrics[d].slicer, 'plotHistogram'):
                 plotParams = {'xlabel':xlabel, 'histMin':histMin, 'histMax':histMax, 
                               'bins':bins, 'title':title, 'label':label, 
-                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color}
+                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color, 'ylabel':ylabel}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key]

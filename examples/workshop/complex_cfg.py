@@ -8,10 +8,9 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 
 # Set the output directory
 root.outputDir = './Complex_out'
-# Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
 # Name of the output table in the database
-root.opsimName = 'Example'
+root.opsimName = 'ComplexExample'
 
 # Make an empty list to hold all the slicer configs
 sliceList = []
@@ -24,31 +23,31 @@ colors={'u':'m','g':'b','r':'g','i':'y','z':'Orange','y':'r'}
 # Resolution to use for HEALpixels
 nside = 64
 
+
+constraints = [ 'filter = "%s"'%filt for filt in filters]
 # Compute the coadded depth and median seeing for each filter
-for filt in filters:
-    metric1 = configureMetric('Coaddm5Metric', params=[],
-                               summaryStats={'MeanMetric':{}}, plotDict={'cbarFormat':'%.3g'})
-    metric2 = configureMetric('MedianMetric', params=['finSeeing'],
-                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-    slicer = configureSlicer('HealpixSlicer',
-                              metricDict=makeDict(metric1,metric2),
-                              constraints=['filter = "%s"'%filt])
-    sliceList.append(slicer)
+metric1 = configureMetric('Coaddm5Metric', params=[],
+                           summaryStats={'MeanMetric':{}}, plotDict={'cbarFormat':'%.3g'})
+metric2 = configureMetric('MedianMetric', params=['finSeeing'],
+                           summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
+slicer = configureSlicer('HealpixSlicer',
+                          metricDict=makeDict(metric1,metric2),
+                          constraints=constraints)
+sliceList.append(slicer)
 
 # Now do coadd depth and median seeing, but use the hexdither positions.
 # Note the addition of metricName kwargs to make each metric output unique
-for filt in filters:
-    metric1 = configureMetric('Coaddm5Metric', params=[],
-                               summaryStats={'MeanMetric':{}},
-                               kwargs={'metricName':'coadd_dither'}, plotDict={'cbarFormat':'%.3g'})
-    metric2 = configureMetric('MedianMetric', params=['finSeeing'],
-                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
-                               kwargs={'metricName':'seeing_dither'})
-    slicer = configureSlicer('HealpixSlicer',
-                              metricDict=makeDict(metric1,metric2),
-                              constraints=['filter = "%s"'%filt],
-                              kwargs={'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
-    sliceList.append(slicer)
+metric1 = configureMetric('Coaddm5Metric', params=[],
+                           summaryStats={'MeanMetric':{}},
+                           kwargs={'metricName':'coadd_dither'}, plotDict={'cbarFormat':'%.3g'})
+metric2 = configureMetric('MedianMetric', params=['finSeeing'],
+                           summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                           kwargs={'metricName':'seeing_dither'})
+slicer = configureSlicer('HealpixSlicer',
+                          metricDict=makeDict(metric1,metric2),
+                          constraints=constraints,
+                          kwargs={'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
+sliceList.append(slicer)
 
 
 

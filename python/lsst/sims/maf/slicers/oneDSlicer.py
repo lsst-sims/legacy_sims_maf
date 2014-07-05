@@ -157,10 +157,11 @@ class OneDSlicer(BaseSlicer):
         if (yMin is None) or (yMax is None):
             if percentileClip:
                 yMin, yMax = percentileClipping(metricValues.compressed(), percentile=percentileClip)
-            else:
-                yMin = metricValues.compressed().min()
-                yMax = metricValues.compressed().max()
-        plt.ylim(yMin, yMax)
+            #else:
+            #    yMin = metricValues.compressed().min()
+            #    yMax = metricValues.compressed().max()
+        if yMin is not None and yMax is not None:
+            plt.ylim(yMin, yMax)
         # Set x limits if given in kwargs.
         if (xMin is not None) or (xMax is not None):
             plt.xlim(xMin, xMax)
