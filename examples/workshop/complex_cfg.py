@@ -56,7 +56,8 @@ sliceList.append(slicer)
 for f in filters:
     m1 = configureMetric('CountMetric', params=['fivesigma_ps'], plotDict={'histMin':20, 'histMax':26},
                           histMerge={'histNum':1, 'legendloc':'upper right',
-                                     'color':colors[f],'label':'%s'%f} )
+                                     'color':colors[f],'label':'%s'%f, 
+                                     'ylabel':'Count'} )
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_ps','binsize':0.1,},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
     sliceList.append(slicer)

@@ -389,6 +389,8 @@ class MafDriver(object):
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
                     fullfilename = os.path.join(self.config.outputDir, filename)
+                    if self.verbose:
+                       print 'reading %s to make merged histogram'%fullfilename
                     cbm.readMetricData(fullfilename)
                 dictNums = cbm.slicemetrics.keys()
                 dictNums.sort()

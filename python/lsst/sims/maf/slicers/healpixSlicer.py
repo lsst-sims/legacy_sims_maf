@@ -139,7 +139,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         return fig.number
 
     def plotHistogram(self, metricValue, title=None, xlabel=None,
-                      ylabel='Area (1000s of square degrees)',
+                      ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
@@ -158,6 +158,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
         # Simply overrides scale and y axis plot label of base plotHistogram. 
+        if ylabel is None:
+            ylabel = 'Area (1000s of square degrees)'
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
