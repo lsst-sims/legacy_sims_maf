@@ -1,8 +1,48 @@
+import inspect
 import numpy as np
 import numpy.lib.recfunctions as rfn
 
+class StackerRegistry(type):
+    """
+    Meta class for Stackers, to build a registry of stacker classes.
+    """
+    def __init__(cls, name, bases, dict):
+        super(StackerRegistry, cls).__init__(name, bases, dict)
+        if not hasattr(cls, 'registry'):
+            cls.registry = {}
+        if not hasattr(cls, 'colregistry'):
+            cls.colregistry = []
+        if cls in cls.registry:
+            warnings.warn('Warning! Redefining stacker %s! (there are >1 stackers with the same name)' %(name))
+        if name != 'BaseStacker':
+            cls.registry[name] = cls
+    def stackerClass(cls, name):
+        return cls.registry[name]
+    def listStackers(cls, docs=False):
+        for stackerName in sorted(cls.registry):
+            if not docs:
+                print stackerName
+            if docs:
+                print '---- ', stackerName, ' ----'
+                print cls.registry[stackerName].__doc__
+
+class ColRegistry(object):
+    """
+    Class to keep a registry of columns that may be added to simData by instantiated Stackers.
+    """
+    def __init__(self):
+        self.colSet = set()
+    def addCols(self, colsAdded):
+        for col in colsAdded:
+            self.colSet.add(col)
+    def uniqueCols(self):
+        return list(self.colSet)
+                        
 class BaseStacker(object):
     """Base MAF Stacker: add columns generated at run-time to the simdata array."""
+    __metaclass__ = StackerRegistry
+    colRegistry = ColRegistry()
+    
     def __init__(self):
         """
         Instantiate the stacker.
@@ -15,6 +55,9 @@ class BaseStacker(object):
         self.colsReq = None
         # Optional: providea list of units for the columns defined in colsAdded.
         self.units = None
+        # Keep this (it adds the columns from colsAdded into a registry, to check if there will be
+        #  any collisions between stackers adding columns with the same name).
+        self.colRegistry.addCols(self.colsAdded)        
 
     def _addStackers(self, simData):
         """

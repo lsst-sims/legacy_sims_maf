@@ -2,7 +2,7 @@ import numpy as np
 import lsst.sims.maf.stackers as stackers
 import unittest
 
-class TestMoreMetrics(unittest.TestCase):
+class TestStackerClasses(unittest.TestCase):
 
     def testNormAirmass(self):
         """ test the normalized airmass stacker"""
