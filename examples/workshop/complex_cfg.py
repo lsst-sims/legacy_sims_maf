@@ -54,7 +54,7 @@ sliceList.append(slicer)
 
 # Look at the single-visit depth and airmass for observations in each filter and merge them into a single histogram
 for f in filters:
-    m1 = configureMetric('CountMetric', params=['fivesigma_ps'], plotDict={'histMin':20, 'histMax':26},
+    m1 = configureMetric('CountMetric', params=['fivesigma_ps'], 
                           histMerge={'histNum':1, 'legendloc':'upper right',
                                      'color':colors[f],'label':'%s'%f, 
                                      'ylabel':'Count'} )
