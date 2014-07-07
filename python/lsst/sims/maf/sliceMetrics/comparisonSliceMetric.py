@@ -235,7 +235,10 @@ class ComparisonSliceMetric(object):
                               'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
-                      plotParams[key] = plotkwargs[i][key] 
+                      plotParams[key] = plotkwargs[i][key]
+                pp = {}
+                pp.update((k, v) for k, v in plotParams.iteritems() if v is not None)
+                plotParams = pp
                 fignum = self.slicemetrics[d].slicer.plotBinnedData(self.slicemetrics[d].metricValues[m],
                                                                  fignum=fignum, **plotParams)
             # Plot data using 'plotHistogram' if that method available (any spatial slicer)
@@ -248,6 +251,9 @@ class ComparisonSliceMetric(object):
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key]
+                pp = {}
+                pp.update((k, v) for k, v in plotParams.iteritems() if v is not None)
+                plotParams = pp
                 fignum = self.slicemetrics[d].slicer.plotHistogram(self.slicemetrics[d].metricValues[m],
                                                                  fignum=fignum, **plotParams)
         if savefig:

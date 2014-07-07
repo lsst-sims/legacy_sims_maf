@@ -83,7 +83,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
             return False
 
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel=None,
+    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
@@ -100,8 +100,6 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        if ylabel is None:
-            ylabel = 'Number of Fields'
         fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
                                                              ylabel=ylabel,
                                                              title=title, fignum=fignum, 
