@@ -9,17 +9,14 @@ class SimpleScalarMetric(BaseMetric):
     """This is the base class for the simplist metrics: ones that calculate one
        number on one column of data and return a scalar. 
     """
-    def __init__(self, colname, *args, **kwargs):
+    def __init__(self, colname, metricDtype='float', *args, **kwargs):
         """Intantiate simple metric."""
         # Use base class init to register columns.
         super(SimpleScalarMetric, self).__init__(colname, *args, **kwargs)
         # Check incoming columns have only one value.
-        if len(self.colNameList) > 1:
+        if len(self.colNameArr) > 1:
             raise Exception('Simple metrics should be passed single column. Got %s' %(colname))
-        self.colname = self.colNameList[0]
-        # Set return type.
-        self.metricDtype = 'float'
-        
+        self.colname = self.colNameArr[0]
         
     def run(self, dataSlice, *args):
         raise NotImplementedError()

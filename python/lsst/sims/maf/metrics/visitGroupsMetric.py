@@ -18,7 +18,8 @@ class VisitGroupsMetric(BaseMetric):
         'nightsCol' = column with the night of the visit (default night),
         'deltaTmin' = minimum time of window: units are days (default 15 min),
         'deltaTmax' = maximum time of window: units are days (default 90 min),
-        'minNVisits' = the minimum number of visits within a night (with spacing between deltaTmin/max from any other visit) required,
+        'minNVisits' = the minimum number of visits within a night (with spacing between deltaTmin/max
+                       from any other visit) required,
         'window' = the number of nights to consider within a window (for reduce methods),
         'minNNights' = the minimum required number of nights within window to make a full 'group'.
         """

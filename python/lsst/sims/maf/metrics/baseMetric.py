@@ -10,43 +10,78 @@ import numpy as np
 import inspect
 from lsst.sims.maf.utils.getColInfo import ColInfo
 
-# ClassRegistry adds some extras to a normal dictionary and serves as a way to 
-#  keep track of what columns are needed for what metrics. 
-class ClassRegistry(dict):
-    # Contents of the classRegistry dictionary look like: 
-    #    {metricClassName: 'set' of [simData columns]}
-    @staticmethod
-    def makeColArr(cols):
-        #Promote scalar to array.  Solution from:
-        #http://stackoverflow.com/questions/12653120/how-can-i-make-a-numpy-function-that-accepts-a-numpy-array-an-iterable-or-a-sc
-        return np.array(cols, copy=False, ndmin=1)
-    def __str__(self):
-        # Print the entire contents of the registry nicely.
-        retstr = "----------------------------\n"
-        retstr += "Registry Contents\n"
-        for k in self:
-            retstr += "%s: %s\n"%(k, ",".join([str(el) for el in self[k]]))
-        retstr += "-----------------------------\n"
-        return retstr
-    def __setitem__(self, i, y):
-        if not hasattr(y, '__iter__'):
-            raise TypeError("Can only contain iterable types")
-        super(ClassRegistry, self).__setitem__(i,y)
-    def uniqueCols(self):
-        colset = set()
-        for k in self:
-            for col in self[k]:
-                colset.add(col)
-        return colset    
-    
+class MetricRegistry(type):
+    """
+    Meta class for metrics, to build a registry of metric classes.
+    """
+    def __init__(cls, name, bases, dict):
+        super(MetricRegistry, cls).__init__(name, bases, dict)
+        if not hasattr(cls, 'registry'):
+            cls.registry = {}
+        if cls in cls.registry:
+            warnings.warn('Redefining metric %s! (there are >1 metrics with the same name)' %(name))
+        if name not in ['BaseMetric', 'SimpleScalarMetric']:
+            cls.registry[name] = cls            
+    def metricClass(cls, name):
+        return cls.registry[name]
+    def listMetrics(cls, docs=False):
+        for metricName in sorted(cls.registry):
+            if not docs:
+                print metricName
+            if docs:
+                print '---- ', metricName, ' ----'
+                print cls.registry[metricName].__doc__
+            
+            
+class ColRegistry(object):
+    """
+    ColRegistry tracks the columns needed for all metric objects (kept internally in a set). 
 
+    ColRegistry.uniqueCols returns a list of all unique columns required for metrics;
+    ColRegistry.dbCols returns the subset of these which come from the database.
+    ColRegistry.stackerCols returns the dictionary of [columns: stacker class].
+    """
+    colInfo = ColInfo()
+    def __init__(self):
+        self.colSet = set()
+        self.dbSet = set()
+        self.stackerDict = {}
+    def addCols(self, colArray):
+        """
+        Add the columns in colArray into the ColRegistry set and identifies their source, using utils.ColInfo.
+        """
+        for col in colArray:
+            self.colSet.add(col)
+            source = self.colInfo.getDataSource(col)
+            if source == self.colInfo.defaultDataSource:
+                self.dbSet.add(col)
+            else:
+                if col not in self.stackerDict:
+                    self.stackerDict[col] = source
+                    #tmpStacker = getattr(addCols, stacker)()
+                    #for c in tmpStacker.colsReq:
+                    #    self.dbSet.add(c)            
+    def uniqueCols(self):
+        """
+        Returns a list of the unique columns used for all metrics.
+        """
+        return list(self.colSet)    
+    def dbCols(self):
+        """
+        Returns the list of unique columns needed from the database (including columns required by default stackers).
+        """
+        return list(self.dbSet)
+    def stackerCols(self):
+        return self.stackerDict
+            
+                       
 class BaseMetric(object):
     """Base class for the metrics."""
-    # Add ClassRegistry to keep track of columns needed for metrics. 
-    classRegistry = ClassRegistry()
+    __metaclass__ = MetricRegistry
+    colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, cols, metricName=None, units=None, plotParams=None,
+    def __init__(self, cols, metricName=None, units=None, plotParams=None, metricDtype='object',
                  *args, **kwargs):
         """Instantiate metric.
         After inheriting from this base metric (and using, perhaps via 'super' this __init__):
@@ -54,71 +89,43 @@ class BaseMetric(object):
             (so the driver can know which columns to pull from the database)
           * every metric object will contain a plotParams dictionary, which may contain only the units.
         """
-        # Turn cols into numpy array (so we know it's iterable).
-        self.colNameList = ClassRegistry.makeColArr(cols)
-        # Register the columns in the classRegistry.
-        self.registerCols(self.colNameList)
+        # Turn cols into numpy array so we know we can iterate over the columns.
+        self.colNameArr = np.array(cols, copy=False, ndmin=1)
+        # Add the columns to the colRegistry.
+        self.colRegistry.addCols(self.colNameArr)
         # Identify type of metric return value. Default 'object'.
-        #  Individual metrics should override with more specific value.
-        self.metricDtype = 'object'
+        #  Individual metrics may override with more specific value.
+        self.metricDtype = metricDtype
         # Value to return if the metric can't be computed
         self.badval = -666
-        # Save a name for the metric + the data it's working on, so we
-        #  can identify this later.
-        if metricName:
-            self.name = metricName
-        else:
-            # Else construct our own name from the class name and the data columns.
-            allcols = ' ' + self.colNameList[0]
-            for i in range(1, len(self.colNameList)):
-                allcols += ', ' + self.colNameList[i]
-            self.name = self.__class__.__name__.replace('Metric', '', 1) + allcols
+        # Save a unique name for the metric.
+        self.name = metricName
+        if self.name is None:
+            # If none provided, construct our own from the class name and the data columns.
+            self.name = self.__class__.__name__.replace('Metric', '', 1) + ' ' + \
+              ' '.join(map(str, self.colNameArr))
         # Set up dictionary of reduce functions (may be empty).
         self.reduceFuncs = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
-        # Set physical units, mostly for plotting purposes.
+        # Set physical units, for plotting purposes.
         # (If plotParams has 'units' this will be ignored). 
         if units is None:
-            units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameList])
+            units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameArr])
             if len(units.replace(' ', '')) == 0:
                 units = ''
         self.units = units
         # Set more plotting preferences (at the very least, the units).
-        if plotParams:
-            self.plotParams = plotParams
-        else:
+        self.plotParams = plotParams
+        if self.plotParams is None:
             self.plotParams = {}
         if 'units' not in self.plotParams:
             self.plotParams['units'] = self.units
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the binMetric, passed to the binner plotting utilities.
-    
 
-    def registerCols(self, cols):
-        """Add cols to the column registry. """
-        # Set myName to be name of the metric class.
-        myName = self.__class__.__name__
-        if myName not in self.classRegistry:
-            # Add a set to the registry if the key doesn't exist.
-            self.classRegistry[myName] = set()
-        # Add the columns to the registry.
-        for col in cols:            
-            self.classRegistry[myName].add(col)
-
-
-    def validateData(self, simData):
-        """Check that simData has necessary columns for this particular metric."""
-        ## Note that we can also use the class registry to find the list of all columns.
-        for col in self.colNameList:
-            try:
-                simData[col]
-            except ValueError:
-                raise ValueError('Could not find data column for metric: %s' %(col))
-        return True
-    
     def run(self, dataSlice, *args):
         raise NotImplementedError('Please implement your metric calculation.')

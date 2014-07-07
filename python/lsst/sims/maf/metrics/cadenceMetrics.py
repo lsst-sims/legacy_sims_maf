@@ -139,24 +139,33 @@ class SupernovaMetric(BaseMetric):
     
                                 
 class TemplateExistsMetric(BaseMetric):
-    """See what fraction of images have a previous template image of desired quality.  Note, one could consider adding additional requirements such as making sure a template exists within a given paralactic angle. """
-    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD',
-                 units='fraction', metricName='TemplateExistsMetric', **kwargs):
-        """seeingCol = column with final seeing value (arcsec)
-           expMJDcol = column with exposure MJD. """
+    """
+    Calculate what fraction of images have a previous template image of desired quality.
+
+    Note, one could consider adding additional requirements such as making sure a
+    template exists within a given paralactic angle.
+    """
+    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD', 
+                 metricName='TemplateExistsMetric', **kwargs):
+        """
+        seeingCol = column with final seeing value (arcsec)
+        expMJDcol = column with exposure MJD.
+        """
         cols = [seeingCol, expMJDcol]
-        super(TemplateExistsMetric,self).__init__(cols, metricName, units='fraction', **kwargs)
+        super(TemplateExistsMetric, self).__init__(cols, metricName, units='fraction',
+                                                  metricDtype='float', **kwargs)
         self.seeingCol = seeingCol
         self.expMJDcol = expMJDcol
-        self.metricDtype = float
-        
 
-    def run(self,dataSlice, *args):
+    def run(self,dataSlice, slicePoint):
+        # Check that data is sorted in expMJD order
         dataSlice.sort(order=self.expMJDcol)
-        # Minimum seeing up to a given time
-        seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol]) 
+        # Find the minimum seeing up to a given time
+        seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol])
+        # Find the difference between the seeing and the minimum seeing at the previous visit
         seeing_diff = dataSlice[self.seeingCol] - np.roll(seeing_mins,1)
-        good = np.where(seeing_diff[1:] >= 0.)[0] # 1st image never has a template
+        # First image never has a template; check how many others do
+        good = np.where(seeing_diff[1:] >= 0.)[0] 
         frac = (good.size)/float(dataSlice[self.seeingCol].size)
         return frac
     

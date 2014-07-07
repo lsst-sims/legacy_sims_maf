@@ -1,4 +1,34 @@
+import os, sys, warnings
 import numpy as np
+
+# Example of adding modules:
+#moduleDict = makeDict(['~/myMetrics.py', 'desc/SNmetrics']
+#root.modules = moduleDict
+
+# Example __init__.py file
+#from .SNmetrics import *
+#from .myNewSNmetrics import *
+
+# Example metric configuration:
+#m1 = configureMetric('PercentileMetric', params=['Airmass'], kwargs={'percentile':75})
+#slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1),
+#                         constraints=[''])
+
+def moduleLoader(moduleList):
+    for m in moduleList:
+        mpath, mname = os.path.split(m)
+        mname = mname.replace('.py', '')
+        if len(mpath) > 0:
+            if mpath == '~':
+                mpath = os.getenv('HOME')
+            if mpath not in sys.path:
+                sys.path.insert(0, mpath)
+            os.listdir(mpath)
+        if mname == '~':
+            warnings.warn('Warning! Cannot import modules directly from home directory.')
+            continue
+        __import__(mname)
+
 
 def optimalBins(datain, binmin=None, binmax=None):
     """Use Freedman-Diaconis rule to set binsize.
@@ -19,7 +49,6 @@ def optimalBins(datain, binmin=None, binmax=None):
         return 1
     else:
         return int(nbins)
-
 
 
 def percentileClipping(data, percentile=95.):
