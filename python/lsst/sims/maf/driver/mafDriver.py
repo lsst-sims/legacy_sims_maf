@@ -135,14 +135,14 @@ class MafDriver(object):
             source = sourceLookup.getDataSource(colname)
             # If data source of column is a stacker:
             if source != sourceLookup.defaultDataSource:
-                source = getattr(stackers, source)()
-                for col in source.colsReq:
+                stacker = source()
+                for col in stacker.colsReq:
                     # Add column names that the stackers need.
                     dbcolnames.append(col)
                 # If not already a configured stacker, instantiate one using defaults
-                if source.__class__.__name__ not in stacker_names: 
-                    stackersList.append(source)
-                    stacker_names.append(source.__class__.__name__)
+                if stacker.__class__.__name__ not in stacker_names: 
+                    stackersList.append(stacker)
+                    stacker_names.append(stacker.__class__.__name__)
             # Else if data source is just the usual database:
             else:
                 dbcolnames.append(colname)
