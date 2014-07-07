@@ -10,10 +10,8 @@ class StackerRegistry(type):
         super(StackerRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        if not hasattr(cls, 'colregistry'):
-            cls.colregistry = []
-        if cls in cls.registry:
-            warnings.warn('Warning! Redefining stacker %s! (there are >1 stackers with the same name)' %(name))
+        if name in cls.registry:
+            raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(name))
         if name != 'BaseStacker':
             cls.registry[name] = cls
     def stackerClass(cls, name):
@@ -34,6 +32,9 @@ class ColRegistry(object):
         self.colSet = set()
     def addCols(self, colsAdded):
         for col in colsAdded:
+            if col in self.colSet:
+                raise Exception('Attempting to add two columns with the same name (%s) to simData'
+                                %(col))
             self.colSet.add(col)
     def uniqueCols(self):
         return list(self.colSet)

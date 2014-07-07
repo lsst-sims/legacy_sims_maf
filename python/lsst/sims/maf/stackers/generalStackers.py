@@ -7,7 +7,7 @@ class NormAirmassStacker(BaseStacker):
     """Calculate the normalized airmass for each opsim pointing."""
     def __init__(self, airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388):
         
-        self.units = 'airmass/(minimum possible airmass)'
+        self.units = ['airmass/(minimum possible airmass)']
         self.colsAdded = ['normairmass']
         self.colsReq = [airmassCol, decCol]
         
@@ -33,7 +33,7 @@ class ParallaxFactorStacker(BaseStacker):
         self.raCol = raCol
         self.decCol = decCol
         self.dateCol = dateCol
-        self.units = 'arcsec'
+        self.units = ['arcsec', 'arcsec']
         self.colsAdded = ['ra_pi_amp','dec_pi_amp']
         self.colsReq = [raCol,decCol,dateCol]
 
@@ -68,35 +68,4 @@ class ParallaxFactorStacker(BaseStacker):
         simData['ra_pi_amp'] = ra_pi_amp
         simData['dec_pi_amp'] = dec_pi_amp
         return simData
-
-# Add a new dither pattern
-class DecOnlyDitherStacker(BaseStacker):
-    """Dither the position of pointings in dec only.  """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
-                 nightStep=1, nSteps=5, stepSize=0.2):
-        """stepsize in degrees """
-        self.raCol = raCol
-        self.decCol = decCol
-        self.nightCol = nightCol
-        self.nightStep=nightStep
-        self.nSteps = nSteps
-        self.stepSize = stepSize
-        self.units = 'rad'
-        self.colsAdded = ['decOnlyDither']
-        self.colsReq =[raCol, decCol, nightCol]
-
-
-    def run(self, simData):
-        off1 = np.arange(self.nSteps+1)*self.stepSize
-        off2 = off1[::-1][1:]
-        off3 = -1.*off1[1:]
-        off4 = off3[::-1][1:]
-        offsets = np.radians(np.concatenate((off1,off2,off3,off4) ))
-        uoffsets = np.size(offsets)
-        nightIndex = simData[self.nightCol]%uoffsets
-        simData= self._addStackers(simData)
-        simData['decOnlyDither'] = simData[self.decCol]+offsets[nightIndex]
-        
-        return simData
-    
-                             
+                     
