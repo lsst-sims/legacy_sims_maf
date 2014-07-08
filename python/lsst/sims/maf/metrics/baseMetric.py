@@ -18,19 +18,31 @@ class MetricRegistry(type):
         super(MetricRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        if cls in cls.registry:
-            warnings.warn('Redefining metric %s! (there are >1 metrics with the same name)' %(name))
-        if name not in ['BaseMetric', 'SimpleScalarMetric']:
-            cls.registry[name] = cls            
-    def metricClass(cls, name):
-        return cls.registry[name]
-    def listMetrics(cls, docs=False):
-        for metricName in sorted(cls.registry):
-            if not docs:
-                print metricName
-            if docs:
-                print '---- ', metricName, ' ----'
-                print cls.registry[metricName].__doc__
+        modname = inspect.getmodule(cls).__name__ + '.'
+        if modname.startswith('lsst.sims.maf.metrics'):
+            modname = '' 
+        metricname = modname + name
+        if metricname in cls.registry:
+            raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' %(metricname))
+        if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
+            cls.registry[metricname] = cls            
+    def getClass(cls, metricname):
+        return cls.registry[metricname]
+    def listMetrics(cls, doc=False):
+        for metricname in sorted(cls.registry):
+            if not doc:
+                print metricname
+            if doc:
+                print '---- ', metricname, ' ----'
+                print inspect.getdoc(cls.registry[metricname])
+    def help(cls, metricname):
+        print metricname
+        print inspect.getdoc(cls.registry[metricname])
+        args, varargs, kwargs, defaults = inspect.getargspec(cls.registry[metricname].__init__)
+        args_with_defaults = args[-len(defaults):]
+        print ' Metric __init__ keyword args and defaults: '
+        for a, d in zip(args_with_defaults, defaults):
+            print '     ', a, d
             
             
 class ColRegistry(object):

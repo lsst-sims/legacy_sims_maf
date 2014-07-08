@@ -1,38 +1,22 @@
-import os, sys, warnings
+import os, sys, importlib
 import numpy as np
 
-# Example of adding modules:
-#moduleDict = makeDict(['~/myMetrics.py', 'desc/SNmetrics']
-#root.modules = moduleDict
-
-# Example __init__.py file
-#from .SNmetrics import *
-#from .myNewSNmetrics import *
-
-# Example metric configuration:
-#m1 = configureMetric('PercentileMetric', params=['Airmass'], kwargs={'percentile':75})
-#slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1),
-#                         constraints=[''])
 
 def moduleLoader(moduleList):
+    """
+    Load additional modules (beyond standard MAF modules) provided by the user at runtime.
+    If the modules contain metrics, slicers or stackers inheriting from MAF base classes, these
+    will then be available from the driver configuration file identified by 'modulename.classname'.
+    """
     for m in moduleList:
-        mpath, mname = os.path.split(m)
-        mname = mname.replace('.py', '')
-        if len(mpath) > 0:
-            if mpath == '~':
-                mpath = os.getenv('HOME')
-            if mpath not in sys.path:
-                sys.path.insert(0, mpath)
-            os.listdir(mpath)
-        if mname == '~':
-            warnings.warn('Warning! Cannot import modules directly from home directory.')
-            continue
-        __import__(mname)
+        importlib.import_module(m)
 
 
 def optimalBins(datain, binmin=None, binmax=None):
-    """Use Freedman-Diaconis rule to set binsize.
-    Allow user to pass min/max data values to consider."""
+    """
+    Use Freedman-Diaconis rule to set binsize.
+    Allow user to pass min/max data values to consider.
+    """
     # if it's a masked array, only use unmasked values
     if hasattr(datain, 'compressed'):
         data = datain.compressed()
@@ -43,7 +27,8 @@ def optimalBins(datain, binmin=None, binmax=None):
     if binmax is None:
         binmax = data.max()
     condition = ((data >= binmin)  & (data <= binmax))
-    binwidth = 2.*(np.percentile(data[condition],75) - np.percentile(data[condition],25))/np.size(data[condition])**(1./3.)
+    binwidth = (2.*(np.percentile(data[condition], 75) - np.percentile(data[condition], 25))
+                /np.size(data[condition])**(1./3.))
     nbins = (binmax - binmin) / binwidth
     if np.isinf(nbins) or np.isnan(nbins):
         return 1
@@ -54,7 +39,8 @@ def optimalBins(datain, binmin=None, binmax=None):
 def percentileClipping(data, percentile=95.):
     """
     Clip off high and low outliers from a distribution in a numpy array.
-    Returns the max and min values that are inside.
+    Returns the max and min values of the clipped data.
+    Useful for determining plotting ranges.  
     """
     if np.size(data) > 0:
         # Use absolute value to get both high and low outliers.
