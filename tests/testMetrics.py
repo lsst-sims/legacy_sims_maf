@@ -20,26 +20,21 @@ class TestBaseMetric(unittest.TestCase):
         self.assertEqual(testmetric.name, 'Test')    
                         
     def testColRegistry(self):
-        """Test column registry adds to class registry dictionary as expected"""
+        """Test column registry adds to colRegistry as expected"""
         cols = 'onecolumn'
+        colset = set()
+        colset.add(cols)
         testmetric = metrics.BaseMetric(cols)
-        # Class registry should have dictionary with key = metric class name
-        self.assertEqual(testmetric.classRegistry.keys(), ['BaseMetric',])
         # Class registry should have dictionary with values = set of columns for metric class
-        self.assertEqual(testmetric.classRegistry['BaseMetric'], set(['onecolumn']))
+        self.assertEqual(testmetric.colRegistry.uniqueCols(), list(colset))
         cols = ['onecolumn', 'twocolumn']
+        colset.add('twocolumn')
         testmetric = metrics.BaseMetric(cols)
-        self.assertEqual(testmetric.classRegistry['BaseMetric'], set(['onecolumn', 'twocolumn']))
-        # Test with explicit metric name.
-        testmetric = metrics.BaseMetric(cols, metricName='test')
-        self.assertEqual(testmetric.classRegistry.keys(), ['BaseMetric',])
+        self.assertEqual(testmetric.colRegistry.uniqueCols(), list(colset))
         # Test with additional (different) metric
         cols = 'twocolumn'
         testmetric2 = metrics.SimpleScalarMetric(cols)
-        self.assertEqual(testmetric.classRegistry.keys(), ['SimpleScalarMetric', 'BaseMetric'])
-        self.assertEqual(testmetric.classRegistry['SimpleScalarMetric'], set(['twocolumn']))
-        # Test uniqueCols method to retrieve unique data columns from class registry
-        self.assertEqual(testmetric.classRegistry.uniqueCols(), set(['onecolumn', 'twocolumn']))
+        self.assertEqual(testmetric.colRegistry.uniqueCols(), list(colset))
 
     def testMetricDtype(self):
         """Test that base metric data value type set appropriately"""
@@ -92,13 +87,6 @@ class TestBaseMetric(unittest.TestCase):
         self.assertTrue(isinstance(testmetric.plotParams, dict))
         self.assertEqual(set(testmetric.plotParams.keys()), set(['title', 'units']))
         
-    def testValidateData(self):
-        """Test 'validateData' method"""
-        testdata = np.zeros(10, dtype=[('testdata', 'float')])
-        testmetric = metrics.BaseMetric(cols='testdata')
-        self.assertTrue(testmetric.validateData(testdata))
-        testmetric = metrics.BaseMetric(cols='nottestdata')
-        self.assertRaises(ValueError, testmetric.validateData, testdata)
 
 class TestSimpleMetrics(unittest.TestCase):
     def setUp(self):

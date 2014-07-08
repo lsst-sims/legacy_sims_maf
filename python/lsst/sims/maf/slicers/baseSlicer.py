@@ -8,10 +8,40 @@ import matplotlib.pyplot as plt
 import warnings
 from lsst.sims.maf.utils import getDateVersion
 
+class SlicerRegistry(type):
+    """
+    Meta class for slicers, to build a registry of slicer classes.
+    """
+    def __init__(cls, name, bases, dict):
+        super(SlicerRegistry, cls).__init__(name, bases, dict)
+        if not hasattr(cls, 'registry'):
+            cls.registry = {}
+        modname = inspect.getmodule(cls).__name__ + '.'
+        if modname.startswith('lsst.sims.maf.slicers'):
+            modname = '' 
+        slicername = modname + name
+        if slicername in cls.registry:
+            raise Exception('Redefining metric %s! (there are >1 slicers with the same name)' %(slicername))
+        if slicername not in ['BaseSlicer', 'BaseSpatialSlicer']:
+            cls.registry[slicername] = cls            
+    def getClass(cls, slicername):
+        return cls.registry[slicername]
+    def listSlicers(cls, doc=False):
+        for slicername in sorted(cls.registry):
+            if not doc:
+                print slicername
+            if doc:
+                print '---- ', slicername, ' ----'
+                print inspect.getdoc(cls.registry[slicername])
+            
+
+
 class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.
     """
+    __metaclass__ = SlicerRegistry
+    
     def __init__(self, verbose=True, badval=-666, *args, **kwargs):
         """Instantiate the base slicer object."""
         # After init: everything necessary for using slicer for plotting or saving/restoring metric

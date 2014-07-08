@@ -226,7 +226,7 @@ class MafDriver(object):
             stackers = []
             for slicer in matchingSlicers:
                 for m in self.metricList[slicer.index]:
-                    for cn in m.colNameList:
+                    for cn in m.colNameArr:
                         colnames.append(cn)
                 for cn in slicer.columnsNeeded:
                     colnames.append(cn)

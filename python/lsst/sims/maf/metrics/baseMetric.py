@@ -115,7 +115,7 @@ class BaseMetric(object):
         if self.name is None:
             # If none provided, construct our own from the class name and the data columns.
             self.name = self.__class__.__name__.replace('Metric', '', 1) + ' ' + \
-              ' '.join(map(str, self.colNameArr))
+              ', '.join(map(str, self.colNameArr))
         # Set up dictionary of reduce functions (may be empty).
         self.reduceFuncs = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):

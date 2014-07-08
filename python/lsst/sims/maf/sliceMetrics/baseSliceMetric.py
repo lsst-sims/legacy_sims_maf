@@ -180,11 +180,10 @@ class BaseSliceMetric(object):
 
     def validateMetricData(self, simData):
         """Validate that simData has the required data values for the metrics in self.metricObjs."""
-        simCols = self.metricObjs[self.metricNames[0]].classRegistry.uniqueCols()
+        simCols = self.metricObjs[self.metricNames[0]].colRegistry.uniqueCols()
         for c in simCols:
             if c not in simData.dtype.names:
-                raise Exception('Column', c,'not in simData: needed by the metrics.\n')#,
-                                #metricList[0].classRegistry)
+                raise Exception('Column', c,'not in simData: needed by the metrics.\n')
         return True
 
     def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):
