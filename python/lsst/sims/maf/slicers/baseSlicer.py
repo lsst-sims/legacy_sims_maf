@@ -26,7 +26,7 @@ class SlicerRegistry(type):
             cls.registry[slicername] = cls            
     def getClass(cls, slicername):
         return cls.registry[slicername]
-    def listSlicers(cls, doc=False):
+    def list(cls, doc=False):
         for slicername in sorted(cls.registry):
             if not doc:
                 print slicername

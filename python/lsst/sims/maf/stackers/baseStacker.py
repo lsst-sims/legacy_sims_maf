@@ -1,4 +1,5 @@
 import inspect
+import warnings
 import numpy as np
 import numpy.lib.recfunctions as rfn
 
@@ -14,9 +15,9 @@ class StackerRegistry(type):
             raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(name))
         if name != 'BaseStacker':
             cls.registry[name] = cls
-    def stackerClass(cls, name):
+    def getClass(cls, name):
         return cls.registry[name]
-    def listStackers(cls, doc=False):
+    def list(cls, doc=False):
         for stackerName in sorted(cls.registry):
             if not doc:
                 print stackerName
@@ -36,8 +37,7 @@ class ColRegistry(object):
     def addCols(self, colsAdded):
         for col in colsAdded:
             if col in self.colSet:
-                raise Exception('Attempting to add two columns with the same name (%s) to simData'
-                                %(col))
+                warnings.warn('Attempting to add two columns with the same name (%s) to simData' %(col))
             self.colSet.add(col)
     def uniqueCols(self):
         return list(self.colSet)

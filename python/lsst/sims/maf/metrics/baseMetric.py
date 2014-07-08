@@ -28,7 +28,7 @@ class MetricRegistry(type):
             cls.registry[metricname] = cls            
     def getClass(cls, metricname):
         return cls.registry[metricname]
-    def listMetrics(cls, doc=False):
+    def list(cls, doc=False):
         for metricname in sorted(cls.registry):
             if not doc:
                 print metricname

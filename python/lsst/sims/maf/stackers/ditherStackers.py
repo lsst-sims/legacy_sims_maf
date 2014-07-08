@@ -11,7 +11,8 @@ def wrapRA(ra):
 def wrapDec(dec):
     """
     Wrap dec positions to be between -pi/2 and pi/2.
-    (reflects Dec values around +/- 90). """
+    (reflects Dec values around +/- 90).
+    """
     dec = np.where(dec < -np.pi/2.0, -1.*(np.pi + dec), dec)
     dec = np.where(dec > np.pi/2.0, (np.pi - dec), dec)
     return dec
@@ -31,6 +32,7 @@ class RandomDitherStacker(BaseStacker):
         self.colsAdded = ['randomRADither', 'randomDecDither']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol]
+        self.colRegistry.addCols(self.colsAdded)        
 
     def run(self, simData):
         # Generate random numbers for dither, using defined seed value if desired.
@@ -67,6 +69,7 @@ class DecOnlyDitherStacker(BaseStacker):
         self.units = ['rad']
         self.colsAdded = ['decOnlyDither']
         self.colsReq = [raCol, decCol, nightCol]
+        self.colRegistry.addCols(self.colsAdded)        
 
     def run(self, simData):
         off1 = np.arange(self.nSteps+1)*self.stepSize

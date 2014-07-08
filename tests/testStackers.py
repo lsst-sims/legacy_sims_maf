@@ -1,8 +1,10 @@
 import numpy as np
+import warnings
 import lsst.sims.maf.stackers as stackers
 import unittest
 
 class TestStackerClasses(unittest.TestCase):
+
 
     def testNormAirmass(self):
         """ test the normalized airmass stacker"""

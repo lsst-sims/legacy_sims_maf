@@ -2,7 +2,7 @@ import numpy as np
 import healpy as hp
 import unittest
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.utils as utils
+import lsst.sims.maf.stackers as stackers
 
 class TestMoreMetrics(unittest.TestCase):
 
@@ -106,16 +106,18 @@ class TestMoreMetrics(unittest.TestCase):
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
         slicePoint = {'sid':0}
+        data['expMJD'] = np.arange(700)+56762
+        data['finSeeing'] = 0.7
+        data['filter'][0:100] = 'r'
+        data['filter'][100:200] = 'u'
+        data['filter'][200:] = 'g'
+        data['fivesigma_modified'] = 24.
+        stacker = stackers.ParallaxFactorStacker()
+        data = stacker.run(data)
         normFlags = [False, True]
         for flag in normFlags:
-            data['expMJD'] = np.arange(700)+56762
             data['finSeeing'] = 0.7
-            data['filter'][0:100] = 'r'
-            data['filter'][100:200] = 'u'
-            data['filter'][200:] = 'g'
-            data['fivesigma_modified'] = 24.
-            stacker = utils.ParallaxFactor()
-            data = stacker.run(data)
+            data['fivesigma_modified'] = 24.                        
             baseline = metrics.ParallaxMetric(normalize=flag).run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
             worse1 = metrics.ParallaxMetric(normalize=flag).run(data, slicePoint)
@@ -145,16 +147,18 @@ class TestMoreMetrics(unittest.TestCase):
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
         slicePoint = [0]
+        stacker = stackers.ParallaxFactorStacker()
         normFlags = [False, True]
+        data['expMJD'] = np.arange(700)+56762
+        data['finSeeing'] = 0.7
+        data['filter'][0:100] = 'r'
+        data['filter'][100:200] = 'u'
+        data['filter'][200:] = 'g'
+        data['fivesigma_modified'] = 24.
+        data = stacker.run(data)
         for flag in normFlags:
-            data['expMJD'] = np.arange(700)+56762
             data['finSeeing'] = 0.7
-            data['filter'][0:100] = 'r'
-            data['filter'][100:200] = 'u'
-            data['filter'][200:] = 'g'
-            data['fivesigma_modified'] = 24.
-            stacker = utils.ParallaxFactor()
-            data = stacker.run(data)
+            data['fivesigma_modified'] = 24
             baseline = metrics.ProperMotionMetric(normalize=flag).run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
             worse1 = metrics.ProperMotionMetric(normalize=flag).run(data, slicePoint)
