@@ -179,10 +179,10 @@ class ComparisonSliceMetric(object):
         return plotTitle
     
     def plotHistograms(self, dictNums, metricNames, 
-                        bins=100, histMin=None,histMax=None,
+                        bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
                         title=None, xlabel=None,color=None, labels=None,
                         legendloc='upper left', bnamelen=4, alpha=1.0,
-                        savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
+                        savefig=False, outDir=None, outfileRoot=None, ylabel=None, plotkwargs=None):
         """
         Create a plot containing the histogram visualization from all possible metrics in dictNum +
           metricNames.
@@ -231,20 +231,29 @@ class ComparisonSliceMetric(object):
             if hasattr(self.slicemetrics[d].slicer, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
                               'alpha':alpha, 'label':label, 'addLegend':addLegend,'legendloc':legendloc,
-                              'color':color}
+                              'color':color, 'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax, 
+                              'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
-                      plotParams[key] = plotkwargs[i][key] 
+                      plotParams[key] = plotkwargs[i][key]
+                pp = {}
+                pp.update((k, v) for k, v in plotParams.iteritems() if v is not None)
+                plotParams = pp
                 fignum = self.slicemetrics[d].slicer.plotBinnedData(self.slicemetrics[d].metricValues[m],
                                                                  fignum=fignum, **plotParams)
             # Plot data using 'plotHistogram' if that method available (any spatial slicer)
             if hasattr(self.slicemetrics[d].slicer, 'plotHistogram'):
-                plotParams = {'xlabel':xlabel, 'histMin':histMin, 'histMax':histMax, 
+                plotParams = {'xlabel':xlabel, 
                               'bins':bins, 'title':title, 'label':label, 
-                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color}
+                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color, 
+                              'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax, 
+                              'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key]
+                pp = {}
+                pp.update((k, v) for k, v in plotParams.iteritems() if v is not None)
+                plotParams = pp
                 fignum = self.slicemetrics[d].slicer.plotHistogram(self.slicemetrics[d].metricValues[m],
                                                                  fignum=fignum, **plotParams)
         if savefig:

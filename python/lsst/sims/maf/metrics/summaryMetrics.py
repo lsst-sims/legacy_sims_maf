@@ -15,7 +15,7 @@ class fOArea(BaseMetric):
         self.nside = nside
         self.norm = norm
 
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
         scale = hp.nside2pixarea(self.nside, degrees=True)
@@ -40,7 +40,7 @@ class fONv(BaseMetric):
         self.nside = nside
         self.norm = norm
 
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
         scale = hp.nside2pixarea(self.nside, degrees=True)
@@ -73,7 +73,7 @@ class TableFractionMetric(SimpleScalarMetric):
         12        100 < P
         Note the 1st and last elements do NOT obey the numpy histogram conventions."""
 
-    def run(self, dataSlice, *args):    
+    def run(self, dataSlice, slicePoint):    
         # Use int step sizes to try and avoid floating point round-off errors.
         bins = np.arange(0,100/self.nbins+3,1)/float(self.nbins) 
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
@@ -97,7 +97,7 @@ class SSTARTableFractionMetric(SimpleScalarMetric):
     9         90 <= P < 100
     10        100 <= P
     Note the 1st and last elements do NOT obey the numpy histogram conventions."""
-    def run(self, dataSlice, *args):    
+    def run(self, dataSlice, slicePoint):    
         # Use int step sizes to try and avoid floating point round-off errors.
         bins = np.arange(0,12,1)/10. 
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
@@ -110,7 +110,7 @@ class SSTARTableFractionMetric(SimpleScalarMetric):
 
 class IdentityMetric(SimpleScalarMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint):
         return dataSlice[self.colname]
 
 
@@ -119,5 +119,5 @@ class NormalizeMetric(SimpleScalarMetric):
     def __init__(self, colname, normVal=1):
         super(NormalizeMetric, self).__init__(colname)
         self.normVal = normVal
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint):
         return dataSlice[self.colname]/self.normVal
