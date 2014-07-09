@@ -78,8 +78,7 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, cols, metricName=None, units=None, plotParams=None, metricDtype='object',
-                 *args, **kwargs):
+    def __init__(self, cols, metricName=None, units=None, plotParams=None, metricDtype='object', **kwargs):
         """Instantiate metric.
                  
         After inheriting from this base metric :

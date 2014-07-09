@@ -9,10 +9,10 @@ class SimpleScalarMetric(BaseMetric):
     """This is the base class for the simplist metrics: ones that calculate one
        number on one column of data and return a scalar. 
     """
-    def __init__(self, colname, *args, **kwargs):
+    def __init__(self, colname, **kwargs):
         """Intantiate simple metric."""
         # Use base class init to register columns.
-        super(SimpleScalarMetric, self).__init__(colname, metricDtype='float', *args, **kwargs)
+        super(SimpleScalarMetric, self).__init__(colname, metricDtype='float', **kwargs)
         # Check incoming columns have only one value.
         # (colNameArr is numpy array version of colname, set by BaseMetric).
         if len(self.colNameArr) > 1:

@@ -38,7 +38,10 @@ class MafDriver(object):
         self.verbose = self.config.verbose
         self.figformat = self.config.figformat
         self.dpi = self.config.dpi
-            
+
+        # Import any additional modules specified by the user.
+        utils.moduleLoader(self.config.modules)
+
         # Set up database connection.
         self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
 
@@ -93,7 +96,7 @@ class MafDriver(object):
                 if (len(params) == 1):
                     info = utils.ColInfo()
                     plotDict['_units'] = info.getUnits(params[0])
-                temp_metric = getattr(metrics,metric.name)(*params, **kwargs)
+                temp_metric = metrics.BaseMetric.registry[metric.name](*params, **kwargs)
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
                     temp_metric.summaryStats.append(getattr(metrics,key)('metricdata',**readMixConfig(summaryStats[key])))
