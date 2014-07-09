@@ -18,7 +18,7 @@ class FftMetric(BaseMetric):
         self.nCoeffs = nCoeffs
         return
 
-    def run(self, dataSlice):
+    def run(self, dataSlice, slicePoint=None):
         fft = fftpack.rfft(dataSlice[self.times])
         return fft[0:self.nCoeffs]
 

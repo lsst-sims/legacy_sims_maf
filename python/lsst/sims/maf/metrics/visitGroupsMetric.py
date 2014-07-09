@@ -18,7 +18,8 @@ class VisitGroupsMetric(BaseMetric):
         'nightsCol' = column with the night of the visit (default night),
         'deltaTmin' = minimum time of window: units are days (default 15 min),
         'deltaTmax' = maximum time of window: units are days (default 90 min),
-        'minNVisits' = the minimum number of visits within a night (with spacing between deltaTmin/max from any other visit) required,
+        'minNVisits' = the minimum number of visits within a night (with spacing between deltaTmin/max
+                       from any other visit) required,
         'window' = the number of nights to consider within a window (for reduce methods),
         'minNNights' = the minimum required number of nights within window to make a full 'group'.
         """
@@ -32,7 +33,7 @@ class VisitGroupsMetric(BaseMetric):
         self.minNNights = minNNights
         super(VisitGroupsMetric, self).__init__([self.times, self.nights], **kwargs)
 
-    def run(self, dataSlice):
+    def run(self, dataSlice, slicePoint=None):
         """
         Return the number of visits within a night (within delta tmin/tmax of another visit),
          and the nights with visits > minNVisits.

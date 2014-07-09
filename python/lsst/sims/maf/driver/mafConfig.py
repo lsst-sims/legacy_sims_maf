@@ -8,7 +8,7 @@ class MixConfig(pexConfig.Config):
     plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
     plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
-  
+    
 class MetricConfig(pexConfig.Config):
     """Config object for MAF metrics """
     name = pexConfig.Field("", dtype=str, default='')
@@ -28,18 +28,18 @@ class ColStackConfig(pexConfig.Config):
     kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
     params = pexConfig.ListField("", dtype=str, default=[])
     
-class BinnerConfig(pexConfig.Config):
-    """Config object for MAF binners """
+class SlicerConfig(pexConfig.Config):
+    """Config object for MAF slicers """
     name = pexConfig.Field("", dtype=str, default='') 
 
-    kwargs = pexConfig.ConfigField("kwargs for binner", dtype=MixConfig, default=None)
+    kwargs = pexConfig.ConfigField("kwargs for slicer", dtype=MixConfig, default=None)
 
     params_str =  pexConfig.ListField("", dtype=str, default=[]) 
     params_float =  pexConfig.ListField("", dtype=float, default=[]) 
     params_int =  pexConfig.ListField("", dtype=int, default=[]) 
     params_bool =  pexConfig.ListField("", dtype=bool, default=[])
 
-    setupKwargs = pexConfig.ConfigField("setup kwargs for binner", dtype=MixConfig, default=None)
+    setupKwargs = pexConfig.ConfigField("setup kwargs for slicer", dtype=MixConfig, default=None)
     
     setupParams_str = pexConfig.ListField("", dtype=str, default=[])
     setupParams_float = pexConfig.ListField("", dtype=float, default=[])
@@ -53,10 +53,24 @@ class BinnerConfig(pexConfig.Config):
     metadata = pexConfig.Field("", dtype=str, default='')
 
 class MafConfig(pexConfig.Config):
-    """Using pexConfig to set MAF configuration parameters"""
+    """Using pexConfig to set MAF configuration parameters
+    modules: Additional modules to load into MAF (for new metrics, slicers and stackers)
+    outputDir:  Location where all output files will be written
+    figformat:  output figure format (pdf and png are popular)
+    dpi:  figure dpi
+    opsimName:  string that will be used for output filenames and plot titles
+    slicers:  pexConfig ConfigDictField with slicer configs
+    comment:  string added to the output
+    dbAddress:  slqAlchamey database address
+    verbose:  print out timing results
+    getConfig:  Copy Opsim configuration settings from the database
+    """
+    modules = pexConfig.ListField(doc="Optional additional modules to load into MAF", dtype=str, default=[])
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
+    figformat = pexConfig.Field("Figure types (png, pdf are popular)", str, 'pdf')
+    dpi = pexConfig.Field("Figure dpi", int, 600)
     opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
-    binners = pexConfig.ConfigDictField(doc="dict of index: binner config", keytype=int, itemtype=BinnerConfig, default={})
+    slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int, itemtype=SlicerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='runName')
     dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
     verbose = pexConfig.Field("", dtype=bool, default=False)
@@ -98,57 +112,58 @@ def makeDict(*args):
     """
     return dict((ind, config) for ind, config in enumerate(args))
 
-def configureBinner(name, params=[], kwargs={}, setupParams=[], setupKwargs={},
+def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={},
                     metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
     """
     Helper function to generate a Slicer pex config object
     """
-    binner = BinnerConfig()
-    binner.name = name
-    binner.metadata=metadata
-    if metricDict:  binner.metricDict=metricDict
-    binner.constraints=constraints
-    if stackCols: binner.stackCols = stackCols
-    if plotConfigs:  binner.plotConfigs = plotConfigs
-    binner.params_str=[]
-    binner.params_float=[]
-    binner.params_int = []
-    binner.params_bool=[]
+    slicer = SlicerConfig()
+    slicer.name = name
+    slicer.metadata=metadata
+    if metricDict:  slicer.metricDict=metricDict
+    slicer.constraints=constraints
+    if stackCols: slicer.stackCols = stackCols
+    if plotConfigs:  slicer.plotConfigs = plotConfigs
+    slicer.params_str=[]
+    slicer.params_float=[]
+    slicer.params_int = []
+    slicer.params_bool=[]
+
     for p in params:
         if type(p) is str:
-            binner.params_str.append(p)
+            slicer.params_str.append(p)
         elif type(p) is float:
-            binner.params_float.append(p)
+            slicer.params_float.append(p)
         elif type(p) is int:
-            binner.params_int.append(p)
+            slicer.params_int.append(p)
         elif type(p) is bool:
-            binner.params_bool.append(p)
+            slicer.params_bool.append(p)
         else:
             raise Exception('Unsupported parameter data type')
 
-    binner.kwargs = makeMixConfig(kwargs)
+    slicer.kwargs = makeMixConfig(kwargs)
 
-    binner.setupParams_str=[]
-    binner.setupParams_float=[]
-    binner.setupParams_int = []
-    binner.setupParams_bool=[]
+    slicer.setupParams_str=[]
+    slicer.setupParams_float=[]
+    slicer.setupParams_int = []
+    slicer.setupParams_bool=[]
 
     for p in setupParams:
         if type(p) is str:
-            binner.setupParams_str.append(p)
+            slicer.setupParams_str.append(p)
         elif type(p) is float:
-            binner.setupParams_float.append(p) 
+            slicer.setupParams_float.append(p) 
         elif type(p) is int:
-            binner.setupParams_int.append(p) 
+            slicer.setupParams_int.append(p) 
         elif type(p) is bool:
-            binner.setupParams_bool.append(p) 
+            slicer.setupParams_bool.append(p) 
         else:
             raise Exception('Unsupported parameter data type')
-    binner.setupKwargs = makeMixConfig(setupKwargs)
+    slicer.setupKwargs = makeMixConfig(setupKwargs)
 
-    return binner
+    return slicer
 
-def readBinnerConfig(config):
+def readSlicerConfig(config):
     """Read in a Slicer pex config object """
     name = config.name
     params = []

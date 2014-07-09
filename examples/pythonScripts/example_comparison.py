@@ -1,20 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.binners as binners
-import lsst.sims.maf.binMetrics as binMetrics
-import lsst.sims.maf.utils.db as db
+import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.sliceMetrics as sliceMetrics
+import lsst.sims.maf.db as db
 import glob
 
 
-cbm = binMetrics.ComparisonBinMetric(verbose=True)
+cbm = sliceMetrics.ComparisonSliceMetric(verbose=True)
 dictnums = []
 dictnames = []
 
-# Generate some metric data from two binMetrics (dithered & nondithered)
+# Generate some metric data from two sliceMetrics (dithered & nondithered)
 #
-runBinMetrics = False
-if runBinMetrics:
+runSliceMetrics = False
+if runSliceMetrics:
     opsimrun = 'opsimblitz1_1131'
     sqlitepath = '../../tests/opsimblitz1_1131_sqlite.db'
     dbAddress = 'sqlite:///' + sqlitepath
@@ -28,8 +28,8 @@ if runBinMetrics:
                                                     'plotMin':0, 'plotMax':300, 'cbarFormat': '%d'}))
     metricList.append(metrics.Coaddm5Metric('fivesigma_modified', metricName='Coadd_m5',
                                             plotParams={'title':'Coadded m5'}))
-    bb1 = binners.HealpixBinner(nside=16, spatialkey1='fieldRA', spatialkey2='fieldDec')
-    bb2 = binners.HealpixBinner(nside=16, spatialkey1='hexdithra', spatialkey2='hexdithdec')
+    bb1 = slicers.HealpixSlicer(nside=16, spatialkey1='fieldRA', spatialkey2='fieldDec')
+    bb2 = slicers.HealpixSlicer(nside=16, spatialkey1='hexdithra', spatialkey2='hexdithdec')
     
     datacolnames = list(metricList[0].classRegistry.uniqueCols())
     datacolnames += bb1.columnsNeeded
@@ -39,18 +39,18 @@ if runBinMetrics:
     print datacolnames
     simdata = opsimdb.fetchMetricData(datacolnames, sqlconstraint)
     
-    print 'setting up binners'
-    bb1.setupBinner(simdata)
-    bb2.setupBinner(simdata)
+    print 'setting up slicers'
+    bb1.setupSlicer(simdata)
+    bb2.setupSlicer(simdata)
     
-    bbm1 = binMetrics.BaseBinMetric()
-    bbm1.setBinner(bb1)
+    bbm1 = sliceMetrics.BaseSliceMetric()
+    bbm1.setSlicer(bb1)
     bbm1.setMetrics(metricList)
-    bbm1.runBins(simdata, simDataName=opsimrun, sqlconstraint=sqlconstraint, metadata='Nondithered')
-    bbm2 = binMetrics.BaseBinMetric()
-    bbm2.setBinner(bb2)
+    bbm1.runSlices(simdata, simDataName=opsimrun, sqlconstraint=sqlconstraint, metadata='Nondithered')
+    bbm2 = sliceMetrics.BaseSliceMetric()
+    bbm2.setSlicer(bb2)
     bbm2.setMetrics(metricList)
-    bbm2.runBins(simdata, simDataName=opsimrun, sqlconstraint=sqlconstraint, metadata='Dithered')
+    bbm2.runSlices(simdata, simDataName=opsimrun, sqlconstraint=sqlconstraint, metadata='Dithered')
 
     dnum = cbm.setMetricData(bbm1, nametag='Nondithered')
     dictnums.append(dnum)
@@ -61,8 +61,8 @@ if runBinMetrics:
     dictnames.append('Dithered')
 
 # Read some metric data in from files.
-readBinMetrics = True
-if readBinMetrics:
+readSliceMetrics = True
+if readSliceMetrics:
     filenames = glob.glob('*.npz')
     dictnums = []
     filelist = []
@@ -91,19 +91,19 @@ print 'all dicts: ', cbm.findDictNums()
 print 'dicts with simname', uniqueSimDataNames[0], '=', cbm.findDictNums(simDataName = uniqueSimDataNames[0])
 print 'dicts with metadata', uniqueMetadata[0], '=',  cbm.findDictNums(metadata = uniqueMetadata[0])
 print 'dicts with metric', uniqueMetrics[0], '=', cbm.findDictNums(metricNames = uniqueMetrics[0])
-print 'dicts with oneD binner =', cbm.findDictNums(binnerName = 'OneDBinner')
+print 'dicts with oneD slicer =', cbm.findDictNums(slicerName = 'OneDSlicer')
 
 
 print ''
 
 print 'oneD comparisons'
-# Find the dict nums with oneD binners
-oneDDicts = cbm.findDictNums(binnerName='OneDBinner')
+# Find the dict nums with oneD slicers
+oneDDicts = cbm.findDictNums(slicerName='OneDSlicer')
 # Find the metric names associated with those oneD binmetrics 
 oneDmetrics = cbm.uniqueMetrics(dictNums=oneDDicts)
 # Plot the same metrics on the same plot
 for mname in oneDmetrics:
-    dicts = cbm.findDictNums(metricNames=mname, binnerName='OneDBinner')
+    dicts = cbm.findDictNums(metricNames=mname, slicerName='OneDSlicer')
     metricnames = [mname for d in dicts]
     cbm.plotHistograms(dicts, metricnames)
 

@@ -1,6 +1,6 @@
 import inspect
 import numpy as np
-import addCols
+import lsst.sims.maf.stackers as stackers 
 
 class ColInfo(object):
     def __init__(self):
@@ -21,7 +21,7 @@ class ColInfo(object):
                         'finSeeing': 'arcsec', 
                         'seeing': 'arcsec',
                         'airmass': 'airmass',
-                        'night': 'night',
+                        'night': 'days',
                         'fieldRA': 'rad',
                         'fieldDec': 'rad', 
                         'hexdithra': 'rad', 
@@ -42,13 +42,11 @@ class ColInfo(object):
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}
-        stackers = inspect.getmembers(addCols, inspect.isclass)
-        stackers = [m[0] for m in stackers if m[1].__module__ == 'lsst.sims.maf.utils.addCols']
-        for stacker in stackers:
-            stack = getattr(addCols, stacker)()
-            for col in stack.colsAdded:
-                self.unitDict[col] = stack.units
-                self.sourceDict[col] = stacker        
+        for stackerClass in stackers.BaseStacker.registry.itervalues():
+            stacker = stackerClass()
+            for col, units in zip(stacker.colsAdded, stacker.units):
+                self.sourceDict[col] = stackerClass
+                self.unitDict[col] = units
         # Note that a 'unique' list of methods should be built from the resulting returned
         #  methods, at whatever point the derived data columns will be calculated. (i.e. in the driver)
 
