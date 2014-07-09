@@ -82,7 +82,8 @@ slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1,m2,m3,m4),
 
 
 # Run some Cadence metrics
-m1 = configureMetric('SupernovaMetric', kwargs={'m5col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.}, plotDict={'percentileClip':95.})
+m1 = configureMetric('SupernovaMetric', kwargs={'m5col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.},
+                     plotDict={'percentileClip':95.})
 m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
 m3 = configureMetric('ParallaxMetric')
 m4 = configureMetric('ProperMotionMetric', plotDict={'percentileClip':95})
