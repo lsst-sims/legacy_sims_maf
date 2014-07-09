@@ -7,8 +7,7 @@ def nearestVal(A, val):
  
 
 class HourglassMetric(BaseMetric):
-    """Plot the filters used as a function of time """
-    
+    """Plot the filters used as a function of time. Must be used with the Hourglass Slicer."""
     def __init__(self, lat=None, lon=None,
                  elev=None, plotParams=None, telescope='LSST'):
 
@@ -26,7 +25,7 @@ class HourglassMetric(BaseMetric):
         if lon != None:  self.telescope.lon = lon
         if elev != None: self.telescope.elev = elev
    
-    def run(self, dataSlice, slicePoint):
+    def run(self, dataSlice, slicePoint=None):
 
         import ephem
         dataSlice.sort(order=self.mjdcol)

@@ -22,7 +22,7 @@ class ComparisonSliceMetric(object):
         self.figformat = figformat
         self.dpi = dpi
         self.verbose = verbose
-        #  The comparison bin metric stores data in dictionaries keyed by (the same) number:
+        #  The comparison slice metric stores data in dictionaries keyed by (the same) number:
         #     -- the baseSliceMetrics (which then hold metric data and the slicer),
         #     -- the filename a particular baseSliceMetric came from (if read from file)
         self.slicemetrics = {}

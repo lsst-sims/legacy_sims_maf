@@ -34,7 +34,7 @@ class BaseSpatialSlicer(BaseSlicer):
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
         the simData KDtree 
-        and binpoint RA/Dec values will be produced."""
+        and slicePoint RA/Dec values will be produced."""
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
@@ -58,9 +58,9 @@ class BaseSpatialSlicer(BaseSlicer):
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            binx, biny, binz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+            sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
-            indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
+            indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
             return {'idxs':indices,
                     'slicePoint':{'sid':self.slicePoints['sid'][islice],
                                   'ra':self.slicePoints['ra'][islice],
@@ -98,7 +98,7 @@ class BaseSpatialSlicer(BaseSlicer):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     
-    def sliceSimDataMultiBinpoint(self, islices):
+    def sliceSimDataMultiSlicepoint(self, islices):
         """Return indexes for opsim data at multiple slicepoints (rarely used). """
         binx, biny, binz=self._treexyz(self.slicePoints['ra'][islices], self.slicePoints['dec'][islices])
         indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)

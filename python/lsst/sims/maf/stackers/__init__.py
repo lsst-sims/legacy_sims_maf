@@ -1,3 +1,3 @@
 from .baseStacker import *
 from .generalStackers import *
-from ditherStackers import *
+from .ditherStackers import *

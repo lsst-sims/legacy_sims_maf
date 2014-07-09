@@ -70,23 +70,8 @@ class ColRegistry(object):
             else:
                 if col not in self.stackerDict:
                     self.stackerDict[col] = source
-                    #tmpStacker = getattr(addCols, stacker)()
-                    #for c in tmpStacker.colsReq:
-                    #    self.dbSet.add(c)            
-    def uniqueCols(self):
-        """
-        Returns a list of the unique columns used for all metrics.
-        """
-        return list(self.colSet)    
-    def dbCols(self):
-        """
-        Returns the list of unique columns needed from the database (including columns required by default stackers).
-        """
-        return list(self.dbSet)
-    def stackerCols(self):
-        return self.stackerDict
             
-                       
+
 class BaseMetric(object):
     """Base class for the metrics."""
     __metaclass__ = MetricRegistry
@@ -139,5 +124,5 @@ class BaseMetric(object):
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the binMetric, passed to the binner plotting utilities.
 
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')

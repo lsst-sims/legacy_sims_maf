@@ -10,7 +10,6 @@ class NormAirmassStacker(BaseStacker):
         self.units = ['airmass/(minimum possible airmass)']
         self.colsAdded = ['normairmass']
         self.colsReq = [airmassCol, decCol]
-        self.colRegistry.addCols(self.colsAdded)        
         self.airmassCol = airmassCol
         self.decCol = decCol
         self.telescope_lat = telescope_lat
@@ -36,7 +35,6 @@ class ParallaxFactorStacker(BaseStacker):
         self.units = ['arcsec', 'arcsec']
         self.colsAdded = ['ra_pi_amp', 'dec_pi_amp']
         self.colsReq = [raCol, decCol, dateCol]
-        self.colRegistry.addCols(self.colsAdded)        
 
     def _gnomonic_project_toxy(self, RA1, Dec1, RAcen, Deccen):
         """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccenp.

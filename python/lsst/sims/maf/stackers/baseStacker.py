@@ -28,24 +28,10 @@ class StackerRegistry(type):
                 print ' Columns added to SimData: ', ','.join(stacker.colsAdded)
                 print ' Default columns required: ', ','.join(stacker.colsReq)
                 
-class ColRegistry(object):
-    """
-    Class to keep a registry of columns that may be added to simData by instantiated Stackers.
-    """
-    def __init__(self):
-        self.colSet = set()
-    def addCols(self, colsAdded):
-        for col in colsAdded:
-            if col in self.colSet:
-                warnings.warn('Attempting to add two columns with the same name (%s) to simData' %(col))
-            self.colSet.add(col)
-    def uniqueCols(self):
-        return list(self.colSet)
                         
 class BaseStacker(object):
     """Base MAF Stacker: add columns generated at run-time to the simdata array."""
     __metaclass__ = StackerRegistry
-    colRegistry = ColRegistry()
     
     def __init__(self):
         """
@@ -59,9 +45,6 @@ class BaseStacker(object):
         self.colsReq = [None]
         # Optional: providea list of units for the columns defined in colsAdded.
         self.units = [None]
-        # Keep this (it adds the columns from colsAdded into a registry, to check if there will be
-        #  any collisions between stackers adding columns with the same name).
-        self.colRegistry.addCols(self.colsAdded)        
 
     def _addStackers(self, simData):
         """

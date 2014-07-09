@@ -23,7 +23,7 @@ class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
 
     def __init__(self, configvalues):
-        """Load up the configuration and set the bin and metric lists """
+        """Load up the configuration and set the slicer and metric lists """
         # Configvalues passed from runDriver.py
         self.config = configvalues
 
@@ -61,10 +61,11 @@ class MafDriver(object):
             dt, time_prev = dtime(time_prev)
             print 'fetched PropID info in %.3g s'%dt
         # Construct the slicers and metric objects
-        self.binList = []
+        self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, params, kwargs, setupParams, setupKwargs, metricDict, constraints, stackCols, plotDict, metadata = readSlicerConfig(slicer)
+            name, params, kwargs, setupParams, setupKwargs, metricDict, \
+                constraints, stackCols, plotDict, metadata = readSlicerConfig(slicer)
             temp_slicer = getattr(slicers,slicer.name)(*params, **kwargs )
             temp_slicer.setupParams = setupParams
             temp_slicer.setupKwargs = setupKwargs
@@ -82,7 +83,7 @@ class MafDriver(object):
                 name, params, kwargs = config2dict(stackCols[key])
                 stackersList.append(getattr(stackers, name)(*params, **kwargs))
             temp_slicer.stackers = stackersList
-            self.binList.append(temp_slicer)
+            self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
                 name,params,kwargs,plotDict,summaryStats,histMerge = readMetricConfig(metric)
@@ -105,13 +106,13 @@ class MafDriver(object):
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
         self.constraints = []
-        for b in self.binList:
+        for b in self.slicerList:
             for c in b.constraints:
                 self.constraints.append(c)
         self.constraints = list(set(self.constraints))
         # Check that all filenames will be unique
         filenames=[]
-        for i,slicer in enumerate(self.binList):
+        for i,slicer in enumerate(self.slicerList):
             for constraint in slicer.constraints:
                 for metric in self.metricList[i]:
                     # Approximate what output filename will be 
@@ -207,18 +208,13 @@ class MafDriver(object):
         allOutfiles = []
         allOutDict = {}
         
-        # Start up summary stats running commentary.
-        summary_stats=[]
-        # Add header to summary stats.
-        summary_stats.append('##opsimname,slicer_name,sql_where,metric_name,summary_stat_name,value')
-
         # Loop through all sqlconstraints, and run slicers + metrics that match the same sql constraints
         #   (so we only have to do one query of database per sql constraint).
         for sqlconstraint in self.constraints:
             # Find which slicers have an exactly matching constraint
             matchingSlicers=[]
             slicerNames=[]
-            for b in self.binList:
+            for b in self.slicerList:
                 if sqlconstraint in b.constraints:
                     matchingSlicers.append(b)
                     slicerNames.append(b.slicerName)
@@ -253,11 +249,11 @@ class MafDriver(object):
                 if self.verbose:
                     print '  Found %i matching visits in %.3g s'%(len(self.data),dt)
                 else:
-                    print '  Found %i matching visits'%len(self.data)
+                    print '  Found %i matching visits' %(len(self.data))
                 # Special data requirements for opsim slicer.
                 if 'OpsimFieldSlicer' in slicerNames:
                     self.getFieldData(matchingSlicers[slicerNames.index('OpsimFieldSlicer')], sqlconstraint)
-                # Setup each slicer, and run through the binpoints (with metrics) in baseSliceMetric
+                # Setup each slicer, and run through the slicepoints (with metrics) in baseSliceMetric
                 if self.verbose:
                     time_prev = time.time()
                 for slicer in matchingSlicers:
@@ -276,7 +272,7 @@ class MafDriver(object):
                     # Make a more useful metadata comment.
                     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
                     metadata = metadata.replace('"', '').replace('  ',' ') + slicer.metadata
-                    # Run through binpoints in slicer, and calculate metric values.
+                    # Run through slicepoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
                                metadata=metadata, sqlconstraint=sqlconstraint)
                     if self.verbose:
@@ -309,7 +305,6 @@ class MafDriver(object):
                                            summary = np.array(np.asscalar(summary))
                                         statstring = self.config.opsimName + ',' + slicer.slicerName + ',' + sqlconstraint 
                                         statstring += ','  + mm + ',' + stat.name + ',' + np.array_str(summary)
-                                        summary_stats.append(statstring)
                                 # Else it's a simple metric value.
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, stat)
@@ -317,7 +312,6 @@ class MafDriver(object):
                                        summary = np.array(np.asscalar(summary))
                                     statstring = self.config.opsimName + ',' + slicer.slicerName + ',' + sqlconstraint 
                                     statstring += ',' + metric.name + ',' + stat.name + ',' + np.array_str(summary)
-                                    summary_stats.append(statstring)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    Computed summarystats in %.3g s'%dt
@@ -350,11 +344,6 @@ class MafDriver(object):
                 #if self.verbose:
                 #    dt,time_prev = dtime(time_prev)
                 #    print '    Computed made plots in %.3g s'%dt
-        # Save summary statistics to file.
-        f = open(self.config.outputDir+'/summaryStats.dat','w')
-        for stat in summary_stats:
-            print >>f, stat
-        f.close()
         
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged

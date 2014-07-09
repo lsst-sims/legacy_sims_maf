@@ -43,9 +43,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                             'radius':radius}
         if useCache:
-            # useCache set the size of the cache for the memoize function in sliceBinMetric.
+            # useCache set the size of the cache for the memoize function in sliceMetric.
             binRes = hp.nside2resol(nside) # Pixel size in radians
-            # Set the cache size to be ~2x the cirumfrance
+            # Set the cache size to be ~2x the circumference
             self.cacheSize = int(np.round(4.*np.pi/binRes))
         # Set up slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
@@ -122,10 +122,6 @@ class HealpixSlicer(BaseSpatialSlicer):
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
                         rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
         hp.graticule(dpar=20., dmer=20.)
-        #ecinc = 23.439291 
-        #x_ec = np.arange(0, 359., (1.))
-        #y_ec = -1*np.sin(x_ec*np.pi/180.) * ecinc
-        #hp.projplot(y_ec, x_ec, 'r-', lonlat=True, rot=(180,0,180))
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]

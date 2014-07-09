@@ -14,6 +14,9 @@ class HourglassSlicer(UniSlicer):
         self.slicerName='HourglassSlicer'
 
     def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
+        """
+        Override base plotData to generate hourglass plot.
+        """
         filenames=[]
         filetypes=[]
         figs={}
@@ -28,8 +31,14 @@ class HourglassSlicer(UniSlicer):
             filetypes.append('hourglassPlot')
         return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
         
-    def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight', filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'}, **kwargs):
-        """expect a tuple to unpack for the metricValue from hourglassMetric  """
+    def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight',
+                 filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'},
+                **kwargs):
+        """
+        Generate the 'hourglass' plot.
+        
+        Expect a tuple 'metricValue' to unpack for the metricValue from hourglassMetric.
+        """
         xlabel = 'Night - min(Night)' # Currently not able to override.
         f = plt.figure()
         ax = f.add_subplot(111)
@@ -57,7 +66,6 @@ class HourglassSlicer(UniSlicer):
         plt.plot(pernight['mjd']-dmin, (pernight['twi18_set']-pernight['midnight'])*24.,
                  'red'  )
         plt.plot(pernight['mjd']-dmin, pernight['moonPer']/100.-7, 'black', label='Moon')
-        #plt.legend()            
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
@@ -65,10 +73,18 @@ class HourglassSlicer(UniSlicer):
         return fig.number
     
     def writeData(self, outfilename, metricValues, metricName='', **kwargs):
-        # Don't actually do anything -- too much data to bother to save.
+        """
+        Override base write method to 'pass': we don't want to save hourglass metric data.
+
+        The data volume is too large.
+        """
         pass
 
     def readMetricData(self, infilename):
-        # See above.
+        """
+        Override base read method to 'pass': we don't save or read hourglass metric data.
+
+        The data volume is too large.
+        """
         pass
     

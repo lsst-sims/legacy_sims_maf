@@ -159,21 +159,21 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
     
     def testSlicing(self):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
-        # Test that slicing fails before setupBinner
+        # Test that slicing fails before setupSlicer
         self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
         # Set up and test actual slicing.
         self.testslicer.setupSlicer(self.dv)
-        for b in self.testslicer:
-            binra = b['slicePoint']['ra']
-            bindec = b['slicePoint']['dec']
-            distances = calcDist_vincenty(binra, bindec, self.dv['ra'], self.dv['dec'])
+        for s in self.testslicer:
+            ra = s['slicePoint']['ra']
+            dec = s['slicePoint']['dec']
+            distances = calcDist_vincenty(ra, dec, self.dv['ra'], self.dv['dec'])
             didxs = np.where(distances<=np.radians(self.radius))
-            binidxs = b['idxs'] 
-            self.assertEqual(len(binidxs), len(didxs[0]))
-            if len(binidxs) > 0:
+            sidxs = s['idxs'] 
+            self.assertEqual(len(sidxs), len(didxs[0]))
+            if len(sinidxs) > 0:
                 didxs = np.sort(didxs[0])
-                binidxs = np.sort(binidxs)
-                np.testing.assert_equal(self.dv['testdata'][didxs], self.dv['testdata'][binidxs])
+                sidxs = np.sort(sidxs)
+                np.testing.assert_equal(self.dv['testdata'][didxs], self.dv['testdata'][sidxs])
 
 class TestHealpixSlicerPlotting(unittest.TestCase):
     def setUp(self):
