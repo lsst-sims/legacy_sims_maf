@@ -170,7 +170,7 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
             didxs = np.where(distances<=np.radians(self.radius))
             sidxs = s['idxs'] 
             self.assertEqual(len(sidxs), len(didxs[0]))
-            if len(sinidxs) > 0:
+            if len(sidxs) > 0:
                 didxs = np.sort(didxs[0])
                 sidxs = np.sort(sidxs)
                 np.testing.assert_equal(self.dv['testdata'][didxs], self.dv['testdata'][sidxs])

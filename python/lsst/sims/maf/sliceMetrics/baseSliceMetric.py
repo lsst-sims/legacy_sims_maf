@@ -180,7 +180,7 @@ class BaseSliceMetric(object):
 
     def validateMetricData(self, simData):
         """Validate that simData has the required data values for the metrics in self.metricObjs."""
-        simCols = self.metricObjs[self.metricNames[0]].colRegistry.uniqueCols()
+        simCols = self.metricObjs[self.metricNames[0]].colRegistry.colSet
         for c in simCols:
             if c not in simData.dtype.names:
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n')
@@ -215,6 +215,7 @@ class BaseSliceMetric(object):
         # Run through all slicepoints and calculate metrics 
         #    (slicing the data once per slicepoint for all metrics).
         for i, slice_i in enumerate(self.slicer):
+            slicedata = simData[slice_i['idxs']]
             if len(slicedata)==0:
                 # No data at this slicepoint. Mask data values.
                 for mname in self.metricObjs:
