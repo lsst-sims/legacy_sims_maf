@@ -28,7 +28,7 @@ from .baseSlicer import BaseSlicer
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', 
-                 badval=-666, leafsize=100, radius=1.8):
+                 badval=-666, leafsize=100, radius=1.75):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -90,7 +90,7 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             raise ValueError('SimDataRA and Dec should have length greater than 0.')
 
-    def _setRad(self, radius=1.8):
+    def _setRad(self, radius=1.75):
         """Set radius (in degrees) for kdtree search.
         
         kdtree queries will return pointings within rad."""        

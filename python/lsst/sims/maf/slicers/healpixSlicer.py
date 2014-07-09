@@ -20,7 +20,7 @@ from .baseSlicer import BaseSlicer
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, 
-                 useCache=True, radius=1.8, leafsize=100):
+                 useCache=True, radius=1.75, leafsize=100):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
