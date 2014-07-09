@@ -81,7 +81,12 @@ class BaseMetric(object):
     def __init__(self, cols, metricName=None, units=None, plotParams=None, metricDtype='object',
                  *args, **kwargs):
         """Instantiate metric.
-        After inheriting from this base metric (and using, perhaps via 'super' this __init__):
+                 
+        After inheriting from this base metric :
+          * every metric object will have metricDtype set according to kwarg
+            (if metricDtype = 'object' no plots will be produced directly from the metric data value,
+             this is intended to support returning dictionaries/etc that need reduce methods; set
+             to 'float' if you are returning scalar data from your metric). 
           * every metric object will have the data columns it requires added to the column registry
             (so the driver can know which columns to pull from the database)
           * every metric object will contain a plotParams dictionary, which may contain only the units.
@@ -122,7 +127,7 @@ class BaseMetric(object):
             self.plotParams['units'] = self.units
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
-        #  These plotParams are used by the binMetric, passed to the binner plotting utilities.
+        #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')
