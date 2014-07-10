@@ -28,13 +28,13 @@ from .baseSlicer import BaseSlicer
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec', 
-                 badval=-666, leafsize=100, radius=1.8):
+                 badval=-666, leafsize=100, radius=1.75):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
         the simData KDtree 
-        and binpoint RA/Dec values will be produced."""
+        and slicePoint RA/Dec values will be produced."""
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
@@ -58,9 +58,9 @@ class BaseSpatialSlicer(BaseSlicer):
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            binx, biny, binz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+            sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
-            indices = self.opsimtree.query_ball_point((binx, biny, binz), self.rad)
+            indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
             return {'idxs':indices,
                     'slicePoint':{'sid':self.slicePoints['sid'][islice],
                                   'ra':self.slicePoints['ra'][islice],
@@ -90,7 +90,7 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             raise ValueError('SimDataRA and Dec should have length greater than 0.')
 
-    def _setRad(self, radius=1.8):
+    def _setRad(self, radius=1.75):
         """Set radius (in degrees) for kdtree search.
         
         kdtree queries will return pointings within rad."""        
@@ -98,7 +98,7 @@ class BaseSpatialSlicer(BaseSlicer):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     
-    def sliceSimDataMultiBinpoint(self, islices):
+    def sliceSimDataMultiSlicepoint(self, islices):
         """Return indexes for opsim data at multiple slicepoints (rarely used). """
         binx, biny, binz=self._treexyz(self.slicePoints['ra'][islices], self.slicePoints['dec'][islices])
         indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
@@ -108,7 +108,8 @@ class BaseSpatialSlicer(BaseSlicer):
     ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, logScale='auto', flipXaxis=False,
+                      bins=None, cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
+                      logScale='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
                       zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
@@ -121,6 +122,7 @@ class BaseSpatialSlicer(BaseSlicer):
         bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
+        yMin/Max = histogram y range
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
@@ -147,6 +149,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 histRange = None
         else:
             histRange=[xMin, xMax]
+        if yMin is not None and yMax is not None:
+            plt.ylim([yMin,yMax])
         # See if should use log scale.
         if logScale == 'auto':
             if (np.log10(np.max(histRange)-np.min(histRange)) > 3 ) & (np.min(histRange) > 0):
@@ -243,7 +247,7 @@ class BaseSpatialSlicer(BaseSlicer):
                    projection='aitoff', radius=1.75/180.*np.pi,
                    logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   xMin=None, xMax=None, percentileClip=None,  **kwargs):
+                   xMin=None, xMax=None, percentileClip=None,  cbar_edge=True, **kwargs):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -276,9 +280,9 @@ class BaseSpatialSlicer(BaseSlicer):
         if logScale:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
-                                norm=norml)
+                                norm=norml, rasterized=True)
         else:
-            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None)
+            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
         p.set_array(metricValue.filled(self.badval)[goodPts])
         ax.add_collection(p)
         # Add ecliptic
@@ -300,6 +304,9 @@ class BaseSpatialSlicer(BaseSlicer):
         clims = [xMin, xMax]
         p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
+        # If outputing to PDF, this fixes the colorbar white stripes
+        if cbar_edge:
+            cb.solids.set_edgecolor("face")
         if xlabel is not None:
             cb.set_label(xlabel)
         elif units is not None:

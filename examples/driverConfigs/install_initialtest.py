@@ -14,7 +14,7 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 import lsst.sims.maf.utils as utils
 
 
-def mafConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
+def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     """
     Set up a MAF config for a very simple, example analysis.
     """

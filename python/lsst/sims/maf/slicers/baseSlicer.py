@@ -8,24 +8,66 @@ import matplotlib.pyplot as plt
 import warnings
 from lsst.sims.maf.utils import getDateVersion
 
+class SlicerRegistry(type):
+    """
+    Meta class for slicers, to build a registry of slicer classes.
+    """
+    def __init__(cls, name, bases, dict):
+        super(SlicerRegistry, cls).__init__(name, bases, dict)
+        if not hasattr(cls, 'registry'):
+            cls.registry = {}
+        modname = inspect.getmodule(cls).__name__ + '.'
+        if modname.startswith('lsst.sims.maf.slicers'):
+            modname = '' 
+        slicername = modname + name
+        if slicername in cls.registry:
+            raise Exception('Redefining metric %s! (there are >1 slicers with the same name)' %(slicername))
+        if slicername not in ['BaseSlicer', 'BaseSpatialSlicer']:
+            cls.registry[slicername] = cls            
+    def getClass(cls, slicername):
+        return cls.registry[slicername]
+    def list(cls, doc=False):
+        for slicername in sorted(cls.registry):
+            if not doc:
+                print slicername
+            if doc:
+                print '---- ', slicername, ' ----'
+                print inspect.getdoc(cls.registry[slicername])
+            
+
+
 class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.
     """
+    __metaclass__ = SlicerRegistry
+    
     def __init__(self, verbose=True, badval=-666, *args, **kwargs):
-        """Instantiate the base slicer object."""
-        # After init: everything necessary for using slicer for plotting or saving/restoring metric
-        #   data should be present (although slicer does not need to be able to slice data again).
-        #   Variables in this init need to be set for slicer to work as such.
-        # 
-        # Args will include sliceDataCols and other data names that must be fetched from DB
+        """
+        Instantiate the base slicer object.
+
+        After first init with a 'blank' slicer: slicer should be ready for setupSlicer to
+        define slicePoints. 
+        After init after a restore: everything necessary for using slicer for plotting or
+        saving/restoring metric data should be present (although slicer does not need to be able to
+        slice data again and generally will not be able to).
+
+        The sliceMetric has a 'memo-ize' functionality that can save previous indexes & return
+        metric data value calculated for same set of previous indexes, if desired.
+        CacheSize = 0 effectively turns this off, otherwise cacheSize should be set by the slicer.
+        (Most useful for healpix slicer, where many healpixels may have same set of LSST visits).
+
+        Minimum set of __init__ kwargs:
+        verbose: True/False flag to send extra output to screen
+        badval: the value the Slicer uses to fill masked metric data values
+        """
         self.verbose = verbose
         self.badval = badval
-        # The sliceMetric has a 'memo-ize' functionality that can save previous indexes & return
-        #  metric data value calculated for same set of previous indexes, if desired.
-        #  CacheSize = 0 effectively turns this off, otherwise cacheSize should be set by the slicer.
-        #  (Most useful for healpix slicer, where many healpixels may have same set of LSST visits). 
-        self.cacheSize = 0
+        # Set cacheSize : each slicer will be able to override if appropriate.
+        # Currently only the healpixSlice actually uses the cache: this is set in 'useCache' flag.
+        #  If other slicers have the ability to use the cache, they should add this flag and set the
+        #  cacheSize in their __init__ methods. 
+        self.cacheSize = 0        
         # Set length of Slicer.
         self.nslice = None
         self.slicePoints = {}
@@ -47,6 +89,8 @@ class BaseSlicer(object):
         
     def setupSlicer(self, *args):
         """
+        Set up Slicer for data slicing.
+        
         Set up internal parameters necessary for slicer to slice data and generates indexes on simData.
         Also sets _sliceSimData for a particular slicer.
         """
@@ -62,7 +106,7 @@ class BaseSlicer(object):
     
     def __len__(self):
         """
-        Return nbins, the number of bins in the slicer.
+        Return nslice, the number of slicePoints in the slicer.
         """
         return self.nslice
 
@@ -75,6 +119,7 @@ class BaseSlicer(object):
     def next(self):
         """
         Returns results of self._sliceSimData when iterating over slicer.
+        
         Results of self._sliceSimData should be dictionary of
            {'idxs' - the data indexes relevant for this slice of the slicer,
            'slicePoint' - the metadata for the slicePoint .. always includes ['sid'] key for ID of slicePoint.}
@@ -98,7 +143,7 @@ class BaseSlicer(object):
 
         Given the identifying slicePoint metadata
         The slice of data returned will be the indices of the numpy rec array (the simData)
-        which are appropriate for the metric to be working on, for that bin.
+        which are appropriate for the metric to be working on, for that slicePoint.
         """
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
@@ -106,6 +151,9 @@ class BaseSlicer(object):
                   simDataName ='', sqlconstraint='', metadata=''):
         """
         Save metric values along with the information required to re-build the slicer.
+
+        outfilename: the output file
+        metricValues: the metric values to save to disk
         """
         header = {}
         header['metricName']=metricName
@@ -137,7 +185,9 @@ class BaseSlicer(object):
                                  
     def readData(self, infilename):
         """
-        Read metric data from disk, along with the info to rebuild the slicer (minus new slicing capability). 
+        Read metric data from disk, along with the info to rebuild the slicer (minus new slicing capability).
+
+        infilename: the filename containing the metric data.
         """
         import lsst.sims.maf.slicers as slicers
         restored = np.load(infilename)
@@ -158,9 +208,14 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
     
-    def plotData(self, metricValues, figformat='png', dpi=None, filename='fig', savefig=True, **kwargs):
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', savefig=True, **kwargs):
         """
         Call all available plotting methods.
+
+        The __init__ for each slicer builds a dictionary of the individual slicer's plotting methods.
+        This method calls each of the plotting methods in that dictionary, and optionally saves the resulting figures.
+        
+        metricValues: the metric values to plot.        
         """
         # If passed metric data which is not a simple data type, return without plotting.
         # (thus - override this method if your slicer requires plotting complex 'object' data.

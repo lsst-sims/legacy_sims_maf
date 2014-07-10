@@ -1,0 +1,93 @@
+import numpy as np
+import unittest
+import lsst.sims.maf.metrics as metrics
+
+class TestBaseMetric(unittest.TestCase):
+    def testReduceDict(self):
+        """Test that reduce dictionary is created."""
+        testmetric = metrics.BaseMetric('testcol')
+        self.assertEqual(testmetric.reduceFuncs.keys(), [])
+
+    def testMetricName(self):
+        """Test that metric name is set appropriately automatically and explicitly"""
+        # Test automatic setting of metric name
+        testmetric = metrics.BaseMetric('testcol')
+        self.assertEqual(testmetric.name, 'Base testcol')
+        testmetric = metrics.BaseMetric(['testcol1', 'testcol2'])
+        self.assertEqual(testmetric.name, 'Base testcol1, testcol2')
+        # Test explicit setting of metric name
+        testmetric = metrics.BaseMetric('testcol', metricName='Test')
+        self.assertEqual(testmetric.name, 'Test')    
+                        
+    def testColRegistry(self):
+        """Test column registry adds to colRegistry as expected"""
+        cols = 'onecolumn'
+        colset = set()
+        colset.add(cols)
+        testmetric = metrics.BaseMetric(cols)
+        # Class registry should have dictionary with values = set of columns for metric class
+        self.assertEqual(testmetric.colRegistry.colSet, colset)
+        cols = ['onecolumn', 'twocolumn']
+        colset.add('twocolumn')
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.colRegistry.colSet, colset)
+        # Test with additional (different) metric
+        cols = 'twocolumn'
+        testmetric2 = metrics.SimpleScalarMetric(cols)
+        self.assertEqual(testmetric.colRegistry.colSet, colset)
+
+    def testMetricDtype(self):
+        """Test that base metric data value type set appropriately"""
+        cols = 'onecolumn'
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.metricDtype, 'object')
+    
+    def testUnits(self):
+        """Test unit setting (including units set by utils.getColInfo)"""
+        cols = 'onecolumn'
+        # Test for column not in colInfo, units not set by hand.
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.units, '')
+        # Test for column not in colInfo, units set by hand.
+        testmetric = metrics.BaseMetric(cols, units='Test')
+        self.assertEqual(testmetric.units, 'Test')
+        # Test for column in colInfo (looking up units in colInfo)
+        cols = 'seeing'
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.units, 'arcsec')
+        # Test for column in colInfo but units overriden
+        testmetric = metrics.BaseMetric(cols, units='Test')
+        self.assertEqual(testmetric.units, 'Test')
+        # Test for multiple columns not in colInfo
+        cols = ['onecol', 'twocol']
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.units, '')
+        # Test for multiple columns in colInfo
+        cols = ['seeing', 'skybrightness_modified']
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.units, 'arcsec mag/sq arcsec')
+        # Test for multiple columns, only one in colInfo
+        cols = ['seeing', 'twocol']
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.units, 'arcsec ')
+        # Test for multiple columns both in colInfo but repeated
+        cols = ['seeing', 'seeing']
+        testmetric = metrics.BaseMetric(cols)
+        self.assertEqual(testmetric.units, 'arcsec arcsec')
+
+    def testPlotParams(self):
+        """Test plot parameter setting"""
+        cols = 'onecolumn'
+        testmetric = metrics.BaseMetric(cols)
+        self.assertTrue(isinstance(testmetric.plotParams, dict))
+        self.assertEqual(testmetric.plotParams.keys(), ['units'])
+        # Set some plot parameters - are they present in dictionary and dictionary contains only needed values?
+        plotParams = {'title':'mytitle'}
+        testmetric = metrics.BaseMetric(cols, plotParams=plotParams)
+        self.assertTrue(isinstance(testmetric.plotParams, dict))
+        self.assertEqual(set(testmetric.plotParams.keys()), set(['title', 'units']))
+        
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,13 +1,14 @@
 # A MAF config that replicates the SSTAR plots
 
 import os
-from lsst.sims.maf.driver.mafConfig import MafConfig, configureSlicer, configureMetric, makeDict
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
 
-def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldSlicer', **kwargs):
+def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldSlicer', **kwargs):
     """
-    Set up a MAF config for SSTAR-like analysis of an opsim run.
+    A MAF config for SSTAR-like analysis of an opsim run.
+    
     Use 'slicerName' for metrics where have the option of using [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither] 
       (dithered healpix slicer uses hexdithra/dec values).
     """
@@ -94,9 +95,10 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFiel
                                         'histMax':nVisits_plotRange['all'][f][1]}, 
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m2 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
-                              plotDict={'normVal':nvisitBench[f], 'ylog':False,
+                              plotDict={'normVal':nvisitBench[f], 'logScale':False,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = configureMetric('MedianMetric', params=['fivesigma_modified'], summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
+        m3 = configureMetric('MedianMetric', params=['fivesigma_modified'],
+                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
                                                          'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
@@ -199,6 +201,8 @@ def mafConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFiel
     constraints = ['']
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                               constraints=constraints, metadata=slicermetadata)
+    slicerList.append(slicer)
+
 
     # Calculate some basic summary info about run, per filter.
     for f in filters:

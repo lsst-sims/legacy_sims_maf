@@ -30,7 +30,7 @@ metricDict = makeDict(m1,m2)
 slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside},
                           metricDict = metricDict,constraints=['filter="r"'])
 # For skymap units, title, ylog, cbarFormat, cmap, percentileClip, plotMin, plotMax, zp, normVal
-# also on hist:  ylabel, bins, cumulative, histMin, histMax, ylog, color, scale, label, addLegend
+# also on hist:  ylabel, bins, cumulative,ylog, color, scale, label, addLegend
 
 slicerList.append(slicer)
 
@@ -47,7 +47,7 @@ slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'finSeeing'},
                           metricDict = metricDict,constraints=['filter="r"'])
 slicerList.append(slicer)
 
-#for OneD:  title, units, label, addLegend, legendloc, filled, alpha, ylog, ylabel, xlabel, yMin, yMax, histMin, histMax
+#for OneD:  title, units, label, addLegend, legendloc, filled, alpha, ylog, ylabel, xlabel, yMin, yMax, xMin, xMax
 
 
 

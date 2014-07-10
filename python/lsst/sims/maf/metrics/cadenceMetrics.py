@@ -66,8 +66,7 @@ class SupernovaMetric(BaseMetric):
 
         # It would make sense to put a dict of interpolation functions here keyed on filter that take time and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.  repeat for multiple time steps.  
         
-    def run(self, dataSlice, *args):
-        """ """
+    def run(self, dataSlice, slicePoint=None):
         # Cut down to only include filters in correct wave range.
         goodFilters = np.in1d(dataSlice['filter'],self.filterNames)
         dataSlice = dataSlice[goodFilters]
@@ -75,18 +74,25 @@ class SupernovaMetric(BaseMetric):
             return (self.badval, self.badval,self.badval)
         dataSlice.sort(order=self.mjdcol)
         time = dataSlice[self.mjdcol]-dataSlice[self.mjdcol].min()
-        time = time/(1.+ self.redshift) # Now days in SN rest frame
-        finetime = np.arange(0.,np.ceil(np.max(time)),self.resolution) # Creat time steps to evaluate at
-        ind = np.arange(finetime.size) #index for each time point
-        right = np.searchsorted( time, finetime+self.Tmax-self.Tmin, side='right') #index for each time point + Tmax - Tmin
+        # Now days in SN rest frame
+        time = time/(1.+ self.redshift) 
+        # Creat time steps to evaluate at
+        finetime = np.arange(0.,np.ceil(np.max(time)),self.resolution) 
+        #index for each time point
+        ind = np.arange(finetime.size) 
+        #index for each time point + Tmax - Tmin
+        right = np.searchsorted( time, finetime+self.Tmax-self.Tmin, side='right')
         left = np.searchsorted(time, finetime, side='left')
-        good = np.where( (right - left) > self.Nbetween)[0] # Demand enough visits in window
+        # Demand enough visits in window
+        good = np.where( (right - left) > self.Nbetween)[0] 
         ind = ind[good]
         right = right[good]
         left = left[good]
         result = 0
-        maxGap = [] # Record the maximum gap near the peak (in rest-frame days)
-        Nobs = [] # Record the total number of observations in a sequence.
+        # Record the maximum gap near the peak (in rest-frame days)
+        maxGap = [] 
+        # Record the total number of observations in a sequence.
+        Nobs = [] 
         right_side = -1
         for i,index in enumerate(ind):
             if i <= right_side:
@@ -105,7 +111,8 @@ class SupernovaMetric(BaseMetric):
                                 nearPeak = np.where((t > self.Tless) & (t < self.Tmore))
                                 ufilters = np.unique(visits[self.filtercol][nearPeak])
                                 for f in ufilters:
-                                    if np.max(visits[self.m5col][nearPeak][np.where(visits[self.filtercol][nearPeak] == f)]) > self.singleDepthLimit:
+                                    if np.max(visits[self.m5col][nearPeak]
+                                              [np.where(visits[self.filtercol][nearPeak] == f)]) > self.singleDepthLimit:
                                         filtersBrightEnough += 1
                                 if filtersBrightEnough >= self.Nfilt:
                                     if np.size(nearPeak) >= 2:
@@ -136,32 +143,39 @@ class SupernovaMetric(BaseMetric):
         result = np.median(data['Nobs'])
         if np.isnan(result):
             result = self.badval
-        return result
-    
+        return result    
                                 
 class TemplateExistsMetric(BaseMetric):
-    """See what fraction of images have a previous template image of desired quality.  Note, one could consider adding additional requirements such as making sure a template exists within a given paralactic angle. """
-    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD',
-                 units='fraction', metricName='TemplateExistsMetric', **kwargs):
-        """seeingCol = column with final seeing value (arcsec)
-           expMJDcol = column with exposure MJD. """
+    """
+    Calculate what fraction of images have a previous template image of desired quality.
+
+    Note, one could consider adding additional requirements such as making sure a
+    template exists within a given paralactic angle.
+    """
+    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD', 
+                 metricName='TemplateExistsMetric', **kwargs):
+        """
+        seeingCol = column with final seeing value (arcsec)
+        expMJDcol = column with exposure MJD.
+        """
         cols = [seeingCol, expMJDcol]
-        super(TemplateExistsMetric,self).__init__(cols, metricName, units='fraction', **kwargs)
+        super(TemplateExistsMetric, self).__init__(cols, metricName, units='fraction',
+                                                  metricDtype='float', **kwargs)
         self.seeingCol = seeingCol
         self.expMJDcol = expMJDcol
-        self.metricDtype = float
-        
 
-    def run(self,dataSlice, *args):
+    def run(self,dataSlice, slicePoint=None):
+        # Check that data is sorted in expMJD order
         dataSlice.sort(order=self.expMJDcol)
-        # Minimum seeing up to a given time
-        seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol]) 
+        # Find the minimum seeing up to a given time
+        seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol])
+        # Find the difference between the seeing and the minimum seeing at the previous visit
         seeing_diff = dataSlice[self.seeingCol] - np.roll(seeing_mins,1)
-        good = np.where(seeing_diff[1:] >= 0.)[0] # 1st image never has a template
+        # First image never has a template; check how many others do
+        good = np.where(seeing_diff[1:] >= 0.)[0] 
         frac = (good.size)/float(dataSlice[self.seeingCol].size)
         return frac
     
-            
 class UniformityMetric(BaseMetric):
     """Calculate how uniformly the observations are spaced in time.  Returns a value between -1 and 1.  A value of zero means the observations are perfectly uniform.  """
     def __init__(self, expMJDcol='expMJD', units='',
@@ -174,7 +188,7 @@ class UniformityMetric(BaseMetric):
         self.metricDtype=float
 
 
-    def run(self,dataSlice, *args):
+    def run(self,dataSlice, slicePoint=None):
         """Based on how a KS-Test works:
         Look at the cumulative distribution of observations dates,
         and compare to a uniform cumulative distribution.

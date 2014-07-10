@@ -14,7 +14,7 @@ class OpenShutterMetric(SimpleScalarMetric):
         self.shutterTime = shutterTime
         self.metricDtype = float
     
-   def run(self, dataSlice, *args):
+   def run(self, dataSlice, slicePoint=None):
        result = np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
        return result
 
@@ -31,8 +31,7 @@ class OpenShutterFracMetric(BaseMetric):
        self.readTime = readTime
        self.shutterTime = shutterTime
 
-
-   def run(self, dataSlice, *args):
+   def run(self, dataSlice, slicePoint=None):
        result = (np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
                  / np.sum(dataSlice[self.slewTimeCol] + dataSlice[self.exptimeCol]))
        return result
@@ -40,9 +39,11 @@ class OpenShutterFracMetric(BaseMetric):
 
 class CompletenessMetric(BaseMetric):
     """Compute the completeness and joint completeness """
-    def __init__(self, filterColName='filter', metricName='Completeness', u=0, g=0, r=0, i=0, z=0, y=0, **kwargs):
+    def __init__(self, filterColName='filter', metricName='Completeness',
+                 u=0, g=0, r=0, i=0, z=0, y=0, **kwargs):
         """Compute the completeness for the each of the given filters and the joint completeness across all filters.
-        Completeness calculated in any filter with a requested 'nvisits' value greater than 0."""
+                 
+        Completeness calculated in any filter with a requested 'nvisits' value greater than 0, range is 0-1."""
         self.filterCol = filterColName
         super(CompletenessMetric,self).__init__(self.filterCol, metricName=metricName, **kwargs)
         self.nvisitsRequested = np.array([u, g, r, i, z, y])
@@ -55,7 +56,7 @@ class CompletenessMetric(BaseMetric):
         if len(self.filters) == 0:
             raise ValueError('Please set the requested number of visits for at least one filter.')
         
-    def run(self, dataSlice, *args):
+    def run(self, dataSlice, slicePoint=None):
         """Compute the completeness for each filter, and then the minimum (joint) completeness for each slice."""
         allCompleteness = []
         for f, nVis in zip(self.filters, self.nvisitsRequested):
@@ -63,6 +64,7 @@ class CompletenessMetric(BaseMetric):
             allCompleteness.append(filterVisits/np.float(nVis))
         allCompleteness.append(np.min(np.array(allCompleteness)))
         return np.array(allCompleteness)
+    
     def reduceu(self, completeness):
         if 'u' in self.filters:
             return completeness[np.where(self.filters == 'u')[0]]

@@ -18,11 +18,11 @@ def dtime(time_prev):
 
 class ComparisonSliceMetric(object):
     """ComparisonSliceMetric"""
-    def __init__(self, figformat='png', dpi=None, verbose=True):
+    def __init__(self, figformat='pdf', dpi=600, verbose=True):
         self.figformat = figformat
         self.dpi = dpi
         self.verbose = verbose
-        #  The comparison bin metric stores data in dictionaries keyed by (the same) number:
+        #  The comparison slice metric stores data in dictionaries keyed by (the same) number:
         #     -- the baseSliceMetrics (which then hold metric data and the slicer),
         #     -- the filename a particular baseSliceMetric came from (if read from file)
         self.slicemetrics = {}
@@ -179,10 +179,10 @@ class ComparisonSliceMetric(object):
         return plotTitle
     
     def plotHistograms(self, dictNums, metricNames, 
-                        bins=100, xMin=None, xMax=None,
-                        title=None, xlabel=None, color='b', label=None,
+                        bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
+                        title=None, xlabel=None,color=None, labels=None,
                         legendloc='upper left', bnamelen=4, alpha=1.0,
-                        savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
+                        savefig=False, outDir=None, outfileRoot=None, ylabel=None, plotkwargs=None):
         """
         Create a plot containing the histogram visualization from all possible metrics in dictNum +
           metricNames.
@@ -223,42 +223,51 @@ class ComparisonSliceMetric(object):
             if i == len(metricNames) - 1:
                 addLegend = True
             # Build legend label for this dictNum/metricName.
-            if label is None:
+            if labels is None:
                label = (self.slicemetrics[d].simDataName[m] + ' ' + self.slicemetrics[d].metadata[m] + ' ' 
-                        + self.slicemetrics[d]._dupeMetricName(m) +
-                        ' ' + self.slicemetrics[d].slicer.slicerName[:bnamelen])
+                              + self.slicemetrics[d]._dupeMetricName(m) +
+                              ' ' + self.slicemetrics[d].slicer.slicerName[:bnamelen])
             # Plot data using 'plotBinnedData' if that method available (oneDSlicer)
             if hasattr(self.slicemetrics[d].slicer, 'plotBinnedData'):
                 plotParams = {'xlabel':xlabel, 'title':title,
                               'alpha':alpha, 'label':label, 'addLegend':addLegend,'legendloc':legendloc,
-                              'color':color}
-                if plotkwargs is not None:
-                   for key in plotkwargs[i].keys():
-                      plotParams[key] = plotkwargs[i][key] 
-                fignum = self.slicemetrics[d].slicer.plotBinnedData(self.slicemetrics[d].metricValues[m],
-                                                                    fignum=fignum, **plotParams)
-            # Plot data using 'plotHistogram' if that method available (any spatial slicer)
-            if hasattr(self.slicemetrics[d].slicer, 'plotHistogram'):
-                plotParams = {'xlabel':xlabel, 'xMin':xMin, 'xMax':xMax, 
-                              'bins':bins, 'title':title, 'label':label, 
-                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color}
+                              'color':color, 'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax, 
+                              'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
                    for key in plotkwargs[i].keys():
                       plotParams[key] = plotkwargs[i][key]
+                pp = {}
+                pp.update((k, v) for k, v in plotParams.iteritems() if v is not None)
+                plotParams = pp
+                fignum = self.slicemetrics[d].slicer.plotBinnedData(self.slicemetrics[d].metricValues[m],
+                                                                 fignum=fignum, **plotParams)
+            # Plot data using 'plotHistogram' if that method available (any spatial slicer)
+            if hasattr(self.slicemetrics[d].slicer, 'plotHistogram'):
+                plotParams = {'xlabel':xlabel, 
+                              'bins':bins, 'title':title, 'label':label, 
+                              'addLegend':addLegend, 'legendloc':legendloc, 'color':color, 
+                              'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax, 
+                              'yMin':yMin,'yMax':yMax}
+                if plotkwargs is not None:
+                   for key in plotkwargs[i].keys():
+                      plotParams[key] = plotkwargs[i][key]
+                pp = {}
+                pp.update((k, v) for k, v in plotParams.iteritems() if v is not None)
+                plotParams = pp
                 fignum = self.slicemetrics[d].slicer.plotHistogram(self.slicemetrics[d].metricValues[m],
-                                                                   fignum=fignum, **plotParams)
+                                                                 fignum=fignum, **plotParams)
         if savefig:
             outfile = self.slicemetrics[d]._buildOutfileName(title,
-                                                             outDir=outDir, outfileRoot=outfileRoot,
-                                                             plotType='hist')
+                                                          outDir=outDir, outfileRoot=outfileRoot,
+                                                          plotType='hist')
             plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile
 
     def plotPowerSpectra(self, dictNums, metricNames, maxl=500., removeDipole=True,
-                         title=None, legendloc='upper left', bnamelen=4, color='b', label=None,
-                         savefig=False, outDir=None, outfileRoot=None, plotkwargs=None):
+                         title=None, legendloc='upper left', bnamelen=4,
+                         savefig=False, outDir=None, outfileRoot=None):
         """Create a plot containing the power spectrum visualization from all possible metrics in dictNum +
                        metricNames.
 
@@ -286,28 +295,21 @@ class ComparisonSliceMetric(object):
             if i == len(metricNames) - 1:
                 addLegend = True
             # Build legend label for this dictNum/metricName.
-            if label is None:
-               label = (self.slicemetrics[d].simDataName[m] + ' ' + self.slicemetrics[d].metadata[m] + ' ' 
-                        + self.slicemetrics[d]._dupeMetricName(m) +
-                        ' ' + self.slicemetrics[d].slicer.slicerName[:bnamelen])    
-            plotParams = {'xlabel':xlabel, 'xMin':xMin, 'xMax':xMax, 
-                          'bins':bins, 'title':title, 'label':label, 
-                          'addLegend':addLegend, 'legendloc':legendloc, 'color':color}
-            if plotkwargs is not None:
-               for key in plotkwargs[i].keys():
-                  plotParams[key] = plotkwargs[i][key]
+            label = (self.slicemetrics[d].simDataName[m] + ' ' + self.slicemetrics[d].metadata[m] + ' ' 
+                           + self.slicemetrics[d]._dupeMetricName(m) +
+                           ' ' + self.slicemetrics[d].slicer.slicerName[:bnamelen])    
             # Plot data.
             fignum = self.slicemetrics[d].slicer.plotPowerSpectrum(self.slicemetrics[d].metricValues[m],
-                                                                   maxl=maxl, removeDipole=removeDipole,
-                                                                   title=title,
-                                                                   fignum=fignum,
-                                                                   label=label,
-                                                                   addLegend=addLegend)
+                                                                maxl=maxl, removeDipole=removeDipole,
+                                                                title=title,
+                                                                fignum=fignum,
+                                                                label=label,
+                                                                addLegend=addLegend)
         if savefig:
             outfile = self.slicemetrics[d]._buildOutfileName(title,
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
-            plt.savefig(outfile, figformat=self.figformat)
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile
@@ -360,7 +362,7 @@ class ComparisonSliceMetric(object):
             outfile = self.slicemetric[dictNums[0]]._buildOutfileName(title, 
                                                                     outDir=outDir, outfileRoot=outfileRoot, 
                                                                     plotType='sky')
-            plt.savefig(outfile, figformat=self.figformat)
+            plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
         else:
             outfile = None
         return fignum, title, outfile

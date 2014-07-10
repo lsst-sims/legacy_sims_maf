@@ -67,7 +67,7 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         # Test that output file list is set to empty dict
         self.assertEqual(self.testbbm.outputFiles, {})
         # Test that figformat is set to default (png)
-        self.assertEqual(self.testbbm.figformat, 'png')
+        self.assertEqual(self.testbbm.figformat, 'pdf')
         # Test that can set figformat to alternate value
         testbbm2 = sliceMetrics.BaseSliceMetric(figformat='eps')
         self.assertEqual(testbbm2.figformat, 'eps')
@@ -150,7 +150,7 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         self.m2 = None
         self.slicer = None
 
-    def testRunBins(self):
+    def testRunSlices(self):
         """Test creating metric data values."""
         opsimname = 'opsim1000'
         sqlconstraint = 'created fake testdata'
@@ -164,10 +164,10 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         # Test that created metric data with expected number of data points.
         for mname in self.metricNames:
             self.assertEqual(len(self.testbbm.metricValues[mname]), len(self.slicer))
-        # Test that metric data was masked where expected (last bin) due to no data in bin.
-        lastbin = len(self.slicer) - 1
+        # Test that metric data was masked where expected (last slicePoint) due to no data in slice.
+        lastslice = len(self.slicer) - 1
         for mname in self.metricNames:
-            self.assertEqual(self.testbbm.metricValues[mname].mask[lastbin], True)
+            self.assertEqual(self.testbbm.metricValues[mname].mask[lastslice], True)
 
     def testReduce(self):
         """Test running reduce methods."""
@@ -191,9 +191,9 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         for m in self.reduceNames:
             self.assertEqual(self.testbbm.plotParams[m]['xlabel'], 'Completeness')
         # Check that mask carried through properly.
-        lastbin = len(self.slicer) - 1
+        lastslice = len(self.slicer) - 1
         for m in self.reduceNames:
-            self.assertEqual(self.testbbm.metricValues[m].mask[lastbin], True)
+            self.assertEqual(self.testbbm.metricValues[m].mask[lastslice], True)
                 
 
 class TestReadWriteBaseSliceMetric(unittest.TestCase):        

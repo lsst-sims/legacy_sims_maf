@@ -20,7 +20,7 @@ from .baseSlicer import BaseSlicer
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, 
-                 useCache=True, radius=1.8, leafsize=100):
+                 useCache=True, radius=1.75, leafsize=100):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
@@ -43,9 +43,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                             'radius':radius}
         if useCache:
-            # useCache set the size of the cache for the memoize function in sliceBinMetric.
+            # useCache set the size of the cache for the memoize function in sliceMetric.
             binRes = hp.nside2resol(nside) # Pixel size in radians
-            # Set the cache size to be ~2x the cirumfrance
+            # Set the cache size to be ~2x the circumference
             self.cacheSize = int(np.round(4.*np.pi/binRes))
         # Set up slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
@@ -75,7 +75,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                    logScale=False, cbarFormat='%.2g', cmap=cm.jet,
                    percentileClip=None, plotMin=None, plotMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   **kwargs):
+                   cbar_edge=True, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -122,16 +122,15 @@ class HealpixSlicer(BaseSpatialSlicer):
             hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
                         rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
         hp.graticule(dpar=20., dmer=20.)
-        #ecinc = 23.439291 
-        #x_ec = np.arange(0, 359., (1.))
-        #y_ec = -1*np.sin(x_ec*np.pi/180.) * ecinc
-        #hp.projplot(y_ec, x_ec, 'r-', lonlat=True, rot=(180,0,180))
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
         cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
                           extend='both', format=cbarFormat)
         cb.set_label(xlabel)
+        # If outputing to PDF, this fixes the colorbar white stripes
+        if cbar_edge:
+            cb.solids.set_edgecolor("face")
         fig = plt.gcf()
         return fig.number
 
@@ -154,7 +153,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        # Simply overrides scale and y axis plot label of base plotHistogram. 
+        # Simply overrides scale of base plotHistogram. 
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,

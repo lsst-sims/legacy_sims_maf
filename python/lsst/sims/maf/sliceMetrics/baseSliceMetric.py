@@ -16,9 +16,9 @@
 # Then, the actual metric data can enter the sliceMetric through either running metrics on simData,
 #  or reading metric values from files.
 #
-#  'runSlices' - generates metric data by running metrics over binpoints in slicer.
+#  'runSlices' - generates metric data by running metrics over slicepoints in slicer.
 #      pass list of metrics, simData, and metadata for the metric run;
-#      validates that simData has needed cols, then runs metrics over the binpoints in the slicer. 
+#      validates that simData has needed cols, then runs metrics over the slicepoints in the slicer. 
 #      Stores the results in a dictionary keyed by the metric names.
 #
 # 'readMetric' will read metric data from files. In this case, the metadata 
@@ -54,7 +54,7 @@ def dtime(time_prev):
 
 
 class BaseSliceMetric(object):
-    def __init__(self, figformat='png', dpi=None):
+    def __init__(self, figformat='pdf', dpi=600):
         """Instantiate sliceMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
@@ -180,11 +180,10 @@ class BaseSliceMetric(object):
 
     def validateMetricData(self, simData):
         """Validate that simData has the required data values for the metrics in self.metricObjs."""
-        simCols = self.metricObjs[self.metricNames[0]].classRegistry.uniqueCols()
+        simCols = self.metricObjs[self.metricNames[0]].colRegistry.colSet
         for c in simCols:
             if c not in simData.dtype.names:
-                raise Exception('Column', c,'not in simData: needed by the metrics.\n')#,
-                                #metricList[0].classRegistry)
+                raise Exception('Column', c,'not in simData: needed by the metrics.\n')
         return True
 
     def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):
@@ -213,20 +212,18 @@ class BaseSliceMetric(object):
            cache = True
         else:
            cache = False
-        # Run through all binpoints and calculate metrics 
-        #    (slicing the data once per binpoint for all metrics).
+        # Run through all slicepoints and calculate metrics 
+        #    (slicing the data once per slicepoint for all metrics).
         for i, slice_i in enumerate(self.slicer):
-            idxs = slice_i['idxs']
-            slicePoint = slice_i['slicePoint']
-            slicedata = simData[idxs]
+            slicedata = simData[slice_i['idxs']]
             if len(slicedata)==0:
-                # No data at this binpoint. Mask data values.
+                # No data at this slicepoint. Mask data values.
                 for mname in self.metricObjs:
                     self.metricValues[mname].mask[i] = True
             else:
                if cache:
-                  # Make the idxs hashable.  
-                  key = str(sorted(idxs))[1:-1].replace(' ','')
+                  # Make the data idxs hashable.  
+                  key = str(sorted(slice_i['idxs']))[1:-1].replace(' ','')
                   # If key exists, set flag to use it, otherwise add it
                   if key in cacheDict:
                      useCache = True 
@@ -240,11 +237,13 @@ class BaseSliceMetric(object):
                      if useCache:
                         self.metricValues[mname].data[i] = self.metricValues[mname].data[cacheDict[key]]
                      else:
-                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, slicePoint)
+                        self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
+                                                                                      slicePoint=slice_i['slicePoint'])
                # Not using memoize, just calculate things normally
                else:
                   for mname in self.metricObjs:
-                     self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata, slicePoint)
+                     self.metricValues[mname].data[i] = self.metricObjs[mname].run(slicedata,
+                                                                                   slicePoint=slice_i['slicePoint'])
     
            
         # Mask data where metrics could not be computed (according to metric bad value).
@@ -279,10 +278,10 @@ class BaseSliceMetric(object):
             self.metricValues[rName] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                       mask = self.metricValues[metricName].mask,
                                                       fill_value=self.slicer.badval)
-        # Run through binpoints, applying all reduce functions.
+        # Run through slicepoints, applying all reduce functions.
         for i, b in enumerate(self.slicer):
             if not self.metricValues[metricName].mask[i]:
-                # Get (complex) metric values for this binpoint. 
+                # Get (complex) metric values for this slicepoint. 
                 metricValuesPt = self.metricValues[metricName][i]
                 # Evaluate reduced version of metric values.
                 for rName, rFunc in zip(rNames, reduceFunc):
@@ -312,7 +311,7 @@ class BaseSliceMetric(object):
                 dtype=[('metricdata', self.metricValues[metricName].dtype)])
         # The summary metric colname should already be set to 'metricdata', but in case it's not:
         summaryMetric.colname = 'metricdata'
-        summaryValue = summaryMetric.run(rarr)
+        summaryValue = summaryMetric.run(rarr, None)
         # Convert to numpy array if not, for uniformity in final use.
         if isinstance(summaryValue, float) or isinstance(summaryValue, int):
             summaryValue = np.array(summaryValue)

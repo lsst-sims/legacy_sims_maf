@@ -1,8 +1,22 @@
+import os, sys, importlib
 import numpy as np
 
+
+def moduleLoader(moduleList):
+    """
+    Load additional modules (beyond standard MAF modules) provided by the user at runtime.
+    If the modules contain metrics, slicers or stackers inheriting from MAF base classes, these
+    will then be available from the driver configuration file identified by 'modulename.classname'.
+    """
+    for m in moduleList:
+        importlib.import_module(m)
+
+
 def optimalBins(datain, binmin=None, binmax=None):
-    """Use Freedman-Diaconis rule to set binsize.
-    Allow user to pass min/max data values to consider."""
+    """
+    Use Freedman-Diaconis rule to set binsize.
+    Allow user to pass min/max data values to consider.
+    """
     # if it's a masked array, only use unmasked values
     if hasattr(datain, 'compressed'):
         data = datain.compressed()
@@ -13,7 +27,8 @@ def optimalBins(datain, binmin=None, binmax=None):
     if binmax is None:
         binmax = data.max()
     condition = ((data >= binmin)  & (data <= binmax))
-    binwidth = 2.*(np.percentile(data[condition],75) - np.percentile(data[condition],25))/np.size(data[condition])**(1./3.)
+    binwidth = (2.*(np.percentile(data[condition], 75) - np.percentile(data[condition], 25))
+                /np.size(data[condition])**(1./3.))
     nbins = (binmax - binmin) / binwidth
     if np.isinf(nbins) or np.isnan(nbins):
         return 1
@@ -21,11 +36,11 @@ def optimalBins(datain, binmin=None, binmax=None):
         return int(nbins)
 
 
-
 def percentileClipping(data, percentile=95.):
     """
     Clip off high and low outliers from a distribution in a numpy array.
-    Returns the max and min values that are inside.
+    Returns the max and min values of the clipped data.
+    Useful for determining plotting ranges.  
     """
     if np.size(data) > 0:
         # Use absolute value to get both high and low outliers.

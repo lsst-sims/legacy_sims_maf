@@ -12,7 +12,7 @@ class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
     def __init__(self, sliceColName=None, sliceColUnits=None, 
                  bins=None, binMin=None, binMax=None, binsize=None,
-                 verbose=True, badval=-666):
+                 verbose=True, badval=0):
         """
         'sliceColName' is the name of the data column to use for slicing.
         'sliceColUnits' lets the user set the units (for plotting purposes) of the slice column.
@@ -52,7 +52,8 @@ class OneDSlicer(BaseSlicer):
             self.binMax = sliceCol.max()
         # Give warning if binMin = binMax, and do something at least slightly reasonable.
         if self.binMin == self.binMax:
-            warnings.warn('binMin = binMax (maybe your data is single-valued?). Increasing binMax by 1 (or 2*binsize, if binsize set).')
+            warnings.warn('binMin = binMax (maybe your data is single-valued?). '
+                          'Increasing binMax by 1 (or 2*binsize, if binsize set).')
             if self.binsize is not None:
                 self.binMax = self.binMax + 2 * self.binsize
             else:
@@ -157,10 +158,8 @@ class OneDSlicer(BaseSlicer):
         if (yMin is None) or (yMax is None):
             if percentileClip:
                 yMin, yMax = percentileClipping(metricValues.compressed(), percentile=percentileClip)
-            else:
-                yMin = metricValues.compressed().min()
-                yMax = metricValues.compressed().max()
-        plt.ylim(yMin, yMax)
+        if yMin is not None and yMax is not None:
+            plt.ylim(yMin, yMax)
         # Set x limits if given in kwargs.
         if (xMin is not None) or (xMax is not None):
             plt.xlim(xMin, xMax)
