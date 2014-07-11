@@ -8,15 +8,6 @@ class TestSimpleMetrics(unittest.TestCase):
         dv = np.arange(0, 10, .5)
         self.dv = np.array(zip(dv), dtype=[('testdata', 'float')])
         
-    def testBaseSimpleScalar(self):
-        """Test base simple scalar metric."""
-        # Check that metric works as expected with single column.
-        testmetric = metrics.SimpleScalarMetric(colname='testdata')
-        self.assertEqual(testmetric.metricDtype, 'float')
-        self.assertEqual(testmetric.colname, 'testdata')
-        # Check that metric raises exception if given more than one column.
-        self.assertRaises(Exception, metrics.SimpleScalarMetric, ['testdata1', 'testdata2'])
-
     def testMaxMetric(self):
         """Test max metric."""
         testmetric = metrics.MaxMetric('testdata')
@@ -44,7 +35,7 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def testCoaddm5Metric(self):
         """Test coaddm5 metric."""
-        testmetric = metrics.Coaddm5Metric(m5col='testdata')
+        testmetric = metrics.Coaddm5Metric(m5Col='testdata')
         self.assertEqual(testmetric.run(self.dv), 1.25 * np.log10(np.sum(10.**(.8*self.dv['testdata']))))
 
     def testRmsMetric(self):

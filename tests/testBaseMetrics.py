@@ -33,15 +33,17 @@ class TestBaseMetric(unittest.TestCase):
         self.assertEqual(testmetric.colRegistry.colSet, colset)
         # Test with additional (different) metric
         cols = 'twocolumn'
-        testmetric2 = metrics.SimpleScalarMetric(cols)
+        testmetric2 = metrics.MeanMetric(cols)
         self.assertEqual(testmetric.colRegistry.colSet, colset)
 
     def testMetricDtype(self):
         """Test that base metric data value type set appropriately"""
         cols = 'onecolumn'
         testmetric = metrics.BaseMetric(cols)
-        self.assertEqual(testmetric.metricDtype, 'object')
-    
+        self.assertEqual(testmetric.metricDtype, 'float')
+        testmetric = metrics.BaseMetric(cols, metricDtype='object')
+        self.assertEqual(testmetric.metricDtype, 'object')        
+        
     def testUnits(self):
         """Test unit setting (including units set by utils.getColInfo)"""
         cols = 'onecolumn'

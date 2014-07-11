@@ -1,18 +1,16 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from .simpleMetrics import SimpleScalarMetric
 
 
-class OpenShutterMetric(SimpleScalarMetric):
+class OpenShutterMetric(BaseMetric):
    """Compute the amount of time the shutter is open. """
    def __init__(self, readTime=2., shutterTime=2.,
                 metricName='OpenShutterMetric',
                 exptimeCol='visitExpTime', **kwargs):
         self.exptimeCol = exptimeCol
-        super(OpenShutterMetric,self).__init__(self.exptimeCol, metricName=metricName, units='sec')
+        super(OpenShutterMetric,self).__init__(col=self.exptimeCol, metricName=metricName, units='sec')
         self.readTime = readTime
         self.shutterTime = shutterTime
-        self.metricDtype = float
     
    def run(self, dataSlice, slicePoint=None):
        result = np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
@@ -25,9 +23,8 @@ class OpenShutterFracMetric(BaseMetric):
                 slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):
        self.exptimeCol = exptimeCol
        self.slewTimeCol = slewTimeCol
-       super(OpenShutterFracMetric,self).__init__([self.exptimeCol, self.slewTimeCol],
+       super(OpenShutterFracMetric,self).__init__(col=[self.exptimeCol, self.slewTimeCol],
                                                   metricName=metricName, units='frac')
-       self.metricDtype = float
        self.units = 'OpenShutter/TotalTime'
        self.readTime = readTime
        self.shutterTime = shutterTime
@@ -47,7 +44,7 @@ class CompletenessMetric(BaseMetric):
                  
         Completeness calculated in any filter with a requested 'nvisits' value greater than 0, range is 0-1."""
         self.filterCol = filterColName
-        super(CompletenessMetric,self).__init__(self.filterCol, metricName=metricName, **kwargs)
+        super(CompletenessMetric,self).__init__(col=self.filterCol, metricName=metricName, **kwargs)
         self.nvisitsRequested = np.array([u, g, r, i, z, y])
         self.filters = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         # Remove filters from consideration where number of visits requested is zero.

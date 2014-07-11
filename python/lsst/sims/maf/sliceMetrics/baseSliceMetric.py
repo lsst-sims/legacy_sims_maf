@@ -297,21 +297,18 @@ class BaseSliceMetric(object):
         """Compute single number summary of metric values in metricName, using summaryMetric.
         summaryMetric must be an object (not a class), already instantiated.
          """
-        # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
-        # Most of the summary metrics are simpleScalarMetrics: test if this is the case, and if
-        #  metricValue is compatible, in order to avoid exceptions.
-        if issubclass(summaryMetric.__class__, metrics.SimpleScalarMetric):
-            if self.metricValues[metricName].dtype == 'object':
-                warnings.warn('Cannot compute simple scalar summary metric %s on "object" type metric value for %s'
+        # Cannot generally run summary statistics on object metric data, so test and skip.
+        if self.metricValues[metricName].dtype == 'object':
+            warnings.warn('Cannot compute simple scalar summary metric %s on "object" type metric value for %s'
                               % (summaryMetric.name, metricName))
-                return None
-        # Because of the way the metrics are built, summaryMetric will require a numpy rec array.
-        # Create numpy rec array from metric data, with bad values removed. 
+            return None
+        # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
+        # Create numpy structured array from metric data, with bad values removed. 
         rarr = np.array(zip(self.metricValues[metricName].compressed()), 
                 dtype=[('metricdata', self.metricValues[metricName].dtype)])
         # The summary metric colname should already be set to 'metricdata', but in case it's not:
         summaryMetric.colname = 'metricdata'
-        summaryValue = summaryMetric.run(rarr, None)
+        summaryValue = summaryMetric.run(rarr)
         # Convert to numpy array if not, for uniformity in final use.
         if isinstance(summaryValue, float) or isinstance(summaryValue, int):
             summaryValue = np.array(summaryValue)
