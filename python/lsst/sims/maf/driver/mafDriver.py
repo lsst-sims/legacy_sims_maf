@@ -386,22 +386,29 @@ class MafDriver(object):
                     cbm.readMetricData(fullfilename)
                 dictNums = cbm.slicemetrics.keys()
                 dictNums.sort()
-                fignum, title, outfile = cbm.plotHistograms(dictNums,[cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
+                fignum, title, histfile = cbm.plotHistograms(dictNums,[cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
                                                      outDir=self.config.outputDir, savefig=True,
                                                      plotkwargs=histDict[key]['plotkwargs'])
+                psfile = None
+                if cbm.slicemetrics[dictNums[0]] == 'HealpixSlicer':
+                   fignum, title, psfile = cbm.plotPowerSpectra(dictNums,[cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
+                                                                outDir=self.config.outputDir, savefig=True,
+                                                                plotkwargs=histDict[key]['plotkwargs'])
                 # Add this plot info to the allOutDict ('ResultsSummary.dat')
                 key = 0
                 while key in allOutDict:
                     key += 1
                 allOutDict[key] = {}
                 metricName = cbm.slicemetrics[0].metricNames[0]
-                allOutDict[key]['metricName'] = metricName
+                allOutDict[key]['metricName'] = 'Combo ' + metricName
                 allOutDict[key]['simDataName'] = self.config.opsimName
                 allOutDict[key]['slicerName'] = cbm.slicemetrics[0].slicer.slicerName
                 allOutDict[key]['metadata'] = title
                 allOutDict[key]['sqlconstraint'] = ''
-                allOutDict[key]['comboPlot'] = outfile
-                
+                allOutDict[key]['comboHist'] = histfile
+                if psfile is not None:
+                   allOutDict[key]['comboPs'] = psfile
+                  
         # Save metric filekey & summary stats output. 
         summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
         subkeyorder = ['metricName', 'simDataName', 'slicerName', 'metadata', 'sqlconstraint', 'dataFile']

@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 import warnings
 import unittest
@@ -257,21 +258,22 @@ class TestOneDSlicerHistogram(unittest.TestCase):
                 np.testing.assert_equal(numpybins, self.testslicer.bins, 'Numpy bins do not match testslicer bins')
                 np.testing.assert_equal(numpycounts, metricval, 'Numpy histogram counts do not match testslicer counts')
 
-    @unittest.skip("Run interactively")
     def testPlotting(self):
         """Test plotting."""
-        testslicer = OneDSlicer(sliceColName='testdata')
         dvmin = 0 
         dvmax = 1
         nbins = 100
         nvalues = 10000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        testslicer.setupSlicer(dv, bins=nbins)
-        metricval = np.zeros(len(testslicer), 'float')
-        for i, b in enumerate(testslicer):
-            idxs = testslicer.sliceSimData(b)
-            metricval[i] = len(idxs)
-        testslicer.plotBinnedData(metricval, xlabel='xrange', ylabel='count')
+        testslicer = OneDSlicer(sliceColName='testdata', bins = nbins)
+        testslicer.setupSlicer(dv)
+        metricvals = ma.MaskedArray(data = np.zeros(len(testslicer), float),
+                                    mask = np.zeros(len(testslicer), bool),
+                                    fill_value = testslicer.badval)
+        for i, s in enumerate(testslicer):
+            idxs = s['idxs']
+            metricvals.data[i] = len(idxs)
+        testslicer.plotBinnedData(metricvals, xlabel='xrange', ylabel='count')
         plt.show()
 
         

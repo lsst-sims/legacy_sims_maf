@@ -35,7 +35,8 @@ class VisitGroupsMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         """
-        Return the number of visits within a night (within delta tmin/tmax of another visit),
+        Return a dictionary of:
+         the number of visits within a night (within delta tmin/tmax of another visit),
          and the nights with visits > minNVisits.
         Count two visits which are within tmin of each other, but which have another visit
          within tmin/tmax interval, as one and a half (instead of two).

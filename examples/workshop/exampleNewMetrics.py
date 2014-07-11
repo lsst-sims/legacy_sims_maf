@@ -32,7 +32,7 @@ class DifferenceMetric(BaseMetric):
         
 class CoaddedDepthBestSeeingMetric(BaseMetric):
     """
-    Metric to calculate coadded limiting magnitude of images,
+    Metric to calculate coadded limiting magnitude of visits,
     using only visitFrac of the visits with best seeing.
     """
     def __init__(self, seeingCol='finSeeing', m5col='fivesigma_modified', visitFrac=0.5, **kwargs):
@@ -66,10 +66,11 @@ class CoaddedDepthBestSeeingMetric(BaseMetric):
 class ComplexCoaddedDepthBestSeeingMetric(BaseMetric):
     """
     Metric to calculate the coadded limiting magnitude of a set
-    of images, using only visitFrac of the visits with best seeing -- and to
+    of visits, using only visitFrac of the visits with best seeing -- and to
     make a map both the resulting seeing and coadded depth values.
     """
-    def __init__(self, seeingCol='finSeeing', m5col='fivesigma_modified', visitFrac=0.5, **kwargs):
+    def __init__(self, seeingCol='finSeeing', m5col='fivesigma_modified',
+                 visitFrac=0.5, **kwargs):
         """
         seeingCol = seeing column
         m5col = five sigma limiting magnitude column
@@ -79,8 +80,8 @@ class ComplexCoaddedDepthBestSeeingMetric(BaseMetric):
         self.m5col = m5col
         self.visitFrac = visitFrac
         super(ComplexCoaddedDepthBestSeeingMetric, self).__init__([self.seeingCol, self.m5col],
-                                                           metricDtype='object', units='',
-                                                           **kwargs)
+                                                                  metricDtype='object', units='',
+                                                                  **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Identify visits with seeing better than visitFrac.
@@ -103,3 +104,31 @@ class ComplexCoaddedDepthBestSeeingMetric(BaseMetric):
         return data['m5']
     def reduceMeanSeeing(self, data):
         return data['meanSeeing']
+
+
+class NightsWithNFiltersMetric(BaseMetric):
+    """
+    Count how many times more than NFilters are used within the same night, for this set of visits.
+    """
+    def __init__(self, nightCol='night', filterCol='filter', nFilters=3, **kwargs):
+        """
+        nightCol = the name of the column defining the night
+        filterCol = the name of the column defining the filter
+        nFilters = the minimum desired set of filters used in these visits
+        """
+        self.nightCol = nightCol
+        self.filterCol = filterCol
+        self.nFilters = nFilters
+        super(NightsWithNFiltersMetric, self).__init__([self.nightCol, self.filterCol],
+                                                       metricDtype='float',
+                                                       **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        count = 0
+        uniqueNights = np.unique(dataSlice[self.nightCol])
+        for n in uniqueNights:
+            condition = (dataSlice[self.night] == n)
+            uniqueFilters = dataSlice[self.filterCol][condition]
+            if len(uniqueFilters) > self.nFilters:
+                count += 1
+        return count

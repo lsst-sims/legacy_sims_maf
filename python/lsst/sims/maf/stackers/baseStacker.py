@@ -43,7 +43,7 @@ class BaseStacker(object):
         self.colsAdded = [None]
         # List of the names of the columns required from the database (to generate the Stacker columns).
         self.colsReq = [None]
-        # Optional: providea list of units for the columns defined in colsAdded.
+        # Optional: provide a list of units for the columns defined in colsAdded.
         self.units = [None]
 
     def _addStackers(self, simData):
