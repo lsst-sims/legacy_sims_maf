@@ -273,8 +273,8 @@ class TestOneDSlicerHistogram(unittest.TestCase):
         for i, s in enumerate(testslicer):
             idxs = s['idxs']
             metricvals.data[i] = len(idxs)
-        testslicer.plotBinnedData(metricvals, xlabel='xrange', ylabel='count')
-        plt.show()
+        #testslicer.plotBinnedData(metricvals, xlabel='xrange', ylabel='count')
+        #plt.show()
 
         
 if __name__ == "__main__":
