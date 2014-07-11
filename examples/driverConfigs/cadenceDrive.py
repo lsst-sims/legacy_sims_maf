@@ -49,7 +49,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     ########### Early Seeing Metrics ################
     seeing_limit = 0.7 # Demand seeing better than this
     for f in usefilters:
-        m1 = configureMetric('BinaryMetric', params=['finSeeing'], summaryStats={'SumMetric':{}})
+        m1 = configureMetric('BinaryMetric', args=['finSeeing'], summaryStats={'SumMetric':{}})
         slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                                  metricDict=makeDict(m1),
                                  constraints= ['night < 365 and filter = "%s" and finSeeing < %s'%(f, seeing_limit),
@@ -60,8 +60,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
     for f in usefilters:
         m1 = configureMetric('TemplateExistsMetric')
-        m2 = configureMetric('MinMetric', params=['finSeeing'])
-        m3 = configureMetric('FracBelowMetric', params=['finSeeing'], kwargs={'cutoff':seeing_limit})
+        m2 = configureMetric('MinMetric', args=['finSeeing'])
+        m3 = configureMetric('FracBelowMetric', args=['finSeeing'], kwargs={'cutoff':seeing_limit})
         slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside}, metricDict=makeDict(m1,m2,m3),
                                 constraints=['night < 365 and filter = "%s"'%(f),
                                             'night < 730 and filter = "%s"'%(f),

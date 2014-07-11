@@ -108,7 +108,8 @@ class VisitGroupsMetric(BaseMetric):
         return visits[condition][condition2], nights[condition][condition2]
     
     def reduceNVisitsInWindow(self, metricval):
-        """Reduce to max number of total visits on all nights with more than minNVisits, within any 'window' (default=30 nights)."""
+        """Reduce to max number of total visits on all nights with more than minNVisits,
+        within any 'window' (default=30 nights)."""
         maxnvisits = 0
         for n in metricval['nights']:
             vw, nw = self._inWindow(metricval['visits'], metricval['nights'], n, self.window, self.minNVisits)

@@ -38,14 +38,18 @@ class fOSlicer(HealpixSlicer):
         # This is breaking the rules and calculating the summary stats in two places.
         # One way to possibly clean this up in the future would be to change the order
         # things are done in the driver so that summary stats get computed first and passed along to the plotting.
-        fOArea_value = fOArea(None,Asky=Asky, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                         dtype=[('fO', metricValue.dtype)]))
-        fONv_value = fONv(None,Nvisit=Nvisit, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                         dtype=[('fO', metricValue.dtype)]))
-        fOArea_value_n = fOArea(None,Asky=Asky, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                          dtype=[('fO', metricValue.dtype)]))
-        fONv_value_n = fONv(None,Nvisit=Nvisit, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                          dtype=[('fO', metricValue.dtype)]))
+        fOArea_value = fOArea(None,Asky=Asky, norm=False,
+                              nside=self.nside).run(np.array(metricValue.compressed(),
+                                                             dtype=[('fO', metricValue.dtype)]))
+        fONv_value = fONv(None,Nvisit=Nvisit, norm=False,
+                          nside=self.nside).run(np.array(metricValue.compressed(),
+                                                         dtype=[('fO', metricValue.dtype)]))
+        fOArea_value_n = fOArea(None,Asky=Asky, norm=True,
+                                nside=self.nside).run(np.array(metricValue.compressed(),
+                                                               dtype=[('fO', metricValue.dtype)]))
+        fONv_value_n = fONv(None,Nvisit=Nvisit, norm=True,
+                            nside=self.nside).run(np.array(metricValue.compressed(),
+                                                           dtype=[('fO', metricValue.dtype)]))
 
         plt.axvline(x=Nvisit, linewidth=colorlinewidth, color='b')
         plt.axhline(y=Asky/1000., linewidth=colorlinewidth,color='r')

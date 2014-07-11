@@ -32,7 +32,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     filters = ['g','r']
 
     for f in filters:
-        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisits'}, 
+        m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisits'}, 
                             plotDict={'plotMin':0, 'plotMax':200, 'units':'N Visits'},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 

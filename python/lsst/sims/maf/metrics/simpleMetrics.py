@@ -79,7 +79,8 @@ class CountMetric(SimpleScalarMetric):
         return len(dataSlice[self.colname]) 
 
 class RobustRmsMetric(SimpleScalarMetric):
-    """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation does not include outliers in the distribution"""
+    """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation
+    does not include outliers in the distribution"""
     def run(self, dataSlice, slicePoint=None):
         iqr = np.percentile(dataSlice[self.colname],75)-np.percentile(dataSlice[self.colname],25)
         rms = iqr/1.349 #approximation

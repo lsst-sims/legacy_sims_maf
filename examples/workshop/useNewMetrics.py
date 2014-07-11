@@ -9,10 +9,10 @@ root.modules = ['exampleNewMetrics']
 metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric')
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=[''])
 
-metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', params=['airmass'])
+metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', args=['airmass'])
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
 
-metric = configureMetric('exampleNewMetrics.PercentileMetric', params=['airmass'],
+metric = configureMetric('exampleNewMetrics.PercentileMetric', args=['airmass'],
                          kwargs={'percentile':75})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
 

@@ -75,7 +75,7 @@ class TestBaseMetric(unittest.TestCase):
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, 'arcsec arcsec')
 
-    def testPlotParams(self):
+    def testPlotArgs(self):
         """Test plot parameter setting"""
         cols = 'onecolumn'
         testmetric = metrics.BaseMetric(cols)

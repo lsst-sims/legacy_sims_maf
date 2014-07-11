@@ -10,8 +10,8 @@ slicerList=[]
 
 plotDict={ 'title':'A Great New Title',  'xMin':0.5, 'xMax':1.7}
 
-m1 = configureMetric('MeanMetric', params=['finSeeing'], plotDict=plotDict, kwargs={'metricName':'wplotdict'})
-m2 = configureMetric('MeanMetric', params=['finSeeing'])
+m1 = configureMetric('MeanMetric', args=['finSeeing'], plotDict=plotDict, kwargs={'metricName':'wplotdict'})
+m2 = configureMetric('MeanMetric', args=['finSeeing'])
 
 metricDict = makeDict(m1,m2)
 

@@ -279,7 +279,8 @@ class OpsimDatabase(Database):
             config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
         for propid, propname in zip(propdata['propID'], propnames):
             config[propname] = table.query_columns_Array(colnames=cols,
-                                                         constraint='nonPropID="%s" and paramName!="userRegion"' %(propid))
+                                                         constraint=
+                                                         'nonPropID="%s" and paramName!="userRegion"' %(propid))
             config[propname] = config[propname][['paramName', 'paramValue', 'comment']]
         config['keyorder'] = ['Comment', 'LSST', 'site', 'instrument', 'filters',
                               'AstronomicalSky', 'File', 'scheduler',

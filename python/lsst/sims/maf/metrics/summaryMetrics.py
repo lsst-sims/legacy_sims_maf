@@ -121,7 +121,8 @@ class SSTARTableFractionMetric(BaseMetric):
         hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
         hist[-1] = np.size(np.where(dataSlice[dataSlice.dtype.names[0]] >= 1. )[0])
         # clip off fields that were not observed, matching SSTAR table
-        hist[0] = np.size(np.where( (dataSlice[dataSlice.dtype.names[0]] > 0.) & (dataSlice[dataSlice.dtype.names[0]] < 0.1))[0] ) 
+        hist[0] = np.size(np.where( (dataSlice[dataSlice.dtype.names[0]] > 0.) &
+                                    (dataSlice[dataSlice.dtype.names[0]] < 0.1))[0] ) 
         return hist
 
 

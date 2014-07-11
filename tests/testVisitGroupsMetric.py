@@ -24,12 +24,15 @@ class TestVisitGroupsMetric(unittest.TestCase):
                           37, 37, 37, 
                           38, 38, 38], 'int')
         #   .. and the time within the night.
-        expmjd = np.array([tstart, tstart+tmin/10.0, tstart+tmin+tmin/2.0, tstart+tmin*2+tmax, tstart+2*tmax, tstart+2*tmax+tmin/2.0, #n0
+        expmjd = np.array([tstart, tstart+tmin/10.0, tstart+tmin+tmin/2.0, tstart+tmin*2+tmax,
+                           tstart+2*tmax, tstart+2*tmax+tmin/2.0, #n0
                            tstart, tstart+tmax, # n1 .. only 2 obs but should make a pair
                            tstart, # n2 - only 1 obs, should not make a pair
                            tstart, tstart+tmin, # n3 .. only 2 obs but should make a pair
-                           tstart, tstart+tmin, tstart, tstart+tmin, tstart, tstart+tmin, #n31/32/33 - a pair on each night
-                           tstart, tstart+tmin/10.0, tstart+tmax*2, tstart+tmax*2+tmin/10.0, # n34 .. should make no pairs
+                           tstart, tstart+tmin, tstart, tstart+tmin,
+                           tstart, tstart+tmin, #n31/32/33 - a pair on each night
+                           tstart, tstart+tmin/10.0, tstart+tmax*2,
+                           tstart+tmax*2+tmin/10.0, # n34 .. should make no pairs
                            tstart, tstart+tmin/10.0, tstart+tmax, # n35 should make 2.5 (too close at start)
                            tstart, tstart+tmax, tstart+tmax+tmin/10.0, #n36 should make 2.5 pairs (too close at end)
                            tstart, tstart+tmin, tstart+tmax, # n37 - 3 (regular 3)
