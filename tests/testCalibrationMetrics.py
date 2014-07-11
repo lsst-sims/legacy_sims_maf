@@ -73,10 +73,12 @@ class TestCalibrationMetrics(unittest.TestCase):
             worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
             data['fivesigma_modified'] = data['fivesigma_modified']-1.
             worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300], slicePoint)
-            # Make sure the RMS increases as seeing increases, the star gets fainter, the background gets brighter, or the baseline decreases.
+            # Make sure the RMS increases as seeing increases, the star gets fainter,
+            # the background gets brighter, or the baseline decreases.
             if flag:
                 #assert(worse1 < baseline)
-                #assert(worse2 < worse1) # When normalized, 'perfect' survey assumed to have same seeing and limiting mags.
+                #assert(worse2 < worse1) # When normalized, 'perfect'
+                #survey assumed to have same seeing and limiting mags.
                 assert(worse3 < worse2)
                 assert(worse4 < worse3)
             else:

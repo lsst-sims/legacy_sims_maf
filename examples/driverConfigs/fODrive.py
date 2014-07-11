@@ -7,12 +7,12 @@ import lsst.sims.maf.utils as utils
 
 
 root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
-# Connect to the database to fetch some values we're using to help configure the driver.                                                             
+# Connect to the database to fetch some values we're using to help configure the driver.
 opsimdb = utils.connectOpsimDb(root.dbAddress)
 # Fetch the proposal ID values from the database
 propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
 
-# Construct a WFD SQL where clause so multiple propIDs can by WFD:                                                                                   
+# Construct a WFD SQL where clause so multiple propIDs can by WFD:
 wfdWhere = ''
 if len(WFDpropid) == 1:
     wfdWhere = "propID = '%s'"%WFDpropid[0]
@@ -28,7 +28,7 @@ root.outputDir = './fOout'
 nside=128
 leafsize = 50000 # For KD-tree
 
-m1 = configureMetric('CountMetric', params=['expMJD'], 
+m1 = configureMetric('CountMetric', args=['expMJD'], 
                       kwargs={'metricName':'fO'}, 
                       plotDict={'units':'Number of Visits', 'xMin':0, 
                                 'xMax':1500},

@@ -6,7 +6,7 @@ root.opsimName = 'opsimblitz1_1131'
 
 root.modules = ['exampleNewMetrics']
 
-metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', params=['airmass'])
+metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', args=['airmass'])
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
 
 root.slicers = makeDict(slicer)

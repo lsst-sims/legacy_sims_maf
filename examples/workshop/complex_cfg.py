@@ -26,9 +26,9 @@ nside = 64
 
 constraints = [ 'filter = "%s"'%filt for filt in filters]
 # Compute the coadded depth and median seeing for each filter
-metric1 = configureMetric('Coaddm5Metric', params=[],
+metric1 = configureMetric('Coaddm5Metric', args=[],
                            summaryStats={'MeanMetric':{}}, plotDict={'cbarFormat':'%.3g'})
-metric2 = configureMetric('MedianMetric', params=['finSeeing'],
+metric2 = configureMetric('MedianMetric', args=['finSeeing'],
                            summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
 slicer = configureSlicer('HealpixSlicer',
                           metricDict=makeDict(metric1,metric2),
@@ -37,10 +37,10 @@ sliceList.append(slicer)
 
 # Now do coadd depth and median seeing, but use the hexdither positions.
 # Note the addition of metricName kwargs to make each metric output unique
-metric1 = configureMetric('Coaddm5Metric', params=[],
+metric1 = configureMetric('Coaddm5Metric', args=[],
                            summaryStats={'MeanMetric':{}},
                            kwargs={'metricName':'coadd_dither'}, plotDict={'cbarFormat':'%.3g'})
-metric2 = configureMetric('MedianMetric', params=['finSeeing'],
+metric2 = configureMetric('MedianMetric', args=['finSeeing'],
                            summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
                            kwargs={'metricName':'seeing_dither'})
 slicer = configureSlicer('HealpixSlicer',
@@ -54,14 +54,14 @@ sliceList.append(slicer)
 
 # Look at the single-visit depth and airmass for observations in each filter and merge them into a single histogram
 for f in filters:
-    m1 = configureMetric('CountMetric', params=['fivesigma_ps'], 
+    m1 = configureMetric('CountMetric', args=['fivesigma_ps'], 
                           histMerge={'histNum':1, 'legendloc':'upper right',
                                      'color':colors[f],'label':'%s'%f, 
                                      'ylabel':'Count'} )
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_ps','binsize':0.1,},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
     sliceList.append(slicer)
-    m1 = configureMetric('CountMetric', params=['airmass'],
+    m1 = configureMetric('CountMetric', args=['airmass'],
                           histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass','binsize':0.05},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)])
@@ -69,13 +69,13 @@ for f in filters:
 
 
 # Stats on airmass and seeing for all observations:
-m1 = configureMetric('MeanMetric', params=['finSeeing'],
+m1 = configureMetric('MeanMetric', args=['finSeeing'],
                           summaryStats={'IdentityMetric':{}})
-m2 = configureMetric('MeanMetric', params=['airmass'],
+m2 = configureMetric('MeanMetric', args=['airmass'],
                           summaryStats={'IdentityMetric':{}})
-m3 = configureMetric('RmsMetric', params=['finSeeing'],
+m3 = configureMetric('RmsMetric', args=['finSeeing'],
                           summaryStats={'IdentityMetric':{}})
-m4 = configureMetric('RmsMetric', params=['airmass'],
+m4 = configureMetric('RmsMetric', args=['airmass'],
                           summaryStats={'IdentityMetric':{}})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1,m2,m3,m4),
                           constraints=[''])

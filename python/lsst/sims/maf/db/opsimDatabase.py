@@ -47,7 +47,8 @@ class OpsimDatabase(Database):
                          'slewMaxSpeedsTable':['SlewMaxSpeeds', 'slewMaxSpeedID'],
                          'slewStateTable':['SlewState', 'slewIniStatID']
                          }
-        # Call base init method to set up all tables and place default values into dbTable/dbTablesIdKey if not overriden.
+        # Call base init method to set up all tables and place default values
+        # into dbTable/dbTablesIdKey if not overriden.
         super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
                                             defaultdbTables=defaultdbTables, 
                                             *args, **kwargs)
@@ -263,7 +264,8 @@ class OpsimDatabase(Database):
             config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
         for propid, propname in zip(propdata['propID'], propnames):
             config[propname] = table.query_columns_Array(colnames=cols,
-                                                         constraint='nonPropID="%s" and paramName!="userRegion"' %(propid))
+                                                         constraint=
+                                                         'nonPropID="%s" and paramName!="userRegion"' %(propid))
             config[propname] = config[propname][['paramName', 'paramValue', 'comment']]
         config['keyorder'] = ['Comment', 'LSST', 'site', 'instrument', 'filters',
                               'AstronomicalSky', 'File', 'scheduler',

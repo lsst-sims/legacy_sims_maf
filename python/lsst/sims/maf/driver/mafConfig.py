@@ -14,7 +14,7 @@ class MetricConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for metrics", dtype=MixConfig, default=None)
     plot = pexConfig.ConfigField("kwargs for plotting parameters", dtype=MixConfig,default=None)
-    params = pexConfig.ListField("", dtype=str, default=[])
+    args = pexConfig.ListField("", dtype=str, default=[])
     summaryStats=pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
                                       itemtype=MixConfig,default={})
     histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
@@ -26,7 +26,7 @@ class ColStackConfig(pexConfig.Config):
     """
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
-    params = pexConfig.ListField("", dtype=str, default=[])
+    args = pexConfig.ListField("", dtype=str, default=[])
     
 class SlicerConfig(pexConfig.Config):
     """Config object for MAF slicers """
@@ -34,22 +34,25 @@ class SlicerConfig(pexConfig.Config):
 
     kwargs = pexConfig.ConfigField("kwargs for slicer", dtype=MixConfig, default=None)
 
-    params_str =  pexConfig.ListField("", dtype=str, default=[]) 
-    params_float =  pexConfig.ListField("", dtype=float, default=[]) 
-    params_int =  pexConfig.ListField("", dtype=int, default=[]) 
-    params_bool =  pexConfig.ListField("", dtype=bool, default=[])
+    args_str =  pexConfig.ListField("", dtype=str, default=[]) 
+    args_float =  pexConfig.ListField("", dtype=float, default=[]) 
+    args_int =  pexConfig.ListField("", dtype=int, default=[]) 
+    args_bool =  pexConfig.ListField("", dtype=bool, default=[])
 
     setupKwargs = pexConfig.ConfigField("setup kwargs for slicer", dtype=MixConfig, default=None)
     
-    setupParams_str = pexConfig.ListField("", dtype=str, default=[])
-    setupParams_float = pexConfig.ListField("", dtype=float, default=[])
-    setupParams_int = pexConfig.ListField("", dtype=int, default=[])
-    setupParams_bool = pexConfig.ListField("", dtype=bool, default=[])
+    setupArgs_str = pexConfig.ListField("", dtype=str, default=[])
+    setupArgs_float = pexConfig.ListField("", dtype=float, default=[])
+    setupArgs_int = pexConfig.ListField("", dtype=int, default=[])
+    setupArgs_bool = pexConfig.ListField("", dtype=bool, default=[])
   
-    metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig, default={})
+    metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig,
+                                           default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
-    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig, default={}) 
-    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str, itemtype=MixConfig, default={})
+    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig,
+                                          default={}) 
+    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str,
+                                            itemtype=MixConfig, default={})
     metadata = pexConfig.Field("", dtype=str, default='')
 
 class MafConfig(pexConfig.Config):
@@ -70,7 +73,8 @@ class MafConfig(pexConfig.Config):
     figformat = pexConfig.Field("Figure types (png, pdf are popular)", str, 'pdf')
     dpi = pexConfig.Field("Figure dpi", int, 600)
     opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
-    slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int, itemtype=SlicerConfig, default={})
+    slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int,
+                                        itemtype=SlicerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='runName')
     dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
     verbose = pexConfig.Field("", dtype=bool, default=False)
@@ -112,7 +116,7 @@ def makeDict(*args):
     """
     return dict((ind, config) for ind, config in enumerate(args))
 
-def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={},
+def configureSlicer(name, args=[], kwargs={}, setupArgs=[], setupKwargs={},
                     metricDict=None, constraints=[], stackCols=None, plotConfigs=None, metadata=''):
     """
     Helper function to generate a Slicer pex config object
@@ -124,39 +128,39 @@ def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={},
     slicer.constraints=constraints
     if stackCols: slicer.stackCols = stackCols
     if plotConfigs:  slicer.plotConfigs = plotConfigs
-    slicer.params_str=[]
-    slicer.params_float=[]
-    slicer.params_int = []
-    slicer.params_bool=[]
+    slicer.args_str=[]
+    slicer.args_float=[]
+    slicer.args_int = []
+    slicer.args_bool=[]
 
-    for p in params:
+    for p in args:
         if type(p) is str:
-            slicer.params_str.append(p)
+            slicer.args_str.append(p)
         elif type(p) is float:
-            slicer.params_float.append(p)
+            slicer.args_float.append(p)
         elif type(p) is int:
-            slicer.params_int.append(p)
+            slicer.args_int.append(p)
         elif type(p) is bool:
-            slicer.params_bool.append(p)
+            slicer.args_bool.append(p)
         else:
             raise Exception('Unsupported parameter data type')
 
     slicer.kwargs = makeMixConfig(kwargs)
 
-    slicer.setupParams_str=[]
-    slicer.setupParams_float=[]
-    slicer.setupParams_int = []
-    slicer.setupParams_bool=[]
+    slicer.setupArgs_str=[]
+    slicer.setupArgs_float=[]
+    slicer.setupArgs_int = []
+    slicer.setupArgs_bool=[]
 
-    for p in setupParams:
+    for p in setupArgs:
         if type(p) is str:
-            slicer.setupParams_str.append(p)
+            slicer.setupArgs_str.append(p)
         elif type(p) is float:
-            slicer.setupParams_float.append(p) 
+            slicer.setupArgs_float.append(p) 
         elif type(p) is int:
-            slicer.setupParams_int.append(p) 
+            slicer.setupArgs_int.append(p) 
         elif type(p) is bool:
-            slicer.setupParams_bool.append(p) 
+            slicer.setupArgs_bool.append(p) 
         else:
             raise Exception('Unsupported parameter data type')
     slicer.setupKwargs = makeMixConfig(setupKwargs)
@@ -166,34 +170,34 @@ def configureSlicer(name, params=[], kwargs={}, setupParams=[], setupKwargs={},
 def readSlicerConfig(config):
     """Read in a Slicer pex config object """
     name = config.name
-    params = []
-    params.append(config.params_str)
-    params.append(config.params_float)
-    params.append(config.params_int)
-    params.append(config.params_bool)
-    params = filter(None,params)
+    args = []
+    args.append(config.args_str)
+    args.append(config.args_float)
+    args.append(config.args_int)
+    args.append(config.args_bool)
+    args = filter(None,args)
     kwargs = readMixConfig(config.kwargs)
-    setupParams=[]
-    setupParams.append(config.setupParams_str)
-    setupParams.append(config.setupParams_float)
-    setupParams.append(config.setupParams_int)
-    setupParams.append(config.setupParams_bool)
-    setupParams = filter(None,setupParams)
+    setupArgs=[]
+    setupArgs.append(config.setupArgs_str)
+    setupArgs.append(config.setupArgs_float)
+    setupArgs.append(config.setupArgs_int)
+    setupArgs.append(config.setupArgs_bool)
+    setupArgs = filter(None,setupArgs)
     setupKwargs = readMixConfig(config.setupKwargs)
     metricDict = config.metricDict    
     constraints=config.constraints
     stackCols= config.stackCols
     plotConfigs = config.plotConfigs
     metadata=config.metadata
-    return name, params, kwargs, setupParams,setupKwargs, metricDict, constraints, stackCols, plotConfigs, metadata
+    return name, args, kwargs, setupArgs,setupKwargs, metricDict, constraints, stackCols, plotConfigs, metadata
         
-def configureMetric(name, params=[], kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
+def configureMetric(name, args=[], kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
     """
     Helper function to generate a metric pex config object.
     """
     mc = MetricConfig()
     mc.name = name
-    mc.params=params
+    mc.args=args
     mc.summaryStats = {}
     for key in summaryStats:
         mc.summaryStats[key] = makeMixConfig(summaryStats[key])
@@ -218,17 +222,17 @@ def readMetricConfig(config):
     """
     Read in a metric pex config object
     """
-    name, params,kwargs = config2dict(config)
+    name, args,kwargs = config2dict(config)
     summaryStats = config.summaryStats
     histMerge = readMixConfig(config.histMerge)
     plotDict = readMixConfig(config.plot)
-    return name,params,kwargs,plotDict,summaryStats, histMerge
+    return name,args,kwargs,plotDict,summaryStats, histMerge
 
 def config2dict(config):
     kwargs = readMixConfig(config.kwargs)
-    params=config.params
+    args=config.args
     name = config.name
-    return name, params, kwargs
+    return name, args, kwargs
  
      
                                         

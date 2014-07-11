@@ -71,12 +71,14 @@ class TestSimpleMetrics(unittest.TestCase):
     def testFracAboveMetric(self):
         cutoff = 5.1
         testmetric=metrics.FracAboveMetric('testdata', cutoff = cutoff)
-        self.assertEqual(testmetric.run(self.dv), np.size(np.where(self.dv['testdata'] >= cutoff)[0])/float(np.size(self.dv)))
+        self.assertEqual(testmetric.run(self.dv),
+                         np.size(np.where(self.dv['testdata'] >= cutoff)[0])/float(np.size(self.dv)))
 
     def testFracBelowMetric(self):
         cutoff = 5.1
         testmetric=metrics.FracBelowMetric('testdata', cutoff = cutoff)
-        self.assertEqual(testmetric.run(self.dv), np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
+        self.assertEqual(testmetric.run(self.dv),
+                         np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
 
 if __name__ == "__main__":
     unittest.main()

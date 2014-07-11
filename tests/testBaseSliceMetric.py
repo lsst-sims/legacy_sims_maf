@@ -216,7 +216,8 @@ class TestReadWriteBaseSliceMetric(unittest.TestCase):
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
         self.metadata = 'testing fake data run'
-        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
+                               metadata=self.metadata)
         self.testbbm.reduceAll()
         self.outroot = 'testBaseSliceMetric'
         self.testbbm.writeAll(outDir='.', outfileRoot=self.outroot)
@@ -331,7 +332,8 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
         self.slicer = slicers.UniSlicer()
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
-        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
+                               metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', metrics.IdentityMetric('metricdata'))
@@ -342,7 +344,8 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
         self.slicer = slicers.OneDSlicer('testdata', bins=100)
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
-        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint, metadata=self.metadata)
+        self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
+                               metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'].mean())
         # Test get warning if calculating summary statistics on 'object' data using simple scalar metric.
@@ -407,7 +410,7 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
         fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()
-        # Check x and y limits set from plot params.
+        # Check x and y limits set from plot args.
         xlims = plt.xlim()
         np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
         ylims = plt.ylim()

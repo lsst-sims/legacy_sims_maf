@@ -25,7 +25,7 @@ constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 # Configure a Healpix slicer:
 # Configure 2 metrics to run on the Healpix slicer.  
-m1 = configureMetric('CountMetric', params=['expMJD'],
+m1 = configureMetric('CountMetric', args=['expMJD'],
                      plotDict={'percentileClip':80., 'units':'#'},
                      summaryStats={'MeanMetric':{},'RmsMetric':{}})
 m2 = configureMetric('Coaddm5Metric',
@@ -50,7 +50,7 @@ slicerList.append(slicer)
 
 # Configure a OneDSlicer:
 # Configure a new metric
-m1 = configureMetric('CountMetric', params=['slewDist'], plotDict={'logScale':True})
+m1 = configureMetric('CountMetric', args=['slewDist'], plotDict={'logScale':True})
 metricDict=makeDict(m1)
 slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'},
                           metricDict=metricDict, constraints=constraints)
@@ -58,11 +58,11 @@ slicerList.append(slicer)
 
 
 # Configure an OpsimFieldSlicer:
-m1 = configureMetric('MinMetric', params=['airmass'],
+m1 = configureMetric('MinMetric', args=['airmass'],
                      plotDict={'cmap':'RdBu'})
-m4 = configureMetric('MeanMetric', params=['normairmass'])
+m4 = configureMetric('MeanMetric', args=['normairmass'])
 m3 = configureMetric('Coaddm5Metric')
-m7 = configureMetric('CountMetric', params=['expMJD'],
+m7 = configureMetric('CountMetric', args=['expMJD'],
                      plotDict={'units':"Number of Observations", 'percentileClip':80.})
 metricDict = makeDict(m1,m3,m4,m7)
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=constraints )
@@ -70,7 +70,7 @@ slicerList.append(slicer)
 
 
 # Configure a UniSlicer.  Note new SQL constraints are passed
-m1 = configureMetric('MeanMetric', params=['airmass'])
+m1 = configureMetric('MeanMetric', args=['airmass'])
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1), constraints=['night < 750'] )
 slicerList.append(slicer)
 

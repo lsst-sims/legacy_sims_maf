@@ -59,11 +59,14 @@ class SupernovaMetric(BaseMetric):
         self.uniqueBlocks = uniqueBlocks
         self.filterNames = np.array(['u','g','r','i','z','y'])
         self.filterWave = np.array([375.,476.,621.,754.,870.,980.])/(1.+self.redshift) # XXX - rough values
-        self.filterNames = self.filterNames[np.where( (self.filterWave > 300.) & (self.filterWave < 900.))[0]] #XXX make wave limits kwargs?
+        #XXX make wave limits kwargs?
+        self.filterNames = self.filterNames[np.where( (self.filterWave > 300.) & (self.filterWave < 900.))[0]] 
         self.singleDepthLimit = singleDepthLimit
         self.badval = badval
 
-        # It would make sense to put a dict of interpolation functions here keyed on filter that take time and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.  repeat for multiple time steps.  
+        # It would make sense to put a dict of interpolation functions here keyed on filter that take time
+        #and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.
+        #repeat for multiple time steps.  
         
     def run(self, dataSlice, slicePoint=None):
         # Cut down to only include filters in correct wave range.
@@ -111,7 +114,8 @@ class SupernovaMetric(BaseMetric):
                                 ufilters = np.unique(visits[self.filtercol][nearPeak])
                                 for f in ufilters:
                                     if np.max(visits[self.m5col][nearPeak]
-                                              [np.where(visits[self.filtercol][nearPeak] == f)]) > self.singleDepthLimit:
+                                              [np.where(visits[self.filtercol][nearPeak] == f)]) \
+                                              > self.singleDepthLimit:
                                         filtersBrightEnough += 1
                                 if filtersBrightEnough >= self.Nfilt:
                                     if np.size(nearPeak) >= 2:
@@ -176,7 +180,8 @@ class TemplateExistsMetric(BaseMetric):
         return frac
     
 class UniformityMetric(BaseMetric):
-    """Calculate how uniformly the observations are spaced in time.  Returns a value between -1 and 1.  A value of zero means the observations are perfectly uniform.  """
+    """Calculate how uniformly the observations are spaced in time.  Returns a value between -1 and 1.
+    A value of zero means the observations are perfectly uniform.  """
     def __init__(self, expMJDcol='expMJD', units='',
                  surveyLength=10., **kwargs):
         """surveyLength = time span of survey (years) """

@@ -9,7 +9,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     """
     A MAF config for SSTAR-like analysis of an opsim run.
     
-    Use 'slicerName' for metrics where have the option of using [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither] 
+    Use 'slicerName' for metrics where have the option of using
+    [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither] 
       (dithered healpix slicer uses hexdithra/dec values).
     """
 
@@ -89,28 +90,28 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # Metrics per filter over sky.
     for f in filters:
-        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
+        m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                               plotDict={'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]}, 
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-        m2 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
+        m2 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = configureMetric('MedianMetric', params=['fivesigma_modified'],
+        m3 = configureMetric('MedianMetric', args=['fivesigma_modified'],
                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
                                                          'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
-                              histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})             
-        m5 = configureMetric('MedianMetric', params=['perry_skybrightness'],
+                              histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
+        m5 = configureMetric('MedianMetric', args=['perry_skybrightness'],
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
-        m6 = configureMetric('MedianMetric', params=['finSeeing'],
+        m6 = configureMetric('MedianMetric', args=['finSeeing'],
                               plotDict={'normVal':seeing_norm[f],
                                         'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-        m7 = configureMetric('MedianMetric', params=['airmass'], plotDict={'_units':'X'})
-        m8 = configureMetric('MaxMetric', params=['airmass'], plotDict={'_units':'X'})
+        m7 = configureMetric('MedianMetric', args=['airmass'], plotDict={'_units':'X'})
+        m8 = configureMetric('MaxMetric', args=['airmass'], plotDict={'_units':'X'})
         metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
         constraints = ['filter = "%s"' %(f)]
         slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
@@ -119,25 +120,25 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # Metrics per filter, WFD only
     for f in filters:
-        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits'}, 
+        m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'Nvisits'}, 
                               plotDict={'percentileClip':75., 'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]},
                               summaryStats={'MeanMetric':{}},
                               histMerge={'histNum':5, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
-        m2 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
+        m2 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = configureMetric('MedianMetric', params=['fivesigma_modified'], summaryStats={'MeanMetric':{}})
+        m3 = configureMetric('MedianMetric', args=['fivesigma_modified'], summaryStats={'MeanMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
-        m5 = configureMetric('MedianMetric', params=['perry_skybrightness'],
+        m5 = configureMetric('MedianMetric', args=['perry_skybrightness'],
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
-        m6 = configureMetric('MedianMetric', params=['finSeeing'],
+        m6 = configureMetric('MedianMetric', args=['finSeeing'],
                               plotDict={'normVal':seeing_norm[f],
                                         'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-        m7 = configureMetric('MedianMetric', params=['airmass'], plotDict={'_units':'X'})
-        m8 = configureMetric('MaxMetric', params=['airmass'], plotDict={'_units':'X'})
+        m7 = configureMetric('MedianMetric', args=['airmass'], plotDict={'_units':'X'})
+        m8 = configureMetric('MaxMetric', args=['airmass'], plotDict={'_units':'X'})
         metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
         constraints = ['filter = "%s" and %s' %(f, wfdWhere)]
         slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
@@ -147,7 +148,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     
     # Number of Visits per proposal, over sky.
     for f in filters:    
-        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisitsPerProp'},
+        m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisitsPerProp'},
                               plotDict={'units':'Number of Visits', 'histBins':50})
         metricDict = makeDict(m1)
         constraints=[]
@@ -160,12 +161,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
 
     # Slew histograms
-    m1 = configureMetric('CountMetric', params=['slewTime'], kwargs={'metadata':'time'})
+    m1 = configureMetric('CountMetric', args=['slewTime'], kwargs={'metadata':'time'})
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime'},
                               metricDict=makeDict(m1), constraints=[''] )
     slicerList.append(slicer)
 
-    m1 = configureMetric('CountMetric', params=['slewDist'], kwargs={'metadata':'dist'})
+    m1 = configureMetric('CountMetric', args=['slewDist'], kwargs={'metadata':'dist'})
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'},
                               metricDict=makeDict(m1), constraints=[''] )
     slicerList.append(slicer)
@@ -206,10 +207,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # Calculate some basic summary info about run, per filter.
     for f in filters:
-        m1 = configureMetric('MeanMetric', params=['finSeeing'], summaryStats={'IdentityMetric':{}})
-        m2 = configureMetric('MedianMetric', params=['finSeeing'], summaryStats={'IdentityMetric':{}})
-        m3 = configureMetric('MedianMetric', params=['airmass'], summaryStats={'IdentityMetric':{}})
-        m4 = configureMetric('MedianMetric', params=['fivesigma_modified'], summaryStats={'IdentityMetric':{}})
+        m1 = configureMetric('MeanMetric', args=['finSeeing'], summaryStats={'IdentityMetric':{}})
+        m2 = configureMetric('MedianMetric', args=['finSeeing'], summaryStats={'IdentityMetric':{}})
+        m3 = configureMetric('MedianMetric', args=['airmass'], summaryStats={'IdentityMetric':{}})
+        m4 = configureMetric('MedianMetric', args=['fivesigma_modified'], summaryStats={'IdentityMetric':{}})
         metricDict = makeDict(m1, m2, m3, m4)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=['filter = "%s"'%f])
         slicerList.append(slicer)
@@ -217,8 +218,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               
 
     # Some other summary statistics over all filters.
-    m1 = configureMetric('MeanMetric', params=['slewTime'], summaryStats={'IdentityMetric':{}})
-    m2 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'TotalNVisits'},
+    m1 = configureMetric('MeanMetric', args=['slewTime'], summaryStats={'IdentityMetric':{}})
+    m2 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'TotalNVisits'},
                           summaryStats={'IdentityMetric':{}})
     m3 = configureMetric('OpenShutterMetric',summaryStats={'IdentityMetric':{}} )
     metricDict = makeDict(m1, m2, m3)
@@ -227,14 +228,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # And count number of visits per proposal.
     constraints = ["propID = '%s'"%pid for pid in propids ]
-    m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'Number of Visits Per Proposal'},
+    m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'Number of Visits Per Proposal'},
                          summaryStats={'IdentityMetric':{}, 'NormalizeMetric':{'normVal':totalNVisits}})
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1),
                              constraints=constraints)
     slicerList.append(slicer)
 
     # Count and plot number of visits per night, and calculate average.
-    m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'Number of visits per night'}, 
+    m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'Number of visits per night'}, 
                           summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
                              metricDict=makeDict(m1,m2),
@@ -245,7 +246,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # fO metrics for all and WFD
     fOnside = 64
-    m1 = configureMetric('CountMetric', params=['expMJD'],
+    m1 = configureMetric('CountMetric', args=['expMJD'],
                           kwargs={'metricName':'fO'},
                           plotDict={'units':'Number of Visits', 'xMin':0,
                                     'xMax':1500},
@@ -261,25 +262,25 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               
     # The merged histograms for basics 
     for f in filters:
-        m1 = configureMetric('CountMetric', params=['fivesigma_modified'], kwargs={'binsize':10},
+        m1 = configureMetric('CountMetric', args=['fivesigma_modified'], kwargs={'binsize':10},
                             histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
         slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_modified'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)]) 
         slicerList.append(slicer)
 
-        m1 = configureMetric('CountMetric', params=['perry_skybrightness'], kwargs={'binsize':0.1},
+        m1 = configureMetric('CountMetric', args=['perry_skybrightness'], kwargs={'binsize':0.1},
                             histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
         slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'perry_skybrightness'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)
     
-        m1 = configureMetric('CountMetric', params=['finSeeing'], kwargs={'binsize':0.03},
+        m1 = configureMetric('CountMetric', args=['finSeeing'], kwargs={'binsize':0.03},
                             histMerge={'histNum':3, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
         slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'finSeeing'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)
 
-        m1 = configureMetric('CountMetric', params=['airmass'], kwargs={'binsize':0.01},
+        m1 = configureMetric('CountMetric', args=['airmass'], kwargs={'binsize':0.01},
                             histMerge={'histNum':4, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
         slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass'},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
