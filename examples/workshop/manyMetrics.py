@@ -11,7 +11,7 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 # Set the output directory
 root.outputDir = './Very_simple_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1131_sqlite.db'}
 # Name of this run (filename base)
 root.opsimName = 'VerySimpleExample'
 
