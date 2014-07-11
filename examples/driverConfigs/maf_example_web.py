@@ -68,8 +68,8 @@ nside=64
 # List of SQL constraints.  If multiple constraints are listed in a slicer object,
 # they are looped over and each one is executed individualy. 
 constraints = ["filter = \'%s\'"%'r']
-m1 = configureMetric('RmsMetric', args=['finSeeing'], plotDict={'plotMin':0., 'plotMax':0.6})
-m2 =  configureMetric('RobustRmsMetric', args=['finSeeing'], plotDict={'plotMin':0., 'plotMax':0.6})
+m1 = configureMetric('RmsMetric', args=['finSeeing'], plotDict={'colorMin':0., 'colorMax':0.6})
+m2 =  configureMetric('RobustRmsMetric', args=['finSeeing'], plotDict={'colorMin':0., 'colorMax':0.6})
 metricDict = makeDict(m1,m2)
 slicer = configureSlicer('HealpixSlicer',
                           kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec"},

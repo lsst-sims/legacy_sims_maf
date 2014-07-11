@@ -95,7 +95,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
         constraints.append('filter = "%s"'%f)
     constraints.append('')
     constraints.append('night < 365')
-    m1 = configureMetric('UniformityMetric', plotDict={'plotMin':0., 'plotMax':1.})
+    m1 = configureMetric('UniformityMetric', plotDict={'colorMin':0., 'colorMax':1.})
     slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                                 metricDict=makeDict(m1),
                                 constraints=constraints)

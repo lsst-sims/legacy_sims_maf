@@ -181,7 +181,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
                                     'units':'# visits (WFD only)/ # WFD',
-                                    'plotMin':.5, 'plotMax':1.5, 'histBins':50},
+                                    'colorMin':.5, 'colorMax':1.5, 'histBins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                           summaryStats={'TableFractionMetric':{}})
@@ -195,7 +195,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (all) / (# WFD Requested)',
                                     'units':'# visits (all) / # WFD',
-                                    'plotMin':.5, 'plotMax':1.5, 'histBins':50},
+                                    'colorMin':.5, 'colorMax':1.5, 'histBins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                           summaryStats={'TableFractionMetric':{}})

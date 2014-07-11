@@ -305,18 +305,11 @@ class MafDriver(object):
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         summary = gm.computeSummaryStatistics(mm, stat)
-                                        if np.size(summary) == 1:
-                                           summary = np.array(np.asscalar(summary))
-                                        statstring = self.config.opsimName + ',' + slicer.slicerName + ',' \
-                                            + sqlconstraint 
-                                        statstring += ','  + mm + ',' + stat.name + ',' + np.array_str(summary)
+                                        
                                 # Else it's a simple metric value.
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, stat)
-                                    if np.size(summary) == 1:
-                                       summary = np.array(np.asscalar(summary))
-                                    statstring = self.config.opsimName + ',' + slicer.slicerName + ',' + sqlconstraint 
-                                    statstring += ',' + metric.name + ',' + stat.name + ',' + np.array_str(summary)
+                                       
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    Computed summarystats in %.3g s'%dt
@@ -388,12 +381,14 @@ class MafDriver(object):
                     cbm.readMetricData(fullfilename)
                 dictNums = cbm.slicemetrics.keys()
                 dictNums.sort()
-                fignum, title, histfile = cbm.plotHistograms(dictNums,[cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
+                fignum, title, histfile = cbm.plotHistograms(dictNums,
+                                                             [cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
                                                             outDir=self.config.outputDir, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
                 psfile = None
                 if cbm.slicemetrics[dictNums[0]] == 'HealpixSlicer':
-                   fignum, title, psfile = cbm.plotPowerSpectra(dictNums,[cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
+                   fignum, title, psfile = cbm.plotPowerSpectra(dictNums,
+                                                                [cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
                                                                 outDir=self.config.outputDir, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
                 # Add this plot info to the allOutDict ('ResultsSummary.dat')
