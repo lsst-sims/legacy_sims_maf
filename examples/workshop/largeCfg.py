@@ -1,14 +1,14 @@
 # A more complex MAF configuration that uses python loops to configure things for every filter
 
 # to run:
-# runDriver.py complex_cfg.py
+# runDriver.py largeCfg.py
 
 # Import MAF helper functions 
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 
 # Set the output directory
 root.outputDir = './Complex_out'
-root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1131_sqlite.db'}
 # Name of the output table in the database
 root.opsimName = 'ComplexExample'
 
@@ -22,7 +22,6 @@ colors={'u':'m','g':'b','r':'g','i':'y','z':'Orange','y':'r'}
 
 # Resolution to use for HEALpixels
 nside = 64
-
 
 constraints = [ 'filter = "%s"'%filt for filt in filters]
 # Compute the coadded depth and median seeing for each filter
