@@ -73,7 +73,7 @@ class HealpixSlicer(BaseSpatialSlicer):
     
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
                    logScale=False, cbarFormat='%.2g', cmap=cm.jet,
-                   percentileClip=None, plotMin=None, plotMax=None,
+                   percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
                    cbar_edge=True, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
@@ -105,12 +105,12 @@ class HealpixSlicer(BaseSpatialSlicer):
 
         if percentileClip:
             pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
-        if plotMin is None and percentileClip:
-            plotMin = pcMin
-        if plotMax is None and percentileClip:
-            plotMax = pcMax
-        if (plotMin is not None) and (plotMax is not None):
-            clims = [plotMin, plotMax]
+        if colorMin is None and percentileClip:
+            colorMin = pcMin
+        if colorMax is None and percentileClip:
+            colorMax = pcMax
+        if (colorMin is not None) and (colorMax is not None):
+            clims = [colorMin, colorMax]
         else:
             clims = None
             

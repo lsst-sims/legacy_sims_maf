@@ -247,7 +247,7 @@ class BaseSpatialSlicer(BaseSlicer):
                    projection='aitoff', radius=1.75/180.*np.pi,
                    logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   xMin=None, xMax=None, percentileClip=None,  cbar_edge=True, **kwargs):
+                   colorMin=None, colorMax=None, percentileClip=None,  cbar_edge=True, **kwargs):
         """Plot the sky map of metricValue."""
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
@@ -292,16 +292,16 @@ class BaseSpatialSlicer(BaseSlicer):
         # Add color bar (with optional setting of limits)
         if percentileClip:
             pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
-        if xMin is None and percentileClip:
-            xMin = pcMin
+        if colorMin is None and percentileClip:
+            colorMin = pcMin
         else:
-            xMin = metricValue.compressed().min()
-        if xMax is None and percentileClip:
-            xMax = pcMax
+            colorMin = metricValue.compressed().min()
+        if colorMax is None and percentileClip:
+            colorMax = pcMax
         else:
-            xMax = metricValue.compressed().max()
+            colorMax = metricValue.compressed().max()
         # Combine to make clims:
-        clims = [xMin, xMax]
+        clims = [colorMin, colorMax]
         p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
         # If outputing to PDF, this fixes the colorbar white stripes

@@ -9,17 +9,12 @@ nside=16
 slicerList=[]
 
 
-# Healpix sky map:  xlabel, title, logScale, cbarFormat, cmap, percentileClip, plotMin, plotMax, plotMaskedValues, zp,normval
-# Healpix hist:  title, xlabel, ylabel, label, addLegend, legendloc, bins, cumulative, xMin, xMax, logScale, plotXaxis, scale, color, linestyle
-# heal PS:  title, maxl, label, addLengend, removeDipole
-
-#oned:  title, units, label, addLegend, legendloc, filled, alpha, logScale, percentileClip, ylabel, xlabel, xMin,xMax, yMin,yMax, color, linestyle
 
 
 plotDict={'title':'title!', 'cmap':'RdBu', 'xlabel':'xlabel!', 'ylabel':'ylabel!', 
            'label':'label!', 'addLegend':True, 'color':'r', 'bins':150,
-          'cbarFormat':'%.4g', 'cumulative':True, 'logScale':True, 'plotMin':0.65,
-          'plotMax':1.5, 'xMin':0.5, 'xMax':1.7, 'linestyle':'--', 'maxl':40, 'removeDipole':False}
+          'cbarFormat':'%.4g', 'cumulative':True, 'logScale':True,'colorMin':0.65, 'colorMax':1.5,
+          'xMin':0.5, 'xMax':1.6, 'linestyle':'--', 'maxl':40, 'removeDipole':False}
 
 
 m1 = configureMetric('MeanMetric', args=['finSeeing'], plotDict=plotDict, kwargs={'metricName':'wplotdict'})
