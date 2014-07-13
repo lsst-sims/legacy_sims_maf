@@ -59,23 +59,23 @@ class MafDriver(object):
                 dt, time_prev = dtime(time_prev)
                 print 'Got OpSim config info in %.3g s'%dt
 
+        # Get proposal information (for OpSim databases).
         self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
         if self.verbose:
             dt, time_prev = dtime(time_prev)
             print 'fetched PropID info in %.3g s'%dt
+
         # Construct the slicers and metric objects
         self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, args, kwargs, setupArgs, setupKwargs, metricDict, \
-                constraints, stackCols, plotDict, metadata = readSlicerConfig(slicer)
-            temp_slicer = getattr(slicers,slicer.name)(*args, **kwargs )
-            temp_slicer.setupArgs = setupArgs
-            temp_slicer.setupKwargs = setupKwargs
+            name, kwargs, metricDict, constraints, stackCols, plotDict, metadata = \
+                readSlicerConfig(slicer)
+            temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
             #check that constraints in slicer are unique
             if len(temp_slicer.constraints) > len(set(temp_slicer.constraints)):
-                print 'Slicer %s has repeated constraints'%slicer.name
+                print 'Slicer %s has repeated constraints' %slicer.name
                 print 'Constraints:  ', slicer.constraints
                 raise Exception('Slicer constraints are not unique')
             temp_slicer.plotConfigs = slicer.plotConfigs
@@ -83,28 +83,24 @@ class MafDriver(object):
             temp_slicer.index = i
             stackersList = []
             for key in stackCols.keys():
-                name, args, kwargs = config2dict(stackCols[key])
-                stackersList.append(getattr(stackers, name)(*args, **kwargs))
+                stackername, kwargs = config2dict(stackCols[key])
+                stackersList.append(stackers.BaseStacker.getClass(stackername)(**kwargs))
             temp_slicer.stackers = stackersList
             self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
-                name,args,kwargs,plotDict,summaryStats,histMerge = readMetricConfig(metric)
+                name, kwargs, plotDict, summaryStats, histMerge = readMetricConfig(metric)
                 # Need to make summaryStats a dict with keys of metric names and items of kwarg dicts.
                 kwargs['plotParams'] = plotDict
-                # If just one parameter, look up units
-                if (len(args) == 1):
-                    info = utils.ColInfo()
-                    plotDict['_units'] = info.getUnits(args[0])
-                temp_metric = metrics.BaseMetric.registry[metric.name](*args, **kwargs)
+                temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
-                    temp_metric.summaryStats.append(getattr(metrics,key)
-                                                    ('metricdata',**readMixConfig(summaryStats[key])))
+                    summaryMetric = metrics.BaseMetric.getClass(key)('metricdata',
+                                                                     **readMixConfig(summaryStats[key]))
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():
-                      temp_metric.summaryStats.append(getattr(metrics,'IdentityMetric')('metricdata'))
+                      temp_metric.summaryStats.append(metrics.BaseMetric.registry['IdentityMetric']('metricdata'))
                 temp_metric.histMerge = histMerge
                 sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
@@ -266,9 +262,9 @@ class MafDriver(object):
                     # Set up slicer.
                     if slicer.slicerName == 'OpsimFieldSlicer':
                         # Need to pass in fieldData as well
-                        slicer.setupSlicer(self.data, self.fieldData, *slicer.setupArgs, **slicer.setupKwargs )
+                        slicer.setupSlicer(self.data, self.fieldData)
                     else:
-                        slicer.setupSlicer(self.data, *slicer.setupArgs, **slicer.setupKwargs)
+                        slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.BaseSliceMetric(figformat=self.figformat, dpi=self.dpi) 
                     gm.setSlicer(slicer)

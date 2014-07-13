@@ -78,8 +78,8 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, col=None, metricName=None, units=None, plotParams=None, metricDtype=None,
-                 badval=-666, **kwargs):
+    def __init__(self, col=None, metricName=None, units=None, plotParams=None,
+                 metricDtype=None, badval=-666):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to

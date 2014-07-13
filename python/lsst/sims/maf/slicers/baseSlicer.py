@@ -87,7 +87,7 @@ class BaseSlicer(object):
         # Will often be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {'badval':badval}
         
-    def setupSlicer(self, *args):
+    def setupSlicer(self, simData):
         """
         Set up Slicer for data slicing.
         
