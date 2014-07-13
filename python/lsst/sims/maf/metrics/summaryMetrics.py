@@ -8,7 +8,7 @@ class fOArea(BaseMetric):
     """
     Metric to calculate the FO Area; works with FO slicer only.
     """
-    def __init__(self, col=None, Asky=18000., Nvisit=825, 
+    def __init__(self, col='metricdata', Asky=18000., Nvisit=825, 
                  metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(fOArea, self).__init__(col=col, metricName=metricName, **kwargs)
@@ -36,7 +36,7 @@ class fONv(BaseMetric):
     """
     Metric to calculate the FO_Nv; works with FO slicer only.
     """
-    def __init__(self, col=None, Asky=18000., metricName='fONv', Nvisit=825, 
+    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825, 
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(fONv, self).__init__(col=col, metricName=metricName, **kwargs)
@@ -111,7 +111,7 @@ class IdentityMetric(BaseMetric):
 
 class NormalizeMetric(BaseMetric):
     """Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions."""
-    def __init__(self, col=None, normVal=1, **kwargs):
+    def __init__(self, col='metricdata', normVal=1, **kwargs):
         super(NormalizeMetric, self).__init__(col=col, **kwargs)
         self.normVal = normVal
     def run(self, dataSlice, slicePoint=None):

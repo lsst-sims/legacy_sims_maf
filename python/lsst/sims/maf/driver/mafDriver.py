@@ -95,9 +95,8 @@ class MafDriver(object):
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
-                    summaryMetric = metrics.BaseMetric.getClass(key)('metricdata',
-                                                                     **readMixConfig(summaryStats[key]))
-                # If it is a UniSlicer, make sure the IdentityMetric is run
+                    summarykwargs = readMixConfig(summaryStats[key])
+                    summaryMetric = metrics.BaseMetric.getClass(key)(col='metricdata', **summarykwargs)                           # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():
                       temp_metric.summaryStats.append(metrics.BaseMetric.registry['IdentityMetric']('metricdata'))
