@@ -13,57 +13,52 @@ class PercentileMetric(SimpleScalarMetric):
         pval = np.percentile(dataSlice[self.colname], self.percentile)
         return pval
 
-class DifferenceMetric(BaseMetric):
+class MaxDifferenceMetric(BaseMetric):
     """
     Take the difference between two data columns and return the max value of the difference.
     """
-    def __init__(self, colA, colB=None, **kwargs):
+    def __init__(self, colA=None, colB=None, **kwargs):
         self.colA = colA
         self.colB = colB
+        if (self.colA is None) or (self.colB is None):
+            raise Exception('Please set colA and colB.')
         super(DifferenceMetric, self).__init__([self.colA, self.colB], metricDtype='float', **kwargs)
-    def run(self, dataSlice, slicePoint=None):
-        if self.colB is not None:
-            difference = dataSlice[self.colA] - dataSlice[self.colB]
-            difference = np.abs(difference).max()
-        else:
-            difference = 0
-        return difference
-    
         
-class CoaddedDepthBestSeeingMetric(BaseMetric):
+    def run(self, dataSlice, slicePoint=None):
+        difference = dataSlice[self.colA] - dataSlice[self.colB]
+        difference = np.abs(difference).max()
+        return difference
+
+    
+class NightsWithNFiltersMetric(BaseMetric):
     """
-    Metric to calculate coadded limiting magnitude of visits,
-    using only visitFrac of the visits with best seeing.
+    Count how many times more than NFilters are used within the same night, for this set of visits.
     """
-    def __init__(self, seeingCol='finSeeing', m5col='fivesigma_modified', visitFrac=0.5, **kwargs):
+    def __init__(self, nightCol='night', filterCol='filter', nFilters=3, **kwargs):
         """
-        seeingCol = seeing column
-        m5col = five sigma limiting magnitude column
-        visitFrac = fraction of visits with best seeing to use.
+        nightCol = the name of the column defining the night
+        filterCol = the name of the column defining the filter
+        nFilters = the minimum desired set of filters used in these visits
         """
-        self.seeingCol = seeingCol
-        self.m5col = m5col
-        self.visitFrac = visitFrac
-        super(CoaddedDepthBestSeeingMetric, self).__init__([self.seeingCol, self.m5col],
-                                                           metricDtype='float', units='mag',
-                                                           **kwargs)
+        self.nightCol = nightCol
+        self.filterCol = filterCol
+        self.nFilters = nFilters
+        super(NightsWithNFiltersMetric, self).__init__([self.nightCol, self.filterCol],
+                                                       metricDtype='float',
+                                                       **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        # Get the indexes of the dataSlice array, sorted by seeing values.
-        seeingorder = np.argsort(dataSlice[self.seeingCol])
-        # Translate visitFrac into number of visits to use.
-        numvisits = self.visitFrac * len(seeingorder)
-        if numvisits < 1:
-            numvisits = 1
-        else:
-            numvisits = int(np.floor(numvisits))
-        # Identify the visits we want to use.
-        bestseeingvisits = seeingorder[:numvisits]
-        # Calculate coadded depth of these visits.
-        coaddm5 = 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.m5col][bestseeingvisits])))
-        return coaddm5
+        count = 0
+        uniqueNights = np.unique(dataSlice[self.nightCol])
+        for n in uniqueNights:
+            condition = (dataSlice[self.night] == n)
+            uniqueFilters = dataSlice[self.filterCol][condition]
+            if len(uniqueFilters) > self.nFilters:
+                count += 1
+        return count    
 
-class ComplexCoaddedDepthBestSeeingMetric(BaseMetric):
+    
+class BestSeeingCoaddedDepthMetric(BaseMetric):
     """
     Metric to calculate the coadded limiting magnitude of a set
     of visits, using only visitFrac of the visits with best seeing -- and to
@@ -104,31 +99,3 @@ class ComplexCoaddedDepthBestSeeingMetric(BaseMetric):
         return data['m5']
     def reduceMeanSeeing(self, data):
         return data['meanSeeing']
-
-
-class NightsWithNFiltersMetric(BaseMetric):
-    """
-    Count how many times more than NFilters are used within the same night, for this set of visits.
-    """
-    def __init__(self, nightCol='night', filterCol='filter', nFilters=3, **kwargs):
-        """
-        nightCol = the name of the column defining the night
-        filterCol = the name of the column defining the filter
-        nFilters = the minimum desired set of filters used in these visits
-        """
-        self.nightCol = nightCol
-        self.filterCol = filterCol
-        self.nFilters = nFilters
-        super(NightsWithNFiltersMetric, self).__init__([self.nightCol, self.filterCol],
-                                                       metricDtype='float',
-                                                       **kwargs)
-
-    def run(self, dataSlice, slicePoint=None):
-        count = 0
-        uniqueNights = np.unique(dataSlice[self.nightCol])
-        for n in uniqueNights:
-            condition = (dataSlice[self.night] == n)
-            uniqueFilters = dataSlice[self.filterCol][condition]
-            if len(uniqueFilters) > self.nFilters:
-                count += 1
-        return count

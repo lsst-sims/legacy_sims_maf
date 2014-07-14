@@ -42,7 +42,7 @@ def getSlicer(simdata):
     print 'Set up slicer %f s' %(dt)
     return bb
 
-def goBin(opsimrun, metadata, simdata, bb, metricList):
+def goSlice(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
     gm = sliceMetrics.BaseSliceMetric()
     gm.setSlicer(bb)
@@ -109,12 +109,12 @@ if __name__ == '__main__':
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"', '')
-    gm = goBin(opsimrun, metadata, simdata, bb, metricList)
+    gm = goSlice(opsimrun, metadata, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.
     printSummary(gm, metricList)
 
-    # No plots for unislicer (these are single number results).
+    # Unlike other examples, don't generate any plots (these are single number results).
     
     # Write the data to file.
     write(gm)
