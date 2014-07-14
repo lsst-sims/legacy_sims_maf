@@ -49,7 +49,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     for f in filters:
         # Set up metrics and slicers.
         m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisits'}, 
-                            plotDict={'plotMin':0, 'plotMax':200, 'units':'N Visits'},
+                            plotDict={'colorMin':0, 'colorMax':200, 'units':'N Visits',
+                                      'xMin':0, 'xMax':200},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
