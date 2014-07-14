@@ -17,7 +17,7 @@ root.opsimName = 'ob1_1131'
 
 # Configure a metric to run. Compute the mean on the final delivered seeing.
 #Once the mean seeing has been computed everywhere on the sky, compute the RMS as a summary statistic.
-metric = configureMetric('MeanMetric', args=['finSeeing'],
+metric = configureMetric('MeanMetric', kwargs={'col':'finSeeing'},
                           summaryStats={'RmsMetric':{}})
 
 # Configure a slicer.  Use the Healpixslicer to compute the metric at points in the sky.

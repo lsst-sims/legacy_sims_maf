@@ -17,8 +17,8 @@ plotDict={'title':'title!', 'cmap':'RdBu', 'xlabel':'xlabel!', 'ylabel':'ylabel!
           'xMin':0.5, 'xMax':1.6, 'linestyle':'--', 'maxl':40, 'removeDipole':False}
 
 
-m1 = configureMetric('MeanMetric', args=['finSeeing'], plotDict=plotDict, kwargs={'metricName':'wplotdict'})
-m2 = configureMetric('MeanMetric', args=['finSeeing'])
+m1 = configureMetric('MeanMetric',  plotDict=plotDict, kwargs={'col': 'finSeeing', 'metricName':'wplotdict'})
+m2 = configureMetric('MeanMetric', kwargs={'col': 'finSeeing'})
 
 metricDict = makeDict(m1,m2)
 
@@ -34,8 +34,8 @@ plotDict={ 'title':'title!', 'xMin':0.5, 'xMax':1.7, 'ylabel':'ylabel!',
            'yMin':0.1,'yMax':10000., 'logScale':True, 'linestyle':'--'}
 
 
-m1 = configureMetric('CountMetric', args=['finSeeing'], kwargs={'metricName':'wplotdict'},plotDict=plotDict)
-m2 = configureMetric('CountMetric', args=['finSeeing'])
+m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing', 'metricName':'wplotdict'}, plotDict=plotDict)
+m2 = configureMetric('CountMetric', kwargs={'col':'finSeeing'})
 
 metricDict = makeDict(m1,m2)
 slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'finSeeing'},

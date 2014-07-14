@@ -36,17 +36,16 @@ nside = 64
 filters = ['g','r']
 for f in filters:
     # Set up metrics and slicers.
-    m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisits'}, 
+    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD','metricName':'NVisits'}, 
                             plotDict={'plotMin':0, 'plotMax':200, 'units':'N Visits'},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-    m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
+    m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fivesigma_modified'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
     metricDict = makeDict(m1, m2)
     sqlconstraint = 'filter = "%s"' %(f)
     slicer = configureSlicer('HealpixSlicer',
                             kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec'},
                             metricDict=metricDict, constraints=[sqlconstraint,])
-    config.slicers=makeDict(slicer)
     slicerList.append(slicer)
 
 # Bundle together metrics and slicers and pass to 'root'
