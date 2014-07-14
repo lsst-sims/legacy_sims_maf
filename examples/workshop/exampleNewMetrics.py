@@ -1,13 +1,13 @@
-from lsst.sims.maf.metrics import BaseMetric, SimpleScalarMetric
+from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
-class SimplePercentileMetric(SimpleScalarMetric):
+class SimplePercentileMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.percentile(dataSlice[self.colname], 95)
 
-class PercentileMetric(SimpleScalarMetric):
-    def __init__(self, colname, percentile=90, **kwargs):
-        super(PercentileMetric, self).__init__(colname, **kwargs)
+class PercentileMetric(BaseMetric):
+    def __init__(self, col=None, percentile=90, **kwargs):
+        super(PercentileMetric, self).__init__(col=col, **kwargs)
         self.percentile = percentile
     def run(self, dataSlice, slicePoint=None):
         pval = np.percentile(dataSlice[self.colname], self.percentile)
