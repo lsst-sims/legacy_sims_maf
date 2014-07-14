@@ -1,13 +1,16 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from .simpleMetrics import SimpleScalarMetric
 
 class SupernovaMetric(BaseMetric):
-    """Measure how many time serries meet a given time and filter distribution requirement """
-    def __init__(self, metricName='SupernovaMetric', mjdcol='expMJD', filtercol='filter',
-                 m5col='fivesigma_modified', units='', redshift=0.,
+    """
+    Measure how many time series meet a given time and filter distribution requirement.
+    """
+    def __init__(self, metricName='SupernovaMetric',
+                 mjdCol='expMJD', filterCol='filter', m5Col='fivesigma_modified',
+                 units='', redshift=0.,
                  Tmin = -20., Tmax = 60., Nbetween=7, Nfilt=2, Tless = -5., Nless=1,
-                 Tmore = 30., Nmore=1, peakGap=15., snrCut=10., singleDepthLimit=23., resolution=5., badval=666,
+                 Tmore = 30., Nmore=1, peakGap=15., snrCut=10., singleDepthLimit=23.,
+                 resolution=5., badval=-666,
                  uniqueBlocks=False, **kwargs):
         """
         redshift = redshift of the SN.  Used to scale observing dates to SN restframe.
@@ -36,15 +39,14 @@ class SupernovaMetric(BaseMetric):
         with filters between 300 < lam_rest < 900 nm are included
 
         In the science book, the metric demands Nfilt observations above a SNR cut.
-        Here, we demand Nfilt observations near the peak with a given singleDepthLimt."""
-        
-        cols=[mjdcol,filtercol,m5col]
-        self.mjdcol = mjdcol
-        self.m5col = m5col
-        self.filtercol = filtercol
-        super(SupernovaMetric, self).__init__(cols, metricName, units=units, **kwargs)
-        self.metricDtype = 'object'
-        self.units = units
+        Here, we demand Nfilt observations near the peak with a given singleDepthLimt.
+        """        
+        self.mjdCol = mjdCol
+        self.m5Col = m5Col
+        self.filterCol = filterCol
+        super(SupernovaMetric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
+                                              metricName=metricName, units=units, badval=badval,
+                                              **kwargs)
         self.redshift = redshift
         self.Tmin = Tmin
         self.Tmax = Tmax
@@ -59,11 +61,10 @@ class SupernovaMetric(BaseMetric):
         self.resolution = resolution
         self.uniqueBlocks = uniqueBlocks
         self.filterNames = np.array(['u','g','r','i','z','y'])
-        self.filterWave = np.array([375.,476.,621.,754.,870.,980.])/(1.+self.redshift) # XXX - rough values
-        #XXX make wave limits kwargs?
+        # Set rough values for the filter effective wavelengths. 
+        self.filterWave = np.array([375.,476.,621.,754.,870.,980.])/(1.+self.redshift) 
         self.filterNames = self.filterNames[np.where( (self.filterWave > 300.) & (self.filterWave < 900.))[0]] 
         self.singleDepthLimit = singleDepthLimit
-        self.badval = badval
 
         # It would make sense to put a dict of interpolation functions here keyed on filter that take time
         #and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.
@@ -75,8 +76,8 @@ class SupernovaMetric(BaseMetric):
         dataSlice = dataSlice[goodFilters]
         if dataSlice.size == 0:
             return (self.badval, self.badval,self.badval)
-        dataSlice.sort(order=self.mjdcol)
-        time = dataSlice[self.mjdcol]-dataSlice[self.mjdcol].min()
+        dataSlice.sort(order=self.mjdCol)
+        time = dataSlice[self.mjdCol]-dataSlice[self.mjdCol].min()
         # Now days in SN rest frame
         time = time/(1.+ self.redshift) 
         # Creat time steps to evaluate at
@@ -108,14 +109,14 @@ class SupernovaMetric(BaseMetric):
                 if np.size(np.where(t < self.Tless)[0]) > self.Nless:
                     if np.size(np.where(t > self.Tmore)[0]) > self.Nmore:
                         if np.size(t) > self.Nbetween:
-                            ufilters = np.unique(visits[self.filtercol])
+                            ufilters = np.unique(visits[self.filterCol])
                             if np.size(ufilters) >= self.Nfilt: #XXX need to add snr cut here
                                 filtersBrightEnough = 0
                                 nearPeak = np.where((t > self.Tless) & (t < self.Tmore))
-                                ufilters = np.unique(visits[self.filtercol][nearPeak])
+                                ufilters = np.unique(visits[self.filterCol][nearPeak])
                                 for f in ufilters:
-                                    if np.max(visits[self.m5col][nearPeak]
-                                              [np.where(visits[self.filtercol][nearPeak] == f)]) \
+                                    if np.max(visits[self.m5Col][nearPeak]
+                                              [np.where(visits[self.filterCol][nearPeak] == f)]) \
                                               > self.singleDepthLimit:
                                         filtersBrightEnough += 1
                                 if filtersBrightEnough >= self.Nfilt:
@@ -151,26 +152,22 @@ class SupernovaMetric(BaseMetric):
                                 
 class TemplateExistsMetric(BaseMetric):
     """
-    Calculate what fraction of images have a previous template image of desired quality.
-
-    Note, one could consider adding additional requirements such as making sure a
-    template exists within a given paralactic angle.
+    Calculate the fraction of images with a previous template image of desired quality.
     """
-    def __init__(self, seeingCol = 'finSeeing', expMJDcol='expMJD', 
+    def __init__(self, seeingCol = 'finSeeing', expMJDCol='expMJD', 
                  metricName='TemplateExistsMetric', **kwargs):
         """
         seeingCol = column with final seeing value (arcsec)
-        expMJDcol = column with exposure MJD.
+        expMJDCol = column with exposure MJD.
         """
-        cols = [seeingCol, expMJDcol]
-        super(TemplateExistsMetric, self).__init__(cols, metricName, units='fraction',
-                                                  metricDtype='float', **kwargs)
+        cols = [seeingCol, expMJDCol]
+        super(TemplateExistsMetric, self).__init__(col=cols, metricName=metricName, units='fraction', **kwargs)
         self.seeingCol = seeingCol
-        self.expMJDcol = expMJDcol
+        self.expMJDCol = expMJDCol
 
     def run(self,dataSlice, slicePoint=None):
         # Check that data is sorted in expMJD order
-        dataSlice.sort(order=self.expMJDcol)
+        dataSlice.sort(order=self.expMJDCol)
         # Find the minimum seeing up to a given time
         seeing_mins = np.minimum.accumulate(dataSlice[self.seeingCol])
         # Find the difference between the seeing and the minimum seeing at the previous visit
@@ -183,14 +180,12 @@ class TemplateExistsMetric(BaseMetric):
 class UniformityMetric(BaseMetric):
     """Calculate how uniformly the observations are spaced in time.  Returns a value between -1 and 1.
     A value of zero means the observations are perfectly uniform.  """
-    def __init__(self, expMJDcol='expMJD', units='',
+    def __init__(self, expMJDCol='expMJD', units='',
                  surveyLength=10., **kwargs):
         """surveyLength = time span of survey (years) """
-        cols = [expMJDcol]
-        super(UniformityMetric,self).__init__(cols, units=units, **kwargs)
-        self.expMJDcol = expMJDcol
+        self.expMJDCol = expMJDCol
+        super(UniformityMetric,self).__init__(col=self.expMJDCol, units=units, **kwargs)
         self.surveyLength = surveyLength
-        self.metricDtype=float
 
 
     def run(self,dataSlice, slicePoint=None):
@@ -199,24 +194,25 @@ class UniformityMetric(BaseMetric):
         and compare to a uniform cumulative distribution.
         Perfectly uniform observations will score a 0, while pure non-uniformity is 1."""
         # If only one observation, there is no uniformity
-        if dataSlice[self.expMJDcol].size == 1:
+        if dataSlice[self.expMJDCol].size == 1:
             return 1
         # Scale dates to lie between 0 and 1, where 0 is the first observation date and 1 is surveyLength
-        dates = (dataSlice[self.expMJDcol]-dataSlice[self.expMJDcol].min())/(self.surveyLength*365.25)
+        dates = (dataSlice[self.expMJDCol]-dataSlice[self.expMJDCol].min())/(self.surveyLength*365.25)
         dates.sort() # Just to be sure
         n_cum = np.arange(1,dates.size+1)/float(dates.size) # Cumulative distribution of dates
         D_max = np.max(np.abs(n_cum-dates-dates[1])) # For a uniform distribution, dates = n_cum
         return D_max
         
+                
         
-        
-        
-class QuickRevisitMetric(SimpleScalarMetric):
-    """Some kind of metric to investigate how dithering effects short-timescale measurements."""
+class QuickRevisitMetric(BaseMetric):
+    """
+    Some kind of metric to investigate how dithering effects short-timescale measurements.
+    (used in SPIE paper; consider depreciating this at some point).
+    """
     def __init__(self, nightCol='night', nVisitsInNight=6, **kwargs):
-        cols = [nightCol]
-        super(QuickRevisitMetric, self).__init__(cols, **kwargs)        
         self.nightCol = nightCol
+        super(QuickRevisitMetric, self).__init__(col=self.nightCol, **kwargs)        
         self.nVisitsInNight = nVisitsInNight
         xlabel = 'Number of Nights with >= %d Visits' %(nVisitsInNight)
         if 'xlabel' not in self.plotParams:

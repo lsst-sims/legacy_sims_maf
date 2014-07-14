@@ -5,18 +5,18 @@ from lsst.sims.maf.utils.astrometryUtils import *
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
     """
-    def __init__(self, metricName='parallax', m5col='fivesigma_modified',
-                 mjdcol='expMJD', units = 'mas',
-                 filtercol='filter', seeingcol='finSeeing',rmag=20.,
-                 SedTemplate='flat', badval= -666,
+    def __init__(self, metricName='parallax', m5Col='fivesigma_modified',
+                 mjdCol='expMJD', units = 'mas',
+                 filterCol='filter', seeingCol='finSeeing',rmag=20.,
+                 SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False,**kwargs):
         
         """ Instantiate metric.
 
-        m5col = column name for inidivual visit m5
-        mjdcol = column name for exposure time dates
-        filtercol = column name for filter
-        seeingcol = column name for seeing (assumed FWHM)
+        m5Col = column name for inidivual visit m5
+        mjdCol = column name for exposure time dates
+        filterCol = column name for filter
+        seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         atm_err = centroiding error due to atmosphere in arcsec
         normalize = Compare to a survey that has all observations with maximum parallax factor.
@@ -25,15 +25,15 @@ class ParallaxMetric(BaseMetric):
 
         return uncertainty in mas. Or normalized map as a fraction
         """
-        cols = [m5col, mjdcol,filtercol,seeingcol, 'ra_pi_amp', 'dec_pi_amp']
+        Cols = [m5Col, mjdCol,filterCol,seeingCol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
             units = 'ratio'
-        super(ParallaxMetric, self).__init__(cols, metricName=metricName, units=units, **kwargs)
+        super(ParallaxMetric, self).__init__(Cols, metricName=metricName, units=units,
+                                             badval=badval, **kwargs)
         # set return type
-        self.m5col = m5col
-        self.seeingcol = seeingcol
-        self.filtercol = filtercol
-        self.metricDtype = 'float'
+        self.m5Col = m5Col
+        self.seeingCol = seeingCol
+        self.filterCol = filterCol
         filters=['u','g','r','i','z','y']
         self.mags={}
         if SedTemplate == 'flat':
@@ -41,7 +41,6 @@ class ParallaxMetric(BaseMetric):
                 self.mags[f] = rmag
         else:
             raise NotImplementedError('Spot to add colors for different stars')
-        self.badval = badval
         self.atm_err = atm_err
         self.normalize = normalize
         
@@ -56,13 +55,13 @@ class ParallaxMetric(BaseMetric):
         return sigma
         
     def run(self, dataslice, slicePoint=None):
-        filters = np.unique(dataslice[self.filtercol])
+        filters = np.unique(dataslice[self.filterCol])
         snr = np.zeros(len(dataslice), dtype='float')
         # compute SNR for all observations
         for filt in filters:
-            good = np.where(dataslice[self.filtercol] == filt)
-            snr[good] = m52snr(self.mags[filt], dataslice[self.m5col][good])
-        position_errors = np.sqrt(astrom_precision(dataslice[self.seeingcol], snr)**2+self.atm_err**2)
+            good = np.where(dataslice[self.filterCol] == filt)
+            snr[good] = m52snr(self.mags[filt], dataslice[self.m5Col][good])
+        position_errors = np.sqrt(astrom_precision(dataslice[self.seeingCol], snr)**2+self.atm_err**2)
         sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp'],dataslice['dec_pi_amp'] )
         if self.normalize:
             # Leave the dec parallax as zero since one can't have ra and dec maximized at the same time.
@@ -75,17 +74,17 @@ class ProperMotionMetric(BaseMetric):
     """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
     """
     def __init__(self, metricName='properMotion',
-                 m5col='fivesigma_modified', mjdcol='expMJD', units='mas/yr',
-                 filtercol='filter', seeingcol='finSeeing',  rmag=20.,
+                 m5Col='fivesigma_modified', mjdCol='expMJD', units='mas/yr',
+                 filterCol='filter', seeingCol='finSeeing',  rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
         """ Instantiate metric.
 
-        m5col = column name for inidivual visit m5
-        mjdcol = column name for exposure time dates
-        filtercol = column name for filter
-        seeingcol = column name for seeing (assumed FWHM)
+        m5Col = column name for inidivual visit m5
+        mjdCol = column name for exposure time dates
+        filterCol = column name for filter
+        seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         sedTemplate = template to use (currently only 'flat' is implamented)
         atm_err = centroiding error due to atmosphere in arcsec
@@ -95,14 +94,13 @@ class ProperMotionMetric(BaseMetric):
         while a poorly scheduled survey will be close to zero.
         baseline = The length of the survey used for the normalization (years)
         """
-        cols = [m5col, mjdcol,filtercol,seeingcol]
+        cols = [m5Col, mjdCol,filterCol,seeingCol]
         if normalize:
             units = 'ratio'
-        super(ProperMotionMetric, self).__init__(cols, metricName, units=units, **kwargs)
+        super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units, badval=badval, **kwargs)
         # set return type
-        self.seeingcol = seeingcol
-        self.m5col = m5col
-        self.metricDtype = 'float'
+        self.seeingCol = seeingCol
+        self.m5Col = m5Col
         filters=['u','g','r','i','z','y']
         self.mags={}
         if SedTemplate == 'flat':
@@ -110,7 +108,6 @@ class ProperMotionMetric(BaseMetric):
                 self.mags[f] = rmag
         else:
             raise NotImplementedError('Spot to add colors for different stars')
-        self.badval = badval
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
@@ -124,9 +121,9 @@ class ProperMotionMetric(BaseMetric):
                 precis[observations] = self.badval
             else:
                 snr = m52snr(self.mags[f],
-                   dataslice[self.m5col][observations])
+                   dataslice[self.m5Col][observations])
                 precis[observations] = astrom_precision(
-                    dataslice[self.seeingcol][observations], snr)
+                    dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
         result = sigma_slope(dataslice['expMJD'][good], precis[good])
@@ -159,18 +156,17 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 class RadiusObsMetric(BaseMetric):
     """find the radius in the focal plane. """
 
-    def __init__(self, metricName='radiusObs', racol='fieldRA',deccol='fieldDec',
+    def __init__(self, metricName='radiusObs', raCol='fieldRA',decCol='fieldDec',
                  units='radians', **kwargs):
-        cols = [racol,deccol]
-        self.racol = racol
-        self.deccol=deccol
-        self.units=units
-        super(RadiusObsMetric,self).__init__(cols,metricName=metricName, **kwargs)
+        self.raCol = raCol
+        self.decCol=decCol
+        super(RadiusObsMetric,self).__init__(col=[self.raCol, self.decCol],
+                                             metricName=metricName, units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint):
         ra = slicePoint['ra']
         dec = slicePoint['dec']
-        distances = calcDist_cosines(ra,dec, dataSlice[self.racol], dataSlice[self.deccol])
+        distances = calcDist_cosines(ra,dec, dataSlice[self.raCol], dataSlice[self.decCol])
         return distances
 
     def reduceMean(self, distances):

@@ -43,7 +43,7 @@ class TestCadenceMetrics(unittest.TestCase):
         names = ['expMJD']
         types=[float]
         data = np.zeros(100, dtype=zip(names,types))
-        metric = metrics.UniformityMetric(dayStart=0.)
+        metric = metrics.UniformityMetric()
         result1 = metric.run(data)
         # If all the observations are on the 1st day, should be 1
         assert(result1 == 1)

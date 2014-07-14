@@ -313,7 +313,7 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
                                      plotParams={'units':'meanunits'})
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.testbbm.setMetrics([self.m1,])
-        self.summaryStat = metrics.MeanMetric('metricData')
+        self.summaryStat = metrics.MeanMetric('metricdata')
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
         self.metadata = 'testing fake data run'
@@ -356,6 +356,7 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             summary = self.testbbm.computeSummaryStatistics('objecttest', self.summaryStat)
+            print 'here', summary
             self.assertTrue('objecttest' in str(w[-1].message))
             self.assertEqual(summary, None)
                             

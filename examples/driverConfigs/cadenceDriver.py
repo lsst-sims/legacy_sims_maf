@@ -49,20 +49,22 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     ########### Early Seeing Metrics ################
     seeing_limit = 0.7 # Demand seeing better than this
     for f in usefilters:
-        m1 = configureMetric('BinaryMetric', args=['finSeeing'], summaryStats={'SumMetric':{}})
+        m1 = configureMetric('BinaryMetric', kwargs={'col':'finSeeing'}, summaryStats={'SumMetric':{}})
         slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                                  metricDict=makeDict(m1),
-                                 constraints= ['night < 365 and filter = "%s" and finSeeing < %s'%(f, seeing_limit),
-                                                'night < 730 and filter = "%s" and finSeeing < %s'%(f, seeing_limit),
+                                 constraints= ['night < 365 and filter = "%s" and finSeeing < %s'%(f,
+                                                                                                   seeing_limit),
+                                                'night < 730 and filter = "%s" and finSeeing < %s'%(f,
+                                                                                                    seeing_limit),
                                                 'filter = "%s" and finSeeing < %s'%(f, seeing_limit)])
         slicerList.append(slicer)
 
     # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
     for f in usefilters:
         m1 = configureMetric('TemplateExistsMetric')
-        m2 = configureMetric('MinMetric', args=['finSeeing'])
-        m3 = configureMetric('FracBelowMetric', args=['finSeeing'], kwargs={'cutoff':seeing_limit})
-        slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside}, metricDict=makeDict(m1,m2,m3),
+        m2 = configureMetric('MinMetric', kwargs={'col':'finSeeing'})
+        m3 = configureMetric('FracBelowMetric', kwargs={'col':'finSeeing', 'cutoff':seeing_limit})
+        slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside}, metricDict=makeDict(m1,m2,m3),
                                 constraints=['night < 365 and filter = "%s"'%(f),
                                             'night < 730 and filter = "%s"'%(f),
                                             'filter = "%s"'%(f)])
@@ -71,7 +73,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     #########  Supernova Metric ############
     m1 = configureMetric('SupernovaMetric',
-                         kwargs={'m5col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.},
+                         kwargs={'m5Col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.},
                          plotDict={'percentileClip':95.})
     ########   Parallax and Proper Motion ########
     m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
@@ -105,7 +107,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     #### Visit Group Metric ######
     m1 = configureMetric('VisitGroupsMetric')
-    slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
+    slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
                             metricDict=makeDict(m1),
                             constraints=['filter = "%s"'%'r'])
     slicerList.append(slicer)

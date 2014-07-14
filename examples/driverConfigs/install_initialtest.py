@@ -1,49 +1,53 @@
-# A simple config test.
+# A simple driver configuration test script.
 
-#To run:
-#  download opsim data (such as run opsimblitz2_1060) using
-#curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1060/design/opsimblitz2_1060_sqlite.db 
-#   then run using the driver (assuming you are in this directory, and you downloaded the opsim run to this directory)
-#runDriver.py install_initialtest.py --runName opsimblitz2_1039
-#  (note you can be in a different directory and run this config by specifying a full pathname to this config)
-#  (note you can also put the opsim dbfile in a different directory and specify its location using --dbDir)
+## To run:
+# cd to your working directory of choice (not this directory -- somewhere outside the MAF source tree).
+## copy this file to that working directory
+# cd [MY_WORK_DIRECTORY]
+# cp $SIMS_MAF_DIR/examples/driverConfigs/install_initialtest.py .
+##  download opsim data (such as run opsimblitz2_1060) using
+# curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1060/design/opsimblitz2_1060_sqlite.db 
+## run the install_initialtest.py driver config script:
+# runDriver.py install_initialtest.py
 
+# Note that 'root' is the parameter which bundles up all configurable settings and passes these
+# setting into the driver.
 
 import os
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
+# Setup Database access. 
+dbDir = '.'
+runName = 'opsimblitz2_1060'
+sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
+root.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
+root.opsimName = runName
 
-def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
-    """
-    Set up a MAF config for a very simple, example analysis.
-    """
+# Set output directory.
+root.outputDir = 'OutDir'
 
-    # Setup Database access
-    config.outputDir = outputDir
-    sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
-    config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
-    config.opsimName = runName
+# Set up slicerList to store slicers.
+slicerList = []
+# Set parameter for healpix slicer resolution.
+nside = 64
 
-
-    slicerList = []
-    nside = 64
-
-    filters = ['g','r']
-
-    for f in filters:
-        m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisits'}, 
+# Loop over g and r filters, running metrics and slicers in each bandpass.
+filters = ['g','r']
+for f in filters:
+    # Set up metrics and slicers.
+    m1 = configureMetric('CountMetric', args=['expMJD'], kwargs={'metricName':'NVisits'}, 
                             plotDict={'plotMin':0, 'plotMax':200, 'units':'N Visits'},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-        m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
+    m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
-        metricDict = makeDict(m1, m2)
-        sqlconstraint = 'filter = "%s"' %(f)
-        slicer = configureSlicer('HealpixSlicer',
-                                  kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec'},
-                                metricDict=metricDict, constraints=[sqlconstraint,])
-        config.slicers=makeDict(slicer)
-        slicerList.append(slicer)
+    metricDict = makeDict(m1, m2)
+    sqlconstraint = 'filter = "%s"' %(f)
+    slicer = configureSlicer('HealpixSlicer',
+                            kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec'},
+                            metricDict=metricDict, constraints=[sqlconstraint,])
+    config.slicers=makeDict(slicer)
+    slicerList.append(slicer)
 
-    config.slicers=makeDict(*slicerList)
-    return config
+# Bundle together metrics and slicers and pass to 'root'
+root.slicers=makeDict(*slicerList)

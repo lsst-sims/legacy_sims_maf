@@ -1,16 +1,17 @@
 import numpy as np
-from .simpleMetrics import SimpleScalarMetric
-from .baseMetric import BaseMetric
 import healpy as hp
+from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
     
 class fOArea(BaseMetric):
-    """Metric to calculate the FO Area; works with FO slicer only."""
-    def __init__(self, cols, Asky=18000., Nvisit=825, 
+    """
+    Metric to calculate the FO Area; works with FO slicer only.
+    """
+    def __init__(self, col='metricdata', Asky=18000., Nvisit=825, 
                  metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(fOArea, self).__init__(cols,metricName=metricName,**kwargs)
+        super(fOArea, self).__init__(col=col, metricName=metricName, **kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
@@ -32,11 +33,13 @@ class fOArea(BaseMetric):
         
 
 class fONv(BaseMetric):
-    """Metric to calculate the FO_Nv; works with FO slicer only."""
-    def __init__(self, cols, Asky=18000., metricName='fONv', Nvisit=825, 
+    """
+    Metric to calculate the FO_Nv; works with FO slicer only.
+    """
+    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825, 
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(fONv, self).__init__(cols,metricName=metricName,**kwargs)
+        super(fONv, self).__init__(col=col, metricName=metricName, **kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
@@ -60,7 +63,7 @@ class fONv(BaseMetric):
 class TableFractionMetric(BaseMetric):
     """
     Count the completeness (for many fields) and summarize how many fields have given completeness levels
-    (within a series of bins).
+    (within a series of bins). Works with completenessMetric only.
 
     This metric is meant to be used as a summary statistic on something like the completeness metric.
     The output is DIFFERENT FROM SSTAR and is:
@@ -75,13 +78,12 @@ class TableFractionMetric(BaseMetric):
         12        1 < P
         Note the 1st and last elements do NOT obey the numpy histogram conventions.
     """
-    def __init__(self, colname, nbins=10):
+    def __init__(self, col='metricdata', nbins=10):
         """
         colname = the column name in the metric data (i.e. 'metricdata' usually).
         nbins = number of bins between 0 and 1. Should divide evenly into 100.  
         """
-        super(TableFractionMetric, self).__init__(colname)
-        self.colname = colname
+        super(TableFractionMetric, self).__init__(col=col, metricDtype='object')
         binsize = 1.0/float(nbins)
         self.tableBins = np.arange(0, 1 + binsize/2., binsize)
         self.tableBins = np.concatenate((np.zeros(1, float), self.tableBins))
@@ -90,9 +92,7 @@ class TableFractionMetric(BaseMetric):
         
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
-        print self.tableBins[1:-2], len(self.tableBins[1:-2])
         hist, b = np.histogram(dataSlice[self.colname], bins=self.tableBins[1:-2])
-        print hist, len(hist)
         # Fill in values for exact 0, exact 1 and >1.
         zero = np.size(np.where(dataSlice[self.colname] == 0)[0])
         # Remove the fields which were exactly 0 from the histogrammed values.
@@ -102,40 +102,17 @@ class TableFractionMetric(BaseMetric):
         hist = np.concatenate((np.array([zero]), hist, np.array([one]), np.array([overone])))
         return self.tableBins, hist
 
-class SSTARTableFractionMetric(BaseMetric):
-    # Using SimpleScalarMetric, but returning a histogram.
-    """This metric is meant to be used as a summary statistic on something like the completeness metric.
-    
-    This table matches the SSTAR table of the format:
-    element   matching values
-    0         0 < P < 10
-    1         10 <= P < 20
-    2         20 <= P < 30
-    ...
-    9         90 <= P < 100
-    10        100 <= P
-    Note the 1st and last elements do NOT obey the numpy histogram conventions."""
-    def run(self, dataSlice, slicePoint=None):    
-        # Use int step sizes to try and avoid floating point round-off errors.
-        bins = np.arange(0,12,1)/10. 
-        hist, binEdges = np.histogram(dataSlice[dataSlice.dtype.names[0]], bins=bins)
-        hist[-1] = np.size(np.where(dataSlice[dataSlice.dtype.names[0]] >= 1. )[0])
-        # clip off fields that were not observed, matching SSTAR table
-        hist[0] = np.size(np.where( (dataSlice[dataSlice.dtype.names[0]] > 0.) &
-                                    (dataSlice[dataSlice.dtype.names[0]] < 0.1))[0] ) 
-        return hist
 
-
-class IdentityMetric(SimpleScalarMetric):
+class IdentityMetric(BaseMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
     def run(self, dataSlice, slicePoint=None):
         return dataSlice[self.colname]
 
 
-class NormalizeMetric(SimpleScalarMetric):
+class NormalizeMetric(BaseMetric):
     """Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions."""
-    def __init__(self, colname, normVal=1):
-        super(NormalizeMetric, self).__init__(colname)
+    def __init__(self, col='metricdata', normVal=1, **kwargs):
+        super(NormalizeMetric, self).__init__(col=col, **kwargs)
         self.normVal = normVal
     def run(self, dataSlice, slicePoint=None):
         return dataSlice[self.colname]/self.normVal

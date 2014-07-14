@@ -1,25 +1,24 @@
 import numpy as np
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
+
 # A driver config for the plots on https://confluence.lsstcorp.org/display/SIM/MAF+documentation
 # and https://confluence.lsstcorp.org/display/SIM/MAF%3A++Writing+a+new+metric
 
 root.outputDir = './Doc'
-root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
-root.opsimName = 'ob1_1131'
-
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
+root.opsimName = 'opsimblitz2_1060'
 
 
 slicerList=[]
 
-m1 = configureMetric('CountMetric', args=['slewTime'],
-                     kwargs={'metadata':'time'}, plotDict={'logScale':True})
+m1 = configureMetric('CountMetric', kwargs={'col':'slewTime'}, plotDict={'logScale':True})
 slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime', 'binsize':5.},
                          metricDict=makeDict(m1), constraints=[''] )
 root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
 constraints = ["filter = \'%s\'"%'r']
-m1 = configureMetric('MinMetric', args=['airmass'], plotDict={'cmap':'RdBu'})
+m1 = configureMetric('MinMetric', kwargs={'col':'airmass'}, plotDict={'cmap':'RdBu'})
 metricDict = makeDict(m1)
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=constraints )
 root.slicers=makeDict(slicer)
@@ -37,21 +36,21 @@ slicerList.append(slicer)
 
 constraints = ["filter = \'%s\'"%'r']
 m3 = configureMetric('Coaddm5Metric')
-m4 = configureMetric('MeanMetric', args=['normairmass'])
+m4 = configureMetric('MeanMetric', kwargs={'col':'normairmass'})
 metricDict = makeDict(m3,m4)
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=constraints )
 root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
 
-m1 = configureMetric('CountMetric', args=['slewDist'], kwargs={'metadata':'dist'})
+m1 = configureMetric('CountMetric', kwargs={'col':'slewDist'})
 slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'},
                          metricDict=makeDict(m1), constraints=[''] )
 root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
 
-m1 = configureMetric('CountMetric', args=['expMJD'], plotDict={'ylabel':'Number of Exposures'})
+m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'}, plotDict={'ylabel':'Number of Exposures'})
 slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'night','binsize':1.},
                          metricDict=makeDict(m1), constraints=[''] )
 slicerList.append(slicer)
@@ -97,7 +96,7 @@ slicerList.append(slicer)
 filters = ['u','g','r','i','z','y']
 colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
 for i,f in enumerate(filters):
-    m1 = configureMetric('CountMetric', args=['airmass'],
+    m1 = configureMetric('CountMetric', kwargs={'col':'airmass'},
                          histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'airmass'},
                              metricDict=makeDict(m1), constraints=["filter = '%s'"%f])

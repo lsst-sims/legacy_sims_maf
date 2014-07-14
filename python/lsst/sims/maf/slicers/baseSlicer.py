@@ -42,7 +42,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
     
-    def __init__(self, verbose=True, badval=-666, *args, **kwargs):
+    def __init__(self, verbose=True, badval=-666):
         """
         Instantiate the base slicer object.
 
@@ -87,7 +87,7 @@ class BaseSlicer(object):
         # Will often be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {'badval':badval}
         
-    def setupSlicer(self, *args):
+    def setupSlicer(self, simData):
         """
         Set up Slicer for data slicing.
         
