@@ -80,6 +80,18 @@ m1=configureMetric('HourglassMetric')
 slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=['night < 750',''])
 slicerList.append(slicer)
 
+# Try out the fO slicer
+fOnside = 64
+m1 = configureMetric('CountMetric',
+                     kwargs={'col':'expMJD', 'metricName':'fO'},
+                     plotDict={'units':'Number of Visits', 'xMin':0,
+                               'xMax':1500},
+                     summaryStats={'fOArea':{'nside':fOnside},
+                                   'fONv':{'nside':fOnside}})
+slicer = configureSlicer('fOSlicer', kwargs={'nside':fOnside},
+                         metricDict=makeDict(m1),
+                         constraints=[''])
+slicerList.append(slicer)
 
 # Save all the slicers to the config
 root.slicers=makeDict(*slicerList)
