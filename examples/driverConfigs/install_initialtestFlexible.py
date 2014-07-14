@@ -48,10 +48,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     filters = ['g','r']
     for f in filters:
         # Set up metrics and slicers.
-        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'NVisits'}, 
+        m1 = configureMetric('CountMetric', kwargs={'col':'expMJD','metricName':'NVisits'}, 
                             plotDict={'plotMin':0, 'plotMax':200, 'units':'N Visits'},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-        m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'fivesigma_modified'}, 
+        m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fivesigma_modified'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
         metricDict = makeDict(m1, m2)
         sqlconstraint = 'filter = "%s"' %(f)
