@@ -41,7 +41,7 @@ def getSlicer(simdata, metricList, bins=100):
     return slicerList
 
 
-def goBinPlotWrite(opsimrun, metadata, simdata, slicerList, metricList):
+def goSlicePlotWrite(opsimrun, metadata, simdata, slicerList, metricList):
     t = time.time()
     for bb, mm in zip(slicerList, metricList):
         gm = sliceMetrics.BaseSliceMetric()
@@ -88,4 +88,4 @@ if __name__ == '__main__':
     
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','')
-    gm = goBinPlotWrite(opsimrun, metadata, simdata, slicerList, metricList)
+    gm = goSlicePlotWrite(opsimrun, metadata, simdata, slicerList, metricList)
