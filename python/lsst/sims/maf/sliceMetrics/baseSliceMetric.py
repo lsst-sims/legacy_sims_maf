@@ -98,8 +98,10 @@ class BaseSliceMetric(object):
         oname = oname + '_' + self.slicer.slicerName[:4].upper()
         # Replace <, > and = signs.
         oname = oname.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
-        # Strip white spaces (replace with underscores), strip '.'s and strip quotes.
-        oname = oname.replace('  ', ' ').replace('.', '_').replace(' ', '_').replace('"','').replace("'",'')
+        # Strip white spaces (replace with underscores), strip '.'s and ','s
+        oname = oname.replace('  ', ' ').replace(' ', '_').replace('.', '_').replace(',', '')
+        # and strip quotes and double __'s
+        oname = oname.replace('"','').replace("'",'').replace('__', '_')        
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
