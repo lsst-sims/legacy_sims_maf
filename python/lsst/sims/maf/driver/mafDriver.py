@@ -96,7 +96,9 @@ class MafDriver(object):
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
                     summarykwargs = readMixConfig(summaryStats[key])
-                    summaryMetric = metrics.BaseMetric.getClass(key)(col='metricdata', **summarykwargs)                           # If it is a UniSlicer, make sure the IdentityMetric is run
+                    summaryMetric = metrics.BaseMetric.getClass(key)(col='metricdata', **summarykwargs)
+                    temp_metric.summaryStats.append(summaryMetric)
+                # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():
                       temp_metric.summaryStats.append(metrics.BaseMetric.registry['IdentityMetric']('metricdata'))
@@ -304,7 +306,6 @@ class MafDriver(object):
                                 # Else it's a simple metric value.
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, stat)
-                                       
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    Computed summarystats in %.3g s'%dt
