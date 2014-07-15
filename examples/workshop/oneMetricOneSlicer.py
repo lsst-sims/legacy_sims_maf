@@ -11,13 +11,13 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 # Set the output directory
 root.outputDir = './Most_simple_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1131_sqlite.db'}
 # Name of this run (filename base)
-root.opsimName = 'MostSimpleExample'
+root.opsimName = 'ob1_1131'
 
 # Configure a metric to run. Compute the mean on the final delivered seeing.
 #Once the mean seeing has been computed everywhere on the sky, compute the RMS as a summary statistic.
-metric = configureMetric('MeanMetric', params=['finSeeing'],
+metric = configureMetric('MeanMetric', kwargs={'col':'finSeeing'},
                           summaryStats={'RmsMetric':{}})
 
 # Configure a slicer.  Use the Healpixslicer to compute the metric at points in the sky.

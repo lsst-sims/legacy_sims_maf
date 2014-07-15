@@ -78,27 +78,33 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, cols, metricName=None, units=None, plotParams=None, metricDtype='object', **kwargs):
+    def __init__(self, col=None, metricName=None, units=None, plotParams=None,
+                 metricDtype=None, badval=-666):
         """Instantiate metric.
-                 
+
+        'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
+        the names of the data columns that the metric will operate on. This can be a single string or a list.
+                         
         After inheriting from this base metric :
-          * every metric object will have metricDtype set according to kwarg
-            (if metricDtype = 'object' no plots will be produced directly from the metric data value,
-             this is intended to support returning dictionaries/etc that need reduce methods; set
-             to 'float' if you are returning scalar data from your metric). 
+          * every metric object will have metricDtype (the type of data it calculates) set according to:
+               -- kwarg (metricDtype='float', 'int', etc)
+               -- 'float' (assumes float if not specified in kwarg)
+               -- 'object' (if reduce functions are present and value not set in kwarg)
           * every metric object will have the data columns it requires added to the column registry
             (so the driver can know which columns to pull from the database)
           * every metric object will contain a plotParams dictionary, which may contain only the units.
         """
+        if col is None:
+            raise ValueError('Specify "col" kwarg for metric %s' %(self.__class__.__name__))
         # Turn cols into numpy array so we know we can iterate over the columns.
-        self.colNameArr = np.array(cols, copy=False, ndmin=1)
+        self.colNameArr = np.array(col, copy=False, ndmin=1)
+        # To support simple metrics operating on a single column, set self.colname
+        if len(self.colNameArr) == 1:
+            self.colname = self.colNameArr[0]
         # Add the columns to the colRegistry.
         self.colRegistry.addCols(self.colNameArr)
-        # Identify type of metric return value. Default 'object'.
-        #  Individual metrics may override with more specific value.
-        self.metricDtype = metricDtype
         # Value to return if the metric can't be computed
-        self.badval = -666
+        self.badval = badval
         # Save a unique name for the metric.
         self.name = metricName
         if self.name is None:
@@ -111,6 +117,13 @@ class BaseMetric(object):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
+        # Identify type of metric return value.
+        if metricDtype is not None:
+            self.metricDtype = metricDtype
+        elif len(self.reduceFuncs.keys()) > 0:
+            self.metricDtype = 'object'
+        else:
+            self.metricDtype = 'float'
         # Set physical units, for plotting purposes.
         # (If plotParams has 'units' this will be ignored). 
         if units is None:

@@ -11,7 +11,7 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 # Set the output directory
 root.outputDir = './Very_simple_out'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///../../tests/opsimblitz1_1131_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1131_sqlite.db'}
 # Name of this run (filename base)
 root.opsimName = 'VerySimpleExample'
 
@@ -26,7 +26,7 @@ for f in filters:
 #["filter = 'u'", "filter = 'g'", "filter = 'r'", "filter = 'i'", "filter = 'z'", "filter = 'y'"]
 
 # Run 2 metrics, the mean seeing and the co-added 5-sigma limiting depth.
-metric1 = configureMetric('MeanMetric', params=['finSeeing'])
+metric1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'})
 metric2 = configureMetric('Coaddm5Metric', plotDict={'cbarFormat':'%.3g'})
 
 # Configure a slicer.  Use the Healpix slicer to make sky maps and power spectra.
@@ -34,7 +34,7 @@ slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric1,metric2),
                           kwargs={'nside':16}, constraints=constraints)
 sliceList.append(slicer)
 
-metric = configureMetric('MeanMetric', params=['finSeeing'])
+metric = configureMetric('MeanMetric', kwargs={'col':'finSeeing'})
 # Configure a slicer.  Use the UniSlicer to simply take all the data.
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric),
                           constraints=constraints)

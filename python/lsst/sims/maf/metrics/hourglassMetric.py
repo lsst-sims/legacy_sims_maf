@@ -16,7 +16,7 @@ class HourglassMetric(BaseMetric):
         mjdcol = "expMJD"
         nightcol = "night"
         cols = [filtercol, mjdcol, nightcol]
-        super(HourglassMetric,self).__init__(cols,metricName=metricName)
+        super(HourglassMetric,self).__init__(col=cols,metricName=metricName, metricDtype='object')
         self.nightcol = nightcol
         self.mjdcol = mjdcol
         self.filtercol = filtercol
@@ -33,7 +33,8 @@ class HourglassMetric(BaseMetric):
         #twilights = np.zeros([len(unights), 6]) #setting and rising.  
         #localMidnight = np.zeros(len(unights))
 
-        names = ['mjd', 'midnight', 'moonPer', 'twi6_rise', 'twi6_set', 'twi12_rise', 'twi12_set', 'twi18_rise', 'twi18_set']
+        names = ['mjd', 'midnight', 'moonPer', 'twi6_rise', 'twi6_set', 'twi12_rise',
+                 'twi12_set', 'twi18_rise', 'twi18_set']
         types = ['float']*len(names)
         pernight = np.zeros(len(unights), dtype=zip(names,types) )
         pernight['mjd'] = dataSlice['expMJD'][uindx]
@@ -67,12 +68,11 @@ class HourglassMetric(BaseMetric):
             moon.compute(mjd)
             pernight['moonPer'][i] = moon.phase
             for j,obs in enumerate(obsList):
-                #mjd = pernight['midnight'][i]-doff
-                pernight[key[j]+'_rise'][i] = obs.next_rising(S, start=pernight['midnight'][i]-doff, use_center=True) + doff#nearestVal([obs.previous_rising(S, start=mjd, use_center=True),
-                                           #obs.next_rising(S, start=mjd, use_center=True) ], mjd )+doff
-                pernight[key[j]+'_set'][i] = obs.previous_setting(S, start=pernight['midnight'][i]-doff, use_center=True) + doff#nearestVal([obs.previous_setting(S, start=mjd, use_center=True),
-                                           #obs.next_setting(S, start=mjd, use_center=True) ], mjd )+doff
-        
+                pernight[key[j]+'_rise'][i] = obs.next_rising(S, start=pernight['midnight'][i]-doff,
+                                                              use_center=True) + doff
+                
+                pernight[key[j]+'_set'][i] = obs.previous_setting(S, start=pernight['midnight'][i]-doff,
+                                                                  use_center=True) + doff
 
         # Define the breakpoints as where either the filter changes OR there's more than a 2 minute gap in observing
         good = np.where((dataSlice[self.filtercol] != np.roll(dataSlice[self.filtercol] ,1)) |

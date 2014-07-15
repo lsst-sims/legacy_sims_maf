@@ -8,10 +8,11 @@ root.opsimName =  'ob2_1060'
 nside=16
 slicerList=[]
 
-plotDict={ 'title':'A Great New Title',  'xMin':0.5, 'xMax':1.7}
+plotDict={ 'title':'A Great New Title',  'colorMin':0.5, 'colorMax':1.4}
 
-m1 = configureMetric('MeanMetric', params=['finSeeing'], plotDict=plotDict, kwargs={'metricName':'wplotdict'})
-m2 = configureMetric('MeanMetric', params=['finSeeing'])
+m1 = configureMetric('MeanMetric', plotDict=plotDict,
+                     kwargs={'col':'finSeeing', 'metricName':'wplotdict'})
+m2 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'})
 
 metricDict = makeDict(m1,m2)
 

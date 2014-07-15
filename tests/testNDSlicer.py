@@ -10,7 +10,8 @@ from lsst.sims.maf.slicers.nDSlicer import NDSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 
 def makeDataValues(size=100, min=0., max=1., nd=3, random=True):
-    """Generate a simple array of numbers, evenly arranged between min/max, in nd dimensions, but (optional) random order."""
+    """Generate a simple array of numbers, evenly arranged between min/max, in nd dimensions, but (optional)
+    random order."""
     data = []
     for d in range(nd):
         datavalues = np.arange(0, size, dtype='float')

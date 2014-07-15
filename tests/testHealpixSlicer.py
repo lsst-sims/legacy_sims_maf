@@ -12,7 +12,9 @@ from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
                    decmin=-np.pi, decmax=np.pi, random=True):
-    """Generate a simple array of numbers, evenly arranged between min/max, in 1 dimensions (optionally sorted), together with RA/Dec values for each data value."""
+    """Generate a simple array of numbers, evenly arranged between min/max,
+    in 1 dimensions (optionally sorted), together with RA/Dec values
+    for each data value."""
     data = []
     # Generate data values min - max.
     datavalues = np.arange(0, size, dtype='float')

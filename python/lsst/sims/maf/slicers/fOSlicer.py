@@ -27,7 +27,7 @@ class fOSlicer(HealpixSlicer):
           for the plot and returned summary stat values to be consistent!"""
         colorlinewidth = 2
         if scale is None:
-            scale = (hp.nside2pixarea(hp.npix2nside(metricValue.size), degrees=True)  / 1000.0)
+            scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         if fignum:
             fig = plt.figure(fignum)
         else:
@@ -38,14 +38,16 @@ class fOSlicer(HealpixSlicer):
         # This is breaking the rules and calculating the summary stats in two places.
         # One way to possibly clean this up in the future would be to change the order
         # things are done in the driver so that summary stats get computed first and passed along to the plotting.
-        fOArea_value = fOArea(None,Asky=Asky, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                         dtype=[('fO', metricValue.dtype)]))
-        fONv_value = fONv(None,Nvisit=Nvisit, norm=False, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                         dtype=[('fO', metricValue.dtype)]))
-        fOArea_value_n = fOArea(None,Asky=Asky, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                          dtype=[('fO', metricValue.dtype)]))
-        fONv_value_n = fONv(None,Nvisit=Nvisit, norm=True, nside=self.nside).run(np.array(metricValue.compressed(),
-                                                                                          dtype=[('fO', metricValue.dtype)]))
+        rarr = np.array(zip(metricValue.compressed()), 
+                dtype=[('fO', metricValue.dtype)])
+        fOArea_value = fOArea(col='fO', Asky=Asky, norm=False,
+                              nside=self.nside).run(rarr)
+        fONv_value = fONv(col='fO', Nvisit=Nvisit, norm=False,
+                          nside=self.nside).run(rarr)
+        fOArea_value_n = fOArea(col='fO', Asky=Asky, norm=True,
+                                nside=self.nside).run(rarr)
+        fONv_value_n = fONv(col='fo',Nvisit=Nvisit, norm=True,
+                            nside=self.nside).run(rarr)
 
         plt.axvline(x=Nvisit, linewidth=colorlinewidth, color='b')
         plt.axhline(y=Asky/1000., linewidth=colorlinewidth,color='r')

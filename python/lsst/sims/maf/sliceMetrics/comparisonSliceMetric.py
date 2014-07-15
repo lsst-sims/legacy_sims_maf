@@ -204,7 +204,8 @@ class ComparisonSliceMetric(object):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) == 0:
-            warnings.warn('Removed all dictNums and metricNames from list, due to slicerName, metricname absence or type of metric data.')
+            warnings.warn('Removed all dictNums and metricNames from list, due to slicerName, '
+                          'metricname absence or type of metric data.')
             return
         if title is None:
             title = self._buildPlotTitle(dictNums, metricNames)
@@ -283,7 +284,8 @@ class ComparisonSliceMetric(object):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) == 0:
-            warnings.warn('Removed all dictNums and metricNames from list, due to slicerName, metricname absence or type of metric data.')
+            warnings.warn('Removed all dictNums and metricNames from list, '
+                          'due to slicerName, metricname absence or type of metric data.')
             return
         if plotTitle is None:
             plotTitle = self._buildPlotTitle(dictNums, metricNames)
@@ -333,7 +335,8 @@ class ComparisonSliceMetric(object):
                 del dictNums[i]
                 del metricNames[i]
         if len(dictNums) != 2:
-            warnings.warn('Removed one or more of the dictNums/metricNames due to metric absence, slicer type or metric data type.')
+            warnings.warn('Removed one or more of the dictNums/metricNames due to metric absence, '
+                          'slicer type or metric data type.')
         if plotTitle is None:
             plotTitle = self._buildPlotTitle(dictNums, metricNames)
         # Plot the data.

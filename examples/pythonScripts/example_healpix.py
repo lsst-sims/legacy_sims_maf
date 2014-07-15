@@ -53,7 +53,7 @@ def getSlicer(simdata, racol, deccol, nside=128):
     return bb
 
 
-def goBin(opsimrun, metadata, simdata, bb, metricList):
+def goSlice(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
     gm = sliceMetrics.BaseSliceMetric()
     gm.setSlicer(bb)
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     comment = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
     if args.dither:
         metadata = metadata + ' hexdither'
-    gm = goBin(opsimrun, comment, simdata, bb, metricList)
+    gm = goSlice(opsimrun, comment, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.
     printSummary(gm, metricList)

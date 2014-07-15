@@ -31,7 +31,7 @@ class VisitGroupsMetric(BaseMetric):
         self.minNVisits = minNVisits
         self.window = window
         self.minNNights = minNNights
-        super(VisitGroupsMetric, self).__init__([self.times, self.nights], **kwargs)
+        super(VisitGroupsMetric, self).__init__(col=[self.times, self.nights], **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """
@@ -108,7 +108,8 @@ class VisitGroupsMetric(BaseMetric):
         return visits[condition][condition2], nights[condition][condition2]
     
     def reduceNVisitsInWindow(self, metricval):
-        """Reduce to max number of total visits on all nights with more than minNVisits, within any 'window' (default=30 nights)."""
+        """Reduce to max number of total visits on all nights with more than minNVisits,
+        within any 'window' (default=30 nights)."""
         maxnvisits = 0
         for n in metricval['nights']:
             vw, nw = self._inWindow(metricval['visits'], metricval['nights'], n, self.window, self.minNVisits)

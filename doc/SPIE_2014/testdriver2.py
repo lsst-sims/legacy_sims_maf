@@ -2,14 +2,12 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 import lsst.sims.maf.utils as utils
 
 # Configure the output directory.
-root.outputDir = './Mafout2'
+root.outputDir = './Mafout'
 
 # Configure our database access information.
 root.dbAddress= {'dbAddress':'mysql://lsst:lsst@localhost/opsim?unix_socket=/opt/local/var/run/mariadb/mysqld.sock',
                    'outputTable':'output_opsim3_61'}
 root.opsimName = 'opsim3.61'
-#root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
-#root.opsimName = 'opsimblitz2_1060'
 
 # Some parameters to help control the plotting ranges below.
 nVisits_plotRange = {'g':[50,220], 'r':[150, 310]}
@@ -31,9 +29,9 @@ colors = {'r':'b', 'i':'y'}
 linestyles = {'r':':', 'i':'-'}
 for f in filters:
     # Configure a metric that will calculate the mean of the seeing and print the result to our summary stats file.
-    m1 = configureMetric('MeanMetric', params=['seeing'], summaryStats={'IdentityMetric':{}})
+    m1 = configureMetric('MeanMetric', kwargs={'col':'seeing'}, summaryStats={'IdentityMetric':{}})
     # Configure a metric that will calculate the rms of the seeing and print the result to our summary stats file.
-    m2 = configureMetric('RmsMetric', params=['seeing'], summaryStats={'IdentityMetric':{}})
+    m2 = configureMetric('RmsMetric', kwargs={'col':'seeing'}, summaryStats={'IdentityMetric':{}})
     # Combine these metrics with the UniSlicer and a SQL constraint based on the filter, so
     #  that we will now calculate the mean and rms of the seeing for all r band visits
     #  (and then the mean and rms of the seeing for all i band visits).
@@ -42,7 +40,7 @@ for f in filters:
     slicerList.append(slicer)
     # Configure a metric + a OneDSlicer so that we can count how many visits have seeing in each interval of
     #  the OneDSlicer. 
-    m1 = configureMetric('CountMetric', params=['airmass'], kwargs={'metricName':'Airmass'},
+    m1 = configureMetric('CountMetric', kwargs={'col':'airmass', 'metricName':'Airmass'},
                           plotDict={'xlabel':'Airmass'},
                           # Set up a additional histogram so that the outputs of these count metrics in each
                           #   filter get combined into a single plot (with both r and i band). 
@@ -110,7 +108,7 @@ for dithlabel, slicerName in zip(dithlabels, slicerNames):
         elif f == 'r':
             histNum = 7
         # Configure a metric to count the number of visits in this band.
-        m1 = configureMetric('CountMetric', params=['expMJD'], kwargs={'metricName':'Nvisits %s band' %(f)},
+        m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Nvisits %s band' %(f)},
                               plotDict={'units':'Number of Visits', 'cbarFormat':'%d',
                                       'plotMin':nVisits_plotRange[f][0],
                                       'plotMax':nVisits_plotRange[f][1],
@@ -124,7 +122,7 @@ for dithlabel, slicerName in zip(dithlabels, slicerNames):
                                            'bins':(nVisits_plotRange[f][1]-nVisits_plotRange[f][0])})
         histNum += 1
         # Configure a metric to count the coadded m5 depth in this band.
-        m2 = configureMetric('Coaddm5Metric', kwargs={'m5col':'5sigma_modified',
+        m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'5sigma_modified',
                                                        'metricName':'Coadded m5 %s band' %(f)},
                                 plotDict={'zp':mag_zpoints[f],
                                           'percentileClip':95., 'plotMin':-1.5, 'plotMax':0.75,

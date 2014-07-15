@@ -1,17 +1,17 @@
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureSlicer, configureStacker, makeDict
 
-root.outputDir = 'Out2'
-root.dbAddress = {'dbAddress':'sqlite:///../tier1/opsimblitz2_1060_sqlite.db'}
+root.outputDir = 'OutDither'
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 root.opsimName = 'opsimblitz2_1060'
 
 sliceList = []
-nside = 8
+nside = 64
 
 # "Normal" configuration of HealpixSlicer
 metric = configureMetric('Coaddm5Metric')
 slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
                          metricDict=makeDict(metric), constraints=['filter="r"'])
-#sliceList.append(slicer)
+sliceList.append(slicer)
 
 # Normal configuration, making defaults explicit
 metric = configureMetric('Coaddm5Metric')
@@ -27,7 +27,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'hexdithRA',
                                                   'spatialkey2':'hexdithDec'},
                          metricDict=makeDict(metric), constraints=['filter="r"'])
-#sliceList.append(slicer)
+sliceList.append(slicer)
 
 
 # Use a new Stacker that does not require configuration
@@ -36,7 +36,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'randomRADither',
                                                   'spatialkey2':'randomDecDither'},
                          metricDict=makeDict(metric), constraints=['filter="r"'])
-#sliceList.append(slicer)
+sliceList.append(slicer)
 
 # Use a new Stacker with configuration
 metric = configureMetric('Coaddm5Metric')
@@ -46,7 +46,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey2':'randomDecDither'},
                          metricDict=makeDict(metric), constraints=['filter="r"'],
                          stackCols=makeDict(stacker))
-#sliceList.append(slicer)
+sliceList.append(slicer)
 
 
 # Use our new stacker 
@@ -58,9 +58,9 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'fixedRA',
                                                   'spatialkey2':'fixedDec'},
                             metricDict = makeDict(metric), constraints=['filter="r"'])
-#sliceList.append(slicer)
+sliceList.append(slicer)
 
-# Use our new stack with configuration
+# Use our new stacker with configuration
 metric = configureMetric('Coaddm5Metric')
 stacker = configureStacker('exampleNewStacker.SingleFieldDitherStacker', kwargs={'fixedRA':0.16,
                                                                                  'fixedDec':-0.5})
@@ -71,8 +71,6 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                             stackCols=makeDict(stacker))
 sliceList.append(slicer)
 
-# Use our new stacker 
-root.modules = ['exampleNewStacker']
 
 # Use our new stacker (using defaults)
 metric = configureMetric('Coaddm5Metric')

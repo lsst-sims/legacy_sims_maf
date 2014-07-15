@@ -255,8 +255,10 @@ class TestOneDSlicerHistogram(unittest.TestCase):
                     idxs = b['idxs']
                     metricval[i] = len(idxs)
                 numpycounts, numpybins = np.histogram(dv['testdata'], bins=nbins)
-                np.testing.assert_equal(numpybins, self.testslicer.bins, 'Numpy bins do not match testslicer bins')
-                np.testing.assert_equal(numpycounts, metricval, 'Numpy histogram counts do not match testslicer counts')
+                np.testing.assert_equal(numpybins, self.testslicer.bins,
+                                        'Numpy bins do not match testslicer bins')
+                np.testing.assert_equal(numpycounts, metricval,
+                                        'Numpy histogram counts do not match testslicer counts')
 
     def testPlotting(self):
         """Test plotting."""
