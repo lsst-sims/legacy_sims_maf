@@ -267,7 +267,8 @@ class MafDriver(object):
                     else:
                         slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
-                    gm = sliceMetrics.BaseSliceMetric(figformat=self.figformat, dpi=self.dpi) 
+                    gm = sliceMetrics.BaseSliceMetric(figformat=self.figformat, dpi=self.dpi,
+                                                      outDir=self.config.outputDir) 
                     gm.setSlicer(slicer)
                     metricNames_in_gm = gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
@@ -281,11 +282,13 @@ class MafDriver(object):
                        print '    Computed metrics in %.3g s'%dt
                     # And run reduce methods for relevant metrics.
                     gm.reduceAll()
+                    # And write metric data files to disk.
+                    gm.writeAll()
                     # Replace the plotParams for selected metricNames (to allow override from config file).
                     for mName in slicer.plotConfigs:
                         gm.plotParams[mName] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
-                    gm.plotAll(outDir=self.config.outputDir, savefig=True, closefig=True, verbose=True)
+                    gm.plotAll(savefig=True, closefig=True, verbose=True)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    plotted metrics in %.3g s'%dt
@@ -301,43 +304,16 @@ class MafDriver(object):
                                     matching_metrics = [x for x in all_names \
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
-                                        summary = gm.computeSummaryStatistics(mm, stat)
-                                        
+                                        summary = gm.computeSummaryStatistics(mm, stat) 
                                 # Else it's a simple metric value.
                                 else:
                                     summary = gm.computeSummaryStatistics(metric.name, stat)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    Computed summarystats in %.3g s'%dt
-                    # And write metric data files to disk.
-                    gm.writeAll(outDir=self.config.outputDir)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    wrote output files in %.3g s'%dt
-                    # Grab output Files - get file output key back. Verbose=True, prints to screen.
-                    outFiles = gm.returnOutputFiles(verbose=False)
-                    # Build continual dictionary of all output info over multiple sqlconstraints.
-                    for metrickey in outFiles:
-                        hashkey = '%d_%s' %(slicer.index, metrickey)
-                        # Shouldn't overwrite previous keys, but let's check.
-                        i = 0
-                        while hashkey in allOutDict:
-                            hashkey = hashkey + '_%d' %(i)
-                            i += 1
-                        allOutDict[hashkey] = outFiles[metrickey]
-                        allOutfiles.append(outFiles[metrickey]['dataFile'])
-                    # And keep track of which output files hold metric data (for merging histograms)
-                    outfile_names = []
-                    outfile_metricNames = []
-                    for key in outFiles:
-                        outfile_names.append(outFiles[key]['dataFile'])
-                        outfile_metricNames.append(outFiles[key]['metricName'])
-                    for i,m in enumerate(self.metricList[slicer.index]):
-                        good = np.where(np.array(outfile_metricNames) == metricNames_in_gm[i])[0]
-                        m.saveFile = outfile_names[good]
-                #if self.verbose:
-                #    dt,time_prev = dtime(time_prev)
-                #    print '    Computed made plots in %.3g s'%dt
         
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged

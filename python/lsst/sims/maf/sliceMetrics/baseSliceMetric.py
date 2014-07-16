@@ -47,6 +47,7 @@ import matplotlib.cm as cm
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.utils.outputUtils as outputUtils
+from lsst.sims.maf.db import ResultsDb
 
 import time
 def dtime(time_prev):
@@ -54,7 +55,7 @@ def dtime(time_prev):
 
 
 class BaseSliceMetric(object):
-    def __init__(self, figformat='pdf', dpi=600):
+    def __init__(self, figformat='pdf', dpi=600, outDir='Output'):
         """Instantiate sliceMetric object and set up (empty) dictionaries."""
         # Set figure format for output plot files.
         self.figformat = figformat
@@ -66,34 +67,33 @@ class BaseSliceMetric(object):
         self.simDataName = {}
         self.sqlconstraint = {}
         self.metadata = {}
+        self.metricId = {}
         self.slicer = None
-        self.outputFiles = {}
+        self.outDir = outDir
+        self.resultsDb = ResultsDb(outDir=outDir)
 
-    def _buildOutfileName(self, metricName,
-                          outDir=None, outfileRoot=None, plotType=None):
+    def _buildOutfileName(self, metricName, outfileRoot=None, plotType=None):
         """Builds an automatic output file name for metric data or plots."""
-        # Set output directory and root 
-        if outDir is None:
-            outDir = '.'
         # Start building output file name.
         if outfileRoot is None:
             if metricName in self.simDataName:
                 # If metricName is the name of an actual metric, use its associated simdata ID.
                 outfileRoot = self.simDataName[metricName]
             else:
-                # metricName may have been a plot title, so try to find a good compromise.
+                # metricName may have been a multi-metric plot title, so try to find a good compromise.
                 outfileRoot = list(set(self.simDataName.values()))
                 if len(outfileRoot) > 1:
                     outfileRoot = 'comparison'
                 else:
                     outfileRoot = outfileRoot[0]
-        # Start building output file name. Strip trailing numerals from metricName.
+        # Start building output file name from the root.
+        # Strip trailing numerals from metricName (de-duplicate).
         oname = outfileRoot + '_' + self._dupeMetricName(metricName)
         # Add summary of the metadata if it exists.
         if metricName in self.metadata:
             if len(self.metadata[metricName]) > 0:        
                 oname = oname + '_' + self.metadata[metricName]
-        # Add letter to distinguish slicer types
+        # Add letters to distinguish slicer types
         #   (which otherwise might have the same output name).
         oname = oname + '_' + self.slicer.slicerName[:4].upper()
         # Replace <, > and = signs.
@@ -105,36 +105,7 @@ class BaseSliceMetric(object):
         # Add plot name, if plot.
         if plotType:
             oname = oname + '_' + plotType + '.' + self.figformat
-        # Build outfile. 
-        outfile = os.path.join(outDir, oname)
-        return outfile
-
-    def _addOutputFiles(self, metricName, key, value):
-        """Add outputfilename to internal dictionary of dictionaries (keyed per metricName)
-        with output filenames (plus plots) and summary metrics.
-
-        Expected keys for each metricName dictionary are:
-        metricName (de-duped), slicerName, sqlconstraint, metadata, simDataName,
-        dataFile (for metric data), histFile, skyFile, psFile, (other plots),
-        summary metric - metricName / summaryValue  [can be repeated]
-        """
-        if metricName not in self.outputFiles:
-            self.outputFiles[metricName] = {}
-            self.outputFiles[metricName]['metricName'] = self._dupeMetricName(metricName)
-            self.outputFiles[metricName]['slicerName'] = self.slicer.slicerName
-            self.outputFiles[metricName]['simDataName'] = self.simDataName[metricName]
-            self.outputFiles[metricName]['sqlconstraint'] = self.sqlconstraint[metricName]
-            self.outputFiles[metricName]['metadata'] = self.metadata[metricName]
-        if key == 'summaryStat':
-            if 'summaryStat' not in self.outputFiles[metricName]:
-                self.outputFiles[metricName]['summaryStat'] = {}
-            self.outputFiles[metricName]['summaryStat'][value[0]] = value[1]
-        else:
-            # Strip out directories and leave only final file name if relevant
-            if key.endswith('File') or key.endswith('Plot'):
-                head, tail = os.path.split(value)
-                value = tail
-            self.outputFiles[metricName][key] = value
+        return oname
 
     def _deDupeMetricName(self, metricName):
         """In case of multiple metrics having the same 'metricName', add additional characters to de-dupe."""
@@ -311,20 +282,16 @@ class BaseSliceMetric(object):
         # The summary metric colname should already be set to 'metricdata', but in case it's not:
         summaryMetric.colname = 'metricdata'
         summaryValue = summaryMetric.run(rarr)
-        # Convert to numpy array if not, for uniformity in final use.
-        if isinstance(summaryValue, float) or isinstance(summaryValue, int):
-            summaryValue = np.array(summaryValue)
-        # Add summary metric info to outputFiles.
-        self._addOutputFiles(metricName, 'summaryStat', [summaryMetric.name.replace(' metricdata', ''), summaryValue])
+        # All summary values should be floats or ints.
+        if not isinstance(summaryValue, float) and not isinstance(summaryValue, int):
+            warnings.warn('Summary Metric should return float/int. Just sending this back without recording.')
+            return summaryValue
+        # Add summary metric info to results database.
+        self.resultsDb.addSummaryStats(self.metricId[metricName],
+                                       summaryName=summaryMetric.name.replace(' metricdata', ''),
+                                       summaryValue=summaryValue)
         return summaryValue
         
-    def returnOutputFiles(self, verbose=True):
-        """Return list of output file information (which is a list of dictionaries)
-        If 'verbose' then prints in somewhat pretty fashion to stdout."""
-        if verbose:
-            subkeyorder = ['metricName', 'simDataName', 'slicerName', 'metadata', 'sqlconstraint', 'dataFile']
-            outputUtils.printSimpleDict(self.outputFiles, subkeyorder)
-        return self.outputFiles      
                         
     def readMetricValues(self, filenames, verbose=False):
         """Given a list of filenames, reads metric values and metadata from disk. """
@@ -352,42 +319,50 @@ class BaseSliceMetric(object):
             if verbose:
                 print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
             
-    def writeAll(self, outDir=None, outfileRoot=None, comment=''):
+    def writeAll(self, outfileRoot=None, comment=''):
         """Write all metric values to disk."""
         for mname in self.metricValues:
             dt = self.metricValues[mname].dtype
-            self.writeMetric(mname, comment=comment, outDir=outDir, outfileRoot=outfileRoot)
-
+            outfilename = self.writeMetric(mname, comment=comment,
+                                           outfileRoot=outfileRoot)
         
-    def writeMetric(self, metricName, comment='', outfileRoot=None, outDir=None):
+    def writeMetric(self, metricName, comment='', outfileRoot=None):
         """Write metric values 'metricName' to disk.
 
         comment = any additional comments to add to output file (beyond 
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
-        outDir = directory to write output data (default '.').        
        """
-        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
-        self.slicer.writeData(outfile+'.npz', self.metricValues[metricName],
+        outfile = self._buildOutfileName(metricName, outfileRoot=outfileRoot) + '.npz'
+        self.slicer.writeData(os.path.join(self.outDir, outfile),
+                              self.metricValues[metricName],
                               metricName = self._dupeMetricName(metricName),
                               simDataName = self.simDataName[metricName],
                               sqlconstraint = self.sqlconstraint[metricName],
                               metadata = self.metadata[metricName] + comment)
-        self._addOutputFiles(metricName, 'dataFile', outfile+'.npz')
+        self.metricId[metricName] = self.resultsDb.addMetric(self._dupeMetricName(metricName),
+                                                              self.slicer.slicerName,
+                                                              self.simDataName[metricName],
+                                                              self.sqlconstraint[metricName],
+                                                              self.metadata[metricName],
+                                                              outfile)
+        # for driver merged histograms - update this later.
+        # Add an attribute to the metric class object letting it know its output file.
+        self.metricObjs[metricName].saveFile = outfile
 
                   
-    def plotAll(self, outDir='./', savefig=True, closefig=False, outfileRoot=None, verbose=True):
+    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """Plot histograms and skymaps (where relevant) for all metrics."""
         for mname in self.metricValues:            
-            plotfigs = self.plotMetric(mname, outDir=outDir, savefig=savefig, outfileRoot=outfileRoot)
+            plotfigs = self.plotMetric(mname, savefig=savefig, outfileRoot=outfileRoot)
             if closefig:
                plt.close('all')
             if plotfigs is None and verbose:
                 warnings.warn('Not plotting metric data for %s' %(mname))
             
-    def plotMetric(self, metricName, savefig=True, outDir=None, outfileRoot=None):
+    def plotMetric(self, metricName, savefig=True, outfileRoot=None):
         """Create all plots for 'metricName' ."""
-        outfile = self._buildOutfileName(metricName, outDir=outDir, outfileRoot=outfileRoot)
+        outfile = self._buildOutfileName(metricName, outfileRoot=outfileRoot)
         # Get the metric plot parameters. 
         pParams = self.plotParams[metricName].copy()
         # Build plot title and label.
@@ -410,10 +385,9 @@ class BaseSliceMetric(object):
         # Plot the data. Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
         plotResults = self.slicer.plotData(self.metricValues[metricName], savefig=savefig,
                                            figformat=self.figformat, dpi=self.dpi,
-                                           filename=outfile, **pParams)
+                                           filename=os.path.join(self.outDir, outfile), **pParams)
         # Save information about the plotted files into the output file list.
         for filename, filetype in  zip(plotResults['filenames'], plotResults['filetypes']):
-           # filetype = 'Histogram' or 'SkyMap', etc. -- add 'Plot' for output file key.
-           filetype += 'Plot'
-           self._addOutputFiles(metricName, filetype, filename)
+           # filetype = 'Histogram' or 'SkyMap', etc.
+           self.resultsDb.addPlot(metricId=self.metricId[metricName], plotType=filetype, plotFile=filename)
         return plotResults['figs']
