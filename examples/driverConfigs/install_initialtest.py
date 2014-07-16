@@ -40,7 +40,7 @@ for f in filters:
                             plotDict={'colorMin':0, 'colorMax':200, 'units':'N Visits',
                                       'xMin':0, 'xMax':200},
                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-    m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fivesigma_modified'}, 
+    m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fiveSigmaDepth'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
     metricDict = makeDict(m1, m2)
     sqlconstraint = 'filter = "%s"' %(f)

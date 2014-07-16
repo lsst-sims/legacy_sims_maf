@@ -33,7 +33,7 @@ class OpsimDatabase(Database):
             # Remove this kwarg since we're sending it on explicitly
             del kwargs['defaultdbTables']
         else:
-            defaultdbTables={'outputTable':['Output', 'obsHistID'],
+            defaultdbTables={'summaryTable':['Summary', 'obsHistID'],
                              'cloudTable':['Cloud', 'cloudID'],
                              'seeingTable':['Seeing', 'seeingID'],
                              'fieldTable':['Field', 'fieldID'],
@@ -46,13 +46,15 @@ class OpsimDatabase(Database):
                              'sequenceHistoryTable':['SeqHistory', 'sequenceID'],
                              'sequenceHistoryObsHistoryTable':['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
                              'missedHistoryTable':['MissedHistory', 'missedHistID'],
-                             'sequenceHistoryMissedHistoryTable':['SeqHistory_MissedHistory', 'seqhistory_missedHistID'],
+                             'sequenceHistoryMissedHistoryTable':['SeqHistory_MissedHistory',
+                                                                  'seqhistory_missedHistID'],
                              'slewActivitiesTable':['SlewActivities', 'slewActivityID'],
                              'slewHistoryTable':['SlewHistory', 'slewID'],
                              'slewMaxSpeedsTable':['SlewMaxSpeeds', 'slewMaxSpeedID'],
                              'slewStateTable':['SlewState', 'slewIniStatID']
                              }
-        # Call base init method to set up all tables and place default values into dbTable/dbTablesIdKey if not overriden.
+        # Call base init method to set up all tables and place default values
+        # into dbTable/dbTablesIdKey if not overriden.
         super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
                                             defaultdbTables=defaultdbTables, 
                                             *args, **kwargs)
@@ -61,7 +63,7 @@ class OpsimDatabase(Database):
         
             
     def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy=None):
-        """Fetch 'colnames' from 'Output' table. 
+        """Fetch 'colnames' from 'Summary' table. 
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").
@@ -69,7 +71,7 @@ class OpsimDatabase(Database):
         groupBy = group by col 'groupBy' (will override group by expMJD)."""
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint. 
-        table = self.tables['outputTable']
+        table = self.tables['summaryTable']
         if groupBy is not None:
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
@@ -88,11 +90,11 @@ class OpsimDatabase(Database):
         return metricdata
 
 
-    def fetchFieldsFromOutputTable(self, sqlconstraint, raColName='fieldID', decColName='fieldDec'):
+    def fetchFieldsFromSummaryTable(self, sqlconstraint, raColName='fieldID', decColName='fieldDec'):
         """Fetch field information (fieldID/RA/Dec) from Output table."""
         # Fetch field info from the Output table, by selecting unique fieldID + ra/dec values.
         # This implicitly only selects fields which were actually observed by opsim.
-        table = self.tables['outputTable']
+        table = self.tables['summaryTable']
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
                                               colnames=['fieldID', raColName, decColName],
                                               groupByCol='fieldID')
@@ -140,7 +142,7 @@ class OpsimDatabase(Database):
          """
         # Check if using full database; otherwise can only fetch list of all propids. 
         if 'proposalTable' not in self.tables:
-            propData = self.tables['outputTable'].query_columns_Array(colnames=['propID'])
+            propData = self.tables['summaryTable'].query_columns_Array(colnames=['propID'])
             propIDs = np.array(propData['propID'], int)
             wfdIDs = []
             ddIDs = []
@@ -196,7 +198,7 @@ class OpsimDatabase(Database):
         """Check whether the seeing column is 'seeing' or 'finSeeing' (v2.x simulator vs v3.0 simulator)."""
         # Really this is just a bit of a hack to see whether we should be using seeing or finseeing.
         # With time, this should probably just go away.
-        table = self.tables['outputTable']
+        table = self.tables['summaryTable']
         try:
             table.query_columns_Array(colnames=['seeing',], numLimit=1)
             seeingcol = 'seeing'

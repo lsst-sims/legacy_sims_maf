@@ -73,7 +73,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     #########  Supernova Metric ############
     m1 = configureMetric('SupernovaMetric',
-                         kwargs={'m5Col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.},
+                         kwargs={'m5Col':'fiveSigmaDepth', 'redshift':0.1, 'resolution':5.},
                          plotDict={'percentileClip':95.})
     ########   Parallax and Proper Motion ########
     m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})

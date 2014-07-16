@@ -11,7 +11,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     
     Use 'slicerName' for metrics where have the option of using
     [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither] 
-      (dithered healpix slicer uses hexdithra/dec values).
+      (dithered healpix slicer uses ditheredRA/dec values).
     """
 
     # Setup Database access
@@ -77,7 +77,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     elif slicerName == 'HealpixSlicerDither':
         slicerName = 'HealpixSlicer'
         nside = 128
-        slicerkwargs = {'nside':nside, 'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'}
+        slicerkwargs = {'nside':nside, 'spatialkey1':'ditheredRA', 'spatialkey2':'ditheredDec'}
         slicermetadata = 'dithered'
     elif slicerName == 'OpsimFieldSlicer':
         slicerName = 'OpsimFieldSlicer'
@@ -98,7 +98,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = configureMetric('MedianMetric', kwargs={'col':'fivesigma_modified'},
+        m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
                                                          'percentileClip':95.,
@@ -129,7 +129,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = configureMetric('MedianMetric', kwargs={'col':'fivesigma_modified'}, summaryStats={'MeanMetric':{}})
+        m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats={'MeanMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
         m5 = configureMetric('MedianMetric', kwargs={'col':'perry_skybrightness'},
@@ -210,7 +210,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
         m1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'}, summaryStats={'IdentityMetric':{}})
         m2 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'}, summaryStats={'IdentityMetric':{}})
         m3 = configureMetric('MedianMetric', kwargs={'col':'airmass'}, summaryStats={'IdentityMetric':{}})
-        m4 = configureMetric('MedianMetric', kwargs={'col':'fivesigma_modified'}, summaryStats={'IdentityMetric':{}})
+        m4 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats={'IdentityMetric':{}})
         metricDict = makeDict(m1, m2, m3, m4)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=['filter = "%s"'%f])
         slicerList.append(slicer)
@@ -262,9 +262,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               
     # The merged histograms for basics 
     for f in filters:
-        m1 = configureMetric('CountMetric', kwargs={'col':'fivesigma_modified'},
+        m1 = configureMetric('CountMetric', kwargs={'col':'fiveSigmaDepth'},
                             histMerge={'histNum':1, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-        slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'fivesigma_modified', 'binsize':10},
+        slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'fiveSigmaDepth', 'binsize':10},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)]) 
         slicerList.append(slicer)
 
