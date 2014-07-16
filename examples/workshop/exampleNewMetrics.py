@@ -1,6 +1,7 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
+
 class SimplePercentileMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.percentile(dataSlice[self.colname], 95)
@@ -22,7 +23,7 @@ class MaxDifferenceMetric(BaseMetric):
         self.colB = colB
         if (self.colA is None) or (self.colB is None):
             raise Exception('Please set colA and colB.')
-        super(DifferenceMetric, self).__init__([self.colA, self.colB], metricDtype='float', **kwargs)
+        super(MaxDifferenceMetric, self).__init__(col=[self.colA, self.colB], **kwargs)
         
     def run(self, dataSlice, slicePoint=None):
         difference = dataSlice[self.colA] - dataSlice[self.colB]
@@ -43,15 +44,14 @@ class NightsWithNFiltersMetric(BaseMetric):
         self.nightCol = nightCol
         self.filterCol = filterCol
         self.nFilters = nFilters
-        super(NightsWithNFiltersMetric, self).__init__([self.nightCol, self.filterCol],
-                                                       metricDtype='float',
+        super(NightsWithNFiltersMetric, self).__init__(col=[self.nightCol, self.filterCol],
                                                        **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         count = 0
         uniqueNights = np.unique(dataSlice[self.nightCol])
         for n in uniqueNights:
-            condition = (dataSlice[self.night] == n)
+            condition = (dataSlice[self.nightCol] == n)
             uniqueFilters = dataSlice[self.filterCol][condition]
             if len(uniqueFilters) > self.nFilters:
                 count += 1
@@ -74,9 +74,8 @@ class BestSeeingCoaddedDepthMetric(BaseMetric):
         self.seeingCol = seeingCol
         self.m5col = m5col
         self.visitFrac = visitFrac
-        super(ComplexCoaddedDepthBestSeeingMetric, self).__init__([self.seeingCol, self.m5col],
-                                                                  metricDtype='object', units='',
-                                                                  **kwargs)
+        super(BestSeeingCoaddedDepthMetric, self).__init__(col=[self.seeingCol, self.m5col],
+                                                           metricDtype='object', units='', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Identify visits with seeing better than visitFrac.
@@ -92,8 +91,8 @@ class BestSeeingCoaddedDepthMetric(BaseMetric):
         # Calculate coadded depth of these visits.
         coaddm5 = 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.m5col][bestseeingvisitsIdx])))
         # Calculate the mean of those bestseeing visits.
-        meanseeing = np.mean(dataSlice[self.seeingCol][bestseeingvisitsIdx])
-        return {'m5':m5, 'meanSeeing':meanSeeing}
+        meanSeeing = np.mean(dataSlice[self.seeingCol][bestseeingvisitsIdx])
+        return {'m5':coaddm5, 'meanSeeing':meanSeeing}
         
     def reduceM5(self, data):
         return data['m5']
