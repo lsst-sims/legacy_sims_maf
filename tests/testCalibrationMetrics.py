@@ -8,7 +8,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax metric.
         """        
-        names = ['expMJD','finSeeing', 'fivesigma_modified', 'fieldRA', 'fieldDec', 'filter']
+        names = ['expMJD','finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
         slicePoint = {'sid':0}
@@ -17,19 +17,19 @@ class TestCalibrationMetrics(unittest.TestCase):
         data['filter'][0:100] = 'r'
         data['filter'][100:200] = 'u'
         data['filter'][200:] = 'g'
-        data['fivesigma_modified'] = 24.
+        data['fiveSigmaDepth'] = 24.
         stacker = stackers.ParallaxFactorStacker()
         data = stacker.run(data)
         normFlags = [False, True]
         for flag in normFlags:
             data['finSeeing'] = 0.7
-            data['fivesigma_modified'] = 24.                        
+            data['fiveSigmaDepth'] = 24.                        
             baseline = metrics.ParallaxMetric(normalize=flag).run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
             worse1 = metrics.ParallaxMetric(normalize=flag).run(data, slicePoint)
             worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data, slicePoint)
             worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
-            data['fivesigma_modified'] = data['fivesigma_modified']-1.
+            data['fiveSigmaDepth'] = data['fiveSigmaDepth']-1.
             worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
             # Make sure the RMS increases as seeing increases, the star gets fainter,
             #    the background gets brighter, or the baseline decreases.
@@ -50,7 +50,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the ProperMotion metric.
         """
-        names = ['expMJD','finSeeing', 'fivesigma_modified', 'fieldRA', 'fieldDec', 'filter']
+        names = ['expMJD','finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
         slicePoint = [0]
@@ -61,17 +61,17 @@ class TestCalibrationMetrics(unittest.TestCase):
         data['filter'][0:100] = 'r'
         data['filter'][100:200] = 'u'
         data['filter'][200:] = 'g'
-        data['fivesigma_modified'] = 24.
+        data['fiveSigmaDepth'] = 24.
         data = stacker.run(data)
         for flag in normFlags:
             data['finSeeing'] = 0.7
-            data['fivesigma_modified'] = 24
+            data['fiveSigmaDepth'] = 24
             baseline = metrics.ProperMotionMetric(normalize=flag).run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
             worse1 = metrics.ProperMotionMetric(normalize=flag).run(data, slicePoint)
             worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data, slicePoint)
             worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
-            data['fivesigma_modified'] = data['fivesigma_modified']-1.
+            data['fiveSigmaDepth'] = data['fiveSigmaDepth']-1.
             worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300], slicePoint)
             # Make sure the RMS increases as seeing increases, the star gets fainter,
             # the background gets brighter, or the baseline decreases.
