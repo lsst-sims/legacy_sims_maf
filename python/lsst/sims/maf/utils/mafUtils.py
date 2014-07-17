@@ -23,9 +23,18 @@ def optimalBins(datain, binmin=None, binmax=None):
     else:
         data = datain
     if binmin is None:
-        binmin = data.min()
+        if data.size == 0:
+            binmin = 0
+        else:
+            binmin = data.min()
     if binmax is None:
-        binmax = data.max()
+        if data.size == 0:
+            binmax = 0
+        else:
+            binmax = data.max()
+
+    if data.size == 0:
+        return 1
     condition = ((data >= binmin)  & (data <= binmax))
     binwidth = (2.*(np.percentile(data[condition], 75) - np.percentile(data[condition], 25))
                 /np.size(data[condition])**(1./3.))
