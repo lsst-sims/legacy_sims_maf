@@ -38,7 +38,10 @@ class ColInfo(object):
                         '5sigma_ps' : 'mag',
                         'fivesigma':'mag',
                         'fivesigma_modified':'mag',
-                        'fivesigma_ps':'mag'}
+                        'fivesigma_ps':'mag',
+                        'fiveSigmaDepth':'mag',
+                        'ditheredRA':'rad',
+                        'ditheredDec':'rad'}
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}

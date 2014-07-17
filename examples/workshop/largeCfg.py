@@ -8,7 +8,7 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 
 # Set the output directory
 root.outputDir = './Complex_out'
-root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1131_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 # Name of the output table in the database
 root.opsimName = 'ComplexExample'
 
@@ -45,7 +45,7 @@ metric2 = configureMetric('MedianMetric',
 slicer = configureSlicer('HealpixSlicer',
                           metricDict=makeDict(metric1,metric2),
                           constraints=constraints,
-                          kwargs={'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
+                          kwargs={'spatialkey1':'ditheredRA', 'spatialkey2':'ditheredDec'})
 sliceList.append(slicer)
 
 
@@ -53,11 +53,11 @@ sliceList.append(slicer)
 
 # Look at the single-visit depth and airmass for observations in each filter and merge them into a single histogram
 for f in filters:
-    m1 = configureMetric('CountMetric', kwargs={'col':'fivesigma_ps'}, 
+    m1 = configureMetric('CountMetric', kwargs={'col':'fiveSigmaDepth'}, 
                           histMerge={'histNum':1, 'legendloc':'upper right',
                                      'color':colors[f],'label':'%s'%f, 
                                      'ylabel':'Count'} )
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fivesigma_ps','binsize':0.1,},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'fiveSigmaDepth','binsize':0.1,},
                               metricDict=makeDict(m1), constraints=["filter = '%s'"%(f)]) 
     sliceList.append(slicer)
     m1 = configureMetric('CountMetric', kwargs={'col':'airmass'},
@@ -81,7 +81,7 @@ slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1,m2,m3,m4),
 
 
 # Run some Cadence metrics
-m1 = configureMetric('SupernovaMetric', kwargs={'m5col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.},
+m1 = configureMetric('SupernovaMetric', kwargs={'m5col':'fiveSigmaDepth', 'redshift':0.1, 'resolution':5.},
                      plotDict={'percentileClip':95.})
 m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
 m3 = configureMetric('ParallaxMetric')
@@ -93,7 +93,7 @@ slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
 sliceList.append(slicer)
 
 # Run those same Cadence metrics on the hexdither positions
-m1 = configureMetric('SupernovaMetric', kwargs={'metricName':'SN_dith','m5col':'fivesigma_modified',
+m1 = configureMetric('SupernovaMetric', kwargs={'metricName':'SN_dith','m5col':'fiveSigmaDepth',
                                                  'redshift':0.1, 'resolution':5.},
                       plotDict={'percentileClip':95.})
 m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed_dith', 'normalize':True})
@@ -103,7 +103,7 @@ m4 = configureMetric('ProperMotionMetric',kwargs={'metricName':'PM_dith'},
 m5 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed_dith'})
 slicer =  configureSlicer('HealpixSlicer',metricDict=makeDict(m2,m3,m4,m5),
                            constraints=[''],
-                           kwargs={"nside":nside,'spatialkey1':'hexdithra', 'spatialkey2':'hexdithdec'})
+                           kwargs={"nside":nside,'spatialkey1':'ditheredRA', 'spatialkey2':'ditheredDec'})
 sliceList.append(slicer)
 
 

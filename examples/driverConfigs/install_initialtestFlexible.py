@@ -6,7 +6,7 @@
 # cd [MY_WORK_DIRECTORY]
 # cp $SIMS_MAF_DIR/examples/driverConfigs/install_initialtestFlexible.py .
 ##  download opsim data (such as run opsimblitz2_1060) using
-# curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1060/design/opsimblitz2_1060_sqlite.db 
+# curl -O  http://www.noao.edu/lsst/opsim/CadenceWorkshop2014/opsimblitz2_1060_sqlite.db 
 ## run the install_initialtest.py driver config script:
 # runFlexibleDriver.py --runName opsimblitz2_1060 install_initialtestFlexible.py
 
