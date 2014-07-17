@@ -208,7 +208,7 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
     
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', savefig=True, **kwargs):
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', savefig=True, thumbnail=True, **kwargs):
         """
         Call all available plotting methods.
 
@@ -232,6 +232,8 @@ class BaseSlicer(object):
             if savefig:
                 outfile = filename + '_' + plottype + '.' + figformat
                 plt.savefig(outfile, figformat=figformat, dpi=dpi)
+                if thumbnail:
+                    plt.savefig('thumb.'+filename + '_' + plottype + '.' +'png', dpi=72)
                 filenames.append(outfile)
                 filetypes.append(plottype)
         return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}

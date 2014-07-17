@@ -18,10 +18,11 @@ def dtime(time_prev):
 
 class ComparisonSliceMetric(object):
     """ComparisonSliceMetric"""
-    def __init__(self, figformat='pdf', dpi=600, verbose=True):
+    def __init__(self, figformat='pdf', dpi=600, thumbnail=True, verbose=True):
         self.figformat = figformat
         self.dpi = dpi
         self.verbose = verbose
+        self.thumbnail = thumbnail
         #  The comparison slice metric stores data in dictionaries keyed by (the same) number:
         #     -- the baseSliceMetrics (which then hold metric data and the slicer),
         #     -- the filename a particular baseSliceMetric came from (if read from file)
@@ -262,6 +263,8 @@ class ComparisonSliceMetric(object):
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
             plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
+            if self.thumbnail:
+               plt.savefig('thumb.'+outfile[:-4]+'.png', dpi=72)
         else:
             outfile = None
         return fignum, title, outfile
@@ -312,6 +315,8 @@ class ComparisonSliceMetric(object):
                                                           outDir=outDir, outfileRoot=outfileRoot,
                                                           plotType='hist')
             plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
+            if self.thumbnail:
+               plt.savefig('thumb.'+outfile[:-4]+'.png', dpi=72)
         else:
             outfile = None
         return fignum, title, outfile
@@ -366,6 +371,8 @@ class ComparisonSliceMetric(object):
                                                                     outDir=outDir, outfileRoot=outfileRoot, 
                                                                     plotType='sky')
             plt.savefig(outfile, figformat=self.figformat, dpi=self.dpi)
+            if self.thumbnail:
+               plt.savefig('thumb.'+outfile[:-4]+'.png', dpi=72)
         else:
             outfile = None
         return fignum, title, outfile
