@@ -26,19 +26,19 @@ def getMetrics(docomplex=False):
     metricList.append(metrics.MeanMetric('finSeeing'))
     metricList.append(metrics.MedianMetric('airmass'))
     metricList.append(metrics.MinMetric('airmass'))
-    metricList.append(metrics.MeanMetric('fivesigma_modified'))
-    metricList.append(metrics.MeanMetric('skybrightness_modified'))
-    metricList.append(metrics.Coaddm5Metric('fivesigma_modified'))
+    metricList.append(metrics.MeanMetric('fiveSigmaDepth'))
+    metricList.append(metrics.MeanMetric('filtSkyBrightness'))
+    metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth'))
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'ylog':False, 'title':'Number of visits',
-                                                      'plotMin':0, 'plotMax':300,
+                                          plotParams={'logScale':False, 'title':'Number of visits',
+                                                      'colorMin':0, 'colorMax':300,
                                                       'cbarFormat': '%d'}))
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.
         dtmax = 360./60./24.
         metricList.append(metrics.VisitGroupsMetric(deltaTmin=dtmin, deltaTmax=dtmax,
-                                                    plotParams={'ylog':False, 'plotMin':0, 'plotMax':20}))
+                                                    plotParams={'logScale':False, 'colorMin':0, 'colorMax':20}))
         
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
@@ -55,7 +55,7 @@ def getSlicer(simdata, racol, deccol, nside=128):
 
 def goSlice(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
-    gm = sliceMetrics.BaseSliceMetric()
+    gm = sliceMetrics.RunSliceMetric()
     gm.setSlicer(bb)
     
     dt, t = dtime(t)
@@ -86,19 +86,15 @@ def write(gm):
     dt, t = dtime(t)
     print 'Wrote outputs %f s' %(dt)
 
+
 def printSummary(gm, metricList):
     t = time.time()
     for m in metricList:
-        try:
-            mean = gm.computeSummaryStatistics(m.name, metrics.MeanMetric(''))
-            rms = gm.computeSummaryStatistics(m.name, metrics.RmsMetric(''))
-            print 'Summary for', m.name, ':\t Mean', mean, '\t rms', rms
-        except Exception as e:
-            # Probably have a metric data value which does not 'work' for the mean metric.
-            print ' Cannot compute mean or rms for metric values', m.name
+       iid = gm.metricObjIid(m)[0]
+       value = gm.computeSummaryStatistics(iid, metrics.MeanMetric(''))
+       print 'Summary for', m.name, ':', value
     dt, t = dtime(t)
     print 'Computed summaries %f s' %(dt)
-
 
 if __name__ == '__main__':
 
@@ -110,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument("--nside", type=int, default=128,
                         help="NSIDE parameter for healpix grid resolution. Default 128.")
     parser.add_argument("--dither", dest='dither', action='store_true',
-                        help="Use hexdither RA/Dec values.")
+                        help="Use dithered RA/Dec values.")
     parser.set_defaults(dither=False)
     args = parser.parse_args()
     
@@ -127,8 +123,8 @@ if __name__ == '__main__':
     metricList = getMetrics(docomplex=False)
 
     # Find columns that are required.
-    colnames = list(metricList[0].classRegistry.uniqueCols())
-    fieldcols = ['fieldRA', 'fieldDec', 'hexdithra', 'hexdithdec']
+    colnames = list(metricList[0].colRegistry.colSet)
+    fieldcols = ['fieldRA', 'fieldDec', 'ditheredRA', 'ditheredDec']
     colnames = colnames + fieldcols
     colnames = list(set(colnames))
     
@@ -137,8 +133,8 @@ if __name__ == '__main__':
     
     # And set up slicer.
     if args.dither:
-        racol = 'hexdithra'
-        deccol = 'hexdithdec'
+        racol = 'ditheredRA'
+        deccol = 'ditheredDec'
     else:
         racol = 'fieldRA'
         deccol = 'fieldDec'
@@ -148,7 +144,7 @@ if __name__ == '__main__':
     # Okay, go calculate the metrics.
     comment = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
     if args.dither:
-        metadata = metadata + ' hexdither'
+        metadata = metadata + ' dither'
     gm = goSlice(opsimrun, comment, simdata, bb, metricList)
 
     # Generate some summary statistics and plots.

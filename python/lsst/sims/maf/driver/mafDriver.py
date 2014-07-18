@@ -46,6 +46,7 @@ class MafDriver(object):
         self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
 
         time_prev = time.time()
+        self.time_start = time.time()
         # Grab config info and write to disk.
         if self.config.getConfig:
             configSummary, configDetails = self.opsimdb.fetchConfig()
@@ -304,10 +305,10 @@ class MafDriver(object):
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         iid = gm.metricNameIid(mm)[0]
-                                        summary = gm.computeSummaryStatistics(iid, stat) 
+                                        summary = gm.computeSummaryStatistics(iid, stat)
                                 # Else it's a simple metric value.
                                 else:
-                                    iid = gm.metricNameIid(metric.name)[0]
+                                    iid = gm.metricNameIid(metric.name)[0]                                    
                                     summary = gm.computeSummaryStatistics(iid, stat)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
@@ -370,4 +371,6 @@ class MafDriver(object):
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         
-
+        if self.verbose:
+            dt,self.time_start = dtime(self.time_start)
+            print 'Ran everything in %.3g seconds' %(dt)

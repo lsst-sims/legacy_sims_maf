@@ -27,6 +27,8 @@ root.opsimName = runName
 # Set output directory.
 root.outputDir = 'OutDir'
 
+root.verbose = True
+
 # Set up slicerList to store slicers.
 slicerList = []
 # Set parameter for healpix slicer resolution.

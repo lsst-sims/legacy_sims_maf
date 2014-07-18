@@ -22,8 +22,8 @@ def getMetrics():
     # Simple metrics: 
     metricList.append(metrics.CountMetric('finSeeing'))
     metricList.append(metrics.CountMetric('airmass'))
-    metricList.append(metrics.CountMetric('fivesigma_modified'))
-    metricList.append(metrics.CountMetric('skybrightness_modified'))
+    metricList.append(metrics.CountMetric('fiveSigmaDepth'))
+    metricList.append(metrics.CountMetric('filtSkyBrightness'))
     metricList.append(metrics.CountMetric('expMJD'))
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
@@ -44,11 +44,12 @@ def getSlicer(simdata, metricList, bins=100):
 def goSlicePlotWrite(opsimrun, metadata, simdata, slicerList, metricList):
     t = time.time()
     for bb, mm in zip(slicerList, metricList):
-        gm = sliceMetrics.BaseSliceMetric()
+        gm = sliceMetrics.RunSliceMetric()
         gm.setSlicer(bb)
         gm.setMetrics(mm)
         gm.runSlices(simdata, simDataName=opsimrun, metadata=metadata)
-        mean = gm.computeSummaryStatistics(mm.name, metrics.SumMetric(''))
+        iid = gm.metricObjIid(mm)[0]
+        mean = gm.computeSummaryStatistics(iid, metrics.SumMetric(''))
         print 'SummaryNumber (sum) for', mm.name, ':', mean
         gm.plotAll(savefig=True, closefig=True)
         gm.writeAll()
@@ -78,7 +79,7 @@ if __name__ == '__main__':
     metricList = getMetrics()
 
     # Find columns that are required.
-    colnames = list(metricList[0].classRegistry.uniqueCols())
+    colnames = list(metricList[0].colRegistry.colSet)
 
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)

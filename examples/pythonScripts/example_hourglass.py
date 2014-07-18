@@ -39,7 +39,7 @@ def getSlicer(simdata, metricList, nbins=100):
 def goSlicePlotWrite(opsimrun, metadata, simdata, slicerList, metricList):
     t = time.time()
     for bb, mm in zip(slicerList, metricList):
-        gm = sliceMetrics.BaseSliceMetric()
+        gm = sliceMetrics.RunSliceMetric()
         gm.setSlicer(bb)
         gm.setMetrics(mm)
         gm.runSlices(simdata, simDataName=opsimrun, metadata=metadata)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     metricList = getMetrics()
 
     # Find columns that are required.
-    colnames = list(metricList[0].classRegistry.uniqueCols())
+    colnames = list(metricList[0].colRegistry.colSet)
 
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)
