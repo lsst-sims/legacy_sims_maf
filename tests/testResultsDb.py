@@ -24,7 +24,7 @@ class TestResultsDb(unittest.TestCase):
     def testDbCreation(self):
         # Test default sqlite file created (even if outDir doesn't exist)
         resultsdb = db.ResultsDb(outDir=self.outDir)
-        self.assertTrue(os.path.isfile(os.path.join(self.outDir, 'ResultsDb_sqlite.db')))
+        self.assertTrue(os.path.isfile(os.path.join(self.outDir, 'resultsDb_sqlite.db')))
         resultsdb.close()
         # Test can pick custom name in directory that exists.
         sqlitefilename = os.path.join(self.outDir, 'testDb_sqlite.db')
