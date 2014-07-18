@@ -8,7 +8,7 @@ class TestOpsimDb(unittest.TestCase):
     """Test opsim specific database class."""
     def setUp(self):
         filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
-        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1131_sqlite.db'
+        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1133_sqlite.db'
         self.oo = db.OpsimDatabase(self.dbAddress)
 
     def tearDown(self):
@@ -20,10 +20,10 @@ class TestOpsimDb(unittest.TestCase):
         """Test opsim specific database class setup/instantiation."""
         # Test tables were connected to.
         self.assertTrue(isinstance(self.oo.tables, dict))
-        self.assertEqual(self.oo.dbTables['outputTable'][0], 'Output')
+        self.assertEqual(self.oo.dbTables['summaryTable'][0], 'Summary')
         # Test can override default table name/id keys if needed.
-        oo = db.OpsimDatabase(self.dbAddress, dbTables={'outputTable':['ObsHistory', 'obsHistID']})
-        self.assertEqual(oo.dbTables['outputTable'][0], 'ObsHistory')
+        oo = db.OpsimDatabase(self.dbAddress, dbTables={'summaryTable':['ObsHistory', 'obsHistID']})
+        self.assertEqual(oo.dbTables['summaryTable'][0], 'ObsHistory')
 
     def testOpsimDbMetricData(self):
         """Test queries for sim data. """
@@ -60,13 +60,13 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbRunLength(self):
         """Test query for length of opsim run."""
         nrun = self.oo.fetchRunLength()
-        self.assertEqual(nrun, 1.)    
+        self.assertEqual(nrun, 0.0794)    
 
     def testOpsimDbSimName(self):
         """Test query for opsim name."""
         simname = self.oo.fetchOpsimRunName()
         self.assertTrue(isinstance(simname, str))
-        self.assertEqual(simname, 'opsimblitz1_1131')
+        self.assertEqual(simname, 'opsimblitz1_1133')
 
     def testOpsimDbSeeingColName(self):
         """Test query to pull out column name for seeing (seeing or finSeeing)."""

@@ -43,7 +43,7 @@ slicerList.append(slicer)
 # Run the same metrics, but now use the hexdither field positions:
 # As before, but new spatialkeys and add a metadata keyword so the previous files don't get overwritten
 slicer = configureSlicer('HealpixSlicer',
-                          kwargs={"nside":nside,'spatialkey1':"hexdithra", 'spatialkey2':"hexdithdec"},
+                          kwargs={"nside":nside,'spatialkey1':"ditheredRA", 'spatialkey2':"ditheredDec"},
                           metricDict=metricDict, constraints=constraints, metadata='dith')
 # Add this slicer to the list of slicers
 slicerList.append(slicer)

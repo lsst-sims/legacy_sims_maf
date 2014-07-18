@@ -36,9 +36,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.pixArea = hp.nside2pixarea(self.nside)
         self.nslice = hp.nside2npix(self.nside)
         if self.verbose:
-            print 'Healpix slicer using NSIDE=%d, approximate resolution %f arcminutes' %(self.nside,
-                                                                                          hp.nside2resol(self.nside,
-                                                                                                         arcmin=True))
+            print 'Healpix slicer using NSIDE=%d, '%(self.nside) + \
+            'approximate resolution %f arcminutes'%(hp.nside2resol(self.nside,arcmin=True))
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                             'radius':radius}
@@ -148,7 +147,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         fignum = the figure number to use (default None - will generate new figure)
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
+        bins = bins for histogram (numpy array or # of bins)
+        (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
@@ -157,13 +157,14 @@ class HealpixSlicer(BaseSpatialSlicer):
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
-                                                        title=title, fignum=fignum, 
-                                                        label=label, 
-                                                        addLegend=addLegend, legendloc=legendloc,
-                                                        bins=bins, cumulative=cumulative,
-                                                        xMin=xMin, xMax=xMax, logScale=logScale,
-                                                        flipXaxis=flipXaxis,
-                                                        scale=scale, color=color, linestyle=linestyle,**kwargs)
+                                                          title=title, fignum=fignum, 
+                                                          label=label, 
+                                                          addLegend=addLegend, legendloc=legendloc,
+                                                          bins=bins, cumulative=cumulative,
+                                                          xMin=xMin, xMax=xMax, logScale=logScale,
+                                                          flipXaxis=flipXaxis,
+                                                          scale=scale, color=color,
+                                                          linestyle=linestyle,**kwargs)
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
@@ -175,16 +176,21 @@ class HealpixSlicer(BaseSpatialSlicer):
         fignum = figure number (default None and create new plot)
         label = label to add in figure legend (default None)
         addLegend = flag to add legend (default False).
-        removeDipole = remove dipole when calculating power spectrum (default True) (monopole removed automatically.)
+        removeDipole = remove dipole when calculating power spectrum (default True)
+        (monopole removed automatically.)
         """
         if fignum:
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        if removeDipole:
-            cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
-        else:
-            cl = hp.anafast(metricValue.filled(self.badval))
+        # If the mask is True everywhere (no data), just plot zeros
+        if False not in metricValue.mask:
+            return None
+        else:        
+            if removeDipole:
+                cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
+            else:
+                cl = hp.anafast(metricValue.filled(self.badval))
         l = np.arange(np.size(cl))
         # Plot the results.
         if removeDipole:

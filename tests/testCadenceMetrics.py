@@ -10,13 +10,13 @@ class TestCadenceMetrics(unittest.TestCase):
         """
         Test the SN Cadence Metric.
         """
-        names = ['expMJD', 'filter', 'fivesigma_modified']
+        names = ['expMJD', 'filter', 'fiveSigmaDepth']
         types = [float,'|S1', float]
         data = np.zeros(700, dtype=zip(names,types))
         data['expMJD'] = np.arange(0.,100.,1/7.) # So, 100 days are well sampled in 2 filters
         data['filter']= 'r'
         data['filter'][np.arange(0,700,2)] = 'g'
-        data['fivesigma_modified'] = 30.
+        data['fiveSigmaDepth'] = 30.
         slicePoint = {'sid':0}
         metric = metrics.SupernovaMetric()
         result = metric.run(data, slicePoint)

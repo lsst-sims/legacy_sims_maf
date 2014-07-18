@@ -1,4 +1,9 @@
+# To use a new stacker, make sure the path to the code is in your
+#PYTHONPATH environement variable.  For example:
+#setenv PYTHONPATH $PYTHONPATH':/some/path/here/'
+
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureSlicer, configureStacker, makeDict
+
 
 root.outputDir = 'OutDither'
 root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
@@ -26,10 +31,10 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
 # Configuring HealpixSlicer to use hexdither RA/dec
 metric = configureMetric('Coaddm5Metric')
 slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
-                                                  'spatialkey1':'hexdithra',
-                                                  'spatialkey2':'hexdithdec'},
+                                                  'spatialkey1':'ditheredRA',
+                                                  'spatialkey2':'ditheredDec'},
                          metricDict=makeDict(metric), constraints=['filter="r"'],
-                         metadata='hex dither')
+                         metadata='opsim hex dither')
 sliceList.append(slicer)
 
 
@@ -49,9 +54,9 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'randomRADither',
                                                   'spatialkey2':'randomDecDither'},
                          metricDict=makeDict(metric), constraints=['filter="r"'],
-                         stackCols=makeDict(stacker),
-                         metadata='random dither w seed')
+                         stackerDict=makeDict(stacker), metadata='random dither-seed 42')
 sliceList.append(slicer)
+
 
 
 # Use our new stacker 
@@ -74,8 +79,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'fixedRA',
                                                   'spatialkey2':'fixedDec'},
                             metricDict = makeDict(metric), constraints=['filter="r"'],
-                            stackCols=makeDict(stacker),
-                            metadata='single field 2')
+                            stackerDict=makeDict(stacker), metadata='single field 2')
 sliceList.append(slicer)
 
 

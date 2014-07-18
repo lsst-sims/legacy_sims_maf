@@ -119,7 +119,8 @@ class BaseSpatialSlicer(BaseSlicer):
         label = the label to use in the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
-        bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
+        bins = bins for histogram (numpy array or # of bins)
+        (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         yMin/Max = histogram y range
@@ -170,10 +171,13 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             plotValue = metricValue
         if plotValue.size == 0:
-            warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %(histRange[0],
-                                                                                               histRange[1]))
+            if histRange is None:
+                warnings.warn('Could not plot metric data: histRange is None' )
+            else:
+                warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %
+                              (histRange[0], histRange[1]))
             return None
-        else:            
+        else:
             n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
                                cumulative=cumulative, range=histRange, label=label, color=color)
         # Option to use 'scale' to turn y axis into area or other value.

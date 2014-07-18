@@ -6,7 +6,7 @@ import lsst.sims.maf.db as db
 class TestDb(unittest.TestCase):
     def setUp(self):
         filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
-        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1131_sqlite.db'
+        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1133_sqlite.db'
 
     def tearDown(self):
         self.dbAddress = None
@@ -14,7 +14,7 @@ class TestDb(unittest.TestCase):
     def testTable(self):
         """Test that we can connect to a DB table and pull data."""
         # Make a connection
-        table = db.Table('Output', 'obsHistID', self.dbAddress)
+        table = db.Table('Summary', 'obsHistID', self.dbAddress)
         # Query a particular column.
         data = table.query_columns_Array(colnames=['finSeeing'])
         self.assertTrue(isinstance(data, np.ndarray))
@@ -39,7 +39,9 @@ class TestDb(unittest.TestCase):
                                                        'fieldTable':['Field', 'fieldID'],
                                                        'obsHistoryProposalTable':['Obshistory_Proposal',
                                                                                   'obsHistory_propID']})
-        self.assertEqual(set(basedb.tables.keys()), set(['obsHistTable', 'obsHistoryProposalTable', 'fieldTable']))
+        self.assertEqual(set(basedb.tables.keys()),
+                         set(['obsHistTable',
+                              'obsHistoryProposalTable', 'fieldTable']))
         # Test general query with a simple query.
         query = 'select fieldID, fieldRA, fieldDec from Field where fieldDec>0'
         data = basedb.queryDatabase('fieldTable', query)

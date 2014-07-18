@@ -1,6 +1,7 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
+
 class SimplePercentileMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.percentile(dataSlice[self.colname], 95)
@@ -26,8 +27,8 @@ class MaxDifferenceMetric(BaseMetric):
         
     def run(self, dataSlice, slicePoint=None):
         difference = dataSlice[self.colA] - dataSlice[self.colB]
-        difference = np.abs(difference).max()
-        return difference
+        maxdifference = np.abs(difference).max()
+        return maxdifference
 
     
 class NightsWithNFiltersMetric(BaseMetric):
@@ -63,7 +64,7 @@ class BestSeeingCoaddedDepthMetric(BaseMetric):
     of visits, using only visitFrac of the visits with best seeing -- and to
     make a map both the resulting seeing and coadded depth values.
     """
-    def __init__(self, seeingCol='finSeeing', m5col='fivesigma_modified',
+    def __init__(self, seeingCol='finSeeing', m5col='fiveSigmaDepth',
                  visitFrac=0.5, **kwargs):
         """
         seeingCol = seeing column
