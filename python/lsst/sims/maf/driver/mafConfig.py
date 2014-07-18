@@ -37,11 +37,11 @@ class SlicerConfig(pexConfig.Config):
     """
     name = pexConfig.Field("", dtype=str, default='') 
     kwargs = pexConfig.ConfigField("kwargs for slicer", dtype=MixConfig, default=None)
-    metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int, itemtype=MetricConfig,
-                                           default={})
+    metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int,
+                                           itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
-    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig", keytype=int, itemtype=ColStackConfig,
-                                          default={}) 
+    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
+                                          keytype=int, itemtype=ColStackConfig, default={}) 
     plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str,
                                             itemtype=MixConfig, default={})
     metadata = pexConfig.Field("", dtype=str, default='')
