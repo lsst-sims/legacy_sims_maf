@@ -1,6 +1,9 @@
 # To use a new stacker, make sure the path to the code is in your
-#PYTHONPATH environement variable.  For example:
+#PYTHONPATH environement variable.
+#For example for c-shell:
 #setenv PYTHONPATH $PYTHONPATH':/some/path/here/'
+#or bash:
+#export PYTHONPATH=$PYTHONPATH':/some/path/here/'
 
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureSlicer, configureStacker, makeDict
 
