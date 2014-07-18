@@ -64,7 +64,7 @@ class BestSeeingCoaddedDepthMetric(BaseMetric):
     of visits, using only visitFrac of the visits with best seeing -- and to
     make a map both the resulting seeing and coadded depth values.
     """
-    def __init__(self, seeingCol='finSeeing', m5col='fivesigma_modified',
+    def __init__(self, seeingCol='finSeeing', m5col='fiveSigmaDepth',
                  visitFrac=0.5, **kwargs):
         """
         seeingCol = seeing column

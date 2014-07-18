@@ -6,7 +6,7 @@
 # cd [MY_WORK_DIRECTORY]
 # cp $SIMS_MAF_DIR/examples/driverConfigs/install_initialtestFlexible.py .
 ##  download opsim data (such as run opsimblitz2_1060) using
-# curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1060/design/opsimblitz2_1060_sqlite.db 
+# curl -O  http://www.noao.edu/lsst/opsim/CadenceWorkshop2014/opsimblitz2_1060_sqlite.db 
 ## run the install_initialtest.py driver config script:
 # runFlexibleDriver.py --runName opsimblitz2_1060 install_initialtestFlexible.py
 
@@ -51,7 +51,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD','metricName':'NVisits'}, 
                             plotDict={'colorMin':0, 'colorMax':200, 'units':'N Visits'},
                            summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-        m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fivesigma_modified'}, 
+        m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fiveSigmaDepth'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
         metricDict = makeDict(m1, m2)
         sqlconstraint = 'filter = "%s"' %(f)

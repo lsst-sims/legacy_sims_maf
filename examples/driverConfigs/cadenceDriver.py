@@ -52,11 +52,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
         m1 = configureMetric('BinaryMetric', kwargs={'col':'finSeeing'}, summaryStats={'SumMetric':{}})
         slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                                  metricDict=makeDict(m1),
-                                 constraints= ['night < 365 and filter = "%s" and finSeeing < %s'%(f,
-                                                                                                   seeing_limit),
-                                                'night < 730 and filter = "%s" and finSeeing < %s'%(f,
-                                                                                                    seeing_limit),
-                                                'filter = "%s" and finSeeing < %s'%(f, seeing_limit)])
+                                 constraints=
+                                 ['night < 365 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
+                                  'night < 730 and filter = "%s" and finSeeing < %s'%(f,seeing_limit),
+                                  'filter = "%s" and finSeeing < %s'%(f, seeing_limit)])
         slicerList.append(slicer)
 
     # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
@@ -73,20 +72,26 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     #########  Supernova Metric ############
     m1 = configureMetric('SupernovaMetric',
-                         kwargs={'m5Col':'fivesigma_modified', 'redshift':0.1, 'resolution':5.},
+                         kwargs={'m5Col':'fiveSigmaDepth', 'redshift':0.1, 'resolution':5.},
                          plotDict={'percentileClip':95.})
+    slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
+                            metricDict=makeDict(m1),
+                            constraints=['night < 365', ''])
+    slicerList.append(slicer)
     ########   Parallax and Proper Motion ########
     m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
     m3 = configureMetric('ParallaxMetric')
     m4 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_24', 'rmag':24})
-    m5 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_24_normed', 'rmag':24, 'normalize':True})
+    m5 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_24_normed',
+                                                   'rmag':24, 'normalize':True})
     m6 = configureMetric('ProperMotionMetric', plotDict={'percentileClip':95})
     m7 = configureMetric('ProperMotionMetric', kwargs={'rmag':24, 'metricName':'PM_24'},
                          plotDict={'percentileClip':95})
     m8 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
-    m9 = configureMetric('ProperMotionMetric', kwargs={'rmag':24,'normalize':True, 'metricName':'PM_24_normed'})
+    m9 = configureMetric('ProperMotionMetric', kwargs={'rmag':24,'normalize':True,
+                                                       'metricName':'PM_24_normed'})
     slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
-                            metricDict=makeDict(m1,m2,m3,m4,m5,m6,m7,m8,m9),
+                            metricDict=makeDict(m2,m3,m4,m5,m6,m7,m8,m9),
                             constraints=['night < 365', ''])
     slicerList.append(slicer)
 

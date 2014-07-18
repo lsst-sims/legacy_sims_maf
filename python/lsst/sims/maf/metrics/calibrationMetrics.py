@@ -5,7 +5,7 @@ from lsst.sims.maf.utils.astrometryUtils import *
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
     """
-    def __init__(self, metricName='parallax', m5Col='fivesigma_modified',
+    def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', units = 'mas',
                  filterCol='filter', seeingCol='finSeeing',rmag=20.,
                  SedTemplate='flat', badval=-666,
@@ -74,7 +74,7 @@ class ProperMotionMetric(BaseMetric):
     """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
     """
     def __init__(self, metricName='properMotion',
-                 m5Col='fivesigma_modified', mjdCol='expMJD', units='mas/yr',
+                 m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
                  filterCol='filter', seeingCol='finSeeing',  rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,

@@ -36,12 +36,12 @@ slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constrain
 
 slicerList.append(slicer)
 
-metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'hexdithra'})
+metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'ditheredRA'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
 
 slicerList.append(slicer)
 
-metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'hexdithdec'},
+metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'ditheredDec'},
                          plotDict={'cbarFormat':'%.3f'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
 

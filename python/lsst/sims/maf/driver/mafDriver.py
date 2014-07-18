@@ -69,7 +69,7 @@ class MafDriver(object):
         self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, kwargs, metricDict, constraints, stackCols, plotDict, metadata = \
+            name, kwargs, metricDict, constraints, stackerDict, plotDict, metadata = \
                 readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
@@ -82,8 +82,8 @@ class MafDriver(object):
             temp_slicer.metadata = metadata
             temp_slicer.index = i
             stackersList = []
-            for key in stackCols.keys():
-                stackername, kwargs = config2dict(stackCols[key])
+            for key in stackerDict.keys():
+                stackername, kwargs = config2dict(stackerDict[key])
                 stackersList.append(stackers.BaseStacker.getClass(stackername)(**kwargs))
             temp_slicer.stackers = stackersList
             self.slicerList.append(temp_slicer)

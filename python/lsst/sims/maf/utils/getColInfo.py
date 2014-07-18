@@ -24,21 +24,15 @@ class ColInfo(object):
                         'night': 'days',
                         'fieldRA': 'rad',
                         'fieldDec': 'rad', 
-                        'hexdithra': 'rad', 
-                        'hexdithdec': 'rad',
                         'moonRA': 'rad',
                         'moonDec': 'rad',
                         'moonAlt': 'rad',
-                        'dist2Moon': 'rad', 
+                        'dist2Moon': 'rad',
+                        'filtSkyBrightness': 'mag/sq arcsec',
                         'VskyBright': 'mag/sq arcsec',
-                        'perry_skybrightness': 'mag/sq arcsec',
-                        'skybrightness_modified': 'mag/sq arcsec',
-                        '5sigma': 'mag',
-                        '5sigma_modified':'mag',
-                        '5sigma_ps' : 'mag',
-                        'fivesigma':'mag',
-                        'fivesigma_modified':'mag',
-                        'fivesigma_ps':'mag'}
+                        'fiveSigmaDepth':'mag',
+                        'ditheredRA':'rad',
+                        'ditheredDec':'rad'}
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}
