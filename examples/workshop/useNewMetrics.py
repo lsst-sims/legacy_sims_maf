@@ -10,72 +10,37 @@ root.opsimName = 'opsimblitz2_1060'
 
 root.modules = ['exampleNewMetrics']
 
-slicerList = []
+sliceList = []
 
-metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', kwargs={'col':'airmass',
-                                                                             'metricName':'95th Percentile Airmass'})
+metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', kwargs={'col':'airmass'})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
+sliceList.append(slicer)
 
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', kwargs={'col':'airmass',
-                                                                             'metricName':'95th Percentile Airmass'})
-slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
-
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.PercentileMetric', kwargs={'col':'airmass', 'percentile':75,
-                                                                       'metricName':'75th percentile Airmass'})
+metric = configureMetric('exampleNewMetrics.PercentileMetric', kwargs={'col':'airmass', 'percentile':75})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
+sliceList.append(slicer)
 
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.PercentileMetric', kwargs={'col':'airmass', 'percentile':75,
-                                                                       'metricName':'75th Percentile Airmass'})
-slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
-
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'ditheredRA'})
+metric = configureMetric('exampleNewMetrics.DifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'hexdithRA'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'ditheredDec'},
-                         plotDict={'cbarFormat':'%.3f'})
+metric = configureMetric('exampleNewMetrics.DifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'hexdithDec'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.BestSeeingCoaddedDepthMetric', kwargs={'metricName':
-                                                                                   'Best Seeing Coadded Depth'})
+metric = configureMetric('exampleNewMetrics.BestSeeingCoaddedDepth')
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric', kwargs={'nFilters':3,
-                                                                               'metricName':
-                                                                               'Nights with >3 filters'},
-                        plotDict={'cbarFormat':'%d', 'xMin':0, 'xMax':300,'colorMin':100, 'colorMax':300})
+metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric')
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
-slicerList.append(slicer)
-
-metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric', kwargs={'nFilters':5,
-                                                                               'metricName':
-                                                                               'Nights with >=5 filters'})
-slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night', 'binsize':30},
+metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric')
+slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night', 'binsize':365},
                          metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
-metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric', kwargs={'nFilters':5,
-                                                                               'metricName':
-                                                                               'Nights with >=5 filters'})
-slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night', 'binsize':30},
-                         metricDict=makeDict(metric), constraints=['propID!=210'])
-
-
-slicerList.append(slicer)
-
-root.slicers = makeDict(*slicerList)
+root.slicers = makeDict(*sliceList)
 
 

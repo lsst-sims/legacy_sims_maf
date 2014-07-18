@@ -27,8 +27,8 @@ class MaxDifferenceMetric(BaseMetric):
         
     def run(self, dataSlice, slicePoint=None):
         difference = dataSlice[self.colA] - dataSlice[self.colB]
-        difference = np.abs(difference).max()
-        return difference
+        maxdifference = np.abs(difference).max()
+        return maxdifference
 
     
 class NightsWithNFiltersMetric(BaseMetric):
@@ -75,7 +75,7 @@ class BestSeeingCoaddedDepthMetric(BaseMetric):
         self.m5col = m5col
         self.visitFrac = visitFrac
         super(BestSeeingCoaddedDepthMetric, self).__init__(col=[self.seeingCol, self.m5col],
-                                                           metricDtype='object', units='', **kwargs)
+                                                           **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Identify visits with seeing better than visitFrac.

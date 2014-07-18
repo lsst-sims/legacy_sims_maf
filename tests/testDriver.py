@@ -82,7 +82,7 @@ class TestDriver(unittest.TestCase):
                             'OpsimTest_Min_airmass_r_and_night_lt_15_OPSI.npz',
                             'OpsimTest_Min_airmass_r_and_night_lt_15_OPSI_Histogram.pdf',
                             'OpsimTest_Min_airmass_r_and_night_lt_15_OPSI_SkyMap.pdf',
-                            'OpsimTest_OpsimTest_Min_airmass_OPSI_hist.pdf',
+                            'OpsimTest_Min_airmass_hist.pdf',
                             'OpsimTest_hourglass_r_and_night_lt_15_HOUR_hr.pdf',
                             'OpsimTest_normAir_hex_g_and_night_lt_15_ONED.npz',
                             'OpsimTest_normAir_hex_g_and_night_lt_15_ONED_BinnedData.pdf',
@@ -108,13 +108,12 @@ class TestDriver(unittest.TestCase):
                             'OpsimTest_Count_fiveSigmaDepth_g_ONED_BinnedData.pdf',
                             'OpsimTest_Count_fiveSigmaDepth_r_ONED.npz',
                             'OpsimTest_Count_fiveSigmaDepth_r_ONED_BinnedData.pdf',
-                            'OpsimTest_OpsimTest_Count_fiveSigmaDepth_ONED_hist.pdf',
-                            'ResultsSummary.dat',
+                            'OpsimTest_Count_fiveSigmaDepth_hist.pdf',
+                            'resultsDb_sqlite.db',
                             'configDetails.txt',
                             'configSummary.txt',
                             'date_version_ran.dat',
-                            'maf_config_asRan.py',
-                            'outputFiles.npy']]
+                            'maf_config_asRan.py']]
         self.filepath = os.environ['SIMS_MAF_DIR']+'/tests/'
 
 
@@ -171,8 +170,6 @@ class TestDriver(unittest.TestCase):
                 assert(os.path.isfile(configIn.outputDir+'/'+filename))
             assert(nout == len(nnpz))
 
-    def testResultsSummaryContents(self):
-        pass
             
     def tearDown(self):
         if os.path.isdir('Output'):

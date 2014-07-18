@@ -21,7 +21,6 @@ class TestSummaryMetrics(unittest.TestCase):
         dv = np.arange(0, 10, .5)
         dv = np.array(zip(dv), dtype=[('testdata', 'float')])
         testmetric = metrics.IdentityMetric('testdata')
-        self.assertEqual(testmetric.run(dv[0]), dv[0]['testdata'])
         np.testing.assert_equal(testmetric.run(dv), dv['testdata'])        
 
     def testfONv(self):

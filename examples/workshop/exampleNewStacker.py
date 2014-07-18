@@ -1,6 +1,6 @@
+import numpy as np
 from lsst.sims.maf.stackers import BaseStacker
 from lsst.sims.maf.stackers import wrapRA, wrapDec
-import numpy as np
 
 class SingleFieldDitherStacker(BaseStacker):
     """

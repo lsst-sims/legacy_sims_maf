@@ -29,15 +29,21 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     return datavalues
 
 
-class TestSetupBaseSliceMetric(unittest.TestCase):
+class TestSetupRunSliceMetric(unittest.TestCase):
     """Unit tests relating to setting up the baseSliceMetric"""
     def setUp(self):
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.outDir = '.'
+        self.figformat = 'pdf'
+        self.dpi = 500
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir=self.outDir, figformat=self.figformat, dpi=self.dpi)
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
+        self.m1iid = 0
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
                                       plotParams={'units':'countunits', 'title':'count_title'})
+        self.m2iid = 1
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=50, r=50)
+        self.m3iid = 2
         self.slicer = slicers.UniSlicer()
 
     def tearDown(self):
@@ -53,23 +59,20 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         
     def testInit(self):
         """Test init setup for baseSliceMetric."""
-        # Test metric Name list set up and empty
-        self.assertEqual(self.testbbm.metricNames, [])
-        # Test dictionaries set up but empty
+        # Test dictionaries set up and empty.
+        self.assertEqual(self.testbbm.metricNames.keys(), [])
         self.assertEqual(self.testbbm.metricObjs.keys(), [])
         self.assertEqual(self.testbbm.metricValues.keys(), [])
         self.assertEqual(self.testbbm.plotParams.keys(), [])
-        self.assertEqual(self.testbbm.simDataName.keys(), [])
-        self.assertEqual(self.testbbm.sqlconstraint.keys(), [])
-        self.assertEqual(self.testbbm.metadata.keys(), [])
+        self.assertEqual(self.testbbm.simDataNames.keys(), [])
+        self.assertEqual(self.testbbm.sqlconstraints.keys(), [])
+        self.assertEqual(self.testbbm.metadatas.keys(), [])
         # Test that slicer is set to None
         self.assertEqual(self.testbbm.slicer, None)
-        # Test that output file list is set to empty dict
-        self.assertEqual(self.testbbm.outputFiles, {})
-        # Test that figformat is set to default (png)
-        self.assertEqual(self.testbbm.figformat, 'pdf')
+        # Test that figformat is set 
+        self.assertEqual(self.testbbm.figformat, self.figformat)
         # Test that can set figformat to alternate value
-        testbbm2 = sliceMetrics.BaseSliceMetric(figformat='eps')
+        testbbm2 = sliceMetrics.RunSliceMetric(outDir='.', figformat='eps')
         self.assertEqual(testbbm2.figformat, 'eps')
 
     def testSetSlicer(self):
@@ -86,29 +89,26 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         self.assertTrue(self.testbbm.setSlicer(slicer2, override=True))
 
     def testSetMetrics(self):
-        """Test setting metrics and de-dupe/dupe metric names."""
+        """Test setting metrics."""
         self.testbbm.setMetrics([self.m1, self.m2, self.m3])
         # Test metricNames list is as expected.
-        self.assertEqual(self.testbbm.metricNames, ['Mean testdata', 'Count testdata', 'Completeness'])
+        self.assertEqual(set(self.testbbm.metricNames.values()),
+                         set(['Mean testdata', 'Count testdata', 'Completeness']))
         # Test that dictionaries for metricObjs (which hold metric python objects) set
-        self.assertEqual(self.testbbm.metricObjs.keys(), ['Mean testdata', 'Count testdata', 'Completeness'])
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
-        self.assertEqual(self.testbbm.plotParams.keys(), ['Mean testdata', 'Count testdata', 'Completeness'])
-        self.assertEqual(self.testbbm.plotParams['Mean testdata'].keys(), ['units'])
-        self.assertEqual(self.testbbm.plotParams['Count testdata'].keys(), ['units', 'title'])
-        self.assertEqual(self.testbbm.plotParams['Count testdata'].values(),
+        self.assertEqual(self.testbbm.plotParams[self.m1iid].keys(), ['units'])
+        self.assertEqual(self.testbbm.plotParams[self.m2iid].keys(), ['units', 'title'])
+        self.assertEqual(self.testbbm.plotParams[self.m2iid].values(),
                          ['countunits', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
-        testbbm2 = sliceMetrics.BaseSliceMetric()
+        testbbm2 = sliceMetrics.RunSliceMetric(outDir='.')
         testbbm2.setMetrics(self.m1)
-        self.assertEqual(testbbm2.metricNames, ['Mean testdata',])
-        # Test that if add an additional metric, the name is 'de-duped' as expected (and added)
+        self.assertEqual(testbbm2.metricNames.values(), ['Mean testdata',])
+        # Test that we can then add another metric.
         m4 = metrics.MeanMetric('testdata')
         testbbm2.setMetrics(m4)
-        self.assertEqual(testbbm2.metricNames, ['Mean testdata', 'Mean testdata__0'])
-        # And that we can de-dupe name as expected.
-        self.assertEqual(testbbm2._dupeMetricName('Mean testdata__0'), 'Mean testdata')
+        self.assertEqual(testbbm2.metricNames.values(), ['Mean testdata', 'Mean testdata'])
         
     def testValidateMetricData(self):
         """Test validation of metric data."""
@@ -121,9 +121,9 @@ class TestSetupBaseSliceMetric(unittest.TestCase):
         self.testbbm.setMetrics(m4)
         self.assertRaises(Exception, self.testbbm.validateMetricData, dv)
 
-class TestRunBaseSliceMetric(unittest.TestCase):        
+class TestRunRunSliceMetric(unittest.TestCase):        
     def setUp(self):
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
@@ -131,8 +131,10 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=500, r=500,
                                              plotParams={'xlabel':'Completeness'})
         self.metricNames = ['Mean testdata', 'Count testdata', 'Completeness']
+        self.iids = [0, 1, 2]
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
                             'Completeness_z', 'Completeness_y', 'Completeness_Joint']
+        self.riids = [3, 4, 5, 6, 7, 8, 9]
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
         self.slicer.setupSlicer(self.dv)
@@ -157,17 +159,18 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         metadata = 'testing fake data run'
         self.testbbm.runSlices(self.dv, simDataName=opsimname, sqlconstraint=sqlconstraint, metadata=metadata)
         # Test that copied opsim name and sqlconstraint and metadata correctly for each metric name.
-        for mname in self.metricNames:
-            self.assertEqual(self.testbbm.simDataName[mname], opsimname)
-            self.assertEqual(self.testbbm.sqlconstraint[mname], sqlconstraint)
-            self.assertEqual(self.testbbm.metadata[mname], metadata)
+        for iid in self.iids:
+            self.assertEqual(self.testbbm.metricNames[iid], self.metricNames[iid])
+            self.assertEqual(self.testbbm.simDataNames[iid], opsimname)
+            self.assertEqual(self.testbbm.sqlconstraints[iid], sqlconstraint)
+            self.assertEqual(self.testbbm.metadatas[iid], metadata)
         # Test that created metric data with expected number of data points.
-        for mname in self.metricNames:
-            self.assertEqual(len(self.testbbm.metricValues[mname]), len(self.slicer))
+        for iid in self.iids:
+            self.assertEqual(len(self.testbbm.metricValues[iid]), len(self.slicer))
         # Test that metric data was masked where expected (last slicePoint) due to no data in slice.
         lastslice = len(self.slicer) - 1
-        for mname in self.metricNames:
-            self.assertEqual(self.testbbm.metricValues[mname].mask[lastslice], True)
+        for iid in self.iids:
+            self.assertEqual(self.testbbm.metricValues[iid].mask[lastslice], True)
 
     def testReduce(self):
         """Test running reduce methods."""
@@ -177,28 +180,28 @@ class TestRunBaseSliceMetric(unittest.TestCase):
         metadata = 'testing fake data run'
         self.testbbm.runSlices(self.dv, simDataName=opsimname, sqlconstraint=sqlconstraint, metadata=metadata)
         self.testbbm.reduceAll()
-        # Check that all metric data values expected exist.
-        for m in self.metricNames:
-            self.assertTrue(m in self.testbbm.metricValues.keys())
-        for m in self.reduceNames:
-            self.assertTrue(m in self.testbbm.metricValues.keys())
+        # Check that all expected metric names exist.
+        for mname in self.metricNames:
+            self.assertTrue(mname in self.testbbm.metricNames.values())
+        for rname in self.reduceNames:
+            self.assertTrue(rname in self.testbbm.metricNames.values())
         # Check that simdata, sqlconstraint and metadatas were copied properly.
-        for m in self.reduceNames:
-            self.assertEqual(self.testbbm.simDataName[m], opsimname)
-            self.assertEqual(self.testbbm.sqlconstraint[m], sqlconstraint)
-            self.assertEqual(self.testbbm.metadata[m], metadata)
+        for riid in self.riids:
+            self.assertEqual(self.testbbm.simDataNames[riid], opsimname)
+            self.assertEqual(self.testbbm.sqlconstraints[riid], sqlconstraint)
+            self.assertEqual(self.testbbm.metadatas[riid], metadata)
         # Check that plot parameters were copied properly.
-        for m in self.reduceNames:
-            self.assertEqual(self.testbbm.plotParams[m]['xlabel'], 'Completeness')
+        for riid in self.riids:
+            self.assertEqual(self.testbbm.plotParams[riid]['xlabel'], 'Completeness')
         # Check that mask carried through properly.
         lastslice = len(self.slicer) - 1
-        for m in self.reduceNames:
-            self.assertEqual(self.testbbm.metricValues[m].mask[lastslice], True)
+        for riid in self.riids:
+            self.assertEqual(self.testbbm.metricValues[riid].mask[lastslice], True)
                 
 
-class TestReadWriteBaseSliceMetric(unittest.TestCase):        
+class TestReadWriteRunSliceMetric(unittest.TestCase):        
     def setUp(self):
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
@@ -206,8 +209,10 @@ class TestReadWriteBaseSliceMetric(unittest.TestCase):
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=500, r=500,
                                              plotParams={'xlabel':'Completeness'})
         self.metricNames = ['Mean testdata', 'Count testdata', 'Completeness']
+        self.iids = [0, 1, 2]
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
                             'Completeness_z', 'Completeness_y', 'Completeness_Joint']
+        self.riids = [3, 4, 5, 6, 7, 8, 9]
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
         self.slicer.setupSlicer(self.dv)
@@ -219,8 +224,8 @@ class TestReadWriteBaseSliceMetric(unittest.TestCase):
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
                                metadata=self.metadata)
         self.testbbm.reduceAll()
-        self.outroot = 'testBaseSliceMetric'
-        self.testbbm.writeAll(outDir='.', outfileRoot=self.outroot)
+        self.outroot = 'testRunSliceMetric'
+        self.testbbm.writeAll(outfileRoot=self.outroot)
         self.expectedfiles = []
         for m in self.metricNames:
             filename = (self.outroot + ' ' + m + ' ' + self.metadata + ' ' +
@@ -232,8 +237,10 @@ class TestReadWriteBaseSliceMetric(unittest.TestCase):
                         self.slicer.slicerName[:4].upper() + '.npz')
             filename = filename.replace(' ', '_')
             self.expectedfiles.append(filename)
+        self.expectedfiles.append('resultsDb_sqlite.db')
                         
     def tearDown(self):
+        self.testbbm.resultsDb.close()
         del self.testbbm
         del self.m1
         del self.m2
@@ -260,59 +267,39 @@ class TestReadWriteBaseSliceMetric(unittest.TestCase):
         filename = (self.outroot + '_' + 'Completeness' + '_' + self.metadata + '_' +
                     self.slicer.slicerName[:4].upper() + '.npz')
         filename = filename.replace(' ', '_')
-        self.testbbm.readMetricValues(filename)
-        # Should be read in and de-duped.
-        self.assertTrue('Completeness__0' in self.testbbm.metricValues)
-        for m, n in zip(self.testbbm.metricValues['Completeness'].data,
-                        self.testbbm.metricValues['Completeness__0'].data):
+        oldiid = self.testbbm.metricNameIid('Completeness')[0]
+        newiid = self.testbbm.iid_next
+        self.testbbm.readMetricData(filename)
+        # Should be read in.
+        for m, n in zip(self.testbbm.metricValues[oldiid].data,
+                        self.testbbm.metricValues[newiid].data):
             np.testing.assert_equal(m, n)
-        for m, n in zip(self.testbbm.metricValues['Completeness'].mask,
-                        self.testbbm.metricValues['Completeness__0'].mask):
+        for m, n in zip(self.testbbm.metricValues[oldiid].mask,
+                        self.testbbm.metricValues[newiid].mask):
             self.assertEqual(m, n)
         # Test with new sliceMetric (with no slicer previously set up).
-        testbbm2 = sliceMetrics.BaseSliceMetric()
-        testbbm2.readMetricValues(filename)
-        self.assertTrue('Completeness' in testbbm2.metricValues)
-        for m, n in zip(self.testbbm.metricValues['Completeness'].data,
-                        testbbm2.metricValues['Completeness'].data):
+        testbbm2 = sliceMetrics.RunSliceMetric(outDir='.')
+        testbbm2.readMetricData(filename)
+        for m, n in zip(self.testbbm.metricValues[oldiid].data,
+                        testbbm2.metricValues[0].data):
             np.testing.assert_equal(m, n)
-        for m, n in zip(self.testbbm.metricValues['Completeness'].mask,
-                        testbbm2.metricValues['Completeness'].mask):
+        for m, n in zip(self.testbbm.metricValues[oldiid].mask,
+                        testbbm2.metricValues[0].mask):
             self.assertEqual(m, n)
         # Check if simDataName and sqlconstraint were restored as expected.
-        self.assertEqual(testbbm2.simDataName['Completeness'], self.testbbm.simDataName['Completeness'])
-        self.assertEqual(testbbm2.sqlconstraint['Completeness'], self.testbbm.sqlconstraint['Completeness'])
+        self.assertEqual(testbbm2.simDataNames[0], self.testbbm.simDataNames[oldiid])
+        self.assertEqual(testbbm2.sqlconstraints[0], self.testbbm.sqlconstraints[oldiid])
         # plot parameters not currently being written to disk
         #self.assertEqual(testbbm2.plotParams['Completeness']['xlabel'], 'Completeness')
 
-    def testOutputFileKey(self):
-        """Test that the output file dict is being generated as expected."""
-        outkeys = self.testbbm.returnOutputFiles(verbose=False)
-        # Check data in outkeys is valid
-        for o in outkeys:
-            self.assertEqual(outkeys[o]['metadata'], self.metadata)
-            self.assertEqual(outkeys[o]['simDataName'], self.opsimname)
-            self.assertEqual(outkeys[o]['sqlconstraint'], self.sqlconstraint)
-            self.assertTrue(outkeys[o]['dataFile'].replace('./', '') in self.expectedfiles)
-            self.assertEqual(outkeys[o]['slicerName'], self.slicer.slicerName)
-            self.assertTrue((outkeys[o]['metricName'] in self.metricNames) or
-                            (outkeys[o]['metricName'] in self.reduceNames)) 
-        # Check data in outkeys is complete
-        outkeysMetricNames = []
-        for o in outkeys:
-            outkeysMetricNames.append(o)
-        for m in self.metricNames:
-            self.assertTrue(m in outkeysMetricNames)
-        for m in self.reduceNames:
-            self.assertTrue(m in outkeysMetricNames)
-
-class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
+class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
     def setUp(self):
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotParams={'units':'meanunits'})
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.testbbm.setMetrics([self.m1,])
+        self.iid = 0
         self.summaryStat = metrics.MeanMetric('metricdata')
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
@@ -334,34 +321,34 @@ class TestSummaryStatisticBaseSliceMetric(unittest.TestCase):
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
                                metadata=self.metadata)
-        summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
-        self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
-        summary = self.testbbm.computeSummaryStatistics('Mean testdata', metrics.IdentityMetric('metricdata'))
-        self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'][0])
+        summary = self.testbbm.computeSummaryStatistics(self.iid, self.summaryStat)
+        self.assertEqual(summary, self.testbbm.metricValues[self.iid][0])
+        summary = self.testbbm.computeSummaryStatistics(self.iid, metrics.IdentityMetric('metricdata'))
+        self.assertEqual(summary, self.testbbm.metricValues[self.iid][0])
         # Try oneD slicer: other slicers should behave similarly.
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.testbbm.setMetrics([self.m1,])
         self.slicer = slicers.OneDSlicer('testdata', bins=100)
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
                                metadata=self.metadata)
-        summary = self.testbbm.computeSummaryStatistics('Mean testdata', self.summaryStat)
-        self.assertEqual(summary, self.testbbm.metricValues['Mean testdata'].mean())
+        summary = self.testbbm.computeSummaryStatistics(self.iid, self.summaryStat)
+        self.assertEqual(summary, self.testbbm.metricValues[self.iid].mean())
         # Test get warning if calculating summary statistics on 'object' data using simple scalar metric.
         fakemetricdata = ma.MaskedArray(data = np.empty(len(self.slicer), 'object'),
                                         mask = np.zeros(len(self.slicer), 'bool'),
                                         fill_value = self.slicer.badval)
-        self.testbbm.metricValues['objecttest'] = fakemetricdata
+        self.testbbm.metricValues[1] = fakemetricdata
+        self.testbbm.metricNames[1] = 'fakemetricdata'
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
-            summary = self.testbbm.computeSummaryStatistics('objecttest', self.summaryStat)
-            print 'here', summary
-            self.assertTrue('objecttest' in str(w[-1].message))
+            summary = self.testbbm.computeSummaryStatistics(1, self.summaryStat)
+            self.assertTrue('fakemetricdata' in str(w[-1].message))
             self.assertEqual(summary, None)
                             
         
-class TestPlottingBaseSliceMetric(unittest.TestCase):
+class TestPlottingRunSliceMetric(unittest.TestCase):
     def setUp(self):
         # Set up dictionary of all plotting parameters to test.
         self.plotParams = {'units': 'testunits',
@@ -379,7 +366,9 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
                         'bins': 50       # parameter for number of bins for spatial slicer histograms
                         }
         self.m1 = metrics.MeanMetric('testdata', metricName='Test labels', plotParams = self.plotParams)
+        self.m1iid = 0
         self.m2 = metrics.MeanMetric('testdata', metricName='Test defaults')
+        self.m2iid = 1
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
@@ -401,14 +390,14 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         # Test OneDSlicer.
         bins = np.arange(0, 1.25, .1)
         self.slicer = slicers.OneDSlicer('testdata', bins=bins)
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.testbbm.setMetrics([self.m1, self.m2])
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
                                sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         # Test plotting oneDslicer, where we've set the plot parameters.
-        fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
+        fignums = self.testbbm.plotMetric(self.m1iid, savefig=False)
         fig = plt.figure(fignums['BinnedData'])
         ax = plt.gca()
         # Check x and y limits set from plot args.
@@ -422,14 +411,14 @@ class TestPlottingBaseSliceMetric(unittest.TestCase):
         # Check title
         self.assertEqual(ax.get_title(), self.plotParams['title'])
         # Test a spatial slicer.
-        self.testbbm = sliceMetrics.BaseSliceMetric()
+        self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.testbbm.setMetrics([self.m1, ])
         self.slicer = slicers.HealpixSlicer(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
         self.slicer.setupSlicer(self.dv)
         self.testbbm.setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
                                sqlconstraint=self.sqlconstraint, metadata=self.metadata)
-        fignums = self.testbbm.plotMetric(self.m1.name, savefig=False)
+        fignums = self.testbbm.plotMetric(self.m1iid, savefig=False)
         # Test histogram.
         fig = plt.figure(fignums['Histogram'])
         ax = plt.gca()
@@ -452,11 +441,11 @@ def suite():
     """Returns a suite containing all the test cases in this module."""
     utilsTests.init()
     suites = []
-    suites += unittest.makeSuite(TestSetupBaseSliceMetric)
-    suites += unittest.makeSuite(TestRunBaseSliceMetric)
-    suites += unittest.makeSuite(TestReadWriteBaseSliceMetric)
-    suites += unittest.makeSuite(TestSummaryStatisticBaseSliceMetric)
-    suites += unittest.makeSuite(TestPlottingBaseSliceMetric)
+    suites += unittest.makeSuite(TestSetupRunSliceMetric)
+    suites += unittest.makeSuite(TestRunRunSliceMetric)
+    suites += unittest.makeSuite(TestReadWriteRunSliceMetric)
+    suites += unittest.makeSuite(TestSummaryStatisticRunSliceMetric)
+    suites += unittest.makeSuite(TestPlottingRunSliceMetric)
 
     return unittest.TestSuite(suites)
 
