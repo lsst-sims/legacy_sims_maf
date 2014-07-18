@@ -152,7 +152,8 @@ class MafDriver(object):
         # Remove duplicates from list of columns required from database.
         dbcolnames=list(set(dbcolnames))
         # Get the data from database.
-        self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint, colnames=dbcolnames, groupBy = groupBy)
+        self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
+                                                 colnames=dbcolnames, groupBy = groupBy)
         # Calculate the data from stackers.
         for stacker in stackersList:
             self.data = stacker.run(self.data)
@@ -270,7 +271,7 @@ class MafDriver(object):
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
                     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-                    metadata = metadata.replace('"', '').replace('  ',' ') + slicer.metadata
+                    metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
                     # Run through slicepoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
                                  metadata=metadata, sqlconstraint=sqlconstraint)
