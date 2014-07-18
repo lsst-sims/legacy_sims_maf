@@ -105,7 +105,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
                               histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
-        m5 = configureMetric('MedianMetric', kwargs={'col':'perry_skybrightness'},
+        m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
                               plotDict={'normVal':seeing_norm[f],
@@ -132,7 +132,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
         m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats={'MeanMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})             
-        m5 = configureMetric('MedianMetric', kwargs={'col':'perry_skybrightness'},
+        m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
                               plotDict={'normVal':seeing_norm[f],
@@ -268,9 +268,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)]) 
         slicerList.append(slicer)
 
-        m1 = configureMetric('CountMetric', kwargs={'col':'perry_skybrightness'},
+        m1 = configureMetric('CountMetric', kwargs={'col':'filtSkyBrightness'},
                             histMerge={'histNum':2, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f} )
-        slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'perry_skybrightness', 'binsize':0.1},
+        slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'filtSkyBrightness', 'binsize':0.1},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)
     
