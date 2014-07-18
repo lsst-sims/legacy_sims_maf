@@ -89,34 +89,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
             iids = self.slicers.keys()
         for iid in iids:
             uniqueSlicerNames.add(self.slicers[iid].slicerName)
-        return uniqueSlicerNames
-
-                            
-    def findIids(self, simDataName=None, metricName=None, metadata=None, slicerName=None):
-        """
-        Identify iids which match simDataName/metricName/metadata/slicer.
-        """
-        iids = self.metricValues.keys()
-        for iid in self.metricValues.keys():
-           if iid in iids:
-              if simDataName is not None:
-                 if self.simDataNames[iid] != simDataName:
-                    iids.remove[iid]
-                    continue
-              if metricName is not None:
-                 if self.metricNames[iid] != metricName:
-                    iids.remove[iid]
-                    continue
-              if metadata is not None:
-                 if self.metadatas[iid] != metadata:
-                    iids.remove[iid]
-                    continue
-              if slicerName is not None:
-                 if self.slicers[iid].slicerName != slicerName:
-                    iids.remove[iid]
-                    continue
-        return iids
-                        
+        return uniqueSlicerNames                        
 
     def splitPlottable(self, iids):
         slicers = set()

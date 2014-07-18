@@ -119,7 +119,7 @@ class MafDriver(object):
                 for metric in self.metricList[i]:
                     # Approximate what output filename will be 
                     comment = constraint.replace('=','').replace('filter','').replace("'",'')
-                    comment = comment.replace('"', '').replace('  ',' ') + slicer.metadata
+                    comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
                     filenames.append('_'.join([metric.name, comment, slicer.slicerName]))
         if len(filenames) != len(set(filenames)):
             duplicates = list(set([x for x in filenames if filenames.count(x) > 1]))
@@ -265,7 +265,7 @@ class MafDriver(object):
                         slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                      outDir=self.config.outputDir) 
+                                                     outDir=self.config.outputDir) 
                     gm.setSlicer(slicer)
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.

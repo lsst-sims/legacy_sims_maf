@@ -50,9 +50,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
         # Set up metrics and slicers.
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD','metricName':'NVisits'}, 
                             plotDict={'colorMin':0, 'colorMax':200, 'units':'N Visits'},
-                           summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
+                           summaryStats={'MedianMetric':{}, 'RobustRmsMetric':{}})
         m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fivesigma_modified'}, 
-                            plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
+                            plotDict={'percentileClip':95}, summaryStats={'MedianMetric':{}})
         metricDict = makeDict(m1, m2)
         sqlconstraint = 'filter = "%s"' %(f)
         slicer = configureSlicer('HealpixSlicer',

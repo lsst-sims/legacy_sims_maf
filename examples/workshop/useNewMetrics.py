@@ -10,28 +10,37 @@ root.opsimName = 'opsimblitz2_1060'
 
 root.modules = ['exampleNewMetrics']
 
+sliceList = []
+
 metric = configureMetric('exampleNewMetrics.SimplePercentileMetric', kwargs={'col':'airmass'})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
+sliceList.append(slicer)
 
 metric = configureMetric('exampleNewMetrics.PercentileMetric', kwargs={'col':'airmass', 'percentile':75})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
+sliceList.append(slicer)
 
 metric = configureMetric('exampleNewMetrics.DifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'hexdithRA'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
 metric = configureMetric('exampleNewMetrics.DifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'hexdithDec'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
 metric = configureMetric('exampleNewMetrics.BestSeeingCoaddedDepth')
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
 metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric')
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
 metric = configureMetric('exampleNewMetrics.NightsWithNFiltersMetric')
 slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night', 'binsize':365},
                          metricDict=makeDict(metric), constraints=[''])
+sliceList.append(slicer)
 
-root.slicers = makeDict(slicer)
+root.slicers = makeDict(*sliceList)
 
 

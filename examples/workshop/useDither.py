@@ -50,7 +50,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey2':'randomDecDither'},
                          metricDict=makeDict(metric), constraints=['filter="r"'],
                          stackCols=makeDict(stacker),
-                         metadata='random dither w/ seed')
+                         metadata='random dither w seed')
 sliceList.append(slicer)
 
 

@@ -40,10 +40,8 @@ class BaseSliceMetric(object):
         # Note that metricNames are not necessarily unique by themselves.
         self.iid_next = 0
         self.metricNames = {}
-        self.metricObjs = {}  # Note, this dict may stay empty
         self.plotParams = {}
         self.slicers = {}
-        self.slicer = None    # This is only used for RunSliceMetric, but makes it easier to define here.
         self.metricValues = {}
         self.simDataNames = {}
         self.sqlconstraints = {}
@@ -62,18 +60,31 @@ class BaseSliceMetric(object):
                 iids.append(iid)
         return iids
 
-    def metricObjIid(self, metricObj):
-       """
-       Return the internal dictionary id number (iid) for a given metricObject.
-
-       If metricObj is a duplicate, will return all iids which match.
-       """
-       iids = []
-       for iid, metric in self.metricObjs.iteritems():
-          if metric == metricObj:
-             iids.append(iid)
-       return iids
-
+    def findIids(self, simDataName=None, metricName=None, metadata=None, slicerName=None):
+        """
+        Identify iids which match simDataName/metricName/metadata/slicer.
+        """
+        iids = self.metricValues.keys()
+        for iid in self.metricValues.keys():
+           if iid in iids:
+              if simDataName is not None:
+                 if self.simDataNames[iid] != simDataName:
+                    iids.remove[iid]
+                    continue
+              if metricName is not None:
+                 if self.metricNames[iid] != metricName:
+                    iids.remove[iid]
+                    continue
+              if metadata is not None:
+                 if self.metadatas[iid] != metadata:
+                    iids.remove[iid]
+                    continue
+              if slicerName is not None:
+                 if self.slicers[iid].slicerName != slicerName:
+                    iids.remove[iid]
+                    continue
+        return iids
+    
        
     def _buildOutfileName(self, iid, outfileRoot=None, plotType=None):
         """
@@ -99,15 +110,15 @@ class BaseSliceMetric(object):
         # Add letters to distinguish slicer types
         if iid in self.slicers:
             oname = oname + '_' + self.slicers[iid].slicerName[:4].upper()
-        if self.slicer is not None:
-            oname = oname + '_' + self.slicer.slicerName[:4].upper()
         # Do some work sanitizing output filename. 
         # Replace <, > and = signs.
         oname = oname.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
         # Strip white spaces (replace with underscores), strip '.'s and ','s
         oname = oname.replace('  ', ' ').replace(' ', '_').replace('.', '_').replace(',', '')
         # and strip quotes and double __'s
-        oname = oname.replace('"','').replace("'",'').replace('__', '_')        
+        oname = oname.replace('"','').replace("'",'').replace('__', '_')
+        # and remove / and \
+        oname = oname.replace('/', '_').replace('\\', '_')
         # Add plot name, if plot.
         if plotType is not None:
            oname = oname + '_' + plotType + '.' + self.figformat

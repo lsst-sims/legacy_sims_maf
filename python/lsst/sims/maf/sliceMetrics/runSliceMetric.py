@@ -25,7 +25,29 @@ class RunSliceMetric(BaseSliceMetric):
     opsim run name, the sql constraint on the query used to obtain the input data,
     and the slicer type that produced the metric data. 
     """
-        
+    def __init__(self, useResultsDb=True, resultsDbAddress=None, 
+                 figformat='pdf', dpi=600, outDir='Output'):
+        """
+        Instantiate the RunSliceMetric.
+        """
+        super(RunSliceMetric, self).__init__(useResultsDb=useResultsDb, resultsDbAddress=resultsDbAddress,
+                                             figformat=figformat, dpi=dpi, outDir=outDir)
+        # Add dictionary to save metric objects
+        self.metricObjs = {}
+        self.slicer = None   
+
+    def metricObjIid(self, metricObj):
+       """
+       Return the internal dictionary id number (iid) for a given metricObject.
+
+       If metricObj is a duplicate, will return all iids which match.
+       """
+       iids = []
+       for iid, metric in self.metricObjs.iteritems():
+          if metric == metricObj:
+             iids.append(iid)
+       return iids
+    
     def setSlicer(self, slicer, override=False):
         """
         Set slicer for RunSliceMetric. 
@@ -34,6 +56,9 @@ class RunSliceMetric(BaseSliceMetric):
         """
         if (self.slicer is None) or (override):
             self.slicer = slicer
+            # Update existing slicer dict
+            for iid in self.slicers:
+                self.slicers[iid] = self.slicer
             return True        
         return (self.slicer == slicer)            
 
@@ -48,6 +73,7 @@ class RunSliceMetric(BaseSliceMetric):
            self.metricObjs[iid] = metric
            self.plotParams[iid] = metric.plotParams
            self.metricNames[iid] = metric.name
+           self.slicers[iid] = self.slicer
            iid += 1
         self.iid_next = iid
         return 
@@ -161,6 +187,7 @@ class RunSliceMetric(BaseSliceMetric):
         self.iid_next = riids.max() + 1
         for riid, rName in zip(riids, rNames):
            self.metricNames[riid] = rName
+           self.slicers[riid] = self.slicer
            self.simDataNames[riid] = self.simDataNames[iid]
            self.sqlconstraints[riid] = self.sqlconstraints[iid]
            self.metadatas[riid] = self.metadatas[iid]

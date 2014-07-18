@@ -237,8 +237,10 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
                         self.slicer.slicerName[:4].upper() + '.npz')
             filename = filename.replace(' ', '_')
             self.expectedfiles.append(filename)
+        self.expectedfiles.append('resultsDb_sqlite.db')
                         
     def tearDown(self):
+        self.testbbm.resultsDb.close()
         del self.testbbm
         del self.m1
         del self.m2
