@@ -209,28 +209,33 @@ class RunSliceMetric(BaseSliceMetric):
         
         summaryMetric must be an object (not a class), already instantiated.
         """
-        # Cannot generally run summary statistics on object metric data, so test and skip.
-        if self.metricValues[iid].dtype == 'object':
-            warnings.warn('Cannot compute simple scalar summary metric %s on "object" type metric value for %s'
-                            % (summaryMetric.name, self.metricNames[iid]))
-            return None
-        # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
-        # Create numpy structured array from metric data, with bad values removed. 
-        rarr = np.array(zip(self.metricValues[iid].compressed()), 
-                        dtype=[('metricdata', self.metricValues[iid].dtype)])
-        # The summary metric colname should already be set to 'metricdata', but in case it's not:
-        summaryMetric.colname = 'metricdata'
-        summaryValue = summaryMetric.run(rarr)
-        # Add summary metric info to results database. (should be float or int).
-        if self.resultsDb:           
-            if iid not in self.metricIds:
-                self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                               self.simDataNames[iid], self.sqlconstraints[iid],
-                                                               self.metadatas[iid], 'NULL')
-            self.resultsDb.addSummaryStat(self.metricIds[iid],
-                                            summaryName=summaryMetric.name.replace(' metricdata', ''),
-                                            summaryValue=summaryValue)
-        return summaryValue
+        if not hasattr(iid, '__iter__'):
+            iid = [iid,]
+        summaryValues = []
+        for iidi in iid: 
+            # Cannot generally run summary statistics on object metric data, so test and skip.
+            if self.metricValues[iidi].dtype == 'object':
+                warnings.warn('Cannot compute simple scalar summary metric %s on "object" type metric value for %s'
+                                % (summaryMetric.name, self.metricNames[iidi]))
+                return None
+            # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
+            # Create numpy structured array from metric data, with bad values removed. 
+            rarr = np.array(zip(self.metricValues[iidi].compressed()), 
+                            dtype=[('metricdata', self.metricValues[iidi].dtype)])
+            # The summary metric colname should already be set to 'metricdata', but in case it's not:
+            summaryMetric.colname = 'metricdata'
+            summaryValue = summaryMetric.run(rarr)
+            summaryValues.append(summaryValue)
+            # Add summary metric info to results database. (should be float or int).
+            if self.resultsDb:           
+                if iidi not in self.metricIds:
+                    self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
+                                                                    self.simDataNames[iidi], self.sqlconstraints[iidi],
+                                                                    self.metadatas[iidi], 'NULL')
+                self.resultsDb.addSummaryStat(self.metricIds[iidi],
+                                                summaryName=summaryMetric.name.replace(' metricdata', ''),
+                                                summaryValue=summaryValue)
+        return summaryValues
 
     
         

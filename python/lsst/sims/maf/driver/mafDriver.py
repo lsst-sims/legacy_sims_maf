@@ -46,6 +46,7 @@ class MafDriver(object):
         self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
 
         time_prev = time.time()
+        self.time_start = time.time()
         # Grab config info and write to disk.
         if self.config.getConfig:
             configSummary, configDetails = self.opsimdb.fetchConfig()
@@ -152,7 +153,8 @@ class MafDriver(object):
         # Remove duplicates from list of columns required from database.
         dbcolnames=list(set(dbcolnames))
         # Get the data from database.
-        self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint, colnames=dbcolnames, groupBy = groupBy)
+        self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
+                                                 colnames=dbcolnames, groupBy = groupBy)
         # Calculate the data from stackers.
         for stacker in stackersList:
             self.data = stacker.run(self.data)
@@ -270,7 +272,7 @@ class MafDriver(object):
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
                     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-                    metadata = metadata.replace('"', '').replace('  ',' ') + slicer.metadata
+                    metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
                     # Run through slicepoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
                                  metadata=metadata, sqlconstraint=sqlconstraint)
@@ -304,10 +306,10 @@ class MafDriver(object):
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         iid = gm.metricNameIid(mm)[0]
-                                        summary = gm.computeSummaryStatistics(iid, stat) 
+                                        summary = gm.computeSummaryStatistics(iid, stat)
                                 # Else it's a simple metric value.
                                 else:
-                                    iid = gm.metricNameIid(metric.name)[0]
+                                    iid = gm.metricNameIid(metric.name)[0]                                    
                                     summary = gm.computeSummaryStatistics(iid, stat)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
@@ -370,4 +372,6 @@ class MafDriver(object):
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         
-
+        if self.verbose:
+            dt,self.time_start = dtime(self.time_start)
+            print 'Ran everything in %.3g seconds' %(dt)

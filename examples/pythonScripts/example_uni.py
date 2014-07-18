@@ -25,9 +25,9 @@ def getMetrics():
     metricList.append(metrics.RmsMetric('finSeeing'))
     metricList.append(metrics.MedianMetric('airmass'))
     metricList.append(metrics.RmsMetric('airmass'))
-    metricList.append(metrics.MeanMetric('fivesigma_modified'))
-    metricList.append(metrics.RmsMetric('fivesigma_modified'))
-    metricList.append(metrics.MeanMetric('skybrightness_modified'))
+    metricList.append(metrics.MeanMetric('fiveSigmaDepth'))
+    metricList.append(metrics.RmsMetric('fiveSigmaDepth'))
+    metricList.append(metrics.MeanMetric('filtSkyBrightness'))
     metricList.append(metrics.CountMetric('expMJD'))
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
@@ -44,7 +44,7 @@ def getSlicer(simdata):
 
 def goSlice(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
-    gm = sliceMetrics.BaseSliceMetric()
+    gm = sliceMetrics.RunSliceMetric()
     gm.setSlicer(bb)
 
     gm.setMetrics(metricList)
@@ -69,11 +69,9 @@ def write(gm):
 def printSummary(gm, metricList):
     t = time.time()
     for m in metricList:
-        try:
-            value = gm.computeSummaryStatistics(m.name, metrics.MeanMetric(''))
-            print 'Summary for', m.name, ':', value
-        except ValueError:
-            pass
+       iid = gm.metricObjIid(m)[0]
+       value = gm.computeSummaryStatistics(iid, metrics.MeanMetric(''))
+       print 'Summary for', m.name, ':', value
     dt, t = dtime(t)
     print 'Computed summaries %f s' %(dt)
 
@@ -99,7 +97,7 @@ if __name__ == '__main__':
     metricList = getMetrics()
 
     # Find columns that are required.
-    colnames = list(metricList[0].classRegistry.uniqueCols())
+    colnames = list(metricList[0].colRegistry.colSet)
     
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)

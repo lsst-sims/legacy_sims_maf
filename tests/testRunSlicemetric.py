@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -56,6 +57,7 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.m1 = None
         self.m2 = None
         self.slicer = None
+        os.remove('resultsDb_sqlite.db')
         
     def testInit(self):
         """Test init setup for baseSliceMetric."""
@@ -151,6 +153,7 @@ class TestRunRunSliceMetric(unittest.TestCase):
         self.m1 = None
         self.m2 = None
         self.slicer = None
+        os.remove('resultsDb_sqlite.db')
 
     def testRunSlices(self):
         """Test creating metric data values."""
@@ -250,13 +253,11 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
         self.m1 = None
         self.m2 = None
         self.slicer = None
-        import os
         for f in self.expectedfiles:
             os.remove(f)        
 
     def testWrite(self):
         """Test writing data to disk (and test outfile name generation)."""
-        import os
         filelist = os.listdir('.')
         for f in self.expectedfiles:
             self.assertTrue(f in filelist)
@@ -312,6 +313,7 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
         self.testbbm = None
         self.m1 = None
         self.slicer = None
+        os.remove('resultsDb_sqlite.db')
 
     def testSummaryStatistic(self):
         """Test summary statistic calculation."""
@@ -383,6 +385,7 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         self.m1 = None
         self.m2 = None
         self.slicer = None
+        os.remove('resultsDb_sqlite.db')
 
     def testPlotting(self):        
         """Test plotting."""

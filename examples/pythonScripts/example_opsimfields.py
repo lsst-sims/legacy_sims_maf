@@ -24,12 +24,12 @@ def getMetrics(docomplex=True):
     metricList.append(metrics.MeanMetric('finSeeing'))
     metricList.append(metrics.MedianMetric('airmass'))
     metricList.append(metrics.MinMetric('airmass'))
-    metricList.append(metrics.MeanMetric('fivesigma_modified'))
-    metricList.append(metrics.MeanMetric('skybrightness_modified'))
-    metricList.append(metrics.Coaddm5Metric('fivesigma_modified'))    
+    metricList.append(metrics.MeanMetric('fiveSigmaDepth'))
+    metricList.append(metrics.MeanMetric('filtSkyBrightness'))
+    metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth'))    
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'ylog':False, '_units':'Number of visits',
-                                                      'plotMin':0, 'plotMax':300}))
+                                          plotParams={'logScale':False, 'units':'Number of visits',
+                                                      'colorMin':0, 'colorMax':300}))
     if docomplex:
         # More complex metrics.    
         dtmin = 1./60./24.
@@ -52,7 +52,7 @@ def getSlicer(simData, fieldData):
 
 def goSlice(opsimrun, metadata, simdata, bb, metricList):
     t = time.time()
-    gm = sliceMetrics.BaseSliceMetric()
+    gm = sliceMetrics.RunSliceMetric()
     gm.setSlicer(bb)
     
     dt, t = dtime(t)
@@ -83,17 +83,12 @@ def write(gm):
     dt, t = dtime(t)
     print 'Wrote outputs %f s' %(dt)
 
-
 def printSummary(gm, metricList):
     t = time.time()
     for m in metricList:
-        try:
-            mean = gm.computeSummaryStatistics(m.name, metrics.MeanMetric(''))
-            rms = gm.computeSummaryStatistics(m.name, metrics.RmsMetric(''))
-            print 'Summary for', m.name, ':\t Mean', mean, '\t rms', rms
-        except Exception as e:
-            # Probably have a metric data value which does not 'work' for the mean metric.
-            print ' Cannot compute mean or rms for metric values', m.name
+       iid = gm.metricObjIid(m)[0]
+       value = gm.computeSummaryStatistics(iid, metrics.MeanMetric(''))
+       print 'Summary for', m.name, ':', value
     dt, t = dtime(t)
     print 'Computed summaries %f s' %(dt)
 
@@ -125,7 +120,7 @@ if __name__ == '__main__':
     metricList = getMetrics(docomplex=True)
     
     # Find columns that are required.
-    colnames = list(metricList[0].classRegistry.uniqueCols())
+    colnames = list(metricList[0].colRegistry.colSet)
     colnames += ['fieldID', 'fieldRA', 'fieldDec']
     colnames = list(set(colnames))
     
@@ -148,4 +143,4 @@ if __name__ == '__main__':
     # Write the data to file.
     write(gm)
     
-    gm.returnOutputFiles(verbose=True)
+
