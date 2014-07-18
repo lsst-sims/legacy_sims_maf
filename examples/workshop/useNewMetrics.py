@@ -1,6 +1,8 @@
 # To use a new metric, make sure the path to the code is in your
 #PYTHONPATH environement variable.  For example:
 #setenv PYTHONPATH $PYTHONPATH':/some/path/here/'
+#or bash:
+#export PYTHONPATH=$PYTHONPATH':/some/path/here/'
 
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureSlicer, makeDict
 
@@ -20,15 +22,15 @@ metric = configureMetric('exampleNewMetrics.PercentileMetric', kwargs={'col':'ai
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(metric), constraints=['filter="r"'])
 sliceList.append(slicer)
 
-metric = configureMetric('exampleNewMetrics.DifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'hexdithRA'})
+metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldRA', 'colB':'ditheredRA'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
 sliceList.append(slicer)
 
-metric = configureMetric('exampleNewMetrics.DifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'hexdithDec'})
+metric = configureMetric('exampleNewMetrics.MaxDifferenceMetric', kwargs={'colA':'fieldDec', 'colB':'ditheredDec'})
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=makeDict(metric), constraints=[''])
 sliceList.append(slicer)
 
-metric = configureMetric('exampleNewMetrics.BestSeeingCoaddedDepth')
+metric = configureMetric('exampleNewMetrics.BestSeeingCoaddedDepthMetric')
 slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric), constraints=[''])
 sliceList.append(slicer)
 
