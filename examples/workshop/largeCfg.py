@@ -10,7 +10,7 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 root.outputDir = './LargeCfg'
 root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 # Name of the output table in the database
-root.opsimName = 'ComplexExample'
+root.opsimName = 'opsimblitz2_1060'
 
 # Make an empty list to hold all the slicer configs
 sliceList = []
@@ -81,17 +81,18 @@ m4 = configureMetric('RmsMetric', kwargs={'col':'airmass'},
                           summaryStats={'IdentityMetric':{}})
 slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1,m2,m3,m4),
                           constraints=[''])
+sliceList.append(slicer)
 
 
 # Run some Cadence metrics
-#m1 = configureMetric('SupernovaMetric', kwargs={'m5Col':'fiveSigmaDepth', 'redshift':0.1, 'resolution':5.},
-#                     plotDict={'percentileClip':95.})
+m1 = configureMetric('SupernovaMetric', kwargs={'m5Col':'fiveSigmaDepth', 'redshift':0.1, 'resolution':5.},
+                     plotDict={'percentileClip':95.})
 m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
 m3 = configureMetric('ParallaxMetric')
 m4 = configureMetric('ProperMotionMetric', plotDict={'percentileClip':95})
 m5 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
 slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
-                           metricDict=makeDict(m2,m3,m4,m5),
+                           metricDict=makeDict(m1,m2,m3,m4,m5),
                            constraints=['night < 1826'])
 sliceList.append(slicer)
 

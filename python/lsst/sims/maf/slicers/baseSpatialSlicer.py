@@ -177,7 +177,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %
                               (histRange[0], histRange[1]))
             return None
-        else:            
+        else:
             n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
                                cumulative=cumulative, range=histRange, label=label, color=color)
         # Option to use 'scale' to turn y axis into area or other value.

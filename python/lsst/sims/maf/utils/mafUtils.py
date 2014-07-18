@@ -1,5 +1,6 @@
 import os, sys, importlib
 import numpy as np
+import warnings
 
 
 def moduleLoader(moduleList):
@@ -12,10 +13,11 @@ def moduleLoader(moduleList):
         importlib.import_module(m)
 
 
-def optimalBins(datain, binmin=None, binmax=None):
+def optimalBins(datain, binmin=None, binmax=None, nbinMax=1e3):
     """
     Use Freedman-Diaconis rule to set binsize.
     Allow user to pass min/max data values to consider.
+    nbinMax sets the maximum value (to keep it from trying to make a trillion bins)
     """
     # if it's a masked array, only use unmasked values
     if hasattr(datain, 'compressed'):
@@ -29,16 +31,19 @@ def optimalBins(datain, binmin=None, binmax=None):
             binmin = data.min()
     if binmax is None:
         if data.size == 0:
-            binmax = 0
+            binmax = 1
         else:
             binmax = data.max()
 
     if data.size == 0:
         return 1
-    condition = ((data >= binmin)  & (data <= binmax))
-    binwidth = (2.*(np.percentile(data[condition], 75) - np.percentile(data[condition], 25))
-                /np.size(data[condition])**(1./3.))
+    cond = np.where((data >= binmin)  & (data <= binmax))[0]
+    binwidth = (2.*(np.percentile(data[cond], 75) - np.percentile(data[cond], 25))
+                /np.size(data[cond])**(1./3.))
     nbins = (binmax - binmin) / binwidth
+    if nbins > nbinMax:
+        warnings.warn('formula tried to make %f bins, returning %i'%(nbins,nbinMax))
+        nbins = nbinMax
     if np.isinf(nbins) or np.isnan(nbins):
         return 1
     else:
