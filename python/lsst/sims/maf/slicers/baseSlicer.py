@@ -234,6 +234,9 @@ class BaseSlicer(object):
                 plt.savefig(outfile, figformat=figformat, dpi=dpi)
                 filenames.append(outfile)
                 filetypes.append(plottype)
+            else:
+                filenames.append('NULL')
+                filetypes.append('NULL')
         return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
 
         

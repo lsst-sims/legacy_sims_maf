@@ -93,6 +93,7 @@ class MafDriver(object):
                 # Need to make summaryStats a dict with keys of metric names and items of kwarg dicts.
                 kwargs['plotParams'] = plotDict
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
+                # Add an attribute to our metric which will describe the summary stats.
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
                     summarykwargs = readMixConfig(summaryStats[key])
@@ -205,10 +206,6 @@ class MafDriver(object):
     def run(self):
         """Loop over each slicer and calculate metrics for that slicer. """
         
-        # Start a list to hold the output file names.
-        allOutfiles = []
-        allOutDict = {}
-        
         # Loop through all sqlconstraints, and run slicers + metrics that match the same sql constraints
         #   (so we only have to do one query of database per sql constraint).
         for sqlconstraint in self.constraints:
@@ -267,16 +264,16 @@ class MafDriver(object):
                     else:
                         slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
-                    gm = sliceMetrics.BaseSliceMetric(figformat=self.figformat, dpi=self.dpi,
+                    gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                       outDir=self.config.outputDir) 
                     gm.setSlicer(slicer)
-                    metricNames_in_gm = gm.setMetrics(self.metricList[slicer.index])
+                    gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
                     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
                     metadata = metadata.replace('"', '').replace('  ',' ') + slicer.metadata
                     # Run through slicepoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
-                               metadata=metadata, sqlconstraint=sqlconstraint)
+                                 metadata=metadata, sqlconstraint=sqlconstraint)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    Computed metrics in %.3g s'%dt
@@ -286,7 +283,8 @@ class MafDriver(object):
                     gm.writeAll()
                     # Replace the plotParams for selected metricNames (to allow override from config file).
                     for mName in slicer.plotConfigs:
-                        gm.plotParams[mName] = readMixConfig(slicer.plotConfigs[mName])
+                        iid = gm.metricNameIid(mName)[0]
+                        gm.plotParams[iid] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
                     if self.verbose:
@@ -299,15 +297,18 @@ class MafDriver(object):
                                 # If it's metric returning an OBJECT, run summary stats on each reduced metric
                                 # (have to identify related reduced metric values first)
                                 if metric.metricDtype == 'object':
-                                    baseName = gm.metricNames[i]
-                                    all_names = gm.metricValues.keys()
+                                    iid = gm.metricObjIid(metric)[0]
+                                    baseName = gm.metricNames[iid]
+                                    all_names = gm.metricNames.keys()
                                     matching_metrics = [x for x in all_names \
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
-                                        summary = gm.computeSummaryStatistics(mm, stat) 
+                                        iid = gm.metricNameIid(mm)[0]
+                                        summary = gm.computeSummaryStatistics(iid, stat) 
                                 # Else it's a simple metric value.
                                 else:
-                                    summary = gm.computeSummaryStatistics(metric.name, stat)
+                                    iid = gm.metricNameIid(metric.name)[0]
+                                    summary = gm.computeSummaryStatistics(iid, stat)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    Computed summarystats in %.3g s'%dt
@@ -344,45 +345,21 @@ class MafDriver(object):
 
         
         for key in histDict.keys():
-            cbm = sliceMetrics.ComparisonSliceMetric(verbose=False, figformat=self.figformat, dpi=self.dpi)
+            # Use a comparison slice metric per merged histogram. Only read relevant files. 
+            cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=True, outDir=self.config.outputDir,
+                                                     figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
                     fullfilename = os.path.join(self.config.outputDir, filename)
                     if self.verbose:
                        print 'reading %s to make merged histogram'%fullfilename
                     cbm.readMetricData(fullfilename)
-                dictNums = cbm.slicemetrics.keys()
-                dictNums.sort()
-                fignum, title, histfile = cbm.plotHistograms(dictNums,
-                                                             [cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
-                                                            outDir=self.config.outputDir, savefig=True,
+                iids = cbm.metricValues.keys()
+                fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
-                psfile = None
-                if cbm.slicemetrics[dictNums[0]] == 'HealpixSlicer':
-                   fignum, title, psfile = cbm.plotPowerSpectra(dictNums,
-                                                                [cbm.slicemetrics[0].metricNames[0]]*len(dictNums),
-                                                                outDir=self.config.outputDir, savefig=True,
+                if cbm.slicers[iids[0]] == 'HealpixSlicer':
+                   fignum, title, psfile = cbm.plotPowerSpectra(iids, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
-                # Add this plot info to the allOutDict ('ResultsSummary.dat')
-                key = 0
-                while key in allOutDict:
-                    key += 1
-                allOutDict[key] = {}
-                metricName = cbm.slicemetrics[0].metricNames[0]
-                allOutDict[key]['metricName'] = 'Combo ' + metricName
-                allOutDict[key]['simDataName'] = self.config.opsimName
-                allOutDict[key]['slicerName'] = cbm.slicemetrics[0].slicer.slicerName
-                allOutDict[key]['metadata'] = title
-                allOutDict[key]['sqlconstraint'] = ''
-                allOutDict[key]['comboHist'] = histfile
-                if psfile is not None:
-                   allOutDict[key]['comboPs'] = psfile
-                  
-        # Save metric filekey & summary stats output. 
-        summaryfile = open(os.path.join(self.config.outputDir, 'ResultsSummary.dat'), 'w')
-        subkeyorder = ['metricName', 'simDataName', 'slicerName', 'metadata', 'sqlconstraint', 'dataFile']
-        utils.outputUtils.printSimpleDict(allOutDict, subkeyorder, summaryfile, delimiter=', ')
-        summaryfile.close()
                 
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.
@@ -390,8 +367,6 @@ class MafDriver(object):
         print >>datefile, 'date, version, fingerprint '
         print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],versionInfo['__fingerprint__'])
         datefile.close()
-        # Save the list of output files
-        np.save(self.config.outputDir+'/'+'outputFiles.npy', allOutfiles)
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
         

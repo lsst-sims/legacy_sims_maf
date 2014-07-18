@@ -11,20 +11,24 @@ class StackerRegistry(type):
         super(StackerRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        if name in cls.registry:
-            raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(name))
-        if name != 'BaseStacker':
-            cls.registry[name] = cls
-    def getClass(cls, name):
-        return cls.registry[name]
+        modname = inspect.getmodule(cls).__name__ + '.'
+        if modname.startswith('lsst.sims.maf.stackers'):
+            modname = '' 
+        stackername = modname + name
+        if stackername in cls.registry:
+            raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(stackername))
+        if stackername != 'BaseStacker':
+            cls.registry[stackername] = cls
+    def getClass(cls, stackername):
+        return cls.registry[stackername]
     def list(cls, doc=False):
-        for stackerName in sorted(cls.registry):
+        for stackername in sorted(cls.registry):
             if not doc:
-                print stackerName
+                print stackername
             if doc:
-                print '---- ', stackerName, ' ----'
-                print cls.registry[stackerName].__doc__
-                stacker = cls.registry[stackerName]()                
+                print '---- ', stackername, ' ----'
+                print cls.registry[stackername].__doc__
+                stacker = cls.registry[stackername]()                
                 print ' Columns added to SimData: ', ','.join(stacker.colsAdded)
                 print ' Default columns required: ', ','.join(stacker.colsReq)
                 

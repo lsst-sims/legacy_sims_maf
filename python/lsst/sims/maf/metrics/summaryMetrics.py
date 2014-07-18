@@ -106,7 +106,11 @@ class TableFractionMetric(BaseMetric):
 class IdentityMetric(BaseMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
     def run(self, dataSlice, slicePoint=None):
-        return dataSlice[self.colname]
+        if len(dataSlice[self.colname]) == 1:
+            result = dataSlice[self.colname][0]
+        else:
+            result = dataSlice[self.colname]
+        return result
 
 
 class NormalizeMetric(BaseMetric):
