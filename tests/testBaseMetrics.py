@@ -54,7 +54,7 @@ class TestBaseMetric(unittest.TestCase):
         testmetric = metrics.BaseMetric(cols, units='Test')
         self.assertEqual(testmetric.units, 'Test')
         # Test for column in colInfo (looking up units in colInfo)
-        cols = 'seeing'
+        cols = 'finSeeing'
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, 'arcsec')
         # Test for column in colInfo but units overriden
@@ -65,15 +65,15 @@ class TestBaseMetric(unittest.TestCase):
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, '')
         # Test for multiple columns in colInfo
-        cols = ['seeing', 'skybrightness_modified']
+        cols = ['finSeeing', 'filtSkyBrightness']
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, 'arcsec mag/sq arcsec')
         # Test for multiple columns, only one in colInfo
-        cols = ['seeing', 'twocol']
+        cols = ['finSeeing', 'twocol']
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, 'arcsec ')
         # Test for multiple columns both in colInfo but repeated
-        cols = ['seeing', 'seeing']
+        cols = ['finSeeing', 'finSeeing']
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, 'arcsec arcsec')
 
