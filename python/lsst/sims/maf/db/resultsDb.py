@@ -6,6 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.exc import DatabaseError
 
 Base = declarative_base()
 
@@ -87,8 +88,8 @@ class ResultsDb(object):
         # Create the tables, if they don't already exist.
         try:
             Base.metadata.create_all(engine)
-        except Exception as e:
-            raise ValueError("Cannot create a database at %s. Directory doesn't exist perhaps?")
+        except DatabaseError:
+            raise ValueError("Cannot create a database at %s. Check directory exists." %(resultsDbAddress))
 
     def close(self):
         self.session.close()
