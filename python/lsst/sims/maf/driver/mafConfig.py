@@ -40,7 +40,7 @@ class SlicerConfig(pexConfig.Config):
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int,
                                            itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
-    stackCols = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
+    stackerDict = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
                                           keytype=int, itemtype=ColStackConfig, default={}) 
     plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str,
                                             itemtype=MixConfig, default={})
@@ -125,7 +125,7 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={})
     mc.plot = makeMixConfig(plotDict)
     return mc
 
-def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackCols=None, plotConfigs=None, metadata=''):
+def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None, plotConfigs=None, metadata=''):
     """
     Helper function to generate a Slicer pex config object.
     """
@@ -136,8 +136,8 @@ def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackCol
     if metricDict:
         slicer.metricDict=metricDict
     slicer.constraints=constraints
-    if stackCols:
-        slicer.stackCols = stackCols
+    if stackerDict:
+        slicer.stackerDict = stackerDict
     if plotConfigs:
         slicer.plotConfigs = plotConfigs
     return slicer
@@ -148,10 +148,10 @@ def readSlicerConfig(config):
     kwargs = readMixConfig(config.kwargs)
     metricDict = config.metricDict    
     constraints=config.constraints
-    stackCols= config.stackCols
+    stackerDict= config.stackerDict
     plotConfigs = config.plotConfigs
     metadata=config.metadata
-    return name, kwargs, metricDict, constraints, stackCols, plotConfigs, metadata
+    return name, kwargs, metricDict, constraints, stackerDict, plotConfigs, metadata
 
 def readMetricConfig(config):
     """

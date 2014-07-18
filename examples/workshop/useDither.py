@@ -50,7 +50,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'randomRADither',
                                                   'spatialkey2':'randomDecDither'},
                          metricDict=makeDict(metric), constraints=['filter="r"'],
-                         stackCols=makeDict(stacker))
+                         stackerDict=makeDict(stacker))
 sliceList.append(slicer)
 
 
@@ -76,7 +76,7 @@ slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside,
                                                   'spatialkey1':'fixedRA',
                                                   'spatialkey2':'fixedDec'},
                             metricDict = makeDict(metric), constraints=['filter="r"'],
-                            stackCols=makeDict(stacker))
+                            stackerDict=makeDict(stacker))
 sliceList.append(slicer)
 
 

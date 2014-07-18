@@ -183,9 +183,9 @@ class HealpixSlicer(BaseSpatialSlicer):
             fig = plt.figure(fignum)
         else:
             fig = plt.figure()
-        # If there was no data, just plot zeros
+        # If the mask is True everywhere (no data), just plot zeros
         if False not in metricValue.mask:
-            cl = np.zeros(metricValue.size)
+            return None
         else:        
             if removeDipole:
                 cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
