@@ -28,7 +28,10 @@ class HourglassSlicer(UniSlicer):
             outfile = filename+'_hr'+'.'+figformat
             plt.savefig(outfile, figformat=figformat, dpi=dpi)
             if thumbnail:
-                plt.savefig('thumb.'+  filename+'_hr'+'.'+'png', dpi=72)
+                thumbfile = outfile.split('/')
+                thumbfile[-1] = 'thumb.'+thumbfile[-1][:-4]
+                thumbfile = '/'.join(thumbfile)
+                plt.savefig(thumbfile+'.'+'png', dpi=72)
             filenames.append(outfile)
             filetypes.append('hourglassPlot')
         return {'figs':figs,'filenames':filenames,'filetypes':filetypes}

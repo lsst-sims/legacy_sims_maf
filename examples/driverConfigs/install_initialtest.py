@@ -6,7 +6,7 @@
 # cd [MY_WORK_DIRECTORY]
 # cp $SIMS_MAF_DIR/examples/driverConfigs/install_initialtest.py .
 ##  download opsim data (such as run opsimblitz2_1060) using
-# curl -O  http://opsimcvs.tuc.noao.edu/runs/opsimblitz2.1060/design/opsimblitz2_1060_sqlite.db 
+# curl -O  http://www.noao.edu/lsst/opsim/CadenceWorkshop2014/opsimblitz2_1060_sqlite.db 
 ## run the install_initialtest.py driver config script:
 # runDriver.py install_initialtest.py
 
@@ -27,6 +27,8 @@ root.opsimName = runName
 # Set output directory.
 root.outputDir = 'OutDir'
 
+root.verbose = True
+
 # Set up slicerList to store slicers.
 slicerList = []
 # Set parameter for healpix slicer resolution.
@@ -39,9 +41,9 @@ for f in filters:
     m1 = configureMetric('CountMetric', kwargs={'col':'expMJD','metricName':'NVisits'}, 
                             plotDict={'colorMin':0, 'colorMax':200, 'units':'N Visits',
                                       'xMin':0, 'xMax':200},
-                            summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
-    m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fivesigma_modified'}, 
-                            plotDict={'percentileClip':95}, summaryStats={'MeanMetric':{}})
+                            summaryStats={'MedianMetric':{}, 'RobustRmsMetric':{}})
+    m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fiveSigmaDepth'}, 
+                            plotDict={'percentileClip':95}, summaryStats={'MedianMetric':{}})
     metricDict = makeDict(m1, m2)
     sqlconstraint = 'filter = "%s"' %(f)
     slicer = configureSlicer('HealpixSlicer',

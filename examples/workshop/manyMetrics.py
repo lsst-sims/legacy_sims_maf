@@ -9,11 +9,11 @@
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 
 # Set the output directory
-root.outputDir = './Very_simple_out'
+root.outputDir = './ManyMetrics'
 # Set the database to use (the example db included in the git repo)
-root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1131_sqlite.db'}
+root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 # Name of this run (filename base)
-root.opsimName = 'VerySimpleExample'
+root.opsimName = 'opsimblitz2_1060'
 
 # Make an empty list to hold all the slicer configs
 sliceList = []

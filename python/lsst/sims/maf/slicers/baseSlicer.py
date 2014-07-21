@@ -233,9 +233,15 @@ class BaseSlicer(object):
                 outfile = filename + '_' + plottype + '.' + figformat
                 plt.savefig(outfile, figformat=figformat, dpi=dpi)
                 if thumbnail:
-                    plt.savefig('thumb.'+filename + '_' + plottype + '.' +'png', dpi=72)
+                    thumbfile = filename.split('/')
+                    thumbfile[-1] = 'thumb.'+thumbfile[-1]
+                    thumbfile = '/'.join(thumbfile)
+                    plt.savefig(thumbfile + '_' + plottype + '.' +'png', dpi=72)
                 filenames.append(outfile)
                 filetypes.append(plottype)
+            else:
+                filenames.append('NULL')
+                filetypes.append('NULL')
         return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
 
         

@@ -6,7 +6,7 @@ class SupernovaMetric(BaseMetric):
     Measure how many time series meet a given time and filter distribution requirement.
     """
     def __init__(self, metricName='SupernovaMetric',
-                 mjdCol='expMJD', filterCol='filter', m5Col='fivesigma_modified',
+                 mjdCol='expMJD', filterCol='filter', m5Col='fiveSigmaDepth',
                  units='', redshift=0.,
                  Tmin = -20., Tmax = 60., Nbetween=7, Nfilt=2, Tless = -5., Nless=1,
                  Tmore = 30., Nmore=1, peakGap=15., snrCut=10., singleDepthLimit=23.,

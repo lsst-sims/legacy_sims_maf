@@ -8,6 +8,7 @@ root.outputDir = './Doc'
 root.dbAddress = {'dbAddress':'sqlite:///opsimblitz2_1060_sqlite.db'}
 root.opsimName = 'opsimblitz2_1060'
 
+root.figformat='png'
 
 slicerList=[]
 

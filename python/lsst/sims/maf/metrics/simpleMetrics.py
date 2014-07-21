@@ -5,7 +5,7 @@ from .baseMetric import BaseMetric
 
 class Coaddm5Metric(BaseMetric):
     """Calculate the coadded m5 value at this gridpoint."""
-    def __init__(self, m5Col = 'fivesigma_modified', metricName='CoaddM5', **kwargs):
+    def __init__(self, m5Col = 'fiveSigmaDepth', metricName='CoaddM5', **kwargs):
         """Instantiate metric.
         
         m5col = the column name of the individual visit m5 data."""

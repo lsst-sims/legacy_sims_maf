@@ -5,14 +5,25 @@ matplotlib.use('Agg')
 
 import lsst.sims.maf.driver as driver
 from lsst.sims.maf.driver.mafConfig import MafConfig
+import lsst.sims.maf.utils as utils
 
 if __name__=="__main__":
+
+    date, version = utils.getDateVersion()
+    versionNum = version['__version__']
+    fingerPrint = version['__fingerprint__']
+    repoVersion = version['__repo_version__']
+
+    versionInfo = 'Running:: version %s,  fingerprint %s,  repoversion %s' %(versionNum, fingerPrint, repoVersion)
+
     parser = argparse.ArgumentParser(description='Python script to interpret MAF "one-off" configuration files '
-                                     'and feed them to the driver.')
+                                     'and feed them to the driver.',
+                                     epilog= '%s' %(versionInfo))
     parser.add_argument("configFile", type=str, help="Name of the configuration file.")
 
     args = parser.parse_args()
 
+    
     # Set up configuration parameters.
     config = MafConfig()
     print 'Reading config data from %s' %(args.configFile)
