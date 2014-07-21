@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+    <title>Display Everything</title>
+</head>
+<body>
+    
+
+
+  {% for m in metrics %}
+  {{ m.NameInfo }}
+  <table id="all plots">
+    <tr>
+      {% for filename in m.plots %}
+      <td align='center'><a href='{{ filename }}'><img width='80%' 
+               src='thumb.{{ filename }}'> </a></td>
+        {% if loop.index is divisibleby 3 %}
+            </tr><tr>
+        {% endif %}
+      {% endfor %}
+    </tr>
+  </table>
+<table>
+  {% for stat in m.stats %}
+  <tr>
+    <td> {{ stat[0] }} </td> <td> {{ stat[1] }} </td>
+  </tr>
+  {% endfor %}
+</table>
+<hr>
+
+{% endfor %}
+
+   
+
+
+</body>
+</html>
