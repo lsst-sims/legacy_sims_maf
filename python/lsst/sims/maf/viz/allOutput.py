@@ -6,6 +6,26 @@ import glob
 import lsst.sims.maf.db as db
 import numpy as np
 
+
+
+def loadResults(sourceDir):
+    """Load up the three tables from resultsDb_sqlite.db """
+    database = db.Database('sqlite:///'+sourceDir+'/resultsDb_sqlite.db',
+                           dbTables={'metrics':['metrics','metricID'] ,
+                                     'plots':['plots','plotId'],
+                                     'stats':['summarystats','statId']})
+    # Hmm, seems like there should be a better way to do this--maybe an outer join or something?
+    metrics = database.queryDatabase('metrics', 'select * from metrics')
+    plots = database.queryDatabase('plots', 'select * from plots')
+    stats = database.queryDatabase('stats', 'select * from summarystats')
+
+    return metrics, plots, stats
+
+
+
+
+
+
 env = Environment(loader=FileSystemLoader('templates'))
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
@@ -24,14 +44,7 @@ class SelectPageHandler(web.RequestHandler):
         # 'plots':[plot1.png,plot2.png]
         # 'summarystats': {'summaryName':summaryValue} } } 
         outDir = 'AllSlicers'
-        database = db.Database('sqlite:///AllSlicers/resultsDb_sqlite.db',
-                               dbTables={'metrics':['metrics','metricID'] ,
-                                         'plots':['plots','plotId'],
-                                         'stats':['summarystats','statId']})
-        # Hmm, seems like there should be a better way to do this--maybe an outer join or something?
-        metrics = database.queryDatabase('metrics', 'select * from metrics')
-        plots = database.queryDatabase('plots', 'select * from plots')
-        stats = database.queryDatabase('stats', 'select * from summarystats')
+        metrics, plots, stats = loadResults(outDir)
 
         blocks = []
         for mId in metrics['metricId']:
@@ -42,9 +55,9 @@ class SelectPageHandler(web.RequestHandler):
             relevant_metrics = metrics[np.where(metrics['metricId'] == mId)[0] ]
             stat_list = [(i, '%.4g'%j) for i,j in  zip(relevant_stats['summaryName'],
                                                        relevant_stats['summaryValue']) ]  
-            blocks.append({'NameInfo': relevant_metrics['metricName'][0]+' '+
+            blocks.append({'NameInfo': relevant_metrics['metricName'][0]+', '+
                            relevant_metrics['slicerName'][0]
-                           + ' ' +  relevant_metrics['sqlConstraint'][0],
+                           + ', ' +  relevant_metrics['sqlConstraint'][0],
                            'plots':relevant_plots['plotFile'].tolist(),
                            'stats':stat_list})
             
