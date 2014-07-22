@@ -302,8 +302,7 @@ class MafDriver(object):
                                     iid = gm.metricObjIid(metric)[0]
                                     baseName = gm.metricNames[iid]
                                     all_names = gm.metricNames.keys()
-                                    matching_metrics = [x for x in all_names \
-                                                        if x[:len(baseName)] == baseName and x != baseName]
+                                    matching_metrics = [x for x in all_names if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         iid = gm.metricNameIid(mm)[0]
                                         summary = gm.computeSummaryStatistics(iid, stat)
