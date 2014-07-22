@@ -213,11 +213,6 @@ class RunSliceMetric(BaseSliceMetric):
             iid = [iid,]
         summaryValues = []
         for iidi in iid: 
-            # Cannot generally run summary statistics on object metric data, so test and skip.
-            if self.metricValues[iidi].dtype == 'object':
-                warnings.warn('Cannot compute simple scalar summary metric %s on "object" type metric value for %s'
-                                % (summaryMetric.name, self.metricNames[iidi]))
-                return None
             # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
             # Create numpy structured array from metric data, with bad values removed. 
             rarr = np.array(zip(self.metricValues[iidi].compressed()), 

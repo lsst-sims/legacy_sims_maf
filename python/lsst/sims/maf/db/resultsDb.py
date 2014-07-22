@@ -53,7 +53,8 @@ class SummaryStatRow(Base):
     """
     Define contents and format of the summary statistics table.
 
-    (Table to list link summary stats to relevant metrics in MetricList, and provide summary stat name, value and potentially a comment).
+    (Table to list link summary stats to relevant metrics in MetricList, and provide summary stat name,
+    value and potentially a comment).
     """
     __tablename__ = "summarystats"
     # Define columns in plot list table.
@@ -121,12 +122,19 @@ class ResultsDb(object):
         Add a row to the summary statistic table.
         """
         ## TODO: check if row already exists in table, and if so, don't add it again.
-        if not ((isinstance(summaryValue, float)) or isinstance(summaryValue, int)):
-            warnings.warn('Cannot save non-float/non-int values for summary statistics.')
-            return
-        summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName, summaryValue=summaryValue)
-        self.session.add(summarystat)
-        self.session.commit()
+
+        #if not ((isinstance(summaryValue, float)) or isinstance(summaryValue, int)):
+        #    warnings.warn('Cannot save non-float/non-int values for summary statistics.')
+        #    return
+        if summaryValue.size > 1:
+            for i,value in enumerate(summaryValue):
+                summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName+'%i'%i, summaryValue=value)
+                self.session.add(summarystat)
+                self.session.commit()
+        else:
+            summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName, summaryValue=summaryValue)
+            self.session.add(summarystat)
+            self.session.commit()
 
     def getMetricIds(self):
         """

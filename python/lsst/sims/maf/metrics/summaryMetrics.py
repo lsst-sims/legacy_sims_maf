@@ -78,12 +78,13 @@ class TableFractionMetric(BaseMetric):
         12        1 < P
         Note the 1st and last elements do NOT obey the numpy histogram conventions.
     """
-    def __init__(self, col='metricdata', nbins=10):
+    def __init__(self, col='metricdata',  nbins=10):
         """
         colname = the column name in the metric data (i.e. 'metricdata' usually).
-        nbins = number of bins between 0 and 1. Should divide evenly into 100.  
+        nbins = number of bins between 0 and 1. Should divide evenly into 100.
+        returnBin = which bin (between 0 and 12) should be returned.
         """
-        super(TableFractionMetric, self).__init__(col=col, metricDtype='object')
+        super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         binsize = 1.0/float(nbins)
         self.tableBins = np.arange(0, 1 + binsize/2., binsize)
         self.tableBins = np.concatenate((np.zeros(1, float), self.tableBins))
@@ -96,12 +97,14 @@ class TableFractionMetric(BaseMetric):
         # Fill in values for exact 0, exact 1 and >1.
         zero = np.size(np.where(dataSlice[self.colname] == 0)[0])
         # Remove the fields which were exactly 0 from the histogrammed values.
-        hist[0] -= zero      
+        hist[0] -= zero
+        ltone = np.size(np.where( (dataSlice[self.colname] < 1) & (dataSlice[self.colname] > b.max) )[0])
         one = np.size(np.where(dataSlice[self.colname] == 1)[0])
         overone = np.size(np.where(dataSlice[self.colname] > 1)[0])
-        hist = np.concatenate((np.array([zero]), hist, np.array([one]), np.array([overone])))
-        return self.tableBins, hist
-
+        hist = np.concatenate((np.array([zero]), hist, np.array([ltone]), np.array([one]), np.array([overone])))
+        
+        return hist
+        
 
 class IdentityMetric(BaseMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""

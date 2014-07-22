@@ -98,7 +98,7 @@ class MafDriver(object):
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
                     summarykwargs = readMixConfig(summaryStats[key])
-                    summaryMetric = metrics.BaseMetric.getClass(key)(col='metricdata', **summarykwargs)
+                    summaryMetric = metrics.BaseMetric.getClass(key.strip())(col='metricdata', **summarykwargs)
                     temp_metric.summaryStats.append(summaryMetric)
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
@@ -301,7 +301,7 @@ class MafDriver(object):
                                 if metric.metricDtype == 'object':
                                     iid = gm.metricObjIid(metric)[0]
                                     baseName = gm.metricNames[iid]
-                                    all_names = gm.metricNames.keys()
+                                    all_names = gm.metricNames.values()
                                     matching_metrics = [x for x in all_names \
                                                         if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:

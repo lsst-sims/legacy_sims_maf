@@ -178,13 +178,16 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
 
     # Completeness and Joint Completeness
+    summaryStats = {}
+    for i in range(13):
+        summaryStats['TableFractionMetric'+' '*i] = {'returnBin':i}
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
                                     'units':'# visits (WFD only)/ # WFD',
                                     'colorMin':.5, 'colorMax':1.5, 'histBins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
-                          summaryStats={'TableFractionMetric':{}})
+                          summaryStats=summaryStats)
     # For just WFD proposals
     metricDict = makeDict(m1)
     constraints = ['%s' %(wfdWhere)]
@@ -198,7 +201,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                     'colorMin':.5, 'colorMax':1.5, 'histBins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
-                          summaryStats={'TableFractionMetric':{}})
+                          summaryStats=summaryStats)
     constraints = ['']
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                               constraints=constraints, metadata=slicermetadata)
