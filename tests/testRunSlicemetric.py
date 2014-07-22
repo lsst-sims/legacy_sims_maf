@@ -343,11 +343,6 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
                                         fill_value = self.slicer.badval)
         self.testbbm.metricValues[1] = fakemetricdata
         self.testbbm.metricNames[1] = 'fakemetricdata'
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            summary = self.testbbm.computeSummaryStatistics(1, self.summaryStat)
-            self.assertTrue('fakemetricdata' in str(w[-1].message))
-            self.assertEqual(summary, None)
                             
         
 class TestPlottingRunSliceMetric(unittest.TestCase):

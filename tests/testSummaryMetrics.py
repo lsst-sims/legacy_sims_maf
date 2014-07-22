@@ -12,8 +12,8 @@ class TestSummaryMetrics(unittest.TestCase):
         metricdata = np.array(zip(metricdata), dtype=[('testdata', 'float')])
         nbins = 10       
         metric = metrics.TableFractionMetric('testdata', nbins=nbins)
-        bins, table = metric.run(metricdata)
-        self.assertEqual(len(table), nbins+2)
+        table = metric.run(metricdata)
+        self.assertEqual(len(table), 13)
         
 
     def testIdentityMetric(self):
