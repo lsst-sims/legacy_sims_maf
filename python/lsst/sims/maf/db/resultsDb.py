@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.exc import DatabaseError
+import numpy as np
 
 Base = declarative_base()
 
@@ -126,7 +127,7 @@ class ResultsDb(object):
         #if not ((isinstance(summaryValue, float)) or isinstance(summaryValue, int)):
         #    warnings.warn('Cannot save non-float/non-int values for summary statistics.')
         #    return
-        if summaryValue.size > 1:
+        if np.size(summaryValue) > 1:
             for i,value in enumerate(summaryValue):
                 summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName+'%i'%i, summaryValue=value)
                 self.session.add(summarystat)
