@@ -165,12 +165,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # Slew histograms
     m1 = configureMetric('CountMetric', kwargs={'col':'slewTime'}, plotDict={'logScale':True})
-    slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'slewTime'},
+    slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'slewTime', 'binsize':5},
                               metricDict=makeDict(m1), constraints=[''], metadata='Slew Time')
     slicerList.append(slicer)
 
     m1 = configureMetric('CountMetric', kwargs={'col':'slewDist'}, plotDict={'logScale':True})
-    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist'},
+    slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist', 'binsize':.05},
                               metricDict=makeDict(m1), constraints=[''], metadata='Slew Distance')
     slicerList.append(slicer)
 
