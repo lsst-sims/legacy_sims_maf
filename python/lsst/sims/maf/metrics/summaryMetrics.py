@@ -86,6 +86,7 @@ class TableFractionMetric(BaseMetric):
         """
         super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         binsize = 1.0/float(nbins)
+        self.nbins = nbins
         self.tableBins = np.arange(0, 1 + binsize/2., binsize)
         self.tableBins = np.concatenate((np.zeros(1, float), self.tableBins))
         self.tableBins = np.concatenate((self.tableBins, np.ones(1, float)))
@@ -102,8 +103,17 @@ class TableFractionMetric(BaseMetric):
         one = np.size(np.where(dataSlice[self.colname] == 1)[0])
         overone = np.size(np.where(dataSlice[self.colname] > 1)[0])
         hist = np.concatenate((np.array([zero]), hist, np.array([ltone]), np.array([one]), np.array([overone])))
-        
-        return hist
+        # Create labels for each value
+        binNames = ['0 == P']
+        for i in np.arange(1,self.nbins+1):
+            binNames.append('%.2g < P < %.2g'%(self.tableBins[i], self.tableBins[i+1]) )
+        binNames.append('1 == P')
+        binNames.append('1 < P')
+        # Package the names and values up
+        result = np.empty(hist.size, dtype=[('name', '|S12'), ('value', float)]) 
+        result['name'] = binNames
+        result['value'] = hist
+        return result
         
 
 class IdentityMetric(BaseMetric):

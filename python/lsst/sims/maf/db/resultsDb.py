@@ -127,9 +127,12 @@ class ResultsDb(object):
         #if not ((isinstance(summaryValue, float)) or isinstance(summaryValue, int)):
         #    warnings.warn('Cannot save non-float/non-int values for summary statistics.')
         #    return
+        
         if np.size(summaryValue) > 1:
-            for i,value in enumerate(summaryValue):
-                summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName+'%i'%i, summaryValue=value)
+            for value in summaryValue:
+                summarystat = SummaryStatRow(metricId=metricId,
+                                             summaryName=summaryName+' '+value['name'],
+                                             summaryValue=value['value'])
                 self.session.add(summarystat)
                 self.session.commit()
         else:

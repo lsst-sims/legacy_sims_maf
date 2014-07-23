@@ -174,9 +174,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               metricDict=makeDict(m1), constraints=[''], metadata='Slew Distance')
     slicerList.append(slicer)
 
-    # Filter Hourglass plots
+    # Filter Hourglass plots per year
+    yearDates = range(0,3650+365,365)
+    nightConstraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1]) for i in range(len(yearDates)-1)]
     m1=configureMetric('HourglassMetric')
-    slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=['night < 750',''])
+    slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=nightConstraints)
     slicerList.append(slicer)
 
 
