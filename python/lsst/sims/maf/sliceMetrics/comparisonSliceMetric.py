@@ -207,7 +207,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='hist')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
-               thumbfile = outfile[-1].split('/')
+               thumbfile = os.path.join(self.outDir, outfile).split('/')
                thumbfile[-1] = 'thumb.'+thumbfile[-1]
                thumbfile = '/'.join(thumbfile)
                plt.savefig(thumbfile+'.png', dpi=72)
@@ -271,10 +271,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 outroot = outfileRoot + title
             else:
                 outroot = title
-            outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot + title, plotType='ps') 
+            outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot + title, plotType='ps')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
-               thumbfile = outfile[-1].split('/')
+               thumbfile = os.path.join(self.outDir, outfile).split('/')
                thumbfile[-1] = 'thumb.'+thumbfile[-1]
                thumbfile = '/'.join(thumbfile)
                plt.savefig(thumbfile+'.png', dpi=72)
@@ -344,7 +344,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='sky')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
-               thumbfile = outfile[-1].split('/')
+               thumbfile = os.path.join(self.outDir, outfile).split('/')
                thumbfile[-1] = 'thumb.'+thumbfile[-1]
                thumbfile = '/'.join(thumbfile)
                plt.savefig(thumbfile+'.png', dpi=72)
