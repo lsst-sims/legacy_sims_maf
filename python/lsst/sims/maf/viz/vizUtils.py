@@ -52,21 +52,33 @@ def blockSS(metrics, plots, stats):
     # Set up lists that will be looped over by template
     blocks =[]
     completenessBlocks = []
-    allStats = []
+    identStats = []
+    basicStats = []
+    completeStats = []
+    etcStats = []
 
     # Stack on an extra column for the column name so we can sort on it
     # and get "Median Airmass" next to "Rms Airmass", etc.
      
     metrics = rfn.merge_arrays([metrics, np.empty(metrics.size,
-                                                  dtype=[('colName','|S256')])], flatten=True, usemask=False)
+                                                  dtype=[('colName','|S256'), ('filt', '|S256')])],
+                               flatten=True, usemask=False)
+    
     for i in np.arange(metrics.size):
+        filt = metrics['metricMetadata'][i].replace(' u ', ' a ')
+        filt.replace(' g ', ' b ')
+        filt.replace(' r ', ' c ')
+        filt.replace(' i ', ' d ')
+        filt.replace(' z ', ' e ')
+        filt.replace(' y ', ' f ')
+        metrics['filt'][i] = filt
         name = metrics['metricName'][i].split(' ')
         if len(name) > 1:
             metrics['colName'][i] = name[1]
         else:
             metrics['colName'][i] = metrics['metricName'][i]
     
-    metrics.sort(order=['colName', 'slicerName', 'sqlConstraint'])
+    metrics.sort(order=['colName', 'slicerName', 'filt', 'sqlConstraint'])
 
     for metric in metrics:
         mId = metric['metricId']
@@ -79,11 +91,26 @@ def blockSS(metrics, plots, stats):
         stat_list = [(i, '%.4g'%j) for i,j in  zip(relevant_stats['summaryName'],
                                                    relevant_stats['summaryValue']) ]
         statsDict={}
+        name = relevant_metrics['metricName'][0]+', '+ \
+                             relevant_metrics['slicerName'][0] \
+                             + ', ' +  relevant_metrics['sqlConstraint'][0]
         for rel_stat in relevant_stats:
             statsDict[rel_stat['summaryName']] = '%.4g'%rel_stat['summaryValue']
-        allStats.append({'NameInfo':relevant_metrics['metricName'][0]+', '+
-                         relevant_metrics['slicerName'][0]
-                         + ', ' +  relevant_metrics['sqlConstraint'][0], 'stats':statsDict} )
+
+        # Break it down into 4 different summary stat tables,
+        # 1) Completeness tables
+        # 2) Identity (i.e., unislicer) table
+        # 3) "basic" table (mean, RMS, median, p/m 3 sigma...)
+        # 4) the etc table for anything left over.
+        if statsDict != {} :
+            if 'Completeness' in name:
+                completeStats.append({'NameInfo':name, 'stats':statsDict} )
+            elif 'Identity' in statsDict.keys():
+                identStats.append({'NameInfo':name, 'stats':statsDict})
+            elif ('Mean' in statsDict.keys()) & ('Rms' in statsDict.keys()):
+                basicStats.append({'NameInfo':name, 'stats':statsDict} )
+            else:
+                etcStats.append({'NameInfo':name, 'stats':statsDict} )
         block = {'NameInfo': relevant_metrics['metricName'][0]+', '+
                        relevant_metrics['slicerName'][0]
                        + ', ' +  relevant_metrics['sqlConstraint'][0],
@@ -95,4 +122,6 @@ def blockSS(metrics, plots, stats):
         else:
             blocks.append(block)
             
-    return {'blocks':blocks, 'completenessBlocks':completenessBlocks, 'allStats':allStats}
+    return {'blocks':blocks, 'completenessBlocks':completenessBlocks,
+            'identStats':identStats, 'basicStats':basicStats,
+            'completeStats':completeStats, 'etcStats':etcStats}

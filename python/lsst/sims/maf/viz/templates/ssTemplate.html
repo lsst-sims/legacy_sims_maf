@@ -62,19 +62,41 @@
 {% endfor %}
 
 <!-- Group all the summary stats together -->
-<a name="summaryStats'"></a>
-<table id="Summary Statistics">
-{% for stat in allStats %}
-<tr> 
-<td> {{ stat.NameInfo }} </td>
-{% for statDict in stat.statDict %}
-<td> {{ statDict.key  }}, {{ statDict.value  }} </td> 
-{% endfor %}
+
+
+<h2> Completness Tables</h2>
+
+<hr>
+
+<h2> Unislicer Stats</h2>
+<table>
+  <tr>
+     <td> <b>Name</b> </td> <td> <b>Ident</b> </td> 
+    </tr>
+    {% for stat in identStats %}
+  <tr>
+    <td> {{ stat.NameInfo }}</td>
+    <td> {{ stat.stats.Identity }} </td>
 </tr>
-{% endfor %}
+  {% endfor %}
 </table>
 
+<hr>
 
+<h2> Basic Stats</h2>
+<table>
+  <tr>
+     <td> <b>Name</b> </td> <td><b>Median</b>  </td>    <td> <b>Mean</b> </td> <td> <b>RMS</b> </td> 
+    </tr>
+    {% for stat in basicStats %}
+  <tr>
+    <td> {{ stat.NameInfo }} </td>
+    <td> {{ stat.stats.Median }} </td><td> {{ stat.stats.Mean }} </td><td> {{ stat.stats.Rms }} </td> 
+</tr>
+  {% endfor %}
+</table>
+
+<hr>
 
  <!-- The configuration files -->
 <a name="configSummary"></a>

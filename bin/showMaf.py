@@ -48,7 +48,7 @@ if __name__ == "__main__":
     
     application = make_app()
     application.listen(8888)
-    print 'Tornado Starting: \n Look at http://localhost:8888/ \n Ctrl-C to stop'
+    print 'Tornado Starting: \nPoint your web browser to http://localhost:8888/ \nCtrl-C to stop'
 
     ioloop.IOLoop.instance().start()
     
