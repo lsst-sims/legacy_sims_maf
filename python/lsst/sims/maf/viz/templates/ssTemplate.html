@@ -1,15 +1,14 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html lang="en">
 <head>
-    <title>Display in a Compact Style</title>
+    <title>MAF Output</title>
 </head>
 <body>
     
-<h1>XXX RUNNAME Here</h1>
+<h1>RUNNAME: {{ runName  }}</h1>
 
-<a href='#configSummary'>Config Summary </a>
-<a href='#configDetails'>Config Details </a>
-XXX-loop through and put in links to the rest of the blocks.
+<a href='#configSummary'>Config Summary and Details</a> <br>
+<a href='#summaryStats'>Summary Statistics Table </a>
 
 <hr><hr>
 
@@ -63,6 +62,7 @@ XXX-loop through and put in links to the rest of the blocks.
 {% endfor %}
 
 <!-- Group all the summary stats together -->
+<a name="summaryStats'"></a>
 <table id="Summary Statistics">
 {% for stat in allStats %}
 <tr> 
@@ -80,7 +80,7 @@ XXX-loop through and put in links to the rest of the blocks.
 <a name="configSummary"></a>
 <object width="400" height="300" type="text/plain" data="{{ outDir }}/configSummary.txt" border="0" >
 </object>
-<a name="configDetails"></a>
+
 <object width="400" height="300" type="text/plain" data="{{ outDir }}/configDetails.txt" border="0" >
 </object>
 

@@ -284,7 +284,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     
         m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing'},
                             histMerge={'histNum':3, 'legendloc':'upper right',
-                                       'color':colors[f],' label':'%s'%f} )
+                                       'color':colors[f],'label':'%s'%f} )
         slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'finSeeing', 'binsize':0.03},
                                 metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)])
         slicerList.append(slicer)

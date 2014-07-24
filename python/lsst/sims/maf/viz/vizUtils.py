@@ -1,6 +1,7 @@
 import lsst.sims.maf.db as db
 import numpy as np
 import numpy.lib.recfunctions as rfn
+import os
 
 def loadResults(sourceDir):
     """Load up the three tables from resultsDb_sqlite.db """
@@ -12,7 +13,18 @@ def loadResults(sourceDir):
     metrics = database.queryDatabase('metrics', 'select * from metrics')
     plots = database.queryDatabase('plots', 'select * from plots')
     stats = database.queryDatabase('stats', 'select * from summarystats')
-    return metrics, plots, stats
+
+    #grab the runName as well
+    configFile = os.path.join(sourceDir, 'configSummary.txt' )
+    if os.path.isfile(configFile):
+        with open (configFile, "r") as myfile:
+            config=myfile.read().replace('\n', '')
+        spot = config.find('RunName')
+        runName = config[spot:spot+300].split(' ')[1]
+    else:
+        runName = 'No configSummary.txt'
+    
+    return metrics, plots, stats, runName
 
 
 def blockAll(metrics, plots, stats):
@@ -82,19 +94,5 @@ def blockSS(metrics, plots, stats):
             completenessBlocks.append(block)
         else:
             blocks.append(block)
-
-
-            
             
     return {'blocks':blocks, 'completenessBlocks':completenessBlocks, 'allStats':allStats}
-
-    
-    #how do I sort things by ugrizy?
-
-    # So let's say I grab all the seeing metrics--
-    #
-    #normalBlock = {'skymap_u':somefile,  'skymap_u':somefile, 'skymap_u':somefile, ...
-    #               'hist_u': , 'hist_g':
-    #}
-    
-
