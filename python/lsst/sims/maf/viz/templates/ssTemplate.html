@@ -65,6 +65,25 @@
 
 
 <h2> Completness Tables</h2>
+<table>
+  <tr>
+    {% for stat in completeStats %}
+      {% if loop.index == 1 %}
+      <td> </td>
+      {% for key,value in stat.stats.iteritems() %}
+         <td> {{ key }} </td>
+      {% endfor %}
+          </tr>
+      {% endif %}
+      <td>{{ stat.NameInfo  }} </td>
+      {% for key,value in stat.stats.iteritems() %}
+          <td> {{ value }} </td>
+      {% endfor %}
+      </tr>
+    {% endfor %}
+</table>
+
+
 
 <hr>
 
@@ -98,7 +117,25 @@
 
 <hr>
 
+<h2> Remaining Stats</h2>
+
+<table>
+  <tr>
+    {% for stat in etcStats %}
+  <tr>
+    <td> {{ stat.NameInfo }} </td>
+    {% for key, value in stat.stats.iteritems() %}
+    <td> <b>{{ key }}</b> <br> {{ value }} </td>
+    {% endfor %}
+</tr>
+  {% endfor %}
+</table>
+
+<hr>
+
+
  <!-- The configuration files -->
+<h2>Configuration Files</h2>
 <a name="configSummary"></a>
 <object width="400" height="300" type="text/plain" data="{{ outDir }}/configSummary.txt" border="0" >
 </object>

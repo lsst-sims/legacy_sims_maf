@@ -2,6 +2,7 @@ import lsst.sims.maf.db as db
 import numpy as np
 import numpy.lib.recfunctions as rfn
 import os
+from collections import OrderedDict
 
 def loadResults(sourceDir):
     """Load up the three tables from resultsDb_sqlite.db """
@@ -9,7 +10,7 @@ def loadResults(sourceDir):
                            dbTables={'metrics':['metrics','metricID'] ,
                                      'plots':['plots','plotId'],
                                      'stats':['summarystats','statId']})
-    # Hmm, seems like there should be a better way to do this--maybe an outer join or something?
+    # Just pull all three tables
     metrics = database.queryDatabase('metrics', 'select * from metrics')
     plots = database.queryDatabase('plots', 'select * from plots')
     stats = database.queryDatabase('stats', 'select * from summarystats')
@@ -25,26 +26,6 @@ def loadResults(sourceDir):
         runName = 'No configSummary.txt'
     
     return metrics, plots, stats, runName
-
-
-def blockAll(metrics, plots, stats):
-    """Package up all the MAF results to be displayed"""
-    blocks = []
-    for mId in metrics['metricId']:
-        relevant_plots = plots[np.where(plots['metricId'] == mId)[0]]
-        for i in np.arange(relevant_plots.size):
-            relevant_plots['plotFile'][i] = relevant_plots['plotFile'][i].replace('.pdf', '.png')
-        relevant_stats = stats[np.where(stats['metricId'] == mId)[0] ]
-        relevant_metrics = metrics[np.where(metrics['metricId'] == mId)[0] ]
-        stat_list = [(i, '%.4g'%j) for i,j in  zip(relevant_stats['summaryName'],
-                                                   relevant_stats['summaryValue']) ]  
-        blocks.append({'NameInfo': relevant_metrics['metricName'][0]+', '+
-                       relevant_metrics['slicerName'][0]
-                       + ', ' +  relevant_metrics['sqlConstraint'][0],
-                       'plots':relevant_plots['plotFile'].tolist(),
-                       'stats':stat_list})
-
-    return blocks
 
 
 def blockSS(metrics, plots, stats):
@@ -63,23 +44,34 @@ def blockSS(metrics, plots, stats):
     metrics = rfn.merge_arrays([metrics, np.empty(metrics.size,
                                                   dtype=[('colName','|S256'), ('filt', '|S256')])],
                                flatten=True, usemask=False)
-    
+    # Stack on a column so filters sort in order of "ugrizy"
     for i in np.arange(metrics.size):
         filt = metrics['metricMetadata'][i].replace(' u ', ' a ')
-        filt.replace(' g ', ' b ')
-        filt.replace(' r ', ' c ')
-        filt.replace(' i ', ' d ')
-        filt.replace(' z ', ' e ')
-        filt.replace(' y ', ' f ')
+        filt = filt.replace(' g ', ' b ')
+        filt = filt.replace(' r ', ' c ')
+        filt = filt.replace(' i ', ' d ')
+        filt = filt.replace(' z ', ' e ')
+        filt = filt.replace(' y ', ' f ')
+        
+        
         metrics['filt'][i] = filt
         name = metrics['metricName'][i].split(' ')
         if len(name) > 1:
             metrics['colName'][i] = name[1]
         else:
             metrics['colName'][i] = metrics['metricName'][i]
-    
+            
+        if '_u' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('u','a')
+        if '_g' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('g','b')
+        if '_r' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('r','c')
+        if '_i' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('i','d')
+        if '_z' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('z','e')
+        if '_y' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('y','f')
+        
+   
     metrics.sort(order=['colName', 'slicerName', 'filt', 'sqlConstraint'])
-
+    
+    
     for metric in metrics:
         mId = metric['metricId']
         relevant_plots = plots[np.where(plots['metricId'] == mId)[0]]
@@ -90,23 +82,24 @@ def blockSS(metrics, plots, stats):
         relevant_metrics = metrics[np.where(metrics['metricId'] == mId)[0] ]
         stat_list = [(i, '%.4g'%j) for i,j in  zip(relevant_stats['summaryName'],
                                                    relevant_stats['summaryValue']) ]
-        statsDict={}
+        statsDict=OrderedDict()
         name = relevant_metrics['metricName'][0]+', '+ \
                              relevant_metrics['slicerName'][0] \
                              + ', ' +  relevant_metrics['sqlConstraint'][0]
         for rel_stat in relevant_stats:
-            statsDict[rel_stat['summaryName']] = '%.4g'%rel_stat['summaryValue']
+            statsDict[rel_stat['summaryName'].replace('TableFraction', '')] = '%.4g'%rel_stat['summaryValue']
 
         # Break it down into 4 different summary stat tables,
         # 1) Completeness tables
         # 2) Identity (i.e., unislicer) table
         # 3) "basic" table (mean, RMS, median, p/m 3 sigma...)
         # 4) the etc table for anything left over.
-        if statsDict != {} :
+        if len(statsDict) != 0 :
             if 'Completeness' in name:
                 completeStats.append({'NameInfo':name, 'stats':statsDict} )
-            elif 'Identity' in statsDict.keys():
+            elif ('Identity' in statsDict.keys()) & (len(statsDict.keys()) == 1):
                 identStats.append({'NameInfo':name, 'stats':statsDict})
+            # XXX -- need to tighten up this constraint, decide on formatting.
             elif ('Mean' in statsDict.keys()) & ('Rms' in statsDict.keys()):
                 basicStats.append({'NameInfo':name, 'stats':statsDict} )
             else:
