@@ -8,13 +8,17 @@ class TestSummaryMetrics(unittest.TestCase):
 
     def testTableFractionMetric(self):
         """Test the table summary metric """
-        metricdata = np.arange(0, 1, .02)
-        metricdata = np.array(zip(metricdata), dtype=[('testdata', 'float')])
-        nbins = 10       
-        metric = metrics.TableFractionMetric('testdata', nbins=nbins)
-        table = metric.run(metricdata)
-        self.assertEqual(len(table), 13)
-        
+        metricdata1 = np.arange(0, 1.5, .02)
+        metricdata = np.array(zip(metricdata1), dtype=[('testdata', 'float')])
+        for nbins in [10,20,5]:
+            metric = metrics.TableFractionMetric('testdata', nbins=nbins)
+            table = metric.run(metricdata)
+            self.assertEqual(len(table), nbins+3)
+            self.assertEqual( table['value'][0], np.size(np.where(metricdata1 == 0)[0]))
+            self.assertEqual( table['value'][-1], np.size(np.where(metricdata1 > 1)[0]))
+            self.assertEqual( table['value'][-2], np.size(np.where(metricdata1 == 1)[0]))
+            self.assertEqual(table['value'].sum(), metricdata1.size )
+            
 
     def testIdentityMetric(self):
         """Test identity metric."""

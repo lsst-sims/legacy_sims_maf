@@ -53,7 +53,6 @@ def blockSS(metrics, plots, stats):
         filt = filt.replace(' z ', ' e ')
         filt = filt.replace(' y ', ' f ')
         
-        
         metrics['filt'][i] = filt
         name = metrics['metricName'][i].split(' ')
         if len(name) > 1:
@@ -67,10 +66,8 @@ def blockSS(metrics, plots, stats):
         if '_i' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('i','d')
         if '_z' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('z','e')
         if '_y' in metrics['colName'][i] : metrics['colName'][i] = metrics['colName'][i].replace('y','f')
-        
    
     metrics.sort(order=['colName', 'slicerName', 'filt', 'sqlConstraint'])
-    
     
     for metric in metrics:
         mId = metric['metricId']
@@ -85,7 +82,7 @@ def blockSS(metrics, plots, stats):
         statsDict=OrderedDict()
         name = relevant_metrics['metricName'][0]+', '+ \
                              relevant_metrics['slicerName'][0] \
-                             + ', ' +  relevant_metrics['sqlConstraint'][0]
+                             + ', ' +  relevant_metrics['metricMetadata'][0]
         for rel_stat in relevant_stats:
             statsDict[rel_stat['summaryName'].replace('TableFraction', '')] = '%.4g'%rel_stat['summaryValue']
 
@@ -106,7 +103,7 @@ def blockSS(metrics, plots, stats):
                 etcStats.append({'NameInfo':name, 'stats':statsDict} )
         block = {'NameInfo': relevant_metrics['metricName'][0]+', '+
                        relevant_metrics['slicerName'][0]
-                       + ', ' +  relevant_metrics['sqlConstraint'][0],
+                       + ', ' +  relevant_metrics['metricMetadata'][0],
                        'plots':relevant_plots['plotFile'].tolist(),
                        'stats':stat_list}
         # If it's a completeness metric, pull it out
