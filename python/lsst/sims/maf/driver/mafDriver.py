@@ -1,9 +1,8 @@
 import os
-import warnings
 import numpy as np 
 
 from .mafConfig import MafConfig, config2dict, readMetricConfig, readSlicerConfig, readMixConfig
-warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
+
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers

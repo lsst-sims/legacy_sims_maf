@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils import percentileClipping
+import warnings
 
 from .baseSpatialSlicer import BaseSpatialSlicer
 from .baseSlicer import BaseSlicer
@@ -124,9 +125,12 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
-        cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
-                          extend='both', format=cbarFormat)
-        cb.set_label(xlabel)
+        # supress silly colorbar warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
+                              extend='both', format=cbarFormat)
+            cb.set_label(xlabel)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")
