@@ -239,7 +239,7 @@ class RunSliceMetric(BaseSliceMetric):
 
     
         
-    def writeMetric(self, iid, comment='', outfileRoot=None):
+    def writeMetric(self, iid, comment='', outfileRoot=None, outfileSuffix=None):
         """
         Write metric values 'metricName' to disk.
 
@@ -247,24 +247,26 @@ class RunSliceMetric(BaseSliceMetric):
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
        """
-        super(RunSliceMetric, self).writeMetric(iid, comment=comment, outfileRoot=outfileRoot)
+        super(RunSliceMetric, self).writeMetric(iid, comment=comment, outfileRoot=outfileRoot,
+                                                outfileSuffix=outfileSuffix)
         # For driver merged histograms .. need to update this later.
         if iid in self.metricObjs:
-            outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot) + '.npz'
+            outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix) + '.npz'
             self.metricObjs[iid].saveFile = outfile
                   
-    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
+    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, outfileSuffix=None, verbose=True):
         """
         Plot histograms and skymaps (where relevant) for all metrics.
         """
         for iid in self.metricValues:            
-            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
+            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot,
+                                       outfileSuffix=outfileSuffix)
             if closefig:
                plt.close('all')
             if plotfigs is None and verbose:
                 warnings.warn('Not plotting metric data for %s' %(mname))
             
-    def plotMetric(self, iid, savefig=True, outfileRoot=None):
+    def plotMetric(self, iid, savefig=True, outfileRoot=None, outfileSuffix=None):
         """
         Create all plots for 'metricName' .
         """
@@ -289,7 +291,7 @@ class RunSliceMetric(BaseSliceMetric):
                 pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
         # Plot the data. 
         # Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
-        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot)    
+        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)    
         plotResults = self.slicer.plotData(self.metricValues[iid], savefig=savefig,
                                            figformat=self.figformat, dpi=self.dpi,
                                            filename=os.path.join(self.outDir, outfile), **pParams)
