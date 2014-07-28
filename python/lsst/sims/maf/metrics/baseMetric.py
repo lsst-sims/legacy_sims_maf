@@ -147,6 +147,10 @@ class BaseMetric(object):
                 warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotParams'
                               % (self.name))
                 del self.plotParams['normVal']
+        if 'xMin' in self.plotParams and 'colorMin' not in self.plotParams:
+            self.plotParams['colorMin'] = self.plotParams['xMin']
+        if 'xMax' in self.plotParams and 'colorMax' not in self.plotParams:
+            self.plotParams['colorMax'] = self.plotParams['xMax']
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
