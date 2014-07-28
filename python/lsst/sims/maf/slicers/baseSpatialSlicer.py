@@ -150,7 +150,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 histRange = None
         else:
             histRange=[xMin, xMax]
-        if yMin is not None and yMax is not None:
+        if yMin is not None or yMax is not None:
             plt.ylim([yMin,yMax])
         # See if should use log scale.
         if logScale == 'auto':
@@ -172,7 +172,7 @@ class BaseSpatialSlicer(BaseSlicer):
             plotValue = metricValue
         if plotValue.size == 0:
             if histRange is None:
-                warnings.warn('Could not plot metric data: histRange is None' )
+                warnings.warn('Could not plot metric data: histRange is None and all data masked' )
             else:
                 warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %
                               (histRange[0], histRange[1]))

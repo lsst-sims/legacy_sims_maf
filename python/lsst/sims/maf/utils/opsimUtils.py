@@ -56,7 +56,11 @@ def scaleStretchDesign(runLength):
     for f in filters:
         design['coaddedDepth'][f] = float(1.25 * np.log10(design['nvisits'][f]
                                                     * 10.**(0.8*design['singleVisitDepth'][f])))
+        if not np.isfinite(design['coaddedDepth'][f]):
+            design['coaddedDepth'][f] = 0
         stretch['coaddedDepth'][f] = float(1.25 * np.log10(stretch['nvisits'][f]
                                                      * 10.**(0.8*stretch['singleVisitDepth'][f])))
+        if not np.isfinite(stretch['coaddedDepth'][f] ):
+            stretch['coaddedDepth'][f] = 0
     return design, stretch
 
