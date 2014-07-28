@@ -43,8 +43,8 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=1e3):
             warnings.warn('Warning! Optimal bin calculation tried to make %f bins, returning %i'%(nbins, nbinMax))
             nbins = nbinMax
     else:
-        warnings.warn('Warning! No data available for calculating optimal bin size within range of %f, %f'
-                      %(binmin, binmax), ' returning %i' %(nbinMax))
+        warnings.warn('Warning! No data available for calculating optimal bin size within range of %f, %f'%
+                      (binmin, binmax) + ' returning %i' %(nbinMax))
         nbins = nbinMax
     if np.isnan(nbins):
         warnings.warn('Warning! Optimal bin calculation calculated NaN: returning %i' %(nbinMax))
