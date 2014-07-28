@@ -7,6 +7,7 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
+import warnings
 import inspect
 from lsst.sims.maf.utils.getColInfo import ColInfo
 
@@ -137,6 +138,15 @@ class BaseMetric(object):
             self.plotParams = {}
         if 'units' not in self.plotParams:
             self.plotParams['units'] = self.units
+        if 'zp' in self.plotParams:
+            if not np.isfinite(self.plotParams['zp']):
+                warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotParams' %(self.name))
+                del self.plotParams['zp']
+        if 'normVal' in self.plotParams:
+            if self.plotParams['normVal'] == 0:
+                warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotParams'
+                              % (self.name))
+                del self.plotParams['normVal']
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
