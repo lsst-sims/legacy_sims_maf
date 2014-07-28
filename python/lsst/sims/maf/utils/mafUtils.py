@@ -42,7 +42,7 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=1e3):
                 /np.size(data[cond])**(1./3.))
     nbins = (binmax - binmin) / binwidth
     if nbins > nbinMax:
-        warnings.warn('formula tried to make %f bins, returning %i'%(nbins,nbinMax))
+        warnings.warn('Freedman-Diaconis rule tried to make %f bins, returning %i'%(nbins,nbinMax))
         nbins = nbinMax
     if np.isinf(nbins) or np.isnan(nbins):
         return 1
