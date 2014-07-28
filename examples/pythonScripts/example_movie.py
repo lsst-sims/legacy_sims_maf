@@ -40,8 +40,8 @@ def setupMetrics():
     # Simple metrics: coadded depth and number of visits
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', 
                                             plotParams={'colorMin':25, 'colorMax':28}))
-    metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'logScale':False, 'title':'Number of visits',
+    metricList.append(metrics.CountMetric('expMJD', metricName='Number of Visits',
+                                          plotParams={'logScale':False,
                                                       'colorMin':0, 'colorMax':300,
                                                       'cbarFormat': '%d'}))
     dt, t = dtime(t)
@@ -72,7 +72,9 @@ def run(opsimName, metadata, simdata, metricList, nside):
         sm.setSlicer(hs)
         sm.setMetrics(metricList)
         # Calculate metric data values for simdatasubset
-        sm.runSlices(simdatasubset, simDataName=opsimName, metadata=metadata)
+        # Add year into the metadata for the slice metric - this will then be added to plot titles
+        metadataYear = metadata +  ' Year %d' %(i + 1)
+        sm.runSlices(simdatasubset, simDataName=opsimName, metadata=metadataYear)
         # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
         sm.plotAll(outfileSuffix=slicenumber, closefig=True)
         # Write the data -- uncomment if you want to do this.
