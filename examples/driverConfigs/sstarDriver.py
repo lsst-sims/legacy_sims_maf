@@ -204,6 +204,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                           summaryStats={'TableFractionMetric':{}})
+    metricDict = makeDict(m1)
     constraints = ['']
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                               constraints=constraints, metadata=slicermetadata)

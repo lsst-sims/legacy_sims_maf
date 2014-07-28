@@ -27,7 +27,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
     """
 
     def addMetricData(self, metricValues, metricName, slicer, simDataName, 
-                      sqlconstraint, metadata, plotParams=None, metricId=None):
+                      sqlconstraint, metadata, displayGroup='', plotParams=None, metricId=None):
         """
         Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata.
         """
@@ -41,6 +41,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.simDataNames[iid] = simDataName
         self.sqlconstraints[iid] = sqlconstraints
         self.metadatas[iid] = metadatas
+        self.displayGroups[iid] = displayGroup
         if metricId is not None:
             self.metricIds[iid] = metricId
 
@@ -217,7 +218,9 @@ class ComparisonSliceMetric(BaseSliceMetric):
               slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
               simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
               metadata = ''.join(list(self.uniqueMetadata(iids)))
-              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata, 'NULL')
+              # For now, just use the 1st displayGroup to assign group
+              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
+                                                  'NULL',self.displayGroups.keys()[0])
               self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
         else:
             outfile = 'NULL'

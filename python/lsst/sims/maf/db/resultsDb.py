@@ -26,10 +26,11 @@ class MetricRow(Base):
     sqlConstraint = Column(String)
     metricMetadata = Column(String)
     metricDataFile = Column(String)
+    displayGroup = Column(String)
     def __repr__(self):
-        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
+        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', displayGroup='%s')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.displayGroup)
         
 class PlotRow(Base):
     """
@@ -97,14 +98,14 @@ class ResultsDb(object):
         self.session.close()
         
     def addMetric(self, metricName, slicerName, simDataName, sqlConstraint,
-                  metricMetadata, metricDataFile):
+                  metricMetadata, metricDataFile, displayGroup):
         """
         Add a row to the metrics table.
         """
         ## TODO: check if row already exists in table, and if so, don't add it again.
         metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
                                 sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
-                                metricDataFile=metricDataFile)
+                                metricDataFile=metricDataFile, displayGroup=displayGroup)
         self.session.add(metricinfo)
         self.session.commit()
         return metricinfo.metricId

@@ -47,6 +47,7 @@ class BaseSliceMetric(object):
         self.simDataNames = {}
         self.sqlconstraints = {}
         self.metadatas = {}
+        self.displayGroups = {}
 
 
     def metricNameIid(self, metricName):
@@ -146,6 +147,9 @@ class BaseSliceMetric(object):
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
           self.plotParams[iid] = {}
+          self.displayGroups[iid] = {}
+          if 'displayGroup' in header:
+              self.displayGroups[iid].update(header['displayGroup'])
           if 'plotParams' in header:
              self.plotParams[iid].update(header['plotParams'])
           if verbose:
@@ -183,11 +187,14 @@ class BaseSliceMetric(object):
                          metricName = self.metricNames[iid],
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
-                         metadata = self.metadatas[iid] + comment)
+                         metadata = self.metadatas[iid] + comment,
+                         displayGroup = self.displayGroups[iid])
         if self.resultsDb:
-           self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
-                                                            slicer.slicerName,
-                                                            self.simDataNames[iid],
-                                                            self.sqlconstraints[iid],
-                                                            self.metadatas[iid],
-                                                            outfile)
+            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
+                                                          slicer.slicerName,
+                                                          self.simDataNames[iid],
+                                                          self.sqlconstraints[iid],
+                                                          self.metadatas[iid],
+                                                          outfile,
+                                                          self.displayGroups[iid])
+           

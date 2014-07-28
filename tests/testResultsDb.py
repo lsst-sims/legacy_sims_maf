@@ -20,6 +20,7 @@ class TestResultsDb(unittest.TestCase):
         self.summaryStatValue1 = 20
         self.summaryStatName2 = 'Median'
         self.summaryStatValue2 = 18
+        self.plotGroup = 2
         
     def testDbCreation(self):
         # Test default sqlite file created (even if outDir doesn't exist)
@@ -38,7 +39,7 @@ class TestResultsDb(unittest.TestCase):
     def testAddData(self):
         resultsDb = db.ResultsDb(outDir=self.outDir)
         metricId = resultsDb.addMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                        self.metadata, self.metricDataFile)
+                                        self.metadata, self.metricDataFile, self.plotGroup)
         resultsDb.addPlot(metricId, self.plotType, self.plotName)
         resultsDb.addSummaryStat(metricId, self.summaryStatName1, self.summaryStatValue1)
         resultsDb.addSummaryStat(metricId, self.summaryStatName2, self.summaryStatValue2)

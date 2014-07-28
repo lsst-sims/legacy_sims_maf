@@ -90,7 +90,7 @@ class MafDriver(object):
             self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
-                name, kwargs, plotDict, summaryStats, histMerge = readMetricConfig(metric)
+                name, kwargs, plotDict, summaryStats, histMerge, displayDict = readMetricConfig(metric)
                 # Need to make summaryStats a dict with keys of metric names and items of kwarg dicts.
                 kwargs['plotParams'] = plotDict
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
@@ -105,6 +105,7 @@ class MafDriver(object):
                    if 'IdentityMetric' not in summaryStats.keys():
                       temp_metric.summaryStats.append(metrics.BaseMetric.registry['IdentityMetric']('metricdata'))
                 temp_metric.histMerge = histMerge
+                temp_metric.displayDict = displayDict
                 sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
         # Make a unique list of all SQL constraints
