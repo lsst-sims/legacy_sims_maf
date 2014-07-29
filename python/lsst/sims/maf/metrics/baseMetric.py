@@ -81,7 +81,7 @@ class BaseMetric(object):
     
     def __init__(self, col=None, metricName=None, units=None, 
                  metricDtype=None, badval=-666,
-                 plotParams=None, displayGroup=None):
+                 plotParams=None, displayDict=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
@@ -160,10 +160,17 @@ class BaseMetric(object):
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
-        # Set the displayGroup
-        self.displayGroup = displayGroup
-        if self.displayGroup is None:
-            self.displayGroup = ''
+        # Set up the displayDict.
+        # Set defaults.
+        defaultDisplayDict = {'group':'Ungrouped',
+                              'subgroup':'NULL',
+                              'order':0,
+                              'caption':'NULL'}
+        if displayDict is None:
+            self.displayDict = defaultDisplayDict
+        else:
+            defaultDisplayDict.update(displayDict)
+            self.displayDict = defaultDisplayDict
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')

@@ -92,9 +92,7 @@ class MafDriver(object):
                 name, kwargs, plotDict, summaryStats, histMerge, displayDict = readMetricConfig(metric)
                 # Add plot parameters and display parameters to kwargs handed to metric.
                 kwargs['plotParams'] = plotDict
-                # Assume that the only parameter used from displayDict is 'displayGroup'
-                if 'displayGroup' in displayDict:
-                    kwargs['displayGroup'] = displayDict['displayGroup']
+                kwargs['displayDict'] = displayDict
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 # Add an attribute to our metric which will describe the summary stats.
                 temp_metric.summaryStats = []

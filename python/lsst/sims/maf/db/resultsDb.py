@@ -26,11 +26,19 @@ class MetricRow(Base):
     sqlConstraint = Column(String)
     metricMetadata = Column(String)
     metricDataFile = Column(String)
+    # Group for displaying metric (in webpages)
     displayGroup = Column(String)
+    # Subgroup for displaying metric 
+    displaySubgroup = Column(String)
+    # Order to display metric (within subgroup)
+    displayOrder = Column(Float)
+    # Filename of the caption
+    displayCaption = Column(String)  
     def __repr__(self):
-        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', displayGroup='%s')>" \
+        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', displayGroup='%s', displaySubgroup='%s', displayOrder='%.1f', displayCaption='%s')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.displayGroup)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile, 
+            self.displayGroup, self.displaySubgroup, self.displayOrder, self.displayCaption)
         
 class PlotRow(Base):
     """
@@ -98,13 +106,19 @@ class ResultsDb(object):
         self.session.close()
         
     def addMetric(self, metricName, slicerName, simDataName, sqlConstraint,
-                  metricMetadata, metricDataFile, displayGroup):
+                  metricMetadata, metricDataFile, displayDict):
         """
         Add a row to the metrics table.
         """
+        displayGroup = displayDict['group']
+        displaySubgroup = displayDict['subgroup']
+        displayOrder = displayDict['order']
+        displayCaption = displayDict['caption']
         metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
-                                sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
-                                metricDataFile=metricDataFile, displayGroup=displayGroup)
+                               sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
+                               metricDataFile=metricDataFile, 
+                               displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
+                               displayOrder=displayOrder, displayCaption=displayCaption)
         self.session.add(metricinfo)
         self.session.commit()
         return metricinfo.metricId
