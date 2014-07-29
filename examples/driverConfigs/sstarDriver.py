@@ -209,7 +209,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               constraints=constraints, metadata=slicermetadata)
     slicerList.append(slicer)
     
-
     # Calculate some basic summary info about run, per filter.
     for f in filters:
         m1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'}, summaryStats={'IdentityMetric':{}})
