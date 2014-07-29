@@ -113,7 +113,7 @@ def configureStacker(name, kwargs={}):
     config.kwargs = makeMixConfig(kwargs)
     return config
     
-def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
+def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={}, displayDict={}):
     """
     Helper function to generate a metric pex config object.
     """
@@ -125,6 +125,7 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={})
     mc.histMerge=makeMixConfig(histMerge)
     mc.kwargs = makeMixConfig(kwargs)
     mc.plot = makeMixConfig(plotDict)
+    mc.displayDict = makeMixConfig(displayDict)
     return mc
 
 def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None, plotConfigs=None, metadata=''):

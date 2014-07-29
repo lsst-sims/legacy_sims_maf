@@ -1,6 +1,5 @@
 import os
 import warnings
-from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -42,12 +41,12 @@ class BaseSliceMetric(object):
         self.iid_next = 0
         self.metricNames = {}
         self.plotParams = {}
+        self.displayDicts = {}        
         self.slicers = {}
         self.metricValues = {}
         self.simDataNames = {}
         self.sqlconstraints = {}
         self.metadatas = {}
-        self.displayGroups = {}
 
 
     def metricNameIid(self, metricName):
@@ -149,9 +148,13 @@ class BaseSliceMetric(object):
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
           self.plotParams[iid] = {}
-          self.displayGroups[iid] = ''
-          if 'displayGroup' in header:
-              self.displayGroups[iid] = header['displayGroup']
+          # Set default values, in  case metric file doesn't have the info.
+          self.displayDicts[iid] = {'group':'Ungrouped', 
+                                    'subgroup':'NULL',
+                                    'order':0,
+                                    'caption':'NULL'}
+          if 'displayDict' in header:
+              self.displayDicts[iid].update(header['displayDict'])
           if 'plotParams' in header:
              self.plotParams[iid].update(header['plotParams'])
           if verbose:
@@ -190,7 +193,7 @@ class BaseSliceMetric(object):
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
                          metadata = self.metadatas[iid] + comment,
-                         displayGroup = self.displayGroups[iid])
+                         displayDict = self.displayDicts[iid])
         if self.resultsDb:
             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
                                                           slicer.slicerName,
@@ -198,5 +201,5 @@ class BaseSliceMetric(object):
                                                           self.sqlconstraints[iid],
                                                           self.metadatas[iid],
                                                           outfile,
-                                                          self.displayGroups[iid])
+                                                          self.displayDicts[iid])
            
