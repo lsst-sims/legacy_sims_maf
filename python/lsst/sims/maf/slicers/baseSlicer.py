@@ -148,7 +148,7 @@ class BaseSlicer(object):
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName ='', sqlconstraint='', metadata='', displayGroup=''):
+                  simDataName ='', sqlconstraint='', metadata='', displayDict=None):
         """
         Save metric values along with the information required to re-build the slicer.
 
@@ -162,7 +162,9 @@ class BaseSlicer(object):
         header['simDataName'] = simDataName
         date, versionInfo = getDateVersion()
         header['dateRan'] = date
-        header['displayGroup'] = displayGroup
+        if displayDict is None:
+            displayDict = {'group':'Ungrouped'}
+        header['displayDict'] = displayDict
         for key in versionInfo.keys():
             header[key] = versionInfo[key]
         if hasattr(metricValues, 'mask'): # If it is a masked array

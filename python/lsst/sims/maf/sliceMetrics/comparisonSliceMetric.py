@@ -27,7 +27,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
     """
 
     def addMetricData(self, metricValues, metricName, slicer, simDataName, 
-                      sqlconstraint, metadata, displayGroup='', plotParams=None, metricId=None):
+                      sqlconstraint, metadata, displayDict=None, plotParams=None, metricId=None):
         """
         Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata directly.
 
@@ -43,7 +43,12 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.simDataNames[iid] = simDataName
         self.sqlconstraints[iid] = sqlconstraints
         self.metadatas[iid] = metadatas
-        self.displayGroups[iid] = displayGroup
+        if displayDict is None:
+           displayDict = {'group':'Ungrouped', 
+                          'subgroup':'NULL',
+                          'order':0, 
+                          'caption':'NULL'}
+        self.displayDicts[iid] = displayDict
         if metricId is not None:
             self.metricIds[iid] = metricId
 
@@ -256,10 +261,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
               metricNames = ''.join(list(self.uniqueMetricNames(iids)))              
               slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
               simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
-              metadata = ''.join(list(self.uniqueMetadata(iids)))
+              metadata = ''.join(list(self.uniqueMetadata(iids)))              
               # Use first iid in iids to determine display group.
               metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                  'NULL', self.displayGroups[iids[0]])
+                                                  'NULL', self.displayDicts[iids[0]])
               self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
         else:
             outfile = 'NULL'
@@ -321,7 +326,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
                 metadata = ''.join(list(self.uniqueMetadata(iids)))
                 metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                    'NULL', self.displayGroups[iids[0]])
+                                                    'NULL', self.displayDicts[iids[0]])
                 self.resultsDb.addPlot(metricId, 'ComboPowerSpectrum', outfile)
         else:
             outfile = 'NULL'
@@ -386,7 +391,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
                 metadata = ''.join(list(self.uniqueMetadata(iids)))
                 metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                    'NULL', self.displayGroups[iids[0]])
+                                                    'NULL', self.displayDicts[iids[0]])
                 self.resultsDb.addPlot(metricId, 'DifferenceSkyMap', outfile)
         else:
             outfile = 'NULL'

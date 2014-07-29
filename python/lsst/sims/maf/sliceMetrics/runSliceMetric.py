@@ -70,12 +70,12 @@ class RunSliceMetric(BaseSliceMetric):
             metricList = [metricList,]
         iid = self.iid_next
         for metric in metricList:
-           self.metricObjs[iid] = metric
-           self.plotParams[iid] = metric.plotParams
-           self.metricNames[iid] = metric.name
-           self.slicers[iid] = self.slicer
-           self.displayGroups[iid] = metric.displayGroup
-           iid += 1
+            self.metricObjs[iid] = metric
+            self.plotParams[iid] = metric.plotParams
+            self.displayDicts[iid] = metric.displayDict
+            self.metricNames[iid] = metric.name
+            self.slicers[iid] = self.slicer
+            iid += 1
         self.iid_next = iid
         return 
 
@@ -193,7 +193,7 @@ class RunSliceMetric(BaseSliceMetric):
            self.sqlconstraints[riid] = self.sqlconstraints[iid]
            self.metadatas[riid] = self.metadatas[iid]
            self.plotParams[riid] = self.plotParams[iid]
-           self.displayGroups[riid] = self.displayGroups[iid]
+           self.displayDicts[riid] = self.displayDicts[iid]
            self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                     mask = self.metricValues[iid].mask,
                                                     fill_value=self.slicer.badval)
@@ -230,9 +230,10 @@ class RunSliceMetric(BaseSliceMetric):
             if self.resultsDb:           
                 if iidi not in self.metricIds:
                     self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
-                                                                    self.simDataNames[iidi], self.sqlconstraints[iidi],
-                                                                    self.metadatas[iidi],
-                                                                    self.displayGroups[iidi], 'NULL')
+                                                                    self.simDataNames[iidi], 
+                                                                    self.sqlconstraints[iidi],
+                                                                    self.metadatas[iidi], 'NULL',
+                                                                    self.displayDicts[iidi])
                 self.resultsDb.addSummaryStat(self.metricIds[iidi],
                                                 summaryName=summaryMetric.name.replace(' metricdata', ''),
                                                 summaryValue=summaryValue)
@@ -298,9 +299,10 @@ class RunSliceMetric(BaseSliceMetric):
         if self.resultsDb:
             if iid not in self.metricIds:
                 self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                                self.simDataNames[iid], self.sqlconstraints[iid],
-                                                                self.metadatas[iid], 'NULL', self.displayGroups[iid])
-            for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
+                                                               self.simDataNames[iid], self.sqlconstraints[iid],
+                                                               self.metadatas[iid], 'NULL',  
+                                                               self.displayDicts[iid])
+        for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
                 froot, fname = os.path.split(filename)
                 self.resultsDb.addPlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
         return plotResults['figs']
