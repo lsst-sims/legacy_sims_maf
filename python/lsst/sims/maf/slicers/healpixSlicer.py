@@ -140,7 +140,7 @@ class HealpixSlicer(BaseSpatialSlicer):
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -152,6 +152,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins)
+        binsize = size of bins to use.  Will override "bins" if both are set.
         (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
@@ -166,7 +167,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                           title=title, fignum=fignum, 
                                                           label=label, 
                                                           addLegend=addLegend, legendloc=legendloc,
-                                                          bins=bins, cumulative=cumulative,
+                                                          bins=bins, binsize=binsize, cumulative=cumulative,
                                                           xMin=xMin, xMax=xMax, logScale=logScale,
                                                           flipXaxis=flipXaxis,
                                                           scale=scale, color=color,

@@ -105,7 +105,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                                          'percentileClip':95.,
                                                          'units':'(coadded m5 - %.1f)' %mag_zpoints[f]},
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
-                              histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f], 'label':'%s'%f})
+                              histMerge={'histNum':6, 'legendloc':'upper right',
+                                         'color':colors[f], 'label':'%s'%f, 'binsize':.01})
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
@@ -127,7 +128,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                         'histMax':nVisits_plotRange['all'][f][1]},
                               summaryStats={'MeanMetric':{}},
                               histMerge={'histNum':5, 'legendloc':'upper right',
-                                         'color':colors[f],'label':'%s'%f})
+                                         'color':colors[f],'label':'%s'%f, 'binsize':5})
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})

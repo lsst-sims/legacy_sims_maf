@@ -108,7 +108,7 @@ class BaseSpatialSlicer(BaseSlicer):
     ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
                       logScale='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
                       zp=None, normVal=None, percentileClip=None, **kwargs):
@@ -120,6 +120,7 @@ class BaseSpatialSlicer(BaseSlicer):
         addLegend = flag for whether or not to add a legend (default False)
         legendloc = location for legend (default 'upper left')
         bins = bins for histogram (numpy array or # of bins)
+        binsize = size of bins to use.  Will override "bins" if both are set.
         (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
@@ -128,7 +129,7 @@ class BaseSpatialSlicer(BaseSlicer):
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
         normVal = normalization value to divide metric values by (overrides zp)"""
-        if bins is None:
+        if bins is None and binsize is None:
             bins = optimalBins(metricValueIn)
         # Histogram metricValues. 
         fig = plt.figure(fignum)
@@ -158,6 +159,12 @@ class BaseSpatialSlicer(BaseSlicer):
                 logScale = True
             else:
                 logScale = False
+        # If we want all the plots to have the same binsize
+        if binsize is not None:
+            if histRange is None:
+                bins = np.arange(metricValue.min(), metricValue.max()+binsize, binsize)
+            else:
+                bins = np.arange(histRange[0], histrange[1]+binsize, binsize)
         # Plot histograms.
         # Add a test to see if data falls within histogram range.. because otherwise histogram will fail.
         if histRange is not None:
