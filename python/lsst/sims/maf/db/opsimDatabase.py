@@ -72,7 +72,7 @@ class OpsimDatabase(Database):
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint. 
         table = self.tables['summaryTable']
-        if groupBy is not None:
+        if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,

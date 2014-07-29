@@ -172,9 +172,9 @@ class BaseSpatialSlicer(BaseSlicer):
             plotValue = metricValue
         if plotValue.size == 0:
             if histRange is None:
-                warnings.warn('Could not plot metric data: histRange is None and all data masked' )
+                warnings.warn('Warning! Could not plot metric data: histRange is None and all data masked' )
             else:
-                warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %
+                warnings.warn('Warning! Could not plot metric data: none fall within histRange %.2f %.2f' %
                               (histRange[0], histRange[1]))
             return None
         else:

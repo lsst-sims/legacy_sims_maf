@@ -82,7 +82,6 @@ class TableFractionMetric(BaseMetric):
         """
         colname = the column name in the metric data (i.e. 'metricdata' usually).
         nbins = number of bins between 0 and 1. Should divide evenly into 100.
-        returnBin = which bin (between 0 and 12) should be returned.
         """
         super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         self.nbins = nbins

@@ -337,12 +337,6 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
                                metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics(self.iid, self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues[self.iid].mean())
-        # Test get warning if calculating summary statistics on 'object' data using simple scalar metric.
-        fakemetricdata = ma.MaskedArray(data = np.empty(len(self.slicer), 'object'),
-                                        mask = np.zeros(len(self.slicer), 'bool'),
-                                        fill_value = self.slicer.badval)
-        self.testbbm.metricValues[1] = fakemetricdata
-        self.testbbm.metricNames[1] = 'fakemetricdata'
                             
         
 class TestPlottingRunSliceMetric(unittest.TestCase):

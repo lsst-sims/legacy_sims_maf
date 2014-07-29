@@ -147,9 +147,9 @@ class BaseSliceMetric(object):
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
           self.plotParams[iid] = {}
-          self.displayGroups[iid] = {}
+          self.displayGroups[iid] = ''
           if 'displayGroup' in header:
-              self.displayGroups[iid].update(header['displayGroup'])
+              self.displayGroups[iid] = header['displayGroup']
           if 'plotParams' in header:
              self.plotParams[iid].update(header['plotParams'])
           if verbose:

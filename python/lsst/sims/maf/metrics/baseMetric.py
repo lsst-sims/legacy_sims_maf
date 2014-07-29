@@ -79,8 +79,9 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, col=None, metricName=None, units=None, plotParams=None,
-                 metricDtype=None, badval=-666):
+    def __init__(self, col=None, metricName=None, units=None, 
+                 metricDtype=None, badval=-666,
+                 plotParams=None, displayGroup=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
@@ -94,6 +95,11 @@ class BaseMetric(object):
           * every metric object will have the data columns it requires added to the column registry
             (so the driver can know which columns to pull from the database)
           * every metric object will contain a plotParams dictionary, which may contain only the units.
+
+        plotParams is a dictionary containing instructions for plotting (setting plot titles, limits,
+        x and y labels, etc.).
+        displayGroup is a string defining where the output of the metric should be displayed in the visualization
+        layer (metrics with the same displayGroup parameter are grouped together). 
         """
         if col is None:
             raise ValueError('Specify "col" kwarg for metric %s' %(self.__class__.__name__))
@@ -154,6 +160,10 @@ class BaseMetric(object):
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
+        # Set the displayGroup
+        self.displayGroup = displayGroup
+        if self.displayGroup is None:
+            self.displayGroup = ''
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')

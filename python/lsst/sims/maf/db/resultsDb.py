@@ -102,7 +102,6 @@ class ResultsDb(object):
         """
         Add a row to the metrics table.
         """
-        ## TODO: check if row already exists in table, and if so, don't add it again.
         metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
                                 sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
                                 metricDataFile=metricDataFile, displayGroup=displayGroup)
@@ -114,7 +113,6 @@ class ResultsDb(object):
         """
         Add a row to the plot table.
         """
-        ## TODO: check if row already exists in table, and if so, don't add it again.
         plotinfo = PlotRow(metricId=metricId, plotType=plotType, plotFile=plotFile)
         self.session.add(plotinfo)
         self.session.commit()
@@ -123,23 +121,27 @@ class ResultsDb(object):
         """
         Add a row to the summary statistic table.
         """
-        ## TODO: check if row already exists in table, and if so, don't add it again.
-
-        #if not ((isinstance(summaryValue, float)) or isinstance(summaryValue, int)):
-        #    warnings.warn('Cannot save non-float/non-int values for summary statistics.')
-        #    return
-        
+        # Allow for special summary statistics which return data in a np structured array with
+        #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic). 
         if np.size(summaryValue) > 1:
-            for value in summaryValue:
-                summarystat = SummaryStatRow(metricId=metricId,
-                                             summaryName=summaryName+' '+value['name'],
-                                             summaryValue=value['value'])
+            if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
+                for value in summaryValue:
+                    summarystat = SummaryStatRow(metricId=metricId,
+                                                summaryName=summaryName+' '+value['name'],
+                                                summaryValue=value['value'])
+                    self.session.add(summarystat)
+                    self.session.commit()
+            else:
+                warnings.warn('Warning! Cannot save non-conforming summary statistic.')
+        # Most summary statistics will be simple floats.
+        else:
+            if isinstance(summaryValue, float) or isinstance(summaryValue, int):
+                summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName, summaryValue=summaryValue)
                 self.session.add(summarystat)
                 self.session.commit()
-        else:
-            summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName, summaryValue=summaryValue)
-            self.session.add(summarystat)
-            self.session.commit()
+            else:
+                warnings.warn('Warning! Cannot save summary statistic that is not a simple float or int')
+        
 
     def getMetricIds(self):
         """

@@ -105,7 +105,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                                          'percentileClip':95.,
                                                          'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
-                              histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f],'label':'%s'%f})
+                              histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f], 'label':'%s'%f})
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
@@ -145,7 +145,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
         metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
         constraints = ['filter = "%s" and %s' %(f, wfdWhere)]
         slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
-                                 constraints=constraints, metadata=slicermetadata)
+                                 constraints=constraints, metadata=slicermetadata + ' (WFD)')
         slicerList.append(slicer)
 
     
@@ -194,7 +194,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     metricDict = makeDict(m1)
     constraints = ['%s' %(wfdWhere)]
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
-                              constraints=constraints, metadata=slicermetadata + ' WFD')
+                              constraints=constraints, metadata=slicermetadata + ' (WFD)')
     slicerList.append(slicer)
     # For all Observations
     m1 = configureMetric('CompletenessMetric',
@@ -260,8 +260,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                           summaryStats={'fOArea':{'nside':fOnside},
                                         'fONv':{'nside':fOnside}})
     slicer = configureSlicer('fOSlicer', kwargs={'nside':fOnside},
-                              metricDict=makeDict(m1),
-                              constraints=['',wfdWhere])
+                              metricDict=makeDict(m1), constraints=['',])
+    slicerList.append(slicer)
+    slicer = configureSlicer('fOSlicer', kwargs={'nside':fOnside},
+                            metricDict=makeDict(m1), constraints=[wfdWhere], metadata='(WFD)')
     slicerList.append(slicer)
 
 

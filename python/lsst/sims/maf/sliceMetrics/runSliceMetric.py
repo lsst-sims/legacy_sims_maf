@@ -74,13 +74,7 @@ class RunSliceMetric(BaseSliceMetric):
            self.plotParams[iid] = metric.plotParams
            self.metricNames[iid] = metric.name
            self.slicers[iid] = self.slicer
-           if hasattr(metric, 'displayDict'):
-              if 'displayGroup' in metric.displayDict.keys():
-                 self.displayGroups[iid] = metric.displayDict['']
-              else:
-                 self.displayGroups[iid] = ''
-           else:
-              self.displayGroups[iid] = ''
+           self.displayGroups[iid] = metric.displayGroup
            iid += 1
         self.iid_next = iid
         return 
@@ -238,7 +232,7 @@ class RunSliceMetric(BaseSliceMetric):
                     self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
                                                                     self.simDataNames[iidi], self.sqlconstraints[iidi],
                                                                     self.metadatas[iidi],
-                                                                    self.displayGroups[iidi],'NULL')
+                                                                    self.displayGroups[iidi], 'NULL')
                 self.resultsDb.addSummaryStat(self.metricIds[iidi],
                                                 summaryName=summaryMetric.name.replace(' metricdata', ''),
                                                 summaryValue=summaryValue)

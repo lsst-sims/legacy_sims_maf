@@ -157,7 +157,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        # Simply overrides scale of base plotHistogram. 
+        # Simply overrides scale of base plotHistogram.
+        if ylabel is None:
+            ylabel = 'Area (1000s of square degrees)'
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,

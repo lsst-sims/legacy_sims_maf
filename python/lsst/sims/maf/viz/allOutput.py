@@ -13,7 +13,6 @@ class MetricGridPageHandler(web.RequestHandler):
     def get(self):
         gridTempl = env.get_template("allOut.html")
         qargs = self.request.query_arguments
-        import pdb ; pdb.set_trace()
         self.write(gridTempl.render(metrics=qargs))
 
 class SelectPageHandler(web.RequestHandler):
