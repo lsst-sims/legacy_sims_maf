@@ -181,7 +181,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=nightConstraints)
     slicerList.append(slicer)
 
-    slicerList = []
     # Completeness and Joint Completeness
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
@@ -210,8 +209,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               constraints=constraints, metadata=slicermetadata)
     slicerList.append(slicer)
     
-    config.slicers = makeDict(*slicerList)
-    return config
 
     # Calculate some basic summary info about run, per filter.
     for f in filters:
