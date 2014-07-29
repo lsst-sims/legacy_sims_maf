@@ -307,7 +307,7 @@ class BaseSpatialSlicer(BaseSlicer):
         # Combine to make clims:
         clims = [colorMin, colorMax]
         p.set_clim(clims)
-        cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
+        cb = plt.colorbar(p, aspect=25, extend='both', extendrect=True, orientation='horizontal', format=cbarFormat)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")

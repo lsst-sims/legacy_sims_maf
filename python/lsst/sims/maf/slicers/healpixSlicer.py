@@ -129,7 +129,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
-                              extend='both', format=cbarFormat)
+                              extend='both', extendrect=True, format=cbarFormat)
             cb.set_label(xlabel)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
