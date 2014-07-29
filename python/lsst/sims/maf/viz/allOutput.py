@@ -3,7 +3,7 @@ from tornado import web
 from jinja2 import Environment, FileSystemLoader
 from collections import OrderedDict
 import glob
-from vizUtils import blockAll, loadResults, blockSS
+from .vizUtils import blockAll, loadResults, blockSS
 
 
 
