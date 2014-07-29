@@ -34,20 +34,22 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=1e3):
             binmax = 1
         else:
             binmax = data.max()
-
-    if data.size == 0:
-        return 1
     cond = np.where((data >= binmin)  & (data <= binmax))[0]
-    binwidth = (2.*(np.percentile(data[cond], 75) - np.percentile(data[cond], 25))
-                /np.size(data[cond])**(1./3.))
-    nbins = (binmax - binmin) / binwidth
-    if nbins > nbinMax:
-        warnings.warn('formula tried to make %f bins, returning %i'%(nbins,nbinMax))
-        nbins = nbinMax
-    if np.isinf(nbins) or np.isnan(nbins):
-        return 1
+    if np.size(data[cond]) > 0:
+        binwidth = (2.*(np.percentile(data[cond], 75) - np.percentile(data[cond], 25))
+                    /np.size(data[cond])**(1./3.))
+        nbins = (binmax - binmin) / binwidth
+        if nbins > nbinMax:
+            warnings.warn('Warning! Optimal bin calculation tried to make %f bins, returning %i'%(nbins, nbinMax))
+            nbins = nbinMax
     else:
-        return int(nbins)
+        warnings.warn('Warning! No data available for calculating optimal bin size within range of %f, %f'%
+                      (binmin, binmax) + ' returning %i' %(nbinMax))
+        nbins = nbinMax
+    if np.isnan(nbins):
+        warnings.warn('Warning! Optimal bin calculation calculated NaN: returning %i' %(nbinMax))
+        nbins = nbinMax
+    return int(nbins)
 
 
 def percentileClipping(data, percentile=95.):

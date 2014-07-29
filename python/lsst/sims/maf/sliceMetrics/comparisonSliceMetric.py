@@ -13,6 +13,7 @@ import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
+
 class ComparisonSliceMetric(BaseSliceMetric):
     """
     ComparisonSliceMetric couples slicers and metric data (one slicer per metric data)
@@ -26,9 +27,11 @@ class ComparisonSliceMetric(BaseSliceMetric):
     """
 
     def addMetricData(self, metricValues, metricName, slicer, simDataName, 
-                      sqlconstraint, metadata, plotParams=None, metricId=None):
+                      sqlconstraint, metadata, displayGroup='', plotParams=None, metricId=None):
         """
-        Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata.
+        Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata directly.
+
+        Another option is to use 'readMetricData' to read metric data from a file.
         """
         iid = self.iid_next
         self.iid_next += 1
@@ -40,6 +43,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.simDataNames[iid] = simDataName
         self.sqlconstraints[iid] = sqlconstraints
         self.metadatas[iid] = metadatas
+        self.displayGroups[iid] = displayGroup
         if metricId is not None:
             self.metricIds[iid] = metricId
 
@@ -129,36 +133,70 @@ class ComparisonSliceMetric(BaseSliceMetric):
     
     
     def _buildXlabel(self, iids):
-        pass
+        xlabel = set()
+        for iid in iids:
+            if hasattr(self.slicers[iid], 'plotHistogram'):
+                xlabel.add(self.metricNames[iid])
+            if hasattr(self.slicers[iid], 'plotBinnedData'):
+                xlabel.add(self.slicers[iid].sliceColName)
+        xlabel = list(xlabel)
+        xlabel = ', '.join(xlabel)
+        return xlabel
     
     def _buildYlabel(self, iids):
-        pass
+        ylabel = None
+        for iid in iids:
+            # For spatial slicers, the y label will be set automatically by plotHistogram.
+            if hasattr(self.slicers[iid], 'plotHistogram'):
+                pass
+            # For OneD slicers though, the y label should be set by the metric.
+            if hasattr(self.slicers[iid], 'plotBinnedData'):
+                # Most of the time it will be 'count', so let's use that for now.
+                ylabel = 'Count'
+        return ylabel            
+        
+    def _buildLegendLabels(self, iids):
+        # Determine what is common among all iids
+        usimDataNames = self.uniqueSimDataNames(iids)
+        umetadatas = self.uniqueMetadata(iids)        
+        umetricNames = self.uniqueMetricNames(iids)
+        labels = []
+        for iid in iids:
+            label = ''
+            if len(usimDataNames) > 1:
+                label += self.simDataNames[iid]
+            if len(umetadatas) > 1:
+                label += ' ' + self.metadatas[iid]
+            if len(umetricNames) > 1:
+                label += ' ' + self.metricNames[iid]
+            labels.append(label)
+        return labels
 
-    def _buildLegendLabel(self, iid):       
-        label = self.simDataNames[iid] + ' ' + self.metadatas[iid] + ' '  + self.metricNames[iid] +\
-            ' ' + self.slicers[iid].slicerName[:4]
-        return label
-
-    def plotHistograms(self, iids, 
-                        bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
-                        title=None, xlabel=None, color=None, labels=None,
-                        legendloc='upper left', alpha=1.0,
-                        savefig=False,  outfileRoot=None, ylabel=None, plotkwargs=None):
-        """
-        Create a plot containing the histograms from metrics in iids (assuming their slicers have histogram-like capability).
-
-        plotkwargs is a list of dicts with plotting parameters that override the defaults.
-        """
+    def _checkPlottable(self, iids):
         for iid in iids:
             if iid not in self.metricValues:
                 iids.remove(iid)
         for iid in iids:
             if iid not in self.slicers:
                 iids.remove(iid)
-        # Check if the data is 'object' type.
         for iid in iids:
             if self.metricValues[iid].dtype == 'object':
                 iids.remove(iid)
+        return iids
+
+    
+    def plotHistograms(self, iids, 
+                        bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
+                        title=None, xlabel=None, color=None, labels=None,
+                        legendloc='upper left', alpha=1.0,
+                        savefig=False,  outfileRoot=None, ylabel=None, plotkwargs=None):
+        """
+        Create a plot containing the histograms from metrics in iids (assuming their slicers
+        have histogram-like capability).
+
+        plotkwargs is a list of dicts with plotting parameters that override the defaults.
+        """
+        iids = self._checkPlottable(iids)
         # Check if the slicer has a histogram type visualization.
         for iid in iids:
             slicer = self.slicers[iid]
@@ -169,6 +207,12 @@ class ComparisonSliceMetric(BaseSliceMetric):
             return
         if title is None:
             title = self._buildPlotTitle(iids)
+        if xlabel is None:
+            xlabel = self._buildXlabel(iids)
+        if ylabel is None:
+            ylabel = self._buildYlabel(iids)
+        if labels is None:
+            labels = self._buildLegendLabels(iids)
         # Plot the data.
         fignum = None
         addLegend = False
@@ -176,15 +220,13 @@ class ComparisonSliceMetric(BaseSliceMetric):
             # If we're at the end of the list, add the legend.
             if i == len(iids) - 1:
                 addLegend = True
-            # Build legend label for this dictNum/metricName.
-            if labels is None:
-                label = self._buildLegendLabel(iid)
+            label = labels[i]
             # Plot data using 'plotBinnedData' if that method available (oneDSlicer)
             if hasattr(self.slicers[iid], 'plotBinnedData'):
-                plotParams = {'xlabel':xlabel, 'title':title, 'alpha':alpha,  \
-                                'label':label, 'addLegend':addLegend, 'legendloc':legendloc, \
-                                'color':color, 'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax,  \
-                                'yMin':yMin,'yMax':yMax}
+                plotParams = {'xlabel':xlabel, 'title':title, 'alpha':alpha,\
+                              'label':label, 'addLegend':addLegend, 'legendloc':legendloc,\
+                              'color':color, 'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax,  \
+                              'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
                     plotParams.update(plotkwargs[i])
                 fignum = self.slicers[iid].plotBinnedData(self.metricValues[iid], fignum=fignum, **plotParams)
@@ -204,34 +246,32 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 outroot = title
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='hist')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
+            if self.thumbnail:
+               thumbfile = os.path.join(self.outDir, outfile[:-4]).split('/')
+               thumbfile[-1] = 'thumb.'+thumbfile[-1]
+               thumbfile = '/'.join(thumbfile)
+               plt.savefig(thumbfile+'.png', dpi=72)
             if self.resultsDb:
-              # Don't have a metricID corresonding to this combo of metrics.
+              # Don't have a metricID corresonding to this combo of metrics, add to metric db table.
               metricNames = ''.join(list(self.uniqueMetricNames(iids)))              
               slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
               simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
               metadata = ''.join(list(self.uniqueMetadata(iids)))
-              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata, 'NULL')
+              # Use first iid in iids to determine display group.
+              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
+                                                  'NULL', self.displayGroups[iids[0]])
               self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
         else:
             outfile = 'NULL'
         return fignum, title, outfile
 
     def plotPowerSpectra(self, iids, maxl=500., removeDipole=True,
-                         title=None, legendloc='upper left',
-                         savefig=False,  outfileRoot=None):
+                         title=None, legendloc='upper left', color=None, labels=None,
+                         savefig=False,  outfileRoot=None, plotkwargs=None):
         """
         Create a plot containing the power spectrum visualization for 'iids'.
         """
-        for iid in iids:
-            if iid not in self.metricValues:
-                iids.remove(iid)
-        for iid in iids:
-            if iid not in self.slicers:
-                iids.remove(iid)
-        # Check if the data is 'object' type.
-        for iid in iids:
-            if self.metricValues[iid].dtype == 'object':
-                iids.remove(iid)
+        iids = self._checkPlottable(iids)
         # Check if the slicer has a power spectrum visualization.
         for iid in iids:
             slicer = self.slicers[iid]
@@ -241,8 +281,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
             warnings.warn('Removed all iids')
             return
         # Build a plot title.
-        if plotTitle is None:
-            plotTitle = self._buildPlotTitle(iids)
+        if title is None:
+            title = self._buildPlotTitle(iids)
+        if labels is None:
+            labels = self._buildLegendLabels(iids)
         # Plot the data.
         fignum = None
         addLegend = False
@@ -250,29 +292,36 @@ class ComparisonSliceMetric(BaseSliceMetric):
             # If we're at the end of the list, add the legend.
             if i == len(iids) - 1:
                 addLegend = True
-            # Build legend label for this dictNum/metricName.
-            label = self._buildLegendLabel(iid) 
+            label = labels[i]
+            # Set up plotParams.
+            plotParams = {'title':title, 'label':label, 'addLegend':addLegend,
+                          'legendloc':legendloc, 'color':color, 'maxl':maxl,
+                          'removeDipole':removeDipole}
+            if plotkwargs is not None:
+                    plotParams.update(plotkwargs[i])
             # Plot data.
             fignum = self.slicers[iid].plotPowerSpectrum(self.metricValues[iid],\
-                                                        maxl=maxl, removeDipole=removeDipole,
-                                                        title=title,
-                                                        fignum=fignum,
-                                                        label=label,
-                                                        addLegend=addLegend)
+                                                         fignum=fignum, **plotParams)
         if savefig:
             if outfileRoot is not None:
                 outroot = outfileRoot + title
             else:
                 outroot = title
-            outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot + title, plotType='ps') 
+            outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot + title, plotType='ps')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
+            if self.thumbnail:
+               thumbfile = os.path.join(self.outDir, outfile[:-4]).split('/')
+               thumbfile[-1] = 'thumb.'+thumbfile[-1]
+               thumbfile = '/'.join(thumbfile)
+               plt.savefig(thumbfile+'.png', dpi=72)
             if self.resultsDb:
-                # Don't have a metricID corresonding to this combo of metrics.
+                # Don't have a metricID corresonding to this combo of metrics, add to metric table.
                 metricNames = ''.join(list(self.uniqueMetricNames(iids)))
                 slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
                 metadata = ''.join(list(self.uniqueMetadata(iids)))
-                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata, 'NULL')
+                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
+                                                    'NULL', self.displayGroups[iids[0]])
                 self.resultsDb.addPlot(metricId, 'ComboPowerSpectrum', outfile)
         else:
             outfile = 'NULL'
@@ -287,16 +336,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
         """
         if len(iids) > 2:
            raise Exception('Only two iids to create a sky map difference')
+        iids  = self._checkPlottable(iids)
         if self.slicers[iid[0]] != self.slicers[iid[1]]:
            raise Exception('Slicers must be equal')
         slicer = self.slicers[iid[0]]
-        for iid in iids:
-           if iid not in self.metricValues:
-              raise Exception('iid %d not in self.metricValues' %(iid))
-        # Check if the data is 'object' type.
-        for iid in iids:
-           if self.metricValues[iid].dtype == 'object':
-              iids.remove(iid)
         # Check if the slicer has a histogram type visualization.
         for iid in iids:
            if (not hasattr(slicer, 'plotSkyMap')):
@@ -331,13 +374,19 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 outroot = title
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='sky')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
+            if self.thumbnail:
+               thumbfile = os.path.join(self.outDir, outfile[:-4]).split('/')
+               thumbfile[-1] = 'thumb.'+thumbfile[-1]
+               thumbfile = '/'.join(thumbfile)
+               plt.savefig(thumbfile+'.png', dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics.
                 metricNames = ''.join(list(self.uniqueMetricNames(iids)))
                 slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
                 metadata = ''.join(list(self.uniqueMetadata(iids)))
-                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata, 'NULL')
+                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
+                                                    'NULL', self.displayGroups[iids[0]])
                 self.resultsDb.addPlot(metricId, 'DifferenceSkyMap', outfile)
         else:
             outfile = 'NULL'

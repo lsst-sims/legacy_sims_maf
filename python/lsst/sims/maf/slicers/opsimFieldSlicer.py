@@ -100,6 +100,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        if ylabel is None:
+            ylabel = 'Number of Fields'
         fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
                                                              ylabel=ylabel,
                                                              title=title, fignum=fignum, 

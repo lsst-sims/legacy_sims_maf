@@ -21,6 +21,8 @@ class MetricConfig(pexConfig.Config):
     summaryStats = pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
                                       itemtype=MixConfig,default={})
     histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
+    displayDict = pexConfig.ConfigField("How plots should be displayed. keys should be 'displayGroup' w/ value of a string",
+                                        dtype=MixConfig,default=None)
 
 class ColStackConfig(pexConfig.Config):
     """
@@ -161,7 +163,8 @@ def readMetricConfig(config):
     summaryStats = config.summaryStats
     histMerge = readMixConfig(config.histMerge)
     plotDict = readMixConfig(config.plot)
-    return name, kwargs, plotDict, summaryStats, histMerge
+    displayDict = readMixConfig(config.displayDict)
+    return name, kwargs, plotDict, summaryStats, histMerge, displayDict
 
 
 def readMixConfig(config):

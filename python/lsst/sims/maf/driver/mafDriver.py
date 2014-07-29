@@ -1,9 +1,8 @@
 import os
-import warnings
 import numpy as np 
 
 from .mafConfig import MafConfig, config2dict, readMetricConfig, readSlicerConfig, readMixConfig
-warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
+
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -90,15 +89,18 @@ class MafDriver(object):
             self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
-                name, kwargs, plotDict, summaryStats, histMerge = readMetricConfig(metric)
-                # Need to make summaryStats a dict with keys of metric names and items of kwarg dicts.
+                name, kwargs, plotDict, summaryStats, histMerge, displayDict = readMetricConfig(metric)
+                # Add plot parameters and display parameters to kwargs handed to metric.
                 kwargs['plotParams'] = plotDict
+                # Assume that the only parameter used from displayDict is 'displayGroup'
+                if 'displayGroup' in displayDict:
+                    kwargs['displayGroup'] = displayDict['displayGroup']
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 # Add an attribute to our metric which will describe the summary stats.
                 temp_metric.summaryStats = []
                 for key in summaryStats.keys():
                     summarykwargs = readMixConfig(summaryStats[key])
-                    summaryMetric = metrics.BaseMetric.getClass(key)(col='metricdata', **summarykwargs)
+                    summaryMetric = metrics.BaseMetric.getClass(key.strip())(col='metricdata', **summarykwargs)
                     temp_metric.summaryStats.append(summaryMetric)
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
@@ -359,7 +361,7 @@ class MafDriver(object):
                 iids = cbm.metricValues.keys()
                 fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
-                if cbm.slicers[iids[0]] == 'HealpixSlicer':
+                if cbm.slicers[iids[0]].slicerName == 'HealpixSlicer':
                    fignum, title, psfile = cbm.plotPowerSpectra(iids, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
                 

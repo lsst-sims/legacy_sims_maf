@@ -1,6 +1,6 @@
 # Here is an example of a very very simple MAF configuration driver script
 # to run:
-# runDriver.py very_simple_cfg.py
+# runDriver.py manyMetrics.py
 
 # This script uses the LSST pex_config.  This is executed as a python script, but only things that start with
 #'root.' are passed on to the driver script.

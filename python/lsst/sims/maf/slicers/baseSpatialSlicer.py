@@ -150,7 +150,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 histRange = None
         else:
             histRange=[xMin, xMax]
-        if yMin is not None and yMax is not None:
+        if yMin is not None or yMax is not None:
             plt.ylim([yMin,yMax])
         # See if should use log scale.
         if logScale == 'auto':
@@ -172,9 +172,9 @@ class BaseSpatialSlicer(BaseSlicer):
             plotValue = metricValue
         if plotValue.size == 0:
             if histRange is None:
-                warnings.warn('Could not plot metric data: histRange is None' )
+                warnings.warn('Warning! Could not plot metric data: histRange is None and all data masked' )
             else:
-                warnings.warn('Could not plot metric data: none fall within histRange %.2f %.2f' %
+                warnings.warn('Warning! Could not plot metric data: none fall within histRange %.2f %.2f' %
                               (histRange[0], histRange[1]))
             return None
         else:
@@ -296,18 +296,20 @@ class BaseSpatialSlicer(BaseSlicer):
         # Add color bar (with optional setting of limits)
         if percentileClip:
             pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
-        if colorMin is None and percentileClip:
-            colorMin = pcMin
-        else:
-            colorMin = metricValue.compressed().min()
-        if colorMax is None and percentileClip:
-            colorMax = pcMax
-        else:
-            colorMax = metricValue.compressed().max()
+        if colorMin is None:
+            if percentileClip:
+                colorMin = pcMin
+            else:
+                colorMin = metricValue.compressed().min()        
+        if colorMax is None:
+            if percentileClip:
+                colorMax = pcMax
+            else:
+                colorMax = metricValue.compressed().max()
         # Combine to make clims:
         clims = [colorMin, colorMax]
         p.set_clim(clims)
-        cb = plt.colorbar(p, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
+        cb = plt.colorbar(p, aspect=25, extend='both', extendrect=True, orientation='horizontal', format=cbarFormat)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")

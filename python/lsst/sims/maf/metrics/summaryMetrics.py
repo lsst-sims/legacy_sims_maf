@@ -78,30 +78,36 @@ class TableFractionMetric(BaseMetric):
         12        1 < P
         Note the 1st and last elements do NOT obey the numpy histogram conventions.
     """
-    def __init__(self, col='metricdata', nbins=10):
+    def __init__(self, col='metricdata',  nbins=10):
         """
         colname = the column name in the metric data (i.e. 'metricdata' usually).
-        nbins = number of bins between 0 and 1. Should divide evenly into 100.  
+        nbins = number of bins between 0 and 1. Should divide evenly into 100.
         """
-        super(TableFractionMetric, self).__init__(col=col, metricDtype='object')
-        binsize = 1.0/float(nbins)
-        self.tableBins = np.arange(0, 1 + binsize/2., binsize)
-        self.tableBins = np.concatenate((np.zeros(1, float), self.tableBins))
-        self.tableBins = np.concatenate((self.tableBins, np.ones(1, float)))
-        self.tableBins[-1:] = 1.01
+        super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
+        self.nbins = nbins
         
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
-        hist, b = np.histogram(dataSlice[self.colname], bins=self.tableBins[1:-2])
+        goodVals = np.where((dataSlice[self.colname] > 0) & (dataSlice[self.colname] < 1)  )
+        bins = np.arange(self.nbins+1.)/self.nbins
+        hist, b = np.histogram(dataSlice[self.colname][goodVals], bins=bins)
         # Fill in values for exact 0, exact 1 and >1.
         zero = np.size(np.where(dataSlice[self.colname] == 0)[0])
-        # Remove the fields which were exactly 0 from the histogrammed values.
-        hist[0] -= zero      
         one = np.size(np.where(dataSlice[self.colname] == 1)[0])
         overone = np.size(np.where(dataSlice[self.colname] > 1)[0])
         hist = np.concatenate((np.array([zero]), hist, np.array([one]), np.array([overone])))
-        return self.tableBins, hist
-
+        # Create labels for each value
+        binNames = ['0 == P']
+        for i in np.arange(0,self.nbins):
+            binNames.append('%.2g < P < %.2g'%(b[i], b[i+1]) )
+        binNames.append('1 == P')
+        binNames.append('1 < P')
+        # Package the names and values up
+        result = np.empty(hist.size, dtype=[('name', '|S12'), ('value', float)]) 
+        result['name'] = binNames
+        result['value'] = hist
+        return result
+        
 
 class IdentityMetric(BaseMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""

@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils import percentileClipping
+import warnings
 
 from .baseSpatialSlicer import BaseSpatialSlicer
 from .baseSlicer import BaseSlicer
@@ -108,7 +109,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             colorMin = pcMin
         if colorMax is None and percentileClip:
             colorMax = pcMax
-        if (colorMin is not None) and (colorMax is not None):
+        if (colorMin is not None) or (colorMax is not None):
             clims = [colorMin, colorMax]
         else:
             clims = None
@@ -124,9 +125,12 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
-        cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
-                          extend='both', format=cbarFormat)
-        cb.set_label(xlabel)
+        # supress silly colorbar warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
+                              extend='both', extendrect=True, format=cbarFormat)
+            cb.set_label(xlabel)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")
@@ -153,7 +157,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        # Simply overrides scale of base plotHistogram. 
+        # Simply overrides scale of base plotHistogram.
+        if ylabel is None:
+            ylabel = 'Area (1000s of square degrees)'
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,

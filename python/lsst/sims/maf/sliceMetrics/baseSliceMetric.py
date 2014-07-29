@@ -18,12 +18,13 @@ class BaseSliceMetric(object):
     storage for things like metric data and metadata about the metric + slicer.
     """
     def __init__(self, useResultsDb=True, resultsDbAddress=None, 
-                 figformat='pdf', dpi=600, outDir='Output'):
+                 figformat='pdf', thumbnail=True, dpi=600, outDir='Output'):
         """
         Instantiate sliceMetric object and set up (empty) dictionaries.
         The dictionaries are keyed by an internal-use id number. """
         # Track output directory.
         self.outDir = outDir
+        self.thumbnail = thumbnail
         # Set up results database storage if desired. 
         if useResultsDb:
            self.resultsDb = ResultsDb(outDir=self.outDir, 
@@ -46,6 +47,7 @@ class BaseSliceMetric(object):
         self.simDataNames = {}
         self.sqlconstraints = {}
         self.metadatas = {}
+        self.displayGroups = {}
 
 
     def metricNameIid(self, metricName):
@@ -119,6 +121,8 @@ class BaseSliceMetric(object):
         oname = oname.replace('"','').replace("'",'').replace('__', '_')
         # and remove / and \
         oname = oname.replace('/', '_').replace('\\', '_')
+        # and remove parentheses
+        oname = oname.replace('(', '').replace(')', '')
         # Add plot name, if plot.
         if plotType is not None:
            oname = oname + '_' + plotType + '.' + self.figformat
@@ -145,6 +149,9 @@ class BaseSliceMetric(object):
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
           self.plotParams[iid] = {}
+          self.displayGroups[iid] = ''
+          if 'displayGroup' in header:
+              self.displayGroups[iid] = header['displayGroup']
           if 'plotParams' in header:
              self.plotParams[iid].update(header['plotParams'])
           if verbose:
@@ -182,11 +189,14 @@ class BaseSliceMetric(object):
                          metricName = self.metricNames[iid],
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
-                         metadata = self.metadatas[iid] + comment)
+                         metadata = self.metadatas[iid] + comment,
+                         displayGroup = self.displayGroups[iid])
         if self.resultsDb:
-           self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
-                                                            slicer.slicerName,
-                                                            self.simDataNames[iid],
-                                                            self.sqlconstraints[iid],
-                                                            self.metadatas[iid],
-                                                            outfile)
+            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
+                                                          slicer.slicerName,
+                                                          self.simDataNames[iid],
+                                                          self.sqlconstraints[iid],
+                                                          self.metadatas[iid],
+                                                          outfile,
+                                                          self.displayGroups[iid])
+           

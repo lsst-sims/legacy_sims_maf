@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+    <title>Large Report</title>
+</head>
+<body>
+    <h2> {{ metrics['BlockTitle'] }}</h2>
+    <table id="skyMap_table">
+    <tr>
+    {% for k in metrics['skyMaps'] %}
+        <td align='center'><a href='{{ k }}'><img width='80%' 
+               src='{{ k }}'> </a></td>
+        {% if loop.index is divisibleby 3 %}
+            </tr><tr>
+        {% endif %}
+    {% endfor %}
+    <td colspan="3">  {{ metrics['skyMapsCaption'] }}</td>
+    </tr>
+    </table>
+<br>
+    <table id="merged_table">
+    <tr>
+      <td align='center'><a href='{{ metrics['mergedHist'][0] }}'><img width='80%' src='{{ metrics['mergedHist'][0] }}'> </a></td>
+    </tr>
+    <td>{{ metrics['mergedHistCaption'] }} </td>
+    </tr>
+    </table>
+
+<br>
+    <table id="SummaryStats">
+      <tr>
+      <td> Filter </td> <td> Median </td> <td> Mean  &plusmn; RMS </td> <td> -3&sigma; </td> <td> +3&sigma; <td>
+      </tr>
+      <td> u </td>  <td> {{ metrics['summaryTables']['Mean_u'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
+      </tr>
+      <td> g </td>  <td> {{ metrics['summaryTables']['Mean_g'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
+      </tr>
+      <td> r </td>  <td> {{ metrics['summaryTables']['Mean_r'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
+      </tr>
+      <td> i </td>  <td> {{ metrics['summaryTables']['Mean_i'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
+      </tr>
+      <td> z </td>  <td> {{ metrics['summaryTables']['Mean_z'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
+      </tr>
+      <td> y </td>  <td> {{ metrics['summaryTables']['Mean_y'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
+      </tr>
+</table>
+
+<hr>
+
+
+
+</body>
+</html>

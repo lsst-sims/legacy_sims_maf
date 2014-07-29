@@ -1,4 +1,4 @@
-import os
+import os, warnings
 import unittest
 import lsst.utils.tests as utilsTests
 import numpy as np
@@ -20,6 +20,12 @@ class TestResultsDb(unittest.TestCase):
         self.summaryStatValue1 = 20
         self.summaryStatName2 = 'Median'
         self.summaryStatValue2 = 18
+        self.summaryStatName3 = 'TableFrac'
+        self.summaryStatValue3 = np.empty(10, dtype=[('name', '|S12'), ('value', float)])
+        for i in range(10):
+            self.summaryStatValue3['name'] = 'test%d' %(i)
+            self.summaryStatValue3['value'] = i
+        self.plotGroup = 2
         
     def testDbCreation(self):
         # Test default sqlite file created (even if outDir doesn't exist)
@@ -37,11 +43,29 @@ class TestResultsDb(unittest.TestCase):
         
     def testAddData(self):
         resultsDb = db.ResultsDb(outDir=self.outDir)
+        # Add metric. 
         metricId = resultsDb.addMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                        self.metadata, self.metricDataFile)
+                                        self.metadata, self.metricDataFile, self.plotGroup)
+        # Add plot.
         resultsDb.addPlot(metricId, self.plotType, self.plotName)
+        # Add normal summary statistics. 
         resultsDb.addSummaryStat(metricId, self.summaryStatName1, self.summaryStatValue1)
         resultsDb.addSummaryStat(metricId, self.summaryStatName2, self.summaryStatValue2)
+        # Add something like tableFrac summary statistic.
+        resultsDb.addSummaryStat(metricId, self.summaryStatName3, self.summaryStatValue3)
+        # Test get warning when try to add a non-conforming summary stat.
+        teststat = np.empty(10, dtype=[('col', '|S12'), ('value', float)])
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            resultsDb.addSummaryStat(metricId, 'testfail', teststat)
+            self.assertTrue("not save" in str(w[-1].message))
+        # Test get warning when try to add a string (non-conforming) summary stat.
+        teststat = 'teststring'
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            resultsDb.addSummaryStat(metricId, 'testfail', teststat)
+            self.assertTrue("not save" in str(w[-1].message))
+        
 
     def tearDown(self):
         if os.path.isdir(self.outDir):
