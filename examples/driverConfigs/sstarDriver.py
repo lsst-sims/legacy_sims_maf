@@ -103,7 +103,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
                                                          'percentileClip':95.,
-                                                         'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]},
+                                                         'units':'(coadded m5 - %.1f)' %mag_zpoints[f]},
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
                               histMerge={'histNum':6, 'legendloc':'upper right', 'color':colors[f], 'label':'%s'%f})
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
@@ -133,7 +133,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
         m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats={'MeanMetric':{}})
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
-                                                         'units':'Co-add (m5 - %.1f)'%mag_zpoints[f]})
+                                                         'units':'(coadded m5 - %.1f)'%mag_zpoints[f]})
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f],
                                         'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
@@ -152,7 +152,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     # Number of Visits per proposal, over sky.
     for f in filters:    
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsPerProp'},
-                              plotDict={'units':'Number of Visits', 'histBins':50})
+                              plotDict={'units':'Number of Visits', 'bins':50})
         metricDict = makeDict(m1)
         constraints=[]
         for propid in propids:
@@ -181,12 +181,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=nightConstraints)
     slicerList.append(slicer)
 
-
+    slicerList = []
     # Completeness and Joint Completeness
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
                                     'units':'# visits (WFD only)/ # WFD',
-                                    'colorMin':.5, 'colorMax':1.5, 'histBins':50},
+                                    'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                           summaryStats={'TableFractionMetric':{}})
@@ -200,7 +200,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (all) / (# WFD Requested)',
                                     'units':'# visits (all) / # WFD',
-                                    'colorMin':.5, 'colorMax':1.5, 'histBins':50},
+                                    'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                           summaryStats={'TableFractionMetric':{}})
@@ -209,7 +209,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                               constraints=constraints, metadata=slicermetadata)
     slicerList.append(slicer)
-
+    
+    config.slicers = makeDict(*slicerList)
+    return config
 
     # Calculate some basic summary info about run, per filter.
     for f in filters:

@@ -296,14 +296,16 @@ class BaseSpatialSlicer(BaseSlicer):
         # Add color bar (with optional setting of limits)
         if percentileClip:
             pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
-        if colorMin is None and percentileClip:
-            colorMin = pcMin
-        else:
-            colorMin = metricValue.compressed().min()
-        if colorMax is None and percentileClip:
-            colorMax = pcMax
-        else:
-            colorMax = metricValue.compressed().max()
+        if colorMin is None:
+            if percentileClip:
+                colorMin = pcMin
+            else:
+                colorMin = metricValue.compressed().min()        
+        if colorMax is None:
+            if percentileClip:
+                colorMax = pcMax
+            else:
+                colorMax = metricValue.compressed().max()
         # Combine to make clims:
         clims = [colorMin, colorMax]
         p.set_clim(clims)

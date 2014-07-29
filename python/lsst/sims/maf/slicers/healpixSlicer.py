@@ -109,7 +109,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             colorMin = pcMin
         if colorMax is None and percentileClip:
             colorMax = pcMax
-        if (colorMin is not None) and (colorMax is not None):
+        if (colorMin is not None) or (colorMax is not None):
             clims = [colorMin, colorMax]
         else:
             clims = None
