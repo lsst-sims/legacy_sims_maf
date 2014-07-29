@@ -313,6 +313,10 @@ class BaseSpatialSlicer(BaseSlicer):
                 colorMax = pcMax
             else:
                 colorMax = metricValue.compressed().max()
+                # Avoid colorbars with no range.
+                if colorMax == colorMin:
+                    colorMax = colorMax+1
+                    colorMin = colorMin-1
         # Combine to make clims:
         clims = [colorMin, colorMax]
         p.set_clim(clims)

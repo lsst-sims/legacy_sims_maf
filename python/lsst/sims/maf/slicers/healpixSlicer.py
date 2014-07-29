@@ -113,14 +113,18 @@ class HealpixSlicer(BaseSpatialSlicer):
             clims = [colorMin, colorMax]
         else:
             clims = None
-            
-        if clims is not None:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                        min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
-                        cmap=cmap, norm=norm)
-        else:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                        rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
+
+        # Make sure there is some range on the colorbar
+        if clims is None:
+            clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            if clims[0] == clims[1]:
+                clims[0] =  clims[0]-1
+                clims[1] =  clims[1]+1
+                   
+        hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
+                    min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
+                    cmap=cmap, norm=norm)
+        
         hp.graticule(dpar=20., dmer=20.)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()

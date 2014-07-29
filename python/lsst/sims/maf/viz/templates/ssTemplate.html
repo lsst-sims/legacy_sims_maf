@@ -66,13 +66,13 @@
 
 <h2> Completness Tables</h2><br>
 <i>(assumes all Completeness Tables run with the same number of bins)</i>
-<table>
-  <tr>
+<table border=2>
+  <tr align="center">
     {% for stat in completeStats %}
       {% if loop.index == 1 %}
-      <td> </td>
+      <td width="100"> </td>
       {% for key,value in stat.stats.iteritems() %}
-         <td> {{ key }} </td>
+         <td width="100"> {{ key }} </td>
       {% endfor %}
           </tr>
       {% endif %}
