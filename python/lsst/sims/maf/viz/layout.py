@@ -38,11 +38,15 @@ class layoutResults(object):
         
     def _matchPlots(self, metric):
         # Find the plots which match a given metric.
-        return self.plots[np.where(self.plots['metricId'] == metric['metricId'])[0]]
-
+        return self.plots[np.where(self.plots['metricId'] == metric['metricId'])][0]
+                          
     def _matchStats(self, metric):
         # Find the summary statistics which match a given metric.
-        return self.stats[np.where(self.stats['metricId'] == metric['metricId'])[0]
+        return self.stats[np.where(self.stats['metricId'] == metric['metricId'])][0]
+    
+    
+                          
+                          
         
     def packageMonster(self):
         #XXX--plan on breaking this into several methods for displaying different info on different pages.
