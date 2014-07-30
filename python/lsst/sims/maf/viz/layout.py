@@ -1,0 +1,95 @@
+import lsst.sims.maf.db as db
+import numpy as np
+from collections import OrderedDict
+import os
+
+
+class layoutResults(object):
+    """Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages """
+    def __init__(self, outDir):
+        """Read in the results database. """
+        database = db.Database('sqlite:///'+outDir+'/resultsDb_sqlite.db',
+                               dbTables={'metrics':['metrics','metricID'] ,
+                                         'plots':['plots','plotId'],
+                                         'stats':['summarystats','statId']})
+        # Just pull all three tables
+        self.metrics = database.queryDatabase('metrics', 'select * from metrics')
+        self.plots = database.queryDatabase('plots', 'select * from plots')
+        self.stats = database.queryDatabase('stats', 'select * from summarystats')
+
+        # Grab the runName as well
+        configFile = os.path.join(outDir, 'configSummary.txt' )
+        if os.path.isfile(configFile):
+            with open (configFile, "r") as myfile:
+                config=myfile.read().replace('\n', '')
+            spot = config.find('RunName')
+            self.runName = config[spot:spot+300].split(' ')[1]
+        else:
+            self.runName = 'No configSummary.txt'
+
+        # Apply the default sorting
+        self._sortMetrics()
+
+    def _sortMetrics(self, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
+        # Sort the metrics
+        self.metrics.sort(order=order)
+
+    def SStar(self):
+        #XXX--plan on breaking this into several methods for displaying different info on different pages.
+        # Maybe take "groups" as input, then only display the selected groups
+        """Sort results from database for using with ssTemplate.html """
+        # Set up lists that will be looped over by template
+        blocks =[]
+        completenessBlocks = []
+        identStats = []
+        basicStats = []
+        completeStats = []
+        etcStats = []
+
+        for metric in self.metrics:
+            mId = metric['metricId']
+            relevant_plots = self.plots[np.where(self.plots['metricId'] == mId)[0]]
+            for i in np.arange(relevant_plots.size):
+                relevant_plots['plotFile'][i] = relevant_plots['plotFile'][i].replace('.pdf', '.png')
+            relevant_stats = self.stats[np.where(self.stats['metricId'] == mId)[0] ]
+
+            relevant_metrics = self.metrics[np.where(self.metrics['metricId'] == mId)[0] ]
+            stat_list = [(i, '%.4g'%j) for i,j in  zip(relevant_stats['summaryName'],
+                                                       relevant_stats['summaryValue']) ]
+            statsDict=OrderedDict()
+            name = relevant_metrics['metricName'][0]+', '+ \
+                                 relevant_metrics['slicerName'][0] \
+                                 + ', ' +  relevant_metrics['metricMetadata'][0]
+            for rel_stat in relevant_stats:
+                statsDict[rel_stat['summaryName'].replace('TableFraction', '')] = '%.4g'%rel_stat['summaryValue']
+
+            # Break it down into 4 different summary stat tables,
+            # 1) Completeness tables
+            # 2) Identity (i.e., unislicer) table
+            # 3) "basic" table (mean, RMS, median, p/m 3 sigma...)
+            # 4) the etc table for anything left over.
+            if len(statsDict) != 0 :
+                if 'Completeness' in name:
+                    completeStats.append({'NameInfo':name, 'stats':statsDict} )
+                elif ('Identity' in statsDict.keys()) & (len(statsDict.keys()) == 1):
+                    identStats.append({'NameInfo':name, 'stats':statsDict})
+                # XXX -- need to tighten up this constraint, decide on formatting.
+                elif ('Mean' in statsDict.keys()) & ('Rms' in statsDict.keys()):
+                    basicStats.append({'NameInfo':name, 'stats':statsDict} )
+                else:
+                    etcStats.append({'NameInfo':name, 'stats':statsDict} )
+            block = {'NameInfo': relevant_metrics['metricName'][0]+', '+
+                           relevant_metrics['slicerName'][0]
+                           + ', ' +  relevant_metrics['metricMetadata'][0],
+                           'plots':relevant_plots['plotFile'].tolist(),
+                           'stats':stat_list}
+            # If it's a completeness metric, pull it out
+            if metric['metricName'][0:12] == 'Completeness':
+                completenessBlocks.append(block)
+            else:
+                blocks.append(block)
+
+        return {'blocks':blocks, 'completenessBlocks':completenessBlocks,
+                'identStats':identStats, 'basicStats':basicStats,
+                'completeStats':completeStats, 'etcStats':etcStats, 'runName':self.runName}
+

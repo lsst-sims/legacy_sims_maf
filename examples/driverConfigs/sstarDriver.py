@@ -96,7 +96,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               plotDict={'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]}, 
-                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
+                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                              displayDict={'group':'Nvisits', 'subgroup':'All Obs', 'order':filtorder[f],
+                                          'caption':'Number of visits, all proposals.'})
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
