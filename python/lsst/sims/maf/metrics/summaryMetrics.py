@@ -125,4 +125,8 @@ class NormalizeMetric(BaseMetric):
         super(NormalizeMetric, self).__init__(col=col, **kwargs)
         self.normVal = normVal
     def run(self, dataSlice, slicePoint=None):
-        return dataSlice[self.colname]/self.normVal
+        result = dataSlice[self.colname]/self.normVal
+        if len(result) == 1:
+            return result[0]
+        else:
+            return result
