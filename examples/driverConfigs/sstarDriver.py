@@ -90,35 +90,56 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     print 'Using %s for generic metrics over the sky.' %(slicerName)
 
+    standardStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}}
+
     # Metrics per filter over sky.
     for f in filters:
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Nvisits'}, 
                               plotDict={'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]}, 
-                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                              summaryStats=standardStats,
                               displayDict={'group':'Nvisits', 'subgroup':'All Obs', 'order':filtorder[f],
                                           'caption':'Number of visits, all proposals.'})
+        
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
-                                        'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
+                                        'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
+                              displayDict={'group':'Nvisits', 'subgroup':'All Obs, ratio', 'order':filtorder[f],
+                                          'caption':'Number of visits divided by design value, all proposals.'})
+        
         m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
-                             summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
+                             summaryStats=standardStats,
+                             displayDict={'group':'Single Visit Depth', 'subgroup':'', 'order':filtorder[f],
+                                          'caption':'Median sky brightness, all proposals.'})
+        
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
-                                                         'percentileClip':95.,
-                                                         'units':'(coadded m5 - %.1f)' %mag_zpoints[f]},
-                              summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
-                              histMerge={'histNum':6, 'legendloc':'upper right',
-                                         'color':colors[f], 'label':'%s'%f, 'binsize':.01},
+                                                        'percentileClip':95.,
+                                                        'units':'(coadded m5 - %.1f)' %mag_zpoints[f]},
+                             summaryStats=standardStats,
+                             histMerge={'histNum':6, 'legendloc':'upper right',
+                                        'color':colors[f], 'label':'%s'%f, 'binsize':.01},
                              displayDict={'group':'Coadd', 'subgroup':'All Obs', 'order':filtorder[f],
-                                          'caption':''})
+                                          'caption':'Coadded depth minus design value, all proposals'})
+        
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
-                              plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
+                              plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])},
+                              displayDict={'group':'Sky Brightness', 'subgroup':'All Obs', 'order':filtorder[f],
+                                           'caption':'Sky Brightnesses, all proposals'})
+        
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
                               plotDict={'normVal':seeing_norm[f],
-                                        'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])})
-        m7 = configureMetric('MedianMetric', kwargs={'col':'airmass'}, plotDict={'_units':'X'})
-        m8 = configureMetric('MaxMetric', kwargs={'col':'airmass'}, plotDict={'_units':'X'})
+                                        'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])},
+                              displayDict={'group':'Seeing', 'subgroup':'All Obs', 'order':filtorder[f],
+                                           'caption':'Median Seeing divided by design value, all proposals'})
+        
+                               
+        m7 = configureMetric('MedianMetric', kwargs={'col':'airmass'}, plotDict={'_units':'X'},
+                             displayDict={'group':'Airmass', 'subgroup':'Median', 'order':filtorder[f],
+                                           'caption':'Median airmass, all proposals'})
+        m8 = configureMetric('MaxMetric', kwargs={'col':'airmass'}, plotDict={'_units':'X'},
+                             displayDict={'group':'Airmass', 'subgroup':'Max', 'order':filtorder[f],
+                                           'caption':'Max airmass, all proposals'})
         metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
         constraints = ['filter = "%s"' %(f)]
         slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
@@ -131,13 +152,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               plotDict={'percentileClip':75., 'units':'Number of Visits', 
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]},
-                              summaryStats={'MeanMetric':{}},
+                              summaryStats=standardStats,
                               histMerge={'histNum':5, 'legendloc':'upper right',
                                          'color':colors[f],'label':'%s'%f, 'binsize':5})
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])})
-        m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats={'MeanMetric':{}})
+        m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats=standardStats)
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'(coadded m5 - %.1f)'%mag_zpoints[f]})
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
@@ -217,11 +238,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     
     # Calculate some basic summary info about run, per filter.
     for f in filters:
-        m1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'}, summaryStats={'IdentityMetric':{}})
-        m2 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'}, summaryStats={'IdentityMetric':{}})
-        m3 = configureMetric('MedianMetric', kwargs={'col':'airmass'}, summaryStats={'IdentityMetric':{}})
-        m4 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
-                             summaryStats={'IdentityMetric':{}})
+        m1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'})
+        m2 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'})
+        m3 = configureMetric('MedianMetric', kwargs={'col':'airmass'})
+        m4 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'})
         metricDict = makeDict(m1, m2, m3, m4)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=['filter = "%s"'%f])
         slicerList.append(slicer)
@@ -229,9 +249,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                               
 
     # Some other summary statistics over all filters.
-    m1 = configureMetric('MeanMetric', kwargs={'col':'slewTime'}, summaryStats={'IdentityMetric':{}})
-    m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
-                          summaryStats={'IdentityMetric':{}})
+    m1 = configureMetric('MeanMetric', kwargs={'col':'slewTime'})
+    m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'})
     m3 = configureMetric('OpenShutterMetric',summaryStats={'IdentityMetric':{}} )
     metricDict = makeDict(m1, m2, m3)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''])
@@ -247,7 +266,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     # Count and plot number of visits per night, and calculate average.
     m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Number of visits per night'}, 
-                          summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
+                          summaryStats=standardStats)
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
                              metricDict=makeDict(m1),
                              constraints=[''])
