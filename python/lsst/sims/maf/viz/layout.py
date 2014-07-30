@@ -12,7 +12,8 @@ class layoutResults(object):
                                dbTables={'metrics':['metrics','metricID'] ,
                                          'plots':['plots','plotId'],
                                          'stats':['summarystats','statId']})
-        # Just pull all three tables
+        # Just pull all three tables.
+        # self.metrics == numpy structured array with 'metricID', '... ' (other parameters from 
         self.metrics = database.queryDatabase('metrics', 'select * from metrics')
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
@@ -30,14 +31,23 @@ class layoutResults(object):
         # Apply the default sorting
         self._sortMetrics()
 
-    def _sortMetrics(self, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
-        # Sort the metrics
-        self.metrics.sort(order=order)
+        
+    def _sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
+        # Sort the metrics (numpy structured array sorting, ftw). 
+        return metrics.sort(order=order)
+        
+    def _matchPlots(self, metric):
+        # Find the plots which match a given metric.
+        return self.plots[np.where(self.plots['metricId'] == metric['metricId'])[0]]
 
-    def SStar(self):
+    def _matchStats(self, metric):
+        # Find the summary statistics which match a given metric.
+        return self.stats[np.where(self.stats['metricId'] == metric['metricId'])[0]
+        
+    def packageMonster(self):
         #XXX--plan on breaking this into several methods for displaying different info on different pages.
         # Maybe take "groups" as input, then only display the selected groups
-        """Sort results from database for using with ssTemplate.html """
+        """Sort results from database for using with monster.html """
         # Set up lists that will be looped over by template
         blocks =[]
         completenessBlocks = []
