@@ -116,7 +116,10 @@ class HealpixSlicer(BaseSpatialSlicer):
 
         # Make sure there is some range on the colorbar
         if clims is None:
-            clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            if metricValue.compressed().size > 0:
+                clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            else:
+                clims = [-1,1]
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1

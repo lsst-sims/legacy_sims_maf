@@ -25,7 +25,7 @@ class TestResultsDb(unittest.TestCase):
         for i in range(10):
             self.summaryStatValue3['name'] = 'test%d' %(i)
             self.summaryStatValue3['value'] = i
-        self.plotGroup = 2
+        self.displayDict = {'group':'seeing', 'subgroup':'all', 'order':1, 'caption':'lalalalal'}
         
     def testDbCreation(self):
         # Test default sqlite file created (even if outDir doesn't exist)
@@ -45,7 +45,7 @@ class TestResultsDb(unittest.TestCase):
         resultsDb = db.ResultsDb(outDir=self.outDir)
         # Add metric. 
         metricId = resultsDb.addMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                        self.metadata, self.metricDataFile, self.plotGroup)
+                                        self.metadata, self.metricDataFile, self.displayDict)
         # Add plot.
         resultsDb.addPlot(metricId, self.plotType, self.plotName)
         # Add normal summary statistics. 
