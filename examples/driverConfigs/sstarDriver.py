@@ -46,6 +46,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
     colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
+    filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
     # Set up benchmark values for Stretch and Design, scaled to length of opsim run.
     runLength = opsimdb.fetchRunLength()
@@ -106,7 +107,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                                          'units':'(coadded m5 - %.1f)' %mag_zpoints[f]},
                               summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
                               histMerge={'histNum':6, 'legendloc':'upper right',
-                                         'color':colors[f], 'label':'%s'%f, 'binsize':.01})
+                                         'color':colors[f], 'label':'%s'%f, 'binsize':.01},
+                             displayDict={'group':'Coadd', 'subgroup':'All Obs', 'order':filtorder[f],
+                                          'caption':''})
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])})
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},

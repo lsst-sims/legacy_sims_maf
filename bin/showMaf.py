@@ -8,7 +8,7 @@ from tornado import web
 from jinja2 import Environment, FileSystemLoader
 import os, argparse
 
-class Blocker(object):
+class layoutResults(object):
     """Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages """
     def __init__(self, outDir):
         """Read in the results database """
@@ -31,7 +31,7 @@ class Blocker(object):
         else:
             self.runName = 'No configSummary.txt'
 
-    def blockSStar(self):
+    def SStar(self):
         """Sort results from database for using with ssTemplate.html """
         # Set up lists that will be looped over by template
         blocks =[]
@@ -130,8 +130,7 @@ class SelectPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
         mainTempl = env.get_template("ssTemplate.html")
-        blocks = blocker.blockSStar()
-        self.write(mainTempl.render(outDir=outDir, **blocks))
+        self.write(mainTempl.render(outDir=outDir, **layout.SStar()))
 
         
 def make_app():
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     outDir = args.outDir
 
-    blocker = Blocker(outDir)
+    layout = layoutResults(outDir)
     
     mafDir = os.getenv('SIMS_MAF_DIR')
     templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/' )
