@@ -13,7 +13,7 @@ class layoutResults(object):
                                          'plots':['plots','plotId'],
                                          'stats':['summarystats','statId']})
         # Just pull all three tables.
-        # self.metrics == numpy structured array with 'metricID', '... ' (other parameters from 
+        # self.metrics == numpy structured array with 'metricID', '... ' (other parameters from
         self.metrics = database.queryDatabase('metrics', 'select * from metrics')
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
@@ -28,21 +28,18 @@ class layoutResults(object):
         else:
             self.runName = 'No configSummary.txt'
 
-        # Apply the default sorting
-        self._sortMetrics()
-
         
     def _sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
         # Sort the metrics (numpy structured array sorting, ftw). 
-        return metrics.sort(order=order)
+        return np.sort(metrics, order=order)
         
     def _matchPlots(self, metric):
         # Find the plots which match a given metric.
-        return self.plots[np.where(self.plots['metricId'] == metric['metricId'])][0]
+        return self.plots[np.where(self.plots['metricId'] == metric['metricId'])[0]]
                           
     def _matchStats(self, metric):
         # Find the summary statistics which match a given metric.
-        return self.stats[np.where(self.stats['metricId'] == metric['metricId'])][0]
+        return self.stats[np.where(self.stats['metricId'] == metric['metricId'])[0]]
     
     
                           
@@ -59,8 +56,10 @@ class layoutResults(object):
         basicStats = []
         completeStats = []
         etcStats = []
+        # Apply the default sorting
+        metrics = self._sortMetrics(self.metrics)
 
-        for metric in self.metrics:
+        for metric in metrics:
             mId = metric['metricId']
             relevant_plots = self.plots[np.where(self.plots['metricId'] == mId)[0]]
             for i in np.arange(relevant_plots.size):
