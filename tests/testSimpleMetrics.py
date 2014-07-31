@@ -71,5 +71,16 @@ class TestSimpleMetrics(unittest.TestCase):
         self.assertEqual(testmetric.run(self.dv),
                          np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
 
+
+    def testNoutliersNsigma(self):
+        data=self.dv
+        testmetric = metrics.NoutliersNsigma('testdata', nSigma=1.)
+        med = np.median(data['testdata'])
+        shouldBe = np.size(np.where(data['testdata'] > med + data['testdata'].std())[0])
+        self.assertEqual(shouldBe, testmetric.run(data))
+        testmetric = metrics.NoutliersNsigma('testdata', nSigma=-1.)
+        shouldBe = np.size(np.where(data['testdata'] < med - data['testdata'].std())[0])
+        self.assertEqual(shouldBe, testmetric.run(data))
+        
 if __name__ == "__main__":
     unittest.main()
