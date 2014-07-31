@@ -175,12 +175,6 @@ class BaseSlicer(object):
             data = metricValues
             mask = None
             fill = None
-        # If there is a caption, write it to a .txt file
-        if displayDict['caption'] != 'NULL':
-            txtfilename = outfilename.replace('.npz','_Caption.txt')
-            txtfile = open(txtfilename, 'w')
-            print >>txtfile, displayDict['caption']
-            txtfile.close()
         # npz file acts like dictionary: each keyword/value pair below acts as a dictionary in loaded NPZ file.
         np.savez(outfilename,
                  header = header, # header saved as dictionary

@@ -79,15 +79,11 @@ class HourglassSlicer(UniSlicer):
     
     def writeData(self, outfilename, metricValues, metricName='', **kwargs):
         """
-        Override base write method to only write out caption: we don't want to save hourglass metric data.
+        Override base write method: we don't want to save hourglass metric data.
 
         The data volume is too large.
         """
-        if displayDict['caption'] != 'NULL':
-            txtfilename = outfilename.replace('.npz','_Caption.txt')
-            txtfile = open(txtfilename, 'w')
-            print >>txtfile, displayDict['caption']
-            txtfile.close()
+        pass
 
     def readMetricData(self, infilename):
         """

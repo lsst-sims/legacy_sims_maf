@@ -106,12 +106,13 @@
 <h2> Basic Stats</h2>
 <table>
   <tr>
-     <td> <b>Name</b> </td> <td><b>Median</b>  </td>    <td> <b>Mean</b> </td> <td> <b>RMS</b> </td> 
+     <td> <b>Name</b> </td> <td><b>Median</b>  </td>    <td> <b>Mean</b> </td> <td> <b>RMS</b> </td> <td> <b>+3&sigma;</b> </td>  <td> <b>-3&sigma;</b> </td>  <td> <b>Count</b> </td>  
     </tr>
     {% for stat in basicStats %}
   <tr>
     <td> {{ stat.NameInfo }} </td>
     <td> {{ stat.stats.Median }} </td><td> {{ stat.stats.Mean }} </td><td> {{ stat.stats.Rms }} </td> 
+    <td> {{ stat.stats.p3Sigma }} </td> <td> {{ stat.stats.m3Sigma }} </td> <td> {{ stat.stats.Count }} </td>
 </tr>
   {% endfor %}
 </table>

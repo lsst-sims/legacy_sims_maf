@@ -59,6 +59,9 @@ class layoutResults(object):
         # Apply the default sorting
         metrics = self._sortMetrics(self.metrics)
 
+        # List what should go in the "basic summary stat" table
+        basicStatNames = sorted(['Mean', 'Rms', 'Median', 'p3Sigma', 'm3Sigma', 'Count'])
+                                
         for metric in metrics:
             mId = metric['metricId']
             relevant_plots = self.plots[np.where(self.plots['metricId'] == mId)[0]]
@@ -81,13 +84,14 @@ class layoutResults(object):
             # 2) Identity (i.e., unislicer) table
             # 3) "basic" table (mean, RMS, median, p/m 3 sigma...)
             # 4) the etc table for anything left over.
+
+            
             if len(statsDict) != 0 :
                 if 'Completeness' in name:
                     completeStats.append({'NameInfo':name, 'stats':statsDict} )
                 elif ('Identity' in statsDict.keys()) & (len(statsDict.keys()) == 1):
                     identStats.append({'NameInfo':name, 'stats':statsDict})
-                # XXX -- need to tighten up this constraint, decide on formatting.
-                elif ('Mean' in statsDict.keys()) & ('Rms' in statsDict.keys()):
+                elif sorted(statsDict.keys()) == basicStatNames:
                     basicStats.append({'NameInfo':name, 'stats':statsDict} )
                 else:
                     etcStats.append({'NameInfo':name, 'stats':statsDict} )
