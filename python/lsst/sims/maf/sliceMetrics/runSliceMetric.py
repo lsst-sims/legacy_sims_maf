@@ -289,6 +289,8 @@ class RunSliceMetric(BaseSliceMetric):
              self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                             self.simDataNames[iid], self.sqlconstraints[iid],
                                                             self.metadatas[iid], 'NULL')
+          if self.displayDicts[iid]['subgroup'] == 'None':
+             self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
           self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
              
                          

@@ -132,7 +132,8 @@ class layoutResults(object):
                 orderMIds.append(m['metricId'])
         return orderMIds
         
-    def sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
+    def sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 
+                                          'slicerName', 'metricName', 'metricMetadata']):
         """
         Sort the metrics by group, subgroup, order, and then finally 'metricName'. 
         """

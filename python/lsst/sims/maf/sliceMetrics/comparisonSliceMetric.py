@@ -309,6 +309,8 @@ class ComparisonSliceMetric(BaseSliceMetric):
               displayDict = {}
               displayDict.update(self.displayDicts[iids[0]])
               displayDict['caption'] = self.captionFigure(iids, 'Combined histogram')
+              if displayDict['subgroup'] == 'None':
+                 displayDict['subgroup'] = 'Combo Hist'
               self.resultsDb.addDisplay(metricId, displayDict)
               self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
         else:
@@ -374,6 +376,8 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[0]])
                 displayDict['caption'] = self.captionFigure(iids, 'Combined power spectrum')
+                if displayDict['subgroup'] == 'None':
+                   displayDict['subgroup'] = 'Combo PS'
                 self.resultsDb.addDisplay(metricId, displayDict)
                 self.resultsDb.addPlot(metricId, 'ComboPowerSpectrum', outfile)
         else:
@@ -443,6 +447,8 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[0]])
                 displayDict['caption'] = self.captionFigure(iids, 'Difference Sky Map')
+                if displayDict['subgroup'] == 'None':
+                   displayDict['subgroup'] = 'Diff SkyMap'
                 self.resultsDb.addDisplay(metricId, displayDict)
                 self.resultsDb.addPlot(metricId, 'DifferenceSkyMap', outfile)
         else:

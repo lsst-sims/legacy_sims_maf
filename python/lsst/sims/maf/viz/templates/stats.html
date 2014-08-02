@@ -56,7 +56,10 @@
  	   {% for statName in statNames %}
 	    <td>
 	     {% if statName in statDict.keys() %}
-	      {% set value = statDict[statName] %}
+	      {% set value = '%.2f' %(statDict[statName]) %}
+	      {% if statName == 'Count' %}
+	        {% set value = '%d' %(statDict[statName]) %}
+	      {% endif %}
 	     {% else %}
 	      {% set value = '--' %}
 	     {% endif %}
