@@ -38,7 +38,7 @@ class MonsterPageHandler(web.RequestHandler):
 def make_app():
     """The tornado global configuration """
     application = web.Application([
-            ("/master", MasterPageHandler),
+            ("/", MasterPageHandler),
             ("/metricSelect", MetricSelectHandler),
             ("/metricResults", MetricGridPageHandler),
             ("/configParams", ConfigPageHandler),
