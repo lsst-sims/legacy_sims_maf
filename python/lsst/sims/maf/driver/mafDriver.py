@@ -11,6 +11,7 @@ import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.stackers as stackers
 import time
+import collections
 
 
 def dtime(time_prev):
@@ -96,10 +97,15 @@ class MafDriver(object):
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 # Add an attribute to our metric which will describe the summary stats.
                 temp_metric.summaryStats = []
+                nameCheck=[]
                 for key in summaryStats.keys():
                     summarykwargs = readMixConfig(summaryStats[key])
                     summaryMetric = metrics.BaseMetric.getClass(key.split(' ')[0])(col='metricdata', **summarykwargs)
                     temp_metric.summaryStats.append(summaryMetric)
+                    nameCheck.append(summaryMetric.name)
+                if len(list(set(nameCheck))) < len(nameCheck):
+                   duplicates = [x for x, y in collections.Counter(nameCheck).items() if y > 1]
+                   raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'%(duplicates[0], temp_metric.name))
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():
