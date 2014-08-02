@@ -220,7 +220,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                     'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
-                          summaryStats={'TableFractionMetric':{}})
+                         summaryStats={'TableFractionMetric':{}},
+                         displayDict = {'group':'Completeness', 'subgroup':'WFD'})
     # For just WFD proposals
     metricDict = makeDict(m1)
     constraints = ['%s' %(wfdWhere)]
@@ -234,7 +235,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
                                     'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
-                          summaryStats={'TableFractionMetric':{}})
+                          summaryStats={'TableFractionMetric':{}},
+                         displayDict = {'group':'Completeness', 'subgroup':'All'}))
     metricDict = makeDict(m1)
     constraints = ['']
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,

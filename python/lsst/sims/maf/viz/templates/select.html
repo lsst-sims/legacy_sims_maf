@@ -1,5 +1,18 @@
 {% extends "master.html" %}
 
+{% block moresidebar %}
+
+</br>
+</br>
+{% for group in run.groups %}
+ {% for subgroup in run.groups[group] %}
+  <a href="#{{group}}_{{subgroup}}">{{group}} : {{subgroup}}</a><br>
+ {% endfor %}
+{% endfor %}
+
+{% endblock %}
+
+
 {% block content %}
 
 <form name="MetricSelect" action="metricResults" method="get">
@@ -17,7 +30,7 @@
 
  {% for group in run.groups %}
     {% for subgroup in run.groups[group] %}
-       <tr> <td></td> <td colspan="3"> Group: <em>{{group }}</em>;  Subgroup: <em>{{ subgroup }}</em> </td>   </tr>
+       <tr> <td></td> <td colspan="3"><a name="{{group}}_{{subgroup}}">Group: <em>{{group }}</em>;  Subgroup: <em>{{ subgroup }}</em></a> </td>   </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
        {% for metric in metrics %}
           {% set metricInfo = run.metricInfo(metric) %}
@@ -32,8 +45,12 @@
 	{% endfor %}
     {% endfor %}
  {% endfor %} 
+<tr>
+<td colspan="4">
+<input type='submit' value='select'></form> 
+</td>
+</tr>
 
 </table>
-<input type='submit' value='select'></form> 
  
 {% endblock %}

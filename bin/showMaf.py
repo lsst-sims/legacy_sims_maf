@@ -7,11 +7,6 @@ import os, argparse
 from lsst.sims.maf.viz import layoutResults
 
 
-class MasterPageHandler(web.RequestHandler):
-    def get(self):
-        masterTempl = env.get_template("master.html")
-        self.write(masterTempl.render(run=layout))
-
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
         gridTempl = env.get_template("grid.html")
@@ -28,6 +23,11 @@ class ConfigPageHandler(web.RequestHandler):
         configTempl = env.get_template("configs.html")
         self.write(configTempl.render(run=layout))
 
+class StatPageHandler(web.RequestHandler):
+    def get(self):
+        statTempl = env.get_template("stats.html")
+        self.write(statTempl.render(run=layout))
+
 class MonsterPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
@@ -38,10 +38,10 @@ class MonsterPageHandler(web.RequestHandler):
 def make_app():
     """The tornado global configuration """
     application = web.Application([
-            ("/master", MasterPageHandler),
             ("/metricSelect", MetricSelectHandler),
             ("/metricResults", MetricGridPageHandler),
             ("/configParams", ConfigPageHandler),
+            ("/summaryStats", StatPageHandler), 
             ("/monster", MonsterPageHandler),
             (r"/"+outDir+"/(.*)", web.StaticFileHandler, {'path':outDir}), 
             (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),

@@ -127,6 +127,21 @@ class BaseSliceMetric(object):
            oname = oname + '_' + plotType + '.' + self.figformat
         return oname
 
+    def _getThumbName(self, outfile):
+        """
+        Build the name for a plot thumbnail file from 'outfile'.
+
+        outfile may contain the output directory
+        """
+        # Split the filepath from the file name.
+        filepath, plotfile = os.path.split(outfile)
+        # Remove the ending from the file name (.pdf or .png).
+        thumbname = ''.join(plotfile.split('.')[:-1])
+        # Add .png to the file name.
+        thumbname = 'thumb.' + thumbname + '.png'
+        # Combine with the filepath (as it was known from method this was called).
+        thumbname = os.path.join(filepath, thumbname)
+        return thumbname
     
     def readMetricData(self, filenames, verbose=False):
        """
@@ -150,9 +165,9 @@ class BaseSliceMetric(object):
           self.plotParams[iid] = {}
           # Set default values, in  case metric file doesn't have the info.
           self.displayDicts[iid] = {'group':'Ungrouped', 
-                                    'subgroup':'NULL',
+                                    'subgroup':'None',
                                     'order':0,
-                                    'caption':'NULL'}
+                                    'caption':'None'}
           if 'displayDict' in header:
               self.displayDicts[iid].update(header['displayDict'])
           if 'plotParams' in header:
@@ -200,6 +215,5 @@ class BaseSliceMetric(object):
                                                           self.simDataNames[iid],
                                                           self.sqlconstraints[iid],
                                                           self.metadatas[iid],
-                                                          outfile,
-                                                          self.displayDicts[iid])
+                                                          outfile)
            

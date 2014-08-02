@@ -232,8 +232,7 @@ class RunSliceMetric(BaseSliceMetric):
                     self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
                                                                     self.simDataNames[iidi], 
                                                                     self.sqlconstraints[iidi],
-                                                                    self.metadatas[iidi], 'NULL',
-                                                                    self.displayDicts[iidi])
+                                                                    self.metadatas[iidi], 'NULL')
                 self.resultsDb.addSummaryStat(self.metricIds[iidi],
                                                 summaryName=summaryMetric.name.replace(' metricdata', ''),
                                                 summaryValue=summaryValue)
@@ -254,17 +253,55 @@ class RunSliceMetric(BaseSliceMetric):
         if iid in self.metricObjs:
             outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot) + '.npz'
             self.metricObjs[iid].saveFile = outfile
-                  
+
+    def captionAll(self):
+        """
+        Auto generate captions. If a caption is provided from driver, use that.
+        """
+        if not self.resultsDb:
+           warnings.warn('Warning! Not saving captions.')
+           return
+        for iid in self.metricValues:            
+           self.captionMetric(iid)
+
+    def captionMetric(self, iid):
+       """
+       Auto generate caption for a given metric.
+       """
+       if self.displayDicts[iid]['caption'] == 'None':
+          caption = ''
+          plotTypes = self.slicer.plotFuncs.keys()
+          if len(plotTypes) > 0:
+             caption += 'Plots (' 
+             for ptype in plotTypes:
+                caption += '%s, ' %(ptype.replace('plot', ''))
+             caption = caption[:-2] + ') for '
+          caption += '%s ' %(self.metricNames[iid])
+          caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
+          caption += 'on a subset of data qualified by %s. ' %(self.metadatas[iid].strip())
+          if 'zp' in self.plotParams[iid]:
+             caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotParams[iid]['zp'])
+          if 'normVal' in self.plotParams[iid]:
+             caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotParams[iid]['normVal'])
+          self.displayDicts[iid]['caption'] = caption
+       if self.resultsDb:
+          if iid not in self.metricIds:
+             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
+                                                            self.simDataNames[iid], self.sqlconstraints[iid],
+                                                            self.metadatas[iid], 'NULL')
+          self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
+             
+                         
     def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """
         Plot histograms and skymaps (where relevant) for all metrics.
         """
         for iid in self.metricValues:            
-            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
-            if closefig:
-               plt.close('all')
-            if plotfigs is None and verbose:
-                warnings.warn('Not plotting metric data for %s' %(mname))
+           plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
+           if closefig:
+              plt.close('all')
+           if plotfigs is None and verbose:
+              warnings.warn('Not plotting metric data for %s' %(mname))
             
     def plotMetric(self, iid, savefig=True, outfileRoot=None):
         """
@@ -300,9 +337,8 @@ class RunSliceMetric(BaseSliceMetric):
             if iid not in self.metricIds:
                 self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                                self.simDataNames[iid], self.sqlconstraints[iid],
-                                                               self.metadatas[iid], 'NULL',  
-                                                               self.displayDicts[iid])
-        for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
+                                                               self.metadatas[iid], 'NULL')
+            for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
                 froot, fname = os.path.split(filename)
                 self.resultsDb.addPlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
         return plotResults['figs']

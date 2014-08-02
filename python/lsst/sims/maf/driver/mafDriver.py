@@ -289,6 +289,8 @@ class MafDriver(object):
                         gm.plotParams[iid] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
+                    # Generate captions for figures and save display data.
+                    gm.captionAll()
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    plotted metrics in %.3g s'%dt

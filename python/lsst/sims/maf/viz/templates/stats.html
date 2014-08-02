@@ -1,0 +1,74 @@
+{% extends "master.html" %}
+
+{% block moresidebar %}
+</br>
+</br>
+{% for group in run.groups.keys() %}
+  {% for subgroup in run.groups[group] %}
+    {% set metrics = run.metricsInSubgroup(group, subgroup) %}
+    {% set statNames = run.allStatNames(metrics) %}
+    {% if run.length(statNames) > 0 %}
+      <a href="#{{group}}_{{subgroup}}">{{group}} : {{subgroup}}</a><br>
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+{% endblock %}
+
+{% block content %}
+
+{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set ninfo = run.length(metricInfo) %}
+
+{% for group in run.groups.keys() %}
+   {% for subgroup in run.groups[group] %}
+
+       {% set metrics = run.metricsInSubgroup(group, subgroup) %}
+       {% set statNames = run.allStatNames(metrics) %}
+       {% if run.length(statNames) > 0 %}
+        {% set ncols = run.length(statNames) + ninfo %}
+
+       
+        <table> 
+        <tr> 
+	<td colspan={{ncols}}> 
+	<a name = "{{group}}_{{subgroup}}"> Group: <i>{{group }}</i>;  
+	     Subgroup: <i>{{ subgroup }}</i> </a> </td>
+        </tr>
+       
+        <tr>
+	 {% for key in metricInfo %}
+	 <th>{{ key }} </th>
+	 {% endfor %}
+	 {% for name in statNames %}
+	 <th> {{name}} </th>
+	 {% endfor %}
+	</tr>
+
+        {% for metric in metrics %}
+          {% set metricInfo = run.metricInfo(metric) %}
+          {% set stats = run.statsForMetric(metric) %}
+	  {% set statDict = run.statDict(stats) %}
+          {% if run.length(statDict) > 0 %}
+           <tr>
+           {% for key in metricInfo %}
+           <td>{{ metricInfo[key]|escape }}</td>
+           {% endfor %}
+ 	   {% for statName in statNames %}
+	    <td>
+	     {% if statName in statDict.keys() %}
+	      {% set value = statDict[statName] %}
+	     {% else %}
+	      {% set value = '--' %}
+	     {% endif %}
+	     {{ value }}
+	    </td>
+	   {% endfor %}
+	   </tr>
+	  {% endif %}
+      {% endfor %}	   
+     </table>
+     {% endif %}
+    {% endfor %}
+ {% endfor %}
+ 
+{% endblock %}

@@ -48,7 +48,8 @@ for i, f in enumerate(filters):
     m2 = configureMetric('Coaddm5Metric', kwargs={'m5Col':'fiveSigmaDepth'}, 
                             plotDict={'percentileClip':95}, summaryStats={'MedianMetric':{}},
                             histMerge={'histNum':2, 'color':colors[f]},
-                            displayDict={'group':'Basic', 'subgroup':'Coadd', 'order':i})
+                            displayDict={'group':'Basic', 'subgroup':'Coadd', 'order':i, 
+                                         'caption':'Coadded m5 limiting magnitude for %s' %(f)})
     metricDict = makeDict(m1, m2)
     sqlconstraint = 'filter = "%s"' %(f)
     slicer = configureSlicer('HealpixSlicer',

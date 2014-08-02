@@ -163,9 +163,9 @@ class BaseMetric(object):
         # Set up the displayDict.
         # Set defaults.
         defaultDisplayDict = {'group':'Ungrouped',
-                              'subgroup':'NULL',
+                              'subgroup':'None',
                               'order':0,
-                              'caption':'NULL'}
+                              'caption':'None'}
         if displayDict is None:
             self.displayDict = defaultDisplayDict
         else:

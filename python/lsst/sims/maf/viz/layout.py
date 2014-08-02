@@ -1,8 +1,8 @@
-import lsst.sims.maf.db as db
-import numpy as np
-from collections import OrderedDict
 import os
-
+from collections import OrderedDict
+import numpy as np
+from numpy.lib.recfunctions import rec_join
+import lsst.sims.maf.db as db
 
 class layoutResults(object):
     """Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages """
@@ -17,17 +17,20 @@ class layoutResults(object):
         # Read in the results database.
         database = db.Database('sqlite:///'+outDir+'/resultsDb_sqlite.db',
                                dbTables={'metrics':['metrics','metricID'] ,
+                                         'displays':['displays', 'displayId'],
                                          'plots':['plots','plotId'],
                                          'stats':['summarystats','statId']})
         # Just pull all three tables.
-        # self.metrics == numpy structured array with : 
-        #   metricId|metricName|slicerName|simDataName|sqlConstraint|metricMetadata|
-        #   metricDataFile|displayGroup|displaySubgroup|displayOrder|displayCaption 
-        # We provide methods below to return filenames, metric info, etc. as dictionaries --
-        #   rather than having to know the exact names of the fields from the DB in each template.
-        #  The idea being that this should make the template code & presentation layer more
-        #    easily maintainable in the future.
+        # Below, we provide some methods to interface between the numpy rec arrays returned
+        #  by these queries and what the templates need. 
+        # The idea being that this should make the template code & presentation layer more
+        #  easily maintainable in the future.
         self.metrics = database.queryDatabase('metrics', 'select * from metrics')        
+        self.displays = database.queryDatabase('displays', 'select * from displays')
+        # Combine metrics and displays arrays (these are one-to-one).
+        self.metrics = rec_join('metricId', self.metrics, self.displays)
+        del self.displays
+        # Get plot and summary stat info.
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
@@ -49,24 +52,85 @@ class layoutResults(object):
             self.runName = 'Not available'
 
         # Pull up the names of the groups and subgroups. 
-        self.groups = {}
+        groups = sorted(list(np.unique(self.metrics['displayGroup'])))
+        self.groups = OrderedDict()
+        for g in groups:
+            self.groups[g] = set()
         for metric in self.metrics:
-            group = metric['displayGroup']
-            subgroup = metric['displaySubgroup']
-            # Check if group already a key in self.groups dictionary.
-            if group not in self.groups:
-                self.groups[group] = set()
-            self.groups[group].add(metric['displaySubgroup'])
+            self.groups[metric['displayGroup']].add(metric['displaySubgroup'])
         for g in self.groups:
-            self.groups[g] = list(self.groups[g])
-                                                               
+            self.groups[g] = sorted(list(self.groups[g]))
 
+
+        self.summaryStatOrder = ['Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
+                                 'm3Sigma', 'p3Sigma']
+            
+
+
+    def _convertMetricId(self, metricId):
+        if not isinstance(metricId, int):
+            if isinstance(metricId, list):
+                metricId = metricId[0]
+            metricId = int(metricId)
+        return metricId
+                                                   
     def orderMetricIds(self, metricIds):
         """
         Given a list of metric Ids, return them in group/subgroup/order/metricName order. 
         """
-        #  TOOODOOOOO
-        return metricIds
+        metricIdList = []
+        for mId in metricIds:
+            mId = self._convertMetricId(mId)
+            metricIdList.append(mId)
+        metricIds = metricIdList
+        orderMIds = []
+        groupDict = self.groupWithMetricIds(metricIds)
+        for g in groupDict:
+            for sg in groupDict[g]:
+                metrics = self.metricsInSubgroup(g, sg)
+                metrics = self.sortMetrics(metrics)
+                for mId in metrics['metricId']:
+                    if mId in metricIds:
+                        orderMIds.append(mId)            
+        return orderMIds
+
+    def groupWithMetricIds(self, metricIds):
+        """
+        Given a list of metric Ids, generate the ordered dict of relevant group/subgroups. 
+        """
+        groups = []
+        subgroups = []
+        for mId in metricIds:
+            mId = self._convertMetricId(mId)
+            match = (self.metrics['metricId'] == mId)
+            groups.append(self.metrics['displayGroup'][match])
+            subgroups.append(self.metrics['displaySubgroup'][match])
+        groupDict = OrderedDict()
+        for g in self.groups:
+            if g in groups:
+                groupDict[g] = []
+                for sg in self.groups[g]:
+                    if sg in subgroups:
+                        groupDict[g].append(sg)
+        return groupDict
+                
+
+    def metricIdsInSubgroup(self, metricIds, group, subgroup):
+        """
+        Return a list of the subset of metricIds which are within a group/subgroup.
+        """
+        metricIdList = []
+        for mId in metricIds:
+            mId = self._convertMetricId(mId)
+            metricIdList.append(mId)
+        metricIds = metricIdList
+        # Find all metrics in this group/subgroup.
+        metrics = self.metricsInSubgroup(group, subgroup)
+        orderMIds = []
+        for m in metrics:
+            if m['metricId'] in metricIds:
+                orderMIds.append(m['metricId'])
+        return orderMIds
         
     def sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
         """
@@ -93,10 +157,7 @@ class layoutResults(object):
         """
         Given a single metric ID, return the metric which matches.
         """
-        if not isinstance(metricId, int):
-            if isinstance(metricId, list):
-                metricId = metricId[0]
-            metricId = int(metricId)
+        metricId = self._convertMetricId(metricId)
         match = (self.metrics['metricId'] == metricId)
         return self.sortMetrics(self.metrics[match])
 
@@ -112,6 +173,12 @@ class layoutResults(object):
         metricInfo['Slicer'] = metric['slicerName']
         metricInfo['Metadata'] = metric['metricMetadata']
         return metricInfo
+
+    def captionForMetric(self, metric):
+        """
+        Return the caption for a given metric.
+        """
+        return metric['displayCaption'][0]
 
     def plotsForMetric(self, metric):
         """
@@ -160,31 +227,53 @@ class layoutResults(object):
         # Provides way that templates do not have to know exact field names in resultsDB,
         #  plus allows packaging multiple stats into a single dictionary. 
         # Result = dict with key == summary stat name, value = summary stat value. 
-        sdict = {}
-        for stat in stats:
-            sdict[stat['summaryName']] = stat['summaryValue']
+        sdict = OrderedDict()
+        statnames = self.orderStatNames(stats)
+        for n in statnames:
+            match = (stats['summaryName'] == n)
+            sdict[stats['summaryName'][match][0]] = stats['summaryValue'][match][0]
         return sdict
-        
-    def allStatNames(self, stats):
+            
+    def orderStatNames(self, stats):
         """
-        For a group of stats, return a list containing all the unique 'summaryNames' in that group.
-
-        Add a default ordering to returned list. (identity-mean-median-rms..)
+        For a recarray of stats, return a list containing all the unique 'summaryNames'         
+        in a default ordering (identity-count-mean-median-rms..).
         """
         names = set()
         for stat in stats:
             names.add(stat['summaryName'])
         # Add some default sorting:
-        defaultorder = ['Identity', 'Mean', 'Median', 'Rms', 'RobustRms']
         namelist = []
-        for nord in defaultorder:
+        for nord in self.summaryStatOrder:
             if nord in names:
                 namelist.append(nord)
                 names.remove(nord)
         for remaining in names:
             namelist.append(remaining)
-        return names
+        return namelist
 
+    def allStatNames(self, metrics):
+        """
+        For a recarray of metrics, return a list containing all the unique 'summaryNames'
+        in a default ordering. 
+        """
+        names = set()
+        for metric in metrics:
+            stats = self.statsForMetric(metric)            
+            for stat in stats:
+                names.add(stat['summaryName'])
+        # Add some default sorting.
+        namelist = []
+        for nord in self.summaryStatOrder:
+            if nord in names:
+                namelist.append(nord)
+                names.remove(nord)
+        for remaining in names:
+            namelist.append(remaining)
+        return namelist
+
+    def length(self, x):
+        return len(x)
 
     def packageMonster(self):
         #XXX--plan on breaking this into several methods for displaying different info on different pages.
@@ -198,7 +287,7 @@ class layoutResults(object):
         completeStats = []
         etcStats = []
         # Apply the default sorting
-        metrics = self._sortMetrics(self.metrics)
+        metrics = self.sortMetrics(self.metrics)
 
         # List what should go in the "basic summary stat" table
         basicStatNames = sorted(['Mean', 'Rms', 'Median', 'p3Sigma', 'm3Sigma', 'Count'])

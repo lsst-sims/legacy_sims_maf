@@ -1,21 +1,26 @@
 <!DOCTYPE HTML>
 <html lang="en">
+
 <head>
 
 <style>
 table,th,td
 {
 border:1px solid black;
-border-collapse:collapse
+border-collapse:collapse;
+}
+th
+{
+background-color: #E8E8E8;
 }
 th, td
 {
 padding:5px;
-text-align:left
+text-align:left;
 }
 
+
 .thumbnail {
-    float: left;
     height: 250px;
     margin: 5px;
 }
@@ -28,7 +33,22 @@ text-align:left
 p
 {
 text-indent:5px;
-line-height:130%
+line-height:130%;
+}
+
+#sidebar
+{
+background-color:#E8E8E8;
+width:150px;
+float:left;
+margin:0
+padding:1em
+}
+
+#content
+{
+    margin-left: 150px;
+    padding: 1em;
 }
 
 </style>
@@ -36,29 +56,28 @@ line-height:130%
 </head>
 
 
-
 <body>
 
 <div id="container" style="width:100%">
 
-<div id="header" style="background-color:#A0A0A0;height:50px;width:100%">
+<div id="header" style="background-color:#A0A0A0;height:45px;width:100%">
 {% block header %}
-<p>
 <h1>{%block title %}OpSim Run: {{ run.runName }} {% endblock %}</h1>
-</p>
 {% endblock %}
 </div>
 
-<div id="sidebar" style="background-color:#E8E8E8;height:600px;width:150px;float:left;">
-<a href="metricSelect">Select Metrics</a> </br>
+<div id="sidebar">
+{% block sidebar %}
+<a href="metricSelect">Select Metrics</a></br>
 <a href="configParams">Opsim Configuration</a> </br>
 <a href="summaryStats">Summary Statistics</a> </br>
 <a href="monster">All Results</a></br>
 {% block moresidebar %}
 {% endblock %}
+{% endblock %}
 </div>
 
-<div id="content" style="float:left;">
+<div id="content">
 {% block content %} 
 {% endblock %}
 </div>

@@ -1,29 +1,56 @@
 {% extends "master.html" %}
+
+{% block moresidebar %}
+
+</br>
+</br>
+
+{% set selectGroups = run.groupWithMetricIds(metricIds.keys()) %} 
+
+{% for g in selectGroups.keys() %} 
+  {% for sg in selectGroups[g] %}
+    <a href="#{{g}}_{{sg}}">{{g}} : {{sg}}</a><br>
+ {% endfor %}
+{% endfor %}
+
+{% endblock %}
+
+
 {% block content %}
 
 {# show metric information for each metric selected from 'select' page #}
 
-{% set metricIds = run.orderMetricIds(metricIds) %}
-
-{% for mId in metricIds %} 
-  {% set metric = run.metricWithMetricId(mId) %}
+{% set selectGroups = run.groupWithMetricIds(metricIds.keys()) %}
+{% for g in selectGroups.keys() %}
+ {% for sg in selectGroups[g] %}
+  <a name = "{{g}}_{{sg}}"> </a>
+  {% set subsetMetricIds = run.metricIdsInSubgroup(metricIds.keys(), g, sg) %}
+  {% for metricId in subsetMetricIds %}  
+  {% set metric = run.metricWithMetricId(metricId) %}   
   {% set plotdict = run.plotsForMetric(metric) %}
   {% set metricInfo = run.metricInfo(metric) %}
-   <h4 class="text_line">
+   <div>
+    <b>
   {% for key in metricInfo %}
    {{ '%s' %(metricInfo[key][0]) }}  /
   {% endfor %}
-   </h4>
+  </b>
 
+   <p>
+    </br>
   {# Add the plots for this metric #}
   {% for ptype, pfile in plotdict.iteritems() %}
-  {% set thumbfile = run.getThumbname(pfile) %}
-  <a href='{{ run.outDir }}/{{ plotfile }}'> 
-         <img class="thumbnail" src='{{ run.outDir }}/{{thumbfile}}'> </a>
+    {% set thumbfile = run.getThumbname(pfile) %}
+    <a href='{{run.outDir}}/{{pfile}}'> 
+          <img class="thumbnail" src='{{run.outDir}}/{{thumbfile}}'></a>
   {% endfor  %}
+  </br>
 
-  <h4 class="text_line"> </h4>
-  
+  <p>
+  {% set caption = run.captionForMetric(metric) %}
+  {{ caption }}
+  </br>
+
   {# Add the summary stats for this metric #} 
   {% set stats = run.statsForMetric(metric) %}
   {% set statdict = run.statDict(stats) %}
@@ -32,8 +59,10 @@
     <i>{{ name }}:</i> 
     {{ '%.2f' %(statdict[name]) }}  <br>
   {% endfor %}
-  </p>
+  </div>
   <hr>
+  {% endfor %}
+ {% endfor %}
 {% endfor %}
 
 
