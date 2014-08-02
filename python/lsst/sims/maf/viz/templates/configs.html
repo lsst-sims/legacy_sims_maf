@@ -1,0 +1,24 @@
+{% extends "master.html" %}
+
+{% block moresidebar %}
+<br>
+<a href="#configSummary">Config Summary</a>
+<a href="#configDetails">Config Details</a>
+{% endblock %}
+
+{% block content %}
+
+<p>
+
+<h2><a name="configSummary">OpSim Configuration Summary</a></h2>
+<object width=600px height=700px type="text/plain" data="{{ run.outDir }}/configSummary.txt" border="0" >
+</object>
+
+<p>
+
+<h2><a name="configDetails">OpSim Configuration Details</a></h2>
+<object width=600px height=700px type="text/plain" data="{{ run.outDir }}/configDetails.txt" border="0" >
+</object>
+
+ 
+{% endblock %}

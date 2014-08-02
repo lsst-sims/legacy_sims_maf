@@ -1,0 +1,39 @@
+{% extends "master.html" %}
+
+{% block content %}
+
+<form name="MetricSelect" action="metricResults" method="get">
+
+<table>
+
+{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+
+<tr>
+<th> </th>
+{% for key in metricInfo %}
+  <th> {{ key }} </th>
+{% endfor %}
+</tr>
+
+ {% for group in run.groups %}
+    {% for subgroup in run.groups[group] %}
+       <tr> <td></td> <td colspan="3"> Group: <em>{{group }}</em>;  Subgroup: <em>{{ subgroup }}</em> </td>   </tr>
+       {% set metrics = run.metricsInSubgroup(group, subgroup) %}
+       {% for metric in metrics %}
+          {% set metricInfo = run.metricInfo(metric) %}
+          <tr> 	    
+	  <td>
+          <input type='checkbox' name="{{ metric['metricId'] }}" value="{{metric['metricId']}}">  
+	  </td>
+	  {% for key in metricInfo %}
+          <td>{{ metricInfo[key]|escape }}</td> 
+	  {% endfor %}
+	  </tr>
+	{% endfor %}
+    {% endfor %}
+ {% endfor %} 
+
+</table>
+<input type='submit' value='select'></form> 
+ 
+{% endblock %}

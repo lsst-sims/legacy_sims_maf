@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+
+<style>
+table,th,td
+{
+border:1px solid black;
+border-collapse:collapse
+}
+th, td
+{
+padding:5px;
+text-align:left
+}
+
+.thumbnail {
+    float: left;
+    height: 250px;
+    margin: 5px;
+}
+
+.text_line {
+    clear: both;
+    margin-bottom: 2px;
+}
+
+p
+{
+text-indent:5px;
+line-height:130%
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<div id="container" style="width:100%">
+
+<div id="header" style="background-color:#A0A0A0;height:50px;width:100%">
+{% block header %}
+<p>
+<h1>{%block title %}OpSim Run: {{ run.runName }} {% endblock %}</h1>
+</p>
+{% endblock %}
+</div>
+
+<div id="sidebar" style="background-color:#E8E8E8;height:600px;width:150px;float:left;">
+<a href="metricSelect">Select Metrics</a> </br>
+<a href="configParams">Opsim Configuration</a> </br>
+<a href="summaryStats">Summary Statistics</a> </br>
+<a href="monster">All Results</a></br>
+{% block moresidebar %}
+{% endblock %}
+</div>
+
+<div id="content" style="float:left;">
+{% block content %} 
+{% endblock %}
+</div>
+
+<div id="footer" style="background-color:#A0A0A0;clear:both;text-align:center;">
+LSST Metrics Analysis Framework (MAF)</div>
+
+
+
+</div>

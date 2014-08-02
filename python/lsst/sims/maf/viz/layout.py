@@ -7,18 +7,31 @@ import os
 class layoutResults(object):
     """Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages """
     def __init__(self, outDir):
-        """Read in the results database. """
+        """
+        Instantiate the (individual run) layout visualization class.
+
+        This class provides methods used by our jinja2 templates to help interact
+        with the outputs of MAF. 
+        """
+        self.outDir = outDir
+        # Read in the results database.
         database = db.Database('sqlite:///'+outDir+'/resultsDb_sqlite.db',
                                dbTables={'metrics':['metrics','metricID'] ,
                                          'plots':['plots','plotId'],
                                          'stats':['summarystats','statId']})
         # Just pull all three tables.
-        # self.metrics == numpy structured array with 'metricID', '... ' (other parameters from 
-        self.metrics = database.queryDatabase('metrics', 'select * from metrics')
+        # self.metrics == numpy structured array with : 
+        #   metricId|metricName|slicerName|simDataName|sqlConstraint|metricMetadata|
+        #   metricDataFile|displayGroup|displaySubgroup|displayOrder|displayCaption 
+        # We provide methods below to return filenames, metric info, etc. as dictionaries --
+        #   rather than having to know the exact names of the fields from the DB in each template.
+        #  The idea being that this should make the template code & presentation layer more
+        #    easily maintainable in the future.
+        self.metrics = database.queryDatabase('metrics', 'select * from metrics')        
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
-        # Grab the runName as well
+        # Grab the runName for the page headers. 
         configFile = os.path.join(outDir, 'configSummary.txt' )
         if os.path.isfile(configFile):
             with open (configFile, "r") as myfile:
@@ -26,28 +39,145 @@ class layoutResults(object):
             spot = config.find('RunName')
             self.runName = config[spot:spot+300].split(' ')[1]
         else:
-            self.runName = 'No configSummary.txt'
+            self.runName = 'Not available'
 
-        # Apply the default sorting
-        self._sortMetrics()
+        # Pull up the names of the groups and subgroups. 
+        self.groups = {}
+        for metric in self.metrics:
+            group = metric['displayGroup']
+            subgroup = metric['displaySubgroup']
+            # Check if group already a key in self.groups dictionary.
+            if group not in self.groups:
+                self.groups[group] = set()
+            self.groups[group].add(metric['displaySubgroup'])
+        for g in self.groups:
+            self.groups[g] = list(self.groups[g])
+                                                               
 
+    def orderMetricIds(self, metricIds):
+        """
+        Given a list of metric Ids, return them in group/subgroup/order/metricName order. 
+        """
+        return metricIds
         
-    def _sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
-        # Sort the metrics (numpy structured array sorting, ftw). 
-        return metrics.sort(order=order)
+    def sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
+        """
+        Sort the metrics by group, subgroup, order, and then finally 'metricName'. 
+        """
+        return np.sort(metrics, order=order)    
+
+    def metricsInGroup(self, group):
+        """
+        Given a group, return the metrics belonging to this group.
+        """
+        match = (self.metrics['displayGroup'] == group)
+        return self.metrics[match]
         
-    def _matchPlots(self, metric):
-        # Find the plots which match a given metric.
-        return self.plots[np.where(self.plots['metricId'] == metric['metricId'])][0]
-                          
-    def _matchStats(self, metric):
-        # Find the summary statistics which match a given metric.
-        return self.stats[np.where(self.stats['metricId'] == metric['metricId'])][0]
+    def metricsInSubgroup(self, group, subgroup):
+        """
+        Given a group and subgroup, return the metrics belonging to these group/subgroups, in display order.
+        """
+        metrics = self.metricsInGroup(group)
+        match = (metrics['displaySubgroup'] == subgroup)
+        return self.sortMetrics(metrics[match])
+
+    def metricWithMetricId(self, metricId):
+        """
+        Given a single metric ID, return the metric which matches.
+        """
+        if not isinstance(metricId, int):
+            if isinstance(metricId, list):
+                metricId = metricId[0]
+            metricId = int(metricId)
+        match = (self.metrics['metricId'] == metricId)
+        return self.sortMetrics(self.metrics[match])
+
+    def metricInfo(self, metric):
+        """
+        Return a dict with the metric info we want to show on the webpages.
+        """
+        # Provides a way to easily modify what we show on all webpages without
+        #  significantly altering the templates. Or provides an abstraction layer 
+        #  in case the resultsDB column names change.
+        metricInfo = OrderedDict()
+        metricInfo['MetricName'] = metric['metricName']
+        metricInfo['Slicer'] = metric['slicerName']
+        metricInfo['Metadata'] = metric['metricMetadata']
+        return metricInfo
+
+    def plotsForMetric(self, metric):
+        """
+        Return an ordered dict with the plots matching a given metric.
+        """
+        plotDict = OrderedDict()
+        match = (self.plots['metricId'] == metric['metricId'])
+        matchPlots = self.plots[match]
+        order = ['SkyMap', 'Histogram', 'PowerSpectrum']
+        plotTypes = list(matchPlots['plotType'])
+        for o in order:
+            if o in plotTypes:
+                plotDict[o] = matchPlots['plotFile'][np.where(matchPlots['plotType'] == o)][0]
+                plotTypes.remove(o)
+        for p in plotTypes:
+            plotDict[p] = matchPlots['plotFile'][np.where(matchPlots['plotType'] == p)][0]
+        return plotDict
+
+    def getThumbname(self, plotfile):
+        """
+        Convert a plot filename into the expected thumbnail file name.
+        """
+        thumbname =  'thumb.' + ''.join(plotfile.split('.')[:-1]) + '.png'
+        return thumbname
+
+    def getPlotname(self, plot):
+        """
+        Return the filename of a particular plot.
+        """
+        return plot['plotFile']
+
+    def statsForMetric(self, metric):
+        """
+        Return the summary statistics which match a given metric.
+        """
+        match = (self.stats['metricId'] == metric['metricId'])        
+        return self.stats[match]
     
-    
-                          
-                          
+    def statDict(self, stats):
+        """
+        Utility to turn a single (or multiple) stat lines from numpy structured array into dict. 
+
+        Note that if you pass 'stats' from multiple metrics with the same summary names, they
+         will be overwritten in the resulting dictionary! So just use stats from one metric.
+        """
+        # Provides way that templates do not have to know exact field names in resultsDB,
+        #  plus allows packaging multiple stats into a single dictionary. 
+        # Result = dict with key == summary stat name, value = summary stat value. 
+        sdict = {}
+        for stat in stats:
+            sdict[stat['summaryName']] = stat['summaryValue']
+        return sdict
         
+    def allStatNames(self, stats):
+        """
+        For a group of stats, return a list containing all the unique 'summaryNames' in that group.
+
+        Add a default ordering to returned list. (identity-mean-median-rms..)
+        """
+        names = set()
+        for stat in stats:
+            names.add(stat['summaryName'])
+        # Add some default sorting:
+        defaultorder = ['Identity', 'Mean', 'Median', 'Rms', 'RobustRms']
+        namelist = []
+        for nord in defaultorder:
+            if nord in names:
+                namelist.append(nord)
+                names.remove(nord)
+        for remaining in names:
+            namelist.append(remaining)
+        return names
+
+
     def packageMonster(self):
         #XXX--plan on breaking this into several methods for displaying different info on different pages.
         # Maybe take "groups" as input, then only display the selected groups

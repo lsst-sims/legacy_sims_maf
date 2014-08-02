@@ -7,26 +7,42 @@ import os, argparse
 from lsst.sims.maf.viz import layoutResults
 
 
-
+class MasterPageHandler(web.RequestHandler):
+    def get(self):
+        masterTempl = env.get_template("master.html")
+        self.write(masterTempl.render(run=layout))
 
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
-        gridTempl = env.get_template("main.html")
-        qargs = self.request.query_arguments
-        self.write(gridTempl.render(metrics=qargs))
+        gridTempl = env.get_template("grid.html")
+        metricIds = self.request.query_arguments
+        self.write(gridTempl.render(metricIds=metricIds, run=layout))
+
+class MetricSelectHandler(web.RequestHandler):
+    def get(self):
+        selectTempl = env.get_template("select.html")
+        self.write(selectTempl.render(run=layout))
+
+class ConfigPageHandler(web.RequestHandler):
+    def get(self):
+        configTempl = env.get_template("configs.html")
+        self.write(configTempl.render(run=layout))
 
 class MonsterPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
-        mainTempl = env.get_template("monster.html")
-        self.write(mainTempl.render(outDir=outDir, **layout.packageMonster()))
+        monsterTempl = env.get_template("monster.html")
+        self.write(monsterTempl.render(outDir=outDir, **layout.packageMonster()))
 
         
 def make_app():
     """The tornado global configuration """
     application = web.Application([
-            ("/metricResult", MetricGridPageHandler),
-            ("/", MonsterPageHandler),
+            ("/master", MasterPageHandler),
+            ("/metricSelect", MetricSelectHandler),
+            ("/metricResults", MetricGridPageHandler),
+            ("/configParams", ConfigPageHandler),
+            ("/monster", MonsterPageHandler),
             (r"/"+outDir+"/(.*)", web.StaticFileHandler, {'path':outDir}), 
             (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
             ])
