@@ -1,6 +1,11 @@
 {% extends "master.html" %}
 
+
 {% block moresidebar %}
+
+{% if 'all' in metricIds.keys() %}
+  {% set metricIds = run.allMetricIds() %}
+{% endif %}
 
 </br>
 </br>
@@ -17,6 +22,10 @@
 
 
 {% block content %}
+
+{% if 'all' in metricIds.keys() %}
+  {% set metricIds = run.allMetricIds() %}
+{% endif %}
 
 {# show metric information for each metric selected from 'select' page #}
 
@@ -36,29 +45,43 @@
   {% endfor %}
   </b>
 
-   <p>
-    </br>
   {# Add the plots for this metric #}
+  {% if plotdict|length > 0 %}
+    <p>
+    </br>
   {% for ptype, pfile in plotdict.iteritems() %}
-    {% set thumbfile = run.getThumbname(pfile) %}
-    <a href='{{run.outDir}}/{{pfile}}'> 
-          <img class="thumbnail" src='{{run.outDir}}/{{thumbfile}}'></a>
+    {% set plotfile = run.getPlotfile(pfile) %}
+    {% set thumbfile = run.getThumbfile(pfile) %}
+    <a href="{{plotfile}}"> 
+          <img class="thumbnail" src='{{thumbfile}}'></a>
   {% endfor  %}
-  </br>
+   </p>
+  {% endif %}
 
-  <p>
+   <p>
   {% set caption = run.captionForMetric(metric) %}
   {{ caption }}
-  </br>
+  </p>
 
   {# Add the summary stats for this metric #} 
   {% set stats = run.statsForMetric(metric) %}
   {% set statdict = run.statDict(stats) %}
+  <table class="blank">
   {% for name in statdict.keys() %}
-    &#160;&#160;&#160;&#160;&#160
-    <i>{{ name }}:</i> 
-    {{ '%.2f' %(statdict[name]) }}  <br>
+   <tr>
+   <td class="blank">
+   <i>{{ name }}:</i>
+   </td>
+   <td class="blank">
+   {% if name == 'Count' %}
+      {{ '%d'|format(statdict[name]) }}
+   {% else %}
+      {{ '%.2f'|format(statdict[name])}}
+   {% endif %}
+   </td> 
+   </tr>
   {% endfor %}
+   </table>
   </div>
   <hr>
   {% endfor %}

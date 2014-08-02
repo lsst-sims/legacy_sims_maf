@@ -2,23 +2,22 @@
 
 {% block moresidebar %}
 <br>
-<a href="#configSummary">Config Summary</a>
-<a href="#configDetails">Config Details</a>
+<a href="#configSummary">Config Summary</a></br>
+<a href="#configDetails">Config Details</a></br>
 {% endblock %}
 
 {% block content %}
 
 <p>
-
 <h2><a name="configSummary">OpSim Configuration Summary</a></h2>
-<object width=600px height=700px type="text/plain" data="{{ run.outDir }}/configSummary.txt" border="0" >
+<object width=600px height=700px type="text/plain" data="{{ run.configSummary }}" border="0" >
 </object>
+</p>
 
 <p>
-
 <h2><a name="configDetails">OpSim Configuration Details</a></h2>
-<object width=600px height=700px type="text/plain" data="{{ run.outDir }}/configDetails.txt" border="0" >
+<object width=600px height=700px type="text/plain" data="{{ run.configDetails }}" border="0" >
 </object>
-
+</p>
  
 {% endblock %}

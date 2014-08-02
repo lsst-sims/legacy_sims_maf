@@ -7,7 +7,7 @@
   {% for subgroup in run.groups[group] %}
     {% set metrics = run.metricsInSubgroup(group, subgroup) %}
     {% set statNames = run.allStatNames(metrics) %}
-    {% if run.length(statNames) > 0 %}
+    {% if statNames|length > 0 %}
       <a href="#{{group}}_{{subgroup}}">{{group}} : {{subgroup}}</a><br>
     {% endif %}
   {% endfor %}
@@ -17,15 +17,15 @@
 {% block content %}
 
 {% set metricInfo = run.metricInfo(run.metrics[0]) %}
-{% set ninfo = run.length(metricInfo) %}
+{% set ninfo = metricInfo|length %}
 
 {% for group in run.groups.keys() %}
    {% for subgroup in run.groups[group] %}
 
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
        {% set statNames = run.allStatNames(metrics) %}
-       {% if run.length(statNames) > 0 %}
-        {% set ncols = run.length(statNames) + ninfo %}
+       {% if statNames|length > 0 %}
+        {% set ncols = statNames|length + ninfo %}
 
        
         <table> 
@@ -48,22 +48,22 @@
           {% set metricInfo = run.metricInfo(metric) %}
           {% set stats = run.statsForMetric(metric) %}
 	  {% set statDict = run.statDict(stats) %}
-          {% if run.length(statDict) > 0 %}
+          {% if statDict|length > 0 %}
            <tr>
            {% for key in metricInfo %}
            <td>{{ metricInfo[key]|escape }}</td>
            {% endfor %}
  	   {% for statName in statNames %}
 	    <td>
-	     {% if statName in statDict.keys() %}
-	      {% set value = '%.2f' %(statDict[statName]) %}
-	      {% if statName == 'Count' %}
-	        {% set value = '%d' %(statDict[statName]) %}
-	      {% endif %}
+	      {% if statName in statDict.keys() %}
+	        {% if statName == 'Count' %} 
+                 {{ '%d'|format(statDict[statName]) }}
+	        {% else %}
+                 {{ '%.2f'|format(statDict[statName]) }}
+	        {% endif %}
 	     {% else %}
-	      {% set value = '--' %}
+	        {{ '--' }}
 	     {% endif %}
-	     {{ value }}
 	    </td>
 	   {% endfor %}
 	   </tr>

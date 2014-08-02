@@ -13,7 +13,27 @@ class layoutResults(object):
         This class provides methods used by our jinja2 templates to help interact
         with the outputs of MAF. 
         """
+        if outDir == '.':
+            raise Exception('Cannot run showMaf.py from within the output directory. '
+                            'Go up a level and try again.')
+
         self.outDir = outDir
+
+        self.configSummary = os.path.join(self.outDir, 'configSummary.txt')
+        if not os.path.isfile(self.configSummary):
+            self.configSummary = 'Config Summary Not Available'
+            self.runName = 'RunName Not Available'
+        else:
+            with open (self.configSummary, "r") as myfile:
+                config=myfile.read().replace('\n', '')
+            spot = config.find('RunName')
+            self.runName = config[spot:spot+300].split(' ')[1]
+
+        self.configDetails = os.path.join(self.outDir, 'configDetails.txt')
+        if not os.path.isfile(self.configDetails):
+            self.configDetails = 'Config Details Not Available.'
+
+
         # Read in the results database.
         database = db.Database('sqlite:///'+outDir+'/resultsDb_sqlite.db',
                                dbTables={'metrics':['metrics','metricID'] ,
@@ -34,22 +54,11 @@ class layoutResults(object):
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
-        # Grab the runName for the page headers. 
-
         # Make empty arrays if there was nothing in the database
         if len(self.plots) == 0:
             self.plots = np.zeros(0, dtype=[('metricId',int),('plotFile', '|S10')])
         if len(self.stats) == 0:
             self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'),('summaryValue', float)])
-
-        configFile = os.path.join(outDir, 'configSummary.txt' )
-        if os.path.isfile(configFile):
-            with open (configFile, "r") as myfile:
-                config=myfile.read().replace('\n', '')
-            spot = config.find('RunName')
-            self.runName = config[spot:spot+300].split(' ')[1]
-        else:
-            self.runName = 'Not available'
 
         # Pull up the names of the groups and subgroups. 
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
@@ -61,10 +70,9 @@ class layoutResults(object):
         for g in self.groups:
             self.groups[g] = sorted(list(self.groups[g]))
 
-
         self.summaryStatOrder = ['Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
                                  'm3Sigma', 'p3Sigma']
-            
+        self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
 
     def _convertMetricId(self, metricId):
@@ -74,6 +82,17 @@ class layoutResults(object):
             metricId = int(metricId)
         return metricId
                                                    
+
+    def allMetricIds(self):
+        """
+        Return a dict of key=metricId / value = metricId, for all metricIds.
+        """
+        metricDict = {}
+        for m in self.metrics['metricId']:
+            key = '%s' %(m)
+            metricDict[key] = [key]
+        return metricDict
+        
     def orderMetricIds(self, metricIds):
         """
         Given a list of metric Ids, return them in group/subgroup/order/metricName order. 
@@ -188,9 +207,8 @@ class layoutResults(object):
         plotDict = OrderedDict()
         match = (self.plots['metricId'] == metric['metricId'])
         matchPlots = self.plots[match]
-        order = ['SkyMap', 'Histogram', 'PowerSpectrum']
         plotTypes = list(matchPlots['plotType'])
-        for o in order:
+        for o in self.plotOrder:
             if o in plotTypes:
                 plotDict[o] = matchPlots['plotFile'][np.where(matchPlots['plotType'] == o)][0]
                 plotTypes.remove(o)
@@ -198,18 +216,25 @@ class layoutResults(object):
             plotDict[p] = matchPlots['plotFile'][np.where(matchPlots['plotType'] == p)][0]
         return plotDict
 
-    def getThumbname(self, plotfile):
+    def getThumbfile(self, plotfile):
         """
         Convert a plot filename into the expected thumbnail file name.
         """
-        thumbname =  'thumb.' + ''.join(plotfile.split('.')[:-1]) + '.png'
-        return thumbname
+        path, file = os.path.split(plotfile)        
+        if path == '':
+            path = self.outDir
+        thumbname =  'thumb.' + ''.join(file.split('.')[:-1]) + '.png'
+        thumbfile = os.path.join(path, thumbname)
+        return thumbfile
 
-    def getPlotname(self, plot):
+    def getPlotfile(self, plot):
         """
         Return the filename of a particular plot.
         """
-        return plot['plotFile']
+        if isinstance(plot, str):
+            return os.path.join(self.outDir, plot)
+        else:
+            return os.path.join(self.outDir, plot['plotFile'])
 
     def statsForMetric(self, metric):
         """
@@ -271,10 +296,7 @@ class layoutResults(object):
                 names.remove(nord)
         for remaining in names:
             namelist.append(remaining)
-        return namelist
-
-    def length(self, x):
-        return len(x)
+        return namelist    
 
     def packageMonster(self):
         #XXX--plan on breaking this into several methods for displaying different info on different pages.

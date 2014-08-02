@@ -113,8 +113,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                         'xMin':nVisits_plotRange['all'][f][0],
                                         'xMax':nVisits_plotRange['all'][f][1]}, 
                               summaryStats=standardStats,
-                              displayDict={'group':'Nvisits', 'subgroup':'All', 'order':filtorder[f],
-                                          'caption':'Number of visits in filter %s, all observations.' %(f)})
+                              displayDict={'group':'Nvisits', 'subgroup':'All Props', 'order':filtorder[f],
+                                          'caption':'Number of visits in filter %s, all proposals.' %(f)})
         
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
@@ -126,8 +126,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         
         m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
                              summaryStats=standardStats,
-                             displayDict={'group':'Single Visit Depth', 'subgroup':'All', 'order':filtorder[f],
-                                          'caption':'Median single visit depth in filter %s, all observations.' %(f)})
+                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props', 'order':filtorder[f],
+                                          'caption':'Median single visit depth in filter %s, all proposals.' %(f)})
         
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f],
                                                         'percentileClip':95.,
@@ -135,29 +135,29 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                              summaryStats=standardStats,
                              histMerge={'histNum':6, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f, 'binsize':.01},
-                             displayDict={'group':'CoaddDepth', 'subgroup':'All', 'order':filtorder[f],
+                             displayDict={'group':'CoaddDepth', 'subgroup':'All Props', 'order':filtorder[f],
                                           'caption':
-                                          'Coadded depth in filter %s, with %s value subtracted (%.1f), all observations.'
+                                          'Coadded depth in filter %s, with %s value subtracted (%.1f), all proposals.'
                                             %(f, benchmark, mag_zpoints[f])})
         
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])},
-                              displayDict={'group':'Sky Brightness', 'subgroup':'All', 'order':filtorder[f],
+                              displayDict={'group':'Sky Brightness', 'subgroup':'All Props', 'order':filtorder[f],
                                            'caption':
-                                           'Median Sky Brightness in filter %s, with expected zeropoint (%.2f) subtracted, for all observations.'
+                                           'Median Sky Brightness in filter %s, with expected zeropoint (%.2f) subtracted, for all proposals.'
                                            %(f, sky_zpoints[f])})        
         m6 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
                               plotDict={'normVal':seeing_norm[f],
                                         'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])},
-                              displayDict={'group':'Seeing', 'subgroup':'All', 'order':filtorder[f],
+                              displayDict={'group':'Seeing', 'subgroup':'All Props', 'order':filtorder[f],
                                            'caption':
                                            'Median Seeing in filter %s divided by expected value (%.2f), all proposals'
                                            %(f, seeing_norm[f])})                                       
         m7 = configureMetric('MedianMetric', kwargs={'col':'airmass'}, plotDict={'units':'X'},
-                             displayDict={'group':'Airmass', 'subgroup':'All', 'order':filtorder[f],
+                             displayDict={'group':'Airmass', 'subgroup':'All Props', 'order':filtorder[f],
                                            'caption':'Median airmass in filter %s, all proposals' %(f)})
         m8 = configureMetric('MaxMetric', kwargs={'col':'airmass'}, plotDict={'units':'X'},
-                             displayDict={'group':'Airmass', 'subgroup':'All', 'order':filtorder[f],
+                             displayDict={'group':'Airmass', 'subgroup':'All Props', 'order':filtorder[f],
                                            'caption':'Max airmass in filter %s, all proposals' %(f)})
 
         metricDict = makeDict(m1,m2,m3,m4,m5,m6,m7,m8)
@@ -185,7 +185,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                           'Number of visits in filter %s divided by %s value (%d), WFD only.'
                                           %(f, benchmark, nvisitBench[f])})
         m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats=standardStats,
-                             displayDict={'group':'Single Visit Depth', 'subgroup':'All', 'order':filtorder[f],
+                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props', 'order':filtorder[f],
                                           'caption':'Median single visit depth in filter %s, WFD only.' %(f)})        
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'(coadded m5 - %.1f)'%mag_zpoints[f]},
@@ -270,7 +270,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                               constraints=constraints, metadata=slicermetadata + ' (WFD)')
     slicerList.append(slicer)
-    # For all Observations
+    # For all proposals
     m1 = configureMetric('CompletenessMetric',
                           plotDict={'xlabel':'# visits (all) / (# WFD Requested)',
                                     'units':'# visits (all) / # WFD',
@@ -278,7 +278,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                           summaryStats={'TableFractionMetric':{}},
-                          displayDict = {'group':'Completeness', 'subgroup':'All'})
+                          displayDict = {'group':'Completeness', 'subgroup':'All Props'})
     metricDict = makeDict(m1)
     constraints = ['']
     slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
