@@ -79,7 +79,7 @@ class HourglassSlicer(UniSlicer):
     
     def writeData(self, outfilename, metricValues, metricName='', **kwargs):
         """
-        Override base write method to 'pass': we don't want to save hourglass metric data.
+        Override base write method: we don't want to save hourglass metric data.
 
         The data volume is too large.
         """

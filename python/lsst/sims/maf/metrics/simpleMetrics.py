@@ -91,3 +91,20 @@ class FracBelowMetric(BaseMetric):
         good = np.where(dataSlice[self.colname] <= self.cutoff)[0]
         fracBelow = np.size(good)/float(np.size(dataSlice[self.colname]))
         return fracBelow
+
+class NoutliersNsigma(BaseMetric):
+   """Calculate the # of Counts less than nSigma below the median (nSigma<0) or
+      more than nSigma above the median"""
+   def __init__(self, col=None, nSigma=3., **kwargs):
+      self.col = col
+      self.nSigma = nSigma
+      super(NoutliersNsigma, self).__init__(col=col, **kwargs)
+   def run(self, dataSlice, slicePoint=None):
+      med = np.median(dataSlice[self.colname])
+      std = np.std(dataSlice[self.colname])
+      boundary = med + self.nSigma*std
+      if self.nSigma >=0:
+         outsiders = np.where(dataSlice[self.colname] > boundary)
+      else:
+         outsiders = np.where(dataSlice[self.colname] < boundary)
+      return len(dataSlice[self.colname][outsiders])

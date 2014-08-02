@@ -32,6 +32,13 @@ class layoutResults(object):
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
         # Grab the runName for the page headers. 
+
+        # Make empty arrays if there was nothing in the database
+        if len(self.plots) == 0:
+            self.plots = np.zeros(0, dtype=[('metricId',int),('plotFile', '|S10')])
+        if len(self.stats) == 0:
+            self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'),('summaryValue', float)])
+
         configFile = os.path.join(outDir, 'configSummary.txt' )
         if os.path.isfile(configFile):
             with open (configFile, "r") as myfile:
@@ -58,6 +65,7 @@ class layoutResults(object):
         """
         Given a list of metric Ids, return them in group/subgroup/order/metricName order. 
         """
+        #  TOOODOOOOO
         return metricIds
         
     def sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 'metricName']):
@@ -189,21 +197,28 @@ class layoutResults(object):
         basicStats = []
         completeStats = []
         etcStats = []
+        # Apply the default sorting
+        metrics = self._sortMetrics(self.metrics)
 
-        for metric in self.metrics:
+        # List what should go in the "basic summary stat" table
+        basicStatNames = sorted(['Mean', 'Rms', 'Median', 'p3Sigma', 'm3Sigma', 'Count'])
+                                
+        for metric in metrics:
             mId = metric['metricId']
             relevant_plots = self.plots[np.where(self.plots['metricId'] == mId)[0]]
+            thumb_plots = relevant_plots.copy()
             for i in np.arange(relevant_plots.size):
-                relevant_plots['plotFile'][i] = relevant_plots['plotFile'][i].replace('.pdf', '.png')
+                thumb_plots['plotFile'][i] = 'thumb.'+relevant_plots['plotFile'][i].replace('.pdf', '.png')
             relevant_stats = self.stats[np.where(self.stats['metricId'] == mId)[0] ]
-
             relevant_metrics = self.metrics[np.where(self.metrics['metricId'] == mId)[0] ]
+        
             stat_list = [(i, '%.4g'%j) for i,j in  zip(relevant_stats['summaryName'],
                                                        relevant_stats['summaryValue']) ]
             statsDict=OrderedDict()
             name = relevant_metrics['metricName'][0]+', '+ \
                                  relevant_metrics['slicerName'][0] \
                                  + ', ' +  relevant_metrics['metricMetadata'][0]
+            
             for rel_stat in relevant_stats:
                 statsDict[rel_stat['summaryName'].replace('TableFraction', '')] = '%.4g'%rel_stat['summaryValue']
 
@@ -212,21 +227,22 @@ class layoutResults(object):
             # 2) Identity (i.e., unislicer) table
             # 3) "basic" table (mean, RMS, median, p/m 3 sigma...)
             # 4) the etc table for anything left over.
+
+            
             if len(statsDict) != 0 :
                 if 'Completeness' in name:
                     completeStats.append({'NameInfo':name, 'stats':statsDict} )
                 elif ('Identity' in statsDict.keys()) & (len(statsDict.keys()) == 1):
                     identStats.append({'NameInfo':name, 'stats':statsDict})
-                # XXX -- need to tighten up this constraint, decide on formatting.
-                elif ('Mean' in statsDict.keys()) & ('Rms' in statsDict.keys()):
+                elif sorted(statsDict.keys()) == basicStatNames:
                     basicStats.append({'NameInfo':name, 'stats':statsDict} )
                 else:
                     etcStats.append({'NameInfo':name, 'stats':statsDict} )
             block = {'NameInfo': relevant_metrics['metricName'][0]+', '+
-                           relevant_metrics['slicerName'][0]
-                           + ', ' +  relevant_metrics['metricMetadata'][0],
-                           'plots':relevant_plots['plotFile'].tolist(),
-                           'stats':stat_list}
+                     relevant_metrics['slicerName'][0]
+                     + ', ' +  relevant_metrics['metricMetadata'][0],
+                     'plots':zip(relevant_plots['plotFile'].tolist(), thumb_plots['plotFile'].tolist()),
+                     'stats':stat_list}
             # If it's a completeness metric, pull it out
             if metric['metricName'][0:12] == 'Completeness':
                 completenessBlocks.append(block)

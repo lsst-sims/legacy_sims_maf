@@ -90,7 +90,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
 
     print 'Using %s for generic metrics over the sky.' %(slicerName)
 
-    standardStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}}
+    # Note there's a bug here, you can't configure multiple versions of a summary metric since that makes a
+    # dict with repeated keys.  One kinda lame workaround is to add blank space (or even more words) to one of
+    # the keys that gets stripped out when the object is instatiated.
+    standardStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}, 'CountMetric':{},
+                   'NoutliersNsigma 1':{'metricName':'p3Sigma', 'nSigma':3.},
+                   'NoutliersNsigma 2':{'metricName':'m3Sigma', 'nSigma':-3.}}
 
     # Metrics per filter over sky.
     for f in filters:
