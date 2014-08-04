@@ -73,6 +73,20 @@ class layoutResults(object):
 
         self.summaryStatOrder = ['Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
                                  'm3Sigma', 'p3Sigma']
+
+        # Add in the table fraction sorting.  
+        tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
+        if len(tableFractions) > 0:
+            tableFractions.remove('TableFraction 0 == P')
+            tableFractions.remove('TableFraction 1 == P')
+            tableFractions.remove('TableFraction 1 < P')
+            tableFractions = sorted(tableFractions)
+            self.summaryStatOrder.append('TableFraction 0 == P')
+            for tableFrac in tableFractions:
+                self.summaryStatOrder.append(tableFrac)
+            self.summaryStatOrder.append('TableFraction 1 == P')
+            self.summaryStatOrder.append('TableFraction 1 < P')
+        
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
         
