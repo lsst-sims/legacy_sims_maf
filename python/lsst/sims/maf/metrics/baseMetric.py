@@ -120,10 +120,12 @@ class BaseMetric(object):
               ', '.join(map(str, self.colNameArr))
         # Set up dictionary of reduce functions (may be empty).
         self.reduceFuncs = {}
+        self.reduceOrder = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
+                self.reduceOrder[reducename] = 0
         # Identify type of metric return value.
         if metricDtype is not None:
             self.metricDtype = metricDtype

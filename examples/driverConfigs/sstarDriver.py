@@ -139,7 +139,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                              displayDict={'group':'CoaddDepth', 'subgroup':'All Props', 'order':filtorder[f],
                                           'caption':
                                           'Coadded depth in filter %s, with %s value subtracted (%.1f), all proposals.'
-                                            %(f, benchmark, mag_zpoints[f])})
+
+                                                                                      %(f, benchmark, mag_zpoints[f])})
         
         m5 = configureMetric('MedianMetric', kwargs={'col':'filtSkyBrightness'},
                               plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])},
@@ -254,9 +255,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     yearDates = range(0,int(round(365*runLength))+365,365)
     for i in range(len(yearDates)-1):
         constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
-        m1=configureMetric('HourglassMetric', plotDict={'title':'Year %i-%i'%(i,i+1)},
+        m1=configureMetric('HourglassMetric',
                            displayDict={'group':'Hourglass', 'order':i})
-        slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints)
+        slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints
+                                 metadata='Year %i-%i' %(i, i+1))
         slicerList.append(slicer)
 
     # Completeness and Joint Completeness
@@ -322,8 +324,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Number of visits per night'}, 
                           summaryStats=standardStats,
                           displayDict={'group':'Technical'})
+    m2 = configureMetric('OpenShutterFractionMetric',
+                         summarystats=standardStats,
+                         displayDict={'group':'Technical',
+                                      'caption':
+                                      'Open shutter fraction per night (time on-sky divided by time on sky plus slews).'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
-                             metricDict=makeDict(m1),
+                             metricDict=makeDict(m1, m2),
                              constraints=[''])
     slicerList.append(slicer)
 

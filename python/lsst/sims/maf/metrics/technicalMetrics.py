@@ -16,14 +16,14 @@ class OpenShutterMetric(BaseMetric):
        result = np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
        return result
 
-class OpenShutterFracMetric(BaseMetric):
+class OpenShutterFractionMetric(BaseMetric):
    """Compute the fraction of time the shutter is open compared to the total time spent observing. """
    def __init__(self, readTime=2., shutterTime=2,
                 metricName='OpenShutterFracMetric',
                 slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):
        self.exptimeCol = exptimeCol
        self.slewTimeCol = slewTimeCol
-       super(OpenShutterFracMetric,self).__init__(col=[self.exptimeCol, self.slewTimeCol],
+       super(OpenShutterFractionMetric,self).__init__(col=[self.exptimeCol, self.slewTimeCol],
                                                   metricName=metricName, units='frac')
        self.units = 'OpenShutter/TotalTime'
        self.readTime = readTime
@@ -54,6 +54,9 @@ class CompletenessMetric(BaseMetric):
         # Raise exception if number of visits wasn't changed from the default, for at least one filter.
         if len(self.filters) == 0:
             raise ValueError('Please set the requested number of visits for at least one filter.')
+        # Set an order for the reduce functions (for display purposes only).
+        for i, f in enumerate(('u', 'g', 'r', 'i', 'z', 'y', 'Joint')):
+            self.reduceOrder[f] = i
         
     def run(self, dataSlice, slicePoint=None):
         """Compute the completeness for each filter, and then the minimum (joint) completeness for each slice."""
