@@ -13,7 +13,7 @@ def moduleLoader(moduleList):
         importlib.import_module(m)
 
 
-def optimalBins(datain, binmin=None, binmax=None, nbinMax=1e3):
+def optimalBins(datain, binmin=None, binmax=None, nbinMax=200):
     """
     Use Freedman-Diaconis rule to set binsize.
     Allow user to pass min/max data values to consider.
@@ -39,6 +39,7 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=1e3):
         binwidth = (2.*(np.percentile(data[cond], 75) - np.percentile(data[cond], 25))
                     /np.size(data[cond])**(1./3.))
         nbins = (binmax - binmin) / binwidth
+        nbins = int(nbins)
         if nbins > nbinMax:
             warnings.warn('Warning! Optimal bin calculation tried to make %f bins, returning %i'%(nbins, nbinMax))
             nbins = nbinMax
