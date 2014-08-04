@@ -7,16 +7,16 @@ import os, argparse
 from lsst.sims.maf.viz import layoutResults
 
 
+class MetricSelectHandler(web.RequestHandler):
+    def get(self):
+        selectTempl = env.get_template("select.html")
+        self.write(selectTempl.render(run=layout))
+
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
         gridTempl = env.get_template("grid.html")
         selectDict = self.request.query_arguments
         self.write(gridTempl.render(selectDict=selectDict, run=layout))
-
-class MetricSelectHandler(web.RequestHandler):
-    def get(self):
-        selectTempl = env.get_template("select.html")
-        self.write(selectTempl.render(run=layout))
 
 class ConfigPageHandler(web.RequestHandler):
     def get(self):
