@@ -325,7 +325,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                           summaryStats=standardStats,
                           displayDict={'group':'Technical'})
     m2 = configureMetric('OpenShutterFractionMetric',
-                         summarystats=standardStats,
+                         summaryStats=standardStats,
                          displayDict={'group':'Technical',
                                       'caption':
                                       'Open shutter fraction per night (time on-sky divided by time on sky plus slews).'})
