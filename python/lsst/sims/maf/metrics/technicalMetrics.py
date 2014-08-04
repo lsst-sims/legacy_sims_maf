@@ -94,7 +94,7 @@ class CompletenessMetric(BaseMetric):
             return completeness[np.where(self.filters == 'y')[0]]
         else: 
             return 1
-    def reduce_Joint(self, completeness):
+    def reduceJoint(self, completeness):
         """The joint completeness is just the minimum completeness for a point/field"""
         return completeness[-1]
     
