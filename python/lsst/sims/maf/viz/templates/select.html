@@ -2,14 +2,16 @@
 
 {% block moresidebar %}
 
-</br>
-</br>
+<ul>
 {% for g in run.groups.keys() %}
-  <a href="#{{g}}"> {{g}}</a> </br>
+  <li>
+  <a href="#{{g}}"> {{g}}</a> </br> 
   {% for sg in run.groups[g] %}
-    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div> 
  {% endfor %}
+ </li>
 {% endfor %}
+</ul>
 
 {% endblock %}
 
@@ -40,7 +42,7 @@
 {% for group in run.groups %}
   {% set groupstart = True %}
   {% for subgroup in run.groups[group] %}
-      <tr>
+      <tr class="lightestgray">
 	<td>
 	  <input type='checkbox' name="Group_{{group}}__{{subgroup}}"
   value="{{ group }}__{{ subgroup }}">
@@ -78,5 +80,5 @@
 </tr>
 
 </table>
- 
+
 {% endblock %}
