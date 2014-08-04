@@ -39,9 +39,8 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=200):
         binwidth = (2.*(np.percentile(data[cond], 75) - np.percentile(data[cond], 25))
                     /np.size(data[cond])**(1./3.))
         nbins = (binmax - binmin) / binwidth
-        nbins = int(nbins)
         if nbins > nbinMax:
-            warnings.warn('Warning! Optimal bin calculation tried to make %f bins, returning %i'%(nbins, nbinMax))
+            warnings.warn('Warning! Optimal bin calculation tried to make %.0f bins, returning %i'%(nbins, nbinMax))
             nbins = nbinMax
     else:
         warnings.warn('Warning! No data available for calculating optimal bin size within range of %f, %f'%

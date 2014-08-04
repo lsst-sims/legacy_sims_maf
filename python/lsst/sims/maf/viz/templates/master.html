@@ -59,7 +59,7 @@ ul
 list-style-type: square;
 padding-left:20px;
 padding-bottom:20px;
-padding-top:10px;
+padding-top:5px;
 margin:2px;
 }
 
@@ -75,19 +75,29 @@ padding-bottom:5px;
 text-indent:25px
 }
 
+#header
+{
+background-color:#A0A0A0;
+height:45px;
+width=100%;
+}
+
 #sidebar
 {
 background-color:#E8E8E8;
 width:170px;
+height=700px;
 float:left;
-margin:0
-padding:1em
+padding:1em;
+margin:0;
 }
 
 #content
 {
+padding: 1em; 
 margin-left: 170px;
-padding: 1em;
+height:700px;
+overflow:scroll;
 }
 
 #mset
@@ -104,7 +114,7 @@ margin-bottom:40px;
 
 <div id="container" style="width:100%">
 
-<div id="header" style="background-color:#A0A0A0;height:45px;width:100%">
+<div id="header">
 {% block header %}
 <h1>{%block title %}OpSim Run: {{ run.runName }} {% endblock %}</h1>
 {% endblock %}
