@@ -64,32 +64,32 @@ class CompletenessMetric(BaseMetric):
         allCompleteness.append(np.min(np.array(allCompleteness)))
         return np.array(allCompleteness)
     
-    def reduce_u(self, completeness):
+    def reduceu(self, completeness):
         if 'u' in self.filters:
             return completeness[np.where(self.filters == 'u')[0]]
         else:
             return 1
-    def reduce_g(self, completeness):
+    def reduceg(self, completeness):
         if 'g' in self.filters:
             return completeness[np.where(self.filters == 'g')[0]]
         else:
             return 1
-    def reduce_r(self, completeness):
+    def reducer(self, completeness):
         if 'r' in self.filters:
             return completeness[np.where(self.filters == 'r')[0]]
         else:
             return 1
-    def reduce_i(self, completeness):
+    def reducei(self, completeness):
         if 'i' in self.filters:
             return completeness[np.where(self.filters == 'i')[0]]
         else:
             return 1
-    def reduce_z(self, completeness):
+    def reducez(self, completeness):
         if 'z' in self.filters:
             return completeness[np.where(self.filters == 'z')[0]]
         else:
             return 1
-    def reduce_y(self, completeness):
+    def reducey(self, completeness):
         if 'y' in self.filters:            
             return completeness[np.where(self.filters == 'y')[0]]
         else: 
