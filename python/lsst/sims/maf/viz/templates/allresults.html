@@ -29,10 +29,12 @@ than per metric. #}
  {% set groupstart = True %}
  {% for sg in run.groups[g] %}
    {% if groupstart == True %}
-      <a name = "{{g}}" </a>
+      <a name = "{{g}}" ></a>
       {% set groupstart = False %}
    {% endif %}
-   <a name = "{{g}}_{{sg}}"> </a>
+   <p>
+   <a name = "{{g}}_{{sg}}"><i>Group: {{g}};  Subgroup: {{sg}}</i> </a>
+   </p>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
@@ -110,8 +112,8 @@ than per metric. #}
       {% endfor %}	   
       </table>
      {% endif %}      
-
    </div>   
+   <hr>
    
  {% endfor %}
 {% endfor %}
