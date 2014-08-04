@@ -16,7 +16,8 @@ class HourglassMetric(BaseMetric):
         mjdcol = "expMJD"
         nightcol = "night"
         cols = [filtercol, mjdcol, nightcol]
-        super(HourglassMetric,self).__init__(col=cols,metricName=metricName, metricDtype='object', **kwargs)
+        super(HourglassMetric,self).__init__(col=cols,metricName=metricName, metricDtype='object',
+                                             plotParams=plotParams, **kwargs)
         self.nightcol = nightcol
         self.mjdcol = mjdcol
         self.filtercol = filtercol

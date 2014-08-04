@@ -251,12 +251,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slicerList.append(slicer)
 
     # Filter Hourglass plots per year (split to make labelling easier). 
-    yearDates = range(0,3650+365,365)
-    nightConstraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1]) for i in range(len(yearDates)-1)]
-    m1=configureMetric('HourglassMetric',
-                       displayDict={'group':'Hourglass'})
-    slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=nightConstraints)
-    slicerList.append(slicer)
+    yearDates = range(0,int(round(365*runLength))+365,365)
+    for i in range(len(yearDates)-1):
+        constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
+        m1=configureMetric('HourglassMetric', plotDict={'title':'Year %i-%i'%(i,i+1)}
+                           displayDict={'group':'Hourglass', 'order':i})
+        slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints)
+        slicerList.append(slicer)
 
     # Completeness and Joint Completeness
     m1 = configureMetric('CompletenessMetric',

@@ -88,10 +88,12 @@ padding: 1em;
 <div id="sidebar">
 {% block sidebar %}
 </br>
-<a href="/">Select Metrics</a></br>
-<a href="configParams">Opsim Configuration</a> </br>
-<a href="summaryStats">Summary Statistics</a> </br>
-<a href="monster">All Results</a></br>
+<ul>
+<li> <a href="/">Select Metrics</a></br> </li>
+<li> <a href="configParams">Opsim Configuration</a> </br> </li>
+<li> <a href="summaryStats">Summary Statistics</a> </br> </li>
+<li> <a href="metricResults?all=All+Metrics">All Results</a></br> </li>
+</ul>
 {% block moresidebar %}
 {% endblock %}
 {% endblock %}
@@ -103,7 +105,7 @@ padding: 1em;
 </div>
 
 <div id="footer" style="background-color:#A0A0A0;clear:both;text-align:center;">
-LSST Metrics Analysis Framework (MAF)</div>
+LSST <a href="https://confluence.lsstcorp.org/display/SIM/MAF+documentation"> Metrics Analysis Framework (MAF)</a></div>
 
 
 
