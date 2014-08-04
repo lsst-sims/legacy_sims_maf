@@ -20,6 +20,10 @@ th, td
 padding:5px;
 text-align:left;
 }
+tr.lightestgray
+{
+background-color:#F5F5F5;
+}
 
 table.blank, th.blank, td.blank
 {
@@ -50,6 +54,22 @@ text-indent:5px;
 line-height:130%;
 }
 
+ul
+{
+list-style-type: square;
+padding-left:20px;
+padding-bottom:20px;
+padding-top:10px;
+margin:2px;
+}
+
+li
+{
+text-indent:0px;
+padding-left:0px;
+padding-bottom:5px;
+}
+
 #indent
 {
 text-indent:25px
@@ -58,7 +78,7 @@ text-indent:25px
 #sidebar
 {
 background-color:#E8E8E8;
-width:160px;
+width:170px;
 float:left;
 margin:0
 padding:1em
@@ -66,8 +86,13 @@ padding:1em
 
 #content
 {
-margin-left: 160px;
+margin-left: 170px;
 padding: 1em;
+}
+
+#mset
+{
+padding-bottom:40px;
 }
 
 </style>
@@ -87,11 +112,12 @@ padding: 1em;
 
 <div id="sidebar">
 {% block sidebar %}
-</br>
-<a href="/">Select Metrics</a></br>
-<a href="configParams">Opsim Configuration</a> </br>
-<a href="summaryStats">Summary Statistics</a> </br>
-<a href="monster">All Results</a></br>
+<ul>
+<li><a href="/">Select Metrics</a></li>
+<li><a href="configParams">Opsim Configuration</a> </li>
+<li><a href="summaryStats">Summary Statistics</a> </li>
+<li><a href="allResults">All Results</a></li>
+</ul>
 {% block moresidebar %}
 {% endblock %}
 {% endblock %}

@@ -6,15 +6,16 @@
 
 {% block moresidebar %}
 
-</br>
-</br>
+<ul>
 {% for g in selectGroups.keys() %}
+  <li>
   <a href="#{{ g }}">{{ g }}</a> </br>
   {% for sg in selectGroups[g] %}
     <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
  {% endfor %}
+ </li>
 {% endfor %}
-
+</ul>
 {% endblock %}
 
 
@@ -33,7 +34,7 @@
   {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
-    <div>
+    <div id="mset">
     <b>
     {% for key in metricInfo %}
      {{ '%s' %(metricInfo[key]) }}  /
@@ -77,7 +78,7 @@
     {% endfor %}
     </table>
     </div>
-    <hr>
+
    {% endfor %}
  {% endfor %}
 {% endfor %}

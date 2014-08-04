@@ -28,11 +28,11 @@ class StatPageHandler(web.RequestHandler):
         statTempl = env.get_template("stats.html")
         self.write(statTempl.render(run=layout))
 
-class MonsterPageHandler(web.RequestHandler):
+class AllResultsPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
-        monsterTempl = env.get_template("monster.html")
-        self.write(monsterTempl.render(outDir=outDir, **layout.packageMonster()))
+        allresultsTempl = env.get_template("allresults.html")
+        self.write(allresultsTempl.render(outDir=outDir, run=layout))
 
         
 def make_app():
@@ -42,7 +42,7 @@ def make_app():
             ("/metricResults", MetricGridPageHandler),
             ("/configParams", ConfigPageHandler),
             ("/summaryStats", StatPageHandler), 
-            ("/monster", MonsterPageHandler),
+            ("/allResults", AllResultsPageHandler),
             (r"/"+outDir+"/(.*)", web.StaticFileHandler, {'path':outDir}), 
             (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
             ])
