@@ -257,7 +257,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
         m1=configureMetric('HourglassMetric',
                            displayDict={'group':'Hourglass', 'order':i})
-        slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints
+        slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints,
                                  metadata='Year %i-%i' %(i, i+1))
         slicerList.append(slicer)
 
