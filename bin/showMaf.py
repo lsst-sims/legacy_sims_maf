@@ -56,6 +56,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     outDir = args.outDir
 
+    # Make sure outDir doesn't end in "/"
+    if outDir[-1] == '/':
+        outDir = outDir[:-1]
+
     layout = layoutResults(outDir)
     
     mafDir = os.getenv('SIMS_MAF_DIR')
