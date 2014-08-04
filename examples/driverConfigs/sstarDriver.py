@@ -254,7 +254,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     yearDates = range(0,int(round(365*runLength))+365,365)
     for i in range(len(yearDates)-1):
         constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
-        m1=configureMetric('HourglassMetric', plotDict={'title':'Year %i-%i'%(i,i+1)}
+        m1=configureMetric('HourglassMetric', plotDict={'title':'Year %i-%i'%(i,i+1)},
                            displayDict={'group':'Hourglass', 'order':i})
         slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints)
         slicerList.append(slicer)

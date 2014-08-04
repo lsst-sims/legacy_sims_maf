@@ -45,7 +45,7 @@ class TestResultsDb(unittest.TestCase):
         resultsDb = db.ResultsDb(outDir=self.outDir)
         # Add metric. 
         metricId = resultsDb.addMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                        self.metadata, self.metricDataFile, self.displayDict)
+                                        self.metadata, self.metricDataFile)
         # Add plot.
         resultsDb.addPlot(metricId, self.plotType, self.plotName)
         # Add normal summary statistics. 
