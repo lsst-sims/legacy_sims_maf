@@ -109,7 +109,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Metrics per filter over sky.
     for f in filters:
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Nvisits'}, 
-                              plotDict={'units':'Number of Visits', 
+                              plotDict={'units':'Number of Visits', 'cbarFormat':'%d',
                                         'xMin':nVisits_plotRange['all'][f][0],
                                         'xMax':nVisits_plotRange['all'][f][1]}, 
                               summaryStats=standardStats,
@@ -118,6 +118,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
+                                        'xMin':0.5, 'xMax':1.5,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
                               displayDict={'group':'Nvisits', 'subgroup':'All Obs, ratio', 'order':filtorder[f],
                                           'caption':
@@ -169,7 +170,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Same metrics per filter, but WFD only
     for f in filters:
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Nvisits'}, 
-                              plotDict={'percentileClip':75., 'units':'Number of Visits', 
+                              plotDict={'percentileClip':75., 'units':'Number of Visits',
+                                        'cbarFormat':'%d',
                                         'histMin':nVisits_plotRange['all'][f][0],
                                         'histMax':nVisits_plotRange['all'][f][1]},
                               summaryStats=standardStats,
@@ -178,14 +180,15 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                               histMerge={'histNum':5, 'legendloc':'upper right',
                                          'color':colors[f],'label':'%s'%f, 'binsize':5})
         m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
-                              plotDict={'normVal':nvisitBench[f], 'percentileClip':80.,
+                              plotDict={'normVal':nvisitBench[f],
+                                        'xMin':0.5, 'xMax':1.5,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
                               displayDict={'group':'Nvisits', 'subgroup':'WFD, ratio', 'order':filtorder[f],
                                           'caption':
                                           'Number of visits in filter %s divided by %s value (%d), WFD only.'
                                           %(f, benchmark, nvisitBench[f])})
         m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats=standardStats,
-                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props', 'order':filtorder[f],
+                             displayDict={'group':'Single Visit Depth', 'subgroup':'WFD', 'order':filtorder[f],
                                           'caption':'Median single visit depth in filter %s, WFD only.' %(f)})        
         m4 = configureMetric('Coaddm5Metric', plotDict={'zp':mag_zpoints[f], 'percentileClip':95.,
                                                          'units':'(coadded m5 - %.1f)'%mag_zpoints[f]},
@@ -223,7 +226,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Number of Visits per proposal, over sky (repeats WFD). 
     for f in filters:    
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsPerProp'},
-                              plotDict={'units':'Number of Visits', 'bins':50},
+                              plotDict={'units':'Number of Visits', 'cbarFormat':'%d', 'bins':50},
                               displayDict={'group':'NVisits', 'subgroup':'PerProp', 'order':filtorder[f]})
         metricDict = makeDict(m1)
         constraints=[]

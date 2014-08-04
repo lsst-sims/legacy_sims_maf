@@ -4,9 +4,10 @@
 
 </br>
 </br>
-{% for group in run.groups %}
- {% for subgroup in run.groups[group] %}
-  <a href="#{{group}}_{{subgroup}}">{{group}} : {{subgroup}}</a><br>
+{% for g in run.groups.keys() %}
+  <a href="#{{g}}"> {{g}}</a> </br>
+  {% for sg in run.groups[g] %}
+    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
  {% endfor %}
 {% endfor %}
 
@@ -27,16 +28,38 @@
   <th> {{ key }} </th>
 {% endfor %}
 </tr>
-
- {% for group in run.groups %}
-    {% for subgroup in run.groups[group] %}
-       <tr> <td></td> <td colspan="3"><a name="{{group}}_{{subgroup}}">Group: <em>{{group }}</em>;  Subgroup: <em>{{ subgroup }}</em></a> </td>   </tr>
+  
+<tr>
+<td> </td>
+<td colspan="3">
+<input type='submit' value='Select Metrics'>
+<input type='submit' value='All Metrics' name='all'>
+</td>
+</tr>
+  
+{% for group in run.groups %}
+  {% set groupstart = True %}
+  {% for subgroup in run.groups[group] %}
+      <tr>
+	<td>
+	  <input type='checkbox' name="Group_{{group}}__{{subgroup}}"
+  value="{{ group }}__{{ subgroup }}">
+	</td>
+	<td colspan="3">
+	{% if groupstart == True %}
+	  <a name="{{group}}"></a>
+	  {% set groupstart = False %}
+	{% endif %}
+	  <a name="{{group}}_{{subgroup}}">All  Group: <em>{{group
+    }}</em>;   Subgroup: <em>{{ subgroup }}</em></a>
+	 </td>
+        </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
        {% for metric in metrics %}
           {% set metricInfo = run.metricInfo(metric) %}
           <tr> 	    
 	  <td>
-          <input type='checkbox' name="{{ metric['metricId'] }}" value="{{metric['metricId']}}">  
+          <input type='checkbox' name="{{ metric['metricId'] }}" value="{{metric['metricId']}}"> 
 	  </td>
 	  {% for key in metricInfo %}
           <td>{{ metricInfo[key]|escape }}</td> 
@@ -46,9 +69,10 @@
     {% endfor %}
  {% endfor %} 
 <tr>
-<td colspan="4">
-<input type='submit' value='Select'><br>
-<input type='submit' value='Select All' name='all'>
+<td> </td>
+<td colspan="3">
+<input type='submit' value='Select Metrics'>
+<input type='submit' value='All Metrics' name='all'>
 </form> 
 </td>
 </tr>

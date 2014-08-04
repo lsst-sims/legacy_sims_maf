@@ -10,8 +10,8 @@ from lsst.sims.maf.viz import layoutResults
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
         gridTempl = env.get_template("grid.html")
-        metricIds = self.request.query_arguments
-        self.write(gridTempl.render(metricIds=metricIds, run=layout))
+        selectDict = self.request.query_arguments
+        self.write(gridTempl.render(selectDict=selectDict, run=layout))
 
 class MetricSelectHandler(web.RequestHandler):
     def get(self):

@@ -307,7 +307,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
               metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
                                                   'NULL')
               displayDict = {}
-              displayDict.update(self.displayDicts[iids[0]])
+              displayDict.update(self.displayDicts[iids[-1]])
               displayDict['caption'] = self.captionFigure(iids, 'Combined histogram')
               if displayDict['subgroup'] == 'None':
                  displayDict['subgroup'] = 'Combo Hist'
@@ -374,7 +374,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
                                                     'NULL')
                 displayDict = {}
-                displayDict.update(self.displayDicts[iids[0]])
+                displayDict.update(self.displayDicts[iids[-1]])
                 displayDict['caption'] = self.captionFigure(iids, 'Combined power spectrum')
                 if displayDict['subgroup'] == 'None':
                    displayDict['subgroup'] = 'Combo PS'
@@ -445,7 +445,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
                                                     'NULL')                
                 displayDict = {}
-                displayDict.update(self.displayDicts[iids[0]])
+                displayDict.update(self.displayDicts[iids[-1]])
                 displayDict['caption'] = self.captionFigure(iids, 'Difference Sky Map')
                 if displayDict['subgroup'] == 'None':
                    displayDict['subgroup'] = 'Diff SkyMap'

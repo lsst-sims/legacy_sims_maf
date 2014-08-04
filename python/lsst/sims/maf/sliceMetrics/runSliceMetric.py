@@ -268,17 +268,26 @@ class RunSliceMetric(BaseSliceMetric):
        """
        Auto generate caption for a given metric.
        """
+       displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
        if self.displayDicts[iid]['caption'] == 'None':
           caption = ''
           plotTypes = self.slicer.plotFuncs.keys()
           if len(plotTypes) > 0:
              caption += 'Plots (' 
-             for ptype in plotTypes:
-                caption += '%s, ' %(ptype.replace('plot', ''))
+             ptypes = []
+             for p in displayOrder:
+                if p in plotTypes:
+                   ptypes.append(p)
+                   plotTypes.remove(p)
+             for r in plotTypes:
+                ptypes.append(r)                   
+             for p in ptypes:
+                caption += '%s, ' %(p.replace('plot', ''))
              caption = caption[:-2] + ') for '
           caption += '%s ' %(self.metricNames[iid])
           caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
-          caption += 'on a subset of data qualified by %s. ' %(self.metadatas[iid].strip())
+          if len(self.metadatas[iid].strip()) > 0:
+             caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
           if 'zp' in self.plotParams[iid]:
              caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotParams[iid]['zp'])
           if 'normVal' in self.plotParams[iid]:

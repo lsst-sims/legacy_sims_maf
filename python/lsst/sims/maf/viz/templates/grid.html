@@ -1,20 +1,17 @@
 {% extends "master.html" %}
 
+{% set selectMetrics = run.convertSelectToMetrics(selectDict) %}
+{% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
+
 
 {% block moresidebar %}
 
-{% if 'all' in metricIds.keys() %}
-  {% set metricIds = run.allMetricIds() %}
-{% endif %}
-
 </br>
 </br>
-
-{% set selectGroups = run.groupWithMetricIds(metricIds.keys()) %} 
-
-{% for g in selectGroups.keys() %} 
+{% for g in selectGroups.keys() %}
+  <a href="#{{ g }}">{{ g }}</a> </br>
   {% for sg in selectGroups[g] %}
-    <a href="#{{g}}_{{sg}}">{{g}} : {{sg}}</a><br>
+    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
  {% endfor %}
 {% endfor %}
 
@@ -23,70 +20,66 @@
 
 {% block content %}
 
-{% if 'all' in metricIds.keys() %}
-  {% set metricIds = run.allMetricIds() %}
-{% endif %}
-
 {# show metric information for each metric selected from 'select' page #}
 
-{% set selectGroups = run.groupWithMetricIds(metricIds.keys()) %}
 {% for g in selectGroups.keys() %}
+ {% set groupstart = True %}
  {% for sg in selectGroups[g] %}
-  <a name = "{{g}}_{{sg}}"> </a>
-  {% set subsetMetricIds = run.metricIdsInSubgroup(metricIds.keys(), g, sg) %}
-  {% for metricId in subsetMetricIds %}  
-  {% set metric = run.metricWithMetricId(metricId) %}   
-  {% set plotdict = run.plotsForMetric(metric) %}
-  {% set metricInfo = run.metricInfo(metric) %}
-   <div>
-    <b>
-  {% for key in metricInfo %}
-   {{ '%s' %(metricInfo[key][0]) }}  /
-  {% endfor %}
-  </b>
-
-  {# Add the plots for this metric #}
-  {% if plotdict|length > 0 %}
-    <p>
-    </br>
-  {% for ptype, pfile in plotdict.iteritems() %}
-    {% set plotfile = run.getPlotfile(pfile) %}
-    {% set thumbfile = run.getThumbfile(pfile) %}
-    <a href="{{plotfile}}"> 
-          <img class="thumbnail" src='{{thumbfile}}'></a>
-  {% endfor  %}
-   </p>
-  {% endif %}
-
-   <p>
-  {% set caption = run.captionForMetric(metric) %}
-  {{ caption }}
-  </p>
-
-  {# Add the summary stats for this metric #} 
-  {% set stats = run.statsForMetric(metric) %}
-  {% set statdict = run.statDict(stats) %}
-  <table class="blank">
-  {% for name in statdict.keys() %}
-   <tr>
-   <td class="blank">
-   <i>{{ name }}:</i>
-   </td>
-   <td class="blank">
-   {% if name == 'Count' %}
-      {{ '%d'|format(statdict[name]) }}
-   {% else %}
-      {{ '%.2f'|format(statdict[name])}}
+   {% if groupstart == True %}
+      <a name = "{{g}}" </a>
+      {% set groupstart = False %}
    {% endif %}
-   </td> 
-   </tr>
-  {% endfor %}
-   </table>
-  </div>
-  <hr>
-  {% endfor %}
+   <a name = "{{g}}_{{sg}}"> </a>
+  {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
+  {% for metric in subsetMetrics %}  
+    {% set metricInfo = run.metricInfo(metric) %}
+    <div>
+    <b>
+    {% for key in metricInfo %}
+     {{ '%s' %(metricInfo[key]) }}  /
+    {% endfor %}
+    </b>
+    {# Add the plots for this metric #}
+    {% set plotdict = run.plotsForMetric(metric) %}
+    {% if plotdict|length > 0 %}
+     <p>
+     </br>
+     {% for ptype, plot in plotdict.iteritems() %}
+      {% set plotfile = run.getPlotfile(plot) %}
+      {% set thumbfile = run.getThumbfile(plot) %}
+       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+      {% endfor  %}
+     </p>
+    {% endif %}
+
+    <p>
+    {% set caption = run.captionForMetric(metric) %}
+    {{ caption }}
+    </p>
+
+    {# Add the summary stats for this metric #} 
+    {% set stats = run.statsForMetric(metric) %}
+    {% set statdict = run.statDict(stats) %}
+    <table class="blank">
+    {% for name in statdict.keys() %}
+     <tr>
+     <td class="blank">
+     <i>{{ name }}:</i>
+     </td>
+     <td class="blank">
+     {% if name == 'Count' %}
+      {{ '%d'|format(statdict[name]) }}
+     {% else %}
+      {{ '%.2f'|format(statdict[name])}}
+     {% endif %}
+     </td> 
+     </tr>
+    {% endfor %}
+    </table>
+    </div>
+    <hr>
+   {% endfor %}
  {% endfor %}
 {% endfor %}
-
 
 {% endblock %}

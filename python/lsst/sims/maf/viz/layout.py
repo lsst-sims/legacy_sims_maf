@@ -13,13 +13,13 @@ class layoutResults(object):
         This class provides methods used by our jinja2 templates to help interact
         with the outputs of MAF. 
         """
-        if outDir == '.':
-            raise Exception('Cannot run showMaf.py from within the output directory. '
-                            'Go up a level and try again.')
-
         self.outDir = outDir
 
-        self.configSummary = os.path.join(self.outDir, 'configSummary.txt')
+        if self.outDir == '.':
+            raise Exception("showMaf.py does not support viewing metric results from within the current directory."
+                            "\n Please 'cd' one level up and run again, explicitly specifying this directory. ")
+
+        self.configSummary = self._makefilename('configSummary.txt')
         if not os.path.isfile(self.configSummary):
             self.configSummary = 'Config Summary Not Available'
             self.runName = 'RunName Not Available'
@@ -29,7 +29,7 @@ class layoutResults(object):
             spot = config.find('RunName')
             self.runName = config[spot:spot+300].split(' ')[1]
 
-        self.configDetails = os.path.join(self.outDir, 'configDetails.txt')
+        self.configDetails = self._makefilename('configDetails.txt')
         if not os.path.isfile(self.configDetails):
             self.configDetails = 'Config Details Not Available.'
 
@@ -49,6 +49,7 @@ class layoutResults(object):
         self.displays = database.queryDatabase('displays', 'select * from displays')
         # Combine metrics and displays arrays (these are one-to-one).
         self.metrics = rec_join('metricId', self.metrics, self.displays)
+        self.metrics = self.sortMetrics(self.metrics)
         del self.displays
         # Get plot and summary stat info.
         self.plots = database.queryDatabase('plots', 'select * from plots')
@@ -74,116 +75,125 @@ class layoutResults(object):
                                  'm3Sigma', 'p3Sigma']
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
+        
+    def _makefilename(self, filename):
+        """
+        Utility to join the filepath (outDir) and a filename.
 
-    def _convertMetricId(self, metricId):
+        Attempt to support running MAF from within the output directory
+        (os.path.join with '.' as start of filename doesn't work).
+
+        But this doesn't work either. 
+        """
+        if self.outDir == '.':
+            return filename
+        else:
+            return os.path.join(self.outDir, filename)
+
+    ## Methods to deal with metricIds
+                
+    def _intMetricId(self, metricId):
+        """
+        Return 'metricId' as an int.
+
+        Select methods from HTML often return list items or strings.
+        By calling this first on any individual metricId passed here, we can be sure it's an int.
+        """
         if not isinstance(metricId, int):
             if isinstance(metricId, list):
                 metricId = metricId[0]
             metricId = int(metricId)
         return metricId
-                                                   
+                                       
+    def convertSelectToMetrics(self, selectDict):
+        """
+        Convert the dict of values returned by 'select metrics' template page 
+        into an appropriate numpy recarray of metrics (in sorted order).
+        """
+        if 'all' in selectDict:
+            metrics = self.metrics
+        else:            
+            metricIds = []
+            for k, v in selectDict.items():
+                if k.startswith('Group'):
+                    group = v[0].split('__')[0]
+                    subgroup = v[0].split('__')[1]
+                    mIds = self.metricIdsInSubgroup(group, subgroup)
+                    for mId in mIds:
+                        metricIds.append(mId)
+                else:
+                    metricIds.append(self._intMetricId(v))
+            metrics = self.metricIdsToMetrics(metricIds)
+        return self.sortMetrics(metrics)
 
-    def allMetricIds(self):
+    def metricIdsInSubgroup(self, group, subgroup):
         """
-        Return a dict of key=metricId / value = metricId, for all metricIds.
+        Return the metricIds within a given group/subgroup.
         """
-        metricDict = {}
-        for m in self.metrics['metricId']:
-            key = '%s' %(m)
-            metricDict[key] = [key]
-        return metricDict
-        
-    def orderMetricIds(self, metricIds):
-        """
-        Given a list of metric Ids, return them in group/subgroup/order/metricName order. 
-        """
-        metricIdList = []
-        for mId in metricIds:
-            mId = self._convertMetricId(mId)
-            metricIdList.append(mId)
-        metricIds = metricIdList
-        orderMIds = []
-        groupDict = self.groupWithMetricIds(metricIds)
-        for g in groupDict:
-            for sg in groupDict[g]:
-                metrics = self.metricsInSubgroup(g, sg)
-                metrics = self.sortMetrics(metrics)
-                for mId in metrics['metricId']:
-                    if mId in metricIds:
-                        orderMIds.append(mId)            
-        return orderMIds
-
-    def groupWithMetricIds(self, metricIds):
-        """
-        Given a list of metric Ids, generate the ordered dict of relevant group/subgroups. 
-        """
-        groups = []
-        subgroups = []
-        for mId in metricIds:
-            mId = self._convertMetricId(mId)
-            match = (self.metrics['metricId'] == mId)
-            groups.append(self.metrics['displayGroup'][match])
-            subgroups.append(self.metrics['displaySubgroup'][match])
-        groupDict = OrderedDict()
-        for g in self.groups:
-            if g in groups:
-                groupDict[g] = []
-                for sg in self.groups[g]:
-                    if sg in subgroups:
-                        groupDict[g].append(sg)
-        return groupDict
-                
-
-    def metricIdsInSubgroup(self, metricIds, group, subgroup):
-        """
-        Return a list of the subset of metricIds which are within a group/subgroup.
-        """
-        metricIdList = []
-        for mId in metricIds:
-            mId = self._convertMetricId(mId)
-            metricIdList.append(mId)
-        metricIds = metricIdList
-        # Find all metrics in this group/subgroup.
         metrics = self.metricsInSubgroup(group, subgroup)
-        orderMIds = []
-        for m in metrics:
-            if m['metricId'] in metricIds:
-                orderMIds.append(m['metricId'])
-        return orderMIds
-        
-    def sortMetrics(self, metrics, order=['displayGroup','displaySubgroup','displayOrder', 
-                                          'slicerName', 'metricName', 'metricMetadata']):
+        metricIds = metrics['metricId']
+        return list(metricIds)
+    
+    def metricIdsToMetrics(self, metricIds):
         """
-        Sort the metrics by group, subgroup, order, and then finally 'metricName'. 
+        Return an ordered numpy recarray of metrics matching metricIds.
+        """
+        metrics = np.empty(len(metricIds), dtype=self.metrics.dtype)
+        for i, mId in enumerate(metricIds):
+            mId = self._intMetricId(mId)
+            match = (self.metrics['metricId'] == mId)
+            metrics[i] = self.metrics[match]
+        return metrics
+            
+    ## Methods to deal with metrics in numpy recarray.
+        
+    def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup', 'metricName', 'displayOrder', 
+                                          'slicerName', 'metricMetadata']):
+        """
+        Sort the metrics by group, subgroup, order, slicer, and then finally 'metricName'. 
         """
         return np.sort(metrics, order=order)    
 
-    def metricsInGroup(self, group):
+    def metricsInGroup(self, group, metrics=None):
         """
-        Given a group, return the metrics belonging to this group.
+        Given a group, return the metrics belonging to this group, in display order.
         """
-        match = (self.metrics['displayGroup'] == group)
-        return self.metrics[match]
+        if metrics is None:
+            metrics = self.metrics
+        match = (metrics['displayGroup'] == group)
+        return self.sortMetrics(metrics[match])
         
-    def metricsInSubgroup(self, group, subgroup):
+    def metricsInSubgroup(self, group, subgroup, metrics=None):
         """
         Given a group and subgroup, return the metrics belonging to these group/subgroups, in display order.
+
+        If 'metrics' is provided, then only consider this subset of metrics.
         """
-        metrics = self.metricsInGroup(group)
+        metrics = self.metricsInGroup(group, metrics)
         match = (metrics['displaySubgroup'] == subgroup)
-        return self.sortMetrics(metrics[match])
+        metrics = metrics[match]
+        return self.sortMetrics(metrics)
 
-    def metricWithMetricId(self, metricId):
+    def metricsToSubgroups(self, metrics):
         """
-        Given a single metric ID, return the metric which matches.
+        Given a recarray of metrics, return an ordered dict of their group/subgroups.
         """
-        metricId = self._convertMetricId(metricId)
-        match = (self.metrics['metricId'] == metricId)
-        return self.sortMetrics(self.metrics[match])
-
+        metrics = self.sortMetrics(metrics)
+        grouplist= sorted(list(np.unique(metrics['displayGroup'])))
+        groups = OrderedDict()
+        for g in grouplist:
+            groups[g] = set()
+        for metric in metrics:
+            groups[metric['displayGroup']].add(metric['displaySubgroup'])
+        for g in groups:
+            groups[g] = sorted(list(groups[g]))
+        return groups
+            
     def metricInfo(self, metric):
         """
         Return a dict with the metric info we want to show on the webpages.
+
+        Currently : MetricName / Slicer/ Metadata.
         """
         # Provides a way to easily modify what we show on all webpages without
         #  significantly altering the templates. Or provides an abstraction layer 
@@ -198,8 +208,10 @@ class layoutResults(object):
         """
         Return the caption for a given metric.
         """
-        return metric['displayCaption'][0]
+        return metric['displayCaption']
 
+    ## Methods for plots.
+    
     def plotsForMetric(self, metric):
         """
         Return an ordered dict with the plots matching a given metric.
@@ -210,32 +222,29 @@ class layoutResults(object):
         plotTypes = list(matchPlots['plotType'])
         for o in self.plotOrder:
             if o in plotTypes:
-                plotDict[o] = matchPlots['plotFile'][np.where(matchPlots['plotType'] == o)][0]
+                plotDict[o] = matchPlots[np.where(matchPlots['plotType'] == o)][0]
                 plotTypes.remove(o)
         for p in plotTypes:
-            plotDict[p] = matchPlots['plotFile'][np.where(matchPlots['plotType'] == p)][0]
+            plotDict[p] = matchPlots[np.where(matchPlots['plotType'] == p)][0]
         return plotDict
 
-    def getThumbfile(self, plotfile):
+    def getThumbfile(self, plot):
         """
-        Convert a plot filename into the expected thumbnail file name.
+        Return the thumbnail file name for a given plot.
         """
-        path, file = os.path.split(plotfile)        
-        if path == '':
-            path = self.outDir
-        thumbname =  'thumb.' + ''.join(file.split('.')[:-1]) + '.png'
-        thumbfile = os.path.join(path, thumbname)
+        thumbname =  'thumb.' + ''.join(plot['plotFile'].split('.')[:-1]) + '.png'
+        thumbfile = self._makefilename(thumbname)
         return thumbfile
 
     def getPlotfile(self, plot):
         """
-        Return the filename of a particular plot.
+        Return the filename for a given plot.
         """
-        if isinstance(plot, str):
-            return os.path.join(self.outDir, plot)
-        else:
-            return os.path.join(self.outDir, plot['plotFile'])
+        return self._makefilename(plot['plotFile'])
 
+
+    ## Set of methods to deal with stats.
+    
     def statsForMetric(self, metric):
         """
         Return the summary statistics which match a given metric.
@@ -245,13 +254,11 @@ class layoutResults(object):
     
     def statDict(self, stats):
         """
-        Utility to turn a single (or multiple) stat lines from numpy structured array into dict. 
+        Returns an ordered dictionary with statName/statValue for numpy recarray of stats.
 
         Note that if you pass 'stats' from multiple metrics with the same summary names, they
          will be overwritten in the resulting dictionary! So just use stats from one metric.
         """
-        # Provides way that templates do not have to know exact field names in resultsDB,
-        #  plus allows packaging multiple stats into a single dictionary. 
         # Result = dict with key == summary stat name, value = summary stat value. 
         sdict = OrderedDict()
         statnames = self.orderStatNames(stats)

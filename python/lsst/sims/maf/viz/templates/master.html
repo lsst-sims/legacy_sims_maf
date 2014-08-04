@@ -4,6 +4,7 @@
 <head>
 
 <style>
+
 table,th,td
 {
 border:1px solid black;
@@ -19,7 +20,6 @@ th, td
 padding:5px;
 text-align:left;
 }
-
 
 table.blank, th.blank, td.blank
 {
@@ -50,10 +50,15 @@ text-indent:5px;
 line-height:130%;
 }
 
+#indent
+{
+text-indent:25px
+}
+
 #sidebar
 {
 background-color:#E8E8E8;
-width:190px;
+width:160px;
 float:left;
 margin:0
 padding:1em
@@ -61,7 +66,7 @@ padding:1em
 
 #content
 {
-margin-left: 190px;
+margin-left: 160px;
 padding: 1em;
 }
 
@@ -82,7 +87,8 @@ padding: 1em;
 
 <div id="sidebar">
 {% block sidebar %}
-<a href="metricSelect">Select Metrics</a></br>
+</br>
+<a href="/">Select Metrics</a></br>
 <a href="configParams">Opsim Configuration</a> </br>
 <a href="summaryStats">Summary Statistics</a> </br>
 <a href="monster">All Results</a></br>
