@@ -85,7 +85,7 @@ class OneDSlicer(BaseSlicer):
         self.simIdxs = np.argsort(simData[self.sliceColName])
         simFieldsSorted = np.sort(simData[self.sliceColName])
         # "left" values are location where simdata == bin value
-        self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
+        self.left = np.searchsorted(simFieldsSorted, self.bins, 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
         # Set up _sliceSimData method for this class.
         @wraps(self._sliceSimData)
