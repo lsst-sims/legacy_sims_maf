@@ -167,13 +167,16 @@ class RunSliceMetric(BaseSliceMetric):
             if len(self.metricObjs[iid].reduceFuncs.keys()) ==0:
                 continue
             # Apply reduce functions 
-            self.reduceMetric(iid, self.metricObjs[iid].reduceFuncs.values())            
+            self.reduceMetric(iid, self.metricObjs[iid].reduceFuncs.values(),
+                              self.metricObjs[iid].reduceOrder.values())            
                 
-    def reduceMetric(self, iid, reduceFunc):
+    def reduceMetric(self, iid, reduceFunc, reduceOrder=None):
         """
         Run 'reduceFunc' (method on metric object) on self.metricValues[iid].
     
         reduceFunc can be a list of functions to be applied to the same metric data.
+        reduceOrder can be list of integers to add to the displayDict['order'] value for each
+          reduced metric value (can also be None). 
         """
         if not isinstance(reduceFunc, list):
             reduceFunc = [reduceFunc,]
@@ -182,18 +185,27 @@ class RunSliceMetric(BaseSliceMetric):
         metricName = self.metricNames[iid]
         for r in reduceFunc:
             rNames.append(metricName + '_' + r.__name__.replace('reduce',''))
+        # Make sure reduceOrder is available.
+        if reduceOrder is None:
+            reduceOrder = np.zeros(len(reduceFunc), int)
+        if len(reduceOrder) < len(reduceFunc):
+            rOrder = np.zeros(len(reduceFunc), int) + len(reduceFunc)
+            for i, r in enumerate(reduceOrder):
+                rOrder[i] = r
+            reduceOrder = rOrder.copy()
         # Set up reduced metric values masked arrays, copying metricName's mask,
         # and copy metadata/plotparameters, etc.
         riids = np.arange(self.iid_next, self.iid_next+len(rNames), 1)
         self.iid_next = riids.max() + 1
-        for riid, rName in zip(riids, rNames):
+        for riid, rName, rOrder in zip(riids, rNames, reduceOrder):
            self.metricNames[riid] = rName
            self.slicers[riid] = self.slicer
            self.simDataNames[riid] = self.simDataNames[iid]
            self.sqlconstraints[riid] = self.sqlconstraints[iid]
            self.metadatas[riid] = self.metadatas[iid]
            self.plotParams[riid] = self.plotParams[iid]
-           self.displayDicts[riid] = self.displayDicts[iid]
+           self.displayDicts[riid] = self.displayDicts[iid].copy()
+           self.displayDicts[riid]['order'] = self.displayDicts[riid]['order'] + rOrder
            self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                     mask = self.metricValues[iid].mask,
                                                     fill_value=self.slicer.badval)

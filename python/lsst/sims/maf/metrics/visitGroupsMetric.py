@@ -32,6 +32,9 @@ class VisitGroupsMetric(BaseMetric):
         self.window = window
         self.minNNights = minNNights
         super(VisitGroupsMetric, self).__init__(col=[self.times, self.nights], **kwargs)
+        self.reduceOrder = {'Median':0, 'NNightsWithNVisits':1, 'NVisitsInWindow':2, 
+                            'NNightsInWindow':3, 'NLunations':4, 'MaxSeqLunations':5}
+
 
     def run(self, dataSlice, slicePoint=None):
         """

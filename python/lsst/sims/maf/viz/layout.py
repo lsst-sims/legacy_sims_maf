@@ -73,7 +73,6 @@ class layoutResults(object):
 
         self.summaryStatOrder = ['Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
                                  'm3Sigma', 'p3Sigma']
-
         # Add in the table fraction sorting.  
         tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
         if len(tableFractions) > 0:
