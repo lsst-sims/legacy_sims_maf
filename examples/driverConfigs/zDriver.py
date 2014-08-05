@@ -75,7 +75,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
 
     m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Number of visits per night'}, 
                         summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
-    m2 = configureMetric('OpenShutterFracMetric',
+    m2 = configureMetric('OpenShutterFractionMetric',
                          summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night', 'binsize':1},
                              metricDict=makeDict(m1,m2),
