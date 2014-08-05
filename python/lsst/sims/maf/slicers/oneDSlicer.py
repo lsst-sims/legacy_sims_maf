@@ -138,8 +138,9 @@ class OneDSlicer(BaseSlicer):
             plt.bar(leftedge, metricValues.filled(), width, label=label,
                     linewidth=0, alpha=alpha, log=logScale, color=color)
         else:
-            x = np.ravel(zip(leftedge, leftedge+width))
-            y = np.ravel(zip(metricValues.filled(), metricValues.filled()))
+            good = np.where(metricValues.mask == False)
+            x = np.ravel(zip(leftedge[good], leftedge[good]+width[good]))
+            y = np.ravel(zip(metricValues[good], metricValues[good]))
             if logScale:
                 plt.semilogy(x, y, label=label, color=color, linestyle=linestyle, alpha=alpha)
             else:
