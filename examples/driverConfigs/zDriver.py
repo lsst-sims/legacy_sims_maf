@@ -40,8 +40,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'fO'},
                         plotDict={'units':'Number of Visits', 'xMin':0,
                                     'xMax':1500},
-                        summaryStats={'f0Area':{'nside':nside},
-                                        'f0Nv':{'nside':nside}})
+                        summaryStats={'fOArea':{'nside':nside},
+                                        'fONv':{'nside':nside}})
     slicer = configureSlicer('fOSlicer', kwargs={'nside':nside},
                             metricDict=makeDict(m1),
                             constraints=['',wfdWhere])
@@ -50,7 +50,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
     # Medians in r and i filters
     m1 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'}, summaryStats={'IdentityMetric':{}})
     m2 = configureMetric('MedianMetric', kwargs={'col':'airmass'}, summaryStats={'IdentityMetric':{}})
-    m3 = configureMetric('MedianMetric', kwargs={'col':'fivesigma_modified'}, summaryStats={'IdentityMetric':{}})
+    m3 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'}, summaryStats={'IdentityMetric':{}})
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1,m2,m3),
                             constraints=['filter = "r"', 'filter = "i"'])
     slicerList.append(slicer)
