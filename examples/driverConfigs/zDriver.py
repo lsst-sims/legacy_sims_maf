@@ -77,7 +77,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', **kwargs):
                         summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
     m2 = configureMetric('OpenShutterFracMetric',
                          summaryStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}})
-    slicer = configureSlicer('OneDSlicer', kwargs={'sliceDataColName':'night', 'binsize':1},
+    slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night', 'binsize':1},
                              metricDict=makeDict(m1,m2),
                              constraints=[''])
     slicerList.append(slicer)
