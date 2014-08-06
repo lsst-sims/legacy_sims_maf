@@ -5,6 +5,66 @@
 
 <style>
 
+#header
+{
+background-color:#A0A0A0;
+height:100%;
+width:100%;
+padding:10px;
+padding-left:20px;
+text-align:left;
+font-weight: bold;
+font-size:2em;
+}
+
+#navbar
+{
+display:block;
+background-color: #C0C0C0
+height:100%;
+width:100%;
+}
+
+#sidebar
+{
+display:block;
+background-color:#E8E8E8;
+width:160px;
+float:left;  
+height:650px; 
+padding:3px;
+margin:0;
+overflow:scroll;
+}
+
+#content
+{
+display:block;
+padding:5px;
+margin:0px; 
+margin-left: 170px;
+height:650px;
+width:860px;
+overflow:scroll;
+}
+
+#footer
+{
+display:block;
+background-color:#A0A0A0;
+clear:both;  
+text-align:center;
+margin:0px;
+}
+
+#metricset
+{
+margin:0px;
+margin-bottom:40px;
+border-bottom:1px solid gray;
+}
+
+
 table,th,td
 {
 border:1px solid black;
@@ -39,14 +99,11 @@ text-align:left;
 }
 
 .thumbnail {
-    height: 250px;
-    margin: 5px;
+    height: 200px;
+    padding:0px;
+    margin: 0px;
 }
 
-.text_line {
-    clear: both;
-    margin-bottom: 2px;
-}
 
 p
 {
@@ -56,7 +113,7 @@ line-height:130%;
 
 ul
 {
-list-style-type: square;
+list-style-type: dot;
 padding-left:20px;
 padding-bottom:20px;
 padding-top:5px;
@@ -70,39 +127,39 @@ padding-left:0px;
 padding-bottom:5px;
 }
 
+
+ul.nav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+li.nav {
+    float: left;
+}
+
+a.nav:link, a.nav:visited {
+    display: block;
+    border:1px solid gray;
+    margin:2px;
+    width: 150px;
+    font-weight: bold;
+    color: black;
+    background-color: #C0C0C0;
+    text-align: center;
+    padding: 5px;
+    text-decoration: none;
+}
+
+a.nav:hover, a.nav:active {
+    background-color: #808080;
+}
+
+
 #indent
 {
 text-indent:25px
-}
-
-#header
-{
-background-color:#A0A0A0;
-height:45px;
-width=100%;
-}
-
-#sidebar
-{
-background-color:#E8E8E8;
-width:170px;
-height=700px;
-float:left;
-padding:1em;
-margin:0;
-}
-
-#content
-{
-padding: 1em; 
-margin-left: 170px;
-height:700px;
-overflow:scroll;
-}
-
-#mset
-{
-margin-bottom:40px;
 }
 
 </style>
@@ -110,26 +167,25 @@ margin-bottom:40px;
 </head>
 
 
-<body>
-
-<div id="container" style="width:100%">
+<body style="display:block;margin:0px;position:relative; top:0px;">
 
 <div id="header">
-{% block header %}
-<h1>{%block title %}OpSim Run: {{ run.runName }} {% endblock %}</h1>
+{%block title %}OpSim Run: {{ run.runName }} {% endblock %}
+</div>
+
+<div id="navbar">
+{% block navbar %}
+<ul class="nav">
+<li class="nav"><a class="nav" href="/">Select Metrics</a></li>
+<li class="nav"><a class="nav" href="configParams">Opsim Configuration</a> </li>
+<li class="nav"><a class="nav" href="summaryStats">Summary Statistics</a> </li>
+<li class="nav"><a class="nav" href="allResults">All Results</a></li>
+</ul>
 {% endblock %}
 </div>
 
 <div id="sidebar">
-{% block sidebar %}
-<ul>
-<li><a href="/">Select Metrics</a></li>
-<li><a href="configParams">Opsim Configuration</a> </li>
-<li><a href="summaryStats">Summary Statistics</a> </li>
-<li><a href="allResults">All Results</a></li>
-</ul>
 {% block moresidebar %}
-{% endblock %}
 {% endblock %}
 </div>
 
@@ -138,11 +194,10 @@ margin-bottom:40px;
 {% endblock %}
 </div>
 
-<div id="footer" style="background-color:#A0A0A0;clear:both;text-align:center;">
+<div id="footer">
 <a
   href="https://confluence.lsstcorp.org/display/SIM/MAF+documentation"
   target="_blank">
   LSST Metrics Analysis Framework (MAF)</a>
-</div>
 </div>
 

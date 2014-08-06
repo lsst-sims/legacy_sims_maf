@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 import numpy as np
-from numpy.lib.recfunctions import rec_join
+from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
 
 class layoutResults(object):
@@ -49,17 +49,24 @@ class layoutResults(object):
         self.displays = database.queryDatabase('displays', 'select * from displays')
         # Combine metrics and displays arrays (these are one-to-one).
         self.metrics = rec_join('metricId', self.metrics, self.displays)
+        # Add base metric names (to keep order for reduce methods).
+        baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S20')])
+        for i, m in enumerate(self.metrics):
+            baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]            
+        self.metrics = merge_arrays([self.metrics, baseNames], flatten=True, usemask=False)
         self.metrics = self.sortMetrics(self.metrics)
         del self.displays
         # Get plot and summary stat info.
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
+        # Remove metrics which have no summary stats or plots.
+
         # Make empty arrays if there was nothing in the database
         if len(self.plots) == 0:
-            self.plots = np.zeros(0, dtype=[('metricId',int),('plotFile', '|S10')])
+            self.plots = np.zeros(0, dtype=[('metricId',int), ('plotFile', '|S10')])
         if len(self.stats) == 0:
-            self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'),('summaryValue', float)])
+            self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'), ('summaryValue', float)])
 
         # Pull up the names of the groups and subgroups. 
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
@@ -152,10 +159,11 @@ class layoutResults(object):
             
     ## Methods to deal with metrics in numpy recarray.
         
-    def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup', 'metricName', 'displayOrder', 
+    def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup',
+                                          'baseMetricNames', 'displayOrder', 
                                           'slicerName', 'metricMetadata']):
         """
-        Sort the metrics by group, subgroup, order, slicer, and then finally 'metricName'. 
+        Sort the metrics by group, subgroup, base metric name (pre '_'), order, slicer, and then finally metadata. 
         """
         return np.sort(metrics, order=order)    
 

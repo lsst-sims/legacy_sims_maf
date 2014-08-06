@@ -34,23 +34,21 @@
   {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
-    <div id="mset">
+    <div id="metricset">
     <b>
     {% for key in metricInfo %}
      {{ '%s' %(metricInfo[key]) }}  /
     {% endfor %}
     </b>
+    </br>
     {# Add the plots for this metric #}
     {% set plotdict = run.plotsForMetric(metric) %}
     {% if plotdict|length > 0 %}
-     <p>
-     </br>
      {% for ptype, plot in plotdict.iteritems() %}
       {% set plotfile = run.getPlotfile(plot) %}
       {% set thumbfile = run.getThumbfile(plot) %}
        <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
       {% endfor  %}
-     </p>
     {% endif %}
 
     <p>

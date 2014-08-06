@@ -36,9 +36,9 @@ than per metric. #}
    <a name = "{{g}}_{{sg}}"><i>Group: {{g}};  Subgroup: {{sg}}</i> </a>
    </p>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
+  <div id="metricset">
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
-    <div id="mset">
     <b>
     {% for key in metricInfo %}
      {{ '%s' %(metricInfo[key]) }}  /
@@ -112,8 +112,7 @@ than per metric. #}
       {% endfor %}	   
       </table>
      {% endif %}      
-   </div>   
-   <hr>
+   </div>
    
  {% endfor %}
 {% endfor %}
