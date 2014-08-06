@@ -53,11 +53,11 @@ class TestOneDSlicerSetup(unittest.TestCase):
                 dvmax = 1
                 dv = makeDataValues(nvalues, dvmin, dvmax, random=False)
                 # Right number of bins? 
-                # expect one more 'bin' to accomodate last right edge), but nbins accounts for this
+                # expect two more 'bins' to accomodate padding on left/right
                 self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
                 self.testslicer.setupSlicer(dv)
-                self.assertEqual(self.testslicer.nslice, nbins)
-                # Bins of the right size?
+                self.assertEqual(self.testslicer.nslice, nbins+2)
+                # Bins of the right size? (size of bins not affected by extra 2 bins)
                 bindiff = np.diff(self.testslicer.bins)
                 expectedbindiff = (dvmax - dvmin) / float(nbins)
                 np.testing.assert_allclose(bindiff, expectedbindiff)
@@ -72,8 +72,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
             warnings.simplefilter("always")
             self.testslicer.setupSlicer(dv)
             self.assertTrue("creasing binMax" in str(w[-1].message))
-        print len(self.testslicer)
-        self.assertEqual(self.testslicer.nslice, nbins)
+        self.assertEqual(self.testslicer.nslice, nbins+2)
                             
 
     def testSetupSlicerEquivalent(self):
@@ -91,15 +90,20 @@ class TestOneDSlicerSetup(unittest.TestCase):
 
     def testSetupSlicerLimits(self):
         """Test setting up slicer using binMin/Max."""
-        binMin = .1
-        binMax = .8
-        dvmin = 0
-        dvmax = 1
+        binMin = 0
+        binMax = 1
+        nbins = 10
+        dvmin = -.5
+        dvmax = 1.5
         dv = makeDataValues(1000, dvmin, dvmax, random=True)
-        self.testslicer = OneDSlicer(sliceColName='testdata', binMin=binMin, binMax=binMax)
+        self.testslicer = OneDSlicer(sliceColName='testdata',
+                                     binMin=binMin, binMax=binMax, bins=nbins)
         self.testslicer.setupSlicer(dv)
-        self.assertAlmostEqual(self.testslicer.bins.min(), binMin)
-        self.assertAlmostEqual(self.testslicer.bins.max(), binMax)
+        # oneDslicer adds extra upper/lower bin to make plots nicer.
+        #  So binMin/Max used to create binsize or number of bins, but then adjusted.
+        # Here would have 10 bins between 0 and 1, then add two more at ends.
+        self.assertAlmostEqual(self.testslicer.bins.min(), binMin-(binMax-binMin)/float(nbins))
+        self.assertAlmostEqual(self.testslicer.bins.max(), binMax+(binMax-binMin)/float(nbins))
 
     def testSetupSlicerBinsize(self):
         """Test setting up slicer using binsize."""
@@ -108,11 +112,9 @@ class TestOneDSlicerSetup(unittest.TestCase):
         dv = makeDataValues(1000, dvmin, dvmax, random=True)
         # Test basic use.
         binsize=0.5
-        self.testslicer = OneDSlicer(sliceColName='testdata',binsize=binsize)
+        self.testslicer = OneDSlicer(sliceColName='testdata', binsize=binsize)
         self.testslicer.setupSlicer(dv)
-        self.assertEqual(self.testslicer.bins.min(), dvmin)
-        self.assertEqual(self.testslicer.bins.max(), dvmax)
-        self.assertEqual(self.testslicer.nslice, (dvmax-dvmin)/binsize)
+        self.assertEqual(self.testslicer.nslice, (dvmax-dvmin)/binsize+2)
         # Test that warning works.
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -129,12 +131,10 @@ class TestOneDSlicerSetup(unittest.TestCase):
         dv = makeDataValues(1000, dvmin, dvmax, random=True)
         self.testslicer = OneDSlicer(sliceColName='testdata', bins=None)
         self.testslicer.setupSlicer(dv)
-        self.assertEqual(self.testslicer.bins.min(), dvmin)
-        self.assertEqual(self.testslicer.bins.max(), dvmax)
         # How many bins do you expect from optimal binsize?
         from lsst.sims.maf.utils import optimalBins
         bins = optimalBins(dv['testdata'])
-        np.testing.assert_equal(self.testslicer.nslice, bins)
+        np.testing.assert_equal(self.testslicer.nslice, bins+2)
 
                 
 class TestOneDSlicerIteration(unittest.TestCase):
@@ -282,10 +282,10 @@ class TestOneDSlicerHistogram(unittest.TestCase):
 if __name__ == "__main__":
     suitelist = []
     suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSetup))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerIteration))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerEqual))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSlicing))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerHistogram))
+    #suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerIteration))
+    #suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerEqual))
+    #suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSlicing))
+    #suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerHistogram))
     suite = unittest.TestSuite(suitelist)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
-    unittest.main()
+    unittest.TextTestRunner(verbosity=2).run(suite)
+    #unittest.main()

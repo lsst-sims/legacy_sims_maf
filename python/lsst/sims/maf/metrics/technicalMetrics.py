@@ -23,7 +23,7 @@ class OpenShutterFractionMetric(BaseMetric):
        self.exptimeCol = exptimeCol
        self.slewTimeCol = slewTimeCol
        super(OpenShutterFractionMetric,self).__init__(col=[self.exptimeCol, self.slewTimeCol],
-                                                  metricName=metricName, units='frac')
+                                                        units='frac')
        self.units = 'OpenShutter/TotalTime'
        self.readTime = readTime
        self.shutterTime = shutterTime
