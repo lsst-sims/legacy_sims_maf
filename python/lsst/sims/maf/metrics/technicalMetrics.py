@@ -7,7 +7,7 @@ class OpenShutterMetric(BaseMetric):
    def __init__(self, readTime=2., shutterTime=2.,
                 metricName='OpenShutterMetric',
                 exptimeCol='visitExpTime', **kwargs):
-        self.exptimeCol = exptimeCol
+        self.exptimeCol = exptimeCol        
         super(OpenShutterMetric,self).__init__(col=self.exptimeCol, metricName=metricName, units='sec')
         self.readTime = readTime
         self.shutterTime = shutterTime
@@ -18,12 +18,12 @@ class OpenShutterMetric(BaseMetric):
 
 class OpenShutterFractionMetric(BaseMetric):
    """Compute the fraction of time the shutter is open compared to the total time spent observing. """
-   def __init__(self, readTime=2., shutterTime=2,
+   def __init__(self, readTime=2., shutterTime=2, metricName='OpenShutterFraction',
                 slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):
        self.exptimeCol = exptimeCol
        self.slewTimeCol = slewTimeCol
        super(OpenShutterFractionMetric,self).__init__(col=[self.exptimeCol, self.slewTimeCol],
-                                                        units='frac')
+                                                      metricName=metricName, units='frac')
        self.units = 'OpenShutter/TotalTime'
        self.readTime = readTime
        self.shutterTime = shutterTime
