@@ -141,9 +141,10 @@ class BaseMetric(object):
                 units = ''
         self.units = units
         # Set more plotting preferences (at the very least, the units).
-        self.plotParams = plotParams
-        if self.plotParams is None:
+        if plotParams is None:
             self.plotParams = {}
+        else:
+            self.plotParams = plotParams.copy()
         if 'units' not in self.plotParams:
             self.plotParams['units'] = self.units
         if 'zp' in self.plotParams:
@@ -171,7 +172,8 @@ class BaseMetric(object):
         if displayDict is None:
             self.displayDict = defaultDisplayDict
         else:
-            defaultDisplayDict.update(displayDict)
+            self.displayDict = displayDict.copy()
+            defaultDisplayDict.update(self.displayDict)
             self.displayDict = defaultDisplayDict
 
     def run(self, dataSlice, slicePoint=None):

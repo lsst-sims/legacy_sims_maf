@@ -139,6 +139,8 @@ class ResultsDb(object):
         displaySubgroup = displayDict['subgroup']
         displayOrder = displayDict['order']
         displayCaption = displayDict['caption']
+        if displayCaption.endswith('(auto)'):
+            displayCaption = displayCaption.replace('(auto)', '', 1)
         displayinfo = DisplayRow(metricId=metricId, 
                                  displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
                                  displayOrder=displayOrder, displayCaption=displayCaption)

@@ -277,37 +277,39 @@ class RunSliceMetric(BaseSliceMetric):
            self.captionMetric(iid)
 
     def captionMetric(self, iid):
-       """
-       Auto generate caption for a given metric.
-       """
-       displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
-       if self.displayDicts[iid]['caption'] == 'None':
+        """
+        Auto generate caption for a given metric.
+        """
+        displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
+        if (self.displayDicts[iid]['caption'] == 'None') or \
+            (self.displayDicts[iid]['caption'].endswith('(auto)')):
           caption = ''
           plotTypes = self.slicer.plotFuncs.keys()
           if len(plotTypes) > 0:
-             caption += 'Plots (' 
-             ptypes = []
-             for p in displayOrder:
+            caption += 'Plots (' 
+            ptypes = []
+            for p in displayOrder:
                 if p in plotTypes:
-                   ptypes.append(p)
-                   plotTypes.remove(p)
-             for r in plotTypes:
+                    ptypes.append(p)
+                    plotTypes.remove(p)
+            for r in plotTypes:
                 ptypes.append(r)                   
-             for p in ptypes:
+            for p in ptypes:
                 caption += '%s, ' %(p.replace('plot', ''))
-             caption = caption[:-2] + ') for '
+            caption = caption[:-2] + ') for '
           caption += '%s ' %(self.metricNames[iid])
           caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
           if len(self.metadatas[iid].strip()) > 0:
-             caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
+            caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
           if 'zp' in self.plotParams[iid]:
-             caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotParams[iid]['zp'])
+            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotParams[iid]['zp'])
           if 'normVal' in self.plotParams[iid]:
-             caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotParams[iid]['normVal'])
+            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotParams[iid]['normVal'])
+          caption += '(auto)' 
           self.displayDicts[iid]['caption'] = caption
-       if self.resultsDb:
+        if self.resultsDb:
           if iid not in self.metricIds:
-             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
+            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                             self.simDataNames[iid], self.sqlconstraints[iid],
                                                             self.metadatas[iid], 'NULL')
           if self.displayDicts[iid]['subgroup'] == 'None':

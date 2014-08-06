@@ -120,7 +120,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                               plotDict={'normVal':nvisitBench[f], 'logScale':False,
                                         'xMin':0.5, 'xMax':1.5,
                                         'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
-                              displayDict={'group':'Nvisits', 'subgroup':'All Obs, ratio', 'order':filtorder[f],
+                              displayDict={'group':'Nvisits', 'subgroup':'All Props, ratio', 'order':filtorder[f],
                                           'caption':
                                           'Number of visits in filter %s divided by %s value (%d), all proposals.'
                                           %(f, benchmark, nvisitBench[f])})
@@ -228,7 +228,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     for f in filters:    
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsPerProp'},
                               plotDict={'units':'Number of Visits', 'cbarFormat':'%d', 'bins':50},
-                              displayDict={'group':'NVisits', 'subgroup':'PerProp', 'order':filtorder[f]})
+                              displayDict={'group':'Nvisits', 'subgroup':'PerProp', 'order':filtorder[f]})
         metricDict = makeDict(m1)
         constraints=[]
         for propid in propids:

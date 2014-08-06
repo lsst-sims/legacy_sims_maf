@@ -156,6 +156,18 @@ a.nav:hover, a.nav:active {
     background-color: #808080;
 }
 
+a.activenav:link, a.activenav:visited {
+    display: block;
+    border:1px solid gray;
+    margin:2px;
+    width: 150px;
+    font-weight: bold;
+    color: black;
+    background-color: #FFFFFF;
+    text-align: center;
+    padding: 5px;
+    text-decoration: none;
+}
 
 #indent
 {
@@ -173,14 +185,31 @@ text-indent:25px
 {%block title %}OpSim Run: {{ run.runName }} {% endblock %}
 </div>
 
+
+{% set navigation_bar = [
+    ('configParams', 'configs', 'Opsim Configuration'),
+    ('/', 'listMetrics', 'Metrics List'),
+    ('summaryStats', 'stats', 'Summary Stats'),
+    ('allResults', 'allResults', 'All Results')
+]  -%}
+{% set active_page = active_page|default('index') -%}
+
+
 <div id="navbar">
 {% block navbar %}
-<ul class="nav">
-<li class="nav"><a class="nav" href="/">Select Metrics</a></li>
-<li class="nav"><a class="nav" href="configParams">Opsim Configuration</a> </li>
-<li class="nav"><a class="nav" href="summaryStats">Summary Statistics</a> </li>
-<li class="nav"><a class="nav" href="allResults">All Results</a></li>
-</ul>
+  <ul class="nav">
+   {% for href, id, caption in navigation_bar %}
+    <li class="nav">
+    <a 
+     {% if id == active_page %}
+       class="activenav"
+     {% else %}
+       class="nav"
+     {% endif%}
+     href="{{ href|e }}">{{ caption|e }}</a>
+    </li>
+   {% endfor %}
+  </ul>
 {% endblock %}
 </div>
 

@@ -1,5 +1,7 @@
 {% extends "master.html" %}
 
+{% set active_page = "listMetrics" %}
+
 {% set selectMetrics = run.convertSelectToMetrics(selectDict) %}
 {% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
 
