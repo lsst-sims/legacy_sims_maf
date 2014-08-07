@@ -53,6 +53,9 @@ class SumMetric(BaseMetric):
 
 class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
+    def __init__(self, col=None, **kwargs):
+        super(CountMetric, self).__init__(col=col, **kwargs)
+        self.plotParams['cbarFormat'] = '%d'
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname]) 
 
@@ -93,18 +96,23 @@ class FracBelowMetric(BaseMetric):
         return fracBelow
 
 class NoutliersNsigma(BaseMetric):
-   """Calculate the # of Counts less than nSigma below the median (nSigma<0) or
-      more than nSigma above the median"""
-   def __init__(self, col=None, nSigma=3., **kwargs):
-      self.col = col
-      self.nSigma = nSigma
-      super(NoutliersNsigma, self).__init__(col=col, **kwargs)
-   def run(self, dataSlice, slicePoint=None):
-      med = np.median(dataSlice[self.colname])
-      std = np.std(dataSlice[self.colname])
-      boundary = med + self.nSigma*std
-      if self.nSigma >=0:
-         outsiders = np.where(dataSlice[self.colname] > boundary)
-      else:
-         outsiders = np.where(dataSlice[self.colname] < boundary)
-      return len(dataSlice[self.colname][outsiders])
+    """
+    Calculate the # of Counts less than nSigma below the median (nSigma<0) or
+    more than nSigma above the median.
+    """
+    def __init__(self, col=None, nSigma=3., **kwargs):
+        self.col = col
+        self.nSigma = nSigma
+        super(NoutliersNsigma, self).__init__(col=col, **kwargs)
+        self.plotParams['cbarFormat'] = '%d'
+    def run(self, dataSlice, slicePoint=None):
+        med = np.median(dataSlice[self.colname])
+        std = np.std(dataSlice[self.colname])
+        boundary = med + self.nSigma*std
+        # If nsigma is positive, look for outliers above median.
+        if self.nSigma >=0:
+            outsiders = np.where(dataSlice[self.colname] > boundary)
+        # Else look for outliers below median. 
+        else:
+            outsiders = np.where(dataSlice[self.colname] < boundary)
+        return len(dataSlice[self.colname][outsiders])

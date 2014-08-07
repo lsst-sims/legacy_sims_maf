@@ -72,10 +72,10 @@ class HealpixSlicer(BaseSpatialSlicer):
         return ra, dec  
     
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
-                   logScale=False, cbarFormat='%.2g', cmap=cm.jet,
+                   logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   cbar_edge=True, **kwargs):
+                   cbar_edge=True, label=None, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -122,16 +122,18 @@ class HealpixSlicer(BaseSpatialSlicer):
                 clims = [-1,1]
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
-                clims[1] =  clims[1]+1
+                clims[1] =  clims[1]+1        
                    
         hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
                     min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
-                    cmap=cmap, norm=norm)
-        
+                    cmap=cmap, norm=norm)        
         hp.graticule(dpar=20., dmer=20.)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
+        # Add label.
+        if label is not None:
+            plt.figtext(0.8, 0.9, '%s' %label)
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -147,7 +149,8 @@ class HealpixSlicer(BaseSpatialSlicer):
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
+                      logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 

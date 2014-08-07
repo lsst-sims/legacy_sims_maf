@@ -20,7 +20,7 @@ font-size:2em;
 #navbar
 {
 display:block;
-background-color: #C0C0C0
+background-color:#FFFFFF;
 height:100%;
 width:100%;
 }
@@ -29,7 +29,7 @@ width:100%;
 {
 display:block;
 background-color:#E8E8E8;
-width:160px;
+width:170px;
 float:left;  
 height:650px; 
 padding:3px;
@@ -42,9 +42,8 @@ overflow:scroll;
 display:block;
 padding:5px;
 margin:0px; 
-margin-left: 170px;
+margin-left:180px;
 height:650px;
-max-width:860px;
 overflow:scroll;
 }
 
@@ -55,6 +54,7 @@ background-color:#A0A0A0;
 clear:both;  
 text-align:center;
 margin:0px;
+padding:5px;
 }
 
 #metricset
@@ -98,12 +98,11 @@ padding:2px;
 text-align:left;
 }
 
-.thumbnail {
+img.thumbnail {
     height: 200px;
     padding:0px;
     margin: 0px;
 }
-
 
 p
 {
@@ -143,27 +142,27 @@ a.nav:link, a.nav:visited {
     display: block;
     border:1px solid gray;
     margin:2px;
-    width: 150px;
+    min-width: 150px;
     font-weight: bold;
     color: black;
-    background-color: #C0C0C0;
+    background-color:#C0C0C0;
     text-align: center;
     padding: 5px;
     text-decoration: none;
 }
 
 a.nav:hover, a.nav:active {
-    background-color: #808080;
+    background-color:#808080;
 }
 
 a.activenav:link, a.activenav:visited {
     display: block;
     border:1px solid gray;
     margin:2px;
-    width: 150px;
+    min-width: 150px;
     font-weight: bold;
     color: black;
-    background-color: #FFFFFF;
+    background-color:#FFFFFF;
     text-align: center;
     padding: 5px;
     text-decoration: none;
@@ -171,7 +170,7 @@ a.activenav:link, a.activenav:visited {
 
 #indent
 {
-text-indent:25px
+text-indent:25px;
 }
 
 </style>
@@ -197,19 +196,19 @@ text-indent:25px
 
 <div id="navbar">
 {% block navbar %}
-  <ul class="nav">
-   {% for href, id, caption in navigation_bar %}
-    <li class="nav">
-    <a 
+ <ul class="nav">
+ {% for href, id, caption in navigation_bar %}
+   <li class="nav">
+     <a 
      {% if id == active_page %}
        class="activenav"
      {% else %}
        class="nav"
      {% endif%}
-     href="{{ href|e }}">{{ caption|e }}</a>
+      href="{{ href|e }}">{{ caption|e }}</a>
     </li>
-   {% endfor %}
-  </ul>
+ {% endfor %}
+ </ul>
 {% endblock %}
 </div>
 

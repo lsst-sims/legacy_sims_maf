@@ -172,8 +172,7 @@ class BaseMetric(object):
         if displayDict is None:
             self.displayDict = defaultDisplayDict
         else:
-            self.displayDict = displayDict.copy()
-            defaultDisplayDict.update(self.displayDict)
+            defaultDisplayDict.update(displayDict)
             self.displayDict = defaultDisplayDict
 
     def run(self, dataSlice, slicePoint=None):

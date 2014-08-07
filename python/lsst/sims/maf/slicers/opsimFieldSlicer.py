@@ -85,7 +85,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
+                      logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 

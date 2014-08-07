@@ -49,14 +49,12 @@ than per metric. #}
     {# Add the plots for this metric #}
     {% set plotdict = run.plotsForMetric(metric) %}
     {% if plotdict|length > 0 %}
-     <p>
      </br>
      {% for ptype, plot in plotdict.iteritems() %}
       {% set plotfile = run.getPlotfile(plot) %}
       {% set thumbfile = run.getThumbfile(plot) %}
        <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
       {% endfor  %}
-     </p>
     {% endif %}
 
     <p>
