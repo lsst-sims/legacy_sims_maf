@@ -103,7 +103,7 @@ class TableFractionMetric(BaseMetric):
         binNames.append('1 == P')
         binNames.append('1 < P')
         # Package the names and values up
-        result = np.empty(hist.size, dtype=[('name', '|S12'), ('value', float)]) 
+        result = np.empty(hist.size, dtype=[('name', '|S20'), ('value', float)]) 
         result['name'] = binNames
         result['value'] = hist
         return result
@@ -125,4 +125,8 @@ class NormalizeMetric(BaseMetric):
         super(NormalizeMetric, self).__init__(col=col, **kwargs)
         self.normVal = normVal
     def run(self, dataSlice, slicePoint=None):
-        return dataSlice[self.colname]/self.normVal
+        result = dataSlice[self.colname]/self.normVal
+        if len(result) == 1:
+            return result[0]
+        else:
+            return result

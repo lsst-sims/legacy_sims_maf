@@ -1,53 +1,86 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
-<html lang="en">
-<head>
-    <title>Large Report</title>
-</head>
-<body>
-    <h2> {{ metrics['BlockTitle'] }}</h2>
-    <table id="skyMap_table">
-    <tr>
-    {% for k in metrics['skyMaps'] %}
-        <td align='center'><a href='{{ k }}'><img width='80%' 
-               src='{{ k }}'> </a></td>
-        {% if loop.index is divisibleby 3 %}
-            </tr><tr>
-        {% endif %}
+{% extends "master.html" %}
+
+{% set active_page = "listMetrics" %}
+
+{% set selectMetrics = run.convertSelectToMetrics(selectDict) %}
+{% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
+
+
+{% block moresidebar %}
+
+<ul>
+{% for g in selectGroups.keys() %}
+  <li>
+  <a href="#{{ g }}">{{ g }}</a> </br>
+  {% for sg in selectGroups[g] %}
+    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+ {% endfor %}
+ </li>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+
+{# show metric information for each metric selected from 'select' page #}
+
+{% for g in selectGroups.keys() %}
+ {% set groupstart = True %}
+ {% for sg in selectGroups[g] %}
+   {% if groupstart == True %}
+      <a name = "{{g}}" </a>
+      {% set groupstart = False %}
+   {% endif %}
+   <a name = "{{g}}_{{sg}}"> </a>
+  {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
+  {% for metric in subsetMetrics %}  
+    {% set metricInfo = run.metricInfo(metric) %}
+    <div id="metricset">
+    <b>
+    {% for key in metricInfo %}
+     {{ '%s' %(metricInfo[key]) }}  /
     {% endfor %}
-    <td colspan="3">  {{ metrics['skyMapsCaption'] }}</td>
-    </tr>
+    </b>
+    </br>
+    {# Add the plots for this metric #}
+    {% set plotdict = run.plotsForMetric(metric) %}
+    {% if plotdict|length > 0 %}
+     {% for ptype, plot in plotdict.iteritems() %}
+      {% set plotfile = run.getPlotfile(plot) %}
+      {% set thumbfile = run.getThumbfile(plot) %}
+       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+      {% endfor  %}
+    {% endif %}
+
+    <p>
+    {% set caption = run.captionForMetric(metric) %}
+    {{ caption }}
+    </p>
+
+    {# Add the summary stats for this metric #} 
+    {% set stats = run.statsForMetric(metric) %}
+    {% set statdict = run.statDict(stats) %}
+    <table class="blank">
+    {% for name in statdict.keys() %}
+     <tr>
+     <td class="blank">
+     <i>{{ name }}:</i>
+     </td>
+     <td class="blank">
+     {% if name == 'Count' %}
+      {{ '%d'|format(statdict[name]) }}
+     {% else %}
+      {{ '%.2f'|format(statdict[name])}}
+     {% endif %}
+     </td> 
+     </tr>
+    {% endfor %}
     </table>
-<br>
-    <table id="merged_table">
-    <tr>
-      <td align='center'><a href='{{ metrics['mergedHist'][0] }}'><img width='80%' src='{{ metrics['mergedHist'][0] }}'> </a></td>
-    </tr>
-    <td>{{ metrics['mergedHistCaption'] }} </td>
-    </tr>
-    </table>
+    </div>
 
-<br>
-    <table id="SummaryStats">
-      <tr>
-      <td> Filter </td> <td> Median </td> <td> Mean  &plusmn; RMS </td> <td> -3&sigma; </td> <td> +3&sigma; <td>
-      </tr>
-      <td> u </td>  <td> {{ metrics['summaryTables']['Mean_u'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
-      </tr>
-      <td> g </td>  <td> {{ metrics['summaryTables']['Mean_g'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
-      </tr>
-      <td> r </td>  <td> {{ metrics['summaryTables']['Mean_r'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
-      </tr>
-      <td> i </td>  <td> {{ metrics['summaryTables']['Mean_i'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
-      </tr>
-      <td> z </td>  <td> {{ metrics['summaryTables']['Mean_z'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
-      </tr>
-      <td> y </td>  <td> {{ metrics['summaryTables']['Mean_y'] }}  </td>   <td>   {{ metrics['summaryTables']['Rms_u'] }} </td> 
-      </tr>
-</table>
+   {% endfor %}
+ {% endfor %}
+{% endfor %}
 
-<hr>
-
-
-
-</body>
-</html>
+{% endblock %}

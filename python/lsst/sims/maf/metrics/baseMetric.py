@@ -81,7 +81,7 @@ class BaseMetric(object):
     
     def __init__(self, col=None, metricName=None, units=None, 
                  metricDtype=None, badval=-666,
-                 plotParams=None, displayGroup=None):
+                 plotParams=None, displayDict=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
@@ -120,10 +120,12 @@ class BaseMetric(object):
               ', '.join(map(str, self.colNameArr))
         # Set up dictionary of reduce functions (may be empty).
         self.reduceFuncs = {}
+        self.reduceOrder = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
+                self.reduceOrder[reducename] = 0
         # Identify type of metric return value.
         if metricDtype is not None:
             self.metricDtype = metricDtype
@@ -139,9 +141,10 @@ class BaseMetric(object):
                 units = ''
         self.units = units
         # Set more plotting preferences (at the very least, the units).
-        self.plotParams = plotParams
-        if self.plotParams is None:
+        if plotParams is None:
             self.plotParams = {}
+        else:
+            self.plotParams = plotParams.copy()
         if 'units' not in self.plotParams:
             self.plotParams['units'] = self.units
         if 'zp' in self.plotParams:
@@ -160,10 +163,17 @@ class BaseMetric(object):
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
-        # Set the displayGroup
-        self.displayGroup = displayGroup
-        if self.displayGroup is None:
-            self.displayGroup = ''
+        # Set up the displayDict.
+        # Set defaults.
+        defaultDisplayDict = {'group':'Ungrouped',
+                              'subgroup':'None',
+                              'order':0,
+                              'caption':'None'}
+        if displayDict is None:
+            self.displayDict = defaultDisplayDict
+        else:
+            defaultDisplayDict.update(displayDict)
+            self.displayDict = defaultDisplayDict
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')

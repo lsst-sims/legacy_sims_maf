@@ -8,7 +8,7 @@ from .baseMetric import BaseMetric
 
 class VisitGroupsMetric(BaseMetric):
     """Count the number of visits per night within deltaTmin and deltaTmax."""
-    def __init__(self, timesCol='expMJD', nightsCol='night', 
+    def __init__(self, timesCol='expMJD', nightsCol='night', metricName='VisitGroups',
                  deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, minNVisits=2, window=30, minNNights=3,
                  **kwargs):
         """
@@ -31,7 +31,10 @@ class VisitGroupsMetric(BaseMetric):
         self.minNVisits = minNVisits
         self.window = window
         self.minNNights = minNNights
-        super(VisitGroupsMetric, self).__init__(col=[self.times, self.nights], **kwargs)
+        super(VisitGroupsMetric, self).__init__(col=[self.times, self.nights], metricName=metricName, **kwargs)
+        self.reduceOrder = {'Median':0, 'NNightsWithNVisits':1, 'NVisitsInWindow':2, 
+                            'NNightsInWindow':3, 'NLunations':4, 'MaxSeqLunations':5}
+
 
     def run(self, dataSlice, slicePoint=None):
         """

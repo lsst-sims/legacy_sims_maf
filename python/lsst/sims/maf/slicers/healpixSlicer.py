@@ -72,10 +72,10 @@ class HealpixSlicer(BaseSpatialSlicer):
         return ra, dec  
     
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
-                   logScale=False, cbarFormat='%.2g', cmap=cm.jet,
+                   logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   cbar_edge=True, **kwargs):
+                   cbar_edge=True, label=None, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -113,18 +113,27 @@ class HealpixSlicer(BaseSpatialSlicer):
             clims = [colorMin, colorMax]
         else:
             clims = None
-            
-        if clims is not None:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                        min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
-                        cmap=cmap, norm=norm)
-        else:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                        rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
+
+        # Make sure there is some range on the colorbar
+        if clims is None:
+            if metricValue.compressed().size > 0:
+                clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            else:
+                clims = [-1,1]
+            if clims[0] == clims[1]:
+                clims[0] =  clims[0]-1
+                clims[1] =  clims[1]+1        
+                   
+        hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
+                    min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
+                    cmap=cmap, norm=norm)        
         hp.graticule(dpar=20., dmer=20.)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
+        # Add label.
+        if label is not None:
+            plt.figtext(0.8, 0.9, '%s' %label)
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -140,7 +149,8 @@ class HealpixSlicer(BaseSpatialSlicer):
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
+                      logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -152,6 +162,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins)
+        binsize = size of bins to use.  Will override "bins" if both are set.
         (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
@@ -166,7 +177,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                           title=title, fignum=fignum, 
                                                           label=label, 
                                                           addLegend=addLegend, legendloc=legendloc,
-                                                          bins=bins, cumulative=cumulative,
+                                                          bins=bins, binsize=binsize, cumulative=cumulative,
                                                           xMin=xMin, xMax=xMax, logScale=logScale,
                                                           flipXaxis=flipXaxis,
                                                           scale=scale, color=color,

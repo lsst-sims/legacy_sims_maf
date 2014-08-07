@@ -27,7 +27,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
     """
 
     def addMetricData(self, metricValues, metricName, slicer, simDataName, 
-                      sqlconstraint, metadata, displayGroup='', plotParams=None, metricId=None):
+                      sqlconstraint, metadata, displayDict=None, plotParams=None, metricId=None):
         """
         Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata directly.
 
@@ -43,9 +43,15 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.simDataNames[iid] = simDataName
         self.sqlconstraints[iid] = sqlconstraints
         self.metadatas[iid] = metadatas
-        self.displayGroups[iid] = displayGroup
+        if displayDict is None:
+           displayDict = {'group':'Ungrouped', 
+                          'subgroup':'None',
+                          'order':0, 
+                          'caption':'None'}
+        self.displayDicts[iid] = displayDict
         if metricId is not None:
             self.metricIds[iid] = metricId
+
 
     def uniqueMetricNames(self, iids=None):
         """
@@ -70,6 +76,38 @@ class ComparisonSliceMetric(BaseSliceMetric):
         for iid in iids:
            uniqueMetadata.add(self.metadatas[iid])
         return uniqueMetadata
+
+    def combineMetadata(self, iids=None):
+       """
+       Combine a set of metadatas to remove duplication. 
+       """
+       uMetadata = self.uniqueMetadata(iids=iids)
+       tmp = []
+       for uM in uMetadata:
+          tmp.append(uM.split(' and '))
+       uMetadata = tmp
+       # Split the pieces of the metadata apart (separated by 'and') 
+       # and then strip off the white spaces.
+       combo = []
+       for uM in uMetadata:
+          iMeta = []
+          for uMi in uM:
+             iMeta.append(uMi.strip())
+          combo.append(iMeta)
+       # See if there are common propIDs to all metadatas
+       propids = []
+       for c in combo:
+          for ci in c:
+             if 'propID' in ci:
+                propids.append(ci)
+       if len(propids) == len(combo) and len(np.unique(propids))==1:
+          propids = np.unique(propids)
+          for c in combo:             
+             c.remove(propids)
+          cMetadata = ', '.join([' '.join(c) for c in combo]) + ' for %s' %(propids[0])
+       else:
+          cMetadata = ', '.join([' '.join(c) for c in combo])
+       return cMetadata
 
     def uniqueSimDataNames(self, iids=None):
         """
@@ -184,6 +222,15 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 iids.remove(iid)
         return iids
 
+    def captionFigure(self, iids, figtype):
+       caption = '%s plot for ' %(figtype)
+       umetrics = self.uniqueMetricNames(iids)
+       usimdata = self.uniqueSimDataNames(iids)
+       comboMetadata = self.combineMetadata(iids)
+       caption += ', '.join(umetrics) + 'metrics '
+       caption += 'calculated with data selected by %s' %(comboMetadata)
+       caption += ' for opsim run(s) ' + ', '.join(usimdata) + '.'
+       return caption
     
     def plotHistograms(self, iids, 
                         bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
@@ -247,19 +294,24 @@ class ComparisonSliceMetric(BaseSliceMetric):
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='hist')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
-               thumbfile = os.path.join(self.outDir, outfile[:-4]).split('/')
-               thumbfile[-1] = 'thumb.'+thumbfile[-1]
-               thumbfile = '/'.join(thumbfile)
-               plt.savefig(thumbfile+'.png', dpi=72)
+               thumbname = self._getThumbName(outfile)
+               thumbfile = os.path.join(self.outDir, thumbname)
+               plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
               # Don't have a metricID corresonding to this combo of metrics, add to metric db table.
-              metricNames = ''.join(list(self.uniqueMetricNames(iids)))              
-              slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
-              simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
-              metadata = ''.join(list(self.uniqueMetadata(iids)))
+              metricNames = ' '.join(list(self.uniqueMetricNames(iids)))              
+              slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
+              simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
+              metadata =  self.combineMetadata(iids)
               # Use first iid in iids to determine display group.
               metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                  'NULL', self.displayGroups[iids[0]])
+                                                  'NULL')
+              displayDict = {}
+              displayDict.update(self.displayDicts[iids[-1]])
+              displayDict['caption'] = self.captionFigure(iids, 'Combined histogram')
+              if displayDict['subgroup'] == 'None':
+                 displayDict['subgroup'] = 'Combo Hist'
+              self.resultsDb.addDisplay(metricId, displayDict)
               self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
         else:
             outfile = 'NULL'
@@ -310,18 +362,23 @@ class ComparisonSliceMetric(BaseSliceMetric):
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot + title, plotType='ps')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
-               thumbfile = os.path.join(self.outDir, outfile[:-4]).split('/')
-               thumbfile[-1] = 'thumb.'+thumbfile[-1]
-               thumbfile = '/'.join(thumbfile)
-               plt.savefig(thumbfile+'.png', dpi=72)
+               thumbname = self._getThumbName(outfile)
+               thumbfile = os.path.join(self.outDir, thumbname)
+               plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics, add to metric table.
-                metricNames = ''.join(list(self.uniqueMetricNames(iids)))
-                slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
-                simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
-                metadata = ''.join(list(self.uniqueMetadata(iids)))
+                metricNames = ' '.join(list(self.uniqueMetricNames(iids)))
+                slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
+                simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
+                metadata = self.combineMetadata(iids)
                 metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                    'NULL', self.displayGroups[iids[0]])
+                                                    'NULL')
+                displayDict = {}
+                displayDict.update(self.displayDicts[iids[-1]])
+                displayDict['caption'] = self.captionFigure(iids, 'Combined power spectrum')
+                if displayDict['subgroup'] == 'None':
+                   displayDict['subgroup'] = 'Combo PS'
+                self.resultsDb.addDisplay(metricId, displayDict)
                 self.resultsDb.addPlot(metricId, 'ComboPowerSpectrum', outfile)
         else:
             outfile = 'NULL'
@@ -366,28 +423,36 @@ class ComparisonSliceMetric(BaseSliceMetric):
             else:
                units = mname0 + ' - ' + mname1
         # Plot data.
-        fignum = slicer.plotSkyMap(diff, units=units, title=title, clims=clims, cmap=cmap, cbarFormat=cbarFormat)
+        fignum = slicer.plotSkyMap(diff, units=units, title=title, clims=clims, 
+                                   cmap=cmap, cbarFormat=cbarFormat)
         if savefig:
             if outfileRoot is not None:
                 outroot = outfileRoot + title
             else:
                 outroot = title
-            outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='sky')
+            outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='SkyDiff')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
-               thumbfile = os.path.join(self.outDir, outfile[:-4]).split('/')
-               thumbfile[-1] = 'thumb.'+thumbfile[-1]
-               thumbfile = '/'.join(thumbfile)
-               plt.savefig(thumbfile+'.png', dpi=72)
+               thumbname = self._getThumbName(outfile)
+               thumbfile = os.path.join(self.outDir, thumbname)
+               plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics.
-                metricNames = ''.join(list(self.uniqueMetricNames(iids)))
-                slicerNames = ''.join(list(self.uniqueSlicerNames(iids)))
-                simDataNames = ''.join(list(self.uniqueSimDataNames(iids)))
-                metadata = ''.join(list(self.uniqueMetadata(iids)))
+                metricNames = ' '.join(list(self.uniqueMetricNames(iids)))
+                slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
+                simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
+                metadata = self.combineMetadata(iids)
                 metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                    'NULL', self.displayGroups[iids[0]])
+                                                    'NULL')                
+                displayDict = {}
+                displayDict.update(self.displayDicts[iids[-1]])
+                displayDict['caption'] = self.captionFigure(iids, 'Difference Sky Map')
+                if displayDict['subgroup'] == 'None':
+                   displayDict['subgroup'] = 'Diff SkyMap'
+                self.resultsDb.addDisplay(metricId, displayDict)
                 self.resultsDb.addPlot(metricId, 'DifferenceSkyMap', outfile)
         else:
             outfile = 'NULL'
         return fignum, title, outfile
+
+    

@@ -1,6 +1,7 @@
 # Base class for all 'Slicer' objects. 
 # 
 
+import os
 import inspect
 import numpy as np
 import numpy.ma as ma
@@ -148,7 +149,7 @@ class BaseSlicer(object):
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName ='', sqlconstraint='', metadata='', displayGroup=''):
+                  simDataName ='', sqlconstraint='', metadata='', displayDict=None):
         """
         Save metric values along with the information required to re-build the slicer.
 
@@ -162,7 +163,9 @@ class BaseSlicer(object):
         header['simDataName'] = simDataName
         date, versionInfo = getDateVersion()
         header['dateRan'] = date
-        header['displayGroup'] = displayGroup
+        if displayDict is None:
+            displayDict = {'group':'Ungrouped'}
+        header['displayDict'] = displayDict
         for key in versionInfo.keys():
             header[key] = versionInfo[key]
         if hasattr(metricValues, 'mask'): # If it is a masked array
@@ -209,7 +212,8 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
     
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', savefig=True, thumbnail=True, **kwargs):
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
+                 savefig=True, thumbnail=True, **kwargs):
         """
         Call all available plotting methods.
 
@@ -234,10 +238,11 @@ class BaseSlicer(object):
                 outfile = filename + '_' + plottype + '.' + figformat
                 plt.savefig(outfile, figformat=figformat, dpi=dpi)
                 if thumbnail:
-                    thumbfile = filename.split('/')
-                    thumbfile[-1] = 'thumb.'+thumbfile[-1]
-                    thumbfile = '/'.join(thumbfile)
-                    plt.savefig(thumbfile + '_' + plottype + '.' +'png', dpi=72)
+                    filepath, thumbname = os.path.split(outfile)                    
+                    thumbname = ''.join(thumbname.split('.')[:-1])
+                    thumbname = 'thumb.' + thumbname + '.png'
+                    thumbfile = os.path.join(filepath, thumbname)
+                    plt.savefig(thumbfile, dpi=72)
                 filenames.append(outfile)
                 filetypes.append(plottype)
             else:

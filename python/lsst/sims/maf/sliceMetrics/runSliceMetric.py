@@ -70,12 +70,12 @@ class RunSliceMetric(BaseSliceMetric):
             metricList = [metricList,]
         iid = self.iid_next
         for metric in metricList:
-           self.metricObjs[iid] = metric
-           self.plotParams[iid] = metric.plotParams
-           self.metricNames[iid] = metric.name
-           self.slicers[iid] = self.slicer
-           self.displayGroups[iid] = metric.displayGroup
-           iid += 1
+            self.metricObjs[iid] = metric
+            self.plotParams[iid] = metric.plotParams
+            self.displayDicts[iid] = metric.displayDict
+            self.metricNames[iid] = metric.name
+            self.slicers[iid] = self.slicer
+            iid += 1
         self.iid_next = iid
         return 
 
@@ -167,13 +167,16 @@ class RunSliceMetric(BaseSliceMetric):
             if len(self.metricObjs[iid].reduceFuncs.keys()) ==0:
                 continue
             # Apply reduce functions 
-            self.reduceMetric(iid, self.metricObjs[iid].reduceFuncs.values())            
+            self.reduceMetric(iid, self.metricObjs[iid].reduceFuncs.values(),
+                              self.metricObjs[iid].reduceOrder.values())            
                 
-    def reduceMetric(self, iid, reduceFunc):
+    def reduceMetric(self, iid, reduceFunc, reduceOrder=None):
         """
         Run 'reduceFunc' (method on metric object) on self.metricValues[iid].
     
         reduceFunc can be a list of functions to be applied to the same metric data.
+        reduceOrder can be list of integers to add to the displayDict['order'] value for each
+          reduced metric value (can also be None). 
         """
         if not isinstance(reduceFunc, list):
             reduceFunc = [reduceFunc,]
@@ -182,18 +185,27 @@ class RunSliceMetric(BaseSliceMetric):
         metricName = self.metricNames[iid]
         for r in reduceFunc:
             rNames.append(metricName + '_' + r.__name__.replace('reduce',''))
+        # Make sure reduceOrder is available.
+        if reduceOrder is None:
+            reduceOrder = np.zeros(len(reduceFunc), int)
+        if len(reduceOrder) < len(reduceFunc):
+            rOrder = np.zeros(len(reduceFunc), int) + len(reduceFunc)
+            for i, r in enumerate(reduceOrder):
+                rOrder[i] = r
+            reduceOrder = rOrder.copy()
         # Set up reduced metric values masked arrays, copying metricName's mask,
         # and copy metadata/plotparameters, etc.
         riids = np.arange(self.iid_next, self.iid_next+len(rNames), 1)
         self.iid_next = riids.max() + 1
-        for riid, rName in zip(riids, rNames):
+        for riid, rName, rOrder in zip(riids, rNames, reduceOrder):
            self.metricNames[riid] = rName
            self.slicers[riid] = self.slicer
            self.simDataNames[riid] = self.simDataNames[iid]
            self.sqlconstraints[riid] = self.sqlconstraints[iid]
            self.metadatas[riid] = self.metadatas[iid]
            self.plotParams[riid] = self.plotParams[iid]
-           self.displayGroups[riid] = self.displayGroups[iid]
+           self.displayDicts[riid] = self.displayDicts[iid].copy()
+           self.displayDicts[riid]['order'] = self.displayDicts[riid]['order'] + rOrder
            self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                     mask = self.metricValues[iid].mask,
                                                     fill_value=self.slicer.badval)
@@ -230,9 +242,9 @@ class RunSliceMetric(BaseSliceMetric):
             if self.resultsDb:           
                 if iidi not in self.metricIds:
                     self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
-                                                                    self.simDataNames[iidi], self.sqlconstraints[iidi],
-                                                                    self.metadatas[iidi],
-                                                                    self.displayGroups[iidi], 'NULL')
+                                                                    self.simDataNames[iidi], 
+                                                                    self.sqlconstraints[iidi],
+                                                                    self.metadatas[iidi], 'NULL')
                 self.resultsDb.addSummaryStat(self.metricIds[iidi],
                                                 summaryName=summaryMetric.name.replace(' metricdata', ''),
                                                 summaryValue=summaryValue)
@@ -253,17 +265,68 @@ class RunSliceMetric(BaseSliceMetric):
         if iid in self.metricObjs:
             outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot) + '.npz'
             self.metricObjs[iid].saveFile = outfile
-                  
+
+    def captionAll(self):
+        """
+        Auto generate captions. If a caption is provided from driver, use that.
+        """
+        if not self.resultsDb:
+           warnings.warn('Warning! Not saving captions.')
+           return
+        for iid in self.metricValues:            
+           self.captionMetric(iid)
+
+    def captionMetric(self, iid):
+        """
+        Auto generate caption for a given metric.
+        """
+        displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
+        if (self.displayDicts[iid]['caption'] == 'None') or \
+            (self.displayDicts[iid]['caption'].endswith('(auto)')):
+          caption = ''
+          plotTypes = self.slicer.plotFuncs.keys()
+          if len(plotTypes) > 0:
+            caption += 'Plots (' 
+            ptypes = []
+            for p in displayOrder:
+                if p in plotTypes:
+                    ptypes.append(p)
+                    plotTypes.remove(p)
+            for r in plotTypes:
+                ptypes.append(r)                   
+            for p in ptypes:
+                caption += '%s, ' %(p.replace('plot', ''))
+            caption = caption[:-2] + ') for '
+          caption += '%s ' %(self.metricNames[iid])
+          caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
+          if len(self.metadatas[iid].strip()) > 0:
+            caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
+          if 'zp' in self.plotParams[iid]:
+            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotParams[iid]['zp'])
+          if 'normVal' in self.plotParams[iid]:
+            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotParams[iid]['normVal'])
+          caption += '(auto)' 
+          self.displayDicts[iid]['caption'] = caption
+        if self.resultsDb:
+          if iid not in self.metricIds:
+            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
+                                                            self.simDataNames[iid], self.sqlconstraints[iid],
+                                                            self.metadatas[iid], 'NULL')
+          if self.displayDicts[iid]['subgroup'] == 'None':
+             self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
+          self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
+             
+                         
     def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """
         Plot histograms and skymaps (where relevant) for all metrics.
         """
         for iid in self.metricValues:            
-            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
-            if closefig:
-               plt.close('all')
-            if plotfigs is None and verbose:
-                warnings.warn('Not plotting metric data for %s' %(mname))
+           plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
+           if closefig:
+              plt.close('all')
+           if plotfigs is None and verbose:
+              warnings.warn('Not plotting metric data for %s' %(mname))
             
     def plotMetric(self, iid, savefig=True, outfileRoot=None):
         """
@@ -298,8 +361,8 @@ class RunSliceMetric(BaseSliceMetric):
         if self.resultsDb:
             if iid not in self.metricIds:
                 self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                                self.simDataNames[iid], self.sqlconstraints[iid],
-                                                                self.metadatas[iid], 'NULL', self.displayGroups[iid])
+                                                               self.simDataNames[iid], self.sqlconstraints[iid],
+                                                               self.metadatas[iid], 'NULL')
             for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
                 froot, fname = os.path.split(filename)
                 self.resultsDb.addPlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)

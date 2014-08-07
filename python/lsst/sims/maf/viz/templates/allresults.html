@@ -1,0 +1,120 @@
+{% extends "master.html" %}
+
+{% set active_page = "allResults" %}
+
+{% set metrics = run.metrics %}
+
+{% block moresidebar %}
+
+<ul>
+{% for g in run.groups.keys() %}
+  <li>
+  <a href="#{{ g }}">{{ g }}</a> </br>
+  {% for sg in run.groups[g] %}
+    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+ {% endfor %}
+ </li>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+
+{# Show all metric results, including summary stats in a table rather
+than per metric. #}
+
+{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set ninfo = metricInfo|length %}
+
+{% for g in run.groups.keys() %}
+ {% set groupstart = True %}
+ {% for sg in run.groups[g] %}
+   {% if groupstart == True %}
+      <a name = "{{g}}" ></a>
+      {% set groupstart = False %}
+   {% endif %}
+   <p>
+   <a name = "{{g}}_{{sg}}"><i>Group: {{g}};  Subgroup: {{sg}}</i> </a>
+   </p>
+  {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
+  <div id="metricset">
+  {% for metric in subsetMetrics %}  
+    {% set metricInfo = run.metricInfo(metric) %}
+    <b>
+    {% for key in metricInfo %}
+     {{ '%s' %(metricInfo[key]) }}  /
+    {% endfor %}
+    </b>
+    {# Add the plots for this metric #}
+    {% set plotdict = run.plotsForMetric(metric) %}
+    {% if plotdict|length > 0 %}
+     </br>
+     {% for ptype, plot in plotdict.iteritems() %}
+      {% set plotfile = run.getPlotfile(plot) %}
+      {% set thumbfile = run.getThumbfile(plot) %}
+       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+      {% endfor  %}
+    {% endif %}
+
+    <p>
+    {% set caption = run.captionForMetric(metric) %}
+    {{ caption }}
+    </p>
+  {% endfor %}
+
+  {# Add a table with the summary stats for all the metrics in this subgroup #}
+
+  {% set statNames = run.allStatNames(subsetMetrics) %}
+      
+  {% if statNames|length > 0 %}
+   {% set ncols = statNames|length + ninfo %}
+   <table>
+   <tr class="lightestgray"> 
+   <td colspan={{ncols}}>
+    Group: <i>{{g }}</i>; Subgroup: <i>{{ sg }}</i>
+   </td>
+   </tr>
+       
+    <tr>
+    {% for key in metricInfo %}
+      <th>{{ key }} </th>
+    {% endfor %}
+    {% for name in statNames %}
+      <th> {{name}} </th>
+    {% endfor %}
+     </tr>
+
+     {% for metric in subsetMetrics %}
+        {% set metricInfo = run.metricInfo(metric) %}
+        {% set stats = run.statsForMetric(metric) %}
+	{% set statDict = run.statDict(stats) %}
+        {% if statDict|length > 0 %}
+           <tr>
+           {% for key in metricInfo %}
+           <td>{{ metricInfo[key]|escape }}</td>
+           {% endfor %}
+ 	   {% for statName in statNames %}
+	    <td>
+	      {% if statName in statDict.keys() %}
+	        {% if statName == 'Count' %} 
+                 {{ '%d'|format(statDict[statName]) }}
+	        {% else %}
+                 {{ '%.2f'|format(statDict[statName]) }}
+	        {% endif %}
+	     {% else %}
+	        {{ '--' }}
+	     {% endif %}
+	    </td>
+	   {% endfor %}
+	   </tr>
+	   {% endif %}
+      {% endfor %}	   
+      </table>
+     {% endif %}      
+   </div>
+   
+ {% endfor %}
+{% endfor %}
+
+{% endblock %}

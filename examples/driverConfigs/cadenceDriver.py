@@ -40,6 +40,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     allfilters = ['u','g','r','i','z','y']
     colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
+    filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
     usefilters=['r']
 
@@ -49,7 +50,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     ########### Early Seeing Metrics ################
     seeing_limit = 0.7 # Demand seeing better than this
     for f in usefilters:
-        m1 = configureMetric('BinaryMetric', kwargs={'col':'finSeeing'}, summaryStats={'SumMetric':{}})
+        m1 = configureMetric('BinaryMetric', kwargs={'col':'finSeeing'},
+                             summaryStats={'SumMetric':{}},
+                             displayDict={'group':'Cadence', 'subgroup':'Early Good Seeing',
+                                          'order':filtorder[f]})
         slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                                  metricDict=makeDict(m1),
                                  constraints=
@@ -60,9 +64,15 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     # Look at the minimum seeing per field, and the fraction of observations below the "good" limit
     for f in usefilters:
-        m1 = configureMetric('TemplateExistsMetric')
-        m2 = configureMetric('MinMetric', kwargs={'col':'finSeeing'})
-        m3 = configureMetric('FracBelowMetric', kwargs={'col':'finSeeing', 'cutoff':seeing_limit})
+        m1 = configureMetric('TemplateExistsMetric', displayDict={'group':'Cadence',
+                                                                  'subgroup':'Early Good Seeing',
+                                                                  'order':filtorder[f]})
+        m2 = configureMetric('MinMetric', kwargs={'col':'finSeeing'},
+                             displayDict={'group':'Cadence', 'subgroup':'Early Good Seeing',
+                                          'order':filtorder[f]})
+        m3 = configureMetric('FracBelowMetric', kwargs={'col':'finSeeing', 'cutoff':seeing_limit},
+                             displayDict={'group':'Cadence', 'subgroup':'Early Good Seeing',
+                                          'order':filtorder[f]})
         slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside}, metricDict=makeDict(m1,m2,m3),
                                 constraints=['night < 365 and filter = "%s"'%(f),
                                             'night < 730 and filter = "%s"'%(f),
@@ -73,23 +83,31 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     #########  Supernova Metric ############
     m1 = configureMetric('SupernovaMetric',
                          kwargs={'m5Col':'fiveSigmaDepth', 'redshift':0.1, 'resolution':5.},
-                         plotDict={'percentileClip':95.})
+                         plotDict={'percentileClip':95.},
+                         displayDict={'group':'Cadence', 'subgroup':'Supernova'})
     slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                             metricDict=makeDict(m1),
                             constraints=['night < 365', ''])
-    slicerList.append(slicer)
+    #slicerList.append(slicer)
     ########   Parallax and Proper Motion ########
-    m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True})
-    m3 = configureMetric('ParallaxMetric')
-    m4 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_24', 'rmag':24})
+    m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_normed', 'normalize':True},
+                         displayDict={'group':'Cadence', 'subgroup':'Calibration'})
+    m3 = configureMetric('ParallaxMetric', displayDict={'group':'Cadence', 'subgroup':'Calibration'})
+    m4 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_24', 'rmag':24},
+                         displayDict={'group':'Cadence', 'subgroup':'Calibration'})
     m5 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax_24_normed',
-                                                   'rmag':24, 'normalize':True})
-    m6 = configureMetric('ProperMotionMetric', plotDict={'percentileClip':95})
+                                                   'rmag':24, 'normalize':True},
+                        displayDict={'group':'Cadence', 'subgroup':'Calibration'})
+    m6 = configureMetric('ProperMotionMetric', plotDict={'percentileClip':95},
+                         displayDict={'group':'Cadence', 'subgroup':'Calibration'})
     m7 = configureMetric('ProperMotionMetric', kwargs={'rmag':24, 'metricName':'PM_24'},
-                         plotDict={'percentileClip':95})
-    m8 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'})
+                         plotDict={'percentileClip':95},
+                         displayDict={'group':'Cadence', 'subgroup':'Calibration'})
+    m8 = configureMetric('ProperMotionMetric', kwargs={'normalize':True, 'metricName':'PM_normed'},
+                         displayDict={'group':'Cadence', 'subgroup':'Calibration'})
     m9 = configureMetric('ProperMotionMetric', kwargs={'rmag':24,'normalize':True,
-                                                       'metricName':'PM_24_normed'})
+                                                       'metricName':'PM_24_normed'},
+                        displayDict={'group':'Cadence', 'subgroup':'Calibration'})
     slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                             metricDict=makeDict(m2,m3,m4,m5,m6,m7,m8,m9),
                             constraints=['night < 365', ''])
@@ -102,7 +120,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
         constraints.append('filter = "%s"'%f)
     constraints.append('')
     constraints.append('night < 365')
-    m1 = configureMetric('UniformityMetric', plotDict={'colorMin':0., 'colorMax':1.})
+    m1 = configureMetric('UniformityMetric', plotDict={'colorMin':0., 'colorMax':1.},
+                         displayDict={'group':'Cadence', 'subgroup':'Uniformity'})
     slicer = configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                                 metricDict=makeDict(m1),
                                 constraints=constraints)
@@ -111,7 +130,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
 
     #### Visit Group Metric ######
-    m1 = configureMetric('VisitGroupsMetric')
+    m1 = configureMetric('VisitGroupsMetric',
+                         plotDict={'percentile':90},
+                         displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
     slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
                             metricDict=makeDict(m1),
                             constraints=['filter = "%s"'%'r'])

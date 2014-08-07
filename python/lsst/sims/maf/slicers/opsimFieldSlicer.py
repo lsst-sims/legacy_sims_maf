@@ -85,7 +85,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
+                      logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -96,6 +97,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
+        binsize = size of bins to use.  Will override "bins" if both are set.
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
@@ -107,7 +109,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                                                              title=title, fignum=fignum, 
                                                              label=label, 
                                                              addLegend=addLegend, legendloc=legendloc,
-                                                             bins=bins, cumulative=cumulative,
+                                                             bins=bins, binsize=binsize, cumulative=cumulative,
                                                              xMin=xMin, xMax=xMax, logScale=logScale,
                                                              flipXaxis=flipXaxis, 
                                                              scale=1, yaxisformat='%d', color=color, **kwargs)

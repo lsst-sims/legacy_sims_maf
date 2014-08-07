@@ -26,11 +26,33 @@ class MetricRow(Base):
     sqlConstraint = Column(String)
     metricMetadata = Column(String)
     metricDataFile = Column(String)
-    displayGroup = Column(String)
     def __repr__(self):
-        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', displayGroup='%s')>" \
+        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.displayGroup)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile)
+
+class DisplayRow(Base):
+    """
+    Define contents and format of the displays table. 
+
+    (Table to list the display properties for each metric.)
+    """
+    __tablename__ = "displays"
+    displayId = Column(Integer, primary_key=True)    
+    metricId = Column(Integer, ForeignKey('metrics.metricId'))
+    # Group for displaying metric (in webpages).
+    displayGroup = Column(String)
+    # Subgroup for displaying metric.
+    displaySubgroup = Column(String)
+    # Order to display metric (within subgroup).
+    displayOrder = Column(Float)
+    # The figure caption.
+    displayCaption = Column(String)  
+    metric = relationship("MetricRow", backref=backref('displays', order_by=displayId))
+    def __rep__(self):
+        return "<Display(displayGroup='%s', displaySubgroup='%s', displayOrder='%.1f', displayCaptio\
+n='%s')>" \
+            %(self.displayGroup, self.displaySubgroup, self.displayOrder, self.displayCaption)
         
 class PlotRow(Base):
     """
@@ -98,16 +120,32 @@ class ResultsDb(object):
         self.session.close()
         
     def addMetric(self, metricName, slicerName, simDataName, sqlConstraint,
-                  metricMetadata, metricDataFile, displayGroup):
+                  metricMetadata, metricDataFile):
         """
         Add a row to the metrics table.
         """
         metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
-                                sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
-                                metricDataFile=metricDataFile, displayGroup=displayGroup)
+                               sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
+                               metricDataFile=metricDataFile)
         self.session.add(metricinfo)
         self.session.commit()
         return metricinfo.metricId
+
+    def addDisplay(self, metricId, displayDict):
+        """
+        Add a row to the displays table.
+        """
+        displayGroup = displayDict['group']
+        displaySubgroup = displayDict['subgroup']
+        displayOrder = displayDict['order']
+        displayCaption = displayDict['caption']
+        if displayCaption.endswith('(auto)'):
+            displayCaption = displayCaption.replace('(auto)', '', 1)
+        displayinfo = DisplayRow(metricId=metricId, 
+                                 displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
+                                 displayOrder=displayOrder, displayCaption=displayCaption)
+        self.session.add(displayinfo)
+        self.session.commit()        
 
     def addPlot(self, metricId, plotType, plotFile):
         """

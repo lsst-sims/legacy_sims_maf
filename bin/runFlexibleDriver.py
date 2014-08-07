@@ -27,7 +27,7 @@ if __name__=="__main__":
     parser.add_argument("--runName", type=str, default='', help='Root name of the sqlite dbfile '
                         '(i.e. filename minus _sqlite.db).' )
     parser.add_argument("--dbDir", type=str, default='.', help='Directory containing the sqlite dbfile.')
-    parser.add_argument("--outputDir", type=str, default='./Out', help='Output directory for MAF outputs.')
+    parser.add_argument("--outDir", type=str, default='./Out', help='Output directory for MAF outputs.')    
     parser.add_argument("--slicerName", type=str, default='HealpixSlicer', help='SlicerName,'
                         'for flexible configuration driver scripts that take this argument.')
     
@@ -56,7 +56,7 @@ if __name__=="__main__":
         
     print 'Finished loading config from %s.mConfig' %(configname)        
     # Run driver configuration script.
-    config = conf.mConfig(config, runName=args.runName, dbDir=args.dbDir, outputDir=args.outputDir,
+    config = conf.mConfig(config, runName=args.runName, dbDir=args.dbDir, outputDir=args.outDir,
                           slicerName=args.slicerName)
 
     # Run MAF driver.

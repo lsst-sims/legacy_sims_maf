@@ -1,6 +1,5 @@
 import os
 import warnings
-from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -42,12 +41,12 @@ class BaseSliceMetric(object):
         self.iid_next = 0
         self.metricNames = {}
         self.plotParams = {}
+        self.displayDicts = {}        
         self.slicers = {}
         self.metricValues = {}
         self.simDataNames = {}
         self.sqlconstraints = {}
         self.metadatas = {}
-        self.displayGroups = {}
 
 
     def metricNameIid(self, metricName):
@@ -128,6 +127,21 @@ class BaseSliceMetric(object):
            oname = oname + '_' + plotType + '.' + self.figformat
         return oname
 
+    def _getThumbName(self, outfile):
+        """
+        Build the name for a plot thumbnail file from 'outfile'.
+
+        outfile may contain the output directory
+        """
+        # Split the filepath from the file name.
+        filepath, plotfile = os.path.split(outfile)
+        # Remove the ending from the file name (.pdf or .png).
+        thumbname = ''.join(plotfile.split('.')[:-1])
+        # Add .png to the file name.
+        thumbname = 'thumb.' + thumbname + '.png'
+        # Combine with the filepath (as it was known from method this was called).
+        thumbname = os.path.join(filepath, thumbname)
+        return thumbname
     
     def readMetricData(self, filenames, verbose=False):
        """
@@ -149,9 +163,13 @@ class BaseSliceMetric(object):
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
           self.plotParams[iid] = {}
-          self.displayGroups[iid] = ''
-          if 'displayGroup' in header:
-              self.displayGroups[iid] = header['displayGroup']
+          # Set default values, in  case metric file doesn't have the info.
+          self.displayDicts[iid] = {'group':'Ungrouped', 
+                                    'subgroup':'None',
+                                    'order':0,
+                                    'caption':'None'}
+          if 'displayDict' in header:
+              self.displayDicts[iid].update(header['displayDict'])
           if 'plotParams' in header:
              self.plotParams[iid].update(header['plotParams'])
           if verbose:
@@ -190,13 +208,12 @@ class BaseSliceMetric(object):
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
                          metadata = self.metadatas[iid] + comment,
-                         displayGroup = self.displayGroups[iid])
+                         displayDict = self.displayDicts[iid])
         if self.resultsDb:
             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
                                                           slicer.slicerName,
                                                           self.simDataNames[iid],
                                                           self.sqlconstraints[iid],
                                                           self.metadatas[iid],
-                                                          outfile,
-                                                          self.displayGroups[iid])
+                                                          outfile)
            
