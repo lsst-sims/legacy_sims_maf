@@ -16,9 +16,9 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-def setupMovieSlicer(simdata):
+def setupMovieSlicer(simdata, binsize = 365.25):
     t = time.time()
-    ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=365.25)
+    ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize)
     ms.setupSlicer(simdata)
     dt, t = dtime(t)
     print 'Set up movie slicer in %f s' %(dt)
@@ -37,13 +37,14 @@ def setupMetrics():
     # Set up metrics.
     t = time.time()
     metricList = []
-    # Simple metrics: coadded depth and number of visits
+    #Simple metrics: coadded depth and number of visits
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', 
-                                            plotParams={'colorMin':25, 'colorMax':28}))
+                                             plotParams={'colorMin':25, 'colorMax':28, 'title':'Coaddm5Metric '}))
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'logScale':False, 'title':'Number of visits',
-                                                      'colorMin':0, 'colorMax':300,
-                                                      'cbarFormat': '%d'}))
+                                          plotParams={'logScale':False,
+                                                      'colorMin':0, 'colorMax':240,
+                                                      'cbarFormat': '%d', 'title':'Number of Visits '}))
+    
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
@@ -54,24 +55,34 @@ def run(opsimName, metadata, simdata, metricList, nside):
     making the plots."""
 
     # Set up movie slicer
-    movieslicer = setupMovieSlicer(simdata)
+    binsize = 2
+    movieslicer = setupMovieSlicer(simdata, binsize = binsize)
 
     # Ideally you'd translate the length of the movieslicer into the format statement for the
     #  movie slicer suffix (i.e. len(movieslicer) -> format = '%s.%dd' %('%', 2))
 
+    base_titles = {}
+    for metric in metricList:
+        base_titles[str(metric)] = metric.plotParams['title']
+
     # Run through the movie slicer slicePoints:
     for i, movieslice in enumerate(movieslicer):
+        print movieslice
         t = time.time()        
-        slicenumber = '%.3d' %(i)
+        slicenumber = '%.4d' %(i)
+        if i*binsize%20.0 == 0:
+            for metric in metricList:
+                metric.plotParams['title'] = base_titles[str(metric)] + ' day: ' + str(i*binsize)
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[movieslice['idxs']]
         # Set up healpix slicer on subset of simdata provided by movieslicer
-        hs = setupHealpixSlicer(simdatasubset, 'fieldRA', 'fieldDec', nside=nside)
+        hs = setupHealpixSlicer(simdatasubset, 'ditheredRA', 'ditheredDec', nside)
         # Set up sliceMetric to handle healpix slicer + metrics calculation + plotting
         sm = sliceMetrics.RunSliceMetric()
         sm.setSlicer(hs)
         sm.setMetrics(metricList)
         # Calculate metric data values for simdatasubset
+        #today_str = metadata+' day:'+str(i) 
         sm.runSlices(simdatasubset, simDataName=opsimName, metadata=metadata)
         # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
         sm.plotAll(outfileSuffix=slicenumber, closefig=True)
@@ -84,7 +95,8 @@ def run(opsimName, metadata, simdata, metricList, nside):
     # Create the movie.
     # Chris - you need to write this method on movieSlicer and decide what arguments are necessary.
     # (e.g. do you pass slicenumbers back into plotMovie or are they generated & stored in movieslicer itself?)
-    movieslicer.plotMovie()
+    # Re: probably in movie slicer itself, that seems to make the most sense. - CM
+    #movieslicer.plotMovie()
     
 
 
@@ -111,7 +123,7 @@ if __name__ == '__main__':
     # Find columns that are required by metrics.
     colnames = list(metricList[0].colRegistry.colSet)
     # Add columns needed for healpix slicer.
-    fieldcols = ['fieldRA', 'fieldDec']
+    fieldcols = ['fieldRA', 'fieldDec', 'ditheredRA', 'ditheredDec']
     colnames += fieldcols
     # Add column needed for movie slicer.
     moviecol = ['expMJD',]

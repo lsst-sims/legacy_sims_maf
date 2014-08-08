@@ -119,13 +119,17 @@ class BaseSliceMetric(object):
         oname = oname.replace('"','').replace("'",'').replace('__', '_')
         # and remove / and \
         oname = oname.replace('/', '_').replace('\\', '_')
+        print oname
         if plotType is not None:
             oname = oname + '_' + plotType
+        print oname
         if outfileSuffix is not None:
             oname = oname + '_' + outfileSuffix
         # Add plot name, if plot.
+        print oname
         if plotType is not None:
            oname = oname + '.' + self.figformat
+        print oname
         return oname
 
     

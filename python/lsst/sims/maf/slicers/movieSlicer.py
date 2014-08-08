@@ -6,7 +6,7 @@ from functools import wraps
 import warnings
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
-
+import subprocess
 
 class MovieSlicer(BaseSlicer):
     """movie Slicer."""
@@ -96,9 +96,12 @@ class MovieSlicer(BaseSlicer):
         @wraps(self._sliceSimData)
         def _sliceSimData(islice):
             """Slice simData on oneD sliceCol, to return relevant indexes for slicepoint."""
-            idxs = self.simIdxs[self.left[islice]:self.left[islice+1]]
+            
+            #this is the important part. The ids here define the pieces of data that get 
+            #passed on to subsequent slicers
+            idxs = self.simIdxs[0:self.left[islice+1]]
             return {'idxs':idxs,
-                    'slicePoint':{'sid':islice, 'binLeft':self.bins[islice]}}
+                    'slicePoint':{'sid':islice, 'binLeft':0}}
         setattr(self, '_sliceSimData', _sliceSimData)
     
     def __eq__(self, otherSlicer):
@@ -108,6 +111,28 @@ class MovieSlicer(BaseSlicer):
         else:
             return False
 
-    def plotMovie(self):
-        """This is where Chris comes in :) """
+    def plotMovie(self, metricList=0, N=0, ips=0, fps=0):
+        """Takes in metric and slicer metadata and calls ffmpeg to stitch together output files"""
+
+        #what was the slicer and metric?
+        print metricList
+        print N
+
+        #look for png files to convert
+        #how many are there? -> pass that info into ffmpeg for what numbers to look for.
+        #take in parameters for ffmpeg - needs slice number, how many digits total
+
+
+        #calling ffmpeg
+        p = subprocess.Popen(['ffmpeg','-r','1','-i',
+                            'opsimblitz2_1060_N_Visits_r_HEAL_%04d_SkyMap.png',
+                            '-c:v','libx264','-r','1','-pix_fmt',
+                            'yuv420p','NVisits_SkyMap.mp4'])
+	    
+        p.communicate
+
+        p = subprocess.Popen(['ffmpeg', '-i', 'NVisits_SkyMap.mp4',  '-vcodec', 'copy', 'NVisits_SkyMap.mp4'])
+
+
         pass
+
