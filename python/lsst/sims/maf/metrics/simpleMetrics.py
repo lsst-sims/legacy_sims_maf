@@ -76,9 +76,11 @@ class BinaryMetric(BaseMetric):
             return self.badval
 
 class FracAboveMetric(BaseMetric):
-    def __init__(self, col=None, cutoff=0.5, **kwargs):
+    def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
         # Col could just get passed in bundle with kwargs, but by explicitly pulling it out
         #  first, we support use cases where class instantiated without explicit 'col='). 
+        if metricName is None:
+            metricName = 'FracAbove %.2f in %s' %(cutoff, col)
         super(FracAboveMetric, self).__init__(col, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
@@ -87,7 +89,9 @@ class FracAboveMetric(BaseMetric):
         return fracAbove
 
 class FracBelowMetric(BaseMetric):
-    def __init__(self, col=None, cutoff=0.5, **kwargs):
+    def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
+        if metricName is None:
+            metricName = 'FracBelow %.2f in %s' %(cutoff, col)
         super(FracBelowMetric, self).__init__(col, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
