@@ -104,9 +104,11 @@ class NoutliersNsigma(BaseMetric):
     Calculate the # of Counts less than nSigma below the median (nSigma<0) or
     more than nSigma above the median.
     """
-    def __init__(self, col=None, nSigma=3., **kwargs):
+    def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
         self.col = col
         self.nSigma = nSigma
+        if metricName is None:
+            metricName = 'Noutliers %.1f in %s' %(self.nSigma, self.col)
         super(NoutliersNsigma, self).__init__(col=col, **kwargs)
         self.plotParams['cbarFormat'] = '%d'
     def run(self, dataSlice, slicePoint=None):
