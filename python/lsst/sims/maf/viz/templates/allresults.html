@@ -9,9 +9,9 @@
 <ul>
 {% for g in run.groups.keys() %}
   <li>
-  <a href="#{{ g }}">{{ g }}</a> </br>
+  <a href="#{{ g|escape }}">{{ g|escape }}</a> </br>
   {% for sg in run.groups[g] %}
-    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+    <div id='indent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
  {% endfor %}
  </li>
 {% endfor %}
@@ -31,11 +31,11 @@ than per metric. #}
  {% set groupstart = True %}
  {% for sg in run.groups[g] %}
    {% if groupstart == True %}
-      <a name = "{{g}}" ></a>
+      <a name = "{{g|escape}}" ></a>
       {% set groupstart = False %}
    {% endif %}
    <p>
-   <a name = "{{g}}_{{sg}}"><i>Group: {{g}};  Subgroup: {{sg}}</i> </a>
+   <a name = "{{g|escape}}_{{sg|escape}}"><i>Group: {{g|escape}};  Subgroup: {{sg|escape}}</i> </a>
    </p>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
   <div id="metricset">
@@ -59,7 +59,7 @@ than per metric. #}
 
     <p>
     {% set caption = run.captionForMetric(metric) %}
-    {{ caption }}
+    {{ caption|escape }}
     </p>
   {% endfor %}
 
@@ -81,7 +81,7 @@ than per metric. #}
       <th>{{ key }} </th>
     {% endfor %}
     {% for name in statNames %}
-      <th> {{name}} </th>
+      <th> {{name|escape}} </th>
     {% endfor %}
      </tr>
 
