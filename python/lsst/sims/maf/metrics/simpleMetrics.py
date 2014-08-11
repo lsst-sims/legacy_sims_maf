@@ -101,15 +101,15 @@ class FracBelowMetric(BaseMetric):
 
 class NoutliersNsigma(BaseMetric):
     """
-    Calculate the # of Counts less than nSigma below the median (nSigma<0) or
-    more than nSigma above the median.
+    Calculate the # of visits less than nSigma below the median (nSigma<0) or
+    more than nSigma above the median of 'col'.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
         self.col = col
         self.nSigma = nSigma
         if metricName is None:
             metricName = 'Noutliers %.1f in %s' %(self.nSigma, self.col)
-        super(NoutliersNsigma, self).__init__(col=col, **kwargs)
+        super(NoutliersNsigma, self).__init__(col=col, metricName=metricName, **kwargs)
         self.plotParams['cbarFormat'] = '%d'
     def run(self, dataSlice, slicePoint=None):
         med = np.median(dataSlice[self.colname])
