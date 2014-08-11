@@ -295,13 +295,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Calculate some basic summary info about run, per filter.
     for f in filters:
         m1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'},
-                             displayDict={'group':'Seeing', 'subgroup':'All Props'})
+                             displayDict={'group':'Seeing', 'subgroup':'All Props', 'order':filtorder[f]})
         m2 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
-                             displayDict={'group':'Seeing', 'subgroup':'All Props'})
+                             displayDict={'group':'Seeing', 'subgroup':'All Props', 'order':filtorder[f]})
         m3 = configureMetric('MedianMetric', kwargs={'col':'airmass'},
-                             displayDict={'group':'Airmass', 'subgroup':'All Props'})
+                             displayDict={'group':'Airmass', 'subgroup':'All Props', 'order':filtorder[f]})
         m4 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
-                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props'})
+                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props','order':filtorder[f]})
         metricDict = makeDict(m1, m2, m3, m4)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=['filter = "%s"'%f])
         slicerList.append(slicer)
