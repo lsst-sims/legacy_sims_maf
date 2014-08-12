@@ -89,7 +89,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                             metricDict=makeDict(m1),
                             constraints=['night < 365', ''])
-    #slicerList.append(slicer)
+    slicerList.append(slicer)
+
     ########   Parallax and Proper Motion ########
     m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax Normed', 'normalize':True},
                          displayDict={'group':'Cadence', 'subgroup':'Calibration'})
@@ -129,14 +130,18 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     slicerList.append(slicer)
 
 
-
     #### Visit Group Metric ######
-    m1 = configureMetric('VisitGroupsMetric',
+    m1 = configureMetric('VisitGroupsMetric', 
+                         kwargs={'minNVisits':2, 'metricName':'VisitGroups2'},
+                         plotDict={'percentile':90},
+                         displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
+    m2 = configureMetric('VisitGroupsMetric', 
+                         kwargs={'minNVisits':4, 'metricName':'VisitGroups4'},
                          plotDict={'percentile':90},
                          displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
     slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
                             metricDict=makeDict(m1),
-                            constraints=['filter = "%s"'%'r'])
+                             constraints=['(filter = "r") or (filter="g") or (filter="i")'])
     slicerList.append(slicer)
 
 

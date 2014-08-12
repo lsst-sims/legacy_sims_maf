@@ -81,7 +81,7 @@ class FracAboveMetric(BaseMetric):
         #  first, we support use cases where class instantiated without explicit 'col='). 
         if metricName is None:
             metricName = 'FracAbove %.2f in %s' %(cutoff, col)
-        super(FracAboveMetric, self).__init__(col, **kwargs)
+        super(FracAboveMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.colname] >= self.cutoff)[0]
@@ -92,7 +92,7 @@ class FracBelowMetric(BaseMetric):
     def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
         if metricName is None:
             metricName = 'FracBelow %.2f in %s' %(cutoff, col)
-        super(FracBelowMetric, self).__init__(col, **kwargs)
+        super(FracBelowMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.colname] <= self.cutoff)[0]

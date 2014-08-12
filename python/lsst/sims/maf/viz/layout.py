@@ -160,8 +160,8 @@ class layoutResults(object):
     ## Methods to deal with metrics in numpy recarray.
         
     def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup',
-                                          'baseMetricNames', 'displayOrder', 
-                                          'slicerName', 'metricMetadata']):
+                                          'baseMetricNames', 'slicerName', 'displayOrder', 
+                                          'metricMetadata']):
         """
         Sort the metrics by group, subgroup, base metric name (pre '_'), order, slicer, and then finally metadata. 
         """
