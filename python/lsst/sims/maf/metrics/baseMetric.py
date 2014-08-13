@@ -19,10 +19,14 @@ class MetricRegistry(type):
         super(MetricRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        modname = inspect.getmodule(cls).__name__ + '.'
+        modname = inspect.getmodule(cls).__name__
         if modname.startswith('lsst.sims.maf.metrics'):
             modname = '' 
-        metricname = modname + name
+        else:
+            tmp = modname.split('.')
+            if len(tmp) > 1:
+                modname = '.'.join(tmp[:-1])
+        metricname = modname + '.' + name
         if metricname in cls.registry:
             raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' %(metricname))
         if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
