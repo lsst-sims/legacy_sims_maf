@@ -74,6 +74,8 @@ class BaseSlicer(object):
         self.slicePoints = {}
         self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
+        # Set if the slicer should try to plot objects
+        self.plotObject = False
         # Add dictionary of plotting methods for each slicer.
         self.plotFuncs = {}
         for p in inspect.getmembers(self, predicate=inspect.ismethod):
@@ -218,7 +220,8 @@ class BaseSlicer(object):
         Call all available plotting methods.
 
         The __init__ for each slicer builds a dictionary of the individual slicer's plotting methods.
-        This method calls each of the plotting methods in that dictionary, and optionally saves the resulting figures.
+        This method calls each of the plotting methods in that dictionary, and optionally
+        saves the resulting figures.
         
         metricValues: the metric values to plot.        
         """
@@ -227,9 +230,10 @@ class BaseSlicer(object):
         filenames=[]
         filetypes=[]
         figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('Metric data type not float or int. No plots generated.')
-            return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
+        if not self.plotObject:
+            if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+                warnings.warn('Metric data type not float or int. No plots generated.')
+                return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         # Otherwise, plot.
         for p in self.plotFuncs:
             plottype = p.replace('plot', '')
