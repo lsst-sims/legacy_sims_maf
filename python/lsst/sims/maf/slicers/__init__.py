@@ -7,5 +7,6 @@ from .oneDSlicer import *
 from .nDSlicer import *
 from .hourglassSlicer import *
 from .fOSlicer import *
+from .healpixHistSlicer import *
 
 
