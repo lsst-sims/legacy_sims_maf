@@ -36,7 +36,7 @@ class VisitGroupsMetric(BaseMetric):
                             'NNightsInWindow':3, 'NLunations':4, 'MaxSeqLunations':5}
         if self.displayDict['caption'] == 'None':
             caption = 'Evaluation of the number of visits within a night, with separations between '
-            caption += 'tMin %.1f and tMax %.1f minutes.'   %(self.deltaTmin, self.deltaTmax)
+            caption += 'tMin %.1f and tMax %.1f minutes.'   %(self.deltaTmin*24.0*60., self.deltaTmax*24.0*60.)
             caption += 'Groups of visits use a minimum number of visits per night of %d, ' %(self.minNVisits)
             caption += 'and minimum number of nights of %d.' %(self.minNNights)
             caption += 'Two visits within this interval would count as 2. '
