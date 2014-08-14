@@ -2,8 +2,9 @@
 
 {% set active_page = "listMetrics" %}
 
-{% block moresidebar %}
+{% set run = runlist.getRun(runId) %}
 
+{% block moresidebar %}
 <ul>
 {% for g in run.groups.keys() %}
   <li>
@@ -21,6 +22,7 @@
 {% block content %}
 
 <form name="MetricSelect" action="metricResults" method="get" >
+<input type="hidden" name="runId" value="{{runId}}">
 
 <table>
 
@@ -37,7 +39,6 @@
 <td> </td>
 <td colspan="3">
 <input type='submit' value='Plot Metrics'>
-<input type='submit' value='All Metrics' name='all'>
 </td>
 </tr>
   
@@ -46,7 +47,7 @@
   {% for subgroup in run.groups[group] %}
       <tr class="lightestgray">
 	<td>
-	  <input type='checkbox' name="Group_{{group|escape}}__{{subgroup|escape}}"
+	  <input type='checkbox' name="Group_subgroup"
   value="{{ group|escape }}__{{ subgroup|escape }}">
 	</td>
 	<td colspan="3">
@@ -63,7 +64,7 @@
           {% set metricInfo = run.metricInfo(metric) %}
           <tr> 	    
 	  <td>
-          <input type='checkbox' name="{{ metric['metricId'] }}" value="{{metric['metricId']}}"> 
+          <input type='checkbox' name="metricId" value="{{metric['metricId']}}"> 
 	  </td>
 	  {% for key in metricInfo %}
           <td>{{ metricInfo[key]|escape }}</td> 
@@ -76,7 +77,6 @@
 <td> </td>
 <td colspan="3">
 <input type='submit' value='Plot Metrics'>
-<input type='submit' value='All Metrics' name='all'>
 </form> 
 </td>
 </tr>

@@ -2,7 +2,8 @@
 
 {% set active_page = "listMetrics" %}
 
-{% set selectMetrics = run.convertSelectToMetrics(selectDict) %}
+{% set run = runlist.getRun(runId) %}
+{% set selectMetrics = run.convertSelectToMetrics(groupList, metricIdList) %}
 {% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
 
 

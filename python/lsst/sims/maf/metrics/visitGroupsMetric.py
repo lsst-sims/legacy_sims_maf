@@ -36,24 +36,25 @@ class VisitGroupsMetric(BaseMetric):
                             'NNightsInWindow':3, 'NLunations':4, 'MaxSeqLunations':5}
         if self.displayDict['caption'] == 'None':
             caption = 'Evaluation of the number of visits within a night, with separations between '
-            caption += 'tMin %.1f and tMax %.1f minutes. Two visits within this interval would count as 2; '\
-                %(self.deltaTmin*24.0*60., self.deltaTmax*24.0*60.)
-            caption += 'four visits, where visits 1/2/3 were all within tMax and visit 4 was later but within '
-            caption += 'tMax of visit 3 would count as 4. Visits closer than tMin, paired with visits that '
-            caption += 'do fall within tMin/tMax, count as half visits. \n'
-            caption += '"VisitsGroups_Median" calculates the median number of visits between tMin/tMax for '
+            caption += 'tMin %.1f and tMax %.1f minutes.'   %(self.deltaTmin, self.deltaTmax)
+            caption += 'Groups of visits use a minimum number of visits per night of %d, ' %(self.minNVisits)
+            caption += 'and minimum number of nights of %d.' %(self.minNNights)
+            caption += 'Two visits within this interval would count as 2. '
+            caption += 'Visits closer than tMin, paired with visits that do fall within tMin/tMax, '
+            caption += 'count as half visits. \n'
+            caption += 'VisitsGroups_Median calculates the median number of visits between tMin/tMax for '
             caption += 'all nights. \n'
-            caption += '"VisitGroups_NNightsWithNNights" calculates the number of nights that have at '
+            caption += 'VisitGroups_NNightsWithNNights calculates the number of nights that have at '
             caption += 'least %d visits.\n' %(self.minNVisits) 
-            caption += '"VisitGroups_NVisitsInWindow" calculates the max number of visits within a window of '
+            caption += 'VisitGroups_NVisitsInWindow calculates the max number of visits within a window of '
             caption += '%d days.\n' %(self.window)
-            caption += '"VisitGroups_NNightsInWindow" calculates the max number of nights that have more '
+            caption += 'VisitGroups_NNightsInWindow calculates the max number of nights that have more '
             caption += 'than %d visits within %d days.\n' %(self.minNVisits, self.window)
-            caption += '"VisitGroups_NLunations" calculates the number of lunations (30 days) that have '
-            caption += 'at least one "group" of more than %d nights with more than %d visits, within '\
+            caption += 'VisitGroups_NLunations calculates the number of lunations (30 days) that have '
+            caption += 'at least one group of more than %d nights with more than %d visits, within '\
                 %(self.minNNights, self.minNVisits)
             caption += '%d days.\n' %(self.window)
-            caption += '"VisitGroups_MaxSeqLunations" calculates the maximum sequential lunations that have '
+            caption += 'VisitGroups_MaxSeqLunations calculates the maximum sequential lunations that have '
             caption += 'at least one "group".\n'
             self.displayDict['caption'] = caption
 

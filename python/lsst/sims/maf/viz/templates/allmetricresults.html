@@ -1,6 +1,9 @@
 {% extends "master.html" %}
 
-{% set active_page = "allResults" %}
+{% set active_page = "allMetricResults" %}
+
+
+{% set run = runlist.getRun(runId) %}
 
 {% set metrics = run.metrics %}
 

@@ -185,18 +185,24 @@ text-indent:25px;
 </div>
 
 
-{% set navigation_bar = [
-    ('configParams', 'configs', 'Opsim Configuration'),
-    ('/', 'listMetrics', 'Metrics List'),
-    ('summaryStats', 'stats', 'Summary Stats'),
-    ('allResults', 'allResults', 'All Results')
-]  -%}
-{% set active_page = active_page|default('index') -%}
+{% set active_page = active_page|default('listRuns') -%}
 
-
-<div id="navbar">
 {% block navbar %}
+<div id="navbar">
+  {% set navigation_bar = [
+    ('configParams', 'configs', 'Opsim Configuration'),
+    ('metricSelect', 'listMetrics', 'Metrics List'),
+    ('summaryStats', 'stats', 'Summary Stats'),
+    ('allMetricResults', 'allMetricResults', 'All Results')]  -%}
  <ul class="nav">
+   <li class="nav">
+   <a {% if 'listRuns'==active_page %}
+       class="activenav"
+      {% else %}
+       class="nav"
+      {% endif %}
+     href="/">Run List</a>
+   </li>
  {% for href, id, caption in navigation_bar %}
    <li class="nav">
      <a 
@@ -204,13 +210,13 @@ text-indent:25px;
        class="activenav"
      {% else %}
        class="nav"
-     {% endif%}
-      href="{{ href|e }}">{{ caption|e }}</a>
+     {% endif %}
+      href="{{ href }}?runId={{runId}}">{{ caption|e }}</a>
     </li>
  {% endfor %}
  </ul>
+ </div>
 {% endblock %}
-</div>
 
 <div id="sidebar">
 {% block moresidebar %}
