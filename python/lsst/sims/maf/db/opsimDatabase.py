@@ -137,8 +137,8 @@ class OpsimDatabase(Database):
         """
         Fetch the proposal IDs from the full opsim run database.
         Return the full list of ID numbers as well as a list of
-         WFD propIDs (proposals containing 'Universal' in the name),
-         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name).
+         WFD propIDs (proposals containing 'Universal' in the name) -- or tagged with wfd,
+         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name) -- or tagged dd.
          """
         # Check if using full database; otherwise can only fetch list of all propids. 
         if 'proposalTable' not in self.tables:
@@ -147,18 +147,24 @@ class OpsimDatabase(Database):
             wfdIDs = []
             ddIDs = []
         else:
-            # The methods to identify WFD and DD proposals will be updated in the future,
-            #  when opsim adds flags to the config tables.
             table = self.tables['proposalTable']
-            propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName'], constraint='')
+            try:
+                propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName', 'tag'], constraint='')
+            except:
+                propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName'], constraint='')
             propIDs = np.array(propData['propID'], int)
             propIDs = list(propIDs)
-            wfdIDs = []
+            if 'tag' in propData.dtype.names:
+                wfdMatch = (propData['tag'] == 'wfd')
+                wfdIDs = list(propData['propID'][wfdMatch])
+            else:
+                wfdIDs = []
+                for name, propid in zip(propData['propConf'] ,propIDs):
+                    if 'Universal' in name:
+                        wfdIDs.append(propid)
+            # Parse on name for DD anyway.
             ddIDs = []
-            # Parse on name for now.
             for name, propid in zip(propData['propConf'], propIDs):
-                if 'Universal' in name:
-                    wfdIDs.append(propid)
                 if ('deep' in name) or ('Deep' in name) or ('DD' in name) or ('dd' in name):
                     ddIDs.append(propid)
         return propIDs, wfdIDs, ddIDs

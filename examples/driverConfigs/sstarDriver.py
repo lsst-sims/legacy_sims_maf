@@ -37,10 +37,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     else: 
         for i,propid in enumerate(WFDpropid):
             if i == 0:
-                wfdWhere = wfdWhere+'('+'propID = %d' %(propid)
+                wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
             else:
                 wfdWhere = wfdWhere+'or propID = %d ' %(propid)
-                wfdWhere = wfdWhere+')'
+        wfdWhere = wfdWhere+')'
 
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)

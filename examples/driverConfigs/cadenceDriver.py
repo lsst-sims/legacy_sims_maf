@@ -29,10 +29,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     else: 
         for i,propid in enumerate(WFDpropid):
             if i == 0:
-                wfdWhere = wfdWhere+'('+'propID = %d' %(propid)
+                wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
             else:
                 wfdWhere = wfdWhere+'or propID = %d ' %(propid)
-                wfdWhere = wfdWhere+')'
+        wfdWhere = wfdWhere+')'
 
 
     # Fetch the total number of visits (to create fraction)
@@ -140,7 +140,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
                          plotDict={'percentile':90},
                          displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
     slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
-                            metricDict=makeDict(m1),
+                            metricDict=makeDict(m1, m2),
                              constraints=['(filter = "r") or (filter="g") or (filter="i")'])
     slicerList.append(slicer)
 
