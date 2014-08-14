@@ -36,7 +36,7 @@ class MafTracking(object):
         runInfo['MafDir'] = run['mafDir']
         return runInfo
 
-    def sortRuns(self, runs, order=['opsimRun','mafRunId']):
+    def sortRuns(self, runs, order=['opsimRun', 'mafComment', 'mafRunId']):
         return np.sort(runs, order=order)    
 
     def getRun(self, mafRunId):

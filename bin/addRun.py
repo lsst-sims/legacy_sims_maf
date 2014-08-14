@@ -31,9 +31,13 @@ if __name__ == "__main__":
             for line in file:
                 tmp = line.split()
                 if tmp[0].startswith('RunName'):
-                    opsimRun = ' '.join(tmp[1:])
+                    tmp_opsimRun = ' '.join(tmp[1:])
                 if tmp[0].startswith('RunComment'):
-                    opsimComment = ' '.join(tmp[1:])
+                    tmp_opsimComment = ' '.join(tmp[1:])
+    if opsimRun == 'NULL':
+        opsimRun = tmp_opsimRun
+    if opsimComment == 'NULL':
+        opsimComment = tmp_opsimComment
 
     print 'Adding to tracking database at %s:' %(args.trackingDb)
     print ' MafDir = %s' %(args.mafDir)
