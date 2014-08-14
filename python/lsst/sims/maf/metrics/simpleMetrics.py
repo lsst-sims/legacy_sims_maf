@@ -55,7 +55,8 @@ class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, **kwargs):
         super(CountMetric, self).__init__(col=col, **kwargs)
-        self.plotParams['cbarFormat'] = '%d'
+        if ('normVal' not in self.plotParams) and ('zp' not in self.plotParams):
+            self.plotParams['cbarFormat'] = '%d'
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname]) 
 
