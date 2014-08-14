@@ -11,9 +11,14 @@ class StackerRegistry(type):
         super(StackerRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        modname = inspect.getmodule(cls).__name__ + '.'
+        modname = inspect.getmodule(cls).__name__ 
         if modname.startswith('lsst.sims.maf.stackers'):
-            modname = '' 
+            modname = ''
+        else:
+            if len(modname.split('.')) > 1:
+                modname = '.'.join(modname.split('.')[:-1]) + '.'
+            else:
+                modname = modname + '.'
         stackername = modname + name
         if stackername in cls.registry:
             raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(stackername))

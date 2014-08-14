@@ -22,11 +22,12 @@ class MetricRegistry(type):
         modname = inspect.getmodule(cls).__name__
         if modname.startswith('lsst.sims.maf.metrics'):
             modname = '' 
-        else:
-            tmp = modname.split('.')
-            if len(tmp) > 1:
-                modname = '.'.join(tmp[:-1])
-        metricname = modname + '.' + name
+        else:            
+            if len(modname.split('.')) > 1:
+                modname = '.'.join(modname.split('.')[:-1]) + '.'
+            else:
+                modname = modname + '.'
+        metricname = modname + name
         if metricname in cls.registry:
             raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' %(metricname))
         if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
