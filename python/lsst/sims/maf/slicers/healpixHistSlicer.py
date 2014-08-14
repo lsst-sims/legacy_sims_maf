@@ -14,12 +14,8 @@ class HealpixHistSlicer(HealpixSlicer):
         self.plotFuncs = {'plotHistogram':self.plotHistogram}
         self.plotObject = True
 
-
-
-        
-
-    def plotHistogram(self, metricValue, fignum=None, binMin=0,
-                      binMax=5000., binsize=120.,linestyle='-',
+    def plotHistogram(self, metricValue, fignum=None, binMin=0.5,
+                      binMax=60.5, binsize=0.5,linestyle='-',
                       title=None,
                       **kwargs):
         """ Take results of a metric that histograms things up"""
@@ -33,7 +29,7 @@ class HealpixHistSlicer(HealpixSlicer):
         y = np.ravel(zip(finalHist, finalHist))
         plt.plot(x,y, linestyle=linestyle)
         plt.title(title)
-        plt.xlabel('Observation Gap Time (seconds)')
+        plt.xlabel('Observation Gap Time (days)')
         plt.ylabel('Count')
         return fig.number
         
