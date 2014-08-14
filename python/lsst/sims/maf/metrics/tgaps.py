@@ -5,11 +5,19 @@ class Tgaps(BaseMetric):
     """Histogram up all the time gaps """
 
     def __init__(self, timesCol='expMJD', binMin=.5,
-                 binMax=60.5, binsize=0.5, **kwargs):
+                 binMax=60.5, binsize=0.5, plotDict=None, **kwargs):
         """  """
+        if plotDict is None:
+            plotDict = {}
+        
+        plotDict['binMin'] = binMin
+        plotDict['binMax'] = binMax
+        plotDict['binsize'] = binsize
+        
         self.timesCol = timesCol
         super(Tgaps, self).__init__(col=[self.timesCol],
-                                    metricDtype=object, **kwargs)
+                                    metricDtype=object, plotDict=plotDict,
+                                    **kwargs)
         self.bins=np.arange(binMin, binMax+binsize,binsize)
 
     def run(self, dataSlice, slicePoint=None):

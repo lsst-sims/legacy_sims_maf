@@ -71,7 +71,7 @@ class RunSliceMetric(BaseSliceMetric):
         iid = self.iid_next
         for metric in metricList:
             self.metricObjs[iid] = metric
-            self.plotParams[iid] = metric.plotParams
+            self.plotDict[iid] = metric.plotDict
             self.displayDicts[iid] = metric.displayDict
             self.metricNames[iid] = metric.name
             self.slicers[iid] = self.slicer
@@ -203,7 +203,7 @@ class RunSliceMetric(BaseSliceMetric):
            self.simDataNames[riid] = self.simDataNames[iid]
            self.sqlconstraints[riid] = self.sqlconstraints[iid]
            self.metadatas[riid] = self.metadatas[iid]
-           self.plotParams[riid] = self.plotParams[iid]
+           self.plotDict[riid] = self.plotDict[iid]
            self.displayDicts[riid] = self.displayDicts[iid].copy()
            self.displayDicts[riid]['order'] = self.displayDicts[riid]['order'] + rOrder
            self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
@@ -301,10 +301,10 @@ class RunSliceMetric(BaseSliceMetric):
           caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
           if len(self.metadatas[iid].strip()) > 0:
             caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
-          if 'zp' in self.plotParams[iid]:
-            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotParams[iid]['zp'])
-          if 'normVal' in self.plotParams[iid]:
-            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotParams[iid]['normVal'])
+          if 'zp' in self.plotDict[iid]:
+            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotDict[iid]['zp'])
+          if 'normVal' in self.plotDict[iid]:
+            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotDict[iid]['normVal'])
           caption += '(auto)' 
           self.displayDicts[iid]['caption'] = caption
         if self.resultsDb:
@@ -333,7 +333,7 @@ class RunSliceMetric(BaseSliceMetric):
         Create all plots for 'metricName' .
         """
         # Get the metric plot parameters. 
-        pParams = self.plotParams[iid].copy()
+        pParams = self.plotDict[iid].copy()
         # Build plot title and label.
         mname = self.metricNames[iid]
         # "Units" always in pParams, but might be '' (== the physical units). 

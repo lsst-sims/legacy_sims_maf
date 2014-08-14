@@ -81,13 +81,13 @@ class TestBaseMetric(unittest.TestCase):
         """Test plot parameter setting"""
         cols = 'onecolumn'
         testmetric = metrics.BaseMetric(cols)
-        self.assertTrue(isinstance(testmetric.plotParams, dict))
-        self.assertEqual(testmetric.plotParams.keys(), ['units'])
+        self.assertTrue(isinstance(testmetric.plotDict, dict))
+        self.assertEqual(testmetric.plotDict.keys(), ['units'])
         # Set some plot parameters - are they present in dictionary and dictionary contains only needed values?
-        plotParams = {'title':'mytitle'}
-        testmetric = metrics.BaseMetric(cols, plotParams=plotParams)
-        self.assertTrue(isinstance(testmetric.plotParams, dict))
-        self.assertEqual(set(testmetric.plotParams.keys()), set(['title', 'units']))
+        plotDict = {'title':'mytitle'}
+        testmetric = metrics.BaseMetric(cols, plotDict=plotDict)
+        self.assertTrue(isinstance(testmetric.plotDict, dict))
+        self.assertEqual(set(testmetric.plotDict.keys()), set(['title', 'units']))
         
 
 

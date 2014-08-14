@@ -55,7 +55,7 @@ class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, **kwargs):
         super(CountMetric, self).__init__(col=col, **kwargs)
-        self.plotParams['cbarFormat'] = '%d'
+        self.plotDict['cbarFormat'] = '%d'
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname]) 
 
@@ -110,7 +110,7 @@ class NoutliersNsigma(BaseMetric):
         if metricName is None:
             metricName = 'Noutliers %.1f in %s' %(self.nSigma, self.col)
         super(NoutliersNsigma, self).__init__(col=col, **kwargs)
-        self.plotParams['cbarFormat'] = '%d'
+        self.plotDict['cbarFormat'] = '%d'
     def run(self, dataSlice, slicePoint=None):
         med = np.median(dataSlice[self.colname])
         std = np.std(dataSlice[self.colname])

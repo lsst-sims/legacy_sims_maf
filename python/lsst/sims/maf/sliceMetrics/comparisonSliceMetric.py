@@ -27,16 +27,16 @@ class ComparisonSliceMetric(BaseSliceMetric):
     """
 
     def addMetricData(self, metricValues, metricName, slicer, simDataName, 
-                      sqlconstraint, metadata, displayDict=None, plotParams=None, metricId=None):
+                      sqlconstraint, metadata, displayDict=None, plotDict=None, metricId=None):
         """
-        Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata directly.
+        Add a set of metricValues/slicer/plotDict/metricName/simDataName/sqlconstraint/metadata directly.
 
         Another option is to use 'readMetricData' to read metric data from a file.
         """
         iid = self.iid_next
         self.iid_next += 1
-        if plotParams is None:
-          self.plotParams[iid] = {}
+        if plotDict is None:
+          self.plotDict[iid] = {}
         self.metricValues[iid] = metricValues
         self.metricNames[iid] = metricName
         self.slicers[iid] = slicer
@@ -270,22 +270,22 @@ class ComparisonSliceMetric(BaseSliceMetric):
             label = labels[i]
             # Plot data using 'plotBinnedData' if that method available (oneDSlicer)
             if hasattr(self.slicers[iid], 'plotBinnedData'):
-                plotParams = {'xlabel':xlabel, 'title':title, 'alpha':alpha,\
+                plotDict = {'xlabel':xlabel, 'title':title, 'alpha':alpha,\
                               'label':label, 'addLegend':addLegend, 'legendloc':legendloc,\
                               'color':color, 'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax,  \
                               'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
-                    plotParams.update(plotkwargs[i])
-                fignum = self.slicers[iid].plotBinnedData(self.metricValues[iid], fignum=fignum, **plotParams)
+                    plotDict.update(plotkwargs[i])
+                fignum = self.slicers[iid].plotBinnedData(self.metricValues[iid], fignum=fignum, **plotDict)
             # Plot data using 'plotHistogram' if that method available (any spatial slicer)
             if hasattr(self.slicers[iid], 'plotHistogram'):
-                plotParams = {'xlabel':xlabel, 'bins':bins, 'title':title, 'label':label, \
+                plotDict = {'xlabel':xlabel, 'bins':bins, 'title':title, 'label':label, \
                               'addLegend':addLegend, 'legendloc':legendloc, 'color':color, \
                               'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax, \
                               'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
-                    plotParams.update(plotkwargs[i])
-                fignum = self.slicers[iid].plotHistogram(self.metricValues[iid], fignum=fignum, **plotParams)
+                    plotDict.update(plotkwargs[i])
+                fignum = self.slicers[iid].plotHistogram(self.metricValues[iid], fignum=fignum, **plotDict)
         if savefig:
             if outfileRoot is not None:
                 outroot = outfileRoot + title
@@ -345,15 +345,15 @@ class ComparisonSliceMetric(BaseSliceMetric):
             if i == len(iids) - 1:
                 addLegend = True
             label = labels[i]
-            # Set up plotParams.
-            plotParams = {'title':title, 'label':label, 'addLegend':addLegend,
+            # Set up plotDict.
+            plotDict = {'title':title, 'label':label, 'addLegend':addLegend,
                           'legendloc':legendloc, 'color':color, 'maxl':maxl,
                           'removeDipole':removeDipole}
             if plotkwargs is not None:
-                    plotParams.update(plotkwargs[i])
+                    plotDict.update(plotkwargs[i])
             # Plot data.
             fignum = self.slicers[iid].plotPowerSpectrum(self.metricValues[iid],\
-                                                         fignum=fignum, **plotParams)
+                                                         fignum=fignum, **plotDict)
         if savefig:
             if outfileRoot is not None:
                 outroot = outfileRoot + title

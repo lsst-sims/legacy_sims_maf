@@ -40,7 +40,7 @@ class BaseSliceMetric(object):
         # Note that metricNames are not necessarily unique by themselves.
         self.iid_next = 0
         self.metricNames = {}
-        self.plotParams = {}
+        self.plotDict = {}
         self.displayDicts = {}        
         self.slicers = {}
         self.metricValues = {}
@@ -162,7 +162,7 @@ class BaseSliceMetric(object):
           self.simDataNames[iid] = header['simDataName']
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
-          self.plotParams[iid] = {}
+          self.plotDict[iid] = {}
           # Set default values, in  case metric file doesn't have the info.
           self.displayDicts[iid] = {'group':'Ungrouped', 
                                     'subgroup':'None',
@@ -170,8 +170,8 @@ class BaseSliceMetric(object):
                                     'caption':'None'}
           if 'displayDict' in header:
               self.displayDicts[iid].update(header['displayDict'])
-          if 'plotParams' in header:
-             self.plotParams[iid].update(header['plotParams'])
+          if 'plotDict' in header:
+             self.plotDict[iid].update(header['plotDict'])
           if verbose:
              print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
             

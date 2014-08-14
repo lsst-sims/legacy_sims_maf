@@ -21,7 +21,6 @@ class HealpixHistSlicer(HealpixSlicer):
         """ Take results of a metric that histograms things up"""
         fig = plt.figure(fignum)
         
-        #import pdb ; pdb.set_trace()
         
         finalHist = np.sum(metricValue.compressed(), axis=0)
         bins = np.arange(binMin, binMax+binsize,binsize)
