@@ -3,6 +3,8 @@
 
 import sys, os, argparse
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -19,7 +21,7 @@ def dtime(time_prev):
 def setupMovieSlicer(simdata, binsize = 365.25):
     t = time.time()
     ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize)
-    ms.setupSlicer(simdata)
+    ms.setupSlicer(simdata, c_flag=True)
     dt, t = dtime(t)
     print 'Set up movie slicer in %f s' %(dt)
     return ms
@@ -40,11 +42,13 @@ def setupMetrics():
     #Simple metrics: coadded depth and number of visits
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', 
                                              plotParams={'colorMin':25, 'colorMax':28, 'title':'Coaddm5Metric '}))
-    metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'logScale':False,
-                                                      'colorMin':0, 'colorMax':240,
-                                                      'cbarFormat': '%d', 'title':'Number of Visits '}))
-    
+    # metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
+    #                                        plotParams={'logScale':False,
+    #                                                    'colorMin':0, 'colorMax':320,
+    #                                                    'cbarFormat': '%d', 'title':'Number of Visits '}))
+    # metricList.append(metrics.SumMetric('expMJD', metricName='Sum',
+    #                                       plotParams={'logScale':True,
+    #                                                   'cbarFormat': '%d', 'title':'Sum Metric'}))
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
@@ -55,21 +59,20 @@ def run(opsimName, metadata, simdata, metricList, nside):
     making the plots."""
 
     # Set up movie slicer
-    binsize = 2
+    binsize = 20
     movieslicer = setupMovieSlicer(simdata, binsize = binsize)
 
     # Ideally you'd translate the length of the movieslicer into the format statement for the
     #  movie slicer suffix (i.e. len(movieslicer) -> format = '%s.%dd' %('%', 2))
-
     base_titles = {}
     for metric in metricList:
         base_titles[str(metric)] = metric.plotParams['title']
 
     # Run through the movie slicer slicePoints:
     for i, movieslice in enumerate(movieslicer):
-        print movieslice
         t = time.time()        
         slicenumber = '%.4d' %(i)
+        #adding day number to title of plot
         if i*binsize%20.0 == 0:
             for metric in metricList:
                 metric.plotParams['title'] = base_titles[str(metric)] + ' day: ' + str(i*binsize)
@@ -96,7 +99,7 @@ def run(opsimName, metadata, simdata, metricList, nside):
     # Chris - you need to write this method on movieSlicer and decide what arguments are necessary.
     # (e.g. do you pass slicenumbers back into plotMovie or are they generated & stored in movieslicer itself?)
     # Re: probably in movie slicer itself, that seems to make the most sense. - CM
-    #movieslicer.plotMovie()
+    movieslicer.plotMovie(metricList, metadata, ips=10, fps=10)
     
 
 
@@ -119,7 +122,6 @@ if __name__ == '__main__':
         
     # Set up metrics. 
     metricList = setupMetrics()
-
     # Find columns that are required by metrics.
     colnames = list(metricList[0].colRegistry.colSet)
     # Add columns needed for healpix slicer.

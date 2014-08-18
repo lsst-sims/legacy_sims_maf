@@ -1,4 +1,4 @@
-# oneDSlicer - slices based on values in one data column in simData.
+# cumulative one dimensional movie slicer
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,6 +7,7 @@ import warnings
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 import subprocess
+import os
 
 class MovieSlicer(BaseSlicer):
     """movie Slicer."""
@@ -43,7 +44,7 @@ class MovieSlicer(BaseSlicer):
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
         
-    def setupSlicer(self, simData): 
+    def setupSlicer(self, simData, c_flag = False): 
         """
         Set up bins in slicer.
         """
@@ -96,12 +97,17 @@ class MovieSlicer(BaseSlicer):
         @wraps(self._sliceSimData)
         def _sliceSimData(islice):
             """Slice simData on oneD sliceCol, to return relevant indexes for slicepoint."""
-            
             #this is the important part. The ids here define the pieces of data that get 
             #passed on to subsequent slicers
-            idxs = self.simIdxs[0:self.left[islice+1]]
-            return {'idxs':idxs,
-                    'slicePoint':{'sid':islice, 'binLeft':0}}
+            if c_flag == True:
+                #cumulative version of 1D slicing
+                idxs = self.simIdxs[0:self.left[islice+1]]
+                return {'idxs':idxs,
+                        'slicePoint':{'sid':islice, 'binLeft':0}}
+            else:
+                idxs = self.simIdxs[self.left[islice]:self.left[islice+1]]
+                return {'idxs':idxs,
+                        'slicePoint':{'sid':islice, 'binLeft':self.bins[islice]}}
         setattr(self, '_sliceSimData', _sliceSimData)
     
     def __eq__(self, otherSlicer):
@@ -111,27 +117,22 @@ class MovieSlicer(BaseSlicer):
         else:
             return False
 
-    def plotMovie(self, metricList=0, N=0, ips=0, fps=0):
+    def plotMovie(self, metricList, metadata, ips=0, fps=0):
         """Takes in metric and slicer metadata and calls ffmpeg to stitch together output files"""
 
-        #what was the slicer and metric?
-        print metricList
-        print N
+        #must be in folder with output files. Generalize this later.
+        wd = os.getcwd()
+        os.chdir('Output')
+        #create video for each metric
+        for metric in metricList:
+            name = metric.name
+            p = subprocess.Popen(['ffmpeg','-r',str(ips),'-i',
+                                'opsimblitz2_1060_{}_{}_HEAL_%04d_SkyMap.png'.format(name, metadata),
+                                '-c:v','libx264','-r',str(fps),'-pix_fmt',
+                                'yuv420p','{}_{}_SkyMap_{}_{}.mp4'.format(name, metadata, str(ips), str(fps))])
+    	    
+            p.communicate
 
-        #look for png files to convert
-        #how many are there? -> pass that info into ffmpeg for what numbers to look for.
-        #take in parameters for ffmpeg - needs slice number, how many digits total
-
-
-        #calling ffmpeg
-        p = subprocess.Popen(['ffmpeg','-r','1','-i',
-                            'opsimblitz2_1060_N_Visits_r_HEAL_%04d_SkyMap.png',
-                            '-c:v','libx264','-r','1','-pix_fmt',
-                            'yuv420p','NVisits_SkyMap.mp4'])
-	    
-        p.communicate
-
-        p = subprocess.Popen(['ffmpeg', '-i', 'NVisits_SkyMap.mp4',  '-vcodec', 'copy', 'NVisits_SkyMap.mp4'])
 
 
         pass
