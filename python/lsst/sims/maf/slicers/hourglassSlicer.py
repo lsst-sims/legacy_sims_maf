@@ -13,7 +13,7 @@ class HourglassSlicer(UniSlicer):
         self.columnsNeeded=[]
         self.slicerName='HourglassSlicer'
 
-    def plotData(self, metricValues, figformat='png', filename=None, savefig=True, **kwargs):
+    def plotData(self, metricValues, figformat='png', filename=None, savefig=True, dpi=600, thumbnail=True, **kwargs):
         """
         Override base plotData to generate hourglass plot.
         """
@@ -26,7 +26,12 @@ class HourglassSlicer(UniSlicer):
         figs['hourglass'] = self.plotHour(metricValues, **kwargs)
         if savefig:
             outfile = filename+'_hr'+'.'+figformat
-            plt.savefig(outfile, figformat=figformat)
+            plt.savefig(outfile, figformat=figformat, dpi=dpi)
+            if thumbnail:
+                thumbfile = outfile.split('/')
+                thumbfile[-1] = 'thumb.'+thumbfile[-1][:-4]
+                thumbfile = '/'.join(thumbfile)
+                plt.savefig(thumbfile+'.'+'png', dpi=72)
             filenames.append(outfile)
             filetypes.append('hourglassPlot')
         return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
@@ -74,7 +79,7 @@ class HourglassSlicer(UniSlicer):
     
     def writeData(self, outfilename, metricValues, metricName='', **kwargs):
         """
-        Override base write method to 'pass': we don't want to save hourglass metric data.
+        Override base write method: we don't want to save hourglass metric data.
 
         The data volume is too large.
         """

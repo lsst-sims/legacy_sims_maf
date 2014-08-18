@@ -72,7 +72,7 @@ class OpsimDatabase(Database):
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint. 
         table = self.tables['summaryTable']
-        if groupBy is not None:
+        if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
@@ -324,10 +324,10 @@ class OpsimDatabase(Database):
             exptime = float(_matchParamNameValue(config[propname], 'ExposureTime')[0])
             temp = _matchParamNameValue(config[propname], 'Filter_ExpFactor')
             if len(temp) > 0:
-                propdict['PerFilter']['ExpTime'] = temp * exptime
+                propdict['PerFilter']['VisitTime'] = temp * exptime
             else:
-                propdict['PerFilter']['ExpTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
-                propdict['PerFilter']['ExpTime'] *= exptime
+                propdict['PerFilter']['VisitTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
+                propdict['PerFilter']['VisitTime'] *= exptime
             # And count how many total exposures are requested per filter.
             # First check if 'RestartCompleteSequences' are true:
             #   if both are true, then basically an indefinite number of visits are requested.
@@ -439,6 +439,6 @@ class OpsimDatabase(Database):
                     continue
                 else:
                     propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
-            propdict['PerFilter']['keyorder'] = ['Filters', 'ExpTime', 'MaxSeeing', 'MinSky',
+            propdict['PerFilter']['keyorder'] = ['Filters', 'VisitTime', 'MaxSeeing', 'MinSky',
                                                  'MaxSky', 'NumVisits']
         return configSummary, config

@@ -41,7 +41,9 @@ class TestSetupRunSliceMetric(unittest.TestCase):
                                      plotParams={'units':'meanunits'})
         self.m1iid = 0
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
-                                      plotParams={'units':'countunits', 'title':'count_title'})
+                                      plotParams={'units':'countunits', 
+                                                  'cbarFormat':'%d', 
+                                                  'title':'count_title'})
         self.m2iid = 1
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=50, r=50)
         self.m3iid = 2
@@ -100,9 +102,9 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
         self.assertEqual(self.testbbm.plotParams[self.m1iid].keys(), ['units'])
-        self.assertEqual(self.testbbm.plotParams[self.m2iid].keys(), ['units', 'title'])
+        self.assertEqual(self.testbbm.plotParams[self.m2iid].keys(), ['units', 'cbarFormat', 'title'])
         self.assertEqual(self.testbbm.plotParams[self.m2iid].values(),
-                         ['countunits', 'count_title'])
+                         ['countunits', '%d', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
         testbbm2 = sliceMetrics.RunSliceMetric(outDir='.')
         testbbm2.setMetrics(self.m1)
@@ -337,17 +339,6 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
                                metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics(self.iid, self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues[self.iid].mean())
-        # Test get warning if calculating summary statistics on 'object' data using simple scalar metric.
-        fakemetricdata = ma.MaskedArray(data = np.empty(len(self.slicer), 'object'),
-                                        mask = np.zeros(len(self.slicer), 'bool'),
-                                        fill_value = self.slicer.badval)
-        self.testbbm.metricValues[1] = fakemetricdata
-        self.testbbm.metricNames[1] = 'fakemetricdata'
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            summary = self.testbbm.computeSummaryStatistics(1, self.summaryStat)
-            self.assertTrue('fakemetricdata' in str(w[-1].message))
-            self.assertEqual(summary, None)
                             
         
 class TestPlottingRunSliceMetric(unittest.TestCase):

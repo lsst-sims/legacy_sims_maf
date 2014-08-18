@@ -1,0 +1,86 @@
+{% extends "master.html" %}
+
+{% set active_page = "listMetrics" %}
+
+{% set selectMetrics = run.convertSelectToMetrics(selectDict) %}
+{% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
+
+
+{% block moresidebar %}
+
+<ul>
+{% for g in selectGroups.keys() %}
+  <li>
+  <a href="#{{ g }}">{{ g }}</a> </br>
+  {% for sg in selectGroups[g] %}
+    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+ {% endfor %}
+ </li>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+
+{# show metric information for each metric selected from 'select' page #}
+
+{% for g in selectGroups.keys() %}
+ {% set groupstart = True %}
+ {% for sg in selectGroups[g] %}
+   {% if groupstart == True %}
+      <a name = "{{g}}" </a>
+      {% set groupstart = False %}
+   {% endif %}
+   <a name = "{{g}}_{{sg}}"> </a>
+  {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
+  {% for metric in subsetMetrics %}  
+    {% set metricInfo = run.metricInfo(metric) %}
+    <div id="metricset">
+    <b>
+    {% for key in metricInfo %}
+     {{ '%s' %(metricInfo[key]) }}  /
+    {% endfor %}
+    </b>
+    </br>
+    {# Add the plots for this metric #}
+    {% set plotdict = run.plotsForMetric(metric) %}
+    {% if plotdict|length > 0 %}
+     {% for ptype, plot in plotdict.iteritems() %}
+      {% set plotfile = run.getPlotfile(plot) %}
+      {% set thumbfile = run.getThumbfile(plot) %}
+       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+      {% endfor  %}
+    {% endif %}
+
+    <p>
+    {% set caption = run.captionForMetric(metric) %}
+    {{ caption }}
+    </p>
+
+    {# Add the summary stats for this metric #} 
+    {% set stats = run.statsForMetric(metric) %}
+    {% set statdict = run.statDict(stats) %}
+    <table class="blank">
+    {% for name in statdict.keys() %}
+     <tr>
+     <td class="blank">
+     <i>{{ name }}:</i>
+     </td>
+     <td class="blank">
+     {% if name == 'Count' %}
+      {{ '%d'|format(statdict[name]) }}
+     {% else %}
+      {{ '%.2f'|format(statdict[name])}}
+     {% endif %}
+     </td> 
+     </tr>
+    {% endfor %}
+    </table>
+    </div>
+
+   {% endfor %}
+ {% endfor %}
+{% endfor %}
+
+{% endblock %}

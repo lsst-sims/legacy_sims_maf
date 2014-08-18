@@ -15,14 +15,12 @@ slicerList=[]
 m1 = configureMetric('CountMetric', kwargs={'col':'slewTime'}, plotDict={'logScale':True})
 slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewTime', 'binsize':5.},
                          metricDict=makeDict(m1), constraints=[''] )
-root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
 constraints = ["filter = \'%s\'"%'r']
 m1 = configureMetric('MinMetric', kwargs={'col':'airmass'}, plotDict={'cmap':'RdBu'})
 metricDict = makeDict(m1)
 slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=constraints )
-root.slicers=makeDict(slicer)
 slicerList.append(slicer)
 
 nside=64

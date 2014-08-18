@@ -1,6 +1,5 @@
 import os
 import warnings
-from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -18,12 +17,13 @@ class BaseSliceMetric(object):
     storage for things like metric data and metadata about the metric + slicer.
     """
     def __init__(self, useResultsDb=True, resultsDbAddress=None, 
-                 figformat='pdf', dpi=600, outDir='Output'):
+                 figformat='pdf', thumbnail=True, dpi=600, outDir='Output'):
         """
         Instantiate sliceMetric object and set up (empty) dictionaries.
         The dictionaries are keyed by an internal-use id number. """
         # Track output directory.
         self.outDir = outDir
+        self.thumbnail = thumbnail
         # Set up results database storage if desired. 
         if useResultsDb:
            self.resultsDb = ResultsDb(outDir=self.outDir, 
@@ -41,6 +41,7 @@ class BaseSliceMetric(object):
         self.iid_next = 0
         self.metricNames = {}
         self.plotParams = {}
+        self.displayDicts = {}        
         self.slicers = {}
         self.metricValues = {}
         self.simDataNames = {}
@@ -119,7 +120,8 @@ class BaseSliceMetric(object):
         oname = oname.replace('"','').replace("'",'').replace('__', '_')
         # and remove / and \
         oname = oname.replace('/', '_').replace('\\', '_')
-        print oname
+        # and remove parentheses
+        oname = oname.replace('(', '').replace(')', '')
         if plotType is not None:
             oname = oname + '_' + plotType
         print oname
@@ -132,6 +134,21 @@ class BaseSliceMetric(object):
         print oname
         return oname
 
+    def _getThumbName(self, outfile):
+        """
+        Build the name for a plot thumbnail file from 'outfile'.
+
+        outfile may contain the output directory
+        """
+        # Split the filepath from the file name.
+        filepath, plotfile = os.path.split(outfile)
+        # Remove the ending from the file name (.pdf or .png).
+        thumbname = ''.join(plotfile.split('.')[:-1])
+        # Add .png to the file name.
+        thumbname = 'thumb.' + thumbname + '.png'
+        # Combine with the filepath (as it was known from method this was called).
+        thumbname = os.path.join(filepath, thumbname)
+        return thumbname
     
     def readMetricData(self, filenames, verbose=False):
        """
@@ -153,6 +170,13 @@ class BaseSliceMetric(object):
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
           self.plotParams[iid] = {}
+          # Set default values, in  case metric file doesn't have the info.
+          self.displayDicts[iid] = {'group':'Ungrouped', 
+                                    'subgroup':'None',
+                                    'order':0,
+                                    'caption':'None'}
+          if 'displayDict' in header:
+              self.displayDicts[iid].update(header['displayDict'])
           if 'plotParams' in header:
              self.plotParams[iid].update(header['plotParams'])
           if verbose:
@@ -190,11 +214,13 @@ class BaseSliceMetric(object):
                          metricName = self.metricNames[iid],
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
-                         metadata = self.metadatas[iid] + comment)
+                         metadata = self.metadatas[iid] + comment,
+                         displayDict = self.displayDicts[iid])
         if self.resultsDb:
-           self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
-                                                            slicer.slicerName,
-                                                            self.simDataNames[iid],
-                                                            self.sqlconstraints[iid],
-                                                            self.metadatas[iid],
-                                                            outfile)
+            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
+                                                          slicer.slicerName,
+                                                          self.simDataNames[iid],
+                                                          self.sqlconstraints[iid],
+                                                          self.metadatas[iid],
+                                                          outfile)
+           

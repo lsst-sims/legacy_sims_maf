@@ -21,6 +21,8 @@ class MetricConfig(pexConfig.Config):
     summaryStats = pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
                                       itemtype=MixConfig,default={})
     histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
+    displayDict = pexConfig.ConfigField("How plots should be displayed. keys should be 'displayGroup' w/ value of a string",
+                                        dtype=MixConfig,default=None)
 
 class ColStackConfig(pexConfig.Config):
     """
@@ -111,7 +113,7 @@ def configureStacker(name, kwargs={}):
     config.kwargs = makeMixConfig(kwargs)
     return config
     
-def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={}):
+def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={}, displayDict={}):
     """
     Helper function to generate a metric pex config object.
     """
@@ -123,6 +125,7 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={})
     mc.histMerge=makeMixConfig(histMerge)
     mc.kwargs = makeMixConfig(kwargs)
     mc.plot = makeMixConfig(plotDict)
+    mc.displayDict = makeMixConfig(displayDict)
     return mc
 
 def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None, plotConfigs=None, metadata=''):
@@ -161,7 +164,8 @@ def readMetricConfig(config):
     summaryStats = config.summaryStats
     histMerge = readMixConfig(config.histMerge)
     plotDict = readMixConfig(config.plot)
-    return name, kwargs, plotDict, summaryStats, histMerge
+    displayDict = readMixConfig(config.displayDict)
+    return name, kwargs, plotDict, summaryStats, histMerge, displayDict
 
 
 def readMixConfig(config):

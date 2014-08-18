@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.exc import DatabaseError
+import numpy as np
 
 Base = declarative_base()
 
@@ -29,6 +30,29 @@ class MetricRow(Base):
         return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
             self.sqlConstraint, self.metricMetadata, self.metricDataFile)
+
+class DisplayRow(Base):
+    """
+    Define contents and format of the displays table. 
+
+    (Table to list the display properties for each metric.)
+    """
+    __tablename__ = "displays"
+    displayId = Column(Integer, primary_key=True)    
+    metricId = Column(Integer, ForeignKey('metrics.metricId'))
+    # Group for displaying metric (in webpages).
+    displayGroup = Column(String)
+    # Subgroup for displaying metric.
+    displaySubgroup = Column(String)
+    # Order to display metric (within subgroup).
+    displayOrder = Column(Float)
+    # The figure caption.
+    displayCaption = Column(String)  
+    metric = relationship("MetricRow", backref=backref('displays', order_by=displayId))
+    def __rep__(self):
+        return "<Display(displayGroup='%s', displaySubgroup='%s', displayOrder='%.1f', displayCaptio\
+n='%s')>" \
+            %(self.displayGroup, self.displaySubgroup, self.displayOrder, self.displayCaption)
         
 class PlotRow(Base):
     """
@@ -53,7 +77,8 @@ class SummaryStatRow(Base):
     """
     Define contents and format of the summary statistics table.
 
-    (Table to list link summary stats to relevant metrics in MetricList, and provide summary stat name, value and potentially a comment).
+    (Table to list link summary stats to relevant metrics in MetricList, and provide summary stat name,
+    value and potentially a comment).
     """
     __tablename__ = "summarystats"
     # Define columns in plot list table.
@@ -99,19 +124,33 @@ class ResultsDb(object):
         """
         Add a row to the metrics table.
         """
-        ## TODO: check if row already exists in table, and if so, don't add it again.
         metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
-                                sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
-                                metricDataFile=metricDataFile)
+                               sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
+                               metricDataFile=metricDataFile)
         self.session.add(metricinfo)
         self.session.commit()
         return metricinfo.metricId
+
+    def addDisplay(self, metricId, displayDict):
+        """
+        Add a row to the displays table.
+        """
+        displayGroup = displayDict['group']
+        displaySubgroup = displayDict['subgroup']
+        displayOrder = displayDict['order']
+        displayCaption = displayDict['caption']
+        if displayCaption.endswith('(auto)'):
+            displayCaption = displayCaption.replace('(auto)', '', 1)
+        displayinfo = DisplayRow(metricId=metricId, 
+                                 displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
+                                 displayOrder=displayOrder, displayCaption=displayCaption)
+        self.session.add(displayinfo)
+        self.session.commit()        
 
     def addPlot(self, metricId, plotType, plotFile):
         """
         Add a row to the plot table.
         """
-        ## TODO: check if row already exists in table, and if so, don't add it again.
         plotinfo = PlotRow(metricId=metricId, plotType=plotType, plotFile=plotFile)
         self.session.add(plotinfo)
         self.session.commit()
@@ -120,13 +159,27 @@ class ResultsDb(object):
         """
         Add a row to the summary statistic table.
         """
-        ## TODO: check if row already exists in table, and if so, don't add it again.
-        if not ((isinstance(summaryValue, float)) or isinstance(summaryValue, int)):
-            warnings.warn('Cannot save non-float/non-int values for summary statistics.')
-            return
-        summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName, summaryValue=summaryValue)
-        self.session.add(summarystat)
-        self.session.commit()
+        # Allow for special summary statistics which return data in a np structured array with
+        #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic). 
+        if np.size(summaryValue) > 1:
+            if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
+                for value in summaryValue:
+                    summarystat = SummaryStatRow(metricId=metricId,
+                                                summaryName=summaryName+' '+value['name'],
+                                                summaryValue=value['value'])
+                    self.session.add(summarystat)
+                    self.session.commit()
+            else:
+                warnings.warn('Warning! Cannot save non-conforming summary statistic.')
+        # Most summary statistics will be simple floats.
+        else:
+            if isinstance(summaryValue, float) or isinstance(summaryValue, int):
+                summarystat = SummaryStatRow(metricId=metricId, summaryName=summaryName, summaryValue=summaryValue)
+                self.session.add(summarystat)
+                self.session.commit()
+            else:
+                warnings.warn('Warning! Cannot save summary statistic that is not a simple float or int')
+        
 
     def getMetricIds(self):
         """

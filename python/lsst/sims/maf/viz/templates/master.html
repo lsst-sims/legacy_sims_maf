@@ -1,0 +1,231 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+
+<style>
+
+#header
+{
+background-color:#A0A0A0;
+height:100%;
+width:100%;
+padding:10px;
+padding-left:20px;
+text-align:left;
+font-weight: bold;
+font-size:2em;
+}
+
+#navbar
+{
+display:block;
+background-color:#FFFFFF;
+height:100%;
+width:100%;
+}
+
+#sidebar
+{
+display:block;
+background-color:#E8E8E8;
+width:170px;
+float:left;  
+height:650px; 
+padding:3px;
+margin:0;
+overflow:scroll;
+}
+
+#content
+{
+display:block;
+padding:5px;
+margin:0px; 
+margin-left:180px;
+height:650px;
+overflow:scroll;
+}
+
+#footer
+{
+display:block;
+background-color:#A0A0A0;
+clear:both;  
+text-align:center;
+margin:0px;
+padding:5px;
+}
+
+#metricset
+{
+margin:0px;
+margin-bottom:40px;
+border-bottom:1px solid gray;
+}
+
+
+table,th,td
+{
+border:1px solid black;
+border-collapse:collapse;
+margin-bottom: 10px
+}
+th
+{
+background-color: #E8E8E8;
+}
+th, td
+{
+padding:5px;
+text-align:left;
+}
+tr.lightestgray
+{
+background-color:#F5F5F5;
+}
+
+table.blank, th.blank, td.blank
+{
+border:0px;
+margin-left:30px;
+margin-bottom:0px
+}
+th.blank, td.blank
+{
+margin-left:10px;
+padding:2px;
+text-align:left;
+}
+
+img.thumbnail {
+    height: 200px;
+    padding:0px;
+    margin: 0px;
+}
+
+p
+{
+text-indent:5px;
+line-height:130%;
+}
+
+ul
+{
+list-style-type: dot;
+padding-left:20px;
+padding-bottom:20px;
+padding-top:5px;
+margin:2px;
+}
+
+li
+{
+text-indent:0px;
+padding-left:0px;
+padding-bottom:5px;
+}
+
+
+ul.nav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+li.nav {
+    float: left;
+}
+
+a.nav:link, a.nav:visited {
+    display: block;
+    border:1px solid gray;
+    margin:2px;
+    min-width: 150px;
+    font-weight: bold;
+    color: black;
+    background-color:#C0C0C0;
+    text-align: center;
+    padding: 5px;
+    text-decoration: none;
+}
+
+a.nav:hover, a.nav:active {
+    background-color:#808080;
+}
+
+a.activenav:link, a.activenav:visited {
+    display: block;
+    border:1px solid gray;
+    margin:2px;
+    min-width: 150px;
+    font-weight: bold;
+    color: black;
+    background-color:#FFFFFF;
+    text-align: center;
+    padding: 5px;
+    text-decoration: none;
+}
+
+#indent
+{
+text-indent:25px;
+}
+
+</style>
+
+</head>
+
+
+<body style="display:block;margin:0px;position:relative; top:0px;">
+
+<div id="header">
+{%block title %}OpSim Run: {{ run.runName }} {% endblock %}
+</div>
+
+
+{% set navigation_bar = [
+    ('configParams', 'configs', 'Opsim Configuration'),
+    ('/', 'listMetrics', 'Metrics List'),
+    ('summaryStats', 'stats', 'Summary Stats'),
+    ('allResults', 'allResults', 'All Results')
+]  -%}
+{% set active_page = active_page|default('index') -%}
+
+
+<div id="navbar">
+{% block navbar %}
+ <ul class="nav">
+ {% for href, id, caption in navigation_bar %}
+   <li class="nav">
+     <a 
+     {% if id == active_page %}
+       class="activenav"
+     {% else %}
+       class="nav"
+     {% endif%}
+      href="{{ href|e }}">{{ caption|e }}</a>
+    </li>
+ {% endfor %}
+ </ul>
+{% endblock %}
+</div>
+
+<div id="sidebar">
+{% block moresidebar %}
+{% endblock %}
+</div>
+
+<div id="content">
+{% block content %} 
+{% endblock %}
+</div>
+
+<div id="footer">
+<a
+  href="https://confluence.lsstcorp.org/display/SIM/MAF+documentation"
+  target="_blank">
+  LSST Metrics Analysis Framework (MAF)</a>
+</div>
+

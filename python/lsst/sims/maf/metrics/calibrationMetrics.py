@@ -43,6 +43,13 @@ class ParallaxMetric(BaseMetric):
             raise NotImplementedError('Spot to add colors for different stars')
         self.atm_err = atm_err
         self.normalize = normalize
+        if self.displayDict['group'] == 'Ungrouped':
+            self.displayDict['group'] = 'Calibration'
+        if self.displayDict['caption'] == 'None':
+            self.displayDict['caption'] = 'Estimated uncertainty in parallax measurement (assuming no proper motion).'
+            if self.normalize:
+                self.displayDict['caption'] = 'Normalized uncertainty in parallax measurement (assuming no proper motion). '
+                self.displayDict['caption'] += 'Values closer to 1 indicate more optimal scheduling for parallax measurement.'
         
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
         """Assume parallax in RA and DEC are fit independently, then combined.
@@ -97,7 +104,8 @@ class ProperMotionMetric(BaseMetric):
         cols = [m5Col, mjdCol,filterCol,seeingCol]
         if normalize:
             units = 'ratio'
-        super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units, badval=badval, **kwargs)
+        super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units, 
+                                                 badval=badval, **kwargs)
         # set return type
         self.seeingCol = seeingCol
         self.m5Col = m5Col
@@ -111,6 +119,14 @@ class ProperMotionMetric(BaseMetric):
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
+        if self.displayDict['group'] == 'Ungrouped':
+            self.displayDict['group'] = 'Calibration'
+        if self.displayDict['caption'] == 'None':
+            self.displayDict['caption'] = 'Estimated uncertainty of the proper motion fits (assuming no parallax).'
+            if self.normalize:
+                self.displayDict['caption'] = 'Normalized uncertainty in proper motion fits (assuming no parallax). '
+                self.displayDict['caption'] += 'Values closer to 1 indicate more optimal scheduling '
+                self.displayDict['caption'] += 'for proper motion error.'
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice['filter'])

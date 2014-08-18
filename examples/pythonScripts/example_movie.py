@@ -49,6 +49,11 @@ def setupMetrics():
     # metricList.append(metrics.SumMetric('expMJD', metricName='Sum',
     #                                       plotParams={'logScale':True,
     #                                                   'cbarFormat': '%d', 'title':'Sum Metric'}))
+
+    metricList.append(metrics.CountMetric('expMJD', metricName='Number of Visits',
+                                          plotParams={'logScale':False,
+                                                      'colorMin':0, 'colorMax':300,
+                                                      'cbarFormat': '%d'}))
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
@@ -85,7 +90,7 @@ def run(opsimName, metadata, simdata, metricList, nside):
         sm.setSlicer(hs)
         sm.setMetrics(metricList)
         # Calculate metric data values for simdatasubset
-        #today_str = metadata+' day:'+str(i) 
+
         sm.runSlices(simdatasubset, simDataName=opsimName, metadata=metadata)
         # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
         sm.plotAll(outfileSuffix=slicenumber, closefig=True)

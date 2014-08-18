@@ -1,9 +1,8 @@
 import os
-import warnings
 import numpy as np 
 
 from .mafConfig import MafConfig, config2dict, readMetricConfig, readSlicerConfig, readMixConfig
-warnings.simplefilter("ignore", Warning) # Suppress tons of numpy warnings
+
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -12,6 +11,7 @@ import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.stackers as stackers
 import time
+import collections
 
 
 def dtime(time_prev):
@@ -90,16 +90,22 @@ class MafDriver(object):
             self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
-                name, kwargs, plotDict, summaryStats, histMerge = readMetricConfig(metric)
-                # Need to make summaryStats a dict with keys of metric names and items of kwarg dicts.
+                name, kwargs, plotDict, summaryStats, histMerge, displayDict = readMetricConfig(metric)
+                # Add plot parameters and display parameters to kwargs handed to metric.
                 kwargs['plotParams'] = plotDict
+                kwargs['displayDict'] = displayDict
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 # Add an attribute to our metric which will describe the summary stats.
                 temp_metric.summaryStats = []
+                nameCheck=[]
                 for key in summaryStats.keys():
                     summarykwargs = readMixConfig(summaryStats[key])
-                    summaryMetric = metrics.BaseMetric.getClass(key)(col='metricdata', **summarykwargs)
+                    summaryMetric = metrics.BaseMetric.getClass(key.split(' ')[0])(col='metricdata', **summarykwargs)
                     temp_metric.summaryStats.append(summaryMetric)
+                    nameCheck.append(summaryMetric.name)
+                if len(list(set(nameCheck))) < len(nameCheck):
+                   duplicates = [x for x, y in collections.Counter(nameCheck).items() if y > 1]
+                   raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'%(duplicates[0], temp_metric.name))
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():
@@ -289,6 +295,8 @@ class MafDriver(object):
                         gm.plotParams[iid] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
+                    # Generate captions for figures and save display data.
+                    gm.captionAll()
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    plotted metrics in %.3g s'%dt
@@ -359,7 +367,7 @@ class MafDriver(object):
                 iids = cbm.metricValues.keys()
                 fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
-                if cbm.slicers[iids[0]] == 'HealpixSlicer':
+                if cbm.slicers[iids[0]].slicerName == 'HealpixSlicer':
                    fignum, title, psfile = cbm.plotPowerSpectra(iids, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
                 

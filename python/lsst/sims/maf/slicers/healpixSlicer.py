@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils import percentileClipping
+import warnings
 
 from .baseSpatialSlicer import BaseSpatialSlicer
 from .baseSlicer import BaseSlicer
@@ -71,10 +72,10 @@ class HealpixSlicer(BaseSpatialSlicer):
         return ra, dec  
     
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
-                   logScale=False, cbarFormat='%.2g', cmap=cm.jet,
+                   logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   cbar_edge=True, **kwargs):
+                   cbar_edge=True, label=None, **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
@@ -108,25 +109,37 @@ class HealpixSlicer(BaseSpatialSlicer):
             colorMin = pcMin
         if colorMax is None and percentileClip:
             colorMax = pcMax
-        if (colorMin is not None) and (colorMax is not None):
+        if (colorMin is not None) or (colorMax is not None):
             clims = [colorMin, colorMax]
         else:
             clims = None
-            
-        if clims is not None:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                        min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
-                        cmap=cmap, norm=norm)
-        else:
-            hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                        rot=(0,0,180), flip='astro', cmap=cmap, norm=norm)
+
+        # Make sure there is some range on the colorbar
+        if clims is None:
+            if metricValue.compressed().size > 0:
+                clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            else:
+                clims = [-1,1]
+            if clims[0] == clims[1]:
+                clims[0] =  clims[0]-1
+                clims[1] =  clims[1]+1        
+                   
+        hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
+                    min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
+                    cmap=cmap, norm=norm)        
         hp.graticule(dpar=20., dmer=20.)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
-        cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
-                          extend='both', format=cbarFormat)
-        cb.set_label(xlabel)
+        # Add label.
+        if label is not None:
+            plt.figtext(0.8, 0.9, '%s' %label)
+        # supress silly colorbar warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
+                              extend='both', extendrect=True, format=cbarFormat)
+            cb.set_label(xlabel)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")
@@ -136,7 +149,8 @@ class HealpixSlicer(BaseSpatialSlicer):
     def plotHistogram(self, metricValue, title=None, xlabel=None,
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, cumulative=False, xMin=None, xMax=None, logScale=False, flipXaxis=False,
+                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
+                      logScale=False, flipXaxis=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -148,19 +162,22 @@ class HealpixSlicer(BaseSpatialSlicer):
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
         bins = bins for histogram (numpy array or # of bins)
+        binsize = size of bins to use.  Will override "bins" if both are set.
         (default None, uses Freedman-Diaconis rule to set binsize)
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
-        # Simply overrides scale of base plotHistogram. 
+        # Simply overrides scale of base plotHistogram.
+        if ylabel is None:
+            ylabel = 'Area (1000s of square degrees)'
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
                                                           title=title, fignum=fignum, 
                                                           label=label, 
                                                           addLegend=addLegend, legendloc=legendloc,
-                                                          bins=bins, cumulative=cumulative,
+                                                          bins=bins, binsize=binsize, cumulative=cumulative,
                                                           xMin=xMin, xMax=xMax, logScale=logScale,
                                                           flipXaxis=flipXaxis,
                                                           scale=scale, color=color,

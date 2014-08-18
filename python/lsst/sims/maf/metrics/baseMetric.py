@@ -7,6 +7,7 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
+import warnings
 import inspect
 from lsst.sims.maf.utils.getColInfo import ColInfo
 
@@ -78,8 +79,9 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, col=None, metricName=None, units=None, plotParams=None,
-                 metricDtype=None, badval=-666):
+    def __init__(self, col=None, metricName=None, units=None, 
+                 metricDtype=None, badval=-666,
+                 plotParams=None, displayDict=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
@@ -93,6 +95,11 @@ class BaseMetric(object):
           * every metric object will have the data columns it requires added to the column registry
             (so the driver can know which columns to pull from the database)
           * every metric object will contain a plotParams dictionary, which may contain only the units.
+
+        plotParams is a dictionary containing instructions for plotting (setting plot titles, limits,
+        x and y labels, etc.).
+        displayGroup is a string defining where the output of the metric should be displayed in the visualization
+        layer (metrics with the same displayGroup parameter are grouped together). 
         """
         if col is None:
             raise ValueError('Specify "col" kwarg for metric %s' %(self.__class__.__name__))
@@ -113,10 +120,12 @@ class BaseMetric(object):
               ', '.join(map(str, self.colNameArr))
         # Set up dictionary of reduce functions (may be empty).
         self.reduceFuncs = {}
+        self.reduceOrder = {}
         for r in inspect.getmembers(self, predicate=inspect.ismethod):
             if r[0].startswith('reduce'):
                 reducename = r[0].replace('reduce', '', 1)
                 self.reduceFuncs[reducename] = r[1]
+                self.reduceOrder[reducename] = 0
         # Identify type of metric return value.
         if metricDtype is not None:
             self.metricDtype = metricDtype
@@ -132,14 +141,39 @@ class BaseMetric(object):
                 units = ''
         self.units = units
         # Set more plotting preferences (at the very least, the units).
-        self.plotParams = plotParams
-        if self.plotParams is None:
+        if plotParams is None:
             self.plotParams = {}
+        else:
+            self.plotParams = plotParams.copy()
         if 'units' not in self.plotParams:
             self.plotParams['units'] = self.units
+        if 'zp' in self.plotParams:
+            if not np.isfinite(self.plotParams['zp']):
+                warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotParams' %(self.name))
+                del self.plotParams['zp']
+        if 'normVal' in self.plotParams:
+            if self.plotParams['normVal'] == 0:
+                warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotParams'
+                              % (self.name))
+                del self.plotParams['normVal']
+        if 'xMin' in self.plotParams and 'colorMin' not in self.plotParams:
+            self.plotParams['colorMin'] = self.plotParams['xMin']
+        if 'xMax' in self.plotParams and 'colorMax' not in self.plotParams:
+            self.plotParams['colorMax'] = self.plotParams['xMax']
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
         #  plotPercentiles (overriden by plotMin/Max). 
         #  These plotParams are used by the sliceMetric, passed to the slicer plotting utilities.
+        # Set up the displayDict.
+        # Set defaults.
+        defaultDisplayDict = {'group':'Ungrouped',
+                              'subgroup':'None',
+                              'order':0,
+                              'caption':'None'}
+        if displayDict is None:
+            self.displayDict = defaultDisplayDict
+        else:
+            defaultDisplayDict.update(displayDict)
+            self.displayDict = defaultDisplayDict
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')
