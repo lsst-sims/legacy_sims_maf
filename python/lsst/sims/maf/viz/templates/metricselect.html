@@ -26,7 +26,7 @@
 
 <table>
 
-{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set metricInfo = run.metricInfo(run.metrics[0], withDataFile=True) %}
 
 <tr>
 <th> </th>
@@ -37,7 +37,7 @@
   
 <tr>
 <td> </td>
-<td colspan="3">
+<td colspan={{metricInfo|length}}>
 <input type='submit' value='Plot Metrics'>
 </td>
 </tr>
@@ -50,7 +50,7 @@
 	  <input type='checkbox' name="Group_subgroup"
   value="{{ group|escape }}__{{ subgroup|escape }}">
 	</td>
-	<td colspan="3">
+	<td colspan={{metricInfo|length}}>
 	{% if groupstart == True %}
 	  <a name="{{group}}"></a>
 	  {% set groupstart = False %}
@@ -61,13 +61,19 @@
         </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
        {% for metric in metrics %}
-          {% set metricInfo = run.metricInfo(metric) %}
+          {% set metricInfo = run.metricInfo(metric, withDataFile=True) %}
           <tr> 	    
 	  <td>
           <input type='checkbox' name="metricId" value="{{metric['metricId']}}"> 
 	  </td>
 	  {% for key in metricInfo %}
-          <td>{{ metricInfo[key]|escape }}</td> 
+           <td>
+	   {% if key == 'Datafile' %}
+	    <a href="{{run.outDir}}/{{metricInfo[key]}}">{{metricInfo[key]|escape}}</a>
+	   {% else %}
+            {{ metricInfo[key]|escape }}
+           {% endif %}
+          </td>
 	  {% endfor %}
 	  </tr>
 	{% endfor %}

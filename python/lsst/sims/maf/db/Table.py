@@ -11,8 +11,9 @@ with warnings.catch_warnings():
 
 class Table(DBObject):
     skipRegistration = True
+    objid = 'sims_maf'
 
-    def __init__(self, tableName, idColKey, dbAddress, verbose=False):
+    def __init__(self, tableName, idColKey, dbAddress, typeOverRide=None, verbose=False):
         """
         Initialize an object for querying OpSim databases
 
@@ -22,21 +23,14 @@ class Table(DBObject):
         @param dbAddress: A string indicating the location of the data to query.
                           This should be a database connection string.
         """
-        self.verbose = verbose
-        if dbAddress is None:
-            dbAddress = self.getDbAddress()
-        self.verbose = verbose
         self.idColKey = idColKey
         self.dbAddress = dbAddress
         self.tableid = tableName
-        self._connect_to_engine()
-        self._get_table()
+        
+        if typeOverRide is not None:
+            self.dbTypeMap.update(typeOverRide)
+        super(Table, self).__init__(address=dbAddress)
 
-        if self.generateDefaultColumnMap:
-            self._make_default_columns()
-
-        self._make_column_map()
-        self._make_type_map()
 
     def _get_column_query(self, doGroupBy, colnames=None, aggregate=func.min):
         # Build the sql query - including adding all column names, if columns were None.

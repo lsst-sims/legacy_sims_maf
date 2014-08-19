@@ -19,7 +19,7 @@ class MafTracking(object):
             trackingDbAddress = 'sqlite:///' + dbfile
             
         # Read in the results database.
-        database = db.Database(trackingDbAddress, 
+        database = db.Database(trackingDbAddress, longstrings=True,
                                dbTables={'runs':['runs', 'mafRunId']})
         self.runs = database.queryDatabase('runs', 'select * from runs')
         self.runs = self.sortRuns(self.runs)

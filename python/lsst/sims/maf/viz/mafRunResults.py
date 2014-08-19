@@ -41,7 +41,7 @@ class MafRunResults(object):
         if resultsDbAddress is None:
             sqlitefile = os.path.join(outDir, 'resultsDb_sqlite.db')
             resultsDbAddress = 'sqlite:///'+sqlitefile
-        database = db.Database(resultsDbAddress,
+        database = db.Database(resultsDbAddress, longstrings=True,
                                dbTables={'metrics':['metrics','metricID'] ,
                                          'displays':['displays', 'displayId'],
                                          'plots':['plots','plotId'],
@@ -184,11 +184,11 @@ class MafRunResults(object):
             groups[g] = sorted(list(groups[g]))
         return groups
             
-    def metricInfo(self, metric):
+    def metricInfo(self, metric, withDataFile=False):
         """
         Return a dict with the metric info we want to show on the webpages.
 
-        Currently : MetricName / Slicer/ Metadata.
+        Currently : MetricName / Slicer/ Metadata / datafile (for download)
         """
         # Provides a way to easily modify what we show on all webpages without
         #  significantly altering the templates. Or provides an abstraction layer 
@@ -197,6 +197,8 @@ class MafRunResults(object):
         metricInfo['MetricName'] = metric['metricName']
         metricInfo['Slicer'] = metric['slicerName']
         metricInfo['Metadata'] = metric['metricMetadata']
+        if withDataFile:
+            metricInfo['Datafile'] = metric['metricDataFile']
         return metricInfo
 
     def captionForMetric(self, metric):
