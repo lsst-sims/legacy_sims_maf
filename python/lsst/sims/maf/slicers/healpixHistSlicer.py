@@ -3,6 +3,7 @@
 
 import numpy as np
 from .healpixSlicer import HealpixSlicer
+import lsst.sims.maf.metrics as metrics
 import matplotlib.pyplot as plt
 import os
 
@@ -14,8 +15,8 @@ class HealpixHistSlicer(HealpixSlicer):
         self.plotFuncs = {'plotHistogram':self.plotHistogram}
         self.plotObject = True
 
-    def plotHistogram(self, metricValue, binMin=0.5,
-                      binMax=60.5, binsize=0.5,linestyle='-',
+    def plotHistogram(self, metricValue, numpyReduce='sum', metricReduce=None, histStyle=True,
+                      binMin=0.5, binMax=60.5, binsize=0.5,linestyle='-',
                       title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
@@ -26,13 +27,33 @@ class HealpixHistSlicer(HealpixSlicer):
         fig = plt.figure(fignum)
         if not xlabel:
             xlabel = units
-        
-        # Need to think of best way to allow various ways to collapse.  Leave as "sum" for now,
-        # but will probably want to have mean and median as options eventually.
-        finalHist = np.sum(metricValue.compressed(), axis=0)
+
+
+        if numpyReduce is not None and metricReduce is not None:
+            raise Exception('Both numpyReduce and metric Reduce are not None, can only reduce one way')
+
+        if numpyReduce is  None and metricReduce is None:
+            raise Exception('Both numpyReduce and metric Reduce are None, need one way to reduce to be set')
+
+        if numpyReduce is not None:
+            # just use a numpy function with axis=0 to 
+            finalHist = getattr(np,numpyReduce)(metricValue.compressed(), axis=0)
+
+        if metricReduce is not None:
+            # can I just change the dtype? no, can't do that
+            mV = np.array(metricValue.compressed().tolist())
+            finalHist = np.zeros(mV.shape[1], dtype=float)
+            for i in np.arange(finalHist.size):
+                finalHist[i] = getattr(metrics,metricReduce)(mV[i,:])
+
         bins = np.arange(binMin, binMax+binsize,binsize)
-        x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
-        y = np.ravel(zip(finalHist, finalHist))
+        if histStyle:
+            x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
+            y = np.ravel(zip(finalHist, finalHist))
+        else:
+            x = bins[:-1]
+            y = finalHist
+            
         plt.plot(x,y, linestyle=linestyle, label=label, color=color)
 
         if xlabel is not None:
