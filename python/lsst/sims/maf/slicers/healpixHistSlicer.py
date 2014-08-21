@@ -28,19 +28,18 @@ class HealpixHistSlicer(HealpixSlicer):
         if not xlabel:
             xlabel = units
 
-
         if numpyReduce is not None and metricReduce is not None:
-            raise Exception('Both numpyReduce and metric Reduce are not None, can only reduce one way')
+            raise Exception('Both numpyReduce and metricReduce are set, can only reduce one way')
 
         if numpyReduce is  None and metricReduce is None:
             raise Exception('Both numpyReduce and metric Reduce are None, need one way to reduce to be set')
 
         if numpyReduce is not None:
-            # just use a numpy function with axis=0 to 
+            # just use a numpy function with axis=0 to collapse the values
             finalHist = getattr(np,numpyReduce)(metricValue.compressed(), axis=0)
 
         if metricReduce is not None:
-            # can I just change the dtype? no, can't do that
+            # An ugly way to change an array of arrays (dtype=object), to a 2-d array
             mV = np.array(metricValue.compressed().tolist())
             finalHist = np.zeros(mV.shape[1], dtype=float)
             for i in np.arange(finalHist.size):
@@ -51,6 +50,7 @@ class HealpixHistSlicer(HealpixSlicer):
             x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
             y = np.ravel(zip(finalHist, finalHist))
         else:
+            # Could use this to plot things like FFT
             x = bins[:-1]
             y = finalHist
             
