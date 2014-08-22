@@ -1,7 +1,6 @@
 import os
 from collections import OrderedDict
 import numpy as np
-from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
 from .mafRunResults import MafRunResults
 

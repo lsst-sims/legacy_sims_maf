@@ -69,7 +69,12 @@
 	  {% for key in metricInfo %}
            <td>
 	   {% if key == 'Datafile' %}
-	    <a href="{{run.outDir}}/{{metricInfo[key]}}">{{metricInfo[key]|escape}}</a>
+	    {% if metricInfo[key] != 'NULL' %}
+	    <a
+  href="{{run.outDir}}/{{metricInfo[key]}}">{{metricInfo[key]|escape}}</a>
+	    {% else %}
+	     N/A
+	    {% endif %}
 	   {% else %}
             {{ metricInfo[key]|escape }}
            {% endif %}

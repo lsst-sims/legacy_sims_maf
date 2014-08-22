@@ -1,6 +1,12 @@
 {% extends "master.html" %}
 
-{% set runId = runlist.runs['mafRunId'][0] %}
+{% if runId < 0 %}
+  {% set runId = runlist.runs['mafRunId'][0] %}
+{% endif %}
+
+{% block pagetitle %}
+Opsim Run Select
+{% endblock %}
 
 {% block title %}
 List of all Opsim Runs

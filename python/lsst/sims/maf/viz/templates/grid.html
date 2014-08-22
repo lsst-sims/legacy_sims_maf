@@ -45,13 +45,20 @@
     </b>
     </br>
     {# Add the plots for this metric #}
-    {% set plotdict = run.plotsForMetric(metric) %}
+    {% set plotdict = run.plotsForMetric(metric) %}     
     {% if plotdict|length > 0 %}
+     <table class="blank">
+     <tr class="blank" width=100%>
      {% for ptype, plot in plotdict.iteritems() %}
       {% set plotfile = run.getPlotfile(plot) %}
       {% set thumbfile = run.getThumbfile(plot) %}
-       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+       <td class="blank">
+	 <a href="{{plotfile}}"> <img class="thumbnail"
+ src='{{thumbfile}}'></a>
+	</td>
       {% endfor  %}
+     </tr>
+     </table>
     {% endif %}
 
     <p>
@@ -65,10 +72,10 @@
     <table class="blank">
     {% for name in statdict.keys() %}
      <tr>
-     <td class="blank">
+     <td class="blank" style='padding-left:10px'>
      <i>{{ name|escape }}:</i>
      </td>
-     <td class="blank">
+     <td class="blank" style='padding-left:20px'>
      {% if name == 'Count' %}
       {{ '%d'|format(statdict[name]) }}
      {% else %}

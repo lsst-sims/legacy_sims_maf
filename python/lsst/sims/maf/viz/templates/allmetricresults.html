@@ -2,7 +2,6 @@
 
 {% set active_page = "allMetricResults" %}
 
-
 {% set run = runlist.getRun(runId) %}
 
 {% set metrics = run.metrics %}
@@ -53,11 +52,18 @@ than per metric. #}
     {% set plotdict = run.plotsForMetric(metric) %}
     {% if plotdict|length > 0 %}
      </br>
+      <table class="blank">
+      <tr class="blank" width=100%>
      {% for ptype, plot in plotdict.iteritems() %}
       {% set plotfile = run.getPlotfile(plot) %}
       {% set thumbfile = run.getThumbfile(plot) %}
-       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+       <td class="blank">
+       <a href="{{plotfile}}"> <img class="thumbnail"
+ src='{{thumbfile}}'></a>
+       </td>
       {% endfor  %}
+      </tr>
+      </table>
     {% endif %}
 
     <p>
