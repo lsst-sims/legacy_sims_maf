@@ -8,7 +8,7 @@ import unittest
 import healpy as hp
 from lsst.sims.maf.slicers.healpixSlicer import HealpixSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
-
+import lsst.sims.maf.slicers as slicers
 
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
                    decmin=-np.pi, decmax=np.pi, random=True):
@@ -244,6 +244,29 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                       logScale=False, flipXaxis=False, scale=None)
 
                 
-                        
+
+class testHealpixHistSlicer(unittest.TestCase):
+    def setUp(self):
+        self.metricValue = np.ma.empty(10,dtype=object)
+        for i in np.arange(10):
+            self.metricValue[i] = np.random.rand(10)
+         
+    def testPlotHistogram(self):
+        slicer = slicers.HealpixHistSlicer()
+       
+        num = slicer.plotHistogram(self.metricValue, binMin=0,binMax=1., binsize=0.1)
+        num = slicer.plotHistogram(self.metricValue, binMin=0,binMax=1., binsize=0.1, histStyle=False)
+        num = slicer.plotHistogram(self.metricValue, binMin=0,binMax=1., binsize=0.1, numpyReduce='median')
+        num = slicer.plotHistogram(self.metricValue, binMin=0,binMax=1., binsize=0.1,
+                                   numpyReduce=None, metricReduce='MeanMetric' )
+
+    def testErrors(self):
+        slicer = slicers.HealpixHistSlicer()
+        self.assertRaises(Exception, slicer.plotHistogram, **{'metricValue':self.metricValue,
+                                                            'metricReduce':'MeanMetric', 'numpyReduce':'mean'})
+        
+                          
+
+        
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,7 @@ class HealpixHistSlicer(HealpixSlicer):
         self.plotFuncs = {'plotHistogram':self.plotHistogram}
         self.plotObject = True
 
-    def plotHistogram(self, metricValue, numpyReduce='sum', metricReduce=None, histStyle=True,
+    def plotHistogram(self, metricValue, numpyReduce=None, metricReduce=None, histStyle=True,
                       binMin=0.5, binMax=60.5, binsize=0.5,linestyle='-',
                       title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
@@ -27,24 +27,27 @@ class HealpixHistSlicer(HealpixSlicer):
         fig = plt.figure(fignum)
         if not xlabel:
             xlabel = units
-
+        
         if numpyReduce is not None and metricReduce is not None:
             raise Exception('Both numpyReduce and metricReduce are set, can only reduce one way')
 
         if numpyReduce is  None and metricReduce is None:
-            raise Exception('Both numpyReduce and metric Reduce are None, need one way to reduce to be set')
+            numpyReduce = 'sum'
 
         if numpyReduce is not None:
             # just use a numpy function with axis=0 to collapse the values
-            finalHist = getattr(np,numpyReduce)(metricValue.compressed(), axis=0)
-
+            mV = np.array(metricValue.compressed().tolist())
+            finalHist = getattr(np,numpyReduce)(mV, axis=0)
+           
         if metricReduce is not None:
             # An ugly way to change an array of arrays (dtype=object), to a 2-d array
-            mV = np.array(metricValue.compressed().tolist())
+            dt = metricValue.compressed()[0].dtype
+            mV = np.array(metricValue.compressed().tolist(), dtype=[('metricValue',dt)])
             finalHist = np.zeros(mV.shape[1], dtype=float)
+            metric = getattr(metrics,metricReduce)(col='metricValue')
             for i in np.arange(finalHist.size):
-                finalHist[i] = getattr(metrics,metricReduce)(mV[i,:])
-
+                finalHist[i] = metric.run(mV[:,i])
+        
         bins = np.arange(binMin, binMax+binsize,binsize)
         if histStyle:
             x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
