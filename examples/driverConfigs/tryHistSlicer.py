@@ -12,13 +12,17 @@ binsize= 1
 metric1 = configureMetric('Tgaps',
                          kwargs={'binMin':binMin,
                                  'binMax':binMax, 'binsize':binsize})
+metric15 = configureMetric('Tgaps',
+                         kwargs={'binMin':0,
+                                 'binMax':60, 'binsize':.05, 'metricName':'TgapsFine'})
+
 binMax = 365.25*5
 
 metric2 = configureMetric('Tgaps',
                          kwargs={'metricName':'AllGaps', 'allGaps':True, 'binMin':binMin,
                                  'binMax':binMax, 'binsize':binsize})
 
-metricDict = makeDict(metric1,metric2)
+metricDict = makeDict(metric1,metric2, metric15)
 slicer = configureSlicer('HealpixHistSlicer',
                          kwargs={'nside':16},
                          metricDict=metricDict,
