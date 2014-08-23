@@ -71,7 +71,7 @@ class ParallaxFactorStacker(BaseStacker):
 class HourAngleStacker(BaseStacker):
     """ Add the Hour Angle for each observation """
     def __init__(self, lstCol='lst', RaCol='fieldRA'):
-        self.units = ['rad']
+        self.units = ['Hours']
         self.colsAdded = ['HA']
         self.colsReq = [lstCol, RaCol]
         self.lstCol = lstCol 
@@ -84,6 +84,7 @@ class HourAngleStacker(BaseStacker):
         ha[np.where(ha < -np.pi)] = ha[np.where(ha < -np.pi)] + 2.*np.pi
         ha[np.where(ha > np.pi)] = ha[np.where(ha > np.pi)] - 2.*np.pi
         simData=self._addStackers(simData)
-        simData['HA'] = ha
+        # Convert radians to hours
+        simData['HA'] = ha*12/np.pi 
         return simData
     
