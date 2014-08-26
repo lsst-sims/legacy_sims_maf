@@ -26,6 +26,9 @@ class MafDriver(object):
         """Load up the configuration and set the slicer and metric lists """
         # Configvalues passed from runDriver.py
         self.config = configvalues
+        # If a dbClass isn't specified, use OpsimDatabase
+        if 'dbClass' not in self.config.dbAddress.keys():
+           self.config.dbAddress['dbClass'] = 'OpsimDatabase'
 
         # Validate and freeze the config
         self.config.validate()
@@ -43,7 +46,7 @@ class MafDriver(object):
         utils.moduleLoader(self.config.modules)
 
         # Set up database connection.
-        self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
+        self.opsimdb = getattr(db,self.config.dbAddress['dbClass'])(self.config.dbAddress['dbAddress'])
 
         time_prev = time.time()
         self.time_start = time.time()
@@ -134,7 +137,7 @@ class MafDriver(object):
             print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add slicer metadata or change metric names.')
   
-    def getData(self, constraint, colnames=[], stackersList=[], groupBy='expMJD'):
+    def getData(self, constraint, colnames=[], stackersList=[]):
         """Pull required data from database and calculate additional columns from stackers. """
         # Stacker_names describe the already-configured (via the config driver) stacker methods.
         stacker_names = [s.__class__.__name__ for s in stackersList ]
@@ -160,7 +163,7 @@ class MafDriver(object):
         dbcolnames=list(set(dbcolnames))
         # Get the data from database.
         self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
-                                                 colnames=dbcolnames, groupBy = groupBy)
+                                                 colnames=dbcolnames)
         # Calculate the data from stackers.
         for stacker in stackersList:
             self.data = stacker.run(self.data)

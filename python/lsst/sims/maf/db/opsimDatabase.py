@@ -81,12 +81,8 @@ class OpsimDatabase(Database):
         self.sessionDateCol = 'sessionDate'
         self.runCommentCol = 'runComment'
 
-        
-                
-            
-    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy=None):
-        """
-        Fetch 'colnames' from 'Summary' table. 
+    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD'):
+        """Fetch 'colnames' from 'Summary' table. 
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").

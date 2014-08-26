@@ -71,6 +71,14 @@ class Database(object):
         configSummary = {}
         configDetails = {}
         return configSummary, configDetails
+
+    def fetchPropIDs(self):
+        """
+        get any info on prop IDs
+        """
+        
+        return [0],[0],[0]
+
                 
     def queryDatabase(self, tableName, sqlQuery):
         """

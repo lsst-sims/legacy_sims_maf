@@ -70,7 +70,8 @@ class MafConfig(pexConfig.Config):
     slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int,
                                         itemtype=SlicerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='runName')
-    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
+    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str,
+                                    default={'dbAddress':'', 'dbClass':'OpsimDatabase'})
     verbose = pexConfig.Field("", dtype=bool, default=False)
     getConfig = pexConfig.Field("", dtype=bool, default=True)
 
