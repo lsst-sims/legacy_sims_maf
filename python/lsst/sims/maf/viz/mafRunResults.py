@@ -26,9 +26,11 @@ class MafRunResults(object):
             with open (self.configSummary, "r") as myfile:
                 config=myfile.read().replace('\n', '')
             spot = config.find('RunName')
-            self.runName = config[spot:spot+300].split(' ')[1]
-
-        self.configDetails = os.path.join(self.outDir, 'configDetails.txt')
+            try:
+                self.runName = config[spot:spot+300].split(' ')[1]
+            except:
+                self.runName = 'RunName not found'
+        self.configDetails = self._makefilename('configDetails.txt')
         if not os.path.isfile(self.configDetails):
             self.configDetails = 'Config Details Not Available.'
 
