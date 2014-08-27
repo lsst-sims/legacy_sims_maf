@@ -265,8 +265,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Completeness and Joint Completeness
     # For just WFD proposals
     m1 = configureMetric('CompletenessMetric',
-                          plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
-                                    'units':'# visits (WFD only)/ # WFD',
+                          plotDict={'xlabel':'# visits (WFD only) / (# WFD Design Value)',
+                                    'units':'# visits (WFD only)/ # WFD Design Value',
                                     'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
@@ -279,8 +279,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slicerList.append(slicer)
     # For all proposals
     m1 = configureMetric('CompletenessMetric',
-                          plotDict={'xlabel':'# visits (all) / (# WFD Requested)',
-                                    'units':'# visits (all) / # WFD',
+                          plotDict={'xlabel':'# visits (all) / (# WFD Design Value)',
+                                    'units':'# visits (all) / # WFD Design Value',
                                     'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
