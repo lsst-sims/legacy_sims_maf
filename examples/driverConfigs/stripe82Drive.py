@@ -20,7 +20,7 @@ m3 =  configureMetric('MaxMetric', kwargs={'col':'nGalaxy'}, plotDict={'cbarForm
 metricDict = makeDict(m1,m2,m3)
 sqlconstraint = 'filter="r" and nStars > 0 and nGalaxy > 0'
 stacker = configureStacker('SdssRADecStacker')
-slicer = configureSlicer('HealpixSlicer',
+slicer = configureSlicer('HealpixSDSSSlicer',
                             kwargs={'nside':nside, 'radius':10./60.,'spatialkey1':'RA1', 'spatialkey2':'Dec1'},
                             metricDict=metricDict, stackerDict=makeDict(stacker), constraints=[sqlconstraint,])
 #slicer = configureSlicer('UniSlicer',metricDict=metricDict, constraints=[sqlconstraint])
