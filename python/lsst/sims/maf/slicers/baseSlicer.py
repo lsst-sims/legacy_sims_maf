@@ -151,7 +151,7 @@ class BaseSlicer(object):
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName ='', sqlconstraint='', metadata='', displayDict=None):
+                  simDataName ='', sqlconstraint='', metadata='', plotDict=None, displayDict=None):
         """
         Save metric values along with the information required to re-build the slicer.
 
@@ -168,6 +168,7 @@ class BaseSlicer(object):
         if displayDict is None:
             displayDict = {'group':'Ungrouped'}
         header['displayDict'] = displayDict
+        header['plotDict'] = plotDict
         for key in versionInfo.keys():
             header[key] = versionInfo[key]
         if hasattr(metricValues, 'mask'): # If it is a masked array
@@ -187,7 +188,7 @@ class BaseSlicer(object):
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
                  slicePoints = self.getSlicePoints(), # slicePoint metadata saved (is a dictionary)
-                 slicerNSlice = self.nslice)
+                 slicerNSlice = self.nslice) 
                                  
     def readData(self, infilename):
         """
@@ -212,7 +213,9 @@ class BaseSlicer(object):
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
-        return metricValues, slicer, header
+        plotDict = header['plotDict']
+        
+        return metricValues, slicer, header, plotDict
     
     def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
                  savefig=True, thumbnail=True, **kwargs):

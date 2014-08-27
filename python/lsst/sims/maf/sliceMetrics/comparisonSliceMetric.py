@@ -36,7 +36,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         iid = self.iid_next
         self.iid_next += 1
         if plotDict is None:
-          self.plotDict[iid] = {}
+          self.plotDicts[iid] = {}
         self.metricValues[iid] = metricValues
         self.metricNames[iid] = metricName
         self.slicers[iid] = slicer

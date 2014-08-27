@@ -71,7 +71,7 @@ class RunSliceMetric(BaseSliceMetric):
         iid = self.iid_next
         for metric in metricList:
             self.metricObjs[iid] = metric
-            self.plotDict[iid] = metric.plotDict
+            self.plotDicts[iid] = metric.plotDict
             self.displayDicts[iid] = metric.displayDict
             self.metricNames[iid] = metric.name
             self.slicers[iid] = self.slicer
@@ -153,10 +153,18 @@ class RunSliceMetric(BaseSliceMetric):
     
            
         # Mask data where metrics could not be computed (according to metric bad value).
-        for iid in self.metricObjs:            
-           self.metricValues[iid].mask = np.where(self.metricValues[iid].data==self.metricObjs[iid].badval,
-                                                  True, self.metricValues[iid].mask)
-
+        for iid in self.metricObjs:
+           if self.metricValues[iid].dtype.name == 'object':
+              for ind,val in enumerate(self.metricValues[iid].data):
+                 if np.size(val) == 1:
+                    if val == self.metricObjs[iid].badval:
+                       self.metricValues[iid].mask[ind] = True
+           else:
+              # For some reason, this doesn't work for dtype=object arrays.
+              self.metricValues[iid].mask = np.where(self.metricValues[iid].data==self.metricObjs[iid].badval,
+                                                     True, self.metricValues[iid].mask)
+           
+           
 
     def reduceAll(self):
         """
@@ -203,7 +211,7 @@ class RunSliceMetric(BaseSliceMetric):
            self.simDataNames[riid] = self.simDataNames[iid]
            self.sqlconstraints[riid] = self.sqlconstraints[iid]
            self.metadatas[riid] = self.metadatas[iid]
-           self.plotDict[riid] = self.plotDict[iid]
+           self.plotDicts[riid] = self.plotDicts[iid]
            self.displayDicts[riid] = self.displayDicts[iid].copy()
            self.displayDicts[riid]['order'] = self.displayDicts[riid]['order'] + rOrder
            self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
@@ -301,10 +309,10 @@ class RunSliceMetric(BaseSliceMetric):
           caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
           if len(self.metadatas[iid].strip()) > 0:
             caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
-          if 'zp' in self.plotDict[iid]:
-            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotDict[iid]['zp'])
-          if 'normVal' in self.plotDict[iid]:
-            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotDict[iid]['normVal'])
+          if 'zp' in self.plotDicts[iid]:
+            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotDicts[iid]['zp'])
+          if 'normVal' in self.plotDicts[iid]:
+            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotDicts[iid]['normVal'])
           caption += '(auto)' 
           self.displayDicts[iid]['caption'] = caption
         if self.resultsDb:
@@ -333,7 +341,7 @@ class RunSliceMetric(BaseSliceMetric):
         Create all plots for 'metricName' .
         """
         # Get the metric plot parameters. 
-        pParams = self.plotDict[iid].copy()
+        pParams = self.plotDicts[iid].copy()
         # Build plot title and label.
         mname = self.metricNames[iid]
         # "Units" always in pParams, but might be '' (== the physical units). 

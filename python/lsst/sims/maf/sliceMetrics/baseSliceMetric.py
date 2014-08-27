@@ -40,7 +40,7 @@ class BaseSliceMetric(object):
         # Note that metricNames are not necessarily unique by themselves.
         self.iid_next = 0
         self.metricNames = {}
-        self.plotDict = {}
+        self.plotDicts = {}
         self.displayDicts = {}        
         self.slicers = {}
         self.metricValues = {}
@@ -152,7 +152,7 @@ class BaseSliceMetric(object):
        for f in filenames:
           # Set up a base slicer to read data.
           baseslicer = slicers.BaseSlicer()
-          metricData, slicer, header = baseslicer.readData(f)
+          metricData, slicer, header, plotDict = baseslicer.readData(f)
           iid = self.iid_next
           self.iid_next += 1
           self.slicers[iid] = slicer
@@ -162,7 +162,7 @@ class BaseSliceMetric(object):
           self.simDataNames[iid] = header['simDataName']
           self.sqlconstraints[iid] = header['sqlconstraint']
           self.metadatas[iid] = header['metadata']
-          self.plotDict[iid] = {}
+          self.plotDicts[iid] = {}
           # Set default values, in  case metric file doesn't have the info.
           self.displayDicts[iid] = {'group':'Ungrouped', 
                                     'subgroup':'None',
@@ -171,7 +171,7 @@ class BaseSliceMetric(object):
           if 'displayDict' in header:
               self.displayDicts[iid].update(header['displayDict'])
           if 'plotDict' in header:
-             self.plotDict[iid].update(header['plotDict'])
+             self.plotDicts[iid].update(header['plotDict'])
           if verbose:
              print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
             
@@ -208,7 +208,8 @@ class BaseSliceMetric(object):
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
                          metadata = self.metadatas[iid] + comment,
-                         displayDict = self.displayDicts[iid])
+                         displayDict = self.displayDicts[iid],
+                         plotDict = self.plotDicts[iid])
         if self.resultsDb:
             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
                                                           slicer.slicerName,

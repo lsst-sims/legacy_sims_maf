@@ -67,7 +67,7 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metricNames.keys(), [])
         self.assertEqual(self.testbbm.metricObjs.keys(), [])
         self.assertEqual(self.testbbm.metricValues.keys(), [])
-        self.assertEqual(self.testbbm.plotDict.keys(), [])
+        self.assertEqual(self.testbbm.plotDicts.keys(), [])
         self.assertEqual(self.testbbm.simDataNames.keys(), [])
         self.assertEqual(self.testbbm.sqlconstraints.keys(), [])
         self.assertEqual(self.testbbm.metadatas.keys(), [])
@@ -101,9 +101,9 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         # Test that dictionaries for metricObjs (which hold metric python objects) set
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
-        self.assertEqual(self.testbbm.plotDict[self.m1iid].keys(), ['units'])
-        self.assertEqual(self.testbbm.plotDict[self.m2iid].keys(), ['units', 'cbarFormat', 'title'])
-        self.assertEqual(self.testbbm.plotDict[self.m2iid].values(),
+        self.assertEqual(self.testbbm.plotDicts[self.m1iid].keys(), ['units'])
+        self.assertEqual(self.testbbm.plotDicts[self.m2iid].keys(), ['units', 'cbarFormat', 'title'])
+        self.assertEqual(self.testbbm.plotDicts[self.m2iid].values(),
                          ['countunits', '%d', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
         testbbm2 = sliceMetrics.RunSliceMetric(outDir='.')
@@ -197,7 +197,7 @@ class TestRunRunSliceMetric(unittest.TestCase):
             self.assertEqual(self.testbbm.metadatas[riid], metadata)
         # Check that plot parameters were copied properly.
         for riid in self.riids:
-            self.assertEqual(self.testbbm.plotDict[riid]['xlabel'], 'Completeness')
+            self.assertEqual(self.testbbm.plotDicts[riid]['xlabel'], 'Completeness')
         # Check that mask carried through properly.
         lastslice = len(self.slicer) - 1
         for riid in self.riids:

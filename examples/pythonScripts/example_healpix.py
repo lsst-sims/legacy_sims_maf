@@ -30,7 +30,7 @@ def getMetrics(docomplex=False):
     metricList.append(metrics.MeanMetric('filtSkyBrightness'))
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth'))
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'logScale':False, 'title':'Number of visits',
+                                          plotDict={'logScale':False, 'title':'Number of visits',
                                                       'colorMin':0, 'colorMax':300,
                                                       'cbarFormat': '%d'}))
     if docomplex:
@@ -38,7 +38,7 @@ def getMetrics(docomplex=False):
         dtmin = 1./60./24.
         dtmax = 360./60./24.
         metricList.append(metrics.VisitGroupsMetric(deltaTmin=dtmin, deltaTmax=dtmax,
-                                                    plotParams={'logScale':False, 'colorMin':0, 'colorMax':20}))
+                                                    plotDict={'logScale':False, 'colorMin':0, 'colorMax':20}))
         
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)

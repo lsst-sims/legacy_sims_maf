@@ -6,47 +6,54 @@ from .healpixSlicer import HealpixSlicer
 import lsst.sims.maf.metrics as metrics
 import matplotlib.pyplot as plt
 import os
+import warnings
 
 class HealpixHistSlicer(HealpixSlicer):
 
     def __init__(self, **kwargs):
         super(HealpixHistSlicer, self).__init__(**kwargs)
         # Only use the new plotHistogram
-        self.plotFuncs = {'plotHistogram':self.plotHistogram}
+        self.plotFuncs = {'plotConsolidatedHist':self.plotConsolidatedHist}
         self.plotObject = True
 
-    def plotHistogram(self, metricValue, numpyReduce=None, metricReduce=None, histStyle=True,
-                      binMin=0.5, binMax=60.5, binsize=0.5,linestyle='-',
+    def plotConsolidatedHist(self, metricValue, metricReduce='SumMetric', histStyle=True,
+                      binMin=0.5, binMax=60.5, binsize=0.5,linestyle='-', singleHP=None,
                       title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
                       logScale='auto', flipXaxis=False,
                       yaxisformat='%.3f', color='b',
                       **kwargs):
-        """ Take results of a metric that histograms things up"""
+        """ This plotting method takes plots/histograms from each healpixel and consolidates them into a
+        single histogram that is plotted.  Note that the metric should set the binMin, binMax, binsize kwargs
+        to ensure the slicer histogram bins match the metric bins.
+        
+        metricReduce = metric name that will be used to combine the histograms bin-by-bin from each healpixel.
+                       We currently do not support using metrics that require kwargs.
+        histStyle = Set to True for the data to be plotted as a histogram.  If False, a simple line-plot is made.
+        binMin/binMax/binSize = parameters for setting up the bins.
+                                Ideally, the metric will set these with the plotDict keyword to ensure they are correct.
+        
+        """
         fig = plt.figure(fignum)
         if not xlabel:
             xlabel = units
         
-        if numpyReduce is not None and metricReduce is not None:
-            raise Exception('Both numpyReduce and metricReduce are set, can only reduce one way')
-
-        if numpyReduce is  None and metricReduce is None:
-            numpyReduce = 'sum'
-
-        if numpyReduce is not None:
-            # just use a numpy function with axis=0 to collapse the values
-            mV = np.array(metricValue.compressed().tolist())
-            finalHist = getattr(np,numpyReduce)(mV, axis=0)
-           
-        if metricReduce is not None:
-            # An ugly way to change an array of arrays (dtype=object), to a 2-d array
-            dt = metricValue.compressed()[0].dtype
-            mV = np.array(metricValue.compressed().tolist(), dtype=[('metricValue',dt)])
-            finalHist = np.zeros(mV.shape[1], dtype=float)
-            metric = getattr(metrics,metricReduce)(col='metricValue')
-            for i in np.arange(finalHist.size):
-                finalHist[i] = metric.run(mV[:,i])
+        if singleHP is not None:
+            # only plot a single histogram
+            if metricValue[singleHP].mask == True:
+                warnings.warn("Pixel %i is masked, nothing to plot for plotConsolidatedHist")
+                return
+            finalHist = metricValue[singleHP] 
+        else:            
+            if metricReduce is not None:
+                # An ugly way to change an array of arrays (dtype=object), to a 2-d array
+                dt = metricValue.compressed()[0].dtype
+                mV = np.array(metricValue.compressed().tolist(), dtype=[('metricValue',dt)])
+                finalHist = np.zeros(mV.shape[1], dtype=float)
+                metric = getattr(metrics,metricReduce)(col='metricValue')
+                for i in np.arange(finalHist.size):
+                    finalHist[i] = metric.run(mV[:,i])
         
         bins = np.arange(binMin, binMax+binsize,binsize)
         if histStyle:

@@ -39,6 +39,25 @@ slicer = configureSlicer('HealpixHistSlicer',
 
 sliceList.append(slicer)
 
+# Plot just a single Healpixel.
+metric1 = configureMetric('Tgaps',
+                         kwargs={'binMin':binMin,
+                                 'binMax':binMax, 'binsize':binsize},plotDict={'singleHist':2253})
+
+slicer = configureSlicer('HealpixHistSlicer',
+                         kwargs={'nside':64,
+                         'spatialkey1':'ditheredRA',
+                         'spatialkey2':'ditheredDec'},
+                         metricDict=makeDict(metric1),
+                         constraints=['filter = "r"'], metadata='single Hist')
+
+sliceList.append(slicer)
+
+
+
+
+
 root.slicers = makeDict(*sliceList)
+
 
 root.verbose = True
