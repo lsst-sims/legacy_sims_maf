@@ -28,11 +28,14 @@ class HealpixHistSlicer(HealpixSlicer):
         single histogram that is plotted.  Note that the metric should set the binMin, binMax, binsize kwargs
         to ensure the slicer histogram bins match the metric bins.
         
-        metricReduce = metric name that will be used to combine the histograms bin-by-bin from each healpixel.
-                       We currently do not support using metrics that require kwargs.
-        histStyle = Set to True for the data to be plotted as a histogram.  If False, a simple line-plot is made.
-        binMin/binMax/binSize = parameters for setting up the bins.
-                                Ideally, the metric will set these with the plotDict keyword to ensure they are correct.
+        metricReduce: metric name that will be used to combine the histograms bin-by-bin from each healpixel.
+                      We currently do not support using metrics that require kwargs.
+        histStyle:  Set to True for the data to be plotted as a histogram.
+                    If False, a simple line-plot is made.
+        binMin/binMax/binSize:  parameters for setting up the bins.
+                                Ideally, the metric will set these with the plotDict keyword to ensure they
+                                are correct.
+        singleHP:  int, plot only the single healpixel id rather than combining the plots.  
         
         """
         fig = plt.figure(fignum)

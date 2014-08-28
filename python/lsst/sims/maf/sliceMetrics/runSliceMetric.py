@@ -156,9 +156,8 @@ class RunSliceMetric(BaseSliceMetric):
         for iid in self.metricObjs:
            if self.metricValues[iid].dtype.name == 'object':
               for ind,val in enumerate(self.metricValues[iid].data):
-                 if np.size(val) == 1:
-                    if val == self.metricObjs[iid].badval:
-                       self.metricValues[iid].mask[ind] = True
+                 if val is self.metricObjs[iid].badval:
+                    self.metricValues[iid].mask[ind] = True
            else:
               # For some reason, this doesn't work for dtype=object arrays.
               self.metricValues[iid].mask = np.where(self.metricValues[iid].data==self.metricObjs[iid].badval,

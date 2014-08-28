@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import unittest
 import healpy as hp
 import lsst.sims.maf.slicers as slicers
-
+import os
 
 
 
@@ -19,7 +19,9 @@ class testHealpixHistSlicer(unittest.TestCase):
          
     def testPlotHistogram(self):
         slicer = slicers.HealpixHistSlicer()
-       
+
+        
+        # Check that the various plotting methods run
         num = slicer.plotConsolidatedHist(self.metricValue, binMin=0,binMax=1., binsize=0.1)
         num = slicer.plotConsolidatedHist(self.metricValue, binMin=0,binMax=1., binsize=0.1, histStyle=False)
         num = slicer.plotConsolidatedHist(self.metricValue, binMin=0,binMax=1., binsize=0.1)
@@ -27,8 +29,18 @@ class testHealpixHistSlicer(unittest.TestCase):
                                           metricReduce='MeanMetric' )
         num = slicer.plotConsolidatedHist(self.metricValue, binMin=0,binMax=1., binsize=0.1,
                                           metricReduce='MeanMetric', singleHP=2 )
-                          
 
+        # Check save/restore works.
+        plotDictIn = {'binMin':0, 'binMax':1, 'binsize':0.1}
+        slicer.writeData('temp.npz', self.metricValue, plotDict=plotDictIn)
+        metBack, slicerBack,header,plotDictBack = slicer.readData('temp.npz')
+        assert(plotDictBack == plotDictIn)
+        assert(slicer == slicerBack)
+        
+        
+
+    def tearDown(self):
+        os.remove('temp.npz')
         
 if __name__ == "__main__":
     unittest.main()

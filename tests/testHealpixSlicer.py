@@ -8,7 +8,6 @@ import unittest
 import healpy as hp
 from lsst.sims.maf.slicers.healpixSlicer import HealpixSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
-import lsst.sims.maf.slicers as slicers
 
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
                    decmin=-np.pi, decmax=np.pi, random=True):
