@@ -8,6 +8,7 @@ root.dbAddress={'dbAddress':'mssql+pymssql://clue-1:wlZH2xWy@fatboy.npl.washingt
 root.outputDir = 'SDSSDir'
 root.opsimName = 'stripe82'
 root.verbose = True
+root.getConfig = False
 slicerList = []
 nside = 64
 
