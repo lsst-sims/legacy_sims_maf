@@ -63,7 +63,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   cbar_edge=True, label=None, latra=[-5,5], lonra=[-100,100],
+                   cbar_edge=True, label=None, rot=(0,0,180),xsize=200, ysize=1200,
                    **kwargs):
         """Plot the sky map of metricValue using healpy Mollweide plot.
 
@@ -112,10 +112,13 @@ class HealpixSDSSSlicer(HealpixSlicer):
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1        
-                   
+
         hp.cartview(metricValue.filled(self.badval), title=title, cbar=False,
-                    min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
-                    cmap=cmap, norm=norm, latra=latra, lonra=lonra)        
+                    min=clims[0], max=clims[1], flip='astro',
+                    cmap=cmap, norm=norm, lonra=[-150,150], latra=[-2,2])   
+        #hp.gnomview(metricValue.filled(self.badval), title=title, cbar=False,
+        #            min=clims[0], max=clims[1], flip='astro',
+        #            cmap=cmap, norm=norm, rot=rot, xsize=xsize,ysize=ysize)        
         hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()

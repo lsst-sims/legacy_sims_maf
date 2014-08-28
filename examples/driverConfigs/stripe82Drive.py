@@ -9,22 +9,32 @@ root.outputDir = 'SDSSDir'
 root.opsimName = 'stripe82'
 root.verbose = True
 slicerList = []
-nside = 128
+nside = 64
 
 
 m1 = configureMetric('MeanMetric', kwargs={'col':'psfWidth'})
 m2 =  configureMetric('MaxMetric', kwargs={'col':'nStars'}, plotDict={'cbarFormat':'%i'})
 m3 =  configureMetric('MaxMetric', kwargs={'col':'nGalaxy'}, plotDict={'cbarFormat':'%i'})
+m4 = configureMetric('CountMetric', kwargs={'col':'psfWidth'})
 
 
-metricDict = makeDict(m1,m2,m3)
+metricDict = makeDict(m1,m2,m3,m4)
 sqlconstraint = 'filter="r" and nStars > 0 and nGalaxy > 0'
 stacker = configureStacker('SdssRADecStacker')
 slicer = configureSlicer('HealpixSDSSSlicer',
-                            kwargs={'nside':nside, 'radius':10./60.,'spatialkey1':'RA1', 'spatialkey2':'Dec1'},
+                            kwargs={'nside':nside,'spatialkey1':'RA1', 'spatialkey2':'Dec1'},
                             metricDict=metricDict, stackerDict=makeDict(stacker), constraints=[sqlconstraint,])
-#slicer = configureSlicer('UniSlicer',metricDict=metricDict, constraints=[sqlconstraint])
+
 slicerList.append(slicer)
+
+m1 = configureMetric('MinMetric', kwargs={'col':'Dec1'})
+m2 = configureMetric('MinMetric', kwargs={'col':'Dec2'})
+m3 = configureMetric('MaxMetric', kwargs={'col':'Dec1'})
+m4 = configureMetric('MaxMetric', kwargs={'col':'Dec2'})
+metricDict = makeDict(m1,m2,m3,m4)
+slicer = configureSlicer('UniSlicer',metricDict=metricDict, constraints=[sqlconstraint])
+slicerList.append(slicer)
+
 
 root.slicers=makeDict(*slicerList)
 
