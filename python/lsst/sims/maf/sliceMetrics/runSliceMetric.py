@@ -26,15 +26,16 @@ class RunSliceMetric(BaseSliceMetric):
     and the slicer type that produced the metric data. 
     """
     def __init__(self, useResultsDb=True, resultsDbAddress=None, 
-                 figformat='png', dpi=600, outDir='Output'):
+                 figformat='png', dpi=600, outDir='Output', thumbnail=True):
         """
         Instantiate the RunSliceMetric.
         """
         super(RunSliceMetric, self).__init__(useResultsDb=useResultsDb, resultsDbAddress=resultsDbAddress,
-                                             figformat=figformat, dpi=dpi, outDir=outDir)
+                                             figformat=figformat, dpi=dpi, outDir=outDir, thumbnail=True)
         # Add dictionary to save metric objects
         self.metricObjs = {}
         self.slicer = None   
+        self.thumbnail = thumbnail
 
     def metricObjIid(self, metricObj):
        """
@@ -360,7 +361,8 @@ class RunSliceMetric(BaseSliceMetric):
         outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)    
         plotResults = self.slicer.plotData(self.metricValues[iid], savefig=savefig,
                                            figformat=self.figformat, dpi=self.dpi,
-                                           filename=os.path.join(self.outDir, outfile), **pParams)
+                                           filename=os.path.join(self.outDir, outfile),
+                                           thumbnail = self.thumbnail, **pParams)
         # Save information about the plotted files.
         if self.resultsDb:
             if iid not in self.metricIds:
