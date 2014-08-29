@@ -112,12 +112,20 @@ class HealpixSDSSSlicer(HealpixSlicer):
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1        
-        lonpts = np.arange(-150,150+50,50)
-        nframes = lonpts.size-1
-        for i, (pt1,pt2) in enumerate(zip(lonpts[:-1],lonpts[1:])):
-            hp.cartview(metricValue.filled(self.badval), title=title, cbar=False,
-                        min=clims[0], max=clims[1], flip='astro',
-                        cmap=cmap, norm=norm, lonra=[pt1,pt2], latra=[-2,2], sub=(nframes,1,i))   
+        lonpts = np.arange(-70,90+40,40)
+        racenters=np.arange(-90,90+45,45)
+        nframes = lonpts.size
+        framesize=45.
+        #-70 to 90 looks good
+        for i, racenter in enumerate(racenters):
+            if i == 0:
+                useTitle = title +' /n'+'%i < RA < %i'%(racenter-framesize, racenter+framesize)
+            else:
+                useTitle = '%i < RA < %i'%(racenter-framesize, racenter+framesize)
+            hp.cartview(metricValue.filled(self.badval), title=useTitle, cbar=False,
+                        min=clims[0], max=clims[1], flip='astro', rot=(racenter,0,0), 
+                        cmap=cmap, norm=norm, lonra=[-framesize,framesize],
+                        latra=[-2,2], sub=(nframes+1,1,i+1))   
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
