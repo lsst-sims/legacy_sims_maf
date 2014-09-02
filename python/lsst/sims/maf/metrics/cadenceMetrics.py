@@ -168,7 +168,7 @@ class TemplateExistsMetric(BaseMetric):
         self.expMJDCol = expMJDCol
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Cadence'
-        if self.displayDict['caption'] == 'None':
+        if self.displayDict['caption'] is None:
             self.displayDict['caption'] = 'The fraction of images which have a previous template image of '
             self.displayDict['caption'] += 'the same or better seeing quality.'
 
@@ -197,7 +197,7 @@ class UniformityMetric(BaseMetric):
         self.surveyLength = surveyLength
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Cadence'
-        if self.displayDict['caption'] == 'None':
+        if self.displayDict['caption'] is None:
             self.displayDict['caption'] = 'Visit uniformity over time. '
             self.displayDict['caption'] += 'Values of 0 indictate perfectly uniform visits. '
 
