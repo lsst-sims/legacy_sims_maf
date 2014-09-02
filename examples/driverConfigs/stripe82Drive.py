@@ -10,7 +10,7 @@ root.opsimName = 'stripe82'
 root.verbose = True
 root.getConfig = False
 slicerList = []
-nside = 64
+nside = 512
 
 
 m1 = configureMetric('MeanMetric', kwargs={'col':'psfWidth'})

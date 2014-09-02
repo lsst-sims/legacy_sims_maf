@@ -8,6 +8,7 @@ from .healpixSlicer import HealpixSlicer
 from functools import wraps
 import matplotlib.path as mplPath
 import warnings
+import matplotlib as mpl
 
 class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
@@ -113,8 +114,8 @@ class HealpixSDSSSlicer(HealpixSlicer):
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1        
         lonpts = np.arange(-70,90+40,40)
-        racenters=np.arange(-90,90+45,45)
-        nframes = lonpts.size
+        racenters=np.arange(-90,90,45)
+        nframes = racenters.size
         framesize=45.
         #-70 to 90 looks good
         for i, racenter in enumerate(racenters):
@@ -128,19 +129,21 @@ class HealpixSDSSSlicer(HealpixSlicer):
                         latra=[-2,2], sub=(nframes+1,1,i+1))   
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
-        ax = plt.gca()
-        im = ax.get_images()[0]
+        fig = plt.gcf() 
+        ax1 = fig.add_axes([0.1, .15,.8,.075]) #left, bottom, width, height
         # Add label.
         if label is not None:
             plt.figtext(0.8, 0.9, '%s' %label)
+        # Make the colorbar as a seperate figure,
+        # from http://matplotlib.org/examples/api/colorbar_only.html
+        cnorm = colors.Normalize(vmin=clims[0], vmax=clims[1])
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
-                              extend='both', extendrect=True, format=cbarFormat)
-            cb.set_label(xlabel)
+            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=cnorm, orientation='horizontal')
+            cb1.set_label(xlabel)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
-            cb.solids.set_edgecolor("face")
+            cb1.solids.set_edgecolor("face")
         fig = plt.gcf()
         return fig.number
