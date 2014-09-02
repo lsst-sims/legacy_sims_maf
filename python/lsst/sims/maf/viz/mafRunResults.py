@@ -16,11 +16,7 @@ class MafRunResults(object):
         This class provides methods used by our jinja2 templates to help interact
         with the outputs of MAF. 
         """
-        self.outDir = outDir
-
-        if self.outDir == '.':
-            raise Exception("showMaf.py does not support viewing metric results from within the current directory."
-                            "\n Please 'cd' one level up and run again, explicitly specifying this directory. ")
+        self.outDir = os.path.relpath(outDir, '.')
 
         self.configSummary = os.path.join(self.outDir, 'configSummary.txt')
         if not os.path.isfile(self.configSummary):
@@ -101,6 +97,7 @@ class MafRunResults(object):
         
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
+        
     ## Methods to deal with metricIds
                 
     def convertSelectToMetrics(self, groupList, metricIdList):

@@ -60,10 +60,33 @@ class OpsimDatabase(Database):
                                             *args, **kwargs)
         # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
+        # Set internal variables for column names.
+        self._colNames()
+
+    def _colNames(self):
+        """
+        Set variables to represent the common column names used in this class directly.
+
+        This should make future schema changes a little easier to handle.
+        """
+        self.mjdCol = 'expMJD'
+        self.fieldIdCol = 'fieldID'
+        self.raCol = 'fieldRA'
+        self.decCol = 'fieldDec'
+        self.propIdCol = 'propID'
+        self.propConfCol = 'propConf'
+        self.propNameCol = 'propName'
+        # For config parsing.
+        self.versionCol = 'version'
+        self.sessionDateCol = 'sessionDate'
+        self.runCommentCol = 'runComment'
+
         
+                
             
     def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy=None):
-        """Fetch 'colnames' from 'Summary' table. 
+        """
+        Fetch 'colnames' from 'Summary' table. 
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").
@@ -82,7 +105,7 @@ class OpsimDatabase(Database):
             metricdata = table.query_columns_Array(chunk_size = self.chunksize, 
                                                     constraint = sqlconstraint,
                                                     colnames = colnames, 
-                                                    groupByCol = 'expMJD')
+                                                    groupByCol = self.mjdCol)
         else:
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
                                                    constraint = sqlconstraint,
@@ -90,19 +113,26 @@ class OpsimDatabase(Database):
         return metricdata
 
 
-    def fetchFieldsFromSummaryTable(self, sqlconstraint, raColName='fieldID', decColName='fieldDec'):
-        """Fetch field information (fieldID/RA/Dec) from Output table."""
+    def fetchFieldsFromSummaryTable(self, sqlconstraint, raColName=None, decColName=None):
+        """
+        Fetch field information (fieldID/RA/Dec) from Output table.
+        """
         # Fetch field info from the Output table, by selecting unique fieldID + ra/dec values.
         # This implicitly only selects fields which were actually observed by opsim.
+        if raColName is None:
+            raColName = self.raColName
+        if decColName is None:
+            decColName = self.decColName
         table = self.tables['summaryTable']
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
-                                              colnames=['fieldID', raColName, decColName],
-                                              groupByCol='fieldID')
+                                              colnames=[self.fieldIdCol, raColName, decColName],
+                                              groupByCol=self.fieldIdCol)
         return fielddata
 
 
     def fetchFieldsFromFieldTable(self, propID=None, degreesToRadians=True):
-        """Fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
+        """
+        Fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
     
         propID = the proposal ID (default None), if selecting particular proposal - can be a list
         degreesToRadians = RA/Dec values are in degrees in the Field table (so convert to radians) """
@@ -111,26 +141,28 @@ class OpsimDatabase(Database):
         #   even if they didn't get any observations. 
         tableName = 'fieldTable'
         if propID is not None:
-            query = 'select f.fieldID, f.fieldRA, f.fieldDec from %s as f' %(self.dbTables['fieldTable'][0])
-            query += ', %s as p where (p.Field_fieldID = f.fieldID) ' %(self.dbTables['proposalFieldTable'][0])
+            query = 'select f.%s, f.%s, f.%s from %s as f' %(self.fieldIdCol, self.raCol, self.decCol,
+                                                             self.dbTables['fieldTable'][0])
+            query += ', %s as p where (p.Field_%s = f.%s) ' %(self.dbTables['proposalFieldTable'][0],
+                                                            self.fieldIdCol, self.fieldIdCol)
             if hasattr(propID, '__iter__'): # list of propIDs
                 query += ' and ('
                 for pID in propID:
-                    query += '(p.Proposal_propID = %d) or ' %(int(pID))
+                    query += '(p.Proposal_%s = %d) or ' %(self.propIdCol, int(pID))
                 # Remove the trailing 'or' and add a closing parenthesis.
                 query = query[:-3]
                 query += ')'
             else: # single proposal ID.
-                query += ' and (p.Proposal_propID = %d) ' %(int(propID))
-            query += ' group by f.fieldID'
+                query += ' and (p.Proposal_%s = %d) ' %(self.propIdCol, int(propID))
+            query += ' group by f.%s' %(self.fieldIdCol)
             fielddata = self.queryDatabase(tableName, query)
         else:
             table = self.tables[tableName]
-            fielddata = table.query_columns_Array(colnames=['fieldID', 'fieldRA', 'fieldDec'],
-                                                  groupByCol = 'fieldID')
+            fielddata = table.query_columns_Array(colnames=[self.fieldIdCol, self.raCol, self.decCol],
+                                                  groupByCol = self.fieldIdCol)
         if degreesToRadians:
-            fielddata['fieldRA'] = fielddata['fieldRA'] * np.pi / 180.
-            fielddata['fieldDec'] = fielddata['fieldDec'] * np.pi / 180.
+            fielddata[self.raCol] = fielddata[self.raCol] * np.pi / 180.
+            fielddata[self.decCol] = fielddata[self.decCol] * np.pi / 180.
         return fielddata
 
     def fetchPropIDs(self):
@@ -142,30 +174,32 @@ class OpsimDatabase(Database):
          """
         # Check if using full database; otherwise can only fetch list of all propids. 
         if 'proposalTable' not in self.tables:
-            propData = self.tables['summaryTable'].query_columns_Array(colnames=['propID'])
-            propIDs = np.array(propData['propID'], int)
+            propData = self.tables['summaryTable'].query_columns_Array(colnames=[self.propIdCol])
+            propIDs = np.array(propData[self.propIdCol], int)
             wfdIDs = []
             ddIDs = []
         else:
             table = self.tables['proposalTable']
             try:
-                propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName', 'tag'], constraint='')
-            except:
-                propData = table.query_columns_Array(colnames=['propID', 'propConf', 'propName'], constraint='')
-            propIDs = np.array(propData['propID'], int)
+                propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
+                                                               self.propNameCol, 'tag'], constraint='')
+            except ValueError:
+                propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
+                                                               self.propNameCol], constraint='')
+            propIDs = np.array(propData[self.propIdCol], int)
             propIDs = list(propIDs)
             if 'tag' in propData.dtype.names:
                 wfdMatch = (propData['tag'] == 'wfd')
                 wfdIDs = list(propData['propID'][wfdMatch])
             else:
                 wfdIDs = []
-                for name, propid in zip(propData['propConf'] ,propIDs):
-                    if 'Universal' in name:
+                for name, propid in zip(propData[self.propConfCol] ,propIDs):
+                    if 'universal' in name.lower():
                         wfdIDs.append(propid)
             # Parse on name for DD anyway.
             ddIDs = []
-            for name, propid in zip(propData['propConf'], propIDs):
-                if ('deep' in name) or ('Deep' in name) or ('DD' in name) or ('dd' in name):
+            for name, propid in zip(propData[self.propConfCol], propIDs):
+                if ('deep' in name.lower()) or ('dd' in name.lower()):
                     ddIDs.append(propid)
         return propIDs, wfdIDs, ddIDs
 
@@ -185,18 +219,18 @@ class OpsimDatabase(Database):
         propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
         tableName = 'obsHistoryTable'
-        query = 'select expMJD from %s' %(self.dbTables[tableName][0])
+        query = 'select %s from %s' %(self.mjdCol, self.dbTables[tableName][0])
         if propID is not None:
             query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['obsHistoryProposalTable'][0])
             if hasattr(propID, '__iter__'): # list of propIDs
                 query += ' and ('
                 for pID in propID:
-                    query += '(Proposal_propID = %d) or ' %(int(pID))
+                    query += '(Proposal_%s = %d) or ' %(self.propIdCol, int(pID))
                 # Remove the trailing 'or' and add a closing parenthesis.
                 query = query[:-3]
                 query += ')'
             else: # single proposal ID.
-                query += ' and (Proposal_propID = %d) ' %(int(propID))
+                query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
         data = self.queryDatabase(tableName, query)
         return data.size
 
@@ -245,14 +279,17 @@ class OpsimDatabase(Database):
           + '  RunDate %s' %(mafdate)
         # Opsim date, version and runcomment info from session table
         table = self.tables['sessionTable']
-        results = table.query_columns_Array(colnames = ['version', 'sessionDate', 'runComment'])
+        results = table.query_columns_Array(colnames = [self.versionCol, self.sessionDateCol, self.runCommentCol])
         configSummary['Version']['OpsimVersion'] = '%s'  %(results['version'][0]) + \
-            '  RunDate %s' %(results['sessionDate'][0])
+            '  RunDate %s' %(results[self.sessionDateCol][0])
         configSummary['RunInfo'] = {}        
-        configSummary['RunInfo']['RunComment'] = results['runComment']
+        configSummary['RunInfo']['RunComment'] = results[self.runCommentCol]
         configSummary['RunInfo']['RunName'] = self.fetchOpsimRunName()
         # Pull out a few special values to put into summary.
         table = self.tables['configTable']
+        # This section has a number of configuration parameter names hard-coded.
+        # I've left these here (rather than adding to self_colNames), because I think schema changes will in the config
+        # files will actually be easier to track here (at least until the opsim configs are cleaned up).
         constraint = 'moduleName="instrument" and paramName="Telescope_AltMin"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinAlt'] = results['paramValue'][0]
@@ -273,10 +310,11 @@ class OpsimDatabase(Database):
         # Now build up config dict with 'nice' group names (proposal name and short module name)
         #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
         # Match proposal IDs with names.
-        query = 'select propID, propConf, propName from Proposal group by propID'
+        query = 'select %s, %s, %s from Proposal group by %s' %(self.propIdCol, self.propConfCol,
+                                                                self.propNameCol, self.propIdCol)
         propdata = self.queryDatabase('proposalTable', query)
         # Make 'nice' proposal names
-        propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata['propConf']])
+        propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata[self.propConfCol]])
         # Get 'nice' module names
         moduledata = table.query_columns_Array(colnames=['moduleName',], constraint='nonPropID=0')
         modulenames = np.array([os.path.split(x)[1].replace('.conf', '') for x in moduledata['moduleName']])
@@ -285,7 +323,7 @@ class OpsimDatabase(Database):
         for longmodname, modname in zip(moduledata['moduleName'], modulenames):
             config[modname] = table.query_columns_Array(colnames=cols, constraint='moduleName="%s"' %(longmodname))
             config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
-        for propid, propname in zip(propdata['propID'], propnames):
+        for propid, propname in zip(propdata[self.propIdCol], propnames):
             config[propname] = table.query_columns_Array(colnames=cols,
                                                          constraint=
                                                          'nonPropID="%s" and paramName!="userRegion"' %(propid))
@@ -298,18 +336,18 @@ class OpsimDatabase(Database):
             return configarray['paramValue'][np.where(configarray['paramName']==keyword)]
         # Loop through all proposals to add summary information.
         configSummary['Proposals'] = {}
-        propidorder = sorted(propdata['propID'])
+        propidorder = sorted(propdata[self.propIdCol])
         # Generate a keyorder to print proposals in order of propid.
         configSummary['Proposals']['keyorder'] = []
         for propid in propidorder:            
-            configSummary['Proposals']['keyorder'].append(propnames[np.where(propdata['propID'] == propid)][0])
-        for propid, propname in zip(propdata['propID'], propnames):
+            configSummary['Proposals']['keyorder'].append(propnames[np.where(propdata[self.propIdCol] == propid)][0])
+        for propid, propname in zip(propdata[self.propIdCol], propnames):
             configSummary['Proposals'][propname] = {}            
             propdict = configSummary['Proposals'][propname]
-            propdict['keyorder'] = ['PropID', 'PropName',  'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
-            propdict['PropName'] = propname
-            propdict['PropID'] = propid
-            propdict['PropType'] = propdata['propName'][np.where(propnames == propname)]
+            propdict['keyorder'] = [self.propIdCol, self.propNameCol, 'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
+            propdict[self.propNameCol] = propname
+            propdict[self.propIdCol] = propid
+            propdict['PropType'] = propdata[self.propNameCol][np.where(propnames == propname)]
             propdict['RelPriority'] = _matchParamNameValue(config[propname], 'RelativeProposalPriority')
             # Get the number of user regions.
             constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)

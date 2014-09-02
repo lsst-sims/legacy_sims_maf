@@ -34,7 +34,7 @@ class VisitGroupsMetric(BaseMetric):
         super(VisitGroupsMetric, self).__init__(col=[self.times, self.nights], metricName=metricName, **kwargs)
         self.reduceOrder = {'Median':0, 'NNightsWithNVisits':1, 'NVisitsInWindow':2, 
                             'NNightsInWindow':3, 'NLunations':4, 'MaxSeqLunations':5}
-        if self.displayDict['caption'] == 'None':
+        if self.displayDict['caption'] is None:
             caption = 'Evaluation of the number of visits within a night, with separations between '
             caption += 'tMin %.1f and tMax %.1f minutes.'   %(self.deltaTmin*24.0*60., self.deltaTmax*24.0*60.)
             caption += 'Groups of visits use a minimum number of visits per night of %d, ' %(self.minNVisits)

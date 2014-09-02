@@ -4,6 +4,8 @@ import numpy as np
 import lsst.sims.maf.db as db
 from .mafRunResults import MafRunResults
 
+# ADD TRACKING DB location
+
 class MafTracking(object):
     """ 
     Class to read MAF's tracking database (tracking all MAF runs) and handle the output for web display.
@@ -14,9 +16,9 @@ class MafTracking(object):
         Instantiate the (multi-run) layout visualization class.
         """
         if trackingDbAddress is None:
-            dbfile = os.path.join(os.getenv('SIMS_MAF_DIR'), 'bin', 'trackingDb_sqlite.db')
+            dbfile = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
             trackingDbAddress = 'sqlite:///' + dbfile
-            
+
         # Read in the results database.
         database = db.Database(trackingDbAddress, longstrings=True,
                                dbTables={'runs':['runs', 'mafRunId']})
