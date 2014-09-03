@@ -11,14 +11,14 @@ import os
 
 
 
-class testHealpixHistSlicer(unittest.TestCase):
+class testHealpixComplexSlicer(unittest.TestCase):
     def setUp(self):
         self.metricValue = np.ma.empty(10,dtype=object)
         for i in np.arange(10):
             self.metricValue[i] = np.random.rand(10)
          
     def testPlotHistogram(self):
-        slicer = slicers.HealpixHistSlicer()
+        slicer = slicers.HealpixComplexSlicer()
 
         
         # Check that the various plotting methods run

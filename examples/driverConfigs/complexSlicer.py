@@ -23,14 +23,14 @@ metric2 = configureMetric('Tgaps',
                                  'binMax':binMax, 'binsize':binsize})
 
 metricDict = makeDict(metric1,metric2, metric15)
-slicer = configureSlicer('HealpixHistSlicer',
+slicer = configureSlicer('HealpixComplexSlicer',
                          kwargs={'nside':16},
                          metricDict=metricDict,
                          constraints=['filter = "r"'])
 
 sliceList.append(slicer)
 
-slicer = configureSlicer('HealpixHistSlicer',
+slicer = configureSlicer('HealpixComplexSlicer',
                          kwargs={'nside':64,
                          'spatialkey1':'ditheredRA',
                          'spatialkey2':'ditheredDec'},
@@ -44,7 +44,7 @@ metric1 = configureMetric('Tgaps',
                          kwargs={'binMin':binMin,
                                  'binMax':binMax, 'binsize':binsize},plotDict={'singleHist':2253})
 
-slicer = configureSlicer('HealpixHistSlicer',
+slicer = configureSlicer('HealpixComplexSlicer',
                          kwargs={'nside':64,
                          'spatialkey1':'ditheredRA',
                          'spatialkey2':'ditheredDec'},

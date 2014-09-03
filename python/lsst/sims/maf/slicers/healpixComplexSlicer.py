@@ -8,10 +8,15 @@ import matplotlib.pyplot as plt
 import os
 import warnings
 
-class HealpixHistSlicer(HealpixSlicer):
+class HealpixComplexSlicer(HealpixSlicer):
 
     def __init__(self, **kwargs):
-        super(HealpixHistSlicer, self).__init__(**kwargs)
+        """
+        Slicer designed to be used with complex metrics where the slicer
+        will collapse the metric results, e.g., summing histograms that were computed
+        at each healpixel.
+        """
+        super(HealpixComplexSlicer, self).__init__(**kwargs)
         # Only use the new plotHistogram
         self.plotFuncs = {'plotConsolidatedHist':self.plotConsolidatedHist}
         self.plotObject = True
