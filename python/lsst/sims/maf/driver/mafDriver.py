@@ -291,7 +291,7 @@ class MafDriver(object):
                     gm.writeAll()
                     # Replace the plotDict for selected metricNames (to allow override from config file).
                     for mName in slicer.plotConfigs:
-                        iid = gm.metricNameIid(mName)[0]
+                        iid = gm.findIids(metricName=mName)[0]
                         gm.plotDict[iid] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
@@ -313,11 +313,11 @@ class MafDriver(object):
                                     matching_metrics = [x for x in all_names \
                                                         if x[:len(baseName)] == baseName and x != baseName]  
                                     for mm in matching_metrics:
-                                        iid = gm.metricNameIid(mm)[0]
+                                        iid = gm.findIids(metricName=mm)[0]
                                         summary = gm.computeSummaryStatistics(iid, stat)
                                 # Else it's a simple metric value.
                                 else:
-                                    iid = gm.metricNameIid(metric.name)[0]                                    
+                                    iid = gm.findIids(metricName=metric.name)[0]
                                     summary = gm.computeSummaryStatistics(iid, stat)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)

@@ -16,8 +16,8 @@ class OpenShutterMetric(BaseMetric):
         self.shutterTime = shutterTime
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
-        if self.displayDict['caption'] == 'None':
-            self.displayDict['caption'] = 'Open shutter time -- (expTime - %.1f seconds readtime' %(self.readTime)
+        if self.displayDict['caption'] is None:
+            self.displayDict['caption'] = 'Open shutter time = (expTime - %.1f seconds readtime' %(self.readTime)
             self.displayDict['caption'] +=  ' - %.1f seconds shutter open/close time) * number of visits.'\
                 %(self.shutterTime)        
     
@@ -40,7 +40,7 @@ class OpenShutterFractionMetric(BaseMetric):
         self.shutterTime = shutterTime
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
-        if self.displayDict['caption'] == 'None':
+        if self.displayDict['caption'] is None:
             self.displayDict['caption'] = 'Open shutter time divided by (open shutter time + slewtime).'
 
     def run(self, dataSlice, slicePoint=None):

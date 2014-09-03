@@ -55,7 +55,9 @@ class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, **kwargs):
         super(CountMetric, self).__init__(col=col, **kwargs)
-        self.plotDict['cbarFormat'] = '%d'
+        if ('normVal' not in self.plotDict) and ('zp' not in self.plotDict):
+            self.plotDict['cbarFormat'] = '%d'
+
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname]) 
 
@@ -81,7 +83,7 @@ class FracAboveMetric(BaseMetric):
         #  first, we support use cases where class instantiated without explicit 'col='). 
         if metricName is None:
             metricName = 'FracAbove %.2f in %s' %(cutoff, col)
-        super(FracAboveMetric, self).__init__(col, **kwargs)
+        super(FracAboveMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.colname] >= self.cutoff)[0]
@@ -92,7 +94,7 @@ class FracBelowMetric(BaseMetric):
     def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
         if metricName is None:
             metricName = 'FracBelow %.2f in %s' %(cutoff, col)
-        super(FracBelowMetric, self).__init__(col, **kwargs)
+        super(FracBelowMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.colname] <= self.cutoff)[0]
@@ -101,16 +103,17 @@ class FracBelowMetric(BaseMetric):
 
 class NoutliersNsigma(BaseMetric):
     """
-    Calculate the # of Counts less than nSigma below the median (nSigma<0) or
-    more than nSigma above the median.
+    Calculate the # of visits less than nSigma below the median (nSigma<0) or
+    more than nSigma above the median of 'col'.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
         self.col = col
         self.nSigma = nSigma
         if metricName is None:
             metricName = 'Noutliers %.1f in %s' %(self.nSigma, self.col)
-        super(NoutliersNsigma, self).__init__(col=col, **kwargs)
+        super(NoutliersNsigma, self).__init__(col=col, metricName=metricName, **kwargs)
         self.plotDict['cbarFormat'] = '%d'
+
     def run(self, dataSlice, slicePoint=None):
         med = np.median(dataSlice[self.colname])
         std = np.std(dataSlice[self.colname])

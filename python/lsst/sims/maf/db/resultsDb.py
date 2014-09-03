@@ -26,10 +26,11 @@ class MetricRow(Base):
     sqlConstraint = Column(String)
     metricMetadata = Column(String)
     metricDataFile = Column(String)
+    metricRun = Column(Integer)
     def __repr__(self):
-        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
+        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', metricRun='%d')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.metricRuns)
 
 class DisplayRow(Base):
     """
@@ -124,9 +125,22 @@ class ResultsDb(object):
         """
         Add a row to the metrics table.
         """
+        if simDataName is None:
+            simDataName = 'NULL'
+        if sqlConstraint is None:
+            sqlConstraint = 'NULL'
+        if metricMetadata is None:
+            metricMetadata = 'NULL'
+        if metricDataFile is None:
+            metricDataFile = 'NULL'
+        metricRun = 0;
+        # Check if metric has already been added to database.
+        prev = self.session.query(MetricRow).filter_by(metricName=metricName, slicerName=slicerName,
+                                                       simDataName=simDataName, metricMetadata=metricMetadata).all()
+        metricRun += len(prev)
         metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
                                sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
-                               metricDataFile=metricDataFile)
+                               metricDataFile=metricDataFile, metricRun=metricRun)
         self.session.add(metricinfo)
         self.session.commit()
         return metricinfo.metricId
@@ -135,6 +149,9 @@ class ResultsDb(object):
         """
         Add a row to the displays table.
         """
+        for k in displayDict:
+            if displayDict[k] is None:
+                displayDict[k] = 'NULL'
         displayGroup = displayDict['group']
         displaySubgroup = displayDict['subgroup']
         displayOrder = displayDict['order']
@@ -198,12 +215,13 @@ class ResultsDb(object):
             metricId = self.getMetricIds()
         if not hasattr(metricId, '__iter__'):
             metricId = [metricId,]
+        summarystats = []
         for mid in metricId:
             for m, s in self.session.query(MetricRow, SummaryStatRow).\
               filter(MetricRow.metricId == SummaryStatRow.metricId).\
               filter(MetricRow.metricId == mid).all():
-                print 'Metric:', m.metricName, m.slicerName, m.metricMetadata                
-                print ' ', s.summaryName, s.summaryValue
+              summarystats.append([m.metricName, m.slicerName, m.metricMetadata, s.summaryName, s.summaryValue])
+        return summarystats
                 
     def getMetricDataFiles(self, metricId=None):
         """
@@ -216,6 +234,5 @@ class ResultsDb(object):
         dataFiles = []
         for mid in metricId:
             for m in self.session.query(MetricRow).filter(MetricRow.metricId == mid).all():
-                print 'Metric:', m.metricName, m.slicerName, m.metricMetadata, m.metricDataFile
                 dataFiles.append(m.metricDataFile)
         return dataFiles

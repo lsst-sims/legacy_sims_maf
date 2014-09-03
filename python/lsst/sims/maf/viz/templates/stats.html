@@ -2,6 +2,8 @@
 
 {% set active_page = "stats" %}
 
+{% set run = runlist.getRun(runId) %}
+
 {% block moresidebar %}
 <ul>
 {% for group in run.groups.keys() %}

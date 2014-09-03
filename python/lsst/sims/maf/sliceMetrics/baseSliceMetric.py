@@ -48,19 +48,6 @@ class BaseSliceMetric(object):
         self.sqlconstraints = {}
         self.metadatas = {}
 
-
-    def metricNameIid(self, metricName):
-        """
-        Return the internal dictionary id number  (iid) for a given metricName.
-        
-        If metricName is a duplicate, will return all iids which match.
-        """
-        iids = []
-        for iid, name in self.metricNames.iteritems():
-            if name == metricName:
-                iids.append(iid)
-        return iids
-
     def findIids(self, simDataName=None, metricName=None, metadata=None, slicerName=None):
         """
         Identify iids which match simDataName/metricName/metadata/slicer.
@@ -70,19 +57,19 @@ class BaseSliceMetric(object):
            if iid in iids:
               if simDataName is not None:
                  if self.simDataNames[iid] != simDataName:
-                    iids.remove[iid]
+                    iids.remove(iid)
                     continue
               if metricName is not None:
                  if self.metricNames[iid] != metricName:
-                    iids.remove[iid]
+                    iids.remove(iid)
                     continue
               if metadata is not None:
                  if self.metadatas[iid] != metadata:
-                    iids.remove[iid]
+                    iids.remove(iid)
                     continue
               if slicerName is not None:
                  if self.slicers[iid].slicerName != slicerName:
-                    iids.remove[iid]
+                    iids.remove(iid)
                     continue
         return iids
     
@@ -148,7 +135,8 @@ class BaseSliceMetric(object):
        Given a list of filenames, reads metric values and metadata from disk. 
        """
        if not hasattr(filenames, '__iter__'):
-          filenames = [filenames, ]        
+           filenames = [filenames, ]
+       newiids = []
        for f in filenames:
           # Set up a base slicer to read data.
           baseslicer = slicers.BaseSlicer()
@@ -165,23 +153,25 @@ class BaseSliceMetric(object):
           self.plotDicts[iid] = {}
           # Set default values, in  case metric file doesn't have the info.
           self.displayDicts[iid] = {'group':'Ungrouped', 
-                                    'subgroup':'None',
+                                    'subgroup':None,
                                     'order':0,
-                                    'caption':'None'}
+                                    'caption':None}
           if 'displayDict' in header:
               self.displayDicts[iid].update(header['displayDict'])
           if 'plotDict' in header:
              self.plotDicts[iid].update(header['plotDict'])
           if verbose:
              print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
-            
+          newiids.append(iid)
+       return newiids
+    
     def writeAll(self, outfileRoot=None, comment=''):
-       """
-       Write all metric values to disk.
-       """
-       for iid in self.metricValues:
-          outfilename = self.writeMetric(iid, comment=comment,
-                                         outfileRoot=outfileRoot)
+        """
+        Write all metric values to disk.
+        """
+        for iid in self.metricValues:
+            outfilename = self.writeMetric(iid, comment=comment,
+                                            outfileRoot=outfileRoot)
         
     def writeMetric(self, iid, comment='', outfileRoot=None):
         """
@@ -190,18 +180,18 @@ class BaseSliceMetric(object):
         comment = any additional comments to add to output file (beyond 
                    metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
-       """
+        """
         outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot)
         outfile = outfile + '.npz'
         if iid in self.slicers:
-           slicer = self.slicers[iid]
+            slicer = self.slicers[iid]
         else:
-           try:
-              slicer = self.slicer
-           except AttributeError:
-              # Otherwise, try just saving with base slicer.
-              # This won't save any metadata about what the slices looked like.
-              slicer = slicers.BaseSlicer()
+            try:
+                slicer = self.slicer
+            except AttributeError:
+                # Otherwise, try just saving with base slicer.
+                # This won't save any metadata about what the slices looked like.
+                slicer = slicers.BaseSlicer()
         slicer.writeData(os.path.join(self.outDir, outfile),
                          self.metricValues[iid],
                          metricName = self.metricNames[iid],

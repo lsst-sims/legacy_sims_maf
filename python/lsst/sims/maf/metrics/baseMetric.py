@@ -19,9 +19,14 @@ class MetricRegistry(type):
         super(MetricRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        modname = inspect.getmodule(cls).__name__ + '.'
+        modname = inspect.getmodule(cls).__name__
         if modname.startswith('lsst.sims.maf.metrics'):
             modname = '' 
+        else:            
+            if len(modname.split('.')) > 1:
+                modname = '.'.join(modname.split('.')[:-1]) + '.'
+            else:
+                modname = modname + '.'
         metricname = modname + name
         if metricname in cls.registry:
             raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' %(metricname))
@@ -166,9 +171,9 @@ class BaseMetric(object):
         # Set up the displayDict.
         # Set defaults.
         defaultDisplayDict = {'group':'Ungrouped',
-                              'subgroup':'None',
+                              'subgroup':None,
                               'order':0,
-                              'caption':'None'}
+                              'caption':None}
         if displayDict is None:
             self.displayDict = defaultDisplayDict
         else:

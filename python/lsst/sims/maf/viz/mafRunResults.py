@@ -4,22 +4,21 @@ import numpy as np
 from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
 
-class layoutResults(object):
-    """Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages """
-    def __init__(self, outDir):
+class MafRunResults(object):
+    """
+    Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages.
+
+    Deals with a single MAF run (one output directory, one resultsDb) only. """
+    def __init__(self, outDir, resultsDbAddress=None):
         """
         Instantiate the (individual run) layout visualization class.
 
         This class provides methods used by our jinja2 templates to help interact
         with the outputs of MAF. 
         """
-        self.outDir = outDir
+        self.outDir = os.path.relpath(outDir, '.')
 
-        if self.outDir == '.':
-            raise Exception("showMaf.py does not support viewing metric results from within the current directory."
-                            "\n Please 'cd' one level up and run again, explicitly specifying this directory. ")
-
-        self.configSummary = self._makefilename('configSummary.txt')
+        self.configSummary = os.path.join(self.outDir, 'configSummary.txt')
         if not os.path.isfile(self.configSummary):
             self.configSummary = 'Config Summary Not Available'
             self.runName = 'RunName Not Available'
@@ -29,13 +28,16 @@ class layoutResults(object):
             spot = config.find('RunName')
             self.runName = config[spot:spot+300].split(' ')[1]
 
-        self.configDetails = self._makefilename('configDetails.txt')
+        self.configDetails = os.path.join(self.outDir, 'configDetails.txt')
         if not os.path.isfile(self.configDetails):
             self.configDetails = 'Config Details Not Available.'
 
 
         # Read in the results database.
-        database = db.Database('sqlite:///'+outDir+'/resultsDb_sqlite.db',
+        if resultsDbAddress is None:
+            sqlitefile = os.path.join(outDir, 'resultsDb_sqlite.db')
+            resultsDbAddress = 'sqlite:///'+sqlitefile
+        database = db.Database(resultsDbAddress, longstrings=True,
                                dbTables={'metrics':['metrics','metricID'] ,
                                          'displays':['displays', 'displayId'],
                                          'plots':['plots','plotId'],
@@ -96,46 +98,24 @@ class layoutResults(object):
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
         
-    def _makefilename(self, filename):
-        """
-        Utility to join the filepath (outDir) and a filename.
-        """
-        return os.path.join(self.outDir, filename)
-
     ## Methods to deal with metricIds
                 
-    def _intMetricId(self, metricId):
+    def convertSelectToMetrics(self, groupList, metricIdList):
         """
-        Return 'metricId' as an int.
-
-        Select methods from HTML often return list items or strings.
-        By calling this first on any individual metricId passed here, we can be sure it's an int.
-        """
-        if not isinstance(metricId, int):
-            if isinstance(metricId, list):
-                metricId = metricId[0]
-            metricId = int(metricId)
-        return metricId
-                                       
-    def convertSelectToMetrics(self, selectDict):
-        """
-        Convert the dict of values returned by 'select metrics' template page 
+        Convert the lists of values returned by 'select metrics' template page 
         into an appropriate numpy recarray of metrics (in sorted order).
         """
-        if 'all' in selectDict:
-            metrics = self.metrics
-        else:            
-            metricIds = []
-            for k, v in selectDict.items():
-                if k.startswith('Group'):
-                    group = v[0].split('__')[0]
-                    subgroup = v[0].split('__')[1]
-                    mIds = self.metricIdsInSubgroup(group, subgroup)
-                    for mId in mIds:
-                        metricIds.append(mId)
-                else:
-                    metricIds.append(self._intMetricId(v))
-            metrics = self.metricIdsToMetrics(metricIds)
+        metricIds = set()    
+        for group_subgroup in groupList:
+            group = group_subgroup.split('_')[0]
+            subgroup = group_subgroup.split('_')[-1].replace('+', ' ')
+            mIds = self.metricIdsInSubgroup(group, subgroup)
+            for mId in mIds:
+                metricIds.add(mId)
+        for mId in metricIdList:
+            mId = int(mId)
+            metricIds.add(mId)
+        metrics = self.metricIdsToMetrics(metricIds)
         return self.sortMetrics(metrics)
 
     def metricIdsInSubgroup(self, group, subgroup):
@@ -152,7 +132,6 @@ class layoutResults(object):
         """
         metrics = np.empty(len(metricIds), dtype=self.metrics.dtype)
         for i, mId in enumerate(metricIds):
-            mId = self._intMetricId(mId)
             match = (self.metrics['metricId'] == mId)
             metrics[i] = self.metrics[match]
         return metrics
@@ -160,8 +139,8 @@ class layoutResults(object):
     ## Methods to deal with metrics in numpy recarray.
         
     def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup',
-                                          'baseMetricNames', 'displayOrder', 
-                                          'slicerName', 'metricMetadata']):
+                                          'baseMetricNames', 'slicerName', 'displayOrder', 
+                                          'metricMetadata']):
         """
         Sort the metrics by group, subgroup, base metric name (pre '_'), order, slicer, and then finally metadata. 
         """
@@ -202,11 +181,11 @@ class layoutResults(object):
             groups[g] = sorted(list(groups[g]))
         return groups
             
-    def metricInfo(self, metric):
+    def metricInfo(self, metric, withDataFile=False):
         """
         Return a dict with the metric info we want to show on the webpages.
 
-        Currently : MetricName / Slicer/ Metadata.
+        Currently : MetricName / Slicer/ Metadata / datafile (for download)
         """
         # Provides a way to easily modify what we show on all webpages without
         #  significantly altering the templates. Or provides an abstraction layer 
@@ -215,6 +194,8 @@ class layoutResults(object):
         metricInfo['MetricName'] = metric['metricName']
         metricInfo['Slicer'] = metric['slicerName']
         metricInfo['Metadata'] = metric['metricMetadata']
+        if withDataFile:
+            metricInfo['Datafile'] = metric['metricDataFile']
         return metricInfo
 
     def captionForMetric(self, metric):
@@ -246,14 +227,14 @@ class layoutResults(object):
         Return the thumbnail file name for a given plot.
         """
         thumbname =  'thumb.' + ''.join(plot['plotFile'].split('.')[:-1]) + '.png'
-        thumbfile = self._makefilename(thumbname)
+        thumbfile = os.path.join(self.outDir, thumbname)
         return thumbfile
 
     def getPlotfile(self, plot):
         """
         Return the filename for a given plot.
         """
-        return self._makefilename(plot['plotFile'])
+        return os.path.join(self.outDir, plot['plotFile'])
 
 
     ## Set of methods to deal with stats.

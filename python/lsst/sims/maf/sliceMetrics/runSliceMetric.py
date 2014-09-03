@@ -251,7 +251,7 @@ class RunSliceMetric(BaseSliceMetric):
                     self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
                                                                     self.simDataNames[iidi], 
                                                                     self.sqlconstraints[iidi],
-                                                                    self.metadatas[iidi], 'NULL')
+                                                                    self.metadatas[iidi], None)
                 self.resultsDb.addSummaryStat(self.metricIds[iidi],
                                                 summaryName=summaryMetric.name.replace(' metricdata', ''),
                                                 summaryValue=summaryValue)
@@ -288,7 +288,7 @@ class RunSliceMetric(BaseSliceMetric):
         Auto generate caption for a given metric.
         """
         displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
-        if (self.displayDicts[iid]['caption'] == 'None') or \
+        if (self.displayDicts[iid]['caption'] is None) or \
             (self.displayDicts[iid]['caption'].endswith('(auto)')):
           caption = ''
           plotTypes = self.slicer.plotFuncs.keys()
@@ -318,8 +318,8 @@ class RunSliceMetric(BaseSliceMetric):
           if iid not in self.metricIds:
             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                             self.simDataNames[iid], self.sqlconstraints[iid],
-                                                            self.metadatas[iid], 'NULL')
-          if self.displayDicts[iid]['subgroup'] == 'None':
+                                                            self.metadatas[iid], None)
+          if self.displayDicts[iid]['subgroup'] is None:
              self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
           self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
              
@@ -369,7 +369,7 @@ class RunSliceMetric(BaseSliceMetric):
             if iid not in self.metricIds:
                 self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                                self.simDataNames[iid], self.sqlconstraints[iid],
-                                                               self.metadatas[iid], 'NULL')
+                                                               self.metadatas[iid], None)
             for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
                 froot, fname = os.path.split(filename)
                 self.resultsDb.addPlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)

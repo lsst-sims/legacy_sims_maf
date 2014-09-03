@@ -270,7 +270,7 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
         filename = (self.outroot + '_' + 'Completeness' + '_' + self.metadata + '_' +
                     self.slicer.slicerName[:4].upper() + '.npz')
         filename = filename.replace(' ', '_')
-        oldiid = self.testbbm.metricNameIid('Completeness')[0]
+        oldiid = self.testbbm.findIids(metricName='Completeness')[0]
         newiid = self.testbbm.iid_next
         self.testbbm.readMetricData(filename)
         # Should be read in.
