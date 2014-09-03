@@ -41,7 +41,7 @@ class OpenShutterFractionMetric(BaseMetric):
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
         if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Open shutter time divided by (open shutter time + slewtime).'
+            self.displayDict['caption'] = 'Open shutter time divided by (open shutter time + slewtime + readtime + shutter time).'
 
     def run(self, dataSlice, slicePoint=None):
         result = (np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
