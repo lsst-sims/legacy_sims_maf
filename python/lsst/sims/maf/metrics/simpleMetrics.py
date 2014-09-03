@@ -30,7 +30,11 @@ class MedianMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.median(dataSlice[self.colname])
 
-    
+class MedianAbsMetric(BaseMetric):
+    """Calculate the median of the absolute value of a simData column slice."""
+    def run(self, dataSlice, slicePoint=None):
+        return np.median(np.abs(dataSlice[self.colname]))
+   
 class MinMetric(BaseMetric):
     """Calculate the minimum of a simData column slice."""
     def run(self, dataSlice, slicePoint=None):
