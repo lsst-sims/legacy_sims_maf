@@ -2,7 +2,8 @@
 
 {% set active_page = "listMetrics" %}
 
-{% set selectMetrics = run.convertSelectToMetrics(selectDict) %}
+{% set run = runlist.getRun(runId) %}
+{% set selectMetrics = run.convertSelectToMetrics(groupList, metricIdList) %}
 {% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
 
 
@@ -11,9 +12,9 @@
 <ul>
 {% for g in selectGroups.keys() %}
   <li>
-  <a href="#{{ g }}">{{ g }}</a> </br>
+  <a href="#{{ g|escape }}">{{ g|escape }}</a> </br>
   {% for sg in selectGroups[g] %}
-    <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+    <div id='indent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
  {% endfor %}
  </li>
 {% endfor %}
@@ -29,10 +30,10 @@
  {% set groupstart = True %}
  {% for sg in selectGroups[g] %}
    {% if groupstart == True %}
-      <a name = "{{g}}" </a>
+      <a name = "{{g|escape}}" </a>
       {% set groupstart = False %}
    {% endif %}
-   <a name = "{{g}}_{{sg}}"> </a>
+   <a name = "{{g|escape}}_{{sg|escape}}"> </a>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
@@ -44,18 +45,25 @@
     </b>
     </br>
     {# Add the plots for this metric #}
-    {% set plotdict = run.plotsForMetric(metric) %}
+    {% set plotdict = run.plotsForMetric(metric) %}     
     {% if plotdict|length > 0 %}
+     <table class="blank">
+     <tr class="blank" width=100%>
      {% for ptype, plot in plotdict.iteritems() %}
       {% set plotfile = run.getPlotfile(plot) %}
       {% set thumbfile = run.getThumbfile(plot) %}
-       <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+       <td class="blank">
+	 <a href="{{plotfile}}"> <img class="thumbnail"
+ src='{{thumbfile}}'></a>
+	</td>
       {% endfor  %}
+     </tr>
+     </table>
     {% endif %}
 
     <p>
     {% set caption = run.captionForMetric(metric) %}
-    {{ caption }}
+    {{ caption|escape }}
     </p>
 
     {# Add the summary stats for this metric #} 
@@ -64,10 +72,10 @@
     <table class="blank">
     {% for name in statdict.keys() %}
      <tr>
-     <td class="blank">
-     <i>{{ name }}:</i>
+     <td class="blank" style='padding-left:10px'>
+     <i>{{ name|escape }}:</i>
      </td>
-     <td class="blank">
+     <td class="blank" style='padding-left:20px'>
      {% if name == 'Count' %}
       {{ '%d'|format(statdict[name]) }}
      {% else %}

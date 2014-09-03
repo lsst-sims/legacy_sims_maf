@@ -28,7 +28,7 @@ def getMetrics(docomplex=True):
     metricList.append(metrics.MeanMetric('filtSkyBrightness'))
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth'))    
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                          plotParams={'logScale':False, 'units':'Number of visits',
+                                          plotDict={'logScale':False, 'units':'Number of visits',
                                                       'colorMin':0, 'colorMax':300}))
     if docomplex:
         # More complex metrics.    

@@ -4,7 +4,7 @@ from .Table import Table
 class Database(object):
     """Base class for database access."""
     def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
-                 chunksize=1000000, **kwargs):
+                 chunksize=1000000, longstrings=False, verbose=False):
         """
         Instantiate database object to handle queries of the database.
 
@@ -20,6 +20,10 @@ class Database(object):
         More information on sqlalchemy connection strings can be found at
           http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html        
         """
+        if longstrings:
+            typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
+                            'TEXT':(str, 1024), 'CLOB':(str, 1024),
+                            'STRING':(str, 1024)}
         self.dbAddress = dbAddress        
         self.chunksize = chunksize
         # Add default values to provided input dictionaries (if not present in input dictionaries)
@@ -45,7 +49,13 @@ class Database(object):
                 if len(self.dbTables[k]) != 2:
                     raise Exception('Need table name plus primary key for each value in dbTables. Missing data for %s:%s'
                                     %(k, self.dbTables[k]))
-                self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], self.dbAddress)
+                if longstrings:
+                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], 
+                                           self.dbAddress, typeOverRide=typeOverRide,
+                                           verbose=verbose)
+                else:
+                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], 
+                                           self.dbAddress, verbose=verbose)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
         """
