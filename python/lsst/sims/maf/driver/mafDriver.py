@@ -92,7 +92,7 @@ class MafDriver(object):
             for metric in slicer.metricDict.itervalues():
                 name, kwargs, plotDict, summaryStats, histMerge, displayDict = readMetricConfig(metric)
                 # Add plot parameters and display parameters to kwargs handed to metric.
-                kwargs['plotParams'] = plotDict
+                kwargs['plotDict'] = plotDict
                 kwargs['displayDict'] = displayDict
                 temp_metric = metrics.BaseMetric.getClass(name)(**kwargs)
                 # Add an attribute to our metric which will describe the summary stats.
@@ -289,10 +289,10 @@ class MafDriver(object):
                     gm.reduceAll()
                     # And write metric data files to disk.
                     gm.writeAll()
-                    # Replace the plotParams for selected metricNames (to allow override from config file).
+                    # Replace the plotDict for selected metricNames (to allow override from config file).
                     for mName in slicer.plotConfigs:
                         iid = gm.findIids(metricName=mName)[0]
-                        gm.plotParams[iid] = readMixConfig(slicer.plotConfigs[mName])
+                        gm.plotDict[iid] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
                     # Generate captions for figures and save display data.
@@ -317,7 +317,7 @@ class MafDriver(object):
                                         summary = gm.computeSummaryStatistics(iid, stat)
                                 # Else it's a simple metric value.
                                 else:
-                                    iid = gm.findIids(metricName=metric.name)[0]                                    
+                                    iid = gm.findIids(metricName=metric.name)[0]
                                     summary = gm.computeSummaryStatistics(iid, stat)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)

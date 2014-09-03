@@ -40,7 +40,7 @@ class BaseSliceMetric(object):
         # Note that metricNames are not necessarily unique by themselves.
         self.iid_next = 0
         self.metricNames = {}
-        self.plotParams = {}
+        self.plotDicts = {}
         self.displayDicts = {}        
         self.slicers = {}
         self.metricValues = {}
@@ -129,43 +129,41 @@ class BaseSliceMetric(object):
         # Combine with the filepath (as it was known from method this was called).
         thumbname = os.path.join(filepath, thumbname)
         return thumbname
-
-    
     
     def readMetricData(self, filenames, verbose=False):
-        """
-        Given a list of filenames, reads metric values and metadata from disk. 
-        """
-        if not hasattr(filenames, '__iter__'):
-            filenames = [filenames, ]
-        newiids = []
-        for f in filenames:
-            # Set up a base slicer to read data.
-            baseslicer = slicers.BaseSlicer()
-            metricData, slicer, header = baseslicer.readData(f)
-            iid = self.iid_next
-            self.iid_next += 1
-            self.slicers[iid] = slicer
-            self.metricValues[iid] = metricData
-            self.metricValues[iid].fill_value = slicer.badval
-            self.metricNames[iid] = header['metricName']
-            self.simDataNames[iid] = header['simDataName']
-            self.sqlconstraints[iid] = header['sqlconstraint']
-            self.metadatas[iid] = header['metadata']
-            self.plotParams[iid] = {}
-            # Set default values, in  case metric file doesn't have the info.
-            self.displayDicts[iid] = {'group':'Ungrouped', 
-                                        'subgroup':None,
-                                        'order':0,
-                                        'caption':None}
-            if 'displayDict' in header:
-                self.displayDicts[iid].update(header['displayDict'])
-            if 'plotParams' in header:
-                self.plotParams[iid].update(header['plotParams'])
-            if verbose:
-                print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
-            newiids.append(iid)
-        return newiids
+       """
+       Given a list of filenames, reads metric values and metadata from disk. 
+       """
+       if not hasattr(filenames, '__iter__'):
+           filenames = [filenames, ]
+       newiids = []
+       for f in filenames:
+          # Set up a base slicer to read data.
+          baseslicer = slicers.BaseSlicer()
+          metricData, slicer, header, plotDict = baseslicer.readData(f)
+          iid = self.iid_next
+          self.iid_next += 1
+          self.slicers[iid] = slicer
+          self.metricValues[iid] = metricData
+          self.metricValues[iid].fill_value = slicer.badval
+          self.metricNames[iid] = header['metricName']
+          self.simDataNames[iid] = header['simDataName']
+          self.sqlconstraints[iid] = header['sqlconstraint']
+          self.metadatas[iid] = header['metadata']
+          self.plotDicts[iid] = {}
+          # Set default values, in  case metric file doesn't have the info.
+          self.displayDicts[iid] = {'group':'Ungrouped', 
+                                    'subgroup':None,
+                                    'order':0,
+                                    'caption':None}
+          if 'displayDict' in header:
+              self.displayDicts[iid].update(header['displayDict'])
+          if 'plotDict' in header:
+             self.plotDicts[iid].update(header['plotDict'])
+          if verbose:
+             print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
+          newiids.append(iid)
+       return newiids
     
     def writeAll(self, outfileRoot=None, comment=''):
         """
@@ -200,7 +198,8 @@ class BaseSliceMetric(object):
                          simDataName = self.simDataNames[iid],
                          sqlconstraint = self.sqlconstraints[iid],
                          metadata = self.metadatas[iid] + comment,
-                         displayDict = self.displayDicts[iid])
+                         displayDict = self.displayDicts[iid],
+                         plotDict = self.plotDicts[iid])
         if self.resultsDb:
             self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
                                                           slicer.slicerName,

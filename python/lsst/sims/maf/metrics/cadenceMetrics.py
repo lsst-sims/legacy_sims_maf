@@ -229,8 +229,8 @@ class QuickRevisitMetric(BaseMetric):
         super(QuickRevisitMetric, self).__init__(col=self.nightCol, **kwargs)        
         self.nVisitsInNight = nVisitsInNight
         xlabel = 'Number of Nights with >= %d Visits' %(nVisitsInNight)
-        if 'xlabel' not in self.plotParams:
-            self.plotParams['xlabel'] = xlabel
+        if 'xlabel' not in self.plotDict:
+            self.plotDict['xlabel'] = xlabel
 
     def run(self, dataSlice, slicePoint):
         """Count how many nights the dataSlice has >= nVisitsInNight."""
