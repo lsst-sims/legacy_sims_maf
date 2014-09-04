@@ -11,8 +11,8 @@ import lsst.sims.maf.db as db
 class RunSelectHandler(web.RequestHandler):
     def get(self):
         selectTempl = env.get_template("runselect.html")
-        if 'runId' in self.request.query_arguments:
-            runId = int(self.request.query_arguments['runId'][0])
+        if 'runId' in self.request.arguments:
+            runId = int(self.request.arguments['runId'][0])
         else:
             # Set runID to a negative number, to default to first run.
             runId = startRunId
@@ -21,19 +21,19 @@ class RunSelectHandler(web.RequestHandler):
 class MetricSelectHandler(web.RequestHandler):
     def get(self):
         selectTempl = env.get_template("metricselect.html")
-        runId = int(self.request.query_arguments['runId'][0])
+        runId = int(self.request.arguments['runId'][0])
         self.write(selectTempl.render(runlist=runlist, runId=runId))
 
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
         gridTempl = env.get_template("grid.html")
-        runId = int(self.request.query_arguments['runId'][0])
-        if 'metricId' in self.request.query_arguments:
-            metricIdList = self.request.query_arguments['metricId']
+        runId = int(self.request.arguments['runId'][0])
+        if 'metricId' in self.request.arguments:
+            metricIdList = self.request.arguments['metricId']
         else:
             metricIdList = []
-        if 'Group_subgroup' in self.request.query_arguments:
-            groupList = self.request.query_arguments['Group_subgroup']
+        if 'Group_subgroup' in self.request.arguments:
+            groupList = self.request.arguments['Group_subgroup']
         else:
             groupList = []
         self.write(gridTempl.render(metricIdList=metricIdList, groupList=groupList,
@@ -42,20 +42,20 @@ class MetricGridPageHandler(web.RequestHandler):
 class ConfigPageHandler(web.RequestHandler):
     def get(self):
         configTempl = env.get_template("configs.html")
-        runId = int(self.request.query_arguments['runId'][0])
+        runId = int(self.request.arguments['runId'][0])
         self.write(configTempl.render(runlist=runlist, runId=runId))
 
 class StatPageHandler(web.RequestHandler):
     def get(self):
         statTempl = env.get_template("stats.html")
-        runId = int(self.request.query_arguments['runId'][0])
+        runId = int(self.request.arguments['runId'][0])
         self.write(statTempl.render(runlist=runlist, runId=runId))
 
 class AllMetricResultsPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
         allresultsTempl = env.get_template("allmetricresults.html")
-        runId = int(self.request.query_arguments['runId'][0])    
+        runId = int(self.request.arguments['runId'][0])    
         self.write(allresultsTempl.render(runlist=runlist, runId=runId))
         
 def make_app():
