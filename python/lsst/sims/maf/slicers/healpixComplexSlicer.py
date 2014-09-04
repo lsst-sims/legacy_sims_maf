@@ -46,23 +46,29 @@ class HealpixComplexSlicer(HealpixSlicer):
         fig = plt.figure(fignum)
         if not xlabel:
             xlabel = units
-        
+
+        # If we are only plotting a single healpixel
         if singleHP is not None:
             # only plot a single histogram
             if metricValue[singleHP].mask == True:
                 warnings.warn("Pixel %i is masked, nothing to plot for plotConsolidatedHist")
                 return
-            finalHist = metricValue[singleHP] 
+            finalHist = metricValue[singleHP]
+        # Combining all the healpixels
         else:            
             if metricReduce is not None:
-                # An ugly way to change an array of arrays (dtype=object), to a 2-d array
+                # Get the data type 
                 dt = metricValue.compressed()[0].dtype
+                # Change an array of arrays (dtype=object) to a 2-d array of correct dtype
                 mV = np.array(metricValue.compressed().tolist(), dtype=[('metricValue',dt)])
+                # Make an array to hold the combined result
                 finalHist = np.zeros(mV.shape[1], dtype=float)
-                metric = getattr(metrics,metricReduce)(col='metricValue')
+                metric = metrics.BaseMetric.getClass(metricReduce)(col='metricValue')
+                # Loop over each bin and use the selected metric to combine the results
                 for i in np.arange(finalHist.size):
                     finalHist[i] = metric.run(mV[:,i])
-        
+
+        # Recreate the bins.  Note this needs to be the same as in the metrics. 
         bins = np.arange(binMin, binMax+binsize,binsize)
         if histStyle:
             x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
