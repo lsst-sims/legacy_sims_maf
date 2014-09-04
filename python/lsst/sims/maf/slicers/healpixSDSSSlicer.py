@@ -14,6 +14,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
     def __init__(self, nside=128, spatialkey1 ='RA1' , spatialkey2='Dec1', verbose=True, 
                  useCache=True, radius=17./60., leafsize=100, **kwargs):
+        """Using one corner of the chip as the spatial key and the diagonal as the radius.  """
         super(HealpixSDSSSlicer,self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
                                             radius=radius, leafsize=leafsize,
@@ -33,9 +34,13 @@ class HealpixSDSSSlicer(HealpixSlicer):
             sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
             initIndices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
-            # Loop through all the nearby images and check if the slicepoint is inside the corners of the chip
-            # XXX--should check if there's a faster way to do this.
-            #isInside = []
+            # Loop through all the images and check if the slicepoint is inside the corners of the chip
+            # XXX--should check if there's a better/faster way to do this.
+            # Maybe in the setupSlicer loop through each image, and use the contains_points method to test all the
+            # healpixels simultaneously?  Then just have a dict with keys = healpix id and values = list of indices?
+            # That way _sliceSimData is just doing a dict look-up and we can get rid of the spatialkey kwargs.
+
+            #wait, this is probably screwing up around zero! 
             indices=[]
             for ind in initIndices:
                 bbPath = mplPath.Path( np.array([ [self.corners['RA1'][ind], self.corners['Dec1'][ind]],
@@ -44,15 +49,8 @@ class HealpixSDSSSlicer(HealpixSlicer):
                                                  [self.corners['RA4'][ind], self.corners['Dec4'][ind]],
                                                  [self.corners['RA1'][ind], self.corners['Dec1'][ind]] ]
                                                  ))
-                #isInside.append(bbPath.contains_point((self.slicePoints['ra'][islice],
-                #                                      self.slicePoints['dec'][islice]) ))
                 if bbPath.contains_point((self.slicePoints['ra'][islice],self.slicePoints['dec'][islice])) == 1:
                     indices.append(ind)
-                
-            #insideInd = [indices[i] for i,val in enumerate(isInside) if val == 1 ]
-            #indices = insideInd
-            #else:
-            #    indices = []
             return {'idxs':indices,
                     'slicePoint':{'sid':self.slicePoints['sid'][islice],
                                   'ra':self.slicePoints['ra'][islice],
@@ -60,19 +58,25 @@ class HealpixSDSSSlicer(HealpixSlicer):
         setattr(self, '_sliceSimData', _sliceSimData)    
 
 
-    def plotSkyMap(self, metricValueIn, xlabel=None, title='',
+    def plotSkyMap(self, metricValueIn, xlabel=None, title='', raMin=-90, raMax=90,
+                   raLen=45., decMin=-2., decMax=2.,
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   cbar_edge=True, label=None, rot=(0,0,180),xsize=200, ysize=1200,
-                   **kwargs):
-        """Plot the sky map of metricValue using healpy Mollweide plot.
-
-        metricValue = metric values
-        units = units for metric color-bar label
-        title = title for plot
-        cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
-        plotMaskedValues = ignored, here to be consistent with OpsimFieldSlicer."""
+                   cbar_edge=True, label=None, **kwargs):
+        """
+        Plot the sky map of metricValue using healpy cartview plots in thin strips.
+        raMin: Minimum RA to plot (deg)
+        raMax: Max RA to plot (deg).  Note raMin/raMax define the centers that will be plotted.
+        raLen:  Length of the plotted strips in degrees
+        decMin: minimum dec value to plot
+        decMax: max dec value to plot
+        
+        metricValueIn: metric values
+        units: units for metric color-bar label
+        title: title for plot
+        cbarFormat: format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
+        plotMaskedValues: ignored, here to be consistent with OpsimFieldSlicer."""
         # Generate a Mollweide full-sky plot.
         norm = None
         if logScale:
@@ -113,20 +117,17 @@ class HealpixSDSSSlicer(HealpixSlicer):
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1        
-        lonpts = np.arange(-70,90+40,40)
-        racenters=np.arange(-90,90,45)
+        racenters=np.arange(raMin,raMax,raLen)
         nframes = racenters.size
-        framesize=45.
-        #-70 to 90 looks good
         for i, racenter in enumerate(racenters):
             if i == 0:
-                useTitle = title +' /n'+'%i < RA < %i'%(racenter-framesize, racenter+framesize)
+                useTitle = title +' /n'+'%i < RA < %i'%(racenter-raLen, racenter+raLen)
             else:
-                useTitle = '%i < RA < %i'%(racenter-framesize, racenter+framesize)
+                useTitle = '%i < RA < %i'%(racenter-raLen, racenter+raLen)
             hp.cartview(metricValue.filled(self.badval), title=useTitle, cbar=False,
                         min=clims[0], max=clims[1], flip='astro', rot=(racenter,0,0), 
-                        cmap=cmap, norm=norm, lonra=[-framesize,framesize],
-                        latra=[-2,2], sub=(nframes+1,1,i+1))   
+                        cmap=cmap, norm=norm, lonra=[-raLen,raLen],
+                        latra=[decMin,decMax], sub=(nframes+1,1,i+1))   
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         fig = plt.gcf() 
