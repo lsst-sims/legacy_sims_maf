@@ -9,6 +9,17 @@ from functools import wraps
 import matplotlib.path as mplPath
 import warnings
 import matplotlib as mpl
+from lsst.sims.maf.stackers import wrapRA
+
+
+def gnomonic_project_toxy(RA1, Dec1, RAcen, Deccen):
+    """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccen.
+    Input radians."""
+    cosc = np.sin(Deccen) * np.sin(Dec1) + np.cos(Deccen) * np.cos(Dec1) * np.cos(RA1-RAcen)
+    x = np.cos(Dec1) * np.sin(RA1-RAcen) / cosc
+    y = (np.cos(Deccen)*np.sin(Dec1) - np.sin(Deccen)*np.cos(Dec1)*np.cos(RA1-RAcen)) / cosc
+    return x, y
+
 
 class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
@@ -40,17 +51,29 @@ class HealpixSDSSSlicer(HealpixSlicer):
             # healpixels simultaneously?  Then just have a dict with keys = healpix id and values = list of indices?
             # That way _sliceSimData is just doing a dict look-up and we can get rid of the spatialkey kwargs.
 
-            #wait, this is probably screwing up around zero! 
+            
             indices=[]
-            for ind in initIndices:
-                bbPath = mplPath.Path( np.array([ [self.corners['RA1'][ind], self.corners['Dec1'][ind]],
-                                                 [self.corners['RA2'][ind], self.corners['Dec2'][ind]],
-                                                 [self.corners['RA3'][ind], self.corners['Dec3'][ind]],
-                                                 [self.corners['RA4'][ind], self.corners['Dec4'][ind]],
-                                                 [self.corners['RA1'][ind], self.corners['Dec1'][ind]] ]
-                                                 ))
-                if bbPath.contains_point((self.slicePoints['ra'][islice],self.slicePoints['dec'][islice])) == 1:
+            # Gnomic project all the corners that are near the slice point, centered on slice point
+            x1,y1 = gnomonic_project_toxy(self.corners['RA1'][initIndices], self.corners['Dec1'][initIndices],
+                                          self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+            x2,y2 = gnomonic_project_toxy(self.corners['RA2'][initIndices], self.corners['Dec2'][initIndices],
+                                          self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+            x3,y3 = gnomonic_project_toxy(self.corners['RA3'][initIndices], self.corners['Dec3'][initIndices],
+                                          self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+            x4,y4 = gnomonic_project_toxy(self.corners['RA4'][initIndices], self.corners['Dec4'][initIndices],
+                                          self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+            
+            for i,ind in enumerate(initIndices):
+                # Use matplotlib to make a polygon on
+                bbPath = mplPath.Path(np.array([[x1[i], y1[i]],
+                                                [x2[i], y2[i]],
+                                                [x3[i], y3[i]],
+                                                [x4[i], y4[i]],
+                                                [x1[i], y1[i]]] ))
+                # Check if the slicepoint is inside the image corners and append to list if it is
+                if bbPath.contains_point((0.,0.)) == 1:
                     indices.append(ind)
+                    
             return {'idxs':indices,
                     'slicePoint':{'sid':self.slicePoints['sid'][islice],
                                   'ra':self.slicePoints['ra'][islice],
