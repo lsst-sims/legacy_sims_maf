@@ -308,6 +308,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                                                     None)
               displayDict = {}
               displayDict.update(self.displayDicts[iids[-1]])
+              displayDict['order'] += 1
               displayDict['caption'] = self.captionFigure(iids, 'Combined histogram')
               if displayDict['subgroup'] is None:
                  displayDict['subgroup'] = 'Combo Hist'
@@ -375,6 +376,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                                                         None)
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[-1]])
+                displayDict['order'] += 1
                 displayDict['caption'] = self.captionFigure(iids, 'Combined power spectrum')
                 if displayDict['subgroup'] is None:
                    displayDict['subgroup'] = 'Combo PS'
@@ -446,6 +448,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                                                         None)
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[-1]])
+                displayDict['order'] += 1
                 displayDict['caption'] = self.captionFigure(iids, 'Difference Sky Map')
                 if displayDict['subgroup'] is None:
                    displayDict['subgroup'] = 'Diff SkyMap'
