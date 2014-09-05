@@ -105,6 +105,14 @@ class FracBelowMetric(BaseMetric):
         fracBelow = np.size(good)/float(np.size(dataSlice[self.colname]))
         return fracBelow
 
+class PercentileMetric(BaseMetric):
+    def __init__(self, col=None, percentile=90, **kwargs):
+        super(PercentileMetric, self).__init__(col=col, **kwargs)
+        self.percentile = percentile
+    def run(self, dataSlice, slicePoint=None):
+        pval = np.percentile(dataSlice[self.colname], self.percentile)
+        return pval
+    
 class NoutliersNsigma(BaseMetric):
     """
     Calculate the # of visits less than nSigma below the median (nSigma<0) or
