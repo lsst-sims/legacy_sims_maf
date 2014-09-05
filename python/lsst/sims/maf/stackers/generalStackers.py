@@ -88,8 +88,8 @@ class HourAngleStacker(BaseStacker):
             warnings.warn('RA values are not between 0 and 2 pi')
         ha = simData[self.lstCol] - simData[self.RaCol]
         # Wrap the results so HA between -pi and pi
-        ha[np.where(ha < -np.pi)] = ha[np.where(ha < -np.pi)] + 2.*np.pi
-        ha[np.where(ha > np.pi)] = ha[np.where(ha > np.pi)] - 2.*np.pi
+        ha = np.where(ha < -np.pi, ha+2.*np.pi, ha)
+        ha = np.where(ha > np.pi, ha-2.*np.pi, ha)
         simData=self._addStackers(simData)
         # Convert radians to hours
         simData['HA'] = ha*12/np.pi 
