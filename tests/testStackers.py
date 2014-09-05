@@ -48,7 +48,39 @@ class TestStackerClasses(unittest.TestCase):
         assert(np.min(data['fieldDec']-data['randomDecDither']) < 0)
         assert(np.max(data['fieldDec']-data['randomDecDither']) > 0)
             
-    
+
+
+    def testHAStacker(self):
+        """Test the Hour Angle stacker"""
+        data = np.zeros(100, dtype=zip(['lst','fieldRA'], [float,float]))
+        data['lst'] = np.arange(100)/99.*np.pi*2
+        stacker = stackers.HourAngleStacker()
+        data = stacker.run(data)
+        # Check that data is always wrapped
+        assert(np.max(data['HA']) < 12.)
+        assert(np.min(data['HA']) > -12.)
+
+        # Check that HA is zero if lst == RA
+        data = np.zeros(1, dtype=zip(['lst','fieldRA'], [float,float]))
+        data = stacker.run(data)
+        assert(data['HA'] == 0.)
+
+        data = np.zeros(1, dtype=zip(['lst','fieldRA'], [float,float]))
+        data['lst'] = 2.
+        data['fieldRA'] = 2.
+        data = stacker.run(data)
+        assert(data['HA'] == 0.)
+
+        # Check a value
+        data = np.zeros(1, dtype=zip(['lst','fieldRA'], [float,float]))
+        data['lst'] = 0.
+        data['fieldRA'] = np.pi/2.
+        data = stacker.run(data)
+        np.testing.assert_almost_equal(data['HA'], -6.)
+
+        
+                    
+        
 if __name__ == '__main__':
 
     unittest.main()
