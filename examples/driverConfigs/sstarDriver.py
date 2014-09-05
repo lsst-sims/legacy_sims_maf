@@ -37,10 +37,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     else: 
         for i,propid in enumerate(WFDpropid):
             if i == 0:
-                wfdWhere = wfdWhere+'('+'propID = %d' %(propid)
+                wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
             else:
                 wfdWhere = wfdWhere+'or propID = %d ' %(propid)
-                wfdWhere = wfdWhere+')'
+        wfdWhere = wfdWhere+')'
 
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)
@@ -226,9 +226,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     
     # Number of Visits per proposal, over sky (repeats WFD but with different plotParams). 
     for f in filters:    
-        m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisitsPerProp'},
+        m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                               plotDict={'units':'Number of Visits', 'cbarFormat':'%d', 'bins':50},
-                              displayDict={'group':'Nvisits', 'order':filtorder[f]})
+                              displayDict={'group':'Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f]})
         metricDict = makeDict(m1)
         constraints=[]
         for propid in propids:
@@ -265,8 +265,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Completeness and Joint Completeness
     # For just WFD proposals
     m1 = configureMetric('CompletenessMetric',
-                          plotDict={'xlabel':'# visits (WFD only) / (# WFD Requested)',
-                                    'units':'# visits (WFD only)/ # WFD',
+                          plotDict={'xlabel':'# visits (WFD only) / (# WFD Design Value)',
+                                    'units':'# visits (WFD only)/ # WFD Design Value',
                                     'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
@@ -279,8 +279,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slicerList.append(slicer)
     # For all proposals
     m1 = configureMetric('CompletenessMetric',
-                          plotDict={'xlabel':'# visits (all) / (# WFD Requested)',
-                                    'units':'# visits (all) / # WFD',
+                          plotDict={'xlabel':'# visits (all) / (# WFD Design Value)',
+                                    'units':'# visits (all) / # WFD Design Value',
                                     'xMin':0.5, 'xMax':1.5, 'bins':50},
                           kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                   'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
@@ -295,13 +295,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Calculate some basic summary info about run, per filter.
     for f in filters:
         m1 = configureMetric('MeanMetric', kwargs={'col':'finSeeing'},
-                             displayDict={'group':'Seeing', 'subgroup':'All Props'})
+                             displayDict={'group':'Seeing', 'subgroup':'All Props', 'order':filtorder[f]})
         m2 = configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
-                             displayDict={'group':'Seeing', 'subgroup':'All Props'})
+                             displayDict={'group':'Seeing', 'subgroup':'All Props', 'order':filtorder[f]})
         m3 = configureMetric('MedianMetric', kwargs={'col':'airmass'},
-                             displayDict={'group':'Airmass', 'subgroup':'All Props'})
+                             displayDict={'group':'Airmass', 'subgroup':'All Props', 'order':filtorder[f]})
         m4 = configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
-                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props'})
+                             displayDict={'group':'Single Visit Depth', 'subgroup':'All Props','order':filtorder[f]})
         metricDict = makeDict(m1, m2, m3, m4)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=['filter = "%s"'%f])
         slicerList.append(slicer)
@@ -312,7 +312,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     m1 = configureMetric('MeanMetric', kwargs={'col':'slewTime'},
                          displayDict={'group':'Technical'})
     m2 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
-                         displayDict={'group':'Nvisits'})
+                         displayDict={'group':'Technical'})
     m3 = configureMetric('OpenShutterMetric', summaryStats={'IdentityMetric':{}})
     metricDict = makeDict(m1, m2, m3)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''])
@@ -320,7 +320,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # And count number of visits per proposal.
     constraints = ["propID = '%s'"%pid for pid in propids ]
-    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Number of Visits Per Proposal'},
+    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                          summaryStats={'IdentityMetric':{}, 'NormalizeMetric':{'normVal':totalNVisits}},
                          displayDict={'group':'Nvisits', 'subgroup':'Per Prop'})
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1),

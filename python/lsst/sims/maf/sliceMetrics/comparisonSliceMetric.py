@@ -27,16 +27,16 @@ class ComparisonSliceMetric(BaseSliceMetric):
     """
 
     def addMetricData(self, metricValues, metricName, slicer, simDataName, 
-                      sqlconstraint, metadata, displayDict=None, plotParams=None, metricId=None):
+                      sqlconstraint, metadata, displayDict=None, plotDict=None, metricId=None):
         """
-        Add a set of metricValues/slicer/plotParams/metricName/simDataName/sqlconstraint/metadata directly.
+        Add a set of metricValues/slicer/plotDict/metricName/simDataName/sqlconstraint/metadata directly.
 
         Another option is to use 'readMetricData' to read metric data from a file.
         """
         iid = self.iid_next
         self.iid_next += 1
-        if plotParams is None:
-          self.plotParams[iid] = {}
+        if plotDict is None:
+          self.plotDicts[iid] = {}
         self.metricValues[iid] = metricValues
         self.metricNames[iid] = metricName
         self.slicers[iid] = slicer
@@ -45,9 +45,9 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.metadatas[iid] = metadatas
         if displayDict is None:
            displayDict = {'group':'Ungrouped', 
-                          'subgroup':'None',
+                          'subgroup':None,
                           'order':0, 
-                          'caption':'None'}
+                          'caption':None}
         self.displayDicts[iid] = displayDict
         if metricId is not None:
             self.metricIds[iid] = metricId
@@ -270,22 +270,22 @@ class ComparisonSliceMetric(BaseSliceMetric):
             label = labels[i]
             # Plot data using 'plotBinnedData' if that method available (oneDSlicer)
             if hasattr(self.slicers[iid], 'plotBinnedData'):
-                plotParams = {'xlabel':xlabel, 'title':title, 'alpha':alpha,\
+                plotDict = {'xlabel':xlabel, 'title':title, 'alpha':alpha,\
                               'label':label, 'addLegend':addLegend, 'legendloc':legendloc,\
                               'color':color, 'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax,  \
                               'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
-                    plotParams.update(plotkwargs[i])
-                fignum = self.slicers[iid].plotBinnedData(self.metricValues[iid], fignum=fignum, **plotParams)
+                    plotDict.update(plotkwargs[i])
+                fignum = self.slicers[iid].plotBinnedData(self.metricValues[iid], fignum=fignum, **plotDict)
             # Plot data using 'plotHistogram' if that method available (any spatial slicer)
             if hasattr(self.slicers[iid], 'plotHistogram'):
-                plotParams = {'xlabel':xlabel, 'bins':bins, 'title':title, 'label':label, \
+                plotDict = {'xlabel':xlabel, 'bins':bins, 'title':title, 'label':label, \
                               'addLegend':addLegend, 'legendloc':legendloc, 'color':color, \
                               'ylabel':ylabel, 'xMin':xMin, 'xMax':xMax, \
                               'yMin':yMin,'yMax':yMax}
                 if plotkwargs is not None:
-                    plotParams.update(plotkwargs[i])
-                fignum = self.slicers[iid].plotHistogram(self.metricValues[iid], fignum=fignum, **plotParams)
+                    plotDict.update(plotkwargs[i])
+                fignum = self.slicers[iid].plotHistogram(self.metricValues[iid], fignum=fignum, **plotDict)
         if savefig:
             if outfileRoot is not None:
                 outroot = outfileRoot + title
@@ -304,17 +304,17 @@ class ComparisonSliceMetric(BaseSliceMetric):
               simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
               metadata =  self.combineMetadata(iids)
               # Use first iid in iids to determine display group.
-              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                  'NULL')
+              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, None, metadata,
+                                                  None)
               displayDict = {}
               displayDict.update(self.displayDicts[iids[-1]])
               displayDict['caption'] = self.captionFigure(iids, 'Combined histogram')
-              if displayDict['subgroup'] == 'None':
+              if displayDict['subgroup'] is None:
                  displayDict['subgroup'] = 'Combo Hist'
               self.resultsDb.addDisplay(metricId, displayDict)
               self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
         else:
-            outfile = 'NULL'
+            outfile = None
         return fignum, title, outfile
 
     def plotPowerSpectra(self, iids, maxl=500., removeDipole=True,
@@ -345,15 +345,15 @@ class ComparisonSliceMetric(BaseSliceMetric):
             if i == len(iids) - 1:
                 addLegend = True
             label = labels[i]
-            # Set up plotParams.
-            plotParams = {'title':title, 'label':label, 'addLegend':addLegend,
+            # Set up plotDict.
+            plotDict = {'title':title, 'label':label, 'addLegend':addLegend,
                           'legendloc':legendloc, 'color':color, 'maxl':maxl,
                           'removeDipole':removeDipole}
             if plotkwargs is not None:
-                    plotParams.update(plotkwargs[i])
+                    plotDict.update(plotkwargs[i])
             # Plot data.
             fignum = self.slicers[iid].plotPowerSpectrum(self.metricValues[iid],\
-                                                         fignum=fignum, **plotParams)
+                                                         fignum=fignum, **plotDict)
         if savefig:
             if outfileRoot is not None:
                 outroot = outfileRoot + title
@@ -371,17 +371,17 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
                 metadata = self.combineMetadata(iids)
-                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                    'NULL')
+                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, None, metadata,
+                                                    None)
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[-1]])
                 displayDict['caption'] = self.captionFigure(iids, 'Combined power spectrum')
-                if displayDict['subgroup'] == 'None':
+                if displayDict['subgroup'] is None:
                    displayDict['subgroup'] = 'Combo PS'
                 self.resultsDb.addDisplay(metricId, displayDict)
                 self.resultsDb.addPlot(metricId, 'ComboPowerSpectrum', outfile)
         else:
-            outfile = 'NULL'
+            outfile = None
         return fignum, title, outfile
     
 
@@ -442,17 +442,17 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
                 metadata = self.combineMetadata(iids)
-                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, 'NULL', metadata,
-                                                    'NULL')                
+                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, None, metadata,
+                                                    None)                
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[-1]])
                 displayDict['caption'] = self.captionFigure(iids, 'Difference Sky Map')
-                if displayDict['subgroup'] == 'None':
+                if displayDict['subgroup'] is None:
                    displayDict['subgroup'] = 'Diff SkyMap'
                 self.resultsDb.addDisplay(metricId, displayDict)
                 self.resultsDb.addPlot(metricId, 'DifferenceSkyMap', outfile)
         else:
-            outfile = 'NULL'
+            outfile = None
         return fignum, title, outfile
 
     

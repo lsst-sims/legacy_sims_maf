@@ -6,3 +6,6 @@ from .calibrationMetrics import *
 from .visitGroupsMetric import *
 from .cadenceMetrics import *
 from .hourglassMetric import *
+from .inDevelopmentMetrics import *
+from .fftMetric import *
+from .tgaps import *

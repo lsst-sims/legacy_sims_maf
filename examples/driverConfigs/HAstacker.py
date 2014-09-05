@@ -13,9 +13,10 @@ metric2 = configureMetric('MinMetric', kwargs={'col':'HA'})
 metric3 = configureMetric('MaxMetric', kwargs={'col':'HA'})
 metric4 = configureMetric('MedianMetric', kwargs={'col':'HA'})
 metric5 = configureMetric('MedianMetric', kwargs={'col':'normairmass'})
+metric6 =  configureMetric('MedianAbsMetric', kwargs={'col':'HA'})
 
-metricDict=makeDict(metric1,metric2,metric3,metric4, metric5)
-slicer=configureSlicer('HealpixSlicer', metricDict=metricDict, constraints=['filter = "r"'])
+metricDict=makeDict(metric1,metric2,metric3,metric4, metric5,metric6)
+slicer=configureSlicer('HealpixSlicer', metricDict=metricDict, constraints=['filter = "r"', 'filter="g"'])
 
 sliceList.append(slicer)
 root.slicers = makeDict(*sliceList)

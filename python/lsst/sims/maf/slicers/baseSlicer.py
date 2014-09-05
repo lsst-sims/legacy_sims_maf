@@ -74,6 +74,8 @@ class BaseSlicer(object):
         self.slicePoints = {}
         self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
+        # Set if the slicer should try to plot objects
+        self.plotObject = False
         # Add dictionary of plotting methods for each slicer.
         self.plotFuncs = {}
         for p in inspect.getmembers(self, predicate=inspect.ismethod):
@@ -149,7 +151,7 @@ class BaseSlicer(object):
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName ='', sqlconstraint='', metadata='', displayDict=None):
+                  simDataName ='', sqlconstraint='', metadata='', plotDict=None, displayDict=None):
         """
         Save metric values along with the information required to re-build the slicer.
 
@@ -166,6 +168,7 @@ class BaseSlicer(object):
         if displayDict is None:
             displayDict = {'group':'Ungrouped'}
         header['displayDict'] = displayDict
+        header['plotDict'] = plotDict
         for key in versionInfo.keys():
             header[key] = versionInfo[key]
         if hasattr(metricValues, 'mask'): # If it is a masked array
@@ -185,7 +188,7 @@ class BaseSlicer(object):
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
                  slicePoints = self.getSlicePoints(), # slicePoint metadata saved (is a dictionary)
-                 slicerNSlice = self.nslice)
+                 slicerNSlice = self.nslice) 
                                  
     def readData(self, infilename):
         """
@@ -210,7 +213,9 @@ class BaseSlicer(object):
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
-        return metricValues, slicer, header
+        plotDict = header['plotDict']
+        
+        return metricValues, slicer, header, plotDict
     
     def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
                  savefig=True, thumbnail=True, **kwargs):
@@ -218,7 +223,8 @@ class BaseSlicer(object):
         Call all available plotting methods.
 
         The __init__ for each slicer builds a dictionary of the individual slicer's plotting methods.
-        This method calls each of the plotting methods in that dictionary, and optionally saves the resulting figures.
+        This method calls each of the plotting methods in that dictionary, and optionally
+        saves the resulting figures.
         
         metricValues: the metric values to plot.        
         """
@@ -227,9 +233,10 @@ class BaseSlicer(object):
         filenames=[]
         filetypes=[]
         figs={}
-        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-            warnings.warn('Metric data type not float or int. No plots generated.')
-            return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
+        if not self.plotObject:
+            if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+                warnings.warn('Metric data type not float or int. No plots generated.')
+                return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         # Otherwise, plot.
         for p in self.plotFuncs:
             plottype = p.replace('plot', '')
