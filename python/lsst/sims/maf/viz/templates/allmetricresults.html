@@ -43,14 +43,15 @@ than per metric. #}
   <div id="metricset">
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
+    {% set plotdict = run.plotsForMetric(metric) %}
+    {# Only show anything here for this metric if it had plots #}
+    {% if plotdict|length > 0 %}
     <b>
     {% for key in metricInfo %}
      {{ '%s' %(metricInfo[key]) }}  /
     {% endfor %}
     </b>
     {# Add the plots for this metric #}
-    {% set plotdict = run.plotsForMetric(metric) %}
-    {% if plotdict|length > 0 %}
      </br>
       <table class="blank">
       <tr class="blank" width=100%>
@@ -64,12 +65,12 @@ than per metric. #}
       {% endfor  %}
       </tr>
       </table>
-    {% endif %}
-
     <p>
     {% set caption = run.captionForMetric(metric) %}
     {{ caption|escape }}
     </p>
+    {% endif %}
+
   {% endfor %}
 
   {# Add a table with the summary stats for all the metrics in this subgroup #}
