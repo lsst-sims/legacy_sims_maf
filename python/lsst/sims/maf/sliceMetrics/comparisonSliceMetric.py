@@ -223,15 +223,47 @@ class ComparisonSliceMetric(BaseSliceMetric):
         return iids
 
     def captionFigure(self, iids, figtype):
-       caption = '%s plot for ' %(figtype)
-       umetrics = self.uniqueMetricNames(iids)
-       usimdata = self.uniqueSimDataNames(iids)
-       comboMetadata = self.combineMetadata(iids)
-       caption += ', '.join(umetrics) + 'metrics '
-       caption += 'calculated with data selected by %s' %(comboMetadata)
-       caption += ' for opsim run(s) ' + ', '.join(usimdata) + '.'
-       return caption
-    
+        caption = '%s plot for ' %(figtype)
+        umetrics = self.uniqueMetricNames(iids)
+        usimdata = self.uniqueSimDataNames(iids)
+        comboMetadata = self.combineMetadata(iids)
+        caption += ', '.join(umetrics) + 'metrics '
+        caption += 'calculated with data selected by %s' %(comboMetadata)
+        caption += ' for opsim run(s) ' + ', '.join(usimdata) + '.'
+        return caption
+
+    def joinMetricNames(self, iids):
+        order = ['u', 'g', 'r', 'i', 'z', 'y']
+        unames = list(self.uniqueMetricNames(iids))
+        # Test if metric names are all the same.
+        if len(unames) == 1:
+            jointName = ' '.join(unames)
+        # .. or not. 
+        else:
+            # Split each unique name into a list to see if we can merge the names.
+            nameLengths = [len(x.split()) for x in unames]
+            nameLists = [x.split() for x in unames]
+            # If the metric names are all the same length, see if we can combine any parts.
+            if len(set(nameLengths)) == 1:
+                jointName = []
+                for i in range(nameLengths[0]):
+                    tmp = set([x[i] for x in nameLists])
+                    # Try to catch special case of filters and put them in order.
+                    if tmp.intersection(order) == tmp:
+                        filterlist = ''
+                        for f in order:
+                            if f in tmp:
+                                filterlist += f
+                        jointName.append(filterlist)
+                    else:
+                        # Otherwise, just join and put into jointName.
+                        jointName.append(''.join(tmp))
+                jointName = ' '.join(jointName)
+            # If the metric names are not the same length, just join everything. 
+            else:
+                jointName = ' '.join(unames)
+        return jointName
+
     def plotHistograms(self, iids, 
                         bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
                         title=None, xlabel=None, color=None, labels=None,
@@ -299,7 +331,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
               # Don't have a metricID corresonding to this combo of metrics, add to metric db table.
-              metricNames = ' '.join(list(self.uniqueMetricNames(iids)))              
+              metricNames = self.joinMetricNames(iids)
               slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
               simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
               metadata =  self.combineMetadata(iids)
@@ -368,7 +400,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics, add to metric table.
-                metricNames = ' '.join(list(self.uniqueMetricNames(iids)))
+                metricNames = self.joinMetricNames(iids)
                 slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
                 metadata = self.combineMetadata(iids)
@@ -440,7 +472,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
                plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics.
-                metricNames = ' '.join(list(self.uniqueMetricNames(iids)))
+                metricNames = self.joinMetricNames(iids)
                 slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
                 metadata = self.combineMetadata(iids)
