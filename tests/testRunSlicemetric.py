@@ -38,10 +38,10 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.dpi = 500
         self.testbbm = sliceMetrics.RunSliceMetric(outDir=self.outDir, figformat=self.figformat, dpi=self.dpi)
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
-                                     plotParams={'units':'meanunits'})
+                                     plotDict={'units':'meanunits'})
         self.m1iid = 0
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
-                                      plotParams={'units':'countunits', 
+                                      plotDict={'units':'countunits', 
                                                   'cbarFormat':'%d', 
                                                   'title':'count_title'})
         self.m2iid = 1
@@ -67,7 +67,7 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metricNames.keys(), [])
         self.assertEqual(self.testbbm.metricObjs.keys(), [])
         self.assertEqual(self.testbbm.metricValues.keys(), [])
-        self.assertEqual(self.testbbm.plotParams.keys(), [])
+        self.assertEqual(self.testbbm.plotDicts.keys(), [])
         self.assertEqual(self.testbbm.simDataNames.keys(), [])
         self.assertEqual(self.testbbm.sqlconstraints.keys(), [])
         self.assertEqual(self.testbbm.metadatas.keys(), [])
@@ -101,9 +101,9 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         # Test that dictionaries for metricObjs (which hold metric python objects) set
         self.assertEqual(self.testbbm.metricObjs.values(), [self.m1, self.m2, self.m3])
         # Test that plot parameters were passed through as expected
-        self.assertEqual(self.testbbm.plotParams[self.m1iid].keys(), ['units'])
-        self.assertEqual(self.testbbm.plotParams[self.m2iid].keys(), ['units', 'cbarFormat', 'title'])
-        self.assertEqual(self.testbbm.plotParams[self.m2iid].values(),
+        self.assertEqual(self.testbbm.plotDicts[self.m1iid].keys(), ['units'])
+        self.assertEqual(self.testbbm.plotDicts[self.m2iid].keys(), ['units', 'cbarFormat', 'title'])
+        self.assertEqual(self.testbbm.plotDicts[self.m2iid].values(),
                          ['countunits', '%d', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
         testbbm2 = sliceMetrics.RunSliceMetric(outDir='.')
@@ -129,11 +129,11 @@ class TestRunRunSliceMetric(unittest.TestCase):
     def setUp(self):
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
-                                     plotParams={'units':'meanunits'})
+                                     plotDict={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
-                                      plotParams={'units':'countunits', 'title':'count_title'})
+                                      plotDict={'units':'countunits', 'title':'count_title'})
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=500, r=500,
-                                             plotParams={'xlabel':'Completeness'})
+                                             plotDict={'xlabel':'Completeness'})
         self.metricNames = ['Mean testdata', 'Count testdata', 'Completeness']
         self.iids = [0, 1, 2]
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
@@ -197,7 +197,7 @@ class TestRunRunSliceMetric(unittest.TestCase):
             self.assertEqual(self.testbbm.metadatas[riid], metadata)
         # Check that plot parameters were copied properly.
         for riid in self.riids:
-            self.assertEqual(self.testbbm.plotParams[riid]['xlabel'], 'Completeness')
+            self.assertEqual(self.testbbm.plotDicts[riid]['xlabel'], 'Completeness')
         # Check that mask carried through properly.
         lastslice = len(self.slicer) - 1
         for riid in self.riids:
@@ -208,11 +208,11 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
     def setUp(self):
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
-                                     plotParams={'units':'meanunits'})
+                                     plotDict={'units':'meanunits'})
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
-                                      plotParams={'units':'countunits', 'title':'count_title'})
+                                      plotDict={'units':'countunits', 'title':'count_title'})
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=500, r=500,
-                                             plotParams={'xlabel':'Completeness'})
+                                             plotDict={'xlabel':'Completeness'})
         self.metricNames = ['Mean testdata', 'Count testdata', 'Completeness']
         self.iids = [0, 1, 2]
         self.reduceNames = ['Completeness_u', 'Completeness_g', 'Completeness_r', 'Completeness_i',
@@ -270,7 +270,7 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
         filename = (self.outroot + '_' + 'Completeness' + '_' + self.metadata + '_' +
                     self.slicer.slicerName[:4].upper() + '.npz')
         filename = filename.replace(' ', '_')
-        oldiid = self.testbbm.metricNameIid('Completeness')[0]
+        oldiid = self.testbbm.findIids(metricName='Completeness')[0]
         newiid = self.testbbm.iid_next
         self.testbbm.readMetricData(filename)
         # Should be read in.
@@ -293,13 +293,13 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
         self.assertEqual(testbbm2.simDataNames[0], self.testbbm.simDataNames[oldiid])
         self.assertEqual(testbbm2.sqlconstraints[0], self.testbbm.sqlconstraints[oldiid])
         # plot parameters not currently being written to disk
-        #self.assertEqual(testbbm2.plotParams['Completeness']['xlabel'], 'Completeness')
+        #self.assertEqual(testbbm2.plotDict['Completeness']['xlabel'], 'Completeness')
 
 class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
     def setUp(self):
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
-                                     plotParams={'units':'meanunits'})
+                                     plotDict={'units':'meanunits'})
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.testbbm.setMetrics([self.m1,])
         self.iid = 0
@@ -344,7 +344,7 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
 class TestPlottingRunSliceMetric(unittest.TestCase):
     def setUp(self):
         # Set up dictionary of all plotting parameters to test.
-        self.plotParams = {'units': 'testunits',
+        self.plotDict = {'units': 'testunits',
                         'title': 'my test title',  # plot titles
                         'xlabel': 'my xlabel',  # plot x labels
                         'ylabel': 'my ylabel',  # plot y labels
@@ -358,7 +358,7 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
                         # No way to set y value limits for spatial slicer histogram?
                         'bins': 50       # parameter for number of bins for spatial slicer histograms
                         }
-        self.m1 = metrics.MeanMetric('testdata', metricName='Test labels', plotParams = self.plotParams)
+        self.m1 = metrics.MeanMetric('testdata', metricName='Test labels', plotDict = self.plotDict)
         self.m1iid = 0
         self.m2 = metrics.MeanMetric('testdata', metricName='Test defaults')
         self.m2iid = 1
@@ -396,14 +396,14 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         ax = plt.gca()
         # Check x and y limits set from plot args.
         xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
+        np.testing.assert_almost_equal(xlims, (self.plotDict['xMin'], self.plotDict['xMax']))
         ylims = plt.ylim()
-        np.testing.assert_almost_equal(ylims, (self.plotParams['yMin'], self.plotParams['yMax']))
+        np.testing.assert_almost_equal(ylims, (self.plotDict['yMin'], self.plotDict['yMax']))
         # Check x and y labels
-        self.assertEqual(ax.get_xlabel(), self.plotParams['xlabel'])
-        self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
+        self.assertEqual(ax.get_xlabel(), self.plotDict['xlabel'])
+        self.assertEqual(ax.get_ylabel(), self.plotDict['ylabel'])
         # Check title
-        self.assertEqual(ax.get_title(), self.plotParams['title'])
+        self.assertEqual(ax.get_title(), self.plotDict['title'])
         # Test a spatial slicer.
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.testbbm.setMetrics([self.m1, ])
@@ -418,18 +418,18 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         ax = plt.gca()
         # Check x limits.
         xlims = plt.xlim()
-        np.testing.assert_almost_equal(xlims, (self.plotParams['xMin'], self.plotParams['xMax']))
+        np.testing.assert_almost_equal(xlims, (self.plotDict['xMin'], self.plotDict['xMax']))
         # Check x and y labels.
-        self.assertEqual(ax.get_xlabel(), self.plotParams['xlabel'])
-        self.assertEqual(ax.get_ylabel(), self.plotParams['ylabel'])
+        self.assertEqual(ax.get_xlabel(), self.plotDict['xlabel'])
+        self.assertEqual(ax.get_ylabel(), self.plotDict['ylabel'])
         # Check title.
-        self.assertEqual(ax.get_title(), self.plotParams['title'])
+        self.assertEqual(ax.get_title(), self.plotDict['title'])
         # Test sky map.
         fig = plt.figure(fignums['SkyMap'])
         ax = plt.gca()
         # Not sure how to check clims of color bar.
         # Check title.
-        self.assertEqual(ax.get_title(), self.plotParams['title'])
+        self.assertEqual(ax.get_title(), self.plotDict['title'])
         
 def suite():
     """Returns a suite containing all the test cases in this module."""

@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.lib.recfunctions as rfn
 from .baseStacker import BaseStacker
+import warnings
         
 ### Normalized airmass
 class NormAirmassStacker(BaseStacker):
@@ -68,3 +69,29 @@ class ParallaxFactorStacker(BaseStacker):
         simData['dec_pi_amp'] = dec_pi_amp
         return simData
                      
+class HourAngleStacker(BaseStacker):
+    """ Add the Hour Angle for each observation """
+    def __init__(self, lstCol='lst', RaCol='fieldRA'):
+        self.units = ['Hours']
+        self.colsAdded = ['HA']
+        self.colsReq = [lstCol, RaCol]
+        self.lstCol = lstCol 
+        self.RaCol = RaCol
+
+    def run(self, simData):
+        """HA = LST - RA """
+        # Check that LST is reasonable
+        if (np.min(simData[self.lstCol]) < 0) | (np.max(simData[self.lstCol]) > 2.*np.pi):
+            warnings.warn('LST values are not between 0 and 2 pi')
+        # Check that RA is reasonable
+        if (np.min(simData[self.RaCol]) < 0) | (np.max(simData[self.RaCol]) > 2.*np.pi):
+            warnings.warn('RA values are not between 0 and 2 pi')
+        ha = simData[self.lstCol] - simData[self.RaCol]
+        # Wrap the results so HA between -pi and pi
+        ha = np.where(ha < -np.pi, ha+2.*np.pi, ha)
+        ha = np.where(ha > np.pi, ha-2.*np.pi, ha)
+        simData=self._addStackers(simData)
+        # Convert radians to hours
+        simData['HA'] = ha*12/np.pi 
+        return simData
+    

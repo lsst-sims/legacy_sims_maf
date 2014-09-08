@@ -9,7 +9,6 @@ import healpy as hp
 from lsst.sims.maf.slicers.healpixSlicer import HealpixSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 
-
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
                    decmin=-np.pi, decmax=np.pi, random=True):
     """Generate a simple array of numbers, evenly arranged between min/max,
@@ -242,8 +241,8 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                       legendloc='upper left',
                                       bins=100, cumulative=False, xMin=None, xMax=None,
                                       logScale=False, flipXaxis=False, scale=None)
+                    
 
-                
-                        
+        
 if __name__ == "__main__":
     unittest.main()

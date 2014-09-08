@@ -45,7 +45,7 @@ class ParallaxMetric(BaseMetric):
         self.normalize = normalize
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Calibration'
-        if self.displayDict['caption'] == 'None':
+        if self.displayDict['caption'] is None:
             self.displayDict['caption'] = 'Estimated uncertainty in parallax measurement (assuming no proper motion).'
             if self.normalize:
                 self.displayDict['caption'] = 'Normalized uncertainty in parallax measurement (assuming no proper motion). '
@@ -121,7 +121,7 @@ class ProperMotionMetric(BaseMetric):
         self.baseline = baseline
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Calibration'
-        if self.displayDict['caption'] == 'None':
+        if self.displayDict['caption'] is None:
             self.displayDict['caption'] = 'Estimated uncertainty of the proper motion fits (assuming no parallax).'
             if self.normalize:
                 self.displayDict['caption'] = 'Normalized uncertainty in proper motion fits (assuming no parallax). '

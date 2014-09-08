@@ -62,6 +62,30 @@ class TestCadenceMetrics(unittest.TestCase):
         result4 = metric.run(data, slicePoint)
         assert(result4 == 1)
 
+
+    def testTGapMetric(self):
+        names = ['expMJD']
+        types=[float]
+        data = np.zeros(100, dtype=zip(names,types))
+        # All 1-day gaps
+        data['expMJD'] = np.arange(100)
+
+        metric = metrics.Tgaps(binsize=1)
+        result1 = metric.run(data)
+        # By default, should all be in first bin 
+        assert(result1[0] == data.size-1)
+        assert(np.sum(result1) == data.size-1)
+        data['expMJD'] = np.arange(0,200,2)
+        result2 =  metric.run(data)
+        assert(result2[1] == data.size-1)
+        assert(np.sum(result2) == data.size-1)
+
+        metric = metrics.Tgaps(allGaps=True, binMax=200, binsize=1)
+        result3 =  metric.run(data)
+        assert(result3[1] == data.size-1)
+        Ngaps = (data.size-1)*(data.size-1)/2.+(data.size-1)/2.
+        assert(np.sum(result3) == Ngaps)
+        
 if __name__ == '__main__':
 
     unittest.main()

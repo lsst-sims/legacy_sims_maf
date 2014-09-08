@@ -24,30 +24,31 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=200):
         data = datain.compressed()
     else:
         data = datain
-    if binmin is None:
-        if data.size == 0:
-            binmin = 0
-        else:
-            binmin = data.min()
-    if binmax is None:
-        if data.size == 0:
-            binmax = 1
-        else:
-            binmax = data.max()
-    cond = np.where((data >= binmin)  & (data <= binmax))[0]
-    if np.size(data[cond]) > 0:
-        binwidth = (2.*(np.percentile(data[cond], 75) - np.percentile(data[cond], 25))
-                    /np.size(data[cond])**(1./3.))
-        nbins = (binmax - binmin) / binwidth
-        if nbins > nbinMax:
-            warnings.warn('Warning! Optimal bin calculation tried to make %.0f bins, returning %i'%(nbins, nbinMax))
-            nbins = nbinMax
-    else:
-        warnings.warn('Warning! No data available for calculating optimal bin size within range of %f, %f'%
-                      (binmin, binmax) + ' returning %i' %(nbinMax))
+    # Check that any good data values remain.
+    if data.size == 0:        
         nbins = nbinMax
+        warnings.warn('No unmasked data available for calculating optimal bin size: returning %i bins' %(nbins))
+    # Else proceed.
+    else:
+        if binmin is None:
+            binmin = data.min()
+        if binmax is None:
+            binmax = data.max()
+        cond = np.where((data >= binmin)  & (data <= binmax))[0]
+        # Check if any data points remain within binmin/binmax.
+        if np.size(data[cond]) == 0:
+            nbins = nbinsMax
+            warnings.warn('No data available for calculating optimal bin size within range of %f, %f'
+                          %(binmin, binmax) + ': returning %i bins' %(nbins))
+        else:
+            iqr = np.percentile(data[cond], 75) - np.percentile(data[cond], 25)
+            binwidth = 2 * iqr * (np.size(data[cond])**(-1./3.))
+            nbins = (binmax - binmin) / binwidth
+            if nbins > nbinMax:
+                warnings.warn('Optimal bin calculation tried to make %.0f bins, returning %i'%(nbins, nbinMax))
+                nbins = nbinMax
     if np.isnan(nbins):
-        warnings.warn('Warning! Optimal bin calculation calculated NaN: returning %i' %(nbinMax))
+        warnings.warn('Optimal bin calculation calculated NaN: returning %i' %(nbinMax))
         nbins = nbinMax
     return int(nbins)
 
