@@ -51,13 +51,11 @@ class MovieSlicer(BaseSlicer):
         if self.sliceColName is None:
             raise Exception('sliceColName was not defined when slicer instantiated.')
         sliceCol = simData[self.sliceColName]
-        print 'this is the length of sliceCol: ', len(sliceCol)
         # Set bin min/max values.
         if self.binMin is None:
             self.binMin = sliceCol.min()
         if self.binMax is None:
             self.binMax = sliceCol.max()
-        print self.binMin, self.binMax
         # Give warning if binMin = binMax, and do something at least slightly reasonable.
         if self.binMin == self.binMax:
             warnings.warn('binMin = binMax (maybe your data is single-valued?). '
@@ -72,7 +70,6 @@ class MovieSlicer(BaseSlicer):
             if self.bins is not None:
                 warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(self.binsize))
             self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
-            print 'I think self.bins is being set here: ', len(self.bins)
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
@@ -97,7 +94,6 @@ class MovieSlicer(BaseSlicer):
         # "left" values are location where simdata == bin value
         self.left = np.searchsorted(simFieldsSorted, self.bins[:-1], 'left')
         self.left = np.concatenate((self.left, np.array([len(self.simIdxs),])))
-        print 'this is the number of bins total in left: ', len(self.left), self.left
         # Set up _sliceSimData method for this class.
         if self.cumulative:
             @wraps(self._sliceSimData)
@@ -138,14 +134,12 @@ class MovieSlicer(BaseSlicer):
         """
         if not os.path.isdir(outDir):
             raise Exception('Cannot find output directory %s with movie input files.' %(outDir))
-        print 'HERE!!!!!!!!!!!!!!!!!!'
         #make video
         p = subprocess.check_call(['ffmpeg', '-r', str(ips), '-i',
                          '%s/%s_%s_%s.%s' %(outDir, outfileroot, sliceformat, plotType, figformat), 
                          '-c:v', 'libx264', '-r', 
                          str(fps), '-pix_fmt', 'yuv420p',
                          '%s/%s_%s_%s_%s.mp4' %(outDir, outfileroot, plotType, str(ips), str(fps))])
-        print 'NOW IM HERE!!!!!!!!!!!!!!!!'
         #make thumbnail gif
         p2 = subprocess.check_call(['ffmpeg','-i', '%s/%s_%s_%s_%s.mp4' %(outDir, outfileroot, plotType, str(ips), str(fps)),
                         '-vf', 'scale=%s:%s' %(str(320),str(-1)), '-t', str(10), '-r', str(10), 

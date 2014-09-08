@@ -111,14 +111,11 @@ class BaseSliceMetric(object):
         oname = oname.replace('(', '').replace(')', '')
         if plotType is not None:
             oname = oname + '_' + plotType
-        print oname
         if outfileSuffix is not None:
             oname = oname + '_' + outfileSuffix
         # Add plot name, if plot.
-        print oname
         if plotType is not None:
            oname = oname + '.' + self.figformat
-        print oname
         return oname
 
     def _getThumbName(self, outfile):

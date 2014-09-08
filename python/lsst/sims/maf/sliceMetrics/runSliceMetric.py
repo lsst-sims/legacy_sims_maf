@@ -26,7 +26,7 @@ class RunSliceMetric(BaseSliceMetric):
     and the slicer type that produced the metric data. 
     """
     def __init__(self, useResultsDb=True, resultsDbAddress=None, 
-                 figformat='png', dpi=600, outDir='Output', thumbnail=True):
+                 figformat='pdf', dpi=600, outDir='Output', thumbnail=True):
         """
         Instantiate the RunSliceMetric.
         """
