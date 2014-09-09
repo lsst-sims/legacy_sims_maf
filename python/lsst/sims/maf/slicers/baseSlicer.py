@@ -192,37 +192,53 @@ class BaseSlicer(object):
                  slicerNSlice = self.nslice) 
 
     def writeJSON(self, outfilename, metricValues, metricName='',
-                  simDataName ='', sqlconstraint='', metadata=''):
+                  simDataName ='', metadata='', plotDict=None):
         """
         Save unmasked metric values only, along with some metadata used to build interactive plots.
 
         outfilename: the output file
         metricValues: the metric values to save to disk
         """
+        if plotDict is None:
+            plotDict = {}
         # Preserve some of the metadata for the plot.
         header = {}
         header['metricName']=metricName
-        header['sqlconstraint'] = sqlconstraint
         header['metadata'] = metadata
         header['simDataName'] = simDataName
-        header['plotDict'] = plotDict
+        # Set some default plot labels if appropriate.
+        if 'title' in plotDict:
+            header['title'] = plotDict['title']
+        else:
+            header['title'] = '%s %s: %s' %(simDataName, metadata, metricName)
+        if 'xlabel' in plotDict:
+            header['xlabel'] = plotDict['xlabel']
+        else:
+            if hasattr(self, 'sliceColName'):
+                header['xlabel'] = '%s (%s)' %(self.sliceColName, self.sliceColUnits)
+                header['ylabel'] = '%s' %(metricName)        
+        # Bundle up the ra/dec/metric value or the bins/metric value
+        points = {}
         if hasattr(metricValues, 'mask'):
             # If it is a masked array, get the metric data and slice points which are not masked.
-            slicePoints = {}
-            for k in self.slicePoints:
-                slicePoints[k] = self.slicePoints[k][~metricValues.mask]
-            mVals = metricValues.compressed()            
+            for k in ['ra', 'dec']:
+                if k in self.slicePoints:
+                    points[k] = list(self.slicePoints[k][~metricValues.mask])
+            if 'bins' in self.slicePoints:
+                points['left'] = list(self.slicePoints['bins'][:-1][~metricValues.mask])
+                points['right'] = list(self.slicePoints['bins'][1:][~metricValues.mask])
+            points['mVals'] = list(metricValues.compressed())
         else:
-            mVals = metricValues
-            slicePoints = self.slicePoints
+            for k in ['ra', 'dec']:
+                if k in self.slicePoints:
+                    points[k] = list(self.slicePoints[k])
+            if 'bins' in self.slicePoints:
+                points['left'] = list(self.slicePoints['bins'][:-1])
+                points['right'] = list(self.slicePoints['bins'][1:])
+            points['mVals'] = list(metricValues)
         # Write out JSON output.
         outfile = open(outfilename, 'w')
-        # Build json output dictionary.
-        jsonDict = {}
-        for k in slicePoints:
-            jsonDict[k] = list(slicePoints[k])
-        jsonDict['metricValues'] = mVals
-        json.dump(jsonDict, outfile)
+        json.dump([header, points], outfile)
         outfile.close()
         
     def readData(self, infilename):
