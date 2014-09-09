@@ -89,7 +89,11 @@ class OpsimDatabase(Database):
         distinctExpMJD = group by expMJD to get unique observations only (default True).
         groupBy = group by col 'groupBy' (will override group by expMJD)."""
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
-        #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint. 
+        #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint.
+
+        if (groupBy is None) and (distinctExpMJD is False):
+            warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
+        
         table = self.tables['summaryTable']
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
