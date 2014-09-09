@@ -49,11 +49,17 @@ class BaseSpatialSlicer(BaseSlicer):
         self.slicePoints['dec'] = None
         self.nslice = None
 
-    def setupSlicer(self, simData):
+    def setupSlicer(self, simData, maps=None):
         """Use simData[self.spatialkey1] and simData[self.spatialkey2]
-        (in radians) to set up KDTree."""
+        (in radians) to set up KDTree.
+
+        maps = list of map objects that will run to build up slicePoint"""
+        if maps is None:
+            maps = []
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
+        for oneMap in maps:
+            self.slicePoints = oneMap.run(self.slicePoints)
         @wraps(self._sliceSimData)
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
@@ -61,10 +67,11 @@ class BaseSpatialSlicer(BaseSlicer):
             sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
             indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
-            return {'idxs':indices,
-                    'slicePoint':{'sid':self.slicePoints['sid'][islice],
-                                  'ra':self.slicePoints['ra'][islice],
-                                  'dec':self.slicePoints['dec'][islice]}}
+            # Build dict for slicePoint info
+            slicePoint={}
+            for key in self.slicePoints.keys():
+                slicePoint[key] = self.slicePoints[key][islice]
+            return {'idxs':indices, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)    
 
     def _treexyz(self, ra, dec):
