@@ -12,7 +12,8 @@ class SdssDatabase(Database):
 
 
     
-    def fetchMetricData(self, colnames, sqlconstraint, groupBy='', **kwargs):
+    def fetchMetricData(self, colnames, sqlconstraint, groupBy=None,
+                        cleanNaNs=True, **kwargs):
         """Get data for metric"""
         table = self.tables['clue.dbo.viewStripe82JoinAll']
         # MSSQL doesn't seem to like double quotes?

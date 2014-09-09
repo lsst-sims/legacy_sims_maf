@@ -239,7 +239,6 @@ class BaseSlicer(object):
                 return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         # Otherwise, plot.
         for p in self.plotFuncs:
-            plt.clf()
             plottype = p.replace('plot', '')
             figs[plottype] = self.plotFuncs[p](metricValues, **kwargs)
             if savefig:

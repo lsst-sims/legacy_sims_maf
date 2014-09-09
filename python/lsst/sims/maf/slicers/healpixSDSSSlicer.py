@@ -86,7 +86,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    plotMaskedValues=False, zp=None, normVal=None,
-                   cbar_edge=True, label=None, **kwargs):
+                   cbar_edge=True, label=None, fignum=None, **kwargs):
         """
         Plot the sky map of metricValue using healpy cartview plots in thin strips.
         raMin: Minimum RA to plot (deg)
@@ -100,7 +100,10 @@ class HealpixSDSSSlicer(HealpixSlicer):
         title: title for plot
         cbarFormat: format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
         plotMaskedValues: ignored, here to be consistent with OpsimFieldSlicer."""
-        # Generate a Mollweide full-sky plot.
+        if fignum:
+            fig = plt.figue(fignum)
+        else:
+            fig=plt.figure()
         norm = None
         if logScale:
             norm = 'log'
@@ -150,7 +153,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
             hp.cartview(metricValue.filled(self.badval), title=useTitle, cbar=False,
                         min=clims[0], max=clims[1], flip='astro', rot=(racenter,0,0), 
                         cmap=cmap, norm=norm, lonra=[-raLen,raLen],
-                        latra=[decMin,decMax], sub=(nframes+1,1,i+1))   
+                        latra=[decMin,decMax], sub=(nframes+1,1,i+1), fig=fig)   
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         fig = plt.gcf() 
