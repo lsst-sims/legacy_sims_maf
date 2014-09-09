@@ -14,15 +14,17 @@ class SdssDatabase(Database):
     
     def fetchMetricData(self, colnames, sqlconstraint, groupBy='', **kwargs):
         """Get data for metric"""
-        sqlQuery = 'select '+','.join(colnames)+' from '+ self.tables.keys()[0]+' where '+sqlconstraint
-        if groupBy != '':
-            sqlQuery = sqlQuery + 'group by '+groupBy
-        sqlQuery = sqlQuery+' ;'
+        table = self.tables['clue.dbo.viewStripe82JoinAll']
         # MSSQL doesn't seem to like double quotes?
-        sqlQuery=sqlQuery.replace('"', "'")
-        data = self.queryDatabase(self.tables.keys()[0] , sqlQuery)
-        for col in colnames:
-            good = np.where(np.isnan(data[col]) == False)
-            data = data[good]
+        sqlconstraint = sqlconstraint.replace('"', "'")
+        data = table.query_columns_Array(chunk_size = self.chunksize,
+                                         constraint = sqlconstraint,
+                                         colnames = colnames,
+                                         groupByCol = groupBy)
+        # Toss columns with NaNs.
+        if cleanNaNs:
+            for col in colnames:
+                good = np.where(np.isnan(data[col]) == False)
+                data = data[good]
         return data
     

@@ -64,10 +64,13 @@ class MafDriver(object):
                 print 'Got OpSim config info in %.3g s'%dt
 
         # Get proposal information (for OpSim databases).
-        self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
-        if self.verbose:
-            dt, time_prev = dtime(time_prev)
-            print 'fetched PropID info in %.3g s'%dt
+        if self.config.dbAddress['dbClass'] == 'OpsimDatabase':
+           self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
+           if self.verbose:
+               dt, time_prev = dtime(time_prev)
+               print 'fetched PropID info in %.3g s'%dt
+        else:
+           self.allpropids, self.wfdpropids, self.ddpropids = ([0],[0],[0])
 
         # Construct the slicers and metric objects
         self.slicerList = []
