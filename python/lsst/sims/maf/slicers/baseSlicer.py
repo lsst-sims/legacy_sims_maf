@@ -3,10 +3,11 @@
 
 import os
 import inspect
+import json
+import warnings
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
-import warnings
 from lsst.sims.maf.utils import getDateVersion
 
 class SlicerRegistry(type):
@@ -36,7 +37,7 @@ class SlicerRegistry(type):
                 print inspect.getdoc(cls.registry[slicername])
             
 
-
+                
 class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.
@@ -187,9 +188,43 @@ class BaseSlicer(object):
                  fill = fill, # metric badval/fill val
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
-                 slicePoints = self.getSlicePoints(), # slicePoint metadata saved (is a dictionary)
+                 slicePoints = self.slicePoints, # slicePoint metadata saved (is a dictionary)
                  slicerNSlice = self.nslice) 
-                                 
+
+    def writeJSON(self, outfilename, metricValues, metricName='',
+                  simDataName ='', sqlconstraint='', metadata=''):
+        """
+        Save unmasked metric values only, along with some metadata used to build interactive plots.
+
+        outfilename: the output file
+        metricValues: the metric values to save to disk
+        """
+        # Preserve some of the metadata for the plot.
+        header = {}
+        header['metricName']=metricName
+        header['sqlconstraint'] = sqlconstraint
+        header['metadata'] = metadata
+        header['simDataName'] = simDataName
+        header['plotDict'] = plotDict
+        if hasattr(metricValues, 'mask'):
+            # If it is a masked array, get the metric data and slice points which are not masked.
+            slicePoints = {}
+            for k in self.slicePoints:
+                slicePoints[k] = self.slicePoints[k][~metricValues.mask]
+            mVals = metricValues.compressed()            
+        else:
+            mVals = metricValues
+            slicePoints = self.slicePoints
+        # Write out JSON output.
+        outfile = open(outfilename, 'w')
+        # Build json output dictionary.
+        jsonDict = {}
+        for k in slicePoints:
+            jsonDict[k] = list(slicePoints[k])
+        jsonDict['metricValues'] = mVals
+        json.dump(jsonDict, outfile)
+        outfile.close()
+        
     def readData(self, infilename):
         """
         Read metric data from disk, along with the info to rebuild the slicer (minus new slicing capability).
@@ -216,7 +251,8 @@ class BaseSlicer(object):
         plotDict = header['plotDict']
         
         return metricValues, slicer, header, plotDict
-    
+
+        
     def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
                  savefig=True, thumbnail=True, **kwargs):
         """
