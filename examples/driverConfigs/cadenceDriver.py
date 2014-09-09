@@ -130,7 +130,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     slicerList.append(slicer)
 
 
-    #### Visit Group Metric ######
+    #### Visit Group Metric and AGN gap ######
     m1 = configureMetric('VisitGroupsMetric', 
                          kwargs={'minNVisits':2, 'metricName':'VisitGroups2'},
                          plotDict={'percentile':90},
@@ -139,11 +139,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
                          kwargs={'minNVisits':4, 'metricName':'VisitGroups4'},
                          plotDict={'percentile':90},
                          displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
+    m3 = configureMetric('LongGapAGNMetric', displayDict={'group':'AGN'})
     slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
-                            metricDict=makeDict(m1, m2),
+                            metricDict=makeDict(m1, m2, m3),
                              constraints=['(filter = "r") or (filter="g") or (filter="i")'])
     slicerList.append(slicer)
-
+  
+    
 
     config.slicers = makeDict(*slicerList)
     return config
