@@ -2,7 +2,7 @@ import numpy as np
 from .baseMetric import BaseMetric
 
 class LongGapAGNMetric(BaseMetric):
-    """max delta-t and average of the top-10 longest gaps. r and i filters separately.
+    """max delta-t and average of the top-10 longest gaps. 
     """
 
     def __init__(self, metricName='longGapAGNMetric',
@@ -13,13 +13,12 @@ class LongGapAGNMetric(BaseMetric):
         """
         cols = [mjdcol]
         super(LongGapAGNMetric, self).__init__(cols, metricName, units=units, **kwargs)
-        # set return type
         self.badval = badval
         self.mjdcol = mjdcol
 	self.xgaps = xgaps
         self.units = units
 
-    def run(self, dataslice):
+    def run(self, dataslice, slicePoint=None):
 	metricval = np.diff(dataslice[self.mjdcol])
         return metricval
     
