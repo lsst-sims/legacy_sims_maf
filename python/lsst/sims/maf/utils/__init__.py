@@ -4,3 +4,4 @@ from .getDateVersion import *
 from .outputUtils import *
 from .opsimUtils import *
 from .telescopeInfo import *
+from .radec2pix import *

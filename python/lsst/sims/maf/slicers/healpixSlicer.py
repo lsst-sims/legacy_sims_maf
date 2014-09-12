@@ -48,6 +48,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             # Set the cache size to be ~2x the circumference
             self.cacheSize = int(np.round(4.*np.pi/binRes))
         # Set up slicePoint metadata.
+        self.slicePoints['nside'] = nside
         self.slicePoints['sid'] = np.arange(self.nslice)
         self.slicePoints['ra'], self.slicePoints['dec'] = self._pix2radec(self.slicePoints['sid'])        
 

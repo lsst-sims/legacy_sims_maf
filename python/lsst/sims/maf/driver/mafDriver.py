@@ -10,6 +10,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.stackers as stackers
+import lsst.sims.maf.maps as maps
 import time
 import collections
 
@@ -70,7 +71,7 @@ class MafDriver(object):
         self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, kwargs, metricDict, constraints, stackerDict, plotDict, metadata = \
+            name, kwargs, metricDict, constraints, stackerDict, mapsDict, plotDict, metadata = \
                 readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
@@ -84,9 +85,17 @@ class MafDriver(object):
             temp_slicer.index = i
             stackersList = []
             for key in stackerDict.keys():
-                stackername, kwargs = config2dict(stackerDict[key])
-                stackersList.append(stackers.BaseStacker.getClass(stackername)(**kwargs))
+               stackername, kwargs = config2dict(stackerDict[key])
+               stackersList.append(stackers.BaseStacker.getClass(stackername)(**kwargs))
             temp_slicer.stackers = stackersList
+            mapsList = []
+            mapsNames = []
+            for key in mapsDict.keys():
+               mapName, kwargs = config2dict(mapsDict[key])
+               mapsList.append(maps.BaseMap.getClass(mapName)(**kwargs) )
+               mapsNames.append(mapName)
+            temp_slicer.mapsList = mapsList
+            temp_slicer.mapsNames = mapsNames
             self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
@@ -265,12 +274,17 @@ class MafDriver(object):
                 for slicer in matchingSlicers:
                     print '    running slicerName =', slicer.slicerName, \
                       ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
+                    # Set up any additional maps
+                    for m in self.metricList[slicer.index]:
+                       for skyMap in m.maps:
+                          if skyMap not in slicer.mapsNames:
+                             slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
                     # Set up slicer.
                     if slicer.slicerName == 'OpsimFieldSlicer':
                         # Need to pass in fieldData as well
-                        slicer.setupSlicer(self.data, self.fieldData)
+                        slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
                     else:
-                        slicer.setupSlicer(self.data)
+                        slicer.setupSlicer(self.data, maps=slicer.mapsList)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                      outDir=self.config.outputDir) 
