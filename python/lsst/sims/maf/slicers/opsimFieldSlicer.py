@@ -47,13 +47,17 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldDecColName':fieldDecColName, 'badval':badval}
         
 
-    def setupSlicer(self, simData, fieldData):
+    def setupSlicer(self, simData, fieldData, maps=None):
         """Set up opsim field slicer object.
         
         simData = numpy rec array with simulation pointing history,
         fieldData = numpy rec array with the field information (ID, RA, Dec),
         Values for the column names are set during 'init'. 
         """
+        if maps is None:
+            maps = []
+        for skyMap in maps:
+            self.slicePoints = skyMap.run(self.slicePoints)
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIDColName])
         # Set needed values for slice metadata.

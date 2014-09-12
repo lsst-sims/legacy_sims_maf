@@ -58,8 +58,8 @@ class BaseSpatialSlicer(BaseSlicer):
             maps = []
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
-        for oneMap in maps:
-            self.slicePoints = oneMap.run(self.slicePoints)
+        for skyMap in maps:
+            self.slicePoints = skyMap.run(self.slicePoints)
         @wraps(self._sliceSimData)
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
@@ -70,7 +70,10 @@ class BaseSpatialSlicer(BaseSlicer):
             # Build dict for slicePoint info
             slicePoint={}
             for key in self.slicePoints.keys():
-                slicePoint[key] = self.slicePoints[key][islice]
+                if np.size(self.slicePoints[key]) > 1:
+                    slicePoint[key] = self.slicePoints[key][islice]
+                else:
+                    slicePoint[key] = self.slicePoints[key]
             return {'idxs':indices, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)    
 

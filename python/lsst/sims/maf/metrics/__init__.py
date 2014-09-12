@@ -10,3 +10,4 @@ from .inDevelopmentMetrics import *
 from .fftMetric import *
 from .tgaps import *
 from .longGapAGNMetric import *
+from .exgalM5 import *
