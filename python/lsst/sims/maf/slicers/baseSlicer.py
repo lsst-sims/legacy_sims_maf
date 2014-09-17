@@ -192,7 +192,7 @@ class BaseSlicer(object):
                  slicerNSlice = self.nslice) 
 
     def writeJSON(self, outfilename, metricValues, metricName='',
-                  simDataName ='', metadata='', plotDict=None):
+                  simDataName ='', metadata='', plotDict=None, displayDict=None):
         """
         Save unmasked metric values only, along with some metadata used to build interactive plots.
 
@@ -202,10 +202,18 @@ class BaseSlicer(object):
         if plotDict is None:
             plotDict = {}
         # Preserve some of the metadata for the plot.
-        header = {}
+        header = {}        
         header['metricName']=metricName
         header['metadata'] = metadata
         header['simDataName'] = simDataName
+        date, versionInfo = getDateVersion()
+        header['dateRan'] = date
+        if displayDict is None:
+            displayDict = {'group':'Ungrouped'}
+        header['displayDict'] = displayDict
+        header['plotDict'] = plotDict
+        for key in versionInfo.keys():
+            header[key] = versionInfo[key]
         # Set some default plot labels if appropriate.
         if 'title' in plotDict:
             header['title'] = plotDict['title']
@@ -216,29 +224,28 @@ class BaseSlicer(object):
         else:
             if hasattr(self, 'sliceColName'):
                 header['xlabel'] = '%s (%s)' %(self.sliceColName, self.sliceColUnits)
-                header['ylabel'] = '%s' %(metricName)        
-        # Bundle up the ra/dec/metric value or the bins/metric value
-        points = {}
-        if hasattr(metricValues, 'mask'):
-            # If it is a masked array, get the metric data and slice points which are not masked.
-            for k in ['ra', 'dec']:
-                if k in self.slicePoints:
-                    points[k] = list(self.slicePoints[k][~metricValues.mask])
-            if 'bins' in self.slicePoints:
-                points['left'] = list(self.slicePoints['bins'][:-1][~metricValues.mask])
-                points['right'] = list(self.slicePoints['bins'][1:][~metricValues.mask])
-            points['mVals'] = list(metricValues.compressed())
+                header['ylabel'] = '%s' %(metricName)
+        # Bundle up slicer info.
+        slicer = {}
+        slicer['init'] = self.slicer_init
+        slicer['slicerName'] = self.slicerName
+        slicer['slicePoints'] = {}
+        for k in self.slicePoints:
+            slicer['slicePoints'][k] = list(self.slicePoints)
+        slicer['NSlice'] = int(self.nslice)
+        # Bundle up metric data.
+        metric = {}
+        if hasattr(metricValues, 'mask'): # If it is a masked array
+            metric['data'] = metricValues.data.tolist()
+            metric['mask'] = metricValues.mask.tolist()
+            metric['fill'] = metricValues.fill_value.tolist()
         else:
-            for k in ['ra', 'dec']:
-                if k in self.slicePoints:
-                    points[k] = list(self.slicePoints[k])
-            if 'bins' in self.slicePoints:
-                points['left'] = list(self.slicePoints['bins'][:-1])
-                points['right'] = list(self.slicePoints['bins'][1:])
-            points['mVals'] = list(metricValues)
+            metric['data'] = metricValues.tolist()
+            metric['mask'] = []
+            metric['fill'] = slicer.badval.tolist()
         # Write out JSON output.
         outfile = open(outfilename, 'w')
-        json.dump([header, points], outfile)
+        json.dump([header, slicer, metric], outfile)
         outfile.close()
         
     def readData(self, infilename):
@@ -264,8 +271,10 @@ class BaseSlicer(object):
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
-        plotDict = header['plotDict']
-        
+        if 'plotDict' in header:
+            plotDict = header['plotDict']
+        else:
+            plotDict = {}
         return metricValues, slicer, header, plotDict
 
         
