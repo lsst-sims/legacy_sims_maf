@@ -81,6 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
     parser.add_argument("-d", "--mafDir", type=str, default=None, help="Add this directory to the trackingDb and open immediately.")
     parser.add_argument("-c", "--mafComment", type=str, default=None, help="Add a comment to the trackingDB describing the MAF analysis of this directory (paired with mafDir argument).")
+    parser.add_argument("-p", "--port", type=int, default=8888, help="Port to use for Tornado server.")
     args = parser.parse_args()
 
     # Check tracking DB is sqlite (and add as convenience if forgotten).
@@ -138,8 +139,8 @@ if __name__ == "__main__":
     
     # Start up tornado app.
     application = make_app()
-    application.listen(8888)
-    print 'Tornado Starting: \nPoint your web browser to http://localhost:8888/ \nCtrl-C to stop'
+    application.listen(args.port)
+    print 'Tornado Starting: \nPoint your web browser to http://localhost:%d \nCtrl-C to stop' %(args.port)
 
     ioloop.IOLoop.instance().start()
     
