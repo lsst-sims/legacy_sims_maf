@@ -124,6 +124,9 @@ class ResultsDb(object):
                   metricMetadata, metricDataFile):
         """
         Add a row to the metrics table.
+
+        If same metric (same metricName, slicerName, simDataName, sqlConstraint, metadata) 
+        already exists, adds to the db with 'run' value increased by one.
         """
         if simDataName is None:
             simDataName = 'NULL'
@@ -148,7 +151,16 @@ class ResultsDb(object):
     def addDisplay(self, metricId, displayDict):
         """
         Add a row to the displays table.
+
+        Replaces existing row with same metricId.
         """
+        # Because we want to maintain 1-1 relationship between metricId's and displayDict's:
+        # First check if a display line is present with this metricID.
+        displayinfo = self.session.query(DisplayRow).filter_by(metricId=metricId).all()
+        if len(displayinfo) > 0:
+            for d in displayinfo:
+                self.session.delete(d)
+        # Then go ahead and add new displayDict. 
         for k in displayDict:
             if displayDict[k] is None:
                 displayDict[k] = 'NULL'
@@ -167,7 +179,14 @@ class ResultsDb(object):
     def addPlot(self, metricId, plotType, plotFile):
         """
         Add a row to the plot table.
+
+        Remove older rows with the same metricId, plotType and plotFile.
         """
+        plotinfo = self.session.query(PlotRow).filter_by(metricId=metricId, plotType=plotType,
+                                                         plotFile=plotFile).all()
+        if len(plotinfo) > 0:
+            for p in plotinfo:
+                self.session.delete(p)
         plotinfo = PlotRow(metricId=metricId, plotType=plotType, plotFile=plotFile)
         self.session.add(plotinfo)
         self.session.commit()

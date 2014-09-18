@@ -207,4 +207,4 @@ class BaseSliceMetric(object):
                                                           self.sqlconstraints[iid],
                                                           self.metadatas[iid],
                                                           outfile)
-           
+            self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])

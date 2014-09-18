@@ -273,15 +273,6 @@ class RunSliceMetric(BaseSliceMetric):
             outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot) + '.npz'
             self.metricObjs[iid].saveFile = outfile
 
-    def captionAll(self):
-        """
-        Auto generate captions. If a caption is provided from driver, use that.
-        """
-        if not self.resultsDb:
-           warnings.warn('Warning! Not saving captions.')
-           return
-        for iid in self.metricValues:            
-           self.captionMetric(iid)
 
     def captionMetric(self, iid):
         """
@@ -365,11 +356,12 @@ class RunSliceMetric(BaseSliceMetric):
                                            figformat=self.figformat, dpi=self.dpi,
                                            filename=os.path.join(self.outDir, outfile), **pParams)
         # Save information about the plotted files.
-        if self.resultsDb:
+        if self.resultsDb:           
             if iid not in self.metricIds:
                 self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                                self.simDataNames[iid], self.sqlconstraints[iid],
                                                                self.metadatas[iid], None)
+            self.captionMetric(iid)
             for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
                 froot, fname = os.path.split(filename)
                 self.resultsDb.addPlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
