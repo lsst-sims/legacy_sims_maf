@@ -97,6 +97,8 @@ class MafRunResults(object):
         
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
+        self.metadataOrder = ['u', 'g', 'r', 'i', 'z', 'y']
+
         
     ## Methods to deal with metricIds
                 
