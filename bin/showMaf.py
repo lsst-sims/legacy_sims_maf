@@ -57,6 +57,13 @@ class AllMetricResultsPageHandler(web.RequestHandler):
         allresultsTempl = env.get_template("allmetricresults.html")
         runId = int(self.request.arguments['runId'][0])    
         self.write(allresultsTempl.render(runlist=runlist, runId=runId))
+
+class MultiColorPageHandler(web.RequestHandler):
+    def get(self):
+        """Display sky maps. """
+        multiColorTempl = env.get_template("multicolor.html")
+        runId = int(self.request.arguments['runId'][0])
+        self.write(multiColorTempl.render(runlist=runlist, runId=runId))
         
 def make_app():
     """The tornado global configuration """
@@ -67,6 +74,7 @@ def make_app():
             ("/configParams", ConfigPageHandler),
             ("/summaryStats", StatPageHandler), 
             ("/allMetricResults", AllMetricResultsPageHandler),
+            ("/multiColor", MultiColorPageHandler),
             (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
             (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}), 
             ])
