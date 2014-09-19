@@ -121,6 +121,12 @@ img.thumbnail {
     margin: 0px;
 }
 
+img.sm_thumbnail {
+    height: 200px;
+    padding:0px;
+    margin: 0px;
+}
+
 p
 {
 text-indent:5px;
@@ -217,8 +223,9 @@ text-indent:25px;
     ('/', 'listRuns', 'Run List'), 
     ('configParams', 'configs', 'Opsim Configuration'),
     ('metricSelect', 'listMetrics', 'Metrics List'),
-    ('summaryStats', 'stats', 'Summary Stats'),
-    ('allMetricResults', 'allMetricResults', 'All Results')]  -%}
+    ('allMetricResults', 'allMetricResults', 'All Results'),
+    ('multiColor', 'multicolor', 'Multi Color'),
+    ('summaryStats', 'stats', 'Summary Stats')]  -%}
  <ul class="nav">
  {% for href, id, caption in navigation_bar %}
    <li class="nav">
