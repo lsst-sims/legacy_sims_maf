@@ -135,8 +135,8 @@ class MafDriver(object):
             for constraint in slicer.constraints:
                 for metric in self.metricList[i]:
                     # Approximate what output filename will be
-                    if len(slicer.metadataVerbatim) > 0:
-                        comment = slicer.metadataVerbatim
+                    if slicer.metadataVerbatim:
+                        comment = slicer.metadata
                     else:
                         comment = constraint.replace('=','').replace('filter','').replace("'",'')
                         comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
