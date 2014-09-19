@@ -70,6 +70,10 @@ class MafRunResults(object):
         if len(self.stats) == 0:
             self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'), ('summaryValue', float)])
 
+        # Replace summary stat names "Identity" with a blank string
+        match = (self.stats['summaryName'] == 'Identity')
+        self.stats['summaryName'][match] = ' '
+                    
         # Pull up the names of the groups and subgroups. 
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
         self.groups = OrderedDict()
@@ -180,7 +184,48 @@ class MafRunResults(object):
         for g in groups:
             groups[g] = sorted(list(groups[g]))
         return groups
-            
+
+    def metricsWithPlotType(self, plotType='SkyMap', metrics=None):
+        """
+        Return metrics with skymaps in this group/subgroup (optional, metric subset).
+        """
+        if metrics is None:
+            metrics = self.metrics
+        hasplot = np.zeros(len(metrics))
+        for i, m in enumerate(metrics):
+            match = (self.plots['metricId'] == m['metricId'])
+            matchType = (self.plots['plotType'][match] == plotType)
+            if len(metrics[matchType]) > 0:
+                hasplot[i] = 1
+        metrics = metrics[np.where(hasplot > 0)]
+        return metrics
+
+    def metricNames(self, metrics=None, baseonly=True):
+        """
+        Return a list of the unique metric names.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        metricNames = set()
+        for m in self.sortMetrics(metrics):
+            if baseonly:
+                metricNames.add(m['baseMetricNames'])
+            else:
+                metricNames.add(m['metricName'])
+        return metricNames
+
+    def metricsWithMetricName(self, metricName, metrics=None, baseonly=True):
+        """
+        Return all metrics which match metricName.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        if baseonly:
+            match = (metrics['baseMetricNames'] == metricName)
+        else:
+            match = (metrics['metricName'] == metricName)
+        return metrics[match]
+                
     def metricInfo(self, metric, withDataFile=False):
         """
         Return a dict with the metric info we want to show on the webpages.
@@ -236,7 +281,23 @@ class MafRunResults(object):
         """
         return os.path.join(self.outDir, plot['plotFile'])
 
+    def getSkyMaps(self, metrics=None):
+        """
+        Return a list of the skymaps, optionally for subset of metrics.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        skymatchPlots = []
+        for m in metrics:
+            match = (self.plots['metricId'] == m['metricId'])
+            matchPlots = self.plots[match]
+            if len(matchPlots) > 0 :
+                match = (matchPlots['plotType'] == 'SkyMap')
+                for skymatch in matchPlots[match]:
+                    skymatchPlots.append(skymatch)
+        return skymatchPlots
 
+    
     ## Set of methods to deal with stats.
     
     def statsForMetric(self, metric):
