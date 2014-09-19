@@ -38,10 +38,16 @@
    {% for subgroup in run.groups[group] %}
 
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
-       {% set statNames = run.allStatNames(metrics) %}
-       {% if statNames|length > 0 %}
-        {% set ncols = statNames|length + ninfo %}
 
+       {% set statNames = run.allStatNames(metrics) %}
+
+       {% if statNames|length == 0 %}
+           {# just skip, no summary stats. #}
+           
+       {% elif statNames|length > 1 %}
+   
+        {# regular metric ->> multiple summary stats table #}
+        {% set ncols = statNames|length + ninfo %}
        
         <table>
 	{% if groupstart == True %}
@@ -75,8 +81,8 @@
  	   {% for statName in statNames %}
 	    <td>
 	      {% if statName in statDict.keys() %}
-	        {% if statName == 'Count' or statName == 'm3Sigma' or
-          statName=='p3Sigma' or 'TableFraction' in statName %} 
+	        {% if 'Count' in statName or 'm3Sigma' in statName or
+          'p3Sigma' in statName or 'TableFraction' in statName %} 
                  {{ '%d'|format(statDict[statName]) }}
 	        {% else %}
                  {{ '%.2f'|format(statDict[statName]) }}
@@ -90,8 +96,67 @@
 	  {% endif %}
       {% endfor %}	   
      </table>
+      
+    {% elif statNames|length == 1 %}
+     
+       {% set statName = statNames[0] %}
+       {% set summarymetrics = run.metricsWithSummaryStat(statName, metrics) %}
+       {% set metricNames = run.metricNames(summarymetrics,
+       baseonly=False, summarySort=True) %}
+       {% set metadata = run.metricMetadata(summarymetrics) %}
+
+       {# table will have columns == metric names #}
+
+       {% set ncols = metricNames|length + 1 %}
+       
+        <table>
+	{% if groupstart == True %}
+	   <a name="{{group}}"></a>
+	   {% set groupstart = False %}
+	{% endif %}	  
+        <tr class="lightestgray"> 
+	<td colspan={{ncols}}>
+	<a name="{{group}}_{{subgroup}}"> Group: <i>{{group }}</i>;  
+	     Subgroup: <i>{{ subgroup }}</i> </a> </td>
+        </tr>
+	
+        <tr>
+	  <th> </th>
+	 {% for mName in metricNames %}
+	  <th>{{ mName }} </th>
+	 {% endfor %}
+	</tr>
+
+        {% for meta in metadata %}
+	  <tr>
+	  <td>{{meta}} </td>
+	  {# Find metric that matches the metric name for this column
+	  and this metadata. #}
+	  {% for mName in metricNames %}
+	    {% set mset = run.metricsWithMetricName(mName, summarymetrics) %}
+	    {% set m = run.metricsWithMetadata(meta, mName, mset) %}
+	    {% set stats = run.statsForMetric(m) %}
+	    {% if stats|length == 0 %}
+	      <td> -- </td>
+	     {% else %}
+ 	      <td>
+	        {% if 'Count' in statName or 'm3Sigma' in statName
+	  or 'p3Sigma' in statName or 'TableFraction' in statName %} 
+                 {{ '%d'|format(stats['summaryValue']) }}
+	        {% else %}
+                 {{ '%.2f'|format(stats['summaryValue']) }}
+	        {% endif %}
+	      </td>
+	      {% endif %}
+	   {% endfor %}
+	   </tr>	   
+       {% endfor %}	   
+      </table>
+
      {% endif %}
-    {% endfor %}
- {% endfor %}
+     
+      
+    {% endfor %}  
+ {% endfor %}  {# end of group/subgroup #}
  
 {% endblock %}
