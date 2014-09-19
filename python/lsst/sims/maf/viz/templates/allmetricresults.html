@@ -107,8 +107,8 @@ than per metric. #}
  	   {% for statName in statNames %}
 	    <td>
 	      {% if statName in statDict.keys() %}
-	        {% if statName == 'Count' or statName == 'm3Sigma' or
-          statName=='p3Sigma' or 'TableFraction' in statName %} 
+	       {% if 'Count' in statName or 'm3Sigma' in statName or
+          'p3Sigma' in statName or 'TableFraction' in statName %} 
                   {{ '%d'|format(statDict[statName]) }}
 	        {% else %}
                   {{ '%.2f'|format(statDict[statName]) }}

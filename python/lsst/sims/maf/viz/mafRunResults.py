@@ -72,7 +72,7 @@ class MafRunResults(object):
 
         # Replace summary stat names "Identity" with a blank string
         match = (self.stats['summaryName'] == 'Identity')
-        self.stats['summaryName'][match] = ' '
+        self.stats['summaryName'][match] = 'Id'
                     
         # Pull up the names of the groups and subgroups. 
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
@@ -84,8 +84,8 @@ class MafRunResults(object):
         for g in self.groups:
             self.groups[g] = sorted(list(self.groups[g]))
 
-        self.summaryStatOrder = ['Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
-                                 'm3Sigma', 'p3Sigma']
+        self.summaryStatOrder = ['Id', 'Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
+                                 'm3Sigma', 'p3Sigma', 'Percentile']
         # Add in the table fraction sorting.  
         tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
         if len(tableFractions) > 0:
@@ -100,6 +100,8 @@ class MafRunResults(object):
             self.summaryStatOrder.append('TableFraction 1 < P')
         
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
+
+        self.metadataOrder = ['u', 'g', 'r', 'i', 'z', 'y']
 
         
     ## Methods to deal with metricIds
@@ -200,20 +202,54 @@ class MafRunResults(object):
         metrics = metrics[np.where(hasplot > 0)]
         return metrics
 
-    def metricNames(self, metrics=None, baseonly=True):
+    def metricNames(self, metrics=None, baseonly=True, summarySort=False):
         """
         Return a list of the unique metric names.
         """
         if metrics is None:
             metrics = self.metrics
-        metricNames = set()
-        for m in self.sortMetrics(metrics):
+        if summarySort:
+            metricNames = []
+            for mord in self.summaryStatOrder:
+                if baseonly:
+                    if mord in metrics['baseMetricNames']:
+                        metricNames.append(mord)
+                else:
+                    if mord in metrics['metricName']:
+                        metricNames.append(mord)
             if baseonly:
-                metricNames.add(m['baseMetricNames'])
+                for m in metrics['baseMetricNames']:
+                    if m not in metricNames:
+                        metricNames.append(m)
             else:
-                metricNames.add(m['metricName'])
+                for m in metrics['metricName']:
+                    if m not in metricNames:
+                        metricNames.append(m)
+        else:
+            metricNames = set()
+            for m in self.sortMetrics(metrics):
+                if baseonly:
+                    metricNames.add(m['baseMetricNames'])
+                else:
+                    metricNames.add(m['metricName'])
         return metricNames
 
+    def metricsWithSummaryStat(self, summaryStatName='Id', metrics=None):
+        """
+        Return metrics with summary stat matching 'summaryStatName' (optional, metric subset).
+        """
+        if metrics is None:
+            metrics = self.metrics
+        hasstat = np.zeros(len(metrics))
+        for i, m in enumerate(metrics):
+            match = (self.stats['metricId'] == m['metricId'])
+            matchStat = (self.stats['summaryName'][match] == summaryStatName)
+            if len(metrics[matchStat]) > 0:
+                hasstat[i] = 1
+        metrics = metrics[np.where(hasstat > 0)]
+        return metrics
+    
+    
     def metricsWithMetricName(self, metricName, metrics=None, baseonly=True):
         """
         Return all metrics which match metricName.
@@ -249,6 +285,40 @@ class MafRunResults(object):
         """
         return metric['displayCaption']
 
+
+    def metricMetadata(self, metrics=None):
+        """
+        For a recarray of metrics, return the unique metadata (in a default order).
+        """
+        if metrics is None:
+            metrics = self.metrics
+        metadata = np.unique(metrics['metricMetadata'])
+        md = set()
+        for meta in metadata:
+            md.add(meta)
+        # Add some default sorting:
+        metadata = []
+        for nord in self.metadataOrder:
+            for meta in md:
+                if nord in meta:
+                    metadata.append(meta)
+        for meta in metadata:
+            if meta in md:
+                md.remove(meta)
+        for remaining in md:
+            metadata.append(remaining)
+        return metadata
+    
+    def metricsWithMetadata(self, metadata, mname, metrics=None):
+        """
+        For a recarray of metrics, return the subset which match a particular 'metadata' value.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        match = (metrics['metricMetadata'] == metadata)
+        return metrics[match]
+
+    
     ## Methods for plots.
     
     def plotsForMetric(self, metric):
