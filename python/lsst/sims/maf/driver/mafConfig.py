@@ -45,7 +45,7 @@ class SlicerConfig(pexConfig.Config):
     stackerDict = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
                                           keytype=int, itemtype=ColStackConfig, default={}) 
     metadata = pexConfig.Field("", dtype=str, default='')
-    metadataOverride = pexConfig.Field("", dtype=str, default='')
+    metadataVerbatim = pexConfig.Field("", dtype=bool, default=False)
     
 class MafConfig(pexConfig.Config):
     """
@@ -128,7 +128,7 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={},
     return mc
 
 def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None,
-                    metadata='', metadataOverride=''):
+                    metadata='', metadataVerbatim=False):
     """
     Helper function to generate a Slicer pex config object.
     """
@@ -136,7 +136,7 @@ def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerD
     slicer.name = name
     slicer.kwargs = makeMixConfig(kwargs)
     slicer.metadata = metadata
-    slicer.metadataOverride = metadataOverride
+    slicer.metadataVerbatim = metadataVerbatim
     if metricDict:
         slicer.metricDict = metricDict
     slicer.constraints = constraints
@@ -152,8 +152,8 @@ def readSlicerConfig(config):
     constraints = config.constraints
     stackerDict = config.stackerDict
     metadata = config.metadata
-    metadataOverride = config.metadataOverride
-    return name, kwargs, metricDict, constraints, stackerDict, metadata, metadataOverride
+    metadataVerbatim = config.metadataVerbatim
+    return name, kwargs, metricDict, constraints, stackerDict, metadata, metadataVerbatim
 
 def readMetricConfig(config):
     """
