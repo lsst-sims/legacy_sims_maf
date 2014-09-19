@@ -106,8 +106,10 @@ class FracBelowMetric(BaseMetric):
         return fracBelow
 
 class PercentileMetric(BaseMetric):
-    def __init__(self, col=None, percentile=90, **kwargs):
-        super(PercentileMetric, self).__init__(col=col, **kwargs)
+    def __init__(self, col=None, percentile=90, metricName=None, **kwargs):
+        if metricName is None:
+            metricName = '%.1f Percentile in %s' %(percentile, col)
+        super(PercentileMetric, self).__init__(col=col, metricName=metricName, **kwargs)
         self.percentile = percentile
     def run(self, dataSlice, slicePoint=None):
         pval = np.percentile(dataSlice[self.colname], self.percentile)
