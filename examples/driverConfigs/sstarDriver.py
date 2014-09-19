@@ -245,7 +245,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                              'caption':'Number of visits per opsim field in %s filter, for propID %d'
                                              %(f, propid)},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                                           'label':'%s' %f, 'binsize':3})
+                                           'label':'%s' %f, 'binsize':5})
             metricDict = makeDict(m1)
             sqlconstraint = ['filter = "%s" and propID = %s' %(f, propid)]
             slicer = configureSlicer('OpsimFieldSlicer',
@@ -265,7 +265,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                              displayDict={'group':'Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
                                           'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s' %f, 'binsize':3},)
+                                        'color':colors[f], 'label':'%s' %f, 'binsize':5},)
         metricDict = makeDict(m1)
         sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
         slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=sqlconstraint,
@@ -464,7 +464,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                   kwargs={'col':col, 'metricName':'m3Sigma %s' %(col)},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
-                metricList.append(configureMetric('CountMetric', kwargs={'col':col, 'metricName':'Total %s' %(col)},
+                metricList.append(configureMetric('CountMetric', kwargs={'col':col, 'metricName':'Count %s' %(col)},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('PercentileMetric',
