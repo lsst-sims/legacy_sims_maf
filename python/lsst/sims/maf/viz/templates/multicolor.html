@@ -1,8 +1,5 @@
 {% extends "master.html" %}
-<<<<<<< HEAD
 {% import 'macros.html' as mcr %}
-=======
->>>>>>> Added 'multicolor' page to MAF visualization.
 
 {% set active_page = "multicolor" %}
 
@@ -51,13 +48,13 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set statNames = run.allStatNames(subsetMetrics) %}
+   {% set statNames = run.allStatNames(subsetMetrics) %}  
 
-   {% set displaygroup = skysetMetrics|length + combosetMetrics|length
+   {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
     + statNames|length %}
-    {% if displaygroup > 0 %}
+    {% if displaygroup > 0 %} 
      {# then show this group ... #}
-
+     
    {% if groupstart == True %}
       <a name = "{{g|escape}}" ></a>
       {% set groupstart = False %}
@@ -66,12 +63,15 @@
    <a name = "{{g|escape}}_{{sg|escape}}"><b>{{g|escape}} : {{sg|escape}}</b> </a>
    </p>
 
-   {% set metricNames = run.metricNames(skysetMetrics, baseonly=True) %}
+   {% set metricNames = run.uniqueMetricNames(skysetMetrics, baseonly=True) %}
    {% for mname in metricNames %}
      {% set mskyset = run.metricsWithMetricName(mname, skysetMetrics, baseonly=True) %}
      {% set skymaps = run.getSkyMaps(mskyset) %}
       <div id='metricset'>
-       {{ mname }} </br>
+       {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId) %}
+       {% set metricSelect = run.metricsToMetricIds(mskyset)|join('&metricId=') %}
+       {% set metricLink = metricLink ~ metricSelect %}
+	<a href={{metricLink}}>{{mname}}</a> </br>
        {% for skymap in skymaps%}
         {% set plotfile = run.getPlotfile(skymap) %}
         {% set thumbfile = run.getThumbfile(skymap) %}
@@ -84,7 +84,7 @@
    {% for m in combosetMetrics %}
      {% set comboplots = run.plotsForMetric(m) %}
      {% set combodict = run.plotDict(comboplots) %}
-     {% set combohist = combodict['ComboHistogram'] %}
+      {% set combohist = combodict['ComboHistogram'] %}
       <div id='metricset'>
 	{% set metricInfo = run.metricInfo(m) %}
         {{ metricInfo['MetricName']|escape }} ({{metricInfo['Slicer']|escape}})
@@ -101,7 +101,7 @@
       </div>
    {% endif %}
 
-  {% endif %}
+  {% endif %}      
  {% endfor %}
 {% endfor %}
 
