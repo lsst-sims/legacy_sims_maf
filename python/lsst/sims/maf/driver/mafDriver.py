@@ -80,7 +80,7 @@ class MafDriver(object):
         self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, kwargs, metricDict, constraints, stackerDict, metadata, metadataOverride = \
+            name, kwargs, metricDict, constraints, stackerDict, metadata, metadataVerbatim = \
                 readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
@@ -90,7 +90,7 @@ class MafDriver(object):
                 print 'Constraints:  ', slicer.constraints
                 raise Exception('Slicer constraints are not unique')
             temp_slicer.metadata = metadata
-            temp_slicer.metadataOverride = metadataOverride
+            temp_slicer.metadataVerbatim = metadataVerbatim
             temp_slicer.index = i
             stackersList = []
             for key in stackerDict.keys():
@@ -135,8 +135,8 @@ class MafDriver(object):
             for constraint in slicer.constraints:
                 for metric in self.metricList[i]:
                     # Approximate what output filename will be
-                    if len(slicer.metadataOverride) > 0:
-                        comment = slicer.metadataOverride
+                    if len(slicer.metadataVerbatim) > 0:
+                        comment = slicer.metadataVerbatim
                     else:
                         comment = constraint.replace('=','').replace('filter','').replace("'",'')
                         comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
@@ -290,8 +290,8 @@ class MafDriver(object):
                     gm.setSlicer(slicer)
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
-                    if len(slicer.metadataOverride) > 0:
-                        metadata = slicer.metadataOverride
+                    if slicer.metadataVerbatim:
+                        metadata = slicer.metadata
                     else:
                         metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
                         metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
