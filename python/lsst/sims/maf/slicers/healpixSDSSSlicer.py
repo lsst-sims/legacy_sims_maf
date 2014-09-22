@@ -167,7 +167,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=cnorm, orientation='horizontal')
+            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=cnorm, orientation='horizontal', format=cbarFormat)
             cb1.set_label(xlabel)
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
