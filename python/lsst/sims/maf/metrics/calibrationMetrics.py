@@ -1,6 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
 from lsst.sims.maf.utils.astrometryUtils import *
+import lsst.sims.maf.utils as utils
 
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
@@ -18,6 +19,7 @@ class ParallaxMetric(BaseMetric):
         filterCol = column name for filter
         seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
+        SedTemplate = string of 'flat' or 'O','B','A','F','G','K','M'.
         atm_err = centroiding error due to atmosphere in arcsec
         normalize = Compare to a survey that has all observations with maximum parallax factor.
         An optimally scheduled survey would be expected to have a normalized value close to unity,
@@ -40,7 +42,7 @@ class ParallaxMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            raise NotImplementedError('Spot to add colors for different stars')
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         if self.displayDict['group'] == 'Ungrouped':
@@ -115,7 +117,7 @@ class ProperMotionMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            raise NotImplementedError('Spot to add colors for different stars')
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
