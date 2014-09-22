@@ -10,15 +10,8 @@ import matplotlib.path as mplPath
 import warnings
 import matplotlib as mpl
 from lsst.sims.maf.stackers import wrapRA
+from lsst.sims.maf.utils.mafUtils import gnomonic_project_toxy
 
-
-def gnomonic_project_toxy(RA1, Dec1, RAcen, Deccen):
-    """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccen.
-    Input radians."""
-    cosc = np.sin(Deccen) * np.sin(Dec1) + np.cos(Deccen) * np.cos(Dec1) * np.cos(RA1-RAcen)
-    x = np.cos(Dec1) * np.sin(RA1-RAcen) / cosc
-    y = (np.cos(Deccen)*np.sin(Dec1) - np.sin(Deccen)*np.cos(Dec1)*np.cos(RA1-RAcen)) / cosc
-    return x, y
 
 
 class HealpixSDSSSlicer(HealpixSlicer):
@@ -96,7 +89,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
         decMax: max dec value to plot
         
         metricValueIn: metric values
-        units: units for metric color-bar label
+        xlabel: units for metric color-bar label
         title: title for plot
         cbarFormat: format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
         plotMaskedValues: ignored, here to be consistent with OpsimFieldSlicer."""

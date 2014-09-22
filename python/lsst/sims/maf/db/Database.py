@@ -1,8 +1,40 @@
 import os, warnings
 from .Table import Table
+import inspect
+
+
+class DatabaseRegistry(type):
+    """
+    Meta class for databases, to build a registry of database classes.
+    """
+    def __init__(cls, name, bases, dict):
+        super(DatabaseRegistry, cls).__init__(name, bases, dict)
+        if not hasattr(cls, 'registry'):
+            cls.registry = {}
+        modname = inspect.getmodule(cls).__name__ + '.'
+        if modname.startswith('lsst.sims.maf.db'):
+            modname = '' 
+        databasename = modname + name
+        if databasename in cls.registry:
+            raise Exception('Redefining databases %s! (there are >1 databases with the same name)' %(databasename))
+        if databasename not in ['BaseDatabase']:
+            cls.registry[databasename] = cls            
+    def getClass(cls, databasename):
+        return cls.registry[databasename]
+    def list(cls, doc=False):
+        for databasename in sorted(cls.registry):
+            if not doc:
+                print databasename
+            if doc:
+                print '---- ', databasename, ' ----'
+                print inspect.getdoc(cls.registry[databasename])
+
 
 class Database(object):
     """Base class for database access."""
+
+    __metaclass__ = DatabaseRegistry
+    
     def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
                  chunksize=1000000, longstrings=False, verbose=False):
         """
@@ -82,3 +114,7 @@ class Database(object):
         results = t.engine.execute(sqlQuery)
         data = t._postprocess_results(results.fetchall())
         return data
+
+
+
+

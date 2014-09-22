@@ -1,5 +1,6 @@
 from .Database import Database
 import numpy as np
+import warnings
 
 class SdssDatabase(Database):
     """Connect to the stripe 82 database"""
@@ -17,7 +18,9 @@ class SdssDatabase(Database):
         """Get data for metric"""
         table = self.tables['clue.dbo.viewStripe82JoinAll']
         # MSSQL doesn't seem to like double quotes?
-        sqlconstraint = sqlconstraint.replace('"', "'")
+        if sqlconstraint != sqlconstraint.replace('"', "'"):
+            warnings.warn('Warning:  Replacing double quotes with single quotes in SQL where-clause.  Double quotes are not defined in standard SQL.')
+            sqlconstraint = sqlconstraint.replace('"', "'")
         data = table.query_columns_Array(chunk_size = self.chunksize,
                                          constraint = sqlconstraint,
                                          colnames = colnames,
