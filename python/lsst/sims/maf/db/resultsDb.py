@@ -167,7 +167,7 @@ class ResultsDb(object):
     def addPlot(self, metricId, plotType, plotFile):
         """
         Add a row to the plot table.
-        """
+        """        
         plotinfo = PlotRow(metricId=metricId, plotType=plotType, plotFile=plotFile)
         self.session.add(plotinfo)
         self.session.commit()
