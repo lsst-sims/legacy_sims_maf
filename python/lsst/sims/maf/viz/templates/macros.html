@@ -1,0 +1,158 @@
+{#   ##### MACROS #### #}
+
+{% macro MakePlotTable(plots, run) %}
+{# Convert 'plots' to dictionary with filenames. #}
+ {# plotdict = {'plotType': {'plotFile':[], 'thumbFile':[]}} #}
+ {% set plotdict = run.plotDict(plots) %}
+ {% if plotdict|length > 0 %}
+  <table class="blank">
+  <tr class="blank" width=100%>
+   {% for plottype in plotdict %}
+     {% for plotfile, thumbfile in zip(plotdict[plottype]['plotFile'],
+ plotdict[plottype]['thumbFile']) %}
+       <td class="blank">
+        <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+       </td>
+     {% endfor  %}
+  {% endfor %}
+  </tr>
+  </table>
+  {% endif %}
+{%- endmacro %}
+
+
+{% macro PrintMetricInfo(metricInfo) %}
+{# print metric info, adding link for metric data if available #}
+ <b>
+ {% for key in metricInfo %}
+    {% if key == 'Data' %}
+       {% if metricInfo[key][0] != 'NULL' %}
+	  <a href="{{metricInfo[key][1]}}">{{metricInfo[key][0]|escape}}</a>
+        {% else %}
+	   N/A
+	{% endif %}
+     {% else %}
+         {{ '%s' %(metricInfo[key])|escape }}  /
+     {% endif %}
+ {% endfor %}
+ </b>
+ </br>
+{%- endmacro %}
+  
+
+{% macro MakeStatTable(metrics, group, subgroup, run) %}
+{# big macro for stats tables #}
+
+{# Split unislicer metrics out into their own tables (because usually
+  just single Identity summary stat). #}
+
+
+  
+{% set metricInfo = run.metricInfo(metrics[0], withDataFile=False) %}
+{% set ninfo = metricInfo|length %}
+{% set statNames = run.allStatNames(metrics) %}
+
+{% if statNames|length == 0 %}
+  {# just skip, no summary stats. #}
+  
+{% elif statNames|length > 1 %}
+  {# make a table with rows = each metric, columns = summary stats #}
+  {% set ncols = statNames|length + ninfo %}  
+
+  <table>
+   <tr class="lightestgray"> 
+     <td colspan={{ncols}}>
+     <a name="{{group}}_{{subgroup}}"> Group: <i>{{group }}</i>; Subgroup: <i>{{ subgroup }}</i> </a> </td>
+   </tr>
+
+   {# Make a table header. #}
+   <tr>
+   {% for key in metricInfo %}
+      <th>{{ key }} </th>
+   {% endfor %}
+   {% for name in statNames %}
+      <th> {{name}} </th>
+   {% endfor %}
+   </tr>
+
+   {# Add the summary stat info. #}
+   {% for metric in metrics %}
+     {% set metricInfo = run.metricInfo(metric, withDataFile=False) %}
+     {% set stats = run.statsForMetric(metric) %}
+     {% set statDict = run.statDict(stats) %}
+
+     {% if statDict|length > 0 %}
+      <tr>
+      {% for key in metricInfo %}
+        <td>{{ metricInfo[key]|escape }}</td>
+      {% endfor %}
+      {% for statName in statNames %}
+         <td>
+	 {% if statName in statDict.keys() %}
+	    {% if 'Count' in statName or 'm3Sigma' in statName or 'p3Sigma' in statName or 'TableFraction' in statName %} 
+               {{ '%d'|format(statDict[statName]) }}
+	    {% else %}
+                {{ '%.2f'|format(statDict[statName]) }}
+	    {% endif %}
+	 {% else %}
+	     {{ '--' }}
+	 {% endif %}
+	 </td>
+       {% endfor %}
+       </tr>
+      {% endif %}
+  {% endfor %}	   
+  </table>
+      
+{% elif statNames|length == 1 %}
+    {# Only one stat reported per metric/metadata combo #}
+    {# .. so let's flip the table to be metadata (row) vs metric name (col) #}
+     
+    {% set statName = statNames[0] %}
+    {% set summarymetrics = run.metricsWithSummaryStat(statName, metrics) %}
+    {% set metricNames = run.uniqueMetricNames(summarymetrics, baseonly=False) %}
+    {% set metadata = run.uniqueMetricMetadata(summarymetrics) %}
+
+    {% set ncols = metricNames|length + 1 %}
+       
+    <table>
+    <tr class="lightestgray">
+    <td colspan={{ncols}}>
+       <a name="{{group}}_{{subgroup}}"> Group: <i>{{group }}</i>; Subgroup: <i>{{ subgroup }}</i> </a>
+    </td>
+    </tr>
+	
+    <tr>
+    <th> </th>
+    {% for mName in metricNames %}
+	<th>{{ mName }} </th>
+    {% endfor %}
+    </tr>
+
+    {% for meta in metadata %}
+        <tr>
+	<td>{{meta}} </td>
+	{# Find metric that matches the metric name for this column and this metadata. #}
+	{% for mName in metricNames %}
+	    {% set mset = run.metricsWithMetricName(mName, summarymetrics) %}
+	    {% set m = run.metricsWithMetadata(meta, mName, mset) %}
+	    {% set stats = run.statsForMetric(m) %}
+	    {% if stats|length == 0 %}
+	       <td> -- </td>
+	    {% else %}
+ 	      <td>
+	      {% if 'Count' in mName or 'm3Sigma' in mName or 'p3Sigma' in mName or 'TableFraction' in mName %} 
+                 {{ '%d'|format(stats['summaryValue']) }}
+	      {% else %}
+                 {{ '%.2f'|format(stats['summaryValue']) }}
+	      {% endif %}
+	      </td>
+	    {% endif %}
+	 {% endfor %}
+	 </tr>	   
+    {% endfor %}	   
+    </table>
+
+{% endif %}
+
+{%- endmacro %}
