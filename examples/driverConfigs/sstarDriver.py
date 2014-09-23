@@ -72,7 +72,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         seeing_norm = stretch['seeing']    
         mag_zpoints = stretch['coaddedDepth']
         nvisitBench = stretch['nvisits']
-    else:
+
         sky_zpoints = design['skybrightness']
         seeing_norm = design['seeing']
         mag_zpoints = design['coaddedDepth']
@@ -131,7 +131,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD']):
-        startNum += i
+        startNum += 100       
         for f in filters:
             # Set some per-proposal information.
             if prop == 'All Props':
@@ -156,7 +156,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                             displayDict={'group':'Nvisits', 'subgroup':prop, 'order':filtorder[f],
                                             'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                             histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                       'binsize':.01, 'legendloc':'upper right'}))
+                                                       'binsize':.01, 'xMin':nVisits_plotRange['all'][f][0],
+                                                       'xMax':nVisits_plotRange['all'][f][1],
+                                                       'legendloc':'upper right'}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.      
             metricList.append(configureMetric('CountMetric',
@@ -168,7 +170,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                 'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
                                                 %(f, benchmark, nvisitBench[f], propCaption)},
                                         histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                       'binsize':.01, 'legendloc':'upper right'}))
+                                                       'binsize':.01, 'xMin':0.5, 'xMax':1.5, 'legendloc':'upper right'}))
             histNum += 1
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
@@ -227,7 +229,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
                                      constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
-
    
     # Count the number of visits per filter for each proposal, over the sky. Uses opsim field slicer.
     propOrder = 0
@@ -245,7 +246,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                              'caption':'Number of visits per opsim field in %s filter, for propID %d'
                                              %(f, propid)},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                                           'label':'%s' %f, 'binsize':5})
+                                           'label':'%s' %f, 'binsize':5, 'xMin':0,
+                                           'xMax':nVisits_plotRange['all'][f][1], 'yMin':0})
             metricDict = makeDict(m1)
             sqlconstraint = ['filter = "%s" and propID = %s' %(f, propid)]
             slicer = configureSlicer('OpsimFieldSlicer',
@@ -265,14 +267,15 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                              displayDict={'group':'Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
                                           'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s' %f, 'binsize':5},)
+                                        'color':colors[f], 'label':'%s' %f, 'binsize':5, 'xMin':0,
+                                        'xMax':nVisits_plotRange['all']['%s' %f][1], 'yMin':0})
         metricDict = makeDict(m1)
         sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
         slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=sqlconstraint,
                                  metadata='%s band and WFD proposal' %(f), metadataVerbatim=True)
         slicerList.append(slicer)
     histNum += 1
-    
+
     # Calculate the Completeness and Joint Completeness for all proposals and WFD only.
     for prop in ('All Props', 'WFD'):
         if prop == 'All Props':
@@ -345,7 +348,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         histNum = startNum
         # Histogram the individual visit five sigma limiting magnitude.
         m1 = configureMetric('CountMetric',
-                             kwargs={'col':'fiveSigmaDepth'},
+                             kwargs={'col':'fiveSigmaDepth', 'metricName':'Single Visit Depth Histogram'},
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f], 'label':'%s'%f},
                             displayDict={'group':'Single Visit Depth', 'subgroup':'WFD', 'order':filtorder[f],
@@ -356,7 +359,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                 metadata=metadata, metadataVerbatim=True) 
         slicerList.append(slicer)
         # Histogram the individual visit sky brightness.
-        m1 = configureMetric('CountMetric', kwargs={'col':'filtSkyBrightness'},
+        m1 = configureMetric('CountMetric', kwargs={'col':'filtSkyBrightness', 'metricName':'Sky Brightness Histogram'},
                             histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f], 'label':'%s'%f},
                             displayDict={'group':'Sky Brightness', 'subgroup':'WFD', 'order':filtorder[f],
@@ -367,7 +370,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                 metadata=metadata, metadataVerbatim=True)
         slicerList.append(slicer)
         # Histogram the individual visit seeing.
-        m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing'},
+        m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing', 'metricName':'Seeing Histogram'},
                             histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f],'label':'%s'%f},
                             displayDict={'group':'Seeing', 'subgroup':'WFD', 'order':filtorder[f],
@@ -378,9 +381,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                 metadata=metadata, metadataVerbatim=True)
         slicerList.append(slicer)
         # Histogram the individual visit airmass values.
-        m1 = configureMetric('CountMetric', kwargs={'col':'airmass'}, 
+        m1 = configureMetric('CountMetric', kwargs={'col':'airmass', 'metricName':'Airmass Histogram'}, 
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                       'color':colors[f], 'label':'%s'%f},
+                                       'color':colors[f], 'label':'%s'%f, 'xMin':1.0, 'xMax':2.0},
                             displayDict={'group':'Airmass', 'subgroup':'WFD', 'order':filtorder[f],
                                          'caption':'Histogram of the airmass in %s band, WFD only.' %(f)})
         histNum += 1
@@ -390,14 +393,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         slicerList.append(slicer)
     
    # Slew histograms (time and distance). 
-    m1 = configureMetric('CountMetric', kwargs={'col':'slewTime'},
+    m1 = configureMetric('CountMetric', kwargs={'col':'slewTime', 'metricName':'Slew Time Histogram'},
                          plotDict={'logScale':True, 'ylabel':'Count'},
                          displayDict={'group':'Technical', 'subgroup':'Slew',
                                       'caption':'Histogram of slew times for all visits.'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'slewTime', 'binsize':5},
                               metricDict=makeDict(m1), constraints=[''])
     slicerList.append(slicer)
-    m1 = configureMetric('CountMetric', kwargs={'col':'slewDist'},
+    m1 = configureMetric('CountMetric', kwargs={'col':'slewDist', 'metricName':'Slew Distance Histogram'},
                          plotDict={'logScale':True, 'ylabel':'Count'},
                          displayDict={'group':'Technical', 'subgroup':'Slew',
                                       'caption':'Histogram of slew distances for all visits.'})
