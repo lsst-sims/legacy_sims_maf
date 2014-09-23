@@ -1,4 +1,5 @@
 {% extends "master.html" %}
+{% import 'macros.html' as mcr %}
 
 {% set active_page = "multicolor" %}
 
@@ -62,12 +63,15 @@
    <a name = "{{g|escape}}_{{sg|escape}}"><b>{{g|escape}} : {{sg|escape}}</b> </a>
    </p>
 
-   {% set metricNames = run.metricNames(skysetMetrics, baseonly=True) %}
+   {% set metricNames = run.uniqueMetricNames(skysetMetrics, baseonly=True) %}
    {% for mname in metricNames %}
      {% set mskyset = run.metricsWithMetricName(mname, skysetMetrics, baseonly=True) %}
      {% set skymaps = run.getSkyMaps(mskyset) %}
       <div id='metricset'>
-       {{ mname }} </br>
+       {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId) %}
+       {% set metricSelect = run.metricsToMetricIds(mskyset)|join('&metricId=') %}
+       {% set metricLink = metricLink ~ metricSelect %}
+	<a href={{metricLink}}>{{mname}}</a> </br>
        {% for skymap in skymaps%}
         {% set plotfile = run.getPlotfile(skymap) %}
         {% set thumbfile = run.getThumbfile(skymap) %}
@@ -79,64 +83,23 @@
 
    {% for m in combosetMetrics %}
      {% set comboplots = run.plotsForMetric(m) %}
-     {% set combohist = comboplots['ComboHistogram'] %}
+     {% set combodict = run.plotDict(comboplots) %}
+      {% set combohist = combodict['ComboHistogram'] %}
       <div id='metricset'>
 	{% set metricInfo = run.metricInfo(m) %}
-        {{ metricInfo['MetricName']|escape }} ({{ metricInfo['Slicer']|escape}}) </br>
-        {% set plotfile = run.getPlotfile(combohist) %}
-        {% set thumbfile = run.getThumbfile(combohist) %}
-          <a href="{{plotfile}}"> <img class="sm_thumbnail"   src='{{thumbfile}}'></a>
-	</div>
+        {{ metricInfo['MetricName']|escape }} ({{metricInfo['Slicer']|escape}})
+	</br> <div id='indent'> {{metricInfo['Metadata']|escape}} </div> </br>	
+	{% for plotfile, thumbfile in zip(combohist['plotFile'], combohist['thumbFile']) %}
+        <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+	 {% endfor %}
+       </div>
    {% endfor  %}
-      
-  {% if statNames|length > 0 %}
-    <div id='metricset'>
-   {% set ncols = statNames|length + ninfo %}
-   <table>
-   <tr class="lightestgray"> 
-   <td colspan={{ncols}}>
-    Group: <i>{{g }}</i>; Subgroup: <i>{{ sg }}</i>
-   </td>
-   </tr>
-       
-    <tr>
-    {% for key in metricInfo %}
-      <th>{{ key }} </th>
-    {% endfor %}
-    {% for name in statNames %}
-      <th> {{name|escape}} </th>
-    {% endfor %}
-     </tr>
 
-     {% for metric in subsetMetrics %}
-        {% set metricInfo = run.metricInfo(metric) %}
-        {% set stats = run.statsForMetric(metric) %}
-	{% set statDict = run.statDict(stats) %}
-        {% if statDict|length > 0 %}
-           <tr>
-           {% for key in metricInfo %}
-           <td>{{ metricInfo[key]|escape }}</td>
-           {% endfor %}
- 	   {% for statName in statNames %}
-	    <td>
-	      {% if statName in statDict.keys() %}
-	        {% if 'Count' in statName or 'm3Sigma' in statName or
-          'p3Sigma' in statName or 'TableFraction' in statName %} 
-                  {{ '%d'|format(statDict[statName]) }}
-	        {% else %}
-                  {{ '%.2f'|format(statDict[statName]) }}
-	        {% endif %}
-	     {% else %}
-	        {{ '--' }}
-	     {% endif %}
-	    </td>
-	   {% endfor %}
-	   </tr>
-	   {% endif %}
-      {% endfor %}	   
-      </table>
+   {% if statNames | length > 0 %}
+      <div id= 'metricset'>
+      {{ mcr.MakeStatTable(subsetMetrics, g, sg, run) }}
       </div>
-     {% endif %}      
+   {% endif %}
 
   {% endif %}      
  {% endfor %}
