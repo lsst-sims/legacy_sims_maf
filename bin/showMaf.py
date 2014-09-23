@@ -141,6 +141,8 @@ if __name__ == "__main__":
     global faviconPath
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
     env = Environment(loader=FileSystemLoader(templateDir))
+    # Add 'zip' to jinja templates.
+    env.globals.update(zip=zip)    
 
     global staticpath
     staticpath = '.'
