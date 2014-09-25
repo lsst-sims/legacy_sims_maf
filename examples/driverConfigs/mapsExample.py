@@ -11,11 +11,17 @@ lsstFilter='r'
 
 constraints=["filter = \'%s\'"%lsstFilter]
 m1 = configureMetric('ExgalM5', kwargs={'lsstFilter':lsstFilter}, plotDict={'xMin':20, 'xMax':30})
+
+# Note that we need to set useCache to False to ensure we calculate the metric at every point.
 slicer = configureSlicer('HealpixSlicer',kwargs={"nside":nside, 'useCache':False},
                          metricDict=makeDict(m1),  constraints=constraints)
 
 slicerList.append(slicer)
 
+slicer = configureSlicer('OpsimFieldSlicer',
+                         metricDict=makeDict(m1),  constraints=constraints)
+
+slicerList.append(slicer)
 
 
 nside=32

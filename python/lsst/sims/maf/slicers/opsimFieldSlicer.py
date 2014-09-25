@@ -54,10 +54,6 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldData = numpy rec array with the field information (ID, RA, Dec),
         Values for the column names are set during 'init'. 
         """
-        if maps is None:
-            maps = []
-        for skyMap in maps:
-            self.slicePoints = skyMap.run(self.slicePoints)
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIDColName])
         # Set needed values for slice metadata.
@@ -65,6 +61,10 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
         self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
+        if maps is None:
+            maps = []
+        for skyMap in maps:
+            self.slicePoints = skyMap.run(self.slicePoints)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
