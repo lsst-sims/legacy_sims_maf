@@ -297,7 +297,10 @@ class MafDriver(object):
                         # Need to pass in fieldData as well
                         slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
                     else:
-                        slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                       if len(slicer.mapsList) > 0:
+                          slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                       else:
+                          slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                      outDir=self.config.outputDir) 

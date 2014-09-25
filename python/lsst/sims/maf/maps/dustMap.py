@@ -23,8 +23,8 @@ class DustMap(BaseMap):
             slicePoints['ebv'] = EBVhp(slicePoints['nside'], pixels=slicePoints['sid'])
         # Not a healpix slicer, look up values based on RA,dec with possible interpolation
         else:
-            slicePoints['ebv'] = EBVhp(self.nside, ra=self.slicePoints['ra'],
-                                            dec=self.slicePoints['dec'], interp=self.interp)
+            slicePoints['ebv'] = EBVhp(self.nside, ra=slicePoints['ra'],
+                                            dec=slicePoints['dec'], interp=self.interp)
         
         return slicePoints
     
