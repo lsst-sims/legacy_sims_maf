@@ -62,8 +62,6 @@ class MafRunResults(object):
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
-        # Remove metrics which have no summary stats or plots.
-
         # Make empty arrays if there was nothing in the database
         if len(self.plots) == 0:
             self.plots = np.zeros(0, dtype=[('metricId',int), ('plotFile', '|S10')])
