@@ -13,7 +13,12 @@ class DatabaseRegistry(type):
             cls.registry = {}
         modname = inspect.getmodule(cls).__name__ + '.'
         if modname.startswith('lsst.sims.maf.db'):
-            modname = '' 
+            modname = ''
+        else:
+            if len(modname.split('.')) > 1:
+                modname = '.'.join(modname.split('.')[:-1]) + '.'
+            else:
+                modname = modname + '.'
         databasename = modname + name
         if databasename in cls.registry:
             raise Exception('Redefining databases %s! (there are >1 databases with the same name)' %(databasename))
@@ -114,7 +119,3 @@ class Database(object):
         results = t.engine.execute(sqlQuery)
         data = t._postprocess_results(results.fetchall())
         return data
-
-
-
-

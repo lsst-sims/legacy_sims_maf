@@ -26,10 +26,14 @@ class MafDriver(object):
         """Load up the configuration and set the slicer and metric lists """
         # Configvalues passed from runDriver.py
         self.config = configvalues
+        # Make sure only legitimate keys are in the dbAddress
+        for key in self.config.dbAddress.keys():
+           if key not in ['dbAddress','dbClass']:
+              raise ValueError('key value "%s" not valid for dbAddress dict.  Must be "dbAddress" or "dbClass".'%key)
         # If a dbClass isn't specified, use OpsimDatabase
         if 'dbClass' not in self.config.dbAddress.keys():
            self.config.dbAddress['dbClass'] = 'OpsimDatabase'
-
+           
         # Validate and freeze the config
         self.config.validate()
         self.config.freeze()

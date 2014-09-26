@@ -24,7 +24,7 @@ class MafRunResults(object):
             self.runName = 'RunName Not Available'
         else:
             with open (self.configSummary, "r") as myfile:
-                config=myfile.read()#.replace('\n', '')
+                config=myfile.read()
             spot = config.find('RunName')
             if spot == -1:
                 self.runName = 'RunName Not Available'
