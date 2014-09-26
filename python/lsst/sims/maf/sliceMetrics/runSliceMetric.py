@@ -250,7 +250,7 @@ class RunSliceMetric(BaseSliceMetric):
                                                                         self.simDataNames[iidi],
                                                                         self.sqlconstraints[iidi],
                                                                         self.metadatas[iidi], None)
-                self.resultsDb.updtaeSummaryStat(self.metricIds[iidi],
+                self.resultsDb.updateSummaryStat(self.metricIds[iidi],
                                                     summaryName=summaryMetric.name.replace(' metricdata', ''),
                                                     summaryValue=summaryValue)
         return summaryValues
