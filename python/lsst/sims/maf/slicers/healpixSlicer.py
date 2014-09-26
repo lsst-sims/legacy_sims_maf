@@ -67,7 +67,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         lat, lon = hp.pix2ang(self.nside, islice)
         # Move dec to +/- 90 degrees
         dec = lat - np.pi/2.0
-        # Flip ra from latitude to RA (increasing eastward rather than westward)
+        # Flip ra from longitude to RA (increasing eastward rather than westward)
         ra = -lon % (np.pi*2)
         return ra, dec  
     
