@@ -127,7 +127,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
                     min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
                     cmap=cmap, norm=norm)        
-        #hp.graticule(dpar=20, dmer=20, verbose=False)
+        hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
