@@ -34,12 +34,12 @@ class MetricRow(Base):
 
 class DisplayRow(Base):
     """
-    Define contents and format of the displays table. 
+    Define contents and format of the displays table.
 
     (Table to list the display properties for each metric.)
     """
     __tablename__ = "displays"
-    displayId = Column(Integer, primary_key=True)    
+    displayId = Column(Integer, primary_key=True)
     metricId = Column(Integer, ForeignKey('metrics.metricId'))
     # Group for displaying metric (in webpages).
     displayGroup = Column(String)
@@ -48,13 +48,13 @@ class DisplayRow(Base):
     # Order to display metric (within subgroup).
     displayOrder = Column(Float)
     # The figure caption.
-    displayCaption = Column(String)  
+    displayCaption = Column(String)
     metric = relationship("MetricRow", backref=backref('displays', order_by=displayId))
     def __rep__(self):
         return "<Display(displayGroup='%s', displaySubgroup='%s', displayOrder='%.1f', displayCaptio\
 n='%s')>" \
             %(self.displayGroup, self.displaySubgroup, self.displayOrder, self.displayCaption)
-        
+
 class PlotRow(Base):
     """
     Define contents and format of plot list table.
@@ -73,7 +73,6 @@ class PlotRow(Base):
         return "<Plot(metricId='%d', plotType='%s', plotFile='%s')>" \
           %(self.metricId, self.plotType, self.plotFile)
 
-    
 class SummaryStatRow(Base):
     """
     Define contents and format of the summary statistics table.
@@ -93,7 +92,6 @@ class SummaryStatRow(Base):
         return "<SummaryStat(metricId='%d', summaryName='%s', summaryValue='%f')>" \
           %(self.metricId, self.summaryName, self.summaryValue)
 
-    
 class ResultsDb(object):
     def __init__(self, outDir= '.', resultsDbAddress=None, verbose=False):
         """
@@ -119,7 +117,7 @@ class ResultsDb(object):
 
     def close(self):
         self.session.close()
-        
+
     def addMetric(self, metricName, slicerName, simDataName, sqlConstraint,
                   metricMetadata, metricDataFile):
         """
@@ -174,7 +172,7 @@ class ResultsDb(object):
                                  displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
                                  displayOrder=displayOrder, displayCaption=displayCaption)
         self.session.add(displayinfo)
-        self.session.commit()        
+        self.session.commit()
 
     def addPlot(self, metricId, plotType, plotFile):
         """
@@ -215,7 +213,6 @@ class ResultsDb(object):
                 self.session.commit()
             else:
                 warnings.warn('Warning! Cannot save summary statistic that is not a simple float or int')
-        
 
     def getMetricIds(self):
         """
@@ -225,7 +222,7 @@ class ResultsDb(object):
         for m in self.session.query(MetricRow).all():
             metricId.append(m.metricId)
         return metricId
-        
+
     def getSummaryStats(self, metricId=None):
         """
         Get the summary stats for all or a single metric.
@@ -241,7 +238,7 @@ class ResultsDb(object):
               filter(MetricRow.metricId == mid).all():
               summarystats.append([m.metricName, m.slicerName, m.metricMetadata, s.summaryName, s.summaryValue])
         return summarystats
-                
+
     def getMetricDataFiles(self, metricId=None):
         """
         Get the metric data filenames for all or a single metric.

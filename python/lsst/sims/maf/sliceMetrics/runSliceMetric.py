@@ -18,14 +18,14 @@ def dtime(time_prev):
 
 class RunSliceMetric(BaseSliceMetric):
     """
-    RunSliceMetric couples a single slicer and multiple metrics, in order 
-    to generate metric data values at all points over the slicer. 
-   
-    The RunSliceMetric handles metadata about each metric, including the 
+    RunSliceMetric couples a single slicer and multiple metrics, in order
+    to generate metric data values at all points over the slicer.
+    
+    The RunSliceMetric handles metadata about each metric, including the
     opsim run name, the sql constraint on the query used to obtain the input data,
-    and the slicer type that produced the metric data. 
+    and the slicer type that produced the metric data.
     """
-    def __init__(self, useResultsDb=True, resultsDbAddress=None, 
+    def __init__(self, useResultsDb=True, resultsDbAddress=None,
                  figformat='pdf', dpi=600, outDir='Output'):
         """
         Instantiate the RunSliceMetric.
@@ -34,7 +34,7 @@ class RunSliceMetric(BaseSliceMetric):
                                              figformat=figformat, dpi=dpi, outDir=outDir)
         # Add dictionary to save metric objects
         self.metricObjs = {}
-        self.slicer = None   
+        self.slicer = None
 
     def metricObjIid(self, metricObj):
        """
@@ -50,7 +50,7 @@ class RunSliceMetric(BaseSliceMetric):
     
     def setSlicer(self, slicer, override=False):
         """
-        Set slicer for RunSliceMetric. 
+        Set slicer for RunSliceMetric.
     
         If override = False (default), checks if slicer already set, and if the two are equal.
         """
@@ -59,12 +59,12 @@ class RunSliceMetric(BaseSliceMetric):
             # Update existing slicer dict
             for iid in self.slicers:
                 self.slicers[iid] = self.slicer
-            return True        
-        return (self.slicer == slicer)            
+            return True
+        return (self.slicer == slicer)
 
     def setMetrics(self, metricList):
         """
-        Set the metric objects used to calculate metric values. 
+        Set the metric objects used to calculate metric values.
         """
         if not hasattr(metricList, '__iter__'):
             metricList = [metricList,]
@@ -77,7 +77,7 @@ class RunSliceMetric(BaseSliceMetric):
             self.slicers[iid] = self.slicer
             iid += 1
         self.iid_next = iid
-        return 
+        return
 
     def validateMetricData(self, simData):
         """
@@ -103,11 +103,11 @@ class RunSliceMetric(BaseSliceMetric):
            self.simDataNames[iid] = simDataName
            self.sqlconstraints[iid] = sqlconstraint
            self.metadatas[iid] = metadata
-           if len(self.metadatas[iid]) == 0:                
+           if len(self.metadatas[iid]) == 0:
               self.metadatas[iid] = self.sqlconstraints[iid]
-        # Set up (masked) arrays to store metric data. 
+        # Set up (masked) arrays to store metric data.
         for iid in self.metricObjs:
-           self.metricValues[iid] = ma.MaskedArray(data = np.empty(len(self.slicer), 
+           self.metricValues[iid] = ma.MaskedArray(data = np.empty(len(self.slicer),
                                                                    self.metricObjs[iid].metricDtype),
                                                    mask = np.zeros(len(self.slicer), 'bool'),
                                                    fill_value=self.slicer.badval)
@@ -128,11 +128,11 @@ class RunSliceMetric(BaseSliceMetric):
             else:
                # There is data! Should we use our data cache?
                if cache:
-                  # Make the data idxs hashable.  
+                  # Make the data idxs hashable.
                   key = str(sorted(slice_i['idxs']))[1:-1].replace(' ','')
                   # If key exists, set flag to use it, otherwise add it
                   if key in cacheDict:
-                     useCache = True 
+                     useCache = True
                   else:
                      cacheDict[key] = i
                      useCache = False
@@ -150,8 +150,7 @@ class RunSliceMetric(BaseSliceMetric):
                   for iid in self.metricObjs:
                      self.metricValues[iid].data[i] = self.metricObjs[iid].run(slicedata,
                                                                                slicePoint=slice_i['slicePoint'])
-    
-           
+
         # Mask data where metrics could not be computed (according to metric bad value).
         for iid in self.metricObjs:
            if self.metricValues[iid].dtype.name == 'object':
@@ -162,8 +161,7 @@ class RunSliceMetric(BaseSliceMetric):
               # For some reason, this doesn't work for dtype=object arrays.
               self.metricValues[iid].mask = np.where(self.metricValues[iid].data==self.metricObjs[iid].badval,
                                                      True, self.metricValues[iid].mask)
-           
-           
+
 
     def reduceAll(self):
         """
@@ -175,15 +173,15 @@ class RunSliceMetric(BaseSliceMetric):
                 continue
             # Apply reduce functions 
             self.reduceMetric(iid, self.metricObjs[iid].reduceFuncs.values(),
-                              self.metricObjs[iid].reduceOrder.values())            
-                
+                              self.metricObjs[iid].reduceOrder.values())
+
     def reduceMetric(self, iid, reduceFunc, reduceOrder=None):
         """
         Run 'reduceFunc' (method on metric object) on self.metricValues[iid].
-    
+
         reduceFunc can be a list of functions to be applied to the same metric data.
         reduceOrder can be list of integers to add to the displayDict['order'] value for each
-          reduced metric value (can also be None). 
+          reduced metric value (can also be None).
         """
         if not isinstance(reduceFunc, list):
             reduceFunc = [reduceFunc,]
@@ -222,21 +220,21 @@ class RunSliceMetric(BaseSliceMetric):
               # Evaluate reduced version of metric values.
               for riid, rFunc in zip(riids, reduceFunc):
                  self.metricValues[riid].data[i] = rFunc(mVal)
-              
+
 
     def computeSummaryStatistics(self, iid, summaryMetric):
         """
         Compute single number summary of self.metricValues[iid], using summaryMetric.
-        
+
         summaryMetric must be an object (not a class), already instantiated.
         """
         if not hasattr(iid, '__iter__'):
             iid = [iid,]
         summaryValues = []
-        for iidi in iid: 
+        for iidi in iid:
             # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
-            # Create numpy structured array from metric data, with bad values removed. 
-            rarr = np.array(zip(self.metricValues[iidi].compressed()), 
+            # Create numpy structured array from metric data, with bad values removed.
+            rarr = np.array(zip(self.metricValues[iidi].compressed()),
                             dtype=[('metricdata', self.metricValues[iidi].dtype)])
             # The summary metric colname should already be set to 'metricdata', but in case it's not:
             summaryMetric.colname = 'metricdata'
@@ -246,10 +244,10 @@ class RunSliceMetric(BaseSliceMetric):
                summaryValue = summaryMetric.run(rarr)
             summaryValues.append(summaryValue)
             # Add summary metric info to results database. (should be float or int).
-            if self.resultsDb:           
+            if self.resultsDb:
                 if iidi not in self.metricIds:
                     self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
-                                                                    self.simDataNames[iidi], 
+                                                                    self.simDataNames[iidi],
                                                                     self.sqlconstraints[iidi],
                                                                     self.metadatas[iidi], None)
                 self.resultsDb.addSummaryStat(self.metricIds[iidi],
@@ -257,13 +255,12 @@ class RunSliceMetric(BaseSliceMetric):
                                                 summaryValue=summaryValue)
         return summaryValues
 
-    
-        
+
     def writeMetric(self, iid, comment='', outfileRoot=None):
         """
         Write metric values 'metricName' to disk.
 
-        comment = any additional comments to add to output file (beyond 
+        comment = any additional comments to add to output file (beyond
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
        """
@@ -284,14 +281,14 @@ class RunSliceMetric(BaseSliceMetric):
           caption = ''
           plotTypes = self.slicer.plotFuncs.keys()
           if len(plotTypes) > 0:
-            caption += 'Plots (' 
+            caption += 'Plots ('
             ptypes = []
             for p in displayOrder:
                 if p in plotTypes:
                     ptypes.append(p)
                     plotTypes.remove(p)
             for r in plotTypes:
-                ptypes.append(r)                   
+                ptypes.append(r)
             for p in ptypes:
                 caption += '%s, ' %(p.replace('plot', ''))
             caption = caption[:-2] + ') for '
@@ -303,7 +300,7 @@ class RunSliceMetric(BaseSliceMetric):
             caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotDicts[iid]['zp'])
           if 'normVal' in self.plotDicts[iid]:
             caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotDicts[iid]['normVal'])
-          caption += '(auto)' 
+          caption += '(auto)'
           self.displayDicts[iid]['caption'] = caption
         if self.resultsDb:
           if iid not in self.metricIds:
@@ -313,30 +310,29 @@ class RunSliceMetric(BaseSliceMetric):
           if self.displayDicts[iid]['subgroup'] is None:
              self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
           self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
-             
-                         
+
     def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """
         Plot histograms and skymaps (where relevant) for all metrics.
         """
-        for iid in self.metricValues:            
+        for iid in self.metricValues:
            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
            if closefig:
               plt.close('all')
            if plotfigs is None and verbose:
               warnings.warn('Not plotting metric data for %s' %(mname))
-            
+
     def plotMetric(self, iid, savefig=True, outfileRoot=None):
         """
         Create all plots for 'metricName' .
         """
-        # Get the metric plot parameters. 
+        # Get the metric plot parameters.
         pParams = self.plotDicts[iid].copy()
         # Build plot title and label.
         mname = self.metricNames[iid]
-        # "Units" always in pParams, but might be '' (== the physical units). 
+        # "Units" always in pParams, but might be '' (== the physical units).
         if 'title' not in pParams:
-            # Build default title. 
+            # Build default title.
             pParams['title'] = self.simDataNames[iid] + ' ' + self.metadatas[iid]
             pParams['title'] += ': ' + mname
         if 'ylabel' not in pParams:
@@ -349,14 +345,14 @@ class RunSliceMetric(BaseSliceMetric):
                 pParams['xlabel'] = self.slicer.sliceColName + ' (' + self.slicer.sliceColUnits + ')'
             else:
                 pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
-        # Plot the data. 
+        # Plot the data.
         # Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
-        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot)    
+        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot)
         plotResults = self.slicer.plotData(self.metricValues[iid], savefig=savefig,
                                            figformat=self.figformat, dpi=self.dpi,
                                            filename=os.path.join(self.outDir, outfile), **pParams)
         # Save information about the plotted files.
-        if self.resultsDb:           
+        if self.resultsDb:
             if iid not in self.metricIds:
                 self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
                                                                self.simDataNames[iid], self.sqlconstraints[iid],
