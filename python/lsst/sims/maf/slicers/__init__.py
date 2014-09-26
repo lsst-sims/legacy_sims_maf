@@ -8,5 +8,6 @@ from .nDSlicer import *
 from .hourglassSlicer import *
 from .fOSlicer import *
 from .healpixComplexSlicer import *
+from .healpixSDSSSlicer import *
 
 

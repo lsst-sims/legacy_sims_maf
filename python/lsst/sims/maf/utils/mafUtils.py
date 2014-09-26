@@ -72,3 +72,11 @@ def percentileClipping(data, percentile=95.):
         min_value = 0
         max_value = 0
     return  min_value, max_value
+
+def gnomonic_project_toxy(RA1, Dec1, RAcen, Deccen):
+    """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccen.
+    Input radians."""
+    cosc = np.sin(Deccen) * np.sin(Dec1) + np.cos(Deccen) * np.cos(Dec1) * np.cos(RA1-RAcen)
+    x = np.cos(Dec1) * np.sin(RA1-RAcen) / cosc
+    y = (np.cos(Deccen)*np.sin(Dec1) - np.sin(Deccen)*np.cos(Dec1)*np.cos(RA1-RAcen)) / cosc
+    return x, y

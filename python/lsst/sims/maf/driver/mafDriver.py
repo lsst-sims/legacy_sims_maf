@@ -26,7 +26,14 @@ class MafDriver(object):
         """Load up the configuration and set the slicer and metric lists """
         # Configvalues passed from runDriver.py
         self.config = configvalues
-
+        # Make sure only legitimate keys are in the dbAddress
+        for key in self.config.dbAddress.keys():
+           if key not in ['dbAddress','dbClass']:
+              raise ValueError('key value "%s" not valid for dbAddress dict.  Must be "dbAddress" or "dbClass".'%key)
+        # If a dbClass isn't specified, use OpsimDatabase
+        if 'dbClass' not in self.config.dbAddress.keys():
+           self.config.dbAddress['dbClass'] = 'OpsimDatabase'
+           
         # Validate and freeze the config
         self.config.validate()
         self.config.freeze()
@@ -43,7 +50,7 @@ class MafDriver(object):
         utils.moduleLoader(self.config.modules)
 
         # Set up database connection.
-        self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
+        self.opsimdb = db.Database.getClass(self.config.dbAddress['dbClass'])(self.config.dbAddress['dbAddress'])
 
         time_prev = time.time()
         self.time_start = time.time()
@@ -61,10 +68,13 @@ class MafDriver(object):
                 print 'Got OpSim config info in %.3g s'%dt
 
         # Get proposal information (for OpSim databases).
-        self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
-        if self.verbose:
-            dt, time_prev = dtime(time_prev)
-            print 'fetched PropID info in %.3g s'%dt
+        if self.config.dbAddress['dbClass'] == 'OpsimDatabase':
+           self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
+           if self.verbose:
+               dt, time_prev = dtime(time_prev)
+               print 'fetched PropID info in %.3g s'%dt
+        else:
+           self.allpropids, self.wfdpropids, self.ddpropids = ([0],[0],[0])
 
         # Construct the slicers and metric objects
         self.slicerList = []
@@ -134,7 +144,7 @@ class MafDriver(object):
             print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add slicer metadata or change metric names.')
   
-    def getData(self, constraint, colnames=[], stackersList=[], groupBy='expMJD'):
+    def getData(self, constraint, colnames=[], stackersList=[]):
         """Pull required data from database and calculate additional columns from stackers. """
         # Stacker_names describe the already-configured (via the config driver) stacker methods.
         stacker_names = [s.__class__.__name__ for s in stackersList ]
@@ -160,7 +170,7 @@ class MafDriver(object):
         dbcolnames=list(set(dbcolnames))
         # Get the data from database.
         self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
-                                                 colnames=dbcolnames, groupBy = groupBy)
+                                                 colnames=dbcolnames)
         # Calculate the data from stackers.
         for stacker in stackersList:
             self.data = stacker.run(self.data)
