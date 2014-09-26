@@ -20,7 +20,7 @@ class RunSliceMetric(BaseSliceMetric):
     """
     RunSliceMetric couples a single slicer and multiple metrics, in order
     to generate metric data values at all points over the slicer.
-    
+
     The RunSliceMetric handles metadata about each metric, including the
     opsim run name, the sql constraint on the query used to obtain the input data,
     and the slicer type that produced the metric data.
@@ -171,7 +171,7 @@ class RunSliceMetric(BaseSliceMetric):
             # If there are no reduce functions, skip this metric.
             if len(self.metricObjs[iid].reduceFuncs.keys()) ==0:
                 continue
-            # Apply reduce functions 
+            # Apply reduce functions.
             self.reduceMetric(iid, self.metricObjs[iid].reduceFuncs.values(),
                               self.metricObjs[iid].reduceOrder.values())
 
@@ -246,13 +246,13 @@ class RunSliceMetric(BaseSliceMetric):
             # Add summary metric info to results database. (should be float or int).
             if self.resultsDb:
                 if iidi not in self.metricIds:
-                    self.metricIds[iidi] = self.resultsDb.addMetric(self.metricNames[iidi], self.slicer.slicerName,
-                                                                    self.simDataNames[iidi],
-                                                                    self.sqlconstraints[iidi],
-                                                                    self.metadatas[iidi], None)
-                self.resultsDb.addSummaryStat(self.metricIds[iidi],
-                                                summaryName=summaryMetric.name.replace(' metricdata', ''),
-                                                summaryValue=summaryValue)
+                    self.metricIds[iidi] = self.resultsDb.updateMetric(self.metricNames[iidi], self.slicer.slicerName,
+                                                                        self.simDataNames[iidi],
+                                                                        self.sqlconstraints[iidi],
+                                                                        self.metadatas[iidi], None)
+                self.resultsDb.updtaeSummaryStat(self.metricIds[iidi],
+                                                    summaryName=summaryMetric.name.replace(' metricdata', ''),
+                                                    summaryValue=summaryValue)
         return summaryValues
 
 
@@ -304,12 +304,12 @@ class RunSliceMetric(BaseSliceMetric):
           self.displayDicts[iid]['caption'] = caption
         if self.resultsDb:
           if iid not in self.metricIds:
-            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                            self.simDataNames[iid], self.sqlconstraints[iid],
-                                                            self.metadatas[iid], None)
+            self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
+                                                              self.simDataNames[iid], self.sqlconstraints[iid],
+                                                              self.metadatas[iid], None)
           if self.displayDicts[iid]['subgroup'] is None:
              self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
-          self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
+          self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
 
     def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
         """
@@ -354,11 +354,11 @@ class RunSliceMetric(BaseSliceMetric):
         # Save information about the plotted files.
         if self.resultsDb:
             if iid not in self.metricIds:
-                self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                               self.simDataNames[iid], self.sqlconstraints[iid],
-                                                               self.metadatas[iid], None)
+                self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
+                                                                self.simDataNames[iid], self.sqlconstraints[iid],
+                                                                self.metadatas[iid], None)
             self.captionMetric(iid)
             for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
                 froot, fname = os.path.split(filename)
-                self.resultsDb.addPlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
+                self.resultsDb.updatePlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
         return plotResults['figs']

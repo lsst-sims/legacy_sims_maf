@@ -118,13 +118,22 @@ class ResultsDb(object):
     def close(self):
         self.session.close()
 
-    def addMetric(self, metricName, slicerName, simDataName, sqlConstraint,
+    def updateMetric(self, metricName, slicerName, simDataName, sqlConstraint,
                   metricMetadata, metricDataFile):
         """
-        Add a row to the metrics table.
+        Add a row to or update a row in the metrics table.
+
+        - metricName: the name of the metric
+        - sliceName: the name of the slicer
+        - simDataName: the name of used to identify the simData
+        - sqlConstraint: the sql constraint used to select data from the simData
+        - metricMetadata: the metadata associated with the metric
+        - metricDatafile: the data file the metric data is stored in
 
         If same metric (same metricName, slicerName, simDataName, sqlConstraint, metadata) 
         already exists, adds to the db with 'run' value increased by one.
+
+        Returns metricId: the Id number of this metric in the metrics table.
         """
         if simDataName is None:
             simDataName = 'NULL'
@@ -146,9 +155,12 @@ class ResultsDb(object):
         self.session.commit()
         return metricinfo.metricId
 
-    def addDisplay(self, metricId, displayDict):
+    def updateDisplay(self, metricId, displayDict):
         """
-        Add a row to the displays table.
+        Add a row to or update a row in the displays table.
+
+        - metricID: the metric Id of this metric in the metrics table
+        - displayDict: dictionary containing the display info
 
         Replaces existing row with same metricId.
         """
@@ -158,7 +170,7 @@ class ResultsDb(object):
         if len(displayinfo) > 0:
             for d in displayinfo:
                 self.session.delete(d)
-        # Then go ahead and add new displayDict. 
+        # Then go ahead and add new displayDict.
         for k in displayDict:
             if displayDict[k] is None:
                 displayDict[k] = 'NULL'
@@ -168,15 +180,19 @@ class ResultsDb(object):
         displayCaption = displayDict['caption']
         if displayCaption.endswith('(auto)'):
             displayCaption = displayCaption.replace('(auto)', '', 1)
-        displayinfo = DisplayRow(metricId=metricId, 
-                                 displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
+        displayinfo = DisplayRow(metricId=metricId,
+                                 displayGroup=displayGroup, displaySubgroup=displaySubgroup,
                                  displayOrder=displayOrder, displayCaption=displayCaption)
         self.session.add(displayinfo)
         self.session.commit()
 
-    def addPlot(self, metricId, plotType, plotFile):
+    def updatePlot(self, metricId, plotType, plotFile):
         """
-        Add a row to the plot table.
+        Add a row to or update a row in the plot table.
+
+        - metricId: the metric Id of this metric in the metrics table
+        - plotType: the 'type' of this plot
+        - plotFile: the filename of this plot
 
         Remove older rows with the same metricId, plotType and plotFile.
         """
@@ -189,9 +205,19 @@ class ResultsDb(object):
         self.session.add(plotinfo)
         self.session.commit()
 
-    def addSummaryStat(self, metricId, summaryName, summaryValue):
+    def updateSummaryStat(self, metricId, summaryName, summaryValue):
         """
-        Add a row to the summary statistic table.
+        Add a row to or update a row in the summary statistic table.
+
+        - metricId: the metric ID of this metric in the metrics table
+        - summaryName: the name of this summary statistic
+        - summaryValue: the value for this summary statistic
+
+        Most summary statistics will be a simple name (string) + value (float) pair.
+        For special summary statistics which must return multiple values, the base name
+        can be provided as 'name', together with a np recarray as 'value', where the
+        recarray also has 'name' and 'value' columns (and each name/value pair is then saved
+        as a summary statistic associated with this same metricId). 
         """
         # Allow for special summary statistics which return data in a np structured array with
         #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic). 
