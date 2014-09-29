@@ -50,7 +50,16 @@ class TestDb(unittest.TestCase):
     def testSqliteFileNotExists(self):
         """Test that db gives useful error message if db file doesn't exist."""
         self.assertRaises(IOError, db.Database, 'sqlite:///thisdatabasedoesntexist_sqlite.db')
-        
+
+    def testArbitraryQuery(self):
+        """
+        Test that an arbitrary query can be executed.
+        No attempt is made to validat the results.
+        """
+        table = db.Table('Summary', 'obsHistID', self.dbAddress)
+        query = 'select count(expMJD), filter from ObsHistory, ObsHistory_Proposal'
+        query += ' where obsHistID = ObsHistory_obsHistID group by Proposal_propID, filter'
+        results = table.execute_arbitrary(query)
 
 if __name__ == "__main__":
     unittest.main()
