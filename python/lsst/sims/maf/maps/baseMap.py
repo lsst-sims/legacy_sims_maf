@@ -21,8 +21,10 @@ class MapsRegistry(type):
             raise Exception('Redefining maps %s! (there are >1 maps with the same name)' %(mapsname))
         if mapsname != 'BaseMaps':
             cls.registry[mapsname] = cls
+            
     def getClass(cls, mapsname):
         return cls.registry[mapsname]
+
     def list(cls, doc=False):
         for mapsname in sorted(cls.registry):
             if not doc:

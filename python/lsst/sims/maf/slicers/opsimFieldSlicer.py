@@ -71,6 +71,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
         @wraps(self._sliceSimData)
+
         def _sliceSimData(islice):
             idxs = self.simIdxs[self.left[islice]:self.right[islice]]
             # Build dict for slicePoint info

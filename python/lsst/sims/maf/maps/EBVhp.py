@@ -20,22 +20,27 @@ def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
         raise RuntimeError("Need to set ra,dec or pixels.")
 
     # Load the map
-    ebvDataDir=os.environ.get("SIMS_DUSTMAPS_DIR")
-    filename = 'DustMaps/dust_nside_%i.npz'%nside
-    dustMap = np.load(os.path.join(ebvDataDir,filename))['ebvMap']
+    if not hasattr(EBVhp, 'nside'):
+        EBVhp.nside = nside
+        
+    if (not hasattr(EBVhp, 'dustmap')) | (EBVhp.nside != nside) :
+        EBVhp.nside = nside
+        ebvDataDir=os.environ.get("SIMS_DUSTMAPS_DIR")
+        filename = 'DustMaps/dust_nside_%i.npz'%EBVhp.nside
+        EBVhp.dustMap = np.load(os.path.join(ebvDataDir,filename))['ebvMap']
 
     # If we are interpolating to arbitrary positions
     if interp:
-        result = hp.get_interp_val(dustMap, dec + np.pi/2.,
+        result = hp.get_interp_val(EBVhp.dustMap, dec + np.pi/2.,
                                   -ra % (np.pi*2.))
     else:
         # If we know the pixel indices we want
         if pixels is not None:
-            result = dustMap[pixels]
+            result = EBVhp.dustMap[pixels]
         # Look up 
         else:
-            pixels = radec2pix(nside,ra,dec)
-            result = dustMap[pixels]
+            pixels = radec2pix(EBVhp.nside,ra,dec)
+            result = EBVhp.dustMap[pixels]
 
     return result
 
