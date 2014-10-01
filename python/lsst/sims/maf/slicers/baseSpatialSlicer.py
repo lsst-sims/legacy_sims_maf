@@ -57,13 +57,14 @@ class BaseSpatialSlicer(BaseSlicer):
         if maps is None:
             maps = []
         else:
-            if self.cacheSize == 0:
+            if self.cacheSize != 0:
                 warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
         for skyMap in maps:
             self.slicePoints = skyMap.run(self.slicePoints)
         @wraps(self._sliceSimData)
+        
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
