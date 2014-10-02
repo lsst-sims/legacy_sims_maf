@@ -31,8 +31,7 @@ def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
 
     # If we are interpolating to arbitrary positions
     if interp:
-        result = hp.get_interp_val(EBVhp.dustMap, dec + np.pi/2.,
-                                  -ra % (np.pi*2.))
+        result = hp.get_interp_val(EBVhp.dustMap, np.pi/2. - dec , ra )
     else:
         # If we know the pixel indices we want
         if pixels is not None:
