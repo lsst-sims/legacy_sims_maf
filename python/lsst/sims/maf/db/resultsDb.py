@@ -30,7 +30,7 @@ class MetricRow(Base):
     def __repr__(self):
         return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', metricRun='%d')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.metricRuns)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.metricRun)
 
 class DisplayRow(Base):
     """
@@ -217,7 +217,8 @@ class ResultsDb(object):
             metricId = [metricId,]
         summarystats = []
         for mid in metricId:
-            for m, s in self.session.query(MetricRow, SummaryStatRow).\
+            for m, s in self.session.query(MetricRow.metricName, MetricRow.slicerName, MetricRow.metricMetadata,
+                                           SummaryStatRow).\
               filter(MetricRow.metricId == SummaryStatRow.metricId).\
               filter(MetricRow.metricId == mid).all():
               summarystats.append([m.metricName, m.slicerName, m.metricMetadata, s.summaryName, s.summaryValue])
