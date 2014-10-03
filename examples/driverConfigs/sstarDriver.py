@@ -72,7 +72,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         seeing_norm = stretch['seeing']    
         mag_zpoints = stretch['coaddedDepth']
         nvisitBench = stretch['nvisits']
-
+    else:
         sky_zpoints = design['skybrightness']
         seeing_norm = design['seeing']
         mag_zpoints = design['coaddedDepth']
