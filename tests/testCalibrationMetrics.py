@@ -76,11 +76,11 @@ class TestCalibrationMetrics(unittest.TestCase):
             # Make sure the RMS increases as seeing increases, the star gets fainter,
             # the background gets brighter, or the baseline decreases.
             if flag:
-                #assert(worse1 < baseline)
-                #assert(worse2 < worse1) # When normalized, 'perfect'
-                #survey assumed to have same seeing and limiting mags.
+                # When normalized, mag of star and m5 don't matter (just scheduling).
+                self.assertAlmostEqual(worse2, worse1)
+                self.assertAlmostEqual(worse4, worse3)
+                # But using fewer points should make proper motion worse.
                 assert(worse3 < worse2)
-                assert(worse4 < worse3)
             else:
                 assert(worse1 > baseline)
                 assert(worse2 > worse1)
