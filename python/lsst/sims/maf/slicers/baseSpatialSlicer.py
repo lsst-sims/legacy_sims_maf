@@ -164,7 +164,7 @@ class BaseSpatialSlicer(BaseSlicer):
             if histRange is None:
                 bins = np.arange(metricValue.min(), metricValue.max()+binsize, binsize)
             else:
-                bins = np.arange(histRange[0], histrange[1]+binsize, binsize)
+                bins = np.arange(histRange[0], histRange[1]+binsize, binsize)
         # Plot histograms.
         # Add a test to see if data falls within histogram range.. because otherwise histogram will fail.
         if histRange is not None:

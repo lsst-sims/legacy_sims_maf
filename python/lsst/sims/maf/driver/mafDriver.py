@@ -80,7 +80,7 @@ class MafDriver(object):
         self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, kwargs, metricDict, constraints, stackerDict, plotDict, metadata = \
+            name, kwargs, metricDict, constraints, stackerDict, metadata, metadataVerbatim = \
                 readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
@@ -89,8 +89,8 @@ class MafDriver(object):
                 print 'Slicer %s has repeated constraints' %slicer.name
                 print 'Constraints:  ', slicer.constraints
                 raise Exception('Slicer constraints are not unique')
-            temp_slicer.plotConfigs = slicer.plotConfigs
             temp_slicer.metadata = metadata
+            temp_slicer.metadataVerbatim = metadataVerbatim
             temp_slicer.index = i
             stackersList = []
             for key in stackerDict.keys():
@@ -134,9 +134,12 @@ class MafDriver(object):
         for i,slicer in enumerate(self.slicerList):
             for constraint in slicer.constraints:
                 for metric in self.metricList[i]:
-                    # Approximate what output filename will be 
-                    comment = constraint.replace('=','').replace('filter','').replace("'",'')
-                    comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
+                    # Approximate what output filename will be
+                    if slicer.metadataVerbatim:
+                        comment = slicer.metadata
+                    else:
+                        comment = constraint.replace('=','').replace('filter','').replace("'",'')
+                        comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
                     filenames.append('_'.join([metric.name, comment, slicer.slicerName]))
         if len(filenames) != len(set(filenames)):
             duplicates = list(set([x for x in filenames if filenames.count(x) > 1]))
@@ -287,8 +290,11 @@ class MafDriver(object):
                     gm.setSlicer(slicer)
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
-                    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-                    metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
+                    if slicer.metadataVerbatim:
+                        metadata = slicer.metadata
+                    else:
+                        metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
+                        metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
                     # Run through slicepoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
                                  metadata=metadata, sqlconstraint=sqlconstraint)
@@ -299,11 +305,7 @@ class MafDriver(object):
                     gm.reduceAll()
                     # And write metric data files to disk.
                     gm.writeAll()
-                    # Replace the plotDict for selected metricNames (to allow override from config file).
-                    for mName in slicer.plotConfigs:
-                        iid = gm.findIids(metricName=mName)[0]
-                        gm.plotDict[iid] = readMixConfig(slicer.plotConfigs[mName])
-                    # And plot (and caption) all metric values.
+                    # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)

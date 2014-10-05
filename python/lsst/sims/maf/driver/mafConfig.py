@@ -44,10 +44,9 @@ class SlicerConfig(pexConfig.Config):
     constraints = pexConfig.ListField("", dtype=str, default=[])
     stackerDict = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
                                           keytype=int, itemtype=ColStackConfig, default={}) 
-    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str,
-                                            itemtype=MixConfig, default={})
     metadata = pexConfig.Field("", dtype=str, default='')
-
+    metadataVerbatim = pexConfig.Field("", dtype=bool, default=False)
+    
 class MafConfig(pexConfig.Config):
     """
     Using pexConfig to set MAF configuration parameters
@@ -129,21 +128,21 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={},
     mc.displayDict = makeMixConfig(displayDict)
     return mc
 
-def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None, plotConfigs=None, metadata=''):
+def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None,
+                    metadata='', metadataVerbatim=False):
     """
     Helper function to generate a Slicer pex config object.
     """
     slicer = SlicerConfig()
     slicer.name = name
     slicer.kwargs = makeMixConfig(kwargs)
-    slicer.metadata=metadata
+    slicer.metadata = metadata
+    slicer.metadataVerbatim = metadataVerbatim
     if metricDict:
-        slicer.metricDict=metricDict
-    slicer.constraints=constraints
+        slicer.metricDict = metricDict
+    slicer.constraints = constraints
     if stackerDict:
         slicer.stackerDict = stackerDict
-    if plotConfigs:
-        slicer.plotConfigs = plotConfigs
     return slicer
 
 def readSlicerConfig(config):
@@ -151,11 +150,11 @@ def readSlicerConfig(config):
     name = config.name
     kwargs = readMixConfig(config.kwargs)
     metricDict = config.metricDict    
-    constraints=config.constraints
-    stackerDict= config.stackerDict
-    plotConfigs = config.plotConfigs
-    metadata=config.metadata
-    return name, kwargs, metricDict, constraints, stackerDict, plotConfigs, metadata
+    constraints = config.constraints
+    stackerDict = config.stackerDict
+    metadata = config.metadata
+    metadataVerbatim = config.metadataVerbatim
+    return name, kwargs, metricDict, constraints, stackerDict, metadata, metadataVerbatim
 
 def readMetricConfig(config):
     """

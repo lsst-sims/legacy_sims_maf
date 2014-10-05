@@ -3,6 +3,8 @@
 
 <head>
 
+{#   ######## CSS ##### #}
+
 <style>
 
 #headerHolder
@@ -87,7 +89,7 @@ table,th,td
 {
 border:1px solid black;
 border-collapse:collapse;
-margin-bottom: 10px
+margin-bottom: 20px
 }
 th
 {
@@ -117,6 +119,12 @@ text-align:left;
 
 img.thumbnail {
     height: 280px;
+    padding:0px;
+    margin: 0px;
+}
+
+img.sm_thumbnail {
+    height: 200px;
     padding:0px;
     margin: 0px;
 }
@@ -189,8 +197,10 @@ a.activenav:link, a.activenav:visited {
 {
 text-indent:25px;
 }
-
 </style>
+
+{#   ##### END CSS ##### #}
+
 <title>
 {% block pagetitle %}
 {{run.runName }}
@@ -217,8 +227,9 @@ text-indent:25px;
     ('/', 'listRuns', 'Run List'), 
     ('configParams', 'configs', 'Opsim Configuration'),
     ('metricSelect', 'listMetrics', 'Metrics List'),
-    ('summaryStats', 'stats', 'Summary Stats'),
-    ('allMetricResults', 'allMetricResults', 'All Results')]  -%}
+    ('allMetricResults', 'allMetricResults', 'All Results'),
+    ('multiColor', 'multicolor', 'Multi Color'),
+    ('summaryStats', 'stats', 'Summary Stats')]  -%}
  <ul class="nav">
  {% for href, id, caption in navigation_bar %}
    <li class="nav">

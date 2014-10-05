@@ -1,0 +1,108 @@
+{% extends "master.html" %}
+{% import 'macros.html' as mcr %}
+
+{% set active_page = "multicolor" %}
+
+{% set run = runlist.getRun(runId) %}
+
+{% set metrics = run.metrics %}
+
+{% block moresidebar %}
+
+<ul>
+{% for g in run.groups.keys() %}
+  {% set groupstart = True %}
+  {% for sg in run.groups[g] %}
+   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
+   {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
+   {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
+   {% set statNames = run.allStatNames(subsetMetrics) %}  
+   {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
+    + statNames|length %}
+   {% if displaygroup > 0 %} 
+      {% if groupstart == True %}
+        <li>
+        <a href="#{{g}}">{{g}}</a>
+        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+        {% set groupstart = False %}
+      {% else %}
+        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>	  
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+
+{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set ninfo = metricInfo|length %}
+
+{% for g in run.groups.keys() %}
+ {% set groupstart = True %}
+ {% for sg in run.groups[g] %}
+   {# Get the metrics, skymaps and combo histograms in this subgroup. #}
+   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
+   {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
+   {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
+   {% set statNames = run.allStatNames(subsetMetrics) %}  
+
+   {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
+    + statNames|length %}
+    {% if displaygroup > 0 %} 
+     {# then show this group ... #}
+     
+   {% if groupstart == True %}
+      <a name = "{{g|escape}}" ></a>
+      {% set groupstart = False %}
+   {% endif %}
+   <p>
+   <a name = "{{g|escape}}_{{sg|escape}}"><b>{{g|escape}} : {{sg|escape}}</b> </a>
+   </p>
+
+   {% set metricNames = run.uniqueMetricNames(skysetMetrics, baseonly=True) %}
+   {% for mname in metricNames %}
+     {% set mskyset = run.metricsWithMetricName(mname, skysetMetrics, baseonly=True) %}
+     {% set skymaps = run.getSkyMaps(mskyset) %}
+      <div id='metricset'>
+       {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId) %}
+       {% set metricSelect = run.metricsToMetricIds(mskyset)|join('&metricId=') %}
+       {% set metricLink = metricLink ~ metricSelect %}
+	<a href={{metricLink}}>{{mname}}</a> </br>
+       {% for skymap in skymaps%}
+        {% set plotfile = run.getPlotfile(skymap) %}
+        {% set thumbfile = run.getThumbfile(skymap) %}
+          <a href="{{plotfile}}"> <img class="sm_thumbnail" src='{{thumbfile}}'></a>
+       {% endfor  %}
+      </div>
+   {% endfor %}
+
+
+   {% for m in combosetMetrics %}
+     {% set comboplots = run.plotsForMetric(m) %}
+     {% set combodict = run.plotDict(comboplots) %}
+      {% set combohist = combodict['ComboHistogram'] %}
+      <div id='metricset'>
+	{% set metricInfo = run.metricInfo(m) %}
+        {{ metricInfo['MetricName']|escape }} ({{metricInfo['Slicer']|escape}})
+	</br> <div id='indent'> {{metricInfo['Metadata']|escape}} </div> </br>	
+	{% for plotfile, thumbfile in zip(combohist['plotFile'], combohist['thumbFile']) %}
+        <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
+	 {% endfor %}
+       </div>
+   {% endfor  %}
+
+   {% if statNames | length > 0 %}
+      <div id= 'metricset'>
+      {{ mcr.MakeStatTable(subsetMetrics, g, sg, run) }}
+      </div>
+   {% endif %}
+
+  {% endif %}      
+ {% endfor %}
+{% endfor %}
+
+{% endblock %}

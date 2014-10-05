@@ -75,6 +75,12 @@ class CompletenessMetric(BaseMetric):
             self.reduceOrder[f] = i
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
+        if self.displayDict['caption'] is None:
+            self.displayDict['caption'] = 'Completeness fraction for each filter (and joint across all filters).'
+            self.displayDict['caption'] += ' Calculated as number of visits compared to a benchmark value of:'
+            for i, f in enumerate(self.filters):
+                self.displayDict['caption'] += '%s: %d' %(f, self.nvisitsRequested[i])
+            self.displayDict['caption'] += '.'
         
     def run(self, dataSlice, slicePoint=None):
         """

@@ -69,7 +69,7 @@ class MafRunResults(object):
             self.plots = np.zeros(0, dtype=[('metricId',int), ('plotFile', '|S10')])
         if len(self.stats) == 0:
             self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'), ('summaryValue', float)])
-
+                    
         # Pull up the names of the groups and subgroups. 
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
         self.groups = OrderedDict()
@@ -80,9 +80,9 @@ class MafRunResults(object):
         for g in self.groups:
             self.groups[g] = sorted(list(self.groups[g]))
 
-        self.summaryStatOrder = ['Identity', 'Count', 'Mean', 'Median', 'Rms', 'RobustRms', 
-                                 'm3Sigma', 'p3Sigma']
-        # Add in the table fraction sorting.  
+        self.summaryStatOrder = ['Id', 'Identity', 'Mean', 'Median', 'Rms', 'RobustRms', 
+                                 'm3Sigma', 'p3Sigma', '%tile', 'Count']
+        # Add in the table fraction sorting to summary stat ordering.
         tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
         if len(tableFractions) > 0:
             tableFractions.remove('TableFraction 0 == P')
@@ -94,18 +94,18 @@ class MafRunResults(object):
                 self.summaryStatOrder.append(tableFrac)
             self.summaryStatOrder.append('TableFraction 1 == P')
             self.summaryStatOrder.append('TableFraction 1 < P')
-        
+
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
-        
+
     ## Methods to deal with metricIds
-                
+
     def convertSelectToMetrics(self, groupList, metricIdList):
         """
         Convert the lists of values returned by 'select metrics' template page 
         into an appropriate numpy recarray of metrics (in sorted order).
         """
-        metricIds = set()    
+        metricIds = set()
         for group_subgroup in groupList:
             group = group_subgroup.split('_')[0]
             subgroup = group_subgroup.split('_')[-1].replace('+', ' ')
@@ -125,7 +125,7 @@ class MafRunResults(object):
         metrics = self.metricsInSubgroup(group, subgroup)
         metricIds = metrics['metricId']
         return list(metricIds)
-    
+
     def metricIdsToMetrics(self, metricIds):
         """
         Return an ordered numpy recarray of metrics matching metricIds.
@@ -135,16 +135,28 @@ class MafRunResults(object):
             match = (self.metrics['metricId'] == mId)
             metrics[i] = self.metrics[match]
         return metrics
-            
+
+    def metricsToMetricIds(self, metrics):
+        """
+        Return a list of the metric Ids corresponding to a subset of metrics.
+        """
+        metricIds = []
+        for m in metrics:
+            metricIds.append(m['metricId'])
+        return metricIds
+
+
     ## Methods to deal with metrics in numpy recarray.
-        
+
     def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup',
-                                          'baseMetricNames', 'slicerName', 'displayOrder', 
+                                          'baseMetricNames', 'slicerName', 'displayOrder',
                                           'metricMetadata']):
         """
-        Sort the metrics by group, subgroup, base metric name (pre '_'), order, slicer, and then finally metadata. 
+        Sort the metrics by order specified by 'order'.
+
+        Default is to sort by group, subgroup, metric name, slicer, display order, then metadata.
         """
-        return np.sort(metrics, order=order)    
+        return np.sort(metrics, order=order)
 
     def metricsInGroup(self, group, metrics=None):
         """
@@ -154,7 +166,7 @@ class MafRunResults(object):
             metrics = self.metrics
         match = (metrics['displayGroup'] == group)
         return self.sortMetrics(metrics[match])
-        
+
     def metricsInSubgroup(self, group, subgroup, metrics=None):
         """
         Given a group and subgroup, return the metrics belonging to these group/subgroups, in display order.
@@ -180,46 +192,205 @@ class MafRunResults(object):
         for g in groups:
             groups[g] = sorted(list(groups[g]))
         return groups
-            
-    def metricInfo(self, metric, withDataFile=False):
+
+    def metricsWithPlotType(self, plotType='SkyMap', metrics=None):
+        """
+        Return recarray of metrics with plot=plotType (optional, metric subset).
+        """
+        if metrics is None:
+            metrics = self.metrics
+        hasplot = np.zeros(len(metrics))
+        for i, m in enumerate(metrics):
+            match = (self.plots['metricId'] == m['metricId'])
+            matchType = (self.plots['plotType'][match] == plotType)
+            if len(self.plots[matchType]) > 0:
+                hasplot[i] = 1
+        metrics = metrics[np.where(hasplot > 0)]
+        return metrics
+
+    def uniqueMetricNames(self, metrics=None, baseonly=True):
+        """
+        Return a list of the unique metric names, preserving the order of 'metrics'.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        if baseonly:
+            sortName = 'baseMetricNames'
+        else:
+            sortName = 'metricName'
+        metricNames = []
+        for m in metrics:
+            if m[sortName] not in metricNames:
+                metricNames.append(m[sortName])
+        return metricNames
+
+    def metricsWithSummaryStat(self, summaryStatName='Id', metrics=None):
+        """
+        Return metrics with summary stat matching 'summaryStatName' (optional, metric subset).
+        """
+        if metrics is None:
+            metrics = self.metrics
+        hasstat = np.zeros(len(metrics))
+        for i, m in enumerate(metrics):
+            match = (self.stats['metricId'] == m['metricId'])
+            matchStat = (self.stats['summaryName'][match] == summaryStatName)
+            if len(self.stats[matchStat]) > 0:
+                hasstat[i] = 1
+        metrics = metrics[np.where(hasstat > 0)]
+        # Re-sort metrics because at this point, probably want displayOrder + metadata before metric name.
+        metrics = self.sortMetrics(metrics, order=['displayGroup', 'displaySubgroup', 'slicerName',
+                                                   'displayOrder', 'metricMetadata', 'baseMetricNames'])
+        return metrics
+
+    def metricsWithStats(self, metrics=None):
+        """
+        Return metrics that have any summary stat.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        hasstat = np.zeros(len(metrics))
+        for i, m in enumerate(metrics):
+            match = (self.stats['metricId'] == m['metricId'])
+            if len(self.stats[match]) > 0:
+                hasstat[i] = 1
+        metrics = metrics[np.where(hasstat > 0)]
+        metrics = self.sortMetrics(metrics, order = ['displayGroup', 'displaySubgroup', 'slicerName',
+                                                   'displayOrder', 'metricMetadata', 'baseMetricNames'])
+        return metrics
+
+    def uniqueSlicerNames(self, metrics=None):
+        """
+        For a recarray of metrics, return the unique slicer names.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        slicernames = []
+        for m in metrics:
+            if m['slicerName'] not in slicernames:
+                slicernames.append(m['slicerName'])
+        return slicernames
+
+    def metricsWithSlicer(self, slicer, metrics=None):
+        """
+        For a recarray of metrics, return the subset which match a particular 'slicername' value.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        match = (metrics['slicerName'] == slicer)
+        return metrics[match]
+
+    def uniqueMetricNameAndMetadata(self, metrics=None):
+        """
+        For a recarray of metrics, return the unique metric names + metadata combo.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        metricmetadata = []
+        for m in metrics:
+            metricmeta = ' '.join([m['metricName'], m['metricMetadata']])
+            if metricmeta not in metricmetadata:
+                metricmetadata.append(metricmeta)
+        return metricmetadata
+
+    def uniqueMetricMetadata(self, metrics=None):
+        """
+        For a recarray of metrics, return the unique metadata.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        metadata = []
+        for m in metrics:
+            if m['metricMetadata'] not in metadata:
+                metadata.append(m['metricMetadata'])
+        return metadata
+
+    def metricsWithMetadata(self, metadata, metrics=None):
+        """
+        For a recarray of metrics, return the subset which match a particular 'metadata' value.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        match = (metrics['metricMetadata'] == metadata)
+        return metrics[match]
+
+    def metricsWithMetricName(self, metricName, metrics=None, baseonly=True):
+        """
+        Return all metrics which match metricName (default, only the 'base' metric name). 
+        """
+        if metrics is None:
+            metrics = self.metrics
+        if baseonly:
+            match = (metrics['baseMetricNames'] == metricName)
+        else:
+            match = (metrics['metricName'] == metricName)
+        return metrics[match]
+
+    def metricInfo(self, metric, withDataFile=True, withSlicerName=True):
         """
         Return a dict with the metric info we want to show on the webpages.
 
         Currently : MetricName / Slicer/ Metadata / datafile (for download)
         """
-        # Provides a way to easily modify what we show on all webpages without
-        #  significantly altering the templates. Or provides an abstraction layer 
-        #  in case the resultsDB column names change.
         metricInfo = OrderedDict()
         metricInfo['MetricName'] = metric['metricName']
-        metricInfo['Slicer'] = metric['slicerName']
+        if withSlicerName:
+            metricInfo['Slicer'] = metric['slicerName']
         metricInfo['Metadata'] = metric['metricMetadata']
         if withDataFile:
-            metricInfo['Datafile'] = metric['metricDataFile']
+            metricInfo['Data'] = []
+            metricInfo['Data'].append(metric['metricDataFile'])
+            metricInfo['Data'].append(os.path.join(self.outDir, metric['metricDataFile']))
         return metricInfo
 
     def captionForMetric(self, metric):
         """
         Return the caption for a given metric.
         """
-        return metric['displayCaption']
+        caption = metric['displayCaption']
+        if caption == 'NULL':
+            return ''
+        else:
+            return caption
 
     ## Methods for plots.
-    
+
     def plotsForMetric(self, metric):
         """
-        Return an ordered dict with the plots matching a given metric.
+        Return a recarray of the plot which match a given metric.
+        """
+        match = (self.plots['metricId'] == metric['metricId'])
+        return self.plots[match]
+
+    def plotDict(self, plots):
+        """
+        Returns an ordered dicts with 'plotType':{dict of 'plotFile': [], 'thumbFile', []}, given recarray of plots.
         """
         plotDict = OrderedDict()
-        match = (self.plots['metricId'] == metric['metricId'])
-        matchPlots = self.plots[match]
-        plotTypes = list(matchPlots['plotType'])
-        for o in self.plotOrder:
-            if o in plotTypes:
-                plotDict[o] = matchPlots[np.where(matchPlots['plotType'] == o)][0]
-                plotTypes.remove(o)
+        plotTypes = list(plots['plotType'])
+        # Go through plots in 'plotOrder'.
+        for p in self.plotOrder:
+            if p in plotTypes:
+                plotDict[p] = {}
+                plotDict[p]['plotFile'] = []
+                plotDict[p]['thumbFile'] = []
+                plotmatch = plots[np.where(plots['plotType'] == p)]
+                for pl in plotmatch:
+                    plotfile = self.getPlotfile(pl)
+                    thumbfile = self.getThumbfile(pl)
+                    plotDict[p]['plotFile'].append(plotfile)
+                    plotDict[p]['thumbFile'].append(thumbfile)
+                plotTypes.remove(p)
+        # Round up remaining plots.
         for p in plotTypes:
-            plotDict[p] = matchPlots[np.where(matchPlots['plotType'] == p)][0]
+            plotDict[p] = {}
+            plotDict[p]['plotFile'] = []
+            plotDict[p]['thumbFile'] = []
+            plotmatch = plots[np.where(plots['plotType'] == p)]
+            for pl in plotmatch:
+                plotfile = self.getPlotfile(pl)
+                thumbfile = self.getThumbfile(pl)
+                plotDict[p]['plotFile'].append(plotfile)
+                plotDict[p]['thumbFile'].append(thumbfile)
         return plotDict
 
     def getThumbfile(self, plot):
@@ -236,19 +407,40 @@ class MafRunResults(object):
         """
         return os.path.join(self.outDir, plot['plotFile'])
 
+    def getSkyMaps(self, metrics=None):
+        """
+        Return a list of the skymaps, optionally for subset of metrics.
+        """
+        if metrics is None:
+            metrics = self.metrics
+        skymatchPlots = []
+        for m in metrics:
+            match = (self.plots['metricId'] == m['metricId'])
+            matchPlots = self.plots[match]
+            if len(matchPlots) > 0 :
+                match = (matchPlots['plotType'] == 'SkyMap')
+                for skymatch in matchPlots[match]:
+                    skymatchPlots.append(skymatch)
+        return skymatchPlots
 
-    ## Set of methods to deal with stats.
-    
-    def statsForMetric(self, metric):
+    ## Set of methods to deal with summary stats.
+
+    def statsForMetric(self, metric, statName=None):
         """
         Return the summary statistics which match a given metric.
+
+        Optionally specify a particular statName that you want to match.
         """
-        match = (self.stats['metricId'] == metric['metricId'])        
-        return self.stats[match]
-    
+        match = (self.stats['metricId'] == metric['metricId'])
+        stats = self.stats[match]
+        if statName is not None:
+            match = (stats['summaryName'] == statName)
+            stats = stats[match]
+        return stats
+
     def statDict(self, stats):
         """
-        Returns an ordered dictionary with statName/statValue for numpy recarray of stats.
+        Returns an ordered dictionary with statName:statValue for numpy recarray of stats.
 
         Note that if you pass 'stats' from multiple metrics with the same summary names, they
          will be overwritten in the resulting dictionary! So just use stats from one metric.
@@ -260,10 +452,10 @@ class MafRunResults(object):
             match = (stats['summaryName'] == n)
             sdict[stats['summaryName'][match][0]] = stats['summaryValue'][match][0]
         return sdict
-            
+
     def orderStatNames(self, stats):
         """
-        For a recarray of stats, return a list containing all the unique 'summaryNames'         
+        For a recarray of stats, return a list containing all the unique 'summaryNames'
         in a default ordering (identity-count-mean-median-rms..).
         """
         names = set()
@@ -282,11 +474,11 @@ class MafRunResults(object):
     def allStatNames(self, metrics):
         """
         For a recarray of metrics, return a list containing all the unique 'summaryNames'
-        in a default ordering. 
+        in a default ordering.
         """
         names = set()
         for metric in metrics:
-            stats = self.statsForMetric(metric)            
+            stats = self.statsForMetric(metric)
             for stat in stats:
                 names.add(stat['summaryName'])
         # Add some default sorting.
@@ -297,4 +489,4 @@ class MafRunResults(object):
                 names.remove(nord)
         for remaining in names:
             namelist.append(remaining)
-        return namelist    
+        return namelist
