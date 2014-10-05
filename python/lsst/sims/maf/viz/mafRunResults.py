@@ -346,8 +346,11 @@ class MafRunResults(object):
         """
         Return the caption for a given metric.
         """
-        return metric['displayCaption']
-
+        caption = metric['displayCaption']
+        if caption == 'NULL':
+            return ''
+        else:
+            return caption
 
     ## Methods for plots.
 

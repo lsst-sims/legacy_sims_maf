@@ -1,3 +1,27 @@
+<style>
+#mybutton {
+display: block;
+width: 6em;
+height: 2em;
+border: 1.5px solid black;
+padding:0;
+text-align:center;
+font-size: 1.2em;
+color:#000000;
+cursor:pointer;
+
+-webkit-border-radius:4px;
+-moz-border-radius:4px;
+-ms-border-radius:4px;
+-o-border-radius:4px;
+border-radius:4px;
+);
+}
+#mybutton:hover {
+background-color:#808080;
+}
+</style>
+
 {% extends "master.html" %}
 
 {% if runId < 0 %}
@@ -15,15 +39,15 @@ List of all Opsim Runs
 {% set active_page = "listRuns" %}
 
 {% block moresidebar %}
-
+<form name="RunSelect" action="metricSelect" method="get" >
+</br>
+</br>
+<center><input id='mybutton' type='submit' value='Select Run'></center>
 {% endblock %}
 
 {% block content %}
 
-
-<form name="RunSelect" action="metricSelect" method="get" >
 <table>
-
 <tr>
 <th> </th>
 {# Get basic run info to include into table (for table header) #}
@@ -33,26 +57,21 @@ List of all Opsim Runs
 {% endfor %}
 </tr>
 
+
 {# Show run info for each run #}
 {% for run in runlist.runs %}
   {% set runInfo = runlist.runInfo(run) %}
-  <tr> 	    
+  <tr>
   <td>
-  <input type='radio' name="runId" value="{{run['mafRunId']}}"> 
+  <input type='radio' name="runId" value="{{run['mafRunId']}}">
   </td>
   {% for key in runInfo %}
-  <td>{{ runInfo[key]|escape }}</td> 
+  <td>{{ runInfo[key]|escape }}</td>
   {% endfor %}
   </tr>
 {% endfor %}
 
-<tr>
-  <td> </td>
-  <td colspan=4>
-<input type='submit' value='Select Run'>
-  </td>
-</tr>
-</form> 
+</form>
 
 </table>
 
