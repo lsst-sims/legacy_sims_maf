@@ -33,6 +33,15 @@ class ColStackConfig(pexConfig.Config):
     kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
     args = pexConfig.ListField("", dtype=str, default=[])
     
+class MapConfig(pexConfig.Config):
+    """
+    If there are maps with info that should be passed to each 
+    """
+    name = pexConfig.Field("", dtype=str, default='')
+    kwargs = pexConfig.ConfigField("kwargs for maps", dtype=MixConfig, default=None)
+    args = pexConfig.ListField("", dtype=str, default=[])
+ 
+
 class SlicerConfig(pexConfig.Config):
     """
     Config object for MAF slicers.
@@ -43,11 +52,14 @@ class SlicerConfig(pexConfig.Config):
                                            itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
     stackerDict = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
-                                          keytype=int, itemtype=ColStackConfig, default={}) 
+                                          keytype=int, itemtype=ColStackConfig, default={})
+    mapsDict = pexConfig.ConfigDictField(doc="dict of index: MapConfig",
+                                          keytype=int, itemtype=MapConfig, default={})
     plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str,
                                             itemtype=MixConfig, default={})
     metadata = pexConfig.Field("", dtype=str, default='')
-
+    metadataVerbatim = pexConfig.Field("", dtype=bool, default=False)
+    
 class MafConfig(pexConfig.Config):
     """
     Using pexConfig to set MAF configuration parameters
@@ -70,7 +82,8 @@ class MafConfig(pexConfig.Config):
     slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int,
                                         itemtype=SlicerConfig, default={})
     comment =  pexConfig.Field("", dtype=str, default='runName')
-    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str, default={'dbAddress':''})
+    dbAddress = pexConfig.DictField("Database access", keytype=str, itemtype=str,
+                                    default={'dbAddress':'', 'dbClass':'OpsimDatabase'})
     verbose = pexConfig.Field("", dtype=bool, default=False)
     getConfig = pexConfig.Field("", dtype=bool, default=True)
 
@@ -113,6 +126,18 @@ def configureStacker(name, kwargs={}):
     config.kwargs = makeMixConfig(kwargs)
     return config
     
+
+def configureMap(name, kwargs={}):
+    """
+    Helper function to generate a map pex config object.
+    (configure a stacker)
+    """
+    config = MapConfig()
+    config.name = name
+    config.kwargs = makeMixConfig(kwargs)
+    return config
+    
+
 def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={}, displayDict={}):
     """
     Helper function to generate a metric pex config object.
@@ -128,21 +153,24 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={},
     mc.displayDict = makeMixConfig(displayDict)
     return mc
 
-def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None, plotConfigs=None, metadata=''):
+def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None,
+                    mapsDict=None, metadata='', metadataVerbatim=False):
     """
     Helper function to generate a Slicer pex config object.
     """
     slicer = SlicerConfig()
     slicer.name = name
     slicer.kwargs = makeMixConfig(kwargs)
-    slicer.metadata=metadata
+    slicer.metadata = metadata
+    slicer.metadataVerbatim = metadataVerbatim
     if metricDict:
-        slicer.metricDict=metricDict
-    slicer.constraints=constraints
+        slicer.metricDict = metricDict
+    slicer.constraints = constraints
     if stackerDict:
         slicer.stackerDict = stackerDict
-    if plotConfigs:
-        slicer.plotConfigs = plotConfigs
+    if mapsDict:
+        slicer.mapsDict = mapsDict
+        
     return slicer
 
 def readSlicerConfig(config):
@@ -150,11 +178,12 @@ def readSlicerConfig(config):
     name = config.name
     kwargs = readMixConfig(config.kwargs)
     metricDict = config.metricDict    
-    constraints=config.constraints
-    stackerDict= config.stackerDict
-    plotConfigs = config.plotConfigs
-    metadata=config.metadata
-    return name, kwargs, metricDict, constraints, stackerDict, plotConfigs, metadata
+    constraints = config.constraints
+    stackerDict = config.stackerDict
+    mapsDict = config.mapsDict
+    metadata = config.metadata
+    metadataVerbatim = config.metadataVerbatim
+    return name, kwargs, metricDict, constraints, stackerDict, mapsDict, metadata, metadataVerbatim
 
 def readMetricConfig(config):
     """

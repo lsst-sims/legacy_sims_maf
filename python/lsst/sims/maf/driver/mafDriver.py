@@ -10,6 +10,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.stackers as stackers
+import lsst.sims.maf.maps as maps
 import time
 import collections
 
@@ -26,7 +27,14 @@ class MafDriver(object):
         """Load up the configuration and set the slicer and metric lists """
         # Configvalues passed from runDriver.py
         self.config = configvalues
-
+        # Make sure only legitimate keys are in the dbAddress
+        for key in self.config.dbAddress.keys():
+           if key not in ['dbAddress','dbClass']:
+              raise ValueError('key value "%s" not valid for dbAddress dict.  Must be "dbAddress" or "dbClass".'%key)
+        # If a dbClass isn't specified, use OpsimDatabase
+        if 'dbClass' not in self.config.dbAddress.keys():
+           self.config.dbAddress['dbClass'] = 'OpsimDatabase'
+           
         # Validate and freeze the config
         self.config.validate()
         self.config.freeze()
@@ -43,7 +51,7 @@ class MafDriver(object):
         utils.moduleLoader(self.config.modules)
 
         # Set up database connection.
-        self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
+        self.opsimdb = db.Database.getClass(self.config.dbAddress['dbClass'])(self.config.dbAddress['dbAddress'])
 
         time_prev = time.time()
         self.time_start = time.time()
@@ -61,17 +69,20 @@ class MafDriver(object):
                 print 'Got OpSim config info in %.3g s'%dt
 
         # Get proposal information (for OpSim databases).
-        self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
-        if self.verbose:
-            dt, time_prev = dtime(time_prev)
-            print 'fetched PropID info in %.3g s'%dt
+        if self.config.dbAddress['dbClass'] == 'OpsimDatabase':
+           self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
+           if self.verbose:
+               dt, time_prev = dtime(time_prev)
+               print 'fetched PropID info in %.3g s'%dt
+        else:
+           self.allpropids, self.wfdpropids, self.ddpropids = ([0],[0],[0])
 
         # Construct the slicers and metric objects
         self.slicerList = []
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
-            name, kwargs, metricDict, constraints, stackerDict, plotDict, metadata = \
-                readSlicerConfig(slicer)
+            name, kwargs, metricDict, constraints, stackerDict, mapsDict, metadata, metadataVerbatim = \
+                 readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
             #check that constraints in slicer are unique
@@ -79,14 +90,22 @@ class MafDriver(object):
                 print 'Slicer %s has repeated constraints' %slicer.name
                 print 'Constraints:  ', slicer.constraints
                 raise Exception('Slicer constraints are not unique')
-            temp_slicer.plotConfigs = slicer.plotConfigs
             temp_slicer.metadata = metadata
+            temp_slicer.metadataVerbatim = metadataVerbatim
             temp_slicer.index = i
             stackersList = []
             for key in stackerDict.keys():
-                stackername, kwargs = config2dict(stackerDict[key])
-                stackersList.append(stackers.BaseStacker.getClass(stackername)(**kwargs))
+               stackername, kwargs = config2dict(stackerDict[key])
+               stackersList.append(stackers.BaseStacker.getClass(stackername)(**kwargs))
             temp_slicer.stackers = stackersList
+            mapsList = []
+            mapsNames = []
+            for key in mapsDict.keys():
+               mapName, kwargs = config2dict(mapsDict[key])
+               mapsList.append(maps.BaseMap.getClass(mapName)(**kwargs) )
+               mapsNames.append(mapName)
+            temp_slicer.mapsList = mapsList
+            temp_slicer.mapsNames = mapsNames
             self.slicerList.append(temp_slicer)
             sub_metricList=[]
             for metric in slicer.metricDict.itervalues():
@@ -124,9 +143,12 @@ class MafDriver(object):
         for i,slicer in enumerate(self.slicerList):
             for constraint in slicer.constraints:
                 for metric in self.metricList[i]:
-                    # Approximate what output filename will be 
-                    comment = constraint.replace('=','').replace('filter','').replace("'",'')
-                    comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
+                    # Approximate what output filename will be
+                    if slicer.metadataVerbatim:
+                        comment = slicer.metadata
+                    else:
+                        comment = constraint.replace('=','').replace('filter','').replace("'",'')
+                        comment = comment.replace('"', '').replace('  ',' ') + ' ' + slicer.metadata
                     filenames.append('_'.join([metric.name, comment, slicer.slicerName]))
         if len(filenames) != len(set(filenames)):
             duplicates = list(set([x for x in filenames if filenames.count(x) > 1]))
@@ -134,7 +156,7 @@ class MafDriver(object):
             print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add slicer metadata or change metric names.')
   
-    def getData(self, constraint, colnames=[], stackersList=[], groupBy='expMJD'):
+    def getData(self, constraint, colnames=[], stackersList=[]):
         """Pull required data from database and calculate additional columns from stackers. """
         # Stacker_names describe the already-configured (via the config driver) stacker methods.
         stacker_names = [s.__class__.__name__ for s in stackersList ]
@@ -160,7 +182,7 @@ class MafDriver(object):
         dbcolnames=list(set(dbcolnames))
         # Get the data from database.
         self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
-                                                 colnames=dbcolnames, groupBy = groupBy)
+                                                 colnames=dbcolnames)
         # Calculate the data from stackers.
         for stacker in stackersList:
             self.data = stacker.run(self.data)
@@ -265,20 +287,31 @@ class MafDriver(object):
                 for slicer in matchingSlicers:
                     print '    running slicerName =', slicer.slicerName, \
                       ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
+                    # Set up any additional maps
+                    for m in self.metricList[slicer.index]:
+                       for skyMap in m.maps:
+                          if skyMap not in slicer.mapsNames:
+                             slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
                     # Set up slicer.
                     if slicer.slicerName == 'OpsimFieldSlicer':
                         # Need to pass in fieldData as well
-                        slicer.setupSlicer(self.data, self.fieldData)
+                        slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
                     else:
-                        slicer.setupSlicer(self.data)
+                       if len(slicer.mapsList) > 0:
+                          slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                       else:
+                          slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                      outDir=self.config.outputDir) 
                     gm.setSlicer(slicer)
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
-                    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-                    metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
+                    if slicer.metadataVerbatim:
+                        metadata = slicer.metadata
+                    else:
+                        metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
+                        metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
                     # Run through slicepoints in slicer, and calculate metric values.
                     gm.runSlices(self.data, simDataName=self.config.opsimName,
                                  metadata=metadata, sqlconstraint=sqlconstraint)
@@ -289,14 +322,8 @@ class MafDriver(object):
                     gm.reduceAll()
                     # And write metric data files to disk.
                     gm.writeAll()
-                    # Replace the plotDict for selected metricNames (to allow override from config file).
-                    for mName in slicer.plotConfigs:
-                        iid = gm.findIids(metricName=mName)[0]
-                        gm.plotDict[iid] = readMixConfig(slicer.plotConfigs[mName])
                     # And plot all metric values.
                     gm.plotAll(savefig=True, closefig=True, verbose=True)
-                    # Generate captions for figures and save display data.
-                    gm.captionAll()
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    plotted metrics in %.3g s'%dt

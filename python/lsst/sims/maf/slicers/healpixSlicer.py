@@ -48,6 +48,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             # Set the cache size to be ~2x the circumference
             self.cacheSize = int(np.round(4.*np.pi/binRes))
         # Set up slicePoint metadata.
+        self.slicePoints['nside'] = nside
         self.slicePoints['sid'] = np.arange(self.nslice)
         self.slicePoints['ra'], self.slicePoints['dec'] = self._pix2radec(self.slicePoints['sid'])        
 
@@ -64,11 +65,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Calculate RA/Dec in RADIANS of pixel in this healpix slicer.
         # Note that ipix could be an array, 
         # in which case RA/Dec values will be an array also. 
-        lat, lon = hp.pix2ang(self.nside, islice)
+        lat, ra = hp.pix2ang(self.nside, islice)
         # Move dec to +/- 90 degrees
-        dec = lat - np.pi/2.0
-        # Flip ra from longitude to RA (increasing eastward rather than westward)
-        ra = -lon % (np.pi*2)
+        dec = np.pi/2.0 - lat
         return ra, dec  
     
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
@@ -125,7 +124,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                 clims[1] =  clims[1]+1        
                    
         hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                    min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
+                    min=clims[0], max=clims[1], rot=(0,0,0), flip='astro',
                     cmap=cmap, norm=norm)        
         hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).

@@ -223,15 +223,47 @@ class ComparisonSliceMetric(BaseSliceMetric):
         return iids
 
     def captionFigure(self, iids, figtype):
-       caption = '%s plot for ' %(figtype)
-       umetrics = self.uniqueMetricNames(iids)
-       usimdata = self.uniqueSimDataNames(iids)
-       comboMetadata = self.combineMetadata(iids)
-       caption += ', '.join(umetrics) + 'metrics '
-       caption += 'calculated with data selected by %s' %(comboMetadata)
-       caption += ' for opsim run(s) ' + ', '.join(usimdata) + '.'
-       return caption
-    
+        caption = '%s plot for ' %(figtype)
+        umetrics = self.uniqueMetricNames(iids)
+        usimdata = self.uniqueSimDataNames(iids)
+        comboMetadata = self.combineMetadata(iids)
+        caption += ', '.join(umetrics) + 'metrics '
+        caption += 'calculated with data selected by %s' %(comboMetadata)
+        caption += ' for opsim run(s) ' + ', '.join(usimdata) + '.'
+        return caption
+
+    def joinMetricNames(self, iids):
+        order = ['u', 'g', 'r', 'i', 'z', 'y']
+        unames = list(self.uniqueMetricNames(iids))
+        # Test if metric names are all the same.
+        if len(unames) == 1:
+            jointName = ' '.join(unames)
+        # .. or not. 
+        else:
+            # Split each unique name into a list to see if we can merge the names.
+            nameLengths = [len(x.split()) for x in unames]
+            nameLists = [x.split() for x in unames]
+            # If the metric names are all the same length, see if we can combine any parts.
+            if len(set(nameLengths)) == 1:
+                jointName = []
+                for i in range(nameLengths[0]):
+                    tmp = set([x[i] for x in nameLists])
+                    # Try to catch special case of filters and put them in order.
+                    if tmp.intersection(order) == tmp:
+                        filterlist = ''
+                        for f in order:
+                            if f in tmp:
+                                filterlist += f
+                        jointName.append(filterlist)
+                    else:
+                        # Otherwise, just join and put into jointName.
+                        jointName.append(''.join(tmp))
+                jointName = ' '.join(jointName)
+            # If the metric names are not the same length, just join everything. 
+            else:
+                jointName = ' '.join(unames)
+        return jointName
+
     def plotHistograms(self, iids, 
                         bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
                         title=None, xlabel=None, color=None, labels=None,
@@ -299,20 +331,21 @@ class ComparisonSliceMetric(BaseSliceMetric):
                plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
               # Don't have a metricID corresonding to this combo of metrics, add to metric db table.
-              metricNames = ' '.join(list(self.uniqueMetricNames(iids)))              
+              metricNames = self.joinMetricNames(iids)
               slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
               simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
               metadata =  self.combineMetadata(iids)
               # Use first iid in iids to determine display group.
-              metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, None, metadata,
-                                                  None)
+              metricId = self.resultsDb.updateMetric(metricNames, slicerNames, simDataNames, None, metadata,
+                                                    None)
               displayDict = {}
               displayDict.update(self.displayDicts[iids[-1]])
+              displayDict['order'] += 1
               displayDict['caption'] = self.captionFigure(iids, 'Combined histogram')
               if displayDict['subgroup'] is None:
                  displayDict['subgroup'] = 'Combo Hist'
-              self.resultsDb.addDisplay(metricId, displayDict)
-              self.resultsDb.addPlot(metricId, 'ComboHistogram', outfile)
+              self.resultsDb.updateDisplay(metricId, displayDict)
+              self.resultsDb.updatePlot(metricId, 'ComboHistogram', outfile)
         else:
             outfile = None
         return fignum, title, outfile
@@ -367,19 +400,20 @@ class ComparisonSliceMetric(BaseSliceMetric):
                plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics, add to metric table.
-                metricNames = ' '.join(list(self.uniqueMetricNames(iids)))
+                metricNames = self.joinMetricNames(iids)
                 slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
                 metadata = self.combineMetadata(iids)
-                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, None, metadata,
-                                                    None)
+                metricId = self.resultsDb.updateMetric(metricNames, slicerNames, simDataNames, None, metadata,
+                                                        None)
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[-1]])
+                displayDict['order'] += 1
                 displayDict['caption'] = self.captionFigure(iids, 'Combined power spectrum')
                 if displayDict['subgroup'] is None:
                    displayDict['subgroup'] = 'Combo PS'
-                self.resultsDb.addDisplay(metricId, displayDict)
-                self.resultsDb.addPlot(metricId, 'ComboPowerSpectrum', outfile)
+                self.resultsDb.updateDisplay(metricId, displayDict)
+                self.resultsDb.updatePlot(metricId, 'ComboPowerSpectrum', outfile)
         else:
             outfile = None
         return fignum, title, outfile
@@ -413,13 +447,13 @@ class ComparisonSliceMetric(BaseSliceMetric):
         mask = self.metricValues[iid[0]].mask
         mask = np.where(self.metricValues[iid[1]].mask == True, True, mask)
         diff = ma.MaskedArray(data = (self.metricValues[iid[0]] - self.metricValues[iid[1]]), mask=mask,
-                                      filled_value = slicer.badval)            
+                                      filled_value = slicer.badval)
         # Make color bar label.
         if units is None:
             mname0 = self.metricNames[iid[0]]
             mname1 = self.metricNames[iid[1]]
             if (mname0 == mname1):
-               units = (mname0 + ' (' + self.metadatas[iid[0]] + ' - ' + self.metadatas[iid[1]])                
+               units = (mname0 + ' (' + self.metadatas[iid[0]] + ' - ' + self.metadatas[iid[1]])
             else:
                units = mname0 + ' - ' + mname1
         # Plot data.
@@ -438,19 +472,20 @@ class ComparisonSliceMetric(BaseSliceMetric):
                plt.savefig(thumbfile, dpi=72)
             if self.resultsDb:
                 # Don't have a metricID corresonding to this combo of metrics.
-                metricNames = ' '.join(list(self.uniqueMetricNames(iids)))
+                metricNames = self.joinMetricNames(iids)
                 slicerNames = ' '.join(list(self.uniqueSlicerNames(iids)))
                 simDataNames = ' '.join(list(self.uniqueSimDataNames(iids)))
                 metadata = self.combineMetadata(iids)
-                metricId = self.resultsDb.addMetric(metricNames, slicerNames, simDataNames, None, metadata,
-                                                    None)                
+                metricId = self.resultsDb.updateMetric(metricNames, slicerNames, simDataNames, None, metadata,
+                                                        None)
                 displayDict = {}
                 displayDict.update(self.displayDicts[iids[-1]])
+                displayDict['order'] += 1
                 displayDict['caption'] = self.captionFigure(iids, 'Difference Sky Map')
                 if displayDict['subgroup'] is None:
                    displayDict['subgroup'] = 'Diff SkyMap'
-                self.resultsDb.addDisplay(metricId, displayDict)
-                self.resultsDb.addPlot(metricId, 'DifferenceSkyMap', outfile)
+                self.resultsDb.updateDisplay(metricId, displayDict)
+                self.resultsDb.updatePlot(metricId, 'DifferenceSkyMap', outfile)
         else:
             outfile = None
         return fignum, title, outfile

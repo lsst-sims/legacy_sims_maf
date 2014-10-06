@@ -49,22 +49,36 @@ class BaseSpatialSlicer(BaseSlicer):
         self.slicePoints['dec'] = None
         self.nslice = None
 
-    def setupSlicer(self, simData):
+    def setupSlicer(self, simData, maps=None):
         """Use simData[self.spatialkey1] and simData[self.spatialkey2]
-        (in radians) to set up KDTree."""
+        (in radians) to set up KDTree.
+
+        maps = list of map objects that will run to build up slicePoint"""
+        if maps is None:
+            maps = []
+        else:
+            if self.cacheSize != 0:
+                warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
+        for skyMap in maps:
+            self.slicePoints = skyMap.run(self.slicePoints)
         @wraps(self._sliceSimData)
+        
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
             sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
             indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
-            return {'idxs':indices,
-                    'slicePoint':{'sid':self.slicePoints['sid'][islice],
-                                  'ra':self.slicePoints['ra'][islice],
-                                  'dec':self.slicePoints['dec'][islice]}}
+            # Build dict for slicePoint info
+            slicePoint={}
+            for key in self.slicePoints.keys():
+                if np.size(self.slicePoints[key]) > 1:
+                    slicePoint[key] = self.slicePoints[key][islice]
+                else:
+                    slicePoint[key] = self.slicePoints[key]
+            return {'idxs':indices, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)    
 
     def _treexyz(self, ra, dec):
@@ -164,7 +178,7 @@ class BaseSpatialSlicer(BaseSlicer):
             if histRange is None:
                 bins = np.arange(metricValue.min(), metricValue.max()+binsize, binsize)
             else:
-                bins = np.arange(histRange[0], histrange[1]+binsize, binsize)
+                bins = np.arange(histRange[0], histRange[1]+binsize, binsize)
         # Plot histograms.
         # Add a test to see if data falls within histogram range.. because otherwise histogram will fail.
         if histRange is not None:

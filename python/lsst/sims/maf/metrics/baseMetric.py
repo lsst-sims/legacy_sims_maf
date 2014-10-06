@@ -84,13 +84,15 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
     
-    def __init__(self, col=None, metricName=None, units=None, 
+    def __init__(self, col=None, metricName=None, maps=None, units=None, 
                  metricDtype=None, badval=-666,
                  plotDict=None, displayDict=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
         the names of the data columns that the metric will operate on. This can be a single string or a list.
+
+        'maps' is a list of any maps that the metric will need, accessed via slicePoint that is passed from the slicer.
                          
         After inheriting from this base metric :
           * every metric object will have metricDtype (the type of data it calculates) set according to:
@@ -115,6 +117,10 @@ class BaseMetric(object):
             self.colname = self.colNameArr[0]
         # Add the columns to the colRegistry.
         self.colRegistry.addCols(self.colNameArr)
+        # Set the maps that are needed:
+        if maps is None:
+            maps = []
+        self.maps = maps
         # Value to return if the metric can't be computed
         self.badval = badval
         # Save a unique name for the metric.

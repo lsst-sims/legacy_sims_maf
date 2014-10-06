@@ -97,7 +97,7 @@ class FracAboveMetric(BaseMetric):
 class FracBelowMetric(BaseMetric):
     def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
         if metricName is None:
-            metricName = 'FracBelow %.2f in %s' %(cutoff, col)
+            metricName = 'FracBelow %.2f %s' %(cutoff, col)
         super(FracBelowMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
     def run(self, dataSlice, slicePoint=None):
@@ -105,6 +105,16 @@ class FracBelowMetric(BaseMetric):
         fracBelow = np.size(good)/float(np.size(dataSlice[self.colname]))
         return fracBelow
 
+class PercentileMetric(BaseMetric):
+    def __init__(self, col=None, percentile=90, metricName=None, **kwargs):
+        if metricName is None:
+            metricName = '%.0f %stile %s' %(percentile, '%', col)
+        super(PercentileMetric, self).__init__(col=col, metricName=metricName, **kwargs)
+        self.percentile = percentile
+    def run(self, dataSlice, slicePoint=None):
+        pval = np.percentile(dataSlice[self.colname], self.percentile)
+        return pval
+    
 class NoutliersNsigma(BaseMetric):
     """
     Calculate the # of visits less than nSigma below the median (nSigma<0) or
@@ -114,7 +124,7 @@ class NoutliersNsigma(BaseMetric):
         self.col = col
         self.nSigma = nSigma
         if metricName is None:
-            metricName = 'Noutliers %.1f in %s' %(self.nSigma, self.col)
+            metricName = 'Noutliers %.1f %s' %(self.nSigma, self.col)
         super(NoutliersNsigma, self).__init__(col=col, metricName=metricName, **kwargs)
         self.plotDict['cbarFormat'] = '%d'
 

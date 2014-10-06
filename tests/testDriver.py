@@ -140,9 +140,8 @@ class TestDriver(unittest.TestCase):
         for filename in expectFiles:
             assert(os.path.isfile(configIn.outputDir+'/'+filename))
 
-        
     def test_driver(self):
-        """Use a large config file to exercise all aspects of the driver. """    
+        """Use a large config file to exercise all aspects of the driver. """
         for filename, outfiles in zip(self.cfgFiles, self.outputFiles):
             configIn = MafConfig()
             configIn.load(self.filepath+filename)

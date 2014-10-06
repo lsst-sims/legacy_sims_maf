@@ -81,19 +81,19 @@ class OpsimDatabase(Database):
         self.sessionDateCol = 'sessionDate'
         self.runCommentCol = 'runComment'
 
-        
-                
-            
-    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy=None):
-        """
-        Fetch 'colnames' from 'Summary' table. 
+    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD'):
+        """Fetch 'colnames' from 'Summary' table. 
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").
         distinctExpMJD = group by expMJD to get unique observations only (default True).
         groupBy = group by col 'groupBy' (will override group by expMJD)."""
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
-        #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint. 
+        #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint.
+
+        if (groupBy is None) and (distinctExpMJD is False):
+            warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
+        
         table = self.tables['summaryTable']
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:

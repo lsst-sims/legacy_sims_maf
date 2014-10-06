@@ -57,6 +57,13 @@ class AllMetricResultsPageHandler(web.RequestHandler):
         allresultsTempl = env.get_template("allmetricresults.html")
         runId = int(self.request.arguments['runId'][0])    
         self.write(allresultsTempl.render(runlist=runlist, runId=runId))
+
+class MultiColorPageHandler(web.RequestHandler):
+    def get(self):
+        """Display sky maps. """
+        multiColorTempl = env.get_template("multicolor.html")
+        runId = int(self.request.arguments['runId'][0])
+        self.write(multiColorTempl.render(runlist=runlist, runId=runId))
         
 def make_app():
     """The tornado global configuration """
@@ -67,6 +74,7 @@ def make_app():
             ("/configParams", ConfigPageHandler),
             ("/summaryStats", StatPageHandler), 
             ("/allMetricResults", AllMetricResultsPageHandler),
+            ("/multiColor", MultiColorPageHandler),
             (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
             (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}), 
             ])
@@ -81,7 +89,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
     parser.add_argument("-d", "--mafDir", type=str, default=None, help="Add this directory to the trackingDb and open immediately.")
     parser.add_argument("-c", "--mafComment", type=str, default=None, help="Add a comment to the trackingDB describing the MAF analysis of this directory (paired with mafDir argument).")
-    parser.add_argument("-p", "--port", type=int, default=8888, help="Port to use for Tornado server.")
+    parser.add_argument("-p", "--port", type=int, default=8888, help="Port for connecting to showMaf.")
     args = parser.parse_args()
 
     # Check tracking DB is sqlite (and add as convenience if forgotten).
@@ -133,6 +141,8 @@ if __name__ == "__main__":
     global faviconPath
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
     env = Environment(loader=FileSystemLoader(templateDir))
+    # Add 'zip' to jinja templates.
+    env.globals.update(zip=zip)    
 
     global staticpath
     staticpath = '.'
@@ -140,7 +150,7 @@ if __name__ == "__main__":
     # Start up tornado app.
     application = make_app()
     application.listen(args.port)
-    print 'Tornado Starting: \nPoint your web browser to http://localhost:%d \nCtrl-C to stop' %(args.port)
+    print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' %(args.port)
 
     ioloop.IOLoop.instance().start()
     

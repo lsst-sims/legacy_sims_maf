@@ -12,7 +12,7 @@ from lsst.sims.maf.db import ResultsDb
 class BaseSliceMetric(object):
     """
     The BaseSlicemetric class provides base functionality common to all
-    sliceMetrics. 
+    sliceMetrics.
     A 'sliceMetric' in general couples slicers and metrics, and provides
     storage for things like metric data and metadata about the metric + slicer.
     """
@@ -201,10 +201,10 @@ class BaseSliceMetric(object):
                          displayDict = self.displayDicts[iid],
                          plotDict = self.plotDicts[iid])
         if self.resultsDb:
-            self.metricIds[iid] = self.resultsDb.addMetric(self.metricNames[iid],
+            self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid],
                                                           slicer.slicerName,
                                                           self.simDataNames[iid],
                                                           self.sqlconstraints[iid],
                                                           self.metadatas[iid],
                                                           outfile)
-           
+            self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
