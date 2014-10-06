@@ -16,3 +16,4 @@ python/lsst/sims/maf/version.py
 *tmp.sqlite
 op*_sqlite.db
 *maf_config_asRan.py
+*~

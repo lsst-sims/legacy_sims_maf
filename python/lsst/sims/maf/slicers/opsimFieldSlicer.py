@@ -47,7 +47,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldDecColName':fieldDecColName, 'badval':badval}
         
 
-    def setupSlicer(self, simData, fieldData):
+    def setupSlicer(self, simData, fieldData, maps=None):
         """Set up opsim field slicer object.
         
         simData = numpy rec array with simulation pointing history,
@@ -61,17 +61,24 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
         self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
+        if maps is None:
+            maps = []
+        for skyMap in maps:
+            self.slicePoints = skyMap.run(self.slicePoints)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
         @wraps(self._sliceSimData)
+
         def _sliceSimData(islice):
-            idxs = self.simIdxs[self.left[islice]:self.right[islice]]  
-            return {'idxs':idxs,
-                    'slicePoint':{'sid':self.slicePoints['sid'][islice],
-                                  'ra':self.slicePoints['ra'][islice], 'dec':self.slicePoints['dec'][islice]}}
+            idxs = self.simIdxs[self.left[islice]:self.right[islice]]
+            # Build dict for slicePoint info
+            slicePoint={}
+            for key in self.slicePoints.keys():
+                slicePoint[key] = self.slicePoints[key][islice]
+            return {'idxs':idxs, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
 
     def __eq__(self, otherSlicer):
