@@ -82,7 +82,7 @@ class MafDriver(object):
         self.metricList = []
         for i,slicer in self.config.slicers.iteritems():
             name, kwargs, metricDict, constraints, stackerDict, mapsDict, metadata, metadataVerbatim = \
-                readSlicerConfig(slicer)
+                 readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
             #check that constraints in slicer are unique

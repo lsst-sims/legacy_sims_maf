@@ -55,6 +55,8 @@ class SlicerConfig(pexConfig.Config):
                                           keytype=int, itemtype=ColStackConfig, default={})
     mapsDict = pexConfig.ConfigDictField(doc="dict of index: MapConfig",
                                           keytype=int, itemtype=MapConfig, default={})
+    plotConfigs = pexConfig.ConfigDictField(doc="dict of plotConfig objects keyed by metricName", keytype=str,
+                                            itemtype=MixConfig, default={})
     metadata = pexConfig.Field("", dtype=str, default='')
     metadataVerbatim = pexConfig.Field("", dtype=bool, default=False)
     
@@ -168,6 +170,7 @@ def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerD
         slicer.stackerDict = stackerDict
     if mapsDict:
         slicer.mapsDict = mapsDict
+        
     return slicer
 
 def readSlicerConfig(config):
