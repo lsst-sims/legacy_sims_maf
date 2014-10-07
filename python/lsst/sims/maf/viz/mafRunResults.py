@@ -131,6 +131,8 @@ class MafRunResults(object):
         iids = sm.readMetricData(datafile)
         iid = iids[0]
         io = sm.outputMetricJSON(iid)
+        if io is None:
+            return 'No JSON file available.'
         return io.getvalue()
 
     def metricIdsInSubgroup(self, group, subgroup):
