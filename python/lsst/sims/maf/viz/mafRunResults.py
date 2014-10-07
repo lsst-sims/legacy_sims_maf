@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 
 class MafRunResults(object):
     """
@@ -49,14 +50,14 @@ class MafRunResults(object):
         #  by these queries and what the templates need. 
         # The idea being that this should make the template code & presentation layer more
         #  easily maintainable in the future.
-        self.metrics = database.queryDatabase('metrics', 'select * from metrics')        
+        self.metrics = database.queryDatabase('metrics', 'select * from metrics')
         self.displays = database.queryDatabase('displays', 'select * from displays')
         # Combine metrics and displays arrays (these are one-to-one).
         self.metrics = rec_join('metricId', self.metrics, self.displays)
         # Add base metric names (to keep order for reduce methods).
         baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S20')])
         for i, m in enumerate(self.metrics):
-            baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]            
+            baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]
         self.metrics = merge_arrays([self.metrics, baseNames], flatten=True, usemask=False)
         self.metrics = self.sortMetrics(self.metrics)
         del self.displays
@@ -69,8 +70,8 @@ class MafRunResults(object):
             self.plots = np.zeros(0, dtype=[('metricId',int), ('plotFile', '|S10')])
         if len(self.stats) == 0:
             self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'), ('summaryValue', float)])
-                    
-        # Pull up the names of the groups and subgroups. 
+
+        # Pull up the names of the groups and subgroups.
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
         self.groups = OrderedDict()
         for g in groups:
@@ -102,7 +103,7 @@ class MafRunResults(object):
 
     def convertSelectToMetrics(self, groupList, metricIdList):
         """
-        Convert the lists of values returned by 'select metrics' template page 
+        Convert the lists of values returned by 'select metrics' template page
         into an appropriate numpy recarray of metrics (in sorted order).
         """
         metricIds = set()
@@ -117,6 +118,20 @@ class MafRunResults(object):
             metricIds.add(mId)
         metrics = self.metricIdsToMetrics(metricIds)
         return self.sortMetrics(metrics)
+
+    def convertJSON(self, metric):
+        """
+        Return the JSON string containing the data for a particular metric.
+        """
+        filename = metric['metricDataFile'][0]
+        if filename == 'NULL':
+            return 'No JSON file'
+        datafile = os.path.join(self.outDir, filename)
+        sm = sliceMetrics.BaseSliceMetric(useResultsDb=False)
+        iids = sm.readMetricData(datafile)
+        iid = iids[0]
+        io = sm.outputMetricJSON(iid)
+        return io.getvalue()
 
     def metricIdsInSubgroup(self, group, subgroup):
         """
@@ -330,6 +345,7 @@ class MafRunResults(object):
         Return a dict with the metric info we want to show on the webpages.
 
         Currently : MetricName / Slicer/ Metadata / datafile (for download)
+        Used to build a lot of tables in showMaf.
         """
         metricInfo = OrderedDict()
         metricInfo['MetricName'] = metric['metricName']

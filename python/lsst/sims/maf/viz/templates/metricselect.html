@@ -27,21 +27,23 @@
 <table>
 
 {% set metricInfo = run.metricInfo(run.metrics[0], withDataFile=True) %}
-
+{% set mInfoLen = metricInfo|length + 1 %}
+  
 <tr>
 <th> </th>
 {% for key in metricInfo %}
   <th> {{ key }} </th>
 {% endfor %}
+  <th>JSON</th>
 </tr>
-  
+
 <tr>
 <td> </td>
-<td colspan={{metricInfo|length}}>
+<td colspan={{mInfoLen}}>
 <input type='submit' value='Plot Metrics'>
 </td>
 </tr>
-  
+
 {% for group in run.groups %}
   {% set groupstart = True %}
   {% for subgroup in run.groups[group] %}
@@ -50,7 +52,7 @@
 	  <input type='checkbox' name="Group_subgroup"
   value="{{ group|escape }}__{{ subgroup|escape }}">
 	</td>
-	<td colspan={{metricInfo|length}}>
+	<td colspan={{mInfoLen}}>
 	{% if groupstart == True %}
 	  <a name="{{group}}"></a>
 	  {% set groupstart = False %}
@@ -61,8 +63,9 @@
         </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
        {% for metric in metrics %}
-          {% set metricInfo = run.metricInfo(metric, withDataFile=True) %}
-          <tr> 	    
+          {% set metricInfo = run.metricInfo(metric,
+  withDataFile=True) %}
+          <tr>
 	  <td>
           <input type='checkbox' name="metricId" value="{{metric['metricId']}}"> 
 	  </td>
@@ -78,11 +81,14 @@
             {{ metricInfo[key]|escape }}
            {% endif %}
           </td>
-	  {% endfor %}
+	  {% endfor %} {# End of metric info keys #}
+	  <td>
+	   <a href="json?runId={{runId}}&metricId={{metric['metricId']}}">JSON</a>
+	  </td>
 	  </tr>
-	{% endfor %}
-    {% endfor %}
- {% endfor %} 
+	{% endfor %} {# End of metrics #}
+    {% endfor %}  {# End of subgroup #}
+ {% endfor %}  {# End of group #}
 <tr>
 <td> </td>
 <td colspan="3">

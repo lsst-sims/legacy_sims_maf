@@ -24,6 +24,13 @@ class MetricSelectHandler(web.RequestHandler):
         runId = int(self.request.arguments['runId'][0])
         self.write(selectTempl.render(runlist=runlist, runId=runId))
 
+class JsonHandler(web.RequestHandler):
+    def get(self):
+        jsonTempl = env.get_template("json.html")
+        runId = int(self.request.arguments['runId'][0])
+        metricId = int(self.request.arguments['metricId'][0])
+        self.write(jsonTempl.render(runlist=runlist, runId=runId, metricId=metricId))
+
 class MetricGridPageHandler(web.RequestHandler):
     def get(self):
         gridTempl = env.get_template("grid.html")
@@ -55,7 +62,7 @@ class AllMetricResultsPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
         allresultsTempl = env.get_template("allmetricresults.html")
-        runId = int(self.request.arguments['runId'][0])    
+        runId = int(self.request.arguments['runId'][0])
         self.write(allresultsTempl.render(runlist=runlist, runId=runId))
 
 class MultiColorPageHandler(web.RequestHandler):
@@ -64,12 +71,13 @@ class MultiColorPageHandler(web.RequestHandler):
         multiColorTempl = env.get_template("multicolor.html")
         runId = int(self.request.arguments['runId'][0])
         self.write(multiColorTempl.render(runlist=runlist, runId=runId))
-        
+
 def make_app():
     """The tornado global configuration """
     application = web.Application([
             ("/", RunSelectHandler),
             ("/metricSelect", MetricSelectHandler),
+            ("/json", JsonHandler),
             ("/metricResults", MetricGridPageHandler),
             ("/configParams", ConfigPageHandler),
             ("/summaryStats", StatPageHandler), 

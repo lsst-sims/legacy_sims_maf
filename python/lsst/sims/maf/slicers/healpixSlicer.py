@@ -54,7 +54,7 @@ class HealpixSlicer(BaseSpatialSlicer):
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
-        # If the two slicers are both healpix slicers, check nsides value. 
+        # If the two slicers are both healpix slicers, check nsides value.
         if isinstance(otherSlicer, HealpixSlicer):
             return (otherSlicer.nside == self.nside)
         else:
@@ -63,13 +63,13 @@ class HealpixSlicer(BaseSpatialSlicer):
     def _pix2radec(self, islice):
         """Given the pixel number / sliceID, return the RA/Dec of the pointing, in radians."""
         # Calculate RA/Dec in RADIANS of pixel in this healpix slicer.
-        # Note that ipix could be an array, 
-        # in which case RA/Dec values will be an array also. 
+        # Note that ipix could be an array,
+        # in which case RA/Dec values will be an array also.
         lat, ra = hp.pix2ang(self.nside, islice)
         # Move dec to +/- 90 degrees
         dec = np.pi/2.0 - lat
-        return ra, dec  
-    
+        return ra, dec
+
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,

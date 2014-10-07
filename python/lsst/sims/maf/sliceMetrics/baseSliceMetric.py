@@ -129,10 +129,10 @@ class BaseSliceMetric(object):
         # Combine with the filepath (as it was known from method this was called).
         thumbname = os.path.join(filepath, thumbname)
         return thumbname
-    
+
     def readMetricData(self, filenames, verbose=False):
        """
-       Given a list of filenames, reads metric values and metadata from disk. 
+       Given a list of filenames, reads metric values and metadata from disk.
        """
        if not hasattr(filenames, '__iter__'):
            filenames = [filenames, ]
@@ -140,7 +140,7 @@ class BaseSliceMetric(object):
        for f in filenames:
           # Set up a base slicer to read data.
           baseslicer = slicers.BaseSlicer()
-          metricData, slicer, header, plotDict = baseslicer.readData(f)
+          metricData, slicer, header = baseslicer.readData(f)
           iid = self.iid_next
           self.iid_next += 1
           self.slicers[iid] = slicer
@@ -159,12 +159,13 @@ class BaseSliceMetric(object):
           if 'displayDict' in header:
               self.displayDicts[iid].update(header['displayDict'])
           if 'plotDict' in header:
-             self.plotDicts[iid].update(header['plotDict'])
+              if header['plotDict'] is not None:
+                self.plotDicts[iid].update(header['plotDict'])
           if verbose:
-             print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
+              print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
           newiids.append(iid)
        return newiids
-    
+
     def writeAll(self, outfileRoot=None, comment=''):
         """
         Write all metric values to disk.
@@ -172,7 +173,7 @@ class BaseSliceMetric(object):
         for iid in self.metricValues:
             outfilename = self.writeMetric(iid, comment=comment,
                                             outfileRoot=outfileRoot)
-        
+
     def writeMetric(self, iid, comment='', outfileRoot=None):
         """
         Write self.metricValues[iid] (and associated metadata) to disk.
@@ -208,3 +209,22 @@ class BaseSliceMetric(object):
                                                           self.metadatas[iid],
                                                           outfile)
             self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
+
+    def outputMetricJSON(self, iid):
+        """
+        Set up and call the baseSlicer outputJSON method, to output to IO string.
+        """
+        if iid in self.slicers:
+            slicer = self.slicers[iid]
+        else:
+            try:
+                slicer = self.slicer
+            except AttributeError:
+                # This won't save any metadata about what the slices looked like.
+                raise ValueError('No slicer information')
+        io = slicer.outputJSON(self.metricValues[iid],
+                            metricName = self.metricNames[iid],
+                            simDataName = self.simDataNames[iid],
+                            metadata = self.metadatas[iid],
+                            plotDict = self.plotDicts[iid])
+        return io
