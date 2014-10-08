@@ -1,0 +1,4 @@
+{% set run = runlist.getRun(runId) -%}
+{% set metric = run.metricIdsToMetrics([metricId]) -%}
+{% set jsn = run.convertJSON(metric) -%}
+{{jsn}}
