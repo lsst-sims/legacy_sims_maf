@@ -50,7 +50,32 @@ class TestDb(unittest.TestCase):
     def testSqliteFileNotExists(self):
         """Test that db gives useful error message if db file doesn't exist."""
         self.assertRaises(IOError, db.Database, 'sqlite:///thisdatabasedoesntexist_sqlite.db')
-        
+
+    def testArbitraryQuery(self):
+        """
+        Test that an arbitrary query can be executed.
+        No attempt is made to validat the results.
+        """
+        table = db.Table('Summary', 'obsHistID', self.dbAddress)
+        query = 'select count(expMJD), filter from ObsHistory, ObsHistory_Proposal'
+        query += ' where obsHistID = ObsHistory_obsHistID group by Proposal_propID, filter'
+        results = table.execute_arbitrary(query)
+
+        #This is a specific case that gave me trouble when refactoring DBObject
+        #Something about the fact that the database was stored in unicode
+        #tripped up numpy.rec.fromrecords().  This test will verify that the
+        #problem has not recurred
+        query = 'select sessionID, version, sessionDate, runComment from Session'
+        dtype=np.dtype([('id',int),('version',str,256),('date',str,256),('comment',str,256)])
+        results = table.execute_arbitrary(query,dtype=dtype)
+        self.assertTrue(isinstance(results[0][0],int))
+        self.assertTrue(isinstance(results[0][1],str))
+        self.assertTrue(isinstance(results[0][2],str))
+        self.assertTrue(isinstance(results[0][3],str))
+        self.assertEqual(results[0][0],1133)
+        self.assertEqual(results[0][1],'3.1')
+        self.assertEqual(results[0][2],'2014-07-11 17:02:08')
+        self.assertEqual(results[0][3],'all DD + regular survey for 1 lunation')
 
 if __name__ == "__main__":
     unittest.main()
