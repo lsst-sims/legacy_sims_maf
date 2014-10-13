@@ -21,7 +21,7 @@ class SlicerRegistry(type):
             cls.registry = {}
         modname = inspect.getmodule(cls).__name__ + '.'
         if modname.startswith('lsst.sims.maf.slicers'):
-            modname = '' 
+            modname = ''
         slicername = modname + name
         if slicername in cls.registry:
             raise Exception('Redefining metric %s! (there are >1 slicers with the same name)' %(slicername))
@@ -36,7 +36,6 @@ class SlicerRegistry(type):
             if doc:
                 print '---- ', slicername, ' ----'
                 print inspect.getdoc(cls.registry[slicername])
-
 
 
 class BaseSlicer(object):

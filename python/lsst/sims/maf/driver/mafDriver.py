@@ -1,8 +1,7 @@
 import os
-import numpy as np 
+import numpy as np
 
 from .mafConfig import MafConfig, config2dict, readMetricConfig, readSlicerConfig, readMixConfig
-
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -34,7 +33,7 @@ class MafDriver(object):
         # If a dbClass isn't specified, use OpsimDatabase
         if 'dbClass' not in self.config.dbAddress.keys():
            self.config.dbAddress['dbClass'] = 'OpsimDatabase'
-           
+
         # Validate and freeze the config
         self.config.validate()
         self.config.freeze()
@@ -124,7 +123,8 @@ class MafDriver(object):
                     nameCheck.append(summaryMetric.name)
                 if len(list(set(nameCheck))) < len(nameCheck):
                    duplicates = [x for x, y in collections.Counter(nameCheck).items() if y > 1]
-                   raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'%(duplicates[0], temp_metric.name))
+                   raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'
+                                   %(duplicates[0], temp_metric.name))
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():
@@ -155,7 +155,7 @@ class MafDriver(object):
             counts = [filenames.count(x) for x in duplicates]
             print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add slicer metadata or change metric names.')
-  
+
     def getData(self, constraint, colnames=[], stackersList=[]):
         """Pull required data from database and calculate additional columns from stackers. """
         # Stacker_names describe the already-configured (via the config driver) stacker methods.
@@ -352,7 +352,7 @@ class MafDriver(object):
                     if self.verbose:
                        dt,time_prev = dtime(time_prev)
                        print '    wrote output files in %.3g s'%dt
-        
+
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged
         histList = []
@@ -360,7 +360,7 @@ class MafDriver(object):
             for m in m1:
                 if 'histNum' in m.histMerge.keys():
                     histList.append(m.histMerge['histNum'])
-        
+
         histList = list(set(histList))
         histList.sort()
         histDict={}
@@ -368,7 +368,7 @@ class MafDriver(object):
             histDict[item] = {}
             histDict[item]['files']=[]
             histDict[item]['plotkwargs']=[]
-                        
+
             for m1 in self.metricList:
                 for m in m1:
                     if 'histNum' in m.histMerge.keys():
@@ -380,7 +380,7 @@ class MafDriver(object):
                             del temp_dict['histNum']
                             histDict[key]['plotkwargs'].append(temp_dict)
 
-        
+
         for key in histDict.keys():
             # Use a comparison slice metric per merged histogram. Only read relevant files. 
             cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=True, outDir=self.config.outputDir,
@@ -397,7 +397,7 @@ class MafDriver(object):
                 if cbm.slicers[iids[0]].slicerName == 'HealpixSlicer':
                    fignum, title, psfile = cbm.plotPowerSpectra(iids, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
-                
+
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.
         datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
@@ -406,7 +406,7 @@ class MafDriver(object):
         datefile.close()
         # Save the as-ran pexConfig file
         self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
-        
+
         if self.verbose:
             dt,self.time_start = dtime(self.time_start)
             print 'Ran everything in %.3g seconds' %(dt)

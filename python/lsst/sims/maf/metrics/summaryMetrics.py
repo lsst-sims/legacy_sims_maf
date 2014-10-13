@@ -3,7 +3,7 @@ import healpy as hp
 from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
-    
+
 class fOArea(BaseMetric):
     """
     Metric to calculate the FO Area; works with FO slicer only.
@@ -30,7 +30,7 @@ class fOArea(BaseMetric):
             return nv
         else:
             return self.badval
-        
+
 
 class fONv(BaseMetric):
     """
@@ -58,7 +58,7 @@ class fONv(BaseMetric):
             return area
         else:
             return self.badval
-    
+
 
 class TableFractionMetric(BaseMetric):
     """
@@ -85,7 +85,7 @@ class TableFractionMetric(BaseMetric):
         """
         super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         self.nbins = nbins
-        
+
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
         goodVals = np.where((dataSlice[self.colname] > 0) & (dataSlice[self.colname] < 1)  )
@@ -107,7 +107,7 @@ class TableFractionMetric(BaseMetric):
         result['name'] = binNames
         result['value'] = hist
         return result
-        
+
 
 class IdentityMetric(BaseMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
