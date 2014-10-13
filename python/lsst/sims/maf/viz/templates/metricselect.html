@@ -26,16 +26,14 @@
 
 <table>
 
-{% set metricInfo = run.metricInfo(run.metrics[0], withDataFile=True) %}
-{% set mInfoLen = metricInfo|length + 1 %}
-  
+{% set metricInfo = run.metricInfo(run.metrics[0], withDataLink=True) %}
+{% set mInfoLen = metricInfo|length  %}
+
 <tr>
 <th> </th>
 {% for key in metricInfo %}
   <th> {{ key }} </th>
 {% endfor %}
-  <th>JSON</th>
-</tr>
 
 <tr>
 <td> </td>
@@ -63,37 +61,30 @@
         </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
        {% for metric in metrics %}
-          {% set metricInfo = run.metricInfo(metric,
-  withDataFile=True) %}
+          {% set metricInfo = run.metricInfo(metric, withDataLink=True) %}
           <tr>
 	  <td>
-          <input type='checkbox' name="metricId" value="{{metric['metricId']}}"> 
+          <input type='checkbox' name="metricId" value="{{metric['metricId']}}">
 	  </td>
 	  {% for key in metricInfo %}
            <td>
 	   {% if key == 'Data' %}
-	    {% if metricInfo[key][0] != 'NULL' %}
-	    <a href="{{metricInfo[key][1]}}">{{metricInfo[key][0]|escape}}</a>
-	    {% else %}
-	     N/A
-	    {% endif %}
+	       <a href="getData?datatype=npz&runId={{runId}}&metricId={{metric['metricId']}}">npz</a>
+	       <a href="getData?datatype=json&runId={{runId}}&metricId={{metric['metricId']}}">JSON</a>
 	   {% else %}
             {{ metricInfo[key]|escape }}
            {% endif %}
-          </td>
-	  {% endfor %} {# End of metric info keys #}
-	  <td>
-	   <a href="json?runId={{runId}}&metricId={{metric['metricId']}}">JSON</a>
-	  </td>
+	   </td>
+	  {% endfor %} {# end of for key in metricInfo #}
 	  </tr>
 	{% endfor %} {# End of metrics #}
     {% endfor %}  {# End of subgroup #}
  {% endfor %}  {# End of group #}
 <tr>
 <td> </td>
-<td colspan="3">
+<td colspan={{mInfoLen}}>
 <input type='submit' value='Plot Metrics'>
-</form> 
+</form>
 </td>
 </tr>
 

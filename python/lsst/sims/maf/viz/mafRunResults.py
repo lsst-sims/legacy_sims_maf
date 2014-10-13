@@ -119,7 +119,7 @@ class MafRunResults(object):
         metrics = self.metricIdsToMetrics(metricIds)
         return self.sortMetrics(metrics)
 
-    def convertJSON(self, metric):
+    def getJson(self, metric):
         """
         Return the JSON string containing the data for a particular metric.
         """
@@ -134,6 +134,16 @@ class MafRunResults(object):
         if io is None:
             return 'No JSON file available.'
         return io.getvalue()
+
+    def getNpz(self, metric):
+        """
+        Return the npz data.
+        """
+        filename = metric['metricDataFile'][0]
+        if filename == 'NULL':
+            return 'No npz file'
+        datafile = os.path.join(self.outDir, filename)
+        return datafile
 
     def metricIdsInSubgroup(self, group, subgroup):
         """
@@ -342,7 +352,7 @@ class MafRunResults(object):
             match = (metrics['metricName'] == metricName)
         return metrics[match]
 
-    def metricInfo(self, metric, withDataFile=True, withSlicerName=True):
+    def metricInfo(self, metric, withDataLink=True, withSlicerName=True):
         """
         Return a dict with the metric info we want to show on the webpages.
 
@@ -354,7 +364,7 @@ class MafRunResults(object):
         if withSlicerName:
             metricInfo['Slicer'] = metric['slicerName']
         metricInfo['Metadata'] = metric['metricMetadata']
-        if withDataFile:
+        if withDataLink:
             metricInfo['Data'] = []
             metricInfo['Data'].append(metric['metricDataFile'])
             metricInfo['Data'].append(os.path.join(self.outDir, metric['metricDataFile']))
@@ -393,10 +403,8 @@ class MafRunResults(object):
                 plotDict[p]['thumbFile'] = []
                 plotmatch = plots[np.where(plots['plotType'] == p)]
                 for pl in plotmatch:
-                    plotfile = self.getPlotfile(pl)
-                    thumbfile = self.getThumbfile(pl)
-                    plotDict[p]['plotFile'].append(plotfile)
-                    plotDict[p]['thumbFile'].append(thumbfile)
+                    plotDict[p]['plotFile'].append(self.getPlotfile(pl))
+                    plotDict[p]['thumbFile'].append(self.getThumbfile(pl))
                 plotTypes.remove(p)
         # Round up remaining plots.
         for p in plotTypes:
@@ -405,10 +413,8 @@ class MafRunResults(object):
             plotDict[p]['thumbFile'] = []
             plotmatch = plots[np.where(plots['plotType'] == p)]
             for pl in plotmatch:
-                plotfile = self.getPlotfile(pl)
-                thumbfile = self.getThumbfile(pl)
-                plotDict[p]['plotFile'].append(plotfile)
-                plotDict[p]['thumbFile'].append(thumbfile)
+                plotDict[p]['plotFile'].append(self.getPlotfile(pl))
+                plotDict[p]['thumbFile'].append(self.getThumbfile(pl))
         return plotDict
 
     def getThumbfile(self, plot):

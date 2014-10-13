@@ -28,7 +28,6 @@
 than per metric. #}
 
 {% set metricInfo = run.metricInfo(run.metrics[0]) %}
-{% set ninfo = metricInfo|length %}
 
 {% for g in run.groups.keys() %}
  {% set groupstart = True %}
@@ -42,13 +41,13 @@ than per metric. #}
    </p>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
   <div id="metricset">
-  {% for metric in subsetMetrics %}  
+  {% for metric in subsetMetrics %}
     {% set metricInfo = run.metricInfo(metric) %}
     {% set metricPlots = run.plotsForMetric(metric) %}
     {# Only show anything here for this metric if it had plots #}
     {% if metricPlots|length > 0 %}
       {# Print the metric info #}
-      {{ mcr.PrintMetricInfo(metricInfo) }}
+      {{ mcr.PrintMetricInfo(runId, metric, metricInfo) }}
       {# Add the plots for this metric #}
       {{ mcr.MakePlotTable(metricPlots, run) }}
       <p>
@@ -66,7 +65,7 @@ than per metric. #}
   {{ mcr.MakeStatTable(subsetMetrics, g, sg, run) }}
 
   </div>
-   
+
  {% endfor %}
 {% endfor %}
 

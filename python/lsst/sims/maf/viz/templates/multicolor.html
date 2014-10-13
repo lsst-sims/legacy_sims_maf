@@ -16,17 +16,17 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set statNames = run.allStatNames(subsetMetrics) %}  
-   {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
+   {% set statNames = run.allStatNames(subsetMetrics) %}
+   {% set displaygroup = skysetMetrics|length + combosetMetrics|length
     + statNames|length %}
-   {% if displaygroup > 0 %} 
+   {% if displaygroup > 0 %}
       {% if groupstart == True %}
         <li>
         <a href="#{{g}}">{{g}}</a>
         <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
         {% set groupstart = False %}
       {% else %}
-        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>	  
+        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
       {% endif %}
     {% endif %}
   {% endfor %}
@@ -48,13 +48,13 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set statNames = run.allStatNames(subsetMetrics) %}  
+   {% set statNames = run.allStatNames(subsetMetrics) %}
 
    {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
     + statNames|length %}
-    {% if displaygroup > 0 %} 
+    {% if displaygroup > 0 %}
      {# then show this group ... #}
-     
+
    {% if groupstart == True %}
       <a name = "{{g|escape}}" ></a>
       {% set groupstart = False %}
@@ -88,7 +88,7 @@
       <div id='metricset'>
 	{% set metricInfo = run.metricInfo(m) %}
         {{ metricInfo['MetricName']|escape }} ({{metricInfo['Slicer']|escape}})
-	</br> <div id='indent'> {{metricInfo['Metadata']|escape}} </div> </br>	
+	</br> <div id='indent'> {{metricInfo['Metadata']|escape}} </div> </br>
 	{% for plotfile, thumbfile in zip(combohist['plotFile'], combohist['thumbFile']) %}
         <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
 	 {% endfor %}
@@ -101,7 +101,7 @@
       </div>
    {% endif %}
 
-  {% endif %}      
+  {% endif %}
  {% endfor %}
 {% endfor %}
 

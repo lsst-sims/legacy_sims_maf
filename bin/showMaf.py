@@ -24,16 +24,9 @@ class MetricSelectHandler(web.RequestHandler):
         runId = int(self.request.arguments['runId'][0])
         self.write(selectTempl.render(runlist=runlist, runId=runId))
 
-class JsonHandler(web.RequestHandler):
+class MetricResultsPageHandler(web.RequestHandler):
     def get(self):
-        jsonTempl = env.get_template("json.html")
-        runId = int(self.request.arguments['runId'][0])
-        metricId = int(self.request.arguments['metricId'][0])
-        self.write(jsonTempl.render(runlist=runlist, runId=runId, metricId=metricId))
-
-class MetricGridPageHandler(web.RequestHandler):
-    def get(self):
-        gridTempl = env.get_template("grid.html")
+        resultsTempl = env.get_template("results.html")
         runId = int(self.request.arguments['runId'][0])
         if 'metricId' in self.request.arguments:
             metricIdList = self.request.arguments['metricId']
@@ -43,8 +36,27 @@ class MetricGridPageHandler(web.RequestHandler):
             groupList = self.request.arguments['Group_subgroup']
         else:
             groupList = []
-        self.write(gridTempl.render(metricIdList=metricIdList, groupList=groupList,
+        self.write(resultsTempl.render(metricIdList=metricIdList, groupList=groupList,
                                     runId=runId, runlist=runlist))
+
+class DataHandler(web.RequestHandler):
+    def get(self):
+        runId = int(self.request.arguments['runId'][0])
+        metricId = int(self.request.arguments['metricId'][0])
+        if 'datatype' in self.request.arguments:
+            datatype = self.request.arguments['datatype'][0].lower()
+        else:
+            datatype = 'npz'
+        run = runlist.getRun(runId)
+        metric = run.metricIdsToMetrics([metricId])
+        if datatype == 'npz':
+            npz = run.getNpz(metric)
+            self.redirect(npz)
+        elif datatype == 'json':
+            jsn = run.getJson(metric)
+            self.write(jsn)
+        else:
+            self.write('Data type "%s" not understood.' %(datatype))
 
 class ConfigPageHandler(web.RequestHandler):
     def get(self):
@@ -75,17 +87,17 @@ class MultiColorPageHandler(web.RequestHandler):
 def make_app():
     """The tornado global configuration """
     application = web.Application([
-            ("/", RunSelectHandler),
-            ("/metricSelect", MetricSelectHandler),
-            ("/json", JsonHandler),
-            ("/metricResults", MetricGridPageHandler),
-            ("/configParams", ConfigPageHandler),
-            ("/summaryStats", StatPageHandler), 
-            ("/allMetricResults", AllMetricResultsPageHandler),
-            ("/multiColor", MultiColorPageHandler),
-            (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
-            (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}), 
-            ])
+        ("/", RunSelectHandler),
+        ("/metricSelect", MetricSelectHandler),
+        ("/metricResults", MetricResultsPageHandler),
+        ("/getData", DataHandler),
+        ("/configParams", ConfigPageHandler),
+        ("/summaryStats", StatPageHandler),
+        ("/allMetricResults", AllMetricResultsPageHandler),
+        ("/multiColor", MultiColorPageHandler),
+        (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
+        (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}),
+        ])
     return application
 
 if __name__ == "__main__":
@@ -105,7 +117,7 @@ if __name__ == "__main__":
     if not trackingDbAddress.startswith('sqlite:///'):
         trackingDbAddress = 'sqlite:///' + trackingDbAddress
     print 'Using tracking database at %s' %(trackingDbAddress)
-    
+
     global startRunId
     startRunId = -666
     # If given a directory argument:
@@ -115,7 +127,7 @@ if __name__ == "__main__":
             print 'There is no directory containing MAF outputs at %s.' %(mafDir)
             print 'Just opening using tracking db at %s.' %(trackingDbAddress)
         # Open tracking database to add a run.
-        trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)    
+        trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
         opsimRun = ''
@@ -137,7 +149,7 @@ if __name__ == "__main__":
         startRunId = trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir)
         print ' Used runID %d' %(startRunId)
         trackingDb.close()
-        
+
     # Open tracking database and start visualization.
     global runlist
     runlist = MafTracking(trackingDbAddress)
@@ -150,15 +162,15 @@ if __name__ == "__main__":
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
     env = Environment(loader=FileSystemLoader(templateDir))
     # Add 'zip' to jinja templates.
-    env.globals.update(zip=zip)    
+    env.globals.update(zip=zip)
 
     global staticpath
     staticpath = '.'
-    
+
     # Start up tornado app.
     application = make_app()
     application.listen(args.port)
     print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' %(args.port)
 
     ioloop.IOLoop.instance().start()
-    
+

@@ -41,7 +41,7 @@
     <div id="metricset">
 
     {# Print the metric info #}
-    {{ mcr.PrintMetricInfo(metricInfo) }}
+    {{ mcr.PrintMetricInfo(runId, metric, metricInfo) }}
 
     {# Add the plots for this metric #}
     {% set metricPlots = run.plotsForMetric(metric) %}
