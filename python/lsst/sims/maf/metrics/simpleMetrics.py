@@ -65,6 +65,15 @@ class CountMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname]) 
 
+class CountRatioMetric(BaseMetric):
+    """Count the length of a simData column slice. """
+    def __init__(self, col=None, normVal=1., **kwargs):
+        self.normVal = normVal
+        super(CountRatioMetric, self).__init__(col=col, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        return len(dataSlice[self.colname])/self.normVal
+
 class RobustRmsMetric(BaseMetric):
     """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation
     does not include outliers in the distribution"""
