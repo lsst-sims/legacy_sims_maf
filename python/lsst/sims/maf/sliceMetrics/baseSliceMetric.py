@@ -41,7 +41,7 @@ class BaseSliceMetric(object):
         self.iid_next = 0
         self.metricNames = {}
         self.plotDicts = {}
-        self.displayDicts = {}        
+        self.displayDicts = {}
         self.slicers = {}
         self.metricValues = {}
         self.simDataNames = {}
@@ -72,8 +72,7 @@ class BaseSliceMetric(object):
                     iids.remove(iid)
                     continue
         return iids
-    
-       
+
     def _buildOutfileName(self, iid, outfileRoot=None, plotType=None):
         """
         Build an automatic output file name for metric data or plots.
@@ -98,7 +97,7 @@ class BaseSliceMetric(object):
         # Add letters to distinguish slicer types
         if iid in self.slicers:
             oname = oname + '_' + self.slicers[iid].slicerName[:4].upper()
-        # Do some work sanitizing output filename. 
+        # Do some work sanitizing output filename.
         # Replace <, > and = signs.
         oname = oname.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
         # Strip white spaces (replace with underscores), strip '.'s and ','s

@@ -20,13 +20,13 @@ class ComparisonSliceMetric(BaseSliceMetric):
     to allow creation of plots using data created by multiple metrics. Each metric data array
     can also be accompanied by the metric object which created it, although this is not necessary
     (but provides a easy way to set plotting parameters).
-    
+
     The ComparisonSliceMetric tracks metadata about each metric, including the opsim run name,
-    the sql constraint that produced the original metric data, and the slicer 
-    which generated the data. 
+    the sql constraint that produced the original metric data, and the slicer
+    which generated the data.
     """
 
-    def addMetricData(self, metricValues, metricName, slicer, simDataName, 
+    def addMetricData(self, metricValues, metricName, slicer, simDataName,
                       sqlconstraint, metadata, displayDict=None, plotDict=None, metricId=None):
         """
         Add a set of metricValues/slicer/plotDict/metricName/simDataName/sqlconstraint/metadata directly.
@@ -44,9 +44,9 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.sqlconstraints[iid] = sqlconstraints
         self.metadatas[iid] = metadatas
         if displayDict is None:
-           displayDict = {'group':'Ungrouped', 
+           displayDict = {'group':'Ungrouped',
                           'subgroup':None,
-                          'order':0, 
+                          'order':0,
                           'caption':None}
         self.displayDicts[iid] = displayDict
         if metricId is not None:
@@ -67,7 +67,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
 
     def uniqueMetadata(self, iids=None):
         """
-        Examine metadatas and return the set of unique metadata values 
+        Examine metadatas and return the set of unique metadata values
         (optionally, for only iids)
         """
         uniqueMetadata = set()
@@ -79,30 +79,30 @@ class ComparisonSliceMetric(BaseSliceMetric):
 
     def combineMetadata(self, iids=None):
        """
-       Combine a set of metadatas to remove duplication. 
+       Combine a set of metadatas to remove duplication.
        """
        uMetadata = self.uniqueMetadata(iids=iids)
-       tmp = []
-       for uM in uMetadata:
-          tmp.append(uM.split(' and '))
-       uMetadata = tmp
-       # Split the pieces of the metadata apart (separated by 'and') 
-       # and then strip off the white spaces.
        combo = []
        for uM in uMetadata:
-          iMeta = []
-          for uMi in uM:
-             iMeta.append(uMi.strip())
-          combo.append(iMeta)
+          if ' and ' in uM:
+             uMSplit = uM.split(' and ')
+          elif ', ' in uM:
+             uMSplit = uM.split(', ')
+          else:
+             uMSplit = uM
+          tmp = []
+          for iM in uMSplit:
+             tmp.append(iM.strip())
+          combo.append(tmp)
        # See if there are common propIDs to all metadatas
        propids = []
        for c in combo:
           for ci in c:
-             if 'propID' in ci:
+             if 'prop' in ci:
                 propids.append(ci)
        if len(propids) == len(combo) and len(np.unique(propids))==1:
           propids = np.unique(propids)
-          for c in combo:             
+          for c in combo:
              c.remove(propids)
           cMetadata = ', '.join([' '.join(c) for c in combo]) + ' for %s' %(propids[0])
        else:
@@ -131,7 +131,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
             iids = self.slicers.keys()
         for iid in iids:
             uniqueSlicerNames.add(self.slicers[iid].slicerName)
-        return uniqueSlicerNames                        
+        return uniqueSlicerNames
 
     def splitPlottable(self, iids):
         slicers = set()
@@ -152,7 +152,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         Build a plot title from the simDataName, metadata and metric names of the 'iids'.
         """
         usimDataNames = self.uniqueSimDataNames(iids)
-        umetadatas = self.uniqueMetadata(iids)        
+        umetadatas = self.uniqueMetadata(iids)
         umetricNames = self.uniqueMetricNames(iids)
         # Create a plot title from the unique parts of the simData/metadata/metric names.
         plotTitle = ''
@@ -161,15 +161,14 @@ class ComparisonSliceMetric(BaseSliceMetric):
         if len(umetadatas) == 1:
             plotTitle += ' ' + list(umetadatas)[0]
         if len(umetricNames) == 1:
-            plotTitle += ' ' + list(umetricNames)[0]        
+            plotTitle += ' ' + list(umetricNames)[0]
         if plotTitle == '':
-            # If there were more than one of everything above, just join metricNames with commas. 
+            # If there were more than one of everything above, just join metricNames with commas.
             plotTitle = ', '.join(umetricNames)
         else:
            plotTitle = plotTitle[1:]
         return plotTitle
-    
-    
+
     def _buildXlabel(self, iids):
         xlabel = set()
         for iid in iids:
@@ -180,7 +179,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         xlabel = list(xlabel)
         xlabel = ', '.join(xlabel)
         return xlabel
-    
+
     def _buildYlabel(self, iids):
         ylabel = None
         for iid in iids:
@@ -191,12 +190,12 @@ class ComparisonSliceMetric(BaseSliceMetric):
             if hasattr(self.slicers[iid], 'plotBinnedData'):
                 # Most of the time it will be 'count', so let's use that for now.
                 ylabel = 'Count'
-        return ylabel            
-        
+        return ylabel
+
     def _buildLegendLabels(self, iids):
         # Determine what is common among all iids
         usimDataNames = self.uniqueSimDataNames(iids)
-        umetadatas = self.uniqueMetadata(iids)        
+        umetadatas = self.uniqueMetadata(iids)
         umetricNames = self.uniqueMetricNames(iids)
         labels = []
         for iid in iids:
@@ -238,7 +237,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         # Test if metric names are all the same.
         if len(unames) == 1:
             jointName = ' '.join(unames)
-        # .. or not. 
+        # .. or not.
         else:
             # Split each unique name into a list to see if we can merge the names.
             nameLengths = [len(x.split()) for x in unames]
@@ -259,12 +258,12 @@ class ComparisonSliceMetric(BaseSliceMetric):
                         # Otherwise, just join and put into jointName.
                         jointName.append(''.join(tmp))
                 jointName = ' '.join(jointName)
-            # If the metric names are not the same length, just join everything. 
+            # If the metric names are not the same length, just join everything.
             else:
                 jointName = ' '.join(unames)
         return jointName
 
-    def plotHistograms(self, iids, 
+    def plotHistograms(self, iids,
                         bins=100, xMin=None, xMax=None, yMin=None, yMax=None,
                         title=None, xlabel=None, color=None, labels=None,
                         legendloc='upper left', alpha=1.0,
@@ -320,9 +319,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
                 fignum = self.slicers[iid].plotHistogram(self.metricValues[iid], fignum=fignum, **plotDict)
         if savefig:
             if outfileRoot is not None:
-                outroot = outfileRoot + title
+                outroot = outfileRoot + title + '_' + self.combineMetadata(iids)
             else:
-                outroot = title
+                outroot = title + '_' + self.combineMetadata(iids)
+            # Since self.iid_next is not in dicts, this just sanitizes outfile.
             outfile = self._buildOutfileName(self.iid_next, outfileRoot=outroot, plotType='hist')
             plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
