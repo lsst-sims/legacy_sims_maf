@@ -30,23 +30,23 @@ class OpenShutterFractionMetric(BaseMetric):
     Compute the fraction of time the shutter is open compared to the total time spent observing.
     """
     def __init__(self, metricName='OpenShutterFraction',
-                 slewTimeCol='slewTime', exptimeCol='visitExpTime', visitTimeCol='visitTime',
+                 slewTimeCol='slewTime', expTimeCol='visitExpTime', visitTimeCol='visitTime',
                  **kwargs):
-        self.exptimeCol = exptimeCol
+        self.expTimeCol = expTimeCol
         self.visitTimeCol = visitTimeCol
         self.slewTimeCol = slewTimeCol
-        super(OpenShutterFractionMetric, self).__init__(col=[self.exptimeCol, self.slewTimeCol],
+        super(OpenShutterFractionMetric, self).__init__(col=[self.expTimeCol, self.visitTimeCol, self.slewTimeCol],
                                                         metricName=metricName, units='OpenShutter/TotalTime',
                                                         **kwargs)
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
         if self.displayDict['caption'] is None:
             self.displayDict['caption'] = 'Open shutter time (%s total) divided by (total visit time (%s) + slewtime (%s)).' \
-              %(self.exptimeCol, self.visitTimeCol, self.slewtimeCol)
+              %(self.expTimeCol, self.visitTimeCol, self.slewTimeCol)
 
     def run(self, dataSlice, slicePoint=None):
-        result = (np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
-                    / np.sum(dataSlice[self.slewTimeCol] + dataSlice[self.exptimeCol]))
+        result = (np.sum(dataSlice[self.expTimeCol])
+                    / np.sum(dataSlice[self.slewTimeCol] + dataSlice[self.visitTimeCol]))
         return result
 
 class CompletenessMetric(BaseMetric):

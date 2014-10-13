@@ -27,9 +27,11 @@ class TestTechnicalMetrics(unittest.TestCase):
         exptime = 30.
         slewtime = 30.
         visitExpTime = np.ones(nvisit, dtype='float')*exptime
+        visitTime = np.ones(nvisit, dtype='float')*(exptime+0.0)
         slewTime = np.ones(nvisit, dtype='float')*slewtime
-        data = np.core.records.fromarrays([visitExpTime, slewTime], names=['visitExpTime', 'slewTime'])
-        metric = metrics.OpenShutterFractionMetric(readTime=0, shutterTime=0)
+        data = np.core.records.fromarrays([visitExpTime, visitTime, slewTime],
+                                          names=['visitExpTime', 'visitTime', 'slewTime'])
+        metric = metrics.OpenShutterFractionMetric()
         result = metric.run(data)
         self.assertEqual(result, .5)
 
