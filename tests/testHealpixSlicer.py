@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import numpy.lib.recfunctions as rfn
 import numpy.ma as ma

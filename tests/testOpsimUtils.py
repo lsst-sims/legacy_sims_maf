@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import unittest
 import lsst.sims.maf.utils.opsimUtils as opsimUtils
 
