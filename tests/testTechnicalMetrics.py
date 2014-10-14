@@ -4,21 +4,6 @@ import lsst.sims.maf.metrics as metrics
 
 class TestTechnicalMetrics(unittest.TestCase):
 
-    def testOpenShutterMetric(self):
-        """
-        Test the open shutter metric.
-        """
-        nvisit = 10
-        exptime = 30.
-        visitExpTime = np.ones(nvisit, dtype='float') * exptime
-        data = np.core.records.fromarrays([visitExpTime], names=['visitExpTime'])
-        metric = metrics.OpenShutterMetric(readTime=0, shutterTime=0)
-        result = metric.run(data)
-        self.assertEqual(result, exptime * nvisit)
-        metric = metrics.OpenShutterMetric(readTime=2, shutterTime=2)
-        result = metric.run(data)
-        self.assertEqual(result, (exptime - 4)*nvisit)
-
     def testOpenShutterFractionMetric(self):
         """
         Test the open shutter fraction metric.
@@ -27,9 +12,11 @@ class TestTechnicalMetrics(unittest.TestCase):
         exptime = 30.
         slewtime = 30.
         visitExpTime = np.ones(nvisit, dtype='float')*exptime
+        visitTime = np.ones(nvisit, dtype='float')*(exptime+0.0)
         slewTime = np.ones(nvisit, dtype='float')*slewtime
-        data = np.core.records.fromarrays([visitExpTime, slewTime], names=['visitExpTime', 'slewTime'])
-        metric = metrics.OpenShutterFractionMetric(readTime=0, shutterTime=0)
+        data = np.core.records.fromarrays([visitExpTime, visitTime, slewTime],
+                                          names=['visitExpTime', 'visitTime', 'slewTime'])
+        metric = metrics.OpenShutterFractionMetric()
         result = metric.run(data)
         self.assertEqual(result, .5)
 
