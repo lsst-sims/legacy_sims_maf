@@ -77,7 +77,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         seeing_norm = design['seeing']
         mag_zpoints = design['coaddedDepth']
         nvisitBench = design['nvisits']
+    # make sure nvisitBench not zero
+    for key in nvisitBench.keys():
+        if nvisitBench[key] == 0:
+            print 'Changing nvisit benchmark value to not be zero.'
+            nvisitBench[key] = 1
+            
     # Set range of values for visits plots.
+    
     nVisits_plotRange = {'all':
                          {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200],
                           'z':[100, 250], 'y':[100,250]},
@@ -127,7 +134,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     histNum = 0
 
     ## Metrics calculating values over the sky (healpix or opsim slicer)
-
     # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD']):
@@ -161,9 +167,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                        'legendloc':'upper right'}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
-            metricList.append(configureMetric('CountMetric',
-                                              kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
-                                            plotDict={'normVal':nvisitBench[f], 'binsize':0.05,
+            metricList.append(configureMetric('CountRatioMetric',
+                                              kwargs={'col':'expMJD', 'normVal':nvisitBench[f], 'metricName':'NVisitsRatio'},
+                                            plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
                                                         'xMin':0.5, 'xMax':1.5,
                                                 'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
                                         displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop), 'order':filtorder[f],
