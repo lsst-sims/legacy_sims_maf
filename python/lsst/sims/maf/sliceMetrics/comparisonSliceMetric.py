@@ -89,7 +89,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
           elif ', ' in uM:
              uMSplit = uM.split(', ')
           else:
-             uMSplit = [uM]
+             uMSplit = [uM,]
           tmp = []
           for iM in uMSplit:
              tmp.append(iM.strip())
