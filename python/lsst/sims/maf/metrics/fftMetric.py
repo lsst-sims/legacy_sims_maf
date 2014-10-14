@@ -1,4 +1,3 @@
-import numpy as np
 from scipy import fftpack
 from .baseMetric import BaseMetric
 
@@ -8,10 +7,10 @@ class FftMetric(BaseMetric):
     def __init__(self, timesCol='expmjd', metricName='Fft',
                  nCoeffs=100, **kwargs):
         """Instantiate metric.
-        
-        'timesCol' = column with the time of the visit (default expmjd), 
+
+        'timesCol' = column with the time of the visit (default expmjd),
         'nCoeffs' = number of coefficients of the (real) FFT to keep."""
-        self.times = timesCol   
+        self.times = timesCol
         super(FftMetric, self).__init__(col=[self.times], metricName=metricName, **kwargs)
         # Set up length of return values.
         self.nCoeffs = nCoeffs
@@ -23,4 +22,3 @@ class FftMetric(BaseMetric):
 
     def reducePeak(self, fftCoeff):
         pass
-        

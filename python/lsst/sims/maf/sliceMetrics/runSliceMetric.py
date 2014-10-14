@@ -1,20 +1,13 @@
-import os
-import warnings
+import os, warnings
 from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.metrics as metrics
-from lsst.sims.maf.db import ResultsDb
 from .baseSliceMetric import BaseSliceMetric
 
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
-
 
 class RunSliceMetric(BaseSliceMetric):
     """
@@ -47,11 +40,11 @@ class RunSliceMetric(BaseSliceMetric):
           if metric == metricObj:
              iids.append(iid)
        return iids
-    
+
     def setSlicer(self, slicer, override=False):
         """
         Set slicer for RunSliceMetric.
-    
+
         If override = False (default), checks if slicer already set, and if the two are equal.
         """
         if (self.slicer is None) or (override):
@@ -138,7 +131,7 @@ class RunSliceMetric(BaseSliceMetric):
                      useCache = False
                      # If we are above the cache size, drop the oldest element from the cache dict
                      if i > self.slicer.cacheSize:
-                        pop = cacheDict.popitem(last=False) #remove 1st item
+                        cacheDict.popitem(last=False) #remove 1st item
                   for iid in self.metricObjs:
                      if useCache:
                         self.metricValues[iid].data[i] = self.metricValues[iid].data[cacheDict[key]]
@@ -320,7 +313,7 @@ class RunSliceMetric(BaseSliceMetric):
            if closefig:
               plt.close('all')
            if plotfigs is None and verbose:
-              warnings.warn('Not plotting metric data for %s' %(mname))
+              warnings.warn('Not plotting metric data for %s' %(self.metricNames[iid]))
 
     def plotMetric(self, iid, savefig=True, outfileRoot=None):
         """

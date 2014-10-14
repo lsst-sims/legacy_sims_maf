@@ -14,7 +14,7 @@ class SupernovaMetric(BaseMetric):
                  uniqueBlocks=False, **kwargs):
         """
         redshift = redshift of the SN.  Used to scale observing dates to SN restframe.
-        Tmin = the minimum day to consider the SN.  
+        Tmin = the minimum day to consider the SN.
         Tmax = the maximum to consider.
         Nbetween = the number of observations to demand between Tmin and Tmax
         Nfilt = number of unique filters that must observe the SN above the snrCut
@@ -40,7 +40,7 @@ class SupernovaMetric(BaseMetric):
 
         In the science book, the metric demands Nfilt observations above a SNR cut.
         Here, we demand Nfilt observations near the peak with a given singleDepthLimt.
-        """        
+        """
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
@@ -61,17 +61,17 @@ class SupernovaMetric(BaseMetric):
         self.resolution = resolution
         self.uniqueBlocks = uniqueBlocks
         self.filterNames = np.array(['u','g','r','i','z','y'])
-        # Set rough values for the filter effective wavelengths. 
-        self.filterWave = np.array([375.,476.,621.,754.,870.,980.])/(1.+self.redshift) 
-        self.filterNames = self.filterNames[np.where( (self.filterWave > 300.) & (self.filterWave < 900.))[0]] 
+        # Set rough values for the filter effective wavelengths.
+        self.filterWave = np.array([375.,476.,621.,754.,870.,980.])/(1.+self.redshift)
+        self.filterNames = self.filterNames[np.where( (self.filterWave > 300.) & (self.filterWave < 900.))[0]]
         self.singleDepthLimit = singleDepthLimit
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Cadence'
-    
+
         # It would make sense to put a dict of interpolation functions here keyed on filter that take time
         #and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.
-        #repeat for multiple time steps.  
-        
+        #repeat for multiple time steps.
+
     def run(self, dataSlice, slicePoint=None):
         # Cut down to only include filters in correct wave range.
         goodFilters = np.in1d(dataSlice['filter'],self.filterNames)
@@ -81,24 +81,24 @@ class SupernovaMetric(BaseMetric):
         dataSlice.sort(order=self.mjdCol)
         time = dataSlice[self.mjdCol]-dataSlice[self.mjdCol].min()
         # Now days in SN rest frame
-        time = time/(1.+ self.redshift) 
+        time = time/(1.+ self.redshift)
         # Creat time steps to evaluate at
-        finetime = np.arange(0.,np.ceil(np.max(time)),self.resolution) 
+        finetime = np.arange(0.,np.ceil(np.max(time)),self.resolution)
         #index for each time point
-        ind = np.arange(finetime.size) 
+        ind = np.arange(finetime.size)
         #index for each time point + Tmax - Tmin
         right = np.searchsorted( time, finetime+self.Tmax-self.Tmin, side='right')
         left = np.searchsorted(time, finetime, side='left')
         # Demand enough visits in window
-        good = np.where( (right - left) > self.Nbetween)[0] 
+        good = np.where( (right - left) > self.Nbetween)[0]
         ind = ind[good]
         right = right[good]
         left = left[good]
         result = 0
         # Record the maximum gap near the peak (in rest-frame days)
-        maxGap = [] 
+        maxGap = []
         # Record the total number of observations in a sequence.
-        Nobs = [] 
+        Nobs = []
         right_side = -1
         for i,index in enumerate(ind):
             if i <= right_side:
@@ -107,7 +107,7 @@ class SupernovaMetric(BaseMetric):
                 visits = dataSlice[left[i]:right[i]]
                 t = time[left[i]:right[i]]
                 t = t-finetime[index]+self.Tmin
-                
+
                 if np.size(np.where(t < self.Tless)[0]) > self.Nless:
                     if np.size(np.where(t > self.Tmore)[0]) > self.Nmore:
                         if np.size(t) > self.Nbetween:
@@ -125,7 +125,7 @@ class SupernovaMetric(BaseMetric):
                                     if np.size(nearPeak) >= 2:
                                         gaps = t[nearPeak][1:]-np.roll(t[nearPeak],1)[1:]
                                     else:
-                                        gaps = self.peakGap+1e6 
+                                        gaps = self.peakGap+1e6
                                     if np.max(gaps) < self.peakGap:
                                         result += 1
                                         if self.uniqueBlocks:
@@ -150,13 +150,13 @@ class SupernovaMetric(BaseMetric):
         result = np.median(data['Nobs'])
         if np.isnan(result):
             result = self.badval
-        return result    
-                                
+        return result
+
 class TemplateExistsMetric(BaseMetric):
     """
     Calculate the fraction of images with a previous template image of desired quality.
     """
-    def __init__(self, seeingCol = 'finSeeing', expMJDCol='expMJD', 
+    def __init__(self, seeingCol = 'finSeeing', expMJDCol='expMJD',
                  metricName='TemplateExistsMetric', **kwargs):
         """
         seeingCol = column with final seeing value (arcsec)
@@ -180,10 +180,10 @@ class TemplateExistsMetric(BaseMetric):
         # Find the difference between the seeing and the minimum seeing at the previous visit
         seeing_diff = dataSlice[self.seeingCol] - np.roll(seeing_mins,1)
         # First image never has a template; check how many others do
-        good = np.where(seeing_diff[1:] >= 0.)[0] 
+        good = np.where(seeing_diff[1:] >= 0.)[0]
         frac = (good.size)/float(dataSlice[self.seeingCol].size)
         return frac
-    
+
 class UniformityMetric(BaseMetric):
     """
     Calculate how uniformly the observations are spaced in time.  Returns a value between -1 and 1.
@@ -216,9 +216,9 @@ class UniformityMetric(BaseMetric):
         n_cum = np.arange(1,dates.size+1)/float(dates.size) # Cumulative distribution of dates
         D_max = np.max(np.abs(n_cum-dates-dates[1])) # For a uniform distribution, dates = n_cum
         return D_max
-        
-                
-        
+
+
+
 class QuickRevisitMetric(BaseMetric):
     """
     Some kind of metric to investigate how dithering effects short-timescale measurements.
@@ -226,7 +226,7 @@ class QuickRevisitMetric(BaseMetric):
     """
     def __init__(self, nightCol='night', nVisitsInNight=6, **kwargs):
         self.nightCol = nightCol
-        super(QuickRevisitMetric, self).__init__(col=self.nightCol, **kwargs)        
+        super(QuickRevisitMetric, self).__init__(col=self.nightCol, **kwargs)
         self.nVisitsInNight = nVisitsInNight
         xlabel = 'Number of Nights with >= %d Visits' %(nVisitsInNight)
         if 'xlabel' not in self.plotDict:
@@ -238,6 +238,6 @@ class QuickRevisitMetric(BaseMetric):
         counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
         condition = (counts >= self.nVisitsInNight)
         return len(counts[condition])
-        
-        
-        
+
+
+

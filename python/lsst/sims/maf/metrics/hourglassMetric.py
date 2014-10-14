@@ -4,7 +4,7 @@ from lsst.sims.maf.utils.telescopeInfo import TelescopeInfo
 
 def nearestVal(A, val):
     return A[np.argmin(np.abs(np.array(A)-val))]
- 
+
 
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time. Must be used with the Hourglass Slicer."""
@@ -25,13 +25,13 @@ class HourglassMetric(BaseMetric):
         if lat != None:  self.telescope.lat = lat
         if lon != None:  self.telescope.lon = lon
         if elev != None: self.telescope.elev = elev
-   
+
     def run(self, dataSlice, slicePoint=None):
 
         import ephem
         dataSlice.sort(order=self.mjdcol)
         unights,uindx = np.unique(dataSlice[self.nightcol], return_index=True)
-        #twilights = np.zeros([len(unights), 6]) #setting and rising.  
+        #twilights = np.zeros([len(unights), 6]) #setting and rising.
         #localMidnight = np.zeros(len(unights))
 
         names = ['mjd', 'midnight', 'moonPer', 'twi6_rise', 'twi6_set', 'twi12_rise',
@@ -39,16 +39,16 @@ class HourglassMetric(BaseMetric):
         types = ['float']*len(names)
         pernight = np.zeros(len(unights), dtype=zip(names,types) )
         pernight['mjd'] = dataSlice['expMJD'][uindx]
-        
+
         left = np.searchsorted(dataSlice[self.nightcol], unights)
-        
+
         lsstObs = ephem.Observer()
         lsstObs.lat = self.telescope.lat
         lsstObs.lon = self.telescope.lon
         lsstObs.elevation = self.telescope.elev
         horizons = ['-6', '-12', '-18']
         key = ['twi6','twi12','twi18']
-        
+
         obsList = []
         S = ephem.Sun()
         moon = ephem.Moon()
@@ -63,7 +63,7 @@ class HourglassMetric(BaseMetric):
 
         for i,mjd in enumerate(pernight['mjd']):
             mjd = mjd-doff
-            
+
             pernight['midnight'][i] = nearestVal([lsstObs.previous_antitransit(S, start=mjd),
                                            lsstObs.next_antitransit(S, start=mjd)], mjd )+doff
             moon.compute(mjd)
@@ -71,7 +71,7 @@ class HourglassMetric(BaseMetric):
             for j,obs in enumerate(obsList):
                 pernight[key[j]+'_rise'][i] = obs.next_rising(S, start=pernight['midnight'][i]-doff,
                                                               use_center=True) + doff
-                
+
                 pernight[key[j]+'_set'][i] = obs.previous_setting(S, start=pernight['midnight'][i]-doff,
                                                                   use_center=True) + doff
 
@@ -83,7 +83,7 @@ class HourglassMetric(BaseMetric):
         left = good[:-1]
         right = good[1:]-1
         good = np.ravel(zip(left,right))
-        
+
         names = ['mjd','midnight', 'filter']
         types=['float','float','|S1']
         perfilter = np.zeros((good.size), dtype=zip(names,types))
@@ -93,7 +93,7 @@ class HourglassMetric(BaseMetric):
             mjd=mjd-doff
             perfilter['midnight'][i] = nearestVal([lsstObs.previous_antitransit(S, start=mjd),
                                            lsstObs.next_antitransit(S, start=mjd)], mjd )+doff
-                                                  
-                                      
+
+
         return {'pernight':pernight, 'perfilter':perfilter}
-    
+

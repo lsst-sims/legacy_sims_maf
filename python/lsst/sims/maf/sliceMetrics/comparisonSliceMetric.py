@@ -3,10 +3,6 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import warnings
-
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.metrics as metrics
-from lsst.sims.maf.db import ResultsDb
 from .baseSliceMetric import BaseSliceMetric
 
 import time
@@ -41,8 +37,8 @@ class ComparisonSliceMetric(BaseSliceMetric):
         self.metricNames[iid] = metricName
         self.slicers[iid] = slicer
         self.simDataNames[iid] = simDataName
-        self.sqlconstraints[iid] = sqlconstraints
-        self.metadatas[iid] = metadatas
+        self.sqlconstraints[iid] = sqlconstraint
+        self.metadatas[iid] = metadata
         if displayDict is None:
            displayDict = {'group':'Ungrouped',
                           'subgroup':None,
@@ -55,7 +51,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
 
     def uniqueMetricNames(self, iids=None):
         """
-        Examine metric names and return the set of unique metric names 
+        Examine metric names and return the set of unique metric names
         (optionally, for only 'iids'.).
         """
         uniqueMetrics = set()
@@ -111,7 +107,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
 
     def uniqueSimDataNames(self, iids=None):
         """
-        Examine simDataNames and return the set of unique simDataNames 
+        Examine simDataNames and return the set of unique simDataNames
         (optionally, for only iids)
         """
         uniqueSimDataNames = set()
@@ -123,7 +119,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
 
     def uniqueSlicerNames(self, iids=None):
         """
-        Examine slicerNames and return the set of unique values. 
+        Examine slicerNames and return the set of unique values.
         (optionally, for only iids).
         """
         uniqueSlicerNames = set()
@@ -139,7 +135,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
             slicers.add(self.slicers[iid].slicerName)
         outIids = []
         for s in slicers:
-            oiids = []
+            ooids = []
             for i in iids:
                 if self.slicers[i].slicerName == s:
                     ooids.append(i)
@@ -417,10 +413,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
         else:
             outfile = None
         return fignum, title, outfile
-    
+
 
     def plotSkyMaps(self, iids, units=None, title=None,
-                    clims=None, cmap=None, cbarFormat='%.2g', 
+                    clims=None, cmap=None, cbarFormat='%.2g',
                     savefig=False, outDir=None, outfileRoot=None):
         """
         Create a skymap plot of the difference between two iids.
@@ -428,9 +424,9 @@ class ComparisonSliceMetric(BaseSliceMetric):
         if len(iids) > 2:
            raise Exception('Only two iids to create a sky map difference')
         iids  = self._checkPlottable(iids)
-        if self.slicers[iid[0]] != self.slicers[iid[1]]:
+        if self.slicers[iids[0]] != self.slicers[iids[1]]:
            raise Exception('Slicers must be equal')
-        slicer = self.slicers[iid[0]]
+        slicer = self.slicers[iids[0]]
         # Check if the slicer has a histogram type visualization.
         for iid in iids:
            if (not hasattr(slicer, 'plotSkyMap')):
@@ -438,11 +434,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
         if len(iids) != 2:
            raise Exception('Removed one or more of the iids due to object data or wrong slicer')
         # Make plot title.
-        if plotTitle is None:
-            plotTitle = self._buildPlotTitle(iids)
+        if title is None:
+            title = self._buildPlotTitle(iids)
         # Plot the data.
         fignum = None
-        addLegend = False
         # Mask areas where either metric has bad data values, take difference elsewhere.
         mask = self.metricValues[iid[0]].mask
         mask = np.where(self.metricValues[iid[1]].mask == True, True, mask)
@@ -457,7 +452,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
             else:
                units = mname0 + ' - ' + mname1
         # Plot data.
-        fignum = slicer.plotSkyMap(diff, units=units, title=title, clims=clims, 
+        fignum = slicer.plotSkyMap(diff, units=units, title=title, clims=clims,
                                    cmap=cmap, cbarFormat=cbarFormat)
         if savefig:
             if outfileRoot is not None:
@@ -489,5 +484,3 @@ class ComparisonSliceMetric(BaseSliceMetric):
         else:
             outfile = None
         return fignum, title, outfile
-
-    

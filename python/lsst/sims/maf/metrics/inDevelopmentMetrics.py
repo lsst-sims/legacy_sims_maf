@@ -4,8 +4,8 @@ from .baseMetric import BaseMetric
 try:
     # Try cKDTree first, as it's supposed to be faster.
     from scipy.spatial import cKDTree as kdtree
-    #current stack scipy has a bad version of cKDTree.  
-    if not hasattr(kdtree,'query_ball_point'): 
+    #current stack scipy has a bad version of cKDTree.
+    if not hasattr(kdtree,'query_ball_point'):
         from scipy.spatial import KDTree as kdtree
 except:
     # But older scipy may not have cKDTree.
@@ -23,7 +23,7 @@ class LinkedMetric(BaseMetric):
            fovRad = radius of the field of view in degrees"""
         cols = [raCol, decCol]
         self.needRADec = True #flag so binMetric will pass ra,dec of point
-        super(LionkedMetric, self).__init__(col=cols, metricName=metricName, **kwargs)
+        super(LinkedMetric, self).__init__(col=cols, metricName=metricName, **kwargs)
         self.raCol = raCol
         self.decCol = decCol
 
@@ -36,7 +36,6 @@ class LinkedMetric(BaseMetric):
 
         pixlist=[]
         # For each ra,dec pointing, find the healpixels they overlap and append to the list
-        
+
         pixlist = list(set(pixlist))
         return len(pixlist)
-    

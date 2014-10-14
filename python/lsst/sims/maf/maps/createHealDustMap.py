@@ -13,7 +13,7 @@ nsides = [2,4,8,16,32,64,128,256,512,1024]
 for nside in nsides:
     lat, ra = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     # Move dec to +/- 90 degrees
-    dec = np.pi/2.0 - lat    
+    dec = np.pi/2.0 - lat
     ebvMap = dustmap.calculateEbv(ra=ra, dec=dec, interp=False)
     # When new API for calculateEbv is out:
     # ebvMap = dustmap.calculateEbv(np.array([ra,dec]), interp=False)

@@ -1,13 +1,11 @@
-import os, warnings
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import backref
 from sqlalchemy.exc import DatabaseError
-import numpy as np
 
 Base = declarative_base()
 
@@ -28,7 +26,7 @@ class RunRow(Base):
         return "<Run(mafRunId='%d', opsimRun='%s', opsimComment='%s', mafComment='%s', mafDir='%s'>" \
             %(self.mafRunId, self.opsimRun, self.opsimComment, self.mafComment, self.mafDir)
 
-    
+
 class TrackingDb(object):
 
     def __init__(self, trackingDbAddress=None, verbose=False):

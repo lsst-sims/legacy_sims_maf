@@ -10,7 +10,7 @@ class StackerRegistry(type):
         super(StackerRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        modname = inspect.getmodule(cls).__name__ 
+        modname = inspect.getmodule(cls).__name__
         if modname.startswith('lsst.sims.maf.stackers'):
             modname = ''
         else:
@@ -32,15 +32,15 @@ class StackerRegistry(type):
             if doc:
                 print '---- ', stackername, ' ----'
                 print cls.registry[stackername].__doc__
-                stacker = cls.registry[stackername]()                
+                stacker = cls.registry[stackername]()
                 print ' Columns added to SimData: ', ','.join(stacker.colsAdded)
                 print ' Default columns required: ', ','.join(stacker.colsReq)
-                
-                        
+
+
 class BaseStacker(object):
     """Base MAF Stacker: add columns generated at run-time to the simdata array."""
     __metaclass__ = StackerRegistry
-    
+
     def __init__(self):
         """
         Instantiate the stacker.

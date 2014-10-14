@@ -1,5 +1,5 @@
-# Base class for all 'Slicer' objects. 
-# 
+# Base class for all 'Slicer' objects.
+#
 
 import os
 import inspect
@@ -19,12 +19,12 @@ class SlicerRegistry(type):
             cls.registry = {}
         modname = inspect.getmodule(cls).__name__ + '.'
         if modname.startswith('lsst.sims.maf.slicers'):
-            modname = '' 
+            modname = ''
         slicername = modname + name
         if slicername in cls.registry:
             raise Exception('Redefining metric %s! (there are >1 slicers with the same name)' %(slicername))
         if slicername not in ['BaseSlicer', 'BaseSpatialSlicer']:
-            cls.registry[slicername] = cls            
+            cls.registry[slicername] = cls
     def getClass(cls, slicername):
         return cls.registry[slicername]
     def list(cls, doc=False):
@@ -34,7 +34,7 @@ class SlicerRegistry(type):
             if doc:
                 print '---- ', slicername, ' ----'
                 print inspect.getdoc(cls.registry[slicername])
-            
+
 
 
 class BaseSlicer(object):
@@ -42,13 +42,13 @@ class BaseSlicer(object):
     Base class for all slicers: sets required methods and implements common functionality.
     """
     __metaclass__ = SlicerRegistry
-    
+
     def __init__(self, verbose=True, badval=-666):
         """
         Instantiate the base slicer object.
 
         After first init with a 'blank' slicer: slicer should be ready for setupSlicer to
-        define slicePoints. 
+        define slicePoints.
         After init after a restore: everything necessary for using slicer for plotting or
         saving/restoring metric data should be present (although slicer does not need to be able to
         slice data again and generally will not be able to).
@@ -67,8 +67,8 @@ class BaseSlicer(object):
         # Set cacheSize : each slicer will be able to override if appropriate.
         # Currently only the healpixSlice actually uses the cache: this is set in 'useCache' flag.
         #  If other slicers have the ability to use the cache, they should add this flag and set the
-        #  cacheSize in their __init__ methods. 
-        self.cacheSize = 0        
+        #  cacheSize in their __init__ methods.
+        self.cacheSize = 0
         # Set length of Slicer.
         self.nslice = None
         self.slicePoints = {}
@@ -89,11 +89,11 @@ class BaseSlicer(object):
         #   are absolutely necesary for init.
         # Will often be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {'badval':badval}
-        
+
     def setupSlicer(self, simData):
         """
         Set up Slicer for data slicing.
-        
+
         Set up internal parameters necessary for slicer to slice data and generates indexes on simData.
         Also sets _sliceSimData for a particular slicer.
         """
@@ -106,7 +106,7 @@ class BaseSlicer(object):
         Return the slicePoint metadata, for all slice points.
         """
         return self.slicePoints
-    
+
     def __len__(self):
         """
         Return nslice, the number of slicePoints in the slicer.
@@ -122,7 +122,7 @@ class BaseSlicer(object):
     def next(self):
         """
         Returns results of self._sliceSimData when iterating over slicer.
-        
+
         Results of self._sliceSimData should be dictionary of
            {'idxs' - the data indexes relevant for this slice of the slicer,
            'slicePoint' - the metadata for the slicePoint .. always includes ['sid'] key for ID of slicePoint.}
@@ -135,7 +135,7 @@ class BaseSlicer(object):
 
     def __getitem__(self, islice):
         return self._sliceSimData(islice)
-    
+
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
         raise NotImplementedError()
@@ -188,8 +188,8 @@ class BaseSlicer(object):
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
                  slicePoints = self.getSlicePoints(), # slicePoint metadata saved (is a dictionary)
-                 slicerNSlice = self.nslice) 
-                                 
+                 slicerNSlice = self.nslice)
+
     def readData(self, infilename):
         """
         Read metric data from disk, along with the info to rebuild the slicer (minus new slicing capability).
@@ -214,10 +214,10 @@ class BaseSlicer(object):
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
         plotDict = header['plotDict']
-        
+
         return metricValues, slicer, header, plotDict
-    
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
+
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig',
                  savefig=True, thumbnail=True, **kwargs):
         """
         Call all available plotting methods.
@@ -225,8 +225,8 @@ class BaseSlicer(object):
         The __init__ for each slicer builds a dictionary of the individual slicer's plotting methods.
         This method calls each of the plotting methods in that dictionary, and optionally
         saves the resulting figures.
-        
-        metricValues: the metric values to plot.        
+
+        metricValues: the metric values to plot.
         """
         # If passed metric data which is not a simple data type, return without plotting.
         # (thus - override this method if your slicer requires plotting complex 'object' data.
@@ -245,7 +245,7 @@ class BaseSlicer(object):
                 outfile = filename + '_' + plottype + '.' + figformat
                 plt.savefig(outfile, figformat=figformat, dpi=dpi)
                 if thumbnail:
-                    filepath, thumbname = os.path.split(outfile)                    
+                    filepath, thumbname = os.path.split(outfile)
                     thumbname = ''.join(thumbname.split('.')[:-1])
                     thumbname = 'thumb.' + thumbname + '.png'
                     thumbfile = os.path.join(filepath, thumbname)
@@ -257,4 +257,4 @@ class BaseSlicer(object):
                 filetypes.append('NULL')
         return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
 
-        
+
