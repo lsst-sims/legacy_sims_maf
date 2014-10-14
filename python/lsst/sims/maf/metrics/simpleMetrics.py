@@ -119,7 +119,7 @@ class FracBelowMetric(BaseMetric):
 class PercentileMetric(BaseMetric):
     def __init__(self, col=None, percentile=90, metricName=None, **kwargs):
         if metricName is None:
-            metricName = '%.0f %stile %s' %(percentile, '%', col)
+            metricName = '%.0fth%sile %s' %(percentile, '%', col)
         super(PercentileMetric, self).__init__(col=col, metricName=metricName, **kwargs)
         self.percentile = percentile
     def run(self, dataSlice, slicePoint=None):

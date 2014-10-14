@@ -255,7 +255,7 @@ class MafRunResults(object):
                 hasstat[i] = 1
         metrics = metrics[np.where(hasstat > 0)]
         metrics = self.sortMetrics(metrics, order = ['displayGroup', 'displaySubgroup', 'slicerName',
-                                                   'displayOrder', 'metricMetadata', 'baseMetricNames'])
+                                                    'displayOrder', 'metricMetadata', 'baseMetricNames'])
         return metrics
 
     def uniqueSlicerNames(self, metrics=None):
