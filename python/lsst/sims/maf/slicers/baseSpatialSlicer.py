@@ -12,16 +12,7 @@ from matplotlib.ticker import FuncFormatter
 from functools import wraps
 import warnings
 from lsst.sims.maf.utils import optimalBins, percentileClipping
-
-try:
-    # Try cKDTree first, as it's supposed to be faster.
-    from scipy.spatial import cKDTree as kdtree
-    #current stack scipy has a bad version of cKDTree.
-    if not hasattr(kdtree,'query_ball_point'):
-        from scipy.spatial import KDTree as kdtree
-except:
-    # But older scipy may not have cKDTree.
-    from scipy.spatial import KDTree as kdtree
+from scipy.spatial import cKDTree as kdtree
 
 from .baseSlicer import BaseSlicer
 

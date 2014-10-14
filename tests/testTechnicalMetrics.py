@@ -4,21 +4,6 @@ import lsst.sims.maf.metrics as metrics
 
 class TestTechnicalMetrics(unittest.TestCase):
 
-    def testOpenShutterMetric(self):
-        """
-        Test the open shutter metric.
-        """
-        nvisit = 10
-        exptime = 30.
-        visitExpTime = np.ones(nvisit, dtype='float') * exptime
-        data = np.core.records.fromarrays([visitExpTime], names=['visitExpTime'])
-        metric = metrics.OpenShutterMetric(readTime=0, shutterTime=0)
-        result = metric.run(data)
-        self.assertEqual(result, exptime * nvisit)
-        metric = metrics.OpenShutterMetric(readTime=2, shutterTime=2)
-        result = metric.run(data)
-        self.assertEqual(result, (exptime - 4)*nvisit)
-
     def testOpenShutterFractionMetric(self):
         """
         Test the open shutter fraction metric.
@@ -56,7 +41,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         assert(metric.reducez(completeness) == 1.5)
         assert(metric.reducey(completeness) == 0.5)
         assert(metric.reduceJoint(completeness) == 0.5)
-        # Test completeness metric when requesting only some filters. 
+        # Test completeness metric when requesting only some filters.
         metric = metrics.CompletenessMetric(u=0, g=100, r=100, i=100, z=100, y=100)
         completeness = metric.run(data, slicePoint)
         assert(metric.reduceu(completeness) == 1)
@@ -66,7 +51,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         assert(metric.reducez(completeness) == 1.5)
         assert(metric.reducey(completeness) == 0.5)
         assert(metric.reduceJoint(completeness) == 0.5)
-        # Test completeness metric when some filters not observed at all. 
+        # Test completeness metric when some filters not observed at all.
         metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
         data['filter'][550:600] = 'z'
         data['filter'][:100] = 'g'

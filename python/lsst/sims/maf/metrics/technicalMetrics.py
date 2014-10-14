@@ -104,5 +104,3 @@ class CompletenessMetric(BaseMetric):
         The joint completeness is just the minimum completeness for a point/field.
         """
         return completeness[-1]
-
-
