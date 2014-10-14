@@ -108,7 +108,7 @@ class TestDriver(unittest.TestCase):
                             'OpsimTest_Count_fiveSigmaDepth_g_ONED_BinnedData.pdf',
                             'OpsimTest_Count_fiveSigmaDepth_r_ONED.npz',
                             'OpsimTest_Count_fiveSigmaDepth_r_ONED_BinnedData.pdf',
-                            'OpsimTest_Count_fiveSigmaDepth_r_g__hist.pdf',
+                            'OpsimTest_Count_fiveSigmaDepth_r_g_hist.pdf',
                             'resultsDb_sqlite.db',
                             'configDetails.txt',
                             'configSummary.txt',
