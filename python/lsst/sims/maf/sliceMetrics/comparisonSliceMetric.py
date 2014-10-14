@@ -100,6 +100,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
           for ci in c:
              if 'prop' in ci:
                 propids.append(ci)
+       
        if len(propids) == len(combo) and len(np.unique(propids))==1:
           propids = np.unique(propids)
           for c in combo:
