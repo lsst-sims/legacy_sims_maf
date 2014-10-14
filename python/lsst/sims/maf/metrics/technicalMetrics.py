@@ -1,30 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-
-class OpenShutterMetric(BaseMetric):
-    """
-    Compute the amount of time the shutter is open.
-    """
-    def __init__(self, readTime=0., shutterTime=0.,
-                    metricName='OpenShutterMetric',
-                    exptimeCol='visitExpTime', **kwargs):
-        self.exptimeCol = exptimeCol
-        super(OpenShutterMetric, self).__init__(col=self.exptimeCol, metricName=metricName,
-                                                units='sec', **kwargs)
-        self.readTime = readTime
-        self.shutterTime = shutterTime
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Technical'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Open shutter time = (%s - %.1f seconds readtime' %(self.exptimeCol, self.readTime)
-            self.displayDict['caption'] +=  ' - %.1f seconds shutter open/close time) * number of visits.'\
-                %(self.shutterTime)
-
-    def run(self, dataSlice, slicePoint=None):
-        result = np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
-        return result
-
 class OpenShutterFractionMetric(BaseMetric):
     """
     Compute the fraction of time the shutter is open compared to the total time spent observing.

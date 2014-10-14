@@ -4,21 +4,6 @@ import lsst.sims.maf.metrics as metrics
 
 class TestTechnicalMetrics(unittest.TestCase):
 
-    def testOpenShutterMetric(self):
-        """
-        Test the open shutter metric.
-        """
-        nvisit = 10
-        exptime = 30.
-        visitExpTime = np.ones(nvisit, dtype='float') * exptime
-        data = np.core.records.fromarrays([visitExpTime], names=['visitExpTime'])
-        metric = metrics.OpenShutterMetric(readTime=0, shutterTime=0)
-        result = metric.run(data)
-        self.assertEqual(result, exptime * nvisit)
-        metric = metrics.OpenShutterMetric(readTime=2, shutterTime=2)
-        result = metric.run(data)
-        self.assertEqual(result, (exptime - 4)*nvisit)
-
     def testOpenShutterFractionMetric(self):
         """
         Test the open shutter fraction metric.

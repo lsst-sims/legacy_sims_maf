@@ -504,7 +504,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                          summaryStats={'IdentityMetric':{'metricName':'Count'}},
                          displayDict={'group':'1: Summary', 'subgroup':'NVisits', 'order':0})
     # Calculate the total open shutter time.
-    m4 = configureMetric('OpenShutterMetric', summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
+    m4 = configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
+                         summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
                          displayDict={'group':'1: Summary', 'subgroup':'On-sky Time'})
     metricDict = makeDict(m1, m2, m3, m4)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
