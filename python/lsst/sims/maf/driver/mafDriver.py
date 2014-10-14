@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readSlicerConfig, readMixConfig
+from .mafConfig import config2dict, readMetricConfig, readSlicerConfig, readMixConfig
 
 
 import lsst.sims.maf.db as db
@@ -17,8 +17,6 @@ import collections
 
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
-
-
 
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
@@ -172,7 +170,7 @@ class MafDriver(object):
                     # Add column names that the stackers need.
                     dbcolnames.append(col)
                 # If not already a configured stacker, instantiate one using defaults
-                if stacker.__class__.__name__ not in stacker_names: 
+                if stacker.__class__.__name__ not in stacker_names:
                     stackersList.append(stacker)
                     stacker_names.append(stacker.__class__.__name__)
             # Else if data source is just the usual database:
@@ -259,7 +257,7 @@ class MafDriver(object):
                     for col in stacker.colsReq:
                         colnames.append(col)
             # Find the unique column names required.
-            colnames = list(set(colnames)) 
+            colnames = list(set(colnames))
 
             print 'Querying with SQLconstraint:', sqlconstraint
             # Get the data from the database + stacker calculations.
@@ -302,7 +300,7 @@ class MafDriver(object):
                           slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                     outDir=self.config.outputDir) 
+                                                     outDir=self.config.outputDir)
                     gm.setSlicer(slicer)
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
@@ -337,7 +335,7 @@ class MafDriver(object):
                                     baseName = gm.metricNames[iid]
                                     all_names = gm.metricNames.values()
                                     matching_metrics = [x for x in all_names \
-                                                        if x[:len(baseName)] == baseName and x != baseName]  
+                                                        if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         iid = gm.findIids(metricName=mm)[0]
                                         summary = gm.computeSummaryStatistics(iid, stat)
@@ -381,7 +379,7 @@ class MafDriver(object):
 
 
         for key in histDict.keys():
-            # Use a comparison slice metric per merged histogram. Only read relevant files. 
+            # Use a comparison slice metric per merged histogram. Only read relevant files.
             cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=True, outDir=self.config.outputDir,
                                                      figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:

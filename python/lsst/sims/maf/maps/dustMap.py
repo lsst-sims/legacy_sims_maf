@@ -14,7 +14,7 @@ class DustMap(BaseMap):
         self.keynames = ['ebv']
         self.interp = interp
         self.nside = nside
-        
+
     def run(self, slicePoints):
         # If the slicer has nside, it's a healpix slicer so we can read the map directly
         if 'nside' in slicePoints.keys():
@@ -25,6 +25,6 @@ class DustMap(BaseMap):
         else:
             slicePoints['ebv'] = EBVhp(self.nside, ra=slicePoints['ra'],
                                             dec=slicePoints['dec'], interp=self.interp)
-        
+
         return slicePoints
-    
+

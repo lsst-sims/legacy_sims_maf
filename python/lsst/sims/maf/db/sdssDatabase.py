@@ -12,7 +12,7 @@ class SdssDatabase(Database):
                                         chunksize=chunksize,**kwargs )
 
 
-    
+
     def fetchMetricData(self, colnames, sqlconstraint, groupBy=None,
                         cleanNaNs=True, **kwargs):
         """Get data for metric"""
@@ -31,4 +31,4 @@ class SdssDatabase(Database):
                 good = np.where(np.isnan(data[col]) == False)
                 data = data[good]
         return data
-    
+

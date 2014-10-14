@@ -1,7 +1,7 @@
 import numpy as np
 """Some simple functions that are useful for astrometry calculations. """
 
-def sigma_slope(x, sigma_y): 
+def sigma_slope(x, sigma_y):
     """For fitting a line, the uncertainty in the slope
        is given by the spread in x values and the uncertainties
        in the y values.  Resulting units are x/sigma_y"""
@@ -23,5 +23,5 @@ def m52snr(m, m5):
 
 def astrom_precision(fwhm, snr):
     """approx precision of astrometric measure given seeing and SNR """
-    result = fwhm/(snr) 
+    result = fwhm/(snr)
     return result

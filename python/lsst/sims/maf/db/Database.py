@@ -23,7 +23,7 @@ class DatabaseRegistry(type):
         if databasename in cls.registry:
             raise Exception('Redefining databases %s! (there are >1 databases with the same name)' %(databasename))
         if databasename not in ['BaseDatabase']:
-            cls.registry[databasename] = cls            
+            cls.registry[databasename] = cls
     def getClass(cls, databasename):
         return cls.registry[databasename]
     def list(cls, doc=False):
@@ -39,7 +39,7 @@ class Database(object):
     """Base class for database access."""
 
     __metaclass__ = DatabaseRegistry
-    
+
     def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
                  chunksize=1000000, longstrings=False, verbose=False):
         """
@@ -55,13 +55,13 @@ class Database(object):
            sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
            mysql://lsst:lsst@localhost/opsim
         More information on sqlalchemy connection strings can be found at
-          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html        
+          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
         """
         if longstrings:
             typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
                             'TEXT':(str, 1024), 'CLOB':(str, 1024),
                             'STRING':(str, 1024)}
-        self.dbAddress = dbAddress        
+        self.dbAddress = dbAddress
         self.chunksize = chunksize
         # Add default values to provided input dictionaries (if not present in input dictionaries)
         if dbTables == None:
@@ -87,11 +87,11 @@ class Database(object):
                     raise Exception('Need table name plus primary key for each value in dbTables. Missing data for %s:%s'
                                     %(k, self.dbTables[k]))
                 if longstrings:
-                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], 
+                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
                                            self.dbAddress, typeOverRide=typeOverRide,
                                            verbose=verbose)
                 else:
-                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1], 
+                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
                                            self.dbAddress, verbose=verbose)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
@@ -104,11 +104,11 @@ class Database(object):
         """
         Get config (metadata) info on source of data for metric calculation.
         """
-        # Demo API (for interface with driver). 
+        # Demo API (for interface with driver).
         configSummary = {}
         configDetails = {}
         return configSummary, configDetails
-                
+
     def queryDatabase(self, tableName, sqlQuery):
         """
         Execute a general sql query (useful for arbitary joins or queries not in convenience functions).

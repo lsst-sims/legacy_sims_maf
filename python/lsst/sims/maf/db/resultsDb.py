@@ -130,7 +130,7 @@ class ResultsDb(object):
         - metricMetadata: the metadata associated with the metric
         - metricDatafile: the data file the metric data is stored in
 
-        If same metric (same metricName, slicerName, simDataName, sqlConstraint, metadata) 
+        If same metric (same metricName, slicerName, simDataName, sqlConstraint, metadata)
         already exists, adds to the db with 'run' value increased by one.
 
         Returns metricId: the Id number of this metric in the metrics table.
@@ -217,10 +217,10 @@ class ResultsDb(object):
         For special summary statistics which must return multiple values, the base name
         can be provided as 'name', together with a np recarray as 'value', where the
         recarray also has 'name' and 'value' columns (and each name/value pair is then saved
-        as a summary statistic associated with this same metricId). 
+        as a summary statistic associated with this same metricId).
         """
         # Allow for special summary statistics which return data in a np structured array with
-        #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic). 
+        #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic).
         if np.size(summaryValue) > 1:
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:

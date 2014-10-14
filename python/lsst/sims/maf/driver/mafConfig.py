@@ -3,14 +3,14 @@ import numpy as np
 
 class MixConfig(pexConfig.Config):
     """
-    A pexConfig designed to hold a dictionary with string keys and a mix of 
+    A pexConfig designed to hold a dictionary with string keys and a mix of
     value datatypes.
     """
     plot_str = pexConfig.DictField("", keytype=str, itemtype=str, default={})
     plot_int = pexConfig.DictField("", keytype=str, itemtype=int, default={})
     plot_float = pexConfig.DictField("", keytype=str, itemtype=float, default={})
     plot_bool =  pexConfig.DictField("", keytype=str, itemtype=bool, default={})
-    
+
 class MetricConfig(pexConfig.Config):
     """
     Config object for MAF metrics.
@@ -18,7 +18,7 @@ class MetricConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for metrics", dtype=MixConfig, default=None)
     plot = pexConfig.ConfigField("kwargs for plotting parameters", dtype=MixConfig,default=None)
-    summaryStats = pexConfig.ConfigDictField("Summary Stats to run", keytype=str, 
+    summaryStats = pexConfig.ConfigDictField("Summary Stats to run", keytype=str,
                                       itemtype=MixConfig,default={})
     histMerge = pexConfig.ConfigField("", dtype=MixConfig, default=None)
     displayDict = pexConfig.ConfigField("How plots should be displayed. keys should be 'displayGroup' w/ value of a string",
@@ -32,21 +32,21 @@ class ColStackConfig(pexConfig.Config):
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for stacker", dtype=MixConfig, default=None)
     args = pexConfig.ListField("", dtype=str, default=[])
-    
+
 class MapConfig(pexConfig.Config):
     """
-    If there are maps with info that should be passed to each 
+    If there are maps with info that should be passed to each
     """
     name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for maps", dtype=MixConfig, default=None)
     args = pexConfig.ListField("", dtype=str, default=[])
- 
+
 
 class SlicerConfig(pexConfig.Config):
     """
     Config object for MAF slicers.
     """
-    name = pexConfig.Field("", dtype=str, default='') 
+    name = pexConfig.Field("", dtype=str, default='')
     kwargs = pexConfig.ConfigField("kwargs for slicer", dtype=MixConfig, default=None)
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int,
                                            itemtype=MetricConfig, default={})
@@ -59,7 +59,7 @@ class SlicerConfig(pexConfig.Config):
                                             itemtype=MixConfig, default={})
     metadata = pexConfig.Field("", dtype=str, default='')
     metadataVerbatim = pexConfig.Field("", dtype=bool, default=False)
-    
+
 class MafConfig(pexConfig.Config):
     """
     Using pexConfig to set MAF configuration parameters
@@ -87,9 +87,9 @@ class MafConfig(pexConfig.Config):
     verbose = pexConfig.Field("", dtype=bool, default=False)
     getConfig = pexConfig.Field("", dtype=bool, default=True)
 
-    
+
 def makeMixConfig(plotDict):
-    """Helper function to convert a dictionary into a MixConfig.  
+    """Helper function to convert a dictionary into a MixConfig.
     Input dictionary must have str keys and values that are str, float, int, or bool.
     If the input dict has numpy data types, they are converted to similar native python types."""
     mc = MixConfig()
@@ -125,7 +125,7 @@ def configureStacker(name, kwargs={}):
     config.name = name
     config.kwargs = makeMixConfig(kwargs)
     return config
-    
+
 
 def configureMap(name, kwargs={}):
     """
@@ -136,7 +136,7 @@ def configureMap(name, kwargs={}):
     config.name = name
     config.kwargs = makeMixConfig(kwargs)
     return config
-    
+
 
 def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={}, displayDict={}):
     """
@@ -170,14 +170,14 @@ def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerD
         slicer.stackerDict = stackerDict
     if mapsDict:
         slicer.mapsDict = mapsDict
-        
+
     return slicer
 
 def readSlicerConfig(config):
     """Read in a Slicer pex config object """
     name = config.name
     kwargs = readMixConfig(config.kwargs)
-    metricDict = config.metricDict    
+    metricDict = config.metricDict
     constraints = config.constraints
     stackerDict = config.stackerDict
     mapsDict = config.mapsDict
@@ -218,8 +218,8 @@ def config2dict(config):
     kwargs = readMixConfig(config.kwargs)
     name = config.name
     return name, kwargs
- 
-     
-                                        
 
-                                      
+
+
+
+

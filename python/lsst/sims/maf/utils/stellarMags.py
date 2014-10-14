@@ -26,7 +26,7 @@ def stellarMags(stellarType, rmag=19.):
         stellarMags.data={}
         for row in data:
             stellarMags.data[row['stellarType']] = row
-        
+
     results = {}
     #good = np.where(stellarMags.data['stellarType'] == stellarType)
     if stellarType not in stellarMags.data.keys():

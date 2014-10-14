@@ -35,22 +35,22 @@ class HourglassSlicer(UniSlicer):
             filenames.append(outfile)
             filetypes.append('hourglassPlot')
         return {'figs':figs,'filenames':filenames,'filetypes':filetypes}
-        
+
     def plotHour(self, metricValue, title='', xlabel=None, ylabel='Hours from local midnight',
                  filter2color={'u':'purple','g':'blue','r':'green','i':'cyan','z':'orange','y':'red'},
                 **kwargs):
         """
         Generate the 'hourglass' plot.
-        
+
         Expect a tuple 'metricValue' to unpack for the metricValue from hourglassMetric.
         """
         xlabel = 'Night - min(Night)' # Currently not able to override.
         f = plt.figure()
         ax = f.add_subplot(111)
-        
+
         pernight =  metricValue[0]['pernight']
         perfilter = metricValue[0]['perfilter']
-        
+
         y = (perfilter['mjd']-perfilter['midnight'])*24.
         dmin = np.floor(np.min(perfilter['mjd']))
         for i in np.arange(0,perfilter.size,2):
@@ -61,7 +61,7 @@ class HourglassSlicer(UniSlicer):
         plt.plot(pernight['mjd']-dmin, (pernight['twi6_rise']-pernight['midnight'])*24.,
                  'blue', label=r'6$^\circ$ twilight' )
         plt.plot(pernight['mjd']-dmin, (pernight['twi6_set']-pernight['midnight'])*24. ,
-                 'blue' )        
+                 'blue' )
         plt.plot(pernight['mjd']-dmin, (pernight['twi12_rise']-pernight['midnight'])*24.,
                  'yellow', label=r'12$^\circ$ twilight' )
         plt.plot(pernight['mjd']-dmin, (pernight['twi12_set']-pernight['midnight'])*24. ,
@@ -76,7 +76,7 @@ class HourglassSlicer(UniSlicer):
         plt.title(title)
         fig=plt.gcf()
         return fig.number
-    
+
     def writeData(self, outfilename, metricValues, metricName='', **kwargs):
         """
         Override base write method: we don't want to save hourglass metric data.
@@ -92,4 +92,4 @@ class HourglassSlicer(UniSlicer):
         The data volume is too large.
         """
         pass
-    
+

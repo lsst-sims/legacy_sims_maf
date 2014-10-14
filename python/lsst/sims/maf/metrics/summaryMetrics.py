@@ -3,12 +3,12 @@ import healpy as hp
 from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
-    
+
 class fOArea(BaseMetric):
     """
     Metric to calculate the FO Area; works with FO slicer only.
     """
-    def __init__(self, col='metricdata', Asky=18000., Nvisit=825, 
+    def __init__(self, col='metricdata', Asky=18000., Nvisit=825,
                  metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(fOArea, self).__init__(col=col, metricName=metricName, **kwargs)
@@ -30,13 +30,13 @@ class fOArea(BaseMetric):
             return nv
         else:
             return self.badval
-        
+
 
 class fONv(BaseMetric):
     """
     Metric to calculate the FO_Nv; works with FO slicer only.
     """
-    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825, 
+    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825,
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(fONv, self).__init__(col=col, metricName=metricName, **kwargs)
@@ -58,7 +58,7 @@ class fONv(BaseMetric):
             return area
         else:
             return self.badval
-    
+
 
 class TableFractionMetric(BaseMetric):
     """
@@ -85,7 +85,7 @@ class TableFractionMetric(BaseMetric):
         """
         super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         self.nbins = nbins
-        
+
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
         goodVals = np.where((dataSlice[self.colname] > 0) & (dataSlice[self.colname] < 1)  )
@@ -103,11 +103,11 @@ class TableFractionMetric(BaseMetric):
         binNames.append('1 == P')
         binNames.append('1 < P')
         # Package the names and values up
-        result = np.empty(hist.size, dtype=[('name', '|S20'), ('value', float)]) 
+        result = np.empty(hist.size, dtype=[('name', '|S20'), ('value', float)])
         result['name'] = binNames
         result['value'] = hist
         return result
-        
+
 
 class IdentityMetric(BaseMetric):
     """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""

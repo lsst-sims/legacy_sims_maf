@@ -43,7 +43,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         assert(metric.reducez(completeness) == 1.5)
         assert(metric.reducey(completeness) == 0.5)
         assert(metric.reduceJoint(completeness) == 0.5)
-        # Test completeness metric when requesting only some filters. 
+        # Test completeness metric when requesting only some filters.
         metric = metrics.CompletenessMetric(u=0, g=100, r=100, i=100, z=100, y=100)
         completeness = metric.run(data, slicePoint)
         assert(metric.reduceu(completeness) == 1)
@@ -53,7 +53,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         assert(metric.reducez(completeness) == 1.5)
         assert(metric.reducey(completeness) == 0.5)
         assert(metric.reduceJoint(completeness) == 0.5)
-        # Test completeness metric when some filters not observed at all. 
+        # Test completeness metric when some filters not observed at all.
         metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
         data['filter'][550:600] = 'z'
         data['filter'][:100] = 'g'
