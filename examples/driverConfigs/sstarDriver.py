@@ -45,7 +45,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     wfdWhere = ''
     if len(WFDpropid) == 1:
         wfdWhere = "propID = %d" %(WFDpropid[0])
-    else: 
+    else:
         for i,propid in enumerate(WFDpropid):
             if i == 0:
                 wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
@@ -430,7 +430,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     propOrder = 0
     props = propids + ['All Props'] + ['WFD']
     for i, propid in enumerate(props):
-        propOrder += 100
+        propOrder += 500
         order = propOrder
         for f in filters:
             if propid in WFDpropid:
