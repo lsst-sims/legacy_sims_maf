@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, re
 import numpy as np
 import warnings
 from .Table import Table
@@ -170,7 +170,8 @@ class OpsimDatabase(Database):
         Fetch the proposal IDs from the full opsim run database.
         Return the full list of ID numbers as well as a list of
          WFD propIDs (proposals containing 'Universal' in the name) -- or tagged with wfd,
-         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name) -- or tagged dd.
+         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name) -- or tagged dd
+         and a dict keyed with the ID and values of the truncated proposal config file.
          """
         # Check if using full database; otherwise can only fetch list of all propids. 
         if 'proposalTable' not in self.tables:
@@ -178,6 +179,7 @@ class OpsimDatabase(Database):
             propIDs = np.array(propData[self.propIdCol], int)
             wfdIDs = []
             ddIDs = []
+            propID2Name = {}
         else:
             table = self.tables['proposalTable']
             try:
@@ -201,7 +203,11 @@ class OpsimDatabase(Database):
             for name, propid in zip(propData[self.propConfCol], propIDs):
                 if ('deep' in name.lower()) or ('dd' in name.lower()):
                     ddIDs.append(propid)
-        return propIDs, wfdIDs, ddIDs
+            propID2Name = {}
+            for propID, propName in zip(propData[self.propIdCol], propData[self.propConfCol] ):
+                # Strip '.conf', 'Prop', and path info.
+                propID2Name[propID] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propName)))
+        return propIDs, wfdIDs, ddIDs, propID2Name
 
     def fetchRunLength(self, runLengthParam='nRun'):
         """Fetch the run length for a particular opsim run.

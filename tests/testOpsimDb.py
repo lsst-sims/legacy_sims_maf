@@ -33,7 +33,7 @@ class TestOpsimDb(unittest.TestCase):
 
     def testOpsimDbPropID(self):
         """Test queries for prop ID"""
-        propids, wfd, dd = self.oo.fetchPropIDs()
+        propids, wfd, dd, propID2Name = self.oo.fetchPropIDs()
         self.assertTrue(len(propids) > 0)
         self.assertTrue(len(wfd) > 0)
         self.assertTrue(len(dd) > 0)
@@ -48,7 +48,7 @@ class TestOpsimDb(unittest.TestCase):
         dataAll = self.oo.fetchFieldsFromFieldTable()
         self.assertEqual(dataAll.dtype.names, ('fieldID', 'fieldRA', 'fieldDec'))
         # Fetch field data for all fields requested by a particular propid.
-        propids, wfd, dd = self.oo.fetchPropIDs()
+        propids, wfd, dd, propID2Name = self.oo.fetchPropIDs()
         propid = propids[0]
         dataProp1 = self.oo.fetchFieldsFromFieldTable(propID=propid)
         # Fetch field data for all fields requested by all proposals.

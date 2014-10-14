@@ -70,7 +70,7 @@ class MafDriver(object):
 
         # Get proposal information (for OpSim databases).
         if self.config.dbAddress['dbClass'] == 'OpsimDatabase':
-           self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
+           self.allpropids, self.wfdpropids, self.ddpropids, propID2Name = self.opsimdb.fetchPropIDs()
            if self.verbose:
                dt, time_prev = dtime(time_prev)
                print 'fetched PropID info in %.3g s'%dt

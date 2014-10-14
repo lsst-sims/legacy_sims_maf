@@ -89,7 +89,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
           elif ', ' in uM:
              uMSplit = uM.split(', ')
           else:
-             uMSplit = uM
+             uMSplit = [uM]
           tmp = []
           for iM in uMSplit:
              tmp.append(iM.strip())
@@ -100,6 +100,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
           for ci in c:
              if 'prop' in ci:
                 propids.append(ci)
+       
        if len(propids) == len(combo) and len(np.unique(propids))==1:
           propids = np.unique(propids)
           for c in combo:
