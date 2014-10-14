@@ -88,10 +88,6 @@
       {% set statName = statNames[0] %}
       {% set metadata = run.uniqueMetricMetadata(slicermetrics) %}
 
-      {{ metadata }} {{metadata|length}} </br>
-      {{ metricNameMeta }} {{metricNameMeta|length}} </br>
-      {{metricNames|length}}
-
       {% set ncols = metricNames|length + 1 %}
 
       <table>
