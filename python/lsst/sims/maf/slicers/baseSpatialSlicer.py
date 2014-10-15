@@ -160,8 +160,9 @@ class BaseSpatialSlicer(BaseSlicer):
             plt.ylim([yMin,yMax])
         # See if should use log scale.
         if logScale == 'auto':
-            if (np.log10(np.max(histRange)-np.log10(np.min(histRange))) > 3 ) & (np.min(histRange) > 0):
-                logScale = True
+            if np.min(histRange) > 0:
+                if (np.log10(np.max(histRange)-np.log10(np.min(histRange))) > 3 ):
+                    logScale = True
             else:
                 logScale = False
         # If we want all the plots to have the same binsize
@@ -307,8 +308,9 @@ class BaseSpatialSlicer(BaseSlicer):
         clims = [colorMin, colorMax]
         # Determine whether or not to use auto-log scale.
         if logScale == 'auto':
-            if (np.log10(colorMax)-np.log10(colorMin) > 3) & (colorMin > 0):
-                logScale = True
+            if colorMin > 0:
+                if np.log10(colorMax)-np.log10(colorMin) > 3:
+                    logScale = True
             else:
                 logScale = False
         if logScale:
