@@ -68,9 +68,9 @@ class CountMetric(BaseMetric):
 class CountRatioMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, normVal=1., metricName=None, **kwargs):
-        self.normVal = normVal
-        if metricName == None:
-            metricName = 'CountRatio %s div %.1f'%(col,normVal)
+        self.normVal = float(normVal)
+        if metricName is None:
+            metricName = 'CountRatio %s div %.1f'%(col, normVal)
         super(CountRatioMetric, self).__init__(col=col, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):

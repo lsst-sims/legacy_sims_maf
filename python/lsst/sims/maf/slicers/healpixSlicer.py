@@ -69,15 +69,16 @@ class HealpixSlicer(BaseSpatialSlicer):
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
-                   plotMaskedValues=False, zp=None, normVal=None,
+                   zp=None, normVal=None,
                    cbar_edge=True, label=None, **kwargs):
-        """Plot the sky map of metricValue using healpy Mollweide plot.
+        """
+        Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
         units = units for metric color-bar label
         title = title for plot
         cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
-        plotMaskedValues = ignored, here to be consistent with OpsimFieldSlicer."""
+        """
         # Generate a Mollweide full-sky plot.
         norm = None
         if logScale:
