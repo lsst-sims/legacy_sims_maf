@@ -163,6 +163,8 @@ class BaseSpatialSlicer(BaseSlicer):
             if np.min(histRange) > 0:
                 if (np.log10(np.max(histRange)-np.log10(np.min(histRange))) > 3 ):
                     logScale = True
+                else:
+                    logScale = False
             else:
                 logScale = False
         # If we want all the plots to have the same binsize
@@ -311,8 +313,15 @@ class BaseSpatialSlicer(BaseSlicer):
             if colorMin > 0:
                 if np.log10(colorMax)-np.log10(colorMin) > 3:
                     logScale = True
+                else:
+                    logScale = False
             else:
                 logScale = False
+        if logScale:
+            # Move min/max values to things that can be marked on the colorbar.
+            colorMin = 10**(int(np.log10(colorMin)))
+            colorMax = 10**(int(np.log10(colorMax)))
+        print 'log?', logScale
         if logScale:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
