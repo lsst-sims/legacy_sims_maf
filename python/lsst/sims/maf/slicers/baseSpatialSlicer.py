@@ -160,7 +160,7 @@ class BaseSpatialSlicer(BaseSlicer):
             plt.ylim([yMin,yMax])
         # See if should use log scale.
         if logScale == 'auto':
-            if (np.log10(np.max(histRange)-np.min(histRange)) > 3 ) & (np.min(histRange) > 0):
+            if (np.log10(np.max(histRange)-np.log10(np.min(histRange))) > 3 ) & (np.min(histRange) > 0):
                 logScale = True
             else:
                 logScale = False
@@ -262,51 +262,31 @@ class BaseSpatialSlicer(BaseSlicer):
     def plotSkyMap(self, metricValueIn, title=None, xlabel=None, units=None,
                    projection='aitoff', radius=1.75/180.*np.pi,
                    logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
-                   plotMaskedValues=False, zp=None, normVal=None,
+                   zp=None, normVal=None,
                    colorMin=None, colorMax=None, percentileClip=None,  cbar_edge=True,
                    label=None, **kwargs):
-        """Plot the sky map of metricValue."""
+        """
+        Plot the sky map of metricValue.
+        """
         from matplotlib.collections import PatchCollection
         from matplotlib import colors
         if fignum is None:
             fig = plt.figure()
+        metricValue = metricValueIn
         if zp or normVal:
             if zp:
-                metricValue = metricValueIn - zp
+                metricValue = metricValue - zp
             if normVal:
-                metricValue = metricValueIn/normVal
-        else:
-            metricValue = metricValueIn
+                metricValue = metricValue/normVal
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
-        # Only include points that are not masked
-        if plotMaskedValues:
-            goodPts = np.arange(metricValue.size)
-        else:
-            goodPts = np.where(metricValue.mask == False)[0]
-        # Add points for RA/Dec locations
-        lon = -(self.slicePoints['ra'][goodPts] - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][goodPts], radius, ax=ax)
-        if logScale == 'auto':
-            if ((np.log10(np.max(metricValue[goodPts])-np.min(metricValue[goodPts])) > 3 ) &
-                (np.min(metricValue[goodPts]) > 0)):
-                logScale = True
-            else:
-                logScale = False
-        if logScale:
-            norml = colors.LogNorm()
-            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
-                                norm=norml, rasterized=True)
-        else:
-            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
-        p.set_array(metricValue.filled(self.badval)[goodPts])
-        ax.add_collection(p)
-        # Add ecliptic
-        self._plot_ecliptic(ax=ax)
-        ax.grid(True)
-        ax.xaxis.set_ticklabels([])
-        # Add color bar (with optional setting of limits)
+        # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
+        mask = ~metricValue.mask
+        # Add ellipses at RA/Dec locations
+        lon = -(self.slicePoints['ra'][mask] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, ax=ax)
+        # Determine color min/max values. metricValue.compressed = non-masked points.
         if percentileClip:
             pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
         if colorMin is None:
@@ -325,6 +305,25 @@ class BaseSpatialSlicer(BaseSlicer):
                     colorMin = colorMin-1
         # Combine to make clims:
         clims = [colorMin, colorMax]
+        # Determine whether or not to use auto-log scale.
+        if logScale == 'auto':
+            if (np.log10(colorMax)-np.log10(colorMin) > 3) & (colorMin > 0):
+                logScale = True
+            else:
+                logScale = False
+        if logScale:
+            norml = colors.LogNorm()
+            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
+                                norm=norml, rasterized=True)
+        else:
+            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
+        p.set_array(metricValue.compressed())
+        ax.add_collection(p)
+        # Add ecliptic
+        self._plot_ecliptic(ax=ax)
+        ax.grid(True)
+        ax.xaxis.set_ticklabels([])
+        # Add color bar (with optional setting of limits)
         p.set_clim(clims)
         cb = plt.colorbar(p, aspect=25, extend='both', extendrect=True, orientation='horizontal',
                           format=cbarFormat)
