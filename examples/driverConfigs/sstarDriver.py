@@ -169,14 +169,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             metricList.append(configureMetric('CountRatioMetric',
                                               kwargs={'col':'expMJD', 'normVal':nvisitBench[f], 'metricName':'NVisitsRatio'},
                                             plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
-                                                        'xMin':0.5, 'xMax':1.5,
-                                                'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
+                                                    'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
+                                                    'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
                                         displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop), 'order':filtorder[f],
                                                 'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
                                                 %(f, benchmark, nvisitBench[f], propCaption)},
                                         histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                                                    'xlabel':'Number of visits / benchmark',
-                                                   'binsize':.05, 'xMin':0.5, 'xMax':1.5, 'legendloc':'upper right'}))
+                                                   'binsize':.05, 'xMin':0.475, 'xMax':1.525, 'legendloc':'upper right'}))
             histNum += 1
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
