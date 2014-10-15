@@ -321,7 +321,6 @@ class BaseSpatialSlicer(BaseSlicer):
             # Move min/max values to things that can be marked on the colorbar.
             colorMin = 10**(int(np.log10(colorMin)))
             colorMax = 10**(int(np.log10(colorMax)))
-        print 'log?', logScale
         if logScale:
             norml = colors.LogNorm()
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
