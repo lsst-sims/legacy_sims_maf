@@ -1,11 +1,10 @@
 #! /usr/bin/env python
-import numpy as np
 from tornado import ioloop
 from tornado import web
 from jinja2 import Environment, FileSystemLoader
 import os, argparse
 
-from lsst.sims.maf.viz import MafRunResults, MafTracking
+from lsst.sims.maf.viz import MafTracking
 import lsst.sims.maf.db as db
 
 class RunSelectHandler(web.RequestHandler):
