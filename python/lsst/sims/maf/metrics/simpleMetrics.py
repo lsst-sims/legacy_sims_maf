@@ -128,7 +128,7 @@ class PercentileMetric(BaseMetric):
 
 class NoutliersNsigma(BaseMetric):
     """
-    Calculate the # of visits less than nSigma below the median (nSigma<0) or
+    Calculate the # of visits less than nSigma below the mean (nSigma<0) or
     more than nSigma above the median of 'col'.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
@@ -140,7 +140,7 @@ class NoutliersNsigma(BaseMetric):
         self.plotDict['cbarFormat'] = '%d'
 
     def run(self, dataSlice, slicePoint=None):
-        med = np.median(dataSlice[self.colname])
+        med = np.mean(dataSlice[self.colname])
         std = np.std(dataSlice[self.colname])
         boundary = med + self.nSigma*std
         # If nsigma is positive, look for outliers above median.
