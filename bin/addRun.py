@@ -4,12 +4,14 @@ import lsst.sims.maf.db as db
 
 
 if __name__ == "__main__":
-      
+
     parser = argparse.ArgumentParser(description="Add a MAF run to the tracking database.")
     parser.add_argument("mafDir", type=str, help="Directory containing MAF outputs.")
     parser.add_argument("-c", "--mafComment", type=str, default=None, help="Comment on MAF run.")
     parser.add_argument("--opsimRun", type=str, default=None, help="Opsim Run Name.")
     parser.add_argument("--opsimComment", type=str, default=None, help="Comment on OpSim run.")
+    parser.add_argument("--opsimDate", type=str, default=None, help="Date Opsim was run")
+    parser.add_argument("--mafDate", type=str, default=None, help="Date MAF was run")
     defaultdb = 'trackingDb_sqlite.db'
     defaultdb = 'sqlite:///' + defaultdb
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
@@ -24,12 +26,14 @@ if __name__ == "__main__":
     trackingDbAddress = args.trackingDb
     if not trackingDbAddress.startswith('sqlite:///'):
         trackingDbAddress = 'sqlite:///' + trackingDbAddress
-    trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)    
-    
+    trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)
+
     # If opsim run name or comment not set, try to set it from maf outputs.
     opsimRun = args.opsimRun
     opsimComment = args.opsimComment
-    if (opsimRun is None) or (opsimComment is None):
+    opsimDate = args.opsimDate
+    mafDate = args.mafDate
+    if (opsimRun is None) or (opsimComment is None) or (opsimDate is None) or (mafDate is None):
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
             file = open(os.path.join(mafDir, 'configSummary.txt'))
             for line in file:
@@ -40,12 +44,23 @@ if __name__ == "__main__":
                 if tmp[0].startswith('RunComment'):
                     if opsimComment is None:
                         opsimComment = ' '.join(tmp[1:])
+                if tmp[0].startswith('MAFVersion'):
+                    if mafDate is None:
+                        mafDate =  tmp[-1]
+                if tmp[0].startswith('OpsimVersion'):
+                    if opsimDate is None:
+                        opsimDate = tmp[-2]
+                        # Let's go ahead and make the formats match
+                        opsimDate = opsimDate.split('-')
+                        opsimDate = opsimDate[1]+'/'+opsimDate[2]+'/'+opsimdate[0][2:]
 
     print 'Adding to tracking database at %s:' %(args.trackingDb)
     print ' MafDir = %s' %(mafDir)
     print ' MafComment = %s' %(args.mafComment)
     print ' OpsimRun = %s' %(opsimRun)
     print ' OpsimComment = %s' %(opsimComment)
-                    
-    trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir)
-    
+    print ' OpsimDate = %s' %(opsimDate)
+    print ' MafDate = %s' %(mafDate)
+
+    trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
+

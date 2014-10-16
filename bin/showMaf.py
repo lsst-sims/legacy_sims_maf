@@ -55,7 +55,7 @@ class AllMetricResultsPageHandler(web.RequestHandler):
     def get(self):
         """Load up the files and display """
         allresultsTempl = env.get_template("allmetricresults.html")
-        runId = int(self.request.arguments['runId'][0])    
+        runId = int(self.request.arguments['runId'][0])
         self.write(allresultsTempl.render(runlist=runlist, runId=runId))
 
 class MultiColorPageHandler(web.RequestHandler):
@@ -64,7 +64,7 @@ class MultiColorPageHandler(web.RequestHandler):
         multiColorTempl = env.get_template("multicolor.html")
         runId = int(self.request.arguments['runId'][0])
         self.write(multiColorTempl.render(runlist=runlist, runId=runId))
-        
+
 def make_app():
     """The tornado global configuration """
     application = web.Application([
@@ -72,11 +72,11 @@ def make_app():
             ("/metricSelect", MetricSelectHandler),
             ("/metricResults", MetricGridPageHandler),
             ("/configParams", ConfigPageHandler),
-            ("/summaryStats", StatPageHandler), 
+            ("/summaryStats", StatPageHandler),
             ("/allMetricResults", AllMetricResultsPageHandler),
             ("/multiColor", MultiColorPageHandler),
             (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
-            (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}), 
+            (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}),
             ])
     return application
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if not trackingDbAddress.startswith('sqlite:///'):
         trackingDbAddress = 'sqlite:///' + trackingDbAddress
     print 'Using tracking database at %s' %(trackingDbAddress)
-    
+
     global startRunId
     startRunId = -666
     # If given a directory argument:
@@ -107,10 +107,12 @@ if __name__ == "__main__":
             print 'There is no directory containing MAF outputs at %s.' %(mafDir)
             print 'Just opening using tracking db at %s.' %(trackingDbAddress)
         # Open tracking database to add a run.
-        trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)    
+        trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
         opsimRun = ''
+        opsimDate = ''
+        mafDate = ''
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
             file = open(os.path.join(mafDir, 'configSummary.txt'))
             for line in file:
@@ -119,17 +121,26 @@ if __name__ == "__main__":
                     opsimRun = ' '.join(tmp[1:])
                 if tmp[0].startswith('RunComment'):
                     opsimComment = ' '.join(tmp[1:])
+                if tmp[0].startswith('MAFVersion'):
+                    mafDate =  tmp[-1]
+                if tmp[0].startswith('OpsimVersion'):
+                    opsimDate = tmp[-2]
+                    # Let's go ahead and make the formats match
+                    opsimDate = opsimDate.split('-')
+                    opsimDate = opsimDate[1]+'/'+opsimDate[2]+'/'+opsimDate[0][2:]
         # Give some feedback to the user about what we're doing.
         print 'Adding to tracking database at %s:' %(trackingDbAddress)
         print ' MafDir = %s' %(mafDir)
         print ' MafComment = %s' %(args.mafComment)
         print ' OpsimRun = %s' %(opsimRun)
         print ' OpsimComment = %s' %(opsimComment)
+        print ' OpsimDate = %s' %(opsimDate)
+        print ' MafDate = %s' %(mafDate)
         # Add the run.
-        startRunId = trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir)
+        startRunId = trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
         print ' Used runID %d' %(startRunId)
         trackingDb.close()
-        
+
     # Open tracking database and start visualization.
     global runlist
     runlist = MafTracking(trackingDbAddress)
@@ -142,15 +153,15 @@ if __name__ == "__main__":
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
     env = Environment(loader=FileSystemLoader(templateDir))
     # Add 'zip' to jinja templates.
-    env.globals.update(zip=zip)    
+    env.globals.update(zip=zip)
 
     global staticpath
     staticpath = '.'
-    
+
     # Start up tornado app.
     application = make_app()
     application.listen(args.port)
     print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' %(args.port)
 
     ioloop.IOLoop.instance().start()
-    
+

@@ -35,6 +35,8 @@ class MafTracking(object):
         runInfo['MafComment'] = run['mafComment']
         runInfo['OpsimComment'] = run['opsimComment']
         runInfo['MafDir'] = run['mafDir']
+        runInfo['OpsimDate'] = run['opsimDate']
+        runInfo['MafDate'] = run['mafDate']
         return runInfo
 
     def sortRuns(self, runs, order=['opsimRun', 'mafComment', 'mafRunId']):
