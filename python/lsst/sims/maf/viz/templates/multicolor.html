@@ -16,17 +16,18 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set statNames = run.allStatNames(subsetMetrics) %}  
-   {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
-    + statNames|length %}
-   {% if displaygroup > 0 %} 
+   {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglassPlot', metrics=subsetMetrics) %}
+   {% set statNames = run.allStatNames(subsetMetrics) %}
+   {% set displaygroup = skysetMetrics|length + combosetMetrics|length
+  + hourglassMetrics|length + statNames|length %}
+   {% if displaygroup > 0 %}
       {% if groupstart == True %}
         <li>
         <a href="#{{g}}">{{g}}</a>
         <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
         {% set groupstart = False %}
       {% else %}
-        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>	  
+        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
       {% endif %}
     {% endif %}
   {% endfor %}
@@ -48,13 +49,14 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType='SkyMap', metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set statNames = run.allStatNames(subsetMetrics) %}  
+   {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglassPlot', metrics=subsetMetrics) %}
+   {% set statNames = run.allStatNames(subsetMetrics) %}
 
-   {% set displaygroup = skysetMetrics|length + combosetMetrics|length 
-    + statNames|length %}
-    {% if displaygroup > 0 %} 
+   {% set displaygroup = skysetMetrics|length + combosetMetrics|length
+    + hourglassMetrics|length + statNames|length %}
+    {% if displaygroup > 0 %}
      {# then show this group ... #}
-     
+
    {% if groupstart == True %}
       <a name = "{{g|escape}}" ></a>
       {% set groupstart = False %}
@@ -62,6 +64,9 @@
    <p>
    <a name = "{{g|escape}}_{{sg|escape}}"><b>{{g|escape}} : {{sg|escape}}</b> </a>
    </p>
+
+   {# In each group, plot sky maps, then combo hists, then hourglass, then summary
+   stats #}
 
    {% set metricNames = run.uniqueMetricNames(skysetMetrics, baseonly=True) %}
    {% for mname in metricNames %}
@@ -88,20 +93,33 @@
       <div id='metricset'>
 	{% set metricInfo = run.metricInfo(m) %}
         {{ metricInfo['MetricName']|escape }} ({{metricInfo['Slicer']|escape}})
-	</br> <div id='indent'> {{metricInfo['Metadata']|escape}} </div> </br>	
+	</br> <div id='indent'> {{metricInfo['Metadata']|escape}} </div> </br>
 	{% for plotfile, thumbfile in zip(combohist['plotFile'], combohist['thumbFile']) %}
         <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
 	 {% endfor %}
        </div>
    {% endfor  %}
 
-   {% if statNames | length > 0 %}
+   <div id='metricset'>
+   {% for h in hourglassMetrics %}
+      {% set metricInfo = run.metricInfo(h) %}
+      {{metricInfo['Metadata']|escape}} </br>
+      {% set hourglassplots = run.plotsForMetric(h) %}
+      {% set hourglassdict = run.plotDict(hourglassplots) %}
+      {% set hourglass = hourglassdict['hourglassPlot'] %}
+      {% for plotfile, thumbfile in zip(hourglass['plotFile'], hourglass['thumbFile']) %}
+         <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a></br>
+      {% endfor %}
+   {% endfor %}
+   </div>
+
+    {% if statNames | length > 0 %}
       <div id= 'metricset'>
       {{ mcr.MakeStatTable(subsetMetrics, g, sg, run) }}
       </div>
    {% endif %}
 
-  {% endif %}      
+  {% endif %}
  {% endfor %}
 {% endfor %}
 
