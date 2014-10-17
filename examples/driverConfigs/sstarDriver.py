@@ -476,10 +476,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
 <<<<<<< HEAD
+<<<<<<< HEAD
                                                     kwargs={'col':col, 'metricName':'p3Sigma %s' %(col),'nSigma':3. },
 =======
                                                     kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
 >>>>>>> sstar driver updates.
+=======
+                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
+>>>>>>> 28fe1e64d5f8baaff6df69766068c664a9a61f0c
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
