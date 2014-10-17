@@ -85,6 +85,8 @@ class TableFractionMetric(BaseMetric):
         """
         super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         self.nbins = nbins
+        # set this so runSliceMetric knows masked values should be set to zero and passed
+        self.maskVal = 0.
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.

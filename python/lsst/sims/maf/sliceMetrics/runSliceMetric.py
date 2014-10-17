@@ -226,9 +226,13 @@ class RunSliceMetric(BaseSliceMetric):
         summaryValues = []
         for iidi in iid:
             # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
-            # Create numpy structured array from metric data, with bad values removed.
-            rarr = np.array(zip(self.metricValues[iidi].compressed()),
-                            dtype=[('metricdata', self.metricValues[iidi].dtype)])
+            # Create numpy structured array from metric data, with bad values removed or filled with maskval.
+            if hasattr(summaryMetric, 'maskVal'):
+               rarr = np.array(zip(self.metricValues[iidi].filled(summaryMetric.maskVal)),
+                               dtype=[('metricdata', self.metricValues[iidi].dtype)])
+            else:
+               rarr = np.array(zip(self.metricValues[iidi].compressed()),
+                               dtype=[('metricdata', self.metricValues[iidi].dtype)])
             # The summary metric colname should already be set to 'metricdata', but in case it's not:
             summaryMetric.colname = 'metricdata'
             if np.size(rarr) == 0:
