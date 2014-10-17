@@ -22,9 +22,11 @@ class RunRow(Base):
     opsimComment = Column(String)
     mafComment = Column(String)
     mafDir = Column(String)
+    opsimDate = Column(String)
+    mafDate = Column(String)
     def __repr__(self):
-        return "<Run(mafRunId='%d', opsimRun='%s', opsimComment='%s', mafComment='%s', mafDir='%s'>" \
-            %(self.mafRunId, self.opsimRun, self.opsimComment, self.mafComment, self.mafDir)
+        return "<Run(mafRunId='%d', opsimRun='%s', opsimComment='%s', mafComment='%s', mafDir='%s', opsimDate='%s', mafDate='%s'>" \
+            %(self.mafRunId, self.opsimRun, self.opsimComment, self.mafComment, self.mafDir, self.opsimDate, self.mafDate)
 
 
 class TrackingDb(object):
@@ -56,7 +58,7 @@ class TrackingDb(object):
     def close(self):
         self.session.close()
 
-    def addRun(self, opsimRun, opsimComment, mafComment, mafDir, override=False):
+    def addRun(self, opsimRun, opsimComment, mafComment, mafDir, opsimDate, mafDate, override=False):
         """
         Add a run to the tracking database.
         """
@@ -66,6 +68,10 @@ class TrackingDb(object):
             opsimComment = 'NULL'
         if mafComment is None:
             mafComment = 'NULL'
+        if opsimDate is None:
+            opsimDate = 'NULL'
+        if mafDate is None:
+            mafDate = 'NULL'
         # Test if mafDir already exists in database (unless directed not to check via override).
         if not override:
             prevruns = self.session.query(RunRow).filter_by(mafDir=mafDir).all()
@@ -77,7 +83,8 @@ class TrackingDb(object):
                 print 'Not currently adding this run to tracking DB (use override=True to add anyway).'
                 return runIds[0]
         # Run did not exist in database or we received override: add it.
-        runinfo = RunRow(opsimRun=opsimRun, opsimComment=opsimComment, mafComment=mafComment, mafDir=mafDir)
+        runinfo = RunRow(opsimRun=opsimRun, opsimComment=opsimComment, mafComment=mafComment,
+                         mafDir=mafDir, opsimDate=opsimDate, mafDate=mafDate)
         self.session.add(runinfo)
         self.session.commit()
         return runinfo.mafRunId
