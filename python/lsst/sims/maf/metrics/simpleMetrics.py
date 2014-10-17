@@ -129,7 +129,7 @@ class PercentileMetric(BaseMetric):
 class NoutliersNsigma(BaseMetric):
     """
     Calculate the # of visits less than nSigma below the mean (nSigma<0) or
-    more than nSigma above the median of 'col'.
+    more than nSigma above the mean of 'col'.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
         self.col = col
