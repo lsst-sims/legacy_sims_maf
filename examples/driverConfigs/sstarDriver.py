@@ -18,7 +18,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     outputDir is the output directory for MAF
 
     Uses 'slicerName' for metrics which have the option of using
-      [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither] 
+      [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither]
       (dithered healpix slicer uses ditheredRA/dec values).
 
     Uses 'benchmark' (which can be design or stretch) to scale plots of number of visits and coadded depth.
@@ -473,11 +473,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col)},
+                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col),'nSigma':3. },
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                  kwargs={'col':col, 'metricName':'m3Sigma %s' %(col)},
+                                                  kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('CountMetric', kwargs={'col':col, 'metricName':'Count %s' %(col)},
