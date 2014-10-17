@@ -267,7 +267,7 @@ class BaseSpatialSlicer(BaseSlicer):
                    logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
                    zp=None, normVal=None,
                    colorMin=None, colorMax=None, percentileClip=None,  cbar_edge=True,
-                   label=None, **kwargs):
+                   label=None, plotMask=False, **kwargs):
         """
         Plot the sky map of metricValue.
         """
@@ -284,8 +284,12 @@ class BaseSpatialSlicer(BaseSlicer):
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
-        # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
-        mask = ~metricValue.mask
+        if plotMask:
+            # Plot all data points.
+            mask = np.ones(len(metricValue), dtype='bool')
+        else:
+            # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
+            mask = ~metricValue.mask
         # Add ellipses at RA/Dec locations
         lon = -(self.slicePoints['ra'][mask] - np.pi) % (np.pi*2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, ax=ax)
@@ -327,7 +331,7 @@ class BaseSpatialSlicer(BaseSlicer):
                                 norm=norml, rasterized=True)
         else:
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
-        p.set_array(metricValue.compressed())
+        p.set_array(metricValue.data[mask])
         ax.add_collection(p)
         # Add ecliptic
         self._plot_ecliptic(ax=ax)
