@@ -1,8 +1,7 @@
 import os
 import numpy as np
-
+import matplotlib.pylab as plt
 from .mafConfig import config2dict, readMetricConfig, readSlicerConfig, readMixConfig
-
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -391,9 +390,11 @@ class MafDriver(object):
                 iids = cbm.metricValues.keys()
                 fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
+                plt.close('all')
                 if cbm.slicers[iids[0]].slicerName == 'HealpixSlicer':
                    fignum, title, psfile = cbm.plotPowerSpectra(iids, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
+                   plt.close('all')
 
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.
