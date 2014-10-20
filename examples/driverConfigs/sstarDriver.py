@@ -252,7 +252,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             m1 = configureMetric('CountMetric',
                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                                 summaryStats=standardStats,
-                                plotDict={'units':'Number of Visits', 'bins':50},
+                                plotDict={'units':'Number of Visits', 'bins':50, 'plotMask':True},
                                 displayDict={'group':'2: Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
                                              %(f, propID2Name[propid])},
@@ -475,19 +475,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-<<<<<<< HEAD
-<<<<<<< HEAD
-                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col),'nSigma':3. },
-=======
-                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
->>>>>>> sstar driver updates.
-=======
-                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
->>>>>>> 28fe1e64d5f8baaff6df69766068c664a9a61f0c
+                                                    kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                  kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
+                                                  kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('CountMetric', kwargs={'col':col, 'metricName':'Count %s' %(col)},
