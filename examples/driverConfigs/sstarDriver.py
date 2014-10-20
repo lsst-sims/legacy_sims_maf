@@ -164,7 +164,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                        'binsize':5, 'xMin':nVisits_plotRange['all'][f][0],
                                                        'xMax':nVisits_plotRange['all'][f][1],
                                                        'legendloc':'upper right',
-                                                       'cumulative':True}))
+                                                       'cumulative':-1}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
             metricList.append(configureMetric('CountRatioMetric',
