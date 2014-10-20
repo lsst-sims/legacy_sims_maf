@@ -72,6 +72,7 @@
    {% for mname in metricNames %}
      {% set mskyset = run.metricsWithMetricName(mname, skysetMetrics, baseonly=True) %}
      {% set skymaps = run.getSkyMaps(mskyset) %}
+     {% if skymaps|length > 0 %}
       <div id='metricset'>
        {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId) %}
        {% set metricSelect = run.metricsToMetricIds(mskyset)|join('&metricId=') %}
@@ -83,13 +84,15 @@
           <a href="{{plotfile}}"> <img class="sm_thumbnail" src='{{thumbfile}}'></a>
        {% endfor  %}
       </div>
+     {% endif %}
    {% endfor %}
 
 
    {% for m in combosetMetrics %}
      {% set comboplots = run.plotsForMetric(m) %}
      {% set combodict = run.plotDict(comboplots) %}
-      {% set combohist = combodict['ComboHistogram'] %}
+     {% set combohist = combodict['ComboHistogram'] %}
+     {% if combohist|length > 0 %}
       <div id='metricset'>
 	{% set metricInfo = run.metricInfo(m) %}
         {{ metricInfo['MetricName']|escape }} ({{metricInfo['Slicer']|escape}})
@@ -98,20 +101,23 @@
         <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
 	 {% endfor %}
        </div>
+      {% endif %}
    {% endfor  %}
 
+   {% if hourglassMetrics|length > 0 %}
    <div id='metricset'>
    {% for h in hourglassMetrics %}
       {% set metricInfo = run.metricInfo(h) %}
-      {{metricInfo['Metadata']|escape}} </br>
+      {# {{metricInfo['Metadata']|escape}} </br> #}
       {% set hourglassplots = run.plotsForMetric(h) %}
       {% set hourglassdict = run.plotDict(hourglassplots) %}
       {% set hourglass = hourglassdict['hourglassPlot'] %}
       {% for plotfile, thumbfile in zip(hourglass['plotFile'], hourglass['thumbFile']) %}
-         <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a></br>
+         <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
       {% endfor %}
    {% endfor %}
    </div>
+   {% endif %}
 
     {% if statNames | length > 0 %}
       <div id= 'metricset'>
