@@ -100,8 +100,9 @@ class TableFractionMetric(BaseMetric):
         hist = np.concatenate((np.array([zero]), hist, np.array([one]), np.array([overone])))
         # Create labels for each value
         binNames = ['0 == P']
-        for i in np.arange(0,self.nbins):
-            binNames.append('%.2g < P < %.2g'%(b[i], b[i+1]) )
+        binNames.append('0 < P < 0.1')
+        for i in np.arange(1, self.nbins):
+            binNames.append('%.2g <= P < %.2g'%(b[i], b[i+1]) )
         binNames.append('1 == P')
         binNames.append('1 < P')
         # Package the names and values up
