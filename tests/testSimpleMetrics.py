@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics
@@ -7,7 +9,7 @@ class TestSimpleMetrics(unittest.TestCase):
     def setUp(self):
         dv = np.arange(0, 10, .5)
         self.dv = np.array(zip(dv), dtype=[('testdata', 'float')])
-        
+
     def testMaxMetric(self):
         """Test max metric."""
         testmetric = metrics.MaxMetric('testdata')
@@ -75,12 +77,12 @@ class TestSimpleMetrics(unittest.TestCase):
     def testNoutliersNsigma(self):
         data=self.dv
         testmetric = metrics.NoutliersNsigma('testdata', nSigma=1.)
-        med = np.median(data['testdata'])
+        med = np.mean(data['testdata'])
         shouldBe = np.size(np.where(data['testdata'] > med + data['testdata'].std())[0])
         self.assertEqual(shouldBe, testmetric.run(data))
         testmetric = metrics.NoutliersNsigma('testdata', nSigma=-1.)
         shouldBe = np.size(np.where(data['testdata'] < med - data['testdata'].std())[0])
         self.assertEqual(shouldBe, testmetric.run(data))
-        
+
 if __name__ == "__main__":
     unittest.main()

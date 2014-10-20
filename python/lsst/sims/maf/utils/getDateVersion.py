@@ -13,8 +13,8 @@ def getDateVersion():
     versionInfo = {'__version__':__version__,'__repo_version__':__repo_version__,
                    '__fingerprint__':__fingerprint__,
                    '__dependency_versions__':__dependency_versions__}
-    
+
     return today_date, versionInfo
 
 
-    
+

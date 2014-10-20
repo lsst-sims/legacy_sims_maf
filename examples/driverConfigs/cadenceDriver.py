@@ -20,7 +20,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     opsimdb = utils.connectOpsimDb(config.dbAddress)
     
     # Fetch the proposal ID values from the database
-    propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
+    propids, WFDpropid, DDpropid, propID2Name = opsimdb.fetchPropIDs()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = ''

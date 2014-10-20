@@ -1,13 +1,12 @@
 import numpy as np
-import numpy.lib.recfunctions as rfn
 from .baseStacker import BaseStacker
 import warnings
-        
+
 ### Normalized airmass
 class NormAirmassStacker(BaseStacker):
     """Calculate the normalized airmass for each opsim pointing."""
     def __init__(self, airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388):
-        
+
         self.units = ['airmass/(minimum possible airmass)']
         self.colsAdded = ['normairmass']
         self.colsReq = [airmassCol, decCol]
@@ -19,7 +18,7 @@ class NormAirmassStacker(BaseStacker):
         """Calculate new column for normalized airmass."""
         # Run method is required to calculate column.
         # Driver runs getColInfo to know what columns are needed from db & which are calculated,
-        #  then gets data from db and then calculates additional columns (via run methods here). 
+        #  then gets data from db and then calculates additional columns (via run methods here).
         min_z_possible = np.abs(simData[self.decCol] - np.radians(self.telescope_lat))
         min_airmass_possible = 1./np.cos(min_z_possible)
         simData=self._addStackers(simData)
@@ -68,14 +67,14 @@ class ParallaxFactorStacker(BaseStacker):
         simData['ra_pi_amp'] = ra_pi_amp
         simData['dec_pi_amp'] = dec_pi_amp
         return simData
-                     
+
 class HourAngleStacker(BaseStacker):
     """ Add the Hour Angle for each observation """
     def __init__(self, lstCol='lst', RaCol='fieldRA'):
         self.units = ['Hours']
         self.colsAdded = ['HA']
         self.colsReq = [lstCol, RaCol]
-        self.lstCol = lstCol 
+        self.lstCol = lstCol
         self.RaCol = RaCol
 
     def run(self, simData):
@@ -92,6 +91,5 @@ class HourAngleStacker(BaseStacker):
         ha = np.where(ha > np.pi, ha-2.*np.pi, ha)
         simData=self._addStackers(simData)
         # Convert radians to hours
-        simData['HA'] = ha*12/np.pi 
+        simData['HA'] = ha*12/np.pi
         return simData
-    

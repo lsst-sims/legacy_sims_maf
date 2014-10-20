@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import os, warnings
 import unittest
 import lsst.utils.tests as utilsTests

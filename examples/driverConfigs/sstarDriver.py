@@ -18,7 +18,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     outputDir is the output directory for MAF
 
     Uses 'slicerName' for metrics which have the option of using
-      [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither] 
+      [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither]
       (dithered healpix slicer uses ditheredRA/dec values).
 
     Uses 'benchmark' (which can be design or stretch) to scale plots of number of visits and coadded depth.
@@ -39,13 +39,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     opsimdb = utils.connectOpsimDb(config.dbAddress)
 
     # Fetch the proposal ID values from the database
-    propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
+    propids, WFDpropid, DDpropid, propID2Name = opsimdb.fetchPropIDs()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = ''
     if len(WFDpropid) == 1:
         wfdWhere = "propID = %d" %(WFDpropid[0])
-    else: 
+    else:
         for i,propid in enumerate(WFDpropid):
             if i == 0:
                 wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
@@ -77,11 +77,17 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         seeing_norm = design['seeing']
         mag_zpoints = design['coaddedDepth']
         nvisitBench = design['nvisits']
+    # make sure nvisitBench not zero
+    for key in nvisitBench.keys():
+        if nvisitBench[key] == 0:
+            print 'Changing nvisit benchmark value to not be zero.'
+            nvisitBench[key] = 1
+
     # Set range of values for visits plots.
     nVisits_plotRange = {'all':
                          {'u':[25, 75], 'g':[50,100], 'r':[150, 200], 'i':[150, 200],
                           'z':[100, 250], 'y':[100,250]},
-                         'DDpropid':
+                         'DD':
                          {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],
                           'z':[7000, 10000], 'y':[5000, 8000]}}
 
@@ -127,7 +133,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     histNum = 0
 
     ## Metrics calculating values over the sky (healpix or opsim slicer)
-
     # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD']):
@@ -136,11 +141,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             # Set some per-proposal information.
             if prop == 'All Props':
                 propCaption = ' for all proposals'
-                metadata = '%s band all proposals' %(f) + slicermetadata
+                metadata = '%s band, all props' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s"' %(f)]
             if prop == 'WFD':
                 propCaption = ' for WFD only'
-                metadata = '%s band WFD only' %(f) + slicermetadata
+                metadata = '%s band, WFD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
             # Reset histNum (for merged histograms, merged over all filters).
             histNum = startNum
@@ -161,17 +166,17 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                        'legendloc':'upper right'}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
-            metricList.append(configureMetric('CountMetric',
-                                              kwargs={'col':'expMJD', 'metricName':'NVisitsRatio'},
-                                            plotDict={'normVal':nvisitBench[f], 'binsize':0.05,
-                                                        'xMin':0.5, 'xMax':1.5,
-                                                'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
+            metricList.append(configureMetric('CountRatioMetric',
+                                              kwargs={'col':'expMJD', 'normVal':nvisitBench[f], 'metricName':'NVisitsRatio'},
+                                            plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
+                                                    'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
+                                                    'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
                                         displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop), 'order':filtorder[f],
                                                 'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
                                                 %(f, benchmark, nvisitBench[f], propCaption)},
                                         histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                                                    'xlabel':'Number of visits / benchmark',
-                                                   'binsize':.05, 'xMin':0.5, 'xMax':1.5, 'legendloc':'upper right'}))
+                                                   'binsize':.05, 'xMin':0.475, 'xMax':1.525, 'legendloc':'upper right'}))
             histNum += 1
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
@@ -238,23 +243,25 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         if propid in WFDpropid:
             continue
         for f in filters:
+            xMax = nVisits_plotRange['all'][f][1]
+            if propid in DDpropid:
+                xMax = nVisits_plotRange['DD'][f][1]
             # Count the number of visits.
             m1 = configureMetric('CountMetric',
                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                                 summaryStats=standardStats,
                                 plotDict={'units':'Number of Visits', 'bins':50},
                                 displayDict={'group':'2: Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
-                                             'caption':'Number of visits per opsim field in %s filter, for propID %d'
-                                             %(f, propid)},
+                                             'caption':'Number of visits per opsim field in %s filter, for %s.'
+                                             %(f, propID2Name[propid])},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                                           'label':'%s' %f, 'binsize':2, 'xMin':0,
-                                           'xMax':nVisits_plotRange['all'][f][1]})
+                                           'label':'%s' %f, 'binsize':2, 'xMin':0, 'xMax':xMax})
             metricDict = makeDict(m1)
-            sqlconstraint = ['filter = "%s" and propID = %s' %(f, propid)]
+            sqlconstraint = ['filter = "%s" and propID = %s' %(f,propid)]
             slicer = configureSlicer('OpsimFieldSlicer',
                                      metricDict=metricDict,
                                      constraints=sqlconstraint,
-                                     metadata='%s band and %s proposal' %(f, propid),
+                                     metadata='%s band, %s' %(f, propID2Name[propid]),
                                      metadataVerbatim=True)
             slicerList.append(slicer)
         histNum += 1
@@ -273,20 +280,20 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         metricDict = makeDict(m1)
         sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
         slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=sqlconstraint,
-                                 metadata='%s band and WFD proposal' %(f), metadataVerbatim=True)
+                                 metadata='%s band, WFD' %(f), metadataVerbatim=True)
         slicerList.append(slicer)
     histNum += 1
 
     # Calculate the Completeness and Joint Completeness for all proposals and WFD only.
     for prop in ('All Props', 'WFD'):
         if prop == 'All Props':
-            metadata = 'all proposals'
+            metadata = 'All proposals'
             sqlconstraint = ['']
-            xlabel = '# visits (WFD only) / (# WFD %s value)' %(benchmark)
+            xlabel = '# visits (All Props) / (# WFD %s value)' %(benchmark)
         if prop == 'WFD':
             metadata = 'WFD only'
             sqlconstraint = ['%s' %(wfdWhere)]
-            xlabel = '# visits (All Props) / (# WFD %s value)' %(benchmark)
+            xlabel = '# visits (WFD) / (# WFD %s value)' %(benchmark)
         # Configure completeness metric.
         m1 = configureMetric('CompletenessMetric',
                             plotDict={'xlabel':xlabel,
@@ -304,9 +311,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Calculate the fO metrics for all proposals and WFD only.
     fOnside = 64
+    order = 0
     for prop in ('All Prop', 'WFD only'):
         if prop == 'All Prop':
-            metadata = 'all proposals'
+            metadata = 'All proposals'
             sqlconstraint = ['']
         if prop == 'WFD only':
             metadata = 'WFD only'
@@ -319,10 +327,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                       'xMax':1500},
                             summaryStats={'fOArea':{'nside':fOnside},
                                             'fONv':{'nside':fOnside}},
-                            displayDict={'group':'Technical', 'subgroup':'F0', 'caption':
+                            displayDict={'group':'Technical', 'subgroup':'F0', 'displayOrder':order, 'caption':
                                         'FO metric: evaluates the overall efficiency of observing.'})
+        order += 1
         slicer = configureSlicer('fOSlicer', kwargs={'nside':fOnside},
-                                 metricDict=makeDict(m1), constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
+                                 metricDict=makeDict(m1), constraints=sqlconstraint,
+                                 metadata=metadata, metadataVerbatim=True)
         slicerList.append(slicer)
 
     ## End of all-sky metrics.
@@ -344,7 +354,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Histograms per filter for WFD only (generally used to produce merged histograms).
     startNum = histNum
     for f in filters:
-        metadata = '%s band WFD only' %(f)
+        metadata = '%s band, WFD' %(f)
         # Reset histNum to starting value (to combine filters).
         histNum = startNum
         # Histogram the individual visit five sigma limiting magnitude.
@@ -411,11 +421,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slicerList.append(slicer)
 
     # Plots per night -- the number of visits and the open shutter time fraction.
-    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'},
+    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisits Per Night'},
                           summaryStats=standardStats,
                           displayDict={'group':'Technical', 'subgroup':'Obs Time',
                                        'caption':'Number of visits per night.'})
-    m2 = configureMetric('OpenShutterFractionMetric', 
+    m2 = configureMetric('OpenShutterFractionMetric',
                          summaryStats=standardStats,
                          displayDict={'group':'Technical', 'subgroup':'Obs Time',
                                       'caption':'Open shutter fraction per night.'})
@@ -430,7 +440,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     propOrder = 0
     props = propids + ['All Props'] + ['WFD']
     for i, propid in enumerate(props):
-        propOrder += 100
+        propOrder += 500
         order = propOrder
         for f in filters:
             if propid in WFDpropid:
@@ -443,11 +453,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             elif propid == 'WFD':
                 subgroup = 'WFD'
                 sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
-                metadata = '%s band and WFD only' %(f)
+                metadata = '%s band, WFD' %(f)
             else:
                 subgroup = 'Per Prop'
                 sqlconstraint = ['filter = "%s" and propId=%d' %(f, propid)]
-                metadata = '%s band and propId=%d' %(f, propid)
+                metadata = '%s band, %s' %(f, propID2Name[propid])
             metricList = []
             cols = ['finSeeing', 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth']
             groups = ['Seeing', 'Sky Brightness', 'Airmass', 'Single Visit Depth']
@@ -463,11 +473,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col)},
+                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col),'nSigma':3. },
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                  kwargs={'col':col, 'metricName':'m3Sigma %s' %(col)},
+                                                  kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('CountMetric', kwargs={'col':col, 'metricName':'Count %s' %(col)},
@@ -504,7 +514,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                          summaryStats={'IdentityMetric':{'metricName':'Count'}},
                          displayDict={'group':'1: Summary', 'subgroup':'NVisits', 'order':0})
     # Calculate the total open shutter time.
-    m4 = configureMetric('OpenShutterMetric', summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
+    m4 = configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
+                         summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
                          displayDict={'group':'1: Summary', 'subgroup':'On-sky Time'})
     metricDict = makeDict(m1, m2, m3, m4)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
@@ -522,12 +533,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                              summaryStats={'IdentityMetric':{'metricName':'Count'},
                                            'NormalizeMetric':{'normVal':totalNVisits, 'metricName':'Fraction of total'}},
                             displayDict={'group':'1: Summary', 'subgroup':'NVisits'})
-        slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1), constraints=sqlconstraint)
+        slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1), constraints=sqlconstraint,
+                                 metadata='%s' %(propID2Name[propid]), metadataVerbatim=True)
         slicerList.append(slicer)
     # Count visits in WFD (as well as ratio of number of visits compared to total number of visits).
     sqlconstraint = ['%s' %(wfdWhere)]
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1),
-                            constraints=sqlconstraint, metadata='WFD only', metadataVerbatim=True)
+                            constraints=sqlconstraint, metadata='WFD', metadataVerbatim=True)
     slicerList.append(slicer)
 
     config.slicers=makeDict(*slicerList)

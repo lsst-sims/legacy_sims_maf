@@ -14,7 +14,7 @@ class MafRunResults(object):
         Instantiate the (individual run) layout visualization class.
 
         This class provides methods used by our jinja2 templates to help interact
-        with the outputs of MAF. 
+        with the outputs of MAF.
         """
         self.outDir = os.path.relpath(outDir, '.')
 
@@ -29,7 +29,7 @@ class MafRunResults(object):
             if spot == -1:
                 self.runName = 'RunName Not Available'
             else:
-                self.runName = config[spot:].split('\n')[0][8:] 
+                self.runName = config[spot:].split('\n')[0][8:]
         self.configDetails = os.path.join(self.outDir,'configDetails.txt')
         if not os.path.isfile(self.configDetails):
             self.configDetails = 'Config Details Not Available.'
@@ -46,17 +46,17 @@ class MafRunResults(object):
                                          'stats':['summarystats','statId']})
         # Just pull all three tables.
         # Below, we provide some methods to interface between the numpy rec arrays returned
-        #  by these queries and what the templates need. 
+        #  by these queries and what the templates need.
         # The idea being that this should make the template code & presentation layer more
         #  easily maintainable in the future.
-        self.metrics = database.queryDatabase('metrics', 'select * from metrics')        
+        self.metrics = database.queryDatabase('metrics', 'select * from metrics')
         self.displays = database.queryDatabase('displays', 'select * from displays')
         # Combine metrics and displays arrays (these are one-to-one).
         self.metrics = rec_join('metricId', self.metrics, self.displays)
         # Add base metric names (to keep order for reduce methods).
         baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S20')])
         for i, m in enumerate(self.metrics):
-            baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]            
+            baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]
         self.metrics = merge_arrays([self.metrics, baseNames], flatten=True, usemask=False)
         self.metrics = self.sortMetrics(self.metrics)
         del self.displays
@@ -69,8 +69,8 @@ class MafRunResults(object):
             self.plots = np.zeros(0, dtype=[('metricId',int), ('plotFile', '|S10')])
         if len(self.stats) == 0:
             self.stats = np.zeros(0, dtype=[('metricId',int), ('summaryName', '|S10'), ('summaryValue', float)])
-                    
-        # Pull up the names of the groups and subgroups. 
+
+        # Pull up the names of the groups and subgroups.
         groups = sorted(list(np.unique(self.metrics['displayGroup'])))
         self.groups = OrderedDict()
         for g in groups:
@@ -80,7 +80,7 @@ class MafRunResults(object):
         for g in self.groups:
             self.groups[g] = sorted(list(self.groups[g]))
 
-        self.summaryStatOrder = ['Id', 'Identity', 'Mean', 'Median', 'Rms', 'RobustRms', 
+        self.summaryStatOrder = ['Id', 'Identity', 'Mean', 'Median', 'Rms', 'RobustRms',
                                  'm3Sigma', 'p3Sigma', '%tile', 'Count']
         # Add in the table fraction sorting to summary stat ordering.
         tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
@@ -102,7 +102,7 @@ class MafRunResults(object):
 
     def convertSelectToMetrics(self, groupList, metricIdList):
         """
-        Convert the lists of values returned by 'select metrics' template page 
+        Convert the lists of values returned by 'select metrics' template page
         into an appropriate numpy recarray of metrics (in sorted order).
         """
         metricIds = set()
@@ -255,7 +255,7 @@ class MafRunResults(object):
                 hasstat[i] = 1
         metrics = metrics[np.where(hasstat > 0)]
         metrics = self.sortMetrics(metrics, order = ['displayGroup', 'displaySubgroup', 'slicerName',
-                                                   'displayOrder', 'metricMetadata', 'baseMetricNames'])
+                                                    'displayOrder', 'metricMetadata', 'baseMetricNames'])
         return metrics
 
     def uniqueSlicerNames(self, metrics=None):
@@ -315,7 +315,7 @@ class MafRunResults(object):
 
     def metricsWithMetricName(self, metricName, metrics=None, baseonly=True):
         """
-        Return all metrics which match metricName (default, only the 'base' metric name). 
+        Return all metrics which match metricName (default, only the 'base' metric name).
         """
         if metrics is None:
             metrics = self.metrics
@@ -445,7 +445,7 @@ class MafRunResults(object):
         Note that if you pass 'stats' from multiple metrics with the same summary names, they
          will be overwritten in the resulting dictionary! So just use stats from one metric.
         """
-        # Result = dict with key == summary stat name, value = summary stat value. 
+        # Result = dict with key == summary stat name, value = summary stat value.
         sdict = OrderedDict()
         statnames = self.orderStatNames(stats)
         for n in statnames:
