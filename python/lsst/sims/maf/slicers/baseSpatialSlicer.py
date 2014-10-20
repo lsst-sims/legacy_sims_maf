@@ -185,6 +185,12 @@ class BaseSpatialSlicer(BaseSlicer):
             plotValue = metricValue[condition]
         else:
             plotValue = metricValue
+
+        rangePad = 20.
+        if (plotValue.size == 1) & (histRange is None):
+            warnings.warn('Only one metric value, making a guess at a good histogram range.')
+            histRange = [plotValue-rangePad, plotValue+rangePad]
+
         if plotValue.size == 0:
             if histRange is None:
                 warnings.warn('Warning! Could not plot metric data: histRange is None and all data masked' )

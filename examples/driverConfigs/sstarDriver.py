@@ -243,19 +243,17 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         if propid in WFDpropid:
             continue
         for f in filters:
-            xMax = nVisits_plotRange['all'][f][1]
-            if propid in DDpropid:
-                xMax = nVisits_plotRange['DD'][f][1]
             # Count the number of visits.
             m1 = configureMetric('CountMetric',
                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                                 summaryStats=standardStats,
-                                plotDict={'units':'Number of Visits', 'bins':50},
+                                plotDict={'units':'Number of Visits',
+                                          'binsize':5, 'xMin':0, 'xMax':160},
                                 displayDict={'group':'2: Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
                                              %(f, propID2Name[propid])},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                                           'label':'%s' %f, 'binsize':2, 'xMin':0, 'xMax':xMax})
+                                           'label':'%s' %f, 'binsize':5, 'xMin':0, 'xMax':160})
             metricDict = makeDict(m1)
             sqlconstraint = ['filter = "%s" and propID = %s' %(f,propid)]
             slicer = configureSlicer('OpsimFieldSlicer',
@@ -271,12 +269,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         m1 = configureMetric('CountMetric',
                              kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                              summaryStats=standardStats,
-                             plotDict={'units':'Number of Visits', 'bins':50},
+                             plotDict={'units':'Number of Visits',
+                                       'xMin':0, 'xMax':160, 'binsize':5},
                              displayDict={'group':'2: Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
                                           'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s' %f, 'binsize':2, 'xMin':0,
-                                        'xMax':nVisits_plotRange['all']['%s' %f][1]})
+                                        'color':colors[f], 'label':'%s' %f, 'binsize':5, 'xMin':0,
+                                        'xMax':160})
         metricDict = makeDict(m1)
         sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
         slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=sqlconstraint,
