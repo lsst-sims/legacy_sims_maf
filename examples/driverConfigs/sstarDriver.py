@@ -163,7 +163,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                             histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                                                        'binsize':5, 'xMin':nVisits_plotRange['all'][f][0],
                                                        'xMax':nVisits_plotRange['all'][f][1],
-                                                       'legendloc':'upper right'}))
+                                                       'legendloc':'upper right',
+                                                       'cumulative':-1}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
             metricList.append(configureMetric('CountRatioMetric',
@@ -186,7 +187,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metricList.append(configureMetric('Coaddm5Metric',
                                               plotDict={'zp':mag_zpoints[f],
-                                                        'percentileClip':95.,
+                                                        'xMin':-0.6, 'xMax':0.6,
                                                         'units':'coadded m5 - %.1f' %mag_zpoints[f]},
                                                 summaryStats=allStats,
                                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
@@ -199,7 +200,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             # Calculate the median individual visit sky brightness (normalized to a benchmark).
             metricList.append(configureMetric('MedianMetric',
                                               kwargs={'col':'filtSkyBrightness'},
-                                            plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f])},
+                                            plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f]),
+                                                      'xMin':-2, 'xMax':1},
                                             displayDict={'group':'Sky Brightness', 'subgroup':prop, 'order':filtorder[f],
                                             'caption':
                                             'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s.'
@@ -472,11 +474,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                    kwargs={'col':col, 'metricName':'p3Sigma %s' %(col),'nSigma':3. },
+                                                    kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('NoutliersNsigma',
-                                                  kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
+                                                  kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
                 metricList.append(configureMetric('CountMetric', kwargs={'col':col, 'metricName':'Count %s' %(col)},
@@ -543,5 +545,3 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     config.slicers=makeDict(*slicerList)
     return config
-
-

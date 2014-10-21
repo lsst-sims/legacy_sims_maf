@@ -113,7 +113,8 @@ class BaseSpatialSlicer(BaseSlicer):
     ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
+                      bins=None, binsize=None, cumulative=False, anticumulative=False,
+                      xMin=None, xMax=None, yMin=None, yMax=None,
                       logScale='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
                       zp=None, normVal=None, percentileClip=None, **kwargs):
@@ -127,7 +128,7 @@ class BaseSpatialSlicer(BaseSlicer):
         bins = bins for histogram (numpy array or # of bins)
         binsize = size of bins to use.  Will override "bins" if both are set.
         (default None, uses Freedman-Diaconis rule to set binsize)
-        cumulative = make histogram cumulative (default False)
+        cumulative = make histogram cumulative (default False) (<0 value makes cumulative the 'less than' way).
         xMin/Max = histogram range (default None, set by matplotlib hist)
         yMin/Max = histogram y range
         flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
@@ -273,7 +274,7 @@ class BaseSpatialSlicer(BaseSlicer):
                    logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
                    zp=None, normVal=None,
                    colorMin=None, colorMax=None, percentileClip=None,  cbar_edge=True,
-                   label=None, **kwargs):
+                   label=None, plotMask=False, **kwargs):
         """
         Plot the sky map of metricValue.
         """
@@ -290,8 +291,12 @@ class BaseSpatialSlicer(BaseSlicer):
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = plt.subplot(111,projection=projection)
-        # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
-        mask = ~metricValue.mask
+        if plotMask:
+            # Plot all data points.
+            mask = np.ones(len(metricValue), dtype='bool')
+        else:
+            # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
+            mask = ~metricValue.mask
         # Add ellipses at RA/Dec locations
         lon = -(self.slicePoints['ra'][mask] - np.pi) % (np.pi*2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, ax=ax)
@@ -333,7 +338,7 @@ class BaseSpatialSlicer(BaseSlicer):
                                 norm=norml, rasterized=True)
         else:
             p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
-        p.set_array(metricValue.compressed())
+        p.set_array(metricValue.data[mask])
         ax.add_collection(p)
         # Add ecliptic
         self._plot_ecliptic(ax=ax)

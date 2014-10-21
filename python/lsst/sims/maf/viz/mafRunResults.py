@@ -80,8 +80,8 @@ class MafRunResults(object):
         for g in self.groups:
             self.groups[g] = sorted(list(self.groups[g]))
 
-        self.summaryStatOrder = ['Id', 'Identity', 'Mean', 'Median', 'Rms', 'RobustRms',
-                                 'm3Sigma', 'p3Sigma', '%tile', 'Count']
+        self.summaryStatOrder = ['Id', 'Identity', 'Median', 'Mean', 'Rms', 'RobustRms',
+                                 'm3Sigma', 'p3Sigma', 'Count', '%ile']
         # Add in the table fraction sorting to summary stat ordering.
         tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
         if len(tableFractions) > 0:
