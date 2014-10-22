@@ -232,9 +232,20 @@ class BaseSlicer(object):
         else:
             if hasattr(self, 'sliceColName'):
                 header['xlabel'] = '%s (%s)' %(self.sliceColName, self.sliceColUnits)
-                header['ylabel'] = '%s (%s)' %(metricName, plotDict['units'])
             else:
-                header['xlabel'] = '%s (%s)' %(metricName, plotDict['units'])
+                header['xlabel'] = '%s' %(metricName)
+                if 'units' in plotDict:
+                    header['xlabel'] += ' (%s)' %(plotDict['units'])
+        if 'ylabel' in plotDict:
+            header['ylabel'] = plotDict['ylabel']
+        else:
+            if hasattr(self, 'sliceColName'):
+                header['ylabel'] = '%s' %(metricName)
+                if 'units' in plotDict:
+                    header['ylabel'] += ' (%s)' %(plotDict['units'])
+            else:
+                # If it's not a oneDslicer and no ylabel given, don't need one.
+                pass
         # Bundle up slicer and metric info.
         metric = []
         # If metric values is a masked array.
