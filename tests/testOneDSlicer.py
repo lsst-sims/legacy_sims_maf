@@ -286,5 +286,5 @@ if __name__ == "__main__":
     suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSlicing))
     suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerHistogram))
     suite = unittest.TestSuite(suitelist)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    #unittest.main()
+    #unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()
