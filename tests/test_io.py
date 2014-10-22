@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import numpy.ma as ma
 import unittest
@@ -24,14 +26,14 @@ class TestSlicers(unittest.TestCase):
         self.filenames.append(filename)
         metadata = 'testdata'
         slicer.writeData(filename, metricValues, metadata=metadata)
-        metricValuesBack, slicerBack, header, plotDict = self.baseslicer.readData(filename)
+        metricValuesBack, slicerBack, header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(slicer == slicerBack)
         assert(metadata == header['metadata'])
         attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
-        
+
     def test_healpixSlicer_floats(self):
         nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
@@ -40,14 +42,13 @@ class TestSlicers(unittest.TestCase):
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, metricValues, metadata='testdata')
-        metricValuesBack,slicerBack,header,plotDict = self.baseslicer.readData(filename)
+        metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(slicer == slicerBack) 
+        assert(slicer == slicerBack)
         attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
-       
-        
+
     def test_healpixSlicer_masked(self):
         nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
@@ -59,9 +60,9 @@ class TestSlicers(unittest.TestCase):
         filename = 'healpix_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, metricValues, metadata='testdata')
-        metricValuesBack,slicerBack,header,plotDict = self.baseslicer.readData(filename)
+        metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
-        assert(slicer == slicerBack) 
+        assert(slicer == slicerBack)
         attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
@@ -74,7 +75,7 @@ class TestSlicers(unittest.TestCase):
         filename = 'oned_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, dataValues[:100])
-        dataBack, slicerBack, header, plotDict = self.baseslicer.readData(filename)
+        dataBack, slicerBack, header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         #np.testing.assert_almost_equal(dataBack,dataValues[:100])
         attr2check = ['nslice', 'columnsNeeded']
@@ -101,7 +102,7 @@ class TestSlicers(unittest.TestCase):
         filename = 'opsimslicer_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, metricValues)
-        metricBack, slicerBack,header,plotDict = self.baseslicer.readData(filename)
+        metricBack, slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
         attr2check = ['nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2','simDataFieldIDColName']
@@ -121,7 +122,7 @@ class TestSlicers(unittest.TestCase):
         self.filenames.append(filename)
         metricValue=np.array([25.])
         slicer.writeData(filename, metricValue)
-        dataBack, slicerBack,header,plotDict = self.baseslicer.readData(filename)
+        dataBack, slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(dataBack,metricValue)
         attr2check = ['nslice', 'columnsNeeded']
@@ -129,7 +130,7 @@ class TestSlicers(unittest.TestCase):
             assert(getattr(slicer,att) == getattr(slicerBack,att))
 
     def test_complex(self):
-        #Test case where there is a complex metric 
+        #Test case where there is a complex metric
         nside = 8
         slicer = slicers.HealpixSlicer(nside=nside)
         data = np.zeros(slicer.nslice, dtype='object')
@@ -139,9 +140,9 @@ class TestSlicers(unittest.TestCase):
         filename = 'heal_complex.npz'
         self.filenames.append(filename)
         slicer.writeData(filename,data)
-        dataBack,slicerBack,header,plotDict = self.baseslicer.readData(filename)
+        dataBack,slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
-        # This is a crazy slow loop!  
+        # This is a crazy slow loop!
         for i, ack in enumerate(data):
             np.testing.assert_almost_equal(dataBack[i],data[i])
 
@@ -159,14 +160,13 @@ class TestSlicers(unittest.TestCase):
         for i, s in enumerate(slicer):
             metricdata[i] = i
         slicer.writeData(filename, metricdata)
-        dataBack, slicerBack, header, plotDict = self.baseslicer.readData(filename)
+        dataBack, slicerBack, header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(dataBack, metricdata)
-            
+
     def tearDown(self):
         for filename in self.filenames:
             os.remove(filename)
-    
+
 if __name__ == '__main__':
     unittest.main()
- 

@@ -2,7 +2,6 @@
 
 import warnings
 import numpy as np
-import numpy.ma as ma
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import itertools
@@ -10,16 +9,16 @@ from functools import wraps
 
 from .baseSlicer import BaseSlicer
 
-    
+
 class NDSlicer(BaseSlicer):
     """Nd slicer (N dimensions)"""
-    def __init__(self, sliceColList=None, verbose=True, binsList=100):  
+    def __init__(self, sliceColList=None, verbose=True, binsList=100):
         """Instantiate object.
         binsList can be a list of numpy arrays with the respective slicepoints for sliceColList,
          or a list of integers (one per column in sliceColList) or a single value
             (repeated for all columns, default=100)."""
         super(NDSlicer, self).__init__(verbose=verbose)
-        self.bins = None 
+        self.bins = None
         self.nslice = None
         self.sliceColList = sliceColList
         self.columnsNeeded = self.sliceColList
@@ -56,7 +55,7 @@ class NDSlicer(BaseSlicer):
                 self.bins.append(np.sort(bl))
         # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDSlicer).
         self.nslice = (np.array(map(len, self.bins))-1).prod()
-        # Set up slice metadata. 
+        # Set up slice metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
         # Including multi-D 'leftmost' bin values
         binsForIteration = []
@@ -100,7 +99,7 @@ class NDSlicer(BaseSlicer):
                     'slicePoint':{'sid':islice,
                                   'binLeft':self.slicePoints['bins'][islice],
                                   'binIdx':self.slicePoints['binIdxs'][islice]}}
-        setattr(self, '_sliceSimData', _sliceSimData)                
+        setattr(self, '_sliceSimData', _sliceSimData)
 
     def __eq__(self, otherSlicer):
         """Evaluate if grids are equivalent."""
@@ -109,7 +108,7 @@ class NDSlicer(BaseSlicer):
                 return False
             for i in range(self.nD):
                 if np.all(otherSlicer.slicePoints['bins'][i] != self.slicePoints['bins'][i]):
-                    return False                
+                    return False
             return True
         else:
             return False
@@ -119,13 +118,13 @@ class NDSlicer(BaseSlicer):
                         title=None, fignum=None, logScale=False, units='',
                         clims=None, cmap=None, cbarFormat=None):
         """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
-        slicepoints [sums over non-visible axes]. 
+        slicepoints [sums over non-visible axes].
 
         metricValues = the metric data (as calculated when iterating through slicer)
         xaxis, yaxis = the x and y dimensions to plot (i.e. 0/1 would plot binsList[0] and
             binsList[1] data values, with other axis )
         title = title for the plot (default None)
-        xlabel/ylabel = labels for the x and y axis (default None, uses sliceColList names). 
+        xlabel/ylabel = labels for the x and y axis (default None, uses sliceColList names).
         fignum = the figure number to use (default None - will generate new figure)
         logScale = make the colorscale log.
         """
@@ -168,12 +167,12 @@ class NDSlicer(BaseSlicer):
         return fig.number
 
     def plotBinnedData1D(self, metricValues, axis, xlabel=None, ylabel=None,
-                         title=None, fignum=None, 
+                         title=None, fignum=None,
                          histRange=None, units=None,
                          label=None, addLegend=False, legendloc='upper left',
                          filled=False, alpha=0.5, logScale=False):
         """Plot a single axes from the sliceColList, identified by axis, given the metricValues at all
-        slicepoints [sums over non-visible axes]. 
+        slicepoints [sums over non-visible axes].
 
         metricValues = the values to be plotted at each bin
         axis = the dimension to plot (i.e. 0 would plot binsList[0])
@@ -195,7 +194,7 @@ class NDSlicer(BaseSlicer):
         for b in self.bins:
             newshape.append(len(b)-1)
         newshape.reverse()
-        md = metricValues.reshape(newshape) 
+        md = metricValues.reshape(newshape)
         # Sum over other dimensions. Note that masked values are not included in sum.
         sumaxes = range(self.nD)
         sumaxes.remove(axis)
@@ -229,8 +228,4 @@ class NDSlicer(BaseSlicer):
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
         if (title!=None):
             plt.title(title)
-        return fig.number    
-    
-
-
-
+        return fig.number

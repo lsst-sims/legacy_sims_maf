@@ -8,7 +8,7 @@ class fOArea(BaseMetric):
     """
     Metric to calculate the FO Area; works with FO slicer only.
     """
-    def __init__(self, col='metricdata', Asky=18000., Nvisit=825, 
+    def __init__(self, col='metricdata', Asky=18000., Nvisit=825,
                  metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(fOArea, self).__init__(col=col, metricName=metricName, **kwargs)
@@ -36,7 +36,7 @@ class fONv(BaseMetric):
     """
     Metric to calculate the FO_Nv; works with FO slicer only.
     """
-    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825, 
+    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825,
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
         super(fONv, self).__init__(col=col, metricName=metricName, **kwargs)
@@ -85,6 +85,8 @@ class TableFractionMetric(BaseMetric):
         """
         super(TableFractionMetric, self).__init__(col=col, metricDtype='float')
         self.nbins = nbins
+        # set this so runSliceMetric knows masked values should be set to zero and passed
+        self.maskVal = 0.
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
@@ -98,12 +100,13 @@ class TableFractionMetric(BaseMetric):
         hist = np.concatenate((np.array([zero]), hist, np.array([one]), np.array([overone])))
         # Create labels for each value
         binNames = ['0 == P']
-        for i in np.arange(0,self.nbins):
-            binNames.append('%.2g < P < %.2g'%(b[i], b[i+1]) )
+        binNames.append('0 < P < 0.1')
+        for i in np.arange(1, self.nbins):
+            binNames.append('%.2g <= P < %.2g'%(b[i], b[i+1]) )
         binNames.append('1 == P')
         binNames.append('1 < P')
         # Package the names and values up
-        result = np.empty(hist.size, dtype=[('name', '|S20'), ('value', float)]) 
+        result = np.empty(hist.size, dtype=[('name', '|S20'), ('value', float)])
         result['name'] = binNames
         result['value'] = hist
         return result

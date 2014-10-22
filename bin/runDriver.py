@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import os, sys, argparse
+import argparse
 import matplotlib
 matplotlib.use('Agg')
 
@@ -23,7 +23,7 @@ if __name__=="__main__":
 
     args = parser.parse_args()
 
-    
+
     # Set up configuration parameters.
     config = MafConfig()
     print 'Reading config data from %s' %(args.configFile)

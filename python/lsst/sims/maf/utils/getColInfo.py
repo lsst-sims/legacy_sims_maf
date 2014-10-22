@@ -1,6 +1,4 @@
-import inspect
-import numpy as np
-import lsst.sims.maf.stackers as stackers 
+import lsst.sims.maf.stackers as stackers
 
 class ColInfo(object):
     def __init__(self):
@@ -18,12 +16,12 @@ class ColInfo(object):
                         'rotSkyPos': 'rad',
                         'rotTelPos': 'rad',
                         'rawSeeing': 'arcsec',
-                        'finSeeing': 'arcsec', 
+                        'finSeeing': 'arcsec',
                         'seeing': 'arcsec',
                         'airmass': 'airmass',
                         'night': 'days',
                         'fieldRA': 'rad',
-                        'fieldDec': 'rad', 
+                        'fieldDec': 'rad',
                         'moonRA': 'rad',
                         'moonDec': 'rad',
                         'moonAlt': 'rad',
@@ -53,13 +51,12 @@ class ColInfo(object):
             return self.defaultUnit
 
     def getDataSource(self, colName):
-        """Given a column name to be added to simdata, identify appropriate source. 
+        """Given a column name to be added to simdata, identify appropriate source.
 
-        For values from database, this is self.defaultDataSource ('db'). 
-        For values which are precalculated for a particular column, this should be a 
+        For values from database, this is self.defaultDataSource ('db').
+        For values which are precalculated for a particular column, this should be a
         method added to this class."""
         if colName in self.sourceDict:
             return self.sourceDict[colName]
         else:
             return self.defaultDataSource
-

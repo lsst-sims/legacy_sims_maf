@@ -9,14 +9,11 @@ from functools import wraps
 import matplotlib.path as mplPath
 import warnings
 import matplotlib as mpl
-from lsst.sims.maf.stackers import wrapRA
 from lsst.sims.maf.utils.mafUtils import gnomonic_project_toxy
-
-
 
 class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
-    def __init__(self, nside=128, spatialkey1 ='RA1' , spatialkey2='Dec1', verbose=True, 
+    def __init__(self, nside=128, spatialkey1 ='RA1' , spatialkey2='Dec1', verbose=True,
                  useCache=True, radius=17./60., leafsize=100, **kwargs):
         """Using one corner of the chip as the spatial key and the diagonal as the radius.  """
         super(HealpixSDSSSlicer,self).__init__(verbose=verbose,
@@ -44,7 +41,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
             # healpixels simultaneously?  Then just have a dict with keys = healpix id and values = list of indices?
             # That way _sliceSimData is just doing a dict look-up and we can get rid of the spatialkey kwargs.
 
-            
+
             indices=[]
             # Gnomic project all the corners that are near the slice point, centered on slice point
             x1,y1 = gnomonic_project_toxy(self.corners['RA1'][initIndices], self.corners['Dec1'][initIndices],
@@ -55,7 +52,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
                                           self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             x4,y4 = gnomonic_project_toxy(self.corners['RA4'][initIndices], self.corners['Dec4'][initIndices],
                                           self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
-            
+
             for i,ind in enumerate(initIndices):
                 # Use matplotlib to make a polygon on
                 bbPath = mplPath.Path(np.array([[x1[i], y1[i]],
@@ -66,12 +63,12 @@ class HealpixSDSSSlicer(HealpixSlicer):
                 # Check if the slicepoint is inside the image corners and append to list if it is
                 if bbPath.contains_point((0.,0.)) == 1:
                     indices.append(ind)
-                    
+
             return {'idxs':indices,
                     'slicePoint':{'sid':self.slicePoints['sid'][islice],
                                   'ra':self.slicePoints['ra'][islice],
                                   'dec':self.slicePoints['dec'][islice]}}
-        setattr(self, '_sliceSimData', _sliceSimData)    
+        setattr(self, '_sliceSimData', _sliceSimData)
 
 
     def plotSkyMap(self, metricValueIn, xlabel=None, title='', raMin=-90, raMax=90,
@@ -87,7 +84,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
         raLen:  Length of the plotted strips in degrees
         decMin: minimum dec value to plot
         decMax: max dec value to plot
-        
+
         metricValueIn: metric values
         xlabel: units for metric color-bar label
         title: title for plot
@@ -135,7 +132,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
                 clims = [-1,1]
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
-                clims[1] =  clims[1]+1        
+                clims[1] =  clims[1]+1
         racenters=np.arange(raMin,raMax,raLen)
         nframes = racenters.size
         for i, racenter in enumerate(racenters):
@@ -144,12 +141,12 @@ class HealpixSDSSSlicer(HealpixSlicer):
             else:
                 useTitle = '%i < RA < %i'%(racenter-raLen, racenter+raLen)
             hp.cartview(metricValue.filled(self.badval), title=useTitle, cbar=False,
-                        min=clims[0], max=clims[1], flip='astro', rot=(racenter,0,0), 
+                        min=clims[0], max=clims[1], flip='astro', rot=(racenter,0,0),
                         cmap=cmap, norm=norm, lonra=[-raLen,raLen],
-                        latra=[decMin,decMax], sub=(nframes+1,1,i+1), fig=fig)   
+                        latra=[decMin,decMax], sub=(nframes+1,1,i+1), fig=fig)
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
-        fig = plt.gcf() 
+        fig = plt.gcf()
         ax1 = fig.add_axes([0.1, .15,.8,.075]) #left, bottom, width, height
         # Add label.
         if label is not None:

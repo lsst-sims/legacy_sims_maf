@@ -1,4 +1,4 @@
-import os, sys, importlib
+import importlib
 import numpy as np
 import warnings
 
@@ -25,7 +25,7 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=200):
     else:
         data = datain
     # Check that any good data values remain.
-    if data.size == 0:        
+    if data.size == 0:
         nbins = nbinMax
         warnings.warn('No unmasked data available for calculating optimal bin size: returning %i bins' %(nbins))
     # Else proceed.
@@ -37,7 +37,7 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=200):
         cond = np.where((data >= binmin)  & (data <= binmax))[0]
         # Check if any data points remain within binmin/binmax.
         if np.size(data[cond]) == 0:
-            nbins = nbinsMax
+            nbins = nbinMax
             warnings.warn('No data available for calculating optimal bin size within range of %f, %f'
                           %(binmin, binmax) + ': returning %i bins' %(nbins))
         else:
@@ -57,7 +57,7 @@ def percentileClipping(data, percentile=95.):
     """
     Clip off high and low outliers from a distribution in a numpy array.
     Returns the max and min values of the clipped data.
-    Useful for determining plotting ranges.  
+    Useful for determining plotting ranges.
     """
     if np.size(data) > 0:
         # Use absolute value to get both high and low outliers.

@@ -1,7 +1,7 @@
 import os
 import numpy as np
-
-from .mafConfig import MafConfig, config2dict, readMetricConfig, readSlicerConfig, readMixConfig
+import matplotlib.pyplot as plt
+from .mafConfig import config2dict, readMetricConfig, readSlicerConfig, readMixConfig
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -16,8 +16,6 @@ import collections
 
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
-
-
 
 class MafDriver(object):
     """Script for configuring and running metrics on Opsim output """
@@ -69,7 +67,7 @@ class MafDriver(object):
 
         # Get proposal information (for OpSim databases).
         if self.config.dbAddress['dbClass'] == 'OpsimDatabase':
-           self.allpropids, self.wfdpropids, self.ddpropids = self.opsimdb.fetchPropIDs()
+           self.allpropids, self.wfdpropids, self.ddpropids, propID2Name = self.opsimdb.fetchPropIDs()
            if self.verbose:
                dt, time_prev = dtime(time_prev)
                print 'fetched PropID info in %.3g s'%dt
@@ -172,7 +170,7 @@ class MafDriver(object):
                     # Add column names that the stackers need.
                     dbcolnames.append(col)
                 # If not already a configured stacker, instantiate one using defaults
-                if stacker.__class__.__name__ not in stacker_names: 
+                if stacker.__class__.__name__ not in stacker_names:
                     stackersList.append(stacker)
                     stacker_names.append(stacker.__class__.__name__)
             # Else if data source is just the usual database:
@@ -187,7 +185,7 @@ class MafDriver(object):
         for stacker in stackersList:
             self.data = stacker.run(self.data)
         # Done - self.data should now have all required columns.
-            
+
 
     def getFieldData(self, slicer, sqlconstraint):
         """Given an opsim slicer, generate the FieldData """
@@ -230,12 +228,11 @@ class MafDriver(object):
             dec = self.data[slicer.fieldDecColName][idx]
             self.fieldData = np.core.records.fromarrays([fieldID, ra, dec],
                                                names=['fieldID', 'fieldRA', 'fieldDec'])
-     
-            
-    
+
+
     def run(self):
         """Loop over each slicer and calculate metrics for that slicer. """
-        
+
         # Loop through all sqlconstraints, and run slicers + metrics that match the same sql constraints
         #   (so we only have to do one query of database per sql constraint).
         for sqlconstraint in self.constraints:
@@ -260,8 +257,8 @@ class MafDriver(object):
                     for col in stacker.colsReq:
                         colnames.append(col)
             # Find the unique column names required.
-            colnames = list(set(colnames)) 
-            
+            colnames = list(set(colnames))
+
             print 'Querying with SQLconstraint:', sqlconstraint
             # Get the data from the database + stacker calculations.
             if self.verbose:
@@ -271,7 +268,7 @@ class MafDriver(object):
                 dt, time_prev = dtime(time_prev)
             if len(self.data) == 0:
                 print '  No data matching constraint:   %s'%sqlconstraint
-                
+
             # Got data, now set up slicers.
             else:
                 if self.verbose:
@@ -303,7 +300,7 @@ class MafDriver(object):
                           slicer.setupSlicer(self.data)
                     # Set up baseSliceMetric.
                     gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                     outDir=self.config.outputDir) 
+                                                     outDir=self.config.outputDir)
                     gm.setSlicer(slicer)
                     gm.setMetrics(self.metricList[slicer.index])
                     # Make a more useful metadata comment.
@@ -338,7 +335,7 @@ class MafDriver(object):
                                     baseName = gm.metricNames[iid]
                                     all_names = gm.metricNames.values()
                                     matching_metrics = [x for x in all_names \
-                                                        if x[:len(baseName)] == baseName and x != baseName]  
+                                                        if x[:len(baseName)] == baseName and x != baseName]
                                     for mm in matching_metrics:
                                         iid = gm.findIids(metricName=mm)[0]
                                         summary = gm.computeSummaryStatistics(iid, stat)
@@ -382,7 +379,7 @@ class MafDriver(object):
 
 
         for key in histDict.keys():
-            # Use a comparison slice metric per merged histogram. Only read relevant files. 
+            # Use a comparison slice metric per merged histogram. Only read relevant files.
             cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=True, outDir=self.config.outputDir,
                                                      figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:
@@ -394,9 +391,11 @@ class MafDriver(object):
                 iids = cbm.metricValues.keys()
                 fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
+                plt.close('all')
                 if cbm.slicers[iids[0]].slicerName == 'HealpixSlicer':
                    fignum, title, psfile = cbm.plotPowerSpectra(iids, savefig=True,
                                                                 plotkwargs=histDict[key]['plotkwargs'])
+                   plt.close('all')
 
         today_date, versionInfo = utils.getDateVersion()
         # Open up a file and print the results of verison and date.

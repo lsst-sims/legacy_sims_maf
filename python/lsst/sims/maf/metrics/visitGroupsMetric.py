@@ -1,4 +1,4 @@
-# Example of more complex metric 
+# Example of more complex metric
 # Takes multiple columns of data (although 'night' could be calculable from 'expmjd')
 # Returns variable length array of data
 # Uses multiple reduce functions
@@ -13,7 +13,7 @@ class VisitGroupsMetric(BaseMetric):
                  **kwargs):
         """
         Instantiate metric.
-        
+
         'timesCol' = column with the time of the visit (default expmjd),
         'nightsCol' = column with the night of the visit (default night),
         'deltaTmin' = minimum time of window: units are days (default 15 min),
@@ -23,7 +23,7 @@ class VisitGroupsMetric(BaseMetric):
         'window' = the number of nights to consider within a window (for reduce methods),
         'minNNights' = the minimum required number of nights within window to make a full 'group'.
         """
-        self.times = timesCol   
+        self.times = timesCol
         self.nights = nightsCol
         eps = 1e-10
         self.deltaTmin = float(deltaTmin) - eps
@@ -32,7 +32,7 @@ class VisitGroupsMetric(BaseMetric):
         self.window = int(window)
         self.minNNights = int(minNNights)
         super(VisitGroupsMetric, self).__init__(col=[self.times, self.nights], metricName=metricName, **kwargs)
-        self.reduceOrder = {'Median':0, 'NNightsWithNVisits':1, 'NVisitsInWindow':2, 
+        self.reduceOrder = {'Median':0, 'NNightsWithNVisits':1, 'NVisitsInWindow':2,
                             'NNightsInWindow':3, 'NLunations':4, 'MaxSeqLunations':5}
         if self.displayDict['caption'] is None:
             caption = 'Evaluation of the number of visits within a night, with separations between '
@@ -45,7 +45,7 @@ class VisitGroupsMetric(BaseMetric):
             caption += 'VisitsGroups_Median calculates the median number of visits between tMin/tMax for '
             caption += 'all nights. \n'
             caption += 'VisitGroups_NNightsWithNNights calculates the number of nights that have at '
-            caption += 'least %d visits.\n' %(self.minNVisits) 
+            caption += 'least %d visits.\n' %(self.minNVisits)
             caption += 'VisitGroups_NVisitsInWindow calculates the max number of visits within a window of '
             caption += '%d days.\n' %(self.window)
             caption += 'VisitGroups_NNightsInWindow calculates the max number of nights that have more '
@@ -117,11 +117,11 @@ class VisitGroupsMetric(BaseMetric):
         if len(visitNum) == 0:
             return self.badval
         return metricval
-        
+
     def reduceMedian(self, metricval):
         """Reduce to median number of visits per night."""
         return np.median(metricval['visits'])
-        
+
     def reduceNNightsWithNVisits(self, metricval):
         """Reduce to total number of nights with more than 'minNVisits' visits."""
         condition = (metricval['visits'] >= self.minNVisits)
@@ -131,7 +131,7 @@ class VisitGroupsMetric(BaseMetric):
         condition = ((nights >= night) & (nights < night+window))
         condition2 = (visits[condition] >= minNVisits)
         return visits[condition][condition2], nights[condition][condition2]
-    
+
     def reduceNVisitsInWindow(self, metricval):
         """Reduce to max number of total visits on all nights with more than minNVisits,
         within any 'window' (default=30 nights)."""
@@ -140,7 +140,7 @@ class VisitGroupsMetric(BaseMetric):
             vw, nw = self._inWindow(metricval['visits'], metricval['nights'], n, self.window, self.minNVisits)
             maxnvisits = max((vw.sum(), maxnvisits))
         return maxnvisits
-    
+
     def reduceNNightsInWindow(self, metricval):
         """Reduce to max number of nights with more than minNVisits, within 'window' over all windows."""
         maxnights = 0
@@ -152,11 +152,11 @@ class VisitGroupsMetric(BaseMetric):
     def _inLunation(self, visits, nights, lunationStart, lunationLength):
         condition = ((nights >= lunationStart) & (nights < lunationStart+lunationLength))
         return visits[condition], nights[condition]
-    
+
     def reduceNLunations(self, metricval):
         """Reduce to number of lunations (unique 30 day windows) that contain at least one 'group':
         a set of more than minNVisits per night, with more than minNNights of visits within 'window' time period.
-        """ 
+        """
         lunationLength = 30
         lunations = np.arange(metricval['nights'][0], metricval['nights'][-1]+lunationLength/2.0, lunationLength)
         nLunations = 0
@@ -179,7 +179,7 @@ class VisitGroupsMetric(BaseMetric):
         lunations = np.arange(metricval['nights'][0], metricval['nights'][-1]+lunationLength/2.0, lunationLength)
         maxSequence = 0
         curSequence = 0
-        inSeq = False        
+        inSeq = False
         for l in lunations:
             # Find visits within lunation.
             vl, nl = self._inLunation(metricval['visits'], metricval['nights'], l, lunationLength)

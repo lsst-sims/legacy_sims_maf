@@ -1,11 +1,10 @@
-import os, sys
-import warnings
+import sys
 import numpy as np
 
 def _myformat(args, delimiter=' '):
     """
     Generic line formatter (to let you specify delimiter between text fields).
-    """    
+    """
     writestring = ''
     for a in args:
         if isinstance(a, list):
@@ -36,10 +35,10 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     """
     Print dictionaries (and/or nested dictionaries) nicely.
     Can also print other simpler items (such as numpy ndarray) nicely too.
-    
+
     filehandle = the file object for output .. if 'None' (default) prints to standard out.
     delimiter = the user specified delimiter between fields.
-    _level is for internal use (controls level of indent). 
+    _level is for internal use (controls level of indent).
     """
     # Get set up with basic file output information.
     if filehandle is None:
@@ -48,7 +47,7 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     baseindent = '%s' %(delimiter)
     indent = ''
     for i in range(_level-1):
-        indent += '%s' %(baseindent)    
+        indent += '%s' %(baseindent)
     # Print data (this is also the termination of the recursion if given nested dictionaries).
     if not isinstance(content, dict):
         if isinstance(content, str) or isinstance(content, float) or isinstance(content, int):
@@ -72,7 +71,7 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
         missingkeys = set(orderkeys).difference(set(content.keys()))
         for m in missingkeys:
             orderkeys.remove(m)
-        otherkeys = sorted(list(set(content.keys()).difference(set(orderkeys))))        
+        otherkeys = sorted(list(set(content.keys()).difference(set(orderkeys))))
         keys = orderkeys + otherkeys
         keys.remove('keyorder')
     else:
@@ -88,8 +87,8 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
 def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
     """
     Print a simple one-level nested dictionary nicely across the screen,
-     with one line per top-level key and all sub-level keys aligned. 
-    
+     with one line per top-level key and all sub-level keys aligned.
+
     filehandle = the file object for output .. if 'None' (default) prints to standard out.
     delimiter = the user specified delimiter between fields.
     """
@@ -105,7 +104,7 @@ def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
     missingkeys = set(subkeyorder).difference(set(subkeys))
     for m in missingkeys:
         subkeyorder.remove(m)
-    otherkeys = sorted(list(set(subkeys).difference(set(subkeyorder))))        
+    otherkeys = sorted(list(set(subkeys).difference(set(subkeyorder))))
     subkeys = subkeyorder + otherkeys
     # Print header.
     writestring = '#'

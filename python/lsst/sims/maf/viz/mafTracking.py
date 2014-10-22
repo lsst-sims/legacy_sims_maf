@@ -7,12 +7,12 @@ from .mafRunResults import MafRunResults
 # ADD TRACKING DB location
 
 class MafTracking(object):
-    """ 
+    """
     Class to read MAF's tracking database (tracking all MAF runs) and handle the output for web display.
 
     Deals with a single MAF run (one output directory, one resultsDb) only. """
     def __init__(self, trackingDbAddress=None):
-        """                                                          
+        """
         Instantiate the (multi-run) layout visualization class.
         """
         if trackingDbAddress is None:
@@ -35,15 +35,17 @@ class MafTracking(object):
         runInfo['MafComment'] = run['mafComment']
         runInfo['OpsimComment'] = run['opsimComment']
         runInfo['MafDir'] = run['mafDir']
+        runInfo['OpsimDate'] = run['opsimDate']
+        runInfo['MafDate'] = run['mafDate']
         return runInfo
 
     def sortRuns(self, runs, order=['opsimRun', 'mafComment', 'mafRunId']):
-        return np.sort(runs, order=order)    
+        return np.sort(runs, order=order)
 
     def getRun(self, mafRunId):
         """
-        For a chosen runID, instantiate a mafRunResults object to read and handle the 
-        individual run results. 
+        For a chosen runID, instantiate a mafRunResults object to read and handle the
+        individual run results.
         Store this information internally.
         """
         if not isinstance(mafRunId, int):
@@ -58,4 +60,4 @@ class MafTracking(object):
         self.runsPage[mafRunId] = MafRunResults(mafDir)
         return self.runsPage[mafRunId]
 
-    
+

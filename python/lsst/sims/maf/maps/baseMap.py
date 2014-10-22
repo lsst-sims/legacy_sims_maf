@@ -8,7 +8,7 @@ class MapsRegistry(type):
         super(MapsRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
             cls.registry = {}
-        modname = inspect.getmodule(cls).__name__ 
+        modname = inspect.getmodule(cls).__name__
         if modname.startswith('lsst.sims.maf.maps'):
             modname = ''
         else:
@@ -21,7 +21,7 @@ class MapsRegistry(type):
             raise Exception('Redefining maps %s! (there are >1 maps with the same name)' %(mapsname))
         if mapsname != 'BaseMaps':
             cls.registry[mapsname] = cls
-            
+
     def getClass(cls, mapsname):
         return cls.registry[mapsname]
 
@@ -32,22 +32,17 @@ class MapsRegistry(type):
             if doc:
                 print '---- ', mapsname, ' ----'
                 print cls.registry[mapsname].__doc__
-                maps = cls.registry[mapsname]()                
+                maps = cls.registry[mapsname]()
                 print ' added to SlicePoint: ', ','.join(maps.keynames)
-               
-                
-
 
 class BaseMap(object):
     """ """
     __metaclass__ = MapsRegistry
-    
-    def __init__(**kwargs):
+
+    def __init__(self,**kwargs):
         self.keyname = 'newkey'
-        
-    def run(slicePoints):
+
+    def run(self,slicePoints):
         """
         slicePoints should be a dict that includes keys "ra" and "dec".
         """
-
-        

@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np 
 import matplotlib
 matplotlib.use('Agg')
@@ -82,7 +84,7 @@ class TestDriver(unittest.TestCase):
                             'OpsimTest_Min_airmass_r_and_night_lt_15_OPSI.npz',
                             'OpsimTest_Min_airmass_r_and_night_lt_15_OPSI_Histogram.pdf',
                             'OpsimTest_Min_airmass_r_and_night_lt_15_OPSI_SkyMap.pdf',
-                            'OpsimTest_Min_airmass_hist.pdf',
+                            'OpsimTest_Min_airmass_g_night_lt_15_r_night_lt_15_hist.pdf',
                             'OpsimTest_hourglass_r_and_night_lt_15_HOUR_hr.pdf',
                             'OpsimTest_normAir_hex_g_and_night_lt_15_ONED.npz',
                             'OpsimTest_normAir_hex_g_and_night_lt_15_ONED_BinnedData.pdf',
@@ -108,7 +110,7 @@ class TestDriver(unittest.TestCase):
                             'OpsimTest_Count_fiveSigmaDepth_g_ONED_BinnedData.pdf',
                             'OpsimTest_Count_fiveSigmaDepth_r_ONED.npz',
                             'OpsimTest_Count_fiveSigmaDepth_r_ONED_BinnedData.pdf',
-                            'OpsimTest_Count_fiveSigmaDepth_hist.pdf',
+                            'OpsimTest_Count_fiveSigmaDepth_r_g_hist.pdf',
                             'resultsDb_sqlite.db',
                             'configDetails.txt',
                             'configSummary.txt',

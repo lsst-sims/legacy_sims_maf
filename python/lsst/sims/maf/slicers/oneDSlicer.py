@@ -10,7 +10,7 @@ from .baseSlicer import BaseSlicer
 
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
-    def __init__(self, sliceColName=None, sliceColUnits=None, 
+    def __init__(self, sliceColName=None, sliceColUnits=None,
                  bins=None, binMin=None, binMax=None, binsize=None,
                  verbose=True, badval=0):
         """
@@ -100,7 +100,7 @@ class OneDSlicer(BaseSlicer):
             return {'idxs':idxs,
                     'slicePoint':{'sid':islice, 'binLeft':self.bins[islice]}}
         setattr(self, '_sliceSimData', _sliceSimData)
-    
+
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""
         if isinstance(otherSlicer, OneDSlicer):
@@ -111,10 +111,10 @@ class OneDSlicer(BaseSlicer):
     def plotBinnedData(self, metricValues, fignum=None,
                        title=None, units=None,
                        label=None, addLegend=False,
-                       legendloc='upper left', 
+                       legendloc='upper left',
                        filled=False, alpha=0.5,
                        logScale=False, percentileClip=None,
-                       ylabel=None, xlabel=None,                       
+                       ylabel=None, xlabel=None,
                        xMin=None, xMax=None, yMin=None, yMax=None,
                        color='b', linestyle='-', **kwargs):
         """
@@ -160,7 +160,7 @@ class OneDSlicer(BaseSlicer):
             if units != None:
                 xlabel += ' (' + self.sliceColUnits + ')'
         plt.xlabel(xlabel)
-        # Set y limits (either from values in args, percentileClipping or compressed data values). 
+        # Set y limits (either from values in args, percentileClipping or compressed data values).
         if (yMin is None) or (yMax is None):
             if percentileClip:
                 yMin, yMax = percentileClipping(metricValues.compressed(), percentile=percentileClip)

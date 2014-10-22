@@ -1,7 +1,6 @@
-import os, sys
+import os, sys, re
 import numpy as np
 import warnings
-from .Table import Table
 from .Database import Database
 from lsst.sims.maf.utils.getDateVersion import getDateVersion
 
@@ -23,11 +22,11 @@ class OpsimDatabase(Database):
            sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
            mysql://lsst:lsst@localhost/opsim
         More information on sqlalchemy connection strings can be found at
-          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html     
-          
+          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
+
         """
-        self.dbAddress = dbAddress        
-        # Default dbTables and dbTableIDKey values:        
+        self.dbAddress = dbAddress
+        # Default dbTables and dbTableIDKey values:
         if 'defaultdbTables' in kwargs:
             defaultdbTables = kwargs.get('defaultdbTables')
             # Remove this kwarg since we're sending it on explicitly
@@ -56,7 +55,7 @@ class OpsimDatabase(Database):
         # Call base init method to set up all tables and place default values
         # into dbTable/dbTablesIdKey if not overriden.
         super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
-                                            defaultdbTables=defaultdbTables, 
+                                            defaultdbTables=defaultdbTables,
                                             *args, **kwargs)
         # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
@@ -82,7 +81,7 @@ class OpsimDatabase(Database):
         self.runCommentCol = 'runComment'
 
     def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD'):
-        """Fetch 'colnames' from 'Summary' table. 
+        """Fetch 'colnames' from 'Summary' table.
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").
@@ -93,7 +92,7 @@ class OpsimDatabase(Database):
 
         if (groupBy is None) and (distinctExpMJD is False):
             warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
-        
+
         table = self.tables['summaryTable']
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
@@ -102,9 +101,9 @@ class OpsimDatabase(Database):
                                                    constraint = sqlconstraint,
                                                    colnames = colnames, groupByCol = groupBy)
         elif distinctExpMJD:
-            metricdata = table.query_columns_Array(chunk_size = self.chunksize, 
+            metricdata = table.query_columns_Array(chunk_size = self.chunksize,
                                                     constraint = sqlconstraint,
-                                                    colnames = colnames, 
+                                                    colnames = colnames,
                                                     groupByCol = self.mjdCol)
         else:
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
@@ -133,12 +132,12 @@ class OpsimDatabase(Database):
     def fetchFieldsFromFieldTable(self, propID=None, degreesToRadians=True):
         """
         Fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
-    
+
         propID = the proposal ID (default None), if selecting particular proposal - can be a list
         degreesToRadians = RA/Dec values are in degrees in the Field table (so convert to radians) """
-        # Note that you can't select any other sql constraints (such as filter). 
+        # Note that you can't select any other sql constraints (such as filter).
         # This will select fields which were requested by a particular proposal or proposals,
-        #   even if they didn't get any observations. 
+        #   even if they didn't get any observations.
         tableName = 'fieldTable'
         if propID is not None:
             query = 'select f.%s, f.%s, f.%s from %s as f' %(self.fieldIdCol, self.raCol, self.decCol,
@@ -170,14 +169,16 @@ class OpsimDatabase(Database):
         Fetch the proposal IDs from the full opsim run database.
         Return the full list of ID numbers as well as a list of
          WFD propIDs (proposals containing 'Universal' in the name) -- or tagged with wfd,
-         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name) -- or tagged dd.
+         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name) -- or tagged dd
+         and a dict keyed with the ID and values of the truncated proposal config file.
          """
-        # Check if using full database; otherwise can only fetch list of all propids. 
+        # Check if using full database; otherwise can only fetch list of all propids.
         if 'proposalTable' not in self.tables:
             propData = self.tables['summaryTable'].query_columns_Array(colnames=[self.propIdCol])
             propIDs = np.array(propData[self.propIdCol], int)
             wfdIDs = []
             ddIDs = []
+            propID2Name = {}
         else:
             table = self.tables['proposalTable']
             try:
@@ -201,7 +202,11 @@ class OpsimDatabase(Database):
             for name, propid in zip(propData[self.propConfCol], propIDs):
                 if ('deep' in name.lower()) or ('dd' in name.lower()):
                     ddIDs.append(propid)
-        return propIDs, wfdIDs, ddIDs
+            propID2Name = {}
+            for propID, propName in zip(propData[self.propIdCol], propData[self.propConfCol] ):
+                # Strip '.conf', 'Prop', and path info.
+                propID2Name[propID] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propName)))
+        return propIDs, wfdIDs, ddIDs, propID2Name
 
     def fetchRunLength(self, runLengthParam='nRun'):
         """Fetch the run length for a particular opsim run.
@@ -215,7 +220,7 @@ class OpsimDatabase(Database):
     def fetchNVisits(self, propID=None):
         """Fetch the total number of visits in the simulation (or total number of visits for a particular propoal).
         Convenience function for setting user-defined benchmark values.
-        
+
         propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
         tableName = 'obsHistoryTable'
@@ -257,20 +262,20 @@ class OpsimDatabase(Database):
         res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
         runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
         return runName
-    
+
     def fetchConfig(self):
         """Fetch config data from configTable, match proposal IDs with proposal names and some field data,
-        and do a little manipulation of the data to make it easier to add to the presentation layer.    
+        and do a little manipulation of the data to make it easier to add to the presentation layer.
         """
         # Check to see if we're dealing with a full database or not. If not, just return (no config info to fetch).
         if 'sessionTable' not in self.tables:
             warnings.warn('Cannot fetch opsim config info as this is not a full opsim database.')
-            return {}, {}            
+            return {}, {}
         # Create two dictionaries: a summary dict that contains a summary of the run
         configSummary = {}
         configSummary['keyorder'] = ['Version', 'RunInfo', 'Proposals']
         #  and the other a general dict that contains all the details (by group) of the run.
-        config = {}        
+        config = {}
         # Start to build up the summary.
         # MAF version
         mafdate, mafversion = getDateVersion()
@@ -282,7 +287,7 @@ class OpsimDatabase(Database):
         results = table.query_columns_Array(colnames = [self.versionCol, self.sessionDateCol, self.runCommentCol])
         configSummary['Version']['OpsimVersion'] = '%s'  %(results['version'][0]) + \
             '  RunDate %s' %(results[self.sessionDateCol][0])
-        configSummary['RunInfo'] = {}        
+        configSummary['RunInfo'] = {}
         configSummary['RunInfo']['RunComment'] = results[self.runCommentCol]
         configSummary['RunInfo']['RunName'] = self.fetchOpsimRunName()
         # Pull out a few special values to put into summary.
@@ -339,10 +344,10 @@ class OpsimDatabase(Database):
         propidorder = sorted(propdata[self.propIdCol])
         # Generate a keyorder to print proposals in order of propid.
         configSummary['Proposals']['keyorder'] = []
-        for propid in propidorder:            
+        for propid in propidorder:
             configSummary['Proposals']['keyorder'].append(propnames[np.where(propdata[self.propIdCol] == propid)][0])
         for propid, propname in zip(propdata[self.propIdCol], propnames):
-            configSummary['Proposals'][propname] = {}            
+            configSummary['Proposals'][propname] = {}
             propdict = configSummary['Proposals'][propname]
             propdict['keyorder'] = [self.propIdCol, self.propNameCol, 'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
             propdict[self.propNameCol] = propname
@@ -351,13 +356,13 @@ class OpsimDatabase(Database):
             propdict['RelPriority'] = _matchParamNameValue(config[propname], 'RelativeProposalPriority')
             # Get the number of user regions.
             constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)
-            result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)            
+            result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)
             propdict['NumUserRegions'] = result.size
-            # Get the number of fields requested in the proposal (all filters). 
+            # Get the number of fields requested in the proposal (all filters).
             propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
             # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
-            #   The order of these entries in the config array matters. 
+            #   The order of these entries in the config array matters.
             propdict['PerFilter'] = {}
             for key, keyword in zip(['Filters', 'MaxSeeing', 'MinSky', 'MaxSky'],
                                     ['Filter', 'Filter_MaxSeeing', 'Filter_MinBrig', 'Filter_MaxBrig']):
@@ -396,7 +401,7 @@ class OpsimDatabase(Database):
                 for sidx in seqidxs:
                     # This is fragile and depends on order from database query. However, it's the
                     #  best I think we can do with the current method of storing these values in the Config table.
-                    i = sidx                    
+                    i = sidx
                     seqname = config[propname]['paramValue'][i]
                     # Check if seqname is a nested subseq of an existing sequence:
                     nestedsubseq = False
@@ -459,7 +464,7 @@ class OpsimDatabase(Database):
                                 events = subevents * propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
                                 subfilters = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Filters']
                                 subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Visits']
-                                # If just one filter .. 
+                                # If just one filter ..
                                 if len(subfilters) == 1:
                                     idx = (propdict['PerFilter']['Filters'] == subfilters)
                                     propdict['PerFilter']['NumVisits'][idx] += events * int(subexp)

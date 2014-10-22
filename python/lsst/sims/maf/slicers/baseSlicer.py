@@ -38,6 +38,7 @@ class SlicerRegistry(type):
                 print inspect.getdoc(cls.registry[slicername])
 
 
+
 class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.

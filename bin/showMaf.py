@@ -1,11 +1,10 @@
 #! /usr/bin/env python
-import numpy as np
 from tornado import ioloop
 from tornado import web
 from jinja2 import Environment, FileSystemLoader
 import os, argparse
 
-from lsst.sims.maf.viz import MafRunResults, MafTracking
+from lsst.sims.maf.viz import MafTracking
 import lsst.sims.maf.db as db
 
 class RunSelectHandler(web.RequestHandler):
@@ -131,6 +130,8 @@ if __name__ == "__main__":
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
         opsimRun = ''
+        opsimDate = ''
+        mafDate = ''
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
             file = open(os.path.join(mafDir, 'configSummary.txt'))
             for line in file:
@@ -139,14 +140,23 @@ if __name__ == "__main__":
                     opsimRun = ' '.join(tmp[1:])
                 if tmp[0].startswith('RunComment'):
                     opsimComment = ' '.join(tmp[1:])
+                if tmp[0].startswith('MAFVersion'):
+                    mafDate =  tmp[-1]
+                if tmp[0].startswith('OpsimVersion'):
+                    opsimDate = tmp[-2]
+                    # Let's go ahead and make the formats match
+                    opsimDate = opsimDate.split('-')
+                    opsimDate = opsimDate[1]+'/'+opsimDate[2]+'/'+opsimDate[0][2:]
         # Give some feedback to the user about what we're doing.
         print 'Adding to tracking database at %s:' %(trackingDbAddress)
         print ' MafDir = %s' %(mafDir)
         print ' MafComment = %s' %(args.mafComment)
         print ' OpsimRun = %s' %(opsimRun)
         print ' OpsimComment = %s' %(opsimComment)
+        print ' OpsimDate = %s' %(opsimDate)
+        print ' MafDate = %s' %(mafDate)
         # Add the run.
-        startRunId = trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir)
+        startRunId = trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
         print ' Used runID %d' %(startRunId)
         trackingDb.close()
 
