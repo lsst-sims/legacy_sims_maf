@@ -37,8 +37,8 @@ class OneDSlicer(BaseSlicer):
             self.sliceColUnits = co.getUnits(self.sliceColName)
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
-        
-    def setupSlicer(self, simData): 
+
+    def setupSlicer(self, simData):
         """
         Set up bins in slicer.
         """
@@ -70,18 +70,16 @@ class OneDSlicer(BaseSlicer):
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
-            if hasattr(self.bins, '__iter__'):  
+            if hasattr(self.bins, '__iter__'):
                 self.bins = np.sort(self.bins)
                 self.binMin = self.bins[0]
                 self.binMax = self.bins[-1]
-            # Or bins was a single value. 
+            # Or bins was a single value.
             else:
                 if self.bins is None:
                     self.bins = optimalBins(sliceCol, self.binMin, self.binMax)
-                nbins = int(self.bins)
+                nbins = np.round(self.bins)
                 self.binsize = (self.binMax - self.binMin) / float(nbins)
-                self.binMin -= self.binsize
-                self.binMax += self.binsize
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nslice = len(self.bins) - 1
