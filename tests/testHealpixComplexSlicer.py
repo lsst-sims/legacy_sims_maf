@@ -18,11 +18,10 @@ class testHealpixComplexSlicer(unittest.TestCase):
         self.metricValue = np.ma.empty(10,dtype=object)
         for i in np.arange(10):
             self.metricValue[i] = np.random.rand(10)
-         
+
     def testPlotHistogram(self):
         slicer = slicers.HealpixComplexSlicer()
 
-        
         # Check that the various plotting methods run
         num = slicer.plotConsolidatedHist(self.metricValue, binMin=0,binMax=1., binsize=0.1)
         num = slicer.plotConsolidatedHist(self.metricValue, binMin=0,binMax=1., binsize=0.1, histStyle=False)
@@ -35,14 +34,13 @@ class testHealpixComplexSlicer(unittest.TestCase):
         # Check save/restore works.
         plotDictIn = {'binMin':0, 'binMax':1, 'binsize':0.1}
         slicer.writeData('temp.npz', self.metricValue, plotDict=plotDictIn)
-        metBack, slicerBack,header,plotDictBack = slicer.readData('temp.npz')
+        metBack, slicerBack,header = slicer.readData('temp.npz')
+        plotDictBack = header['plotDict']
         assert(plotDictBack == plotDictIn)
         assert(slicer == slicerBack)
-        
-        
 
     def tearDown(self):
         os.remove('temp.npz')
-        
+
 if __name__ == "__main__":
     unittest.main()

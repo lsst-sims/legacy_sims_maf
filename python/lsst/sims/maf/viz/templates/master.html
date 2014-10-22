@@ -70,7 +70,7 @@ overflow:auto;
 {
 display:block;
 background-color:#A0A0A0;
-clear:both;  
+clear:both;
 text-align:center;
 margin:0px;
 padding:5px;
@@ -224,7 +224,7 @@ text-indent:25px;
 {% block navbar %}
 <div id="navbar">
   {% set navigation_bar = [
-    ('/', 'listRuns', 'Run List'), 
+    ('/', 'listRuns', 'Run List'),
     ('configParams', 'configs', 'Opsim Configuration'),
     ('metricSelect', 'listMetrics', 'Metrics List'),
     ('allMetricResults', 'allMetricResults', 'All Results'),
@@ -233,7 +233,7 @@ text-indent:25px;
  <ul class="nav">
  {% for href, id, caption in navigation_bar %}
    <li class="nav">
-     <a 
+     <a
      {% if id == active_page %}
        class="activenav"
      {% else %}
@@ -254,7 +254,7 @@ text-indent:25px;
 </div>
 
 <div id="content">
-{% block content %} 
+{% block content %}
 {% endblock %}
 </div>
 

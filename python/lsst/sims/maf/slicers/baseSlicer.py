@@ -3,10 +3,12 @@
 
 import os
 import inspect
+from StringIO import StringIO
+import json
+import warnings
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
-import warnings
 from lsst.sims.maf.utils import getDateVersion
 
 class SlicerRegistry(type):
@@ -187,8 +189,107 @@ class BaseSlicer(object):
                  fill = fill, # metric badval/fill val
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
-                 slicePoints = self.getSlicePoints(), # slicePoint metadata saved (is a dictionary)
+                 slicePoints = self.slicePoints, # slicePoint metadata saved (is a dictionary)
                  slicerNSlice = self.nslice)
+
+    def outputJSON(self, metricValues, metricName='',
+                  simDataName ='', metadata='', plotDict=None):
+        """
+        Send metric data to JSON streaming API, along with a little bit of metadata.
+
+        Output is
+           header dictionary with 'metricName/metadata/simDataName/slicerName' and plot labels from plotDict (if provided).
+           then data for plot:
+             if oneDSlicer, it's [ [bin_left_edge, value], [bin_left_edge, value]..].
+             if a spatial slicer, it's [ [lon, lat, value], [lon, lat, value] ..].
+        This method will only work for non-complex metrics (i.e. metrics where the metric value is a float or int),
+        as JSON will not interpret more complex data properly. These values can't be plotted anyway though.
+        """
+        # Bail if this is not a good data type for JSON.
+        if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
+                warnings.warn('Cannot generate JSON.')
+                io = StringIO()
+                json.dump(['Cannot generate JSON for this file.'], io)
+                return
+        # Else put everything together for JSON output.
+        if plotDict is None:
+            plotDict = {}
+            plotDict['units'] = ''
+        # Preserve some of the metadata for the plot.
+        header = {}
+        header['metricName'] = metricName
+        header['metadata'] = metadata
+        header['simDataName'] = simDataName
+        header['slicerName'] = self.slicerName
+        header['slicerLen'] = int(self.nslice)
+        # Set some default plot labels if appropriate.
+        if 'title' in plotDict:
+            header['title'] = plotDict['title']
+        else:
+            header['title'] = '%s %s: %s' %(simDataName, metadata, metricName)
+        if 'xlabel' in plotDict:
+            header['xlabel'] = plotDict['xlabel']
+        else:
+            if hasattr(self, 'sliceColName'):
+                header['xlabel'] = '%s (%s)' %(self.sliceColName, self.sliceColUnits)
+            else:
+                header['xlabel'] = '%s' %(metricName)
+                if 'units' in plotDict:
+                    header['xlabel'] += ' (%s)' %(plotDict['units'])
+        if 'ylabel' in plotDict:
+            header['ylabel'] = plotDict['ylabel']
+        else:
+            if hasattr(self, 'sliceColName'):
+                header['ylabel'] = '%s' %(metricName)
+                if 'units' in plotDict:
+                    header['ylabel'] += ' (%s)' %(plotDict['units'])
+            else:
+                # If it's not a oneDslicer and no ylabel given, don't need one.
+                pass
+        # Bundle up slicer and metric info.
+        metric = []
+        # If metric values is a masked array.
+        if hasattr(metricValues, 'mask'):
+            if 'ra' in self.slicePoints:
+                # Spatial slicer. Translate ra/dec to lon/lat in degrees and output with metric value.
+                for ra, dec, value, mask in zip(self.slicePoints['ra'], self.slicePoints['dec'],
+                                                metricValues.data, metricValues.mask):
+                    if not mask:
+                        lon = ra * 180.0/np.pi
+                        lat = dec * 180.0/np.pi
+                        metric.append([lon, lat, value])
+            elif 'bins' in self.slicePoints:
+                # OneD slicer. Translate bins into bin/left and output with metric value.
+                for i in range(len(metricValues)):
+                    binleft = self.slicePoints['bins'][i]
+                    value = metricValues.data[i]
+                    mask = metricValues.mask[i]
+                    if not mask:
+                        metric.append([binleft, value])
+                    else:
+                        metric.append([binleft, 0])
+                metric.append([self.slicePoints['bins'][i+1], 0])
+            elif self.slicerName == 'UniSlicer':
+                metric.append([metricValues[0]])
+        # Else:
+        else:
+            if 'ra' in self.slicePoints:
+                for ra, dec, value in zip(self.slicePoints['ra'], self.slicePoints['dec'], metricValues):
+                        lon = ra * 180.0/np.pi
+                        lat = dec * 180.0/np.pi
+                        metric.append([lon, lat, value])
+            elif 'bins' in self.slicePoints:
+                for i in range(len(metricValues)):
+                    binleft = self.slicePoints['bins'][i]
+                    value = metricValues[i]
+                    metric.append([binleft, value])
+                metric.append(self.slicePoints['bins'][i+1][0])
+            elif self.slicerName == 'UniSlicer':
+                metric.append([metricValues[0]])
+        # Write out JSON output.
+        io = StringIO()
+        json.dump([header, metric], io)
+        return io
 
     def readData(self, infilename):
         """
@@ -213,11 +314,9 @@ class BaseSlicer(object):
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
-        plotDict = header['plotDict']
+        return metricValues, slicer, header
 
-        return metricValues, slicer, header, plotDict
-
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig',
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
                  savefig=True, thumbnail=True, **kwargs):
         """
         Call all available plotting methods.
@@ -256,5 +355,3 @@ class BaseSlicer(object):
                 filenames.append('NULL')
                 filetypes.append('NULL')
         return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
-
-

@@ -55,7 +55,7 @@ class ColRegistry(object):
     """
     ColRegistry tracks the columns needed for all metric objects (kept internally in a set).
 
-    ColRegistry.uniqueCols returns a list of all unique columns required for metrics;
+    ColRegistry.colSet returns a list of all unique columns required for metrics;
     ColRegistry.dbCols returns the subset of these which come from the database.
     ColRegistry.stackerCols returns the dictionary of [columns: stacker class].
     """

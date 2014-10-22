@@ -78,10 +78,8 @@ class OneDSlicer(BaseSlicer):
             else:
                 if self.bins is None:
                     self.bins = optimalBins(sliceCol, self.binMin, self.binMax)
-                nbins = int(self.bins)
+                nbins = np.round(self.bins)
                 self.binsize = (self.binMax - self.binMin) / float(nbins)
-                self.binMin -= self.binsize
-                self.binMax += self.binsize
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nslice = len(self.bins) - 1

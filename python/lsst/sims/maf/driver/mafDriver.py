@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 from .mafConfig import config2dict, readMetricConfig, readSlicerConfig, readMixConfig
 
 import lsst.sims.maf.db as db
@@ -121,7 +121,8 @@ class MafDriver(object):
                     nameCheck.append(summaryMetric.name)
                 if len(list(set(nameCheck))) < len(nameCheck):
                    duplicates = [x for x, y in collections.Counter(nameCheck).items() if y > 1]
-                   raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'%(duplicates[0], temp_metric.name))
+                   raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'
+                                   %(duplicates[0], temp_metric.name))
                 # If it is a UniSlicer, make sure the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
                    if 'IdentityMetric' not in summaryStats.keys():

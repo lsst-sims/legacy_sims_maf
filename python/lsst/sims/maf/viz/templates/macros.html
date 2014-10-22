@@ -22,19 +22,16 @@
 {%- endmacro %}
 
 {# # #}
-{% macro PrintMetricInfo(metricInfo) %}
+{% macro PrintMetricInfo(runId, metric, metricInfo) %}
 {# print metric info, adding link for metric data if available #}
  <b>
  {% for key in metricInfo %}
     {% if key == 'Data' %}
-       {% if metricInfo[key][0] != 'NULL' %}
-	  <a href="{{metricInfo[key][1]}}">{{metricInfo[key][0]|escape}}</a>
-        {% else %}
-	   N/A
-	{% endif %}
-     {% else %}
-         {{ '%s' %(metricInfo[key])|escape }}  /
-     {% endif %}
+       <a href="getData?datatype=npz&runId={{runId}}&metricId={{metric['metricId']}}">npz</a>
+       <a href="getData?datatype=json&runId={{runId}}&metricId={{metric['metricId']}}">JSON</a>
+    {% else %}
+       {{ metricInfo[key]|escape }}
+    {% endif %}
  {% endfor %}
  </b>
  </br>
@@ -58,7 +55,7 @@
   {# Put in a link to jump to this part of the page. #}
   <a name="{{group}}_{{subgroup}}"> </a>
 
-  {% set metricInfo = run.metricInfo(metrics[0], withDataFile=False, withSlicerName=False) %}
+  {% set metricInfo = run.metricInfo(metrics[0], withDataLink=False, withSlicerName=False) %}
   {% set lenMinfo = metricInfo|length %}
 
   {% set slicers = run.uniqueSlicerNames(metrics) %}
@@ -152,7 +149,7 @@
 
      {# Add the summary stat info. #}
      {% for metric in slicermetrics %}
-       {% set metricInfo = run.metricInfo(metric, withDataFile=False, withSlicerName=False) %}
+       {% set metricInfo = run.metricInfo(metric, withDataLink=False, withSlicerName=False) %}
        {% set stats = run.statsForMetric(metric) %}
        {% set statDict = run.statDict(stats) %}
 
@@ -194,7 +191,7 @@
       <tr>
 	<th></th>
       {% for m in slicermetrics %}
-  	  {% set mInfo = run.metricInfo(m, withDataFile=False, withSlicerName=False) %}
+  	  {% set mInfo = run.metricInfo(m, withDataLink=False, withSlicerName=False) %}
 	  <th>
 	   {{mInfo['MetricName']}}
 	  </th>
@@ -203,7 +200,7 @@
       <tr>
 	<th></th>
       {% for m in slicermetrics %}
-	  {% set mInfo = run.metricInfo(m, withDataFile=False, withSlicerName=False) %}
+	  {% set mInfo = run.metricInfo(m, withDataLink=False, withSlicerName=False) %}
 	  <th>
 	   {{mInfo['Metadata']}}
 	  </th>

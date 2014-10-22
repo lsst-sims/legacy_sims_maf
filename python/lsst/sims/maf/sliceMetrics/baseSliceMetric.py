@@ -133,7 +133,7 @@ class BaseSliceMetric(object):
        for f in filenames:
           # Set up a base slicer to read data.
           baseslicer = slicers.BaseSlicer()
-          metricData, slicer, header, plotDict = baseslicer.readData(f)
+          metricData, slicer, header = baseslicer.readData(f)
           iid = self.iid_next
           self.iid_next += 1
           self.slicers[iid] = slicer
@@ -152,9 +152,10 @@ class BaseSliceMetric(object):
           if 'displayDict' in header:
               self.displayDicts[iid].update(header['displayDict'])
           if 'plotDict' in header:
-             self.plotDicts[iid].update(header['plotDict'])
+              if header['plotDict'] is not None:
+                self.plotDicts[iid].update(header['plotDict'])
           if verbose:
-             print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
+              print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
           newiids.append(iid)
        return newiids
 
@@ -200,3 +201,22 @@ class BaseSliceMetric(object):
                                                           self.metadatas[iid],
                                                           outfile)
             self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
+
+    def outputMetricJSON(self, iid):
+        """
+        Set up and call the baseSlicer outputJSON method, to output to IO string.
+        """
+        if iid in self.slicers:
+            slicer = self.slicers[iid]
+        else:
+            try:
+                slicer = self.slicer
+            except AttributeError:
+                # This won't save any metadata about what the slices looked like.
+                raise ValueError('No slicer information')
+        io = slicer.outputJSON(self.metricValues[iid],
+                            metricName = self.metricNames[iid],
+                            simDataName = self.simDataNames[iid],
+                            metadata = self.metadatas[iid],
+                            plotDict = self.plotDicts[iid])
+        return io

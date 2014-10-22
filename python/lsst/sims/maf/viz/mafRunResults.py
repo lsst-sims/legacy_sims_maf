@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
+import lsst.sims.maf.sliceMetrics as sliceMetrics
 
 class MafRunResults(object):
     """
@@ -117,6 +118,32 @@ class MafRunResults(object):
             metricIds.add(mId)
         metrics = self.metricIdsToMetrics(metricIds)
         return self.sortMetrics(metrics)
+
+    def getJson(self, metric):
+        """
+        Return the JSON string containing the data for a particular metric.
+        """
+        filename = metric['metricDataFile'][0]
+        if filename == 'NULL':
+            return 'No JSON file'
+        datafile = os.path.join(self.outDir, filename)
+        sm = sliceMetrics.BaseSliceMetric(useResultsDb=False)
+        iids = sm.readMetricData(datafile)
+        iid = iids[0]
+        io = sm.outputMetricJSON(iid)
+        if io is None:
+            return 'No JSON file available.'
+        return io.getvalue()
+
+    def getNpz(self, metric):
+        """
+        Return the npz data.
+        """
+        filename = metric['metricDataFile'][0]
+        if filename == 'NULL':
+            return 'No npz file'
+        datafile = os.path.join(self.outDir, filename)
+        return datafile
 
     def metricIdsInSubgroup(self, group, subgroup):
         """
@@ -325,18 +352,19 @@ class MafRunResults(object):
             match = (metrics['metricName'] == metricName)
         return metrics[match]
 
-    def metricInfo(self, metric, withDataFile=True, withSlicerName=True):
+    def metricInfo(self, metric, withDataLink=True, withSlicerName=True):
         """
         Return a dict with the metric info we want to show on the webpages.
 
         Currently : MetricName / Slicer/ Metadata / datafile (for download)
+        Used to build a lot of tables in showMaf.
         """
         metricInfo = OrderedDict()
         metricInfo['MetricName'] = metric['metricName']
         if withSlicerName:
             metricInfo['Slicer'] = metric['slicerName']
         metricInfo['Metadata'] = metric['metricMetadata']
-        if withDataFile:
+        if withDataLink:
             metricInfo['Data'] = []
             metricInfo['Data'].append(metric['metricDataFile'])
             metricInfo['Data'].append(os.path.join(self.outDir, metric['metricDataFile']))
@@ -375,10 +403,8 @@ class MafRunResults(object):
                 plotDict[p]['thumbFile'] = []
                 plotmatch = plots[np.where(plots['plotType'] == p)]
                 for pl in plotmatch:
-                    plotfile = self.getPlotfile(pl)
-                    thumbfile = self.getThumbfile(pl)
-                    plotDict[p]['plotFile'].append(plotfile)
-                    plotDict[p]['thumbFile'].append(thumbfile)
+                    plotDict[p]['plotFile'].append(self.getPlotfile(pl))
+                    plotDict[p]['thumbFile'].append(self.getThumbfile(pl))
                 plotTypes.remove(p)
         # Round up remaining plots.
         for p in plotTypes:
@@ -387,10 +413,8 @@ class MafRunResults(object):
             plotDict[p]['thumbFile'] = []
             plotmatch = plots[np.where(plots['plotType'] == p)]
             for pl in plotmatch:
-                plotfile = self.getPlotfile(pl)
-                thumbfile = self.getThumbfile(pl)
-                plotDict[p]['plotFile'].append(plotfile)
-                plotDict[p]['thumbFile'].append(thumbfile)
+                plotDict[p]['plotFile'].append(self.getPlotfile(pl))
+                plotDict[p]['thumbFile'].append(self.getThumbfile(pl))
         return plotDict
 
     def getThumbfile(self, plot):
