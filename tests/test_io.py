@@ -3,7 +3,6 @@ matplotlib.use("Agg")
 import numpy as np
 import numpy.ma as ma
 import unittest
-#from lsst.sims.maf.metrics import SimpleMetrics as sm
 import lsst.sims.maf.slicers as slicers
 import healpy as hp
 import os
