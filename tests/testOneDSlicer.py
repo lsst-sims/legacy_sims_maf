@@ -56,8 +56,8 @@ class TestOneDSlicerSetup(unittest.TestCase):
                 # expect two more 'bins' to accomodate padding on left/right
                 self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
                 self.testslicer.setupSlicer(dv)
-                self.assertEqual(self.testslicer.nslice, nbins+2)
-                # Bins of the right size? (size of bins not affected by extra 2 bins)
+                self.assertEqual(self.testslicer.nslice, nbins)
+                # Bins of the right size? 
                 bindiff = np.diff(self.testslicer.bins)
                 expectedbindiff = (dvmax - dvmin) / float(nbins)
                 np.testing.assert_allclose(bindiff, expectedbindiff)
@@ -72,7 +72,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
             warnings.simplefilter("always")
             self.testslicer.setupSlicer(dv)
             self.assertTrue("creasing binMax" in str(w[-1].message))
-        self.assertEqual(self.testslicer.nslice, nbins+2)
+        self.assertEqual(self.testslicer.nslice, nbins)
 
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
@@ -98,11 +98,8 @@ class TestOneDSlicerSetup(unittest.TestCase):
         self.testslicer = OneDSlicer(sliceColName='testdata',
                                      binMin=binMin, binMax=binMax, bins=nbins)
         self.testslicer.setupSlicer(dv)
-        # oneDslicer adds extra upper/lower bin to make plots nicer.
-        #  So binMin/Max used to create binsize or number of bins, but then adjusted.
-        # Here would have 10 bins between 0 and 1, then add two more at ends.
-        self.assertAlmostEqual(self.testslicer.bins.min(), binMin-(binMax-binMin)/float(nbins))
-        self.assertAlmostEqual(self.testslicer.bins.max(), binMax+(binMax-binMin)/float(nbins))
+        self.assertAlmostEqual(self.testslicer.bins.min(), binMin)
+        self.assertAlmostEqual(self.testslicer.bins.max(), binMax)
 
     def testSetupSlicerBinsize(self):
         """Test setting up slicer using binsize."""
@@ -113,6 +110,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         binsize=0.5
         self.testslicer = OneDSlicer(sliceColName='testdata', binsize=binsize)
         self.testslicer.setupSlicer(dv)
+        # When binsize is specified, oneDslicer adds an extra bin to first/last spots.
         self.assertEqual(self.testslicer.nslice, (dvmax-dvmin)/binsize+2)
         # Test that warning works.
         with warnings.catch_warnings(record=True) as w:
@@ -133,7 +131,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         # How many bins do you expect from optimal binsize?
         from lsst.sims.maf.utils import optimalBins
         bins = optimalBins(dv['testdata'])
-        np.testing.assert_equal(self.testslicer.nslice, bins+2)
+        np.testing.assert_equal(self.testslicer.nslice, bins)
 
 
 class TestOneDSlicerIteration(unittest.TestCase):
@@ -228,10 +226,8 @@ class TestOneDSlicerSlicing(unittest.TestCase):
                 if len(dataslice)>0:
                     self.assertTrue(len(dataslice), nvalues/float(nbins))
                 else:
-                    if (i>0) and (i<=len(self.testslicer)):
-                        self.assertTrue(len(dataslice) > 0,
-                                        'Data in test case expected to always be > 0 len after slicing,'
-                                        'except in first bin.')
+                    self.assertTrue(len(dataslice) > 0,
+                            'Data in test case expected to always be > 0 len after slicing')
             self.assertTrue(sum, nvalues)
 
 class TestOneDSlicerHistogram(unittest.TestCase):
@@ -256,8 +252,7 @@ class TestOneDSlicerHistogram(unittest.TestCase):
                 for i, b in enumerate(self.testslicer):
                     idxs = b['idxs']
                     metricval[i] = len(idxs)
-                numpycounts, numpybins = np.histogram(dv['testdata'], bins=nbins+2,
-                                                      range=[metricval.)
+                numpycounts, numpybins = np.histogram(dv['testdata'], bins=nbins)
                 np.testing.assert_almost_equal(numpybins, self.testslicer.bins,
                                         err_msg='Numpy bins do not match testslicer bins')
                 np.testing.assert_almost_equal(numpycounts, metricval,
