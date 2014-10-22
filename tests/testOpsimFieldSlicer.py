@@ -30,7 +30,7 @@ def makeDataValues(fieldData, size=10000, min=0., max=1., random=True):
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
     datavalues += min
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     # Add valid fieldID values to match data values
