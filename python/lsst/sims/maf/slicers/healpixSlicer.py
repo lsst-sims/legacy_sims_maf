@@ -123,10 +123,11 @@ class HealpixSlicer(BaseSpatialSlicer):
         hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
                     min=clims[0], max=clims[1], rot=(0,0,0), flip='astro',
                     cmap=cmap, norm=norm)
-        try:
-            hp.graticule(dpar=20, dmer=20, verbose=False)
-        except:
-            print 'XXX-Need to update healpy to support newer matplotlib version'
+
+        # This graticule call can fail with old versions of healpy and matplotlib 1.4.0.
+        # Make sure the latest version of healpy in the stack is setup
+        hp.graticule(dpar=20, dmer=20, verbose=False)
+
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
