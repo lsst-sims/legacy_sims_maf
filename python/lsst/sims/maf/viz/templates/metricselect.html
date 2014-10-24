@@ -4,25 +4,30 @@
 
 {% set run = runlist.getRun(runId) %}
 
+
 {% block moresidebar %}
+</br>
+<form name="MetricSelect" action="metricResults" method="get" >
+<input type="hidden" name="runId" value="{{runId}}">
+<center><input id='mybutton' type='submit' value='Plot Metrics'></center>
+</br>
 <ul>
 {% for g in run.groups.keys() %}
   <li>
-  <a href="#{{g|escape}}"> {{g|escape}}</a> </br> 
+  <a href="#{{g|escape}}"> {{g|escape}}</a> </br>
   {% for sg in run.groups[g] %}
-    <div id='indent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div> 
+    <div id='indent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
  {% endfor %}
  </li>
 {% endfor %}
 </ul>
-
+<center><input id='mybutton' type='submit' value='Plot Metrics'></center>
+</br>
 {% endblock %}
 
 
 {% block content %}
 
-<form name="MetricSelect" action="metricResults" method="get" >
-<input type="hidden" name="runId" value="{{runId}}">
 
 <table>
 
@@ -36,11 +41,6 @@
 {% endfor %}
 
 <tr>
-<td> </td>
-<td colspan={{mInfoLen}}>
-<input type='submit' value='Plot Metrics'>
-</td>
-</tr>
 
 {% for group in run.groups %}
   {% set groupstart = True %}
@@ -82,12 +82,11 @@
  {% endfor %}  {# End of group #}
 <tr>
 <td> </td>
-<td colspan={{mInfoLen}}>
-<input type='submit' value='Plot Metrics'>
-</form>
 </td>
 </tr>
 
 </table>
+
+</form>
 
 {% endblock %}
