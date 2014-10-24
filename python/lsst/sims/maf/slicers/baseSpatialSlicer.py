@@ -187,10 +187,12 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             plotValue = metricValue
 
+        # If there is only one value to histogram, need to set histRange
         rangePad = 20.
-        if (plotValue.size == 1) & (histRange is None):
+        if (np.unique(plotValue).size == 1) & (histRange is None):
             warnings.warn('Only one metric value, making a guess at a good histogram range.')
-            histRange = [plotValue-rangePad, plotValue+rangePad]
+            histRange = [plotValue.max()-rangePad, plotValue.max()+rangePad]
+            bins=np.arange(histRange[0], histRange[1], binsize)
 
         if plotValue.size == 0:
             if histRange is None:
@@ -200,8 +202,11 @@ class BaseSpatialSlicer(BaseSlicer):
                               (histRange[0], histRange[1]))
             return None
         else:
-            n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
+            try:
+                n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
                                cumulative=cumulative, range=histRange, label=label, color=color)
+            except:
+                import pdb ; pdb.set_trace()
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
             return yaxisformat % (y * scale)
