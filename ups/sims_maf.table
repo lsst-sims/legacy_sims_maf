@@ -3,12 +3,12 @@ setupRequired(numpy)
 setupRequired(matplotlib)
 setupRequired(pyephem)
 setupRequired(palpy)
-setupRequired(healpy)
 setupRequired(pex_config)
 setupRequired(sims_catalogs_generation)
 setupRequired(sims_photUtils)
 setupRequired(sims_coordUtils)
 setupRequired(sims_dustmaps)
+setupRequired(healpy)
 
 # other requirements (not in LSST stack)
 # both are supplied by Anaconda
