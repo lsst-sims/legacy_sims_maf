@@ -202,11 +202,8 @@ class BaseSpatialSlicer(BaseSlicer):
                               (histRange[0], histRange[1]))
             return None
         else:
-            try:
-                n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
+            n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
                                cumulative=cumulative, range=histRange, label=label, color=color)
-            except:
-                import pdb ; pdb.set_trace()
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
             return yaxisformat % (y * scale)
