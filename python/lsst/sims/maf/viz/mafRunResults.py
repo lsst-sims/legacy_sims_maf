@@ -445,7 +445,27 @@ class MafRunResults(object):
                 match = (matchPlots['plotType'] == 'SkyMap')
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
-        return skymatchPlots
+        # Make sure there is a plot for each filter and that they are in proper order
+        orderList = ['u','g','r','i','z','y']
+        orderedSkymatchPlots = []
+        # XXX -- need to handle cases of multiple base-names
+        # XXX -- need to test that the missing file case works.
+        for f in orderList:
+            found = False
+            for i, blob in enumerate(skymatchPlots):
+                plot = blob[3]
+                if '_'+f+'_' in plot:
+                    orderedSkymatchPlots.append(blob)
+                    skymatchPlots.remove(blob)
+                    found = True
+            # If there isn't a filter, just put in a blank dummy placeholder
+            if not found:
+                orderedSkymatchPlots.append( (-1,-1,'SkyMap','blank.pdf') )
+        # Tack on any left over plots (e.g., joint completeness)
+        for blob in skymatchPlots:
+            orderedSkymatchPlots.append(blob)
+
+        return orderedSkymatchPlots
 
     ## Set of methods to deal with summary stats.
 

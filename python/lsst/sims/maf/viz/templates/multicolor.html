@@ -78,11 +78,20 @@
        {% set metricSelect = run.metricsToMetricIds(mskyset)|join('&metricId=') %}
        {% set metricLink = metricLink ~ metricSelect %}
 	<a href={{metricLink}}>{{mname}}</a> </br>
+	<table>
+	<tr>
        {% for skymap in skymaps%}
         {% set plotfile = run.getPlotfile(skymap) %}
         {% set thumbfile = run.getThumbfile(skymap) %}
+          <td align='center'>
           <a href="{{plotfile}}"> <img class="sm_thumbnail" src='{{thumbfile}}'></a>
+	  </td>
+	  {% if loop.index is divisibleby 3 %}
+	    </tr><tr>
+	  {% endif %}
        {% endfor  %}
+	</tr>
+	</table>
       </div>
      {% endif %}
    {% endfor %}
