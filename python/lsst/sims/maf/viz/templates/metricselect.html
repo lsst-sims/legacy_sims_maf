@@ -11,17 +11,22 @@
 <input type="hidden" name="runId" value="{{runId}}">
 <center><input id='mybutton' type='submit' value='Plot Metrics'></center>
 </br>
+{% set counter = 0 %}
 <ul>
 {% for g in run.groups.keys() %}
   <li>
   <a href="#{{g|escape}}"> {{g|escape}}</a> </br>
+  {% set counter = counter + 1 %}
   {% for sg in run.groups[g] %}
-    <div id='indent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
+    <div id='smallindent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
+      {% set counter = counter + 1 %}
  {% endfor %}
  </li>
 {% endfor %}
 </ul>
+{% if counter > 20 %}
 <center><input id='mybutton' type='submit' value='Plot Metrics'></center>
+{% endif %}
 </br>
 {% endblock %}
 
