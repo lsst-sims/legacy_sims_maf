@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import os, argparse
+import argparse
 import subprocess
 
 
