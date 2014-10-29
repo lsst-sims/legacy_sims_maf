@@ -24,10 +24,10 @@
       {% if groupstart == True %}
         <li>
         <a href="#{{g}}">{{g}}</a>
-        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+        <div id='smallindent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
         {% set groupstart = False %}
       {% else %}
-        <div id='indent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
+        <div id='smallindent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
       {% endif %}
     {% endif %}
   {% endfor %}
