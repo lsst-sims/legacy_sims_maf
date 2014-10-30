@@ -468,6 +468,7 @@ class MafRunResults(object):
         """
         Return a list of the skymaps, optionally for subset of metrics.
         """
+        orderList = ['u','g','r','i','z','y']
         if metrics is None:
             metrics = self.metrics
         skymatchPlots = []
@@ -479,7 +480,26 @@ class MafRunResults(object):
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
 
-        orderedSkymatchPlots = self.orderPlots(skymatchPlots)
+        # Now find each unique metadata:
+        strippedFilt = []
+        for plot in skymatchPlots:
+            for filt in orderList:
+                if '_'+filt+'_' in plot['plotFile']:
+                    newItem = plot['plotFile'].split('_'+filt+'_')
+                    if newItem not in strippedFilt:
+                        strippedFilt.append(newItem)
+
+        metaGroups=[]
+        for metaD in strippedFilt:
+            group = []
+            for plot in skymatchPlots:
+                if (metaD[0] in plot['plotFile']) & (metaD[1] in plot['plotFile']):
+                    group.append(plot)
+            metaGroups.append(group)
+
+        orderedSkymatchPlots=[]
+        for group in metaGroups:
+            orderedSkymatchPlots = orderedSkymatchPlots+self.orderPlots(group)
 
         return orderedSkymatchPlots
 
