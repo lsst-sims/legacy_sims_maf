@@ -431,6 +431,39 @@ class MafRunResults(object):
         """
         return os.path.join(self.outDir, plot['plotFile'])
 
+    def orderPlots(self, skyPlots):
+        """
+        Make sure files are in correct order
+        """
+        orderList = ['u','g','r','i','z','y']
+        orderedSkymatchPlots = []
+
+        if len(skyPlots) > 0:
+            blankRecord = skyPlots[0].copy()
+            blankRecord['plotId'] = -1
+            blankRecord['metricId'] = -1
+            blankRecord['plotFile'] = 'blank.pdf'
+
+        for f in orderList:
+            found = False
+            for i, blob in enumerate(skyPlots):
+                plot = blob[3]
+                if '_'+f+'_' in plot:
+                    orderedSkymatchPlots.append(blob)
+                    skyPlots.remove(blob)
+                    found = True
+            # If there isn't a filter, just put in a blank dummy placeholder
+            if not found:
+                orderedSkymatchPlots.append(blankRecord)
+        # Tack on any left over plots (e.g., joint completeness)
+        for blob in skyPlots:
+            orderedSkymatchPlots.append(blob)
+        # Pad out to make sure the there are rows of 3
+        while len(orderedSkymatchPlots) % 3 != 0:
+            orderedSkymatchPlots.append(blankRecord)
+
+        return orderedSkymatchPlots
+
     def getSkyMaps(self, metrics=None):
         """
         Return a list of the skymaps, optionally for subset of metrics.
@@ -445,25 +478,8 @@ class MafRunResults(object):
                 match = (matchPlots['plotType'] == 'SkyMap')
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
-        # Make sure there is a plot for each filter and that they are in proper order
-        orderList = ['u','g','r','i','z','y']
-        orderedSkymatchPlots = []
-        # XXX -- need to handle cases of multiple base-names
-        # XXX -- need to test that the missing file case works.
-        for f in orderList:
-            found = False
-            for i, blob in enumerate(skymatchPlots):
-                plot = blob[3]
-                if '_'+f+'_' in plot:
-                    orderedSkymatchPlots.append(blob)
-                    skymatchPlots.remove(blob)
-                    found = True
-            # If there isn't a filter, just put in a blank dummy placeholder
-            if not found:
-                orderedSkymatchPlots.append( (-1,-1,'SkyMap','blank.pdf') )
-        # Tack on any left over plots (e.g., joint completeness)
-        for blob in skymatchPlots:
-            orderedSkymatchPlots.append(blob)
+
+        orderedSkymatchPlots = self.orderPlots(skymatchPlots)
 
         return orderedSkymatchPlots
 
