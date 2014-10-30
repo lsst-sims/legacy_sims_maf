@@ -455,6 +455,19 @@ class MafRunResults(object):
             # If there isn't a filter, just put in a blank dummy placeholder
             if not found:
                 orderedSkymatchPlots.append(blankRecord)
+
+        # If there are multiple plots for a filter, strip out the blanks
+        # It's up to the user to not to bundle things together badly if they
+        # want everything in a 3x2.
+        filtHist = np.zeros(len(orderList))
+        for plot in orderedSkymatchPlots:
+            for i,filt in enumerate(orderList):
+                if '_'+filt+'_' in plot['plotFile']:
+                    filtHist[i] += 1
+        if np.max(filtHist) > 1:
+            while blankRecord in orderedSkymatchPlots:
+                orderedSkymatchPlots.remove(blankRecord)
+
         # Tack on any left over plots (e.g., joint completeness)
         for plot in skyPlots:
             orderedSkymatchPlots.append(plot)
@@ -480,26 +493,7 @@ class MafRunResults(object):
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
 
-        # Now find each unique metadata:
-        strippedFilt = []
-        for plot in skymatchPlots:
-            for filt in orderList:
-                if '_'+filt+'_' in plot['plotFile']:
-                    newItem = plot['plotFile'].split('_'+filt+'_')
-                    if newItem not in strippedFilt:
-                        strippedFilt.append(newItem)
-
-        metaGroups=[]
-        for metaD in strippedFilt:
-            group = []
-            for plot in skymatchPlots:
-                if (metaD[0] in plot['plotFile']) & (metaD[1] in plot['plotFile']):
-                    group.append(plot)
-            metaGroups.append(group)
-
-        orderedSkymatchPlots=[]
-        for group in metaGroups:
-            orderedSkymatchPlots = orderedSkymatchPlots+self.orderPlots(group)
+        orderedSkymatchPlots = self.orderPlots(skymatchPlots)
 
         return orderedSkymatchPlots
 
