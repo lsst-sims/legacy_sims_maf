@@ -270,7 +270,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         propOrder += 100
         histNum += 1
 
-    # Run for combined WFD proposals if there's more than one
+    # Run for combined WFD proposals if there's more than one.  Isn't this already being done above?
     if len(WFDpropid) > 1:
         for f in filters:
             m1 = configureMetric('CountMetric',
