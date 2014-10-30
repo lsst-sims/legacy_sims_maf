@@ -446,19 +446,19 @@ class MafRunResults(object):
 
         for f in orderList:
             found = False
-            for i, blob in enumerate(skyPlots):
-                plot = blob[3]
+            for i, rec in enumerate(skyPlots):
+                plot = rec['plotFile']
                 if '_'+f+'_' in plot:
-                    orderedSkymatchPlots.append(blob)
-                    skyPlots.remove(blob)
+                    orderedSkymatchPlots.append(rec)
+                    skyPlots.remove(rec)
                     found = True
             # If there isn't a filter, just put in a blank dummy placeholder
             if not found:
                 orderedSkymatchPlots.append(blankRecord)
         # Tack on any left over plots (e.g., joint completeness)
-        for blob in skyPlots:
-            orderedSkymatchPlots.append(blob)
-        # Pad out to make sure the there are rows of 3
+        for plot in skyPlots:
+            orderedSkymatchPlots.append(plot)
+        # Pad out to make sure there are rows of 3
         while len(orderedSkymatchPlots) % 3 != 0:
             orderedSkymatchPlots.append(blankRecord)
 
