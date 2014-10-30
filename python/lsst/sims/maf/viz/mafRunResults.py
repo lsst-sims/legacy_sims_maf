@@ -442,7 +442,7 @@ class MafRunResults(object):
             blankRecord = skyPlots[0].copy()
             blankRecord['plotId'] = -1
             blankRecord['metricId'] = -1
-            blankRecord['plotFile'] = 'blank.pdf'
+            blankRecord['plotFile'] = None
 
         for f in orderList:
             found = False
