@@ -448,22 +448,27 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     for i, propid in enumerate(props):
         propOrder += 500
         order = propOrder
-        for f in filters:
+        for f in filters+['all']:
+            if f != 'all':
+                sqlconstraint = 'filter = "%s" and' %(f)
+            else:
+                sqlconstraint = ''
             if propid in WFDpropid:
                 # Skip individual WFD propids (do in 'WFD')
                 continue
             if propid == 'All Props':
                 subgroup = 'All Props'
-                sqlconstraint = ['filter = "%s"' %(f)]
-                metadata = '%s band, all props' %(f)
+                sqlconstraint = sqlconstraint[:-4]
+                metadata = '%s band, all props'%(f)
             elif propid == 'WFD':
                 subgroup = 'WFD'
-                sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
-                metadata = '%s band, WFD' %(f)
+                sqlconstraint = sqlconstraint+' %s'%(wfdWhere)
+                metadata = '%s band, WFD'%(f)
             else:
                 subgroup = 'Per Prop'
-                sqlconstraint = ['filter = "%s" and propId=%d' %(f, propid)]
-                metadata = '%s band, %s' %(f, propID2Name[propid])
+                sqlconstraint = sqlconstraint+' propId=%d'%(propid)
+                metadata = '%s band, %s'%(f, propID2Name[propid])
+            sqlconstraint = [sqlconstraint]
             metricList = []
             cols = ['finSeeing', 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth']
             groups = ['Seeing', 'Sky Brightness', 'Airmass', 'Single Visit Depth']
