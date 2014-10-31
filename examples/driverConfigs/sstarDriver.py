@@ -157,27 +157,27 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               plotDict={'units':'Number of Visits',
                                                 'xMin':nVisits_plotRange['all'][f][0],
                                                 'xMax':nVisits_plotRange['all'][f][1]},
-                                            summaryStats=standardStats,
-                                            displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
-                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
-                                            histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                       'binsize':5, 'xMin':nVisits_plotRange['all'][f][0],
-                                                       'xMax':nVisits_plotRange['all'][f][1],
-                                                       'legendloc':'upper right',
-                                                       'cumulative':-1}))
+                                              summaryStats=standardStats,
+                                              displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
+                                                           'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
+                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                                                         'binsize':5, 'legendloc':'upper right',
+                                                         'cumulative':-1}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
             metricList.append(configureMetric('CountRatioMetric',
-                                              kwargs={'col':'expMJD', 'normVal':nvisitBench[f], 'metricName':'NVisitsRatio'},
-                                            plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
+                                              kwargs={'col':'expMJD', 'normVal':nvisitBench[f],
+                                                      'metricName':'NVisitsRatio'},
+                                              plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
                                                     'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
                                                     'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
-                                        displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop), 'order':filtorder[f],
-                                                'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
-                                                %(f, benchmark, nvisitBench[f], propCaption)},
-                                        histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                   'xlabel':'Number of visits / benchmark',
-                                                   'binsize':.05, 'xMin':0.475, 'xMax':1.525, 'legendloc':'upper right'}))
+                                              displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop),
+                                                           'order':filtorder[f],
+                                                           'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
+                                                     %(f, benchmark, nvisitBench[f], propCaption)},
+                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                                                         'xlabel':'Number of visits / benchmark',
+                                                         'binsize':.05, 'legendloc':'upper right'}))
             histNum += 1
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
@@ -270,7 +270,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         propOrder += 100
         histNum += 1
 
-    # Run for combined WFD proposals if there's more than one.  Isn't this already being done above?
+    # Run for combined WFD proposals if there's more than one.  Isn't this already being done above?--yes,
+    # but with cumulative:-1
     if len(WFDpropid) > 1:
         for f in filters:
             m1 = configureMetric('CountMetric',

@@ -23,7 +23,7 @@ List of all Opsim Runs
 
 {% block content %}
 
-<table>
+<table class="sortable">
 <tr>
 <th> </th>
 {# Get basic run info to include into table (for table header) #}
@@ -38,7 +38,7 @@ List of all Opsim Runs
 {% for run in runlist.runs %}
   {% set runInfo = runlist.runInfo(run) %}
   <tr>
-  <td>
+  <td sorttable_customkey="{{run['mafRunId']}}">
   <input type='radio' name="runId" value="{{run['mafRunId']}}">
   </td>
   {% for key in runInfo %}

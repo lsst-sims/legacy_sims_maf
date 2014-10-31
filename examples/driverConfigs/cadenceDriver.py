@@ -42,7 +42,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
-    usefilters=['r']
+    usefilters=allfilters#['r']
 
     slicerList=[]
     nside=128

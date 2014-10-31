@@ -433,10 +433,17 @@ class MafRunResults(object):
 
     def orderPlots(self, skyPlots):
         """
-        Make sure files are in correct order
+        If the plots are of single filters, add gaps so that they will be layed out
+        in a 3x2 grid on the Multi Color page.  If there are other plots that are not of
+        a single filter, they will be appended to the end.
+
+        If the plots include multiple plots in the same single filter no gaps are added.
         """
         orderList = ['u','g','r','i','z','y']
         orderedSkymatchPlots = []
+
+        # Make a copy of the original, which should already be in order
+        skyPlotsOrig = list(skyPlots)
 
         if len(skyPlots) > 0:
             blankRecord = skyPlots[0].copy()
@@ -456,21 +463,19 @@ class MafRunResults(object):
             if not found:
                 orderedSkymatchPlots.append(blankRecord)
 
-        # If there are multiple plots for a filter, strip out the blanks
-        # It's up to the user to not to bundle things together badly if they
-        # want everything in a 3x2.
+        # If there are multiple plots for a filter, revert to the original
         filtHist = np.zeros(len(orderList))
         for plot in orderedSkymatchPlots:
             for i,filt in enumerate(orderList):
                 if '_'+filt+'_' in plot['plotFile']:
                     filtHist[i] += 1
         if np.max(filtHist) > 1:
-            while blankRecord in orderedSkymatchPlots:
-                orderedSkymatchPlots.remove(blankRecord)
+            orderedSkymatchPlots = skyPlotsOrig
+        else:
+            # Tack on any left over plots (e.g., joint completeness)
+            for plot in skyPlots:
+                orderedSkymatchPlots.append(plot)
 
-        # Tack on any left over plots (e.g., joint completeness)
-        for plot in skyPlots:
-            orderedSkymatchPlots.append(plot)
         # Pad out to make sure there are rows of 3
         while len(orderedSkymatchPlots) % 3 != 0:
             orderedSkymatchPlots.append(blankRecord)
