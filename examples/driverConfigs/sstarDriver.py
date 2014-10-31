@@ -253,7 +253,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                 summaryStats=standardStats,
                                 plotDict={'units':'Number of Visits', 'plotMask':True,
                                           'binsize':5, 'xMin':xMin, 'xMax':xMax},
-                                displayDict={'group':'2: Nvisits', 'subgroup':'Prop %i,%s'%(propid,propID2Name[propid]),
+                                displayDict={'group':'2: Nvisits', 'subgroup':'%s'%(propID2Name[propid]),
                                              'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
                                              %(f, propID2Name[propid])},
