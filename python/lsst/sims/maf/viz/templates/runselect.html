@@ -15,10 +15,7 @@ List of all Opsim Runs
 {% set active_page = "listRuns" %}
 
 {% block moresidebar %}
-<form name="RunSelect" action="metricSelect" method="get" >
-</br>
-</br>
-<center><input id='mybutton' type='submit' value='Select Run'></center>
+
 {% endblock %}
 
 {% block content %}
@@ -39,15 +36,18 @@ List of all Opsim Runs
   {% set runInfo = runlist.runInfo(run) %}
   <tr>
   <td>
-  <input type='radio' name="runId" value="{{run['mafRunId']}}">
+    <a href="metricSelect?runId={{run['mafRunId']}}">{{run['mafRunId']}}</a>
   </td>
   {% for key in runInfo %}
-  <td>{{ runInfo[key]|escape }}</td>
+    {% if key == 'OpsimRun' %}
+      <a href="metricSelect?runId={{run['mafRunId']}}"> <td>{{ runInfo[key]|escape }}</td> </a>
+    {% else %}
+      <td>{{ runInfo[key]|escape }}</td>
+    {% endif %}
   {% endfor %}
   </tr>
 {% endfor %}
 
-</form>
 
 </table>
 
