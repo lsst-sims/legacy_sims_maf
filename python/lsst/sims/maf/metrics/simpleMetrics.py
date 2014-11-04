@@ -55,6 +55,11 @@ class SumMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.sum(dataSlice[self.colname])
 
+class UniqueMetric(BaseMetric):
+    """Return the number of unique values """
+    def run(self, dataSlice, slicePoint=None):
+        return np.size(np.unique(dataSlice[self.colname]))
+
 class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, **kwargs):

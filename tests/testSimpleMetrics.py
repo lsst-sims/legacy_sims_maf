@@ -50,6 +50,14 @@ class TestSimpleMetrics(unittest.TestCase):
         testmetric = metrics.SumMetric('testdata')
         self.assertEqual(testmetric.run(self.dv), self.dv['testdata'].sum())
 
+    def testUniqueMetric(self):
+        """Test UniqueMetric"""
+        testmetric = metrics.UniqueMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), np.size(np.unique(self.dv['testdata'])))
+        d2 = self.dv.copy()
+        d2['testdata'][1] = d2['testdata'][0]
+        self.assertEqual(testmetric.run(d2), np.size(np.unique(d2)))
+
     def testCountMetric(self):
         """Test count metric."""
         testmetric = metrics.CountMetric('testdata')

@@ -517,22 +517,48 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Some other summary statistics over all filters and all proposals.
     # Calculate the mean and median slewtime.
-    m1 = configureMetric('MeanMetric', kwargs={'col':'slewTime'},
-                         displayDict={'group':'Technical', 'subgroup':'Slew'})
-    m2 = configureMetric('MedianMetric', kwargs={'col':'slewTime'},
-                         displayDict={'group':'Technical', 'subgroup':'Slew'})
+    metricList = []
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'slewTime'},
+                         displayDict={'group':'Technical', 'subgroup':'Slew'}))
+    metricList.append(configureMetric('MedianMetric', kwargs={'col':'slewTime'},
+                         displayDict={'group':'Technical', 'subgroup':'Slew'}))
     # Calculate the total number of visits.
-    m3 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
+    metricList.append(configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
                          summaryStats={'IdentityMetric':{'metricName':'Count'}},
-                         displayDict={'group':'1: Summary', 'subgroup':'NVisits', 'order':0})
+                         displayDict={'group':'1: Summary', 'subgroup':'NVisits', 'order':0}))
     # Calculate the total open shutter time.
-    m4 = configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
+    metricList.append(configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
                          summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
-                         displayDict={'group':'1: Summary', 'subgroup':'On-sky Time'})
-    metricDict = makeDict(m1, m2, m3, m4)
+                         displayDict={'group':'1: Summary', 'subgroup':'On-sky Time'}))
+    # Number of nights
+    metricList.append(configureMetric('UniqueMetric', kwargs={'col':'night'},
+                                     displayDict={'group':'Technical', 'subgroup':'Nights'}))
+    # Slew stats
+    metricList.append(configureMetric('MaxMetric', kwargs={'col':'altitude'},
+                                      displayDict={'group':'Technical', 'subgroup':'Alt'}))
+    metricList.append(configureMetric('MinMetric', kwargs={'col':'altitude'},
+                                      displayDict={'group':'Technical', 'subgroup':'Alt'}))
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'altitude'},
+                                      displayDict={'group':'Technical', 'subgroup':'Alt'}))
+    metricList.append(configureMetric('RmsMetric', kwargs={'col':'altitude'},
+                                      displayDict={'group':'Technical', 'subgroup':'Alt'}))
+    metricList.append(configureMetric('MaxMetric', kwargs={'col':'azimuth'},
+                                      displayDict={'group':'Technical', 'subgroup':'Az'}))
+    metricList.append(configureMetric('MinMetric', kwargs={'col':'azimuth'},
+                                      displayDict={'group':'Technical', 'subgroup':'Az'}))
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'azimuth'},
+                                      displayDict={'group':'Technical', 'subgroup':'Az'}))
+    metricList.append(configureMetric('RmsMetric', kwargs={'col':'azimuth'},
+                                      displayDict={'group':'Technical', 'subgroup':'Az'}))
+    # Mean exposure time
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'visitExpTime'},
+                                      displayDict={'group':'Technical', 'subgroup':'Exptime'}))
+
+    metricDict = makeDict(*metricList)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
                              metadataVerbatim=True)
     slicerList.append(slicer)
+
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
