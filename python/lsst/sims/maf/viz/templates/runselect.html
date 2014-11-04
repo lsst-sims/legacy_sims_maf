@@ -1,3 +1,7 @@
+{% block javascript %}
+   <script type="text/javascript" src="sorttable.js"></script>
+{% endblock %}
+
 {% extends "master.html" %}
 
 {% if runId < 0 %}
@@ -15,17 +19,13 @@ List of all Opsim Runs
 {% set active_page = "listRuns" %}
 
 {% block moresidebar %}
-<form name="RunSelect" action="metricSelect" method="get" >
-</br>
-</br>
-<center><input id='mybutton' type='submit' value='Select Run'></center>
+
 {% endblock %}
 
 {% block content %}
 
-<table>
+<table class="sortable">
 <tr>
-<th> </th>
 {# Get basic run info to include into table (for table header) #}
 {% set runInfo = runlist.runInfo(runlist.runs[0]) %}
 {% for key in runInfo %}
@@ -38,16 +38,16 @@ List of all Opsim Runs
 {% for run in runlist.runs %}
   {% set runInfo = runlist.runInfo(run) %}
   <tr>
-  <td>
-  <input type='radio' name="runId" value="{{run['mafRunId']}}">
-  </td>
   {% for key in runInfo %}
-  <td>{{ runInfo[key]|escape }}</td>
+    {% if loop.index == 1 %}
+       <td><a href="metricSelect?runId={{run['mafRunId']}}">{{ runInfo[key]|escape }} </a> </td>
+    {% else %}
+      <td>{{ runInfo[key]|escape }}   </td>
+    {% endif %}
   {% endfor %}
   </tr>
 {% endfor %}
 
-</form>
 
 </table>
 

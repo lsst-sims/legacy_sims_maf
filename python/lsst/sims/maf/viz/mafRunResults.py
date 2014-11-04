@@ -431,10 +431,62 @@ class MafRunResults(object):
         """
         return os.path.join(self.outDir, plot['plotFile'])
 
+    def orderPlots(self, skyPlots):
+        """
+        If the plots are of single filters, add gaps so that they will be layed out
+        in a 3x2 grid on the Multi Color page.  If there are other plots that are not of
+        a single filter, they will be appended to the end.
+
+        If the plots include multiple plots in the same single filter no gaps are added.
+        """
+        orderList = ['u','g','r','i','z','y']
+        orderedSkymatchPlots = []
+
+        # Make a copy of the original, which should already be in order
+        skyPlotsOrig = list(skyPlots)
+
+        if len(skyPlots) > 0:
+            blankRecord = skyPlots[0].copy()
+            blankRecord['plotId'] = -1
+            blankRecord['metricId'] = -1
+            blankRecord['plotFile'] = None
+
+        for f in orderList:
+            found = False
+            for i, rec in enumerate(skyPlots):
+                plot = rec['plotFile']
+                if '_'+f+'_' in plot:
+                    orderedSkymatchPlots.append(rec)
+                    skyPlots.remove(rec)
+                    found = True
+            # If there isn't a filter, just put in a blank dummy placeholder
+            if not found:
+                orderedSkymatchPlots.append(blankRecord)
+
+        # If there are multiple plots for a filter, revert to the original
+        filtHist = np.zeros(len(orderList))
+        for plot in orderedSkymatchPlots:
+            for i,filt in enumerate(orderList):
+                if '_'+filt+'_' in plot['plotFile']:
+                    filtHist[i] += 1
+        if np.max(filtHist) > 1:
+            orderedSkymatchPlots = skyPlotsOrig
+        else:
+            # Tack on any left over plots (e.g., joint completeness)
+            for plot in skyPlots:
+                orderedSkymatchPlots.append(plot)
+
+        # Pad out to make sure there are rows of 3
+        while len(orderedSkymatchPlots) % 3 != 0:
+            orderedSkymatchPlots.append(blankRecord)
+
+        return orderedSkymatchPlots
+
     def getSkyMaps(self, metrics=None):
         """
         Return a list of the skymaps, optionally for subset of metrics.
         """
+        orderList = ['u','g','r','i','z','y']
         if metrics is None:
             metrics = self.metrics
         skymatchPlots = []
@@ -445,6 +497,7 @@ class MafRunResults(object):
                 match = (matchPlots['plotType'] == 'SkyMap')
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
+
         return skymatchPlots
 
     ## Set of methods to deal with summary stats.

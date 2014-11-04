@@ -156,28 +156,29 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               kwargs={'col':'expMJD', 'metricName':'Nvisits'},
                                               plotDict={'units':'Number of Visits',
                                                 'xMin':nVisits_plotRange['all'][f][0],
-                                                'xMax':nVisits_plotRange['all'][f][1]},
-                                            summaryStats=standardStats,
-                                            displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
-                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
-                                            histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                       'binsize':5, 'xMin':nVisits_plotRange['all'][f][0],
-                                                       'xMax':nVisits_plotRange['all'][f][1],
-                                                       'legendloc':'upper right',
-                                                       'cumulative':-1}))
+                                                'xMax':nVisits_plotRange['all'][f][1], 'binsize':5},
+                                              summaryStats=standardStats,
+                                              displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
+                                                           'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
+                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                                                         'binsize':5, 'legendloc':'upper right',
+                                                         'cumulative':-1}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
             metricList.append(configureMetric('CountRatioMetric',
-                                              kwargs={'col':'expMJD', 'normVal':nvisitBench[f], 'metricName':'NVisitsRatio'},
-                                            plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
+                                              kwargs={'col':'expMJD', 'normVal':nvisitBench[f],
+                                                      'metricName':'NVisitsRatio'},
+                                              plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
                                                     'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
                                                     'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
-                                        displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop), 'order':filtorder[f],
-                                                'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
-                                                %(f, benchmark, nvisitBench[f], propCaption)},
-                                        histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                   'xlabel':'Number of visits / benchmark',
-                                                   'binsize':.05, 'xMin':0.475, 'xMax':1.525, 'legendloc':'upper right'}))
+                                              displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop),
+                                                           'order':filtorder[f],
+                                                           'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
+                                                     %(f, benchmark, nvisitBench[f], propCaption)},
+                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                                                         'xlabel':'Number of visits / benchmark',
+                                                         'binsize':.05, 'xMin':0.475, 'xMax':1.525,
+                                                         'legendloc':'upper right'}))
             histNum += 1
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
@@ -241,28 +242,24 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Count the number of visits per filter for each proposal, over the sky. Uses opsim field slicer.
     propOrder = 0
     for propid in propids:
-        # Skip the wfd proposals.
-        if propid in WFDpropid:
-            continue
         for f in filters:
             xMax = nVisits_plotRange['all'][f][1]
             xMin = nVisits_plotRange['all'][f][0]
             if propid in DDpropid:
                 xMax = nVisits_plotRange['DD'][f][1]
                 xMin = nVisits_plotRange['DD'][f][0]
-            xMaxMerge = max( [nVisits_plotRange['all'][f][1], nVisits_plotRange['DD'][f][1]] )
-            xMinMerge = min([nVisits_plotRange['all'][f][0], nVisits_plotRange['DD'][f][0]] )
             # Count the number of visits.
             m1 = configureMetric('CountMetric',
                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                                 summaryStats=standardStats,
                                 plotDict={'units':'Number of Visits', 'plotMask':True,
                                           'binsize':5, 'xMin':xMin, 'xMax':xMax},
-                                displayDict={'group':'2: Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
+                                displayDict={'group':'2: Nvisits', 'subgroup':'%s'%(propID2Name[propid]),
+                                             'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
                                              %(f, propID2Name[propid])},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                                           'label':'%s' %f, 'binsize':5, 'xMin':xMinMerge, 'xMax':xMaxMerge})
+                                           'label':'%s' %f, 'binsize':5})
             metricDict = makeDict(m1)
             sqlconstraint = ['filter = "%s" and propID = %s' %(f,propid)]
             slicer = configureSlicer('OpsimFieldSlicer',
@@ -274,22 +271,25 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         propOrder += 100
         histNum += 1
 
-    # Run for WFD prop.
-    for f in filters:
-        m1 = configureMetric('CountMetric',
-                             kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
-                             summaryStats=standardStats,
-                             plotDict={'units':'Number of Visits', 'binsize':5},
-                             displayDict={'group':'2: Nvisits', 'subgroup':'Per Prop', 'order':filtorder[f] + propOrder,
-                                          'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
-                             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s' %f, 'binsize':5})
-        metricDict = makeDict(m1)
-        sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
-        slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=sqlconstraint,
-                                 metadata='%s band, WFD' %(f), metadataVerbatim=True)
-        slicerList.append(slicer)
-    histNum += 1
+    # Run for combined WFD proposals if there's more than one.  Isn't this already being done above?--yes,
+    # but possibly with the HealpixSlicer.
+    if len(WFDpropid) > 1:
+        for f in filters:
+            m1 = configureMetric('CountMetric',
+                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
+                                 summaryStats=standardStats,
+                                 plotDict={'units':'Number of Visits', 'binsize':5},
+                                 displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                              'order':filtorder[f] + propOrder,
+                                              'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
+                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
+                                            'color':colors[f], 'label':'%s' %f, 'binsize':5})
+            metricDict = makeDict(m1)
+            sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
+            slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict, constraints=sqlconstraint,
+                                     metadata='%s band, WFD' %(f), metadataVerbatim=True)
+            slicerList.append(slicer)
+        histNum += 1
 
     # Calculate the Completeness and Joint Completeness for all proposals and WFD only.
     for prop in ('All Props', 'WFD'):
@@ -449,22 +449,27 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     for i, propid in enumerate(props):
         propOrder += 500
         order = propOrder
-        for f in filters:
+        for f in filters+['all']:
+            if f != 'all':
+                sqlconstraint = 'filter = "%s" and' %(f)
+            else:
+                sqlconstraint = ''
             if propid in WFDpropid:
                 # Skip individual WFD propids (do in 'WFD')
                 continue
             if propid == 'All Props':
                 subgroup = 'All Props'
-                sqlconstraint = ['filter = "%s"' %(f)]
-                metadata = '%s band, all props' %(f)
+                sqlconstraint = sqlconstraint[:-4]
+                metadata = '%s band, all props'%(f)
             elif propid == 'WFD':
                 subgroup = 'WFD'
-                sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
-                metadata = '%s band, WFD' %(f)
+                sqlconstraint = sqlconstraint+' %s'%(wfdWhere)
+                metadata = '%s band, WFD'%(f)
             else:
                 subgroup = 'Per Prop'
-                sqlconstraint = ['filter = "%s" and propId=%d' %(f, propid)]
-                metadata = '%s band, %s' %(f, propID2Name[propid])
+                sqlconstraint = sqlconstraint+' propId=%d'%(propid)
+                metadata = '%s band, %s'%(f, propID2Name[propid])
+            sqlconstraint = [sqlconstraint]
             metricList = []
             cols = ['finSeeing', 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth']
             groups = ['Seeing', 'Sky Brightness', 'Airmass', 'Single Visit Depth']

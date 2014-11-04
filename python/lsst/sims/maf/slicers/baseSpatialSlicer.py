@@ -192,6 +192,8 @@ class BaseSpatialSlicer(BaseSlicer):
         if (np.unique(plotValue).size == 1) & (histRange is None):
             warnings.warn('Only one metric value, making a guess at a good histogram range.')
             histRange = [plotValue.max()-rangePad, plotValue.max()+rangePad]
+            if (plotValue.min() >= 0) & (histRange[0] < 0):
+                histRange[0] = 0.
             bins=np.arange(histRange[0], histRange[1], binsize)
 
         if plotValue.size == 0:

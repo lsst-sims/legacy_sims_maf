@@ -15,7 +15,7 @@ class RunSelectHandler(web.RequestHandler):
         else:
             # Set runID to a negative number, to default to first run.
             runId = startRunId
-        self.write(selectTempl.render(runlist=runlist, runId=runId))
+        self.write(selectTempl.render(runlist=runlist, runId=runId, jsPath=jsPath))
 
 class MetricSelectHandler(web.RequestHandler):
     def get(self):
@@ -95,7 +95,8 @@ def make_app():
         ("/allMetricResults", AllMetricResultsPageHandler),
         ("/multiColor", MultiColorPageHandler),
         (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
-        (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath}),
+        (r"/(sorttable.js)", web.StaticFileHandler, {'path':jsPath}),
+        (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath})
         ])
     return application
 
@@ -170,6 +171,8 @@ if __name__ == "__main__":
     templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/' )
     global faviconPath
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
+    global jsPath
+    jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
     env = Environment(loader=FileSystemLoader(templateDir))
     # Add 'zip' to jinja templates.
     env.globals.update(zip=zip)
