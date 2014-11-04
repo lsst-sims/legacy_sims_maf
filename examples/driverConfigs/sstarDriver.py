@@ -156,7 +156,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               kwargs={'col':'expMJD', 'metricName':'Nvisits'},
                                               plotDict={'units':'Number of Visits',
                                                 'xMin':nVisits_plotRange['all'][f][0],
-                                                'xMax':nVisits_plotRange['all'][f][1]},
+                                                'xMax':nVisits_plotRange['all'][f][1], 'binsize':5},
                                               summaryStats=standardStats,
                                               displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
@@ -177,7 +177,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                      %(f, benchmark, nvisitBench[f], propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                                                          'xlabel':'Number of visits / benchmark',
-                                                         'binsize':.05, 'legendloc':'upper right'}))
+                                                         'binsize':.05, 'xMin':0.475, 'xMax':1.525,
+                                                         'legendloc':'upper right'}))
             histNum += 1
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
@@ -271,7 +272,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         histNum += 1
 
     # Run for combined WFD proposals if there's more than one.  Isn't this already being done above?--yes,
-    # but with cumulative:-1
+    # but possibly with the HealpixSlicer.
     if len(WFDpropid) > 1:
         for f in filters:
             m1 = configureMetric('CountMetric',

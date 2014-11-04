@@ -72,6 +72,7 @@
    {% for mname in metricNames %}
      {% set mskyset = run.metricsWithMetricName(mname, skysetMetrics, baseonly=True) %}
      {% set skymaps = run.getSkyMaps(mskyset) %}
+     {% set skymaps = run.orderPlots(skymaps) %}
      {% if skymaps|length > 0 %}
       <div id='metricset'>
        {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId) %}

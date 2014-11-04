@@ -498,9 +498,7 @@ class MafRunResults(object):
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
 
-        orderedSkymatchPlots = self.orderPlots(skymatchPlots)
-
-        return orderedSkymatchPlots
+        return skymatchPlots
 
     ## Set of methods to deal with summary stats.
 
