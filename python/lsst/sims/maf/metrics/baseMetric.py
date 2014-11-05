@@ -21,8 +21,8 @@ class MetricRegistry(type):
             cls.registry = {}
         modname = inspect.getmodule(cls).__name__
         if modname.startswith('lsst.sims.maf.metrics'):
-            modname = '' 
-        else:            
+            modname = ''
+        else:
             if len(modname.split('.')) > 1:
                 modname = '.'.join(modname.split('.')[:-1]) + '.'
             else:
@@ -31,7 +31,7 @@ class MetricRegistry(type):
         if metricname in cls.registry:
             raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' %(metricname))
         if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
-            cls.registry[metricname] = cls            
+            cls.registry[metricname] = cls
     def getClass(cls, metricname):
         return cls.registry[metricname]
     def list(cls, doc=False):
@@ -49,13 +49,13 @@ class MetricRegistry(type):
         print ' Metric __init__ keyword args and defaults: '
         for a, d in zip(args_with_defaults, defaults):
             print '     ', a, d
-            
-            
+
+
 class ColRegistry(object):
     """
-    ColRegistry tracks the columns needed for all metric objects (kept internally in a set). 
+    ColRegistry tracks the columns needed for all metric objects (kept internally in a set).
 
-    ColRegistry.uniqueCols returns a list of all unique columns required for metrics;
+    ColRegistry.colSet returns a list of all unique columns required for metrics;
     ColRegistry.dbCols returns the subset of these which come from the database.
     ColRegistry.stackerCols returns the dictionary of [columns: stacker class].
     """
@@ -76,22 +76,24 @@ class ColRegistry(object):
             else:
                 if col not in self.stackerDict:
                     self.stackerDict[col] = source
-            
+
 
 class BaseMetric(object):
     """Base class for the metrics."""
     __metaclass__ = MetricRegistry
     colRegistry = ColRegistry()
     colInfo = ColInfo()
-    
-    def __init__(self, col=None, metricName=None, units=None, 
+
+    def __init__(self, col=None, metricName=None, maps=None, units=None,
                  metricDtype=None, badval=-666,
                  plotDict=None, displayDict=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
         the names of the data columns that the metric will operate on. This can be a single string or a list.
-                         
+
+        'maps' is a list of any maps that the metric will need, accessed via slicePoint that is passed from the slicer.
+
         After inheriting from this base metric :
           * every metric object will have metricDtype (the type of data it calculates) set according to:
                -- kwarg (metricDtype='float', 'int', etc)
@@ -104,7 +106,7 @@ class BaseMetric(object):
         plotDict is a dictionary containing instructions for plotting (setting plot titles, limits,
         x and y labels, etc.).
         displayGroup is a string defining where the output of the metric should be displayed in the visualization
-        layer (metrics with the same displayGroup parameter are grouped together). 
+        layer (metrics with the same displayGroup parameter are grouped together).
         """
         if col is None:
             raise ValueError('Specify "col" kwarg for metric %s' %(self.__class__.__name__))
@@ -115,6 +117,10 @@ class BaseMetric(object):
             self.colname = self.colNameArr[0]
         # Add the columns to the colRegistry.
         self.colRegistry.addCols(self.colNameArr)
+        # Set the maps that are needed:
+        if maps is None:
+            maps = []
+        self.maps = maps
         # Value to return if the metric can't be computed
         self.badval = badval
         # Save a unique name for the metric.
@@ -139,9 +145,9 @@ class BaseMetric(object):
         else:
             self.metricDtype = 'float'
         # Set physical units, for plotting purposes.
-        # (If plotDict has 'units' this will be ignored). 
+        # (If plotDict has 'units' this will be ignored).
         if units is None:
-            units = ' '.join([self.colInfo.getUnits(col) for col in self.colNameArr])
+            units = ' '.join([self.colInfo.getUnits(colName) for colName in self.colNameArr])
             if len(units.replace(' ', '')) == 0:
                 units = ''
         self.units = units
@@ -166,7 +172,7 @@ class BaseMetric(object):
         if 'xMax' in self.plotDict and 'colorMax' not in self.plotDict:
             self.plotDict['colorMax'] = self.plotDict['xMax']
         # Example options for plotting parameters: plotTitle, plotMin, plotMax,
-        #  plotPercentiles (overriden by plotMin/Max). 
+        #  plotPercentiles (overriden by plotMin/Max).
         #  These plotDict are used by the sliceMetric, passed to the slicer plotting utilities.
         # Set up the displayDict.
         # Set defaults.

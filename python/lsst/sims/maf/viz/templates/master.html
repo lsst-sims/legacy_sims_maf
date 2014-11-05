@@ -1,7 +1,8 @@
 <!DOCTYPE HTML>
 <html lang="en">
-
 <head>
+
+{#   ######## CSS ##### #}
 
 <style>
 
@@ -68,7 +69,7 @@ overflow:auto;
 {
 display:block;
 background-color:#A0A0A0;
-clear:both;  
+clear:both;
 text-align:center;
 margin:0px;
 padding:5px;
@@ -82,12 +83,37 @@ margin-bottom:40px;
 border-bottom:1px solid gray;
 }
 
+#mybutton {
+display: block;
+width: 6.4em;
+height: 1.8em;
+border: 2px solid black;
+padding:0;
+text-align:center;
+vertical-align:middle;
+font-size: 1.1em;
+color:#000000;
+background-color:#A0A0A0;
+   background: #A0A0A0;
+   background: -webkit-gradient(linear, left top, left bottom, from(#A0A0A0), to(#E8E8E8));
+   background: -webkit-linear-gradient(top, #A0A0A0, #E8E8E8);
+   background: -moz-linear-gradient(top, #A0A0A0, #E8E8E8);
+   background: -ms-linear-gradient(top, #A0A0A0, #E8E8E8);
+   background: -o-linear-gradient(top, #A0A0A0, #E8E8E8);
+cursor:pointer;
+   -webkit-border-radius: 10px;
+   -moz-border-radius: 10px;
+   border-radius: 10px;
+}
+#mybutton:hover {
+background-color:#808080;
+}
 
 table,th,td
 {
 border:1px solid black;
 border-collapse:collapse;
-margin-bottom: 10px
+margin-bottom: 20px
 }
 th
 {
@@ -117,6 +143,12 @@ text-align:left;
 
 img.thumbnail {
     height: 280px;
+    padding:0px;
+    margin: 0px;
+}
+
+img.sm_thumbnail {
+    height: 200px;
     padding:0px;
     margin: 0px;
 }
@@ -189,8 +221,14 @@ a.activenav:link, a.activenav:visited {
 {
 text-indent:25px;
 }
-
+#smallindent
+{
+text-indent:5px;
+}
 </style>
+
+{#   ##### END CSS ##### #}
+
 <title>
 {% block pagetitle %}
 {{run.runName }}
@@ -214,15 +252,16 @@ text-indent:25px;
 {% block navbar %}
 <div id="navbar">
   {% set navigation_bar = [
-    ('/', 'listRuns', 'Run List'), 
+    ('/', 'listRuns', 'Run List'),
     ('configParams', 'configs', 'Opsim Configuration'),
     ('metricSelect', 'listMetrics', 'Metrics List'),
-    ('summaryStats', 'stats', 'Summary Stats'),
-    ('allMetricResults', 'allMetricResults', 'All Results')]  -%}
+    ('allMetricResults', 'allMetricResults', 'All Results'),
+    ('multiColor', 'multicolor', 'Multi Color'),
+    ('summaryStats', 'stats', 'Summary Stats')]  -%}
  <ul class="nav">
  {% for href, id, caption in navigation_bar %}
    <li class="nav">
-     <a 
+     <a
      {% if id == active_page %}
        class="activenav"
      {% else %}
@@ -243,7 +282,7 @@ text-indent:25px;
 </div>
 
 <div id="content">
-{% block content %} 
+{% block content %}
 {% endblock %}
 </div>
 

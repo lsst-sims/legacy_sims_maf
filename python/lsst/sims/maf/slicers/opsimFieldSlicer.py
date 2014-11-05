@@ -1,10 +1,7 @@
 # Class for opsim field based slicer.
 
 import numpy as np
-import matplotlib.pyplot as plt
 from functools import wraps
-   
-from .baseSlicer import BaseSlicer
 from .baseSpatialSlicer import BaseSpatialSlicer
 
 class OpsimFieldSlicer(BaseSpatialSlicer):
@@ -12,11 +9,11 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
 
     Slicer uses fieldData RA and Dec values to do sky map plotting, but could be used more
     generally for any kind of data slicing where the match is based on a simple ID value.
-     
+
     Note that this slicer uses the fieldID of the opsim fields to generate spatial matches,
     thus this slicer is not suitable for use in evaluating dithering or high resolution metrics
     (use the healpix slicer instead for those use-cases). """
-    
+
     def __init__(self, verbose=True, simDataFieldIDColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
@@ -24,7 +21,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         """Instantiate opsim field slicer (an index-based slicer that can do spatial plots).
 
         simDataFieldIDColName = the column name in simData for the field ID
-        simDataFieldRaColName = the column name in simData for the field RA 
+        simDataFieldRaColName = the column name in simData for the field RA
         simDataFieldDecColName = the column name in simData for the field Dec
         fieldIDcolName = the column name in the fieldData for the field ID (to match with simData)
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
@@ -45,14 +42,14 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldIDColName':fieldIDColName,
                           'fieldRaColName':fieldRaColName,
                           'fieldDecColName':fieldDecColName, 'badval':badval}
-        
 
-    def setupSlicer(self, simData, fieldData):
+
+    def setupSlicer(self, simData, fieldData, maps=None):
         """Set up opsim field slicer object.
-        
+
         simData = numpy rec array with simulation pointing history,
         fieldData = numpy rec array with the field information (ID, RA, Dec),
-        Values for the column names are set during 'init'. 
+        Values for the column names are set during 'init'.
         """
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIDColName])
@@ -61,24 +58,31 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
         self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
+        if maps is None:
+            maps = []
+        for skyMap in maps:
+            self.slicePoints = skyMap.run(self.slicePoints)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
         @wraps(self._sliceSimData)
+
         def _sliceSimData(islice):
-            idxs = self.simIdxs[self.left[islice]:self.right[islice]]  
-            return {'idxs':idxs,
-                    'slicePoint':{'sid':self.slicePoints['sid'][islice],
-                                  'ra':self.slicePoints['ra'][islice], 'dec':self.slicePoints['dec'][islice]}}
+            idxs = self.simIdxs[self.left[islice]:self.right[islice]]
+            # Build dict for slicePoint info
+            slicePoint={}
+            for key in self.slicePoints.keys():
+                slicePoint[key] = self.slicePoints[key][islice]
+            return {'idxs':idxs, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
 
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
         if isinstance(otherSlicer, OpsimFieldSlicer):
             return (np.all(otherSlicer.slicePoints['ra'] == self.slicePoints['ra']) and
-                    np.all(otherSlicer.slicePoints['dec'] == self.slicePoints['dec']))        
+                    np.all(otherSlicer.slicePoints['dec'] == self.slicePoints['dec']))
         else:
             return False
 
@@ -92,7 +96,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
 
         title = the title for the plot (default None)
         xlabel = x axis label (default None)
-        ylabel = y axis label (default 'Number of Fields')** 
+        ylabel = y axis label (default 'Number of Fields')**
         fignum = the figure number to use (default None - will generate new figure)
         label = the label to use for the figure legend (default None)
         addLegend = flag for whether or not to add a legend (default False)
@@ -106,11 +110,11 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
             ylabel = 'Number of Fields'
         fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
                                                              ylabel=ylabel,
-                                                             title=title, fignum=fignum, 
-                                                             label=label, 
+                                                             title=title, fignum=fignum,
+                                                             label=label,
                                                              addLegend=addLegend, legendloc=legendloc,
                                                              bins=bins, binsize=binsize, cumulative=cumulative,
                                                              xMin=xMin, xMax=xMax, logScale=logScale,
-                                                             flipXaxis=flipXaxis, 
+                                                             flipXaxis=flipXaxis,
                                                              scale=1, yaxisformat='%d', color=color, **kwargs)
         return fignum

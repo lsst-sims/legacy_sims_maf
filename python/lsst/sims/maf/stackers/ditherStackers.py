@@ -1,6 +1,6 @@
 import numpy as np
 from .baseStacker import BaseStacker
-        
+
 def wrapRA(ra):
     """
     Wrap RA values so they are between 0 and 2pi (using mod).
@@ -21,7 +21,7 @@ def wrapDec(dec):
 class RandomDitherStacker(BaseStacker):
     """Randomly dither the RA and Dec pointings up to maxDither degrees from center."""
     def __init__(self, raCol='fieldRA', decCol='fieldDec', maxDither=1.8, randomSeed=None):
-        # Instantiate the RandomDither object and set internal variables. 
+        # Instantiate the RandomDither object and set internal variables.
         self.raCol = raCol
         self.decCol = decCol
         self.maxDither = maxDither * np.pi / 180.0
@@ -78,7 +78,7 @@ class DecOnlyDitherStacker(BaseStacker):
         uoffsets = np.size(offsets)
         nightIndex = simData[self.nightCol]%uoffsets
         simData= self._addStackers(simData)
-        simData['decOnlyDither'] = wrapDec(simData[self.decCol]+offsets[nightIndex])        
+        simData['decOnlyDither'] = wrapDec(simData[self.decCol]+offsets[nightIndex])
         return simData
-    
-                             
+
+

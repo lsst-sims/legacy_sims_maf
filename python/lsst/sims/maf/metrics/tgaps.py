@@ -26,7 +26,7 @@ class Tgaps(BaseMetric):
         plotDict['binMin'] = binMin
         plotDict['binMax'] = binMax
         plotDict['binsize'] = binsize
-        
+
         self.timesCol = timesCol
         super(Tgaps, self).__init__(col=[self.timesCol],
                                     metricDtype=object, plotDict=plotDict,
@@ -47,4 +47,4 @@ class Tgaps(BaseMetric):
             dts = np.diff(times)
         result, bins = np.histogram(dts, self.bins)
         return result
-        
+

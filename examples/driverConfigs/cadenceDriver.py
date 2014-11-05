@@ -9,7 +9,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     """
     A MAF config to run the cadence metrics on an OpSim run.
     """
-    
+
     # Setup Database access
     config.outputDir = outputDir
     sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
@@ -18,15 +18,15 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
 
     # Connect to the database to fetch some values we're using to help configure the driver.
     opsimdb = utils.connectOpsimDb(config.dbAddress)
-    
+
     # Fetch the proposal ID values from the database
-    propids, WFDpropid, DDpropid = opsimdb.fetchPropIDs()
+    propids, WFDpropid, DDpropid, propID2Name = opsimdb.fetchPropIDs()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = ''
     if len(WFDpropid) == 1:
         wfdWhere = "propID = %d" %(WFDpropid[0])
-    else: 
+    else:
         for i,propid in enumerate(WFDpropid):
             if i == 0:
                 wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
@@ -42,11 +42,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
-    usefilters=['r']
+    usefilters=allfilters#['r']
 
     slicerList=[]
     nside=128
-    
+
     ########### Early Seeing Metrics ################
     seeing_limit = 0.7 # Demand seeing better than this
     for f in usefilters:
@@ -89,7 +89,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     slicer =  configureSlicer('HealpixSlicer', kwargs={"nside":nside},
                             metricDict=makeDict(m1),
                             constraints=['night < 365', ''])
-    slicerList.append(slicer)
+    #slicerList.append(slicer)
 
     ########   Parallax and Proper Motion ########
     m2 = configureMetric('ParallaxMetric', kwargs={'metricName':'Parallax Normed', 'normalize':True},
@@ -130,19 +130,21 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     slicerList.append(slicer)
 
 
-    #### Visit Group Metric ######
-    m1 = configureMetric('VisitGroupsMetric', 
+    #### Visit Group Metric and AGN gap ######
+    m1 = configureMetric('VisitGroupsMetric',
                          kwargs={'minNVisits':2, 'metricName':'VisitGroups2'},
                          plotDict={'percentile':90},
                          displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
-    m2 = configureMetric('VisitGroupsMetric', 
+    m2 = configureMetric('VisitGroupsMetric',
                          kwargs={'minNVisits':4, 'metricName':'VisitGroups4'},
                          plotDict={'percentile':90},
                          displayDict={'group':'Cadence', 'subgroup':'Visit Groups'})
+    m3 = configureMetric('LongGapAGNMetric', displayDict={'group':'AGN'})
     slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
-                            metricDict=makeDict(m1, m2),
+                            metricDict=makeDict(m1, m2, m3),
                              constraints=['(filter = "r") or (filter="g") or (filter="i")'])
     slicerList.append(slicer)
+
 
 
     config.slicers = makeDict(*slicerList)

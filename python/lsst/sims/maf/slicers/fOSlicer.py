@@ -1,4 +1,4 @@
-# Class for computing the f_0 metric.  Nearly identical 
+# Class for computing the f_0 metric.  Nearly identical
 # to HealpixSlicer, but with an added plotting method
 
 import numpy as np
@@ -16,13 +16,13 @@ class fOSlicer(HealpixSlicer):
         # Override base plotFuncs dictionary, because we don't want to create plots from Healpix
         #  slicer (skymap, power spectrum, and histogram) -- only fO plot -- when using 'plotData'.
         self.plotFuncs = {'plotFO':self.plotFO}
-    
-    
+
+
     def plotFO(self, metricValue, title=None, xlabel='Number of Visits',
                ylabel='Area (1000s of square degrees)', fignum=None,
-               scale=None, Asky=18000., Nvisit=825, 
+               scale=None, Asky=18000., Nvisit=825,
                xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
-        """ 
+        """
         Note that Asky and Nvisit need to be set for both the slicer and the summary statistic
           for the plot and returned summary stat values to be consistent!"""
         colorlinewidth = 2
@@ -38,7 +38,7 @@ class fOSlicer(HealpixSlicer):
         # This is breaking the rules and calculating the summary stats in two places.
         # One way to possibly clean this up in the future would be to change the order
         # things are done in the driver so that summary stats get computed first and passed along to the plotting.
-        rarr = np.array(zip(metricValue.compressed()), 
+        rarr = np.array(zip(metricValue.compressed()),
                 dtype=[('fO', metricValue.dtype)])
         fOArea_value = fOArea(col='fO', Asky=Asky, norm=False,
                               nside=self.nside).run(rarr)
@@ -51,10 +51,10 @@ class fOSlicer(HealpixSlicer):
 
         plt.axvline(x=Nvisit, linewidth=colorlinewidth, color='b')
         plt.axhline(y=Asky/1000., linewidth=colorlinewidth,color='r')
-        
-        plt.axhline(y=fONv_value/1000., linewidth=colorlinewidth, color='b', 
+
+        plt.axhline(y=fONv_value/1000., linewidth=colorlinewidth, color='b',
                     alpha=.5, label=r'f$_0$ Nvisits=%.3g'%fONv_value_n)
-        plt.axvline(x=fOArea_value , linewidth=colorlinewidth,color='r', 
+        plt.axvline(x=fOArea_value , linewidth=colorlinewidth,color='r',
                     alpha=.5, label='f$_0$ Area=%.3g'%fOArea_value_n)
         plt.legend(loc='lower left', fontsize='small', numpoints=1)
 
@@ -68,5 +68,5 @@ class fOSlicer(HealpixSlicer):
             plt.xlim([xMin,xMax])
         if (yMin is not None) & (yMax is not None):
             plt.ylim([yMin,yMax])
-        
+
         return fig.number

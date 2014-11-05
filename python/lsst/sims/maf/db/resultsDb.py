@@ -30,16 +30,16 @@ class MetricRow(Base):
     def __repr__(self):
         return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', metricRun='%d')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.metricRuns)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.metricRun)
 
 class DisplayRow(Base):
     """
-    Define contents and format of the displays table. 
+    Define contents and format of the displays table.
 
     (Table to list the display properties for each metric.)
     """
     __tablename__ = "displays"
-    displayId = Column(Integer, primary_key=True)    
+    displayId = Column(Integer, primary_key=True)
     metricId = Column(Integer, ForeignKey('metrics.metricId'))
     # Group for displaying metric (in webpages).
     displayGroup = Column(String)
@@ -48,13 +48,13 @@ class DisplayRow(Base):
     # Order to display metric (within subgroup).
     displayOrder = Column(Float)
     # The figure caption.
-    displayCaption = Column(String)  
+    displayCaption = Column(String)
     metric = relationship("MetricRow", backref=backref('displays', order_by=displayId))
     def __rep__(self):
         return "<Display(displayGroup='%s', displaySubgroup='%s', displayOrder='%.1f', displayCaptio\
 n='%s')>" \
             %(self.displayGroup, self.displaySubgroup, self.displayOrder, self.displayCaption)
-        
+
 class PlotRow(Base):
     """
     Define contents and format of plot list table.
@@ -73,7 +73,6 @@ class PlotRow(Base):
         return "<Plot(metricId='%d', plotType='%s', plotFile='%s')>" \
           %(self.metricId, self.plotType, self.plotFile)
 
-    
 class SummaryStatRow(Base):
     """
     Define contents and format of the summary statistics table.
@@ -93,7 +92,6 @@ class SummaryStatRow(Base):
         return "<SummaryStat(metricId='%d', summaryName='%s', summaryValue='%f')>" \
           %(self.metricId, self.summaryName, self.summaryValue)
 
-    
 class ResultsDb(object):
     def __init__(self, outDir= '.', resultsDbAddress=None, verbose=False):
         """
@@ -119,11 +117,23 @@ class ResultsDb(object):
 
     def close(self):
         self.session.close()
-        
-    def addMetric(self, metricName, slicerName, simDataName, sqlConstraint,
+
+    def updateMetric(self, metricName, slicerName, simDataName, sqlConstraint,
                   metricMetadata, metricDataFile):
         """
-        Add a row to the metrics table.
+        Add a row to or update a row in the metrics table.
+
+        - metricName: the name of the metric
+        - sliceName: the name of the slicer
+        - simDataName: the name of used to identify the simData
+        - sqlConstraint: the sql constraint used to select data from the simData
+        - metricMetadata: the metadata associated with the metric
+        - metricDatafile: the data file the metric data is stored in
+
+        If same metric (same metricName, slicerName, simDataName, sqlConstraint, metadata)
+        already exists, adds to the db with 'run' value increased by one.
+
+        Returns metricId: the Id number of this metric in the metrics table.
         """
         if simDataName is None:
             simDataName = 'NULL'
@@ -145,10 +155,22 @@ class ResultsDb(object):
         self.session.commit()
         return metricinfo.metricId
 
-    def addDisplay(self, metricId, displayDict):
+    def updateDisplay(self, metricId, displayDict):
         """
-        Add a row to the displays table.
+        Add a row to or update a row in the displays table.
+
+        - metricID: the metric Id of this metric in the metrics table
+        - displayDict: dictionary containing the display info
+
+        Replaces existing row with same metricId.
         """
+        # Because we want to maintain 1-1 relationship between metricId's and displayDict's:
+        # First check if a display line is present with this metricID.
+        displayinfo = self.session.query(DisplayRow).filter_by(metricId=metricId).all()
+        if len(displayinfo) > 0:
+            for d in displayinfo:
+                self.session.delete(d)
+        # Then go ahead and add new displayDict.
         for k in displayDict:
             if displayDict[k] is None:
                 displayDict[k] = 'NULL'
@@ -158,26 +180,47 @@ class ResultsDb(object):
         displayCaption = displayDict['caption']
         if displayCaption.endswith('(auto)'):
             displayCaption = displayCaption.replace('(auto)', '', 1)
-        displayinfo = DisplayRow(metricId=metricId, 
-                                 displayGroup=displayGroup, displaySubgroup=displaySubgroup, 
+        displayinfo = DisplayRow(metricId=metricId,
+                                 displayGroup=displayGroup, displaySubgroup=displaySubgroup,
                                  displayOrder=displayOrder, displayCaption=displayCaption)
         self.session.add(displayinfo)
-        self.session.commit()        
+        self.session.commit()
 
-    def addPlot(self, metricId, plotType, plotFile):
+    def updatePlot(self, metricId, plotType, plotFile):
         """
-        Add a row to the plot table.
+        Add a row to or update a row in the plot table.
+
+        - metricId: the metric Id of this metric in the metrics table
+        - plotType: the 'type' of this plot
+        - plotFile: the filename of this plot
+
+        Remove older rows with the same metricId, plotType and plotFile.
         """
+        plotinfo = self.session.query(PlotRow).filter_by(metricId=metricId, plotType=plotType,
+                                                         plotFile=plotFile).all()
+        if len(plotinfo) > 0:
+            for p in plotinfo:
+                self.session.delete(p)
         plotinfo = PlotRow(metricId=metricId, plotType=plotType, plotFile=plotFile)
         self.session.add(plotinfo)
         self.session.commit()
 
-    def addSummaryStat(self, metricId, summaryName, summaryValue):
+    def updateSummaryStat(self, metricId, summaryName, summaryValue):
         """
-        Add a row to the summary statistic table.
+        Add a row to or update a row in the summary statistic table.
+
+        - metricId: the metric ID of this metric in the metrics table
+        - summaryName: the name of this summary statistic
+        - summaryValue: the value for this summary statistic
+
+        Most summary statistics will be a simple name (string) + value (float) pair.
+        For special summary statistics which must return multiple values, the base name
+        can be provided as 'name', together with a np recarray as 'value', where the
+        recarray also has 'name' and 'value' columns (and each name/value pair is then saved
+        as a summary statistic associated with this same metricId).
         """
         # Allow for special summary statistics which return data in a np structured array with
-        #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic). 
+        #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic).
         if np.size(summaryValue) > 1:
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:
@@ -196,7 +239,6 @@ class ResultsDb(object):
                 self.session.commit()
             else:
                 warnings.warn('Warning! Cannot save summary statistic that is not a simple float or int')
-        
 
     def getMetricIds(self):
         """
@@ -206,7 +248,7 @@ class ResultsDb(object):
         for m in self.session.query(MetricRow).all():
             metricId.append(m.metricId)
         return metricId
-        
+
     def getSummaryStats(self, metricId=None):
         """
         Get the summary stats for all or a single metric.
@@ -217,12 +259,13 @@ class ResultsDb(object):
             metricId = [metricId,]
         summarystats = []
         for mid in metricId:
-            for m, s in self.session.query(MetricRow, SummaryStatRow).\
+            for m, s in self.session.query(MetricRow.metricName, MetricRow.slicerName, MetricRow.metricMetadata,
+                                           SummaryStatRow).\
               filter(MetricRow.metricId == SummaryStatRow.metricId).\
               filter(MetricRow.metricId == mid).all():
               summarystats.append([m.metricName, m.slicerName, m.metricMetadata, s.summaryName, s.summaryValue])
         return summarystats
-                
+
     def getMetricDataFiles(self, metricId=None):
         """
         Get the metric data filenames for all or a single metric.

@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics

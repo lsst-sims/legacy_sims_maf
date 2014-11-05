@@ -5,7 +5,6 @@ import numpy as np
 from .healpixSlicer import HealpixSlicer
 import lsst.sims.maf.metrics as metrics
 import matplotlib.pyplot as plt
-import os
 import warnings
 
 class HealpixComplexSlicer(HealpixSlicer):
@@ -32,7 +31,7 @@ class HealpixComplexSlicer(HealpixSlicer):
         """ This plotting method takes plots/histograms from each healpixel and consolidates them into a
         single histogram that is plotted.  Note that the metric should set the binMin, binMax, binsize kwargs
         to ensure the slicer histogram bins match the metric bins.
-        
+
         metricReduce: metric name that will be used to combine the histograms bin-by-bin from each healpixel.
                       We currently do not support using metrics that require kwargs.
         histStyle:  Set to True for the data to be plotted as a histogram.
@@ -40,8 +39,8 @@ class HealpixComplexSlicer(HealpixSlicer):
         binMin/binMax/binSize:  parameters for setting up the bins.
                                 Ideally, the metric will set these with the plotDict keyword to ensure they
                                 are correct.
-        singleHP:  int, plot only the single healpixel id rather than combining the plots.  
-        
+        singleHP:  int, plot only the single healpixel id rather than combining the plots.
+
         """
         fig = plt.figure(fignum)
         if not xlabel:
@@ -55,9 +54,9 @@ class HealpixComplexSlicer(HealpixSlicer):
                 return
             finalHist = metricValue[singleHP]
         # Combining all the healpixels
-        else:            
+        else:
             if metricReduce is not None:
-                # Get the data type 
+                # Get the data type
                 dt = metricValue.compressed()[0].dtype
                 # Change an array of arrays (dtype=object) to a 2-d array of correct dtype
                 mV = np.array(metricValue.compressed().tolist(), dtype=[('metricValue',dt)])
@@ -68,7 +67,7 @@ class HealpixComplexSlicer(HealpixSlicer):
                 for i in np.arange(finalHist.size):
                     finalHist[i] = metric.run(mV[:,i])
 
-        # Recreate the bins.  Note this needs to be the same as in the metrics. 
+        # Recreate the bins.  Note this needs to be the same as in the metrics.
         bins = np.arange(binMin, binMax+binsize,binsize)
         if histStyle:
             x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
@@ -77,7 +76,7 @@ class HealpixComplexSlicer(HealpixSlicer):
             # Could use this to plot things like FFT
             x = bins[:-1]
             y = finalHist
-            
+
         plt.plot(x,y, linestyle=linestyle, label=label, color=color)
 
         if xlabel is not None:
@@ -92,6 +91,5 @@ class HealpixComplexSlicer(HealpixSlicer):
             plt.title(title)
         if addLegend:
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc)
-            
+
         return fig.number
-        

@@ -1,4 +1,5 @@
 {% extends "master.html" %}
+{% import 'macros.html' as mcr %}
 
 {% set active_page = "allMetricResults" %}
 
@@ -13,7 +14,7 @@
   <li>
   <a href="#{{ g|escape }}">{{ g|escape }}</a> </br>
   {% for sg in run.groups[g] %}
-    <div id='indent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
+    <div id='smallindent'><a href="#{{g|escape}}_{{sg|escape}}">{{sg|escape}}</a></div>
  {% endfor %}
  </li>
 {% endfor %}
@@ -27,7 +28,6 @@
 than per metric. #}
 
 {% set metricInfo = run.metricInfo(run.metrics[0]) %}
-{% set ninfo = metricInfo|length %}
 
 {% for g in run.groups.keys() %}
  {% set groupstart = True %}
@@ -41,88 +41,31 @@ than per metric. #}
    </p>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
   <div id="metricset">
-  {% for metric in subsetMetrics %}  
+  {% for metric in subsetMetrics %}
     {% set metricInfo = run.metricInfo(metric) %}
-    <b>
-    {% for key in metricInfo %}
-     {{ '%s' %(metricInfo[key]) }}  /
-    {% endfor %}
-    </b>
-    {# Add the plots for this metric #}
-    {% set plotdict = run.plotsForMetric(metric) %}
-    {% if plotdict|length > 0 %}
-     </br>
-      <table class="blank">
-      <tr class="blank" width=100%>
-     {% for ptype, plot in plotdict.iteritems() %}
-      {% set plotfile = run.getPlotfile(plot) %}
-      {% set thumbfile = run.getThumbfile(plot) %}
-       <td class="blank">
-       <a href="{{plotfile}}"> <img class="thumbnail"
- src='{{thumbfile}}'></a>
-       </td>
-      {% endfor  %}
-      </tr>
-      </table>
+    {% set metricPlots = run.plotsForMetric(metric) %}
+    {# Only show anything here for this metric if it had plots #}
+    {% if metricPlots|length > 0 %}
+      {# Print the metric info #}
+      {{ mcr.PrintMetricInfo(runId, metric, metricInfo) }}
+      {# Add the plots for this metric #}
+      {{ mcr.MakePlotTable(metricPlots, run) }}
+      <p>
+      {% set caption = run.captionForMetric(metric) %}
+      {{ caption|escape }}
+      </p>
     {% endif %}
 
-    <p>
-    {% set caption = run.captionForMetric(metric) %}
-    {{ caption|escape }}
-    </p>
   {% endfor %}
 
   {# Add a table with the summary stats for all the metrics in this subgroup #}
 
   {% set statNames = run.allStatNames(subsetMetrics) %}
-      
-  {% if statNames|length > 0 %}
-   {% set ncols = statNames|length + ninfo %}
-   <table>
-   <tr class="lightestgray"> 
-   <td colspan={{ncols}}>
-    Group: <i>{{g }}</i>; Subgroup: <i>{{ sg }}</i>
-   </td>
-   </tr>
-       
-    <tr>
-    {% for key in metricInfo %}
-      <th>{{ key }} </th>
-    {% endfor %}
-    {% for name in statNames %}
-      <th> {{name|escape}} </th>
-    {% endfor %}
-     </tr>
 
-     {% for metric in subsetMetrics %}
-        {% set metricInfo = run.metricInfo(metric) %}
-        {% set stats = run.statsForMetric(metric) %}
-	{% set statDict = run.statDict(stats) %}
-        {% if statDict|length > 0 %}
-           <tr>
-           {% for key in metricInfo %}
-           <td>{{ metricInfo[key]|escape }}</td>
-           {% endfor %}
- 	   {% for statName in statNames %}
-	    <td>
-	      {% if statName in statDict.keys() %}
-	        {% if statName == 'Count' %} 
-                 {{ '%d'|format(statDict[statName]) }}
-	        {% else %}
-                 {{ '%.2f'|format(statDict[statName]) }}
-	        {% endif %}
-	     {% else %}
-	        {{ '--' }}
-	     {% endif %}
-	    </td>
-	   {% endfor %}
-	   </tr>
-	   {% endif %}
-      {% endfor %}	   
-      </table>
-     {% endif %}      
-   </div>
-   
+  {{ mcr.MakeStatTable(subsetMetrics, g, sg, run) }}
+
+  </div>
+
  {% endfor %}
 {% endfor %}
 

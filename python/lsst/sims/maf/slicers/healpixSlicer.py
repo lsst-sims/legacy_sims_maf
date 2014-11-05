@@ -5,28 +5,24 @@
 # Also requires numpy and pylab (for histogram and power spectrum plotting)
 
 import numpy as np
-import numpy.ma as ma
 import warnings
 import healpy as hp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils import percentileClipping
-import warnings
-
 from .baseSpatialSlicer import BaseSpatialSlicer
-from .baseSlicer import BaseSlicer
 
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
-    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, 
+    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,
                  useCache=True, radius=1.75, leafsize=100):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
-                                            badval=hp.UNSEEN, radius=radius, leafsize=leafsize) 
-        # Valid values of nside are powers of 2. 
+                                            badval=hp.UNSEEN, radius=radius, leafsize=leafsize)
+        # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
         # nside=1024 gives about 3' resolution
@@ -48,12 +44,13 @@ class HealpixSlicer(BaseSpatialSlicer):
             # Set the cache size to be ~2x the circumference
             self.cacheSize = int(np.round(4.*np.pi/binRes))
         # Set up slicePoint metadata.
+        self.slicePoints['nside'] = nside
         self.slicePoints['sid'] = np.arange(self.nslice)
-        self.slicePoints['ra'], self.slicePoints['dec'] = self._pix2radec(self.slicePoints['sid'])        
+        self.slicePoints['ra'], self.slicePoints['dec'] = self._pix2radec(self.slicePoints['sid'])
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
-        # If the two slicers are both healpix slicers, check nsides value. 
+        # If the two slicers are both healpix slicers, check nsides value.
         if isinstance(otherSlicer, HealpixSlicer):
             return (otherSlicer.nside == self.nside)
         else:
@@ -62,27 +59,26 @@ class HealpixSlicer(BaseSpatialSlicer):
     def _pix2radec(self, islice):
         """Given the pixel number / sliceID, return the RA/Dec of the pointing, in radians."""
         # Calculate RA/Dec in RADIANS of pixel in this healpix slicer.
-        # Note that ipix could be an array, 
-        # in which case RA/Dec values will be an array also. 
-        lat, lon = hp.pix2ang(self.nside, islice)
+        # Note that ipix could be an array,
+        # in which case RA/Dec values will be an array also.
+        lat, ra = hp.pix2ang(self.nside, islice)
         # Move dec to +/- 90 degrees
-        dec = lat - np.pi/2.0
-        # Flip ra from latitude to RA (increasing eastward rather than westward)
-        ra = -lon % (np.pi*2)
-        return ra, dec  
-    
+        dec = np.pi/2.0 - lat
+        return ra, dec
+
     def plotSkyMap(self, metricValueIn, xlabel=None, title='',
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
-                   plotMaskedValues=False, zp=None, normVal=None,
+                   zp=None, normVal=None,
                    cbar_edge=True, label=None, **kwargs):
-        """Plot the sky map of metricValue using healpy Mollweide plot.
+        """
+        Plot the sky map of metricValue using healpy Mollweide plot.
 
         metricValue = metric values
         units = units for metric color-bar label
         title = title for plot
         cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
-        plotMaskedValues = ignored, here to be consistent with OpsimFieldSlicer."""
+        """
         # Generate a Mollweide full-sky plot.
         norm = None
         if logScale:
@@ -122,12 +118,16 @@ class HealpixSlicer(BaseSpatialSlicer):
                 clims = [-1,1]
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
-                clims[1] =  clims[1]+1        
-                   
+                clims[1] =  clims[1]+1
+
         hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                    min=clims[0], max=clims[1], rot=(0,0,180), flip='astro',
-                    cmap=cmap, norm=norm)        
+                    min=clims[0], max=clims[1], rot=(0,0,0), flip='astro',
+                    cmap=cmap, norm=norm)
+
+        # This graticule call can fail with old versions of healpy and matplotlib 1.4.0.
+        # Make sure the latest version of healpy in the stack is setup
         hp.graticule(dpar=20, dmer=20, verbose=False)
+
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
@@ -174,8 +174,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)
         fignum = super(HealpixSlicer, self).plotHistogram(metricValue, xlabel=xlabel, ylabel=ylabel,
-                                                          title=title, fignum=fignum, 
-                                                          label=label, 
+                                                          title=title, fignum=fignum,
+                                                          label=label,
                                                           addLegend=addLegend, legendloc=legendloc,
                                                           bins=bins, binsize=binsize, cumulative=cumulative,
                                                           xMin=xMin, xMax=xMax, logScale=logScale,
@@ -184,7 +184,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                           linestyle=linestyle,**kwargs)
         return fignum
 
-    def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500., 
+    def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500.,
                           label=None, addLegend=False, removeDipole=True, verbose=False, **kwargs):
         """Generate and plot the power spectrum of metricValue.
 
@@ -203,7 +203,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         # If the mask is True everywhere (no data), just plot zeros
         if False not in metricValue.mask:
             return None
-        else:        
+        else:
             if removeDipole:
                 cl = hp.anafast(hp.remove_dipole(metricValue.filled(self.badval), verbose=verbose))
             else:
@@ -223,7 +223,5 @@ class HealpixSlicer(BaseSpatialSlicer):
             plt.legend(loc='upper right', fancybox=True, prop={'size':'smaller'})
         if title!=None:
             plt.title(title)
-        # Return figure number (so we can reuse/add onto/save this figure if desired). 
+        # Return figure number (so we can reuse/add onto/save this figure if desired).
         return fig.number
-
-

@@ -1,6 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from lsst.sims.maf.utils.astrometryUtils import *
+from lsst.sims.maf.utils.astrometryUtils import sigma_slope, m52snr, astrom_precision
+import lsst.sims.maf.utils as utils
 
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
@@ -10,7 +11,7 @@ class ParallaxMetric(BaseMetric):
                  filterCol='filter', seeingCol='finSeeing',rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False,**kwargs):
-        
+
         """ Instantiate metric.
 
         m5Col = column name for inidivual visit m5
@@ -18,6 +19,7 @@ class ParallaxMetric(BaseMetric):
         filterCol = column name for filter
         seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
+        SedTemplate = string of 'flat' or 'O','B','A','F','G','K','M'.
         atm_err = centroiding error due to atmosphere in arcsec
         normalize = Compare to a survey that has all observations with maximum parallax factor.
         An optimally scheduled survey would be expected to have a normalized value close to unity,
@@ -40,7 +42,7 @@ class ParallaxMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            raise NotImplementedError('Spot to add colors for different stars')
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         if self.displayDict['group'] == 'Ungrouped':
@@ -50,7 +52,7 @@ class ParallaxMetric(BaseMetric):
             if self.normalize:
                 self.displayDict['caption'] = 'Normalized uncertainty in parallax measurement (assuming no proper motion). '
                 self.displayDict['caption'] += 'Values closer to 1 indicate more optimal scheduling for parallax measurement.'
-        
+
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
         """Assume parallax in RA and DEC are fit independently, then combined.
         All inputs assumed to be arcsec """
@@ -60,7 +62,7 @@ class ParallaxMetric(BaseMetric):
         sigma_dec = np.sqrt(1./np.sum(1./sigma_B**2))
         sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2))*1e3 #combine RA and Dec uncertainties, convert to mas
         return sigma
-        
+
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice[self.filterCol])
         snr = np.zeros(len(dataslice), dtype='float')
@@ -74,7 +76,7 @@ class ParallaxMetric(BaseMetric):
             # Leave the dec parallax as zero since one can't have ra and dec maximized at the same time.
             sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp']*0+1.,dataslice['dec_pi_amp']*0 )/sigma
         return sigma
-        
+
 
 
 class ProperMotionMetric(BaseMetric):
@@ -104,7 +106,7 @@ class ProperMotionMetric(BaseMetric):
         cols = [m5Col, mjdCol,filterCol,seeingCol]
         if normalize:
             units = 'ratio'
-        super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units, 
+        super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units,
                                                  badval=badval, **kwargs)
         # set return type
         self.seeingCol = seeingCol
@@ -115,7 +117,7 @@ class ProperMotionMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            raise NotImplementedError('Spot to add colors for different stars')
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
@@ -148,10 +150,10 @@ class ProperMotionMetric(BaseMetric):
             new_dates=dataslice['expMJD'][good]*0
             nDates = new_dates.size
             new_dates[nDates/2:] = self.baseline*365.25
-            result = (sigma_slope(new_dates,  precis[good])*365.25*1e3)/result 
+            result = (sigma_slope(new_dates,  precis[good])*365.25*1e3)/result
         # Observations that are very close together can still fail
         if np.isnan(result):
-            result = self.badval 
+            result = self.badval
         return result
 
 ## Check radius of observations to look for calibration effects.
@@ -159,11 +161,11 @@ class ProperMotionMetric(BaseMetric):
 def calcDist_cosines(RA1, Dec1, RA2, Dec2):
     #taken from simSelfCalib.py
     """Calculates distance on a sphere using spherical law of cosines.
-    
+
     Give this function RA/Dec values in radians. Returns angular distance(s), in radians.
     Note that since this is all numpy, you could input arrays of RA/Decs."""
     # This formula can have rounding errors for case where distances are small.
-    # Oh, the joys of wikipedia - http://en.wikipedia.org/wiki/Great-circle_distance 
+    # Oh, the joys of wikipedia - http://en.wikipedia.org/wiki/Great-circle_distance
     # For the purposes of these calculations, this is probably accurate enough.
     D = np.sin(Dec2)*np.sin(Dec1) + np.cos(Dec1)*np.cos(Dec2)*np.cos(RA2-RA1)
     D = np.arccos(D)
@@ -191,4 +193,3 @@ class RadiusObsMetric(BaseMetric):
         return np.std(distances)
     def reduceFullRange(self,distances):
         return np.max(distances)-np.min(distances)
-    

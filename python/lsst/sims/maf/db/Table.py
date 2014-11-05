@@ -7,9 +7,9 @@ from sqlalchemy.sql import expression
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    from lsst.sims.catalogs.generation.db import DBObject, ChunkIterator
+    from lsst.sims.catalogs.generation.db import CatalogDBObject, ChunkIterator
 
-class Table(DBObject):
+class Table(CatalogDBObject):
     skipRegistration = True
     objid = 'sims_maf'
 
@@ -19,14 +19,14 @@ class Table(DBObject):
 
         Keyword arguments:
         @param tableName: Name of the table to query
-        @param idColKey:  Primary key for table 
+        @param idColKey:  Primary key for table
         @param dbAddress: A string indicating the location of the data to query.
                           This should be a database connection string.
         """
         self.idColKey = idColKey
         self.dbAddress = dbAddress
         self.tableid = tableName
-        
+
         if typeOverRide is not None:
             self.dbTypeMap.update(typeOverRide)
         super(Table, self).__init__(address=dbAddress)
@@ -94,10 +94,10 @@ class Table(DBObject):
         return ChunkIterator(self, query, chunk_size)
 
 
-    def query_columns_Array(self, colnames=None, chunk_size=1000000, constraint=None, 
+    def query_columns_Array(self, colnames=None, chunk_size=1000000, constraint=None,
                             groupByCol=None, numLimit=None):
         """Same as query_columns, but returns a numpy rec array instead. """
-        # Query the database, chunk by chunk (to reduce memory footprint). 
+        # Query the database, chunk by chunk (to reduce memory footprint).
         # If colnames == None, then will retrieve all columns in table.
         results = self.query_columns_Iterator(colnames=colnames, chunk_size=chunk_size,
                                               constraint=constraint, groupByCol=groupByCol,

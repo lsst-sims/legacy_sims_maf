@@ -9,3 +9,4 @@ from .healpixSlicer import *
 from .opsimFieldSlicer import *
 from .fOSlicer import *
 from .healpixComplexSlicer import *
+from .healpixSDSSSlicer import *

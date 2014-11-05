@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -28,7 +30,7 @@ def makeDataValues(fieldData, size=10000, min=0., max=1., random=True):
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
     datavalues += min
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     # Add valid fieldID values to match data values
@@ -45,11 +47,11 @@ class TestOpsimFieldSlicerSetup(unittest.TestCase):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
-        
+
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
-        
+
     def testSlicertype(self):
         """Test instantiation of slicer sets slicer type as expected."""
         self.assertEqual(self.testslicer.slicerName, self.testslicer.__class__.__name__)
@@ -68,7 +70,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
-        
+
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
@@ -85,14 +87,14 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         self.assertNotEqual(self.testslicer, testslicer2)
         testslicer2 = UniSlicer()
         self.assertNotEqual(self.testslicer, testslicer2)
-        
+
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)        
+        self.simData = makeDataValues(self.fieldData)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
-        
+
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
@@ -125,18 +127,18 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
         self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
         self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
 
-            
+
 class TestOpsimFieldSlicerSlicing(unittest.TestCase):
     # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)        
+        self.simData = makeDataValues(self.fieldData)
 
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
-    
+
     def testSlicing(self):
         """Test slicing returns (all) data points which match fieldID values."""
         # Test that slicing fails before setupBinner
@@ -156,7 +158,7 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)        
+        self.simData = makeDataValues(self.fieldData)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
 
         self.metricdata = ma.MaskedArray(data = np.zeros(len(self.testslicer), dtype='float'),
@@ -183,8 +185,8 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
                         clims=None, logScale=False, cbarFormat='%.2g')
         self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
                         clims=None, logScale=False, cbarFormat='%.2g')
-    
-        
+
+
     def testHistogram(self):
         """Test plotting the histogram (mean of random data)."""
         self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
@@ -203,8 +205,8 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
                                       bins=100, cumulative=False, histRange=None,
                                       logScale=False, flipXaxis=False, scale=None)
 
-                
-                        
+
+
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestOpsimFieldSlicerSetup)
     unittest.TextTestRunner(verbosity=2).run(suite)

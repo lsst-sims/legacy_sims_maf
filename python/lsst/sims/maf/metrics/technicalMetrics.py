@@ -1,53 +1,29 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-
-class OpenShutterMetric(BaseMetric):
-    """
-    Compute the amount of time the shutter is open.
-    """
-    def __init__(self, readTime=2., shutterTime=2.,
-                    metricName='OpenShutterMetric',
-                    exptimeCol='visitExpTime', **kwargs):
-        self.exptimeCol = exptimeCol        
-        super(OpenShutterMetric, self).__init__(col=self.exptimeCol, metricName=metricName,
-                                                units='sec', **kwargs)
-        self.readTime = readTime
-        self.shutterTime = shutterTime
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Technical'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Open shutter time = (expTime - %.1f seconds readtime' %(self.readTime)
-            self.displayDict['caption'] +=  ' - %.1f seconds shutter open/close time) * number of visits.'\
-                %(self.shutterTime)        
-    
-    def run(self, dataSlice, slicePoint=None):
-        result = np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
-        return result
-
 class OpenShutterFractionMetric(BaseMetric):
     """
     Compute the fraction of time the shutter is open compared to the total time spent observing.
     """
-    def __init__(self, readTime=2., shutterTime=2, metricName='OpenShutterFraction',
-                    slewTimeCol='slewTime', exptimeCol='visitExpTime', **kwargs):
-        self.exptimeCol = exptimeCol
+    def __init__(self, metricName='OpenShutterFraction',
+                 slewTimeCol='slewTime', expTimeCol='visitExpTime', visitTimeCol='visitTime',
+                 **kwargs):
+        self.expTimeCol = expTimeCol
+        self.visitTimeCol = visitTimeCol
         self.slewTimeCol = slewTimeCol
-        super(OpenShutterFractionMetric, self).__init__(col=[self.exptimeCol, self.slewTimeCol],
+        super(OpenShutterFractionMetric, self).__init__(col=[self.expTimeCol, self.visitTimeCol, self.slewTimeCol],
                                                         metricName=metricName, units='OpenShutter/TotalTime',
                                                         **kwargs)
-        self.readTime = readTime
-        self.shutterTime = shutterTime
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
         if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Open shutter time divided by (open shutter time + slewtime + readtime + shutter time).'
+            self.displayDict['caption'] = 'Open shutter time (%s total) divided by (total visit time (%s) + slewtime (%s)).' \
+              %(self.expTimeCol, self.visitTimeCol, self.slewTimeCol)
 
     def run(self, dataSlice, slicePoint=None):
-        result = (np.sum(dataSlice[self.exptimeCol] - self.readTime - self.shutterTime)
-                    / np.sum(dataSlice[self.slewTimeCol] + dataSlice[self.exptimeCol]))
+        result = (np.sum(dataSlice[self.expTimeCol])
+                    / np.sum(dataSlice[self.slewTimeCol] + dataSlice[self.visitTimeCol]))
         return result
-
 
 class CompletenessMetric(BaseMetric):
     """Compute the completeness and joint completeness """
@@ -56,7 +32,7 @@ class CompletenessMetric(BaseMetric):
         """
         Compute the completeness for the each of the given filters and the
         joint completeness across all filters.
-    
+
         Completeness calculated in any filter with a requested 'nvisits' value greater than 0, range is 0-1.
         """
         self.filterCol = filterColName
@@ -64,7 +40,7 @@ class CompletenessMetric(BaseMetric):
         self.nvisitsRequested = np.array([u, g, r, i, z, y])
         self.filters = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         # Remove filters from consideration where number of visits requested is zero.
-        good = np.where(self.nvisitsRequested > 0)        
+        good = np.where(self.nvisitsRequested > 0)
         self.nvisitsRequested = self.nvisitsRequested[good]
         self.filters = self.filters[good]
         # Raise exception if number of visits wasn't changed from the default, for at least one filter.
@@ -75,7 +51,13 @@ class CompletenessMetric(BaseMetric):
             self.reduceOrder[f] = i
         if self.displayDict['group'] == 'Ungrouped':
             self.displayDict['group'] = 'Technical'
-        
+        if self.displayDict['caption'] is None:
+            self.displayDict['caption'] = 'Completeness fraction for each filter (and joint across all filters).'
+            self.displayDict['caption'] += ' Calculated as number of visits compared to a benchmark value of:'
+            for i, f in enumerate(self.filters):
+                self.displayDict['caption'] += '%s: %d' %(f, self.nvisitsRequested[i])
+            self.displayDict['caption'] += '.'
+
     def run(self, dataSlice, slicePoint=None):
         """
         Compute the completeness for each filter, and then the minimum (joint) completeness for each slice.
@@ -86,7 +68,7 @@ class CompletenessMetric(BaseMetric):
             allCompleteness.append(filterVisits/np.float(nVis))
         allCompleteness.append(np.min(np.array(allCompleteness)))
         return np.array(allCompleteness)
-    
+
     def reduceu(self, completeness):
         if 'u' in self.filters:
             return completeness[np.where(self.filters == 'u')[0]]
@@ -113,14 +95,12 @@ class CompletenessMetric(BaseMetric):
         else:
             return 1
     def reducey(self, completeness):
-        if 'y' in self.filters:            
+        if 'y' in self.filters:
             return completeness[np.where(self.filters == 'y')[0]]
-        else: 
+        else:
             return 1
     def reduceJoint(self, completeness):
         """
         The joint completeness is just the minimum completeness for a point/field.
         """
         return completeness[-1]
-    
-    

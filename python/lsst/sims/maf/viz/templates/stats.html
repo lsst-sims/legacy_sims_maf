@@ -1,4 +1,5 @@
 {% extends "master.html" %}
+{% import 'macros.html' as mcr %}
 
 {% set active_page = "stats" %}
 
@@ -30,67 +31,21 @@
 	
 {% block content %}
 
-{% set metricInfo = run.metricInfo(run.metrics[0]) %}
-{% set ninfo = metricInfo|length %}
-
 {% for group in run.groups.keys() %}
    {% set groupstart = True %} 	
    {% for subgroup in run.groups[group] %}
-
+       {# Identify the metrics to put into table #}
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
-       {% set statNames = run.allStatNames(metrics) %}
-       {% if statNames|length > 0 %}
-        {% set ncols = statNames|length + ninfo %}
 
-       
-        <table>
-	{% if groupstart == True %}
-	   <a name="{{group}}"></a>
-	   {% set groupstart = False %}
-	{% endif %}	  
-        <tr class="lightestgray"> 
-	<td colspan={{ncols}}>
-	<a name="{{group}}_{{subgroup}}"> Group: <i>{{group }}</i>;  
-	     Subgroup: <i>{{ subgroup }}</i> </a> </td>
-        </tr>
-       
-        <tr>
-	 {% for key in metricInfo %}
-	 <th>{{ key }} </th>
-	 {% endfor %}
-	 {% for name in statNames %}
-	 <th> {{name}} </th>
-	 {% endfor %}
-	</tr>
+       {# add an anchor if it's the start of a group #}
+       {% if groupstart %}
+          <a name="{{group}}"></a>
+          {% set groupstart = False %}
+       {% endif %}	  
+      
+       {{ mcr.MakeStatTable(metrics, group, subgroup, run) }}
 
-        {% for metric in metrics %}
-          {% set metricInfo = run.metricInfo(metric) %}
-          {% set stats = run.statsForMetric(metric) %}
-	  {% set statDict = run.statDict(stats) %}
-          {% if statDict|length > 0 %}
-           <tr>
-           {% for key in metricInfo %}
-           <td>{{ metricInfo[key]|escape }}</td>
-           {% endfor %}
- 	   {% for statName in statNames %}
-	    <td>
-	      {% if statName in statDict.keys() %}
-	        {% if statName == 'Count' %} 
-                 {{ '%d'|format(statDict[statName]) }}
-	        {% else %}
-                 {{ '%.2f'|format(statDict[statName]) }}
-	        {% endif %}
-	     {% else %}
-	        {{ '--' }}
-	     {% endif %}
-	    </td>
-	   {% endfor %}
-	   </tr>
-	  {% endif %}
-      {% endfor %}	   
-     </table>
-     {% endif %}
-    {% endfor %}
- {% endfor %}
+    {% endfor %}  
+ {% endfor %}  {# end of group/subgroup #}
  
 {% endblock %}

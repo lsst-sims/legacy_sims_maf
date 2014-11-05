@@ -1,4 +1,5 @@
 {% extends "master.html" %}
+{% import 'macros.html' as mcr %}
 
 {% set active_page = "listMetrics" %}
 
@@ -38,28 +39,13 @@
   {% for metric in subsetMetrics %}  
     {% set metricInfo = run.metricInfo(metric) %}
     <div id="metricset">
-    <b>
-    {% for key in metricInfo %}
-     {{ '%s' %(metricInfo[key]) }}  /
-    {% endfor %}
-    </b>
-    </br>
+
+    {# Print the metric info #}
+    {{ mcr.PrintMetricInfo(runId, metric, metricInfo) }}
+
     {# Add the plots for this metric #}
-    {% set plotdict = run.plotsForMetric(metric) %}     
-    {% if plotdict|length > 0 %}
-     <table class="blank">
-     <tr class="blank" width=100%>
-     {% for ptype, plot in plotdict.iteritems() %}
-      {% set plotfile = run.getPlotfile(plot) %}
-      {% set thumbfile = run.getThumbfile(plot) %}
-       <td class="blank">
-	 <a href="{{plotfile}}"> <img class="thumbnail"
- src='{{thumbfile}}'></a>
-	</td>
-      {% endfor  %}
-     </tr>
-     </table>
-    {% endif %}
+    {% set metricPlots = run.plotsForMetric(metric) %}
+    {{ mcr.MakePlotTable(metricPlots, run) }}
 
     <p>
     {% set caption = run.captionForMetric(metric) %}
