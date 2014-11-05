@@ -89,6 +89,13 @@ class RobustRmsMetric(BaseMetric):
         rms = iqr/1.349 #approximation
         return rms
 
+class MaxPercentMetric(BaseMetric):
+    """Return the percent of the data which has the maximum value."""
+    def run(self, dataSlice, slicePoint=None):
+        nMax = np.size(np.where(dataSlice[self.colname] == np.max(dataSlice[self.colname]))[0])
+        percent = nMax/float(dataSlice[self.colname].size)*100.
+        return percent
+
 class BinaryMetric(BaseMetric):
     """Return 1 if there is data. """
     def run(self, dataSlice, slicePoint=None):
