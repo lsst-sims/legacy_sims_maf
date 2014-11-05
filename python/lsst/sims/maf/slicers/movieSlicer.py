@@ -10,7 +10,7 @@ import os
 
 class MovieSlicer(BaseSlicer):
     """movie Slicer."""
-    def __init__(self, sliceColName=None, sliceColUnits=None, 
+    def __init__(self, sliceColName=None, sliceColUnits=None,
                  bins=None, binMin=None, binMax=None, binsize=None,
                  verbose=True, badval=0, cumulative=True):
         """
@@ -18,7 +18,7 @@ class MovieSlicer(BaseSlicer):
         However, the data slices from the movieSlicer are intended to be fed to another slicer, which then
         (together with a set of Metrics) calculates metric values + plots at each slice created by the movieSlicer.
         The job of the movieSlicer is to track those slices and put them together into a movie.
-        
+
         'sliceColName' is the name of the data column to use for slicing.
         'sliceColUnits' lets the user set the units (for plotting purposes) of the slice column.
         'bins' can be a numpy array with the binpoints for sliceCol or a single integer value
@@ -43,8 +43,8 @@ class MovieSlicer(BaseSlicer):
             self.sliceColUnits = co.getUnits(self.sliceColName)
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
-                
-    def setupSlicer(self, simData): 
+
+    def setupSlicer(self, simData):
         """
         Set up bins in slicer.
         """
@@ -66,16 +66,16 @@ class MovieSlicer(BaseSlicer):
                 self.binMax = self.binMax + 1
         # Set bins.
         # Using binsize.
-        if self.binsize is not None:  
+        if self.binsize is not None:
             if self.bins is not None:
                 warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(self.binsize))
             self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
-            if hasattr(self.bins, '__iter__'):  
+            if hasattr(self.bins, '__iter__'):
                 self.bins = np.sort(self.bins)
-            # Or bins was a single value. 
+            # Or bins was a single value.
             else:
                 if self.bins is None:
                     self.bins = optimalBins(sliceCol, self.binMin, self.binMax)
@@ -101,13 +101,13 @@ class MovieSlicer(BaseSlicer):
                 """
                 Slice simData on oneD sliceCol, to return relevant indexes for slicepoint.
                 """
-                #this is the important part. The ids here define the pieces of data that get 
+                #this is the important part. The ids here define the pieces of data that get
                 #passed on to subsequent slicers
                 #cumulative version of 1D slicing
                 idxs = self.simIdxs[0:self.left[islice+1]]
                 return {'idxs':idxs,
                         'slicePoint':{'sid':islice, 'binLeft':0, 'binRight':self.bins[islice+1]}}
-            setattr(self, '_sliceSimData', _sliceSimData)      
+            setattr(self, '_sliceSimData', _sliceSimData)
         else:
             @wraps(self._sliceSimData)
             def _sliceSimData(islice):
@@ -118,7 +118,7 @@ class MovieSlicer(BaseSlicer):
                 return {'idxs':idxs,
                         'slicePoint':{'sid':islice, 'binLeft':self.bins[islice], 'binRight':self.bins[islice+1]}}
             setattr(self, '_sliceSimData', _sliceSimData)
-            
+
     def __eq__(self, otherSlicer):
         """
         Evaluate if slicers are equivalent.
@@ -136,13 +136,12 @@ class MovieSlicer(BaseSlicer):
             raise Exception('Cannot find output directory %s with movie input files.' %(outDir))
         #make video
         p = subprocess.check_call(['ffmpeg', '-r', str(ips), '-i',
-                         '%s/%s_%s_%s.%s' %(outDir, outfileroot, sliceformat, plotType, figformat), 
-                         '-c:v', 'libx264', '-r', 
-                         str(fps), '-pix_fmt', 'yuv420p',
+                         '%s/%s_%s_%s.%s' %(outDir, outfileroot, sliceformat, plotType, figformat),
+                         '-r', str(fps), '-pix_fmt', 'yuv420p',
                          '%s/%s_%s_%s_%s.mp4' %(outDir, outfileroot, plotType, str(ips), str(fps))])
         #make thumbnail gif
         p2 = subprocess.check_call(['ffmpeg','-i', '%s/%s_%s_%s_%s.mp4' %(outDir, outfileroot, plotType, str(ips), str(fps)),
-                        '-vf', 'scale=%s:%s' %(str(320),str(-1)), '-t', str(10), '-r', str(10), 
+                        '-vf', 'scale=%s:%s' %(str(320),str(-1)), '-t', str(10), '-r', str(10),
                         '%s/%s_%s_%s_%s.gif' %(outDir, outfileroot, plotType, str(ips), str(fps))])
 
 
