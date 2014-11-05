@@ -45,7 +45,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
 
-    def __init__(self, verbose=True, badval=-666):
+    def __init__(self, verbose=True, badval=-666, plotFuncs='all'):
         """
         Instantiate the base slicer object.
 
@@ -63,6 +63,9 @@ class BaseSlicer(object):
         Minimum set of __init__ kwargs:
         verbose: True/False flag to send extra output to screen
         badval: the value the Slicer uses to fill masked metric data values
+        plotFuncs:  default value of 'all' means the slicer will use all methods that start with 'plot'
+                    to gerenate plots.  Could be a string or list specifying specific methods that should
+                    be called when plotting.
         """
         self.verbose = verbose
         self.badval = badval
@@ -85,7 +88,11 @@ class BaseSlicer(object):
                 if p[0] == 'plotData':
                     pass
                 else:
-                    self.plotFuncs[p[0]] = p[1]
+                    if plotFuncs == 'all':
+                        self.plotFuncs[p[0]] = p[1]
+                    else:
+                        if p[0] in plotFuncs:
+                            self.plotFuncs[p[0]] = p[1]
         # Create a dict that saves how to re-init the slicer.
         #  This may not be the whole set of args/kwargs, but those which carry useful metadata or
         #   are absolutely necesary for init.
@@ -316,7 +323,7 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
 
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig',
                  savefig=True, thumbnail=True, **kwargs):
         """
         Call all available plotting methods.

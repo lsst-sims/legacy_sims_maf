@@ -13,13 +13,13 @@
 #-------------------------------------------------------------
 # python example_movie.py opsimblitz2_1060_sqlite.db --movieStepsize 20 --ips 6 --fps 6 --outDir myMovie --sqlConstraint "filter='g'"
 #(because we specified a relatively low step size this will be more computationally intensive but result in more usable images for a video)
-# movieStepsize: 
-#       Movie slicer will step through data with a stride of 180 days. Higher step size means fewer steps to reach the end of the 
-#       data, and fewer images. Conversely, a lower step size results in a greater number of images produced, and a greater number of calculations. 
+# movieStepsize:
+#       Movie slicer will step through data with a stride of 180 days. Higher step size means fewer steps to reach the end of the
+#       data, and fewer images. Conversely, a lower step size results in a greater number of images produced, and a greater number of calculations.
 #       At stepSize=1 a calculation is being made at each day.
 # fps:
-#       Can specify a fps. If fps is higher than ips it will 'copy' images to meet the fps requirement. If fps is lower than ips, it will cut out 
-#       images from the sequence to maintain the fps. (note: it will still cover the same number of images in a second, it just has to choose which 
+#       Can specify a fps. If fps is higher than ips it will 'copy' images to meet the fps requirement. If fps is lower than ips, it will cut out
+#       images from the sequence to maintain the fps. (note: it will still cover the same number of images in a second, it just has to choose which
 #       ones it can display.) As a rule of thumb a fps>30 is pointless, it takes more time, and isn't detectable to the human eye.
 # outDir:
 #       Can specify an output directory. If it doesn't already exist, it will make one.
@@ -32,7 +32,7 @@
 #-------------------------------------------------------------
 # python example_movie.py opsimblitz2_1060_sqlite.db -sc --outDir myMovie --movieLength 10
 # (may want to specify movieStepsize smaller than default of 365.25, or it will be very choppy and discontinuous for long movieLengths)
-# movieLength: 
+# movieLength:
 #       Can specify the length of the video in seconds. will automatically calculate corresponding ips & fps.
 #-------------------------------------------------------------
 import sys, os, argparse
@@ -53,7 +53,7 @@ import fnmatch
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
-    
+
 def setupMovieSlicer(simdata, binsize = 365.25, cumulative=True):
     t = time.time()
     ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize, cumulative=cumulative)
@@ -61,43 +61,43 @@ def setupMovieSlicer(simdata, binsize = 365.25, cumulative=True):
     dt, t = dtime(t)
     print 'Set up movie slicer in %f s' %(dt)
     return ms
-    
+
 def setupHealpixSlicer(simdatasubset, racol, deccol, nside):
     t = time.time()
-    hs = slicers.HealpixSlicer(nside=nside, spatialkey1=racol, spatialkey2=deccol)    
+    hs = slicers.HealpixSlicer(nside=nside, spatialkey1=racol, spatialkey2=deccol, plotFuncs='plotSkyMap')
     hs.setupSlicer(simdatasubset)
     dt, t = dtime(t)
     print 'Set up healpix slicer and built kdtree %f s' %(dt)
     return hs
-    
+
 
 def setupMetrics():
     # Set up metrics.
     t = time.time()
     metricList = []
     #Simple metrics: coadded depth and number of visits
-    # metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5Metric', 
-    #                                          plotParams={'colorMin':25, 'colorMax':28}))
+    # metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5Metric',
+    #                                          plotDict={'colorMin':25, 'colorMax':28}))
     # metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-    #                                        plotParams={'logScale':False,
+    #                                        plotDict={'logScale':False,
     #                                                    'colorMin':0, 'colorMax':320,
     #                                                    'cbarFormat': '%d', 'title':'Number of Visits '}))
     # metricList.append(metrics.SumMetric('expMJD', metricName='Sum',
-    #                                       plotParams={'logScale':True,
+    #                                       plotDict={'logScale':True,
     #                                                   'cbarFormat': '%d', 'title':'Sum Metric'}))
     metricList.append(metrics.CountMetric('expMJD', metricName='Number of Visits',
-                                          plotParams={'logScale':False,
+                                          plotDict={'logScale':False,
                                                       'colorMin':0, 'colorMax':300,
                                                       'cbarFormat': '%d'}))
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
     return metricList
-    
-    
+
+
 def run(opsimName, metadata, simdata, metricList, args):
     """Do the work to run the movie slicer, and at each step, setup the healpix slicer and run the metrics,
     making the plots."""
-    
+
     sliceformat = '%04d'
 
     #calculation of metrics
@@ -111,38 +111,38 @@ def run(opsimName, metadata, simdata, metricList, args):
             timeInterval = '%.2f to %.2f' %(movieslice['slicePoint']['binLeft']-start_date, movieslice['slicePoint']['binRight']-start_date)
             print 'working on time interval %s' %(timeInterval)
             slicenumber = '%.4d' %(i)
-            
+
             #adding day number to title of plot
             if args.cumulative:
                 for metric in metricList:
-                    metric.plotParams['label'] = 'day: ' + str(i*args.movieStepsize) + '\n' + args.sqlConstraint
+                    metric.plotDict['label'] = 'day: ' + str(i*args.movieStepsize) + '\n' + args.sqlConstraint
             else:
                 for metric in metricList:
-                    metric.plotParams['label'] = 'time interval: ' + '\n' + timeInterval + '\n'+ '\n' + args.sqlConstraint
-              
+                    metric.plotDict['label'] = 'time interval: ' + '\n' + timeInterval + '\n'+ '\n' + args.sqlConstraint
+
             # Identify the subset of simdata in the movieslicer 'data slice'
             simdatasubset = simdata[movieslice['idxs']]
             # Set up healpix slicer on subset of simdata provided by movieslicer
             hs = setupHealpixSlicer(simdatasubset, 'ditheredRA', 'ditheredDec', args.nside)
             # Set up sliceMetric to handle healpix slicer + metrics calculation + plotting
-            sm = sliceMetrics.RunSliceMetric(outDir=args.outDir, useResultsDb=False, 
-                                            figformat='png', dpi=600, thumbnail=False)
+            sm = sliceMetrics.RunSliceMetric(outDir=args.outDir, useResultsDb=False,
+                                            figformat='png', dpi=72, thumbnail=False)
             sm.setSlicer(hs)
             sm.setMetrics(metricList)
             # Calculate metric data values for simdatasubset
             sm.runSlices(simdatasubset, simDataName=opsimName)
             # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
             sm.plotAll(outfileSuffix=slicenumber, closefig=True)
-            
+
             # Write the data -- uncomment if you want to do this.
             # sm.writeAll(outfileSuffix=slicenumber)
-            
+
             dt, t = dtime(t)
             print 'Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt)
     else:
         #create movieslicer to call plotMovie
         movieslicer = slicers.MovieSlicer()
-    
+
     outfileroots = []
     for metric in metricList:
         #Create plot names
@@ -159,11 +159,11 @@ def run(opsimName, metadata, simdata, metricList, args):
             n_images = len(fnmatch.filter(os.listdir(args.outDir), outfileroots[0] + '*SkyMap.png'))
             print outfileroots[0]
             if n_images == 0:
-                warnings.warn('Targeted files did not match directory contents. Make sure the parameters of this run, match the files. (for instance metrics)') 
+                warnings.warn('Targeted files did not match directory contents. Make sure the parameters of this run, match the files. (for instance metrics)')
             #calculate images/second rate
             args.ips = n_images/args.movieLength
         print "for a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips
-    
+
     if args.fps == 0.0:
             warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
             if args.ips <= 30.0:
@@ -173,9 +173,9 @@ def run(opsimName, metadata, simdata, metricList, args):
     # Create the movie for every metric that was run
     for outroot in outfileroots:
         movieslicer.plotMovie(outroot, sliceformat, plotType='SkyMap', figformat='png', outDir=args.outDir, ips=args.ips, fps=args.fps)
-    
+
 if __name__ == '__main__':
-    
+
     # Parse command line arguments for database connection info.
     parser = argparse.ArgumentParser()
     parser.add_argument("opsimDb", type=str, help="Filename for opsim sqlite db file")
@@ -186,12 +186,12 @@ if __name__ == '__main__':
                         help="NSIDE parameter for healpix grid resolution. Default 64.")
     parser.add_argument("--outDir", type=str, default='Output', help="Output directory.")
     parser.add_argument("-bin", "--cumulative", action = 'store_false', default=True, help="Create cumulative movie, or bin?")
-    parser.add_argument("--ips", type=float, default = 10.0, 
+    parser.add_argument("--ips", type=float, default = 10.0,
                         help="The number of images per second in the movie. Will skip accordingly if fps is lower.")
     parser.add_argument("--fps", type=float, default = 0.0, help="The frames per second of the movie.")
-    parser.add_argument("-sc", "--skipComp", action = 'store_false', default=True, 
+    parser.add_argument("-sc", "--skipComp", action = 'store_false', default=True,
                         help="Compute the metrics(True), or just make movie from existing files(False).")
-    parser.add_argument("--movieLength", type=float, default=0.0, 
+    parser.add_argument("--movieLength", type=float, default=0.0,
                         help="Enter the desired length of the movie in seconds. If you do so, there is no need to enter images per second, it will be calculated.")
     args = parser.parse_args()
     start_t = time.time()
@@ -201,14 +201,14 @@ if __name__ == '__main__':
     if not os.path.isdir(args.outDir):
          warnings.warn('Cannot find output directory named %s, creating directory.' %(args.outDir))
          os.mkdir(args.outDir)
-    
+
     # Get db connection info, and connect to database.
     dbAddress = 'sqlite:///' + args.opsimDb
     oo = db.OpsimDatabase(dbAddress)
     opsimName = oo.fetchOpsimRunName()
     sqlconstraint = args.sqlConstraint
-    
-    # Set up metrics. 
+
+    # Set up metrics.
     metricList = setupMetrics()
     # Find columns that are required by metrics.
     colnames = list(metricList[0].colRegistry.colSet)
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     colnames += moviecol
     # Remove duplicates.
     colnames = list(set(colnames))
-    
+
     # Get data from database.
     simdata = oo.fetchMetricData(colnames, sqlconstraint)
     # Run the movie slicer (and at each step, healpix slicer and calculate metrics).

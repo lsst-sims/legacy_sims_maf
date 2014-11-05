@@ -17,11 +17,11 @@ from .baseSpatialSlicer import BaseSpatialSlicer
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100):
+                 useCache=True, radius=1.75, leafsize=100, **kwargs):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
-                                            badval=hp.UNSEEN, radius=radius, leafsize=leafsize)
+                                            badval=hp.UNSEEN, radius=radius, leafsize=leafsize, **kwargs)
         # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)

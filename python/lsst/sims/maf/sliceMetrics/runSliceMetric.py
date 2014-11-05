@@ -308,7 +308,7 @@ class RunSliceMetric(BaseSliceMetric):
                                                               self.metadatas[iid], None)
           if self.displayDicts[iid]['subgroup'] is None:
              self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
-          self.resultsDb.addDisplay(self.metricIds[iid], self.displayDicts[iid])
+          self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
 
     def plotAll(self, savefig=True, closefig=False, outfileRoot=None, outfileSuffix=None, verbose=True):
         """

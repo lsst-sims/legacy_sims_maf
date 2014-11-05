@@ -170,8 +170,6 @@ class BaseSliceMetric(object):
        for iid in self.metricValues:
           outfilename = self.writeMetric(iid, comment=comment,
                                          outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
-          newiids.append(iid)
-       return newiids
 
     def writeMetric(self, iid, comment='', outfileRoot=None, outfileSuffix=None):
         """

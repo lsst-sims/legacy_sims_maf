@@ -19,14 +19,14 @@ from .baseSlicer import BaseSlicer
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75):
+                 badval=-666, leafsize=100, radius=1.75, **kwargs):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
         the simData KDtree
         and slicePoint RA/Dec values will be produced."""
-        super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
+        super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval, **kwargs)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.columnsNeeded = [spatialkey1, spatialkey2]
