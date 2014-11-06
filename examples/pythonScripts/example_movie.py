@@ -35,16 +35,13 @@
 # movieLength:
 #       Can specify the length of the video in seconds. will automatically calculate corresponding ips & fps.
 #-------------------------------------------------------------
-import sys, os, argparse
-import numpy as np
+import os, argparse
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.sliceMetrics as sliceMetrics
-import glob
 import time
 import warnings
 import fnmatch
@@ -172,7 +169,8 @@ def run(opsimName, metadata, simdata, metricList, args):
                 args.fps = 30.0
     # Create the movie for every metric that was run
     for outroot in outfileroots:
-        movieslicer.plotMovie(outroot, sliceformat, plotType='SkyMap', figformat='png', outDir=args.outDir, ips=args.ips, fps=args.fps)
+       out = outroot.split('/')[-1]
+       movieslicer.plotMovie(out, sliceformat, plotType='SkyMap', figformat='png', outDir=args.outDir, ips=args.ips, fps=args.fps)
 
 if __name__ == '__main__':
 

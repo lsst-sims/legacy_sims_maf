@@ -1,13 +1,10 @@
 ## EXAMPLE
 
-import sys, os, argparse
-import numpy as np
-import matplotlib.pyplot as plt
+import argparse
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.sliceMetrics as sliceMetrics
-import glob
 
 import time
 def dtime(time_prev):
@@ -18,7 +15,7 @@ def getMetrics():
     t = time.time()
     # Set up metrics.
     metricList = []
-    # Simple metrics: 
+    # Simple metrics:
     metricList.append(metrics.HourglassMetric())
     dt, t = dtime(t)
     print 'Set up metrics %f s' %(dt)
@@ -56,16 +53,16 @@ if __name__ == '__main__':
     parser.add_argument("simDataTable", type=str, help="Filename of opsim database")
     parser.add_argument("--sqlConstraint", type=str, default="", help="SQL constraint")
     args = parser.parse_args()
-    
+
     # Get opsim info / db connection.
     dbAddress = 'sqlite:///' + args.simDataTable
     oo = db.OpsimDatabase(dbAddress)
 
     opsimrun = oo.fetchOpsimRunName()
-    
+
     sqlconstraint = args.sqlConstraint
-    
-    # Set up metrics. 
+
+    # Set up metrics.
     metricList = getMetrics()
 
     # Find columns that are required.
@@ -73,10 +70,10 @@ if __name__ == '__main__':
 
     # Get opsim simulation data
     simdata = oo.fetchMetricData(colnames, sqlconstraint)
-    
+
     # And set up slicer.
     slicerList = getSlicer(simdata, metricList)
-    
+
     # Okay, go calculate the metrics.
     metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
     gm = goSlicePlotWrite(opsimrun, metadata, simdata, slicerList, metricList)

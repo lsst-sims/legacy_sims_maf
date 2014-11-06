@@ -10,7 +10,6 @@ import fnmatch
 import shutil
 import unittest
 
-
 def setupMovieSlicer(simdata, binsize = 365.25, cumulative=True):
     ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize, cumulative=cumulative)
     ms.setupSlicer(simdata)
@@ -20,7 +19,6 @@ def setupHealpixSlicer(simdatasubset, racol, deccol, nside):
     hs = slicers.HealpixSlicer(nside=nside, spatialkey1=racol, spatialkey2=deccol, plotFuncs='plotSkyMap')
     hs.setupSlicer(simdatasubset)
     return hs
-
 
 def setupMetrics():
     # Set up metrics.
@@ -152,7 +150,6 @@ class TestMovieSlicer(unittest.TestCase):
         colnames += moviecol
         # Remove duplicates.
         colnames = list(set(colnames))
-
         # Get data from database.
         simdata = oo.fetchMetricData(colnames, self.args.sqlConstraint)
         # Run the movie slicer (and at each step, healpix slicer and calculate metrics).
