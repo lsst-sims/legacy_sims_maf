@@ -15,12 +15,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Copy MAF output directory using rsync")
     parser.add_argument("dirSource", type=str, help="directory to copy")
     parser.add_argument("dirDest", type=str, help="destination to copy to")
-    parser.add_argument("--noNpz", dest='noNpz', action='store_true', help="skip the .npz files")
-    parser.set_defaults(noNpz=False)
-    parser.add_argument("--noPdf", dest='noPdf', action='store_true', help="skip the .pdf files")
-    parser.set_defaults(noPdf=False)
+    parser.add_argument("--noNpz", dest='noNpz', default=False, action='store_true', help="skip the .npz files")
+    parser.add_argument("--noPdf", dest='noPdf', default=False, action='store_true', help="skip the .pdf files")
     args = parser.parse_args()
-
     source = args.dirSource
     while source[-1] == '/':
         warnings.warn('stripping trailing slash on the source directory')
@@ -28,7 +25,7 @@ if __name__ == "__main__":
 
     dest = args.dirDest
 
-    callList = ['rsync', '-av']
+    callList = ['rsync', '-rav']
     if args.noNpz:
         callList.append("--exclude '*.npz'")
     if args.noPdf:
