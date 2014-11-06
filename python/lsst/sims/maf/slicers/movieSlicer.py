@@ -136,15 +136,18 @@ class MovieSlicer(BaseSlicer):
             raise Exception('Cannot find output directory %s with movie input files.' %(outDir))
         #make video
         callList = ['ffmpeg', '-r', str(ips), '-i',
-                         '%s/%s_%s_%s.%s' %(outDir, outfileroot, sliceformat, plotType, figformat),
-                         '-r', str(fps), '-pix_fmt', 'yuv420p',
-                         '%s/%s_%s_%s_%s.mp4' %(outDir, outfileroot, plotType, str(ips), str(fps))]
+                    os.path.join(outDir,'%s_%s_%s.%s'%(outfileroot, sliceformat, plotType, figformat)),
+                    '-r', str(fps), '-pix_fmt', 'yuv420p',
+                    os.path.join(outDir,'%s_%s_%s_%s.mp4' %(outfileroot, plotType, str(ips), str(fps)))]
         print 'Attempting to call ffmpeg with:'
         print ' '.join(callList)
         p = subprocess.check_call(callList)
         #make thumbnail gif
-        p2 = subprocess.check_call(['ffmpeg','-i', '%s/%s_%s_%s_%s.mp4' %(outDir, outfileroot, plotType, str(ips), str(fps)),
-                        '-vf', 'scale=%s:%s' %(str(320),str(-1)), '-t', str(10), '-r', str(10),
-                        '%s/%s_%s_%s_%s.gif' %(outDir, outfileroot, plotType, str(ips), str(fps))])
+        callList = ['ffmpeg','-i',os.path.join(outDir,'%s_%s_%s_%s.mp4' %(outfileroot, plotType, str(ips), str(fps))),
+                                               '-vf', 'scale=%s:%s' %(str(320),str(-1)), '-t', str(10), '-r', str(10),
+                    os.path.join(outDir,'%s_%s_%s_%s.gif' %(outfileroot, plotType, str(ips), str(fps)))]
+        print 'converting to animated gif with:'
+        print ' '.join(callList)
+        p2 = subprocess.check_call(callList)
 
 
