@@ -177,7 +177,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     metricDict = makeDict(*metricList)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
                              metadataVerbatim=True)
-    #slicerList.append(slicer)
+    slicerList.append(slicer)
 
 
 
@@ -194,8 +194,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                           displayDict={'group':'Technical', 'subgroup':colDict[key]}))
 
     metricDict = makeDict(*metricList)
-    slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=['from slewMaxSpeeds'], metadata='',
-                             metadataVerbatim=True)
+    slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='',
+                             metadataVerbatim=True, table='slewMaxSpeeds')
     #slicerList.append(slicer)
 
 
@@ -205,15 +205,15 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     for slewType in slewTypes:
         metricList = []
         metricList.append(configureMetric('MeanMetric',
-                                          kwargs={'col':'actDelay' ,'metricName':'Mean%s'%slewType},
+                                          kwargs={'col':'actDelay' ,'metricName':'Mean %s'%slewType},
                                           displayDict={'group':'Technical', 'subgroup':slewType}) )
         metricList.append(configureMetric('MaxMetric',
-                                          kwargs={'col':'actDelay', 'metricName':'Max%s'%slewType},
+                                          kwargs={'col':'actDelay', 'metricName':'Max %s'%slewType},
                                           displayDict={'group':'Technical', 'subgroup':slewType}) )
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,
-                                 constraints=['activity = "%s" from slewActivities'%slewType], metadata='',
-                                 metadataVerbatim=True)
+                                 constraints=['activity = "%s"'%slewType], metadata='',
+                                 metadataVerbatim=True, table='slewActivities')
         slicerList.append(slicer)
 
 
@@ -229,9 +229,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                           displayDict={'group':'Technical', 'subgroup':slewType}) )
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,
-                                 constraints=['from slewActivities'], metadata='',
-                                 metadataVerbatim=True)
-        slicerList.append(slicer)
+                                 constraints=[''], metadata='',
+                                 metadataVerbatim=True, table='slewActivities')
+        #slicerList.append(slicer)
 
     config.slicers=makeDict(*slicerList)
     return config
