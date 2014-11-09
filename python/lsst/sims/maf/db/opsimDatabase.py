@@ -263,6 +263,13 @@ class OpsimDatabase(Database):
         runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
         return runName
 
+    def fetchTotalSlewN(self):
+        """Fetch the total slew time."""
+        table = self.tables['slewActivitiesTable']
+        res = table.query_columns_Array(constraint='actDelay>0', colnames=['actDelay'])
+        return res['actDelay'].size
+
+
     def fetchConfig(self):
         """Fetch config data from configTable, match proposal IDs with proposal names and some field data,
         and do a little manipulation of the data to make it easier to add to the presentation layer.
