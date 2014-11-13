@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
+import warnings
 import numpy.lib.recfunctions as rfn
 import numpy.ma as ma
 import matplotlib
@@ -19,10 +20,10 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     data = []
     # Generate data values min - max.
     datavalues = np.arange(0, size, dtype='float')
-    datavalues *= (float(maxval) - float(minval)) / (datavalues.max() - datavalues.min()) 
+    datavalues *= (float(maxval) - float(minval)) / (datavalues.max() - datavalues.min())
     datavalues += minval
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     datavalues = np.array(zip(datavalues), dtype=[('testdata', 'float')])
@@ -31,7 +32,7 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     ra = np.arange(0, size, dtype='float')
     ra *= (float(ramax) - float(ramin)) / (ra.max() - ra.min())
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         ra = ra[randind]
     ra = np.array(zip(ra), dtype=[('ra', 'float')])
@@ -41,7 +42,7 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     v += (np.cos(decmin+np.pi)+1.)/2.0
     dec = np.arccos(2*v-1) - np.pi
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         dec = dec[randind]
     dec = np.array(zip(dec), dtype=[('dec', 'float')])
@@ -50,7 +51,7 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     return data
 
 def calcDist_vincenty(RA1, Dec1, RA2, Dec2):
-    """Calculates distance on a sphere using the Vincenty formula. 
+    """Calculates distance on a sphere using the Vincenty formula.
     Give this function RA/Dec values in radians. Returns angular distance(s), in radians.
     Note that since this is all numpy, you could input arrays of RA/Decs."""
     D1 = (np.cos(Dec2)*np.sin(RA2-RA1))**2 + \
@@ -62,7 +63,7 @@ def calcDist_vincenty(RA1, Dec1, RA2, Dec2):
     D = np.arctan2(D1,D2)
     return D
 
-class TestHealpixSlicerSetup(unittest.TestCase):    
+class TestHealpixSlicerSetup(unittest.TestCase):
     def testSlicertype(self):
         """Test instantiation of slicer sets slicer type as expected."""
         testslicer = HealpixSlicer(nside=16, verbose=False)
@@ -91,7 +92,7 @@ class TestHealpixSlicerEqual(unittest.TestCase):
                                 decmin=-np.pi, decmax=0,
                                 random=True)
         self.testslicer.setupSlicer(self.dv)
-        
+
     def tearDown(self):
         del self.testslicer
         del self.dv
@@ -104,7 +105,7 @@ class TestHealpixSlicerEqual(unittest.TestCase):
         self.assertEqual(self.testslicer, testslicer2)
         testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False)
         self.assertNotEqual(self.testslicer, testslicer2)
-        
+
 class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.nside = 8
@@ -153,13 +154,13 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
                                 ramin=0, ramax=2*np.pi,
                                 decmin=-np.pi, decmax=0,
                                 random=True)
-        
+
 
 
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
-    
+
     def testSlicing(self):
         """Test slicing returns (all) data points which are within 'radius' of bin point."""
         # Test that slicing fails before setupSlicer
@@ -171,7 +172,7 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
             dec = s['slicePoint']['dec']
             distances = calcDist_vincenty(ra, dec, self.dv['ra'], self.dv['dec'])
             didxs = np.where(distances<=np.radians(self.radius))
-            sidxs = s['idxs'] 
+            sidxs = s['idxs']
             self.assertEqual(len(sidxs), len(didxs[0]))
             if len(sidxs) > 0:
                 didxs = np.sort(didxs[0])
@@ -194,7 +195,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                          mask = np.zeros(len(self.testslicer), 'bool'),
                                          fill_value = self.testslicer.badval)
         for i, b in enumerate(self.testslicer):
-            idxs = b['idxs'] 
+            idxs = b['idxs']
             if len(idxs) > 0:
                 self.metricdata.data[i] = np.mean(self.dv['testdata'][idxs])
             else:
@@ -214,7 +215,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                         clims=None, logScale=False, cbarFormat='%.2g')
         self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
                         clims=None, logScale=False, cbarFormat='%.2g')
-    
+
     def testPowerSpectrum(self):
         """Test plotting the power spectrum (mean of random data)."""
         self.testslicer.plotPowerSpectrum(self.metricdata, title='Mean of random test data',
@@ -225,7 +226,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                           fignum=None, maxl=500.,
                                           legendLabel=None, addLegend=False, removeDipole=True,
                                           verbose=False)
-        
+
     def testHistogram(self):
         """Test plotting the histogram (mean of random data)."""
         self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
@@ -243,8 +244,15 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                                       legendloc='upper left',
                                       bins=100, cumulative=False, xMin=None, xMax=None,
                                       logScale=False, flipXaxis=False, scale=None)
-                    
 
-        
+    def testWarning(self):
+        """Test a warning gets thrown if wrong plotFunc name used."""
+        with warnings.catch_warnings(record=True) as w:
+            self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
+                                            spatialkey1='ra', spatialkey2='dec', radius=self.radius,
+                                            plotFuncs='plotNotAName')
+            self.assertTrue('NotAName' in str(w[-1].message))
+
+
 if __name__ == "__main__":
     unittest.main()
