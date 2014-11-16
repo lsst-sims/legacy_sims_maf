@@ -1,6 +1,6 @@
 import matplotlib
 matplotlib.use("Agg")
-import numpy as np 
+import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import unittest
@@ -12,9 +12,11 @@ import os
 import inspect
 import shutil
 
+#Make sure latex is off to pass install:
+matplotlib.rc('text', usetex=False)
 
 class TestDriver(unittest.TestCase):
-    
+
     def setUp(self):
         # Files to loop over
         self.cfgFiles = ['mafconfigTest.cfg']
@@ -171,13 +173,10 @@ class TestDriver(unittest.TestCase):
                 assert(os.path.isfile(configIn.outputDir+'/'+filename))
             assert(nout == len(nnpz))
 
-            
+
     def tearDown(self):
         if os.path.isdir('Output'):
             shutil.rmtree('Output')
-       
+
 if __name__ == '__main__':
     unittest.main()
-
-
-
