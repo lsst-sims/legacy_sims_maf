@@ -19,15 +19,16 @@ class RunSliceMetric(BaseSliceMetric):
     and the slicer type that produced the metric data.
     """
     def __init__(self, useResultsDb=True, resultsDbAddress=None,
-                 figformat='pdf', dpi=600, outDir='Output'):
+                 figformat='pdf', dpi=600, outDir='Output', thumbnail=True):
         """
         Instantiate the RunSliceMetric.
         """
         super(RunSliceMetric, self).__init__(useResultsDb=useResultsDb, resultsDbAddress=resultsDbAddress,
-                                             figformat=figformat, dpi=dpi, outDir=outDir)
+                                             figformat=figformat, dpi=dpi, outDir=outDir, thumbnail=True)
         # Add dictionary to save metric objects
         self.metricObjs = {}
         self.slicer = None
+        self.thumbnail = thumbnail
 
     def metricObjIid(self, metricObj):
        """
@@ -253,7 +254,7 @@ class RunSliceMetric(BaseSliceMetric):
         return summaryValues
 
 
-    def writeMetric(self, iid, comment='', outfileRoot=None):
+    def writeMetric(self, iid, comment='', outfileRoot=None, outfileSuffix=None):
         """
         Write metric values 'metricName' to disk.
 
@@ -261,10 +262,11 @@ class RunSliceMetric(BaseSliceMetric):
            metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
        """
-        super(RunSliceMetric, self).writeMetric(iid, comment=comment, outfileRoot=outfileRoot)
+        super(RunSliceMetric, self).writeMetric(iid, comment=comment, outfileRoot=outfileRoot,
+                                                outfileSuffix=outfileSuffix)
         # For driver merged histograms .. need to update this later.
         if iid in self.metricObjs:
-            outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot) + '.npz'
+            outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix) + '.npz'
             self.metricObjs[iid].saveFile = outfile
 
 
@@ -308,18 +310,20 @@ class RunSliceMetric(BaseSliceMetric):
              self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
           self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
 
-    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, verbose=True):
+    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, outfileSuffix=None, verbose=True):
         """
         Plot histograms and skymaps (where relevant) for all metrics.
         """
         for iid in self.metricValues:
-           plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot)
-           if closefig:
-              plt.close('all')
-           if plotfigs is None and verbose:
-              warnings.warn('Not plotting metric data for %s' %(self.metricNames[iid]))
+            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot,
+                                       outfileSuffix=outfileSuffix)
+            if closefig:
+               plt.close('all')
+            if plotfigs is None and verbose:
+                warnings.warn('Not plotting metric data for %s' %(mname))
 
-    def plotMetric(self, iid, savefig=True, outfileRoot=None):
+
+    def plotMetric(self, iid, savefig=True, outfileRoot=None, outfileSuffix=None):
         """
         Create all plots for 'metricName' .
         """
@@ -344,10 +348,11 @@ class RunSliceMetric(BaseSliceMetric):
                 pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
         # Plot the data.
         # Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
-        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot)
+        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
         plotResults = self.slicer.plotData(self.metricValues[iid], savefig=savefig,
                                            figformat=self.figformat, dpi=self.dpi,
-                                           filename=os.path.join(self.outDir, outfile), **pParams)
+                                           filename=os.path.join(self.outDir, outfile),
+                                           thumbnail = self.thumbnail, **pParams)
         # Save information about the plotted files.
         if self.resultsDb:
             if iid not in self.metricIds:
