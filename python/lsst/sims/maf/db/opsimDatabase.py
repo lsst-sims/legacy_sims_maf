@@ -217,6 +217,15 @@ class OpsimDatabase(Database):
         runLength = float(runLength['paramValue'][0]) # Years
         return runLength
 
+    def fetchLatLonHeight(self):
+        """Fetch the latitude, longitude, and height of the telescope used by the config file."""
+        table = self.tables['configTable']
+        lat = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'latitude'")
+        lon = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'longitude'")
+        height = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'height'")
+        return float(lat['paramValue'][0]),float(lon['paramValue'][0]),float(height['paramValue'][0])
+
+
     def fetchNVisits(self, propID=None):
         """Fetch the total number of visits in the simulation (or total number of visits for a particular propoal).
         Convenience function for setting user-defined benchmark values.
