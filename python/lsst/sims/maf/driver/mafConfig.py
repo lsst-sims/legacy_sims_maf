@@ -51,6 +51,7 @@ class SlicerConfig(pexConfig.Config):
     metricDict = pexConfig.ConfigDictField(doc="dict of index: metric config", keytype=int,
                                            itemtype=MetricConfig, default={})
     constraints = pexConfig.ListField("", dtype=str, default=[])
+    table = pexConfig.Field("Table to use for query", dtype=str, default='Summary')
     stackerDict = pexConfig.ConfigDictField(doc="dict of index: ColstackConfig",
                                           keytype=int, itemtype=ColStackConfig, default={})
     mapsDict = pexConfig.ConfigDictField(doc="dict of index: MapConfig",
@@ -154,7 +155,7 @@ def configureMetric(name, kwargs={}, plotDict={}, summaryStats={}, histMerge={},
     return mc
 
 def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerDict=None,
-                    mapsDict=None, metadata='', metadataVerbatim=False):
+                    mapsDict=None, metadata='', metadataVerbatim=False, table=None):
     """
     Helper function to generate a Slicer pex config object.
     """
@@ -170,6 +171,8 @@ def configureSlicer(name, kwargs={}, metricDict=None, constraints=[''], stackerD
         slicer.stackerDict = stackerDict
     if mapsDict:
         slicer.mapsDict = mapsDict
+    if table:
+        slicer.table = table
 
     return slicer
 
@@ -218,8 +221,3 @@ def config2dict(config):
     kwargs = readMixConfig(config.kwargs)
     name = config.name
     return name, kwargs
-
-
-
-
-
