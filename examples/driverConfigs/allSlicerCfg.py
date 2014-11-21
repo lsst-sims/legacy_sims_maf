@@ -21,11 +21,11 @@ slicerList=[]
 nside=128
 
 # List of SQL constraints.
-# If multiple constraints are listed in a slicer object, they are looped over and each one is executed individualy.  
+# If multiple constraints are listed in a slicer object, they are looped over and each one is executed individualy.
 constraints = ["filter = \'%s\'"%'r', "filter = \'%s\' and night < 730"%'r']
 
 # Configure a Healpix slicer:
-# Configure 2 metrics to run on the Healpix slicer.  
+# Configure 2 metrics to run on the Healpix slicer.
 m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'},
                      plotDict={'percentileClip':80., 'units':'#'},
                      summaryStats={'MeanMetric':{},'RmsMetric':{}})
@@ -92,6 +92,17 @@ slicer = configureSlicer('fOSlicer', kwargs={'nside':fOnside},
                          metricDict=makeDict(m1),
                          constraints=[''])
 slicerList.append(slicer)
+
+
+# Run things at a single point
+metricList = []
+metricList.append(configureMetric('MeanMetric', kwargs={'col':'finSeeing'}))
+slicer = configureSlicer('UserPointsSlicer',
+                         kwargs={'ra':0.,'dec':0.},
+                         constraints=['filter="r"'],
+                         metricDict=makeDict(*metricList))
+slicerList.append(slicer)
+
 
 # Save all the slicers to the config
 root.slicers=makeDict(*slicerList)
