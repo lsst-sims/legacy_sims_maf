@@ -266,8 +266,9 @@ class OpsimDatabase(Database):
     def fetchTotalSlewN(self):
         """Fetch the total slew time."""
         table = self.tables['slewActivitiesTable']
-        res = table.query_columns_Array(constraint='actDelay>0', colnames=['actDelay'])
-        return res['actDelay'].size
+        res = table.query_columns_Array(constraint='actDelay>0', colnames=['SlewHistory_slewID'])
+        result = np.size(np.unique(res['SlewHistory_slewID']))
+        return result
 
 
     def fetchConfig(self):

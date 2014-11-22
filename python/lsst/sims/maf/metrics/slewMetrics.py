@@ -36,3 +36,19 @@ class ActiveMeanMetric(BaseMetric):
         good = np.where(dataSlice[self.activeCol] == self.activity)[0]
         result = np.mean(dataSlice[self.col][good])*self.norm
         return result
+
+class ActiveMaxMetric(BaseMetric):
+    def __init__(self, col=None, activity=None, activeCol='activity',
+                 **kwargs):
+        """Return the Max """
+        self.col = col
+        col = [col]
+        col.append(activeCol)
+        self.activeCol = activeCol
+        self.activity = activity
+        super(ActiveMaxMetric, self).__init__(col=col, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        good = np.where(dataSlice[self.activeCol] == self.activity)[0]
+        result = np.max(dataSlice[self.col][good])
+        return result
