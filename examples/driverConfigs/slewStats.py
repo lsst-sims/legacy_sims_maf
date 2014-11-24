@@ -136,7 +136,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     histNum = 0
 
 
-    # Some other summary statistics over all filters and all proposals.
+
     # Calculate the mean and median slewtime.
     metricList = []
     # Mean Slewtime
@@ -165,7 +165,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     metricDict = makeDict(*metricList)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
                              metadataVerbatim=True)
-    #slicerList.append(slicer)
+    slicerList.append(slicer)
 
 
 
@@ -222,8 +222,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                           displayDict={'group':'Slew', 'subgroup':slewType}) )
         metricList.append(configureMetric('ActiveMeanMetric',
                                           kwargs={'col':'actDelay', 'activity':slewType,
-                                                  'metricName':'ActiveAve',
-                                                  'norm':100./totalSlewN},
+                                                  'metricName':'ActiveAve'},
                                           displayDict={'group':'Slew', 'subgroup':slewType}) )
         metricList.append(configureMetric('ActiveMaxMetric',
                                           kwargs={'col':'actDelay', 'activity':slewType,
@@ -244,8 +243,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                           displayDict={'group':'Slew', 'subgroup':slewType}) )
         metricList.append(configureMetric('ActiveMeanMetric',
                                           kwargs={'col':'actDelay', 'activity':slewType,
-                                                  'metricName':'ActiveAve in crit',
-                                                  'norm':100./totalSlewN},
+                                                  'metricName':'ActiveAve in crit'},
                                           displayDict={'group':'Slew', 'subgroup':slewType}) )
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,

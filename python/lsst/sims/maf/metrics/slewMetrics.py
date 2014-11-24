@@ -23,7 +23,7 @@ class ActivePercentMetric(BaseMetric):
 class ActiveMeanMetric(BaseMetric):
     def __init__(self, col=None, activity=None, activeCol='activity',
                  norm=1., **kwargs):
-        """Return the Count multiplied by some norm """
+        """Return the Mean multiplied by some norm """
         self.col = col
         col = [col]
         col.append(activeCol)
