@@ -240,6 +240,24 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                      constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
 
+    # Count the number of visits including all filters, WFD only
+    metricList =[]
+    metricList.append(configureMetric('CountMetric',
+                                              kwargs={'col':'expMJD', 'metricName':'Nvisits'},
+                                              plotDict={'units':'Number of Visits', 'binsize':5},
+                                              summaryStats=standardStats,
+                                              displayDict={'group':'2: Nvisits', 'subgroup':prop,
+                                                           'caption':'Number of visits all filters, WFD only'},
+                                              histMerge={'histNum':histNum, 'label':'all filters',
+                                                         'binsize':5, 'legendloc':'upper right',
+                                                         'cumulative':-1}))
+    histNum += 1
+    slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=makeDict(*metricList),
+                                     constraints=[wfdWhere])
+    slicerList.append(slicer)
+
+
+
     # Count the number of visits per filter for each proposal, over the sky. Uses opsim field slicer.
     propOrder = 0
     for propid in propids:
