@@ -1,9 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.sliceMetrics as sliceMetrics
-import lsst.sims.maf.db as db
 import glob
 
 
@@ -16,7 +12,7 @@ for f in filenames:
     if 'VisitPairs' not in f:
         print 'working on %s' %(f)
         cbm.readMetricData(f)
-        
+
 uniqueMetrics = list(cbm.uniqueMetrics())
 uniqueMetadata = list(cbm.uniqueMetadata())
 uniqueSimDataNames = list(cbm.uniqueSimDataNames())
@@ -38,7 +34,7 @@ print ''
 print 'oneD comparisons'
 # Find the dict nums with oneD slicers
 oneDIids = cbm.findIids(slicerName='OneDSlicer')
-# Find the metric names associated with those oneD binmetrics 
+# Find the metric names associated with those oneD binmetrics
 oneDmetrics = cbm.uniqueMetrics(iids=oneDIids)
 # Plot the same metrics on the same plot
 for mname in oneDmetrics:
@@ -46,4 +42,4 @@ for mname in oneDmetrics:
     cbm.plotHistograms(iids)
 
 plt.show()
-    
+

@@ -45,7 +45,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
 
-    def __init__(self, verbose=True, badval=-666):
+    def __init__(self, verbose=True, badval=-666, plotFuncs='all'):
         """
         Instantiate the base slicer object.
 
@@ -63,6 +63,9 @@ class BaseSlicer(object):
         Minimum set of __init__ kwargs:
         verbose: True/False flag to send extra output to screen
         badval: the value the Slicer uses to fill masked metric data values
+        plotFuncs:  default value of 'all' means the slicer will use all methods that start with 'plot'
+                    to generate plots.  Could be a string or list specifying specific methods that should
+                    be called when plotting.
         """
         self.verbose = verbose
         self.badval = badval
@@ -80,17 +83,30 @@ class BaseSlicer(object):
         self.plotObject = False
         # Add dictionary of plotting methods for each slicer.
         self.plotFuncs = {}
-        for p in inspect.getmembers(self, predicate=inspect.ismethod):
-            if p[0].startswith('plot'):
-                if p[0] == 'plotData':
-                    pass
-                else:
+        plotNames=[]
+        if plotFuncs is not None:
+            # Add every method that starts with 'plot'
+            for  p in inspect.getmembers(self, predicate=inspect.ismethod):
+                if p[0].startswith('plot'):
                     self.plotFuncs[p[0]] = p[1]
-        # Create a dict that saves how to re-init the slicer.
+                    plotNames.append(p[0])
+            # Remove plotData method if it exists
+            if 'plotData' in self.plotFuncs.keys():
+                del self.plotFuncs['plotData']
+            # If the plotFuncs kwarg is set, only include those plotting methods
+            if (plotFuncs != 'all') & (plotFuncs is not None):
+                for key in self.plotFuncs.keys():
+                    if key not in plotFuncs:
+                        del self.plotFuncs[key]
+        # Raise warning if plotFuncs was specified but didn't match anything
+        if (plotFuncs != 'all') & (plotFuncs is not None) & (len(self.plotFuncs) == 0):
+            warnings.warn('No plotting method matched %s.  Options are: %s'%(plotFuncs,plotNames))
+
+      # Create a dict that saves how to re-init the slicer.
         #  This may not be the whole set of args/kwargs, but those which carry useful metadata or
         #   are absolutely necesary for init.
         # Will often be overwritten by individual slicer slicer_init dictionaries.
-        self.slicer_init = {'badval':badval}
+        self.slicer_init = {'badval':badval,'plotFuncs':plotFuncs }
 
     def setupSlicer(self, simData):
         """
@@ -316,7 +332,7 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
 
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig', 
+    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig',
                  savefig=True, thumbnail=True, **kwargs):
         """
         Call all available plotting methods.

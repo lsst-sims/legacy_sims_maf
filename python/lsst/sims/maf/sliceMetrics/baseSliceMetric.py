@@ -67,7 +67,7 @@ class BaseSliceMetric(object):
                     continue
         return iids
 
-    def _buildOutfileName(self, iid, outfileRoot=None, plotType=None):
+    def _buildOutfileName(self, iid, outfileRoot=None, outfileSuffix=None, plotType=None):
         """
         Build an automatic output file name for metric data or plots.
         """
@@ -102,9 +102,13 @@ class BaseSliceMetric(object):
         oname = oname.replace('/', '_').replace('\\', '_')
         # and remove parentheses
         oname = oname.replace('(', '').replace(')', '')
+        if plotType is not None:
+            oname = oname + '_' + plotType
+        if outfileSuffix is not None:
+            oname = oname + '_' + outfileSuffix
         # Add plot name, if plot.
         if plotType is not None:
-           oname = oname + '_' + plotType + '.' + self.figformat
+           oname = oname + '.' + self.figformat
         return oname
 
     def _getThumbName(self, outfile):
@@ -155,18 +159,19 @@ class BaseSliceMetric(object):
               if header['plotDict'] is not None:
                 self.plotDicts[iid].update(header['plotDict'])
           if verbose:
-              print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
+             print 'Read data from %s, got metric data for metricName %s' %(f, header['metricName'])
           newiids.append(iid)
        return newiids
 
-    def writeAll(self, outfileRoot=None, comment=''):
-        """
-        Write all metric values to disk.
-        """
-        for iid in self.metricValues:
-            self.writeMetric(iid, comment=comment, outfileRoot=outfileRoot)
+    def writeAll(self, outfileRoot=None, outfileSuffix=None, comment=''):
+       """
+       Write all metric values to disk.
+       """
+       for iid in self.metricValues:
+          outfilename = self.writeMetric(iid, comment=comment,
+                                         outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
 
-    def writeMetric(self, iid, comment='', outfileRoot=None):
+    def writeMetric(self, iid, comment='', outfileRoot=None, outfileSuffix=None):
         """
         Write self.metricValues[iid] (and associated metadata) to disk.
 
@@ -174,7 +179,7 @@ class BaseSliceMetric(object):
                    metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
         """
-        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot)
+        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
         outfile = outfile + '.npz'
         if iid in self.slicers:
             slicer = self.slicers[iid]

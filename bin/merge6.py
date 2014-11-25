@@ -21,13 +21,21 @@ if __name__=="__main__":
     args = parser.parse_args()
     fileBase = args.fileBase
 
+    if '/' in fileBase:
+        fileBase = fileBase.split('/')
+        path = fileBase[:-1]
+        path = '/'.join(path)+'/'
+        fileBase = fileBase[-1]
+    else:
+        path=''
+
     # Make a list of the 6 files:
     filters = ['u','g','r','i','z','y']
     for f in filters:
         if '_'+f+'_' in fileBase:
             fileBase = fileBase.split('_'+f+'_')
 
-    fileList = [ fileBase[0]+'_'+f+'_'+fileBase[1] for f in filters]
+    fileList = [ path+fileBase[0]+'_'+f+'_'+fileBase[1] for f in filters]
     if args.outfile is None:
         outfile = fileBase[0]+'_6_'+fileBase[1]
     else:
@@ -41,4 +49,3 @@ if __name__=="__main__":
     command=''
     for item in callList: command=command+' '+item
     subprocess.call([command], shell=True)
-

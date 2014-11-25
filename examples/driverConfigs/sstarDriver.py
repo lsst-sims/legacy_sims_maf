@@ -3,6 +3,7 @@
 import os
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
+import numpy as np
 
 
 def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlicer',
@@ -40,6 +41,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the proposal ID values from the database
     propids, WFDpropid, DDpropid, propID2Name = opsimdb.fetchPropIDs()
+
+    # Fetch the telescope location from config
+    lat,lon,height = opsimdb.fetchLatLonHeight()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = ''
@@ -369,7 +373,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     yearDates = range(0,int(round(365*runLength))+365,365)
     for i in range(len(yearDates)-1):
         constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
-        m1=configureMetric('HourglassMetric',
+        m1=configureMetric('HourglassMetric', kwargs={'lat':lat*np.pi/180.,
+                                                      'lon':lon*np.pi/180. , 'elev':height},
                            displayDict={'group':'Hourglass', 'order':i})
         slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints,
                                  metadata='Year %i-%i' %(i, i+1), metadataVerbatim=True)
