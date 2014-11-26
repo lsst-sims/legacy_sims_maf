@@ -116,6 +116,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         raise ValueError('Do not understand slicerName %s: looking for one of %s' %(slicerName, slicerNames))
     print 'Using slicer %s for generic metrics over the sky.' %(slicerName)
 
+    onlyHist = {'plotFuncs':'plotHistogram'}
+    for key in slicerkwargs:
+        onlyHist[key] = slicerkwargs[key]
+
     ####
 
     # Configure some standard summary statistics dictionaries to apply to appropriate metrics.
@@ -139,6 +143,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     ## Metrics calculating values over the sky (healpix or opsim slicer)
     # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
+
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD']):
         startNum += 100
@@ -166,8 +171,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                         'binsize':5, 'legendloc':'upper right',
-                                                         'cumulative':-1}))
+                                                         'binsize':5, 'legendloc':'upper right'}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
             metricList.append(configureMetric('CountRatioMetric',
@@ -243,24 +247,41 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
                                      constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
+            # Tack on an extra copy of Nvisits with a cumulative histogram
+            metric = configureMetric('CountMetric',
+                                              kwargs={'col':'expMJD', 'metricName':'Nvisits cumulative'},
+                                              plotDict={'units':'Number of Visits',
+                                                        'xMin':nVisits_plotRange['all'][f][0],
+                                                        'xMax':nVisits_plotRange['all'][f][1], 'binsize':5,
+                                                        'cumulative':-1},
+                                              displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
+                                                           'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
+                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                                                         'binsize':5, 'legendloc':'upper right',
+                                                         'cumulative':-1})
+            histNum += 1
+            slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*[metric]),
+                                     constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
+            slicerList.append(slicer)
 
     # Count the number of visits including all filters, WFD only
     metricList =[]
+    # Make the reverse cumulative histogram
     metricList.append(configureMetric('CountMetric',
-                                              kwargs={'col':'expMJD', 'metricName':'Nvisits'},
-                                              plotDict={'units':'Number of Visits', 'binsize':5},
-                                              summaryStats=standardStats,
-                                              displayDict={'group':'2: Nvisits', 'subgroup':prop,
-                                                           'caption':'Number of visits all filters, WFD only'},
-                                              histMerge={'histNum':histNum, 'label':'all filters',
-                                                         'binsize':5, 'legendloc':'upper right',
-                                                         'cumulative':-1}))
-    histNum += 1
-    slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=makeDict(*metricList),
-                                     constraints=[wfdWhere])
+                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, cumulative'},
+                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1},
+                                      displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                                   'caption':'Number of visits all filters, WFD only'}))
+    # Regular Histogram
+    metricList.append(configureMetric('CountMetric',
+                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, regular hist'},
+                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False},
+                                      summaryStats=standardStats,
+                                      displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                                   'caption':'Number of visits all filters, WFD only'}))
+    slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*metricList),
+                                     constraints=[wfdWhere], metadata='histOnly')
     slicerList.append(slicer)
-
-
 
     # Count the number of visits per filter for each proposal, over the sky. Uses opsim field slicer.
     propOrder = 0

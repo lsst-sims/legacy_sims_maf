@@ -17,7 +17,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     def __init__(self, verbose=True, simDataFieldIDColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
-                 badval=-666):
+                 badval=-666, plotFuncs='all'):
         """Instantiate opsim field slicer (an index-based slicer that can do spatial plots).
 
         simDataFieldIDColName = the column name in simData for the field ID
@@ -27,7 +27,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
-        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
+        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval, plotFuncs=plotFuncs)
         self.fieldID = None
         self.simDataFieldIDColName = simDataFieldIDColName
         self.fieldIDColName = fieldIDColName
