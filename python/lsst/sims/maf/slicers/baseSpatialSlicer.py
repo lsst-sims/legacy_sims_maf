@@ -19,7 +19,8 @@ from .baseSlicer import BaseSlicer
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all'):
+                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all', useCamera=False,
+                 rotSkyPosCol='rotSkyPos'):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -27,21 +28,31 @@ class BaseSpatialSlicer(BaseSlicer):
         the simData KDtree
         and slicePoint RA/Dec values will be produced
         plotFuncs = plotting methods to run. default 'all' runs all methods that start
-        with 'plot'."""
+        with 'plot'.
+        useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
+        True means the observations are checked to make suer they fall on a chip."""
+
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval,
                                                 plotFuncs=plotFuncs)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
+        self.rotSkyPosCol = rotSkyPosCol
         self.columnsNeeded = [spatialkey1, spatialkey2]
+        if useCamera:
+            self.setupLSSTCamera()
+            self.columnsNeeded.append(rotSkyPosCol)
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
-                          'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs}
+                          'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs,
+                          'useCamera':useCamera}
         self.radius = radius
-        self.leafsize=leafsize
+        self.leafsize = leafsize
+        self.useCamera = useCamera
         # RA and Dec are required slicePoint info for any spatial slicer.
         self.slicePoints['sid'] = None
         self.slicePoints['ra'] = None
         self.slicePoints['dec'] = None
         self.nslice = None
+
 
     def setupSlicer(self, simData, maps=None):
         """Use simData[self.spatialkey1] and simData[self.spatialkey2]
@@ -65,6 +76,23 @@ class BaseSpatialSlicer(BaseSlicer):
             sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
             indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
+            # For each of those observations, check that the slicepoint lands on a chip
+            if self.useCamera:
+                clippedIndices = []
+                obs_metadata = XXX_obs_object
+                # XXX -- really, I only need to loop over each UNIQUE combo of ra,dec,rot.
+                for ind in indices:
+                    obs_metadata.unrefractedRA = simData[ind][self.spatialkey1]
+                    obs_metadata.unrefractedDec = simData[ind][self.spatialkey2]
+                    obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
+                    chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][islice],
+                                                             dec=self.slicePoints['dec'][islice],
+                                                             epoch=self.epoch,
+                                                             camera=self.camera, obs_metadata=obs_metadata)
+                    if chipName is not None:
+                        clippedIndices.append(ind)
+                indices = np.array(clippedIndices) # XXX-is this an array or just a list?
+
             # Build dict for slicePoint info
             slicePoint={}
             for key in self.slicePoints.keys():
@@ -74,6 +102,18 @@ class BaseSpatialSlicer(BaseSlicer):
                     slicePoint[key] = self.slicePoints[key]
             return {'idxs':indices, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
+
+    def setupLSSTCamera(self):
+        """If we want to include the camera chip gaps, etc"""
+
+        #Check that the radius in large enough
+
+        from lsst.obs.lsstSim import LsstSimMapper
+        from lsst.sims.coordUtils import CameraCoords
+        mapper = LsstSimMapper()
+        camera = mapper.camera
+        self.myCamCoords = CameraCoords()
+        self.epoch = 2000.0
 
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
