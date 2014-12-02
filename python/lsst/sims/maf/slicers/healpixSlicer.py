@@ -17,12 +17,12 @@ from .baseSpatialSlicer import BaseSpatialSlicer
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all'):
+                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all', **kwargs):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
-                                            plotFuncs=plotFuncs)
+                                            plotFuncs=plotFuncs, useCamera=False, **kwargs)
         # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -39,6 +39,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                             'radius':radius}
+        if useCamera & useCache:
+            warnings.warn("Can't use cache and camera at the same time, tunring cache off")
+            useCache = False
         if useCache:
             # useCache set the size of the cache for the memoize function in sliceMetric.
             binRes = hp.nside2resol(nside) # Pixel size in radians

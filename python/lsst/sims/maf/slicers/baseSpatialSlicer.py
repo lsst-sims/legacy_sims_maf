@@ -20,7 +20,7 @@ class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
                  badval=-666, leafsize=100, radius=1.75, plotFuncs='all', useCamera=False,
-                 rotSkyPosCol='rotSkyPos'):
+                 rotSkyPosCol='rotSkyPos', mjdCol='expMJD'):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -37,10 +37,12 @@ class BaseSpatialSlicer(BaseSlicer):
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
         self.rotSkyPosCol = rotSkyPosCol
+        self.mjdCol = mjdCol
         self.columnsNeeded = [spatialkey1, spatialkey2]
         if useCamera:
             self.setupLSSTCamera()
             self.columnsNeeded.append(rotSkyPosCol)
+            self.columnsNeeded.append(mjdCol)
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                           'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs,
                           'useCamera':useCamera}
@@ -79,19 +81,20 @@ class BaseSpatialSlicer(BaseSlicer):
             # For each of those observations, check that the slicepoint lands on a chip
             if self.useCamera:
                 clippedIndices = []
-                obs_metadata = XXX_obs_object
-                # XXX -- really, I only need to loop over each UNIQUE combo of ra,dec,rot.
+                # XXX -- really, I only need to loop over each UNIQUE combo of ra,dec,rot in simData[indices].
                 for ind in indices:
-                    obs_metadata.unrefractedRA = simData[ind][self.spatialkey1]
-                    obs_metadata.unrefractedDec = simData[ind][self.spatialkey2]
-                    obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
+                    # XXX--this loop is painful.  Maybe need to just build a dict for lookup? for each simData point, find the slicepoints that have good chipnames.
+                    self.obs_metadata.unrefractedRA = simData[ind][self.spatialkey1]
+                    self.obs_metadata.unrefractedDec = simData[ind][self.spatialkey2]
+                    self.obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
+                    self.obs_metadata.mjd = simData[ind][self.mjdCol]
                     chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][islice],
                                                              dec=self.slicePoints['dec'][islice],
                                                              epoch=self.epoch,
-                                                             camera=self.camera, obs_metadata=obs_metadata)
+                                                             camera=self.camera, obs_metadata=self.obs_metadata)
                     if chipName is not None:
                         clippedIndices.append(ind)
-                indices = np.array(clippedIndices) # XXX-is this an array or just a list?
+                indices = clippedIndices
 
             # Build dict for slicePoint info
             slicePoint={}
@@ -110,10 +113,13 @@ class BaseSpatialSlicer(BaseSlicer):
 
         from lsst.obs.lsstSim import LsstSimMapper
         from lsst.sims.coordUtils import CameraCoords
+        from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
         mapper = LsstSimMapper()
-        camera = mapper.camera
+        self.camera = mapper.camera
         self.myCamCoords = CameraCoords()
         self.epoch = 2000.0
+        metadata = {'unrefractedRA':0.,'unrefractedDec':0.,'rotSkyPos':0.}
+        self.obs_metadata = ObservationMetaData(m5=0.)
 
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
