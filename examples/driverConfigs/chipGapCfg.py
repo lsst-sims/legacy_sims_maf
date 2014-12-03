@@ -11,8 +11,8 @@ root.opsimName = 'ops1_1140'
 root.verbose = True
 
 slicerList=[]
-#constraints = ['filter="r"']
-constraints = ['filter="r" and night < 100']
+constraints = ['filter="r"']
+#constraints = ['filter="r" and night < 100']
 # How many Healpix sides to use
 nside=128
 
