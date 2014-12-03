@@ -39,8 +39,8 @@ class BaseSpatialSlicer(BaseSlicer):
         self.rotSkyPosCol = rotSkyPosCol
         self.mjdCol = mjdCol
         self.columnsNeeded = [spatialkey1, spatialkey2]
+        self.useCamera = useCamera
         if useCamera:
-            self.setupLSSTCamera()
             self.columnsNeeded.append(rotSkyPosCol)
             self.columnsNeeded.append(mjdCol)
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
@@ -66,35 +66,27 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             if self.cacheSize != 0:
                 warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
-        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
+
         self._setRad(self.radius)
+        if self.useCamera:
+            self.setupLSSTCamera(simData)
+        else:
+            self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         for skyMap in maps:
             self.slicePoints = skyMap.run(self.slicePoints)
+
         @wraps(self._sliceSimData)
 
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
-            # Query against tree.
-            indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
-            # For each of those observations, check that the slicepoint lands on a chip
+
             if self.useCamera:
-                clippedIndices = []
-                # XXX -- really, I only need to loop over each UNIQUE combo of ra,dec,rot in simData[indices].
-                for ind in indices:
-                    # XXX--this loop is painful.  Maybe need to just build a dict for lookup? for each simData point, find the slicepoints that have good chipnames.
-                    self.obs_metadata.unrefractedRA = simData[ind][self.spatialkey1]
-                    self.obs_metadata.unrefractedDec = simData[ind][self.spatialkey2]
-                    self.obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
-                    self.obs_metadata.mjd = simData[ind][self.mjdCol]
-                    chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][islice],
-                                                             dec=self.slicePoints['dec'][islice],
-                                                             epoch=self.epoch,
-                                                             camera=self.camera, obs_metadata=self.obs_metadata)
-                    if chipName is not None:
-                        clippedIndices.append(ind)
-                indices = clippedIndices
+                indices = self.sliceLookup[islice]
+            else:
+                sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+                # Query against tree.
+                indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
             # Build dict for slicePoint info
             slicePoint={}
@@ -106,9 +98,8 @@ class BaseSpatialSlicer(BaseSlicer):
             return {'idxs':indices, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
 
-    def setupLSSTCamera(self):
+    def setupLSSTCamera(self, simData):
         """If we want to include the camera chip gaps, etc"""
-
         #Check that the radius in large enough
 
         from lsst.obs.lsstSim import LsstSimMapper
@@ -118,8 +109,36 @@ class BaseSpatialSlicer(BaseSlicer):
         self.camera = mapper.camera
         self.myCamCoords = CameraCoords()
         self.epoch = 2000.0
-        metadata = {'unrefractedRA':0.,'unrefractedDec':0.,'rotSkyPos':0.}
         self.obs_metadata = ObservationMetaData(m5=0.)
+
+        # Now to make a list of lists for looking up the relevant observations at each slicepoint
+        self.sliceLookup = [[] for dummy in xrange(self.nslice)]
+        # Make a kdtree for the slicepoints
+        self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
+
+        combinedRaDec = np.char.array(simData[self.spatialkey1])+','+np.char.array(simData[self.spatialkey2])
+        uRaDec = np.unique(combinedRaDec)
+        # Loop over each unique pointing position
+        for raDec in uRaDec:
+            dataIndxs = np.where(combinedRaDec == raDec)[0]
+            ra,dec = simData[self.spatialkey1][dataIndxs[0]], simData[self.spatialkey2][dataIndxs[0]]
+            dx,dy,dz = self._treexyz(ra,dec)
+            sliceIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
+            for ind in dataIndxs:
+                # Argle Bargle, obs_metadata is expecting degrees since it was using Opsim 3.61
+                self.obs_metadata.unrefractedRA = np.degrees(simData[ind][self.spatialkey1])
+                self.obs_metadata.unrefractedDec = np.degrees(simData[ind][self.spatialkey2])
+                self.obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
+                self.obs_metadata.mjd = simData[ind][self.mjdCol]
+                chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][sliceIndices],
+                                                         dec=self.slicePoints['dec'][sliceIndices],
+                                                         epoch=self.epoch,
+                                                         camera=self.camera, obs_metadata=self.obs_metadata)
+                hitChip = sliceIndices[np.where(chipName != [None])[0]]
+                for i in hitChip:
+                    self.sliceLookup[i].append(ind)
+        if self.verbose:
+            "Created lookup table after checking for chip gaps."
 
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
