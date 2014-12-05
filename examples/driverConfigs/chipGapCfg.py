@@ -39,4 +39,19 @@ slicer = configureSlicer('HealpixSlicer',
 slicerList.append(slicer)
 
 
+
+# Now to try it out with the dithered pointings:
+slicer = configureSlicer('HealpixSlicer',
+                          kwargs={"nside":nside,'spatialkey1':"ditheredRA", 'spatialkey2':"ditheredDec"},
+                          metricDict=metricDict, constraints=constraints, metadata='Dithered')
+slicerList.append(slicer)
+
+slicer = configureSlicer('HealpixSlicer',
+                          kwargs={"nside":nside,'spatialkey1':"ditheredRA", 'spatialkey2':"ditheredDec",
+                                  'useCamera':True},
+                          metricDict=metricDict, constraints=constraints, metadata='Dithered and chipGaps')
+slicerList.append(slicer)
+
+
+
 root.slicers=makeDict(*slicerList)
