@@ -31,9 +31,10 @@ slicer = configureSlicer('HealpixSlicer',
 # Add the slicer to the list of slicers
 slicerList.append(slicer)
 
+# Turn in the camera to calc chip gaps. Increase the radius to get the chips that poke out at the corners.
 slicer = configureSlicer('HealpixSlicer',
                           kwargs={"nside":nside,'spatialkey1':"fieldRA", 'spatialkey2':"fieldDec",
-                                  'useCamera':True, 'verbose':True},
+                                  'useCamera':True, 'verbose':True, 'radius':2.041},
                           metricDict=metricDict, constraints=constraints, metadata='chipGaps')
 # Add the slicer to the list of slicers
 slicerList.append(slicer)
@@ -48,7 +49,7 @@ slicerList.append(slicer)
 
 slicer = configureSlicer('HealpixSlicer',
                           kwargs={"nside":nside,'spatialkey1':"ditheredRA", 'spatialkey2':"ditheredDec",
-                                  'useCamera':True},
+                                  'useCamera':True, 'radius':2.041},
                           metricDict=metricDict, constraints=constraints, metadata='Dithered and chipGaps')
 slicerList.append(slicer)
 

@@ -100,7 +100,6 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def setupLSSTCamera(self, simData):
         """If we want to include the camera chip gaps, etc"""
-        #Check that the radius in large enough
 
         from lsst.obs.lsstSim import LsstSimMapper
         from lsst.sims.coordUtils import CameraCoords
@@ -124,19 +123,20 @@ class BaseSpatialSlicer(BaseSlicer):
             ra,dec = simData[self.spatialkey1][dataIndxs[0]], simData[self.spatialkey2][dataIndxs[0]]
             dx,dy,dz = self._treexyz(ra,dec)
             sliceIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
-            for ind in dataIndxs:
-                # Argle Bargle, obs_metadata is expecting degrees since it was using Opsim 3.61
-                self.obs_metadata.unrefractedRA = np.degrees(simData[ind][self.spatialkey1])
-                self.obs_metadata.unrefractedDec = np.degrees(simData[ind][self.spatialkey2])
-                self.obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
-                self.obs_metadata.mjd = simData[ind][self.mjdCol]
-                chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][sliceIndices],
-                                                         dec=self.slicePoints['dec'][sliceIndices],
-                                                         epoch=self.epoch,
-                                                         camera=self.camera, obs_metadata=self.obs_metadata)
-                hitChip = sliceIndices[np.where(chipName != [None])[0]]
-                for i in hitChip:
-                    self.sliceLookup[i].append(ind)
+            if sliceIndices.size > 0:
+                for ind in dataIndxs:
+                    # Argle Bargle, obs_metadata is expecting degrees since it was using Opsim 3.61
+                    self.obs_metadata.unrefractedRA = np.degrees(simData[ind][self.spatialkey1])
+                    self.obs_metadata.unrefractedDec = np.degrees(simData[ind][self.spatialkey2])
+                    self.obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
+                    self.obs_metadata.mjd = simData[ind][self.mjdCol]
+                    chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][sliceIndices],
+                                                             dec=self.slicePoints['dec'][sliceIndices],
+                                                             epoch=self.epoch,
+                                                             camera=self.camera, obs_metadata=self.obs_metadata)
+                    hitChip = sliceIndices[np.where(chipName != [None])[0]]
+                    for i in hitChip:
+                        self.sliceLookup[i].append(ind)
         if self.verbose:
             "Created lookup table after checking for chip gaps."
 
