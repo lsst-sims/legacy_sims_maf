@@ -11,6 +11,8 @@ tests/.tests
 ups/*.cfgc
 python/lsst/sims/maf/version.py
 *.png
+*.gif
+*.mp4
 *.fits
 *.npz
 *tmp.sqlite
