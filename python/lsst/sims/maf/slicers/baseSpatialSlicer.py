@@ -115,19 +115,24 @@ class BaseSpatialSlicer(BaseSlicer):
         # Make a kdtree for the slicepoints
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
-        combinedRaDec = np.char.array(simData[self.spatialkey1])+','+np.char.array(simData[self.spatialkey2])
+        # Construct a single number of combined RA and Dec.
+        combinedRaDec = np.round(simData[self.spatialkey1]*10000)*10 + \
+            simData[self.spatialkey2] - simData[self.spatialkey2].min()
         uRaDec = np.unique(combinedRaDec)
+        order = np.argsort(combinedRaDec)
+        left = np.searchsorted(combinedRaDec[order], uRaDec)
+        right = np.searchsorted(combinedRaDec[order], uRaDec, side='right')
         # Loop over each unique pointing position
-        for raDec in uRaDec:
-            dataIndxs = np.where(combinedRaDec == raDec)[0]
+        for le,ri in zip(left,right):
+            dataIndxs = order[le:ri]
             ra,dec = simData[self.spatialkey1][dataIndxs[0]], simData[self.spatialkey2][dataIndxs[0]]
             dx,dy,dz = self._treexyz(ra,dec)
             sliceIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if sliceIndices.size > 0:
+                # Argle Bargle, obs_metadata is expecting degrees since it was using Opsim 3.61
+                self.obs_metadata.unrefractedRA = np.degrees(simData[dataIndxs[0]][self.spatialkey1])
+                self.obs_metadata.unrefractedDec = np.degrees(simData[dataIndxs[0]][self.spatialkey2])
                 for ind in dataIndxs:
-                    # Argle Bargle, obs_metadata is expecting degrees since it was using Opsim 3.61
-                    self.obs_metadata.unrefractedRA = np.degrees(simData[ind][self.spatialkey1])
-                    self.obs_metadata.unrefractedDec = np.degrees(simData[ind][self.spatialkey2])
                     self.obs_metadata.rotSkyPos = simData[ind][self.rotSkyPosCol]
                     self.obs_metadata.mjd = simData[ind][self.mjdCol]
                     chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][sliceIndices],
