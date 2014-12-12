@@ -12,7 +12,7 @@ class TestDb(unittest.TestCase):
 
     def tearDown(self):
         self.dbAddress = None
-        
+
     def testTable(self):
         """Test that we can connect to a DB table and pull data."""
         # Make a connection
@@ -33,7 +33,7 @@ class TestDb(unittest.TestCase):
 
     def testBaseDatabase(self):
         """Test base database class."""
-        # Test instantation with no dbTables info (and no defaults). 
+        # Test instantation with no dbTables info (and no defaults).
         basedb = db.Database(self.dbAddress)
         self.assertEqual(basedb.tables, None)
         # Test instantiation with some tables.
@@ -48,7 +48,7 @@ class TestDb(unittest.TestCase):
         query = 'select fieldID, fieldRA, fieldDec from Field where fieldDec>0'
         data = basedb.queryDatabase('fieldTable', query)
         self.assertEqual(data.dtype.names, ('fieldID', 'fieldRA', 'fieldDec'))
-    
+
     def testSqliteFileNotExists(self):
         """Test that db gives useful error message if db file doesn't exist."""
         self.assertRaises(IOError, db.Database, 'sqlite:///thisdatabasedoesntexist_sqlite.db')
