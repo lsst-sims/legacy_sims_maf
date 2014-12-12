@@ -67,12 +67,12 @@ class MafDriver(object):
 
         # Get proposal information (for OpSim databases).
         if self.config.dbAddress['dbClass'] == 'OpsimDatabase':
-           self.allpropids, self.wfdpropids, self.ddpropids, propID2Name = self.opsimdb.fetchPropIDs()
+           self.propids, self.propTags = self.opsimdb.fetchPropInfo()
            if self.verbose:
                dt, time_prev = dtime(time_prev)
                print 'fetched PropID info in %.3g s'%dt
         else:
-           self.allpropids, self.wfdpropids, self.ddpropids = ([0],[0],[0])
+           self.propids, self.propTags = ({}, {})
 
         # Construct the slicers and metric objects
         self.slicerList = []
@@ -191,7 +191,7 @@ class MafDriver(object):
         """Given an opsim slicer, generate the FieldData """
         # Do a bunch of parsing to get the propids out of the sqlconstraint.
         if 'propID' not in sqlconstraint:
-            propids = self.allpropids
+            propids = self.propids.keys()
         else:
             # example sqlconstraint: filter = r and (propid = 219 or propid = 155) and propid!= 90
             sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
@@ -214,7 +214,7 @@ class MafDriver(object):
                         nonpropids.append(int(sqllist[i]))
                 i += 1
             if len(propids) == 0:
-                propids = self.allpropids
+                propids = self.propids.keys()
             if len(nonpropids) > 0:
                 for nonpropid in nonpropids:
                     if nonpropid in propids:
