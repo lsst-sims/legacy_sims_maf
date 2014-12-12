@@ -40,23 +40,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     opsimdb = utils.connectOpsimDb(config.dbAddress)
 
     # Fetch the proposal ID values from the database
-    propids, WFDpropid, DDpropid, propID2Name = opsimdb.fetchPropIDs()
+    propids, propTags = opsimdb.fetchPropInfo()
 
     # Fetch the telescope location from config
     lat,lon,height = opsimdb.fetchLatLonHeight()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = ''
-    if len(WFDpropid) == 1:
-        wfdWhere = "propID = %d" %(WFDpropid[0])
-    else:
-        for i,propid in enumerate(WFDpropid):
-            if i == 0:
-                wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
-            else:
-                wfdWhere = wfdWhere+'or propID = %d ' %(propid)
-        wfdWhere = wfdWhere+')'
-
+    wfdWhere = utils.createSQLWhere('WFD', propTags)
+    print 'WFD "where" clause: %s' %(wfdWhere)
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)
     totalNVisits = opsimdb.fetchNVisits()

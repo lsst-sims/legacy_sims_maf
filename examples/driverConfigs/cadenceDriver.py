@@ -20,20 +20,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     opsimdb = utils.connectOpsimDb(config.dbAddress)
 
     # Fetch the proposal ID values from the database
-    propids, WFDpropid, DDpropid, propID2Name = opsimdb.fetchPropIDs()
+    propids, propTags = opsimdb.fetchPropIDs()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = ''
-    if len(WFDpropid) == 1:
-        wfdWhere = "propID = %d" %(WFDpropid[0])
-    else:
-        for i,propid in enumerate(WFDpropid):
-            if i == 0:
-                wfdWhere = wfdWhere+'('+'propID = %d ' %(propid)
-            else:
-                wfdWhere = wfdWhere+'or propID = %d ' %(propid)
-        wfdWhere = wfdWhere+')'
-
+    wfdWhere = utils.createSQLWhere('WFD', propTags)
+    print 'WFD "where" clause: %s' %(wfdWhere)
 
     # Fetch the total number of visits (to create fraction)
     totalNVisits = opsimdb.fetchNVisits()
