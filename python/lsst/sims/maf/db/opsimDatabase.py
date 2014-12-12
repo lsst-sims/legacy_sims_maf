@@ -459,7 +459,18 @@ class OpsimDatabase(Database):
                     seqdict['Events'] = int(subseqevents)
                     i+=2
                     subseqinterval = config[propname]['paramValue'][i]
-                    seqdict['SubSeqInt'] = subseqinterval.split('*')[0]
+                    subseqint = np.array([subseqinterval.split('*')], 'float').prod()
+                    # In days ..
+                    subseqint *= 1/24.0/60.0/60.0
+                    if subseqint > 1:
+                        seqdict['SubSeqInt'] = '%.2f days' %(subseqint)
+                    else:
+                        subseqint *= 24.0
+                        if subseqint > 1:
+                            seqdict['SubSeqInt'] = '%.2f hours' %(subseqint)
+                        else:
+                            subseqint *= 60.0
+                            seqdict['SubSeqInt'] = '%.3f minutes' %(subseqint)
                 # End of assigning subsequence info - move on to counting number of visits.
                 if restartComplete:
                     propdict['PerFilter']['NumVisits'] = 'Indefinite'
