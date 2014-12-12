@@ -204,6 +204,11 @@ class OpsimDatabase(Database):
                             propTags['WFD'].append(propid)
                         else:
                             propTags['WFD'] = [propid,]
+                    if 'deep' in propname.lower():
+                        if 'DD' in propTags:
+                            propTags['DD'].append(propid)
+                        else:
+                            propTags['DD'] = [propid,]
             else:
                 # Newer opsim output with 'ScienceType' fields in conf files.
                 for sc in sciencetypes:
