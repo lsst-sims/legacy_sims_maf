@@ -41,6 +41,14 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
+    if 'DD' in propTags:
+        DDpropid = propTags['DD']
+    else:
+        DDpropid = []
+    if 'WFD' in propTags:
+        WFDpropid = propTags['WFD']
+    else:
+        WFDpropid = []
 
     # Fetch the telescope location from config
     lat,lon,height = opsimdb.fetchLatLonHeight()
@@ -249,10 +257,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                 summaryStats=standardStats,
                                 plotDict={'units':'Number of Visits', 'plotMask':True,
                                           'binsize':5, 'xMin':xMin, 'xMax':xMax},
-                                displayDict={'group':'2: Nvisits', 'subgroup':'%s'%(propID2Name[propid]),
+                                displayDict={'group':'2: Nvisits', 'subgroup':'%s'%(propids[propid]),
                                              'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
-                                             %(f, propID2Name[propid])},
+                                             %(f, propids[propid])},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
                                            'label':'%s' %f, 'binsize':5})
             metricDict = makeDict(m1)
@@ -260,7 +268,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             slicer = configureSlicer('OpsimFieldSlicer',
                                      metricDict=metricDict,
                                      constraints=sqlconstraint,
-                                     metadata='%s band, %s' %(f, propID2Name[propid]),
+                                     metadata='%s band, %s' %(f, propids[propid]),
                                      metadataVerbatim=True)
             slicerList.append(slicer)
         propOrder += 100
@@ -441,7 +449,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Calculate some basic summary info about run, per filter, per proposal and for all proposals.
     propOrder = 0
-    props = propids + ['All Props'] + ['WFD']
+    props = propids.keys() + ['All Props'] + ['WFD']
     for i, propid in enumerate(props):
         propOrder += 500
         order = propOrder
@@ -464,7 +472,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             else:
                 subgroup = 'Per Prop'
                 sqlconstraint = sqlconstraint+' propId=%d'%(propid)
-                metadata = '%s band, %s'%(f, propID2Name[propid])
+                metadata = '%s band, %s'%(f, propids[propid])
             sqlconstraint = [sqlconstraint]
             metricList = []
             cols = ['finSeeing', 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth']
@@ -542,7 +550,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                            'NormalizeMetric':{'normVal':totalNVisits, 'metricName':'Fraction of total'}},
                             displayDict={'group':'1: Summary', 'subgroup':'NVisits'})
         slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1), constraints=sqlconstraint,
-                                 metadata='%s' %(propID2Name[propid]), metadataVerbatim=True)
+                                 metadata='%s' %(propids[propid]), metadataVerbatim=True)
         slicerList.append(slicer)
     # Count visits in WFD (as well as ratio of number of visits compared to total number of visits).
     sqlconstraint = ['%s' %(wfdWhere)]
