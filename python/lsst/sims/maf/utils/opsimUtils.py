@@ -18,6 +18,25 @@ def connectOpsimDb(dbAddressDict):
         opsimdb = db.OpsimDatabase(dbAddressDict['dbAddress'])
     return opsimdb
 
+def createSQLWhere(tag, propTags):
+    """
+    Create a SQL 'where' clause for 'tag' using the information in the propTags dictionary.
+    (i.e. create a where clause for WFD proposals).
+    Returns SQL clause.
+    """
+    sqlWhere = ''
+    if len(propTags[tag]) == 0:
+        print 'No %s proposals found' %(s)
+    elif len(propTags[tag]) == 1:
+        sqlWhere = "propID = %d" %(propTags[tag][0])
+    else:
+        for i, propid in enumerate(propTags[tag]):
+            if i == 0:
+                sqlWhere = sqlWhere+'('+'propID = %d ' %(propid)
+            else:
+                sqlWhere = sqlWhere+'or propID = %d ' %(propid)
+        sqlWhere = sqlWhere +')'
+    return sqlWhere
 
 def scaleStretchDesign(runLength):
     """Scale the benchmark numbers for total number of visits and coadded depth (both design and stretch goals),
