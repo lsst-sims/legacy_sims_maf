@@ -21,7 +21,8 @@ class DatabaseRegistry(type):
                 modname = modname + '.'
         databasename = modname + name
         if databasename in cls.registry:
-            raise Exception('Redefining databases %s! (there are >1 databases with the same name)' %(databasename))
+            raise Exception('Redefining databases %s! (there are >1 database classes with the same name)'
+                            %(databasename))
         if databasename not in ['BaseDatabase']:
             cls.registry[databasename] = cls
     def getClass(cls, databasename):
