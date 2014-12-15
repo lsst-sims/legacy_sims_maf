@@ -159,41 +159,40 @@ class MafDriver(object):
 
     def getData(self, constraint, colnames=[], stackersList=[], table=None):
         """Pull required data from database and calculate additional columns from stackers. """
-        # If we are using an irregular table
-        if (table is not None) & (table != 'Summary'):
+        # Stacker_names describe the already-configured (via the config driver) stacker methods.
+        stacker_names = [s.__class__.__name__ for s in stackersList ]
+        dbcolnames = []
+        sourceLookup = utils.getColInfo.ColInfo()
+        # Go through all columns that the metrics need.
+        for colname in colnames:
+            source = sourceLookup.getDataSource(colname)
+            # If data source of column is a stacker:
+            if source != sourceLookup.defaultDataSource:
+                stacker = source()
+                for col in stacker.colsReq:
+                    # Add column names that the stackers need.
+                    dbcolnames.append(col)
+                # If not already a configured stacker, instantiate one using defaults
+                if stacker.__class__.__name__ not in stacker_names:
+                    stackersList.append(stacker)
+                    stacker_names.append(stacker.__class__.__name__)
+            # Else if data source is just the usual database:
+            else:
+                dbcolnames.append(colname)
+        # Remove duplicates from list of columns required from database.
+        dbcolnames=list(set(dbcolnames))
+        # Get the data from database.
+        if (table is not None)  & (table != 'Summary'):
            self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,colnames=colnames,
-                                                    distinctExpMJD=False, groupBy=None, tableName=table+'Table')
-
+                                                    distinctExpMJD=False, groupBy=None,
+                                                    tableName=table+'Table')
         else:
-           # Stacker_names describe the already-configured (via the config driver) stacker methods.
-           stacker_names = [s.__class__.__name__ for s in stackersList ]
-           dbcolnames = []
-           sourceLookup = utils.getColInfo.ColInfo()
-           # Go through all columns that the metrics need.
-           for colname in colnames:
-               source = sourceLookup.getDataSource(colname)
-               # If data source of column is a stacker:
-               if source != sourceLookup.defaultDataSource:
-                   stacker = source()
-                   for col in stacker.colsReq:
-                       # Add column names that the stackers need.
-                       dbcolnames.append(col)
-                   # If not already a configured stacker, instantiate one using defaults
-                   if stacker.__class__.__name__ not in stacker_names:
-                       stackersList.append(stacker)
-                       stacker_names.append(stacker.__class__.__name__)
-               # Else if data source is just the usual database:
-               else:
-                   dbcolnames.append(colname)
-           # Remove duplicates from list of columns required from database.
-           dbcolnames=list(set(dbcolnames))
-           # Get the data from database.
            self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
                                                     colnames=dbcolnames)
-           # Calculate the data from stackers.
-           for stacker in stackersList:
-               self.data = stacker.run(self.data)
-           # Done - self.data should now have all required columns.
+        # Calculate the data from stackers.
+        for stacker in stackersList:
+            self.data = stacker.run(self.data)
+        # Done - self.data should now have all required columns.
 
 
     def getFieldData(self, slicer, sqlconstraint):
