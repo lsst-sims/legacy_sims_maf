@@ -667,6 +667,19 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                  metadata=slewType,
                                  metadataVerbatim=True)
         slicerList.append(slicer)
+        metricList = []
+        metricList.append(configureMetric('AveSlewFracMetric',
+                                          kwargs={'col':'actDelay','activity':slewType,
+                                                  'metricName':'Total Ave'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+        metricList.append(configureMetric('ContributionMetric',
+                                          kwargs={'col':'actDelay','activity':slewType,
+                                                  'metricName':'Contribution'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict,constraints=[''],
+                                 table='slewActivities', metadata=slewType, metadataVerbatim=True)
+        slicerList.append(slicer)
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
