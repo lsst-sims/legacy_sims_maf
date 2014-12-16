@@ -81,7 +81,7 @@ class AveSlewFracMetric(BaseMetric):
                  idCol='SlewHistory_slewID', **kwargs):
         """Return the average time multiplied by fraction of slews """
         self.col = col
-        self.idCol
+        self.idCol = idCol
         col = [col, idCol]
         col.append(activeCol)
         self.activeCol = activeCol
@@ -92,5 +92,5 @@ class AveSlewFracMetric(BaseMetric):
         good = np.where(dataSlice[self.activeCol] == self.activity)[0]
         result = np.mean(dataSlice[self.col][good])
         nslews = np.size(np.unique(dataSlice[self.idCol]))
-        result = result * np.size(good/np.float(nslews))
+        result = result * np.size(good)/np.float(nslews)
         return result

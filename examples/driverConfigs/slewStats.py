@@ -157,7 +157,19 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                  metadata=slewType,
                                  metadataVerbatim=True)
         slicerList.append(slicer)
-
+        metricList = []
+        metricList.append(configureMetric('AveSlewFracMetric',
+                                          kwargs={'col':'actDelay','activity':slewType,
+                                                  'metricName':'Total Ave'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+        metricList.append(configureMetric('ContributionMetric',
+                                          kwargs={'col':'actDelay','activity':slewType,
+                                                  'metricName':'Contribution'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict,constraints=[''],
+                                 table='slewActivities', metadata=slewType, metadataVerbatim=True)
+        slicerList.append(slicer)
 
 
     config.slicers=makeDict(*slicerList)
