@@ -80,7 +80,8 @@ class OpsimDatabase(Database):
         self.sessionDateCol = 'sessionDate'
         self.runCommentCol = 'runComment'
 
-    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD'):
+    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD',
+                        tableName='summaryTable'):
         """Fetch 'colnames' from 'Summary' table.
 
         colnames = the columns to fetch from the table.
@@ -89,11 +90,10 @@ class OpsimDatabase(Database):
         groupBy = group by col 'groupBy' (will override group by expMJD)."""
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint.
-
         if (groupBy is None) and (distinctExpMJD is False):
             warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
 
-        table = self.tables['summaryTable']
+        table = self.tables[tableName]
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
@@ -271,6 +271,14 @@ class OpsimDatabase(Database):
         res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
         runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
         return runName
+
+    def fetchTotalSlewN(self):
+        """Fetch the total slew time."""
+        table = self.tables['slewActivitiesTable']
+        res = table.query_columns_Array(constraint='actDelay>0', colnames=['SlewHistory_slewID'])
+        result = np.size(np.unique(res['SlewHistory_slewID']))
+        return result
+
 
     def fetchConfig(self):
         """Fetch config data from configTable, match proposal IDs with proposal names and some field data,

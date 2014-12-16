@@ -82,6 +82,7 @@ class MafDriver(object):
                  readSlicerConfig(slicer)
             temp_slicer = slicers.BaseSlicer.getClass(name)(**kwargs )
             temp_slicer.constraints = slicer.constraints
+            temp_slicer.table = slicer.table
             #check that constraints in slicer are unique
             if len(temp_slicer.constraints) > len(set(temp_slicer.constraints)):
                 print 'Slicer %s has repeated constraints' %slicer.name
@@ -136,6 +137,8 @@ class MafDriver(object):
             for c in b.constraints:
                 self.constraints.append(c)
         self.constraints = list(set(self.constraints))
+        # Make a unique list of tables
+        self.tables = list(set([s.table for s in self.slicerList]))
         # Check that all filenames will be unique
         filenames=[]
         for i,slicer in enumerate(self.slicerList):
@@ -154,7 +157,7 @@ class MafDriver(object):
             print ['%s: %d versions' %(d, c) for d, c in zip(duplicates, counts)]
             raise Exception('Filenames for metrics will not be unique.  Add slicer metadata or change metric names.')
 
-    def getData(self, constraint, colnames=[], stackersList=[]):
+    def getData(self, constraint, colnames=[], stackersList=[], table=None):
         """Pull required data from database and calculate additional columns from stackers. """
         # Stacker_names describe the already-configured (via the config driver) stacker methods.
         stacker_names = [s.__class__.__name__ for s in stackersList ]
@@ -179,8 +182,13 @@ class MafDriver(object):
         # Remove duplicates from list of columns required from database.
         dbcolnames=list(set(dbcolnames))
         # Get the data from database.
-        self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
-                                                 colnames=dbcolnames)
+        if (table is not None)  & (table != 'Summary'):
+           self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,colnames=colnames,
+                                                    distinctExpMJD=False, groupBy=None,
+                                                    tableName=table+'Table')
+        else:
+           self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
+                                                    colnames=dbcolnames)
         # Calculate the data from stackers.
         for stacker in stackersList:
             self.data = stacker.run(self.data)
@@ -235,120 +243,125 @@ class MafDriver(object):
 
         # Loop through all sqlconstraints, and run slicers + metrics that match the same sql constraints
         #   (so we only have to do one query of database per sql constraint).
-        for sqlconstraint in self.constraints:
-            # Find which slicers have an exactly matching constraint
-            matchingSlicers=[]
-            slicerNames=[]
-            for b in self.slicerList:
-                if sqlconstraint in b.constraints:
-                    matchingSlicers.append(b)
-                    slicerNames.append(b.slicerName)
-            # And for those slicers, find the data columns required.
-            colnames=[]
-            stackersList = []
-            for slicer in matchingSlicers:
-                for m in self.metricList[slicer.index]:
-                    for cn in m.colNameArr:
-                        colnames.append(cn)
-                for cn in slicer.columnsNeeded:
-                    colnames.append(cn)
-                for stacker in slicer.stackers:
-                    stackersList.append(stacker)
-                    for col in stacker.colsReq:
-                        colnames.append(col)
-            # Find the unique column names required.
-            colnames = list(set(colnames))
 
-            print 'Querying with SQLconstraint:', sqlconstraint
-            # Get the data from the database + stacker calculations.
-            if self.verbose:
-                time_prev = time.time()
-            self.getData(sqlconstraint, colnames=colnames, stackersList=stackersList)
-            if self.verbose:
-                dt, time_prev = dtime(time_prev)
-            if len(self.data) == 0:
-                print '  No data matching constraint:   %s'%sqlconstraint
+        # XXX -- add a check here to make sure tables match.
+        for table in self.tables:
+           for sqlconstraint in self.constraints:
+               # Find which slicers have an exactly matching constraint
+               matchingSlicers=[]
+               slicerNames=[]
+               for b in self.slicerList:
+                  if b.table == table:
+                     if sqlconstraint in b.constraints:
+                         matchingSlicers.append(b)
+                         slicerNames.append(b.slicerName)
+               if len(matchingSlicers) > 0:
+                  # And for those slicers, find the data columns required.
+                  colnames=[]
+                  stackersList = []
+                  for slicer in matchingSlicers:
+                      for m in self.metricList[slicer.index]:
+                          for cn in m.colNameArr:
+                              colnames.append(cn)
+                      for cn in slicer.columnsNeeded:
+                          colnames.append(cn)
+                      for stacker in slicer.stackers:
+                          stackersList.append(stacker)
+                          for col in stacker.colsReq:
+                              colnames.append(col)
+                  # Find the unique column names required.
+                  colnames = list(set(colnames))
 
-            # Got data, now set up slicers.
-            else:
-                if self.verbose:
-                    print '  Found %i matching visits in %.3g s'%(len(self.data),dt)
-                else:
-                    print '  Found %i matching visits' %(len(self.data))
-                # Special data requirements for opsim slicer.
-                if 'OpsimFieldSlicer' in slicerNames:
-                    self.getFieldData(matchingSlicers[slicerNames.index('OpsimFieldSlicer')], sqlconstraint)
-                # Setup each slicer, and run through the slicepoints (with metrics) in baseSliceMetric
-                if self.verbose:
-                    time_prev = time.time()
-                for slicer in matchingSlicers:
-                    print '    running slicerName =', slicer.slicerName, \
-                      ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
-                    # Set up any additional maps
-                    for m in self.metricList[slicer.index]:
-                       for skyMap in m.maps:
-                          if skyMap not in slicer.mapsNames:
-                             slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
-                    # Set up slicer.
-                    if slicer.slicerName == 'OpsimFieldSlicer':
-                        # Need to pass in fieldData as well
-                        slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
-                    else:
-                       if len(slicer.mapsList) > 0:
-                          slicer.setupSlicer(self.data, maps=slicer.mapsList)
-                       else:
-                          slicer.setupSlicer(self.data)
-                    # Set up baseSliceMetric.
-                    gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                     outDir=self.config.outputDir)
-                    gm.setSlicer(slicer)
-                    gm.setMetrics(self.metricList[slicer.index])
-                    # Make a more useful metadata comment.
-                    if slicer.metadataVerbatim:
-                        metadata = slicer.metadata
-                    else:
-                        metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-                        metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
-                    # Run through slicepoints in slicer, and calculate metric values.
-                    gm.runSlices(self.data, simDataName=self.config.opsimName,
-                                 metadata=metadata, sqlconstraint=sqlconstraint)
-                    if self.verbose:
-                       dt,time_prev = dtime(time_prev)
-                       print '    Computed metrics in %.3g s'%dt
-                    # And run reduce methods for relevant metrics.
-                    gm.reduceAll()
-                    # And write metric data files to disk.
-                    gm.writeAll()
-                    # And plot all metric values.
-                    gm.plotAll(savefig=True, closefig=True, verbose=True)
-                    if self.verbose:
-                       dt,time_prev = dtime(time_prev)
-                       print '    plotted metrics in %.3g s'%dt
-                    # Loop through the metrics and calculate any summary statistics
-                    for i, metric in enumerate(self.metricList[slicer.index]):
-                        if hasattr(metric, 'summaryStats'):
-                            for stat in metric.summaryStats:
-                                # If it's metric returning an OBJECT, run summary stats on each reduced metric
-                                # (have to identify related reduced metric values first)
-                                if metric.metricDtype == 'object':
-                                    iid = gm.metricObjIid(metric)[0]
-                                    baseName = gm.metricNames[iid]
-                                    all_names = gm.metricNames.values()
-                                    matching_metrics = [x for x in all_names \
-                                                        if x[:len(baseName)] == baseName and x != baseName]
-                                    for mm in matching_metrics:
-                                        iid = gm.findIids(metricName=mm)[0]
-                                        summary = gm.computeSummaryStatistics(iid, stat)
-                                # Else it's a simple metric value.
-                                else:
-                                    iid = gm.findIids(metricName=metric.name)[0]
-                                    summary = gm.computeSummaryStatistics(iid, stat)
-                    if self.verbose:
-                       dt,time_prev = dtime(time_prev)
-                       print '    Computed summarystats in %.3g s'%dt
-                    if self.verbose:
-                       dt,time_prev = dtime(time_prev)
-                       print '    wrote output files in %.3g s'%dt
+                  print 'Querying with SQLconstraint:', sqlconstraint
+                  # Get the data from the database + stacker calculations.
+                  if self.verbose:
+                      time_prev = time.time()
+                  self.getData(sqlconstraint, colnames=colnames, stackersList=stackersList, table=table)
+                  if self.verbose:
+                      dt, time_prev = dtime(time_prev)
+                  if len(self.data) == 0:
+                      print '  No data matching constraint:   %s'%sqlconstraint
+
+                  # Got data, now set up slicers.
+                  else:
+                      if self.verbose:
+                          print '  Found %i matching visits in %.3g s'%(len(self.data),dt)
+                      else:
+                          print '  Found %i matching visits' %(len(self.data))
+                      # Special data requirements for opsim slicer.
+                      if 'OpsimFieldSlicer' in slicerNames:
+                          self.getFieldData(matchingSlicers[slicerNames.index('OpsimFieldSlicer')], sqlconstraint)
+                      # Setup each slicer, and run through the slicepoints (with metrics) in baseSliceMetric
+                      if self.verbose:
+                          time_prev = time.time()
+                      for slicer in matchingSlicers:
+                          print '    running slicerName =', slicer.slicerName, \
+                            ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
+                          # Set up any additional maps
+                          for m in self.metricList[slicer.index]:
+                             for skyMap in m.maps:
+                                if skyMap not in slicer.mapsNames:
+                                   slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
+                          # Set up slicer.
+                          if slicer.slicerName == 'OpsimFieldSlicer':
+                              # Need to pass in fieldData as well
+                              slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
+                          else:
+                             if len(slicer.mapsList) > 0:
+                                slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                             else:
+                                slicer.setupSlicer(self.data)
+                          # Set up baseSliceMetric.
+                          gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
+                                                           outDir=self.config.outputDir)
+                          gm.setSlicer(slicer)
+                          gm.setMetrics(self.metricList[slicer.index])
+                          # Make a more useful metadata comment.
+                          if slicer.metadataVerbatim:
+                              metadata = slicer.metadata
+                          else:
+                              metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
+                              metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
+                          # Run through slicepoints in slicer, and calculate metric values.
+                          gm.runSlices(self.data, simDataName=self.config.opsimName,
+                                       metadata=metadata, sqlconstraint=sqlconstraint)
+                          if self.verbose:
+                             dt,time_prev = dtime(time_prev)
+                             print '    Computed metrics in %.3g s'%dt
+                          # And run reduce methods for relevant metrics.
+                          gm.reduceAll()
+                          # And write metric data files to disk.
+                          gm.writeAll()
+                          # And plot all metric values.
+                          gm.plotAll(savefig=True, closefig=True, verbose=True)
+                          if self.verbose:
+                             dt,time_prev = dtime(time_prev)
+                             print '    plotted metrics in %.3g s'%dt
+                          # Loop through the metrics and calculate any summary statistics
+                          for i, metric in enumerate(self.metricList[slicer.index]):
+                              if hasattr(metric, 'summaryStats'):
+                                  for stat in metric.summaryStats:
+                                      # If it's metric returning an OBJECT, run summary stats on each reduced metric
+                                      # (have to identify related reduced metric values first)
+                                      if metric.metricDtype == 'object':
+                                          iid = gm.metricObjIid(metric)[0]
+                                          baseName = gm.metricNames[iid]
+                                          all_names = gm.metricNames.values()
+                                          matching_metrics = [x for x in all_names \
+                                                              if x[:len(baseName)] == baseName and x != baseName]
+                                          for mm in matching_metrics:
+                                              iid = gm.findIids(metricName=mm)[0]
+                                              summary = gm.computeSummaryStatistics(iid, stat)
+                                      # Else it's a simple metric value.
+                                      else:
+                                          iid = gm.findIids(metricName=metric.name)[0]
+                                          summary = gm.computeSummaryStatistics(iid, stat)
+                          if self.verbose:
+                             dt,time_prev = dtime(time_prev)
+                             print '    Computed summarystats in %.3g s'%dt
+                          if self.verbose:
+                             dt,time_prev = dtime(time_prev)
+                             print '    wrote output files in %.3g s'%dt
 
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged

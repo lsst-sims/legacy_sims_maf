@@ -55,6 +55,11 @@ class SumMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.sum(dataSlice[self.colname])
 
+class UniqueMetric(BaseMetric):
+    """Return the number of unique values """
+    def run(self, dataSlice, slicePoint=None):
+        return np.size(np.unique(dataSlice[self.colname]))
+
 class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, **kwargs):
@@ -83,6 +88,13 @@ class RobustRmsMetric(BaseMetric):
         iqr = np.percentile(dataSlice[self.colname],75)-np.percentile(dataSlice[self.colname],25)
         rms = iqr/1.349 #approximation
         return rms
+
+class MaxPercentMetric(BaseMetric):
+    """Return the percent of the data which has the maximum value."""
+    def run(self, dataSlice, slicePoint=None):
+        nMax = np.size(np.where(dataSlice[self.colname] == np.max(dataSlice[self.colname]))[0])
+        percent = nMax/float(dataSlice[self.colname].size)*100.
+        return percent
 
 class BinaryMetric(BaseMetric):
     """Return 1 if there is data. """

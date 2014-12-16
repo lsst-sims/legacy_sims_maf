@@ -143,7 +143,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Cadence', **kwargs):
     slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside},
                             metricDict=makeDict(m1, m2, m3),
                              constraints=['(filter = "r") or (filter="g") or (filter="i")'])
-    slicerList.append(slicer)
+    # These are making giant .npz files!
+    #slicerList.append(slicer)
 
 
 

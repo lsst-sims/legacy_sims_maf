@@ -60,6 +60,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)
     totalNVisits = opsimdb.fetchNVisits()
+    totalSlewN = opsimdb.fetchTotalSlewN()
 
     # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
@@ -115,6 +116,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         raise ValueError('Do not understand slicerName %s: looking for one of %s' %(slicerName, slicerNames))
     print 'Using slicer %s for generic metrics over the sky.' %(slicerName)
 
+    onlyHist = {'plotFuncs':'plotHistogram'}
+    for key in slicerkwargs:
+        onlyHist[key] = slicerkwargs[key]
+
     ####
 
     # Configure some standard summary statistics dictionaries to apply to appropriate metrics.
@@ -138,6 +143,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     ## Metrics calculating values over the sky (healpix or opsim slicer)
     # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
+
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD']):
         startNum += 100
@@ -165,8 +171,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                         'binsize':5, 'legendloc':'upper right',
-                                                         'cumulative':-1}))
+                                                         'binsize':5, 'legendloc':'upper right'}))
             histNum += 1
             # Count the number of visits as a ratio against a benchmark value.
             metricList.append(configureMetric('CountRatioMetric',
@@ -242,6 +247,41 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
                                      constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
+            # Tack on an extra copy of Nvisits with a cumulative histogram
+            metric = configureMetric('CountMetric',
+                                              kwargs={'col':'expMJD', 'metricName':'Nvisits cumulative'},
+                                              plotDict={'units':'Number of Visits',
+                                                        'xMin':nVisits_plotRange['all'][f][0],
+                                                        'xMax':nVisits_plotRange['all'][f][1], 'binsize':5,
+                                                        'cumulative':-1},
+                                              displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
+                                                           'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
+                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                                                         'binsize':5, 'legendloc':'upper right',
+                                                         'cumulative':-1})
+            histNum += 1
+            slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*[metric]),
+                                     constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
+            slicerList.append(slicer)
+
+    # Count the number of visits including all filters, WFD only
+    metricList =[]
+    # Make the reverse cumulative histogram
+    metricList.append(configureMetric('CountMetric',
+                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, cumulative'},
+                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1},
+                                      displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                                   'caption':'Number of visits all filters, WFD only'}))
+    # Regular Histogram
+    metricList.append(configureMetric('CountMetric',
+                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, regular hist'},
+                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False},
+                                      summaryStats=standardStats,
+                                      displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                                   'caption':'Number of visits all filters, WFD only'}))
+    slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*metricList),
+                                     constraints=[wfdWhere], metadata='histOnly')
+    slicerList.append(slicer)
 
     # Count the number of visits per filter for each proposal, over the sky. Uses opsim field slicer.
     propOrder = 0
@@ -519,25 +559,127 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                     constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
 
-
-    # Some other summary statistics over all filters and all proposals.
     # Calculate the mean and median slewtime.
-    m1 = configureMetric('MeanMetric', kwargs={'col':'slewTime'},
-                         displayDict={'group':'Technical', 'subgroup':'Slew'})
-    m2 = configureMetric('MedianMetric', kwargs={'col':'slewTime'},
-                         displayDict={'group':'Technical', 'subgroup':'Slew'})
+    metricList = []
+    # Mean Slewtime
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'slewTime'},
+                         displayDict={'group':'Slew Summary'}))
+    # Median Slewtime
+    metricList.append(configureMetric('MedianMetric', kwargs={'col':'slewTime'},
+                         displayDict={'group':'Slew Summary'}))
     # Calculate the total number of visits.
-    m3 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
+    metricList.append(configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
                          summaryStats={'IdentityMetric':{'metricName':'Count'}},
-                         displayDict={'group':'1: Summary', 'subgroup':'NVisits', 'order':0})
+                         displayDict={'group':'Slew Summary'}))
     # Calculate the total open shutter time.
-    m4 = configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
+    metricList.append(configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
                          summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
-                         displayDict={'group':'1: Summary', 'subgroup':'On-sky Time'})
-    metricDict = makeDict(m1, m2, m3, m4)
+                         displayDict={'group':'Slew Summary'}))
+    # Number of nights
+    metricList.append(configureMetric('UniqueMetric', kwargs={'col':'night'},
+                                     displayDict={'group':'Slew Summary'}))
+    # Mean exposure time
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'visitExpTime'},
+                                      displayDict={'group':'Slew Summary'}))
+    # Mean visit time
+    metricList.append(configureMetric('MeanMetric', kwargs={'col':'visitTime'},
+                                      displayDict={'group':'Slew Summary'}))
+    metricDict = makeDict(*metricList)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
                              metadataVerbatim=True)
     slicerList.append(slicer)
+
+    # Stats for angle:
+    angles = ['telAlt', 'telAz', 'rotTelPos']
+
+    for angle in angles:
+        metricList = []
+        metricList.append(configureMetric('MaxMetric', kwargs={'col':angle},
+                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
+        metricList.append(configureMetric('MinMetric', kwargs={'col':angle},
+                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
+        metricList.append(configureMetric('MeanMetric', kwargs={'col':angle},
+                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
+        metricList.append(configureMetric('RmsMetric', kwargs={'col':angle},
+                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata=angle,
+                                 metadataVerbatim=True, table='slewState')
+        slicerList.append(slicer)
+
+    # Make some calls to other tables to get slew stats
+    colDict = {'domAltSpd':'Dome Alt Speed','domAzSpd':'Dome Az Speed','telAltSpd': 'Tel Alt Speed',
+               'telAzSpd': 'Tel Az Speed', 'rotSpd':'Rotation Speed'}
+    for key in colDict.keys():
+        metricList=[]
+        metricList.append(configureMetric('MaxMetric', kwargs={'col':key},
+                                          displayDict={'group':'Slew Speed', 'subgroup':colDict[key]}))
+        metricList.append(configureMetric('MeanMetric', kwargs={'col':key},
+                                          displayDict={'group':'Slew Speed', 'subgroup':colDict[key]}))
+        metricList.append(configureMetric('MaxPercentMetric', kwargs={'col':key, 'metricName':'% of slews'},
+                                          displayDict={'group':'Slew Speed', 'subgroup':colDict[key]}))
+
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''],
+                                 table='slewMaxSpeeds', metadata=colDict[key], metadataVerbatim=True)
+        slicerList.append(slicer)
+
+    # Use the slew stats
+    slewTypes = ['DomAlt', 'DomAz', 'TelAlt', 'TelAz', 'Rotator', 'Filter',
+                 'TelOpticsOL', 'Readout', 'Settle', 'TelOpticsCL']
+
+    for slewType in slewTypes:
+        metricList = []
+        metricList.append(configureMetric('ActivePercentMetric',
+                                          kwargs={'col':'actDelay', 'activity':slewType,
+                                                  'metricName':'ActivePerc',
+                                                  'norm':100./totalSlewN},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+        metricList.append(configureMetric('ActiveMeanMetric',
+                                          kwargs={'col':'actDelay', 'activity':slewType,
+                                                  'metricName':'ActiveAve'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+        metricList.append(configureMetric('ActiveMaxMetric',
+                                          kwargs={'col':'actDelay', 'activity':slewType,
+                                                  'metricName':'Max'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict,
+                                 constraints=['actDelay>0 and activity="%s"'%slewType],
+                                 table='slewActivities', metadata=slewType,
+                                 metadataVerbatim=True)
+        slicerList.append(slicer)
+        metricList = []
+        metricList.append(configureMetric('ActivePercentMetric',
+                                          kwargs={'col':'actDelay', 'activity':slewType,
+                                                  'metricName':'ActivePerc in crit',
+                                                  'norm':100./totalSlewN},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+        metricList.append(configureMetric('ActiveMeanMetric',
+                                          kwargs={'col':'actDelay', 'activity':slewType,
+                                                  'metricName':'ActiveAve in crit'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict,
+                                 constraints=['actDelay>0 and inCriticalPath="True" and activity="%s"'%slewType],
+                                 table='slewActivities',
+                                 metadata=slewType,
+                                 metadataVerbatim=True)
+        slicerList.append(slicer)
+        metricList = []
+        metricList.append(configureMetric('AveSlewFracMetric',
+                                          kwargs={'col':'actDelay','activity':slewType,
+                                                  'metricName':'Total Ave'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+        metricList.append(configureMetric('ContributionMetric',
+                                          kwargs={'col':'actDelay','activity':slewType,
+                                                  'metricName':'Contribution'},
+                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+        metricDict = makeDict(*metricList)
+        slicer = configureSlicer('UniSlicer', metricDict=metricDict,constraints=[''],
+                                 table='slewActivities', metadata=slewType, metadataVerbatim=True)
+        slicerList.append(slicer)
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
