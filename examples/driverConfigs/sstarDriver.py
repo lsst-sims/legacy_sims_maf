@@ -56,6 +56,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = utils.createSQLWhere('WFD', propTags)
     print 'WFD "where" clause: %s' %(wfdWhere)
+    ddWhere = utils.createSQLWhere('DD', propTags)
+    print 'DD "where" clause: %s' %(ddWhere)
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)
     totalNVisits = opsimdb.fetchNVisits()
@@ -85,6 +87,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         if nvisitBench[key] == 0:
             print 'Changing nvisit benchmark value to not be zero.'
             nvisitBench[key] = 1
+
+    mag_DDzpoints = {'u':28.5, 'g':28.5, 'r':28.5, 'i':28.5, 'z':28.0, 'y':27.0}
 
     # Set range of values for visits plots.
     nVisits_plotRange = {'all':
@@ -138,7 +142,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     ## Metrics calculating values over the sky (healpix or opsim slicer)
     # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
     startNum = histNum
-    for i, prop in enumerate(['All Props', 'WFD']):
+    for i, prop in enumerate(['All Props', 'WFD', 'DD']):
         startNum += 100
         for f in filters:
             # Set some per-proposal information.
@@ -146,10 +150,23 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                 propCaption = ' for all proposals'
                 metadata = '%s band, all props' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s"' %(f)]
+                nvisitsMin = nVisits_plotRange['all'][f][0]
+                nvisitsMax = nVisits_plotRange['all'][f][1]
+                mag_zp = mag_zpoints[f]
             if prop == 'WFD':
                 propCaption = ' for WFD only'
                 metadata = '%s band, WFD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
+                nvisitsMin = nVisits_plotRange['all'][f][0]
+                nvisitsMax = nVisits_plotRange['all'][f][1]
+                mag_zp = mag_zpoints[f]
+            if prop == 'DD':
+                propCaption = ' for (all) DD only'
+                metadata = '%s band, DD' %(f) + slicermetadata
+                sqlconstraint = ['filter = "%s" and %s' %(f, ddWhere)]
+                nvisitsMin = nVisits_plotRange['DD'][f][0]
+                nvisitsMax = nVisits_plotRange['DD'][f][1]
+                mag_zp = mag_DDzpoints[f]
             # Reset histNum (for merged histograms, merged over all filters).
             histNum = startNum
             # Configure the metrics to run for this sql constraint (all proposals/wfd and filter combo).
@@ -158,9 +175,9 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             metricList.append(configureMetric('CountMetric',
                                               kwargs={'col':'expMJD', 'metricName':'Nvisits'},
                                               plotDict={'units':'Number of Visits',
-                                                'xMin':nVisits_plotRange['all'][f][0],
-                                                'xMax':nVisits_plotRange['all'][f][1], 'binsize':5},
-                                              summaryStats=standardStats,
+                                                'xMin':nvisitsMin,
+                                                'xMax':nvisitsMax, 'binsize':5},
+                                              summaryStats=allStats,
                                               displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
@@ -190,16 +207,16 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                             'caption':'Median single visit depth in filter %s, %s.' %(f, propCaption)}))
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metricList.append(configureMetric('Coaddm5Metric',
-                                              plotDict={'zp':mag_zpoints[f],
+                                              plotDict={'zp':mag_zp,
                                                         'xMin':-0.6, 'xMax':0.6,
-                                                        'units':'coadded m5 - %.1f' %mag_zpoints[f]},
+                                                        'units':'coadded m5 - %.1f' %mag_zp},
                                                 summaryStats=allStats,
                                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                                         'color':colors[f], 'label':'%s' %f, 'binsize':.02},
                                                 displayDict={'group':'3: CoaddDepth', 'subgroup':prop, 'order':filtorder[f],
                                                             'caption':
-                                                'Coadded depth in filter %s, with %s value subtracted (%.1f), %s.'
-                                                %(f, benchmark, mag_zpoints[f], propCaption)}))
+                                                'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. Fainter limiting magnitudes are more positive numbers.'
+                                                %(f, benchmark, mag_zp, propCaption)}))
             histNum += 1
             # Calculate the median individual visit sky brightness (normalized to a benchmark).
             metricList.append(configureMetric('MedianMetric',
@@ -208,7 +225,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                       'xMin':-2, 'xMax':1},
                                             displayDict={'group':'Sky Brightness', 'subgroup':prop, 'order':filtorder[f],
                                             'caption':
-                                            'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s.'
+                                            'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s. Fainter sky brightness values are more positive numbers.'
                                             %(f, sky_zpoints[f], propCaption)}))
             # Calculate the median delivered seeing.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
