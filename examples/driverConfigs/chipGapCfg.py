@@ -18,10 +18,10 @@ nside=128
 
 m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'},
                      plotDict={'percentileClip':80., 'units':'#'},
-                     summaryStats={'MeanMetric':{},'RmsMetric':{}, 'SumMetric':{}})
+                     summaryStats={'MeanMetric':{},'RmsMetric':{}, 'SumMetric':{}, 'MedianMetric':{}})
 m2 = configureMetric('Coaddm5Metric',
                      plotDict={'zp':27., 'percentileClip':95, 'units':'Co-add m5 - %.1f'%27.},
-                     summaryStats={'MeanMetric':{},'RmsMetric':{}})
+                     summaryStats={'MeanMetric':{},'RmsMetric':{}, 'MedianMetric':{}})
 # Combine metrics in a dictionary
 metricDict = makeDict(m1,m2)
 # Generate the slicer configuration, passing in the metric configurations and SQL constraints

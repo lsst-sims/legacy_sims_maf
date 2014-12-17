@@ -20,7 +20,7 @@ class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
                  badval=-666, leafsize=100, radius=1.75, plotFuncs='all', useCamera=False,
-                 rotSkyPosCol='rotSkyPos', mjdCol='expMJD'):
+                 rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -36,13 +36,13 @@ class BaseSpatialSlicer(BaseSlicer):
                                                 plotFuncs=plotFuncs)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
-        self.rotSkyPosCol = rotSkyPosCol
-        self.mjdCol = mjdCol
+        self.rotSkyPosColName = rotSkyPosColName
+        self.mjdColName = mjdColName
         self.columnsNeeded = [spatialkey1, spatialkey2]
         self.useCamera = useCamera
         if useCamera:
-            self.columnsNeeded.append(rotSkyPosCol)
-            self.columnsNeeded.append(mjdCol)
+            self.columnsNeeded.append(rotSkyPosColName)
+            self.columnsNeeded.append(mjdColName)
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                           'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs,
                           'useCamera':useCamera}
@@ -123,7 +123,7 @@ class BaseSpatialSlicer(BaseSlicer):
         # Loop over each unique pointing position
         for ind,ra,dec,mjd,rotSkyPos in zip(np.arange(simData.size), simData[self.spatialkey1],
                                             simData[self.spatialkey2],
-                                            simData[self.rotSkyPosCol], simData[self.mjdCol]):
+                                            simData[self.rotSkyPosColName], simData[self.mjdColName]):
             dx,dy,dz = self._treexyz(ra,dec)
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
