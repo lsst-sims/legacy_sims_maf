@@ -50,10 +50,16 @@ class DataHandler(web.RequestHandler):
         metric = run.metricIdsToMetrics([metricId])
         if datatype == 'npz':
             npz = run.getNpz(metric)
-            self.redirect(npz)
+            if npz is None:
+                self.write('No npz file available.')
+            else:
+                self.redirect(npz)
         elif datatype == 'json':
             jsn = run.getJson(metric)
-            self.write(jsn)
+            if jsn is None:
+                self.write('No JSON file available.')
+            else:
+                self.write(jsn)
         else:
             self.write('Data type "%s" not understood.' %(datatype))
 

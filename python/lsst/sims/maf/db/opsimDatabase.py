@@ -67,6 +67,8 @@ class OpsimDatabase(Database):
         Set variables to represent the common column names used in this class directly.
 
         This should make future schema changes a little easier to handle.
+        It is NOT meant to function as a general column map, just to abstract values
+        which are used *within this class*.
         """
         self.mjdCol = 'expMJD'
         self.fieldIdCol = 'fieldID'
@@ -74,7 +76,7 @@ class OpsimDatabase(Database):
         self.decCol = 'fieldDec'
         self.propIdCol = 'propID'
         self.propConfCol = 'propConf'
-        self.propNameCol = 'propName'
+        self.propNameCol = 'propName' #(propname == proptype)
         # For config parsing.
         self.versionCol = 'version'
         self.sessionDateCol = 'sessionDate'
@@ -155,6 +157,9 @@ class OpsimDatabase(Database):
                 query += ' and (p.Proposal_%s = %d) ' %(self.propIdCol, int(propID))
             query += ' group by f.%s' %(self.fieldIdCol)
             fielddata = self.queryDatabase(tableName, query)
+            if len(fielddata) == 0:
+                fielddata = np.zeros(0, dtype=zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                  ['int', 'float', 'float']))
         else:
             table = self.tables[tableName]
             fielddata = table.query_columns_Array(colnames=[self.fieldIdCol, self.raCol, self.decCol],
@@ -164,49 +169,55 @@ class OpsimDatabase(Database):
             fielddata[self.decCol] = fielddata[self.decCol] * np.pi / 180.
         return fielddata
 
-    def fetchPropIDs(self):
+    def fetchPropInfo(self):
         """
-        Fetch the proposal IDs from the full opsim run database.
-        Return the full list of ID numbers as well as a list of
-         WFD propIDs (proposals containing 'Universal' in the name) -- or tagged with wfd,
-         deep drilling propIDs (proposals containing 'deep', 'Deep', 'dd' or 'DD' in the name) -- or tagged dd
-         and a dict keyed with the ID and values of the truncated proposal config file.
-         """
-        # Check if using full database; otherwise can only fetch list of all propids.
+        Fetch the proposal IDs as well as their (short) proposal names and science type tags from the
+        full opsim database.
+        Returns dictionary of propID / propname, and dictionary of propTag / propID.
+        If not using a full database, will return dict of propIDs with empty propnames + empty propTag dict.
+        """
+        propIDs = {}
+        # If do not have full database available:
         if 'proposalTable' not in self.tables:
             propData = self.tables['summaryTable'].query_columns_Array(colnames=[self.propIdCol])
-            propIDs = np.array(propData[self.propIdCol], int)
-            wfdIDs = []
-            ddIDs = []
-            propID2Name = {}
+            for propid in propData[self.propIdCol]:
+                propIDs[int(propid)] = ''
+            propTags = {}
         else:
             table = self.tables['proposalTable']
-            try:
-                propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
-                                                               self.propNameCol, 'tag'], constraint='')
-            except ValueError:
-                propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
-                                                               self.propNameCol], constraint='')
-            propIDs = np.array(propData[self.propIdCol], int)
-            propIDs = list(propIDs)
-            if 'tag' in propData.dtype.names:
-                wfdMatch = (propData['tag'] == 'wfd')
-                wfdIDs = list(propData['propID'][wfdMatch])
-            else:
-                wfdIDs = []
-                for name, propid in zip(propData[self.propConfCol] ,propIDs):
-                    if 'universal' in name.lower():
-                        wfdIDs.append(propid)
-            # Parse on name for DD anyway.
-            ddIDs = []
-            for name, propid in zip(propData[self.propConfCol], propIDs):
-                if ('deep' in name.lower()) or ('dd' in name.lower()):
-                    ddIDs.append(propid)
-            propID2Name = {}
-            for propID, propName in zip(propData[self.propIdCol], propData[self.propConfCol] ):
+            # Query for all propIDs.
+            propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
+                                                           self.propNameCol], constraint='')
+            for propid, propname in zip(propData[self.propIdCol], propData[self.propConfCol]):
                 # Strip '.conf', 'Prop', and path info.
-                propID2Name[propID] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propName)))
-        return propIDs, wfdIDs, ddIDs, propID2Name
+                propIDs[int(propid)] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propname)))
+            propTags = {}
+            # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
+            table = self.tables['configTable']
+            sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
+                                                    constraint="paramName like 'ScienceType'")
+            if len(sciencetypes) == 0:
+                # Older opsim output, so fall back to trying to guess what proposals are WFD.
+                for propid, propname in propIDs.iteritems():
+                    if 'universal' in propname.lower():
+                        if 'WFD' in propTags:
+                            propTags['WFD'].append(propid)
+                        else:
+                            propTags['WFD'] = [propid,]
+                    if 'deep' in propname.lower():
+                        if 'DD' in propTags:
+                            propTags['DD'].append(propid)
+                        else:
+                            propTags['DD'] = [propid,]
+            else:
+                # Newer opsim output with 'ScienceType' fields in conf files.
+                for sc in sciencetypes:
+                    sciencetype = sc['paramValue'].strip(',')
+                    if sciencetype in propTags:
+                        propTags[sciencetype].append(int(sc['nonPropID']))
+                    else:
+                        propTags[sciencetype] = [int(sc['nonPropID']),]
+        return propIDs, propTags
 
     def fetchRunLength(self, runLengthParam='nRun'):
         """Fetch the run length for a particular opsim run.
@@ -402,6 +413,7 @@ class OpsimDatabase(Database):
             if len(temp) > 0:
                 if temp[0] == 'True':
                     restartComplete = True
+            propdict['RestartSequences'] = restartComplete
             if propdict['PropType'] == 'WL':
                 # Simple 'Filter_Visits' request for number of observations.
                 propdict['PerFilter']['NumVisits'] = np.array(_matchParamNameValue(config[propname],
@@ -449,10 +461,24 @@ class OpsimDatabase(Database):
                     i += 1
                     subseqexp = config[propname]['paramValue'][i]
                     if subseqexp != '.':
-                        seqdict['Visits'] = subseqexp
+                        seqdict['SubSeqExp'] = subseqexp
                     i+= 1
                     subseqevents = config[propname]['paramValue'][i]
                     seqdict['Events'] = int(subseqevents)
+                    i+=2
+                    subseqinterval = config[propname]['paramValue'][i]
+                    subseqint = np.array([subseqinterval.split('*')], 'float').prod()
+                    # In days ..
+                    subseqint *= 1/24.0/60.0/60.0
+                    if subseqint > 1:
+                        seqdict['SubSeqInt'] = '%.2f days' %(subseqint)
+                    else:
+                        subseqint *= 24.0
+                        if subseqint > 1:
+                            seqdict['SubSeqInt'] = '%.2f hours' %(subseqint)
+                        else:
+                            subseqint *= 60.0
+                            seqdict['SubSeqInt'] = '%.3f minutes' %(subseqint)
                 # End of assigning subsequence info - move on to counting number of visits.
                 if restartComplete:
                     propdict['PerFilter']['NumVisits'] = 'Indefinite'
@@ -462,9 +488,10 @@ class OpsimDatabase(Database):
                     for subseq in subseqs:
                         subevents = propdict['SubSeq'][subseq]['Events']
                         # Count visits from direct subsequences.
-                        if 'Visits' in propdict['SubSeq'][subseq] and 'Filters' in propdict['SubSeq'][subseq]:
+                        if 'SubSeqExp' in propdict['SubSeq'][subseq] \
+                            and 'Filters' in propdict['SubSeq'][subseq]:
                             subfilters = propdict['SubSeq'][subseq]['Filters']
-                            subexp = propdict['SubSeq'][subseq]['Visits']
+                            subexp = propdict['SubSeq'][subseq]['SubSeqExp']
                             # If just one filter ..
                             if len(subfilters) == 1:
                                 idx = (propdict['PerFilter']['Filters'] == subfilters)
@@ -478,9 +505,10 @@ class OpsimDatabase(Database):
                         # Count visits if have nested subsequences.
                         if 'SubSeqNested' in propdict['SubSeq'][subseq]:
                             for subseqnested in propdict['SubSeq'][subseq]['SubSeqNested']:
-                                events = subevents * propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
+                                events = subevents *\
+                                  propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
                                 subfilters = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Filters']
-                                subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Visits']
+                                subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['SubSeqExp']
                                 # If just one filter ..
                                 if len(subfilters) == 1:
                                     idx = (propdict['PerFilter']['Filters'] == subfilters)
@@ -491,7 +519,8 @@ class OpsimDatabase(Database):
                                 for f, exp in zip(splitsubfilters, splitsubexp):
                                     idx = (propdict['PerFilter']['Filters'] == f)
                                     propdict['PerFilter']['NumVisits'][idx] += int(exp) * events
-                        propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events']
+                        propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested',
+                                                          'Events', 'SubSeqInt']
             # Sort the filter information so it's ugrizy instead of order in opsim config db.
             idx = []
             for f in self.filterlist:

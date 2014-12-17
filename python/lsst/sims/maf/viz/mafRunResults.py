@@ -124,15 +124,15 @@ class MafRunResults(object):
         Return the JSON string containing the data for a particular metric.
         """
         filename = metric['metricDataFile'][0]
-        if filename == 'NULL':
-            return 'No JSON file'
+        if filename.upper() == 'NULL':
+            return None
         datafile = os.path.join(self.outDir, filename)
         sm = sliceMetrics.BaseSliceMetric(useResultsDb=False)
         iids = sm.readMetricData(datafile)
         iid = iids[0]
         io = sm.outputMetricJSON(iid)
         if io is None:
-            return 'No JSON file available.'
+            return None
         return io.getvalue()
 
     def getNpz(self, metric):
@@ -140,10 +140,17 @@ class MafRunResults(object):
         Return the npz data.
         """
         filename = metric['metricDataFile'][0]
-        if filename == 'NULL':
-            return 'No npz file'
-        datafile = os.path.join(self.outDir, filename)
-        return datafile
+        if filename.upper() == 'NULL':
+            return None
+        else:
+            datafile = os.path.join(self.outDir, filename)
+            return datafile
+
+    def getResultsDb(self):
+        """
+        Return the summary results sqlite filename.
+        """
+        return os.path.join(self.outDir, 'resultsDb_sqlite.db')
 
     def metricIdsInSubgroup(self, group, subgroup):
         """

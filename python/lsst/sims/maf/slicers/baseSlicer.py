@@ -223,10 +223,10 @@ class BaseSlicer(object):
         """
         # Bail if this is not a good data type for JSON.
         if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-                warnings.warn('Cannot generate JSON.')
-                io = StringIO()
-                json.dump(['Cannot generate JSON for this file.'], io)
-                return
+            warnings.warn('Cannot generate JSON.')
+            io = StringIO()
+            json.dump(['Cannot generate JSON for this file.'], io)
+            return None
         # Else put everything together for JSON output.
         if plotDict is None:
             plotDict = {}

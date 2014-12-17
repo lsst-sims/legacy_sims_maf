@@ -19,7 +19,7 @@
         <div id='indent'><a href="#{{group}}_{{subgroup}}">{{subgroup}}</a></div>
         {% set groupstart = False %}
       {% else %}
-        <div id='indent'><a href="#{{group}}_{{subgroup}}">{{subgroup}}</a></div>	  
+        <div id='indent'><a href="#{{group}}_{{subgroup}}">{{subgroup}}</a></div>
       {% endif %}
     {% endif %}
   {% endfor %}
@@ -28,11 +28,16 @@
 </ul>
 {% endblock %}
 
-	
+
 {% block content %}
 
+<p>
+{% set resultsDb = run.getResultsDb() %}
+Download <a href="{{resultsDb}}" download>summary results sqlite file</a>
+</p>
+
 {% for group in run.groups.keys() %}
-   {% set groupstart = True %} 	
+   {% set groupstart = True %}
    {% for subgroup in run.groups[group] %}
        {# Identify the metrics to put into table #}
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
@@ -41,11 +46,11 @@
        {% if groupstart %}
           <a name="{{group}}"></a>
           {% set groupstart = False %}
-       {% endif %}	  
-      
+       {% endif %}
+
        {{ mcr.MakeStatTable(metrics, group, subgroup, run) }}
 
-    {% endfor %}  
+    {% endfor %}
  {% endfor %}  {# end of group/subgroup #}
- 
+
 {% endblock %}
