@@ -125,18 +125,20 @@ class BaseSpatialSlicer(BaseSlicer):
                                             simData[self.spatialkey2],
                                             simData[self.rotSkyPosCol], simData[self.mjdCol]):
             dx,dy,dz = self._treexyz(ra,dec)
-            sliceIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
-            if sliceIndices.size > 0:
+            # Find healpixels inside the FoV
+            hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
+            if hpIndices.size > 0:
                 self.obs_metadata.unrefractedRA = np.degrees(ra)
                 self.obs_metadata.unrefractedDec = np.degrees(dec)
                 self.obs_metadata.rotSkyPos = rotSkyPos
                 self.obs_metadata.mjd = mjd
-                chipName = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][sliceIndices],
-                                                         dec=self.slicePoints['dec'][sliceIndices],
+                chipNames = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][hpIndices],
+                                                         dec=self.slicePoints['dec'][hpIndices],
                                                          epoch=self.epoch,
                                                          camera=self.camera, obs_metadata=self.obs_metadata)
-                hitChip = sliceIndices[np.where(chipName != [None])[0]]
-                for i in hitChip:
+                # Find the healpixels that fell on a chip for this pointing
+                hpOnChip = hpIndices[np.where(chipNames != [None])[0]]
+                for i in hpOnChip:
                     self.sliceLookup[i].append(ind)
 
         if self.verbose:
