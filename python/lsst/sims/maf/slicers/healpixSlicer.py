@@ -12,7 +12,7 @@ import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils import percentileClipping
 from .baseSpatialSlicer import BaseSpatialSlicer
-
+from matplotlib import ticker
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
@@ -72,7 +72,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    zp=None, normVal=None,
-                   cbar_edge=True, label=None, **kwargs):
+                   cbar_edge=True, label=None, nTicks=10, **kwargs):
         """
         Plot the sky map of metricValue using healpy Mollweide plot.
 
@@ -142,6 +142,9 @@ class HealpixSlicer(BaseSpatialSlicer):
             cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
                               extend='both', extendrect=True, format=cbarFormat)
             cb.set_label(xlabel)
+            tick_locator = ticker.MaxNLocator(nbins=nTicks)
+            cb.locator = tick_locator
+            cb.update_ticks()
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")
