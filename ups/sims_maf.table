@@ -9,6 +9,7 @@ setupRequired(sims_photUtils)
 setupRequired(sims_coordUtils)
 setupRequired(sims_dustmaps)
 setupRequired(healpy)
+setupRequired(obs_lsstSim)
 
 # other requirements (not in LSST stack)
 # both are supplied by Anaconda

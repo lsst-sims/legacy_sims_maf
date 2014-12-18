@@ -47,6 +47,11 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
         dec = dec[randind]
     dec = np.array(zip(dec), dtype=[('dec', 'float')])
     data.append(dec)
+    # Add in rotation angle
+    rot = np.random.rand(len(dec))*2*np.pi
+    data.append(np.array(rot, dtype=[('rotSkyPos','float')]))
+    mjd = np.arange(len(dec))*.1
+    data.append(np.array(mjd, dtype=[('expMJD','float')]))
     data = rfn.merge_arrays(data, flatten=True, usemask=False)
     return data
 
@@ -155,8 +160,6 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
                                 decmin=-np.pi, decmax=0,
                                 random=True)
 
-
-
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
@@ -178,6 +181,43 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
                 didxs = np.sort(didxs[0])
                 sidxs = np.sort(sidxs)
                 np.testing.assert_equal(self.dv['testdata'][didxs], self.dv['testdata'][sidxs])
+
+
+class TestHealpixChipGap(unittest.TestCase):
+    # Note that this is really testing baseSpatialSlicer, as slicing is done there for healpix grid
+    def setUp(self):
+        self.nside = 8
+        self.radius = 2.041
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
+                                        spatialkey1='ra', spatialkey2='dec',
+                                        radius=self.radius, useCamera=True)
+        nvalues = 1000
+        self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
+                                ramin=0, ramax=2*np.pi,
+                                decmin=-np.pi, decmax=0,
+                                random=True)
+
+    def tearDown(self):
+        del self.testslicer
+        self.testslicer = None
+
+    def testSlicing(self):
+        """Test slicing returns (most) data points which are within 'radius' of bin point."""
+        # Test that slicing fails before setupSlicer
+        self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
+        # Set up and test actual slicing.
+        self.testslicer.setupSlicer(self.dv)
+        for s in self.testslicer:
+            ra = s['slicePoint']['ra']
+            dec = s['slicePoint']['dec']
+            distances = calcDist_vincenty(ra, dec, self.dv['ra'], self.dv['dec'])
+            didxs = np.where(distances<=np.radians(self.radius))
+            sidxs = s['idxs']
+            self.assertTrue(len(sidxs) <= len(didxs[0]))
+            if len(sidxs) > 0:
+                for indx in sidxs:
+                    self.assertTrue( self.dv['testdata'][indx] in self.dv['testdata'][didxs])
+
 
 class TestHealpixSlicerPlotting(unittest.TestCase):
     def setUp(self):

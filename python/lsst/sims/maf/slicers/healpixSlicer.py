@@ -12,17 +12,17 @@ import matplotlib.cm as cm
 from matplotlib import colors
 from lsst.sims.maf.utils import percentileClipping
 from .baseSpatialSlicer import BaseSpatialSlicer
-
+from matplotlib import ticker
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all'):
+                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all', **kwargs):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
-                                            plotFuncs=plotFuncs)
+                                            plotFuncs=plotFuncs, **kwargs)
         # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -39,6 +39,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
                             'radius':radius}
+
         if useCache:
             # useCache set the size of the cache for the memoize function in sliceMetric.
             binRes = hp.nside2resol(nside) # Pixel size in radians
@@ -71,7 +72,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    zp=None, normVal=None,
-                   cbar_edge=True, label=None, **kwargs):
+                   cbar_edge=True, label=None, nTicks=None, **kwargs):
         """
         Plot the sky map of metricValue using healpy Mollweide plot.
 
@@ -141,6 +142,10 @@ class HealpixSlicer(BaseSpatialSlicer):
             cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
                               extend='both', extendrect=True, format=cbarFormat)
             cb.set_label(xlabel)
+            if nTicks is not None:
+                tick_locator = ticker.MaxNLocator(nbins=nTicks)
+                cb.locator = tick_locator
+                cb.update_ticks()
         # If outputing to PDF, this fixes the colorbar white stripes
         if cbar_edge:
             cb.solids.set_edgecolor("face")

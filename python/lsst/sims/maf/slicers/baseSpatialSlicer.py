@@ -13,13 +13,16 @@ from functools import wraps
 import warnings
 from lsst.sims.maf.utils import optimalBins, percentileClipping
 from scipy.spatial import cKDTree as kdtree
-
+from lsst.obs.lsstSim import LsstSimMapper
+from lsst.sims.coordUtils import CameraCoords, AstrometryBase
+from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
 from .baseSlicer import BaseSlicer
 
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all'):
+                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all', useCamera=False,
+                 rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -27,21 +30,33 @@ class BaseSpatialSlicer(BaseSlicer):
         the simData KDtree
         and slicePoint RA/Dec values will be produced
         plotFuncs = plotting methods to run. default 'all' runs all methods that start
-        with 'plot'."""
+        with 'plot'.
+        useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
+        True means the observations are checked to make sure they fall on a chip."""
+
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval,
                                                 plotFuncs=plotFuncs)
         self.spatialkey1 = spatialkey1
         self.spatialkey2 = spatialkey2
+        self.rotSkyPosColName = rotSkyPosColName
+        self.mjdColName = mjdColName
         self.columnsNeeded = [spatialkey1, spatialkey2]
+        self.useCamera = useCamera
+        if useCamera:
+            self.columnsNeeded.append(rotSkyPosColName)
+            self.columnsNeeded.append(mjdColName)
         self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
-                          'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs}
+                          'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs,
+                          'useCamera':useCamera}
         self.radius = radius
-        self.leafsize=leafsize
+        self.leafsize = leafsize
+        self.useCamera = useCamera
         # RA and Dec are required slicePoint info for any spatial slicer.
         self.slicePoints['sid'] = None
         self.slicePoints['ra'] = None
         self.slicePoints['dec'] = None
         self.nslice = None
+
 
     def setupSlicer(self, simData, maps=None):
         """Use simData[self.spatialkey1] and simData[self.spatialkey2]
@@ -53,27 +68,84 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             if self.cacheSize != 0:
                 warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
-        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
-        self._setRad(self.radius)
         for skyMap in maps:
             self.slicePoints = skyMap.run(self.slicePoints)
+
+        self._setRad(self.radius)
+        if self.useCamera:
+            self._setupLSSTCamera()
+            self._presliceFootprint(simData)
+        else:
+            self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
+
+
         @wraps(self._sliceSimData)
 
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
-            sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
-            # Query against tree.
-            indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
+
+            if self.useCamera:
+                indices = self.sliceLookup[islice]
+            else:
+                sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+                # Query against tree.
+                indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
+
             # Build dict for slicePoint info
             slicePoint={}
             for key in self.slicePoints.keys():
+                # If we have used the _presliceFootprint to
                 if np.size(self.slicePoints[key]) > 1:
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]
             return {'idxs':indices, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
+
+    def _setupLSSTCamera(self):
+        """If we want to include the camera chip gaps, etc"""
+
+        mapper = LsstSimMapper()
+        self.camera = mapper.camera
+        self.myCamCoords = CameraCoords()
+        self.epoch = 2000.0
+        self.obs_metadata = ObservationMetaData(m5=0.)
+
+    def _presliceFootprint(self, simData):
+        """Loop over each pointing and find which sky points are observed """
+        # Now to make a list of lists for looking up the relevant observations at each slicepoint
+        self.sliceLookup = [[] for dummy in xrange(self.nslice)]
+        # Make a kdtree for the _slicepoints_
+        self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
+
+        astrometryObject = AstrometryBase()
+        # Loop over each unique pointing position
+        for ind,ra,dec,mjd,rotSkyPos in zip(np.arange(simData.size), simData[self.spatialkey1],
+                                            simData[self.spatialkey2],
+                                            simData[self.rotSkyPosColName], simData[self.mjdColName]):
+            dx,dy,dz = self._treexyz(ra,dec)
+            # Find healpixels inside the FoV
+            hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
+            if hpIndices.size > 0:
+                self.obs_metadata.unrefractedRA = np.degrees(ra)
+                self.obs_metadata.unrefractedDec = np.degrees(dec)
+                self.obs_metadata.rotSkyPos = rotSkyPos
+                self.obs_metadata.mjd = mjd
+                # Correct ra,dec for
+                raCorr, decCorr = astrometryObject.correctCoordinates(self.slicePoints['ra'][hpIndices],
+                                                                      self.slicePoints['dec'][hpIndices],
+                                                                      obs_metadata=self.obs_metadata, epoch=self.epoch)
+                chipNames = self.myCamCoords.findChipName(ra=raCorr,dec=decCorr,
+                                                         epoch=self.epoch,
+                                                         camera=self.camera, obs_metadata=self.obs_metadata)
+                # Find the healpixels that fell on a chip for this pointing
+                hpOnChip = hpIndices[np.where(chipNames != [None])[0]]
+                for i in hpOnChip:
+                    self.sliceLookup[i].append(ind)
+
+        if self.verbose:
+            "Created lookup table after checking for chip gaps."
 
     def _treexyz(self, ra, dec):
         """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
