@@ -13,7 +13,9 @@ from functools import wraps
 import warnings
 from lsst.sims.maf.utils import optimalBins, percentileClipping
 from scipy.spatial import cKDTree as kdtree
-
+from lsst.obs.lsstSim import LsstSimMapper
+from lsst.sims.coordUtils import CameraCoords, AstrometryBase
+from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
 from .baseSlicer import BaseSlicer
 
 class BaseSpatialSlicer(BaseSlicer):
@@ -103,9 +105,6 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def _setupLSSTCamera(self):
         """If we want to include the camera chip gaps, etc"""
-        from lsst.obs.lsstSim import LsstSimMapper
-        from lsst.sims.coordUtils import CameraCoords
-        from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
 
         mapper = LsstSimMapper()
         self.camera = mapper.camera
@@ -120,6 +119,7 @@ class BaseSpatialSlicer(BaseSlicer):
         # Make a kdtree for the _slicepoints_
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
+        astrometryObject = AstrometryBase()
         # Loop over each unique pointing position
         for ind,ra,dec,mjd,rotSkyPos in zip(np.arange(simData.size), simData[self.spatialkey1],
                                             simData[self.spatialkey2],
@@ -132,8 +132,11 @@ class BaseSpatialSlicer(BaseSlicer):
                 self.obs_metadata.unrefractedDec = np.degrees(dec)
                 self.obs_metadata.rotSkyPos = rotSkyPos
                 self.obs_metadata.mjd = mjd
-                chipNames = self.myCamCoords.findChipName(ra=self.slicePoints['ra'][hpIndices],
-                                                         dec=self.slicePoints['dec'][hpIndices],
+                # Correct ra,dec for
+                raCorr, decCorr = astrometryObject.correctCoordinates(self.slicePoints['ra'][hpIndices],
+                                                                      self.slicePoints['dec'][hpIndices],
+                                                                      obs_metadata=self.obs_metadata, epoch=self.epoch)
+                chipNames = self.myCamCoords.findChipName(ra=raCorr,dec=decCorr,
                                                          epoch=self.epoch,
                                                          camera=self.camera, obs_metadata=self.obs_metadata)
                 # Find the healpixels that fell on a chip for this pointing
