@@ -127,7 +127,7 @@
                <td> {{ FormatSummaryStat(mName, stats['summaryValue'])}} </td>
 	    {% else %}
 	       {% if stats|length == 0 %}
-	          <td> '--' </td>
+	          <td> -- </td>
 	       {% else %}
 	          <td> {{stats['summaryValue'] }} </td>
 	       {% endif %}
@@ -173,7 +173,7 @@
 	   {% if statName in statDict.keys() %}
                <td> {{ FormatSummaryStat(statName, statDict[statName]) }} </td>
 	    {% else %}
-	          <td> '--' </td>
+	          <td> -- </td>
 	   {% endif %}
          {% endfor %}
          </tr>
@@ -223,7 +223,7 @@
 	        <td> {{ FormatSummaryStat(statName, stats['summaryValue']) }} </td>
             {% else %}
 		{% if stats|length == 0 %}
-		   <td> '--' </td>
+		   <td> -- </td>
 		{% else %}
 		   <td> {{stats['summaryValue']}} </td>
 		{% endif %}
