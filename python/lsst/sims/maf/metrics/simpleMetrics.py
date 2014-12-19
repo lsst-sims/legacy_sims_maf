@@ -71,7 +71,7 @@ class CountMetric(BaseMetric):
         return len(dataSlice[self.colname])
 
 class CountRatioMetric(BaseMetric):
-    """Count the length of a simData column slice. """
+    """Count the length of a simData column slice, then divide by 'normVal'. """
     def __init__(self, col=None, normVal=1., metricName=None, **kwargs):
         self.normVal = float(normVal)
         if metricName is None:
