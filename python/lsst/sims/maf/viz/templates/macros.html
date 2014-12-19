@@ -38,6 +38,19 @@
 {%- endmacro %}
 
 {# # #}
+{% macro FormatSummaryStat(statname, statvalue) %}
+ {% if 'Count' in statname or 'm3Sigma' in statname or 'p3Sigma' in statname or 'TableFraction' in statname %}
+   {{ '%d'|format(statvalue) }}
+ {% else %}
+   {% if statvalue|abs < 0.03 %}
+      {{ '%.4f'|format(statvalue) }}
+   {% else %}
+      {{ '%.2f'|format(statvalue) }}
+   {% endif %}
+ {% endif %}
+{%- endmacro %}
+
+{# # #}
 {% macro MakeStatTable(metrics, group, subgroup, run) %}
 {# big macro for stats tables #}
 
@@ -110,16 +123,14 @@
 	    {% set mset = run.metricsWithMetricName(mName, slicermetrics, baseonly=False) %}
 	    {% set m = run.metricsWithMetadata(meta, mset) %}
 	    {% set stats = run.statsForMetric(m) %}
-	    {% if stats|length == 0 %}
-	       <td> -- </td>
+	    {% if stats|length == 1 %}
+               <td> {{ FormatSummaryStat(mName, stats['summaryValue'])}} </td>
 	    {% else %}
- 	      <td>
-	      {% if 'Count' in mName or 'm3Sigma' in mName or 'p3Sigma' in mName or 'TableFraction' in mName %} 
-                 {{ '%d'|format(stats['summaryValue']) }}
-	      {% else %}
-                 {{ '%.2f'|format(stats['summaryValue']) }}
-	      {% endif %}
-	      </td>
+	       {% if stats|length == 0 %}
+	          <td> '--' </td>
+	       {% else %}
+	          <td> {{stats['summaryValue'] }} </td>
+	       {% endif %}
 	    {% endif %}
 	   {% endfor %}
 	   </tr>
@@ -159,17 +170,11 @@
            <td><b>{{ metricInfo[key]|escape }}</b></td>
          {% endfor %}
          {% for statName in statNames %}
-           <td>
 	   {% if statName in statDict.keys() %}
-	     {% if 'Count' in statName or 'm3Sigma' in statName or 'p3Sigma' in statName or 'TableFraction' in statName %} 
-                {{ '%d'|format(statDict[statName]) }}
-	     {% else %}
-                {{ '%.2f'|format(statDict[statName]) }}
-	     {% endif %}
-	   {% else %}
-	      {{ '--' }}
+               <td> {{ FormatSummaryStat(statName, statDict[statName]) }} </td>
+	    {% else %}
+	          <td> '--' </td>
 	   {% endif %}
-	   </td>
          {% endfor %}
          </tr>
         {% endif %}
@@ -214,16 +219,14 @@
 	{# Find metric that matches the metric name for this column and this statName. #}
 	{% for m in slicermetrics %}
 	    {% set stats = run.statsForMetric(m, statName=statName) %}
-	    {% if stats|length == 0 %}
-	       <td> -- </td>
-	    {% else %}
- 	      <td>
-	      {% if 'Count' in statName or 'm3Sigma' in statName or 'p3Sigma' in statName or 'TableFraction' in statName %} 
-                 {{ '%d'|format(stats['summaryValue']) }}
-	      {% else %}
-                 {{ '%.2f'|format(stats['summaryValue']) }}
-	      {% endif %}
-	      </td>
+	    {% if stats|length == 1 %}
+	        <td> {{ FormatSummaryStat(statName, stats['summaryValue']) }} </td>
+            {% else %}
+		{% if stats|length == 0 %}
+		   <td> '--' </td>
+		{% else %}
+		   <td> {{stats['summaryValue']}} </td>
+		{% endif %}
 	    {% endif %}
 	 {% endfor %}
 	 </tr>
