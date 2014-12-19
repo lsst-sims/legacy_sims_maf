@@ -138,17 +138,16 @@ class PercentileMetric(BaseMetric):
         pval = np.percentile(dataSlice[self.colname], self.percentile)
         return pval
 
-class NoutliersNsigma(BaseMetric):
+class NoutliersNsigmaMetric(BaseMetric):
     """
     Calculate the # of visits less than nSigma below the mean (nSigma<0) or
     more than nSigma above the mean of 'col'.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
-        self.col = col
         self.nSigma = nSigma
         if metricName is None:
             metricName = 'Noutliers %.1f %s' %(self.nSigma, self.col)
-        super(NoutliersNsigma, self).__init__(col=col, metricName=metricName, **kwargs)
+        super(NoutliersNsigmaMetric, self).__init__(col=col, metricName=metricName, **kwargs)
         self.plotDict['cbarFormat'] = '%d'
 
     def run(self, dataSlice, slicePoint=None):
