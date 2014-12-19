@@ -162,19 +162,3 @@ class NoutliersNsigmaMetric(BaseMetric):
             outsiders = np.where(dataSlice[self.colname] < boundary)
         return len(dataSlice[self.colname][outsiders])
 
-
-class NChangesMetric(BaseMetric):
-    """
-    Compute the number of times a column value changes.
-    (useful for filter changes in particular).
-    """
-    def __init__(self, col=None, orderBy='expMJD', **kwargs):
-        self.col = col
-        self.orderBy = orderBy
-        super(NChangesMetric, self).__init__(col=[col, orderBy], **kwargs)
-
-    def run(self, dataSlice, slicePoint=None):
-        idxs = np.argsort(dataSlice[self.orderBy])
-        diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
-        return len(np.where(diff == True)[0])
-
