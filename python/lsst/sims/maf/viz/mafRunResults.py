@@ -574,3 +574,4 @@ class MafRunResults(object):
         for remaining in names:
             namelist.append(remaining)
         return namelist
+
