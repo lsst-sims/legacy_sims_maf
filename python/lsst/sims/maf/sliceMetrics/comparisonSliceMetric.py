@@ -94,7 +94,10 @@ class ComparisonSliceMetric(BaseSliceMetric):
         # Now look within the 'diff' elements and see if there are any common words to split off.
         diffsplit = []
         for d in diff:
-            m = set([x.split() for x in d][0])
+            if len(d) >0:
+                m = set([x.split() for x in d][0])
+            else:
+                m = set()
             diffsplit.append(m)
         diffcommon = set.intersection(*diffsplit)
         diffdiff = [x.difference(diffcommon) for x in diffsplit]

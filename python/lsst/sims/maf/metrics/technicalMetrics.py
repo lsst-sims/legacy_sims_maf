@@ -6,7 +6,7 @@ class NChangesMetric(BaseMetric):
     Compute the number of times a column value changes.
     (useful for filter changes in particular).
     """
-    def __init__(self, col=None, orderBy='expMJD', **kwargs):
+    def __init__(self, col='filter', orderBy='expMJD', **kwargs):
         self.col = col
         self.orderBy = orderBy
         super(NChangesMetric, self).__init__(col=[col, orderBy], **kwargs)
