@@ -121,7 +121,7 @@ class BaseSpatialSlicer(BaseSlicer):
 
         astrometryObject = AstrometryBase()
         # Loop over each unique pointing position
-        for ind,ra,dec,mjd,rotSkyPos in zip(np.arange(simData.size), simData[self.spatialkey1],
+        for ind,ra,dec,rotSkyPos,mjd in zip(np.arange(simData.size), simData[self.spatialkey1],
                                             simData[self.spatialkey2],
                                             simData[self.rotSkyPosColName], simData[self.mjdColName]):
             dx,dy,dz = self._treexyz(ra,dec)
