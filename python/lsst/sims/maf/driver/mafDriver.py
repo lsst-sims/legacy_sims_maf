@@ -272,7 +272,7 @@ class MafDriver(object):
                   # Find the unique column names required.
                   colnames = list(set(colnames))
 
-                  print 'Querying with SQLconstraint:', sqlconstraint
+                  print 'Querying with SQLconstraint:', sqlconstraint, ' from table:', table
                   # Get the data from the database + stacker calculations.
                   if self.verbose:
                       time_prev = time.time()
