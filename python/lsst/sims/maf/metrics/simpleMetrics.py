@@ -145,6 +145,7 @@ class NoutliersNsigmaMetric(BaseMetric):
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
         self.nSigma = nSigma
+        self.col = col
         if metricName is None:
             metricName = 'Noutliers %.1f %s' %(self.nSigma, self.col)
         super(NoutliersNsigmaMetric, self).__init__(col=col, metricName=metricName, **kwargs)

@@ -84,11 +84,11 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def testNoutliersNsigma(self):
         data=self.dv
-        testmetric = metrics.NoutliersNsigma('testdata', nSigma=1.)
+        testmetric = metrics.NoutliersNsigmaMetric('testdata', nSigma=1.)
         med = np.mean(data['testdata'])
         shouldBe = np.size(np.where(data['testdata'] > med + data['testdata'].std())[0])
         self.assertEqual(shouldBe, testmetric.run(data))
-        testmetric = metrics.NoutliersNsigma('testdata', nSigma=-1.)
+        testmetric = metrics.NoutliersNsigmaMetric('testdata', nSigma=-1.)
         shouldBe = np.size(np.where(data['testdata'] < med - data['testdata'].std())[0])
         self.assertEqual(shouldBe, testmetric.run(data))
 
