@@ -14,17 +14,16 @@ nside = 128
 band='r'
 slicerList = []
 
-
+obsIDs = [1899225, 147175, 1176198, 1736871] # These should be all about 45 degrees apart
 nside = 2048
 
 m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'})
+constraints = ['obsHistID = %i '%(x) for x in obsIDs ]
 slicer = configureSlicer('HealpixSlicer',
                        kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec',
                                'useCamera':True},
                        metricDict=makeDict(*[m1]),
-                       constraints=['filter="%s" and obsHistID = %i '%(band, 140704),
-                                    'filter="%s" and obsHistID = %i '%(band, 174499),
-                                    'filter="%s" and obsHistID = %i '%(band, 215847 )])
+                         constraints=constraints)
 slicerList.append(slicer)
 
 nside = 128
@@ -33,9 +32,7 @@ slicer = configureSlicer('HealpixSlicer',
                        kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec',
                                'useCamera':False},
                        metricDict=makeDict(*[m1]),
-                       constraints=['filter="%s" and obsHistID = %i '%(band, 140704),
-                                    'filter="%s" and obsHistID = %i '%(band, 174499),
-                                    'filter="%s" and obsHistID = %i '%(band, 215847 )], metadata='cameraOff')
+                       constraints=constraints, metadata='cameraOff')
 slicerList.append(slicer)
 
 root.slicers=makeDict(*slicerList)

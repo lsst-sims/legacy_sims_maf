@@ -128,14 +128,15 @@ class BaseSpatialSlicer(BaseSlicer):
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
-                self.obs_metadata.unrefractedRA = np.degrees(ra)
-                self.obs_metadata.unrefractedDec = np.degrees(dec)
+                self.obs_metadata.unrefractedRA = ra
+                self.obs_metadata.unrefractedDec = dec
                 self.obs_metadata.rotSkyPos = rotSkyPos
                 self.obs_metadata.mjd = mjd
                 # Correct ra,dec for
                 raCorr, decCorr = astrometryObject.correctCoordinates(self.slicePoints['ra'][hpIndices],
                                                                       self.slicePoints['dec'][hpIndices],
                                                                       obs_metadata=self.obs_metadata, epoch=self.epoch)
+                print '#### rotSkyPos = %f degrees ####'%np.degrees(self.obs_metadata.rotSkyPos)
                 chipNames = self.myCamCoords.findChipName(ra=raCorr,dec=decCorr,
                                                          epoch=self.epoch,
                                                          camera=self.camera, obs_metadata=self.obs_metadata)
