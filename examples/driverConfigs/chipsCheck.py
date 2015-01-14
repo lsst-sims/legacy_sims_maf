@@ -15,7 +15,7 @@ band='r'
 slicerList = []
 
 obsIDs = [1899225, 147175, 1176198, 1736871] # These should be all about 45 degrees apart
-nside = 2048
+nside = 1024
 
 m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'})
 constraints = ['obsHistID = %i '%(x) for x in obsIDs ]

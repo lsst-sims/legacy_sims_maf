@@ -32,7 +32,7 @@ dec = np.ravel(dec)
 chipNames = myCamCoords.findChipName(ra=ra, dec=dec, epoch=epoch, camera=camera, obs_metadata=obs_metadata)
 
 # rotate 45 degrees
-obs_metadata.rotSkyPos = obs_metadata.rotSkyPos+45. #np.pi/4.
+obs_metadata.rotSkyPos = obs_metadata.rotSkyPos+np.pi/4.
 
 chipNames2 = myCamCoords.findChipName(ra=ra, dec=dec, epoch=epoch, camera=camera, obs_metadata=obs_metadata)
 

@@ -130,7 +130,7 @@ class BaseSpatialSlicer(BaseSlicer):
             if hpIndices.size > 0:
                 self.obs_metadata.unrefractedRA = ra
                 self.obs_metadata.unrefractedDec = dec
-                self.obs_metadata.rotSkyPos = np.degrees(rotSkyPos)
+                self.obs_metadata.rotSkyPos = rotSkyPos
                 self.obs_metadata.mjd = mjd
                 # Correct ra,dec for
                 raCorr, decCorr = astrometryObject.correctCoordinates(self.slicePoints['ra'][hpIndices],
