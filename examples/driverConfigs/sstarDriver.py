@@ -41,14 +41,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
-    if 'DD' in propTags:
-        DDpropid = propTags['DD']
-    else:
-        DDpropid = []
-    if 'WFD' in propTags:
-        WFDpropid = propTags['WFD']
-    else:
-        WFDpropid = []
+    if 'DD' not in propTags:
+        propTags['DD'] = []
+    if 'WFD' not in propTags:
+        propTags['WFD'] = []
+    DDpropid = propTags['DD']
+    WFDpropid = propTags['WFD']
 
     # Fetch the telescope location from config
     lat,lon,height = opsimdb.fetchLatLonHeight()
@@ -61,7 +59,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)
     totalNVisits = opsimdb.fetchNVisits()
-    totalSlewN = opsimdb.fetchTotalSlewN()
+    totalSlewN = opsimdb.fetchTotalSlewN() 
 
     # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
@@ -99,6 +97,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                          {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000], 'i':[5000, 8000],
                           'z':[7000, 10000], 'y':[5000, 8000]}}
 
+    ####
+    # Configure the most commonly used spatial slicers
     # Set slicer name and kwargs, so that we can vary these from the command line.
     slicerNames = ['HealpixSlicer', 'HealpixSlicerDither', 'OpsimFieldSlicer']
     if slicerName == 'HealpixSlicer':
@@ -118,34 +118,48 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     else:
         raise ValueError('Do not understand slicerName %s: looking for one of %s' %(slicerName, slicerNames))
     print 'Using slicer %s for generic metrics over the sky.' %(slicerName)
-
+    # For a few slicer/metric combos, we want to only create histograms (not skymaps or power spectra), but keep
+    #  the rest of slicerkwargs.
     onlyHist = {'plotFuncs':'plotHistogram'}
-    for key in slicerkwargs:
-        onlyHist[key] = slicerkwargs[key]
+    onlyHist.update(slicerkwargs)
 
-    ####
-
+    ###
     # Configure some standard summary statistics dictionaries to apply to appropriate metrics.
-
     # Note there's a complication here, you can't configure multiple versions of a summary metric since that makes a
-    # dict with repeated keys.  One kinda workaround is to add blank space (or even more words) to one of
-    # the keys that gets stripped out when the object is instatiated.
+    # dict with repeated keys.  The workaround is to add blank space (or even more words) to one of
+    # the keys, which will be stripped out of the metric class name when the object is instatiated.
     standardStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}, 'CountMetric':{},
-                   'NoutliersNsigma 1':{'metricName':'p3Sigma', 'nSigma':3.},
-                   'NoutliersNsigma 2':{'metricName':'m3Sigma', 'nSigma':-3.}}
-    percentileStats={'PercentileMetric 1':{'metricName':'25th%ile', 'percentile':25},
-                     'PercentileMetric 2':{'metricName':'50th%ile', 'percentile':50},
-                     'PercentileMetric 3':{'metricName':'75th%ile', 'percentile':75}}
+                   'NoutliersNsigmaMetric 1':{'metricName':'p3Sigma', 'nSigma':3.},
+                   'NoutliersNsigmaMetric 2':{'metricName':'m3Sigma', 'nSigma':-3.}}
+    rangeStats={'PercentileMetric 1':{'metricName':'25th%ile', 'percentile':25},
+                'PercentileMetric 2':{'metricName':'75th%ile', 'percentile':75},
+                'MinMetric':{},
+                'MaxMetric':{}}
     allStats = standardStats.copy()
-    allStats.update(percentileStats)
+    allStats.update(rangeStats)
+
+    # Standardize a couple of labels (for ordering purposes in showMaf).
+    summarygroup = 'A: Summary'
+    srdgroup = 'B: SRD'
+    nvisitgroup = 'C: NVisits'
+    nvisitOpsimgroup = 'D: NVisits (opsim)'
+    coaddeddepthgroup = 'E: Coadded depth'
+    completenessgroup = 'F: Completeness'
+    airmassgroup = 'G: Airmass'
+    seeinggroup = 'H: Seeing'
+    skybrightgroup = 'I: SkyBrightness'
+    singlevisitdepthgroup = 'J: Single Visit Depth'
+    hourglassgroup = 'K: Hourglass'
+    slewgroup = 'L: Slew'
+
     ####
     # Start specifying metrics and slicers for MAF to run.
 
     slicerList=[]
     histNum = 0
 
-    ## Metrics calculating values over the sky (healpix or opsim slicer)
-    # Loop over a set of standard analysis metrics, for All Proposals together and for WFD only.
+    ## Metrics calculating values across the sky (healpix or opsim slicer).
+    # Loop over a set of standard analysis metrics, for All Proposals, WFD only, and DD only. 
 
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD', 'DD']):
@@ -153,20 +167,23 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         for f in filters:
             # Set some per-proposal information.
             if prop == 'All Props':
+                subgroup = 'All Props'
                 propCaption = ' for all proposals'
                 metadata = '%s band, all props' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s"' %(f)]
                 nvisitsMin = nVisits_plotRange['all'][f][0]
                 nvisitsMax = nVisits_plotRange['all'][f][1]
                 mag_zp = mag_zpoints[f]
-            if prop == 'WFD':
+            elif prop == 'WFD':
+                subgroup = 'WFD'
                 propCaption = ' for WFD only'
                 metadata = '%s band, WFD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
                 nvisitsMin = nVisits_plotRange['all'][f][0]
                 nvisitsMax = nVisits_plotRange['all'][f][1]
                 mag_zp = mag_zpoints[f]
-            if prop == 'DD':
+            elif prop == 'DD':
+                subgroup = 'DD'
                 propCaption = ' for (all) DD only'
                 metadata = '%s band, DD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, ddWhere)]
@@ -184,7 +201,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                 'xMin':nvisitsMin,
                                                 'xMax':nvisitsMax, 'binsize':5},
                                               summaryStats=allStats,
-                                              displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
+                                              displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                                                          'binsize':5, 'legendloc':'upper right'}))
@@ -196,7 +213,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
                                                     'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
                                                     'units':'Number of Visits/Benchmark (%d)' %(nvisitBench[f])},
-                                              displayDict={'group':'2: Nvisits', 'subgroup':'%s, ratio' %(prop),
+                                              displayDict={'group':nvisitgroup, 'subgroup':'%s, ratio' %(subgroup),
                                                            'order':filtorder[f],
                                                            'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
                                                      %(f, benchmark, nvisitBench[f], propCaption)},
@@ -208,7 +225,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             # Calculate the median individual visit five sigma limiting magnitude.
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
                                 summaryStats=standardStats,
-                                displayDict={'group':'Single Visit Depth', 'subgroup':prop, 'order':filtorder[f],
+                                displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                             'caption':'Median single visit depth in filter %s, %s.' %(f, propCaption)}))
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metricList.append(configureMetric('Coaddm5Metric',
@@ -218,7 +235,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                 summaryStats=allStats,
                                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                                         'color':colors[f], 'label':'%s' %f, 'binsize':.02},
-                                                displayDict={'group':'3: CoaddDepth', 'subgroup':prop, 'order':filtorder[f],
+                                                displayDict={'group':coaddeddepthgroup, 'subgroup':subgroup,
+                                                             'order':filtorder[f],
                                                             'caption':
                                                 'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. Fainter limiting magnitudes are more positive numbers.'
                                                 %(f, benchmark, mag_zp, propCaption)}))
@@ -228,7 +246,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               kwargs={'col':'filtSkyBrightness'},
                                             plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f]),
                                                       'xMin':-2, 'xMax':1},
-                                            displayDict={'group':'Sky Brightness', 'subgroup':prop, 'order':filtorder[f],
+                                            displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                             'caption':
                                             'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s. Fainter sky brightness values are more positive numbers.'
                                             %(f, sky_zpoints[f], propCaption)}))
@@ -236,7 +254,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             metricList.append(configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
                                     plotDict={'normVal':seeing_norm[f],
                                                 'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])},
-                                    displayDict={'group':'Seeing', 'subgroup':prop, 'order':filtorder[f],
+                                    displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                 'caption':
                                                 'Median Seeing in filter %s divided by expected value (%.2f), %s.'
                                                 %(f, seeing_norm[f], propCaption)}))
@@ -244,20 +262,20 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             metricList.append(configureMetric('MedianMetric',
                                               kwargs={'col':'airmass'},
                                               plotDict={'units':'X'},
-                                              displayDict={'group':'Airmass', 'subgroup':prop, 'order':filtorder[f],
+                                              displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                         'caption':'Median airmass in filter %s, %s.' %(f, propCaption)}))
             # Calculate the median normalized airmass.
             metricList.append(configureMetric('MedianMetric',
                                               kwargs={'col':'normairmass'},
                                               plotDict={'units':'X'},
-                                              displayDict={'group':'Airmass', 'subgroup':prop, 'order':filtorder[f],
+                                              displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                         'caption':'Median normalized airmass in filter %s, %s.'
                                                         %(f, propCaption)}))
             # Calculate the maximum airmass.
             metricList.append(configureMetric('MaxMetric',
                                               kwargs={'col':'airmass'},
                                               plotDict={'units':'X'},
-                                              displayDict={'group':'Airmass', 'subgroup':prop, 'order':filtorder[f],
+                                              displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                             'caption':'Max airmass in filter %s, %s.' %(f, propCaption)}))
             metricDict = makeDict(*metricList)
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
@@ -270,7 +288,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                         'xMin':nVisits_plotRange['all'][f][0],
                                                         'xMax':nVisits_plotRange['all'][f][1], 'binsize':5,
                                                         'cumulative':-1},
-                                              displayDict={'group':'2: Nvisits', 'subgroup':prop, 'order':filtorder[f],
+                                              displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                                                          'binsize':5, 'legendloc':'upper right',
@@ -280,26 +298,30 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                      constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
 
-    # Count the number of visits including all filters, WFD only
+    # Count the number of visits in all filters, WFD only
     metricList =[]
     # Make the reverse cumulative histogram
     metricList.append(configureMetric('CountMetric',
                                       kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, cumulative'},
-                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1},
-                                      displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1,
+                                                'xMin':500, 'xMax':2000},
+                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD',
                                                    'caption':'Number of visits all filters, WFD only'}))
     # Regular Histogram
     metricList.append(configureMetric('CountMetric',
-                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, regular hist'},
-                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False},
-                                      summaryStats=standardStats,
-                                      displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters'},
+                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False,
+                                                'xMin':500, 'xMax':2000},
+                                      summaryStats=allStats,
+                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD',
                                                    'caption':'Number of visits all filters, WFD only'}))
     slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*metricList),
-                                     constraints=[wfdWhere], metadata='histOnly')
+                                     constraints=[wfdWhere],
+                                     metadata='All filters WFD: histogram only', metadataVerbatim=True)
     slicerList.append(slicer)
 
-    # Count the number of visits per filter for each proposal, over the sky. Uses opsim field slicer.
+    # Count the number of visits per filter for each proposal, over the sky.
+    # Different from above, as uses opsim field slicer.
     propOrder = 0
     for propid in propids:
         for f in filters:
@@ -314,7 +336,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                 summaryStats=standardStats,
                                 plotDict={'units':'Number of Visits', 'plotMask':True,
                                           'binsize':5, 'xMin':xMin, 'xMax':xMax},
-                                displayDict={'group':'2: Nvisits', 'subgroup':'%s'%(propids[propid]),
+                                displayDict={'group':nvisitOpsimgroup, 'subgroup':'%s'%(propids[propid]),
                                              'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
                                              %(f, propids[propid])},
@@ -339,7 +361,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                  kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                                  summaryStats=standardStats,
                                  plotDict={'units':'Number of Visits', 'binsize':5},
-                                 displayDict={'group':'2: Nvisits', 'subgroup':'WFD',
+                                 displayDict={'group':nvisitOpsimgroup, 'subgroup':'WFD',
                                               'order':filtorder[f] + propOrder,
                                               'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
                                  histMerge={'histNum':histNum, 'legendloc':'upper right',
@@ -354,10 +376,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Calculate the Completeness and Joint Completeness for all proposals and WFD only.
     for prop in ('All Props', 'WFD'):
         if prop == 'All Props':
+            subgroup = 'All Props'
             metadata = 'All proposals'
             sqlconstraint = ['']
             xlabel = '# visits (All Props) / (# WFD %s value)' %(benchmark)
         if prop == 'WFD':
+            subgroup = 'WFD'
             metadata = 'WFD only'
             sqlconstraint = ['%s' %(wfdWhere)]
             xlabel = '# visits (WFD) / (# WFD %s value)' %(benchmark)
@@ -369,7 +393,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                             kwargs={'u':nvisitBench['u'], 'g':nvisitBench['g'], 'r':nvisitBench['r'],
                                     'i':nvisitBench['i'], 'z':nvisitBench['z'], 'y':nvisitBench['y']},
                             summaryStats={'TableFractionMetric':{}},
-                            displayDict={'group':'4: Completeness', 'subgroup':prop})
+                            displayDict={'group':completenessgroup, 'subgroup':subgroup})
         metricDict = makeDict(m1)
         slicer = configureSlicer('OpsimFieldSlicer', metricDict=metricDict,
                                 constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
@@ -394,7 +418,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                       'xMax':1500},
                             summaryStats={'fOArea':{'nside':fOnside},
                                             'fONv':{'nside':fOnside}},
-                            displayDict={'group':'Technical', 'subgroup':'F0', 'displayOrder':order, 'caption':
+                            displayDict={'group':srdgroup, 'subgroup':'F0', 'displayOrder':order, 'caption':
                                         'FO metric: evaluates the overall efficiency of observing.'})
         order += 1
         slicer = configureSlicer('fOSlicer', kwargs={'nside':fOnside},
@@ -412,12 +436,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
         m1=configureMetric('HourglassMetric', kwargs={'lat':lat*np.pi/180.,
                                                       'lon':lon*np.pi/180. , 'elev':height},
-                           displayDict={'group':'Hourglass', 'order':i})
+                           displayDict={'group':hourglassgroup, 'subgroup':'Yearly', 'order':i})
         slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints,
                                  metadata='Year %i-%i' %(i, i+1), metadataVerbatim=True)
         slicerList.append(slicer)
 
-    ## Histograms. (one-d slicers).
+    ## Histograms of individual output values of Opsim. (one-d slicers).
 
     # Histograms per filter for WFD only (generally used to produce merged histograms).
     startNum = histNum
@@ -430,7 +454,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                              kwargs={'col':'fiveSigmaDepth', 'metricName':'Single Visit Depth Histogram'},
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f], 'label':'%s'%f},
-                            displayDict={'group':'Single Visit Depth', 'subgroup':'WFD', 'order':filtorder[f],
+                            displayDict={'group':singlevisitdepthgroup, 'subgroup':'WFD', 'order':filtorder[f],
                                          'caption':'Histogram of the single visit depth in %s band, WFD only.' %(f)})
         histNum += 1
         slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'fiveSigmaDepth', 'binsize':0.05},
@@ -441,7 +465,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         m1 = configureMetric('CountMetric', kwargs={'col':'filtSkyBrightness', 'metricName':'Sky Brightness Histogram'},
                             histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f], 'label':'%s'%f},
-                            displayDict={'group':'Sky Brightness', 'subgroup':'WFD', 'order':filtorder[f],
+                            displayDict={'group':skybrightgroup, 'subgroup':'WFD', 'order':filtorder[f],
                                          'caption':'Histogram of the sky brightness in %s band, WFD only.' %(f)})
         histNum += 1
         slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'filtSkyBrightness', 'binsize':0.1,
@@ -453,7 +477,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing', 'metricName':'Seeing Histogram'},
                             histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f],'label':'%s'%f},
-                            displayDict={'group':'Seeing', 'subgroup':'WFD', 'order':filtorder[f],
+                            displayDict={'group':seeinggroup, 'subgroup':'WFD', 'order':filtorder[f],
                                          'caption':'Histogram of the seeing in %s band, WFD only.' %(f)} )
         histNum += 1
         slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'finSeeing', 'binsize':0.02},
@@ -464,7 +488,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         m1 = configureMetric('CountMetric', kwargs={'col':'airmass', 'metricName':'Airmass Histogram'},
                              histMerge={'histNum':histNum, 'legendloc':'upper right',
                                        'color':colors[f], 'label':'%s'%f, 'xMin':1.0, 'xMax':2.0},
-                            displayDict={'group':'Airmass', 'subgroup':'WFD', 'order':filtorder[f],
+                            displayDict={'group':airmassgroup, 'subgroup':'WFD', 'order':filtorder[f],
                                          'caption':'Histogram of the airmass in %s band, WFD only.' %(f)})
         histNum += 1
         slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'airmass', 'binsize':0.01},
@@ -475,31 +499,35 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
    # Slew histograms (time and distance).
     m1 = configureMetric('CountMetric', kwargs={'col':'slewTime', 'metricName':'Slew Time Histogram'},
                          plotDict={'logScale':True, 'ylabel':'Count'},
-                         displayDict={'group':'Technical', 'subgroup':'Slew',
+                         displayDict={'group':slewgroup, 'subgroup':'Slew Histograms',
                                       'caption':'Histogram of slew times for all visits.'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'slewTime', 'binsize':5},
                               metricDict=makeDict(m1), constraints=[''])
     slicerList.append(slicer)
     m1 = configureMetric('CountMetric', kwargs={'col':'slewDist', 'metricName':'Slew Distance Histogram'},
                          plotDict={'logScale':True, 'ylabel':'Count'},
-                         displayDict={'group':'Technical', 'subgroup':'Slew',
+                         displayDict={'group':slewgroup, 'subgroup':'Slew Histograms',
                                       'caption':'Histogram of slew distances for all visits.'})
     slicer = configureSlicer('OneDSlicer', kwargs={"sliceColName":'slewDist', 'binsize':.05},
                               metricDict=makeDict(m1), constraints=[''])
     slicerList.append(slicer)
 
     # Plots per night -- the number of visits and the open shutter time fraction.
-    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisits Per Night'},
-                          summaryStats=standardStats,
-                          displayDict={'group':'Technical', 'subgroup':'Obs Time',
+    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisits'},
+                          summaryStats=allStats,
+                          displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
                                        'caption':'Number of visits per night.'})
     m2 = configureMetric('OpenShutterFractionMetric',
-                         summaryStats=standardStats,
-                         displayDict={'group':'Technical', 'subgroup':'Obs Time',
+                         summaryStats=allStats,
+                         displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
                                       'caption':'Open shutter fraction per night.'})
+    m3 = configureMetric('NChangesMetric', kwargs={'col':'filter', 'metricName':'Filter Changes'},
+                         summaryStats=allStats,
+                         displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
+                                     'caption':'Number of filter changes per night.'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
-                             metricDict=makeDict(m1, m2),
-                             constraints=[''])
+                             metricDict=makeDict(m1, m2, m3),
+                             constraints=[''], metadata='Per night', metadataVerbatim=True)
     slicerList.append(slicer)
 
     ## Unislicer (single number) metrics.
@@ -533,7 +561,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             sqlconstraint = [sqlconstraint]
             metricList = []
             cols = ['finSeeing', 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth']
-            groups = ['Seeing', 'Sky Brightness', 'Airmass', 'Single Visit Depth']
+            groups = [seeinggroup, skybrightgroup, airmassgroup, singlevisitdepthgroup]
             for col, group in zip(cols, groups):
                 metricList.append(configureMetric('MedianMetric', kwargs={'col':col},
                                                 displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
@@ -545,11 +573,11 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                 metricList.append(configureMetric('RmsMetric', kwargs={'col':col},
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
-                metricList.append(configureMetric('NoutliersNsigma',
+                metricList.append(configureMetric('NoutliersNsigmaMetric',
                                                     kwargs={'col':col, 'metricName':'m3Sigma %s' %(col), 'nSigma':-3.},
                                                     displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
-                metricList.append(configureMetric('NoutliersNsigma',
+                metricList.append(configureMetric('NoutliersNsigmaMetric',
                                                   kwargs={'col':col, 'metricName':'p3Sigma %s' %(col), 'nSigma':3.},
                                                   displayDict={'group':group, 'subgroup':subgroup, 'order':order}))
                 order += 1
@@ -575,31 +603,26 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                     constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
 
-    # Calculate the mean and median slewtime.
+
+    # Calculate SLEW statistics.
     metricList = []
     # Mean Slewtime
     metricList.append(configureMetric('MeanMetric', kwargs={'col':'slewTime'},
-                         displayDict={'group':'Slew Summary'}))
+                         displayDict={'group':slewgroup, 'subgroup':'Summary', 'order':1,
+                                      'caption':'Mean slew time in seconds.'}))
     # Median Slewtime
     metricList.append(configureMetric('MedianMetric', kwargs={'col':'slewTime'},
-                         displayDict={'group':'Slew Summary'}))
-    # Calculate the total number of visits.
-    metricList.append(configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
-                         summaryStats={'IdentityMetric':{'metricName':'Count'}},
-                         displayDict={'group':'Slew Summary'}))
-    # Calculate the total open shutter time.
-    metricList.append(configureMetric('SumMetric', kwargs={'col':'visitExpTime', 'metricName':'Open Shutter Time'},
-                         summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
-                         displayDict={'group':'Slew Summary'}))
-    # Number of nights
-    metricList.append(configureMetric('UniqueMetric', kwargs={'col':'night'},
-                                     displayDict={'group':'Slew Summary'}))
+                         displayDict={'group':slewgroup, 'subgroup':'Summary', 'order':2,
+                                      'caption':'Median slew time in seconds.'}))
     # Mean exposure time
     metricList.append(configureMetric('MeanMetric', kwargs={'col':'visitExpTime'},
-                                      displayDict={'group':'Slew Summary'}))
+                                      displayDict={'group':slewgroup, 'subgroup':'Summary', 'order':3,
+                                                   'caption':'Mean visit on-sky time, in seconds.'}))
     # Mean visit time
     metricList.append(configureMetric('MeanMetric', kwargs={'col':'visitTime'},
-                                      displayDict={'group':'Slew Summary'}))
+                                      displayDict={'group':slewgroup, 'subgroup':'Summary', 'order':4,
+                                                   'caption':
+                                                   'Mean total visit time (including readout and shutter), in seconds.'}))
     metricDict = makeDict(*metricList)
     slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata='All Visits',
                              metadataVerbatim=True)
@@ -608,16 +631,25 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Stats for angle:
     angles = ['telAlt', 'telAz', 'rotTelPos']
 
+    order = 0
     for angle in angles:
         metricList = []
-        metricList.append(configureMetric('MaxMetric', kwargs={'col':angle},
-                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
-        metricList.append(configureMetric('MinMetric', kwargs={'col':angle},
-                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
-        metricList.append(configureMetric('MeanMetric', kwargs={'col':angle},
-                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
-        metricList.append(configureMetric('RmsMetric', kwargs={'col':angle},
-                                          displayDict={'group':'Slew Angle Stats', 'subgroup':angle}))
+        metricList.append(configureMetric('MinMetric', kwargs={'col':angle, 'metricName':'Min'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Angles', 'order':order,
+                                                       'caption':'Minimum %s value, in radians.' %(angle)}))
+        order += 1
+        metricList.append(configureMetric('MaxMetric', kwargs={'col':angle, 'metricName':'Max'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Angles', 'order':order,
+                                                       'caption':'Maximum %s value, in radians.' %(angle)}))
+        order += 1
+        metricList.append(configureMetric('MeanMetric', kwargs={'col':angle, 'metricName':'Mean'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Angles', 'order':order,
+                                                       'caption':'Mean %s value, in radians.' %(angle)}))
+        order += 1
+        metricList.append(configureMetric('RmsMetric', kwargs={'col':angle, 'metricName':'RMS'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Angles', 'order':order,
+                                                       'caption':'Rms of %s value, in radians.' %(angle)}))
+        order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata=angle,
                                  metadataVerbatim=True, table='slewState')
@@ -626,15 +658,22 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     # Make some calls to other tables to get slew stats
     colDict = {'domAltSpd':'Dome Alt Speed','domAzSpd':'Dome Az Speed','telAltSpd': 'Tel Alt Speed',
                'telAzSpd': 'Tel Az Speed', 'rotSpd':'Rotation Speed'}
-    for key in colDict.keys():
+    order = 0
+    for key in colDict:
         metricList=[]
-        metricList.append(configureMetric('MaxMetric', kwargs={'col':key},
-                                          displayDict={'group':'Slew Speed', 'subgroup':colDict[key]}))
-        metricList.append(configureMetric('MeanMetric', kwargs={'col':key},
-                                          displayDict={'group':'Slew Speed', 'subgroup':colDict[key]}))
+        metricList.append(configureMetric('MaxMetric', kwargs={'col':key, 'metricName':'Max'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Speed', 'order':order,
+                                                       'caption':'Maximum slew speed for %s.' %(colDict[key])}))
+        order += 1
+        metricList.append(configureMetric('MeanMetric', kwargs={'col':key, 'metricName':'Mean'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Speed', 'order':order,
+                                                       'caption':'Mean slew speed for %s.' %(colDict[key])}))
+        order += 1
         metricList.append(configureMetric('MaxPercentMetric', kwargs={'col':key, 'metricName':'% of slews'},
-                                          displayDict={'group':'Slew Speed', 'subgroup':colDict[key]}))
-
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Speed', 'order':order,
+                                                       'caption':'Percent of slews which are at maximum value of %s'
+                                                       %(colDict[key])}))
+        order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''],
                                  table='slewMaxSpeeds', metadata=colDict[key], metadataVerbatim=True)
@@ -644,22 +683,31 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slewTypes = ['DomAlt', 'DomAz', 'TelAlt', 'TelAz', 'Rotator', 'Filter',
                  'TelOpticsOL', 'Readout', 'Settle', 'TelOpticsCL']
 
+    order = 0
     for slewType in slewTypes:
         metricList = []
-        metricList.append(configureMetric('ActivePercentMetric',
-                                          kwargs={'col':'actDelay', 'activity':slewType,
-                                                  'metricName':'ActivePerc',
-                                                  'norm':100./totalSlewN},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
-        metricList.append(configureMetric('ActiveMeanMetric',
-                                          kwargs={'col':'actDelay', 'activity':slewType,
+        metricList.append(configureMetric('CountRatioMetric',
+                                          kwargs={'col':'actDelay', 'normVal':totalSlewN/100.0,
+                                                  'metricName':'ActivePerc'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order,
+                                                       'caption':'Percent of total slews which include %s movement.'
+                                                       %(slewType)}))
+        order += 1
+        metricList.append(configureMetric('MeanMetric',
+                                          kwargs={'col':'actDelay',
                                                   'metricName':'ActiveAve'},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
-        metricList.append(configureMetric('ActiveMaxMetric',
-                                          kwargs={'col':'actDelay', 'activity':slewType,
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order,
+                                                       'caption':'Mean amount of time (in seconds) for %s movements.'
+                                                       %(slewType)}))
+        order += 1
+        metricList.append(configureMetric('MaxMetric',
+                                          kwargs={'col':'actDelay',
                                                   'metricName':'Max'},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order,
+                                                       'caption':'Max amount of time (in seconds) for %s movement.'
+                                                       %(slewType)}))
 
+        order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,
                                  constraints=['actDelay>0 and activity="%s"'%slewType],
@@ -667,31 +715,36 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                  metadataVerbatim=True)
         slicerList.append(slicer)
         metricList = []
-        metricList.append(configureMetric('ActivePercentMetric',
-                                          kwargs={'col':'actDelay', 'activity':slewType,
-                                                  'metricName':'ActivePerc in crit',
-                                                  'norm':100./totalSlewN},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
-        metricList.append(configureMetric('ActiveMeanMetric',
-                                          kwargs={'col':'actDelay', 'activity':slewType,
+        metricList.append(configureMetric('CountRatioMetric',
+                                          kwargs={'col':'actDelay', 'normVal':totalSlewN/100.0,
+                                                  'metricName':'ActivePerc in crit'},
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order,
+                                                       'caption':'Percent of total slew which include %s movement, and are in critical path.' %(slewType)}))
+        order += 1
+        metricList.append(configureMetric('MeanMetric',
+                                          kwargs={'col':'actDelay',
                                                   'metricName':'ActiveAve in crit'},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}) )
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order,
+                                                       'caption':'Mean time (in seconds) for %s movements, when in critical path.'
+                                                       %(slewType)}))
+        order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,
                                  constraints=['actDelay>0 and inCriticalPath="True" and activity="%s"'%slewType],
-                                 table='slewActivities',
-                                 metadata=slewType,
+                                 table='slewActivities', metadata=slewType,
                                  metadataVerbatim=True)
         slicerList.append(slicer)
         metricList = []
         metricList.append(configureMetric('AveSlewFracMetric',
                                           kwargs={'col':'actDelay','activity':slewType,
                                                   'metricName':'Total Ave'},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}))
-        metricList.append(configureMetric('ContributionMetric',
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order}))
+        order += 1
+        metricList.append(configureMetric('SlewContributionMetric',
                                           kwargs={'col':'actDelay','activity':slewType,
                                                   'metricName':'Contribution'},
-                                          displayDict={'group':'Slew', 'subgroup':slewType}))
+                                          displayDict={'group':slewgroup, 'subgroup':'Slew Activity', 'order':order}))
+        order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,constraints=[''],
                                  table='slewActivities', metadata=slewType, metadataVerbatim=True)
@@ -699,15 +752,17 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
+    order = 1
     for propid in propids:
-        # Skip the wfd proposals.
-        if propid in WFDpropid:
-            continue
         sqlconstraint = ['propID = %s' %(propid)]
         m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                              summaryStats={'IdentityMetric':{'metricName':'Count'},
                                            'NormalizeMetric':{'normVal':totalNVisits, 'metricName':'Fraction of total'}},
-                            displayDict={'group':'1: Summary', 'subgroup':'NVisits'})
+                            displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':order,
+                                         'caption':
+                                         'Number of visits for %s proposal and fraction of total visits.'
+                                         %(propids[propid])})
+        order += 1
         slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1), constraints=sqlconstraint,
                                  metadata='%s' %(propids[propid]), metadataVerbatim=True)
         slicerList.append(slicer)
@@ -715,6 +770,18 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     sqlconstraint = ['%s' %(wfdWhere)]
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1),
                             constraints=sqlconstraint, metadata='WFD', metadataVerbatim=True)
+    slicerList.append(slicer)
+    # Count total number of visits.
+    m1 = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'TotalNVisits'},
+                         summaryStats={'IdentityMetric':{'metricName':'Count'}},
+                         displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':0})
+    # Count total number of nights
+    m2 = configureMetric('UniqueMetric', kwargs={'col':'night', 'metricName':'Nights on sky'},
+                                     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
+    m3 = configureMetric('FullRangeMetric', kwargs={'col':'night', 'metricName':'Nights in survey'},
+                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
+    slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2, m3), constraints=[''], metadata='All Visits',
+                             metadataVerbatim=True)
     slicerList.append(slicer)
 
     config.slicers=makeDict(*slicerList)

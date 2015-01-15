@@ -1,6 +1,21 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+class NChangesMetric(BaseMetric):
+    """
+    Compute the number of times a column value changes.
+    (useful for filter changes in particular).
+    """
+    def __init__(self, col='filter', orderBy='expMJD', **kwargs):
+        self.col = col
+        self.orderBy = orderBy
+        super(NChangesMetric, self).__init__(col=[col, orderBy], **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        idxs = np.argsort(dataSlice[self.orderBy])
+        diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
+        return len(np.where(diff == True)[0])
+
 class OpenShutterFractionMetric(BaseMetric):
     """
     Compute the fraction of time the shutter is open compared to the total time spent observing.

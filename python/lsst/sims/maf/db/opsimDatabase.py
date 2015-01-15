@@ -192,6 +192,9 @@ class OpsimDatabase(Database):
                 # Strip '.conf', 'Prop', and path info.
                 propIDs[int(propid)] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propname)))
             propTags = {}
+            # Add WFD and DD by default, as we probably expect those every time.
+            propTags['WFD'] = []
+            propTags['DD'] = []
             # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
             table = self.tables['configTable']
             sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
@@ -200,15 +203,9 @@ class OpsimDatabase(Database):
                 # Older opsim output, so fall back to trying to guess what proposals are WFD.
                 for propid, propname in propIDs.iteritems():
                     if 'universal' in propname.lower():
-                        if 'WFD' in propTags:
-                            propTags['WFD'].append(propid)
-                        else:
-                            propTags['WFD'] = [propid,]
+                        propTags['WFD'].append(propid)
                     if 'deep' in propname.lower():
-                        if 'DD' in propTags:
-                            propTags['DD'].append(propid)
-                        else:
-                            propTags['DD'] = [propid,]
+                        propTags['DD'].append(propid)
             else:
                 # Newer opsim output with 'ScienceType' fields in conf files.
                 for sc in sciencetypes:

@@ -73,38 +73,38 @@ class ComparisonSliceMetric(BaseSliceMetric):
            uniqueMetadata.add(self.metadatas[iid])
         return uniqueMetadata
 
-    def combineMetadata(self, iids=None):
-       """
-       Combine a set of metadatas to remove duplication.
-       """
-       uMetadata = self.uniqueMetadata(iids=iids)
-       combo = []
-       for uM in uMetadata:
-          if ' and ' in uM:
-             uMSplit = uM.split(' and ')
-          elif ', ' in uM:
-             uMSplit = uM.split(', ')
-          else:
-             uMSplit = [uM,]
-          tmp = []
-          for iM in uMSplit:
-             tmp.append(iM.strip())
-          combo.append(tmp)
-       # See if there are common propIDs to all metadatas
-       propids = []
-       for c in combo:
-          for ci in c:
-             if 'prop' in ci:
-                propids.append(ci)
 
-       if len(propids) == len(combo) and len(np.unique(propids))==1:
-          propids = np.unique(propids)
-          for c in combo:
-             c.remove(propids)
-          cMetadata = ', '.join([' '.join(c) for c in combo]) + ' for %s' %(propids[0])
-       else:
-          cMetadata = ', '.join([' '.join(c) for c in combo])
-       return cMetadata
+    def combineMetadata(self, iids=None):
+        metadatas = self.uniqueMetadata(iids)
+        splitmetas = []
+        for m in metadatas:
+            # Split metadata into separate phrases (filter / proposal / constraint..).
+            if ' and ' in m:
+                m = m.split(' and ')
+            elif ', ' in m:
+                m = m.split(', ')
+            else:
+                m = [m,]
+            # Strip white spaces from individual elements.
+            m = set([im.strip() for im in m])
+            splitmetas.append(m)
+        # Look for common elements and separate from the general metadata.
+        common = set.intersection(*splitmetas)
+        diff = [x.difference(common) for x in splitmetas]
+        # Now look within the 'diff' elements and see if there are any common words to split off.
+        diffsplit = []
+        for d in diff:
+            if len(d) >0:
+                m = set([x.split() for x in d][0])
+            else:
+                m = set()
+            diffsplit.append(m)
+        diffcommon = set.intersection(*diffsplit)
+        diffdiff = [x.difference(diffcommon) for x in diffsplit]
+        # And put it all back together.
+        combo = ', '.join([' '.join(c) for c in diffdiff]) + ' ' + ' '.join([''.join(d) for d in diffcommon]) + ' '\
+            + ' '.join([''.join(e) for e in common])
+        return combo
 
     def uniqueSimDataNames(self, iids=None):
         """
@@ -223,7 +223,7 @@ class ComparisonSliceMetric(BaseSliceMetric):
         umetrics = self.uniqueMetricNames(iids)
         usimdata = self.uniqueSimDataNames(iids)
         comboMetadata = self.combineMetadata(iids)
-        caption += ', '.join(umetrics) + 'metrics '
+        caption += ', '.join(umetrics) + ' metrics '
         caption += 'calculated with data selected by %s' %(comboMetadata)
         caption += ' for opsim run(s) ' + ', '.join(usimdata) + '.'
         return caption

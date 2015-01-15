@@ -71,7 +71,7 @@ class CountMetric(BaseMetric):
         return len(dataSlice[self.colname])
 
 class CountRatioMetric(BaseMetric):
-    """Count the length of a simData column slice. """
+    """Count the length of a simData column slice, then divide by 'normVal'. """
     def __init__(self, col=None, normVal=1., metricName=None, **kwargs):
         self.normVal = float(normVal)
         if metricName is None:
@@ -138,17 +138,17 @@ class PercentileMetric(BaseMetric):
         pval = np.percentile(dataSlice[self.colname], self.percentile)
         return pval
 
-class NoutliersNsigma(BaseMetric):
+class NoutliersNsigmaMetric(BaseMetric):
     """
     Calculate the # of visits less than nSigma below the mean (nSigma<0) or
     more than nSigma above the mean of 'col'.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
-        self.col = col
         self.nSigma = nSigma
+        self.col = col
         if metricName is None:
             metricName = 'Noutliers %.1f %s' %(self.nSigma, self.col)
-        super(NoutliersNsigma, self).__init__(col=col, metricName=metricName, **kwargs)
+        super(NoutliersNsigmaMetric, self).__init__(col=col, metricName=metricName, **kwargs)
         self.plotDict['cbarFormat'] = '%d'
 
     def run(self, dataSlice, slicePoint=None):
@@ -162,3 +162,4 @@ class NoutliersNsigma(BaseMetric):
         else:
             outsiders = np.where(dataSlice[self.colname] < boundary)
         return len(dataSlice[self.colname][outsiders])
+

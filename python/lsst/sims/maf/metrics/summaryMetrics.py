@@ -126,7 +126,7 @@ class NormalizeMetric(BaseMetric):
     """Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions."""
     def __init__(self, col='metricdata', normVal=1, **kwargs):
         super(NormalizeMetric, self).__init__(col=col, **kwargs)
-        self.normVal = normVal
+        self.normVal = float(normVal)
     def run(self, dataSlice, slicePoint=None):
         result = dataSlice[self.colname]/self.normVal
         if len(result) == 1:

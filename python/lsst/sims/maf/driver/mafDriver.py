@@ -124,10 +124,10 @@ class MafDriver(object):
                    duplicates = [x for x, y in collections.Counter(nameCheck).items() if y > 1]
                    raise Exception('Summary metric names not unique. "%s" defined more than one with metric "%s"'
                                    %(duplicates[0], temp_metric.name))
-                # If it is a UniSlicer, make sure the IdentityMetric is run
+                # If it is a UniSlicer, make sure at least the IdentityMetric is run
                 if temp_slicer.slicerName == 'UniSlicer':
-                   if 'IdentityMetric' not in summaryStats.keys():
-                      temp_metric.summaryStats.append(metrics.BaseMetric.registry['IdentityMetric']('metricdata'))
+                    if len(summaryStats) == 0:
+                        temp_metric.summaryStats.append(metrics.BaseMetric.registry['IdentityMetric']('metricdata'))
                 temp_metric.histMerge = histMerge
                 sub_metricList.append(temp_metric )
             self.metricList.append(sub_metricList)
@@ -272,7 +272,7 @@ class MafDriver(object):
                   # Find the unique column names required.
                   colnames = list(set(colnames))
 
-                  print 'Querying with SQLconstraint:', sqlconstraint
+                  print 'Querying with SQLconstraint:', sqlconstraint, ' from table:', table
                   # Get the data from the database + stacker calculations.
                   if self.verbose:
                       time_prev = time.time()
