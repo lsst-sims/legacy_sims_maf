@@ -1,29 +1,36 @@
 import numpy as np
 from .baseStacker import BaseStacker
 
+def wrapRADec(ra, dec):
+    """
+    Wrap RA and Dec values so RA between 0-2pi (using mod),
+      and Dec in +/- pi/2.
+    """
+    # Wrap dec.
+    low = np.where(dec < -np.pi/2.0)[0]
+    dec[low] = -1.*(np.pi + dec)
+    ra[low] = ra - np.pi
+    high = np.where(dec > np.pi/2.0)[0]
+    dec[high] = np.pi - dec
+    ra[high] = ra - np.pi
+    # Wrap RA.
+    ra = ra % (2.0*np.pi)
+    return ra, dec
+
 def wrapRA(ra):
     """
-    Wrap RA values so they are between 0 and 2pi (using mod).
-     """
+    Wrap only RA values into 0-2pi (using mod).
+    """
     ra = ra % (2.0*np.pi)
     return ra
 
-def wrapDec(dec):
-    """
-    Wrap dec positions to be between -pi/2 and pi/2.
-    (reflects Dec values around +/- 90).
-    """
-    dec = np.where(dec < -np.pi/2.0, -1.*(np.pi + dec), dec)
-    dec = np.where(dec > np.pi/2.0, (np.pi - dec), dec)
-    return dec
-
-
 class RandomDitherStacker(BaseStacker):
-    """Randomly dither the RA and Dec pointings up to maxDither degrees from center."""
+    """Randomly dither the RA and Dec pointings up to maxDither degrees from center, per pointing."""
     def __init__(self, raCol='fieldRA', decCol='fieldDec', maxDither=1.8, randomSeed=None):
         # Instantiate the RandomDither object and set internal variables.
         self.raCol = raCol
         self.decCol = decCol
+        # Convert maxDither from degrees (internal units for ra/dec are radians)
         self.maxDither = maxDither * np.pi / 180.0
         self.randomSeed = randomSeed
         # self.units used for plot labels
@@ -37,48 +44,53 @@ class RandomDitherStacker(BaseStacker):
         # Generate random numbers for dither, using defined seed value if desired.
         if self.randomSeed is not None:
             np.random.seed(self.randomSeed)
-        # Generate the random dither values.
-        dithersRA = np.random.rand(len(simData[self.raCol]))
-        dithersDec = np.random.rand(len(simData[self.decCol]))
-        # np.random.rand returns numbers in [0, 1) interval.
-        # Scale to desired +/- maxDither range.
-        dithersRA = dithersRA*np.cos(simData[self.decCol])*2.0*self.maxDither - self.maxDither
-        dithersDec = dithersDec*2.0*self.maxDither - self.maxDither
-        # Add columns to simData and then fill with new values.
+        # Add new columns to simData, ready to fill with new values.
         simData = self._addStackers(simData)
-        # Add to RA and wrap back into expected range.
-        simData['randomRADither'] = wrapRA(simData[self.raCol] + dithersRA)
-        # Add to Dec and wrap back into expected range.
-        simData['randomDecDither'] = wrapDec(simData[self.decCol] + dithersDec)
+        # Generate the random dither values.
+        nobs = len(simData[self.raCol])
+        dithersRA = (np.random.rand(nobs)*2.0*self.maxDither - self.maxDither)*np.cos(simData[self.decCol])
+        dithersDec = np.random.rand(nobs)*2.0*self.maxDither - self.maxDither
+        # Add to RA and dec values.
+        simData['randomRADither'] = simData[self.raCol] + dithersRA
+        simData['randomDecDither'] = simData[self.decCol] + dithersDec
+        # Wrap back into expected range.
+        simData['randomRADither'], simData['randomDecDither'] = wrapRADec(simData['randomRADither'], simData['randomDecDither'])
         return simData
 
-
-# Add a new dither pattern (sily example)
-class DecOnlyDitherStacker(BaseStacker):
-    """Dither the position of pointings in dec only.  """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
-                 nightStep=1, nSteps=5, stepSize=0.2):
-        """stepsize in degrees """
+class NightlyRandomDitherStacker(BaseStacker):
+    """Randomly dither the RA and Dec pointings up to maxDither degrees from center, one dither offset per night."""
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night', maxDither=1.8, randomSeed=None):
+        # Instantiate the RandomDither object and set internal variables.
         self.raCol = raCol
         self.decCol = decCol
         self.nightCol = nightCol
-        self.nightStep = nightStep
-        self.nSteps = nSteps
-        self.stepSize = stepSize
-        self.units = ['rad']
-        self.colsAdded = ['decOnlyDither']
-        self.colsReq = [raCol, decCol, nightCol]
+        # Convert maxDither from degrees (internal units for ra/dec are radians)
+        self.maxDither = maxDither * np.pi / 180.0
+        self.randomSeed = randomSeed
+        # self.units used for plot labels
+        self.units = ['rad', 'rad']
+        # Values required for framework operation: this specifies the names of the new columns.
+        self.colsAdded = ['nightlyRandomRADither', 'nightlyRandomDecDither']
+        # Values required for framework operation: this specifies the data columns required from the database.
+        self.colsReq = [self.raCol, self.decCol, self.nightCol]
 
     def run(self, simData):
-        off1 = np.arange(self.nSteps+1)*self.stepSize
-        off2 = off1[::-1][1:]
-        off3 = -1.*off1[1:]
-        off4 = off3[::-1][1:]
-        offsets = np.radians(np.concatenate((off1,off2,off3,off4) ))
-        uoffsets = np.size(offsets)
-        nightIndex = simData[self.nightCol]%uoffsets
-        simData= self._addStackers(simData)
-        simData['decOnlyDither'] = wrapDec(simData[self.decCol]+offsets[nightIndex])
+        # Generate random numbers for dither, using defined seed value if desired.
+        if self.randomSeed is not None:
+            np.random.seed(self.randomSeed)
+        # Add the new columns to simData.
+        simData = self._addStackers(simData)
+        # Generate the random dither values, one per night.
+        nights = np.unique(simData[self.nightCol])
+        nightDithersRA = np.random.rand(len(nights))*2.0*self.maxDither - self.maxDither
+        nightDithersDec = np.random.rand(len(nights))*2.0*self.maxDither - self.maxDither
+        for n, dra, ddec in zip(nights, nightDithersRA, nightDithersDec):
+            match = np.where(simData[self.nightCol] == n)[0]
+            simData['nightlyRandomRADither'][match] = simData[self.raCol][match] + dra*np.cos(simData[self.decCol][match])
+            simData['nightlyRandomDecDither'][match] = simData[self.decCol][match] + ddec
+        # Wrap RA/Dec into expected range.
+        simData['nightlyRandomRADither'], simData['nightlyRandomDecDither'] = wrapRADec(simData['nightlyRandomRADither'],
+                                                                                        simData['nightlyRandomDecDither'])
         return simData
 
 
