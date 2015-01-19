@@ -25,7 +25,7 @@ def createSQLWhere(tag, propTags):
     Returns SQL clause.
     """
     sqlWhere = ''
-    if len(propTags[tag]) == 0:
+    if (tag not in propTags) or (len(propTags[tag]) == 0):
         print 'No %s proposals found' %(tag)
         # Create a sqlWhere clause that will not return anything as a query result.
         sqlWhere = 'propID like "NO PROP"'
