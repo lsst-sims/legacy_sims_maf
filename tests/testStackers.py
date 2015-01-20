@@ -9,18 +9,22 @@ class TestStackerClasses(unittest.TestCase):
 
 
     def testNormAirmass(self):
-        """ test the normalized airmass stacker"""
+        """
+        Test the normalized airmass stacker.
+        """
         data = np.zeros(600, dtype=zip(['airmass','fieldDec'],[float,float]))
         data['airmass'] = np.random.rand(600)
         data['fieldDec'] = np.random.rand(600)*np.pi-np.pi/2.
         stacker = stackers.NormAirmassStacker()
         data = stacker.run(data)
         for i in np.arange(data.size):
-            assert(data['normairmass'][i] <= data['airmass'][i])
-        assert(np.min(data['normairmass']-data['airmass']) < 0)
+            self.assertLessEqual(data['normairmass'][i], data['airmass'][i])
+        self.assertLess(np.min(data['normairmass']-data['airmass']), 0)
 
     def testParallaxFactor(self):
-        """test the parallax factor """
+        """
+        Test the parallax factor.
+        """
         data = np.zeros(600, dtype=zip(['fieldRA','fieldDec', 'expMJD'],
                                        [float,float,float]))
         data['fieldRA'] = data['fieldRA']+.1
@@ -28,29 +32,66 @@ class TestStackerClasses(unittest.TestCase):
         data['expMJD'] = np.arange(data.size)+49000.
         stacker = stackers.ParallaxFactorStacker()
         data = stacker.run(data)
-        assert(max(np.abs(data['ra_pi_amp'])) < 1.1)
-        assert(max(np.abs(data['dec_pi_amp'])) < 1.1)
-        assert( np.max(data['ra_pi_amp']**2+data['dec_pi_amp']**2) < 1.1)
-        assert(min(np.abs(data['ra_pi_amp'])) > 0.)
-        assert(min(np.abs(data['dec_pi_amp'])) > 0.)
+        self.assertLess(max(np.abs(data['ra_pi_amp'])), 1.1)
+        self.assertLess(max(np.abs(data['dec_pi_amp'])), 1.1)
+        self.assertLess(np.max(data['ra_pi_amp']**2+data['dec_pi_amp']**2), 1.1)
+        self.assertGreater(min(np.abs(data['ra_pi_amp'])), 0.)
+        self.assertGreater(min(np.abs(data['dec_pi_amp'])), 0.)
 
     def testRandomDither(self):
-        """test the random dither pattern """
+        """
+        Test the random dither pattern.
+        """
         maxDither = .5
         data = np.zeros(600, dtype=zip(['fieldRA','fieldDec'],[float,float]))
-        data['fieldRA'] = np.random.rand(600)*(2*np.pi - 2.*maxDither)+maxDither
-        data['fieldDec'] = np.random.rand(600)*np.pi-np.pi/2.
+        # Restrict dithers to area where wraparound is not a problem for comparisons.
+        data['fieldRA'] = np.random.rand(600)*(np.pi) + np.pi/2.0
+        data['fieldDec'] = np.random.rand(600)*np.pi/2.0 - np.pi/4.0
         stacker = stackers.RandomDitherStacker(maxDither=maxDither)
         data = stacker.run(data)
-        for i in np.arange(data.size):
-            diff = np.abs(data['fieldRA'][i]-data['randomRADither'][i])
-            assert( diff <= np.radians(maxDither))
-            assert( np.abs(data['fieldDec'][i]-data['randomDecDither'][i])
-                    <= np.radians(maxDither))
-        assert(np.min(data['fieldDec']-data['randomDecDither']) < 0)
-        assert(np.max(data['fieldDec']-data['randomDecDither']) > 0)
-            
+        diffsra = data['fieldRA'] - data['randomRADither']
+        diffsdec = data['fieldDec'] - data['randomDecDither']
+        # Check dithers within expected range.
+        for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
+            self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
+            self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
+        # Check dithers not all the same and go positive and negative.
+        self.assertGreater(diffsra.max(), 0)
+        self.assertGreater(diffsdec.max(), 0)
+        self.assertLess(diffsra.min(), 0)
+        self.assertLess(diffsdec.min(), 0)
 
+    def testNightlyRandomDither(self):
+        """
+        Test the per-night random dither pattern.
+        """
+        maxDither = 0.5
+        ndata = 600
+        data = np.zeros(ndata, dtype=zip(['fieldRA', 'fieldDec', 'night'], [float, float, int]))
+        data['fieldRA'] = np.random.rand(ndata)*(np.pi) + np.pi/2.0
+        data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
+        data['night'] = np.floor(np.random.rand(ndata)*10).astype('int')
+        stacker = stackers.NightlyRandomDitherStacker(maxDither=maxDither)
+        data = stacker.run(data)
+        diffsra = (data['fieldRA'] - data['nightlyRandomRADither'])/np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['nightlyRandomDecDither']
+        for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
+            self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
+            self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
+        # Check dithers not all the same and go positive and negative.
+        self.assertGreater(diffsra.max(), 0)
+        self.assertGreater(diffsdec.max(), 0)
+        self.assertLess(diffsra.min(), 0)
+        self.assertLess(diffsdec.min(), 0)
+        # Check that dithers on the same night are the same.
+        nights = np.unique(data['night'])
+        for n in nights:
+            match = np.where(data['night'] == n)[0]
+            rarange = np.abs(np.diff(diffsra[match]))
+            decrange = np.abs(np.diff(diffsdec[match]))
+            for r, d in zip(rarange, decrange):
+                self.assertAlmostEqual(r, 0)
+                self.assertAlmostEqual(d, 0)
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
@@ -59,20 +100,17 @@ class TestStackerClasses(unittest.TestCase):
         stacker = stackers.HourAngleStacker()
         data = stacker.run(data)
         # Check that data is always wrapped
-        assert(np.max(data['HA']) < 12.)
-        assert(np.min(data['HA']) > -12.)
-
+        self.assertLess(np.max(data['HA']), 12.)
+        self.assertGreater(np.min(data['HA']), -12.)
         # Check that HA is zero if lst == RA
         data = np.zeros(1, dtype=zip(['lst','fieldRA'], [float,float]))
         data = stacker.run(data)
-        assert(data['HA'] == 0.)
-
+        self.assertEqual(data['HA'], 0.)
         data = np.zeros(1, dtype=zip(['lst','fieldRA'], [float,float]))
         data['lst'] = 2.
         data['fieldRA'] = 2.
         data = stacker.run(data)
-        assert(data['HA'] == 0.)
-
+        self.assertEqual(data['HA'],0.)
         # Check a value
         data = np.zeros(1, dtype=zip(['lst','fieldRA'], [float,float]))
         data['lst'] = 0.
@@ -80,9 +118,7 @@ class TestStackerClasses(unittest.TestCase):
         data = stacker.run(data)
         np.testing.assert_almost_equal(data['HA'], -6.)
 
-        
-                    
-        
+
 if __name__ == '__main__':
 
     unittest.main()
