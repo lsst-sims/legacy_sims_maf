@@ -32,12 +32,7 @@ def createSQLWhere(tag, propTags):
     elif len(propTags[tag]) == 1:
         sqlWhere = "propID = %d" %(propTags[tag][0])
     else:
-        for i, propid in enumerate(propTags[tag]):
-            if i == 0:
-                sqlWhere = sqlWhere+'('+'propID = %d ' %(propid)
-            else:
-                sqlWhere = sqlWhere+'or propID = %d ' %(propid)
-        sqlWhere = sqlWhere +')'
+        sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
 
 def scaleStretchDesign(runLength):
