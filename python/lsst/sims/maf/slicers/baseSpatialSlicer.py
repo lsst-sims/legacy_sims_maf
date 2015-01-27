@@ -339,22 +339,23 @@ class BaseSpatialSlicer(BaseSlicer):
             ellipses.append(el)
         return ellipses
 
-    def _plot_ecliptic(self, ax=None):
+    def _plot_ecliptic(self, raCen=0, ax=None):
         """Plot a red line at location of ecliptic"""
         if ax is None:
             ax = plt.gca()
         ecinc = 23.439291*(np.pi/180.0)
-        x_ec = np.arange(0, np.pi*2., (np.pi*2./360))
-        ra = x_ec - np.pi
-        y_ec = np.sin(x_ec) * ecinc
-        plt.plot(ra, y_ec, 'r-')
+        ra_ec = np.arange(0, np.pi*2., (np.pi*2./360))
+        dec_ec = np.sin(ra_ec) * ecinc
+        lon = -(ra_ec - raCen - np.pi) % (np.pi*2) - np.pi
+        ax.plot(lon, dec_ec, 'r.', markersize=1.8)
 
     def plotSkyMap(self, metricValueIn, title=None, xlabel=None, units=None,
                    projection='aitoff', radius=1.75/180.*np.pi,
-                   logScale='auto', cbarFormat=None, cmap=cm.jet, fignum=None,
+                   logScale='auto', cbar=True, cbarFormat=None,
+                   cmap=cm.jet, alpha=1, fignum=None,
                    zp=None, normVal=None,
-                   colorMin=None, colorMax=None, percentileClip=None,  cbar_edge=True,
-                   label=None, plotMask=False, **kwargs):
+                   colorMin=None, colorMax=None, percentileClip=None, cbar_edge=True,
+                   label=None, plotMask=False, metricIsColor=False, raCen=0.0, **kwargs):
         """
         Plot the sky map of metricValue.
         """
@@ -362,6 +363,8 @@ class BaseSpatialSlicer(BaseSlicer):
         from matplotlib import colors
         if fignum is None:
             fig = plt.figure()
+        else:
+            fig = plt.figure(fignum)
         metricValue = metricValueIn
         if zp or normVal:
             if zp:
@@ -370,16 +373,14 @@ class BaseSpatialSlicer(BaseSlicer):
                 metricValue = metricValue/normVal
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        ax = plt.subplot(111,projection=projection)
+        ax = fig.add_subplot(111, projection=projection)
+        # Set up valid datapoints and colormin/max values. 
         if plotMask:
             # Plot all data points.
             mask = np.ones(len(metricValue), dtype='bool')
         else:
             # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
             mask = ~metricValue.mask
-        # Add ellipses at RA/Dec locations
-        lon = -(self.slicePoints['ra'][mask] - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, ax=ax)
         # Determine color min/max values. metricValue.compressed = non-masked points.
         if percentileClip:
             pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=percentileClip)
@@ -412,32 +413,43 @@ class BaseSpatialSlicer(BaseSlicer):
             # Move min/max values to things that can be marked on the colorbar.
             colorMin = 10**(int(np.log10(colorMin)))
             colorMax = 10**(int(np.log10(colorMax)))
-        if logScale:
-            norml = colors.LogNorm()
-            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None,
-                                norm=norml, rasterized=True)
+        # Add ellipses at RA/Dec locations
+        lon = -(self.slicePoints['ra'][mask] - raCen - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, ax=ax)
+        if metricIsColor:
+            for ellipse, mVal in zip(ellipses, metricValue.data[mask]):
+                ellipse.set_alpha(mVal[3])
+                ellipse.set_color((mVal[0], mVal[1], mVal[2]))
+                ax.add_patch(ellipse)
         else:
-            p = PatchCollection(ellipses, cmap=cmap, alpha=1, linewidth=0, edgecolor=None, rasterized=True)
-        p.set_array(metricValue.data[mask])
-        ax.add_collection(p)
+            if logScale:
+                norml = colors.LogNorm()
+                p = PatchCollection(ellipses, cmap=cmap, alpha=alpha, linewidth=0, edgecolor=None,
+                                    norm=norml, rasterized=True)
+            else:
+                p = PatchCollection(ellipses, cmap=cmap, alpha=alpha, linewidth=0, edgecolor=None,
+                                    rasterized=True)
+            p.set_array(metricValue.data[mask])
+            p.set_clim(clims)
+            ax.add_collection(p)
+            # Add color bar (with optional setting of limits)
+            if cbar:
+                cb = plt.colorbar(p, aspect=25, extend='both', extendrect=True, orientation='horizontal',
+                                format=cbarFormat)
+                # If outputing to PDF, this fixes the colorbar white stripes
+                if cbar_edge:
+                    cb.solids.set_edgecolor("face")
+                if xlabel is not None:
+                    cb.set_label(xlabel)
+                elif units is not None:
+                    cb.set_label(units)
         # Add ecliptic
-        self._plot_ecliptic(ax=ax)
-        ax.grid(True)
+        self._plot_ecliptic(raCen, ax=ax)
+        ax.grid(True, zorder=1)
         ax.xaxis.set_ticklabels([])
-        # Add color bar (with optional setting of limits)
-        p.set_clim(clims)
-        cb = plt.colorbar(p, aspect=25, extend='both', extendrect=True, orientation='horizontal',
-                          format=cbarFormat)
         # Add label.
         if label is not None:
-            plt.figtext(0.8, 0.9, '%s' %label)
-        # If outputing to PDF, this fixes the colorbar white stripes
-        if cbar_edge:
-            cb.solids.set_edgecolor("face")
-        if xlabel is not None:
-            cb.set_label(xlabel)
-        elif units is not None:
-            cb.set_label(units)
+            plt.figtext(0.75, 0.9, '%s' %label)
         if title is not None:
             plt.text(0.5, 1.09, title, horizontalalignment='center', transform=ax.transAxes)
         return fig.number
