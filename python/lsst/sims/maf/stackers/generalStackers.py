@@ -4,7 +4,9 @@ import warnings
 
 ### Normalized airmass
 class NormAirmassStacker(BaseStacker):
-    """Calculate the normalized airmass for each opsim pointing."""
+    """
+    Calculate the normalized airmass for each opsim pointing.
+    """
     def __init__(self, airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388):
 
         self.units = ['airmass/(minimum possible airmass)']
@@ -27,7 +29,9 @@ class NormAirmassStacker(BaseStacker):
 
 ### Parallax factors
 class ParallaxFactorStacker(BaseStacker):
-    """Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds"""
+    """
+    Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
+    """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', dateCol='expMJD'):
         self.raCol = raCol
         self.decCol = decCol
@@ -37,8 +41,10 @@ class ParallaxFactorStacker(BaseStacker):
         self.colsReq = [raCol, decCol, dateCol]
 
     def _gnomonic_project_toxy(self, RA1, Dec1, RAcen, Deccen):
-        """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccenp.
-        Input radians."""
+        """
+        Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccenp.
+        Input radians.
+        """
         # also used in Global Telescope Network website
         cosc = np.sin(Deccen) * np.sin(Dec1) + np.cos(Deccen) * np.cos(Dec1) * np.cos(RA1-RAcen)
         x = np.cos(Dec1) * np.sin(RA1-RAcen) / cosc
@@ -69,7 +75,9 @@ class ParallaxFactorStacker(BaseStacker):
         return simData
 
 class HourAngleStacker(BaseStacker):
-    """ Add the Hour Angle for each observation """
+    """
+    Add the Hour Angle for each observation.
+    """
     def __init__(self, lstCol='lst', RaCol='fieldRA'):
         self.units = ['Hours']
         self.colsAdded = ['HA']
@@ -92,4 +100,30 @@ class HourAngleStacker(BaseStacker):
         simData=self._addStackers(simData)
         # Convert radians to hours
         simData['HA'] = ha*12/np.pi
+        return simData
+
+class FilterNumberStacker(BaseStacker):
+    """
+    Translate filters ('u', 'g', 'r' ..) into numbers.
+    """
+    def __init__(self, filterCol='filter', filterMap={'u':1, 'g':2, 'r':3, 'i':4, 'z':5, 'y':6}):
+        self.filterCol = filterCol
+        self.filterMap = filterMap
+        # self.units used for plot labels
+        self.units = ['filter']
+        # Values required for framework operation: this specifies the names of the new columns.
+        self.colsAdded = ['filterNumber',]
+        # Values required for framework operation: this specifies the data columns required from the database.
+        self.colsReq = [self.filterCol,]
+
+    def run(self, simData):
+        # Add new columns to simData, ready to fill with new values.
+        simData = self._addStackers(simData)
+        # Translate filter names into numbers.
+        filtersUsed = np.unique(simData[self.filterCol])
+        for f in filtersUsed:
+            if f not in self.filterMap:
+                raise IndexError('Filter %s not in filterMap' %(f))
+            match = np.where(simData[self.filterCol] == f)[0]
+            simData['filterNumber'][match] = self.filterMap[f]
         return simData
