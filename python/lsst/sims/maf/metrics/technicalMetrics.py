@@ -183,5 +183,5 @@ class VisitFiltersMetric(BaseMetric):
             timeweight = dts.min()/dts
             r, g, b = self._scaleColor(colorR*timeweight, colorG*timeweight, colorB*timeweight)
             alpha = np.max([0.8*np.exp(-100.*dts.min()+len(dts)/50.), 0.14])
-            alpha = np.min(alpha, 0.9)
+            alpha = np.min([alpha, 0.9])
         return (r, g, b, alpha)
