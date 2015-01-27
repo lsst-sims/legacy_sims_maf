@@ -125,7 +125,7 @@ class VisitFiltersMetric(BaseMetric):
     """
     Calculate an RGBA value that accounts for the filters used up to time t0.
     """
-    def __init__(self, filterCol='filter', timeCol='expMJD', t0=None, tStep=(30./60./60./24.), **kwargs):
+    def __init__(self, filterCol='filter', timeCol='expMJD', t0=None, tStep=30./60./60./24., **kwargs):
         self.filter_rgba_map = {'u':(0,0,1),   #dark blue
                                 'g':(0,1,1),  #cyan
                                 'r':(0,1,0),    #green
@@ -182,6 +182,13 @@ class VisitFiltersMetric(BaseMetric):
             colorR, colorG, colorB = self._calcColor(dataSlice[self.filterCol])
             timeweight = dts.min()/dts
             r, g, b = self._scaleColor(colorR*timeweight, colorG*timeweight, colorB*timeweight)
+            # These values for calculating alpha (the transparency of the final plotted point)
+            #  are just numbers that seemed to make nice movies in my trials.
+            # The exponential decay with the most recent time of observations (dts.min) gives a nice fast fade,
+            #  and adding the len(dts) means that repeated observations show up a bit darker.
+            # 0.8, 100, 50 and 0.14 are just empirically determined .. 0.14 will be the minimum transparency,
+            #   and 0.9 will be the maximum. These were chosen to separate the peak from the 'active' observations,
+            #   and not let the long-ago observations fade out too much. 
             alpha = np.max([0.8*np.exp(-100.*dts.min()+len(dts)/50.), 0.14])
             alpha = np.min([alpha, 0.9])
         return (r, g, b, alpha)
