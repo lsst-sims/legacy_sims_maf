@@ -106,7 +106,7 @@ class MovieSlicer(BaseSlicer):
                 #cumulative version of 1D slicing
                 idxs = self.simIdxs[0:self.left[islice+1]]
                 return {'idxs':idxs,
-                        'slicePoint':{'sid':islice, 'binLeft':0, 'binRight':self.bins[islice+1]}}
+                        'slicePoint':{'sid':islice, 'binLeft':self.bins[0], 'binRight':self.bins[islice+1]}}
             setattr(self, '_sliceSimData', _sliceSimData)
         else:
             @wraps(self._sliceSimData)

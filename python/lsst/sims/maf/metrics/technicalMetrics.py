@@ -119,3 +119,69 @@ class CompletenessMetric(BaseMetric):
         The joint completeness is just the minimum completeness for a point/field.
         """
         return completeness[-1]
+
+
+class VisitFiltersMetric(BaseMetric):
+    """
+    Calculate an RGBA value that accounts for the filters used up to time t0.
+    """
+    def __init__(self, filterCol='filter', timeCol='expMJD', t0=None, tStep=(30./60./60./24.), **kwargs):
+        self.filter_rgba_map = {'u':(0,0,1),   #dark blue
+                                'g':(0,1,1),  #cyan
+                                'r':(0,1,0),    #green
+                                'i':(1,0.5,0.3),  #orange
+                                'z':(1,0,0),    #red
+                                'y':(1,0,1)}  #magenta
+        self.filterCol = filterCol
+        self.timeCol = timeCol
+        self.t0 = t0
+        if self.t0 is None:
+            self.t0 = 52939
+        self.tStep = tStep
+        super(VisitFiltersMetric, self).__init__(col=[filterCol, timeCol], **kwargs)
+        self.metricDtype = 'object'
+        self.plotDict['logScale'] = False
+        self.plotDict['colorMax'] = 10
+        self.plotDict['colorMin'] = 0
+        self.plotDict['cbar'] = False
+        self.plotDict['metricIsColor'] = True
+
+    def _calcColor(self, filters):
+        colorR = []
+        colorG = []
+        colorB = []
+        for f in filters:
+            color = self.filter_rgba_map[f]
+            colorR.append(color[0])
+            colorG.append(color[1])
+            colorB.append(color[2])
+        colorR = np.array(colorR, float)
+        colorG = np.array(colorG, float)
+        colorB = np.array(colorB, float)
+        return colorR, colorG, colorB
+
+    def _scaleColor(self, colorR, colorG, colorB):
+        r = colorR.sum()
+        g = colorG.sum()
+        b = colorB.sum()
+        scale = 1. / np.max([r, g, b])
+        r *= scale
+        g *= scale
+        b *= scale
+        return r, g, b
+
+    def run(self, dataSlice, slicePoint=None):
+        dts = np.abs(self.t0 - dataSlice[self.timeCol])
+        visitNow = np.where(dts < self.tStep)[0]
+        if len(visitNow) > 0:
+            # We have some exact matches to this timestep, so just use their colors directly.
+            colorR, colorG, colorB = self._calcColor(dataSlice[self.filterCol][visitNow])
+            r, g, b = self._scaleColor(colorR, colorG, colorB)
+            alpha = 1.0
+        else:
+            colorR, colorG, colorB = self._calcColor(dataSlice[self.filterCol])
+            timeweight = dts.min()/dts
+            r, g, b = self._scaleColor(colorR*timeweight, colorG*timeweight, colorB*timeweight)
+            alpha = np.max([0.8*np.exp(-100.*dts.min()+len(dts)/50.), 0.14])
+            alpha = np.min(alpha, 0.9)
+        return (r, g, b, alpha)
