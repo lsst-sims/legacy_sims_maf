@@ -1,3 +1,4 @@
+# python $SIMS_MAF_DIR/examples/pythonScripts/opsimMovie.py ops2_1088_sqlite.db --sqlConstraint 'night=130' --outDir Output
 #
 # --ips = number of images to stitch together per second of view
 # --fps = frames per second for the output video .. default just matches ips. If specified as higher than ips,
@@ -13,6 +14,7 @@ import numpy as np
 #import matplotlib
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -31,9 +33,12 @@ def dtime(time_prev):
 
 def getData(opsDb, sqlconstraint):
     # Define columns we want from opsim database (for metrics, slicers and stacker info).
-    colnames = ['expMJD', 'filter', 'fieldID', 'fieldRA', 'fieldDec', 'lst']
+    colnames = ['expMJD', 'filter', 'fieldID', 'fieldRA', 'fieldDec', 'lst',
+                'moonRA', 'moonDec', 'moonPhase']
     # Get data from database.
     simdata = opsDb.fetchMetricData(colnames, sqlconstraint)
+    if len(simdata) == 0:
+        raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
     # Add stacker columns.
     hourangleStacker = stackers.HourAngleStacker()
     simdata = hourangleStacker.run(simdata)
@@ -82,9 +87,7 @@ def runSlices(opsimName, metadata, simdata, fields, args, verbose=False):
     # Set up the movie slicer.
     movieslicer = setupMovieSlicer(simdata, bins)
     # Set up formatting for output suffix.
-    sliceformat = '%04d'
-    if len(movieslicer) >= 1e4:
-        sliceformat = '%07d'
+    sliceformat = '%s0%dd' %('%', int(np.log10(len(movieslicer)))+1)
     # Run through the movie slicer slicePoints and generate plots at each point.
     for i, ms in enumerate(movieslicer):
         t = time.time()
@@ -106,13 +109,22 @@ def runSlices(opsimName, metadata, simdata, fields, args, verbose=False):
         sm.setMetrics([metric])
         sm.runSlices(simdatasubset, simDataName=opsimName)
         # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
-        lstnow = np.where(simdatasubset['expMJD'] == simdatasubset['expMJD'].max())[0]
-        raCen = simdatasubset[lstnow]['lst']
+        obsnow = np.where(simdatasubset['expMJD'] == simdatasubset['expMJD'].max())[0]
+        raCen = np.mean(simdatasubset[obsnow]['lst'])
         fignum = ops.plotSkyMap(sm.metricValues[0], raCen=raCen, **sm.plotDicts[0])
         fig = plt.figure(fignum)
+        ax = plt.gca()
         # Add a legend.
         for i, f in enumerate(['u', 'g', 'r', 'i', 'z', 'y']):
             plt.figtext(0.92, 0.55 - i*0.035, f, color=metric.filter_rgba_map[f])
+        # Add a moon.
+        moonRA = np.mean(simdatasubset[obsnow]['moonRA'])
+        lon = -(moonRA - raCen - np.pi) % (np.pi*2) - np.pi
+        moonDec = np.mean(simdatasubset[obsnow]['moonDec'])
+        # Note that moonphase is 0-100 (translate to 0-1)
+        moonPhase = np.mean(simdatasubset[obsnow]['moonPhase'])/100.
+        circle = Circle((lon, moonDec), radius=5, color='k', alpha=(1-moonPhase))
+        ax.add_patch(circle)
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
         plt.close('all')
         dt, t = dtime(t)
