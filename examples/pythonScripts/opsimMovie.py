@@ -123,7 +123,7 @@ def runSlices(opsimName, metadata, simdata, fields, args, verbose=False):
         moonDec = np.mean(simdatasubset[obsnow]['moonDec'])
         # Note that moonphase is 0-100 (translate to 0-1)
         moonPhase = np.mean(simdatasubset[obsnow]['moonPhase'])/100.
-        alpha = np.max([(1-moonPhase), 0.1])
+        alpha = np.max([(moonPhase), 0.1])
         circle = Circle((lon, moonDec), radius=0.05, color='k', alpha=alpha)
         ax.add_patch(circle)
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
