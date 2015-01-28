@@ -25,19 +25,14 @@ def createSQLWhere(tag, propTags):
     Returns SQL clause.
     """
     sqlWhere = ''
-    if len(propTags[tag]) == 0:
+    if (tag not in propTags) or (len(propTags[tag]) == 0):
         print 'No %s proposals found' %(tag)
         # Create a sqlWhere clause that will not return anything as a query result.
         sqlWhere = 'propID like "NO PROP"'
     elif len(propTags[tag]) == 1:
         sqlWhere = "propID = %d" %(propTags[tag][0])
     else:
-        for i, propid in enumerate(propTags[tag]):
-            if i == 0:
-                sqlWhere = sqlWhere+'('+'propID = %d ' %(propid)
-            else:
-                sqlWhere = sqlWhere+'or propID = %d ' %(propid)
-        sqlWhere = sqlWhere +')'
+        sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
 
 def scaleStretchDesign(runLength):
