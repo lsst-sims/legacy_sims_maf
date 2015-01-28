@@ -1,6 +1,6 @@
 # python $SIMS_MAF_DIR/examples/pythonScripts/opsimMovie.py ops2_1088_sqlite.db --sqlConstraint 'night=130' --outDir Output
 #
-# --ips = number of images to stitch together per second of view
+# --ips = number of images to stitch together per second of view (default is 10).
 # --fps = frames per second for the output video .. default just matches ips. If specified as higher than ips,
 #         the additional frames will be copied to meet the fps requirement. If fps is lower than ips, images will be
 #         removed from the sequence to maintain fps. As a rule of thumb, fps>30 is undetectable to the human eye.
@@ -191,19 +191,20 @@ if __name__ == '__main__':
         else:
             os.mkdir(args.outDir)
 
-    # Get db connection info, and connect to database.
-    dbAddress = 'sqlite:///' + args.opsimDb
-    oo = db.OpsimDatabase(dbAddress)
-    opsimName = oo.fetchOpsimRunName()
-    sqlconstraint = args.sqlConstraint
-
-    # Fetch the data from opsim.
-    simdata, fields = getData(oo, sqlconstraint)
-
-    # Run the movie slicer (and at each step, setup opsim slicer and calculate metrics).
-    metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
     if not args.skipComp:
+        # Get db connection info, and connect to database.
+        dbAddress = 'sqlite:///' + args.opsimDb
+        oo = db.OpsimDatabase(dbAddress)
+        opsimName = oo.fetchOpsimRunName()
+        sqlconstraint = args.sqlConstraint
+
+        # Fetch the data from opsim.
+        simdata, fields = getData(oo, sqlconstraint)
+
+        # Run the movie slicer (and at each step, setup opsim slicer and calculate metrics).
+        metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
         runSlices(opsimName, metadata, simdata, fields, args)
+
     stitchMovie(args)
     end_t, start_t = dtime(start_t)
     print 'Total time to create movie: ', end_t
