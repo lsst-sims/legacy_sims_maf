@@ -221,8 +221,8 @@ class UniformityMetric(BaseMetric):
 
 class QuickRevisitMetric(BaseMetric):
     """
-    Some kind of metric to investigate how dithering effects short-timescale measurements.
-    (used in SPIE paper; consider depreciating this at some point).
+    Count how many nights have more than nVisitsInNight visits.
+    (used in SPIE paper; but consider depreciating this at some point).
     """
     def __init__(self, nightCol='night', nVisitsInNight=6, **kwargs):
         self.nightCol = nightCol
@@ -232,7 +232,7 @@ class QuickRevisitMetric(BaseMetric):
         if 'xlabel' not in self.plotDict:
             self.plotDict['xlabel'] = xlabel
 
-    def run(self, dataSlice, slicePoint):
+    def run(self, dataSlice, slicePoint=None):
         """Count how many nights the dataSlice has >= nVisitsInNight."""
         nightbins = np.arange(dataSlice[self.nightCol].min(), dataSlice[self.nightCol].max()+0.5, 1)
         counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
@@ -240,4 +240,30 @@ class QuickRevisitMetric(BaseMetric):
         return len(counts[condition])
 
 
+
+class GalaxyCountsMetric(BaseMetric):
+    """
+    Estimate the number of galaxies expected at a particular coadded depth.
+    """
+    def __init__(self, m5Col = 'fiveSigmaDepth', **kwargs):
+        self.m5Col = m5Col
+        super(GalaxyCountsMetric, self).__init__(col=self.m5Col, **kwargs)
+        # Use the coadded depth metric to calculate the coadded depth at each point.
+        from .simpleMetrics import Coaddm5Metric
+        self.coaddmetric = Coaddm5Metric(m5Col=self.m5Col)
+
+    def run(self, dataSlice, slicePoint=None):
+        # Calculate the coadded depth.
+        coaddm5 = self.coaddmetric.run(dataSlice)
+        # Calculate the number of galaxies.
+        # From Carroll et al, 2014 SPIE (http://arxiv.org/abs/1501.04733)
+        # Instead of a number of galaxies accurate on an absolute scale,
+        #  this may give the number of galaxies on a relative scale as I haven't
+        #  included the effects of a rollover in efficiency around the m5 value,
+        #  or the size of the healpix, and I did not integrate to -infinity at the bright end.
+        dmag = 0.005
+        m = np.arange(20, coaddm5+dmag/2.0, dmag)
+        x = np.power(10, -3.52*np.power(10, 0.34*m))
+        dnum_gal = np.sum(x*dmag)
+        return dnum_gal
 
