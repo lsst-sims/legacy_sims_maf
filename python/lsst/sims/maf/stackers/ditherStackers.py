@@ -8,11 +8,11 @@ def wrapRADec(ra, dec):
     """
     # Wrap dec.
     low = np.where(dec < -np.pi/2.0)[0]
-    dec[low] = -1.*(np.pi + dec)
-    ra[low] = ra - np.pi
+    dec[low] = -1 * (np.pi + dec[low])
+    ra[low] = ra[low] - np.pi
     high = np.where(dec > np.pi/2.0)[0]
-    dec[high] = np.pi - dec
-    ra[high] = ra - np.pi
+    dec[high] = np.pi - dec[high]
+    ra[high] = ra[high] - np.pi
     # Wrap RA.
     ra = ra % (2.0*np.pi)
     return ra, dec
@@ -108,9 +108,11 @@ class SpiralDitherStacker(BaseStacker):
     Offset along an equidistant spiral with numPoints, out to a maximum radius of maxDither.
     Sequential offset for each individual visit to a field.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', numPoints=60, maxDither=1.75, nCoils=5):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID',
+                 numPoints=60, maxDither=1.75, nCoils=5):
         self.raCol = raCol
         self.decCol = decCol
+        self.fieldIdCol = fieldIdCol
         # Convert maxDither from degrees (internal units for ra/dec are radians)
         self.numPoints = numPoints
         self.nCoils = nCoils
@@ -120,7 +122,7 @@ class SpiralDitherStacker(BaseStacker):
         # Values required for framework operation: this specifies the names of the new columns.
         self.colsAdded = ['spiralRADither', 'spiralDecDither']
         # Values required for framework operation: this specifies the data columns required from the database.
-        self.colsReq = [self.raCol, self.decCol]
+        self.colsReq = [self.raCol, self.decCol, self.fieldIdCol]
 
     def _generateSpiralOffsets(self):
         # First generate a full archimedean spiral ..
@@ -149,14 +151,17 @@ class SpiralDitherStacker(BaseStacker):
         # Generate the spiral offset vertices.
         self._generateSpiralOffsets()
         # Now apply to observations.
-        for ra, dec in zip(np.unique(simData[self.raCol]), np.unique(simData[self.decCol])):
-            # Identify observations of this field.
-            match = np.where((simData[self.raCol] == ra) & (simData[self.decCol] == dec))[0]
+        for fieldid in np.unique(simData[self.fieldIdCol]):
+            match = np.where(simData[self.fieldIdCol] == fieldid)[0]
             # Apply sequential dithers, increasing with each visit.
             vertexIdxs = np.arange(0, len(match), 1)
             vertexIdxs = vertexIdxs % self.numPoints
-            simData['spiralRADither'][match] = ra + self.xOff[vertexIdxs]/np.cos(dec)
-            simData['spiralDecDither'][match] = dec + self.yOff[vertexIdxs]
+            simData['spiralRADither'][match] = simData[self.raCol][match] + \
+              self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
+            simData['spiralDecDither'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
+        # Wrap into expected range.
+        simData['spiralRADither'], simData['spiralDecDither'] = wrapRADec(simData['spiralRADither'],
+                                                                          simData['spiralDecDither'])
         return simData
 
 
@@ -165,28 +170,33 @@ class NightlySpiralDitherStacker(SpiralDitherStacker):
     Offset along an equidistant spiral with numPoints, out to a maximum radius of maxDither.
     Sequential offset for each night of visits to a field.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night', numPoints=60, maxDither=1.75, nCoils=5):
-        super(NightlySpiralDitherStacker, self).__init__(raCol=raCol, decCol=decCol, numPoints=numPoints,
-                                                        maxDither=maxDither, nCoils=nCoils)
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night',
+                 numPoints=60, maxDither=1.75, nCoils=5):
+        super(NightlySpiralDitherStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
+                                                         numPoints=numPoints, maxDither=maxDither, nCoils=nCoils)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the names of the new columns.
         self.colsAdded = ['nightlySpiralRADither', 'nightlySpiralDecDither']
         # Values required for framework operation: this specifies the data columns required from the database.
-        self.colsReq = [self.raCol, self.decCol, self.nightCol]
+        self.colsReq.append(self.nightCol)
 
     def run(self, simData):
         simData = self._addStackers(simData)
         self._generateSpiralOffsets()
-        for ra, dec in zip(np.unique(simData[self.raCol]), np.unique(simData[self.decCol])):
+        for fieldid in np.unique(simData[self.fieldIdCol]):
             # Identify observations of this field.
-            match = np.where((simData[self.raCol] == ra) & (simData[self.decCol] == dec))[0]
+            match = np.where(simData[self.fieldIdCol] == fieldid)[0]
             # Apply a sequential dither, increasing each night.
             vertexIdxs = np.arange(0, len(match), 1)
             nights = simData[self.nightCol][match]
             vertexIdxs = np.searchsorted(np.unique(nights), nights)
             vertexIdxs = vertexIdxs % self.numPoints
-            simData['nightlySpiralRADither'][match] = ra + self.xOff[vertexIdxs]/np.cos(dec)
-            simData['nightlySpiralDecDither'][match] = dec + self.yOff[vertexIdxs]
+            simData['nightlySpiralRADither'][match] = simData[self.raCol][match] + \
+              self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
+            simData['nightlySpiralDecDither'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
+        # Wrap into expected range.
+        simData['nightlySpiralRADither'], simData['nightlySpiralDecDither'] = wrapRADec(simData['nightlySpiralRADither'],
+                                                                                        simData['nightlySpiralDecDither'])
         return simData
 
 
@@ -195,14 +205,15 @@ class SequentialHexDitherStacker(BaseStacker):
     Use offsets from the hexagonal grid of 'hexdither', but visit each vertex sequentially.
     Sequential offset for each visit.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', maxDither=1.8):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', maxDither=1.8):
         self.raCol = raCol
         self.decCol = decCol
+        self.fieldIdCol = fieldIdCol
         self.maxDither = np.radians(maxDither)
         # self.units used for plot labels
         self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the names of the new columns.
-        self.colsAdded = ['seqHexRADither', 'seqHexDecDither']
+        self.colsAdded = ['sequentialHexRADither', 'sequentialHexDecDither']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol]
 
@@ -237,16 +248,20 @@ class SequentialHexDitherStacker(BaseStacker):
     def run(self, simData):
         simData = self._addStackers(simData)
         self._generateHexOffsets()
-        for ra, dec in zip(np.unique(simData[self.raCol]), np.unique(simData[self.decCol])):
+        for fieldid in np.unique(simData[self.fieldIdCol]):
             # Identify observations of this field.
-            match = np.where((simData[self.raCol] == ra) & (simData[self.decCol] == dec))[0]
+            match = np.where(simData[self.fieldIdCol] == fieldid)[0]
             # Apply a sequential dither.
             vertexIdxs = np.arange(0, len(match), 1)
             # Apply sequential dithers, increasing with each visit.
             vertexIdxs = np.arange(0, len(match), 1)
             vertexIdxs = vertexIdxs % self.numPoints
-            simData['seqHexRADither'][match] = ra + self.xOff[vertexIdxs]/np.cos(dec)
-            simData['seqHexDecDither'][match] = dec + self.yOff[vertexIdxs]
+            simData['sequentialHexRADither'][match] = simData[self.raCol][match] + \
+              self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
+            simData['sequentialHexDecDither'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
+        # Wrap into expected range.
+        simData['sequentialHexRADither'], simData['sequentialHexDecDither'] = wrapRADec(simData['sequentialHexRADither'],
+                                                                                        simData['sequentialHexDecDither'])
         return simData
 
 class NightlySequentialHexDitherStacker(SequentialHexDitherStacker):
@@ -254,25 +269,29 @@ class NightlySequentialHexDitherStacker(SequentialHexDitherStacker):
     Use offsets from the hexagonal grid of 'hexdither', but visit each vertex sequentially.
     Sequential offset for each night of visits.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night', maxDither=1.8):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldIdCol', nightCol='night', maxDither=1.8):
         super(NightlySequentialHexDitherStacker, self).__init__(raCol=raCol, decCol=decCol, maxDither=maxDither)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the names of the new columns.
-        self.colsAdded = ['nightlySeqHexRADither', 'nightlySeqHexDecDither']
+        self.colsAdded = ['nightlySequentialHexRADither', 'nightlySequentialHexDecDither']
         # Values required for framework operation: this specifies the data columns required from the database.
-        self.colsReq = [self.raCol, self.decCol, self.nightCol]
+        self.colsReq.append(self.nightCol)
 
     def run(self, simData):
         simData = self._addStackers(simData)
         self._generateHexOffsets()
-        for ra, dec in zip(np.unique(simData[self.raCol]), np.unique(simData[self.decCol])):
+        for fieldid in np.unique(simData[self.fieldIdCol]):
             # Identify observations of this field.
-            match = np.where((simData[self.raCol] == ra) & (simData[self.decCol] == dec))[0]
+            match = np.where(simData[self.fieldIdCol] == fieldid)[0]
             # Apply a sequential dither, increasing each night.
             vertexIdxs = np.arange(0, len(match), 1)
             nights = simData[self.nightCol][match]
             vertexIdxs = np.searchsorted(np.unique(nights), nights)
             vertexIdxs = vertexIdxs % self.numPoints
-            simData['nightlySeqHexRADither'][match] = ra + self.xOff[vertexIdxs]/np.cos(dec)
-            simData['nightlySeqHexDecDither'][match] = dec + self.yOff[vertexIdxs]
+            simData['nightlySequentialHexRADither'][match] = simData[self.raCol][match] + \
+              self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
+            simData['nightlySequentialHexDecDither'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
+        # Wrap into expected range.
+        simData['nightlySequentialHexRADither'], simData['nightlySequentialHexDecDither'] = \
+          wrapRADec(simData['nightlySequentialHexRADither'], simData['nightlySequentialHexDecDither'])
         return simData
