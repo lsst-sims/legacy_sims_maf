@@ -22,17 +22,22 @@ stackerDict['NightlySequentialHexDither'] = stackers.NightlySequentialHexDitherS
 
 stepsize= np.pi/50.
 theta = np.arange(0, np.pi*2.+stepsize, stepsize)
-radius = np.radians(1.75)
+#radius = np.radians(1.75)
+radius = 1.75
 for s in stackerDict:
     print s
     simdata = stackerDict[s].run(simdata)
     plt.figure()
     plt.axis('equal')
-    plt.plot(simdata['fieldRA'][0], simdata['fieldDec'][0], 'g+')
-    plt.plot(radius*np.cos(theta)+simdata['fieldRA'][0], radius*np.sin(theta)+simdata['fieldDec'][0], 'g-')
+    x = np.degrees(simdata['fieldRA'][0])
+    y = np.degrees(simdata['fieldDec'][0])
+    plt.plot(x, y, 'g+')
+    plt.plot(radius*np.cos(theta)+x, radius*np.sin(theta)+y, 'g-')
     print stackerDict[s].colsAdded[0], stackerDict[s].colsAdded[1]
-    plt.plot(simdata[stackerDict[s].colsAdded[0]], simdata[stackerDict[s].colsAdded[1]], 'k-', alpha=0.2)
-    plt.plot(simdata[stackerDict[s].colsAdded[0]], simdata[stackerDict[s].colsAdded[1]], 'r.')
+    x = np.degrees(simdata[stackerDict[s].colsAdded[0]])
+    y = np.degrees(simdata[stackerDict[s].colsAdded[1]])
+    plt.plot(x, y, 'k-', alpha=0.2)
+    plt.plot(x, y, 'r.')
     plt.title(s)
     plt.savefig('%s.png' %(s))
 
