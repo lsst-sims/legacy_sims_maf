@@ -59,7 +59,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                          summaryStats={'IdentityMetric':{'metricName':'Time (s)'}},
                          displayDict={'group':'Slew Summary'}))
     # Number of nights
-    metricList.append(configureMetric('UniqueMetric', kwargs={'col':'night'},
+    metricList.append(configureMetric('CountUniqueMetric', kwargs={'col':'night'},
                                      displayDict={'group':'Slew Summary'}))
     # Mean exposure time
     metricList.append(configureMetric('MeanMetric', kwargs={'col':'visitExpTime'},

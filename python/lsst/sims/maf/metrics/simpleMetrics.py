@@ -55,7 +55,7 @@ class SumMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.sum(dataSlice[self.colname])
 
-class UniqueMetric(BaseMetric):
+class CountUniqueMetric(BaseMetric):
     """Return the number of unique values """
     def run(self, dataSlice, slicePoint=None):
         return np.size(np.unique(dataSlice[self.colname]))

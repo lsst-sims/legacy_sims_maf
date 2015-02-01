@@ -773,7 +773,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                          summaryStats={'IdentityMetric':{'metricName':'Count'}},
                          displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':0})
     # Count total number of nights
-    m2 = configureMetric('UniqueMetric', kwargs={'col':'night', 'metricName':'Nights on sky'},
+    m2 = configureMetric('CountUniqueMetric', kwargs={'col':'night', 'metricName':'Nights on sky'},
                                      displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
     m3 = configureMetric('FullRangeMetric', kwargs={'col':'night', 'metricName':'Nights in survey'},
                          displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
