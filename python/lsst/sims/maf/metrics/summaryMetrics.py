@@ -113,7 +113,9 @@ class TableFractionMetric(BaseMetric):
 
 
 class IdentityMetric(BaseMetric):
-    """Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics."""
+    """
+    Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics.
+    """
     def run(self, dataSlice, slicePoint=None):
         if len(dataSlice[self.colname]) == 1:
             result = dataSlice[self.colname][0]
@@ -123,7 +125,9 @@ class IdentityMetric(BaseMetric):
 
 
 class NormalizeMetric(BaseMetric):
-    """Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions."""
+    """
+    Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions.
+    """
     def __init__(self, col='metricdata', normVal=1, **kwargs):
         super(NormalizeMetric, self).__init__(col=col, **kwargs)
         self.normVal = float(normVal)
@@ -133,3 +137,26 @@ class NormalizeMetric(BaseMetric):
             return result[0]
         else:
             return result
+
+
+class TotalPowerMetric(BaseMetric):
+    """
+    Calculate the total power in the angular power spectrum between lmin/lmax.
+    """
+    def __init__(self, col='metricdata', lmin=100., lmax=300., removeDipole=True, **kwargs):
+        self.lmin = lmin
+        self.lmax = lmax
+        self.removeDipole = removeDipole
+        super(TotalPowerMetric, self).__init__(col=col, **kwargs)
+        self.maskVal = hp.UNSEEN
+
+    def run(self, dataSlice, slicePoint=None):
+        # Calculate the power spectrum.
+        if self.removeDipole:
+            cl = hp.anafast(hp.remove_dipole(dataSlice[self.colname]))
+        else:
+            cl = hp.anafast(dataSlice[self.colname])
+        l = np.arange(np.size(cl))
+        condition = np.where((l <= self.lmax) & (l >= self.lmin))[0]
+        totalpower = np.sum(cl[condition]*l[condition]*(l[condition]+1)/2.0/np.pi)
+        return totalpower
