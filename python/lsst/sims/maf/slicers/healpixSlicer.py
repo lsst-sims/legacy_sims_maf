@@ -222,11 +222,11 @@ class HealpixSlicer(BaseSpatialSlicer):
             condition = ((l < maxl) & (l > 1))
         else:
             condition = (l < maxl)
-        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=label)
+        plt.plot(l[condition], (cl[condition]*l[condition]*(l[condition]+1))/2.0/np.pi, label=label)
         if cl[condition].max() > 0 and logPlot:
             plt.yscale('log')
         plt.xlabel(r'$l$')
-        plt.ylabel(r'$l(l+1)C_l$')
+        plt.ylabel(r'$l(l+1)C_l/(2\pi)$')
         if addLegend:
             plt.legend(loc=legendloc, fancybox=True, prop={'size':'smaller'})
         if title!=None:
