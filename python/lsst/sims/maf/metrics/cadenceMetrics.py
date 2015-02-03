@@ -1,5 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
+import healpy as hp
+import scipy
 
 class SupernovaMetric(BaseMetric):
     """
@@ -240,17 +242,23 @@ class QuickRevisitMetric(BaseMetric):
         return len(counts[condition])
 
 
-
 class GalaxyCountsMetric(BaseMetric):
     """
     Estimate the number of galaxies expected at a particular coadded depth.
     """
-    def __init__(self, m5Col = 'fiveSigmaDepth', **kwargs):
+    def __init__(self, m5Col = 'fiveSigmaDepth', nside=128, **kwargs):
         self.m5Col = m5Col
         super(GalaxyCountsMetric, self).__init__(col=self.m5Col, **kwargs)
         # Use the coadded depth metric to calculate the coadded depth at each point.
         from .simpleMetrics import Coaddm5Metric
         self.coaddmetric = Coaddm5Metric(m5Col=self.m5Col)
+        # Total of 41253.0 galaxies across the sky (at what magnitude?).
+        self.scale = 41253.0 / hp.nside2npix(nside)
+
+    def _galCount(self, coaddm5, apparent_mag):
+        dn_gal = np.power(10., -3.52) * np.power(10., 0.34*apparent_mag)
+        completeness = 0.5*scipy.special.erfc(apparent_mag-coaddm5)
+        return dn_gal*completeness
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate the coadded depth.
@@ -260,10 +268,8 @@ class GalaxyCountsMetric(BaseMetric):
         # Instead of a number of galaxies accurate on an absolute scale,
         #  this may give the number of galaxies on a relative scale as I haven't
         #  included the effects of a rollover in efficiency around the m5 value,
-        #  or the size of the healpix, and I did not integrate to -infinity at the bright end.
-        dmag = 0.005
-        m = np.arange(20, coaddm5+dmag/2.0, dmag)
-        x = np.power(10, -3.52*np.power(10, 0.34*m))
-        dnum_gal = np.sum(x*dmag)
+        #  or the size of the healpix, or account for the overall number of galaxies around the sky.
+        dnum_gal, intErr = scipy.integrate.quad(self._galCount, -np.inf, 32, args=coaddm5)
+        dnum_gal *= self.scale
         return dnum_gal
 
