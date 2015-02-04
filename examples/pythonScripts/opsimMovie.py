@@ -26,6 +26,7 @@ import time
 import warnings
 import fnmatch
 
+lat_tele = np.radians(-29.666667)
 
 def dtime(time_prev):
     return (time.time() - time_prev, time.time())
@@ -76,14 +77,7 @@ def setupOpsimFieldSlicer(simdatasubset, fields, verbose=False):
     return ops
 
 
-def runSlices(opsimName, metadata, simdata, fields, args, verbose=False):
-    # Set up movie slicer
-    start_date = simdata['expMJD'][0]
-    if args.movieStepsize == 0:
-        bins = simdata['expMJD']
-    else:
-        end_date = simdata['expMJD'].max()
-        bins = np.arange(start_date, end_date+args.movieStepSize/2.0, args.movieStepSize, float)
+def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
     # Set up the movie slicer.
     movieslicer = setupMovieSlicer(simdata, bins)
     # Set up formatting for output suffix.
@@ -121,11 +115,19 @@ def runSlices(opsimName, metadata, simdata, fields, args, verbose=False):
         moonRA = np.mean(simdatasubset[obsnow]['moonRA'])
         lon = -(moonRA - raCen - np.pi) % (np.pi*2) - np.pi
         moonDec = np.mean(simdatasubset[obsnow]['moonDec'])
-        # Note that moonphase is 0-100 (translate to 0-1)
+        # Note that moonphase is 0-100 (translate to 0-1). 0=new.
         moonPhase = np.mean(simdatasubset[obsnow]['moonPhase'])/100.
-        alpha = np.max([(moonPhase), 0.1])
+        alpha = np.max([moonPhase, 0.15])
         circle = Circle((lon, moonDec), radius=0.05, color='k', alpha=alpha)
         ax.add_patch(circle)
+        # Add horizon and zenith.
+        plt.plot(0, lat_tele, 'k+')
+        step = 0.002
+        theta = np.arange(0, np.pi*2 +step/2., step)
+        rad = np.radians(110.)
+        x = rad*np.sin(theta)
+        y = rad*np.cos(theta) + lat_tele
+        plt.plot(x, y, 'k-', alpha=0.3)
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
         plt.close('all')
         dt, t = dtime(t)
@@ -170,7 +172,9 @@ if __name__ == '__main__':
     parser.add_argument("--movieStepsize", type=float, default=0, help="Step size (in days) for movie slicer. "
                         "Default sets 1 visit = 1 step.")
     parser.add_argument("--outDir", type=str, default='Output', help="Output directory.")
-    parser.add_argument("-sc", "--skipComp", action = 'store_true', default=False,
+    parser.add_argument("--addPreviousObs", action='store_true', default=False,
+                        help="Add all previous observations into movie (as background).")
+    parser.add_argument("--skipComp", action = 'store_true', default=False,
                         help="Just make movie from existing metric plot files (True).")
     parser.add_argument("--ips", type=float, default = 10.0,
                         help="The number of images per second in the movie. Will skip accordingly if fps is lower.")
@@ -198,13 +202,28 @@ if __name__ == '__main__':
         oo = db.OpsimDatabase(dbAddress)
         opsimName = oo.fetchOpsimRunName()
         sqlconstraint = args.sqlConstraint
-
+        metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
         # Fetch the data from opsim.
         simdata, fields = getData(oo, sqlconstraint)
+        # Set up the time bins for the movie slicer.
+        start_date = simdata['expMJD'][0]
+        if args.movieStepsize == 0:
+            bins = simdata['expMJD']
+        else:
+            end_date = simdata['expMJD'].max()
+            bins = np.arange(start_date, end_date+args.movieStepSize/2.0, args.movieStepSize, float)
+        if args.addPreviousObs:
+            # Go back and grab all the data, including all previous observations.
+            if "night =" in sqlconstraint:
+                sqlconstraint = sqlconstraint.replace("night =", "night <=")
+            elif "night=" in sqlconstraint:
+                sqlconstraint = sqlconstraint.replace("night=", "night<=")
+            simdata, fields = getData(oo, sqlconstraint)
+            # Update the first bin to be prior to the earliest opsim time.
+            bins[0] = simdata['expMJD'][0]
 
         # Run the movie slicer (and at each step, setup opsim slicer and calculate metrics).
-        metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
-        runSlices(opsimName, metadata, simdata, fields, args)
+        runSlices(opsimName, metadata, simdata, fields, bins, args)
 
     stitchMovie(args)
     end_t, start_t = dtime(start_t)
