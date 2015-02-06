@@ -125,40 +125,23 @@ class VisitFiltersMetric(BaseMetric):
     """
     Calculate an RGBA value that accounts for the filters used up to time t0.
     """
-    def __init__(self, filterCol='filter', timeCol='expMJD', t0=None, tStep=30./60./60./24., **kwargs):
-        self.filter_rgba_map = {'u':(0,0,1),   #dark blue
-                                'g':(0,1,1),  #cyan
-                                'r':(0,1,0),    #green
-                                'i':(1,0.5,0.3),  #orange
-                                'z':(1,0,0),    #red
-                                'y':(1,0,1)}  #magenta
-        self.filterCol = filterCol
+    def __init__(self, rRGB='rRGB', gRGB='gRGB', bRGB='bRGB',
+                 timeCol='expMJD', t0=None, tStep=30./60./60./24., **kwargs):
+        self.rRGB = rRGB
+        self.bRGB = bRGB
+        self.gRGB = gRGB
         self.timeCol = timeCol
         self.t0 = t0
         if self.t0 is None:
             self.t0 = 52939
         self.tStep = tStep
-        super(VisitFiltersMetric, self).__init__(col=[filterCol, timeCol], **kwargs)
+        super(VisitFiltersMetric, self).__init__(col=[rRGB, gRGB, bRGB, timeCol], **kwargs)
         self.metricDtype = 'object'
         self.plotDict['logScale'] = False
         self.plotDict['colorMax'] = 10
         self.plotDict['colorMin'] = 0
         self.plotDict['cbar'] = False
         self.plotDict['metricIsColor'] = True
-
-    def _calcColor(self, filters):
-        colorR = []
-        colorG = []
-        colorB = []
-        for f in filters:
-            color = self.filter_rgba_map[f]
-            colorR.append(color[0])
-            colorG.append(color[1])
-            colorB.append(color[2])
-        colorR = np.array(colorR, float)
-        colorG = np.array(colorG, float)
-        colorB = np.array(colorB, float)
-        return colorR, colorG, colorB
 
     def _scaleColor(self, colorR, colorG, colorB):
         r = colorR.sum()
@@ -175,20 +158,22 @@ class VisitFiltersMetric(BaseMetric):
         visitNow = np.where(dts < self.tStep)[0]
         if len(visitNow) > 0:
             # We have some exact matches to this timestep, so just use their colors directly.
-            colorR, colorG, colorB = self._calcColor(dataSlice[self.filterCol][visitNow])
-            r, g, b = self._scaleColor(colorR, colorG, colorB)
+            r, g, b = self._scaleColor(dataSlice[visitNow][self.rRGB],
+                                       dataSlice[visitNow][self.gRGB],
+                                       dataSlice[visitNow][self.bRGB])
             alpha = 1.0
         else:
-            colorR, colorG, colorB = self._calcColor(dataSlice[self.filterCol])
             timeweight = dts.min()/dts
-            r, g, b = self._scaleColor(colorR*timeweight, colorG*timeweight, colorB*timeweight)
+            r, g, b = self._scaleColor(dataSlice[self.rRGB]*timeweight,
+                                       dataSlice[self.gRGB]*timeweight,
+                                       dataSlice[self.bRGB]*timeweight)
             # These values for calculating alpha (the transparency of the final plotted point)
             #  are just numbers that seemed to make nice movies in my trials.
             # The exponential decay with the most recent time of observations (dts.min) gives a nice fast fade,
             #  and adding the len(dts) means that repeated observations show up a bit darker.
             # 0.8, 100, 50 and 0.14 are just empirically determined .. 0.14 will be the minimum transparency,
             #   and 0.9 will be the maximum. These were chosen to separate the peak from the 'active' observations,
-            #   and not let the long-ago observations fade out too much. 
+            #   and not let the long-ago observations fade out too much.
             alpha = np.max([0.8*np.exp(-100.*dts.min()+len(dts)/50.), 0.14])
             alpha = np.min([alpha, 0.9])
         return (r, g, b, alpha)
