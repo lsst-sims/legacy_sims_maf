@@ -43,6 +43,8 @@ def getData(opsDb, sqlconstraint):
     # Add stacker columns.
     hourangleStacker = stackers.HourAngleStacker()
     simdata = hourangleStacker.run(simdata)
+    filterStacker = stackers.FilterColorStacker()
+    simdata = filterStacker.run(simdata)
     # Fetch field data.
     fields = opsDb.fetchFieldsFromFieldTable()
     return simdata, fields
@@ -109,8 +111,9 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         fig = plt.figure(fignum)
         ax = plt.gca()
         # Add a legend.
+        filterstacker = stackers.FilterColorStacker()
         for i, f in enumerate(['u', 'g', 'r', 'i', 'z', 'y']):
-            plt.figtext(0.92, 0.55 - i*0.035, f, color=metric.filter_rgba_map[f])
+            plt.figtext(0.92, 0.55 - i*0.035, f, color=filterstacker.filter_rgb_map[f])
         # Add a moon.
         moonRA = np.mean(simdatasubset[obsnow]['moonRA'])
         lon = -(moonRA - raCen - np.pi) % (np.pi*2) - np.pi
@@ -124,7 +127,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         plt.plot(0, lat_tele, 'k+')
         step = 0.002
         theta = np.arange(0, np.pi*2 +step/2., step)
-        rad = np.radians(110.)
+        rad = np.radians(90.)
         x = rad*np.sin(theta)
         y = rad*np.cos(theta) + lat_tele
         plt.plot(x, y, 'k-', alpha=0.3)
