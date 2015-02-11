@@ -354,7 +354,7 @@ class BaseSpatialSlicer(BaseSlicer):
         ra_ec = np.arange(0, np.pi*2., (np.pi*2./360))
         dec_ec = np.sin(ra_ec) * ecinc
         lon = -(ra_ec - raCen - np.pi) % (np.pi*2) - np.pi
-        ax.plot(lon, dec_ec, 'r.', markersize=1.8)
+        ax.plot(lon, dec_ec, 'r.', markersize=1.8, alpha=0.4)
 
     def _plot_mwZone(self, raCen=0, peakWidth=np.radians(10.), taperLength=np.radians(80.), ax=None):
         """
@@ -372,10 +372,10 @@ class BaseSpatialSlicer(BaseSlicer):
         # Convert to lon/lat and plot.
         ra, dec = AstrometryBase.galacticToEquatorial(galL, galB1)
         lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
-        ax.plot(lon, dec, 'r.', markersize=1.8)
+        ax.plot(lon, dec, 'r.', markersize=1.8, alpha=0.4)
         ra, dec = AstrometryBase.galacticToEquatorial(galL, galB2)
         lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
-        ax.plot(lon, dec, 'r.', markersize=1.8)
+        ax.plot(lon, dec, 'r.', markersize=1.8, alpha=0.4)
 
     def plotSkyMap(self, metricValueIn, title=None, xlabel=None, units=None,
                    projection='aitoff', radius=1.75/180.*np.pi,
