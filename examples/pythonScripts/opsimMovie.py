@@ -15,6 +15,7 @@ import numpy as np
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
+import ephem
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
@@ -78,6 +79,24 @@ def setupOpsimFieldSlicer(simdatasubset, fields, verbose=False):
         print 'Set up opsim field slicer in %s' %(dt)
     return ops
 
+def addHorizon(horizon_altitude=20., lat_telescope=np.radians(-29.666667)):
+    step = .02
+    az = np.arange(0, np.pi*2.0+step, step)
+    alt = np.ones(len(az), float) * np.radians(horizon_altitude)
+    obs = ephem.Observer()
+    obs.lat = lat_telescope
+    obs.lon = 0
+    obs.pressure=0
+    zenithra, zenithdec = obs.radec_of(0, 90)
+    lon = np.zeros(len(az), float)
+    lat = np.zeros(len(az), float)
+    for i, (alti, azi) in enumerate(zip(alt, az)):
+        r, d = obs.radec_of(azi, alti)
+        lon[i] = ephem.degrees(r)
+        lat[i] = ephem.degrees(d)
+    lon = lon - zenithra
+    lon = -(lon - np.pi) % (np.pi*2) - np.pi
+    return lon, lat
 
 def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
     # Set up the movie slicer.
@@ -124,16 +143,9 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         circle = Circle((lon, moonDec), radius=0.05, color='k', alpha=alpha)
         ax.add_patch(circle)
         # Add horizon and zenith.
+        lon, lat = addHorizon(lat_telescope=lat_tele)
+        plt.plot(lon, lat, 'k.', alpha=0.3, markersize=1.8)
         plt.plot(0, lat_tele, 'k+')
-        step = 0.02
-        theta = np.arange(0, np.pi*2 +step/2., step)
-        rad = np.radians(70.)
-        x = rad*np.sin(theta)
-        y = rad*np.cos(theta) + lat_tele
-        # approximately correct horizon for area around south celestial pole
-        alpha = 1/np.cos(y)*np.cos(y**2/2.0)
-        x *= alpha
-        plt.plot(x, y, 'k-', alpha=0.3)
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
         plt.close('all')
         dt, t = dtime(t)
