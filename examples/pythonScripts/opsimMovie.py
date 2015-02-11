@@ -125,11 +125,14 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         ax.add_patch(circle)
         # Add horizon and zenith.
         plt.plot(0, lat_tele, 'k+')
-        step = 0.002
+        step = 0.02
         theta = np.arange(0, np.pi*2 +step/2., step)
-        rad = np.radians(90.)
+        rad = np.radians(70.)
         x = rad*np.sin(theta)
         y = rad*np.cos(theta) + lat_tele
+        # approximately correct horizon for area around south celestial pole
+        alpha = 1/np.cos(y)*np.cos(y**2/2.0)
+        x *= alpha
         plt.plot(x, y, 'k-', alpha=0.3)
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
         plt.close('all')
