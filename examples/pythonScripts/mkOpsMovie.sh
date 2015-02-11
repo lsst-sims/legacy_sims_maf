@@ -16,6 +16,6 @@ endif
 set nights = `seq $nightStart $nightEnd`
 foreach night ( $nights )
  set nightconstraint = $sqlconstraint" night="$night
- echo "python opsimMovie.py "$opsRun"_sqlite.db --sqlConstraint "$nightconstraint" --ips 30 --outDir "$opsRun"_n"$night
+ echo "python opsimMovie.py "$opsRun"_sqlite.db --sqlConstraint "$nightconstraint" --ips 30 --addPreviousObs --outDir "$opsRun"_n"$night
 end
 
