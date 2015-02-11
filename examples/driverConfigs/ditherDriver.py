@@ -59,7 +59,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
     slicerList = []
     for f in filterlist:
         sqlconstraint = "filter = '%s'" %(f)
-        sqlconstraint += 'and %s' %(wfdWhere)
+        sqlconstraint += ' and %s' %(wfdWhere)
+        metadata = '%s band WFD' %(f)
         # Set up metrics to run for each dither pattern.
         metricList = []
         metricList.append(configureMetric('Coaddm5Metric',
@@ -93,10 +94,10 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
             else:
                 racol = ditherDict[dithername].colsAdded[0]
                 deccol = ditherDict[dithername].colsAdded[1]
-        slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside, 'spatialkey1':racol, 'spatialkey2':deccol},
-                                 constraints=[sqlconstraint], metricDict=makeDict(*metricList),
-                                 metadata=dithername)
-        slicerList.append(slicer)
+            slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside, 'spatialkey1':racol, 'spatialkey2':deccol},
+                                    constraints=[sqlconstraint], metricDict=makeDict(*metricList),
+                                    metadata= metadata + ' %s' %(dithername))
+            slicerList.append(slicer)
 
     config.slicers = makeDict(*slicerList)
     return config
