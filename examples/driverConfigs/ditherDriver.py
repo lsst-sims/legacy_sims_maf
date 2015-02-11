@@ -42,6 +42,13 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
     colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
+    summaryStats = {'MeanMetric':{}, 'MedianMetric':{}, 'RmsMetric':{},
+                    'PercentileMetric 1':{'metricName':'25th%ile', 'percentile':25},
+                    'PercentileMetric 2':{'metricName':'75th%ile', 'percentile':75},
+                    'MinMetric':{},
+                    'MaxMetric':{},
+                    'TotalPowerMetric':{}}
+
     ditherDict = {}
     ditherDict['NoDither'] = None
     ditherDict['HexDither'] = None
@@ -51,40 +58,22 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
     ditherDict['NightlySpiralDither'] = stackers.NightlySpiralDitherStacker()
     ditherDict['SequentialHexDither'] = stackers.SequentialHexDitherStacker()
     ditherDict['NightlySequentialHexDither'] = stackers.NightlySequentialHexDitherStacker()
+    dithernames = ['NoDither', 'HexDither', 'SequentialHexDither', 'NightlySequentialHexDither',
+                   'RandomDither', 'NightlyRandomDither', 'SpiralDither', 'NightlySpiralDither']
 
-    mag_zp = 27.5
-    filterlist = ['r', 'i']
+    filterlist = ['u', 'g', 'r', 'i', 'z', 'y']
 
     # Set up sqlconstraint and use this as the outermost loop.
     slicerList = []
+    order = 0
     for f in filterlist:
         sqlconstraint = "filter = '%s'" %(f)
         sqlconstraint += ' and %s' %(wfdWhere)
-        metadata = '%s band WFD' %(f)
+        common_metadata = '%s band WFD' %(f)
+        histNum = 0
         # Set up metrics to run for each dither pattern.
-        metricList = []
-        metricList.append(configureMetric('Coaddm5Metric',
-                                            plotDict={'zp':mag_zp, 'xMin':-0.6, 'xMax':0.6,
-                                                      'units':'coadded m5 - %.1f' %mag_zp},
-                                            displayDict={'group':'Dithers', 'subgroup':'Coadded Depth',
-                                                         'order':filtorder[f]}))
-        metricList.append(configureMetric('CountUniqueMetric', kwargs={'col':'night', 'metricName':'Unique Nights'},
-                                               plotDict={'title':'Number of unique nights with observations',
-                                                         'cbarFormat':'%d'},
-                                                displayDict={'group':'Dithers', 'subgroup':'Number of nights',
-                                                             'order':filtorder[f]}))
-        metricList.append(configureMetric('CountMetric', kwargs={'col':'expMJD',
-                                                                 'metricName':'Number of Visits'},
-                                          plotDict={'title':'Number of visits',
-                                                    'colorMin':0, 'colorMax':300,
-                                                    'cbarFormat': '%d'},
-                                            displayDict={'group':'Dithers','subgroup':'Number of visits',
-                                                         'order':filtorder[f]}))
-        metricList.append(configureMetric('mafContrib.GalaxyCountsMetric', kwargs={'nside':nside},
-                                                 displayDict={'group':'Dithers', 'subgroup':'Galaxy Counts',
-                                                              'order':filtorder[f]}))
-        # Set up appropriate slicer for each ditherpattern, using the same sqlconstraint.
-        for dithername in ditherDict:
+        # Set up appropriate slicer and update order/hist label for each ditherpattern, using the same sqlconstraint.
+        for i, dithername in enumerate(dithernames):
             if dithername == 'NoDither':
                 racol = 'fieldRA'
                 deccol = 'fieldDec'
@@ -94,9 +83,47 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
             else:
                 racol = ditherDict[dithername].colsAdded[0]
                 deccol = ditherDict[dithername].colsAdded[1]
+            metadata = common_metadata + ' ' + dithername
+
+            metricList = []
+            metricList.append(configureMetric('Coaddm5Metric',
+                                            plotDict={'units':'Coadded m5'},
+                                            summaryStats=summaryStats,
+                                            displayDict={'group':'Dithers', 'subgroup':'Coadded Depth',
+                                                         'order':i+filtorder[f]*100},
+                                            histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s' %(metadata),
+                                                         'legendloc':'upper right'}))
+            histNum += 1
+            metricList.append(configureMetric('CountUniqueMetric', kwargs={'col':'night', 'metricName':'Unique Nights'},
+                                               plotDict={'title':'Number of unique nights with observations',
+                                                         'cbarFormat':'%d'},
+                                                summaryStats=summaryStats,
+                                                displayDict={'group':'Dithers', 'subgroup':'Number of nights',
+                                                             'order':i+filtorder[f]*100},
+                                                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s' %(metadata),
+                                                         'legendloc':'upper right'}))
+            histNum += 1
+            metricList.append(configureMetric('CountMetric', kwargs={'col':'expMJD',
+                                                                 'metricName':'Number of Visits'},
+                                          plotDict={'title':'Number of visits',
+                                                    'colorMin':0, 'colorMax':300,
+                                                    'cbarFormat': '%d'},
+                                            summaryStats=summaryStats,
+                                            displayDict={'group':'Dithers','subgroup':'Number of visits',
+                                                         'order':i+filtorder[f]*100},
+                                            histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s' %(metadata),
+                                                         'legendloc':'upper right'}))
+            histNum += 1
+            metricList.append(configureMetric('mafContrib.GalaxyCountsMetric', kwargs={'nside':nside},
+                                          summaryStats=summaryStats,
+                                            displayDict={'group':'Dithers', 'subgroup':'Galaxy Counts',
+                                                              'order':i+filtorder[f]*100},
+                                            histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s' %(metadata),
+                                                         'legendloc':'upper right'}))
+            histNum += 1
             slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside, 'spatialkey1':racol, 'spatialkey2':deccol},
                                     constraints=[sqlconstraint], metricDict=makeDict(*metricList),
-                                    metadata= metadata + ' %s' %(dithername))
+                                    metadata= metadata, metadataVerbatim=True)
             slicerList.append(slicer)
 
     config.slicers = makeDict(*slicerList)
