@@ -3,19 +3,24 @@
 #  return the relevant indices in the simData to the metric.
 # The primary things added here are the methods to slice the data (for any spatial slicer)
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes.
-
+import warnings
 import numpy as np
+# For plotting.
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.ticker import FuncFormatter
+
 from functools import wraps
-import warnings
-from lsst.sims.maf.utils import optimalBins, percentileClipping
 from scipy.spatial import cKDTree as kdtree
+
+from lsst.sims.maf.utils import optimalBins, percentileClipping
+
+# For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.coordUtils import CameraCoords, AstrometryBase
 from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
+
 from .baseSlicer import BaseSlicer
 
 class BaseSpatialSlicer(BaseSlicer):
@@ -340,7 +345,9 @@ class BaseSpatialSlicer(BaseSlicer):
         return ellipses
 
     def _plot_ecliptic(self, raCen=0, ax=None):
-        """Plot a red line at location of ecliptic"""
+        """
+        Plot a red line at location of ecliptic.
+        """
         if ax is None:
             ax = plt.gca()
         ecinc = 23.439291*(np.pi/180.0)
@@ -349,13 +356,34 @@ class BaseSpatialSlicer(BaseSlicer):
         lon = -(ra_ec - raCen - np.pi) % (np.pi*2) - np.pi
         ax.plot(lon, dec_ec, 'r.', markersize=1.8)
 
+    def _plot_mwZone(self, raCen=0, peakWidth=np.radians(10.), taperLength=np.radians(80.), ax=None):
+        """
+        Plot lines to mark the milky way galactic exclusion zone.
+        """
+        if ax is None:
+            ax = plt.gca()
+        # Calculate galactic coordinates for mw location.
+        step = 0.02
+        galL = np.arange(-np.pi, np.pi+step/2., step)
+        val = peakWidth * np.cos(galL/taperLength*np.pi/2.)
+        galB1 = np.where(np.abs(galL) <= taperLength, val, 0)
+        galB2 = np.where(np.abs(galL) <= taperLength, -val, 0)
+        # Convert to ra/dec.
+        # Convert to lon/lat and plot.
+        ra, dec = AstrometryBase.galacticToEquatorial(galL, galB1)
+        lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
+        ax.plot(lon, dec, 'r.', markersize=1.8)
+        ra, dec = AstrometryBase.galacticToEquatorial(galL, galB2)
+        lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
+        ax.plot(lon, dec, 'r.', markersize=1.8)
+
     def plotSkyMap(self, metricValueIn, title=None, xlabel=None, units=None,
                    projection='aitoff', radius=1.75/180.*np.pi,
                    logScale='auto', cbar=True, cbarFormat=None,
                    cmap=cm.jet, alpha=1, fignum=None,
                    zp=None, normVal=None,
                    colorMin=None, colorMax=None, percentileClip=None, cbar_edge=True,
-                   label=None, plotMask=False, metricIsColor=False, raCen=0.0, **kwargs):
+                   label=None, plotMask=False, metricIsColor=False, raCen=0.0, mwZone=True, **kwargs):
         """
         Plot the sky map of metricValue.
         """
@@ -445,6 +473,8 @@ class BaseSpatialSlicer(BaseSlicer):
                     cb.set_label(units)
         # Add ecliptic
         self._plot_ecliptic(raCen, ax=ax)
+        if mwZone:
+            self._plot_mwZone(raCen, ax=ax)
         ax.grid(True, zorder=1)
         ax.xaxis.set_ticklabels([])
         # Add label.
