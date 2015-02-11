@@ -181,7 +181,7 @@ if __name__ == '__main__':
     parser.add_argument("--addPreviousObs", action='store_true', default=False,
                         help="Add all previous observations into movie (as background).")
     parser.add_argument("--skipComp", action = 'store_true', default=False,
-                        help="Just make movie from existing metric plot files (True).")
+                        help="Just make movie from existing metric plot files.")
     parser.add_argument("--ips", type=float, default = 10.0,
                         help="The number of images per second in the movie. Will skip accordingly if fps is lower.")
     parser.add_argument("--fps", type=float, default = 0.0,
