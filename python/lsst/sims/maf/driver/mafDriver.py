@@ -43,6 +43,7 @@ class MafDriver(object):
         self.verbose = self.config.verbose
         self.figformat = self.config.figformat
         self.dpi = self.config.dpi
+        self.plotOnly = self.config.plotOnly
 
         # Import any additional modules specified by the user.
         utils.moduleLoader(self.config.modules)
@@ -323,45 +324,64 @@ class MafDriver(object):
                               metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
                               metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
                           # Run through slicepoints in slicer, and calculate metric values.
-                          gm.runSlices(self.data, simDataName=self.config.opsimName,
-                                       metadata=metadata, sqlconstraint=sqlconstraint)
-                          if self.verbose:
-                             dt,time_prev = dtime(time_prev)
-                             print '    Computed metrics in %.3g s'%dt
-                          # And run reduce methods for relevant metrics.
-                          gm.reduceAll()
-                          # And write metric data files to disk.
-                          gm.writeAll()
-                          # And plot all metric values.
-                          gm.plotAll(savefig=True, closefig=True, verbose=True)
-                          if self.verbose:
-                             dt,time_prev = dtime(time_prev)
-                             print '    plotted metrics in %.3g s'%dt
-                          # Loop through the metrics and calculate any summary statistics
-                          for i, metric in enumerate(self.metricList[slicer.index]):
-                              if hasattr(metric, 'summaryStats'):
-                                  for stat in metric.summaryStats:
-                                      # If it's metric returning an OBJECT, run summary stats on each reduced metric
-                                      # (have to identify related reduced metric values first)
-                                      if metric.metricDtype == 'object':
-                                          iid = gm.metricObjIid(metric)[0]
-                                          baseName = gm.metricNames[iid]
-                                          all_names = gm.metricNames.values()
-                                          matching_metrics = [x for x in all_names \
-                                                              if x[:len(baseName)] == baseName and x != baseName]
-                                          for mm in matching_metrics:
-                                              iid = gm.findIids(metricName=mm)[0]
-                                              summary = gm.computeSummaryStatistics(iid, stat)
-                                      # Else it's a simple metric value.
-                                      else:
-                                          iid = gm.findIids(metricName=metric.name)[0]
-                                          summary = gm.computeSummaryStatistics(iid, stat)
-                          if self.verbose:
-                             dt,time_prev = dtime(time_prev)
-                             print '    Computed summarystats in %.3g s'%dt
-                          if self.verbose:
-                             dt,time_prev = dtime(time_prev)
-                             print '    wrote output files in %.3g s'%dt
+                          if self.plotOnly:
+                             iids = gm.metricNames.keys()
+                             files = []
+                             for iid in iids:
+                                files.append(gm._buildOutfileName(iid))
+                              newGm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
+                                                                  outDir=self.config.outputDir)
+                              for filename, iid in zip(files,iids):
+                                 # Load all the metric data back in
+                                 newGm.readMetricData(file)
+                                 # Replace plotting parameters
+                                 newGm.plotDicts[iid] = gm.plotDicts[iid]
+                                 newGm.displayDicts[iid] = gm.displayDicts[iid]
+                                 # Replot
+                                 newGM.plotAll(savefig=True, closefig=True, verbose=True)
+                                 # XXX--do we bother to re-write just to update the plotting? I'd say no.
+                          else:
+                             gm.runSlices(self.data, simDataName=self.config.opsimName,
+                                          metadata=metadata, sqlconstraint=sqlconstraint)
+                             if self.verbose:
+                                dt,time_prev = dtime(time_prev)
+                                print '    Computed metrics in %.3g s'%dt
+                             # And run reduce methods for relevant metrics.
+                             gm.reduceAll()
+                             # And write metric data files to disk.
+                             gm.writeAll()
+                             # And plot all metric values.
+                             gm.plotAll(savefig=True, closefig=True, verbose=True)
+                             if self.verbose:
+                                dt,time_prev = dtime(time_prev)
+                                print '    plotted metrics in %.3g s'%dt
+                             # Loop through the metrics and calculate any summary statistics
+                             for i, metric in enumerate(self.metricList[slicer.index]):
+                                 if hasattr(metric, 'summaryStats'):
+                                     for stat in metric.summaryStats:
+                                         # If it's metric returning an OBJECT, run summary stats on
+                                         # each reduced metric
+                                         # (have to identify related reduced metric values first)
+                                         if metric.metricDtype == 'object':
+                                             iid = gm.metricObjIid(metric)[0]
+                                             baseName = gm.metricNames[iid]
+                                             all_names = gm.metricNames.values()
+                                             matching_metrics = [x for x in all_names \
+                                                                 if x[:len(baseName)] == baseName \
+                                                                 and x != baseName]
+                                             for mm in matching_metrics:
+                                                 iid = gm.findIids(metricName=mm)[0]
+                                                 summary = gm.computeSummaryStatistics(iid, stat)
+                                         # Else it's a simple metric value.
+                                         else:
+                                             iid = gm.findIids(metricName=metric.name)[0]
+                                             summary = gm.computeSummaryStatistics(iid, stat)
+                             if self.verbose:
+                                dt,time_prev = dtime(time_prev)
+                                print '    Computed summarystats in %.3g s'%dt
+                             if self.verbose:
+                                dt,time_prev = dtime(time_prev)
+                                print '    wrote output files in %.3g s'%dt
 
         # Create any 'merge' histograms that need merging.
         # Loop through all the metrics and find which histograms need to be merged
@@ -410,14 +430,16 @@ class MafDriver(object):
                                                                 plotkwargs=histDict[key]['plotkwargs'])
                    plt.close('all')
 
-        today_date, versionInfo = utils.getDateVersion()
-        # Open up a file and print the results of verison and date.
-        datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
-        print >>datefile, 'date, version, fingerprint '
-        print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],versionInfo['__fingerprint__'])
-        datefile.close()
-        # Save the as-ran pexConfig file
-        self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
+        if not self.plotOnly:
+           today_date, versionInfo = utils.getDateVersion()
+           # Open up a file and print the results of verison and date.
+           datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
+           print >>datefile, 'date, version, fingerprint '
+           print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],
+                                         versionInfo['__fingerprint__'])
+           datefile.close()
+           # Save the as-ran pexConfig file
+           self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
 
         if self.verbose:
             dt,self.time_start = dtime(self.time_start)
