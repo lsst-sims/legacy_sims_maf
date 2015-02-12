@@ -272,19 +272,22 @@ class MafDriver(object):
                               colnames.append(col)
                   # Find the unique column names required.
                   colnames = list(set(colnames))
-
-                  print 'Querying with SQLconstraint:', sqlconstraint, ' from table:', table
-                  # Get the data from the database + stacker calculations.
-                  if self.verbose:
-                      time_prev = time.time()
-                  self.getData(sqlconstraint, colnames=colnames, stackersList=stackersList, table=table)
-                  if self.verbose:
-                      dt, time_prev = dtime(time_prev)
-                  if len(self.data) == 0:
-                      print '  No data matching constraint:   %s'%sqlconstraint
+                  if not self.plotOnly:
+                     print 'Querying with SQLconstraint:', sqlconstraint, ' from table:', table
+                     # Get the data from the database + stacker calculations.
+                     if self.verbose:
+                         time_prev = time.time()
+                     self.getData(sqlconstraint, colnames=colnames, stackersList=stackersList, table=table)
+                     if self.verbose:
+                         dt, time_prev = dtime(time_prev)
+                     if len(self.data) == 0:
+                         print '  No data matching constraint:   %s'%sqlconstraint
+                  else:
+                     # Set some dummy data if we are going to restore later
+                     self.data = [0]
 
                   # Got data, now set up slicers.
-                  else:
+                  if len(self.data) > 0:
                       if self.verbose:
                           print '  Found %i matching visits in %.3g s'%(len(self.data),dt)
                       else:
@@ -296,23 +299,23 @@ class MafDriver(object):
                       if self.verbose:
                           time_prev = time.time()
                       for slicer in matchingSlicers:
-                          print '    running slicerName =', slicer.slicerName, \
-                            ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
+
                           # Set up any additional maps
                           for m in self.metricList[slicer.index]:
                              for skyMap in m.maps:
                                 if skyMap not in slicer.mapsNames:
                                    slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
                           # Set up slicer.
-                          if slicer.slicerName == 'OpsimFieldSlicer':
-                              # Need to pass in fieldData as well
-                              slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
-                          else:
-                             if len(slicer.mapsList) > 0:
-                                slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                          if not self.plotOnly:
+                             if slicer.slicerName == 'OpsimFieldSlicer':
+                                 # Need to pass in fieldData as well
+                                 slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
                              else:
-                                slicer.setupSlicer(self.data)
-                          # Set up baseSliceMetric.
+                                if len(slicer.mapsList) > 0:
+                                   slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                                else:
+                                   slicer.setupSlicer(self.data)
+                             # Set up baseSliceMetric.
                           gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                            outDir=self.config.outputDir)
                           gm.setSlicer(slicer)
@@ -323,24 +326,30 @@ class MafDriver(object):
                           else:
                               metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'')
                               metadata = metadata.replace('"', '').replace('  ',' ') + ' '+ slicer.metadata
-                          # Run through slicepoints in slicer, and calculate metric values.
+
                           if self.plotOnly:
                              iids = gm.metricNames.keys()
-                             files = []
+                             newGm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
+                                                                 outDir=self.config.outputDir)
+                             newGm.setSlicer(slicer)
                              for iid in iids:
-                                files.append(gm._buildOutfileName(iid))
-                              newGm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                                  outDir=self.config.outputDir)
-                              for filename, iid in zip(files,iids):
-                                 # Load all the metric data back in
-                                 newGm.readMetricData(file)
-                                 # Replace plotting parameters
-                                 newGm.plotDicts[iid] = gm.plotDicts[iid]
-                                 newGm.displayDicts[iid] = gm.displayDicts[iid]
-                                 # Replot
-                                 newGM.plotAll(savefig=True, closefig=True, verbose=True)
-                                 # XXX--do we bother to re-write just to update the plotting? I'd say no.
+                                gm.simDataNames[iid] = self.config.opsimName
+                                gm.metadatas[iid] = metadata
+                                filename = gm._buildOutfileName(iid)
+                                # Load all the metric data back in
+                                fullFile = os.path.join(self.config.outputDir, filename+'.npz')
+                                print 'Restoring %s'%fullFile
+                                newGm.readMetricData(fullFile)
+                                # Replace the restored plotting parameters
+                                newGm.plotDicts[iid] = gm.plotDicts[iid]
+                                newGm.displayDicts[iid] = gm.displayDicts[iid]
+                             # Replot
+                             newGm.plotAll(savefig=True, closefig=True, verbose=True)
+                             # XXX--do we bother to re-write .npz fles just to update the plotting? I'd say no.
                           else:
+                             # Run through slicepoints in slicer, and calculate metric values.
+                             print '    running slicerName =', slicer.slicerName, \
+                            ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
                              gm.runSlices(self.data, simDataName=self.config.opsimName,
                                           metadata=metadata, sqlconstraint=sqlconstraint)
                              if self.verbose:
