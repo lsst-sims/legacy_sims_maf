@@ -330,7 +330,8 @@ class MafDriver(object):
                           if self.plotOnly:
                              iids = gm.metricNames.keys()
                              newGm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                                 outDir=self.config.outputDir)
+                                                                 outDir=self.config.outputDir,
+                                                                 useResultsDb=False)
                              newGm.setSlicer(slicer)
                              for iid in iids:
                                 gm.simDataNames[iid] = self.config.opsimName
@@ -419,10 +420,13 @@ class MafDriver(object):
                             del temp_dict['histNum']
                             histDict[key]['plotkwargs'].append(temp_dict)
 
-
+        if self.plotOnly:
+           useResultsDb = False
+        else:
+           useResultsDb = True
         for key in histDict.keys():
             # Use a comparison slice metric per merged histogram. Only read relevant files.
-            cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=True, outDir=self.config.outputDir,
+            cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=useResultsDb, outDir=self.config.outputDir,
                                                      figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:

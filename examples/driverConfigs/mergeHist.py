@@ -3,8 +3,8 @@ from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, mak
 
 
 root.outputDir = './MergeHist'
-root.dbAddress = {'dbAddress':'sqlite:///opsimblitz1_1133_sqlite.db'}
-root.opsimName = 'opsimblitz1_1133'
+root.dbAddress = {'dbAddress':'sqlite:///ops2_1065_sqlite.db'}
+root.opsimName = 'ops2_1065'
 slicerList=[]
 root.plotOnly = False
 
