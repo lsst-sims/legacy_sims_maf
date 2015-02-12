@@ -344,9 +344,8 @@ class MafDriver(object):
                                 # Replace the restored plotting parameters
                                 newGm.plotDicts[iid] = gm.plotDicts[iid]
                                 newGm.displayDicts[iid] = gm.displayDicts[iid]
-                             # Replot
+                             # Replot, note we are not saving the updated plotDicts to save time.
                              newGm.plotAll(savefig=True, closefig=True, verbose=True)
-                             # XXX--do we bother to re-write .npz fles just to update the plotting? I'd say no.
                           else:
                              # Run through slicepoints in slicer, and calculate metric values.
                              print '    running slicerName =', slicer.slicerName, \
