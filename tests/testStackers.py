@@ -4,6 +4,7 @@ import numpy as np
 import warnings
 import lsst.sims.maf.stackers as stackers
 import unittest
+from lsst.sims.catalogs.generation.db import haversine
 
 class TestStackerClasses(unittest.TestCase):
 
@@ -49,12 +50,16 @@ class TestStackerClasses(unittest.TestCase):
         data['fieldDec'] = np.random.rand(600)*np.pi/2.0 - np.pi/4.0
         stacker = stackers.RandomDitherStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = data['fieldRA'] - data['randomRADither']
+        diffsra = (data['fieldRA'] - data['randomRADither'])*np.cos(data['fieldDec'])
         diffsdec = data['fieldDec'] - data['randomDecDither']
         # Check dithers within expected range.
         for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
             self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
             self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
+        distances = haversine(data['fieldRA'], data['fieldDec'], data['randomRADither'],
+                              data['randomDecDither'])
+        for d in distances:
+            self.assertLessEqual(d, np.radians(maxDither))
         # Check dithers not all the same and go positive and negative.
         self.assertGreater(diffsra.max(), 0)
         self.assertGreater(diffsdec.max(), 0)
@@ -73,11 +78,15 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(np.random.rand(ndata)*10).astype('int')
         stacker = stackers.NightlyRandomDitherStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['nightlyRandomRADither'])/np.cos(data['fieldDec'])
+        diffsra = (data['fieldRA'] - data['nightlyRandomRADither'])*np.cos(data['fieldDec'])
         diffsdec = data['fieldDec'] - data['nightlyRandomDecDither']
         for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
             self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
             self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
+        distances = haversine(data['fieldRA'], data['fieldDec'], data['nightlyRandomRADither'],
+                              data['nightlyRandomDecDither'])
+        for d in distances:
+            self.assertLessEqual(d, np.radians(maxDither))
         # Check dithers not all the same and go positive and negative.
         self.assertGreater(diffsra.max(), 0)
         self.assertGreater(diffsdec.max(), 0)
