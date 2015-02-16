@@ -126,7 +126,10 @@ class VisitFiltersMetric(BaseMetric):
     Calculate an RGBA value that accounts for the filters used up to time t0.
     """
     def __init__(self, rRGB='rRGB', gRGB='gRGB', bRGB='bRGB',
-                 timeCol='expMJD', t0=None, tStep=30./60./60./24., **kwargs):
+                 timeCol='expMJD', t0=None, tStep=40./60./60./24., **kwargs):
+        """
+        t0 = the current time
+        """
         self.rRGB = rRGB
         self.bRGB = bRGB
         self.gRGB = gRGB
@@ -154,26 +157,33 @@ class VisitFiltersMetric(BaseMetric):
         return r, g, b
 
     def run(self, dataSlice, slicePoint=None):
-        dts = np.abs(self.t0 - dataSlice[self.timeCol])
-        visitNow = np.where(dts < self.tStep)[0]
+        deltaT = np.abs(dataSlice[self.timeCol]-self.t0)
+        visitNow = np.where(deltaT <= self.tStep)[0]
         if len(visitNow) > 0:
-            # We have some exact matches to this timestep, so just use their colors directly.
+            # We have exact matches to this timestep, so use their colors directly and set alpha to >1.
             r, g, b = self._scaleColor(dataSlice[visitNow][self.rRGB],
                                        dataSlice[visitNow][self.gRGB],
                                        dataSlice[visitNow][self.bRGB])
-            alpha = 1.0
+            alpha = 10.
         else:
-            timeweight = dts.min()/dts
-            r, g, b = self._scaleColor(dataSlice[self.rRGB]*timeweight,
-                                       dataSlice[self.gRGB]*timeweight,
-                                       dataSlice[self.bRGB]*timeweight)
-            # These values for calculating alpha (the transparency of the final plotted point)
-            #  are just numbers that seemed to make nice movies in my trials.
-            # The exponential decay with the most recent time of observations (dts.min) gives a nice fast fade,
-            #  and adding the len(dts) means that repeated observations show up a bit darker.
-            # 0.8, 100, 50 and 0.14 are just empirically determined .. 0.14 will be the minimum transparency,
-            #   and 0.9 will be the maximum. These were chosen to separate the peak from the 'active' observations,
-            #   and not let the long-ago observations fade out too much.
-            alpha = np.max([0.8*np.exp(-100.*dts.min()+len(dts)/50.), 0.14])
-            alpha = np.min([alpha, 0.9])
+            # This part of the sky has only older exposures.
+            deltaTmin = deltaT.min()
+            nObs = len(dataSlice[self.timeCol])
+            # Generate a combined color (weighted towards most recent observation).
+            decay = deltaTmin/deltaT
+            r, g, b = self._scaleColor(dataSlice[self.rRGB]*decay,
+                                       dataSlice[self.gRGB]*decay,
+                                       dataSlice[self.bRGB]*decay)
+            # Then generate an alpha value, between alphamax/alphamid for visits
+            #  happening within the previous 12 hours, then falling between
+            #  alphamid/alphamin with a value that depends on the number of obs.
+            alphamax = 0.8
+            alphamid = 0.5
+            alphamin = 0.2
+            if deltaTmin < 0.5:
+                alpha = np.exp(-deltaTmin*10.)*(alphamax - alphamid) + alphamid
+            else:
+                alpha = nObs/800.*alphamid
+            alpha = np.max([alpha, alphamin])
+            alpha = np.min([alphamax, alpha])
         return (r, g, b, alpha)
