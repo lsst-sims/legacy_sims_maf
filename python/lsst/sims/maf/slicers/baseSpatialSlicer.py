@@ -443,12 +443,19 @@ class BaseSpatialSlicer(BaseSlicer):
             colorMax = 10**(int(np.log10(colorMax)))
         # Add ellipses at RA/Dec locations
         lon = -(self.slicePoints['ra'][mask] - raCen - np.pi) % (np.pi*2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, ax=ax)
+        ellipses = self._plot_tissot_ellipse(lon, self.slicePoints['dec'][mask], radius, rasterized=True, ax=ax)
         if metricIsColor:
             for ellipse, mVal in zip(ellipses, metricValue.data[mask]):
-                ellipse.set_alpha(mVal[3])
-                ellipse.set_color((mVal[0], mVal[1], mVal[2]))
+                if mVal[3] > 1:
+                    ellipse.set_alpha(1.0)
+                    ellipse.set_facecolor((mVal[0], mVal[1], mVal[2]))
+                    ellipse.set_edgecolor('k')
+                    current = ellipse
+                else:
+                    ellipse.set_alpha(mVal[3])
+                    ellipse.set_color((mVal[0], mVal[1], mVal[2]))
                 ax.add_patch(ellipse)
+            ax.add_patch(current)
         else:
             if logScale:
                 norml = colors.LogNorm()
