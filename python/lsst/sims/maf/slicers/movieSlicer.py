@@ -1,18 +1,21 @@
 # cumulative one dimensional movie slicer
+import os
+import warnings
+import subprocess
+from subprocess import CalledProcessError
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
-import warnings
+
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
-import subprocess
-import os
+
 
 class MovieSlicer(BaseSlicer):
     """movie Slicer."""
     def __init__(self, sliceColName=None, sliceColUnits=None,
                  bins=None, binMin=None, binMax=None, binsize=None,
-                 verbose=True, badval=0, cumulative=True):
+                 verbose=True, badval=0, cumulative=True, forceNoFfmpeg=False):
         """
         The 'movieSlicer' acts similarly to the OneDSlicer (slices on one data column).
         However, the data slices from the movieSlicer are intended to be fed to another slicer, which then
@@ -29,7 +32,18 @@ class MovieSlicer(BaseSlicer):
 
         Bins work like numpy histogram bins: the last 'bin' value is end value of last bin;
           all bins except for last bin are half-open ([a, b>), the last one is ([a, b]).
+
+        The movieSlicer stitches individual frames together into a movie using ffmpeg. Thus, on
+        instantiation it checks that ffmpeg is available and will raise and exception if not.
+        This behavior can be overriden using forceNoFfmpeg = True (in order to create a movie later perhaps).
         """
+        # Check for ffmpeg.
+        if not forceNoFfmpeg:
+            try:
+                subprocess.check_call(['which', 'ffmpeg'])
+            except CalledProcessError:
+                raise Exception('Could not find ffmpeg on the system, so will not be able to create movie.'
+                                ' Use forceNoFfmpeg=True to override this error and create individual images.')
         super(MovieSlicer, self).__init__(verbose=verbose, badval=badval)
         self.sliceColName = sliceColName
         self.columnsNeeded = [sliceColName]
