@@ -36,7 +36,7 @@ def dtime(time_prev):
 def getData(opsDb, sqlconstraint):
     # Define columns we want from opsim database (for metrics, slicers and stacker info).
     colnames = ['expMJD', 'filter', 'fieldID', 'fieldRA', 'fieldDec', 'lst',
-                'moonRA', 'moonDec', 'moonPhase']
+                'moonRA', 'moonDec', 'moonPhase', 'night']
     # Get data from database.
     simdata = opsDb.fetchMetricData(colnames, sqlconstraint)
     if len(simdata) == 0:
@@ -50,11 +50,11 @@ def getData(opsDb, sqlconstraint):
     fields = opsDb.fetchFieldsFromFieldTable()
     return simdata, fields
 
-def setupMetrics(opsimName, metadata, visittime, verbose=False):
+def setupMetrics(opsimName, metadata, t0, tStep, verbose=False):
     # Set up metrics. Will apply one to ms and one to ms_curr.
     t = time.time()
     import matplotlib.cm as cm
-    metric = metrics.VisitFiltersMetric(t0=visittime)
+    metric = metrics.VisitFiltersMetric(t0=t0, tStep=tStep)
     metric.plotDict['title'] = "%s: %s" %(opsimName, metadata)
     dt, t = dtime(t)
     if verbose:
@@ -110,7 +110,14 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         if verbose:
             print slicenumber
         # Set up metrics.
-        metric = setupMetrics(opsimName, metadata, ms['slicePoint']['binRight'], verbose)
+        if args.movieStepsize != 0:
+            tstep = args.movieStepsize
+        else:
+            tstep = ms['slicePoint']['binRight'] - bins[i]
+            if tstep > 1:
+                tstep = 40./24./60./60.
+        metric = setupMetrics(opsimName, metadata,
+                              t0=ms['slicePoint']['binRight'], tStep=tstep, verbose=verbose)
         # Add time to plot label.
         metric.plotDict['label'] = 'Time: %f' %(ms['slicePoint']['binRight'])
         # Identify the subset of simdata in the movieslicer 'data slice'
