@@ -10,6 +10,7 @@ doc/htmlDir
 tests/.tests
 ups/*.cfgc
 python/lsst/sims/maf/version.py
+*.pdf
 *.png
 *.gif
 *.mp4
