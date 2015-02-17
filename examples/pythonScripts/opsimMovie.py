@@ -79,22 +79,32 @@ def setupOpsimFieldSlicer(simdatasubset, fields, verbose=False):
         print 'Set up opsim field slicer in %s' %(dt)
     return ops
 
-def addHorizon(horizon_altitude=20., lat_telescope=np.radians(-29.666667)):
+
+def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=np.radians(-29.666667), raCen=0.):
+    """
+    Adds a horizon at horizon_altitude, using the telescope latitude lat_telescope.
+    Returns the lon/lat points that would be appropriate to add to a SkyMap plot centered on raCen.
+    """
     step = .02
     az = np.arange(0, np.pi*2.0+step, step)
-    alt = np.ones(len(az), float) * np.radians(horizon_altitude)
+    alt = np.ones(len(az), float) * horizon_altitude
     obs = ephem.Observer()
     obs.lat = lat_telescope
+    # Set obs lon to zero, just to fix the location.
+    # Note that this is not the true observatory longitude, but as long as
+    #  we calculate the RA at zenith for this longitude, we can still calculate HA appropriately.
     obs.lon = 0
     obs.pressure=0
-    zenithra, zenithdec = obs.radec_of(0, 90)
+    # Given obs lon at zero, find the equivalent ra overhead.
+    zenithra, zenithlat = obs.radec_of(0, 90)
     lon = np.zeros(len(az), float)
     lat = np.zeros(len(az), float)
     for i, (alti, azi) in enumerate(zip(alt, az)):
+        # Find the equivalent ra/dec values for an alt/az circle.
         r, d = obs.radec_of(azi, alti)
-        lon[i] = ephem.degrees(r)
+        # Correct the ra value by the zenith ra value, to get the HA.
+        lon[i] = ephem.degrees(r) - zenithra
         lat[i] = ephem.degrees(d)
-    lon = lon - zenithra
     lon = -(lon - np.pi) % (np.pi*2) - np.pi
     return lon, lat
 
@@ -150,7 +160,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         circle = Circle((lon, moonDec), radius=0.05, color='k', alpha=alpha)
         ax.add_patch(circle)
         # Add horizon and zenith.
-        lon, lat = addHorizon(lat_telescope=lat_tele)
+        lon, lat = addHorizon(lat_telescope=lat_tele, raCen=raCen)
         plt.plot(lon, lat, 'k.', alpha=0.3, markersize=1.8)
         plt.plot(0, lat_tele, 'k+')
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
