@@ -191,7 +191,9 @@ class HealpixSlicer(BaseSpatialSlicer):
         return fignum
 
     def plotPowerSpectrum(self, metricValue, title=None, fignum=None, maxl=500.,
-                          label=None, addLegend=False, removeDipole=True, verbose=False, **kwargs):
+                          label=None, addLegend=False, legendloc='upper right',
+                          removeDipole=True,
+                          logPlot=True, verbose=False, **kwargs):
         """Generate and plot the power spectrum of metricValue.
 
         maxl = maximum ell value to plot (default 500 .. to plot all l, set to value > 3500)
@@ -220,13 +222,13 @@ class HealpixSlicer(BaseSpatialSlicer):
             condition = ((l < maxl) & (l > 1))
         else:
             condition = (l < maxl)
-        plt.plot(l[condition], cl[condition]*l[condition]*(l[condition]+1), label=label)
-        if cl[condition].max() > 0:
+        plt.plot(l[condition], (cl[condition]*l[condition]*(l[condition]+1))/2.0/np.pi, label=label)
+        if cl[condition].max() > 0 and logPlot:
             plt.yscale('log')
         plt.xlabel(r'$l$')
-        plt.ylabel(r'$l(l+1)C_l$')
+        plt.ylabel(r'$l(l+1)C_l/(2\pi)$')
         if addLegend:
-            plt.legend(loc='upper right', fancybox=True, prop={'size':'smaller'})
+            plt.legend(loc=legendloc, fancybox=True, prop={'size':'smaller'})
         if title!=None:
             plt.title(title)
         # Return figure number (so we can reuse/add onto/save this figure if desired).

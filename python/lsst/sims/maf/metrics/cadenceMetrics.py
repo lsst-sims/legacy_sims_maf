@@ -221,8 +221,8 @@ class UniformityMetric(BaseMetric):
 
 class QuickRevisitMetric(BaseMetric):
     """
-    Some kind of metric to investigate how dithering effects short-timescale measurements.
-    (used in SPIE paper; consider depreciating this at some point).
+    Count how many nights have more than nVisitsInNight visits.
+    (used in SPIE paper; but consider depreciating this at some point).
     """
     def __init__(self, nightCol='night', nVisitsInNight=6, **kwargs):
         self.nightCol = nightCol
@@ -232,12 +232,10 @@ class QuickRevisitMetric(BaseMetric):
         if 'xlabel' not in self.plotDict:
             self.plotDict['xlabel'] = xlabel
 
-    def run(self, dataSlice, slicePoint):
+    def run(self, dataSlice, slicePoint=None):
         """Count how many nights the dataSlice has >= nVisitsInNight."""
         nightbins = np.arange(dataSlice[self.nightCol].min(), dataSlice[self.nightCol].max()+0.5, 1)
         counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
         condition = (counts >= self.nVisitsInNight)
         return len(counts[condition])
-
-
 

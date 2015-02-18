@@ -168,7 +168,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
             # Set some per-proposal information.
             if prop == 'All Props':
                 subgroup = 'All Props'
-                propCaption = ' for all proposals'
+                propCaption = ' for all proposals.'
                 metadata = '%s band, all props' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s"' %(f)]
                 nvisitsMin = nVisits_plotRange['all'][f][0]
@@ -176,7 +176,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                 mag_zp = mag_zpoints[f]
             elif prop == 'WFD':
                 subgroup = 'WFD'
-                propCaption = ' for WFD only'
+                propCaption = ' for all WFD proposals.'
                 metadata = '%s band, WFD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
                 nvisitsMin = nVisits_plotRange['all'][f][0]
@@ -184,7 +184,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                 mag_zp = mag_zpoints[f]
             elif prop == 'DD':
                 subgroup = 'DD'
-                propCaption = ' for (all) DD only'
+                propCaption = ' for all DD proposals.'
                 metadata = '%s band, DD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, ddWhere)]
                 nvisitsMin = nVisits_plotRange['DD'][f][0]
@@ -204,10 +204,24 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                               displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                            'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                         'binsize':5, 'legendloc':'upper right'}))
+                                                         'binsize':5, 'xMin':nvisitsMin, 'xMax':nvisitsMax,
+                                                         'legendloc':'upper right'}))
             histNum += 1
-            # Count the number of visits as a ratio against a benchmark value.
-            metricList.append(configureMetric('CountRatioMetric',
+            # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
+            metricList.append(configureMetric('Coaddm5Metric',
+                                              plotDict={'zp':mag_zp, 'xMin':-0.6, 'xMax':0.6,
+                                                        'units':'coadded m5 - %.1f' %mag_zp},
+                                            summaryStats=allStats,
+                                            histMerge={'histNum':histNum, 'legendloc':'upper right',
+                                                        'color':colors[f], 'label':'%s' %f, 'binsize':.02},
+                                            displayDict={'group':coaddeddepthgroup, 'subgroup':subgroup,
+                                                        'order':filtorder[f],
+                                                        'caption':
+                                                        'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, mag_zp, propCaption)}))
+            histNum += 1
+            # Count the number of visits as a ratio against a benchmark value, for 'all' and 'WFD'.
+            if prop != 'DD':
+                metricList.append(configureMetric('CountRatioMetric',
                                               kwargs={'col':'expMJD', 'normVal':nvisitBench[f],
                                                       'metricName':'NVisitsRatio'},
                                               plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
@@ -221,99 +235,86 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                                                          'xlabel':'Number of visits / benchmark',
                                                          'binsize':.05, 'xMin':0.475, 'xMax':1.525,
                                                          'legendloc':'upper right'}))
-            histNum += 1
-            # Calculate the median individual visit five sigma limiting magnitude.
-            metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
-                                summaryStats=standardStats,
-                                displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                            'caption':'Median single visit depth in filter %s, %s.' %(f, propCaption)}))
-            # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
-            metricList.append(configureMetric('Coaddm5Metric',
-                                              plotDict={'zp':mag_zp,
-                                                        'xMin':-0.6, 'xMax':0.6,
-                                                        'units':'coadded m5 - %.1f' %mag_zp},
-                                                summaryStats=allStats,
-                                                histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                                        'color':colors[f], 'label':'%s' %f, 'binsize':.02},
-                                                displayDict={'group':coaddeddepthgroup, 'subgroup':subgroup,
-                                                             'order':filtorder[f],
-                                                            'caption':
-                                                'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. Fainter limiting magnitudes are more positive numbers.'
-                                                %(f, benchmark, mag_zp, propCaption)}))
-            histNum += 1
-            # Calculate the median individual visit sky brightness (normalized to a benchmark).
-            metricList.append(configureMetric('MedianMetric',
-                                              kwargs={'col':'filtSkyBrightness'},
-                                            plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f]),
-                                                      'xMin':-2, 'xMax':1},
-                                            displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                            'caption':
-                                            'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s. Fainter sky brightness values are more positive numbers.'
-                                            %(f, sky_zpoints[f], propCaption)}))
-            # Calculate the median delivered seeing.
-            metricList.append(configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
-                                    plotDict={'normVal':seeing_norm[f],
-                                                'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])},
-                                    displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
+                histNum += 1
+                # Calculate the median individual visit five sigma limiting magnitude.
+                metricList.append(configureMetric('MedianMetric', kwargs={'col':'fiveSigmaDepth'},
+                                    summaryStats=standardStats,
+                                    displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                                'caption':'Median single visit depth in filter %s, %s.' %(f, propCaption)}))
+                # Calculate the median individual visit sky brightness (normalized to a benchmark).
+                metricList.append(configureMetric('MedianMetric',
+                                                kwargs={'col':'filtSkyBrightness'},
+                                                plotDict={'zp':sky_zpoints[f], 'units':'Skybrightness - %.2f' %(sky_zpoints[f]),
+                                                        'xMin':-2, 'xMax':1},
+                                                displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                 'caption':
-                                                'Median Seeing in filter %s divided by expected value (%.2f), %s.'
-                                                %(f, seeing_norm[f], propCaption)}))
-            # Calculate the median airmass.
-            metricList.append(configureMetric('MedianMetric',
-                                              kwargs={'col':'airmass'},
-                                              plotDict={'units':'X'},
-                                              displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                        'caption':'Median airmass in filter %s, %s.' %(f, propCaption)}))
-            # Calculate the median normalized airmass.
-            metricList.append(configureMetric('MedianMetric',
-                                              kwargs={'col':'normairmass'},
-                                              plotDict={'units':'X'},
-                                              displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                        'caption':'Median normalized airmass in filter %s, %s.'
-                                                        %(f, propCaption)}))
-            # Calculate the maximum airmass.
-            metricList.append(configureMetric('MaxMetric',
-                                              kwargs={'col':'airmass'},
-                                              plotDict={'units':'X'},
-                                              displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                            'caption':'Max airmass in filter %s, %s.' %(f, propCaption)}))
+                                                'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s. Fainter sky brightness values are more positive numbers.'
+                                                %(f, sky_zpoints[f], propCaption)}))
+                # Calculate the median delivered seeing.
+                metricList.append(configureMetric('MedianMetric', kwargs={'col':'finSeeing'},
+                                        plotDict={'normVal':seeing_norm[f],
+                                                    'units':'Median Seeing/(Expected seeing %.2f)'%(seeing_norm[f])},
+                                        displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                                    'caption':
+                                                    'Median Seeing in filter %s divided by expected value (%.2f), %s.'
+                                                    %(f, seeing_norm[f], propCaption)}))
+                # Calculate the median airmass.
+                metricList.append(configureMetric('MedianMetric',
+                                                kwargs={'col':'airmass'},
+                                                plotDict={'units':'X'},
+                                                displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                                            'caption':'Median airmass in filter %s, %s.' %(f, propCaption)}))
+                # Calculate the median normalized airmass.
+                metricList.append(configureMetric('MedianMetric',
+                                                kwargs={'col':'normairmass'},
+                                                plotDict={'units':'X'},
+                                                displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                                            'caption':'Median normalized airmass in filter %s, %s.'
+                                                            %(f, propCaption)}))
+                # Calculate the maximum airmass.
+                metricList.append(configureMetric('MaxMetric',
+                                                kwargs={'col':'airmass'},
+                                                plotDict={'units':'X'},
+                                                displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                                'caption':'Max airmass in filter %s, %s.' %(f, propCaption)}))
             metricDict = makeDict(*metricList)
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
                                      constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
-            # Tack on an extra copy of Nvisits with a cumulative histogram
-            metric = configureMetric('CountMetric',
-                                              kwargs={'col':'expMJD', 'metricName':'Nvisits cumulative'},
+            # Tack on an extra copy of Nvisits with a cumulative histogram for WFD.
+            if prop == 'WFD':
+                metric = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Nvisits cumulative'},
                                               plotDict={'units':'Number of Visits',
-                                                        'xMin':nVisits_plotRange['all'][f][0],
-                                                        'xMax':nVisits_plotRange['all'][f][1], 'binsize':5,
+                                                        'xMin':0,
+                                                        'xMax':nvisitsMax, 'binsize':5,
                                                         'cumulative':-1},
                                               displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                           'caption':'Number of visits in filter %s, %s.' %(f, propCaption)},
+                                                           'caption':'Cumulative number of visits in filter %s, %s.'
+                                                            %(f, propCaption)},
                                               histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                         'binsize':5, 'legendloc':'upper right',
+                                                         'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
                                                          'cumulative':-1})
-            histNum += 1
-            slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*[metric]),
-                                     constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
-            slicerList.append(slicer)
+                histNum += 1
+                slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*[metric]),
+                                        constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
+                slicerList.append(slicer)
 
-    # Count the number of visits in all filters, WFD only
+    # Count the number of visits in all filters together, WFD only.
     metricList =[]
     # Make the reverse cumulative histogram
     metricList.append(configureMetric('CountMetric',
                                       kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, cumulative'},
                                       plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1,
-                                                'xMin':500, 'xMax':2000},
-                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD',
+                                                'xMin':500, 'xMax':1500},
+                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
                                                    'caption':'Number of visits all filters, WFD only'}))
     # Regular Histogram
     metricList.append(configureMetric('CountMetric',
                                       kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters'},
                                       plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False,
-                                                'xMin':500, 'xMax':2000},
+                                                'xMin':500, 'xMax':1500},
                                       summaryStats=allStats,
-                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD',
+                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
                                                    'caption':'Number of visits all filters, WFD only'}))
     slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*metricList),
                                      constraints=[wfdWhere],
@@ -321,21 +322,17 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     slicerList.append(slicer)
 
     # Count the number of visits per filter for each proposal, over the sky.
-    # Different from above, as uses opsim field slicer.
+    # Different from above, as uses opsim field slicer. Also, the min/max limits for these are allowed
+    #  to float, so that we can really see what's going on in each proposal.
     propOrder = 0
     for propid in propids:
         for f in filters:
-            xMax = nVisits_plotRange['all'][f][1]
-            xMin = nVisits_plotRange['all'][f][0]
-            if propid in DDpropid:
-                xMax = nVisits_plotRange['DD'][f][1]
-                xMin = nVisits_plotRange['DD'][f][0]
             # Count the number of visits.
             m1 = configureMetric('CountMetric',
                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
                                 summaryStats=standardStats,
                                 plotDict={'units':'Number of Visits', 'plotMask':True,
-                                          'binsize':5, 'xMin':xMin, 'xMax':xMax},
+                                          'binsize':5},
                                 displayDict={'group':nvisitOpsimgroup, 'subgroup':'%s'%(propids[propid]),
                                              'order':filtorder[f] + propOrder,
                                              'caption':'Number of visits per opsim field in %s filter, for %s.'
@@ -776,7 +773,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
                          summaryStats={'IdentityMetric':{'metricName':'Count'}},
                          displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':0})
     # Count total number of nights
-    m2 = configureMetric('UniqueMetric', kwargs={'col':'night', 'metricName':'Nights on sky'},
+    m2 = configureMetric('CountUniqueMetric', kwargs={'col':'night', 'metricName':'Nights on sky'},
                                      displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
     m3 = configureMetric('FullRangeMetric', kwargs={'col':'night', 'metricName':'Nights in survey'},
                          displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
