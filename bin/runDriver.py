@@ -20,6 +20,8 @@ if __name__=="__main__":
                                      'and feed them to the driver.',
                                      epilog= '%s' %(versionInfo))
     parser.add_argument("configFile", type=str, help="Name of the configuration file.")
+    parser.add_argument("--plotOnly", dest='plotOnly', action='store_true', help="Restore data and regenerate plots")
+    parser.set_defaults(plotOnly=False)
 
     args = parser.parse_args()
 
@@ -29,6 +31,8 @@ if __name__=="__main__":
     print 'Reading config data from %s' %(args.configFile)
     config.load(args.configFile)
     print 'Finished loading config file: %s' %(args.configFile)
+    if args.plotOnly:
+        config.plotOnly = True
 
     # Run MAF driver.
     try:

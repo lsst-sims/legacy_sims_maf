@@ -79,6 +79,7 @@ class MafConfig(pexConfig.Config):
     outputDir = pexConfig.Field("Location to write MAF output", str, '')
     figformat = pexConfig.Field("Figure types (png, pdf are popular)", str, 'pdf')
     dpi = pexConfig.Field("Figure dpi", int, 600)
+    plotOnly = pexConfig.Field("Restore previous results replot", bool, False)
     opsimName = pexConfig.Field("Name to tag output files with", str, 'noName')
     slicers = pexConfig.ConfigDictField(doc="dict of index: slicer config", keytype=int,
                                         itemtype=SlicerConfig, default={})

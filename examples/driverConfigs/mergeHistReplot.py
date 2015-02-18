@@ -6,7 +6,7 @@ root.outputDir = './MergeHist'
 root.dbAddress = {'dbAddress':'sqlite:///ops2_1065_sqlite.db'}
 root.opsimName = 'ops2_1065'
 slicerList=[]
-root.plotOnly = False
+root.plotOnly = True
 
 root.figformat = 'png'
 filters = ['u','g','r','i','z','y']
@@ -16,7 +16,7 @@ slicerName='HealpixSlicer'
 slicerkwargs={'nside':32}
 
 for f in filters:
-    m4 = configureMetric('Coaddm5Metric',
+    m4 = configureMetric('Coaddm5Metric', plotDict={'xMin':20., 'xMax':30.},
                          summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
                          histMerge={'histNum':6, 'binsize':0.2, 'legendloc':'upper right',
                                     'color':colors[f], 'label':'%s'%f})

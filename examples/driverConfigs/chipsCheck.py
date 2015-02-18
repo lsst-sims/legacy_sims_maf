@@ -21,7 +21,7 @@ m1 = configureMetric('CountMetric', kwargs={'col':'expMJD'})
 constraints = ['obsHistID = %i '%(x) for x in obsIDs ]
 slicer = configureSlicer('HealpixSlicer',
                        kwargs={'nside':nside, 'spatialkey1':'fieldRA', 'spatialkey2':'fieldDec',
-                               'useCamera':True},
+                               'useCamera':True, 'radius':2.0},
                        metricDict=makeDict(*[m1]),
                          constraints=constraints)
 slicerList.append(slicer)
