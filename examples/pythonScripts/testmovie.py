@@ -12,26 +12,30 @@ from lsst.sims.maf.stackers import FilterColorStacker
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import opsimMovie as mm
 
-dbAddress = 'sqlite:///lucy_1002_sqlite.db'
+# Set database information.
+opsimName = 'lucy_1002'
+dbAddress = 'sqlite:///' + opsimName + '_sqlite.db'
+
+# Choose night to look at.
 night = 0
 sqlconstraint = 'night<=%d' %(night)
-opsimName = 'lucy_1002'
 metadata = 'night %d' %(night)
 
-oo = db.OpsimDatabase(dbAddress)
 # Get observations from the particular night, plus previous.
+oo = db.OpsimDatabase(dbAddress)
 simdata, fields = mm.getData(oo, sqlconstraint)
 condition = np.where(simdata['night'] == night)[0]
+
+# Set bins for movieslicer.
 bins = simdata['expMJD'][condition]
 bins[0] = simdata['expMJD'].min()
-
 movieslicer = mm.setupMovieSlicer(simdata, bins)
-sliceformat = '%04d'
+sliceformat = '%s0%dd' %('%', int(np.log10(len(movieslicer)))+1)
 
-
+# Choose frame to plot. (len(movieslicer)-1 will be the last frame).
 i = len(movieslicer)-1
-i = 2
 
+# Recreate the work done in opsimMovie.py runSlices method (but for a single slice/frame).
 ms = movieslicer[i]
 slicenumber = sliceformat %(i)
 time = ms['slicePoint']['binRight']
