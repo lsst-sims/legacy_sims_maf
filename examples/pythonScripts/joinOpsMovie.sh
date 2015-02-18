@@ -29,4 +29,3 @@ foreach night ( $nights )
  end
 
 echo "ffmpeg -f concat -i "$movieList" -c copy "$opsRun"_n"$nightStart"_n"$nightEnd".mp4"
-ffmpeg -f concat -i "$movieList" -c copy "$opsRun"_n"$nightStart"_n"$nightEnd".mp4
