@@ -84,7 +84,7 @@ class MovieSlicer(BaseSlicer):
         if self.binsize is not None:
             if self.bins is not None:
                 warnings.warn('Both binsize and bins have been set; Using binsize %f only.' %(self.binsize))
-            self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
+            self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, float(self.binsize), 'float')
         # Using bins value.
         else:
             # Bins was a sequence (np array or list)
@@ -97,7 +97,6 @@ class MovieSlicer(BaseSlicer):
                 nbins = int(self.bins)
                 self.binsize = (self.binMax - self.binMin) / float(nbins)
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
-                self.bins[-1] = self.binMax
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nslice = len(self.bins) - 1
         # Set slicePoint metadata.
