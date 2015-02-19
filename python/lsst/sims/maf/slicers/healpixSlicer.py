@@ -135,7 +135,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         im = ax.get_images()[0]
         # Add label.
         if label is not None:
-            plt.figtext(0.8, 0.9, '%s' %label)
+            plt.figtext(0.8, 0.8, '%s' %label)
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
