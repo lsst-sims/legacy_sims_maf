@@ -1,178 +1,284 @@
 import matplotlib
 matplotlib.use("Agg")
-import os
-import lsst.sims.maf.db as db
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.sliceMetrics as sliceMetrics
+import numpy as np
+import numpy.ma as ma
+import matplotlib.pyplot as plt
 import warnings
-import fnmatch
-import shutil
 import unittest
+from lsst.sims.maf.slicers.movieSlicer import MovieSlicer
+from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 
-def setupMovieSlicer(simdata, binsize = 365.25, cumulative=True):
-    ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize, cumulative=cumulative)
-    ms.setupSlicer(simdata)
-    return ms
-
-def setupHealpixSlicer(simdatasubset, racol, deccol, nside):
-    hs = slicers.HealpixSlicer(nside=nside, spatialkey1=racol, spatialkey2=deccol, plotFuncs='plotSkyMap')
-    hs.setupSlicer(simdatasubset)
-    return hs
-
-def setupMetrics():
-    # Set up metrics.
-    metricList = []
-    metricList.append(metrics.CountMetric('expMJD', metricName='Number of Visits',
-                                          plotDict={'logScale':False,
-                                                      'colorMin':0, 'colorMax':300,
-                                                      'cbarFormat': '%d'}))
-    return metricList
-
-def run(opsimName, metadata, simdata, metricList, largs, ffmpeg = True):
-    """Do the work to run the movie slicer, and at each step, setup the healpix slicer and run the metrics,
-    making the plots."""
-    sliceformat = '%04d'
-    #calculation of metrics
-    if largs.skipComp:
-        # Set up movie slicer
-        movieslicer = setupMovieSlicer(simdata, binsize = largs.movieStepsize, cumulative=largs.cumulative)
-        start_date = movieslicer[0]['slicePoint']['binLeft']
-        # Run through the movie slicer slicePoints:
-        for i, movieslice in enumerate(movieslicer):
-            timeInterval = '%.2f to %.2f' %(movieslice['slicePoint']['binLeft']-
-                                            start_date, movieslice['slicePoint']['binRight']-start_date)
-            slicenumber = '%.4d' %(i)
-            #adding day number to title of plot
-            if largs.cumulative:
-                for metric in metricList:
-                    metric.plotDict['label'] = 'day: ' + str(i*largs.movieStepsize) + '\n' + largs.sqlConstraint
-            else:
-                for metric in metricList:
-                    metric.plotDict['label'] = 'time interval: ' + '\n' + timeInterval + '\n'+ '\n' + largs.sqlConstraint
-
-            # Identify the subset of simdata in the movieslicer 'data slice'
-            simdatasubset = simdata[movieslice['idxs']]
-            # Set up healpix slicer on subset of simdata provided by movieslicer
-            hs = setupHealpixSlicer(simdatasubset, 'ditheredRA', 'ditheredDec', largs.nside)
-            # Set up sliceMetric to handle healpix slicer + metrics calculation + plotting
-            sm = sliceMetrics.RunSliceMetric(outDir=largs.outDir, useResultsDb=False,
-                                            figformat='png', dpi=72, thumbnail=False)
-            sm.setSlicer(hs)
-            sm.setMetrics(metricList)
-            # Calculate metric data values for simdatasubset
-            sm.runSlices(simdatasubset, simDataName=opsimName)
-            # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
-            sm.plotAll(outfileSuffix=slicenumber, closefig=True)
-            # Write the data -- uncomment if you want to do this.
-            # sm.writeAll(outfileSuffix=slicenumber)
-
-    else:
-        #create movieslicer to call plotMovie
-        movieslicer = slicers.MovieSlicer()
-
-    outfileroots = []
-    for metric in metricList:
-        #Create plot names
-        Mname = metric.name.replace('  ', ' ').replace(' ', '_').replace('.', '_').replace(',', '')
-        dbName = largs.opsimDb.strip('_sqlite.db')
-        outfileroots.append(dbName + '_' + Mname + '_' + 'HEAL')
-
-    #if a movieLength was specified
-    if largs.movieLength != 0.0:
-        if largs.skipComp:
-            largs.ips = len(movieslicer)/largs.movieLength
-        else:
-            #figure out how many images there are.
-            n_images = len(fnmatch.filter(os.listdir(largs.outDir), outfileroots[0] + '*SkyMap.png'))
-            print outfileroots[0]
-            if n_images == 0:
-                warnings.warn('Targeted files did not match directory contents. Make sure the parameters of this run, match the files. (for instance metrics)')
-            #calculate images/second rate
-            largs.ips = n_images/largs.movieLength
-        print "for a movie length of " + str(largs.movieLength) + " IPS set to: ", largs.ips
-
-    if largs.fps == 0.0:
-            warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
-            if largs.ips <= 30.0:
-                largs.fps = largs.ips
-            else:
-                largs.fps = 30.0
-    # Create the movie for every metric that was run
-    if ffmpeg:
-        for outroot in outfileroots:
-            out = outroot.split('/')[-1]
-            movieslicer.plotMovie(out, sliceformat, plotType='SkyMap', figformat='png',
-                                  outDir=largs.outDir, ips=largs.ips, fps=largs.fps)
+def makeTimeSteps(size=10, min=0., max=1.):
+    """Generate a simple array of numbers, evenly arranged between min/max."""
+    datavalues = np.arange(0, size, dtype='float')
+    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
+    datavalues += min
+    datavalues = np.array(zip(datavalues), dtype=[('time', 'float')])
+    return datavalues
 
 
-class TestMovieSlicer(unittest.TestCase):
-    """Run the movie slicer.  Check that it outputs mp4 and gif files. """
-
-    class setArgs(object):
-        def __init__(self):
-            self.filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
-            self.opsimDb = 'sqlite:///' + self.filepath + 'opsimblitz1_1133_sqlite.db'
-            self.skipComp = False
-            self.movieStepsize = 5
-            self.cumulative=True
-            self.sqlConstraint = 'night < 10'
-            self.nside = 16
-            self.outDir = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/movieTest')
-            self.cumulative = True
-            self.ips = 10.
-            self.fps = 0.0
-            self.skipComp = True
-            self.movieLength = 0.0
-
+class TestMovieSlicerSetup(unittest.TestCase):
     def setUp(self):
-        self.args = self.setArgs()
-        os.mkdir(self.args.outDir)
-        # Assume buildbot doesn't have ffmpeg.
-        ffPath = None #distutils.spawn.find_executable('ffmpeg')
-        if ffPath is None:
-            self.ffmpeg = False
-        else:
-            self.ffmpeg = True
-
-    def testRun(self):
-        oo = db.OpsimDatabase(self.args.opsimDb)
-        opsimName = oo.fetchOpsimRunName()
-        # Set up metrics.
-        metricList = setupMetrics()
-        # Find columns that are required by metrics.
-        colnames = list(metricList[0].colRegistry.colSet)
-        # Add columns needed for healpix slicer.
-        fieldcols = ['fieldRA', 'fieldDec', 'ditheredRA', 'ditheredDec']
-        colnames += fieldcols
-        # Add column needed for movie slicer.
-        moviecol = ['expMJD',]
-        colnames += moviecol
-        # Remove duplicates.
-        colnames = list(set(colnames))
-        # Get data from database.
-        simdata = oo.fetchMetricData(colnames, self.args.sqlConstraint)
-        # Run the movie slicer (and at each step, healpix slicer and calculate metrics).
-        comment = self.args.sqlConstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
-        ##for goodness sake, why not just pass it args itself?
-        gm = run(opsimName, comment, simdata, metricList, self.args, ffmpeg = self.ffmpeg)
-        mapsOut = ['opsimblitz1_1133_Number_of_Visits_HEAL_0000_SkyMap.png',
-                   'opsimblitz1_1133_Number_of_Visits_HEAL_0001_SkyMap.png']
-        for filename in mapsOut:
-            assert(os.path.isfile(os.path.join(self.args.outDir,filename)))
-
-        if self.ffmpeg:
-            moviesOut = ['opsimblitz1_1133_Number_of_Visits_HEAL_SkyMap_10.0_10.0.gif',
-                         'opsimblitz1_1133_Number_of_Visits_HEAL_SkyMap_10.0_10.0.mp4']
-            for filename in moviesOut:
-                assert(os.path.isfile(os.path.join(self.args.outDir,filename)))
-
+        self.testslicer = MovieSlicer(sliceColName='time')
 
     def tearDown(self):
-        direc = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/movieTest')
-        if os.path.isdir(direc):
-            shutil.rmtree(direc)
+        del self.testslicer
+        self.testslicer = None
 
+    def testSlicertype(self):
+        """Test instantiation of slicer sets slicer type as expected."""
+        self.assertEqual(self.testslicer.slicerName, self.testslicer.__class__.__name__)
+        self.assertEqual(self.testslicer.slicerName, 'MovieSlicer')
+
+    def testSetupSlicerBins(self):
+        """Test setting up slicer using defined bins."""
+        dvmin = 0
+        dvmax = 1
+        nvalues = 1000
+        bins = np.arange(dvmin, dvmax, 0.1)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        # Used right bins?
+        self.testslicer = MovieSlicer(sliceColName='time', bins=bins)
+        self.testslicer.setupSlicer(dv)
+        np.testing.assert_equal(self.testslicer.bins, bins)
+        self.assertEqual(self.testslicer.nslice, len(bins)-1)
+
+    def testSetupSlicerNbins(self):
+        """Test setting up slicer using bins as integer."""
+        for nvalues in (100, 1000, 10000):
+            for nbins in (5, 25, 75):
+                dvmin = 0
+                dvmax = 1
+                dv = makeDataValues(nvalues, dvmin, dvmax, random=False)
+                # Right number of bins?
+                # expect two more 'bins' to accomodate padding on left/right
+                self.testslicer = MovieSlicer(sliceColName='time', bins=nbins)
+                self.testslicer.setupSlicer(dv)
+                self.assertEqual(self.testslicer.nslice, nbins)
+                # Bins of the right size? 
+                bindiff = np.diff(self.testslicer.bins)
+                expectedbindiff = (dvmax - dvmin) / float(nbins)
+                np.testing.assert_allclose(bindiff, expectedbindiff)
+
+    def testSetupSlicerNbinsZeros(self):
+        """Test what happens if give slicer test data that is all single-value."""
+        dv = np.zeros(100, float)
+        dv = np.array(zip(dv), dtype=[('time', 'float')])
+        nbins = 10
+        self.testslicer = MovieSlicer(sliceColName='time', bins=nbins)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.testslicer.setupSlicer(dv)
+            self.assertTrue("creasing binMax" in str(w[-1].message))
+        self.assertEqual(self.testslicer.nslice, nbins)
+
+    def testSetupSlicerEquivalent(self):
+        """Test setting up slicer using defined bins and nbins is equal where expected."""
+        dvmin = 0
+        dvmax = 1
+        for nbins in (20, 50, 100, 105):
+            bins = makeDataValues(nbins+1, dvmin, dvmax, random=False)
+            bins = bins['time']
+            for nvalues in (100, 1000, 10000):
+                dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+                self.testslicer = MovieSlicer(sliceColName='time', bins=bins)
+                self.testslicer.setupSlicer(dv)
+                np.testing.assert_allclose(self.testslicer.bins, bins)
+
+    def testSetupSlicerLimits(self):
+        """Test setting up slicer using binMin/Max."""
+        binMin = 0
+        binMax = 1
+        nbins = 10
+        dvmin = -.5
+        dvmax = 1.5
+        dv = makeDataValues(1000, dvmin, dvmax, random=True)
+        self.testslicer = MovieSlicer(sliceColName='time',
+                                     binMin=binMin, binMax=binMax, bins=nbins)
+        self.testslicer.setupSlicer(dv)
+        self.assertAlmostEqual(self.testslicer.bins.min(), binMin)
+        self.assertAlmostEqual(self.testslicer.bins.max(), binMax)
+
+    def testSetupSlicerBinsize(self):
+        """Test setting up slicer using binsize."""
+        dvmin = 0
+        dvmax = 1
+        dv = makeDataValues(1000, dvmin, dvmax, random=True)
+        # Test basic use.
+        binsize=0.5
+        self.testslicer = MovieSlicer(sliceColName='time', binsize=binsize)
+        self.testslicer.setupSlicer(dv)
+        # When binsize is specified, oneDslicer adds an extra bin to first/last spots.
+        self.assertEqual(self.testslicer.nslice, (dvmax-dvmin)/binsize+2)
+        # Test that warning works.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.testslicer = MovieSlicer(sliceColName='time',bins=200,binsize=binsize)
+            self.testslicer.setupSlicer(dv)
+            # Verify some things
+            self.assertTrue("binsize" in str(w[-1].message))
+
+
+    def testSetupSlicerFreedman(self):
+        """Test that setting up the slicer using bins=None works."""
+        dvmin = 0
+        dvmax = 1
+        dv = makeDataValues(1000, dvmin, dvmax, random=True)
+        self.testslicer = MovieSlicer(sliceColName='time', bins=None)
+        self.testslicer.setupSlicer(dv)
+        # How many bins do you expect from optimal binsize?
+        from lsst.sims.maf.utils import optimalBins
+        bins = optimalBins(dv['time'])
+        np.testing.assert_equal(self.testslicer.nslice, bins)
+
+
+class TestMovieSlicerIteration(unittest.TestCase):
+    def setUp(self):
+        self.testslicer = MovieSlicer(sliceColName='time')
+        dvmin = 0
+        dvmax = 1
+        nvalues = 1000
+        self.bins = np.arange(dvmin, dvmax, 0.01)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        self.testslicer = MovieSlicer(sliceColName='time',bins=self.bins)
+        self.testslicer.setupSlicer(dv)
+
+    def tearDown(self):
+        del self.testslicer
+        self.testslicer = None
+
+    def testIteration(self):
+        """Test iteration."""
+        for i,(s, b) in enumerate(zip(self.testslicer, self.bins)):
+            self.assertEqual(s['slicePoint']['sid'], i)
+            self.assertEqual(s['slicePoint']['binLeft'], b)
+
+    def testGetItem(self):
+        """Test that can return an individual indexed values of the slicer."""
+        for i in ([0, 10, 20]):
+            self.assertEqual(self.testslicer[i]['slicePoint']['sid'], i)
+            self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], self.bins[i])
+
+class TestMovieSlicerEqual(unittest.TestCase):
+    def setUp(self):
+        self.testslicer = MovieSlicer(sliceColName='time')
+
+    def tearDown(self):
+        del self.testslicer
+        self.testslicer = None
+
+    def testEquivalence(self):
+        """Test equals method."""
+        # Note that two movieSlicers slicers will be considered equal if they are both the same kind of
+        # slicer AND have the same bins.
+        # Set up self..
+        dvmin = 0
+        dvmax = 1
+        nvalues = 1000
+        bins = np.arange(dvmin, dvmax, 0.01)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        self.testslicer = MovieSlicer(sliceColName='time', bins=bins)
+        self.testslicer.setupSlicer(dv)
+        # Set up another slicer to match (same bins, although not the same data).
+        dv2 = makeDataValues(nvalues+100, dvmin, dvmax, random=True)
+        testslicer2 = MovieSlicer(sliceColName='time', bins=bins)
+        testslicer2.setupSlicer(dv2)
+        self.assertEqual(self.testslicer, testslicer2)
+        # Set up another slicer that should not match (different bins)
+        dv2 = makeDataValues(nvalues, dvmin+1, dvmax+1, random=True)
+        testslicer2 = MovieSlicer(sliceColName='time', bins=len(bins))
+        testslicer2.setupSlicer(dv2)
+        self.assertNotEqual(self.testslicer, testslicer2)
+        # Set up a different kind of slicer that should not match.
+        dv2 = makeDataValues(100, 0, 1, random=True)
+        testslicer2 = UniSlicer()
+        testslicer2.setupSlicer(dv2)
+        self.assertNotEqual(self.testslicer, testslicer2)
+
+
+class TestMovieSlicerSlicing(unittest.TestCase):
+    def setUp(self):
+        self.testslicer = MovieSlicer(sliceColName='time')
+
+    def tearDown(self):
+        del self.testslicer
+        self.testslicer = None
+
+    def testSlicing(self):
+        """Test slicing."""
+        dvmin = 0
+        dvmax = 1
+        nbins = 100
+        binsize = (dvmax - dvmin) / (float(nbins))
+        # Test that testbinner raises appropriate error before it's set up (first time)
+        self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
+        for nvalues in (1000, 10000, 100000):
+            dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+            self.testslicer = MovieSlicer(sliceColName='time', bins=nbins)
+            self.testslicer.setupSlicer(dv)
+            sum = 0
+            for i, s in enumerate(self.testslicer):
+                idxs = s['idxs']
+                dataslice = dv['time'][idxs]
+                sum += len(idxs)
+                if len(dataslice)>0:
+                    self.assertTrue(len(dataslice), nvalues/float(nbins))
+                else:
+                    self.assertTrue(len(dataslice) > 0,
+                            'Data in test case expected to always be > 0 len after slicing')
+            self.assertTrue(sum, nvalues)
+
+class TestMovieSlicerHistogram(unittest.TestCase):
+    def setUp(self):
+        self.testslicer = MovieSlicer(sliceColName='time')
+
+    def tearDown(self):
+        del self.testslicer
+        self.testslicer = None
+
+    def testHistogram(self):
+        """Test that histogram values match those generated by numpy hist,
+        with the exception that MovieSlicer now adds a first/last bin to extend the xrange."""
+        dvmin = 0
+        dvmax = 1
+        for nbins in [10, 20, 30, 75, 100, 33]:
+            for nvalues in [1000, 10000, 250000]:
+                dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+                self.testslicer = MovieSlicer(sliceColName='time', bins=nbins)
+                self.testslicer.setupSlicer(dv)
+                metricval = np.zeros(len(self.testslicer), 'float')
+                for i, b in enumerate(self.testslicer):
+                    idxs = b['idxs']
+                    metricval[i] = len(idxs)
+                numpycounts, numpybins = np.histogram(dv['time'], bins=nbins)
+                np.testing.assert_almost_equal(numpybins, self.testslicer.bins,
+                                        err_msg='Numpy bins do not match testslicer bins')
+                np.testing.assert_almost_equal(numpycounts, metricval,
+                                        err_msg='Numpy histogram counts do not match testslicer counts')
+
+    def testPlotting(self):
+        """Test movie creation."""
+        dvmin = 0
+        dvmax = 1
+        nbins = 100
+        nvalues = 10000
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        testslicer = MovieSlicer(sliceColName='time', bins = nbins)
+        testslicer.setupSlicer(dv)
+        metricvals = ma.MaskedArray(data = np.zeros(len(testslicer), float),
+                                    mask = np.zeros(len(testslicer), bool),
+                                    fill_value = testslicer.badval)
+        for i, s in enumerate(testslicer):
+            idxs = s['idxs']
+            metricvals.data[i] = len(idxs)
+        testslicer.plotMovie()
+        #plt.show()
 
 if __name__ == "__main__":
+    suitelist = []
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestMovieSlicerSetup))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestMovieSlicerEqual))
+    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestMovieSlicerSlicing))
+    suite = unittest.TestSuite(suitelist)
+    #unittest.TextTestRunner(verbosity=2).run(suite)
     unittest.main()
