@@ -358,7 +358,7 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def _plot_mwZone(self, raCen=0, peakWidth=np.radians(10.), taperLength=np.radians(80.), ax=None):
         """
-        Plot lines to mark the milky way galactic exclusion zone.
+        Plot blue lines to mark the milky way galactic exclusion zone.
         """
         if ax is None:
             ax = plt.gca()
@@ -372,10 +372,10 @@ class BaseSpatialSlicer(BaseSlicer):
         # Convert to lon/lat and plot.
         ra, dec = AstrometryBase.galacticToEquatorial(galL, galB1)
         lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
-        ax.plot(lon, dec, 'r.', markersize=1.8, alpha=0.4)
+        ax.plot(lon, dec, 'b.', markersize=1.8, alpha=0.4)
         ra, dec = AstrometryBase.galacticToEquatorial(galL, galB2)
         lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
-        ax.plot(lon, dec, 'r.', markersize=1.8, alpha=0.4)
+        ax.plot(lon, dec, 'b.', markersize=1.8, alpha=0.4)
 
     def plotSkyMap(self, metricValueIn, title=None, xlabel=None, units=None,
                    projection='aitoff', radius=1.75/180.*np.pi,
