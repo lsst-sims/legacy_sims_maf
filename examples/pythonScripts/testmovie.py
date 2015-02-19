@@ -18,7 +18,7 @@ opsimName = 'lucy_1002'
 dbAddress = 'sqlite:///' + opsimName + '_sqlite.db'
 
 # Choose night to look at.
-night = 0
+night = 2
 sqlconstraint = 'night<=%d' %(night)
 metadata = 'night %d' %(night)
 
@@ -49,7 +49,7 @@ if tstep > 1:
 metric = mm.setupMetrics(opsimName, metadata, t0=time, tStep=tstep)
 # Convert expMJD days to time from noon on first day. (local midnight is at 0.16)
 times_from_start = ms['slicePoint']['binRight'] - (int(bins[0]) + 0.16 - 0.5)
-years = int(times_from_start % 365)
+years = int(times_from_start/365)
 days = times_from_start - years*365
 metric.plotDict['label'] = 'Year %d Day %.4f' %(years, days)
 sm = sliceMetrics.RunSliceMetric(outDir = '.', useResultsDb=False, figformat='png', dpi=72, thumbnail=False)
@@ -80,11 +80,12 @@ lon, lat = mm.addHorizon(lat_telescope=lat_tele, raCen=raCen)
 plt.plot(lon, lat, 'k.', alpha=0.3, markersize=1.8)
 plt.plot(0, lat_tele, 'k+')
 # Add some explanatory text.
-ecliptic = Line2D([], [], color='r', label="Ecliptic Plane")
-galaxy = Line2D([], [], color='b', label="Galactic Plane")
-horizon = Line2D([], [], color='k', alpha=0.3, label="Elevation limit")
+ecliptic = Line2D([], [], color='r', label="Ecliptic plane")
+galaxy = Line2D([], [], color='b', label="Galactic plane")
+horizon = Line2D([], [], color='k', alpha=0.3, label="20 deg elevation limit")
 moon = Line2D([], [], color='k', linestyle='', marker='o', markersize=8, alpha=alpha, label="Moon")
-plt.legend(handles=[horizon, galaxy, ecliptic, moon], loc=[0.05, -0.3], ncol=4, frameon=False,
+zenith = Line2D([], [], color='k', linestyle='', marker='+', markersize=5, label="Zenith")
+plt.legend(handles=[horizon, galaxy, ecliptic, moon, zenith], loc=[-0.1, -0.3], ncol=5, frameon=False,
            title = 'Aitoff plot showing HA/Dec of simulated survey pointings', numpoints=1, fontsize='small')
 plt.savefig(os.path.join('.', 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png')
 

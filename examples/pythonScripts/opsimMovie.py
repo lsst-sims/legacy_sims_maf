@@ -131,7 +131,8 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
                               t0=ms['slicePoint']['binRight'], tStep=tstep, verbose=verbose)
         # Add simple view of time to plot label.
         times_from_start = ms['slicePoint']['binRight'] - (int(bins[0]) + 0.16 - 0.5)
-        years = int(times_from_start % 365)
+        # Opsim years are 365 days (not 365.25)
+        years = int(times_from_start/365)
         days = times_from_start - years*365
         metric.plotDict['label'] = 'Year %d Day %.4f' %(years, days)
         # Identify the subset of simdata in the movieslicer 'data slice'
