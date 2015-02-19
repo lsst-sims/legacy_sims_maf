@@ -40,7 +40,8 @@ class MovieSlicer(BaseSlicer):
         # Check for ffmpeg.
         if not forceNoFfmpeg:
             try:
-                subprocess.check_call(['which', 'ffmpeg'])
+                fnull = open(os.devnull, 'w')
+                subprocess.check_call(['which', 'ffmpeg'], stdout=fnull)
             except CalledProcessError:
                 raise Exception('Could not find ffmpeg on the system, so will not be able to create movie.'
                                 ' Use forceNoFfmpeg=True to override this error and create individual images.')
@@ -96,7 +97,7 @@ class MovieSlicer(BaseSlicer):
                 nbins = int(self.bins)
                 self.binsize = (self.binMax - self.binMin) / float(nbins)
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
-
+                self.bins[-1] = self.binMax
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nslice = len(self.bins) - 1
         # Set slicePoint metadata.
