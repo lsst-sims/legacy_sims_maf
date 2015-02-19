@@ -51,11 +51,13 @@ class ColInfo(object):
             return self.defaultUnit
 
     def getDataSource(self, colName):
-        """Given a column name to be added to simdata, identify appropriate source.
+        """
+        Given a column name to be added to simdata, identify appropriate source.
 
-        For values from database, this is self.defaultDataSource ('db').
-        For values which are precalculated for a particular column, this should be a
-        method added to this class."""
+        For values which are calculated via a stacker, the returned value is the stacker class.
+        For values which do not have a recorded source or are known to be coming from the database, the result
+        is self.defaultDataSource.
+        """
         if colName in self.sourceDict:
             return self.sourceDict[colName]
         else:
