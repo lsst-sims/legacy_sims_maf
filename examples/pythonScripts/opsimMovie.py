@@ -15,6 +15,7 @@ import numpy as np
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
+from matplotlib.lines import Line2D
 import ephem
 
 import lsst.sims.maf.db as db
@@ -55,7 +56,7 @@ def setupMetrics(opsimName, metadata, t0, tStep, verbose=False):
     t = time.time()
     import matplotlib.cm as cm
     metric = metrics.VisitFiltersMetric(t0=t0, tStep=tStep)
-    metric.plotDict['title'] = "%s: %s" %(opsimName, metadata)
+    metric.plotDict['title'] = "Simulation %s: %s" %(opsimName, metadata)
     dt, t = dtime(t)
     if verbose:
         print 'Set up metrics %f s' %(dt)
@@ -128,8 +129,11 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
                 tstep = 40./24./60./60.
         metric = setupMetrics(opsimName, metadata,
                               t0=ms['slicePoint']['binRight'], tStep=tstep, verbose=verbose)
-        # Add time to plot label.
-        metric.plotDict['label'] = 'Time: %f' %(ms['slicePoint']['binRight'])
+        # Add simple view of time to plot label.
+        times_from_start = ms['slicePoint']['binRight'] - (int(bins[0]) + 0.16 - 0.5)
+        years = int(times_from_start % 365)
+        days = times_from_start - years*365 - 0.5 + 0.16
+        metric.plotDict['label'] = 'Year %d Day %.4f' %(years, days)
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
@@ -146,7 +150,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         fignum = ops.plotSkyMap(sm.metricValues[0], raCen=raCen, **sm.plotDicts[0])
         fig = plt.figure(fignum)
         ax = plt.gca()
-        # Add a legend.
+        # Add a legend for the filters.
         filterstacker = stackers.FilterColorStacker()
         for i, f in enumerate(['u', 'g', 'r', 'i', 'z', 'y']):
             plt.figtext(0.92, 0.55 - i*0.035, f, color=filterstacker.filter_rgb_map[f])
@@ -163,6 +167,14 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         lon, lat = addHorizon(lat_telescope=lat_tele, raCen=raCen)
         plt.plot(lon, lat, 'k.', alpha=0.3, markersize=1.8)
         plt.plot(0, lat_tele, 'k+')
+        # Add some explanatory text.
+        ecliptic = Line2D([], [], color='r', label="Ecliptic Plane")
+        galaxy = Line2D([], [], color='b', label="Galactic Plane")
+        horizon = Line2D([], [], color='k', alpha=0.3, label="Elevation limit")
+        moon = Line2D([], [], color='k', linestyle='', marker='o', markersize=8, alpha=alpha, label="Moon")
+        plt.legend(handles=[horizon, galaxy, ecliptic, moon], loc=[0.05, -0.3], ncol=4, frameon=False,
+            title = 'Aitoff plot showing HA/Dec of simulated survey pointings', numpoints=1, fontsize='small')
+        # Save figure.
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
         plt.close('all')
         dt, t = dtime(t)
@@ -176,7 +188,7 @@ def stitchMovie(args):
     outfileroot = 'movieFrame'
     # Identify filenames.
     plotfiles = fnmatch.filter(os.listdir(args.outDir), outfileroot + '*SkyMap.png')
-    slicenum = plotfiles[0].strip(outfileroot).strip('_SkyMap.png')
+    slicenum = plotfiles[0].replace(outfileroot, '').replace('_SkyMap.png', '').replace('_', '')
     sliceformat = '%s0%dd' %('%', len(slicenum))
     n_images = len(plotfiles)
     if n_images == 0:
