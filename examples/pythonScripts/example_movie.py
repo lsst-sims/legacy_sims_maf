@@ -64,17 +64,26 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
-def setupMetrics(verbose=False):
+def setupMetrics(args, verbose=False):
     # Define and set up metrics.
     # Note that it is useful to set up the plotDict so that the min/max range for the plot
     #  is the same for all movie frames.
     t = time.time()
     metricList = []
     #Simple metrics: coadded depth and number of visits
+    nvisitsMin = 0
+    nvisitsMax = 300
+    coaddMin = 25
+    coaddMax = 28
+    if not args.cumulative:
+        # Take a guess ... probably will need to be adjusted for your stepsize.
+        nvisitsMax = 15
+        coaddMin = 24.0
+        coaddMax = 26.5
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5Metric',
-                                            plotDict={'colorMin':25, 'colorMax':28}))
+                                            plotDict={'colorMin':coaddMin, 'colorMax':coaddMax}))
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits',
-                                            plotDict={'colorMin':0, 'colorMax':320,
+                                            plotDict={'colorMin':nvisitsMin, 'colorMax':nvisitsMax,
                                                         'cbarFormat': '%d', 'title':'Number of Visits '}))
     dt, t = dtime(t)
     if verbose:
@@ -199,18 +208,22 @@ def stitchMovie(metricList, args):
         n_images = len(plotfiles)
         if n_images == 0:
             raise Exception('No images found in %s with name like %s' %(args.outDir, outfileroot))
-        # Set up ffmpeg parameters.
-        # If a movieLength was specified... set args.ips/fps.
+        # Set up ffmpeg FPS/IPS parameters.
+        # If a movieLength was specified... set args.ips/fps according to the number of images.
         if args.movieLength != 0.0:
             #calculate images/second rate
-            args.ips = n_images/args.movieLength
-            print "for a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips
+            args.ips = n_images/float(args.movieLength)
+            print "For a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips
         if args.fps == 0.0:
             warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
             if args.ips <= 30.0:
                 args.fps = args.ips
             else:
                 args.fps = 30.0
+        if args.fps < args.ips:
+            warnings.warn('Will create movie, but FPS < IPS, so some frames may be skipped.')
+        if args.fps > 30.0:
+            warnings.warn('Will create movie, but FPS above 30 reduces performance and is undetectable to the human eye.')
         # Create the movie.
         movieslicer.plotMovie(outfileroot, sliceformat, plotType='SkyMap', figformat='png',
                                 outDir=args.outDir, ips=args.ips, fps=args.fps)
@@ -245,12 +258,10 @@ if __name__ == '__main__':
 
     # Flip the flag to the more intuitive value within the code. However, we anticipate most movies will be cumulative,
     #  so the flag is flipped in the argument list.
-    args.cumulative = ~args.binned
+    args.cumulative = not args.binned
 
     start_t = time.time()
-    # Cleaning up movie parameters.
-    if args.fps > 30.0:
-        warnings.warn('FPS above 30 reduces performance and is undetectable to the human eye. Try lowering the fps.')
+
     if not os.path.isdir(args.outDir):
         if args.skipComp:
             raise Exception('Skipping metric generation, expect to find plots in %s directory but it does not exist.'
@@ -259,7 +270,7 @@ if __name__ == '__main__':
             os.mkdir(args.outDir)
 
     # Set up metrics.
-    metricList = setupMetrics()
+    metricList = setupMetrics(args)
 
     if not args.skipComp:
         # Get db connection info, and connect to database.
