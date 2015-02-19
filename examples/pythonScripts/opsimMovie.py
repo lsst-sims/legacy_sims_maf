@@ -169,11 +169,12 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         plt.plot(lon, lat, 'k.', alpha=0.3, markersize=1.8)
         plt.plot(0, lat_tele, 'k+')
         # Add some explanatory text.
-        ecliptic = Line2D([], [], color='r', label="Ecliptic Plane")
-        galaxy = Line2D([], [], color='b', label="Galactic Plane")
-        horizon = Line2D([], [], color='k', alpha=0.3, label="Elevation limit")
+        ecliptic = Line2D([], [], color='r', label="Ecliptic plane")
+        galaxy = Line2D([], [], color='b', label="Galactic plane")
+        horizon = Line2D([], [], color='k', alpha=0.3, label="20 deg elevation limit")
         moon = Line2D([], [], color='k', linestyle='', marker='o', markersize=8, alpha=alpha, label="Moon")
-        plt.legend(handles=[horizon, galaxy, ecliptic, moon], loc=[0.05, -0.3], ncol=4, frameon=False,
+        zenith = Line2D([], [], color='k', linestyle='', marker='+', markersize=5, label="Zenith")
+        plt.legend(handles=[horizon, galaxy, ecliptic, moon, zenith], loc=[-0.1, -0.3], ncol=5, frameon=False,
             title = 'Aitoff plot showing HA/Dec of simulated survey pointings', numpoints=1, fontsize='small')
         # Save figure.
         plt.savefig(os.path.join(args.outDir, 'movieFrame_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
