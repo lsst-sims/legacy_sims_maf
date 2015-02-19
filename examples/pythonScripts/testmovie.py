@@ -50,7 +50,7 @@ metric = mm.setupMetrics(opsimName, metadata, t0=time, tStep=tstep)
 # Convert expMJD days to time from noon on first day. (local midnight is at 0.16)
 times_from_start = ms['slicePoint']['binRight'] - (int(bins[0]) + 0.16 - 0.5)
 years = int(times_from_start % 365)
-days = times_from_start - years*365 - 0.5 + 0.16
+days = times_from_start - years*365
 metric.plotDict['label'] = 'Year %d Day %.4f' %(years, days)
 sm = sliceMetrics.RunSliceMetric(outDir = '.', useResultsDb=False, figformat='png', dpi=72, thumbnail=False)
 sm.setSlicer(ops)
