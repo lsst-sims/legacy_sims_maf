@@ -200,7 +200,6 @@ def stitchMovie(metricList, args):
         outfileroots.append(dbName + '_' + mName + '_' + 'HEAL')
 
     for outfileroot in outfileroots:
-        print 'outfileroot', outfileroot
         # Identify filenames.
         plotfiles = fnmatch.filter(os.listdir(args.outDir), outfileroot + '*SkyMap.png')
         slicenum = plotfiles[0].replace(outfileroot, '').replace('_SkyMap.png', '').replace('_', '')
