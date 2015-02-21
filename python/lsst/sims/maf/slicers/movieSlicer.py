@@ -151,7 +151,7 @@ class MovieSlicer(BaseSlicer):
         #make video
         callList = ['ffmpeg', '-r', str(ips), '-i',
                     os.path.join(outDir,'%s_%s_%s.%s'%(outfileroot, sliceformat, plotType, figformat)),
-                    '-r', str(fps), '-pix_fmt', 'yuv420p',
+                    '-r', str(fps), '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'slow',
                     os.path.join(outDir,'%s_%s_%s_%s.mp4' %(outfileroot, plotType, str(ips), str(fps)))]
         print 'Attempting to call ffmpeg with:'
         print ' '.join(callList)
