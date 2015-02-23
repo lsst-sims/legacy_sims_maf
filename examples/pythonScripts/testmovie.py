@@ -18,7 +18,7 @@ opsimName = 'lucy_1002'
 dbAddress = 'sqlite:///' + opsimName + '_sqlite.db'
 
 # Choose night to look at.
-night = 2
+night = 3610
 sqlconstraint = 'night<=%d' %(night)
 metadata = 'night %d' %(night)
 
@@ -35,11 +35,11 @@ sliceformat = '%s0%dd' %('%', int(np.log10(len(movieslicer)))+1)
 
 # Choose frame to plot. (len(movieslicer)-1 will be the last frame).
 i = len(movieslicer)-1
+i = 0
 
 # Recreate the work done in opsimMovie.py runSlices method (but for a single slice/frame).
 ms = movieslicer[i]
 slicenumber = sliceformat %(i)
-time = ms['slicePoint']['binRight']
 
 simdatasubset = simdata[ms['idxs']]
 ops = mm.setupOpsimFieldSlicer(simdatasubset, fields)
@@ -53,7 +53,7 @@ days = times_from_start - years*365
 plotlabel = 'Year %d Day %.4f' %(years, days)
 
 metricList = mm.setupMetrics(opsimName, metadata, plotlabel,
-                             t0=time, tStep=tstep, years=years, onlyVisitFilters=True)
+                             t0=ms['slicePoint']['binRight'], tStep=tstep, years=years, onlyVisitFilters=True)
 sm = sliceMetrics.RunSliceMetric(outDir = '.', useResultsDb=False, figformat='png', dpi=72, thumbnail=False)
 sm.setSlicer(ops)
 sm.setMetrics(metricList)

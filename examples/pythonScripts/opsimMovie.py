@@ -152,7 +152,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         plotlabel = 'Year %d Day %.4f' %(years, days)
         # Set up metrics.
         metricList = setupMetrics(opsimName, metadata, plotlabel=plotlabel,
-                                t0=ms['slicePoint']['binRight'], tStep=tstep, years=years, verbose=verbose)
+                                    t0=ms['slicePoint']['binRight'], tStep=tstep, years=years, verbose=verbose)
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
