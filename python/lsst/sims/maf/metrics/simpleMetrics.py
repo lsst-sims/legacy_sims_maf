@@ -85,14 +85,13 @@ class CountSubsetMetric(BaseMetric):
     """Count the length of a simData column slice which matches 'subset'. """
     def __init__(self, col=None, subset=None, **kwargs):
         super(CountSubsetMetric, self).__init__(col=col, **kwargs)
+        self.badval = 0
         self.subset = subset
         if ('normVal' not in self.plotDict) and ('zp' not in self.plotDict):
             self.plotDict['cbarFormat'] = '%d'
 
     def run(self, dataSlice, slicePoint=None):
         count = len(np.where(dataSlice[self.colname] == self.subset)[0])
-        if count == 0:
-            count = self.badval
         return count
 
 
