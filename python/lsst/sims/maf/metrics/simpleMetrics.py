@@ -81,6 +81,20 @@ class CountRatioMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice[self.colname])/self.normVal
 
+class CountSubsetMetric(BaseMetric):
+    """Count the length of a simData column slice which matches 'subset'. """
+    def __init__(self, col=None, subset=None, **kwargs):
+        super(CountSubsetMetric, self).__init__(col=col, **kwargs)
+        self.badval = 0
+        self.subset = subset
+        if ('normVal' not in self.plotDict) and ('zp' not in self.plotDict):
+            self.plotDict['cbarFormat'] = '%d'
+
+    def run(self, dataSlice, slicePoint=None):
+        count = len(np.where(dataSlice[self.colname] == self.subset)[0])
+        return count
+
+
 class RobustRmsMetric(BaseMetric):
     """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation
     does not include outliers in the distribution"""

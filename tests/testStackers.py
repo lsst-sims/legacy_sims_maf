@@ -127,6 +127,23 @@ class TestStackerClasses(unittest.TestCase):
         data = stacker.run(data)
         np.testing.assert_almost_equal(data['HA'], -6.)
 
+    def testFilterColorStacker(self):
+        """Test the filter color stacker."""
+        data = np.zeros(60, dtype=zip(['filter'],['|S1']))
+        data['filter'][0:10] = 'u'
+        data['filter'][10:20] = 'g'
+        data['filter'][20:30] = 'r'
+        data['filter'][30:40] = 'i'
+        data['filter'][40:50] = 'z'
+        data['filter'][50:60] = 'y'
+        stacker = stackers.FilterColorStacker()
+        data = stacker.run(data)
+        # Check if re-run stacker raises exception (adding column twice).
+        self.assertRaises(ValueError, stacker.run, data)
+        # Check if use non-recognized filter raises exception.
+        data = np.zeros(600, dtype=zip(['filter'],['|S1']))
+        data['filter'] = 'q'
+        self.assertRaises(IndexError, stacker.run, data)
 
 if __name__ == '__main__':
 

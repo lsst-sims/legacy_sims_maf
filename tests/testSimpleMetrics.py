@@ -63,6 +63,16 @@ class TestSimpleMetrics(unittest.TestCase):
         testmetric = metrics.CountMetric('testdata')
         self.assertEqual(testmetric.run(self.dv), np.size(self.dv['testdata']))
 
+    def testCountRatioMetric(self):
+        """Test countratio metric."""
+        testmetric = metrics.CountRatioMetric('testdata', normVal=2.)
+        self.assertEqual(testmetric.run(self.dv), np.size(self.dv['testdata'])/2.0)
+
+    def testCountSubsetMetric(self):
+        """Test countsubset metric."""
+        testmetric = metrics.CountSubsetMetric('testdata', subset=0)
+        self.assertEqual(testmetric.run(self.dv), 1)
+
     def testRobustRmsMetric(self):
         """Test Robust RMS metric."""
         testmetric = metrics.RobustRmsMetric('testdata')

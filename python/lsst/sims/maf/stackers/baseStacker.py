@@ -1,4 +1,5 @@
 import inspect
+import warnings
 import numpy as np
 import numpy.lib.recfunctions as rfn
 
@@ -51,6 +52,8 @@ class BaseStacker(object):
         self.colsAdded = [None]
         # List of the names of the columns required from the database (to generate the Stacker columns).
         self.colsReq = [None]
+        # Optional: specify the new column types.
+        self.colsAddedDtypes = None
         # Optional: provide a list of units for the columns defined in colsAdded.
         self.units = [None]
 
@@ -61,9 +64,14 @@ class BaseStacker(object):
         Returns simData array with these columns added (so 'run' method can set their values).
         """
         newcolList = [simData]
-        for col in self.colsAdded:
-            if col not in simData:
-                newcol = np.empty(len(simData), dtype=[(col, float)])
+        if not hasattr(self, 'colsAddedDtypes') or self.colsAddedDtypes is None:
+            self.colsAddedDtypes = [float for col in self.colsAdded]
+        for col, dtype in zip(self.colsAdded, self.colsAddedDtypes):
+            if col in simData:
+                warnings.warn('Warning - column %s already present in simData, will be overwritten.'
+                              %(col))
+            else:
+                newcol = np.empty(len(simData), dtype=[(col, dtype)])
                 newcolList.append(newcol)
         return rfn.merge_arrays(newcolList, flatten=True, usemask=False)
 
