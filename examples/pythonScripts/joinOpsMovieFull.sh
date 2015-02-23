@@ -17,7 +17,7 @@
 ## [bgd][logo] overlay=shortest=0:x=10:y=10" -r 30 -pix_fmt yuv420p -crf 18 -preset slower blank2.mp4
 
 ## usage: expects to be run after mkOpsMovie.sh is used to generate movies for a series of individual nights.
-## usage: joinOpsMovie.sh [db name] [start night] [end night]
+## usage: joinOpsMovie.sh [opsim name] [start night] [end night]
 
 set opsRun = $1
 set nightStart = $2

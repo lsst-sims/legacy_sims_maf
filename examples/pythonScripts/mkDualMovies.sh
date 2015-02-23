@@ -1,7 +1,10 @@
 #!/bin/csh
 
 ## This script is intended to be used as a convenience to help generate commands for making cumulative + differential movies,
-## then combining the results into a single movie. Will echo, but not run, the commands. 
+## then combining the results into a single movie. Will echo, but not run, the commands.
+
+## usage: mkDualMovies.sh [opsim name]
+## (edit this file to change the sql constraint).
 
 set opsimRun = $1
 set sqlconstraint = 'filter="r"'

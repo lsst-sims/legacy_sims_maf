@@ -9,7 +9,7 @@
 ## Note that the tmpMovieList file could be edited and the ffmpeg command rerun to change these pauses, etc.
 
 ## usage: expects to be run after mkOpsMovie.sh is used to generate movies for a series of individual nights.
-## usage: joinOpsMovie.sh [db name] [start night] [end night]
+## usage: joinOpsMovie.sh [opsim name] [start night] [end night]
 
 set opsRun = $1
 set nightStart = $2
