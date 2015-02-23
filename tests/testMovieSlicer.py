@@ -162,22 +162,17 @@ class TestMovieSlicerSetup(unittest.TestCase):
                 dataslice = dv['times'][idxs]
                 sum += len(idxs)
                 if len(dataslice)>0:
-                    self.assertTrue(len(dataslice), nvalues/float(nbins))
+                    self.assertEqual(len(dataslice), nvalues/float(nbins))
                 else:
-                    self.assertTrue(len(dataslice) > 0,
-                            'Data in test case expected to always be > 0 len after slicing')
-            self.assertTrue(sum, nvalues)
+                    raise ValueError('Data in test case expected to always be > 0 len after slicing')
+            self.assertEqual(sum, nvalues)
             # And cumulative case.
             self.testslicer = MovieSlicer(sliceColName='times', bins=nbins, cumulative=True, forceNoFfmpeg=True)
             self.testslicer.setupSlicer(dv)
             for i, s in enumerate(self.testslicer):
                 idxs = s['idxs']
                 dataslice = dv['times'][idxs]
-                if len(dataslice)>0:
-                    self.assertTrue(len(dataslice), nvalues*i/float(nbins))
-                else:
-                    self.assertTrue(len(dataslice) > 0,
-                            'Data in test case expected to always be > 0 len after slicing')
+                self.assertTrue(len(dataslice)>0)
 
 
 
