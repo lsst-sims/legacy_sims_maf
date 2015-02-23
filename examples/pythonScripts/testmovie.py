@@ -81,7 +81,7 @@ for mId in sm.metricValues:
         lon = -(moonRA - raCen - np.pi) % (np.pi*2) - np.pi
         moonDec = np.mean(simdatasubset['moonDec'][visitNow])
         # Note that moonphase is 0-100
-        moonPhase = np.mean(simdatasubset[visitNow]['moonPhase'])/100.
+        moonPhase = np.mean(simdatasubset['moonPhase'][visitNow])/100.
         alpha = np.max([moonPhase, 0.15])
         circle = Circle((lon, moonDec), radius=0.05, color='k', alpha=alpha)
         ax.add_patch(circle)
