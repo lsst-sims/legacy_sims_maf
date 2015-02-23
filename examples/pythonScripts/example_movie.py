@@ -263,12 +263,17 @@ if __name__ == '__main__':
 
     start_t = time.time()
 
+    # Check if directory exists; create if appropriate.
     if not os.path.isdir(args.outDir):
         if args.skipComp:
             raise Exception('Skipping metric generation, expect to find plots in %s directory but it does not exist.'
                             %(args.outDir))
         else:
             os.mkdir(args.outDir)
+
+    # Check if user passed directory + filename as opsimDb.
+    if len(os.path.dirname(args.opsimDb)) > 0:
+        raise Exception('OpsimDB should be just the filename of the sqlite file (not %s). Use --dbDir.' %(args.opsimDb))
 
     # Set up metrics.
     metricList = setupMetrics(args)

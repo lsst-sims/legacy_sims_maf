@@ -270,12 +270,18 @@ if __name__ == '__main__':
     #cleaning up movie parameters
     if args.fps > 30.0:
         warnings.warn('FPS above 30 reduces performance and is undetectable to the human eye. Try lowering the fps.')
+
+    # Check if output directory exists; create if appropriate.
     if not os.path.isdir(args.outDir):
         if args.skipComp:
             raise Exception('Skipping metric generation, expect to find plots in %s directory but it does not exist.'
                             %(args.outDir))
         else:
             os.mkdir(args.outDir)
+
+    # Check if user passed directory + filename as opsimDb.
+    if len(os.path.dirname(args.opsimDb)) > 0:
+        raise Exception('OpsimDB should be just the filename of the sqlite file (not %s). Use --dbDir.' %(args.opsimDb))
 
     opsimName =  args.opsimDb.replace('_sqlite.db', '')
     metadata = args.sqlConstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
