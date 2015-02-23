@@ -65,6 +65,11 @@ def dtime(time_prev):
 
 
 def setupMetrics(args, verbose=False):
+    """
+    Define and instantiate metrics.
+    Pass 'args' to access 'cumulative' flag, in order to set better limits for max/min.
+    Could potentially access other 'args' values.
+    """
     # Define and set up metrics.
     # Note that it is useful to set up the plotDict so that the min/max range for the plot
     #  is the same for all movie frames.
@@ -91,6 +96,12 @@ def setupMetrics(args, verbose=False):
     return metricList
 
 def getData(opsDb, sqlconstraint, metricList, args):
+    """
+    Get opsim data from the opsDb (opsim database object, connected to sqlite db).
+    Uses sqlconstraint to select the data.
+    Identifies the columns required from the database by metricList and args.raCol/decCol.
+    Returns simdata.
+    """
     # Find the columns required  by the metrics and slicers (including if they come from stackers).
     colInfo = ColInfo()
     dbcolnames = set()
@@ -134,6 +145,12 @@ def getData(opsDb, sqlconstraint, metricList, args):
     return simdata
 
 def setupMovieSlicer(simdata, binsize = 365.0, cumulative=True, verbose=False):
+    """
+    Instantiates and sets up the MovieSlicer.
+    Uses simdata (all the opsim data) and binsize to set the bin sizes.
+    Uses 'cumulative' to determine whether slicer should be cumulative or binned.
+    Returns the movie slicer.
+    """
     t = time.time()
     ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize, cumulative=cumulative)
     ms.setupSlicer(simdata)
@@ -143,6 +160,13 @@ def setupMovieSlicer(simdata, binsize = 365.0, cumulative=True, verbose=False):
     return ms
 
 def setupHealpixSlicer(simdatasubset, racol, deccol, nside, verbose=False):
+    """
+    Instantiates and sets up the healpix slicer, using the subset of simdata (simdatasubset)
+    which should be used for this slice of the movieslicer.
+    racol and deccol identify the columns to be used by the healpix slicer.
+    nside sets the resolution of the healpix slicer.
+    Returns the healpix slicer.
+    """
     t = time.time()
     hs = slicers.HealpixSlicer(nside=nside, spatialkey1=racol, spatialkey2=deccol, plotFuncs='plotSkyMap')
     hs.setupSlicer(simdatasubset)
@@ -152,8 +176,10 @@ def setupHealpixSlicer(simdatasubset, racol, deccol, nside, verbose=False):
     return hs
 
 def runSlices(opsimName, metadata, simdata, metricList, args, verbose=False):
-    """Do the work to run the movie slicer, and at each step, setup the healpix slicer and run the metrics,
-    making the plots."""
+    """
+    Set up and run the movie slicer, and at each step,
+    setup the healpix slicer and run the metrics, creating and saving the plots.
+    """
     # Set up movie slicer
     movieslicer = setupMovieSlicer(simdata, binsize = args.movieStepsize, cumulative=args.cumulative)
     start_date = movieslicer[0]['slicePoint']['binLeft']
@@ -190,6 +216,11 @@ def runSlices(opsimName, metadata, simdata, metricList, args, verbose=False):
 
 
 def stitchMovie(metricList, args):
+    """
+    Create a movie for each metric from the plots generated in runSlices.
+    Uses metricList to identify which metrics should be used as input for movies.
+    Uses args to identify framerates for the movie slicer.
+    """
     # Create a movie slicer to access the movie generation routine.
     movieslicer = slicers.MovieSlicer()
     # Identify roots of distinct output plot files.
