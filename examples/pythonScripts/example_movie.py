@@ -8,9 +8,9 @@
 # default - automatically sets outDir to default Output. Will create directory if not already present.
 #
 #-------------------------------------------------------------
-# python example_movie.py opsimblitz2_1060_sqlite.db --ips 2 --cumulative
-# cumulative:
-#       This flag tells movie slicer to step though data to slice cumulatively, rather than bin.
+# python example_movie.py opsimblitz2_1060_sqlite.db --ips 2 --binned
+# binned:
+#       This flag tells movie slicer to step though data in individual bins, rather than to create cumulative timesteps.
 #
 #-------------------------------------------------------------
 # python example_movie.py opsimblitz2_1060_sqlite.db --movieStepsize 20 --ips 6 --fps 6 --outDir myMovie --sqlConstraint "filter='g'"
@@ -30,7 +30,7 @@
 #
 #-------------------------------------------------------------
 # python example_movie.py opsimblitz2_1060_sqlite.db --skipComp --outDir myMovie --ips 4
-# sc:
+# skipComp
 #       Flag to skip computation. Will make a movie out of the existing images in a directory.
 #
 #-------------------------------------------------------------
@@ -42,7 +42,7 @@
 #-------------------------------------------------------------
 
 # To modify the metrics calculated and used in the movie, edit the 'setupMetrics' section. The columns required from the
-# database will be propagated to getData automatically. 
+# database will be propagated to getData automatically.
 
 
 import os, argparse
@@ -109,7 +109,7 @@ def getData(opsDb, sqlconstraint, metricList, args):
             defaultstackers.add(colsource)
         else:
             dbcolnames.add(col)
-    # If you want to specify options for stackers, instante them and add to the list here.
+    # If you want to specify options for stackers, instantiante them and add to the list here.
     mystackers = []
     # Remove explicity instantiated stackers from defaultstacker set.
     for s in mystackers:
