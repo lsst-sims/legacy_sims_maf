@@ -232,7 +232,9 @@ if __name__ == '__main__':
 
     # Parse command line arguments for database connection info.
     parser = argparse.ArgumentParser()
-    parser.add_argument("opsimDb", type=str, help="Filename for opsim sqlite db file")
+    parser.add_argument("opsimDb", type=str, help="Opsim sqlite db file")
+    parser.add_argument("--dbDir", type=str, default='.',
+                        help="Directory containing opsim sqlite db file")
     parser.add_argument("--skipComp", action = 'store_true', default=False,
                         help="Just make movie from existing metric plot files.")
     parser.add_argument("--sqlConstraint", type=str, default="filter='r'",
@@ -273,9 +275,9 @@ if __name__ == '__main__':
 
     if not args.skipComp:
         # Get db connection info, and connect to database.
-        dbAddress = 'sqlite:///' + args.opsimDb
-        opsDb = db.OpsimDatabase(dbAddress)
         opsimName =  args.opsimDb.replace('_sqlite.db', '')
+        dbAddress = 'sqlite:///' + os.path.join(args.dbDir, args.opsimDb)
+        opsDb = db.OpsimDatabase(dbAddress)
         sqlconstraint = args.sqlConstraint
         metadata = sqlconstraint.replace('=','').replace('filter','').replace("'",'').replace('"','').replace('/','.')
         # Get data from database.

@@ -23,12 +23,12 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.sliceMetrics as sliceMetrics
+from lsst.sims.maf.utils import TelescopeInfo
 
 import time
 import warnings
 import fnmatch
 
-lat_tele = np.radians(-29.666667)
 
 def dtime(time_prev):
     return (time.time() - time_prev, time.time())
@@ -98,7 +98,7 @@ def setupOpsimFieldSlicer(simdatasubset, fields, verbose=False):
     return ops
 
 
-def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=np.radians(-29.666667), raCen=0.):
+def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=TelescopeInfo('LSST').lat, raCen=0.):
     """
     Adds a horizon at horizon_altitude, using the telescope latitude lat_telescope.
     Returns the lon/lat points that would be appropriate to add to a SkyMap plot centered on raCen.
@@ -119,10 +119,9 @@ def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=np.radians(-29.66
     lat = np.zeros(len(az), float)
     for i, (alti, azi) in enumerate(zip(alt, az)):
         # Find the equivalent ra/dec values for an alt/az circle.
-        r, d = obs.radec_of(azi, alti)
+        r, lat[i] = obs.radec_of(azi, alti)
         # Correct the ra value by the zenith ra value, to get the HA.
-        lon[i] = ephem.degrees(r) - zenithra
-        lat[i] = ephem.degrees(d)
+        lon[i] = r - zenithra
     lon = -(lon - np.pi) % (np.pi*2) - np.pi
     return lon, lat
 
@@ -131,6 +130,8 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
     movieslicer = setupMovieSlicer(simdata, bins)
     # Set up formatting for output suffix.
     sliceformat = '%s0%dd' %('%', int(np.log10(len(movieslicer)))+1)
+    # Get the telescope latitude info.
+    lat_tele = TelescopeInfo('LSST').lat
     # Run through the movie slicer slicePoints and generate plots at each point.
     for i, ms in enumerate(movieslicer):
         t = time.time()
@@ -244,7 +245,9 @@ if __name__ == '__main__':
 
     # Parse command line arguments for database connection info.
     parser = argparse.ArgumentParser()
-    parser.add_argument("opsimDb", type=str, help="Filename for opsim sqlite db file")
+    parser.add_argument("opsimDb", type=str, help="Opsim sqlite db file")
+    parser.add_argument("--dbDir", type=str, default='.',
+                        help="Directory containing opsim sqlite db file")
     parser.add_argument("--sqlConstraint", type=str, default="filter='r'",
                         help="SQL constraint, such as filter='r' or propID=182")
     parser.add_argument("--movieStepsize", type=float, default=0, help="Step size (in days) for movie slicer. "
@@ -280,7 +283,7 @@ if __name__ == '__main__':
     if not args.skipComp:
         verbose=False
         # Get db connection info, and connect to database.
-        dbAddress = 'sqlite:///' + args.opsimDb
+        dbAddress = 'sqlite:///' + os.path.join(args.dbDir, args.opsimDb)
         oo = db.OpsimDatabase(dbAddress)
         sqlconstraint = args.sqlConstraint
         # Fetch the data from opsim.
