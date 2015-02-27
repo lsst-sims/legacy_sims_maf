@@ -10,9 +10,9 @@ from lsst.sims.maf.metrics.summaryMetrics import fOArea, fONv
 
 class fOSlicer(HealpixSlicer):
     """fO spatial slicer"""
-    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True):
+    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, **kwargs):
         super(fOSlicer, self).__init__(verbose=verbose, spatialkey1=spatialkey1, spatialkey2=spatialkey2,
-                                        nside=nside)
+                                        nside=nside, **kwargs)
         # Override base plotFuncs dictionary, because we don't want to create plots from Healpix
         #  slicer (skymap, power spectrum, and histogram) -- only fO plot -- when using 'plotData'.
         self.plotFuncs = {'plotFO':self.plotFO}

@@ -340,9 +340,11 @@ class MafDriver(object):
                                 filename = gm._buildOutfileName(iid)
                                 # Load all the metric data back in
                                 fullFile = os.path.join(self.config.outputDir, filename+'.npz')
-                                if os.isfile(fullFile):
+                                if os.path.isfile(fullFile):
                                    print 'Restoring %s'%fullFile
                                    newGm.readMetricData(fullFile)
+                                   # Set the slicer to the newly restored slicer
+                                   newGm.setSlicer(newGm.slicers[iid], override=True)
                                    # Replace the restored plotting parameters
                                    newGm.plotDicts[iid] = gm.plotDicts[iid]
                                    newGm.displayDicts[iid] = gm.displayDicts[iid]
