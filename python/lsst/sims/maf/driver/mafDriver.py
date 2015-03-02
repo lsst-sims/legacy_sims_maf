@@ -333,19 +333,25 @@ class MafDriver(object):
                                                                  outDir=self.config.outputDir,
                                                                  useResultsDb=False)
                              newGm.setSlicer(slicer)
+                             restoredData = False
                              for iid in iids:
                                 gm.simDataNames[iid] = self.config.opsimName
                                 gm.metadatas[iid] = metadata
                                 filename = gm._buildOutfileName(iid)
                                 # Load all the metric data back in
                                 fullFile = os.path.join(self.config.outputDir, filename+'.npz')
-                                print 'Restoring %s'%fullFile
-                                newGm.readMetricData(fullFile)
-                                # Replace the restored plotting parameters
-                                newGm.plotDicts[iid] = gm.plotDicts[iid]
-                                newGm.displayDicts[iid] = gm.displayDicts[iid]
+                                if os.path.isfile(fullFile):
+                                   print 'Restoring %s'%fullFile
+                                   newGm.readMetricData(fullFile)
+                                   # Set the slicer to the newly restored slicer
+                                   newGm.setSlicer(newGm.slicers[iid], override=True)
+                                   # Replace the restored plotting parameters
+                                   newGm.plotDicts[iid] = gm.plotDicts[iid]
+                                   newGm.displayDicts[iid] = gm.displayDicts[iid]
+                                   restoredData = True
                              # Replot, note we are not saving the updated plotDicts to save time.
-                             newGm.plotAll(savefig=True, closefig=True, verbose=True)
+                             if restoredData:
+                                newGm.plotAll(savefig=True, closefig=True, verbose=True)
                           else:
                              # Run through slicepoints in slicer, and calculate metric values.
                              print '    running slicerName =', slicer.slicerName, \
