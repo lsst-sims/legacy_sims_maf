@@ -11,7 +11,7 @@ class TestSstar(unittest.TestCase):
 
     def testSstarConfig(self):
         """Load up and run the SStar config with the small example db. """
-        configFile = glob.glob('../examples/driverConfigs/sstarDriver.py')
+        configFile = glob.glob('../../examples/driverConfigs/sstarDriver.py')
         path, configname = os.path.split(configFile[0])
         configname = os.path.splitext(configname)[0]
         sys.path.insert(0, path)
@@ -19,7 +19,7 @@ class TestSstar(unittest.TestCase):
         conf = importlib.import_module(configname)
         config = MafConfig()
         config = conf.mConfig(config, runName='opsimblitz1_1133',
-                              outDir='Output', slicerName='OpsimFieldSlicer')
+                              outDir='Output', dbDir='../',slicerName='OpsimFieldSlicer')
         drive = driver.MafDriver(config)
         drive.run()
 

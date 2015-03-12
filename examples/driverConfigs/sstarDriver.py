@@ -6,7 +6,7 @@ import lsst.sims.maf.utils as utils
 import numpy as np
 
 
-def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlicer',
+def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldSlicer',
             benchmark='design', **kwargs):
     """
     A MAF config for SSTAR-like analysis of an opsim run.
@@ -22,7 +22,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
       [HealpixSlicer, OpsimFieldSlicer, or HealpixSlicerDither]
       (dithered healpix slicer uses ditheredRA/dec values).
 
-    Uses 'benchmark' (which can be design or stretch) to scale plots of number of visits and coadded depth.
+    Uses 'benchmark' (which can be design, stretch or request) to scale plots of number of visits and coadded depth.
+       ('request' means look up the requested number of visits for the proposal and use that information).
     """
 
     # Setup Database access
@@ -41,10 +42,6 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
-    if 'DD' not in propTags:
-        propTags['DD'] = []
-    if 'WFD' not in propTags:
-        propTags['WFD'] = []
     DDpropid = propTags['DD']
     WFDpropid = propTags['WFD']
 
@@ -59,7 +56,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
 
     # Fetch the total number of visits (to create fraction for number of visits per proposal)
     totalNVisits = opsimdb.fetchNVisits()
-    totalSlewN = opsimdb.fetchTotalSlewN() 
+    totalSlewN = opsimdb.fetchTotalSlewN()
 
     # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
@@ -71,11 +68,17 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
     design, stretch = utils.scaleStretchDesign(runLength)
 
     # Set zeropoints and normalization values for plots (and range for nvisits plots).
+    # These are only applied to 'all' and 'WFD' plots.
     if benchmark == 'stretch':
         sky_zpoints = stretch['skybrightness']
         seeing_norm = stretch['seeing']
         mag_zpoints = stretch['coaddedDepth']
         nvisitBench = stretch['nvisits']
+    elif benchmark == 'request':
+        sky_zpoints = design['skybrightness']
+        seeing_norm = design['seeing']
+        mag_zpoints = design['coaddedDepth']
+        nvisitBench = opsimdb.fetchRequestedNvisits(propId=WFDpropid)
     else:
         sky_zpoints = design['skybrightness']
         seeing_norm = design['seeing']
@@ -649,7 +652,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata=angle,
-                                 metadataVerbatim=True, table='slewState')
+                                 metadataVerbatim=True, table='SlewState')
         slicerList.append(slicer)
 
     # Make some calls to other tables to get slew stats
@@ -673,7 +676,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''],
-                                 table='slewMaxSpeeds', metadata=colDict[key], metadataVerbatim=True)
+                                 table='SlewMaxSpeeds', metadata=colDict[key], metadataVerbatim=True)
         slicerList.append(slicer)
 
     # Use the slew stats
@@ -708,7 +711,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,
                                  constraints=['actDelay>0 and activity="%s"'%slewType],
-                                 table='slewActivities', metadata=slewType,
+                                 table='SlewActivities', metadata=slewType,
                                  metadataVerbatim=True)
         slicerList.append(slicer)
         metricList = []
@@ -728,7 +731,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,
                                  constraints=['actDelay>0 and inCriticalPath="True" and activity="%s"'%slewType],
-                                 table='slewActivities', metadata=slewType,
+                                 table='SlewActivities', metadata=slewType,
                                  metadataVerbatim=True)
         slicerList.append(slicer)
         metricList = []
@@ -744,7 +747,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='HealpixSlic
         order += 1
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,constraints=[''],
-                                 table='slewActivities', metadata=slewType, metadataVerbatim=True)
+                                 table='SlewActivities', metadata=slewType, metadataVerbatim=True)
         slicerList.append(slicer)
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits

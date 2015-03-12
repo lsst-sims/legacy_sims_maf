@@ -32,25 +32,25 @@ class OpsimDatabase(Database):
             # Remove this kwarg since we're sending it on explicitly
             del kwargs['defaultdbTables']
         else:
-            defaultdbTables={'summaryTable':['Summary', 'obsHistID'],
-                             'cloudTable':['Cloud', 'cloudID'],
-                             'seeingTable':['Seeing', 'seeingID'],
-                             'fieldTable':['Field', 'fieldID'],
-                             'sessionTable':['Session', 'sessionID'],
-                             'configTable':['Config', 'configID'],
-                             'proposalTable':['Proposal', 'propID'],
-                             'proposalFieldTable':['Proposal_Field', 'proposal_field_id'],
-                             'obsHistoryTable':['ObsHistory', 'obsHistID'],
-                             'obsHistoryProposalTable':['Obshistory_Proposal', 'obsHistory_propID'],
-                             'sequenceHistoryTable':['SeqHistory', 'sequenceID'],
-                             'sequenceHistoryObsHistoryTable':['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
-                             'missedHistoryTable':['MissedHistory', 'missedHistID'],
-                             'sequenceHistoryMissedHistoryTable':['SeqHistory_MissedHistory',
+            defaultdbTables={'Summary':['Summary', 'obsHistID'],
+                             'Cloud':['Cloud', 'cloudID'],
+                             'Seeing':['Seeing', 'seeingID'],
+                             'Field':['Field', 'fieldID'],
+                             'Session':['Session', 'sessionID'],
+                             'Config':['Config', 'configID'],
+                             'Proposal':['Proposal', 'propID'],
+                             'Proposal_Field':['Proposal_Field', 'proposal_field_id'],
+                             'ObsHistory':['ObsHistory', 'obsHistID'],
+                             'ObsHistory_Proposal':['ObsHistory_Proposal', 'obsHistory_propID'],
+                             'SeqHistory':['SeqHistory', 'sequenceID'],
+                             'SeqHistory_ObsHistory':['SeqHistory_ObsHistory', 'seqhistory_obsHistID'],
+                             'MissedHistory':['MissedHistory', 'missedHistID'],
+                             'SeqHistory_MissedHistory':['SeqHistory_MissedHistory',
                                                                   'seqhistory_missedHistID'],
-                             'slewActivitiesTable':['SlewActivities', 'slewActivityID'],
-                             'slewHistoryTable':['SlewHistory', 'slewID'],
-                             'slewMaxSpeedsTable':['SlewMaxSpeeds', 'slewMaxSpeedID'],
-                             'slewStateTable':['SlewState', 'slewIniStatID']
+                             'SlewActivities':['SlewActivities', 'slewActivityID'],
+                             'SlewHistory':['SlewHistory', 'slewID'],
+                             'SlewMaxSpeeds':['SlewMaxSpeeds', 'slewMaxSpeedID'],
+                             'SlewState':['SlewState', 'slewIniStatID']
                              }
         # Call base init method to set up all tables and place default values
         # into dbTable/dbTablesIdKey if not overriden.
@@ -83,13 +83,16 @@ class OpsimDatabase(Database):
         self.runCommentCol = 'runComment'
 
     def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD',
-                        tableName='summaryTable'):
-        """Fetch 'colnames' from 'Summary' table.
+                        tableName='Summary'):
+        """
+        Fetch 'colnames' from 'tableName'.
 
         colnames = the columns to fetch from the table.
         sqlconstraint = sql constraint to apply to data (minus "WHERE").
         distinctExpMJD = group by expMJD to get unique observations only (default True).
-        groupBy = group by col 'groupBy' (will override group by expMJD)."""
+        groupBy = group by col 'groupBy' (will override group by expMJD).
+        tableName = the opsim table to query.
+        """
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint.
         if (groupBy is None) and (distinctExpMJD is False):
@@ -136,15 +139,16 @@ class OpsimDatabase(Database):
         Fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
 
         propID = the proposal ID (default None), if selecting particular proposal - can be a list
-        degreesToRadians = RA/Dec values are in degrees in the Field table (so convert to radians) """
+        degreesToRadians = RA/Dec values are in degrees in the Field table (so convert to radians).
+        """
         # Note that you can't select any other sql constraints (such as filter).
         # This will select fields which were requested by a particular proposal or proposals,
         #   even if they didn't get any observations.
-        tableName = 'fieldTable'
+        tableName = 'Field'
         if propID is not None:
             query = 'select f.%s, f.%s, f.%s from %s as f' %(self.fieldIdCol, self.raCol, self.decCol,
-                                                             self.dbTables['fieldTable'][0])
-            query += ', %s as p where (p.Field_%s = f.%s) ' %(self.dbTables['proposalFieldTable'][0],
+                                                             self.dbTables['Field'][0])
+            query += ', %s as p where (p.Field_%s = f.%s) ' %(self.dbTables['Proposal_Field'][0],
                                                             self.fieldIdCol, self.fieldIdCol)
             if hasattr(propID, '__iter__'): # list of propIDs
                 query += ' and ('
@@ -178,13 +182,13 @@ class OpsimDatabase(Database):
         """
         propIDs = {}
         # If do not have full database available:
-        if 'proposalTable' not in self.tables:
-            propData = self.tables['summaryTable'].query_columns_Array(colnames=[self.propIdCol])
+        if 'Proposal' not in self.tables:
+            propData = self.tables['Summary'].query_columns_Array(colnames=[self.propIdCol])
             for propid in propData[self.propIdCol]:
                 propIDs[int(propid)] = ''
             propTags = {}
         else:
-            table = self.tables['proposalTable']
+            table = self.tables['Proposal']
             # Query for all propIDs.
             propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
                                                            self.propNameCol], constraint='')
@@ -196,11 +200,12 @@ class OpsimDatabase(Database):
             propTags['WFD'] = []
             propTags['DD'] = []
             # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
-            table = self.tables['configTable']
+            table = self.tables['Config']
             sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
                                                     constraint="paramName like 'ScienceType'")
             if len(sciencetypes) == 0:
-                # Older opsim output, so fall back to trying to guess what proposals are WFD.
+                # Then this was an older opsim run without 'ScienceType' tags,
+                #   so fall back to trying to guess what proposals are WFD or DD.
                 for propid, propname in propIDs.iteritems():
                     if 'universal' in propname.lower():
                         propTags['WFD'].append(propid)
@@ -209,41 +214,45 @@ class OpsimDatabase(Database):
             else:
                 # Newer opsim output with 'ScienceType' fields in conf files.
                 for sc in sciencetypes:
-                    sciencetype = sc['paramValue'].strip(',')
-                    if sciencetype in propTags:
-                        propTags[sciencetype].append(int(sc['nonPropID']))
-                    else:
-                        propTags[sciencetype] = [int(sc['nonPropID']),]
+                    # ScienceType tag can be multiple values, separated by a ','
+                    tags = [x.strip(' ') for x in sc['paramValue'].split(',')]
+                    for sciencetype in tags:
+                        if sciencetype in propTags:
+                            propTags[sciencetype].append(int(sc['nonPropID']))
+                        else:
+                            propTags[sciencetype] = [int(sc['nonPropID']),]
         return propIDs, propTags
 
     def fetchRunLength(self, runLengthParam='nRun'):
-        """Fetch the run length for a particular opsim run.
+        """
+        Returns the run length for a particular opsim run.
 
-        runLengthParam = the 'paramName' in the config table identifying the run length (default nRun)."""
-        table = self.tables['configTable']
+        runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
+        """
+        table = self.tables['Config']
         runLength = table.query_columns_Array(colnames=['paramValue'], constraint=" paramName = '%s'"%runLengthParam)
         runLength = float(runLength['paramValue'][0]) # Years
         return runLength
 
     def fetchLatLonHeight(self):
-        """Fetch the latitude, longitude, and height of the telescope used by the config file."""
-        table = self.tables['configTable']
+        """
+        Returns the latitude, longitude, and height of the telescope used by the config file.
+        """
+        table = self.tables['Config']
         lat = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'latitude'")
         lon = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'longitude'")
         height = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'height'")
         return float(lat['paramValue'][0]),float(lon['paramValue'][0]),float(height['paramValue'][0])
 
-
     def fetchNVisits(self, propID=None):
-        """Fetch the total number of visits in the simulation (or total number of visits for a particular propoal).
-        Convenience function for setting user-defined benchmark values.
-
-        propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
-        tableName = 'obsHistoryTable'
+        Returns the total number of visits in the simulation (or total number of visits for a particular propoal).
+        param: propID = the proposal ID (default None), if selecting particular proposal - can be a list
+        """
+        tableName = 'ObsHistory'
         query = 'select %s from %s' %(self.mjdCol, self.dbTables[tableName][0])
         if propID is not None:
-            query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['obsHistoryProposalTable'][0])
+            query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['ObsHistory_Proposal'][0])
             if hasattr(propID, '__iter__'): # list of propIDs
                 query += ' and ('
                 for pID in propID:
@@ -257,10 +266,13 @@ class OpsimDatabase(Database):
         return data.size
 
     def fetchSeeingColName(self):
-        """Check whether the seeing column is 'seeing' or 'finSeeing' (v2.x simulator vs v3.0 simulator)."""
+        """
+        Check whether the seeing column is 'seeing' or 'finSeeing' (v2.x simulator vs v3.0 simulator).
+        Returns the name of the seeing column.
+        """
         # Really this is just a bit of a hack to see whether we should be using seeing or finseeing.
         # With time, this should probably just go away.
-        table = self.tables['summaryTable']
+        table = self.tables['Summary']
         try:
             table.query_columns_Array(colnames=['seeing',], numLimit=1)
             seeingcol = 'seeing'
@@ -274,26 +286,164 @@ class OpsimDatabase(Database):
         return seeingcol
 
     def fetchOpsimRunName(self):
-        """Pull opsim run name (machine name + session ID) from Session table. Return string."""
-        table = self.tables['sessionTable']
+        """
+        Returns opsim run name (machine name + session ID) from Session table. 
+        """
+        table = self.tables['Session']
         res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
         runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
         return runName
 
     def fetchTotalSlewN(self):
-        """Fetch the total slew time."""
-        table = self.tables['slewActivitiesTable']
+        """
+        Returns the total slew time.
+        """
+        table = self.tables['SlewActivities']
         res = table.query_columns_Array(constraint='actDelay>0', colnames=['SlewHistory_slewID'])
         result = np.size(np.unique(res['SlewHistory_slewID']))
         return result
 
+    def fetchRequestedNvisits(self, propId=None):
+        """
+        Find the requested number of visits for each proposal.
+        Returns a nested dictionary - Nvisits{propID: {u/g/r/i/z/y} }
+        """
+        visitDict = {}
+        if propId is None:
+            # Get all the available propIds.
+            propData = self.tables['Proposal'].query_columns_Array(colnames=[self.propIdCol, self.propNameCol], constraint='')
+        else:
+            # Get the propType info to go with the propId(s).
+            if hasattr(propId, '__iter__'):
+                constraint = ''
+                for pi in propId:
+                    constraint += '(propId = %d) or ' %(pi)
+                constraint = constraint[:-3] + ')'
+            else:
+                constraint = 'propId = %d' %(propId)
+            propData = self.tables['Proposal'].query_columns_Array(colnames=[self.propIdCol, self.propNameCol],
+                                                                   constraint=constraint)
+        for pId, propType in zip(propData[self.propIdCol], propData[self.propNameCol]):
+            perPropConfig = self.tables['Config'].query_columns_Array(colnames=['paramName', 'paramValue'],
+                                                                    constraint = 'nonPropID = %d and paramName!="userRegion"'
+                                                                    %(pId))
+            filterlist = self._matchParamNameValue(perPropConfig, 'Filter')
+            if propType == 'WL':
+                # For WL proposals, the simple 'Filter_Visits' == the requested number of observations.
+                nvisits = np.array(self._matchParamNameValue(perPropConfig, 'Filter_Visits'), int)
+            elif propType == 'WLTSS':
+                seqDict, nvisits = self._parseSequences(perPropConfig, filterlist)
+            visitDict[pId] = {}
+            for f, N in zip(filterlist, nvisits):
+                visitDict[pId][f] = N
+        return visitDict
+
+    def _matchParamNameValue(self, configarray, keyword):
+        return configarray['paramValue'][np.where(configarray['paramName']==keyword)]
+
+    def _parseSequences(self, perPropConfig, filterlist):
+        """
+        (Private). Given an array of config paramName/paramValue info for a given WLTSS proposal
+        and the filterlist of filters used in that proposal, parse the sequences/subsequences and returns:
+           a dictionary with all the per-sequence information (including subsequence names & events, etc.)
+           a numpy array with the number of visits per filter
+        """
+        propDict = {}
+        # Identify where subsequences start in config[propname] arrays.
+        seqidxs = np.where(perPropConfig['paramName'] == 'SubSeqName')[0]
+        for sidx in seqidxs:
+            i = sidx
+            # Get the name of this subsequence.
+            seqname = perPropConfig['paramValue'][i]
+            # Check if seqname is a nested subseq of an existing sequence:
+            nestedsubseq = False
+            for prevseq in propDict:
+                if 'SubSeqNested' in propDict[prevseq]:
+                    if seqname in propDict[prevseq]['SubSeqNested']:
+                        seqdict = propDict[prevseq]['SubSeqNested'][seqname]
+                        nestedsubseq = True
+            # If not, then create a new subseqence key/dictionary for this subseq.
+            if not nestedsubseq:
+                propDict[seqname] = {}
+                seqdict = propDict[seqname]
+            # And move on to next parameters within subsequence set.
+            i += 1
+            if perPropConfig['paramName'][i] == 'SubSeqNested':
+                subseqnestedname = perPropConfig['paramValue'][i]
+                if subseqnestedname != '.':
+                    # Have nested subsequence, so keep track of that here
+                    #  but will fill in info later.
+                    seqdict['SubSeqNested'] = {}
+                    # Set up nested dictionary for nested subsequence.
+                    seqdict['SubSeqNested'][subseqnestedname] = {}
+                i += 1
+            subseqfilters = perPropConfig['paramValue'][i]
+            if subseqfilters != '.':
+                seqdict['Filters'] = subseqfilters
+            i += 1
+            subseqexp = perPropConfig['paramValue'][i]
+            if subseqexp != '.':
+                seqdict['SubSeqExp'] = subseqexp
+            i+= 1
+            subseqevents = perPropConfig['paramValue'][i]
+            seqdict['Events'] = int(subseqevents)
+            i+=2
+            subseqinterval = perPropConfig['paramValue'][i]
+            subseqint = np.array([subseqinterval.split('*')], 'float').prod()
+            # In days ..
+            subseqint *= 1/24.0/60.0/60.0
+            if subseqint > 1:
+                seqdict['SubSeqInt'] = '%.2f days' %(subseqint)
+            else:
+                subseqint *= 24.0
+                if subseqint > 1:
+                    seqdict['SubSeqInt'] = '%.2f hours' %(subseqint)
+                else:
+                    subseqint *= 60.0
+                    seqdict['SubSeqInt'] = '%.3f minutes' %(subseqint)
+        # End of assigning subsequence info - move on to counting number of visits.
+        nvisits = np.zeros(len(filterlist), int)
+        for subseq in propDict:
+            subevents = propDict[subseq]['Events']
+            # Count visits from direct subsequences.
+            if 'SubSeqExp' in propDict[subseq] and 'Filters' in propDict[subseq]:
+                subfilters = propDict[subseq]['Filters']
+                subexp = propDict[subseq]['SubSeqExp']
+                # If just one filter ..
+                if len(subfilters) == 1:
+                    idx = np.where(filterlist == subfilters)[0]
+                    nvisits[idx] += subevents * int(subexp)
+                else:
+                    splitsubfilters = subfilters.split(',')
+                    splitsubexp = subexp.split(',')
+                    for f, exp in zip(splitsubfilters, splitsubexp):
+                        idx = np.where(filterlist == f)[0]
+                        nvisits[idx] += subevents * int(exp)
+            # Count visits if have nested subsequences.
+            if 'SubSeqNested' in propDict[subseq]:
+                for subseqnested in propDict[subseq]['SubSeqNested']:
+                    events = subevents * propDict[subseq]['SubSeqNested'][subseqnested]['Events']
+                    subfilters = propDict[subseq]['SubSeqNested'][subseqnested]['Filters']
+                    subexp = propDict[subseq]['SubSeqNested'][subseqnested]['SubSeqExp']
+                    # If just one filter ..
+                    if len(subfilters) == 1:
+                        idx = np.where(filterlist == subfilters)[0]
+                        nvisits[idx] += events * int(subexp)
+                    # Else may have multiple filters in the subsequence, so must split.
+                    splitsubfilters = subfilters.split(',')
+                    splitsubexp = subexp.split(',')
+                    for f, exp in zip(splitsubfilters, splitsubexp):
+                        idx = np.where(filterlist == f)[0]
+                        nvisits[idx] += int(exp) * events
+        return propDict, nvisits
 
     def fetchConfig(self):
-        """Fetch config data from configTable, match proposal IDs with proposal names and some field data,
+        """
+        Fetch config data from configTable, match proposal IDs with proposal names and some field data,
         and do a little manipulation of the data to make it easier to add to the presentation layer.
         """
         # Check to see if we're dealing with a full database or not. If not, just return (no config info to fetch).
-        if 'sessionTable' not in self.tables:
+        if 'Session' not in self.tables:
             warnings.warn('Cannot fetch opsim config info as this is not a full opsim database.')
             return {}, {}
         # Create two dictionaries: a summary dict that contains a summary of the run
@@ -308,7 +458,7 @@ class OpsimDatabase(Database):
         configSummary['Version']['MAFVersion'] = '%s' %(mafversion['__version__']) \
           + '  RunDate %s' %(mafdate)
         # Opsim date, version and runcomment info from session table
-        table = self.tables['sessionTable']
+        table = self.tables['Session']
         results = table.query_columns_Array(colnames = [self.versionCol, self.sessionDateCol, self.runCommentCol])
         configSummary['Version']['OpsimVersion'] = '%s'  %(results['version'][0]) + \
             '  RunDate %s' %(results[self.sessionDateCol][0])
@@ -316,7 +466,7 @@ class OpsimDatabase(Database):
         configSummary['RunInfo']['RunComment'] = results[self.runCommentCol]
         configSummary['RunInfo']['RunName'] = self.fetchOpsimRunName()
         # Pull out a few special values to put into summary.
-        table = self.tables['configTable']
+        table = self.tables['Config']
         # This section has a number of configuration parameter names hard-coded.
         # I've left these here (rather than adding to self_colNames), because I think schema changes will in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
@@ -342,7 +492,7 @@ class OpsimDatabase(Database):
         # Match proposal IDs with names.
         query = 'select %s, %s, %s from Proposal group by %s' %(self.propIdCol, self.propConfCol,
                                                                 self.propNameCol, self.propIdCol)
-        propdata = self.queryDatabase('proposalTable', query)
+        propdata = self.queryDatabase('Proposal', query)
         # Make 'nice' proposal names
         propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata[self.propConfCol]])
         # Get 'nice' module names
@@ -362,8 +512,6 @@ class OpsimDatabase(Database):
                               'AstronomicalSky', 'File', 'scheduler',
                               'schedulingData', 'schedDown', 'unschedDown']
         # Now finish building the summary to add proposal information.
-        def _matchParamNameValue(configarray, keyword):
-            return configarray['paramValue'][np.where(configarray['paramName']==keyword)]
         # Loop through all proposals to add summary information.
         configSummary['Proposals'] = {}
         propidorder = sorted(propdata[self.propIdCol])
@@ -378,7 +526,7 @@ class OpsimDatabase(Database):
             propdict[self.propNameCol] = propname
             propdict[self.propIdCol] = propid
             propdict['PropType'] = propdata[self.propNameCol][np.where(propnames == propname)]
-            propdict['RelPriority'] = _matchParamNameValue(config[propname], 'RelativeProposalPriority')
+            propdict['RelPriority'] = self._matchParamNameValue(config[propname], 'RelativeProposalPriority')
             # Get the number of user regions.
             constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)
             result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)
@@ -391,133 +539,44 @@ class OpsimDatabase(Database):
             propdict['PerFilter'] = {}
             for key, keyword in zip(['Filters', 'MaxSeeing', 'MinSky', 'MaxSky'],
                                     ['Filter', 'Filter_MaxSeeing', 'Filter_MinBrig', 'Filter_MaxBrig']):
-                temp = _matchParamNameValue(config[propname], keyword)
+                temp = self._matchParamNameValue(config[propname], keyword)
                 if len(temp) > 0:
                     propdict['PerFilter'][key] = temp
             # Add exposure time, potentially looking for scaling per filter.
-            exptime = float(_matchParamNameValue(config[propname], 'ExposureTime')[0])
-            temp = _matchParamNameValue(config[propname], 'Filter_ExpFactor')
+            exptime = float(self._matchParamNameValue(config[propname], 'ExposureTime')[0])
+            temp = self._matchParamNameValue(config[propname], 'Filter_ExpFactor')
             if len(temp) > 0:
                 propdict['PerFilter']['VisitTime'] = temp * exptime
             else:
                 propdict['PerFilter']['VisitTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
                 propdict['PerFilter']['VisitTime'] *= exptime
             # And count how many total exposures are requested per filter.
-            # First check if 'RestartCompleteSequences' are true:
-            #   if both are true, then basically an indefinite number of visits are requested.
+            # First check if 'RestartCompleteSequences' is true:
+            #   if both are true, then basically an indefinite number of visits are requested, although we're
+            #   not going to count this way (as the proposals still make an approximate number of requests).
             restartComplete = False
-            temp = _matchParamNameValue(config[propname], 'RestartCompleteSequences')
+            temp = self._matchParamNameValue(config[propname], 'RestartCompleteSequences')
             if len(temp) > 0:
                 if temp[0] == 'True':
                     restartComplete = True
-            propdict['RestartSequences'] = restartComplete
+            propdict['RestartCompleteSequences'] = restartComplete
+            # Grab information on restarting lost sequences so we can print this too.
+            restartLost = False
+            tmp = self._matchParamNameValue(config[propname], 'RestartLostSequences')
+            if len(temp) > 0:
+                if temp[0]  == 'True':
+                    restartLost = True
+            propdict['RestartLostSequences'] = restartLost
             if propdict['PropType'] == 'WL':
                 # Simple 'Filter_Visits' request for number of observations.
-                propdict['PerFilter']['NumVisits'] = np.array(_matchParamNameValue(config[propname],
+                propdict['PerFilter']['NumVisits'] = np.array(self._matchParamNameValue(config[propname],
                                                                                    'Filter_Visits'), int)
-                if restartComplete:
-                    propdict['PerFilter']['NumVisits'] = 'Indefinite'
             elif propdict['PropType'] == 'WLTSS':
                 # Proposal contains subsequences and possible nested subseq, so must delve further.
                 # Make a dictionary to hold the subsequence info (keyed per subsequence).
-                propdict['SubSeq'] = {}
-                # Identify where subsequences start in config[propname] arrays.
-                seqidxs = np.where(config[propname]['paramName'] == 'SubSeqName')[0]
-                # Assign subsequence info to configSummary['Proposals'][propname]['SubSeq'][subseqname]
-                for sidx in seqidxs:
-                    # This is fragile and depends on order from database query. However, it's the
-                    #  best I think we can do with the current method of storing these values in the Config table.
-                    i = sidx
-                    seqname = config[propname]['paramValue'][i]
-                    # Check if seqname is a nested subseq of an existing sequence:
-                    nestedsubseq = False
-                    prevseqs = propdict['SubSeq'].keys()
-                    for ps in prevseqs:
-                        if 'SubSeqNested' in propdict['SubSeq'][ps]:
-                            if seqname in propdict['SubSeq'][ps]['SubSeqNested']:
-                                seqdict = propdict['SubSeq'][ps]['SubSeqNested'][seqname]
-                                nestedsubseq = True
-                    # If not, then create a new subseqence key/dictionary for this subseq.
-                    if not nestedsubseq:
-                        propdict['SubSeq'][seqname] = {}
-                        seqdict = propdict['SubSeq'][seqname]
-                    # And move on to next parameters within subsequence set.
-                    i += 1
-                    if config[propname]['paramName'][i] == 'SubSeqNested':
-                        subseqnestedname = config[propname]['paramValue'][i]
-                        if subseqnestedname != '.':
-                            # Have nested subsequence, so keep track of that here
-                            #  but will fill in info later.
-                            seqdict['SubSeqNested'] = {}
-                            # Set up nested dictionary for nested subsequence.
-                            seqdict['SubSeqNested'][subseqnestedname] = {}
-                        i += 1
-                    subseqfilters = config[propname]['paramValue'][i]
-                    if subseqfilters != '.':
-                        seqdict['Filters'] = subseqfilters
-                    i += 1
-                    subseqexp = config[propname]['paramValue'][i]
-                    if subseqexp != '.':
-                        seqdict['SubSeqExp'] = subseqexp
-                    i+= 1
-                    subseqevents = config[propname]['paramValue'][i]
-                    seqdict['Events'] = int(subseqevents)
-                    i+=2
-                    subseqinterval = config[propname]['paramValue'][i]
-                    subseqint = np.array([subseqinterval.split('*')], 'float').prod()
-                    # In days ..
-                    subseqint *= 1/24.0/60.0/60.0
-                    if subseqint > 1:
-                        seqdict['SubSeqInt'] = '%.2f days' %(subseqint)
-                    else:
-                        subseqint *= 24.0
-                        if subseqint > 1:
-                            seqdict['SubSeqInt'] = '%.2f hours' %(subseqint)
-                        else:
-                            subseqint *= 60.0
-                            seqdict['SubSeqInt'] = '%.3f minutes' %(subseqint)
-                # End of assigning subsequence info - move on to counting number of visits.
-                if restartComplete:
-                    propdict['PerFilter']['NumVisits'] = 'Indefinite'
-                else:
-                    propdict['PerFilter']['NumVisits'] = np.zeros(len(propdict['PerFilter']['Filters']), int)
-                    subseqs = propdict['SubSeq'].keys()
-                    for subseq in subseqs:
-                        subevents = propdict['SubSeq'][subseq]['Events']
-                        # Count visits from direct subsequences.
-                        if 'SubSeqExp' in propdict['SubSeq'][subseq] \
-                            and 'Filters' in propdict['SubSeq'][subseq]:
-                            subfilters = propdict['SubSeq'][subseq]['Filters']
-                            subexp = propdict['SubSeq'][subseq]['SubSeqExp']
-                            # If just one filter ..
-                            if len(subfilters) == 1:
-                                idx = (propdict['PerFilter']['Filters'] == subfilters)
-                                propdict['PerFilter']['NumVisits'][idx] += subevents * int(subexp)
-                            else:
-                                splitsubfilters = subfilters.split(',')
-                                splitsubexp = subexp.split(',')
-                                for f, exp in zip(splitsubfilters, splitsubexp):
-                                    idx = (propdict['PerFilter']['Filters'] == f)
-                                    propdict['PerFilter']['NumVisits'][idx] += subevents * int(exp)
-                        # Count visits if have nested subsequences.
-                        if 'SubSeqNested' in propdict['SubSeq'][subseq]:
-                            for subseqnested in propdict['SubSeq'][subseq]['SubSeqNested']:
-                                events = subevents *\
-                                  propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Events']
-                                subfilters = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['Filters']
-                                subexp = propdict['SubSeq'][subseq]['SubSeqNested'][subseqnested]['SubSeqExp']
-                                # If just one filter ..
-                                if len(subfilters) == 1:
-                                    idx = (propdict['PerFilter']['Filters'] == subfilters)
-                                    propdict['PerFilter']['NumVisits'][idx] += events * int(subexp)
-                                # Else may have multiple filters in the subsequence, so must split.
-                                splitsubfilters = subfilters.split(',')
-                                splitsubexp = subexp.split(',')
-                                for f, exp in zip(splitsubfilters, splitsubexp):
-                                    idx = (propdict['PerFilter']['Filters'] == f)
-                                    propdict['PerFilter']['NumVisits'][idx] += int(exp) * events
-                        propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested',
-                                                          'Events', 'SubSeqInt']
+                propdict['SubSeq'], Nvisits = self._parseSequences(config[propname], propdict['PerFilter']['Filters'])
+                propdict['PerFilter']['NumVisits'] = Nvisits
+                propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events', 'SubSeqInt']
             # Sort the filter information so it's ugrizy instead of order in opsim config db.
             idx = []
             for f in self.filterlist:
@@ -526,11 +585,7 @@ class OpsimDatabase(Database):
                     idx.append(filterpos[0][0])
             idx = np.array(idx, int)
             for k in propdict['PerFilter']:
-                # Skip numvisits if restartComplete (because just a string)
-                if restartComplete and k == 'NumVisits':
-                    continue
-                else:
-                    propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
+                propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
             propdict['PerFilter']['keyorder'] = ['Filters', 'VisitTime', 'MaxSeeing', 'MinSky',
                                                  'MaxSky', 'NumVisits']
         return configSummary, config
