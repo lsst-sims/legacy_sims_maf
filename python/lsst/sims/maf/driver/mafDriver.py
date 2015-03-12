@@ -186,7 +186,7 @@ class MafDriver(object):
         if (table is not None)  & (table != 'Summary'):
            self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,colnames=colnames,
                                                     distinctExpMJD=False, groupBy=None,
-                                                    tableName=table+'Table')
+                                                    tableName=table)
         else:
            self.data = self.opsimdb.fetchMetricData(sqlconstraint=constraint,
                                                     colnames=dbcolnames)
@@ -232,7 +232,7 @@ class MafDriver(object):
         if 'fieldTable' in self.opsimdb.tables:
             self.fieldData = self.opsimdb.fetchFieldsFromFieldTable(propids)
         else:
-            fieldID, idx = np.unique(self.data[slicer.simDataFieldIdColName], return_index=True)
+            fieldID, idx = np.unique(self.data[slicer.simDataFieldIDColName], return_index=True)
             ra = self.data[slicer.fieldRaColName][idx]
             dec = self.data[slicer.fieldDecColName][idx]
             self.fieldData = np.core.records.fromarrays([fieldID, ra, dec],
