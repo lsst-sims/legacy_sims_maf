@@ -22,10 +22,10 @@ class TestOpsimDb(unittest.TestCase):
         """Test opsim specific database class setup/instantiation."""
         # Test tables were connected to.
         self.assertTrue(isinstance(self.oo.tables, dict))
-        self.assertEqual(self.oo.dbTables['summaryTable'][0], 'Summary')
+        self.assertEqual(self.oo.dbTables['Summary'][0], 'Summary')
         # Test can override default table name/id keys if needed.
-        oo = db.OpsimDatabase(self.dbAddress, dbTables={'summaryTable':['ObsHistory', 'obsHistID']})
-        self.assertEqual(oo.dbTables['summaryTable'][0], 'ObsHistory')
+        oo = db.OpsimDatabase(self.dbAddress, dbTables={'Summary':['ObsHistory', 'obsHistID']})
+        self.assertEqual(oo.dbTables['Summary'][0], 'ObsHistory')
 
     def testOpsimDbMetricData(self):
         """Test queries for sim data. """
@@ -75,7 +75,6 @@ class TestOpsimDb(unittest.TestCase):
         seeingcol = self.oo.fetchSeeingColName()
         self.assertTrue(seeingcol, 'finSeeing')
 
-    '''
     def testOpsimDbConfig(self):
         """Test generation of config data. """
         configsummary, configdetails = self.oo.fetchConfig()
@@ -86,11 +85,11 @@ class TestOpsimDb(unittest.TestCase):
         propidsSummary = []
         for propname in configsummary['Proposals']:
             if propname != 'keyorder':
-                propidsSummary.append(configsummary['Proposals'][propname]['PropID'])
+                propidsSummary.append(configsummary['Proposals'][propname]['propID'])
         self.assertEqual(set(propidsSummary), set(propids))
         out.printDict(configsummary, 'Summary')
-        out.printDict(configdetails, 'Details')
-    '''
+        #out.printDict(configdetails, 'Details')
+
 
 if __name__ == "__main__":
     unittest.main()
