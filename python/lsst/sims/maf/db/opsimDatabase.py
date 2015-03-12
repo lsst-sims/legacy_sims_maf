@@ -557,14 +557,14 @@ class OpsimDatabase(Database):
             restartComplete = False
             temp = self._matchParamNameValue(config[propname], 'RestartCompleteSequences')
             if len(temp) > 0:
-                if temp[0] is 'True':
+                if temp[0] == 'True':
                     restartComplete = True
             propdict['RestartCompleteSequences'] = restartComplete
             # Grab information on restarting lost sequences so we can print this too.
             restartLost = False
             tmp = self._matchParamNameValue(config[propname], 'RestartLostSequences')
             if len(temp) > 0:
-                if temp[0] is True:
+                if temp[0]  == 'True':
                     restartLost = True
             propdict['RestartLostSequences'] = restartLost
             if propdict['PropType'] == 'WL':
