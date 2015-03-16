@@ -12,7 +12,7 @@ class TransientMetric(BaseMetric):
                  transDuration=10.,peakTime=5., riseSlope=0., declineSlope=0.,
                  surveyDuration=10., surveyStart=None, detectM5Plus=0.,
                  uPeak=20, gPeak=20, rPeak=20, iPeak=20, zPeak=20, yPeak=20,
-                 nPerLC=1, nFilters=1,
+                 nDetect=1, nPerLC=1, nFilters=1,
                  **kwargs):
         """
         transDuration = how long the transient lasts (days)
@@ -24,6 +24,8 @@ class TransientMetric(BaseMetric):
         surveyStart = MJD for the survey start date (otherwise us the time of the first observation)
         detectM5Plus = an observation will count as a detection if the light curve magnitude is brighter
                        than m5+detectM5Plus
+        nDetect = Number of observations (any filter) to demand before saying a transient has been detected
+                  (If one does not trust detection on a single frame)
         nPerLC = number of points to light curve for a object to be counted (in a unique filter)
         nFilters = number of filters that need to be observed for an object to be counted
         """
@@ -41,6 +43,7 @@ class TransientMetric(BaseMetric):
         self.surveyDuration = surveyDuration
         self.surveyStart = surveyStart
         self.detectM5Plus = detectM5Plus
+        self.nDetect = nDetect
         self.nPerLC = nPerLC
         self.nFilters = nFilters
 
@@ -74,6 +77,24 @@ class TransientMetric(BaseMetric):
         detected = np.zeros(dataSlice.size, dtype=int)
         detected[np.where(lcMags < dataSlice[self.m5Col] + self.detectM5Plus)] = 1
         detectThresh += 1
+
+        # XXX - insert a nDetect to demand that the thing be in X images, any filters.
+        if self.nDetect > 1:
+            detectThresh += 1
+            ord = np.argsort(dataSlice[self.mjdCol])
+            dataSlice = dataSlice[ord]
+            detected = detected[ord]
+            lcNumber = lcNumber[ord]
+            ulcNumber = np.unique(lcNumber)
+            left = np.searchsorted(lcNumber, ulcNumber)
+            right = np.searchsorted(lcNumber, ulcNumber, side='right')
+
+            for le,ri in zip(left,right):
+                # number of points where there are a detection
+                nd = np.sum(detected[le:ri])
+                if nd >= self.nDetect:
+                    detected[le:ri] += 1
+
 
         # Check if we need multiple points per light curve or multiple filters
         if (self.nPerLC > 1) | (self.nFilters > 1) :

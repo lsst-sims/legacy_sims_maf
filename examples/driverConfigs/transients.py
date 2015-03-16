@@ -18,16 +18,27 @@ metricList.append(configureMetric('TransientMetric',
                      kwargs={'riseSlope':-1., 'declineSlope':1.,
                              'metricName':'Detect w/slope'}) )
 
-# Demand at least 1 filter sample the lightcurve at 4 well-spaced points
+metricList.append(configureMetric('TransientMetric',
+                     kwargs={'riseSlope':-1., 'declineSlope':1.,
+                             'nDetect':2,
+                             'metricName':'Detect w/slope 2pts'}) )
+
+# Demand at least 1 filter sample the lightcurve at 3 well-spaced points
 metricList.append( configureMetric('TransientMetric',
                      kwargs={'riseSlope':-1., 'declineSlope':1.,
-                             'nPerLC':4 ,
-                             'metricName':'fourptsPerLC'}))
-# Demand at least 2 filters sample the lightcurve at 4 well-spaced points
+                             'nPerLC':3 ,
+                             'metricName':'3ptsPerLC'}))
+# Demand at least 2 filters sample the lightcurve at 3 well-spaced points
 metricList.append( configureMetric('TransientMetric',
                      kwargs={'riseSlope':-1., 'declineSlope':1.,
-                             'nPerLC':4 , 'nFilters':2,
-                             'metricName':'fourptsPerLC2Filt'}))
+                             'nPerLC':3 , 'nFilters':2,
+                             'metricName':'3ptsPerLC2Filt'}))
+
+# Demand at least 1 filters sample the lightcurve at 6 well-spaced points
+metricList.append( configureMetric('TransientMetric',
+                     kwargs={'riseSlope':-1., 'declineSlope':1.,
+                             'nPerLC':6 , 'nFilters':1,
+                             'metricName':'6ptsPerLC'}))
 
 
 
