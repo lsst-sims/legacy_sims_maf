@@ -1,16 +1,19 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-class TransientDetectMetric(BaseMetric):
+
+class TransientMetric(BaseMetric):
     """
     Calculate what fraction of the transients would be detected. Best paired with a spatial slicer.
     We are assuming simple light curves with no color evolution.
     """
     def __init__(self, metricName='TransientDetectMetric', mjdCol='expMJD',
-                 m5Col='fiveSigmaDepth', filterCol='filter', transDuration=10.,
-                 peakTime=5., riseSlope=0., declineSlope=0.,
+                 m5Col='fiveSigmaDepth', filterCol='filter',
+                 transDuration=10.,peakTime=5., riseSlope=0., declineSlope=0.,
+                 surveyDuration=10., surveyStart=None, detectM5Plus=0.,
                  uPeak=20, gPeak=20, rPeak=20, iPeak=20, zPeak=20, yPeak=20,
-                 surveyDuration=10., surveyStart=None, detectM5Plus=0., **kwargs):
+                 nPerLC=1, nFilters=1)
+                 **kwargs):
         """
         transDuration = how long the transient lasts (days)
         peakTime = How long it takes to reach the peak magnitude (days)
@@ -21,6 +24,8 @@ class TransientDetectMetric(BaseMetric):
         surveyStart = MJD for the survey start date (otherwise us the time of the first observation)
         detectM5Plus = an observation will count as a detection if the light curve magnitude is brighter
                        than m5+detectM5Plus
+        nPerLC = number of points to light curve for a object to be counted
+        nFilters = number of filters that need to be observed for an object to be counted
         """
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -36,11 +41,10 @@ class TransientDetectMetric(BaseMetric):
         self.surveyDuration = surveyDuration
         self.surveyStart = surveyStart
         self.detectM5Plus = detectM5Plus
+        self.nPerLC = nPerLC
+        self.nFilters = nFilters
 
     def run(self, dataSlice, slicePoint=None):
-        """
-
-        """
 
         # XXX--Should I loop this over a few phase-shifts to get a better measure? Maybe only needed in the more complicated transient metrics?
 
@@ -63,19 +67,33 @@ class TransientDetectMetric(BaseMetric):
             fMatch = np.where(dataSlice[self.filterCol] == key)
             lcMags[fMatch] += self.peaks[key]
 
+        # How many criteria needs to be passed
+        detectThresh = 0
+
+        # flag points that are above the SNR limit
         detected = np.zeros(dataSlice.size, dtype=int)
         detected[np.where(lcMags < dataSlice[self.m5Col] + self.detectM5Plus)] = 1
+        detectThresh += 1
 
-        nDetected = np.size(np.unique(lcNumber[np.where(detected == 1)]))
+        # Check if we need multiple points per light curve or multiple filters
+        if (self.nPerLC > 1) | (self.nFilters > 1) :
+            ulcNumber = np.unique(lcNumber)
+
+            left = np.searchsorted(ulcNumber, lcNumber)
+            right = np.searchsorted(ulcNumber, lcNumber, side='right')
+
+            detecThresh += self.nFilters
+
+            for le,ri in zip(left,right):
+                points = np.where(detected[le:ri] > 0)
+                ufilters = np.unique(data['fitler'][le:ri][points])
+                phaseSections = np.floor(time[le:ri][points]/self.transDuration * self.nPerLC)
+                #nPhase = np.size(np.unique(phaseSections))
+                for filtName in ufilters:
+                    good = np.where(data['fitler'][le:ri][points] == filtName)
+                    if np.size(np.unique(phaseSections[good])) >= self.nPerLC:
+                        detected[le:ri] += 1
+
+        nDetected = np.size(np.unique(lcNumber[np.where(detected >= detectThresh)]))
 
         return float(nDetected)/nTransMax
-
-
-# Now, these are going to be fairly similar metrics--it's tempting to make them complex metrics and just have reduce functions for detect, LC, color...
-
-
-#class TransientLCMetric(BaseMetric):
-    #XXX -- similar to detect, but now demand that there are N observations in at least one filter to count
-
-#class TransientColorMetric(BaseMetric):
-    #XXX -- similar to above, but now demand the light curve is observed with N well-spaced observations in M different filters.
