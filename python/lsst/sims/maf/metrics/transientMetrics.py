@@ -12,7 +12,7 @@ class TransientMetric(BaseMetric):
                  transDuration=10.,peakTime=5., riseSlope=0., declineSlope=0.,
                  surveyDuration=10., surveyStart=None, detectM5Plus=0.,
                  uPeak=20, gPeak=20, rPeak=20, iPeak=20, zPeak=20, yPeak=20,
-                 nPerLC=1, nFilters=1)
+                 nPerLC=1, nFilters=1,
                  **kwargs):
         """
         transDuration = how long the transient lasts (days)
@@ -24,13 +24,13 @@ class TransientMetric(BaseMetric):
         surveyStart = MJD for the survey start date (otherwise us the time of the first observation)
         detectM5Plus = an observation will count as a detection if the light curve magnitude is brighter
                        than m5+detectM5Plus
-        nPerLC = number of points to light curve for a object to be counted
+        nPerLC = number of points to light curve for a object to be counted (in a unique filter)
         nFilters = number of filters that need to be observed for an object to be counted
         """
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
-        super(TransientDetectMetric, self).__init__(col=[self.mjdCol, self.m5Col,self.filterCol],
+        super(TransientMetric, self).__init__(col=[self.mjdCol, self.m5Col,self.filterCol],
                                                     units='Fraction Detected',
                                                     metricName=metricName,**kwargs)
         self.peaks = {'u':uPeak,'g':gPeak,'r':rPeak,'i':iPeak,'z':zPeak,'y':yPeak}
@@ -77,20 +77,25 @@ class TransientMetric(BaseMetric):
 
         # Check if we need multiple points per light curve or multiple filters
         if (self.nPerLC > 1) | (self.nFilters > 1) :
+            # make sure things are sorted by time
+            ord = np.argsort(dataSlice[self.mjdCol])
+            dataSlice = dataSlice[ord]
+            detected = detected[ord]
+            lcNumber = lcNumber[ord]
             ulcNumber = np.unique(lcNumber)
 
-            left = np.searchsorted(ulcNumber, lcNumber)
-            right = np.searchsorted(ulcNumber, lcNumber, side='right')
+            left = np.searchsorted(lcNumber, ulcNumber)
+            right = np.searchsorted(lcNumber, ulcNumber, side='right')
 
-            detecThresh += self.nFilters
+            detectThresh += self.nFilters
 
             for le,ri in zip(left,right):
                 points = np.where(detected[le:ri] > 0)
-                ufilters = np.unique(data['fitler'][le:ri][points])
+                ufilters = np.unique(dataSlice[self.filterCol][le:ri][points])
                 phaseSections = np.floor(time[le:ri][points]/self.transDuration * self.nPerLC)
                 #nPhase = np.size(np.unique(phaseSections))
                 for filtName in ufilters:
-                    good = np.where(data['fitler'][le:ri][points] == filtName)
+                    good = np.where(dataSlice[self.filterCol][le:ri][points] == filtName)
                     if np.size(np.unique(phaseSections[good])) >= self.nPerLC:
                         detected[le:ri] += 1
 
