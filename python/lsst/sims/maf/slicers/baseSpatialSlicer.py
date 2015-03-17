@@ -23,6 +23,8 @@ from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMeta
 
 from .baseSlicer import BaseSlicer
 
+__all__ = ['BaseSpatialSlicer']
+
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',

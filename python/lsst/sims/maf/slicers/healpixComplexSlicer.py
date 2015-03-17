@@ -7,6 +7,8 @@ import lsst.sims.maf.metrics as metrics
 import matplotlib.pyplot as plt
 import warnings
 
+__all__ = ['HealpixComplexSlicer']
+
 class HealpixComplexSlicer(HealpixSlicer):
 
     def __init__(self, **kwargs):

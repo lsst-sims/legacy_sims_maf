@@ -10,6 +10,7 @@ from functools import wraps
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 
+__all__ = ['MovieSlicer']
 
 class MovieSlicer(BaseSlicer):
     """movie Slicer."""

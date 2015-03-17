@@ -4,6 +4,8 @@ import numpy as np
 from functools import wraps
 from .baseSpatialSlicer import BaseSpatialSlicer
 
+__all__ = ['OpsimFieldSlicer']
+
 class OpsimFieldSlicer(BaseSpatialSlicer):
     """Index-based slicer, matched ID's between simData and fieldData.
 

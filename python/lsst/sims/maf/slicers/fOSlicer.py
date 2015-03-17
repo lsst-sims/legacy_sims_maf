@@ -8,6 +8,8 @@ import healpy as hp
 from .healpixSlicer import HealpixSlicer
 from lsst.sims.maf.metrics.summaryMetrics import fOArea, fONv
 
+__all__ = ['fOSlicer']
+
 class fOSlicer(HealpixSlicer):
     """fO spatial slicer"""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, **kwargs):

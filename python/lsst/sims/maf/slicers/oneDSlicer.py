@@ -7,6 +7,7 @@ import warnings
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 
+__all__ = ['OneDSlicer']
 
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""

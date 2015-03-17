@@ -11,6 +11,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from lsst.sims.maf.utils import getDateVersion
 
+__all__ = ['SlicerRegistry', 'BaseSlicer']
+
 class SlicerRegistry(type):
     """
     Meta class for slicers, to build a registry of slicer classes.

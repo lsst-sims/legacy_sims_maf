@@ -9,6 +9,7 @@ from functools import wraps
 
 from .baseSlicer import BaseSlicer
 
+__all__ = ['NDSlicer']
 
 class NDSlicer(BaseSlicer):
     """Nd slicer (N dimensions)"""

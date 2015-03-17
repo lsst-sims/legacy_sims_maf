@@ -11,6 +11,8 @@ import warnings
 import matplotlib as mpl
 from lsst.sims.maf.utils.mafUtils import gnomonic_project_toxy
 
+__all__ = ['HealpixSDSSSlicer']
+
 class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
     def __init__(self, nside=128, spatialkey1 ='RA1' , spatialkey2='Dec1', verbose=True,

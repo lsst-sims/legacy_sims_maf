@@ -14,6 +14,8 @@ from lsst.sims.maf.utils import percentileClipping
 from .baseSpatialSlicer import BaseSpatialSlicer
 from matplotlib import ticker
 
+__all__ = ['HealpixSlicer']
+
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,

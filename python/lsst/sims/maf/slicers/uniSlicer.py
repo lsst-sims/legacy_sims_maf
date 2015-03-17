@@ -6,6 +6,8 @@ from functools import wraps
 
 from .baseSlicer import BaseSlicer
 
+__all__ = ['UniSlicer']
+
 class UniSlicer(BaseSlicer):
     """UniSlicer."""
     def __init__(self, verbose=True, badval=-666, plotFuncs=None):
