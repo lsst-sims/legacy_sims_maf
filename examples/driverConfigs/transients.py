@@ -18,6 +18,7 @@ metricList.append(configureMetric('TransientMetric',
                      kwargs={'riseSlope':-1., 'declineSlope':1.,
                              'metricName':'Detect w/slope'}) )
 
+# Demand 2 points before tmax before counting the LC as detected
 metricList.append(configureMetric('TransientMetric',
                      kwargs={'riseSlope':-1., 'declineSlope':1.,
                              'nDetect':2,

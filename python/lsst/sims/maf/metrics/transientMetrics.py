@@ -17,17 +17,21 @@ class TransientMetric(BaseMetric):
         """
         transDuration = how long the transient lasts (days)
         peakTime = How long it takes to reach the peak magnitude (days)
-        riseSlope = slope of the light curve before peak time (mags/day) (XXX -- should be negative since mags are backwards?)
-        declineSlope = slope of the light curve after peak time (mags/day)
-        (ugrizy)Peak = peak magnitude in each filter
-        surveyDuration = length of survey (years)
-        surveyStart = MJD for the survey start date (otherwise us the time of the first observation)
-        detectM5Plus = an observation will count as a detection if the light curve magnitude is brighter
-                       than m5+detectM5Plus
-        nDetect = Number of observations (any filter) to demand before saying a transient has been detected
-                  (If one does not trust detection on a single frame)
-        nPerLC = number of points to light curve for a object to be counted (in a unique filter)
-        nFilters = number of filters that need to be observed for an object to be counted
+        riseSlope = Slope of the light curve before peak time (mags/day).
+                    Should be negative since mags are backwards.
+        declineSlope = Slope of the light curve after peak time (mags/day).
+                       Should be positive since mags are backwards.
+        (ugrizy)Peak = Peak magnitude in each filter.
+        surveyDuration = Length of survey (years).
+        surveyStart = MJD for the survey start date (otherwise us the time of the first observation).
+        detectM5Plus = An observation will count as a if the light curve magnitude is brighter
+                       than m5+detectM5Plus.
+        nDetect = Number of observations (any filter) to demand before peakTime
+                  before saying a transient has been detected.
+                  (If one does not trust detection on a single visit)
+        nPerLC = Number of points "well-distributed points" above the detectM5Plus theshold
+                 in a light curve for a object to be counted (in a single filter).
+        nFilters = Number of filters that need to be observed for an object to be counted as detected.
         """
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -48,8 +52,6 @@ class TransientMetric(BaseMetric):
         self.nFilters = nFilters
 
     def run(self, dataSlice, slicePoint=None):
-
-        # XXX--Should I loop this over a few phase-shifts to get a better measure? Maybe only needed in the more complicated transient metrics?
 
         # Total number of transients that could go off back-to-back
         nTransMax = np.floor(self.surveyDuration/(self.transDuration/365.25))
@@ -78,23 +80,23 @@ class TransientMetric(BaseMetric):
         detected[np.where(lcMags < dataSlice[self.m5Col] + self.detectM5Plus)] = 1
         detectThresh += 1
 
-        # XXX - insert a nDetect to demand that the thing be in X images, any filters.
         if self.nDetect > 1:
             detectThresh += 1
             ord = np.argsort(dataSlice[self.mjdCol])
             dataSlice = dataSlice[ord]
             detected = detected[ord]
             lcNumber = lcNumber[ord]
+            time = time[ord]
             ulcNumber = np.unique(lcNumber)
             left = np.searchsorted(lcNumber, ulcNumber)
             right = np.searchsorted(lcNumber, ulcNumber, side='right')
 
             for le,ri in zip(left,right):
                 # number of points where there are a detection
-                nd = np.sum(detected[le:ri])
+                good = np.where(time[le:ri] < self.peakTime)
+                nd = np.sum(detected[le:ri][good])
                 if nd >= self.nDetect:
                     detected[le:ri] += 1
-
 
         # Check if we need multiple points per light curve or multiple filters
         if (self.nPerLC > 1) | (self.nFilters > 1) :
