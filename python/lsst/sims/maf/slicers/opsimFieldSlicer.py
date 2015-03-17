@@ -90,7 +90,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
-                      logScale=False, flipXaxis=False,
+                      logScale=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -105,7 +105,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        """
         if ylabel is None:
             ylabel = 'Number of Fields'
         fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
@@ -115,6 +115,5 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                                                              addLegend=addLegend, legendloc=legendloc,
                                                              bins=bins, binsize=binsize, cumulative=cumulative,
                                                              xMin=xMin, xMax=xMax, logScale=logScale,
-                                                             flipXaxis=flipXaxis,
                                                              scale=1, yaxisformat='%d', color=color, **kwargs)
         return fignum

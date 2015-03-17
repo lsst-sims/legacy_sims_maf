@@ -156,7 +156,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
-                      logScale=False, flipXaxis=False,
+                      logScale=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -173,7 +173,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        """
         # Simply overrides scale of base plotHistogram.
         if ylabel is None:
             ylabel = 'Area (1000s of square degrees)'
@@ -185,7 +185,6 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                           addLegend=addLegend, legendloc=legendloc,
                                                           bins=bins, binsize=binsize, cumulative=cumulative,
                                                           xMin=xMin, xMax=xMax, logScale=logScale,
-                                                          flipXaxis=flipXaxis,
                                                           scale=scale, color=color,
                                                           linestyle=linestyle,**kwargs)
         return fignum
