@@ -124,4 +124,7 @@ class TransientMetric(BaseMetric):
 
         nDetected = np.size(np.unique(lcNumber[np.where(detected >= detectThresh)]))
 
+        # Rather than keeping a single "detected" variable, maybe make a mask for each criteria, then
+        # reduce functions like: reduce_singleDetect, reduce_NDetect, reduce_PerLC, reduce_perFilter. The way I'm running now it would speed things up.
+
         return float(nDetected)/nTransMax
