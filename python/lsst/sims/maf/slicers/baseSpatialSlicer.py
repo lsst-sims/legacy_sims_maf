@@ -184,17 +184,11 @@ class BaseSpatialSlicer(BaseSlicer):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
 
-    def sliceSimDataMultiSlicepoint(self, islices):
-        """Return indexes for opsim data at multiple slicepoints (rarely used). """
-        binx, biny, binz=self._treexyz(self.slicePoints['ra'][islices], self.slicePoints['dec'][islices])
-        indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
-        return indices
-
 
     ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, binsize=None, cumulative=False, anticumulative=False,
+                      bins=None, binsize=None, cumulative=False,
                       xMin=None, xMax=None, yMin=None, yMax=None,
                       logScale='auto', flipXaxis=False,
                       scale=1.0, yaxisformat='%.3f', color='b',
@@ -402,7 +396,7 @@ class BaseSpatialSlicer(BaseSlicer):
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = fig.add_subplot(111, projection=projection)
-        # Set up valid datapoints and colormin/max values. 
+        # Set up valid datapoints and colormin/max values.
         if plotMask:
             # Plot all data points.
             mask = np.ones(len(metricValue), dtype='bool')
