@@ -4,6 +4,7 @@ from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
 
+
 class fOArea(BaseMetric):
     """
     Metric to calculate the FO Area; works with FO slicer only.
@@ -138,6 +139,19 @@ class NormalizeMetric(BaseMetric):
         else:
             return result
 
+class ZeropointMetric(BaseMetric):
+    """
+    Return a metric values with the addition of 'zp'. Useful for altering the zeropoint for summary statistics.
+    """
+    def __init__(self, col='metricdata', zp=0, **kwargs):
+        super(NormalizeMetric, self).__init__(col=col, **kwargs)
+        self.zp = zp
+    def run(self, dataSlice, slicePoint=None):
+        result = dataSlice[self.colname] + self.zp
+        if len(result) == 1:
+            return result[0]
+        else:
+            return result
 
 class TotalPowerMetric(BaseMetric):
     """
