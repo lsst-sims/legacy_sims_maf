@@ -21,19 +21,25 @@ if __name__=="__main__":
 
 
     parser = argparse.ArgumentParser(description='Python script to interpret MAF "flexible" configuration files'
-                                     'and feed them to the driver.',
+                                     ' and feed them to the driver.',
                                      epilog='%s' %(versionInfo))
     parser.add_argument("configFile", type=str, help="Name of the configuration file.")
     parser.add_argument("--runName", type=str, default='', help='Root name of the sqlite dbfile '
                         '(i.e. filename minus _sqlite.db).' )
     parser.add_argument("--dbDir", type=str, default='.', help='Directory containing the sqlite dbfile.')
     parser.add_argument("--outDir", type=str, default='./Out', help='Output directory for MAF outputs.')
-    parser.add_argument("--slicerName", type=str, default='HealpixSlicer', help='SlicerName,'
-                        'for flexible configuration driver scripts that take this argument.')
-    parser.add_argument("--plotOnly", dest='plotOnly', action='store_true', help="Restore data and regenerate plots")
+    parser.add_argument("--plotOnly", dest='plotOnly', action='store_true', help="Restore data and regenerate plots, without recalculating metrics.")
     parser.set_defaults(plotOnly=False)
 
-    args = parser.parse_args()
+    # Allow runFlexibleDriver to parse expected (defined above) options as well as kwargs appropriate for
+    #   a given driver configuration file.  Will pass the resulting set of kwargs to the driver in **kwargs dict.
+    args, extras = parser.parse_known_args()
+    kwargs = {}
+    for ekey, estr in zip(extras[::2], extras[1::2]):
+        kwargs[ekey] = estr
+    runName = args.runName
+    del args.runName
+    kwargs.update(vars(args))
 
     # Set up configuration parameters.
     config = MafConfig()
@@ -58,8 +64,7 @@ if __name__=="__main__":
 
     print 'Finished loading config from %s.mConfig' %(configname)
     # Run driver configuration script.
-    config = conf.mConfig(config, runName=args.runName, dbDir=args.dbDir, outputDir=args.outDir,
-                          slicerName=args.slicerName)
+    config = conf.mConfig(config, runName, **kwargs)
     if args.plotOnly:
         config.plotOnly = True
 
