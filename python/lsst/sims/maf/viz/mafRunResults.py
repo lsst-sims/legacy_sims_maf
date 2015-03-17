@@ -5,6 +5,8 @@ from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 
+__all__ = ['MafRunResults']
+
 class MafRunResults(object):
     """
     Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages.

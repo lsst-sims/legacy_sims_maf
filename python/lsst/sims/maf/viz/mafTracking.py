@@ -4,7 +4,7 @@ import numpy as np
 import lsst.sims.maf.db as db
 from .mafRunResults import MafRunResults
 
-# ADD TRACKING DB location
+__all__ = ['MafTracking']
 
 class MafTracking(object):
     """
