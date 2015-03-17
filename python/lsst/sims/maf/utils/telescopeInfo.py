@@ -1,3 +1,4 @@
+__all__ = ['TelescopeInfo']
 
 class TelescopeInfo(object):
 

@@ -1,6 +1,8 @@
 import sys
 import numpy as np
 
+__all__ = ['printDict', 'printSimpleDict']
+
 def _myformat(args, delimiter=' '):
     """
     Generic line formatter (to let you specify delimiter between text fields).
@@ -36,6 +38,8 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     Print dictionaries (and/or nested dictionaries) nicely.
     Can also print other simpler items (such as numpy ndarray) nicely too.
 
+    content = dictionary,
+    label = header, 
     filehandle = the file object for output .. if 'None' (default) prints to standard out.
     delimiter = the user specified delimiter between fields.
     _level is for internal use (controls level of indent).

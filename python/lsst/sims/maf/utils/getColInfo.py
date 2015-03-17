@@ -1,5 +1,7 @@
 import lsst.sims.maf.stackers as stackers
 
+__all__ = ['ColInfo']
+
 class ColInfo(object):
     def __init__(self):
         """Set up the unit and source dictionaries.
