@@ -2,6 +2,8 @@
 
 import numpy as np
 
+__all__ = ['connectOpsimDb', 'createSQLWhere', 'scaleBenchmarks', 'calcCoaddedDepth']
+
 def connectOpsimDb(dbAddressDict):
     """
     Convenience function to handle connecting to database.
@@ -35,46 +37,58 @@ def createSQLWhere(tag, propTags):
         sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
 
-def scaleStretchDesign(runLength):
-    """Scale the benchmark numbers for total number of visits and coadded depth (both design and stretch goals),
-    based on the length of the opsim run (runLength, in years).
 
-    (i.e. design and stretch goals have default values: scale these from the nominal 10 years to whatever is the
-    length of the current opsim run).
-    Note that the number of visits is scaled to a truncated (floor) number, not rounded.
+def scaleBenchmarks(runLength, benchmark='design'):
     """
-    # Set baseline (default) numbers.
-    # Baseline length (Years)
+    Given the runLength and a benchmark name ('design' or 'stretch'),
+    returns the default benchmark expected values for seeing, skybrightness, single visit depth and number of visits,
+     scaled to the run length.
+
+    Note that the number of visits is scaled to a truncated number rather than rounded.
+    If the benchmark name is 'requested', returns the design values of the other parameters.
+    """
+    # Set baseline (default) numbers for the baseline survey length (10 years).
     baseline = 10.
+
     design = {}
     stretch = {}
     design['nvisits']={'u':56,'g':80, 'r':184, 'i':184, 'z':160, 'y':160}
     stretch['nvisits']={'u':70,'g':100, 'r':230, 'i':230, 'z':200, 'y':200}
+
     design['skybrightness'] = {'u':21.8, 'g':22., 'r':21.3, 'i':20.0, 'z':19.1, 'y':17.5} # mag/sq arcsec
     stretch['skybrightness'] = {'u':21.8, 'g':22., 'r':21.3, 'i':20.0, 'z':19.1, 'y':17.5}
+
     design['seeing'] = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63} # arcsec
     stretch['seeing'] = {'u':0.77, 'g':0.73, 'r':0.7, 'i':0.67, 'z':0.65, 'y':0.63}
 
     design['singleVisitDepth'] = {'u':23.9,'g':25.0, 'r':24.7, 'i':24.0, 'z':23.3, 'y':22.1}
     stretch['singleVisitDepth'] = {'u':24.0,'g':25.1, 'r':24.8, 'i':24.1, 'z':23.4, 'y':22.2}
 
-    filters = design['nvisits'].keys()
     # Scale the number of visits.
     if runLength != baseline:
         scalefactor = float(runLength) / float(baseline)
-        for f in filters:
+        # Calculate scaled value for design and stretch values of nvisits, per filter.
+        for f in design:
             design['nvisits'][f] = int(np.floor(design['nvisits'][f] * scalefactor))
             stretch['nvisits'][f] = int(np.floor(stretch['nvisits'][f] * scalefactor))
-    # Scale the coaddded depth.
-    design['coaddedDepth'] = {}
-    stretch['coaddedDepth'] = {}
-    for f in filters:
-        design['coaddedDepth'][f] = float(1.25 * np.log10(design['nvisits'][f]
-                                                    * 10.**(0.8*design['singleVisitDepth'][f])))
-        if not np.isfinite(design['coaddedDepth'][f]):
-            design['coaddedDepth'][f] = design['singleVisitDepth'][f]
-        stretch['coaddedDepth'][f] = float(1.25 * np.log10(stretch['nvisits'][f]
-                                                     * 10.**(0.8*stretch['singleVisitDepth'][f])))
-        if not np.isfinite(stretch['coaddedDepth'][f] ):
-            stretch['coaddedDepth'][f] = stretch['singleVisitDepth'][f]
-    return design, stretch
+
+    if benchmark == 'design':
+        return design
+    elif benchmark == 'stretch':
+        return stretch
+    else:
+        raise ValueError("Benchmark value %s not understood: use 'design' or 'stretch'" %(benchmark))
+
+def calcCoaddedDepth(nvisits, singleVisitDepth):
+    """
+    Given dictionaries of nvisits and singleVisitDepth (per filter),
+    Returns a dictionary containing the expected coadded depth.
+    """
+    coaddedDepth = {}
+    for f in nvisits:
+        if f not in singleVisitDepth:
+            raise ValueError('Filter keys in nvisits and singleVisitDepth must match')
+        coaddedDepth[f] = float(1.25 * np.log10(nvisits[f]) * 10**(0.8*singleVisitDepth[f]))
+        if not np.isfinite(coaddedDepth[f]):
+            coaddedDepth[f] = singleVisitDepth[f]
+    return coaddedDepth
