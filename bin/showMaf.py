@@ -6,6 +6,7 @@ import os, argparse
 
 from lsst.sims.maf.viz import MafTracking
 import lsst.sims.maf.db as db
+import webbrowser
 
 class RunSelectHandler(web.RequestHandler):
     def get(self):
@@ -116,6 +117,9 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--mafDir", type=str, default=None, help="Add this directory to the trackingDb and open immediately.")
     parser.add_argument("-c", "--mafComment", type=str, default=None, help="Add a comment to the trackingDB describing the MAF analysis of this directory (paired with mafDir argument).")
     parser.add_argument("-p", "--port", type=int, default=8888, help="Port for connecting to showMaf.")
+    parser.add_argument("--noBrowser", dest='noBrowser', default=False,
+                        action='store_true', help="Do not open a new browser tab")
+
     args = parser.parse_args()
 
     # Check tracking DB is sqlite (and add as convenience if forgotten).
@@ -190,6 +194,6 @@ if __name__ == "__main__":
     application = make_app()
     application.listen(args.port)
     print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' %(args.port)
-
+    if not args.noBrowser:
+        webbrowser.open_new_tab('http://localhost:%d' % (args.port))
     ioloop.IOLoop.instance().start()
-
