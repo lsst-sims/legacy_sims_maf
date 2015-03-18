@@ -6,6 +6,43 @@ import lsst.sims.maf.metrics as metrics
 
 class TestTechnicalMetrics(unittest.TestCase):
 
+    def testNChangesMetric(self):
+        """
+        Test the NChanges metric.
+        """
+        filters = np.array(['u', 'u', 'g', 'g', 'r'])
+        visitTimes = np.arange(0, filters.size, 1)
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.NChangesMetric()
+        result = metric.run(data)
+        self.assertEqual(result, 2)
+        filters = np.array(['u', 'g', 'u', 'g', 'r'])
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.NChangesMetric()
+        result = metric.run(data)
+        self.assertEqual(result, 4)
+
+    def testDeltaTimeChangesMetric(self):
+        """
+        Test the DeltaTime metric.
+        """
+        filters = np.array(['u', 'g'])
+        visitTimes = np.random.rand(2) * 10.0
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.DeltaTimeChangesMetric()
+        result = metric.run(data)
+        self.assertEqual(result, np.diff(visitTimes))
+        filters = np.array(['u', 'u', 'g', 'g', 'r'])
+        visitTimes = np.random.rand(filters.size) * 10.0
+        visitTimes.sort()
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        result = metric.run(data)
+        self.assertEqual(result.size, 2)
+
     def testOpenShutterFractionMetric(self):
         """
         Test the open shutter fraction metric.
