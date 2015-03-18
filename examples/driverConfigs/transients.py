@@ -29,29 +29,29 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     #                                  kwargs={'metricName':'Detect Tophat'}))
 
     metricList.append(configureMetric('TransientMetric', plotDict=plotDict,summaryStats=stats,
-                                      kwargs={'riseSlope':-0.5, 'declineSlope':0.5,'transDuration':20,
+                                      kwargs={'riseSlope':0, 'declineSlope':0,'transDuration':60,
                                               'metricName':'Alert'}) )
 
     # Demand 2 points before tmax before counting the LC as detected
     metricList.append(configureMetric('TransientMetric', plotDict=plotDict,summaryStats=stats,
-                         kwargs={'riseSlope':-0.5, 'declineSlope':0.5,'transDuration':20,
+                         kwargs={'riseSlope':0, 'declineSlope':0,'transDuration':60,
                                  'nDetect':2,
                                  'metricName':'Detect on rise'}) )
 
     # Demand at least 1 filter sample the lightcurve at 3 well-spaced points
     metricList.append( configureMetric('TransientMetric', plotDict=plotDict,summaryStats=stats,
-                         kwargs={'riseSlope':-0.5, 'declineSlope':0.5,'transDuration':20,
+                         kwargs={'riseSlope':0, 'declineSlope':0,'transDuration':60,
                                  'nPerLC':3 ,
                                  'metricName':'3ptsPerLC'}))
     # Demand at least 2 filters sample the lightcurve at 3 well-spaced points
     metricList.append( configureMetric('TransientMetric', plotDict=plotDict,summaryStats=stats,
-                         kwargs={'riseSlope':-0.5, 'declineSlope':0.5,'transDuration':20,
+                         kwargs={'riseSlope':0, 'declineSlope':0,'transDuration':60,
                                  'nPerLC':3 , 'nFilters':2,
                                  'metricName':'3ptsPerLC2Filt'}))
 
     # Demand at least 1 filters sample the lightcurve at 6 well-spaced points
     metricList.append( configureMetric('TransientMetric', plotDict=plotDict,summaryStats=stats,
-                         kwargs={'riseSlope':-0.5, 'declineSlope':0.5,'transDuration':20,
+                         kwargs={'riseSlope':0, 'declineSlope':0,'transDuration':60,
                                  'nPerLC':6 , 'nFilters':1,
                                  'metricName':'6ptsPerLC'}))
 
