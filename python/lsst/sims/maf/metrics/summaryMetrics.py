@@ -4,6 +4,8 @@ from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
 
+__all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
+           'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric']
 
 class fOArea(BaseMetric):
     """

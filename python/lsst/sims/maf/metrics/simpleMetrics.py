@@ -3,6 +3,12 @@ from .baseMetric import BaseMetric
 
 # A collection of commonly used simple metrics, operating on a single column and returning a float.
 
+__all__ = ['Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetric', 'MedianAbsMetric',
+           'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric', 'CountUniqueMetric',
+           'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
+           'MaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
+           'PercentileMetric', 'NoutliersNsigmaMetric']
+
 class Coaddm5Metric(BaseMetric):
     """Calculate the coadded m5 value at this gridpoint."""
     def __init__(self, m5Col = 'fiveSigmaDepth', metricName='CoaddM5', **kwargs):

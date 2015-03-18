@@ -1,6 +1,9 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['NChangesMetric', 'OpenShutterFractionMetric', 'CompletenessMetric',
+           'VisitFiltersMetric']
+
 class NChangesMetric(BaseMetric):
     """
     Compute the number of times a column value changes.
