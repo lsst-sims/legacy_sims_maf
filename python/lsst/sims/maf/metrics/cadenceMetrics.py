@@ -1,6 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric', 'QuickRevisitMetric']
+
 class SupernovaMetric(BaseMetric):
     """
     Measure how many time series meet a given time and filter distribution requirement.
@@ -219,23 +221,36 @@ class UniformityMetric(BaseMetric):
 
 
 
-class QuickRevisitMetric(BaseMetric):
+class RapidRevisitMetric(BaseMetric):
     """
-    Count how many nights have more than nVisitsInNight visits.
-    (used in SPIE paper; but consider depreciating this at some point).
+    Calculate uniformity of time between consecutive visits on short timescales (for RAV1).
     """
-    def __init__(self, nightCol='night', nVisitsInNight=6, **kwargs):
-        self.nightCol = nightCol
-        super(QuickRevisitMetric, self).__init__(col=self.nightCol, **kwargs)
-        self.nVisitsInNight = nVisitsInNight
-        xlabel = 'Number of Nights with >= %d Visits' %(nVisitsInNight)
-        if 'xlabel' not in self.plotDict:
-            self.plotDict['xlabel'] = xlabel
+    def __init__(self, timeCol='expMJD', minNvisits=100,
+                 dTmin=40.0/60.0/60.0/24.0, dTmax=30.0/60.0/24.0, **kwargs):
+        """
+        timeCol = times of visits
+        minNvisits = minimum number of visits over survey.
+        dTmin = minimum dtime to consider (default 40 seconds)
+        dTmax = maximum dtime to consider (default 30 minutes)
+        """
+        self.timeCol = timeCol
+        self.minNvisits = minNvisits
+        self.dTmin = dTmin
+        self.dTmax = dTmax
+        super(QuickRevisitMetric, self).__init__(col=self.timeCol, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        """Count how many nights the dataSlice has >= nVisitsInNight."""
-        nightbins = np.arange(dataSlice[self.nightCol].min(), dataSlice[self.nightCol].max()+0.5, 1)
-        counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
-        condition = (counts >= self.nVisitsInNight)
-        return len(counts[condition])
-
+        # Check that we had at least minNvisits.
+        if dataSlice.size < minNvisits:
+            return self.badval
+        # Calculate consecutive visit time intervals
+        dtimes = np.diff(np.sort(dataSlice[self.timeCol]))
+        # Throw out dtimes which do not fall between dTmin/dTmax and sort.
+        good = np.where(dtimes >= self.dTmin & dtimes <= self.dTmax)[0]
+        dtimes = dtimes[good].sort()
+        # Set up a uniform distribution of dtimes between dTmin and dTmax.
+        binsize = (self.dTmax - self.dTmin) / float(dtimes.size)
+        uniform_dtimes = np.arange(self.dTmin, self.dTmax + binsize/2.0, binsize)
+        # Look at the differences between our times and the uniform times.
+        dmax = np.max(np.abs(dtimes - uniform_dtimes))
+        return dmax
