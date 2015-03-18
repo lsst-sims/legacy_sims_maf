@@ -16,19 +16,19 @@ set nightStart = $2
 set nightEnd = $3
 echo "#Joining movie from " $opsRun " for nights " $nightStart " to " $nightEnd
 
-# Set up to combine VisitFilters into long movie.
+# Set up to combine FilterColors into long movie.
 set nights = `seq $nightStart $nightEnd`
-set movieList = 'visitFiltersMovieList'
+set movieList = 'FilterColorsMovieList'
 if (-e $movieList) then
    rm $movieList
   endif
 
 foreach night ( $nights )
- if (-e $opsRun"_n"$night"/VisitFilters_SkyMap_30.0_30.0.mp4") then
-    echo "file "$opsRun"_n"$night"/VisitFilters_SkyMap_30.0_30.0.mp4" >> $movieList
+ if (-e $opsRun"_n"$night"/FilterColors_SkyMap_30.0_30.0.mp4") then
+    echo "file "$opsRun"_n"$night"/FilterColors_SkyMap_30.0_30.0.mp4" >> $movieList
     echo "file blank.mp4" >> $movieList
  endif
 end
 
-echo "# To create long movie of VisitFilters metric only, over multiple nights:"
+echo "# To create long movie of FilterColors metric only, over multiple nights:"
 echo "ffmpeg -f concat -i "$movieList" -c copy "$opsRun"_n"$nightStart"_n"$nightEnd"_visits.mp4"

@@ -124,12 +124,13 @@ class CompletenessMetric(BaseMetric):
         return completeness[-1]
 
 
-class VisitFiltersMetric(BaseMetric):
+class FilterColorsMetric(BaseMetric):
     """
     Calculate an RGBA value that accounts for the filters used up to time t0.
     """
     def __init__(self, rRGB='rRGB', gRGB='gRGB', bRGB='bRGB',
-                 timeCol='expMJD', t0=None, tStep=40./60./60./24., **kwargs):
+                 timeCol='expMJD', t0=None, tStep=40./60./60./24.,
+                 metricName='FilterColors', **kwargs):
         """
         t0 = the current time
         """
@@ -141,7 +142,8 @@ class VisitFiltersMetric(BaseMetric):
         if self.t0 is None:
             self.t0 = 52939
         self.tStep = tStep
-        super(VisitFiltersMetric, self).__init__(col=[rRGB, gRGB, bRGB, timeCol], **kwargs)
+        super(FilterColors, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
+                                           metricName=metricName, **kwargs)
         self.metricDtype = 'object'
         self.plotDict['logScale'] = False
         self.plotDict['colorMax'] = 10
