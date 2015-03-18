@@ -1,8 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['NChangesMetric', 'OpenShutterFractionMetric', 'CompletenessMetric',
-           'VisitFiltersMetric']
+__all__ = ['NChangesMetric', 'DeltaTimeChangesMetric', 'OpenShutterFractionMetric',
+           'CompletenessMetric', 'FilterColorsMetric']
 
 class NChangesMetric(BaseMetric):
     """
@@ -18,6 +18,23 @@ class NChangesMetric(BaseMetric):
         idxs = np.argsort(dataSlice[self.orderBy])
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         return len(np.where(diff == True)[0])
+
+class DeltaTimeChangesMetric(BaseMetric):
+    """
+    Compute the time between changes in a column value.
+    (useful for calculating time between filter changes in particular).
+    """
+    def __init__(self, col='filter', timeCol='expMJD', **kwargs):
+        self.col = col
+        self.timeCol = timeCol
+        super(DeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        idxs = np.argsort(dataSlice[self.timeCol])
+        diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
+        condition = np.where(diff==True)[0]
+        dtimes = dataSlice[self.timeCol][1:][condition] - dataSlice[self.timeCol][:-1][condition]
+        return dtimes
 
 class OpenShutterFractionMetric(BaseMetric):
     """
