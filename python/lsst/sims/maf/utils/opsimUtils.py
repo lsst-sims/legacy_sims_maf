@@ -52,6 +52,12 @@ def scaleBenchmarks(runLength, benchmark='design'):
 
     design = {}
     stretch = {}
+
+    design['nvisitsTotal'] = 825
+    stretch['nvisitsTotal'] = 1000
+    design['Area'] = 18000
+    stretch['Area'] = 20000
+
     design['nvisits']={'u':56,'g':80, 'r':184, 'i':184, 'z':160, 'y':160}
     stretch['nvisits']={'u':70,'g':100, 'r':230, 'i':230, 'z':200, 'y':200}
 
