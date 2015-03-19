@@ -30,7 +30,7 @@ class RunSliceMetric(BaseSliceMetric):
         self.slicer = None
         self.thumbnail = thumbnail
 
-    def metricObjIid(self, metricObj):
+    def getMetricObjIid(self, metricObj):
        """
        Return the internal dictionary id number (iid) for a given metricObject.
 

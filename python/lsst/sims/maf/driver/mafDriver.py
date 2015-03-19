@@ -378,7 +378,7 @@ class MafDriver(object):
                                          # each reduced metric
                                          # (have to identify related reduced metric values first)
                                          if metric.metricDtype == 'object':
-                                             iid = gm.metricObjIid(metric)[0]
+                                             iid = gm.getMetricObjIid(metric)[0]
                                              baseName = gm.metricNames[iid]
                                              all_names = gm.metricNames.values()
                                              matching_metrics = [x for x in all_names \
