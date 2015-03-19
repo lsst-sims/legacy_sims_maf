@@ -41,7 +41,7 @@ class TeffMetric(BaseMetric):
     """
     Effective time equivalent for a given set of visits.
     """
-    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', metricName='Teff',
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', metricName='tEff',
                  fiducialDepth=None, teffBase=30.0, **kwargs):
         self.m5Col = m5Col
         self.filterCol = filterCol
