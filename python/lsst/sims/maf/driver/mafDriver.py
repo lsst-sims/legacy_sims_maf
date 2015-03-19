@@ -332,7 +332,7 @@ class MafDriver(object):
                              newGm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                                  outDir=self.config.outputDir,
                                                                  useResultsDb=False)
-                             newGm.setSlicer(slicer)
+                             newGm._setSlicer(slicer)
                              restoredData = False
                              for iid in iids:
                                 gm.simDataNames[iid] = self.config.opsimName
@@ -344,7 +344,7 @@ class MafDriver(object):
                                    print 'Restoring %s'%fullFile
                                    newGm.readMetricData(fullFile)
                                    # Set the slicer to the newly restored slicer
-                                   newGm.setSlicer(newGm.slicers[iid], override=True)
+                                   newGm._setSlicer(newGm.slicers[iid], override=True)
                                    # Replace the restored plotting parameters
                                    newGm.plotDicts[iid] = gm.plotDicts[iid]
                                    newGm.displayDicts[iid] = gm.displayDicts[iid]
