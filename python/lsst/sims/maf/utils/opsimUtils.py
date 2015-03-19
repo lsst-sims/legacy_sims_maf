@@ -2,7 +2,7 @@
 
 import numpy as np
 
-__all__ = ['connectOpsimDb', 'createSQLWhere', 'scaleBenchmarks', 'calcCoaddedDepth']
+__all__ = ['connectOpsimDb', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
 def connectOpsimDb(dbAddressDict):
     """
@@ -36,6 +36,61 @@ def createSQLWhere(tag, propTags):
     else:
         sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
+
+def getFieldData(self, opsimFieldSlicer, opsimDb, sqlconstraint):
+    """Get the FieldData for an OpsimFieldSlicer, for an appropriate sqlconstraint (i.e. one proposal?)."""
+    # Get all fields used for all proposals.
+    if 'propID' not in sqlconstraint:
+        propids, propTags = opsimDb.fetchPropInfo()
+        propids = propids.keys()
+    else:
+        # Parse the propID out of the sqlconstraint.
+        # example: sqlconstraint: filter = r and (propid = 219 or propid = 155) and propid!= 90
+        sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
+        sqlconstraint = sqlconstraint.replace("'", '').replace('"', '')
+        # Allow for choosing all but a particular proposal.
+        sqlconstraint = sqlconstraint.replace('! =' , ' !=')
+        sqlconstraint = sqlconstraint.replace('  ', ' ')
+        sqllist = sqlconstraint.split(' ')
+        propids = []
+        nonpropids = []
+        i = 0
+        while i < len(sqllist):
+            if sqllist[i].lower() == 'propid':
+                i += 1
+                if sqllist[i] == "=":
+                    i += 1
+                    propids.append(int(sqllist[i]))
+                elif sqllist[i] == '!=':
+                    i += 1
+                    nonpropids.append(int(sqllist[i]))
+            i += 1
+        if len(propids) == 0:
+            propids = self.propids.keys()
+        if len(nonpropids) > 0:
+            for nonpropid in nonpropids:
+                if nonpropid in propids:
+                    propids.remove(nonpropid)
+    # And query the field Table.
+    if 'Field' in opsimDb.tables:
+        fieldData = opsimDb.fetchFieldsFromFieldTable(propids)
+    else:
+        fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)
+    return fieldData
+
+def getSimData(opsimDb, sqlconstraint, dbcols, stackers):
+    """
+    Query the opsim database for the necessary simdata columns, run any needed stackers,
+    return simdata array.
+    """
+    # Get data from database.
+    simdata = opsimDb.fetchMetricData(dbcolnames, sqlconstraint)
+    if len(simdata) == 0:
+        raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
+    # Now add the stacker columns.
+    for s in stackers
+        simData = s.run(simData)
+    return simData
 
 
 def scaleBenchmarks(runLength, benchmark='design'):
