@@ -43,6 +43,18 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data)
         self.assertEqual(result.size, 2)
 
+    def testTeffMetric(self):
+        """
+        Test the Teff (time_effective) metric.
+        """
+        filters = np.array(['g', 'g', 'g', 'g', 'g'])
+        m5 = np.zeros(len(filters), float) + 25.0
+        data = np.core.records.fromarrays([m5, filters],
+                                        names=['fiveSigmaDepth', 'filter'])
+        metric = metrics.TeffMetric(fiducialDepth={'g':25}, teffBase=30.0)
+        result = metric.run(data)
+        self.assertEqual(result, 30.0*m5.size)
+
     def testOpenShutterFractionMetric(self):
         """
         Test the open shutter fraction metric.

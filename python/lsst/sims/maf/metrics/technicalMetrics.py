@@ -1,7 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['NChangesMetric', 'DeltaTimeChangesMetric', 'OpenShutterFractionMetric',
+__all__ = ['NChangesMetric', 'DeltaTimeChangesMetric',
+           'TeffMetric', 'OpenShutterFractionMetric',
            'CompletenessMetric', 'FilterColorsMetric']
 
 class NChangesMetric(BaseMetric):
@@ -35,6 +36,33 @@ class DeltaTimeChangesMetric(BaseMetric):
         condition = np.where(diff==True)[0]
         dtimes = dataSlice[self.timeCol][1:][condition] - dataSlice[self.timeCol][:-1][condition]
         return dtimes
+
+class TeffMetric(BaseMetric):
+    """
+    Effective time equivalent for a given set of visits.
+    """
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', metricName='Teff',
+                 fiducialDepth=None, teffBase=30.0, **kwargs):
+        self.m5Col = m5Col
+        self.filterCol = filterCol
+        if fiducialDepth is None:
+            self.depth = {'u':23.9,'g':25.0, 'r':24.7, 'i':24.0, 'z':23.3, 'y':22.1} # design value
+        else:
+            if isinstance(fiducialDepth, dict):
+                self.depth = fiducialDepth
+            else:
+                raise ValueError('fiducialDepth should be None or dictionary')
+        self.teffBase = teffBase
+        super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        filters = np.unique(dataSlice[self.filterCol])
+        teff = 0.0
+        for f in filters:
+            match = np.where(dataSlice[self.filterCol] == f)[0]
+            teff += (10.0**(0.8*(dataSlice[self.m5Col][match] - self.depth[f]))).sum()
+        teff *= self.teffBase
+        return teff
 
 class OpenShutterFractionMetric(BaseMetric):
     """
