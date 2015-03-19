@@ -88,7 +88,7 @@ def getSimData(opsimDb, sqlconstraint, dbcols, stackers):
     if len(simdata) == 0:
         raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
     # Now add the stacker columns.
-    for s in stackers
+    for s in stackers:
         simData = s.run(simData)
     return simData
 
