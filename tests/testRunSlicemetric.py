@@ -13,12 +13,12 @@ import lsst.sims.maf.slicers as slicers
 import lsst.utils.tests as utilsTests
 
 def makeDataValues(size=100, min=0., max=1., random=True):
-    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
+    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
     datavalues += min
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     filtervalues = np.empty(size, dtype='str')
@@ -28,7 +28,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     ra = np.random.rand(size) * (360.0) * (np.pi/180.)
     dec = np.random.rand(size) * (-90.0) * (np.pi/180.)
     datavalues = np.core.records.fromarrays([datavalues, filtervalues, ra, dec],
-                                            names=['testdata', 'filter', 'ra', 'dec'])    
+                                            names=['testdata', 'filter', 'ra', 'dec'])
     return datavalues
 
 
@@ -43,8 +43,8 @@ class TestSetupRunSliceMetric(unittest.TestCase):
                                      plotDict={'units':'meanunits'})
         self.m1iid = 0
         self.m2 = metrics.CountMetric('testdata', metricName='Count testdata',
-                                      plotDict={'units':'countunits', 
-                                                  'cbarFormat':'%d', 
+                                      plotDict={'units':'countunits',
+                                                  'cbarFormat':'%d',
                                                   'title':'count_title'})
         self.m2iid = 1
         self.m3 = metrics.CompletenessMetric('filter', metricName='Completeness', g=50, r=50)
@@ -62,7 +62,7 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.m2 = None
         self.slicer = None
         os.remove('resultsDb_sqlite.db')
-        
+
     def testInit(self):
         """Test init setup for baseSliceMetric."""
         # Test dictionaries set up and empty.
@@ -75,7 +75,7 @@ class TestSetupRunSliceMetric(unittest.TestCase):
         self.assertEqual(self.testbbm.metadatas.keys(), [])
         # Test that slicer is set to None
         self.assertEqual(self.testbbm.slicer, None)
-        # Test that figformat is set 
+        # Test that figformat is set
         self.assertEqual(self.testbbm.figformat, self.figformat)
         # Test that can set figformat to alternate value
         testbbm2 = sliceMetrics.RunSliceMetric(outDir='.', figformat='eps')
@@ -84,19 +84,19 @@ class TestSetupRunSliceMetric(unittest.TestCase):
     def testSetSlicer(self):
         """Test setSlicer."""
         # Test can set slicer (when bbm slicer = None)
-        self.testbbm.setSlicer(self.slicer)
+        self.testbbm._setSlicer(self.slicer)
         # Test can set/check slicer (when = previous slicer)
         slicer2 = slicers.UniSlicer()
-        self.assertTrue(self.testbbm.setSlicer(slicer2, override=False))
+        self.assertTrue(self.testbbm._setSlicer(slicer2, override=False))
         # Test can not set/override slicer (when != previous slicer)
         slicer2 = slicers.HealpixSlicer(nside=16, verbose=False)
-        self.assertFalse(self.testbbm.setSlicer(slicer2, override=False))
+        self.assertFalse(self.testbbm._setSlicer(slicer2, override=False))
         # Unless you really wanted to..
-        self.assertTrue(self.testbbm.setSlicer(slicer2, override=True))
+        self.assertTrue(self.testbbm._setSlicer(slicer2, override=True))
 
     def testSetMetrics(self):
         """Test setting metrics."""
-        self.testbbm.setMetrics([self.m1, self.m2, self.m3])
+        self.testbbm._setMetrics([self.m1, self.m2, self.m3])
         # Test metricNames list is as expected.
         self.assertEqual(set(self.testbbm.metricNames.values()),
                          set(['Mean testdata', 'Count testdata', 'Completeness']))
@@ -109,25 +109,25 @@ class TestSetupRunSliceMetric(unittest.TestCase):
                          ['countunits', '%d', 'count_title'])
         # Test that can set metrics using a single metric (not a list)
         testbbm2 = sliceMetrics.RunSliceMetric(outDir='.')
-        testbbm2.setMetrics(self.m1)
+        testbbm2._setMetrics(self.m1)
         self.assertEqual(testbbm2.metricNames.values(), ['Mean testdata',])
         # Test that we can then add another metric.
         m4 = metrics.MeanMetric('testdata')
-        testbbm2.setMetrics(m4)
+        testbbm2._setMetrics(m4)
         self.assertEqual(testbbm2.metricNames.values(), ['Mean testdata', 'Mean testdata'])
-        
+
     def testValidateMetricData(self):
         """Test validation of metric data."""
         dv = makeDataValues()
-        # Test that validates correctly if all columns present in data. 
-        self.testbbm.setMetrics([self.m1, self.m2, self.m3])
+        # Test that validates correctly if all columns present in data.
+        self.testbbm._setMetrics([self.m1, self.m2, self.m3])
         self.assertTrue(self.testbbm.validateMetricData(dv))
         # Test that raises exception if not all columns present in data.
         m4 = metrics.MeanMetric('notTestData')
-        self.testbbm.setMetrics(m4)
+        self.testbbm._setMetrics(m4)
         self.assertRaises(Exception, self.testbbm.validateMetricData, dv)
 
-class TestRunRunSliceMetric(unittest.TestCase):        
+class TestRunRunSliceMetric(unittest.TestCase):
     def setUp(self):
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
@@ -144,8 +144,8 @@ class TestRunRunSliceMetric(unittest.TestCase):
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
         self.slicer.setupSlicer(self.dv)
-        self.testbbm.setSlicer(self.slicer)
-        self.testbbm.setMetrics([self.m1, self.m2, self.m3])
+        self.testbbm._setSlicer(self.slicer)
+        self.testbbm._setMetrics([self.m1, self.m2, self.m3])
 
     def tearDown(self):
         del self.testbbm
@@ -204,9 +204,9 @@ class TestRunRunSliceMetric(unittest.TestCase):
         lastslice = len(self.slicer) - 1
         for riid in self.riids:
             self.assertEqual(self.testbbm.metricValues[riid].mask[lastslice], True)
-                
 
-class TestReadWriteRunSliceMetric(unittest.TestCase):        
+
+class TestReadWriteRunSliceMetric(unittest.TestCase):
     def setUp(self):
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
@@ -223,8 +223,8 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
         self.dv = makeDataValues(size=1000, min=0, max=1)
         self.slicer = slicers.OneDSlicer('testdata', bins=np.arange(0, 1.25, .1))
         self.slicer.setupSlicer(self.dv)
-        self.testbbm.setSlicer(self.slicer)
-        self.testbbm.setMetrics([self.m1, self.m2, self.m3])
+        self.testbbm._setSlicer(self.slicer)
+        self.testbbm._setMetrics([self.m1, self.m2, self.m3])
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
         self.metadata = 'testing fake data run'
@@ -245,7 +245,7 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
             filename = filename.replace(' ', '_')
             self.expectedfiles.append(filename)
         self.expectedfiles.append('resultsDb_sqlite.db')
-                        
+
     def tearDown(self):
         self.testbbm.resultsDb.close()
         del self.testbbm
@@ -258,7 +258,7 @@ class TestReadWriteRunSliceMetric(unittest.TestCase):
         self.m2 = None
         self.slicer = None
         for f in self.expectedfiles:
-            os.remove(f)        
+            os.remove(f)
 
     def testWrite(self):
         """Test writing data to disk (and test outfile name generation)."""
@@ -303,13 +303,13 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
         self.m1 = metrics.MeanMetric('testdata', metricName='Mean testdata',
                                      plotDict={'units':'meanunits'})
         self.dv = makeDataValues(size=1000, min=0, max=1)
-        self.testbbm.setMetrics([self.m1,])
+        self.testbbm._setMetrics([self.m1,])
         self.iid = 0
         self.summaryStat = metrics.MeanMetric('metricdata')
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
         self.metadata = 'testing fake data run'
-        
+
     def tearDown(self):
         del self.testbbm
         del self.m1
@@ -324,7 +324,7 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
         # Try unislicer first: expect that summary statistic return will be simply the unislicer value.
         self.slicer = slicers.UniSlicer()
         self.slicer.setupSlicer(self.dv)
-        self.testbbm.setSlicer(self.slicer)
+        self.testbbm._setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
                                metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics(self.iid, self.summaryStat)
@@ -333,16 +333,15 @@ class TestSummaryStatisticRunSliceMetric(unittest.TestCase):
         self.assertEqual(summary, self.testbbm.metricValues[self.iid][0])
         # Try oneD slicer: other slicers should behave similarly.
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
-        self.testbbm.setMetrics([self.m1,])
+        self.testbbm._setMetrics([self.m1,])
         self.slicer = slicers.OneDSlicer('testdata', bins=100)
         self.slicer.setupSlicer(self.dv)
-        self.testbbm.setSlicer(self.slicer)
+        self.testbbm._setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname, sqlconstraint=self.sqlconstraint,
                                metadata=self.metadata)
         summary = self.testbbm.computeSummaryStatistics(self.iid, self.summaryStat)
         self.assertEqual(summary, self.testbbm.metricValues[self.iid].mean())
-                            
-        
+
 class TestPlottingRunSliceMetric(unittest.TestCase):
     def setUp(self):
         # Set up dictionary of all plotting parameters to test.
@@ -368,7 +367,7 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         self.opsimname = 'opsim1000'
         self.sqlconstraint = 'created fake testdata'
         self.metadata = 'testing fake data run'
-                        
+
     def tearDown(self):
         del self.testbbm
         del self.m1
@@ -380,16 +379,16 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         self.slicer = None
         os.remove('resultsDb_sqlite.db')
 
-    def testPlotting(self):        
+    def testPlotting(self):
         """Test plotting."""
-        import matplotlib.pyplot as plt    
+        import matplotlib.pyplot as plt
         # Test OneDSlicer.
         bins = np.arange(0, 1.25, .1)
         self.slicer = slicers.OneDSlicer('testdata', bins=bins)
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
-        self.testbbm.setMetrics([self.m1, self.m2])
+        self.testbbm._setMetrics([self.m1, self.m2])
         self.slicer.setupSlicer(self.dv)
-        self.testbbm.setSlicer(self.slicer)
+        self.testbbm._setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
                                sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         # Test plotting oneDslicer, where we've set the plot parameters.
@@ -408,10 +407,10 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         self.assertEqual(ax.get_title(), self.plotDict['title'])
         # Test a spatial slicer.
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
-        self.testbbm.setMetrics([self.m1, ])
+        self.testbbm._setMetrics([self.m1, ])
         self.slicer = slicers.HealpixSlicer(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
         self.slicer.setupSlicer(self.dv)
-        self.testbbm.setSlicer(self.slicer)
+        self.testbbm._setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
                                sqlconstraint=self.sqlconstraint, metadata=self.metadata)
         fignums = self.testbbm.plotMetric(self.m1iid, savefig=False)
@@ -432,7 +431,7 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         # Not sure how to check clims of color bar.
         # Check title.
         self.assertEqual(ax.get_title(), self.plotDict['title'])
-        
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
     utilsTests.init()

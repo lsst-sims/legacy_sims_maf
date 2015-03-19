@@ -3,6 +3,7 @@
 #  return the relevant indices in the simData to the metric.
 # The primary things added here are the methods to slice the data (for any spatial slicer)
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes.
+
 import warnings
 import numpy as np
 # For plotting.
@@ -288,12 +289,16 @@ class BaseSpatialSlicer(BaseSlicer):
             return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
-        if plt.axis()[2] == max(n):
-            plt.ylim([n.min(),n.max()])
         # Set y limits.
         if yMin is not None:
             plt.ylim(ymin=yMin)
+        else:
+            # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
+            try:
+                if plt.axis()[2] == max(n):
+                    plt.ylim([n.min(),n.max()])
+            except UnboundLocalError:
+                pass
         if yMax is not None:
             plt.ylim(ymax=yMax)
         # Set x limits.

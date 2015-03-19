@@ -1,4 +1,6 @@
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 import lsst.sims.maf.slicers as slicers
 from lsst.sims.maf.db import ResultsDb
 
@@ -191,9 +193,10 @@ class BaseSliceMetric(object):
             # Add summary metric info to results database. (should be float or int).
             if self.resultsDb:
                 if iidi not in self.metricIds:
-                    self.metricIds[iidi] = self.resultsDb.updateMetric(self.metricNames[iidi], self.slicer.slicerName,
-                                                                        self.simDataNames[iidi],
-                                                                        self.sqlconstraints[iidi],
+                    self.metricIds[iidi] = self.resultsDb.updateMetric(self.metricNames[iidi],
+                                                                       self.slicers[iidi].slicerName,
+                                                                       self.simDataNames[iidi],
+                                                                       self.sqlconstraints[iidi],
                                                                         self.metadatas[iidi], None)
                 self.resultsDb.updateSummaryStat(self.metricIds[iidi],
                                                     summaryName=summaryMetric.name.replace(' metricdata', ''),
@@ -228,11 +231,11 @@ class BaseSliceMetric(object):
             pParams['title'] += ': ' + mname
         if 'ylabel' not in pParams:
             # Build default y label if needed (i.e. oneDSlicer)
-            if self.slicer.slicerName == 'OneDSlicer':
+            if self.slicers[iid].slicerName == 'OneDSlicer':
                 pParams['ylabel'] = mname + ' (' + pParams['units'] + ')'
         if 'xlabel' not in pParams:
             # Build a default x label if needed
-            if self.slicer.slicerName == 'OneDSlicer':
+            if self.slicers[iid].slicerName == 'OneDSlicer':
                 pParams['xlabel'] = self.slicer.sliceColName + ' (' + self.slicer.sliceColUnits + ')'
             else:
                 pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
@@ -246,7 +249,7 @@ class BaseSliceMetric(object):
         # Save information about the plotted files.
         if self.resultsDb:
             if iid not in self.metricIds:
-                self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
+                self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicers[iid].slicerName,
                                                                 self.simDataNames[iid], self.sqlconstraints[iid],
                                                                 self.metadatas[iid], None)
             self.captionMetric(iid)
@@ -277,7 +280,7 @@ class BaseSliceMetric(object):
                 caption += '%s, ' %(p.replace('plot', ''))
             caption = caption[:-2] + ') for '
           caption += '%s ' %(self.metricNames[iid])
-          caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
+          caption += 'calculated with a %s slicer ' %(self.slicers[iid].slicerName)
           if len(self.metadatas[iid].strip()) > 0:
             caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
           if 'zp' in self.plotDicts[iid]:
@@ -288,11 +291,11 @@ class BaseSliceMetric(object):
           self.displayDicts[iid]['caption'] = caption
         if self.resultsDb:
           if iid not in self.metricIds:
-            self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
+            self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicers[iid].slicerName,
                                                               self.simDataNames[iid], self.sqlconstraints[iid],
                                                               self.metadatas[iid], None)
           if self.displayDicts[iid]['subgroup'] is None:
-             self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
+             self.displayDicts[iid]['subgroup'] = self.slicers[iid].slicerName
           self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
 
 
@@ -324,7 +327,7 @@ class BaseSliceMetric(object):
                             plotDict = self.plotDicts[iid])
         if self.resultsDb:
             self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid],
-                                                          slicer.slicerName,
+                                                          self.slicers[iid].slicerName,
                                                           self.simDataNames[iid],
                                                           self.sqlconstraints[iid],
                                                           self.metadatas[iid],
