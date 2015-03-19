@@ -19,7 +19,6 @@ class Coaddm5Metric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
 
-
 class MaxMetric(BaseMetric):
     """Calculate the maximum of a simData column slice."""
     def run(self, dataSlice, slicePoint=None):
