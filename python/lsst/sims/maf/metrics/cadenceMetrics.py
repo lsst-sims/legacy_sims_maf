@@ -1,7 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric', 'QuickRevisitMetric']
+__all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric', 'RapidRevisitMetric']
 
 class SupernovaMetric(BaseMetric):
     """
@@ -215,8 +215,8 @@ class UniformityMetric(BaseMetric):
         # Scale dates to lie between 0 and 1, where 0 is the first observation date and 1 is surveyLength
         dates = (dataSlice[self.expMJDCol]-dataSlice[self.expMJDCol].min())/(self.surveyLength*365.25)
         dates.sort() # Just to be sure
-        n_cum = np.arange(1,dates.size+1)/float(dates.size) # Cumulative distribution of dates
-        D_max = np.max(np.abs(n_cum-dates-dates[1])) # For a uniform distribution, dates = n_cum
+        n_cum = np.arange(1,dates.size+1)/float(dates.size)
+        D_max = np.max(np.abs(n_cum-dates-dates[1]))
         return D_max
 
 
@@ -229,7 +229,7 @@ class RapidRevisitMetric(BaseMetric):
                  dTmin=40.0/60.0/60.0/24.0, dTmax=30.0/60.0/24.0, **kwargs):
         """
         timeCol = times of visits
-        minNvisits = minimum number of visits over survey.
+        minNvisits = minimum number of visits within dtime in interval
         dTmin = minimum dtime to consider (default 40 seconds)
         dTmax = maximum dtime to consider (default 30 minutes)
         """
@@ -237,20 +237,24 @@ class RapidRevisitMetric(BaseMetric):
         self.minNvisits = minNvisits
         self.dTmin = dTmin
         self.dTmax = dTmax
-        super(QuickRevisitMetric, self).__init__(col=self.timeCol, **kwargs)
+        super(RapidRevisitMetric, self).__init__(col=self.timeCol, **kwargs)
+        # Update minNvisits, as 0 visits will crash algorithm and 1 is nonuniform by definition.
+        if self.minNvisits <= 1:
+            self.minNvisits = 2
 
     def run(self, dataSlice, slicePoint=None):
-        # Check that we had at least minNvisits.
-        if dataSlice.size < minNvisits:
-            return self.badval
         # Calculate consecutive visit time intervals
         dtimes = np.diff(np.sort(dataSlice[self.timeCol]))
-        # Throw out dtimes which do not fall between dTmin/dTmax and sort.
-        good = np.where(dtimes >= self.dTmin & dtimes <= self.dTmax)[0]
-        dtimes = dtimes[good].sort()
-        # Set up a uniform distribution of dtimes between dTmin and dTmax.
-        binsize = (self.dTmax - self.dTmin) / float(dtimes.size)
-        uniform_dtimes = np.arange(self.dTmin, self.dTmax + binsize/2.0, binsize)
+        # Identify dtimes within interval from dTmin/dTmax.
+        good = np.where((dtimes >= self.dTmin) & (dtimes <= self.dTmax))[0]
+        # If there are not enough visits in this time range, return bad value.
+        if good.size < self.minNvisits:
+            return self.badval
+        # Throw out dtimes outside desired range, and sort, then scale to 0-1.
+        dtimes = np.sort(dtimes[good])
+        dtimes = (dtimes-dtimes.min()) / float(self.dTmax-self.dTmin)
+        # Set up a uniform distribution between 0-1 (to match dtimes).
+        uniform_dtimes = np.arange(1, dtimes.size+1, 1)/float(dtimes.size)
         # Look at the differences between our times and the uniform times.
-        dmax = np.max(np.abs(dtimes - uniform_dtimes))
+        dmax = np.max(np.abs(uniform_dtimes-dtimes-dtimes[1]))
         return dmax
