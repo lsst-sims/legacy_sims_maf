@@ -78,7 +78,7 @@ def getFieldData(self, opsimFieldSlicer, opsimDb, sqlconstraint):
         fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)
     return fieldData
 
-def getSimData(opsimDb, sqlconstraint, dbcols, stackers):
+def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None):
     """
     Query the opsim database for the necessary simdata columns, run any needed stackers,
     return simdata array.
@@ -88,8 +88,9 @@ def getSimData(opsimDb, sqlconstraint, dbcols, stackers):
     if len(simdata) == 0:
         raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
     # Now add the stacker columns.
-    for s in stackers:
-        simData = s.run(simData)
+    if stackers is not None:
+        for s in stackers:
+            simData = s.run(simData)
     return simData
 
 
