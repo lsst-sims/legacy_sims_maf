@@ -81,15 +81,21 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def testFracAboveMetric(self):
         cutoff = 5.1
-        testmetric=metrics.FracAboveMetric('testdata', cutoff = cutoff)
+        testmetric = metrics.FracAboveMetric('testdata', cutoff=cutoff)
         self.assertEqual(testmetric.run(self.dv),
                          np.size(np.where(self.dv['testdata'] >= cutoff)[0])/float(np.size(self.dv)))
+        testmetric = metrics.FracAboveMetric('testdata', cutoff=cutoff, scale=2)
+        self.assertEqual(testmetric.run(self.dv),
+                         2.0*np.size(np.where(self.dv['testdata'] >= cutoff)[0])/float(np.size(self.dv)))
 
     def testFracBelowMetric(self):
         cutoff = 5.1
-        testmetric=metrics.FracBelowMetric('testdata', cutoff = cutoff)
+        testmetric = metrics.FracBelowMetric('testdata', cutoff=cutoff)
         self.assertEqual(testmetric.run(self.dv),
                          np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
+        testmetric = metrics.FracBelowMetric('testdata', cutoff=cutoff, scale=2)
+        self.assertEqual(testmetric.run(self.dv),
+                         2.0*np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
 
 
     def testNoutliersNsigma(self):
