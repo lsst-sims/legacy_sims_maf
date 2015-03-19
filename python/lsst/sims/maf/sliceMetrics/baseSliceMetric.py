@@ -163,6 +163,139 @@ class BaseSliceMetric(object):
           newiids.append(iid)
        return newiids
 
+    def computeSummaryStatistics(self, iid, summaryMetric):
+        """
+        Compute single number summary of self.metricValues[iid], using summaryMetric.
+
+        summaryMetric must be an object (not a class), already instantiated.
+        """
+        if not hasattr(iid, '__iter__'):
+            iid = [iid,]
+        summaryValues = []
+        for iidi in iid:
+            # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
+            # Create numpy structured array from metric data, with bad values removed or filled with maskval.
+            if hasattr(summaryMetric, 'maskVal'):
+               rarr = np.array(zip(self.metricValues[iidi].filled(summaryMetric.maskVal)),
+                               dtype=[('metricdata', self.metricValues[iidi].dtype)])
+            else:
+               rarr = np.array(zip(self.metricValues[iidi].compressed()),
+                               dtype=[('metricdata', self.metricValues[iidi].dtype)])
+            # The summary metric colname should already be set to 'metricdata', but in case it's not:
+            summaryMetric.colname = 'metricdata'
+            if np.size(rarr) == 0:
+               summaryValue = self.slicer.badval
+            else:
+               summaryValue = summaryMetric.run(rarr)
+            summaryValues.append(summaryValue)
+            # Add summary metric info to results database. (should be float or int).
+            if self.resultsDb:
+                if iidi not in self.metricIds:
+                    self.metricIds[iidi] = self.resultsDb.updateMetric(self.metricNames[iidi], self.slicer.slicerName,
+                                                                        self.simDataNames[iidi],
+                                                                        self.sqlconstraints[iidi],
+                                                                        self.metadatas[iidi], None)
+                self.resultsDb.updateSummaryStat(self.metricIds[iidi],
+                                                    summaryName=summaryMetric.name.replace(' metricdata', ''),
+                                                    summaryValue=summaryValue)
+        return summaryValues
+
+
+    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, outfileSuffix=None, verbose=True):
+        """
+        Generate visualizations (where relevant) for all metrics.
+        """
+        for iid in self.metricValues:
+            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot,
+                                       outfileSuffix=outfileSuffix)
+            if closefig:
+               plt.close('all')
+            if plotfigs is None and verbose:
+                warnings.warn('Not plotting metric data for %s' %(mname))
+
+    def plotMetric(self, iid, savefig=True, outfileRoot=None, outfileSuffix=None):
+        """
+        Create all plots for 'metricName' .
+        """
+        # Get the metric plot parameters.
+        pParams = self.plotDicts[iid]
+        # Build plot title and label.
+        mname = self.metricNames[iid]
+        # "Units" always in pParams, but might be '' (== the physical units).
+        if 'title' not in pParams:
+            # Build default title.
+            pParams['title'] = self.simDataNames[iid] + ' ' + self.metadatas[iid]
+            pParams['title'] += ': ' + mname
+        if 'ylabel' not in pParams:
+            # Build default y label if needed (i.e. oneDSlicer)
+            if self.slicer.slicerName == 'OneDSlicer':
+                pParams['ylabel'] = mname + ' (' + pParams['units'] + ')'
+        if 'xlabel' not in pParams:
+            # Build a default x label if needed
+            if self.slicer.slicerName == 'OneDSlicer':
+                pParams['xlabel'] = self.slicer.sliceColName + ' (' + self.slicer.sliceColUnits + ')'
+            else:
+                pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
+        # Plot the data.
+        # Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
+        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
+        plotResults = self.slicers[iid].plotData(self.metricValues[iid], savefig=savefig,
+                                           figformat=self.figformat, dpi=self.dpi,
+                                           filename=os.path.join(self.outDir, outfile),
+                                           thumbnail = self.thumbnail, **pParams)
+        # Save information about the plotted files.
+        if self.resultsDb:
+            if iid not in self.metricIds:
+                self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
+                                                                self.simDataNames[iid], self.sqlconstraints[iid],
+                                                                self.metadatas[iid], None)
+            self.captionMetric(iid)
+            for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
+                froot, fname = os.path.split(filename)
+                self.resultsDb.updatePlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
+        return plotResults['figs']
+
+    def captionMetric(self, iid):
+        """
+        Auto generate caption for a given metric.
+        """
+        displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
+        if (self.displayDicts[iid]['caption'] is None) or \
+            (self.displayDicts[iid]['caption'].endswith('(auto)')):
+          caption = ''
+          plotTypes = self.slicer.plotFuncs.keys()
+          if len(plotTypes) > 0:
+            caption += 'Plots ('
+            ptypes = []
+            for p in displayOrder:
+                if p in plotTypes:
+                    ptypes.append(p)
+                    plotTypes.remove(p)
+            for r in plotTypes:
+                ptypes.append(r)
+            for p in ptypes:
+                caption += '%s, ' %(p.replace('plot', ''))
+            caption = caption[:-2] + ') for '
+          caption += '%s ' %(self.metricNames[iid])
+          caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
+          if len(self.metadatas[iid].strip()) > 0:
+            caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
+          if 'zp' in self.plotDicts[iid]:
+            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotDicts[iid]['zp'])
+          if 'normVal' in self.plotDicts[iid]:
+            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotDicts[iid]['normVal'])
+          caption += '(auto)'
+          self.displayDicts[iid]['caption'] = caption
+        if self.resultsDb:
+          if iid not in self.metricIds:
+            self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
+                                                              self.simDataNames[iid], self.sqlconstraints[iid],
+                                                              self.metadatas[iid], None)
+          if self.displayDicts[iid]['subgroup'] is None:
+             self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
+          self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
+
+
     def writeAll(self, outfileRoot=None, outfileSuffix=None, comment=''):
        """
        Write all metric values to disk.
@@ -181,23 +314,14 @@ class BaseSliceMetric(object):
         """
         outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
         outfile = outfile + '.npz'
-        if iid in self.slicers:
-            slicer = self.slicers[iid]
-        else:
-            try:
-                slicer = self.slicer
-            except AttributeError:
-                # Otherwise, try just saving with base slicer.
-                # This won't save any metadata about what the slices looked like.
-                slicer = slicers.BaseSlicer()
-        slicer.writeData(os.path.join(self.outDir, outfile),
-                         self.metricValues[iid],
-                         metricName = self.metricNames[iid],
-                         simDataName = self.simDataNames[iid],
-                         sqlconstraint = self.sqlconstraints[iid],
-                         metadata = self.metadatas[iid] + comment,
-                         displayDict = self.displayDicts[iid],
-                         plotDict = self.plotDicts[iid])
+        self.slicers[iid].writeData(os.path.join(self.outDir, outfile),
+                            self.metricValues[iid],
+                            metricName = self.metricNames[iid],
+                            simDataName = self.simDataNames[iid],
+                            sqlconstraint = self.sqlconstraints[iid],
+                            metadata = self.metadatas[iid] + comment,
+                            displayDict = self.displayDicts[iid],
+                            plotDict = self.plotDicts[iid])
         if self.resultsDb:
             self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid],
                                                           slicer.slicerName,
@@ -211,17 +335,9 @@ class BaseSliceMetric(object):
         """
         Set up and call the baseSlicer outputJSON method, to output to IO string.
         """
-        if iid in self.slicers:
-            slicer = self.slicers[iid]
-        else:
-            try:
-                slicer = self.slicer
-            except AttributeError:
-                # This won't save any metadata about what the slices looked like.
-                raise ValueError('No slicer information')
-        io = slicer.outputJSON(self.metricValues[iid],
-                            metricName = self.metricNames[iid],
-                            simDataName = self.simDataNames[iid],
-                            metadata = self.metadatas[iid],
-                            plotDict = self.plotDicts[iid])
+        io = self.slicers[iid].outputJSON(self.metricValues[iid],
+                                metricName = self.metricNames[iid],
+                                simDataName = self.simDataNames[iid],
+                                metadata = self.metadatas[iid],
+                                plotDict = self.plotDicts[iid])
         return io
