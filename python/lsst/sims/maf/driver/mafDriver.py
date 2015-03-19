@@ -318,8 +318,8 @@ class MafDriver(object):
                              # Set up baseSliceMetric.
                           gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                            outDir=self.config.outputDir)
-                          gm.setSlicer(slicer)
-                          gm.setMetrics(self.metricList[slicer.index])
+                          gm._setSlicer(slicer)
+                          gm._setMetrics(self.metricList[slicer.index])
                           # Make a more useful metadata comment.
                           if slicer.metadataVerbatim:
                               metadata = slicer.metadata
