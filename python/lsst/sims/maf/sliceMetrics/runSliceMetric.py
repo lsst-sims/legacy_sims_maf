@@ -5,6 +5,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from .baseSliceMetric import BaseSliceMetric
 
+from lsst.sims.maf.utils import ColInfo
+
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
@@ -13,6 +15,11 @@ class RunSliceMetric(BaseSliceMetric):
     """
     RunSliceMetric couples a single slicer and multiple metrics, in order
     to generate metric data values at all points over the slicer.
+
+    Given the list of metrics and slicers (plus customized stackers, if desired),
+    and the sql constraint relevant for this slicer/metric calculation,
+    the RunSliceMetric will discover the list of columns required and get this information
+    from the database.
 
     The RunSliceMetric handles metadata about each metric, including the
     opsim run name, the sql constraint on the query used to obtain the input data,
@@ -42,7 +49,17 @@ class RunSliceMetric(BaseSliceMetric):
              iids.append(iid)
        return iids
 
-    def setSlicer(self, slicer, override=False):
+    def setMetricsSlicerStackers(self, metricList, slicer, stackerList=None):
+        """
+        Set the metric objects used to calculate metric values, together with the
+        slicer that will be used here, and optionally set the customized stackers.
+        Note that each of these objects must be instantiated by the user.
+        """
+        self._setSlicer(slicer, override=True)
+        self._setMetrics(metricList)
+        self._setStackers(stackerList)
+
+    def _setSlicer(self, slicer, override=False):
         """
         Set slicer for RunSliceMetric.
 
@@ -56,9 +73,10 @@ class RunSliceMetric(BaseSliceMetric):
             return True
         return (self.slicer == slicer)
 
-    def setMetrics(self, metricList):
+    def _setMetrics(self, metricList):
         """
         Set the metric objects used to calculate metric values.
+        Need to set slicer first!
         """
         if not hasattr(metricList, '__iter__'):
             metricList = [metricList,]
@@ -71,7 +89,57 @@ class RunSliceMetric(BaseSliceMetric):
             self.slicers[iid] = self.slicer
             iid += 1
         self.iid_next = iid
-        return
+
+    def _setStackers(self, stackerList=None):
+        """
+        Set the stackers.
+        Note that these stackers are not tied to particular metrics -- they are just
+         used to generate extra data from the database.
+        """
+        if not hasattr(stackerList, '__iter__'):
+            stackerList = [stackerList,]
+        self.stackerObjs = set()
+        for s in stackerList:
+            self.stackerObjs.add(s)
+
+    def findDataCols(self):
+        """
+        Determine the complete list of columns that must be queried from the database.
+
+        Uses the metrics, slicer, and stackers to determine the necessary columns, returns this list.
+        Instantiates any additional necessary stackers.
+        """
+        # Find the columns required  by the metrics and slicers (including if they come from stackers).
+        colInfo = ColInfo()
+        dbcolnames = set()
+        defaultstackers = set()
+        # Look for the source for the columns for the slicer.
+        for col in self.slicer.columnsNeeded:
+            colsource = colInfo.getDataSource(col)
+            if colsource != colInfo.defaultDataSource:
+                defaultstackers.add(colsource)
+            else:
+                dbcolnames.add(col)
+        # Look for the source of columns in the metrics.
+        for col in metricList[0].colRegistry.colSet:
+            colsource = colInfo.getDataSource(col)
+            if colsource != colInfo.defaultDataSource:
+                defaultstackers.add(colsource)
+            else:
+                dbcolnames.add(col)
+        # Remove explicity instantiated stackers from defaultstacker set.
+        for s in self.stackerObjs:
+            if s.__class__ in defaultstackers:
+                defaultstackers.remove(s.__class__)
+        # Instantiate the remaining default stackers.
+        for s in defaultstackers:
+            self.stackerObjs.add(s())
+        # Add the columns needed by stackers to the list to grab from the database.
+        for s in self.stackers:
+            for col in s.colsReq:
+                dbcolnames.add(col)
+        return dbcolnames
+
 
     def validateMetricData(self, simData):
         """
