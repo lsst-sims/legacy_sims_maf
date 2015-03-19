@@ -127,7 +127,7 @@ class OpsimDatabase(Database):
             raColName = self.raColName
         if decColName is None:
             decColName = self.decColName
-        table = self.tables['summaryTable']
+        table = self.tables['Summary']
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
                                               colnames=[self.fieldIdCol, raColName, decColName],
                                               groupByCol=self.fieldIdCol)

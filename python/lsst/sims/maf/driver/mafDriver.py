@@ -229,7 +229,7 @@ class MafDriver(object):
                     if nonpropid in propids:
                         propids.remove(nonpropid)
         # And query the field Table.
-        if 'fieldTable' in self.opsimdb.tables:
+        if 'Field' in self.opsimdb.tables:
             self.fieldData = self.opsimdb.fetchFieldsFromFieldTable(propids)
         else:
             fieldID, idx = np.unique(self.data[slicer.simDataFieldIDColName], return_index=True)
