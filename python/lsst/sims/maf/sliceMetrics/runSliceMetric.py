@@ -121,7 +121,7 @@ class RunSliceMetric(BaseSliceMetric):
             else:
                 dbcolnames.add(col)
         # Look for the source of columns in the metrics.
-        for col in metricList[0].colRegistry.colSet:
+        for col in self.metricObjs[0].colRegistry.colSet:
             colsource = colInfo.getDataSource(col)
             if colsource != colInfo.defaultDataSource:
                 defaultstackers.add(colsource)
@@ -135,7 +135,7 @@ class RunSliceMetric(BaseSliceMetric):
         for s in defaultstackers:
             self.stackerObjs.add(s())
         # Add the columns needed by stackers to the list to grab from the database.
-        for s in self.stackers:
+        for s in self.stackerObjs:
             for col in s.colsReq:
                 dbcolnames.add(col)
         return dbcolnames
