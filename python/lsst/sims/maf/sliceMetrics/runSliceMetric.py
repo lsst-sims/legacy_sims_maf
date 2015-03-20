@@ -35,6 +35,7 @@ class RunSliceMetric(BaseSliceMetric):
         # Add dictionary to save metric objects
         self.metricObjs = {}
         self.slicer = None
+        self.stackerObjs = set()
         self.thumbnail = thumbnail
 
     def getMetricObjIid(self, metricObj):
@@ -98,9 +99,9 @@ class RunSliceMetric(BaseSliceMetric):
         """
         if not hasattr(stackerList, '__iter__'):
             stackerList = [stackerList,]
-        self.stackerObjs = set()
         for s in stackerList:
-            self.stackerObjs.add(s)
+            if s is not None:
+                self.stackerObjs.add(s)
 
     def findDataCols(self):
         """
@@ -131,10 +132,10 @@ class RunSliceMetric(BaseSliceMetric):
         for s in self.stackerObjs:
             if s.__class__ in defaultstackers:
                 defaultstackers.remove(s.__class__)
-        # Instantiate the remaining default stackers.
+        # Instantiate and add the remaining default stackers.
         for s in defaultstackers:
             self.stackerObjs.add(s())
-        # Add the columns needed by stackers to the list to grab from the database.
+        # Add the columns needed by all stackers to the list to grab from the database.
         for s in self.stackerObjs:
             for col in s.colsReq:
                 dbcolnames.add(col)
