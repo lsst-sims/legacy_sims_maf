@@ -257,7 +257,7 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             # Plot non-cumulative histogram.
             # First, test if data falls within histRange, because otherwise histogram generation will fail.
-            if histRange is not None:
+            if np.min(histRange) is not None:
                 if (histRange[0] is None) and (histRange[1] is not None):
                     condition = (metricValue <= histRange[1])
                 elif (histRange[1] is None) and (histRange[0] is not None):
@@ -280,6 +280,8 @@ class BaseSpatialSlicer(BaseSlicer):
             # If there is data, make the histogram.
             if plotValue.size > 0:
                 # Generate histogram.
+                if np.min(histRange) is None:
+                    histRange = None
                 n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
                                    cumulative=cumulative, range=histRange, label=label, color=color)
 
