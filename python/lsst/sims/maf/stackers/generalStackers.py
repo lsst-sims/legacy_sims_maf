@@ -2,6 +2,9 @@ import numpy as np
 from .baseStacker import BaseStacker
 import warnings
 
+__all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
+           'ModRotSkyPosStacker', 'FilterColorStacker']
+
 ### Normalized airmass
 class NormAirmassStacker(BaseStacker):
     """
