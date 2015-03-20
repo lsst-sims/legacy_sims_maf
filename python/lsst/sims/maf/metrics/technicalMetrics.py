@@ -1,7 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['NChangesMetric', 'DeltaTimeChangesMetric',
+__all__ = ['NChangesMetric', 'MinDeltaTimeChangesMetric', 'DeltaTimeChangesMetric',
            'TeffMetric', 'OpenShutterFractionMetric',
            'CompletenessMetric', 'FilterColorsMetric']
 
@@ -20,10 +20,11 @@ class NChangesMetric(BaseMetric):
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         return len(np.where(diff == True)[0])
 
-class DeltaTimeChangesMetric(BaseMetric):
+class MinDeltaTimeChangesMetric(BaseMetric):
     """
-    Compute the time between changes in a column value.
+    Compute the minimum time between changes in a column value.
     (useful for calculating time between filter changes in particular).
+    Returns delta time in minutes!
     """
     def __init__(self, col='filter', timeCol='expMJD', **kwargs):
         self.col = col
@@ -35,7 +36,25 @@ class DeltaTimeChangesMetric(BaseMetric):
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         condition = np.where(diff==True)[0]
         dtimes = dataSlice[self.timeCol][1:][condition] - dataSlice[self.timeCol][:-1][condition]
-        return dtimes
+        return dtimes.min()*24.0*60.0
+
+class DeltaTimeChangesMetric(BaseMetric):
+    """
+    Compute (all of) the time between changes in a column value.
+    (useful for calculating time between filter changes in particular).
+    Returns delta time in minutes!
+    """
+    def __init__(self, col='filter', timeCol='expMJD', **kwargs):
+        self.col = col
+        self.timeCol = timeCol
+        super(DeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        idxs = np.argsort(dataSlice[self.timeCol])
+        diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
+        condition = np.where(diff==True)[0]
+        dtimes = dataSlice[self.timeCol][1:][condition] - dataSlice[self.timeCol][:-1][condition]
+        return dtimes*24.0*60.0
 
 class TeffMetric(BaseMetric):
     """
