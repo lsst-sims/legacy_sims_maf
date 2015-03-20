@@ -123,6 +123,23 @@ class TestStackerClasses(unittest.TestCase):
         data = stacker.run(data)
         np.testing.assert_almost_equal(data['HA'], -6.)
 
+    def testModRotSkyPosStacker(self):
+        """Test the modRotSkyPos Stacker"""
+        data = np.zeros(100, dtype=zip(['oldCol'], [float]))
+        data['oldCol'] = np.random.rand(data.size) * np.pi*2
+        stacker = stackers.ModRotSkyPosStacker(origCol='oldCol')
+        data = stacker.run(data)
+        # Check wrapped to correct range.
+        self.assertLess(np.max(data['modRotSkyPos']), 90)
+        self.assertGreater(np.min(data['modRotSkyPos']), -90)
+        # Check 0 -> -90, 90 -> 0, 180 ->+90, 270->0 then 360 -> -90.
+        for o, n in zip([0., 90., 179., 270., 360.], [-90., 0., 89., 0., -90]):
+            data = np.zeros(10, dtype=zip(['oldCol'], [float]))
+            data['oldCol'] += np.radians(o)
+            data = stacker.run(data)
+            comparison = np.zeros(10, float) + n
+            np.testing.assert_almost_equal(data['modRotSkyPos'], comparison)
+
     def testFilterColorStacker(self):
         """Test the filter color stacker."""
         data = np.zeros(60, dtype=zip(['filter'],['|S1']))

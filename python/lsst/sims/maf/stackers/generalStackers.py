@@ -102,6 +102,29 @@ class HourAngleStacker(BaseStacker):
         simData['HA'] = ha*12/np.pi
         return simData
 
+class ModRotSkyPosStacker(BaseStacker):
+    """
+    Wrap a provided angle into -90 to 90 range.
+    Return angle in degrees.
+    """
+    def __init__(self, origCol='rotSkyPos'):
+        ## Would be nice to make the 'wrapCol' dynamically set,
+        ## but with the current setup of getColInfo, this doesn't work.
+        self.units = ['Deg']
+        wrapCol = 'modRotSkyPos'
+        self.colsAdded = ['modRotSkyPos']
+        self.colsReq = [origCol]
+        self.origCol = origCol
+        self.wrapCol = wrapCol
+
+    def run(self, simData):
+        """
+        wrapCol = np.degrees((origCol % pi) - pi/2.)
+        """
+        simData=self._addStackers(simData)
+        simData[self.wrapCol] = np.degrees(simData[self.origCol] % np.pi - np.pi/2.0)
+        return simData
+
 class FilterColorStacker(BaseStacker):
     """
     Translate filters ('u', 'g', 'r' ..) into RGB tuples.
