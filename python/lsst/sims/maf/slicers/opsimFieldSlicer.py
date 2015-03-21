@@ -60,10 +60,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
         self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
-        if maps is None:
-            maps = []
-        for skyMap in maps:
-            self.slicePoints = skyMap.run(self.slicePoints)
+        self._runMaps(maps)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])

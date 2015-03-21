@@ -29,8 +29,8 @@ __all__ = ['BaseSpatialSlicer']
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all', useCamera=False,
-                 rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
+                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all',
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -70,15 +70,13 @@ class BaseSpatialSlicer(BaseSlicer):
         """Use simData[self.spatialkey1] and simData[self.spatialkey2]
         (in radians) to set up KDTree.
 
-        maps = list of map objects that will run to build up slicePoint"""
-        if maps is None:
-            maps = []
-        else:
-            if self.cacheSize != 0:
+        maps = list of map objects (such as dust extinction) that will run to build up
+           additional metadata at each slicePoint (available to metrics via slicePoint dictionary).
+        """
+        if maps is not None:
+            if self.cacheSize != 0 and len(maps)>0:
                 warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
-        for skyMap in maps:
-            self.slicePoints = skyMap.run(self.slicePoints)
-
+            self._runMaps(maps)
         self._setRad(self.radius)
         if self.useCamera:
             self._setupLSSTCamera()

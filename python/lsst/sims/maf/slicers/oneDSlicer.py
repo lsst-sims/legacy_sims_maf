@@ -39,7 +39,7 @@ class OneDSlicer(BaseSlicer):
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
 
-    def setupSlicer(self, simData):
+    def setupSlicer(self, simData, maps=None):
         """
         Set up bins in slicer.
         """
@@ -87,6 +87,8 @@ class OneDSlicer(BaseSlicer):
         # Set slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
         self.slicePoints['bins'] = self.bins
+        # Add metadata from map if needed.
+        self._runMaps(maps)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceColName])
         simFieldsSorted = np.sort(simData[self.sliceColName])

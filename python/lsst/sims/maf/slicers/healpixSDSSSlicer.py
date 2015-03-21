@@ -24,9 +24,12 @@ class HealpixSDSSSlicer(HealpixSlicer):
                                             useCache=useCache,nside=nside )
         self.cornerLables = ['RA1', 'Dec1', 'RA2','Dec2','RA3','Dec3','RA4','Dec4']
 
-    def setupSlicer(self, simData):
-        """Use simData[self.spatialkey1] and simData[self.spatialkey2]
-        (in radians) to set up KDTree."""
+    def setupSlicer(self, simData, maps=None):
+        """
+        Use simData[self.spatialkey1] and simData[self.spatialkey2]
+        (in radians) to set up KDTree.
+        """
+        self._runMaps(maps)
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
         self.corners = simData[self.cornerLables]
