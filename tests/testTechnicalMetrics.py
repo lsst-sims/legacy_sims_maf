@@ -29,12 +29,12 @@ class TestTechnicalMetrics(unittest.TestCase):
         Test the DeltaTime metric.
         """
         filters = np.array(['u', 'g'])
-        visitTimes = np.random.rand(2) * 10.0
+        visitTimes = np.random.rand(2) * 10.0 #days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.DeltaTimeChangesMetric()
-        result = metric.run(data)
-        self.assertEqual(result, np.diff(visitTimes))
+        result = metric.run(data) # minutes
+        self.assertEqual(result, np.diff(visitTimes)*24.0*60.0)
         filters = np.array(['u', 'u', 'g', 'g', 'r'])
         visitTimes = np.random.rand(filters.size) * 10.0
         visitTimes.sort()
