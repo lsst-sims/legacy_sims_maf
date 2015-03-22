@@ -54,6 +54,10 @@ class TestTechnicalMetrics(unittest.TestCase):
         metric = metrics.MinDeltaTimeChangesMetric()
         result = metric.run(data) # minutes
         self.assertEqual(result, 2*24.0*60.0)
+        data['filter'] = np.array(['u', 'u', 'u', 'u'])
+        result = metric.run(data)
+        self.assertEqual(result, metric.badval)
+
 
     def testTeffMetric(self):
         """
