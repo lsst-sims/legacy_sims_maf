@@ -287,7 +287,7 @@ class OpsimDatabase(Database):
 
     def fetchOpsimRunName(self):
         """
-        Returns opsim run name (machine name + session ID) from Session table. 
+        Returns opsim run name (machine name + session ID) from Session table.
         """
         table = self.tables['Session']
         res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
@@ -321,7 +321,6 @@ class OpsimDatabase(Database):
                 constraint = constraint[:-4] + ')'
             else:
                 constraint = 'propId = %d' %(propId)
-            print 'constraint', constraint
             propData = self.tables['Proposal'].query_columns_Array(colnames=[self.propIdCol, self.propNameCol],
                                                                    constraint=constraint)
         for pId, propType in zip(propData[self.propIdCol], propData[self.propNameCol]):
