@@ -146,7 +146,7 @@ class ZeropointMetric(BaseMetric):
     Return a metric values with the addition of 'zp'. Useful for altering the zeropoint for summary statistics.
     """
     def __init__(self, col='metricdata', zp=0, **kwargs):
-        super(NormalizeMetric, self).__init__(col=col, **kwargs)
+        super(ZeropointMetric, self).__init__(col=col, **kwargs)
         self.zp = zp
     def run(self, dataSlice, slicePoint=None):
         result = dataSlice[self.colname] + self.zp
