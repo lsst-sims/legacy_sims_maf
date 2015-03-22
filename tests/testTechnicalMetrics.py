@@ -28,27 +28,30 @@ class TestTechnicalMetrics(unittest.TestCase):
         """
         Test the DeltaTime metric.
         """
-        filters = np.array(['u', 'g'])
-        visitTimes = np.random.rand(2) * 10.0 #days
+        filters = np.array(['u', 'g', 'u'])
+        visitTimes = np.random.rand(filters.size) * 10.0 #days
+        visitTimes.sort()
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.DeltaTimeChangesMetric()
         result = metric.run(data) # minutes
-        self.assertEqual(result, np.diff(visitTimes)*24.0*60.0)
+        np.testing.assert_equal(result, np.diff(visitTimes)*24.0*60.0)
         filters = np.array(['u', 'u', 'g', 'g', 'r'])
-        visitTimes = np.random.rand(filters.size) * 10.0
+        visitTimes = np.floor(np.random.rand(filters.size) * 100)
         visitTimes.sort()
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
-        result = metric.run(data)
-        self.assertEqual(result.size, 2)
+        metric = metrics.DeltaTimeChangesMetric()
+        result = metric.run(data) # minutes
+        dtimes = np.array([visitTimes[2]-visitTimes[0], visitTimes[4]-visitTimes[2]]) #days
+        np.testing.assert_almost_equal(result, dtimes*24.0*60.0)
 
     def testMinDeltaTimeChangesMetric(self):
         """
         Test the MinDeltaTime metric.
         """
-        filters = np.array(['u', 'g', 'r', 'g'])
-        visitTimes = np.array([0, 2, 5, 10]) #days
+        filters = np.array(['u', 'g', 'g', 'r'])
+        visitTimes = np.array([0, 5, 6, 7]) #days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.MinDeltaTimeChangesMetric()
@@ -68,6 +71,14 @@ class TestTechnicalMetrics(unittest.TestCase):
         data = np.core.records.fromarrays([m5, filters],
                                         names=['fiveSigmaDepth', 'filter'])
         metric = metrics.TeffMetric(fiducialDepth={'g':25}, teffBase=30.0)
+        result = metric.run(data)
+        self.assertEqual(result, 30.0*m5.size)
+        filters = np.array(['g', 'g', 'g', 'u', 'u'])
+        m5 = np.zeros(len(filters), float) + 25.0
+        m5[3:5] = 20.0
+        data = np.core.records.fromarrays([m5, filters],
+                                        names=['fiveSigmaDepth', 'filter'])
+        metric = metrics.TeffMetric(fiducialDepth={'u':20, 'g':25}, teffBase=30.0)
         result = metric.run(data)
         self.assertEqual(result, 30.0*m5.size)
 

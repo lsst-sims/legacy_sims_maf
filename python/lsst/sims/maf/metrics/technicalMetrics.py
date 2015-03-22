@@ -20,26 +20,6 @@ class NChangesMetric(BaseMetric):
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         return np.size(np.where(diff == True)[0])
 
-class MinDeltaTimeChangesMetric(BaseMetric):
-    """
-    Compute the minimum time between changes in a column value.
-    (useful for calculating time between filter changes in particular).
-    Returns delta time in minutes!
-    """
-    def __init__(self, col='filter', timeCol='expMJD', **kwargs):
-        self.col = col
-        self.timeCol = timeCol
-        super(MinDeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
-
-    def run(self, dataSlice, slicePoint=None):
-        idxs = np.argsort(dataSlice[self.timeCol])
-        diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
-        condition = np.where(diff==True)[0]
-        dtimes = dataSlice[self.timeCol][idxs][1:][condition] - dataSlice[self.timeCol][idxs][:-1][condition]
-        if dtimes.size == 0:
-            return self.badval
-        return dtimes.min()*24.0*60.0
-
 class DeltaTimeChangesMetric(BaseMetric):
     """
     Compute (all of) the time between changes in a column value.
@@ -52,11 +32,29 @@ class DeltaTimeChangesMetric(BaseMetric):
         super(DeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
+        # Sort on time, to be sure we've got filter (or other col) changes in the right order.
         idxs = np.argsort(dataSlice[self.timeCol])
-        diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
-        condition = np.where(diff==True)[0]
-        dtimes = dataSlice[self.timeCol][idxs][1:][condition] - dataSlice[self.timeCol][idxs][:-1][condition]
-        return dtimes*24.0*60.0
+        changes = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
+        condition = np.where(changes==True)[0]
+        times = dataSlice[self.timeCol][idxs][condition]
+        changetimes = dataSlice[self.timeCol][idxs][1:][condition]
+        prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
+                                         dataSlice[self.timeCol][idxs][1:][condition][:-1]))
+        dtimes = changetimes - prevchangetime
+        dtimes *= 24.0*60.0
+        return dtimes
+
+class MinDeltaTimeChangesMetric(DeltaTimeChangesMetric):
+    """
+    Compute the minimum time between changes in a column value.
+    (useful for calculating time between filter changes in particular).
+    Returns delta time in minutes!
+    """
+    def run(self, dataSlice, slicePoint=None):
+        dtimes = super(MinDeltaTimeChangesMetric, self).run(dataSlice, slicePoint)
+        if dtimes.size == 0:
+            return self.badval
+        return dtimes.min()
 
 class TeffMetric(BaseMetric):
     """
