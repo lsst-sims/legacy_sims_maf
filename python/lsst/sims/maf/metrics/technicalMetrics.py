@@ -35,7 +35,7 @@ class MinDeltaTimeChangesMetric(BaseMetric):
         idxs = np.argsort(dataSlice[self.timeCol])
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         condition = np.where(diff==True)[0]
-        dtimes = dataSlice[self.timeCol][1:][condition] - dataSlice[self.timeCol][:-1][condition]
+        dtimes = dataSlice[self.timeCol][idxs][1:][condition] - dataSlice[self.timeCol][idxs][:-1][condition]
         if dtimes.size == 0:
             return self.badval
         return dtimes.min()*24.0*60.0
@@ -55,7 +55,7 @@ class DeltaTimeChangesMetric(BaseMetric):
         idxs = np.argsort(dataSlice[self.timeCol])
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         condition = np.where(diff==True)[0]
-        dtimes = dataSlice[self.timeCol][1:][condition] - dataSlice[self.timeCol][:-1][condition]
+        dtimes = dataSlice[self.timeCol][idxs][1:][condition] - dataSlice[self.timeCol][idxs][:-1][condition]
         return dtimes*24.0*60.0
 
 class TeffMetric(BaseMetric):
