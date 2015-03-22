@@ -87,12 +87,12 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', benchmark='design', **k
                            'i':[100, 250], 'z':[100, 300], 'y':[100,300]}
     nvisitsRange['DD'] = {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000],
                           'i':[5000, 8000], 'z':[7000, 10000], 'y':[5000, 8000]}
-    # Scale these ranges for the runLength.
+    # Scale these nvisit ranges for the runLength.
     scale = runLength / 10.0
     for prop in nvisitsRange:
         for f in nvisitsRange[prop]:
             for i in [0, 1]:
-                nvisitsRange[prop][f][i] = int(np.floor(nvisitsRange[prop][f][i] * scale)
+                nvisitsRange[prop][f][i] = int(np.floor(nvisitsRange[prop][f][i] * scale))
 
     # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
@@ -271,7 +271,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', benchmark='design', **k
                 # Calculate the RMS of the hour angle.
                 metricList.append(configureMetric('RmsMetric', kwargs={'col':'HA'},
                                                   displayDict={'group':houranglegroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                               'caption':'RMS of the Hour Angle in filter %s, %s'.
+                                                               'caption':'RMS of the Hour Angle in filter %s, %s.'
                                                                %(f, propCaption)}))
             metricDict = makeDict(*metricList)
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
@@ -432,87 +432,88 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', benchmark='design', **k
                                 kwargs={'col':'fiveSigmaDepth', 'metricName':'Single Visit Depth Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f},
-                                displayDict={'group':singlevisitdepthgroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the single visit depth in %s band, WFD only.' %(f)})
+                                displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the single visit depth in %s band, %s.' %(f, propCaption)})
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'fiveSigmaDepth', 'binsize':0.05},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s" %(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the individual visit sky brightness.
             m1 = configureMetric('CountMetric', kwargs={'col':'filtSkyBrightness', 'metricName':'Sky Brightness Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f},
-                                displayDict={'group':skybrightgroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the sky brightness in %s band, WFD only.' %(f)})
+                                displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the sky brightness in %s band, %s.' %(f, propCaption)})
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'filtSkyBrightness', 'binsize':0.1,
                                                         'binMin':16, 'binMax':23},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the individual visit seeing.
             m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing', 'metricName':'Seeing Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f],'label':'%s'%f},
-                                displayDict={'group':seeinggroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the seeing in %s band, WFD only.' %(f)} )
+                                displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the seeing in %s band, %s.' %(f, propCaption)} )
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'finSeeing', 'binsize':0.02},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the individual visit airmass values.
             m1 = configureMetric('CountMetric', kwargs={'col':'airmass', 'metricName':'Airmass Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f, 'xMin':1.0, 'xMax':2.0},
-                                displayDict={'group':airmassgroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the airmass in %s band, WFD only.' %(f)})
+                                displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the airmass in %s band, %s' %(f, propCaption)})
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'airmass', 'binsize':0.01},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the individual visit normalized airmass values.
             m1 = configureMetric('CountMetric', kwargs={'col':'normairmass', 'metricName':'Normalized Airmass Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f, 'xMin':1.0, 'xMax':2.0},
-                                displayDict={'group':airmassgroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the normalized airmass in %s band, WFD only.' %(f)})
+                                displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the normalized airmass in %s band, %s' %(f, propCaption)})
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'normairmass', 'binsize':0.01},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the individual visit hour angle values.
             m1 = configureMetric('CountMetric', kwargs={'col':'HA', 'metricName':'Hour Angle Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f, 'xMin':1.0, 'xMax':2.0},
-                                displayDict={'group':houranglegroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the hour angle in %s band, WFD only.' %(f)})
+                                displayDict={'group':houranglegroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the hour angle in %s band, %s' %(f, propCaption)})
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'HA', 'binsize':0.01},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the sky position angles (rotSkyPos % 180)
-            m1 = configureMetric('CountMetric', kwargs={'col':'ModRotSkyPos', 'metricName':'Position Angle Histogram'},
+            m1 = configureMetric('CountMetric', kwargs={'col':'modRotSkyPos', 'metricName':'Position Angle Histogram'},
                                  histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                            'colors':colors[f], 'label':'%s' %f}
+                                            'colors':colors[f], 'label':'%s' %f},
                                 displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                             'caption':'Histogram of the position angle in %s' %(propcaption)})
+                                             'caption':'Histogram of the position angle in %s' %(propCaption)})
             histNum += 1
-            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'ModRotSkyPos', 'binsize':
-
+            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'modRotSkyPos', 'binsize':5},
+                                     metricDict=makeDict(m1), constraints=sqlconstraint,
+                                     metadata=metadata, metadataVerbatim=True)
             # Histogram the individual visit distance to moon values.
             m1 = configureMetric('CountMetric', kwargs={'col':'dist2Moon', 'metricName':'Distance to Moon Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
                                         'color':colors[f], 'label':'%s'%f, 'xMin':1.0, 'xMax':2.0},
-                                displayDict={'group':dist2moongroup, 'subgroup':'WFD', 'order':filtorder[f],
-                                            'caption':'Histogram of the hour angle in %s band, WFD only.' %(f)})
+                                displayDict={'group':dist2moongroup, 'subgroup':subgroup, 'order':filtorder[f],
+                                            'caption':'Histogram of the hour angle in %s band, %s' %(f, propCaption)})
             histNum += 1
             slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'dist2Moon', 'binsize':0.01},
-                                    metricDict=makeDict(m1), constraints=["filter = '%s' and %s"%(f, wfdWhere)],
+                                    metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
 
@@ -548,7 +549,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', benchmark='design', **k
                                      'caption':'Number of filter changes per night.'})
     m4 = configureMetric('MinDeltaTimeChangeMetric', kwargs={'col':'filter', 'metricName':'Min dT(minutes) Filter Change'},
                          summaryStats=allStats,
-                         displayDict={'group':filterchanges, 'subgroup':'2: Per Night'
+                         displayDict={'group':filterchanges, 'subgroup':'2: Per Night'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
                              metricDict=makeDict(m1, m2, m3, m4),
                              constraints=[''], metadata='Per night', metadataVerbatim=True)
@@ -560,7 +561,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', benchmark='design', **k
                                       'caption':'Total filter changes over survey'})
     m2 = configureMetric('MinDeltaTimeChangeMetric', kwargs={'metricName':'dTimes(minutes) Filter Change'},
                          summaryStats={'FracBelowMetric':{'metricName':'Fraction Filter Changes < 20min',
-                                                          'cutoff':20}}
+                                                          'cutoff':20}},
                         displayDict={'group':filterchanges, 'subgroup':'1: Summary', 'order':1,
                                      'caption':'Fraction of the total filter changes which occur faster than 20 minutes'})
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2), constraints=[''], metadata='All visits',
@@ -813,7 +814,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', benchmark='design', **k
     m2 = configureMetric('CountUniqueMetric', kwargs={'col':'night', 'metricName':'Nights with Observations'},
                                      displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
     m3 = configureMetric('FullRangeMetric', kwargs={'col':'night', 'metricName':'Nights in survey'},
-                         summaryStats={'ZeropointMetric':{'zp':1, 'metricName':'Survey Length'},
+                         summaryStats={'ZeropointMetric':{'zp':1, 'metricName':'Survey Length'}},
                          displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
     m4 = configureMetric('TeffMetric', kwargs={'metricName':'Total Effective Time of survey'},
                          displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
