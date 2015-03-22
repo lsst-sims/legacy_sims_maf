@@ -250,7 +250,7 @@ class OpsimDatabase(Database):
         param: propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
         tableName = 'ObsHistory'
-        query = 'select %s from %s' %(self.mjdCol, self.dbTables[tableName][0])
+        query = 'select count(ObsHistID) from %s' %(self.dbTables[tableName][0])
         if propID is not None:
             query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['ObsHistory_Proposal'][0])
             if hasattr(propID, '__iter__'): # list of propIDs
@@ -262,8 +262,8 @@ class OpsimDatabase(Database):
                 query += ')'
             else: # single proposal ID.
                 query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
-        data = self.queryDatabase(tableName, query)
-        return data.size
+        data = self.tables[tableName].execute_arbitrary(query)
+        return data[0][0]
 
     def fetchSeeingColName(self):
         """
@@ -299,9 +299,9 @@ class OpsimDatabase(Database):
         Returns the total slew time.
         """
         table = self.tables['SlewActivities']
-        res = table.query_columns_Array(constraint='actDelay>0', colnames=['SlewHistory_slewID'])
-        result = np.size(np.unique(res['SlewHistory_slewID']))
-        return result
+        query = 'select count(distinct(slewHistory_slewID)) from slewActivities where actDelay >0'
+        res = table.execute_arbitrary(query)
+        return res[0][0]
 
     def fetchRequestedNvisits(self, propId=None):
         """
