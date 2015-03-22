@@ -315,12 +315,13 @@ class OpsimDatabase(Database):
         else:
             # Get the propType info to go with the propId(s).
             if hasattr(propId, '__iter__'):
-                constraint = ''
+                constraint = '('
                 for pi in propId:
                     constraint += '(propId = %d) or ' %(pi)
-                constraint = constraint[:-3] + ')'
+                constraint = constraint[:-4] + ')'
             else:
                 constraint = 'propId = %d' %(propId)
+            print 'constraint', constraint
             propData = self.tables['Proposal'].query_columns_Array(colnames=[self.propIdCol, self.propNameCol],
                                                                    constraint=constraint)
         for pId, propType in zip(propData[self.propIdCol], propData[self.propNameCol]):
