@@ -305,8 +305,8 @@ class OpsimDatabase(Database):
 
     def fetchRequestedNvisits(self, propId=None):
         """
-        Find the requested number of visits for each proposal.
-        Returns a nested dictionary - Nvisits{propID: {u/g/r/i/z/y} }
+        Find the requested number of visits for proposals in propId.
+        Returns a dictionary - Nvisits{u/g/r/i/z/y}
         """
         visitDict = {}
         if propId is None:
@@ -337,7 +337,13 @@ class OpsimDatabase(Database):
             visitDict[pId] = {}
             for f, N in zip(filterlist, nvisits):
                 visitDict[pId][f] = N
-        return visitDict
+        nvisits = {}
+        for f in ['u', 'g', 'r', 'i', 'z', 'y']:
+            nvisits[f] = 0
+        for pId in visitDict:
+            for f in visitDict[pId]:
+                nvisits[f] += visitDict[pId][f]
+        return nvisits
 
     def _matchParamNameValue(self, configarray, keyword):
         return configarray['paramValue'][np.where(configarray['paramName']==keyword)]
