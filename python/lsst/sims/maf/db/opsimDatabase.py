@@ -263,7 +263,7 @@ class OpsimDatabase(Database):
             else: # single proposal ID.
                 query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
         data = self.tables[tableName].execute_arbitrary(query)
-        return data[0][0]
+        return int(data[0][0])
 
     def fetchSeeingColName(self):
         """
@@ -301,7 +301,7 @@ class OpsimDatabase(Database):
         table = self.tables['SlewActivities']
         query = 'select count(distinct(slewHistory_slewID)) from slewActivities where actDelay >0'
         res = table.execute_arbitrary(query)
-        return res[0][0]
+        return int(res[0][0])
 
     def fetchRequestedNvisits(self, propId=None):
         """
