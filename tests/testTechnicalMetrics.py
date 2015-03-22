@@ -43,6 +43,18 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data)
         self.assertEqual(result.size, 2)
 
+    def testMinDeltaTimeChangesMetric(self):
+        """
+        Test the MinDeltaTime metric.
+        """
+        filters = np.array(['u', 'g', 'r', 'g'])
+        visitTimes = np.array([0, 2, 5, 10]) #days
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.MinDeltaTimeChangesMetric()
+        result = metric.run(data) # minutes
+        self.assertEqual(result, 2*24.0*60.0)
+
     def testTeffMetric(self):
         """
         Test the Teff (time_effective) metric.

@@ -29,7 +29,7 @@ class MinDeltaTimeChangesMetric(BaseMetric):
     def __init__(self, col='filter', timeCol='expMJD', **kwargs):
         self.col = col
         self.timeCol = timeCol
-        super(DeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
+        super(MinDeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         idxs = np.argsort(dataSlice[self.timeCol])
