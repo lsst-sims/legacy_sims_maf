@@ -152,7 +152,8 @@ class RunSliceMetric(BaseSliceMetric):
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n')
         return True
 
-    def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):
+    def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata='',
+                  fieldData=None, maps=None):
         """
         Generate metric values, iterating through self.slicer and running self.metricObjs for each slice.
 
@@ -160,7 +161,16 @@ class RunSliceMetric(BaseSliceMetric):
         simDataName = identifier for simulated data (i.e. the opsim run name).
         sqlconstraint = the sql where clause used to pull data from simDataName.
         metadata = further information from config files ('WFD', 'r band', etc.).
+        fieldData = numpy recarray holding the information on the field pointings -- used for OpsimFieldSlicer ONLY
+        maps = skymap (such as dust extinction map) objects to add to slicer metadata at each slicepoint
         """
+        # Set up indexing in slicer.
+        if self.slicer.slicerName == 'OpsimFieldSlicer':
+            if fieldData is None:
+                raise ValueError('For opsimFieldSlicer, need to provide fieldData to setup slicer')
+            self.slicer.setupSlicer(simData, fieldData, maps=maps)
+        else:
+            self.slicer.setupSlicer(simData, maps=maps)
         # Set simDataName, sqlconstraint and metadata for each metric.
         for iid in self.metricObjs:
            self.simDataNames[iid] = simDataName

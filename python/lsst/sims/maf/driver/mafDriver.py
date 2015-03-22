@@ -293,6 +293,7 @@ class MafDriver(object):
                       else:
                           print '  Found %i matching visits' %(len(self.data))
                       # Special data requirements for opsim slicer.
+                      self.fieldData = None
                       if 'OpsimFieldSlicer' in slicerNames:
                           self.getFieldData(matchingSlicers[slicerNames.index('OpsimFieldSlicer')], sqlconstraint)
                       # Setup each slicer, and run through the slicepoints (with metrics) in baseSliceMetric
@@ -306,15 +307,15 @@ class MafDriver(object):
                                 if skyMap not in slicer.mapsNames:
                                    slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
                           # Set up slicer.
-                          if not self.plotOnly:
-                             if slicer.slicerName == 'OpsimFieldSlicer':
+                          #if not self.plotOnly:
+                          #   if slicer.slicerName == 'OpsimFieldSlicer':
                                  # Need to pass in fieldData as well
-                                 slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
-                             else:
-                                if len(slicer.mapsList) > 0:
-                                   slicer.setupSlicer(self.data, maps=slicer.mapsList)
-                                else:
-                                   slicer.setupSlicer(self.data)
+                          #       slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
+                          #   else:
+                          #      if len(slicer.mapsList) > 0:
+                          #         slicer.setupSlicer(self.data, maps=slicer.mapsList)
+                          #      else:
+                          #         slicer.setupSlicer(self.data)
                              # Set up baseSliceMetric.
                           gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                            outDir=self.config.outputDir)
@@ -357,7 +358,8 @@ class MafDriver(object):
                              print '    running slicerName =', slicer.slicerName, \
                             ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
                              gm.runSlices(self.data, simDataName=self.config.opsimName,
-                                          metadata=metadata, sqlconstraint=sqlconstraint)
+                                          metadata=metadata, sqlconstraint=sqlconstraint,
+                                          fieldData=self.fieldData, maps=slicer.mapsList)
                              if self.verbose:
                                 dt,time_prev = dtime(time_prev)
                                 print '    Computed metrics in %.3g s'%dt
