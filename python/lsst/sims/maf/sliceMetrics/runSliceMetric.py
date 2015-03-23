@@ -262,7 +262,8 @@ class RunSliceMetric(BaseSliceMetric):
         rNames = []
         metricName = self.metricNames[iid]
         for r in reduceFunc:
-            rNames.append(metricName + '_' + r.__name__.replace('reduce',''))
+            rname = metricName + '_' + r.__name__.replace('reduce', '')
+            rNames.append(rname)
         # Make sure reduceOrder is available.
         if reduceOrder is None:
             reduceOrder = np.zeros(len(reduceFunc), int)
