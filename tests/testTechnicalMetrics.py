@@ -44,8 +44,11 @@ class TestTechnicalMetrics(unittest.TestCase):
         metric = metrics.DeltaTimeChangesMetric()
         result = metric.run(data) # minutes
         dtimes = np.array([visitTimes[2]-visitTimes[0], visitTimes[4]-visitTimes[2]]) #days
-        np.testing.assert_almost_equal(result, dtimes*24.0*60.0)
-
+        dtimes = dtimes*24.0*60.0
+        np.testing.assert_almost_equal(result, dtimes)
+        self.assertEqual(metric.reduceMin(result), dtimes.min())
+        self.assertEqual(metric.reduceNBelow(result, cutoff=10), np.where(dtimes<10)[0].size)
+        
     def testMinDeltaTimeChangesMetric(self):
         """
         Test the MinDeltaTime metric.
