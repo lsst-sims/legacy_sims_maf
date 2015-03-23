@@ -232,18 +232,36 @@ class BaseSpatialSlicer(BaseSlicer):
                 if (np.log10(np.max(histRange)-np.log10(np.min(histRange))) > 3 ):
                     logScale = True
 
-        # Determine number of bins, if neither 'bins' or 'binsize' were specified.
-        if bins is None and binsize is None:
-            bins = optimalBins(metricValue)
-        # If binsize was specified, set up bins for histogram.
+        # If binsize was specified, set up an array of bins for the histogram.
         if binsize is not None:
             #  If generating cumulative histogram, want to use full range of data (but with given binsize).
-            #  If histrange min or max is not set, we want to use full range of data.
-            if (cumulative is not False) or (np.min(histRange) is None):
-                bins = np.arange(metricValue.min(), metricValue.max()+binsize/2.0, binsize)
-            # Otherwise, set up a histogram covering specified range only.
+            #    .. but if user set histRange to be wider than full range of data, then
+            #       extend bins to cover this range, so we can make prettier plots.
+            if cumulative is not False:
+                if histRange[0] is not None:
+                    bmin = np.min([metricValue.min(), histRange[0]])
+                else:
+                    bmin = metricValue.min()
+                if histRange[1] is not None:
+                    bmax = np.max([metricValue.max(), histRange[1]])
+                else:
+                    bmax = metricValue.max()
+                bins = np.arange(bmin, bmax+binsize/2.0, binsize)
+            #  Else try to set up bins using min/max values if specified, or full data range.
             else:
-                bins = np.arange(histRange[0], histRange[1]+binsize/2.0, binsize)
+                if histRange[0] is not None:
+                    bmin = histRange[0]
+                else:
+                    bmin = metricValue.min()
+                if histRange[1] is not None:
+                    bmax = histRange[1]
+                else:
+                    bmax = metricValue.max()
+                bins = np.arange(bmin, bmax+binsize/2.0, binsize)
+        # Otherwise, determine number of bins, if neither 'bins' or 'binsize' were specified.
+        else:
+            if bins is None:
+                bins = optimalBins(metricValue)
 
         # Generate plots.
         fig = plt.figure()
@@ -298,6 +316,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 if plt.axis()[2] == max(n):
                     plt.ylim([n.min(),n.max()])
             except UnboundLocalError:
+                # This happens if we were generating an empty plot (no histogram).
+                # But in which case, the above error was probably not relevant. So skip it.
                 pass
         if yMax is not None:
             plt.ylim(ymax=yMax)
