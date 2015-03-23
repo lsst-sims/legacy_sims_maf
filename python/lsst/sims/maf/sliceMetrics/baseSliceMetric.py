@@ -314,6 +314,7 @@ class BaseSliceMetric(object):
         comment = any additional comments to add to output file (beyond
                    metric name, simDataName, and metadata).
         outfileRoot = root of the output files (default simDataName).
+        outfileSuffix = additional suffix to add to output files (numerical suffix for movies).
         """
         outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
         outfile = outfile + '.npz'

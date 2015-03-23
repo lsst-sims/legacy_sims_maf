@@ -294,20 +294,3 @@ class RunSliceMetric(BaseSliceMetric):
               # Evaluate reduced version of metric values.
               for riid, rFunc in zip(riids, reduceFunc):
                  self.metricValues[riid].data[i] = rFunc(mVal)
-
-
-
-    def writeMetric(self, iid, comment='', outfileRoot=None, outfileSuffix=None):
-        """
-        Write metric values 'metricName' to disk.
-
-        comment = any additional comments to add to output file (beyond
-           metric name, simDataName, and metadata).
-        outfileRoot = root of the output files (default simDataName).
-       """
-        super(RunSliceMetric, self).writeMetric(iid, comment=comment, outfileRoot=outfileRoot,
-                                                outfileSuffix=outfileSuffix)
-        # Have to return additional info for driver merged histograms .. need to update this later.
-        if iid in self.metricObjs:
-            outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix) + '.npz'
-            self.metricObjs[iid].saveFile = outfile
