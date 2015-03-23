@@ -138,6 +138,8 @@ class OneDSlicer(BaseSlicer):
         yMin/Max = min/max for y-axis (overrides percentileClip)
         xMin/Max = min/max for x-axis (typically set by bin values though)
         """
+        if color is None:
+            color = 'b'
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.slicePoints['bins'][:-1]
