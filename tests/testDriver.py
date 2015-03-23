@@ -142,35 +142,35 @@ class TestDriver(unittest.TestCase):
         testDriver = driver.MafDriver(configIn)
         testDriver.run()
         for filename in expectFiles:
-            assert(os.path.isfile(configIn.outputDir+'/'+filename))
+            assert(os.path.isfile(configIn.outDir+'/'+filename))
 
     def test_driver(self):
         """Use a large config file to exercise all aspects of the driver. """
         for filename, outfiles in zip(self.cfgFiles, self.outputFiles):
             configIn = MafConfig()
             configIn.load(self.filepath+filename)
-            nnpz = glob.glob(configIn.outputDir+'/*.npz')
+            nnpz = glob.glob(configIn.outDir+'/*.npz')
             if len(nnpz) > 0:
-                ack = Popen('rm '+configIn.outputDir+'/*.npz', shell=True).wait()
+                ack = Popen('rm '+configIn.outDir+'/*.npz', shell=True).wait()
 
 
             testDriver = driver.MafDriver(configIn)
             testDriver.run()
 
             configOut = MafConfig()
-            configOut.load(configIn.outputDir+'/maf_config_asRan.py')
+            configOut.load(configIn.outDir+'/maf_config_asRan.py')
             assert(configIn == configOut)
             nout=0
             for j,slicer in enumerate(configIn.slicers):
                 if configIn.slicers[j].name != 'HourglassSlicer':
                     nout += len(configIn.slicers[j].constraints)*len(configIn.slicers[j].metricDict)
 
-            nnpz = glob.glob(configIn.outputDir+'/*.npz')
-            assert(os.path.isfile(configIn.outputDir+'/date_version_ran.dat'))
+            nnpz = glob.glob(configIn.outDir+'/*.npz')
+            assert(os.path.isfile(configIn.outDir+'/date_version_ran.dat'))
             for filename in outfiles:
-                if not os.path.isfile(configIn.outputDir+'/'+filename):
+                if not os.path.isfile(configIn.outDir+'/'+filename):
                     print 'missing file %s'%filename
-                assert(os.path.isfile(configIn.outputDir+'/'+filename))
+                assert(os.path.isfile(configIn.outDir+'/'+filename))
             assert(nout == len(nnpz))
 
 
