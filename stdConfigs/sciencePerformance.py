@@ -289,8 +289,8 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
         slicerList.append(slicer)
 
     # Good seeing in r/i band metrics, including in first/second years.
-    startNum = histNum
     for f in (['r', 'i']):
+        startNum = histNum
         for tcolor, tlabel, timespan in zip(['k', 'g', 'r'], ['10 years', '1 year', '2 years'],
                                             ['', ' and night<=365', ' and night<=730']):
             sqlconstraint = ['filter = "%s" %s' %(f, timespan)]
@@ -299,6 +299,7 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
             histNum = startNum
             metricList = []
             seeing_limit = 0.7
+            airmass_limit = 1.15
             metricList.append(configureMetric('MinMetric', kwargs={'col':'finSeeing'},
                                             plotDict={'xMin':0.5, 'xMax':0.9},
                                             displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
@@ -316,6 +317,20 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
                                                 histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
                                                         'binsize':0.05}))
             histNum += 1
+            metricList.append(configureMetric('MinAirmass', kwargs={'col':'Airmass'},
+                                              displayDict={'group':seeinggroup, 'subgroup':'Best Airmass',
+                                                           'order':filtorder[f], 'caption':
+                                                           'Minimum airmass in %s.' %(propCaption)},
+                                            histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                                                       'binsize':0.02}))
+            histNum += 1
+            metricList.append(configureMetric('FracBelowMetric', kwargs={'col':'Airmass', 'cutoff':airmass_limit},
+                                              displayDict={'group':seeinggroup, 'subgroup':'Low airmass fraction',
+                                                           'order':filtorder[f], 'caption':
+                                                           'Fraction of total images with airmass lower than %.2f, in %s'
+                                                           %(airmass_limit, propCaption)},
+                                            histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                                                       binsize=0.02}))
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs,
                                     metricDict=makeDict(*metricList), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
