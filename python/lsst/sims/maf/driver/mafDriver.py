@@ -344,6 +344,8 @@ class MafDriver(object):
                                 if os.path.isfile(fullFile):
                                    print 'Restoring %s'%fullFile
                                    newGm.readMetricData(fullFile)
+                                   # Set the filename as a property of each metric (for merged histograms)
+                                   gm.metricObjs[iid].saveFile = fullFile
                                    # Set the slicer to the newly restored slicer
                                    newGm._setSlicer(newGm.slicers[iid], override=True)
                                    # Replace the restored plotting parameters
@@ -367,6 +369,12 @@ class MafDriver(object):
                              gm.reduceAll()
                              # And write metric data files to disk.
                              gm.writeAll()
+                             # Add the metric filenames to the metric objects (for merged histograms).
+                             for iid in gm.metricObjs:
+                                filename = gm._buildOutfileName(iid)
+                                # Load all the metric data back in
+                                fullFile = os.path.join(self.config.outDir, filename+'.npz')
+                                gm.metricObjs[iid].saveFile = fullFile
                              # And plot all metric values.
                              gm.plotAll(savefig=True, closefig=True, verbose=True)
                              if self.verbose:
@@ -419,8 +427,8 @@ class MafDriver(object):
             for m1 in self.metricList:
                 for m in m1:
                     if 'histNum' in m.histMerge.keys():
+                        # Determine which merged histogram to put data into.
                         key = m.histMerge['histNum']
-                        # Could be there was no data, then it got skipped
                         if hasattr(m,'saveFile') and key in histDict.keys():
                             histDict[key]['files'].append(m.saveFile)
                             temp_dict = m.histMerge
@@ -437,10 +445,9 @@ class MafDriver(object):
                                                      figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
-                    fullfilename = os.path.join(self.config.outDir, filename)
                     if self.verbose:
                        print 'reading %s to make merged histogram'%fullfilename
-                    cbm.readMetricData(fullfilename)
+                    cbm.readMetricData(filename)
                 iids = cbm.metricValues.keys()
                 fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
