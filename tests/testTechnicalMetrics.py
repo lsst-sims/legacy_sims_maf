@@ -35,20 +35,18 @@ class TestTechnicalMetrics(unittest.TestCase):
                                           names=['expMJD', 'filter'])
         metric = metrics.DeltaTimeChangesMetric()
         result = metric.run(data) # minutes
-        np.testing.assert_equal(result, np.diff(visitTimes)*24.0*60.0)
+        np.testing.assert_almost_equal(result, np.diff(visitTimes)*24.0*60.0)
         filters = np.array(['u', 'u', 'g', 'g', 'r'])
         visitTimes = np.floor(np.random.rand(filters.size) * 100)
         visitTimes.sort()
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
-        metric = metrics.DeltaTimeChangesMetric()
+        metric = metrics.DeltaTimeChangesMetric(cutoff=10)
         result = metric.run(data) # minutes
         dtimes = np.array([visitTimes[2]-visitTimes[0], visitTimes[4]-visitTimes[2]]) #days
         dtimes = dtimes*24.0*60.0
         np.testing.assert_almost_equal(result, dtimes)
-        self.assertEqual(metric.reduceMin(result), dtimes.min())
-        self.assertEqual(metric.reduceNBelow(result, cutoff=10), np.where(dtimes<10)[0].size)
-        
+
     def testMinDeltaTimeChangesMetric(self):
         """
         Test the MinDeltaTime metric.
@@ -63,6 +61,18 @@ class TestTechnicalMetrics(unittest.TestCase):
         data['filter'] = np.array(['u', 'u', 'u', 'u'])
         result = metric.run(data)
         self.assertEqual(result, metric.badval)
+
+    def testNBelowDeltaTimeChangesMetric(self):
+        """
+        Test the NBelowDeltaTime metric.
+        """
+        filters = np.array(['u', 'g', 'g', 'r'])
+        visitTimes = np.array([0, 5, 6, 7]) #days
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.NBelowDeltaTimeChangesMetric(cutoff=3*24*60)
+        result = metric.run(data) # minutes
+        self.assertEqual(result, 1)
 
 
     def testTeffMetric(self):
