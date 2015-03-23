@@ -64,6 +64,7 @@ class MinDeltaTimeChangesMetric(BaseMetric):
         """
         self.filterCol = filterCol
         self.timeCol = timeCol
+        self.units = 'minutes'
         super(MinDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol], metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
@@ -98,6 +99,7 @@ class NBelowDeltaTimeChangesMetric(BaseMetric):
         self.filterCol = filterCol
         self.timeCol = timeCol
         self.cutoff = cutoff
+        self.units = '#'
         super(NBelowDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol],
                                                            metricName=metricName, **kwargs)
 
@@ -120,7 +122,7 @@ class TeffMetric(BaseMetric):
     Effective time equivalent for a given set of visits.
     """
     def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', metricName='tEff',
-                 fiducialDepth=None, teffBase=30.0, **kwargs):
+                 fiducialDepth=None, teffBase=30.0, normed=False, **kwargs):
         self.m5Col = m5Col
         self.filterCol = filterCol
         if fiducialDepth is None:
@@ -131,6 +133,7 @@ class TeffMetric(BaseMetric):
             else:
                 raise ValueError('fiducialDepth should be None or dictionary')
         self.teffBase = teffBase
+        self.normed = normed
         super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
@@ -140,6 +143,9 @@ class TeffMetric(BaseMetric):
             match = np.where(dataSlice[self.filterCol] == f)[0]
             teff += (10.0**(0.8*(dataSlice[self.m5Col][match] - self.depth[f]))).sum()
         teff *= self.teffBase
+        if self.normed:
+            # Normalize by the t_eff if each observation was at the fiducial depth.
+            teff = teff / (self.teffBase*dataSlice[self.m5Col].size)
         return teff
 
 class OpenShutterFractionMetric(BaseMetric):
