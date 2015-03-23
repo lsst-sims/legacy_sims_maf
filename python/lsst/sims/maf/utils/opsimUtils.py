@@ -150,7 +150,7 @@ def calcCoaddedDepth(nvisits, singleVisitDepth):
     for f in nvisits:
         if f not in singleVisitDepth:
             raise ValueError('Filter keys in nvisits and singleVisitDepth must match')
-        coaddedDepth[f] = float(1.25 * np.log10(nvisits[f]) * 10**(0.8*singleVisitDepth[f]))
+        coaddedDepth[f] = float(1.25 * np.log10(nvisits[f] * 10**(0.8*singleVisitDepth[f])))
         if not np.isfinite(coaddedDepth[f]):
             coaddedDepth[f] = singleVisitDepth[f]
     return coaddedDepth
