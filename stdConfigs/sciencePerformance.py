@@ -317,7 +317,7 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
                                                 histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
                                                         'binsize':0.05}))
             histNum += 1
-            metricList.append(configureMetric('MinAirmass', kwargs={'col':'Airmass'},
+            metricList.append(configureMetric('MinMetric', kwargs={'col':'Airmass'},
                                               displayDict={'group':seeinggroup, 'subgroup':'Best Airmass',
                                                            'order':filtorder[f], 'caption':
                                                            'Minimum airmass in %s.' %(propCaption)},
@@ -330,7 +330,7 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
                                                            'Fraction of total images with airmass lower than %.2f, in %s'
                                                            %(airmass_limit, propCaption)},
                                             histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
-                                                       binsize=0.02}))
+                                                       'binsize':0.02}))
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs,
                                     metricDict=makeDict(*metricList), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
