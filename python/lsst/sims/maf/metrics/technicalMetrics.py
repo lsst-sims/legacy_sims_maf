@@ -26,10 +26,10 @@ class DeltaTimeChangesMetric(BaseMetric):
     (useful for calculating time between filter changes in particular).
     Returns delta time in minutes!
     """
-    def __init__(self, col='filter', timeCol='expMJD', **kwargs):
+    def __init__(self, col='filter', timeCol='expMJD', metricName='Time Between Filter Changes', **kwargs):
         self.col = col
         self.timeCol = timeCol
-        super(DeltaTimeChangesMetric, self).__init__(col=[col, timeCol], **kwargs)
+        super(DeltaTimeChangesMetric, self).__init__(col=[col, timeCol], metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
@@ -43,10 +43,16 @@ class DeltaTimeChangesMetric(BaseMetric):
         dtimes = changetimes - prevchangetime
         dtimes *= 24.0*60.0
         return dtimes
+    def reduceMin(self, dtimes):
+        if dtimes.size == 0:
+            return self.badval
+        return dtimes.min()
+    def reduceNBelow(self, dtimes, cutoff=20.):
+        return np.where(dtimes<cutoff)[0].size
 
 class MinDeltaTimeChangesMetric(DeltaTimeChangesMetric):
     """
-    Compute the minimum time between changes in a column value.
+    Compute (only) the minimum time between changes in a column value.
     (useful for calculating time between filter changes in particular).
     Returns delta time in minutes!
     """
