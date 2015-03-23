@@ -291,28 +291,34 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     # Good seeing in r/i band metrics, including in first/second years.
     startNum = histNum
     for f in (['r', 'i']):
-        sqlconstraint = ['filter = "%s"' %(f)]
-        propCaption = '%s band, all proposals.' %(f)
-        metadata = '%s band'
+        for tcolor, tlabel, timespan in zip(['k', 'g', 'r'], ['10 years', '1 year', '2 years'],
+                                            ['', ' and night<=365', ' and night<=730']):
+        sqlconstraint = ['filter = "%s" %s' %(f, timespan)]
+        propCaption = '%s band, all proposals, over %s.' %(f, tlabel)
+        metadata = '%s band, %s' %(tlabel)
         histNum = startNum
         metricList = []
         seeing_limit = 0.7
         metricList.append(configureMetric('MinMetric', kwargs={'col':'finSeeing'},
-                             displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
-                                          'order':filtorder[f],
-                                          'caption':'Minimum seeing values in %s.' %(propCaption)},
-                             histMerge={'histNum':histNum, color='k', label='%s total',
-                                        binsize=0.05}))
+                                          plotDict={'xMin':0.5, 'xMax':0.9},
+                                          displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
+                                            'order':filtorder[f],
+                                            'caption':'Minimum seeing values in %s.' %(propCaption)},
+                                        histMerge={'histNum':histNum, color=tcolor, label='%s %s' %(f, tlabel),
+                                            binsize=0.05}))
         histNum += 1
         metricList.append(configureMetric('FracBelowMetric', kwargs={'col':'finSeeing', 'cutoff':seeing_limit},
-                                displayDict={'group':seeinggroup, 'subgroup':'Good seeing frac',
-                                            'order':filtorder[f],
-                                            'caption':'Fraction of total images with seeing better than %.1f, in %s'
-                                            %(seeing_limit, propCaption)},
-                                histMerge={'histNum':histNum, color='k', label='%s total',
-                                           binsize=0.05}))
-        slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=makeDict(*metricList),
-                                constraints=sqlconstraint)
+                                            plotDict={'xMin':0, 'xMax':0.5},
+                                            displayDict={'group':seeinggroup, 'subgroup':'Good seeing fraction',
+                                                'order':filtorder[f],
+                                                'caption':'Fraction of total images with seeing better than %.1f, in %s'
+                                                %(seeing_limit, propCaption)},
+                                            histMerge={'histNum':histNum, color=tcolor, label='%s %s' %(f, tlabel),
+                                                binsize=0.05}))
+        histNum += 1
+        slicer = configureSlicer(slicerName, kwargs=slicerkwargs,
+                                 metricDict=makeDict(*metricList), constraints=sqlconstraint,
+                                 metadata=metadata, metadataVerbatim=True)
         slicerList.append(slicer)
 
     # Coadded depth (after adding dust extinction)
