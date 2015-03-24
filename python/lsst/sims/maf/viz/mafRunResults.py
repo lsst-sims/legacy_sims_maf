@@ -57,7 +57,7 @@ class MafRunResults(object):
         # Combine metrics and displays arrays (these are one-to-one).
         self.metrics = rec_join('metricId', self.metrics, self.displays)
         # Add base metric names (to keep order for reduce methods).
-        baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S20')])
+        baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S50')])
         for i, m in enumerate(self.metrics):
             baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]
         self.metrics = merge_arrays([self.metrics, baseNames], flatten=True, usemask=False)
