@@ -236,7 +236,7 @@ class BaseSliceMetric(object):
         if 'xlabel' not in pParams:
             # Build a default x label if needed
             if self.slicers[iid].slicerName == 'OneDSlicer':
-                pParams['xlabel'] = self.slicer.sliceColName + ' (' + self.slicer.sliceColUnits + ')'
+                pParams['xlabel'] = self.slicers[iid].sliceColName + ' (' + self.slicers[iid].sliceColUnits + ')'
             else:
                 pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
         # Plot the data.
