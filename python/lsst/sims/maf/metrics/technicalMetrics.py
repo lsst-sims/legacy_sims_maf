@@ -95,7 +95,7 @@ class NBelowDeltaTimeChangesMetric(BaseMetric):
         cutoff = the cutoff value for the reduce method 'NBelow'
         """
         if metricName is None:
-            metricName = 'Number of Filter Changes < %.1f' %(cutoff)
+            metricName = 'Number of Filter Changes <%.1f minutes' %(cutoff)
         self.filterCol = filterCol
         self.timeCol = timeCol
         self.cutoff = cutoff
