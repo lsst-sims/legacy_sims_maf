@@ -14,7 +14,7 @@ class NChangesMetric(BaseMetric):
     def __init__(self, col='filter', orderBy='expMJD', **kwargs):
         self.col = col
         self.orderBy = orderBy
-        super(NChangesMetric, self).__init__(col=[col, orderBy], **kwargs)
+        super(NChangesMetric, self).__init__(col=[col, orderBy], units='#', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         idxs = np.argsort(dataSlice[self.orderBy])
@@ -64,8 +64,8 @@ class MinDeltaTimeChangesMetric(BaseMetric):
         """
         self.filterCol = filterCol
         self.timeCol = timeCol
-        self.units = 'minutes'
-        super(MinDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol], metricName=metricName, **kwargs)
+        super(MinDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol], metricName=metricName,
+                                                        units='minutes', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
@@ -99,9 +99,8 @@ class NBelowDeltaTimeChangesMetric(BaseMetric):
         self.filterCol = filterCol
         self.timeCol = timeCol
         self.cutoff = cutoff
-        self.units = '#'
         super(NBelowDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol],
-                                                           metricName=metricName, **kwargs)
+                                                           metricName=metricName, units='#', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
@@ -134,7 +133,7 @@ class TeffMetric(BaseMetric):
                 raise ValueError('fiducialDepth should be None or dictionary')
         self.teffBase = teffBase
         self.normed = normed
-        super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName, **kwargs)
+        super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName, units='seconds', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         filters = np.unique(dataSlice[self.filterCol])
