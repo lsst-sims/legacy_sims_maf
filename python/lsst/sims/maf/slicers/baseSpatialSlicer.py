@@ -264,7 +264,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 bins = optimalBins(metricValue)
 
         # Generate plots.
-        fig = plt.figure()
+        fig = plt.figure(fignum)
 
         if cumulative is not False:
             # If cumulative is set, generate histogram without using histRange (to use full range of data).
