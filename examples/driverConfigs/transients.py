@@ -1,3 +1,6 @@
+# To run:
+# runFlexibleDriver.py transients.py --runName <opsim run name> --outDir <directory name>
+
 import numpy as np
 import os
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
@@ -35,7 +38,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     # Demand 2 points before tmax before counting the LC as detected
     metricList.append(configureMetric('TransientMetric', plotDict=plotDict,summaryStats=stats,
                          kwargs={'riseSlope':0, 'declineSlope':0,'transDuration':60,
-                                 'nDetect':2,
+                                 'nPrePeak':2,
                                  'metricName':'Detect on rise'}) )
 
     # Demand at least 1 filter sample the lightcurve at 3 well-spaced points
