@@ -77,7 +77,7 @@ class SummaryStatRow(Base):
     """
     Define contents and format of the summary statistics table.
 
-    (Table to list link summary stats to relevant metrics in MetricList, and provide summary stat name,
+    (Table to list and link summary stats to relevant metrics in MetricList, and provide summary stat name,
     value and potentially a comment).
     """
     __tablename__ = "summarystats"
@@ -125,7 +125,7 @@ class ResultsDb(object):
 
         - metricName: the name of the metric
         - sliceName: the name of the slicer
-        - simDataName: the name of used to identify the simData
+        - simDataName: the name used to identify the simData
         - sqlConstraint: the sql constraint used to select data from the simData
         - metricMetadata: the metadata associated with the metric
         - metricDatafile: the data file the metric data is stored in
