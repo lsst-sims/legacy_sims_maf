@@ -294,7 +294,7 @@ class MafDriver(object):
                           print '  Found %i matching visits' %(len(self.data))
                       # Special data requirements for opsim slicer.
                       self.fieldData = None
-                      if 'OpsimFieldSlicer' in slicerNames:
+                      if 'OpsimFieldSlicer' in slicerNames and not self.plotOnly:
                           self.getFieldData(matchingSlicers[slicerNames.index('OpsimFieldSlicer')], sqlconstraint)
                       # Setup each slicer, and run through the slicepoints (with metrics) in baseSliceMetric
                       if self.verbose:
@@ -306,17 +306,6 @@ class MafDriver(object):
                              for skyMap in m.maps:
                                 if skyMap not in slicer.mapsNames:
                                    slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
-                          # Set up slicer.
-                          #if not self.plotOnly:
-                          #   if slicer.slicerName == 'OpsimFieldSlicer':
-                                 # Need to pass in fieldData as well
-                          #       slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
-                          #   else:
-                          #      if len(slicer.mapsList) > 0:
-                          #         slicer.setupSlicer(self.data, maps=slicer.mapsList)
-                          #      else:
-                          #         slicer.setupSlicer(self.data)
-                             # Set up baseSliceMetric.
                           gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
                                                            outDir=self.config.outDir)
                           gm._setSlicer(slicer)
