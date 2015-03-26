@@ -74,6 +74,25 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data) # minutes
         self.assertEqual(result, 1)
 
+    def testNWithinDeltaTimeChangesMetric(self):
+        """
+        Test the NWithinDeltaTime metric.
+        """
+        filters = np.array(['u', 'g', 'r', 'u', 'g', 'r'])
+        visitTimes = np.array([0, 1, 1, 4, 6, 7]) #days
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.NWithinDeltaTimeChangesMetric(timespan=1*24*60)
+        result = metric.run(data) # minutes
+        self.assertEqual(result, 2)
+        filters = np.array(['u', 'g', 'g', 'u', 'g', 'r', 'g', 'r'])
+        visitTimes = np.array([0, 1, 1, 4, 4, 7, 8, 8]) #days
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.NWithinDeltaTimeChangesMetric(timespan=1*24*60)
+        result = metric.run(data) # minutes
+        self.assertEqual(result, 2)
+
 
     def testTeffMetric(self):
         """

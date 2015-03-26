@@ -3,6 +3,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['NChangesMetric',
            'MinDeltaTimeChangesMetric', 'NBelowDeltaTimeChangesMetric', 'DeltaTimeChangesMetric',
+           'NWithinDeltaTimeChangesMetric',
            'TeffMetric', 'OpenShutterFractionMetric',
            'CompletenessMetric', 'FilterColorsMetric']
 
@@ -95,10 +96,10 @@ class NBelowDeltaTimeChangesMetric(BaseMetric):
         cutoff = the cutoff value for the reduce method 'NBelow'
         """
         if metricName is None:
-            metricName = 'Number of Filter Changes <%.1f minutes' %(cutoff)
+            metricName = 'Number of Filter Changes Faster Than <%.1f minutes' %(cutoff)
         self.filterCol = filterCol
         self.timeCol = timeCol
-        self.cutoff = cutoff
+        self.cutoff = cutoff/24.0/60.0 # Convert cutoff from minutes to days.
         super(NBelowDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol],
                                                            metricName=metricName, units='#', **kwargs)
 
@@ -112,9 +113,41 @@ class NBelowDeltaTimeChangesMetric(BaseMetric):
         prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
                                          dataSlice[self.timeCol][idxs][1:][condition][:-1]))
         dtimes = changetimes - prevchangetime
-        dtimes *= 24.0*60.0
         return np.where(dtimes<self.cutoff)[0].size
 
+class NWithinDeltaTimeChangesMetric(BaseMetric):
+    """
+    Compute the maximum number of changes that occur within a given timespan.
+    (useful for calculating time between filter changes in particular).
+    'timespan' should be in minutes.
+    """
+    def __init__(self, filterCol='filter', timeCol='expMJD', metricName=None, timespan=20, **kwargs):
+        """
+        col = column tracking changes in
+        timeCol = column keeping the time of each visit
+        timespan = the timespan to count the number of changes within (in minutes)
+        """
+        if metricName is None:
+            metricName = 'Max Number of Filter Changes Within <%.1f minutes' %(timespan)
+        self.filterCol = filterCol
+        self.timeCol = timeCol
+        self.timespan = timespan/24./60. # Convert timespan from minutes to days.
+        super(NWithinDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol],
+                                                           metricName=metricName, units='#', **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        # Sort on time, to be sure we've got filter (or other col) changes in the right order.
+        idxs = np.argsort(dataSlice[self.timeCol])
+        changes = (dataSlice[self.filterCol][idxs][1:] != dataSlice[self.filterCol][idxs][:-1])
+        condition = np.where(changes==True)[0]
+        times = dataSlice[self.timeCol][idxs][condition]
+        changetimes = dataSlice[self.timeCol][idxs][1:][condition]
+        if dataSlice[self.filterCol][idxs][1] != dataSlice[self.filterCol][idxs][0]:
+            changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])
+        nchanges = np.zeros(changetimes.size, int)
+        for i, t in enumerate(changetimes):
+            nchanges[i] = np.where(np.abs(t - changetimes) <= self.timespan)[0].size - 1
+        return nchanges.max()
 
 class TeffMetric(BaseMetric):
     """
