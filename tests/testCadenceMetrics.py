@@ -7,7 +7,7 @@ import lsst.sims.maf.metrics as metrics
 
 
 class TestCadenceMetrics(unittest.TestCase):
-                        
+
     def testSNMetric(self):
         """
         Test the SN Cadence Metric.
@@ -74,7 +74,7 @@ class TestCadenceMetrics(unittest.TestCase):
 
         metric = metrics.Tgaps(binsize=1)
         result1 = metric.run(data)
-        # By default, should all be in first bin 
+        # By default, should all be in first bin
         assert(result1[0] == data.size-1)
         assert(np.sum(result1) == data.size-1)
         data['expMJD'] = np.arange(0,200,2)
@@ -87,7 +87,55 @@ class TestCadenceMetrics(unittest.TestCase):
         assert(result3[1] == data.size-1)
         Ngaps = (data.size-1)*(data.size-1)/2.+(data.size-1)/2.
         assert(np.sum(result3) == Ngaps)
-        
+
+
+    def testTransientMetric(self):
+        names = ['expMJD','fiveSigmaDepth', 'filter']
+        types = [float, float,'|S1']
+
+        ndata = 100
+        dataSlice = np.zeros(ndata, dtype = zip(names, types))
+        dataSlice['expMJD'] = np.arange(ndata)
+        dataSlice['fiveSigmaDepth'] = 25
+        dataSlice['filter'] = 'g'
+
+        metric = metrics.TransientMetric(surveyDuration=ndata/365.25)
+
+        # Should detect everything
+        assert(metric.run(dataSlice) == 1.)
+
+        # Double to survey duration, should now only detect half
+        metric = metrics.TransientMetric(surveyDuration=ndata/365.25*2)
+        assert(metric.run(dataSlice) == 0.5)
+
+        # Set half of the m5 of the observations very bright, so kill another half.
+        dataSlice['fiveSigmaDepth'][0:ndata/2] = 20
+        assert(metric.run(dataSlice) == 0.25)
+
+        dataSlice['fiveSigmaDepth'] = 25
+        # Demand lots of early observations
+        metric = metrics.TransientMetric(peakTime=.5, nDetect=3, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 0.)
+
+        # Demand a reasonable number of early observations
+        metric = metrics.TransientMetric(peakTime=2, nDetect=2, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 1.)
+
+        # Demand multiple filters
+        metric = metrics.TransientMetric(nFilters=2, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 0.)
+
+        dataSlice['filter'] = ['r','g']*50
+        assert(metric.run(dataSlice) == 1.)
+
+        # Demad too many observation per light curve
+        metric = metrics.TransientMetric(nPerLC=20, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 0.)
+
+        # Test both filter and number of LC samples
+        metric = metrics.TransientMetric(nFilters=2,nPerLC=3, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 1.)
+
 if __name__ == '__main__':
 
     unittest.main()

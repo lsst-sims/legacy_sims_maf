@@ -238,4 +238,3 @@ class QuickRevisitMetric(BaseMetric):
         counts, bins = np.histogram(dataSlice[self.nightCol], nightbins)
         condition = (counts >= self.nVisitsInNight)
         return len(counts[condition])
-
