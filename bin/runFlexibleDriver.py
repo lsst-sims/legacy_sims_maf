@@ -36,7 +36,8 @@ if __name__=="__main__":
     args, extras = parser.parse_known_args()
     kwargs = {}
     for ekey, estr in zip(extras[::2], extras[1::2]):
-        kwargs[ekey] = estr
+        k = ekey.replace('--', '')
+        kwargs[k] = estr
     runName = args.runName
     del args.runName
     kwargs.update(vars(args))
