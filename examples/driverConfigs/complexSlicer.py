@@ -42,7 +42,8 @@ sliceList.append(slicer)
 # Plot just a single Healpixel.
 metric1 = configureMetric('Tgaps',
                          kwargs={'binMin':binMin,
-                                 'binMax':binMax, 'binsize':binsize},plotDict={'singleHist':2253})
+                                 'binMax':binMax, 'binsize':binsize},
+                        plotDict={'singleHist':2253})
 
 slicer = configureSlicer('HealpixComplexSlicer',
                          kwargs={'nside':64,
