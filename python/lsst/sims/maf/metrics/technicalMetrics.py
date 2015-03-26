@@ -144,6 +144,10 @@ class NWithinDeltaTimeChangesMetric(BaseMetric):
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
         if dataSlice[self.filterCol][idxs][1] != dataSlice[self.filterCol][idxs][0]:
             changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])
+        # If there are 0 filter changes ...
+        if changetimes.size == 0:
+            return 0
+        # Otherwise ..
         nchanges = np.zeros(changetimes.size, int)
         for i, t in enumerate(changetimes):
             nchanges[i] = np.where(np.abs(t - changetimes) <= self.timespan)[0].size - 1
