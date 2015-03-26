@@ -96,7 +96,6 @@ class TestCadenceMetrics(unittest.TestCase):
         # Set up "rapid revisit" metric to look for visits between 5 and 25
         metric = metrics.RapidRevisitMetric(dTmin=5, dTmax=55, minNvisits=50)
         result = metric.run(data)
-        print result
         # This should be uniform.
         self.assertTrue(result < 0.1)
         self.assertTrue(result >= 0)
@@ -104,12 +103,10 @@ class TestCadenceMetrics(unittest.TestCase):
         dtimes = np.zeros(100) + 5
         data['expMJD'] = dtimes.cumsum()
         result = metric.run(data)
-        print result
         self.assertTrue(result >= 0.5)
         dtimes = np.zeros(100) + 15
         data['expMJD'] = dtimes.cumsum()
         result = metric.run(data)
-        print result
         self.assertTrue(result >= 0.5)
         # Let's see how much dmax/result can vary
         resmin = 1
@@ -123,6 +120,17 @@ class TestCadenceMetrics(unittest.TestCase):
             resmax = np.max([resmax, result])
         print "RapidRevisit .. range", resmin, resmax
 
+    def testNRevisitsMetric(self):
+        data = np.zeros(100, dtype=zip(['expMJD'], [float]))
+        dtimes = np.arange(100)/24./60.
+        data['expMJD'] = dtimes.cumsum()
+        metric = metrics.NRevisitsMetric(dT=50.)
+        result = metric.run(data)
+        self.assertEqual(result, 50)
+        metric = metrics.NRevisitsMetric(dT=50., normed=True)
+        result = metric.run(data)
+        self.assertEqual(result, 0.5)
+        
 if __name__ == '__main__':
 
     unittest.main()

@@ -1,7 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric', 'RapidRevisitMetric']
+__all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric',
+           'RapidRevisitMetric', 'NRevisitsMetric']
 
 class SupernovaMetric(BaseMetric):
     """
@@ -226,7 +227,8 @@ class RapidRevisitMetric(BaseMetric):
     Calculate uniformity of time between consecutive visits on short timescales (for RAV1).
     """
     def __init__(self, timeCol='expMJD', minNvisits=100,
-                 dTmin=40.0/60.0/60.0/24.0, dTmax=30.0/60.0/24.0, **kwargs):
+                 dTmin=40.0/60.0/60.0/24.0, dTmax=30.0/60.0/24.0,
+                 metricName='RapidRevisit', **kwargs):
         """
         timeCol = times of visits
         minNvisits = minimum number of visits within dtime in interval
@@ -237,7 +239,7 @@ class RapidRevisitMetric(BaseMetric):
         self.minNvisits = minNvisits
         self.dTmin = dTmin
         self.dTmax = dTmax
-        super(RapidRevisitMetric, self).__init__(col=self.timeCol, **kwargs)
+        super(RapidRevisitMetric, self).__init__(col=self.timeCol, metricName=metricName, **kwargs)
         # Update minNvisits, as 0 visits will crash algorithm and 1 is nonuniform by definition.
         if self.minNvisits <= 1:
             self.minNvisits = 2
@@ -258,3 +260,34 @@ class RapidRevisitMetric(BaseMetric):
         # Look at the differences between our times and the uniform times.
         dmax = np.max(np.abs(uniform_dtimes-dtimes-dtimes[1]))
         return dmax
+
+class NRevisitsMetric(BaseMetric):
+    """
+    Calculate the number of (consecutive) visits with time differences less than dT.
+    """
+    def __init__(self, timeCol='expMJD', dT=30.0/60.0/24., normed=False, metricName=None,**kwargs):
+        """
+        dT = time interval to consider (in minutes, default 30).
+        normed = False - returns number of visits
+               = True - returns fraction of overall visits
+        """
+        units = None
+        if metricName is None:
+            if normed:
+                metricName = 'Fraction of revisits faster than %.1f minutes' %(dT)
+            else:
+                metricName = 'Number of revisits faster than %.1f minutes' %(dT)
+                units = '#'
+        self.timeCol = timeCol
+        self.dT = dT / 60./24. # convert to days
+        self.normed = normed
+        super(NRevisitsMetric, self).__init__(col=self.timeCol, units=units, metricName=metricName, **kwargs)
+        if ('normVal' not in self.plotDict) and ('zp' not in self.plotDict) and not normed:
+            self.plotDict['cbarFormat'] = '%d'
+
+    def run(self, dataSlice, slicePoint=None):
+        dtimes = np.diff(np.sort(dataSlice[self.timeCol]))
+        nFastRevisits = np.size(np.where(dtimes<=self.dT)[0])
+        if self.normed:
+            nFastRevisits = nFastRevisits / float(np.size(dataSlice[self.timeCol]))
+        return nFastRevisits
