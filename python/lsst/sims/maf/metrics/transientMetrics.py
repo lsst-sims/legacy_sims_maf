@@ -63,7 +63,7 @@ class TransientMetric(BaseMetric):
 
         # Total number of transients that could go off back-to-back
         nTransMax = np.floor(self.surveyDuration/(self.transDuration/365.25))
-        tshifts = np.arange(nPhaseCheck)*self.transDuration/float(nPhaseCheck)
+        tshifts = np.arange(self.nPhaseCheck)*self.transDuration/float(self.nPhaseCheck)
         nDetected = 0
         nTransMax = 0
         for tshift in tshifts:
@@ -108,7 +108,9 @@ class TransientMetric(BaseMetric):
                 ulcNumber = np.unique(lcNumber)
                 left = np.searchsorted(lcNumber, ulcNumber)
                 right = np.searchsorted(lcNumber, ulcNumber, side='right')
-
+                # Note here I'm using np.searchsorted to basically do a 'group by'
+                # might be clearer to use scipy.ndimage.measurements.find_objects or pandas, but
+                # this numpy function is known for being efficient.
                 for le,ri in zip(left,right):
                     # Number of points where there are a detection
                     good = np.where(time[le:ri] < self.peakTime)

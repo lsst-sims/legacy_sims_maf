@@ -24,7 +24,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Out', slicerName='OpsimFieldS
     nside=128
 
     # Set everything on
-    plotDict={'xMin':0.,'xMax':.25}
+    plotDict={'xMin':0.,'xMax':.75}
     stats = {'MeanMetric':{}, 'MedianMetric':{}, 'MinMetric':{}, 'MaxMetric':{}}
 
     metricList = []
