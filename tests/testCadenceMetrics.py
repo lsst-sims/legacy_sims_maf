@@ -114,11 +114,11 @@ class TestCadenceMetrics(unittest.TestCase):
 
         dataSlice['fiveSigmaDepth'] = 25
         # Demand lots of early observations
-        metric = metrics.TransientMetric(peakTime=.5, nDetect=3, surveyDuration=ndata/365.25 )
+        metric = metrics.TransientMetric(peakTime=.5, nPrePeak=3, surveyDuration=ndata/365.25 )
         assert(metric.run(dataSlice) == 0.)
 
         # Demand a reasonable number of early observations
-        metric = metrics.TransientMetric(peakTime=2, nDetect=2, surveyDuration=ndata/365.25 )
+        metric = metrics.TransientMetric(peakTime=2, nPrePeak=2, surveyDuration=ndata/365.25 )
         assert(metric.run(dataSlice) == 1.)
 
         # Demand multiple filters
