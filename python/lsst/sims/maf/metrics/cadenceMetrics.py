@@ -265,7 +265,7 @@ class NRevisitsMetric(BaseMetric):
     """
     Calculate the number of (consecutive) visits with time differences less than dT.
     """
-    def __init__(self, timeCol='expMJD', dT=30.0/60.0/24., normed=False, metricName=None,**kwargs):
+    def __init__(self, timeCol='expMJD', dT=30.0, normed=False, metricName=None,**kwargs):
         """
         dT = time interval to consider (in minutes, default 30).
         normed = False - returns number of visits
