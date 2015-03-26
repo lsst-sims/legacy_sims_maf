@@ -20,6 +20,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     benchmark (which can be design, stretch or requested) values used to scale plots of number of visits and coadded depth.
        ('requested' means look up the requested number of visits for the proposal and use that information).
     """
+    #config.mafComment = 'Scheduler Validation'
+
     # Setup Database access
     config.outDir = outDir
     if runName.endswith('_sqlite.db'):
@@ -73,15 +75,19 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     benchmarkDDVals = {}
     benchmarkDDVals = utils.scaleBenchmarks(runLength, benchmark='design')
     benchmarkDDVals['nvisits'] = opsimdb.fetchRequestedNvisits(propId=DDpropid)
-    benchmarkDDVals['coaddedDepth'] = utils.calcCoaddedDepth(benchmarkDDVals['nvisits'], benchmarkDDVals['singleVisitDepth'])
-    #benchmarkDDVals['coaddedDepth'] = {'u':28.5, 'g':28.5, 'r':28.5, 'i':28.5, 'z':28.0, 'y':27.0}
+    #benchmarkDDVals['coaddedDepth'] = utils.calcCoaddedDepth(benchmarkDDVals['nvisits'], benchmarkDDVals['singleVisitDepth'])
+    benchmarkDDVals['coaddedDepth'] = {'u':28.5, 'g':28.5, 'r':28.5, 'i':28.5, 'z':28.0, 'y':27.0}
 
     # Set values for min/max range of nvisits for All/WFD and DD plots. These are somewhat arbitrary.
     nvisitsRange = {}
     nvisitsRange['all'] = {'u':[20, 80], 'g':[50,150], 'r':[100, 250],
                            'i':[100, 250], 'z':[100, 300], 'y':[100,300]}
-    nvisitsRange['DD'] = {'u':[6000, 10000], 'g':[2500, 5000], 'r':[5000, 8000],
-                          'i':[5000, 8000], 'z':[7000, 10000], 'y':[5000, 8000]}
+    nvisitsRange['DD'] = {'u':[3000, 7000], 'g':[1000, 7000], 'r':[1000, 7000],
+                          'i':[1000, 7000], 'z':[1000, 7000], 'y':[1000, 7000]}
+    #for f in benchmarkDDVals['nvisits']:
+    #    nvisitsRange['DD'][f][0] = np.min([benchmarkDDVals['nvisits'] - 2000, 0])
+    #    nvisitsRange['DD'][f][1] = benchmarkDDVals['nvisits'] + 2000
+
     # Scale these nvisit ranges for the runLength.
     scale = runLength / 10.0
     for prop in nvisitsRange:
@@ -156,7 +162,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
             # Set some per-proposal information.
             if prop == 'All Props':
                 subgroup = 'All Props'
-                propCaption = ' for all proposals.'
+                propCaption = ' for all proposals'
                 metadata = '%s band, all props' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s"' %(f)]
                 nvisitsMin = nvisitsRange['all'][f][0]
@@ -164,7 +170,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                 mag_zp = benchmarkVals['coaddedDepth'][f]
             elif prop == 'WFD':
                 subgroup = 'WFD'
-                propCaption = ' for all WFD proposals.'
+                propCaption = ' for all WFD proposals'
                 metadata = '%s band, WFD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
                 nvisitsMin = nvisitsRange['all'][f][0]
@@ -172,7 +178,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                 mag_zp = benchmarkVals['coaddedDepth'][f]
             elif prop == 'DD':
                 subgroup = 'DD'
-                propCaption = ' for all DD proposals.'
+                propCaption = ' for all DD proposals'
                 metadata = '%s band, DD' %(f) + slicermetadata
                 sqlconstraint = ['filter = "%s" and %s' %(f, ddWhere)]
                 nvisitsMin = nvisitsRange['DD'][f][0]
@@ -259,7 +265,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                                 kwargs={'col':'normairmass'},
                                                 plotDict={'units':'X'},
                                                 displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                            'caption':'Median normalized airmass in filter %s, %s.'
+                                                            'caption':'Median normalized airmass (airmass divided by the minimum airmass a field could reach) in filter %s, %s.'
                                                             %(f, propCaption)}))
                 # Calculate the maximum airmass.
                 metricList.append(configureMetric('MaxMetric',
@@ -280,10 +286,10 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                                                'caption':'Full Range of the Hour Angle in filter %s, %s.'
                                                                %(f, propCaption)}))
                 # Calculate the RMS of the position angle
-                metricList.append(configureMetric('RmsMetric', kwargs={'col':'modRotSkyPos'},
-                                                  plotDict={'xMin':0, 'xMax':90},
+                metricList.append(configureMetric('RmsMetric', kwargs={'col':'rotSkyPos'},
+                                                  plotDict={'xMin':0, 'xMax':float(np.pi)},
                                                   displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                               'caption':'RMS of the position angle in filter %s, %s.'
+                                                               'caption':'RMS of the position angle (angle between "up" in the camera and north on the sky) in filter %s, %s.'
                                                                %(f, propCaption)}))
             metricDict = makeDict(*metricList)
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
@@ -466,7 +472,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
             # Histogram the individual visit seeing.
             m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing', 'metricName':'Seeing Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f],'label':'%s'%f},
+                                        'color':colors[f], 'label':'%s'%f},
                                 displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                                             'caption':'Histogram of the seeing in %s band, %s.' %(f, propCaption)} )
             histNum += 1
@@ -507,26 +513,26 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                     metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
-            # Histogram the sky position angles (rotSkyPos % 180)
-            m1 = configureMetric('CountMetric', kwargs={'col':'modRotSkyPos', 'metricName':'Position Angle Histogram'},
+            # Histogram the sky position angles (rotSkyPos)
+            m1 = configureMetric('CountMetric', kwargs={'col':'rotSkyPos', 'metricName':'Position Angle Histogram'},
                                  histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                            'color':colors[f], 'label':'%s' %f, 'xMin':-90., 'xMax':90.},
+                                            'color':colors[f], 'label':'%s' %f, 'xMin':0., 'xMax':float(np.pi*2.)},
                                 displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                             'caption':'Histogram of the position angle in %s band, %s' %(f, propCaption)})
+                                             'caption':'Histogram of the position angle (in radians) in %s band, %s. The position angle is the angle between "up" in the image and North on the sky.' %(f, propCaption)})
             histNum += 1
-            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'modRotSkyPos', 'binsize':5},
+            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'rotSkyPos', 'binsize':0.05},
                                      metricDict=makeDict(m1), constraints=sqlconstraint,
                                      metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
             # Histogram the individual visit distance to moon values.
             m1 = configureMetric('CountMetric', kwargs={'col':'dist2Moon', 'metricName':'Distance to Moon Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s'%f, 
+                                        'color':colors[f], 'label':'%s'%f,
                                         'xMin':float(np.radians(15.)), 'xMax':float(np.radians(180.))},
                                 displayDict={'group':dist2moongroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                            'caption':'Histogram of the hour angle in %s band, %s' %(f, propCaption)})
+                                            'caption':'Histogram of the distance between the field and the moon (in radians) in %s band, %s' %(f, propCaption)})
             histNum += 1
-            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'dist2Moon', 'binsize':0.1},
+            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'dist2Moon', 'binsize':0.05},
                                     metricDict=makeDict(m1), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
@@ -556,7 +562,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     m2 = configureMetric('OpenShutterFractionMetric',
                          summaryStats=allStats,
                          displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
-                                      'caption':'Open shutter fraction per night.'})
+                                      'caption':'Open shutter fraction per night. This compares the on-sky image time against the on-sky time + slews/filter changes/readout, but does not include downtime due to weather.'})
     m3 = configureMetric('NChangesMetric', kwargs={'col':'filter', 'metricName':'Filter Changes'},
                          summaryStats=allStats,
                          plotDict={'units':'Number of Filter Changes'},
@@ -564,16 +570,32 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                      'caption':'Number of filter changes per night.'})
     m4 = configureMetric('MinDeltaTimeChangesMetric',
                          kwargs={'filterCol':'filter'},
+                         plotDict={'yMin':0, 'yMax':120},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
                                       'caption':'Minimum time between filter changes, in minutes.'})
     m5 = configureMetric('NBelowDeltaTimeChangesMetric',
+                         kwargs={'filterCol':'filter', 'cutoff':10},
+                         summaryStats=allStats,
+                         displayDict={'group':filtergroup, 'subgroup':'Per Night',
+                                      'caption':'Number of filter changes, where the time between filter changes is shorter than 10 minutes, per night.'})
+    m6 = configureMetric('NBelowDeltaTimeChangesMetric',
                          kwargs={'filterCol':'filter', 'cutoff':20},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
-                                      'caption':'Number of filter changes faster than 20 minutes, per night.'})
+                                      'caption':'Number of filter changes, where the time between filter changes is shorter than 20 minutes, per night.'})
+    m7 = configureMetric('NWithinDeltaTimeChangesMetric',
+                         kwargs={'filterCol':'filter', 'timespan':10},
+                         summaryStats=allStats,
+                         displayDict={'group':filtergroup, 'subgroup':'Per Night',
+                                      'caption':'Max number of filter changes within a window of 10 minutes, per night'})
+    m8 = configureMetric('NWithinDeltaTimeChangesMetric',
+                         kwargs={'filterCol':'filter', 'timespan':20},
+                         summaryStats=allStats,
+                         displayDict={'group':filtergroup, 'subgroup':'Per Night',
+                                      'caption':'Max number of filter changes within a window of 20 minutes, per night'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
-                             metricDict=makeDict(m1, m2, m3, m4, m5),
+                             metricDict=makeDict(m1, m2, m3, m4, m5, m6, m7, m8),
                              constraints=[''], metadata='Per night', metadataVerbatim=True)
     slicerList.append(slicer)
 
@@ -838,14 +860,17 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     # Count total number of nights
     m2 = configureMetric('CountUniqueMetric', kwargs={'col':'night', 'metricName':'Nights with observations'},
                          summaryStats={'IdentityMetric':{'metricName':'(days)'}},
-                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
+                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':1})
     m3 = configureMetric('FullRangeMetric', kwargs={'col':'night', 'metricName':'Total nights in survey'},
                          summaryStats={'ZeropointMetric':{'zp':1, 'metricName':'(days)'}},
-                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
+                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':0})
     m4 = configureMetric('TeffMetric', kwargs={'metricName':'Total effective time of survey'},
                          summaryStats={'NormalizeMetric':{'normVal':24.0*60.0*60.0, 'metricName':'(days)'}},
-                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time'})
-    slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2, m3, m4), constraints=[''], metadata='All Visits',
+                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':3})
+    m5 = configureMetric('TeffMetric', kwargs={'metricName':'Normalized total effective time of survey', 'normed':True},
+                         summaryStats={'IdentityMetric':{'metricName':'(fraction)'}},
+                         displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':2})
+    slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2, m3, m4, m5), constraints=[''], metadata='All Visits',
                              metadataVerbatim=True)
     slicerList.append(slicer)
 

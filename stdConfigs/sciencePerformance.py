@@ -22,6 +22,7 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     benchmark (which can be design, stretch or requested) values used to scale plots of number of visits and coadded depth.
        ('requested' means look up the requested number of visits for the proposal and use that information).
     """
+    #config.mafComment = 'Science Performance'
 
     # Setup Database access
     config.outDir = outDir
@@ -106,21 +107,16 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     # Note there's a complication here, you can't configure multiple versions of a summary metric since that makes a
     # dict with repeated keys.  The workaround is to add blank space (or even more words) to one of
     # the keys, which will be stripped out of the metric class name when the object is instatiated.
-    standardStats={'MeanMetric':{}, 'RmsMetric':{}, 'MedianMetric':{}, 'CountMetric':{},
-                   'NoutliersNsigmaMetric 1':{'metricName':'+3Sigma', 'nSigma':3.},
-                   'NoutliersNsigmaMetric 2':{'metricName':'-3Sigma', 'nSigma':-3.}}
-    rangeStats={'PercentileMetric 1':{'metricName':'25th%ile', 'percentile':25},
-                'PercentileMetric 2':{'metricName':'75th%ile', 'percentile':75},
-                'MinMetric':{},
-                'MaxMetric':{}}
-    allStats = standardStats.copy()
-    allStats.update(rangeStats)
-
+    allStats={'MeanMetric':{}, 'RobustRmsMetric':{}, 'MedianMetric':{},
+                   'PercentileMetric 1':{'metricName':'25th%ile', 'percentile':25},
+                    'PercentileMetric 2':{'metricName':'75th%ile', 'percentile':75},
+                    'MinMetric':{},
+                    'MaxMetric':{}}
 
     # Set up some 'group' labels
     reqgroup = 'A: Required SRD metrics'
     depthgroup = 'B: Depth per filter'
-    uniformitygroup = 'C: Time uniformity'
+    uniformitygroup = 'C: Uniformity'
     seeinggroup = 'D: Seeing distribution'
 
     histNum = 0
@@ -141,16 +137,16 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
                             plotDict={'units':'Number of Visits',
                                       'Asky':benchmarkVals['Area'], 'Nvisit':benchmarkVals['nvisitsTotal'],
                                       'xMin':0, 'xMax':1500},
-                            summaryStats={'fOArea':{'nside':nside, 'norm':False, 'metricName':'fOArea: Nvisits',
+                            summaryStats={'fOArea 1':{'nside':nside, 'norm':False, 'metricName':'fOArea: Nvisits (#)',
                                                     'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']},
-                                          'fOArea':{'nside':nside, 'norm':True, 'metricName':'fOArea: Nvisits fraction',
+                                          'fOArea 2':{'nside':nside, 'norm':True, 'metricName':'fOArea: Nvisits/benchmark',
                                                     'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']},
-                                        'fONv':{'nside':nside, 'norm':False, 'metricName':'fONv: Area',
+                                        'fONv 1':{'nside':nside, 'norm':False, 'metricName':'fONv: Area (sqdeg)',
                                                     'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']},
-                                        'fONv':{'nside':nside, 'norm':True, 'metricName':'fONv: Area fraction',
+                                        'fONv 2':{'nside':nside, 'norm':True, 'metricName':'fONv: Area/benchmark',
                                                     'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']}},
                             displayDict={'group':reqgroup, 'subgroup':'F0', 'displayOrder':order, 'caption':
-                                        'FO metric: evaluates the overall efficiency of observing.\n (fOArea = %.1f sq degrees receive at least this many visits out of %d, fONv = this many square degrees out of %.1f receive at least %d visits).'
+                                        'The FO metric evaluates the overall efficiency of observing. fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. fONv: Area = this many square degrees out of %.1f receive at least %d visits.'
                                         %(benchmarkVals['Area'], benchmarkVals['nvisitsTotal'],
                                           benchmarkVals['Area'], benchmarkVals['nvisitsTotal'])})
         order += 1
@@ -162,23 +158,39 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
 
     # Calculate the Rapid Revisit Metric.
     order = 0
-    for prop in ('All Prop', 'WFD only'):
-        if prop == 'All Prop':
-            metadata = 'All proposal' + slicermetadata
-            sqlconstraint = ''
-        if prop == 'WFD only':
-            metadata = 'WFD only' + slicermetadata
-            sqlconstraint = wfdWhere
-        m1 = configureMetric('RapidRevisitMetric',
-                             plotDict={'xMin':0, 'xMax':1},
-                             summaryStats = {'FracBelowMetric':{'cutoff':0.5, 'scale':hp.nside2pixarea(nside),
-                                                                'metricName':'RAV1'}},
-                            displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
-                                           'caption':'Deviation from uniformity for short revisit timescales.'})
-        order += 1
-        slicer = configureSlicer(slicerName, kwargs=slicerkwargs, constraints = [sqlconstraint],
-                                 metadata=metadata, metadataVerbatim=True)
-        slicerList.append(slicer)
+    metadata = 'All proposal' + slicermetadata
+    sqlconstraint = ''
+    dTmin = 40.0 # seconds
+    dTmax = 30.0 # minutes
+    minNvisit = 100
+    pixArea = float(hp.nside2pixarea(nside, degrees=True))
+    extraStats = {'FracBelowMetric':{'cutoff':0.5, 'scale':pixArea, 'metricName':'Area (sq deg)'}}
+    extraStats.update(allStats)
+    extraStats2 = {'FracBelowMetric':{'cutoff':100, 'scale':pixArea, 'metricName':'Area (sq deg) '}}
+    extraStats2.update(allStats)
+    extraStats3 = {'FracBelowMetric':{'cutoff':.15, 'scale':pixArea, 'metricName':'Area (sq deg)'}}
+    extraStats3.update(allStats)
+    m1 = configureMetric('RapidRevisitMetric', kwargs={'metricName':'RapidRevisitUniformity',
+                                                        'dTmin':dTmin/60.0/60.0/24.0, 'dTmax':dTmax/60.0/24.0,
+                                                        'minNvisits':minNvisit},
+                                plotDict={'xMin':0, 'xMax':1},
+                                summaryStats=extraStats,
+                                displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
+                                           'caption':'Deviation from uniformity for short revisit timescales, between %s and %s seconds, for pointings with at least %d visits in this time range.' %(dTmin, dTmax, minNvisit)})
+    order += 1
+    m2 = configureMetric('NRevisitsMetric', kwargs={'dT':dTmax},
+                         summaryStats= extraStats2,
+                        displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
+                                            'caption':'Number of consecutive visits with return times faster than %.1f minutes, in any filter, all proposals.' %(dTmax)})
+    order += 1
+    m3 = configureMetric('NRevisitsMetric', kwargs={'dT':dTmax, 'normed':True},
+                         summaryStats= extraStats3,
+                        displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
+                                            'caption':'Fraction of total visits where consecutive visits have return times faster than %.1f minutes, in any filter, all proposals.' %(dTmax)})
+    order += 1
+    slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=makeDict(m1, m2, m3), constraints = [sqlconstraint],
+                            metadata=metadata, metadataVerbatim=True)
+    slicerList.append(slicer)
 
 
     # Trigonometric parallax and proper motion @ r=20 and r=24
@@ -186,37 +198,43 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     order = 0
     metricList.append(configureMetric('ParallaxMetric',
                                       kwargs={'metricName':'Parallax 20', 'rmag':20},
+                                      summaryStats=allStats,
+                                      plotDict={'cbarFormat':'%.1f', 'xMin':0, 'xMax':3},
                                       displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                                                    'caption':'Parallax precision at r=20. (without refraction).'}))
     order += 1
     metricList.append(configureMetric('ParallaxMetric',
                                       kwargs={'metricName':'Parallax 24', 'rmag':24},
+                                      summaryStats=allStats,
+                                      plotDict={'cbarFormat':'%.1f', 'xMin':0, 'xMax':10},
                                     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                                              'caption':'Parallax precision at r=24. (without refraction).'}))
     order += 1
     metricList.append(configureMetric('ParallaxMetric',
                                       kwargs={'metricName':'Parallax Normed', 'rmag':24, 'normalize':True},
-                                      plotDict={'xMin':0.4, 'xMax':1},
+                                      plotDict={'xMin':0.5, 'xMax':1.0},
                                     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                                          'caption':
-                                         'Normalized parallax (normalized to optimum observation cadence, 1=optimal, relevant for all magnitudes).'}))
+                                         'Normalized parallax (normalized to optimum observation cadence, 1=optimal).'}))
     order += 1
     metricList.append(configureMetric('ProperMotionMetric',
-                                      kwargs={'metricName':'ProperMotion 20', 'rmag':20},
-                                      plotDict={'percentileClip':95},
+                                      kwargs={'metricName':'Proper Motion 20', 'rmag':20},
+                                      summaryStats=allStats,
+                                      plotDict={'xMin':0, 'xMax':3},
                                     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
                                                  'caption':'Proper Motion precision at r=20.'}))
     order += 1
     metricList.append(configureMetric('ProperMotionMetric', kwargs={'rmag':24, 'metricName':'Proper Motion 24'},
-                                    plotDict={'percentileClip':95},
+                                      summaryStats=allStats,
+                                    plotDict={'xMin':0, 'xMax':10},
                                     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
                                                  'caption':'Proper Motion precision at r=24.'}))
     order += 1
     metricList.append(configureMetric('ProperMotionMetric',
                                       kwargs={'rmag':24,'normalize':True, 'metricName':'Proper Motion Normed'},
-                                      plotDict={'xMin':0.25, 'xMax':0.75},
+                                      plotDict={'xMin':0.2, 'xMax':0.7},
                                 displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
-                                             'caption':'Normalized proper motion at r=24 (normalized to optimum observation cadence - start/end. 1=optimal, relevant to all magnitudes).'}))
+                                             'caption':'Normalized proper motion at r=24 (normalized to optimum observation cadence - start/end. 1=optimal).'}))
     order += 1
     slicer =  configureSlicer(slicerName, kwargs=slicerkwargs,
                             metricDict=makeDict(*metricList), constraints=[''])
@@ -227,18 +245,17 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     yearDates = range(0,int(round(365*runLength))+365,365)
     for i in range(len(yearDates)-1):
         for f in filters:
-            metadata = 'Year %d, filter %s' %(i, f) + slicermetadata
+            metadata = '%s band, after year %d' %(f, i+1) + slicermetadata
             sqlconstraint = ['filter = "%s" and night<=%i' %(f, yearDates[i+1])]
-            m1 = configureMetric('UniformityMetric',
+            m1 = configureMetric('UniformityMetric', kwargs={'metricName':'Time Uniformity'},
                                 plotDict={'xMin':0, 'xMax':1},
-                                displayDict = {'group':uniformitygroup, 'subgroup':'All Props',
-                                               'displayOrder':order+filtorder[f],
-                                                'caption':'Deviation from uniformity over entire survey.'})
+                                displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
+                                               'displayOrder':filtorder[f],
+                                                'caption':'Deviation from uniformity in %s band, by the end of year %d of the survey. (0=perfectly uniform, 1=perfectly nonuniform).' %(f, i+1)})
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs,
                                      metricDict=makeDict(m1), constraints=sqlconstraint,
                                         metadata=metadata, metadataVerbatim=True)
             slicerList.append(slicer)
-        order += 20
 
     # Depth metrics.
     startNum = histNum
@@ -263,7 +280,7 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
         histNum += 1
         # Coadded depth.
         metricList.append(configureMetric('Coaddm5Metric',
-                                            plotDict={'zp':benchmarkVals['coaddedDepth'][f], 'xMin':-0.6, 'xMax':0.6,
+                                            plotDict={'zp':benchmarkVals['coaddedDepth'][f], 'xMin':-0.8, 'xMax':0.8,
                                                         'units':'coadded m5 - %.1f' %benchmarkVals['coaddedDepth'][f]},
                                             summaryStats=allStats,
                                             histMerge={'histNum':histNum, 'legendloc':'upper right',
@@ -274,8 +291,9 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
                                                         'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, benchmarkVals['coaddedDepth'][f], propCaption)}))
         histNum += 1
         # Effective time.
-        metricList.append(configureMetric('TeffMetric', kwargs={'metricName':'Effective Time',
+        metricList.append(configureMetric('TeffMetric', kwargs={'metricName':'Normalized Effective Time',
                                                                 'normed':True},
+                                            plotDict={'xMin':0.1, 'xMax':1.1},
                                           summaryStats=allStats,
                                           histMerge={'histNum':histNum, 'legendLoc':'upper right',
                                                      'color':colors[f], 'label':'%s' %f, 'binsize':0.02},
@@ -289,48 +307,54 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
         slicerList.append(slicer)
 
     # Good seeing in r/i band metrics, including in first/second years.
-    for f in (['r', 'i']):
-        startNum = histNum
-        for tcolor, tlabel, timespan in zip(['k', 'g', 'r'], ['10 years', '1 year', '2 years'],
-                                            ['', ' and night<=365', ' and night<=730']):
+    startNum = histNum
+    order = 0
+    for tcolor, tlabel, timespan in zip(['k', 'g', 'r'], ['10 years', '1 year', '2 years'],
+                                        ['', ' and night<=365', ' and night<=730']):
+        order += 1
+        for f in (['r', 'i']):
             sqlconstraint = ['filter = "%s" %s' %(f, timespan)]
             propCaption = '%s band, all proposals, over %s.' %(f, tlabel)
             metadata = '%s band, %s' %(f, tlabel)
             histNum = startNum
             metricList = []
             seeing_limit = 0.7
-            airmass_limit = 1.15
+            airmass_limit = 1.2
             metricList.append(configureMetric('MinMetric', kwargs={'col':'finSeeing'},
+                                              summaryStats=allStats,
                                             plotDict={'xMin':0.5, 'xMax':0.9},
                                             displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
-                                                'order':filtorder[f],
+                                                'order':filtorder[f]*100+order,
                                                 'caption':'Minimum seeing values in %s.' %(propCaption)},
                                             histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
-                                                    'binsize':0.05}))
+                                                    'binsize':0.02, 'legendloc':'upper right'}))
             histNum += 1
             metricList.append(configureMetric('FracBelowMetric', kwargs={'col':'finSeeing', 'cutoff':seeing_limit},
+                                              summaryStats=allStats,
                                                 plotDict={'xMin':0, 'xMax':0.5},
                                                 displayDict={'group':seeinggroup, 'subgroup':'Good seeing fraction',
-                                                    'order':filtorder[f],
+                                                    'order':filtorder[f]*100+order,
                                                     'caption':'Fraction of total images with seeing better than %.1f, in %s'
                                                     %(seeing_limit, propCaption)},
                                                 histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
-                                                        'binsize':0.05}))
+                                                        'binsize':0.02, 'legendloc':'upper right'}))
             histNum += 1
-            metricList.append(configureMetric('MinMetric', kwargs={'col':'Airmass'},
+            metricList.append(configureMetric('MinMetric', kwargs={'col':'airmass'},
+                                              summaryStats=allStats,
                                               displayDict={'group':seeinggroup, 'subgroup':'Best Airmass',
-                                                           'order':filtorder[f], 'caption':
+                                                           'order':filtorder[f]*100+order, 'caption':
                                                            'Minimum airmass in %s.' %(propCaption)},
                                             histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
-                                                       'binsize':0.02}))
+                                                       'binsize':0.02, 'legendloc':'upper right'}))
             histNum += 1
-            metricList.append(configureMetric('FracBelowMetric', kwargs={'col':'Airmass', 'cutoff':airmass_limit},
+            metricList.append(configureMetric('FracBelowMetric', kwargs={'col':'airmass', 'cutoff':airmass_limit},
+                                              summaryStats=allStats,
                                               displayDict={'group':seeinggroup, 'subgroup':'Low airmass fraction',
-                                                           'order':filtorder[f], 'caption':
+                                                           'order':filtorder[f]*100+order, 'caption':
                                                            'Fraction of total images with airmass lower than %.2f, in %s'
                                                            %(airmass_limit, propCaption)},
                                             histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
-                                                       'binsize':0.02}))
+                                                       'binsize':0.02, 'legendloc':'upper right'}))
             slicer = configureSlicer(slicerName, kwargs=slicerkwargs,
                                     metricDict=makeDict(*metricList), constraints=sqlconstraint,
                                     metadata=metadata, metadataVerbatim=True)
