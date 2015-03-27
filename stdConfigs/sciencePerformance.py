@@ -281,9 +281,9 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     # Depth metrics.
     startNum = histNum
     for f in filters:
-        propCaption = '%s band, all proposals' %(f)
+        propCaption = '%s band, all proposals %s' %(f, slicermetadata)
         sqlconstraint = ['filter = "%s"' %(f)]
-        metadata = '%s band' %(f)
+        metadata = '%s band' %(f) + slicermetadata
         histNum = startNum
         metricList = []
         # Number of visits.
@@ -336,8 +336,8 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
         histNum = startNum
         for f in (['r', 'i']):
             sqlconstraint = ['filter = "%s" %s' %(f, timespan)]
-            propCaption = '%s band, all proposals, over %s.' %(f, tlabel)
-            metadata = '%s band, %s' %(f, tlabel)
+            propCaption = '%s band, all proposals %s, over %s.' %(f, slicermetadata, tlabel)
+            metadata = '%s band, %s' %(f, tlabel) + slicermetadata
             metricList = []
             seeing_limit = 0.7
             airmass_limit = 1.2
