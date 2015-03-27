@@ -88,10 +88,9 @@ def setupMovieSlicer(simdata, bins, verbose=False):
         print 'Set up movie slicers in %f s' %(dt)
     return movieslicer
 
-def setupOpsimFieldSlicer(simdatasubset, fields, verbose=False):
+def setupOpsimFieldSlicer(verbose=False):
     t = time.time()
     ops = slicers.OpsimFieldSlicer(plotFuncs='plotSkyMap')
-    ops.setupSlicer(simdatasubset, fields)
     dt, t = dtime(t)
     if verbose:
         print 'Set up opsim field slicer in %s' %(dt)
@@ -157,13 +156,12 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
-        ops = setupOpsimFieldSlicer(simdatasubset, fields)
+        ops = setupOpsimFieldSlicer()
         # Set up sliceMetric to handle healpix slicer + metrics calculation + plotting
         sm = sliceMetrics.RunSliceMetric(outDir = args.outDir, useResultsDb=False,
                                                 figformat='png', dpi=72, thumbnail=False)
-        sm.setSlicer(ops)
-        sm.setMetrics(metricList)
-        sm.runSlices(simdatasubset, simDataName=opsimName)
+        sm.setMetricsSlicerStackers(metricList, ops)
+        sm.runSlices(simdatasubset, simDataName=opsimName, fieldData=fields)
         # Plot data each metric, for this slice of the movie, adding slicenumber as a suffix for output plots.
         # Plotting here, rather than automatically via sliceMetric method because we're going to rotate the sky,
         #  and add extra legend info and figure text (for FilterColors metric).
