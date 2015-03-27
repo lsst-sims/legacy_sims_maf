@@ -27,6 +27,27 @@ class NormAirmassStacker(BaseStacker):
         simData['normairmass'] = simData[self.airmassCol] / min_airmass_possible
         return simData
 
+
+class ZenithDistStacker(BaseStacker):
+    """
+    Calculate the zenith distance for each pointing.
+    """
+    def __init__(self,altCol = 'altitude'):
+
+        self.altCol = altCol
+        self.units = ['radians']
+        self.colsAdded = ['zenithDistance']
+        self.colsReq = [self.altCol]
+
+    def run(self, simData):
+        """Calculate new column for zenith distance."""
+
+        zenithDist = np.pi-simData[self.altCol]
+        simData=self._addStackers(simData)
+        simData['zenithDistance'] = zenithDist
+        return simData
+
+
 ### Parallax factors
 class ParallaxFactorStacker(BaseStacker):
     """
