@@ -619,13 +619,11 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     order += 1
     m5 = configureMetric('MaxStateChangesWithinMetric',
                          kwargs={'changeCol':'filter', 'timespan':10},
-                         summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
                                       'caption':'Max number of filter changes within a window of 10 minutes over the entire survey.'})
     order += 1
     m6 = configureMetric('MaxStateChangesWithinMetric',
                          kwargs={'changeCol':'filter', 'timespan':20},
-                         summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
                                       'caption':'Max number of filter changes within a window of 20 minutes over the entire survey.'})
     order += 1
