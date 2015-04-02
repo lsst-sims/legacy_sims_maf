@@ -588,28 +588,48 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                          kwargs={'changeCol':'filter', 'timespan':10},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
-                                      'caption':'Max number of filter changes within a window of 10 minutes, per night'})
+                                      'caption':'Max number of filter changes within a window of 10 minutes, per night.'})
     m8 = configureMetric('MaxStateChangesWithinMetric',
                          kwargs={'changeCol':'filter', 'timespan':20},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
-                                      'caption':'Max number of filter changes within a window of 20 minutes, per night'})
+                                      'caption':'Max number of filter changes within a window of 20 minutes, per night.'})
     slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'night','binsize':1},
                              metricDict=makeDict(m1, m2, m3, m4, m5, m6, m7, m8),
                              constraints=[''], metadata='Per night', metadataVerbatim=True)
     slicerList.append(slicer)
 
     ## Unislicer (single number) metrics.
+    order = 0
     m1 = configureMetric('NChangesMetric', kwargs={'col':'filter', 'metricName':'Total Filter Changes'},
-                         displayDict={'group':filtergroup, 'subgroup':'Summary', 'order':0,
+                         displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
                                       'caption':'Total filter changes over survey'})
+    order += 1
     m2 = configureMetric('MinTimeBetweenStatesMetric', kwargs={'changeCol':'filter'},
-                        displayDict={'group':filtergroup, 'subgroup':'Summary', 'order':1,
+                        displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
                                      'caption':'Minimum time between filter changes, in minutes.'})
-    m3 = configureMetric('NStateChangesFasterThanMetric', kwargs={'changeCol':'filter', 'cutoff':20},
-                        displayDict={'group':filtergroup, 'subgroup':'Summary', 'order':1,
-                        'caption':'Number of filter changes faster than 20 minutes.'})
-    slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2, m3), constraints=[''], metadata='All visits',
+    order += 1 
+    m3 = configureMetric('NStateChangesFasterThanMetric', kwargs={'changeCol':'filter', 'cutoff':10},
+                        displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
+                        'caption':'Number of filter changes faster than 10 minutes over the entire survey.'})
+    order += 1
+    m4 = configureMetric('NStateChangesFasterThanMetric', kwargs={'changeCol':'filter', 'cutoff':20},
+                        displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
+                        'caption':'Number of filter changes faster than 20 minutes over the entire survey.'})
+    order += 1
+    m5 = configureMetric('MaxStateChangesWithinMetric',
+                         kwargs={'changeCol':'filter', 'timespan':10},
+                         summaryStats=allStats,
+                         displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
+                                      'caption':'Max number of filter changes within a window of 10 minutes over the entire survey.'})
+    order += 1
+    m6 = configureMetric('MaxStateChangesWithinMetric',
+                         kwargs={'changeCol':'filter', 'timespan':20},
+                         summaryStats=allStats,
+                         displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
+                                      'caption':'Max number of filter changes within a window of 20 minutes over the entire survey.'})
+    order += 1
+    slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2, m3, m4, m5, m6), constraints=[''], metadata='All visits',
                              metadataVerbatim=True)
     slicerList.append(slicer)
 
