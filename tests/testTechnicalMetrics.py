@@ -24,72 +24,49 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data)
         self.assertEqual(result, 4)
 
-    def testDeltaTimeChangesMetric(self):
+    def testMinTimeBetweenStatesMetric(self):
         """
-        Test the DeltaTime metric.
-        """
-        filters = np.array(['u', 'g', 'u'])
-        visitTimes = np.random.rand(filters.size) * 10.0 #days
-        visitTimes.sort()
-        data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
-        metric = metrics.DeltaTimeChangesMetric()
-        result = metric.run(data) # minutes
-        np.testing.assert_almost_equal(result, np.diff(visitTimes)*24.0*60.0)
-        filters = np.array(['u', 'u', 'g', 'g', 'r'])
-        visitTimes = np.floor(np.random.rand(filters.size) * 100)
-        visitTimes.sort()
-        data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
-        metric = metrics.DeltaTimeChangesMetric(cutoff=10)
-        result = metric.run(data) # minutes
-        dtimes = np.array([visitTimes[2]-visitTimes[0], visitTimes[4]-visitTimes[2]]) #days
-        dtimes = dtimes*24.0*60.0
-        np.testing.assert_almost_equal(result, dtimes)
-
-    def testMinDeltaTimeChangesMetric(self):
-        """
-        Test the MinDeltaTime metric.
+        Test the minTimeBetweenStates metric.
         """
         filters = np.array(['u', 'g', 'g', 'r'])
         visitTimes = np.array([0, 5, 6, 7]) #days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
-        metric = metrics.MinDeltaTimeChangesMetric()
+        metric = metrics.MinTimeBetweenStatesMetric()
         result = metric.run(data) # minutes
         self.assertEqual(result, 2*24.0*60.0)
         data['filter'] = np.array(['u', 'u', 'u', 'u'])
         result = metric.run(data)
         self.assertEqual(result, metric.badval)
 
-    def testNBelowDeltaTimeChangesMetric(self):
+    def testNStateChangesFasterThanMetric(self):
         """
-        Test the NBelowDeltaTime metric.
+        Test the NStateChangesFasterThan metric.
         """
         filters = np.array(['u', 'g', 'g', 'r'])
         visitTimes = np.array([0, 5, 6, 7]) #days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
-        metric = metrics.NBelowDeltaTimeChangesMetric(cutoff=3*24*60)
+        metric = metrics.NStateChangesFasterThanMetric(cutoff=3*24*60)
         result = metric.run(data) # minutes
         self.assertEqual(result, 1)
 
-    def testNWithinDeltaTimeChangesMetric(self):
+    def testMaxStateChangesWithinMetric(self):
         """
-        Test the NWithinDeltaTime metric.
+        Test the MaxStateChangesWithin metric.
         """
         filters = np.array(['u', 'g', 'r', 'u', 'g', 'r'])
         visitTimes = np.array([0, 1, 1, 4, 6, 7]) #days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
-        metric = metrics.NWithinDeltaTimeChangesMetric(timespan=1*24*60)
+        metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data) # minutes
         self.assertEqual(result, 2)
         filters = np.array(['u', 'g', 'g', 'u', 'g', 'r', 'g', 'r'])
         visitTimes = np.array([0, 1, 1, 4, 4, 7, 8, 8]) #days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
-        metric = metrics.NWithinDeltaTimeChangesMetric(timespan=1*24*60)
+        metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data) # minutes
         self.assertEqual(result, 2)
 

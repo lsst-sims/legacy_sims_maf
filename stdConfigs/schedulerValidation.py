@@ -568,28 +568,28 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                          plotDict={'units':'Number of Filter Changes'},
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
                                      'caption':'Number of filter changes per night.'})
-    m4 = configureMetric('MinDeltaTimeChangesMetric',
+    m4 = configureMetric('MinTimeBetweenStatesMetric',
                          kwargs={'filterCol':'filter'},
                          plotDict={'yMin':0, 'yMax':120},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
                                       'caption':'Minimum time between filter changes, in minutes.'})
-    m5 = configureMetric('NBelowDeltaTimeChangesMetric',
+    m5 = configureMetric('NStateChangesFasterThanMetric',
                          kwargs={'filterCol':'filter', 'cutoff':10},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
                                       'caption':'Number of filter changes, where the time between filter changes is shorter than 10 minutes, per night.'})
-    m6 = configureMetric('NBelowDeltaTimeChangesMetric',
+    m6 = configureMetric('NStateChangesFasterThanMetric',
                          kwargs={'filterCol':'filter', 'cutoff':20},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
                                       'caption':'Number of filter changes, where the time between filter changes is shorter than 20 minutes, per night.'})
-    m7 = configureMetric('NWithinDeltaTimeChangesMetric',
+    m7 = configureMetric('MaxStateChangesWithinMetric',
                          kwargs={'filterCol':'filter', 'timespan':10},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
                                       'caption':'Max number of filter changes within a window of 10 minutes, per night'})
-    m8 = configureMetric('NWithinDeltaTimeChangesMetric',
+    m8 = configureMetric('MaxStateChangesWithinMetric',
                          kwargs={'filterCol':'filter', 'timespan':20},
                          summaryStats=allStats,
                          displayDict={'group':filtergroup, 'subgroup':'Per Night',
@@ -603,10 +603,10 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     m1 = configureMetric('NChangesMetric', kwargs={'col':'filter', 'metricName':'Total Filter Changes'},
                          displayDict={'group':filtergroup, 'subgroup':'Summary', 'order':0,
                                       'caption':'Total filter changes over survey'})
-    m2 = configureMetric('MinDeltaTimeChangesMetric', kwargs={'filterCol':'filter'},
+    m2 = configureMetric('MinTimeBetweenStatesMetric', kwargs={'filterCol':'filter'},
                         displayDict={'group':filtergroup, 'subgroup':'Summary', 'order':1,
                                      'caption':'Minimum time between filter changes, in minutes.'})
-    m3 = configureMetric('NBelowDeltaTimeChangesMetric', kwargs={'filterCol':'filter', 'cutoff':20},
+    m3 = configureMetric('NStateChangesFasterThanMetric', kwargs={'filterCol':'filter', 'cutoff':20},
                         displayDict={'group':filtergroup, 'subgroup':'Summary', 'order':1,
                         'caption':'Number of filter changes faster than 20 minutes.'})
     slicer = configureSlicer('UniSlicer', metricDict=makeDict(m1, m2, m3), constraints=[''], metadata='All visits',

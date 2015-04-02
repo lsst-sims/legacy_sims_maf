@@ -2,8 +2,8 @@ import numpy as np
 from .baseMetric import BaseMetric
 
 __all__ = ['NChangesMetric',
-           'MinDeltaTimeChangesMetric', 'NBelowDeltaTimeChangesMetric', 'DeltaTimeChangesMetric',
-           'NWithinDeltaTimeChangesMetric',
+           'MinTimeBetweenStatesMetric', 'NStateChangesFasterThanMetric', 
+           'MaxStateChangesWithinMetric',
            'TeffMetric', 'OpenShutterFractionMetric',
            'CompletenessMetric', 'FilterColorsMetric']
 
@@ -22,56 +22,29 @@ class NChangesMetric(BaseMetric):
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
         return np.size(np.where(diff == True)[0])
 
-class DeltaTimeChangesMetric(BaseMetric):
-    """
-    Compute (all of) the time between changes in a column value.
-    (useful for calculating time between filter changes in particular).
-    Returns delta time in minutes!
-    """
-    def __init__(self, filterCol='filter', timeCol='expMJD', metricName='Time Between Filter Changes',
-                 cutoff=20, **kwargs):
-        """
-        col = column tracking changes in
-        timeCol = column keeping the time of each visit
-        cutoff = the cutoff value for the reduce method 'NBelow'
-        """
-        self.filterCol = filterCol
-        self.timeCol = timeCol
-        super(DeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol], metricName=metricName, **kwargs)
-        self.metricDtype = object
-    def run(self, dataSlice, slicePoint=None):
-        # Sort on time, to be sure we've got filter (or other col) changes in the right order.
-        idxs = np.argsort(dataSlice[self.timeCol])
-        changes = (dataSlice[self.filterCol][idxs][1:] != dataSlice[self.filterCol][idxs][:-1])
-        condition = np.where(changes==True)[0]
-        times = dataSlice[self.timeCol][idxs][condition]
-        changetimes = dataSlice[self.timeCol][idxs][1:][condition]
-        prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
-                                         dataSlice[self.timeCol][idxs][1:][condition][:-1]))
-        dtimes = changetimes - prevchangetime
-        dtimes *= 24.0*60.0
-        return dtimes
 
-class MinDeltaTimeChangesMetric(BaseMetric):
+class MinTimeBetweenStatesMetric(BaseMetric):
     """
-    Compute (only) the minimum time between changes in a column value.
-    (useful for calculating time between filter changes in particular).
+    Compute the minimum time between changes of state in a column value.
+    (useful for calculating fastest time between filter changes in particular).
     Returns delta time in minutes!
     """
-    def __init__(self, filterCol='filter', timeCol='expMJD', metricName='Minimum Time Between Filter Changes', **kwargs):
+    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, **kwargs):
         """
-        col = column tracking changes in
-        timeCol = column keeping the time of each visit
+        changeCol = column that changes state
+        timeCol = column tracking time of each visit
         """
-        self.filterCol = filterCol
+        self.changeCol = changeCol
         self.timeCol = timeCol
-        super(MinDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol], metricName=metricName,
+        if metricName is None:
+            metricName = 'Minimum time between %s changes' %(changeCol)
+        super(MinTimeBetweenStatesMetric, self).__init__(col=[changeCol, timeCol], metricName=metricName,
                                                         units='minutes', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
         idxs = np.argsort(dataSlice[self.timeCol])
-        changes = (dataSlice[self.filterCol][idxs][1:] != dataSlice[self.filterCol][idxs][:-1])
+        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
         condition = np.where(changes==True)[0]
         times = dataSlice[self.timeCol][idxs][condition]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
@@ -83,30 +56,30 @@ class MinDeltaTimeChangesMetric(BaseMetric):
             return self.badval
         return dtimes.min()
 
-class NBelowDeltaTimeChangesMetric(BaseMetric):
+class NStateChangesFasterThanMetric(BaseMetric):
     """
-    Compute (only) the number of changes that happen faster than 'cutoff'.
+    Compute the number of changes of state that happen faster than 'cutoff'.
     (useful for calculating time between filter changes in particular).
     'cutoff' should be in minutes.
     """
-    def __init__(self, filterCol='filter', timeCol='expMJD', metricName=None, cutoff=20, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, cutoff=20, **kwargs):
         """
         col = column tracking changes in
         timeCol = column keeping the time of each visit
         cutoff = the cutoff value for the reduce method 'NBelow'
         """
         if metricName is None:
-            metricName = 'Number of Filter Changes Faster Than <%.1f minutes' %(cutoff)
-        self.filterCol = filterCol
+            metricName = 'Number of %s changes faster than <%.1f minutes' %(changeCol, cutoff)
+        self.changeCol = changeCol
         self.timeCol = timeCol
         self.cutoff = cutoff/24.0/60.0 # Convert cutoff from minutes to days.
-        super(NBelowDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol],
+        super(NStateChangesFasterThanMetric, self).__init__(col=[changeCol, timeCol],
                                                            metricName=metricName, units='#', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
         idxs = np.argsort(dataSlice[self.timeCol])
-        changes = (dataSlice[self.filterCol][idxs][1:] != dataSlice[self.filterCol][idxs][:-1])
+        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
         condition = np.where(changes==True)[0]
         times = dataSlice[self.timeCol][idxs][condition]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
@@ -115,34 +88,34 @@ class NBelowDeltaTimeChangesMetric(BaseMetric):
         dtimes = changetimes - prevchangetime
         return np.where(dtimes<self.cutoff)[0].size
 
-class NWithinDeltaTimeChangesMetric(BaseMetric):
+class MaxStateChangesWithinMetric(BaseMetric):
     """
-    Compute the maximum number of changes that occur within a given timespan.
+    Compute the maximum number of changes of state that occur within a given timespan.
     (useful for calculating time between filter changes in particular).
     'timespan' should be in minutes.
     """
-    def __init__(self, filterCol='filter', timeCol='expMJD', metricName=None, timespan=20, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, timespan=20, **kwargs):
         """
         col = column tracking changes in
         timeCol = column keeping the time of each visit
         timespan = the timespan to count the number of changes within (in minutes)
         """
         if metricName is None:
-            metricName = 'Max Number of Filter Changes Within <%.1f minutes' %(timespan)
-        self.filterCol = filterCol
+            metricName = 'Max number of %s changes within %.1f minutes' %(changeCol, timespan)
+        self.changeCol = changeCol
         self.timeCol = timeCol
         self.timespan = timespan/24./60. # Convert timespan from minutes to days.
-        super(NWithinDeltaTimeChangesMetric, self).__init__(col=[filterCol, timeCol],
+        super(MaxStateChangesWithinMetric, self).__init__(col=[changeCol, timeCol],
                                                            metricName=metricName, units='#', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
         idxs = np.argsort(dataSlice[self.timeCol])
-        changes = (dataSlice[self.filterCol][idxs][1:] != dataSlice[self.filterCol][idxs][:-1])
+        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
         condition = np.where(changes==True)[0]
         times = dataSlice[self.timeCol][idxs][condition]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
-        if dataSlice[self.filterCol][idxs][1] != dataSlice[self.filterCol][idxs][0]:
+        if dataSlice[self.changeCol][idxs][1] != dataSlice[self.changeCol][idxs][0]:
             changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])
         # If there are 0 filter changes ...
         if changetimes.size == 0:
