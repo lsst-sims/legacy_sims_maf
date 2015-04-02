@@ -130,7 +130,54 @@ class TestCadenceMetrics(unittest.TestCase):
         metric = metrics.NRevisitsMetric(dT=50., normed=True)
         result = metric.run(data)
         self.assertEqual(result, 0.5)
-        
+
+    def testTransientMetric(self):
+        names = ['expMJD','fiveSigmaDepth', 'filter']
+        types = [float, float,'|S1']
+
+        ndata = 100
+        dataSlice = np.zeros(ndata, dtype = zip(names, types))
+        dataSlice['expMJD'] = np.arange(ndata)
+        dataSlice['fiveSigmaDepth'] = 25
+        dataSlice['filter'] = 'g'
+
+        metric = metrics.TransientMetric(surveyDuration=ndata/365.25)
+
+        # Should detect everything
+        assert(metric.run(dataSlice) == 1.)
+
+        # Double to survey duration, should now only detect half
+        metric = metrics.TransientMetric(surveyDuration=ndata/365.25*2)
+        assert(metric.run(dataSlice) == 0.5)
+
+        # Set half of the m5 of the observations very bright, so kill another half.
+        dataSlice['fiveSigmaDepth'][0:ndata/2] = 20
+        assert(metric.run(dataSlice) == 0.25)
+
+        dataSlice['fiveSigmaDepth'] = 25
+        # Demand lots of early observations
+        metric = metrics.TransientMetric(peakTime=.5, nPrePeak=3, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 0.)
+
+        # Demand a reasonable number of early observations
+        metric = metrics.TransientMetric(peakTime=2, nPrePeak=2, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 1.)
+
+        # Demand multiple filters
+        metric = metrics.TransientMetric(nFilters=2, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 0.)
+
+        dataSlice['filter'] = ['r','g']*50
+        assert(metric.run(dataSlice) == 1.)
+
+        # Demad too many observation per light curve
+        metric = metrics.TransientMetric(nPerLC=20, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 0.)
+
+        # Test both filter and number of LC samples
+        metric = metrics.TransientMetric(nFilters=2,nPerLC=3, surveyDuration=ndata/365.25 )
+        assert(metric.run(dataSlice) == 1.)
+
 if __name__ == '__main__':
 
     unittest.main()

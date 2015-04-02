@@ -76,7 +76,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                    logScale=False, cbarFormat='%.2f', cmap=cm.jet,
                    percentileClip=None, colorMin=None, colorMax=None,
                    zp=None, normVal=None,
-                   cbar_edge=True, label=None, nTicks=None, **kwargs):
+                   cbar_edge=True, label=None, nTicks=None, rot1=0, rot2=0, rot3=0, **kwargs):
         """
         Plot the sky map of metricValue using healpy Mollweide plot.
 
@@ -84,6 +84,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         units = units for metric color-bar label
         title = title for plot
         cbarFormat = format for color bar numerals (i.e. '%.2g', etc) (default to matplotlib default)
+        rot1,2,3 = rotations passed to mollview.
         """
         # Generate a Mollweide full-sky plot.
         norm = None
@@ -125,9 +126,9 @@ class HealpixSlicer(BaseSpatialSlicer):
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1
-
+        rot = (rot1,rot2,rot3)
         hp.mollview(metricValue.filled(self.badval), title=title, cbar=False,
-                    min=clims[0], max=clims[1], rot=(0,0,0), flip='astro',
+                    min=clims[0], max=clims[1], rot=rot, flip='astro',
                     cmap=cmap, norm=norm)
 
         # This graticule call can fail with old versions of healpy and matplotlib 1.4.0.
