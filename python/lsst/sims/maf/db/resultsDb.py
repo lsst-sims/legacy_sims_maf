@@ -11,7 +11,7 @@ import numpy as np
 
 Base = declarative_base()
 
-__all__ = ['ResultsDb']
+__all__ = ['MetricRow', 'DisplayRow', 'PlotRow', 'SummaryStatRow', 'ResultsDb']
 
 class MetricRow(Base):
     """
