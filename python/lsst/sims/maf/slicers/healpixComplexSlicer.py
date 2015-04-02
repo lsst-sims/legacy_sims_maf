@@ -7,6 +7,8 @@ import lsst.sims.maf.metrics as metrics
 import matplotlib.pyplot as plt
 import warnings
 
+__all__ = ['HealpixComplexSlicer']
+
 class HealpixComplexSlicer(HealpixSlicer):
 
     def __init__(self, **kwargs):
@@ -25,7 +27,7 @@ class HealpixComplexSlicer(HealpixSlicer):
                       title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       cumulative=False, xMin=None, xMax=None, yMin=None, yMax=None,
-                      logScale='auto', flipXaxis=False,
+                      logScale='auto',
                       yaxisformat='%.3f', color='b',
                       **kwargs):
         """ This plotting method takes plots/histograms from each healpixel and consolidates them into a
@@ -83,10 +85,6 @@ class HealpixComplexSlicer(HealpixSlicer):
             plt.xlabel(xlabel)
         if ylabel is not None:
             plt.ylabel(ylabel)
-        if flipXaxis:
-            # Might be useful for magnitude scales.
-            x0, x1 = plt.xlim()
-            plt.xlim(x1, x0)
         if title is not None:
             plt.title(title)
         if addLegend:

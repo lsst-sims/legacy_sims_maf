@@ -1,6 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['LongGapAGNMetric']
+
 class LongGapAGNMetric(BaseMetric):
     """max delta-t and average of the top-10 longest gaps.
     """

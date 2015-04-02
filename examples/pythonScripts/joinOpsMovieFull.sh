@@ -1,7 +1,7 @@
 #!/bin/tcsh
 
 ## This script will generate but not run the commands to concatenate mp4 files generated as movies
-## of each individual opsim night, combining VisitFilters/Nvisits(in each filter and all filters) using
+## of each individual opsim night, combining FilterColors/Nvisits(in each filter and all filters) using
 ##  'comboCommand' and outputting the list of combo videos to combine in bigMovieList.
 
 ## Note that the bigMovieList file consists of a line pointing to each mp4 file, then another pointing to
@@ -26,7 +26,7 @@ echo "#Joining movie from " $opsRun " for nights " $nightStart " to " $nightEnd
 
 set nights = `seq $nightStart $nightEnd`
 
-# Set up to make VisitFilters + Nvisits movie.
+# Set up to make FilterColors + Nvisits movie.
 set combomovieList = 'bigMovieList'
 set comboCommand = 'comboCommand'
 if (-e $combomovieList) then
@@ -37,12 +37,12 @@ if (-e $comboCommand) then
 endif
 
 foreach night ($nights)
- if (-e $opsRun"_n"$night"/VisitFilters_SkyMap_30.0_30.0.mp4") then
-    # combine NVisits and VisitFilters
+ if (-e $opsRun"_n"$night"/FilterColors_SkyMap_30.0_30.0.mp4") then
+    # combine NVisits and FilterColors
     # "normal" opsim movie size is 576x432
     echo 'ffmpeg -f lavfi -i color=c=white:s=965x648 \' >> $comboCommand
     echo ' -f lavfi -i color=c=black:s=2x648\'  >> $comboCommand
-    echo ' -i '$opsRun'_n'$night'/VisitFilters_SkyMap_30.0_30.0.mp4\'  >> $comboCommand
+    echo ' -i '$opsRun'_n'$night'/FilterColors_SkyMap_30.0_30.0.mp4\'  >> $comboCommand
     echo ' -i '$opsRun'_n'$night'/Nvisits_SkyMap_30.0_30.0.mp4\'  >> $comboCommand
     echo ' -i '$opsRun'_n'$night'/Nvisits_u_SkyMap_30.0_30.0.mp4\'  >> $comboCommand
     echo ' -i '$opsRun'_n'$night'/Nvisits_g_SkyMap_30.0_30.0.mp4\'  >> $comboCommand
@@ -78,6 +78,6 @@ foreach night ($nights)
  endif
 end
 
-echo '# To create long movie with both VisitFilters + Nvisits, over multiple nights:'
+echo '# To create long movie with both FilterColors + Nvisits, over multiple nights:'
 echo 'source '$comboCommand
 echo 'ffmpeg -f concat -i '$combomovieList' -c copy '$opsRun'_n'$nightStart'_n'$nightEnd'.mp4'

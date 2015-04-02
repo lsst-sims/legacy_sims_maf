@@ -1,5 +1,7 @@
 import inspect
 
+__all__ = ['MapsRegistry', 'BaseMap']
+
 class MapsRegistry(type):
     """
     Meta class for Maps, to build a registry of maps classes.
@@ -44,5 +46,7 @@ class BaseMap(object):
 
     def run(self,slicePoints):
         """
-        slicePoints should be a dict that includes keys "ra" and "dec".
+        Given slicePoints (dict containing metadata about each slicePoint, including ra/dec),
+         adds additional metadata at each slicepoint and returns updated dict.
         """
+        raise NotImplementedError('This must be defined in subclass')

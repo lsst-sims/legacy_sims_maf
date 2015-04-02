@@ -65,7 +65,7 @@ class MafConfig(pexConfig.Config):
     """
     Using pexConfig to set MAF configuration parameters
     modules: [list] Additional modules to load into MAF (for new metrics, slicers and stackers)
-    outputDir: [str] Location where all output files will be written
+    outDir: [str] Location where all output files will be written
     figformat:  [str] output figure format (pdf and png are popular)
     dpi:  [int] figure dpi
     opsimName:  [str] string that will be used for output filenames and plot titles
@@ -76,7 +76,7 @@ class MafConfig(pexConfig.Config):
     slicers:  pexConfig ConfigDictField with slicer configs
     """
     modules = pexConfig.ListField(doc="Optional additional modules to load into MAF", dtype=str, default=[])
-    outputDir = pexConfig.Field("Location to write MAF output", str, '')
+    outDir = pexConfig.Field("Location to write MAF output", str, '')
     figformat = pexConfig.Field("Figure types (png, pdf are popular)", str, 'pdf')
     dpi = pexConfig.Field("Figure dpi", int, 600)
     plotOnly = pexConfig.Field("Restore previous results replot", bool, False)

@@ -2,9 +2,11 @@ from lsst.sims.maf.maps import BaseMap
 from .EBVhp import EBVhp
 import warnings
 
+__all__ = ['DustMap']
+
 class DustMap(BaseMap):
     """
-    Compute the E(B-V) for each point in a given slicePoint
+    Compute the E(B-V) for each point in a given spatial distribution of slicePoints.
     """
 
     def __init__(self, interp=False, nside=128):

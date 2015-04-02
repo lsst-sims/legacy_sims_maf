@@ -52,14 +52,14 @@ def getData(opsDb, sqlconstraint):
     return simdata, fields
 
 def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60., years=0,
-                 onlyVisitFilters=False, verbose=False):
+                 onlyFilterColors=False, verbose=False):
     # Set up metrics. Will apply one to ms and one to ms_curr, but note that
     #  because of the nature of this script, the metrics are applied to cumulative data (from all filters).
     t = time.time()
     nvisitsMax = 90*(years+1)
     colorMax = int(nvisitsMax/4)
     metricList = []
-    if not onlyVisitFilters:
+    if not onlyFilterColors:
         metricList.append(metrics.CountMetric('expMJD', metricName='Nvisits',
                                             plotDict={'colorMin':0, 'colorMax':nvisitsMax,
                                                     'xlabel':'Number of visits',
@@ -69,10 +69,10 @@ def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60.,
                                                         plotDict={'colorMin':0, 'colorMax':colorMax,
                                                                     'cbarFormat': '%d', 'xlabel':'Number of Visits',
                                                                     'title':'%s band' %(f)}))
-        # Apply plotlabel only to nvisits plots (will place it on VisitFilters by hand).
+        # Apply plotlabel only to nvisits plots (will place it on FilterColors by hand).
         for m in metricList:
             m.plotDict['label'] = plotlabel
-    metricList.append(metrics.VisitFiltersMetric(metricName='VisitFilters', t0=t0, tStep=tStep,
+    metricList.append(metrics.FilterColorsMetric(t0=t0, tStep=tStep,
                                                  plotDict={'title':'Simulation %s: %s' %(opsimName, metadata)}))
     dt, t = dtime(t)
     if verbose:
@@ -88,10 +88,9 @@ def setupMovieSlicer(simdata, bins, verbose=False):
         print 'Set up movie slicers in %f s' %(dt)
     return movieslicer
 
-def setupOpsimFieldSlicer(simdatasubset, fields, verbose=False):
+def setupOpsimFieldSlicer(verbose=False):
     t = time.time()
     ops = slicers.OpsimFieldSlicer(plotFuncs='plotSkyMap')
-    ops.setupSlicer(simdatasubset, fields)
     dt, t = dtime(t)
     if verbose:
         print 'Set up opsim field slicer in %s' %(dt)
@@ -157,16 +156,15 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
-        ops = setupOpsimFieldSlicer(simdatasubset, fields)
+        ops = setupOpsimFieldSlicer()
         # Set up sliceMetric to handle healpix slicer + metrics calculation + plotting
         sm = sliceMetrics.RunSliceMetric(outDir = args.outDir, useResultsDb=False,
                                                 figformat='png', dpi=72, thumbnail=False)
-        sm.setSlicer(ops)
-        sm.setMetrics(metricList)
-        sm.runSlices(simdatasubset, simDataName=opsimName)
+        sm.setMetricsSlicerStackers(metricList, ops)
+        sm.runSlices(simdatasubset, simDataName=opsimName, fieldData=fields)
         # Plot data each metric, for this slice of the movie, adding slicenumber as a suffix for output plots.
         # Plotting here, rather than automatically via sliceMetric method because we're going to rotate the sky,
-        #  and add extra legend info and figure text (for VisitFilters metric).
+        #  and add extra legend info and figure text (for FilterColors metric).
         obsnow = np.where(simdatasubset['expMJD'] == simdatasubset['expMJD'].max())[0]
         raCen = np.mean(simdatasubset[obsnow]['lst'])
         # Calculate horizon location.
@@ -179,8 +177,8 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
             # Add horizon and zenith.
             plt.plot(horizonlon, horizonlat, 'k.', alpha=0.3, markersize=1.8)
             plt.plot(0, lat_tele, 'k+')
-            # For the VisitFilters metric, add some extra items.
-            if sm.metricNames[mId] == 'VisitFilters':
+            # For the FilterColors metric, add some extra items.
+            if sm.metricNames[mId] == 'FilterColors':
                 # Add the time stamp info (plotlabel) with a fancybox.
                 plt.figtext(0.75, 0.9, '%s' %(plotlabel), bbox=dict(boxstyle='Round, pad=0.7', fc='w', ec='k', alpha=0.5))
                 # Add a legend for the filters.

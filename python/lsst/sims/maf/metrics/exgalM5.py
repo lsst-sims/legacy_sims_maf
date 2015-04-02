@@ -2,6 +2,8 @@ from .baseMetric import BaseMetric
 from .simpleMetrics import Coaddm5Metric
 from lsst.sims.photUtils import Sed
 
+__all__ = ['ExgalM5']
+
 class ExgalM5(BaseMetric):
     """Calculate co-added five-sigma limiting depth after dust extinction."""
 

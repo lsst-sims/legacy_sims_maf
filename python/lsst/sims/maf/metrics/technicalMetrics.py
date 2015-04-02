@@ -1,6 +1,12 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['NChangesMetric',
+           'MinTimeBetweenStatesMetric', 'NStateChangesFasterThanMetric', 
+           'MaxStateChangesWithinMetric',
+           'TeffMetric', 'OpenShutterFractionMetric',
+           'CompletenessMetric', 'FilterColorsMetric']
+
 class NChangesMetric(BaseMetric):
     """
     Compute the number of times a column value changes.
@@ -9,12 +15,147 @@ class NChangesMetric(BaseMetric):
     def __init__(self, col='filter', orderBy='expMJD', **kwargs):
         self.col = col
         self.orderBy = orderBy
-        super(NChangesMetric, self).__init__(col=[col, orderBy], **kwargs)
+        super(NChangesMetric, self).__init__(col=[col, orderBy], units='#', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         idxs = np.argsort(dataSlice[self.orderBy])
         diff = (dataSlice[self.col][idxs][1:] != dataSlice[self.col][idxs][:-1])
-        return len(np.where(diff == True)[0])
+        return np.size(np.where(diff == True)[0])
+
+
+class MinTimeBetweenStatesMetric(BaseMetric):
+    """
+    Compute the minimum time between changes of state in a column value.
+    (useful for calculating fastest time between filter changes in particular).
+    Returns delta time in minutes!
+    """
+    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, **kwargs):
+        """
+        changeCol = column that changes state
+        timeCol = column tracking time of each visit
+        """
+        self.changeCol = changeCol
+        self.timeCol = timeCol
+        if metricName is None:
+            metricName = 'Minimum time between %s changes' %(changeCol)
+        super(MinTimeBetweenStatesMetric, self).__init__(col=[changeCol, timeCol], metricName=metricName,
+                                                        units='minutes', **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        # Sort on time, to be sure we've got filter (or other col) changes in the right order.
+        idxs = np.argsort(dataSlice[self.timeCol])
+        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
+        condition = np.where(changes==True)[0]
+        times = dataSlice[self.timeCol][idxs][condition]
+        changetimes = dataSlice[self.timeCol][idxs][1:][condition]
+        prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
+                                         dataSlice[self.timeCol][idxs][1:][condition][:-1]))
+        dtimes = changetimes - prevchangetime
+        dtimes *= 24.0*60.0
+        if dtimes.size == 0:
+            return self.badval
+        return dtimes.min()
+
+class NStateChangesFasterThanMetric(BaseMetric):
+    """
+    Compute the number of changes of state that happen faster than 'cutoff'.
+    (useful for calculating time between filter changes in particular).
+    'cutoff' should be in minutes.
+    """
+    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, cutoff=20, **kwargs):
+        """
+        col = column tracking changes in
+        timeCol = column keeping the time of each visit
+        cutoff = the cutoff value for the reduce method 'NBelow'
+        """
+        if metricName is None:
+            metricName = 'Number of %s changes faster than <%.1f minutes' %(changeCol, cutoff)
+        self.changeCol = changeCol
+        self.timeCol = timeCol
+        self.cutoff = cutoff/24.0/60.0 # Convert cutoff from minutes to days.
+        super(NStateChangesFasterThanMetric, self).__init__(col=[changeCol, timeCol],
+                                                           metricName=metricName, units='#', **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        # Sort on time, to be sure we've got filter (or other col) changes in the right order.
+        idxs = np.argsort(dataSlice[self.timeCol])
+        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
+        condition = np.where(changes==True)[0]
+        times = dataSlice[self.timeCol][idxs][condition]
+        changetimes = dataSlice[self.timeCol][idxs][1:][condition]
+        prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
+                                         dataSlice[self.timeCol][idxs][1:][condition][:-1]))
+        dtimes = changetimes - prevchangetime
+        return np.where(dtimes<self.cutoff)[0].size
+
+class MaxStateChangesWithinMetric(BaseMetric):
+    """
+    Compute the maximum number of changes of state that occur within a given timespan.
+    (useful for calculating time between filter changes in particular).
+    'timespan' should be in minutes.
+    """
+    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, timespan=20, **kwargs):
+        """
+        col = column tracking changes in
+        timeCol = column keeping the time of each visit
+        timespan = the timespan to count the number of changes within (in minutes)
+        """
+        if metricName is None:
+            metricName = 'Max number of %s changes within %.1f minutes' %(changeCol, timespan)
+        self.changeCol = changeCol
+        self.timeCol = timeCol
+        self.timespan = timespan/24./60. # Convert timespan from minutes to days.
+        super(MaxStateChangesWithinMetric, self).__init__(col=[changeCol, timeCol],
+                                                           metricName=metricName, units='#', **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        # Sort on time, to be sure we've got filter (or other col) changes in the right order.
+        idxs = np.argsort(dataSlice[self.timeCol])
+        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
+        condition = np.where(changes==True)[0]
+        times = dataSlice[self.timeCol][idxs][condition]
+        changetimes = dataSlice[self.timeCol][idxs][1:][condition]
+        if dataSlice[self.changeCol][idxs][1] != dataSlice[self.changeCol][idxs][0]:
+            changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])
+        # If there are 0 filter changes ...
+        if changetimes.size == 0:
+            return 0
+        # Otherwise ..
+        nchanges = np.zeros(changetimes.size, int)
+        for i, t in enumerate(changetimes):
+            nchanges[i] = np.where(np.abs(t - changetimes) <= self.timespan)[0].size - 1
+        return nchanges.max()
+
+class TeffMetric(BaseMetric):
+    """
+    Effective time equivalent for a given set of visits.
+    """
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', metricName='tEff',
+                 fiducialDepth=None, teffBase=30.0, normed=False, **kwargs):
+        self.m5Col = m5Col
+        self.filterCol = filterCol
+        if fiducialDepth is None:
+            self.depth = {'u':23.9,'g':25.0, 'r':24.7, 'i':24.0, 'z':23.3, 'y':22.1} # design value
+        else:
+            if isinstance(fiducialDepth, dict):
+                self.depth = fiducialDepth
+            else:
+                raise ValueError('fiducialDepth should be None or dictionary')
+        self.teffBase = teffBase
+        self.normed = normed
+        super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName, units='seconds', **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        filters = np.unique(dataSlice[self.filterCol])
+        teff = 0.0
+        for f in filters:
+            match = np.where(dataSlice[self.filterCol] == f)[0]
+            teff += (10.0**(0.8*(dataSlice[self.m5Col][match] - self.depth[f]))).sum()
+        teff *= self.teffBase
+        if self.normed:
+            # Normalize by the t_eff if each observation was at the fiducial depth.
+            teff = teff / (self.teffBase*dataSlice[self.m5Col].size)
+        return teff
 
 class OpenShutterFractionMetric(BaseMetric):
     """
@@ -121,12 +262,13 @@ class CompletenessMetric(BaseMetric):
         return completeness[-1]
 
 
-class VisitFiltersMetric(BaseMetric):
+class FilterColorsMetric(BaseMetric):
     """
     Calculate an RGBA value that accounts for the filters used up to time t0.
     """
     def __init__(self, rRGB='rRGB', gRGB='gRGB', bRGB='bRGB',
-                 timeCol='expMJD', t0=None, tStep=40./60./60./24., **kwargs):
+                 timeCol='expMJD', t0=None, tStep=40./60./60./24.,
+                 metricName='FilterColors', **kwargs):
         """
         t0 = the current time
         """
@@ -138,7 +280,8 @@ class VisitFiltersMetric(BaseMetric):
         if self.t0 is None:
             self.t0 = 52939
         self.tStep = tStep
-        super(VisitFiltersMetric, self).__init__(col=[rRGB, gRGB, bRGB, timeCol], **kwargs)
+        super(FilterColors, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
+                                           metricName=metricName, **kwargs)
         self.metricDtype = 'object'
         self.plotDict['logScale'] = False
         self.plotDict['colorMax'] = 10

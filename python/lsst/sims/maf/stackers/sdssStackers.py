@@ -2,6 +2,8 @@ import numpy as np
 from .baseStacker import BaseStacker
 from .ditherStackers import wrapRA
 
+__all__ = ['SdssRADecStacker']
+
 class SdssRADecStacker(BaseStacker):
     """convert the p1,p2,p3... columns to radians and wrap them """
     def __init__(self, pcols = ['p1','p2','p3','p4','p5','p6','p7','p8']):

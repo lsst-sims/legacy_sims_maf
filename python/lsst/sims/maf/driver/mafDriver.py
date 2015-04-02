@@ -37,8 +37,8 @@ class MafDriver(object):
         self.config.freeze()
 
         # Check for output directory, make if needed.
-        if not os.path.isdir(self.config.outputDir):
-            os.makedirs(self.config.outputDir)
+        if not os.path.isdir(self.config.outDir):
+            os.makedirs(self.config.outDir)
 
         self.verbose = self.config.verbose
         self.figformat = self.config.figformat
@@ -56,10 +56,10 @@ class MafDriver(object):
         # Grab config info and write to disk.
         if self.config.getConfig:
             configSummary, configDetails = self.opsimdb.fetchConfig()
-            f = open(os.path.join(self.config.outputDir,'configSummary.txt'), 'w')
+            f = open(os.path.join(self.config.outDir,'configSummary.txt'), 'w')
             utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
             f.close()
-            f = open(os.path.join(self.config.outputDir, 'configDetails.txt'), 'w')
+            f = open(os.path.join(self.config.outDir, 'configDetails.txt'), 'w')
             utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
             f.close()
             if self.verbose:
@@ -229,7 +229,7 @@ class MafDriver(object):
                     if nonpropid in propids:
                         propids.remove(nonpropid)
         # And query the field Table.
-        if 'fieldTable' in self.opsimdb.tables:
+        if 'Field' in self.opsimdb.tables:
             self.fieldData = self.opsimdb.fetchFieldsFromFieldTable(propids)
         else:
             fieldID, idx = np.unique(self.data[slicer.simDataFieldIDColName], return_index=True)
@@ -293,7 +293,8 @@ class MafDriver(object):
                       else:
                           print '  Found %i matching visits' %(len(self.data))
                       # Special data requirements for opsim slicer.
-                      if 'OpsimFieldSlicer' in slicerNames:
+                      self.fieldData = None
+                      if 'OpsimFieldSlicer' in slicerNames and not self.plotOnly:
                           self.getFieldData(matchingSlicers[slicerNames.index('OpsimFieldSlicer')], sqlconstraint)
                       # Setup each slicer, and run through the slicepoints (with metrics) in baseSliceMetric
                       if self.verbose:
@@ -305,21 +306,10 @@ class MafDriver(object):
                              for skyMap in m.maps:
                                 if skyMap not in slicer.mapsNames:
                                    slicer.mapsList.append(maps.BaseMap.getClass(skyMap)())
-                          # Set up slicer.
-                          if not self.plotOnly:
-                             if slicer.slicerName == 'OpsimFieldSlicer':
-                                 # Need to pass in fieldData as well
-                                 slicer.setupSlicer(self.data, self.fieldData, maps=slicer.mapsList)
-                             else:
-                                if len(slicer.mapsList) > 0:
-                                   slicer.setupSlicer(self.data, maps=slicer.mapsList)
-                                else:
-                                   slicer.setupSlicer(self.data)
-                             # Set up baseSliceMetric.
                           gm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                           outDir=self.config.outputDir)
-                          gm.setSlicer(slicer)
-                          gm.setMetrics(self.metricList[slicer.index])
+                                                           outDir=self.config.outDir)
+                          gm._setSlicer(slicer)
+                          gm._setMetrics(self.metricList[slicer.index])
                           # Make a more useful metadata comment.
                           if slicer.metadataVerbatim:
                               metadata = slicer.metadata
@@ -330,21 +320,23 @@ class MafDriver(object):
                           if self.plotOnly:
                              iids = gm.metricNames.keys()
                              newGm = sliceMetrics.RunSliceMetric(figformat=self.figformat, dpi=self.dpi,
-                                                                 outDir=self.config.outputDir,
+                                                                 outDir=self.config.outDir,
                                                                  useResultsDb=False)
-                             newGm.setSlicer(slicer)
+                             newGm._setSlicer(slicer)
                              restoredData = False
                              for iid in iids:
                                 gm.simDataNames[iid] = self.config.opsimName
                                 gm.metadatas[iid] = metadata
                                 filename = gm._buildOutfileName(iid)
                                 # Load all the metric data back in
-                                fullFile = os.path.join(self.config.outputDir, filename+'.npz')
+                                fullFile = os.path.join(self.config.outDir, filename+'.npz')
                                 if os.path.isfile(fullFile):
                                    print 'Restoring %s'%fullFile
                                    newGm.readMetricData(fullFile)
+                                   # Set the filename as a property of each metric (for merged histograms)
+                                   gm.metricObjs[iid].saveFile = fullFile
                                    # Set the slicer to the newly restored slicer
-                                   newGm.setSlicer(newGm.slicers[iid], override=True)
+                                   newGm._setSlicer(newGm.slicers[iid], override=True)
                                    # Replace the restored plotting parameters
                                    newGm.plotDicts[iid] = gm.plotDicts[iid]
                                    newGm.displayDicts[iid] = gm.displayDicts[iid]
@@ -357,7 +349,8 @@ class MafDriver(object):
                              print '    running slicerName =', slicer.slicerName, \
                             ' run metrics:', ', '.join([m.name for m in self.metricList[slicer.index]])
                              gm.runSlices(self.data, simDataName=self.config.opsimName,
-                                          metadata=metadata, sqlconstraint=sqlconstraint)
+                                          metadata=metadata, sqlconstraint=sqlconstraint,
+                                          fieldData=self.fieldData, maps=slicer.mapsList)
                              if self.verbose:
                                 dt,time_prev = dtime(time_prev)
                                 print '    Computed metrics in %.3g s'%dt
@@ -365,6 +358,12 @@ class MafDriver(object):
                              gm.reduceAll()
                              # And write metric data files to disk.
                              gm.writeAll()
+                             # Add the metric filenames to the metric objects (for merged histograms).
+                             for iid in gm.metricObjs:
+                                filename = gm._buildOutfileName(iid)
+                                # Load all the metric data back in
+                                fullFile = os.path.join(self.config.outDir, filename+'.npz')
+                                gm.metricObjs[iid].saveFile = fullFile
                              # And plot all metric values.
                              gm.plotAll(savefig=True, closefig=True, verbose=True)
                              if self.verbose:
@@ -378,7 +377,7 @@ class MafDriver(object):
                                          # each reduced metric
                                          # (have to identify related reduced metric values first)
                                          if metric.metricDtype == 'object':
-                                             iid = gm.metricObjIid(metric)[0]
+                                             iid = gm.getMetricObjIid(metric)[0]
                                              baseName = gm.metricNames[iid]
                                              all_names = gm.metricNames.values()
                                              matching_metrics = [x for x in all_names \
@@ -417,8 +416,8 @@ class MafDriver(object):
             for m1 in self.metricList:
                 for m in m1:
                     if 'histNum' in m.histMerge.keys():
+                        # Determine which merged histogram to put data into.
                         key = m.histMerge['histNum']
-                        # Could be there was no data, then it got skipped
                         if hasattr(m,'saveFile') and key in histDict.keys():
                             histDict[key]['files'].append(m.saveFile)
                             temp_dict = m.histMerge
@@ -431,14 +430,13 @@ class MafDriver(object):
            useResultsDb = True
         for key in histDict.keys():
             # Use a comparison slice metric per merged histogram. Only read relevant files.
-            cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=useResultsDb, outDir=self.config.outputDir,
+            cbm = sliceMetrics.ComparisonSliceMetric(useResultsDb=useResultsDb, outDir=self.config.outDir,
                                                      figformat=self.figformat, dpi=self.dpi)
             if len(histDict[key]['files']) > 0:
                 for filename in histDict[key]['files']:
-                    fullfilename = os.path.join(self.config.outputDir, filename)
                     if self.verbose:
                        print 'reading %s to make merged histogram'%fullfilename
-                    cbm.readMetricData(fullfilename)
+                    cbm.readMetricData(filename)
                 iids = cbm.metricValues.keys()
                 fignum, title, histfile = cbm.plotHistograms(iids, savefig=True,
                                                             plotkwargs=histDict[key]['plotkwargs'])
@@ -451,13 +449,13 @@ class MafDriver(object):
         if not self.plotOnly:
            today_date, versionInfo = utils.getDateVersion()
            # Open up a file and print the results of verison and date.
-           datefile = open(self.config.outputDir+'/'+'date_version_ran.dat','w')
+           datefile = open(self.config.outDir+'/'+'date_version_ran.dat','w')
            print >>datefile, 'date, version, fingerprint '
            print >>datefile, '%s,%s,%s'%(today_date,versionInfo['__version__'],
                                          versionInfo['__fingerprint__'])
            datefile.close()
            # Save the as-ran pexConfig file
-           self.config.save(self.config.outputDir+'/'+'maf_config_asRan.py')
+           self.config.save(self.config.outDir+'/'+'maf_config_asRan.py')
 
         if self.verbose:
             dt,self.time_start = dtime(self.time_start)

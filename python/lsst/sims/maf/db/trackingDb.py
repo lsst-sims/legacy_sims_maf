@@ -9,6 +9,8 @@ from sqlalchemy.exc import DatabaseError
 
 Base = declarative_base()
 
+__all__ = ['TrackingDb']
+
 class RunRow(Base):
     """
     Define contents and format of run list table.

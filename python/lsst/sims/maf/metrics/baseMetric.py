@@ -11,6 +11,8 @@ import warnings
 import inspect
 from lsst.sims.maf.utils.getColInfo import ColInfo
 
+__all__ = ['MetricRegistry', 'BaseMetric']
+
 class MetricRegistry(type):
     """
     Meta class for metrics, to build a registry of metric classes.

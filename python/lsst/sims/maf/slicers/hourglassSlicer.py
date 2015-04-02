@@ -4,6 +4,8 @@ import warnings
 
 from .uniSlicer import UniSlicer
 
+__all__ = ['HourglassSlicer']
+
 class HourglassSlicer(UniSlicer):
     """Slicer to make the filter hourglass plots """
 

@@ -9,6 +9,7 @@ from functools import wraps
 
 from .baseSlicer import BaseSlicer
 
+__all__ = ['NDSlicer']
 
 class NDSlicer(BaseSlicer):
     """Nd slicer (N dimensions)"""
@@ -32,7 +33,7 @@ class NDSlicer(BaseSlicer):
                 raise Exception('BinsList must be same length as sliceColNames, unless it is a single value')
         self.slicer_init={'sliceColList':sliceColList}
 
-    def setupSlicer(self, simData):
+    def setupSlicer(self, simData, maps=None):
         """Set up bins. """
         # Parse input bins choices.
         self.bins = []
@@ -73,6 +74,8 @@ class NDSlicer(BaseSlicer):
         binIdIterator = itertools.product(*binIdsForIteration)
         for bidx in binIdIterator:
             self.slicePoints['binIdxs'].append(bidx)
+        # Add metadata from maps.
+        self._runMaps(maps)
         # Set up indexing for data slicing.
         self.simIdxs = []
         self.lefts = []

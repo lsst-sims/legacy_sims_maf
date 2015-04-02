@@ -1,6 +1,11 @@
 import numpy as np
 from .baseStacker import BaseStacker
 
+__all__ = ['wrapRADec', 'wrapRA',
+           'RandomDitherStacker', 'NightlyRandomDitherStacker',
+           'SpiralDitherStacker', 'NightlySpiralDitherStacker',
+           'SequentialHexDitherStacker', 'NightlySequentialHexDitherStacker']
+
 def wrapRADec(ra, dec):
     """
     Wrap RA and Dec values so RA between 0-2pi (using mod),

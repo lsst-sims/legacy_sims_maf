@@ -8,6 +8,8 @@ import healpy as hp
 from .healpixSlicer import HealpixSlicer
 from lsst.sims.maf.metrics.summaryMetrics import fOArea, fONv
 
+__all__ = ['fOSlicer']
+
 class fOSlicer(HealpixSlicer):
     """fO spatial slicer"""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, **kwargs):
@@ -24,7 +26,8 @@ class fOSlicer(HealpixSlicer):
                xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
         """
         Note that Asky and Nvisit need to be set for both the slicer and the summary statistic
-          for the plot and returned summary stat values to be consistent!"""
+          for the plot and returned summary stat values to be consistent!
+        """
         colorlinewidth = 2
         if scale is None:
             scale = (hp.nside2pixarea(self.nside, degrees=True)  / 1000.0)

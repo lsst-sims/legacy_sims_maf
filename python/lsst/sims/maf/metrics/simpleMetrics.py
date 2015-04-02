@@ -3,6 +3,12 @@ from .baseMetric import BaseMetric
 
 # A collection of commonly used simple metrics, operating on a single column and returning a float.
 
+__all__ = ['Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetric', 'MedianAbsMetric',
+           'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric', 'CountUniqueMetric',
+           'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
+           'MaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
+           'PercentileMetric', 'NoutliersNsigmaMetric']
+
 class Coaddm5Metric(BaseMetric):
     """Calculate the coadded m5 value at this gridpoint."""
     def __init__(self, m5Col = 'fiveSigmaDepth', metricName='CoaddM5', **kwargs):
@@ -12,7 +18,6 @@ class Coaddm5Metric(BaseMetric):
         super(Coaddm5Metric, self).__init__(col=m5Col, metricName=metricName, **kwargs)
     def run(self, dataSlice, slicePoint=None):
         return 1.25 * np.log10(np.sum(10.**(.8*dataSlice[self.colname])))
-
 
 class MaxMetric(BaseMetric):
     """Calculate the maximum of a simData column slice."""
@@ -119,27 +124,31 @@ class BinaryMetric(BaseMetric):
             return self.badval
 
 class FracAboveMetric(BaseMetric):
-    def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
+    def __init__(self, col=None, cutoff=0.5, scale=1, metricName=None, **kwargs):
         # Col could just get passed in bundle with kwargs, but by explicitly pulling it out
         #  first, we support use cases where class instantiated without explicit 'col=').
         if metricName is None:
             metricName = 'FracAbove %.2f in %s' %(cutoff, col)
         super(FracAboveMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
+        self.scale = scale
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.colname] >= self.cutoff)[0]
         fracAbove = np.size(good)/float(np.size(dataSlice[self.colname]))
+        fracAbove = fracAbove * self.scale
         return fracAbove
 
 class FracBelowMetric(BaseMetric):
-    def __init__(self, col=None, cutoff=0.5, metricName=None, **kwargs):
+    def __init__(self, col=None, cutoff=0.5, scale=1, metricName=None, **kwargs):
         if metricName is None:
             metricName = 'FracBelow %.2f %s' %(cutoff, col)
         super(FracBelowMetric, self).__init__(col, metricName=metricName, **kwargs)
         self.cutoff = cutoff
+        self.scale = scale
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.colname] <= self.cutoff)[0]
         fracBelow = np.size(good)/float(np.size(dataSlice[self.colname]))
+        fracBelow = fracBelow * self.scale
         return fracBelow
 
 class PercentileMetric(BaseMetric):

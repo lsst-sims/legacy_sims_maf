@@ -1,6 +1,8 @@
 import os
 import time
 
+__all__ = ['getDateVersion']
+
 def getDateVersion():
     """
     Return a string with today's date and a dict with the MAF version info.

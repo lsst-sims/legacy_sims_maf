@@ -2,6 +2,9 @@ import numpy as np
 from .baseStacker import BaseStacker
 import warnings
 
+__all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
+            'FilterColorStacker']
+
 ### Normalized airmass
 class NormAirmassStacker(BaseStacker):
     """
@@ -122,6 +125,7 @@ class HourAngleStacker(BaseStacker):
         # Convert radians to hours
         simData['HA'] = ha*12/np.pi
         return simData
+
 
 class FilterColorStacker(BaseStacker):
     """

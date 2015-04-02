@@ -14,15 +14,19 @@ from lsst.sims.maf.utils import percentileClipping
 from .baseSpatialSlicer import BaseSpatialSlicer
 from matplotlib import ticker
 
+__all__ = ['HealpixSlicer']
+
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all', **kwargs):
+                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all',
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
-                                            plotFuncs=plotFuncs, **kwargs)
+                                            plotFuncs=plotFuncs,
+                                            useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD')
         # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
@@ -157,7 +161,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                       ylabel='Area (1000s of square degrees)',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
-                      logScale=False, flipXaxis=False,
+                      logScale=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -174,7 +178,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        """
         # Simply overrides scale of base plotHistogram.
         if ylabel is None:
             ylabel = 'Area (1000s of square degrees)'
@@ -186,7 +190,6 @@ class HealpixSlicer(BaseSpatialSlicer):
                                                           addLegend=addLegend, legendloc=legendloc,
                                                           bins=bins, binsize=binsize, cumulative=cumulative,
                                                           xMin=xMin, xMax=xMax, logScale=logScale,
-                                                          flipXaxis=flipXaxis,
                                                           scale=scale, color=color,
                                                           linestyle=linestyle,**kwargs)
         return fignum

@@ -7,6 +7,7 @@ import warnings
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 
+__all__ = ['OneDSlicer']
 
 class OneDSlicer(BaseSlicer):
     """oneD Slicer."""
@@ -38,7 +39,7 @@ class OneDSlicer(BaseSlicer):
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
 
-    def setupSlicer(self, simData):
+    def setupSlicer(self, simData, maps=None):
         """
         Set up bins in slicer.
         """
@@ -86,6 +87,8 @@ class OneDSlicer(BaseSlicer):
         # Set slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
         self.slicePoints['bins'] = self.bins
+        # Add metadata from map if needed.
+        self._runMaps(maps)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceColName])
         simFieldsSorted = np.sort(simData[self.sliceColName])
@@ -135,6 +138,8 @@ class OneDSlicer(BaseSlicer):
         yMin/Max = min/max for y-axis (overrides percentileClip)
         xMin/Max = min/max for x-axis (typically set by bin values though)
         """
+        if color is None:
+            color = 'b'
         # Plot the histogrammed data.
         fig = plt.figure(fignum)
         leftedge = self.slicePoints['bins'][:-1]

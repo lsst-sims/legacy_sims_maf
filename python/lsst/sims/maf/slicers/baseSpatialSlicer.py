@@ -3,6 +3,7 @@
 #  return the relevant indices in the simData to the metric.
 # The primary things added here are the methods to slice the data (for any spatial slicer)
 #  as this uses a KD-tree built on spatial (RA/Dec type) indexes.
+
 import warnings
 import numpy as np
 # For plotting.
@@ -23,11 +24,13 @@ from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMeta
 
 from .baseSlicer import BaseSlicer
 
+__all__ = ['BaseSpatialSlicer']
+
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all', useCamera=False,
-                 rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
+                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all',
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
         spatialkey1 = ra, spatialkey2 = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -67,15 +70,13 @@ class BaseSpatialSlicer(BaseSlicer):
         """Use simData[self.spatialkey1] and simData[self.spatialkey2]
         (in radians) to set up KDTree.
 
-        maps = list of map objects that will run to build up slicePoint"""
-        if maps is None:
-            maps = []
-        else:
-            if self.cacheSize != 0:
+        maps = list of map objects (such as dust extinction) that will run to build up
+           additional metadata at each slicePoint (available to metrics via slicePoint dictionary).
+        """
+        if maps is not None:
+            if self.cacheSize != 0 and len(maps)>0:
                 warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
-        for skyMap in maps:
-            self.slicePoints = skyMap.run(self.slicePoints)
-
+            self._runMaps(maps)
         self._setRad(self.radius)
         if self.useCamera:
             self._setupLSSTCamera()
@@ -184,19 +185,13 @@ class BaseSpatialSlicer(BaseSlicer):
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
 
-    def sliceSimDataMultiSlicepoint(self, islices):
-        """Return indexes for opsim data at multiple slicepoints (rarely used). """
-        binx, biny, binz=self._treexyz(self.slicePoints['ra'][islices], self.slicePoints['dec'][islices])
-        indices = self.opsimtree.query_ball_point(zip(binx, biny, binz), self.rad)
-        return indices
-
 
     ## Plot histogram (base spatial slicer method).
     def plotHistogram(self, metricValueIn, title=None, xlabel=None, units=None, ylabel=None,
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, binsize=None, cumulative=False, anticumulative=False,
+                      bins=None, binsize=None, cumulative=False,
                       xMin=None, xMax=None, yMin=None, yMax=None,
-                      logScale='auto', flipXaxis=False,
+                      logScale='auto',
                       scale=1.0, yaxisformat='%.3f', color='b',
                       zp=None, normVal=None, percentileClip=None, **kwargs):
         """Plot a histogram of metricValue, labelled by metricLabel.
@@ -212,97 +207,132 @@ class BaseSpatialSlicer(BaseSlicer):
         cumulative = make histogram cumulative (default False) (<0 value makes cumulative the 'less than' way).
         xMin/Max = histogram range (default None, set by matplotlib hist)
         yMin/Max = histogram y range
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)
         scale = scale y axis by 'scale' (i.e. to translate to area)
         zp = zeropoing to subtract off metricVals
-        normVal = normalization value to divide metric values by (overrides zp)"""
-        if bins is None and binsize is None:
-            bins = optimalBins(metricValueIn)
-        # Histogram metricValues.
-        fig = plt.figure(fignum)
-        if not xlabel:
-            xlabel = units
+        normVal = normalization value to divide metric values by (overrides zp).
+        """
+        # Adjust metric values by zeropoint or normVal, and use 'compressed' version of masked array.
         if zp:
             metricValue = metricValueIn.compressed() - zp
         elif normVal:
             metricValue = metricValueIn.compressed()/normVal
         else:
             metricValue = metricValueIn.compressed()
-        # Need to only use 'good' values in histogram,
-        # but metricValue is masked array (so bad values masked when calculating max/min).
+
+        # Determine percentile clipped X range, if set. (and xmin/max not set).
         if xMin is None and xMax is None:
             if percentileClip:
                 xMin, xMax = percentileClipping(metricValue, percentile=percentileClip)
-                histRange = [xMin, xMax]
-            else:
-                histRange = None
-        else:
-            histRange=[xMin, xMax]
-        if yMin is not None or yMax is not None:
-            plt.ylim([yMin,yMax])
-        # See if should use log scale.
+        # Determine range for histogram. Note that if xmin/max are None, this will just be [None, None].
+        histRange = [xMin, xMax]
+        # Should we use log scale on y axis? (if 'auto')
         if logScale == 'auto':
+            logScale = False
             if np.min(histRange) > 0:
                 if (np.log10(np.max(histRange)-np.log10(np.min(histRange))) > 3 ):
                     logScale = True
-                else:
-                    logScale = False
-            else:
-                logScale = False
-        # If we want all the plots to have the same binsize
+
+        # If binsize was specified, set up an array of bins for the histogram.
         if binsize is not None:
-            if histRange is None:
-                bins = np.arange(metricValue.min(), metricValue.max()+binsize, binsize)
+            #  If generating cumulative histogram, want to use full range of data (but with given binsize).
+            #    .. but if user set histRange to be wider than full range of data, then
+            #       extend bins to cover this range, so we can make prettier plots.
+            if cumulative is not False:
+                if histRange[0] is not None:
+                    bmin = np.min([metricValue.min(), histRange[0]])
+                else:
+                    bmin = metricValue.min()
+                if histRange[1] is not None:
+                    bmax = np.max([metricValue.max(), histRange[1]])
+                else:
+                    bmax = metricValue.max()
+                bins = np.arange(bmin, bmax+binsize/2.0, binsize)
+            #  Else try to set up bins using min/max values if specified, or full data range.
             else:
-                bins = np.arange(histRange[0], histRange[1]+binsize, binsize)
-        # Plot histograms.
-        # Add a test to see if data falls within histogram range.. because otherwise histogram will fail.
-        if histRange is not None:
-            if (histRange[0] is None) and (histRange[1] is not None):
-                condition = (metricValue <= histRange[1])
-            elif (histRange[1] is None) and (histRange[0] is not None):
-                condition = (metricValue >= histRange[0])
-            else:
-                condition = ((metricValue >= histRange[0]) & (metricValue <= histRange[1]))
-            plotValue = metricValue[condition]
+                if histRange[0] is not None:
+                    bmin = histRange[0]
+                else:
+                    bmin = metricValue.min()
+                if histRange[1] is not None:
+                    bmax = histRange[1]
+                else:
+                    bmax = metricValue.max()
+                bins = np.arange(bmin, bmax+binsize/2.0, binsize)
+        # Otherwise, determine number of bins, if neither 'bins' or 'binsize' were specified.
         else:
-            plotValue = metricValue
+            if bins is None:
+                bins = optimalBins(metricValue)
 
-        # If there is only one value to histogram, need to set histRange
-        rangePad = 20.
-        if (np.unique(plotValue).size == 1) & (histRange is None):
-            warnings.warn('Only one metric value, making a guess at a good histogram range.')
-            histRange = [plotValue.max()-rangePad, plotValue.max()+rangePad]
-            if (plotValue.min() >= 0) & (histRange[0] < 0):
-                histRange[0] = 0.
-            bins=np.arange(histRange[0], histRange[1], binsize)
+        # Generate plots.
+        fig = plt.figure(fignum)
 
-        if plotValue.size == 0:
-            if histRange is None:
-                warnings.warn('Warning! Could not plot metric data: histRange is None and all data masked' )
-            else:
-                warnings.warn('Warning! Could not plot metric data: none fall within histRange %.2f %.2f' %
-                              (histRange[0], histRange[1]))
-            return None
+        if cumulative is not False:
+            # If cumulative is set, generate histogram without using histRange (to use full range of data).
+            n, b, p = plt.hist(metricValue, bins=bins, histtype='step', log=logScale,
+                               cumulative=cumulative, label=label, color=color)
         else:
-            n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
-                               cumulative=cumulative, range=histRange, label=label, color=color)
+            # Plot non-cumulative histogram.
+            # First, test if data falls within histRange, because otherwise histogram generation will fail.
+            if np.min(histRange) is not None:
+                if (histRange[0] is None) and (histRange[1] is not None):
+                    condition = (metricValue <= histRange[1])
+                elif (histRange[1] is None) and (histRange[0] is not None):
+                    condition = (metricValue >= histRange[0])
+                else:
+                    condition = ((metricValue >= histRange[0]) & (metricValue <= histRange[1]))
+                plotValue = metricValue[condition]
+            else:
+                plotValue = metricValue
+            # If there is only one value to histogram, need to set histRange, otherwise histogram will fail.
+            rangePad = 20.
+            if (np.unique(plotValue).size == 1) & (np.min(histRange) is None):
+                warnings.warn('Only one metric value, making a guess at a good histogram range.')
+                histRange = [plotValue.min()-rangePad, plotValue.max()+rangePad]
+                if (plotValue.min() >= 0) & (histRange[0] < 0):
+                    # Reset histogram range if it went below 0.
+                    histRange[0] = 0.
+                bins=np.arange(histRange[0], histRange[1], binsize)
+            # If there is no data within the histogram range, we will generate an empty plot.
+            # If there is data, make the histogram.
+            if plotValue.size > 0:
+                # Generate histogram.
+                if np.min(histRange) is None:
+                    histRange = None
+                n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=logScale,
+                                   cumulative=cumulative, range=histRange, label=label, color=color)
+
+        # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
             return yaxisformat % (y * scale)
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
-        if plt.axis()[2] == max(n):
-            plt.ylim([n.min(),n.max()])
+        # Set y limits.
+        if yMin is not None:
+            plt.ylim(ymin=yMin)
+        else:
+            # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
+            try:
+                if plt.axis()[2] == max(n):
+                    plt.ylim([n.min(),n.max()])
+            except UnboundLocalError:
+                # This happens if we were generating an empty plot (no histogram).
+                # But in which case, the above error was probably not relevant. So skip it.
+                pass
+        if yMax is not None:
+            plt.ylim(ymax=yMax)
+        # Set x limits.
+        if xMin is not None:
+            plt.xlim(xmin=xMin)
+        if xMax is not None:
+            plt.xlim(xmax=xMax)
+        # Set/Add various labels.
+        if not xlabel:
+            xlabel = units
         if xlabel is not None:
             plt.xlabel(xlabel)
         if ylabel is not None:
             plt.ylabel(ylabel)
-        if flipXaxis:
-            # Might be useful for magnitude scales.
-            x0, x1 = plt.xlim()
-            plt.xlim(x1, x0)
         if addLegend:
             plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc)
         if title!=None:
@@ -402,7 +432,7 @@ class BaseSpatialSlicer(BaseSlicer):
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = fig.add_subplot(111, projection=projection)
-        # Set up valid datapoints and colormin/max values. 
+        # Set up valid datapoints and colormin/max values.
         if plotMask:
             # Plot all data points.
             mask = np.ones(len(metricValue), dtype='bool')

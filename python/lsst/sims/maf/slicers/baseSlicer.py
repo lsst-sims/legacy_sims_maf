@@ -11,6 +11,8 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from lsst.sims.maf.utils import getDateVersion
 
+__all__ = ['SlicerRegistry', 'BaseSlicer']
+
 class SlicerRegistry(type):
     """
     Meta class for slicers, to build a registry of slicer classes.
@@ -108,7 +110,15 @@ class BaseSlicer(object):
         # Will often be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {'badval':badval,'plotFuncs':plotFuncs }
 
-    def setupSlicer(self, simData):
+    def _runMaps(self, maps):
+        """
+        Add map metadata to slicePoints.
+        """
+        if maps is not None:
+            for m in maps:
+                self.slicePoints = m.run(self.slicePoints)
+
+    def setupSlicer(self, simData, maps=None):
         """
         Set up Slicer for data slicing.
 

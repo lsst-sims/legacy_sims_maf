@@ -5,14 +5,24 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from .baseSliceMetric import BaseSliceMetric
 
+from lsst.sims.maf.utils import ColInfo
+
 import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
+
+
+__all__ = ['RunSliceMetric']
 
 class RunSliceMetric(BaseSliceMetric):
     """
     RunSliceMetric couples a single slicer and multiple metrics, in order
     to generate metric data values at all points over the slicer.
+
+    Given the list of metrics and slicers (plus customized stackers, if desired),
+    and the sql constraint relevant for this slicer/metric calculation,
+    the RunSliceMetric will discover the list of columns required and get this information
+    from the database.
 
     The RunSliceMetric handles metadata about each metric, including the
     opsim run name, the sql constraint on the query used to obtain the input data,
@@ -28,9 +38,10 @@ class RunSliceMetric(BaseSliceMetric):
         # Add dictionary to save metric objects
         self.metricObjs = {}
         self.slicer = None
+        self.stackerObjs = set()
         self.thumbnail = thumbnail
 
-    def metricObjIid(self, metricObj):
+    def getMetricObjIid(self, metricObj):
        """
        Return the internal dictionary id number (iid) for a given metricObject.
 
@@ -42,7 +53,17 @@ class RunSliceMetric(BaseSliceMetric):
              iids.append(iid)
        return iids
 
-    def setSlicer(self, slicer, override=False):
+    def setMetricsSlicerStackers(self, metricList, slicer, stackerList=None):
+        """
+        Set the metric objects used to calculate metric values, together with the
+        slicer that will be used here, and optionally set the customized stackers.
+        Note that each of these objects must be instantiated by the user.
+        """
+        self._setSlicer(slicer, override=True)
+        self._setMetrics(metricList)
+        self._setStackers(stackerList)
+
+    def _setSlicer(self, slicer, override=False):
         """
         Set slicer for RunSliceMetric.
 
@@ -56,9 +77,10 @@ class RunSliceMetric(BaseSliceMetric):
             return True
         return (self.slicer == slicer)
 
-    def setMetrics(self, metricList):
+    def _setMetrics(self, metricList):
         """
         Set the metric objects used to calculate metric values.
+        Need to set slicer first!
         """
         if not hasattr(metricList, '__iter__'):
             metricList = [metricList,]
@@ -71,7 +93,57 @@ class RunSliceMetric(BaseSliceMetric):
             self.slicers[iid] = self.slicer
             iid += 1
         self.iid_next = iid
-        return
+
+    def _setStackers(self, stackerList=None):
+        """
+        Set the stackers.
+        Note that these stackers are not tied to particular metrics -- they are just
+         used to generate extra data from the database.
+        """
+        if not hasattr(stackerList, '__iter__'):
+            stackerList = [stackerList,]
+        for s in stackerList:
+            if s is not None:
+                self.stackerObjs.add(s)
+
+    def findDataCols(self):
+        """
+        Determine the complete list of columns that must be queried from the database.
+
+        Uses the metrics, slicer, and stackers to determine the necessary columns, returns this list.
+        Instantiates any additional necessary stackers.
+        """
+        # Find the columns required  by the metrics and slicers (including if they come from stackers).
+        colInfo = ColInfo()
+        dbcolnames = set()
+        defaultstackers = set()
+        # Look for the source for the columns for the slicer.
+        for col in self.slicer.columnsNeeded:
+            colsource = colInfo.getDataSource(col)
+            if colsource != colInfo.defaultDataSource:
+                defaultstackers.add(colsource)
+            else:
+                dbcolnames.add(col)
+        # Look for the source of columns in the metrics.
+        for col in self.metricObjs[0].colRegistry.colSet:
+            colsource = colInfo.getDataSource(col)
+            if colsource != colInfo.defaultDataSource:
+                defaultstackers.add(colsource)
+            else:
+                dbcolnames.add(col)
+        # Remove explicity instantiated stackers from defaultstacker set.
+        for s in self.stackerObjs:
+            if s.__class__ in defaultstackers:
+                defaultstackers.remove(s.__class__)
+        # Instantiate and add the remaining default stackers.
+        for s in defaultstackers:
+            self.stackerObjs.add(s())
+        # Add the columns needed by all stackers to the list to grab from the database.
+        for s in self.stackerObjs:
+            for col in s.colsReq:
+                dbcolnames.add(col)
+        return dbcolnames
+
 
     def validateMetricData(self, simData):
         """
@@ -83,7 +155,8 @@ class RunSliceMetric(BaseSliceMetric):
                 raise Exception('Column', c,'not in simData: needed by the metrics.\n')
         return True
 
-    def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata=''):
+    def runSlices(self, simData, simDataName='opsim', sqlconstraint='', metadata='',
+                  fieldData=None, maps=None):
         """
         Generate metric values, iterating through self.slicer and running self.metricObjs for each slice.
 
@@ -91,7 +164,16 @@ class RunSliceMetric(BaseSliceMetric):
         simDataName = identifier for simulated data (i.e. the opsim run name).
         sqlconstraint = the sql where clause used to pull data from simDataName.
         metadata = further information from config files ('WFD', 'r band', etc.).
+        fieldData = numpy recarray holding the information on the field pointings -- used for OpsimFieldSlicer ONLY
+        maps = skymap (such as dust extinction map) objects to add to slicer metadata at each slicepoint
         """
+        # Set up indexing in slicer.
+        if self.slicer.slicerName == 'OpsimFieldSlicer':
+            if fieldData is None:
+                raise ValueError('For opsimFieldSlicer, need to provide fieldData to setup slicer')
+            self.slicer.setupSlicer(simData, fieldData, maps=maps)
+        else:
+            self.slicer.setupSlicer(simData, maps=maps)
         # Set simDataName, sqlconstraint and metadata for each metric.
         for iid in self.metricObjs:
            self.simDataNames[iid] = simDataName
@@ -183,7 +265,8 @@ class RunSliceMetric(BaseSliceMetric):
         rNames = []
         metricName = self.metricNames[iid]
         for r in reduceFunc:
-            rNames.append(metricName + '_' + r.__name__.replace('reduce',''))
+            rname = metricName + '_' + r.__name__.replace('reduce', '')
+            rNames.append(rname)
         # Make sure reduceOrder is available.
         if reduceOrder is None:
             reduceOrder = np.zeros(len(reduceFunc), int)
@@ -214,153 +297,3 @@ class RunSliceMetric(BaseSliceMetric):
               # Evaluate reduced version of metric values.
               for riid, rFunc in zip(riids, reduceFunc):
                  self.metricValues[riid].data[i] = rFunc(mVal)
-
-
-    def computeSummaryStatistics(self, iid, summaryMetric):
-        """
-        Compute single number summary of self.metricValues[iid], using summaryMetric.
-
-        summaryMetric must be an object (not a class), already instantiated.
-        """
-        if not hasattr(iid, '__iter__'):
-            iid = [iid,]
-        summaryValues = []
-        for iidi in iid:
-            # To get (clear, non-confusing) result from unislicer, try running this with 'Identity' metric.
-            # Create numpy structured array from metric data, with bad values removed or filled with maskval.
-            if hasattr(summaryMetric, 'maskVal'):
-               rarr = np.array(zip(self.metricValues[iidi].filled(summaryMetric.maskVal)),
-                               dtype=[('metricdata', self.metricValues[iidi].dtype)])
-            else:
-               rarr = np.array(zip(self.metricValues[iidi].compressed()),
-                               dtype=[('metricdata', self.metricValues[iidi].dtype)])
-            # The summary metric colname should already be set to 'metricdata', but in case it's not:
-            summaryMetric.colname = 'metricdata'
-            if np.size(rarr) == 0:
-               summaryValue = self.slicer.badval
-            else:
-               summaryValue = summaryMetric.run(rarr)
-            summaryValues.append(summaryValue)
-            # Add summary metric info to results database. (should be float or int).
-            if self.resultsDb:
-                if iidi not in self.metricIds:
-                    self.metricIds[iidi] = self.resultsDb.updateMetric(self.metricNames[iidi], self.slicer.slicerName,
-                                                                        self.simDataNames[iidi],
-                                                                        self.sqlconstraints[iidi],
-                                                                        self.metadatas[iidi], None)
-                self.resultsDb.updateSummaryStat(self.metricIds[iidi],
-                                                    summaryName=summaryMetric.name.replace(' metricdata', ''),
-                                                    summaryValue=summaryValue)
-        return summaryValues
-
-
-    def writeMetric(self, iid, comment='', outfileRoot=None, outfileSuffix=None):
-        """
-        Write metric values 'metricName' to disk.
-
-        comment = any additional comments to add to output file (beyond
-           metric name, simDataName, and metadata).
-        outfileRoot = root of the output files (default simDataName).
-       """
-        super(RunSliceMetric, self).writeMetric(iid, comment=comment, outfileRoot=outfileRoot,
-                                                outfileSuffix=outfileSuffix)
-        # For driver merged histograms .. need to update this later.
-        if iid in self.metricObjs:
-            outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix) + '.npz'
-            self.metricObjs[iid].saveFile = outfile
-
-
-    def captionMetric(self, iid):
-        """
-        Auto generate caption for a given metric.
-        """
-        displayOrder = ['plotSkyMap', 'plotHistogram', 'plotPowerSpectrum']
-        if (self.displayDicts[iid]['caption'] is None) or \
-            (self.displayDicts[iid]['caption'].endswith('(auto)')):
-          caption = ''
-          plotTypes = self.slicer.plotFuncs.keys()
-          if len(plotTypes) > 0:
-            caption += 'Plots ('
-            ptypes = []
-            for p in displayOrder:
-                if p in plotTypes:
-                    ptypes.append(p)
-                    plotTypes.remove(p)
-            for r in plotTypes:
-                ptypes.append(r)
-            for p in ptypes:
-                caption += '%s, ' %(p.replace('plot', ''))
-            caption = caption[:-2] + ') for '
-          caption += '%s ' %(self.metricNames[iid])
-          caption += 'calculated with a %s slicer ' %(self.slicer.slicerName)
-          if len(self.metadatas[iid].strip()) > 0:
-            caption += 'on a subset of data selected in %s. ' %(self.metadatas[iid].strip())
-          if 'zp' in self.plotDicts[iid]:
-            caption += 'Values plotted with a zeropoint of %.2f. ' %(self.plotDicts[iid]['zp'])
-          if 'normVal' in self.plotDicts[iid]:
-            caption += 'Values plotted with a normalization value of %.2f. ' %(self.plotDicts[iid]['normVal'])
-          caption += '(auto)'
-          self.displayDicts[iid]['caption'] = caption
-        if self.resultsDb:
-          if iid not in self.metricIds:
-            self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                              self.simDataNames[iid], self.sqlconstraints[iid],
-                                                              self.metadatas[iid], None)
-          if self.displayDicts[iid]['subgroup'] is None:
-             self.displayDicts[iid]['subgroup'] = self.slicer.slicerName
-          self.resultsDb.updateDisplay(self.metricIds[iid], self.displayDicts[iid])
-
-    def plotAll(self, savefig=True, closefig=False, outfileRoot=None, outfileSuffix=None, verbose=True):
-        """
-        Plot histograms and skymaps (where relevant) for all metrics.
-        """
-        for iid in self.metricValues:
-            plotfigs = self.plotMetric(iid, savefig=savefig, outfileRoot=outfileRoot,
-                                       outfileSuffix=outfileSuffix)
-            if closefig:
-               plt.close('all')
-            if plotfigs is None and verbose:
-                warnings.warn('Not plotting metric data for %s' %(mname))
-
-
-    def plotMetric(self, iid, savefig=True, outfileRoot=None, outfileSuffix=None):
-        """
-        Create all plots for 'metricName' .
-        """
-        # Get the metric plot parameters.
-        pParams = self.plotDicts[iid].copy()
-        # Build plot title and label.
-        mname = self.metricNames[iid]
-        # "Units" always in pParams, but might be '' (== the physical units).
-        if 'title' not in pParams:
-            # Build default title.
-            pParams['title'] = self.simDataNames[iid] + ' ' + self.metadatas[iid]
-            pParams['title'] += ': ' + mname
-        if 'ylabel' not in pParams:
-            # Build default y label if needed (i.e. oneDSlicer)
-            if self.slicer.slicerName == 'OneDSlicer':
-                pParams['ylabel'] = mname + ' (' + pParams['units'] + ')'
-        if 'xlabel' not in pParams:
-            # Build a default x label if needed
-            if self.slicer.slicerName == 'OneDSlicer':
-                pParams['xlabel'] = self.slicer.sliceColName + ' (' + self.slicer.sliceColUnits + ')'
-            else:
-                pParams['xlabel'] = mname + ' (' + pParams['units'] + ')'
-        # Plot the data.
-        # Plotdata for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
-        outfile = self._buildOutfileName(iid, outfileRoot=outfileRoot, outfileSuffix=outfileSuffix)
-        plotResults = self.slicer.plotData(self.metricValues[iid], savefig=savefig,
-                                           figformat=self.figformat, dpi=self.dpi,
-                                           filename=os.path.join(self.outDir, outfile),
-                                           thumbnail = self.thumbnail, **pParams)
-        # Save information about the plotted files.
-        if self.resultsDb:
-            if iid not in self.metricIds:
-                self.metricIds[iid] = self.resultsDb.updateMetric(self.metricNames[iid], self.slicer.slicerName,
-                                                                self.simDataNames[iid], self.sqlconstraints[iid],
-                                                                self.metadatas[iid], None)
-            self.captionMetric(iid)
-            for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
-                froot, fname = os.path.split(filename)
-                self.resultsDb.updatePlot(metricId=self.metricIds[iid], plotType=filetype, plotFile=fname)
-        return plotResults['figs']

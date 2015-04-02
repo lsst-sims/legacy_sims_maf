@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 import numpy.lib.recfunctions as rfn
 
+__all__ = ['StackerRegistry', 'BaseStacker']
+
 class StackerRegistry(type):
     """
     Meta class for Stackers, to build a registry of stacker classes.

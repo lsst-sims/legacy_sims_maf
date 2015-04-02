@@ -11,6 +11,8 @@ import warnings
 import matplotlib as mpl
 from lsst.sims.maf.utils.mafUtils import gnomonic_project_toxy
 
+__all__ = ['HealpixSDSSSlicer']
+
 class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
     def __init__(self, nside=128, spatialkey1 ='RA1' , spatialkey2='Dec1', verbose=True,
@@ -22,9 +24,12 @@ class HealpixSDSSSlicer(HealpixSlicer):
                                             useCache=useCache,nside=nside )
         self.cornerLables = ['RA1', 'Dec1', 'RA2','Dec2','RA3','Dec3','RA4','Dec4']
 
-    def setupSlicer(self, simData):
-        """Use simData[self.spatialkey1] and simData[self.spatialkey2]
-        (in radians) to set up KDTree."""
+    def setupSlicer(self, simData, maps=None):
+        """
+        Use simData[self.spatialkey1] and simData[self.spatialkey2]
+        (in radians) to set up KDTree.
+        """
+        self._runMaps(maps)
         self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
         self._setRad(self.radius)
         self.corners = simData[self.cornerLables]

@@ -4,6 +4,8 @@ import numpy as np
 from functools import wraps
 from .baseSpatialSlicer import BaseSpatialSlicer
 
+__all__ = ['OpsimFieldSlicer']
+
 class OpsimFieldSlicer(BaseSpatialSlicer):
     """Index-based slicer, matched ID's between simData and fieldData.
 
@@ -58,10 +60,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
         self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
-        if maps is None:
-            maps = []
-        for skyMap in maps:
-            self.slicePoints = skyMap.run(self.slicePoints)
+        self._runMaps(maps)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
@@ -90,7 +89,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
                       fignum=None, label=None, addLegend=False, legendloc='upper left',
                       bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
-                      logScale=False, flipXaxis=False,
+                      logScale=False,
                       scale=None, color='b', linestyle='-', **kwargs):
         """Histogram metricValue over the healpix bin points.
 
@@ -105,7 +104,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         cumulative = make histogram cumulative (default False)
         xMin/Max = histogram range (default None, set by matplotlib hist)
         logScale = use log for y axis (default False)
-        flipXaxis = flip the x axis (i.e. for magnitudes) (default False)."""
+        """
         if ylabel is None:
             ylabel = 'Number of Fields'
         fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
@@ -115,6 +114,5 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                                                              addLegend=addLegend, legendloc=legendloc,
                                                              bins=bins, binsize=binsize, cumulative=cumulative,
                                                              xMin=xMin, xMax=xMax, logScale=logScale,
-                                                             flipXaxis=flipXaxis,
                                                              scale=1, yaxisformat='%d', color=color, **kwargs)
         return fignum

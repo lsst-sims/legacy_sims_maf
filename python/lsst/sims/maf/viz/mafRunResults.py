@@ -5,6 +5,8 @@ from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 
+__all__ = ['MafRunResults']
+
 class MafRunResults(object):
     """
     Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages.
@@ -55,7 +57,7 @@ class MafRunResults(object):
         # Combine metrics and displays arrays (these are one-to-one).
         self.metrics = rec_join('metricId', self.metrics, self.displays)
         # Add base metric names (to keep order for reduce methods).
-        baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S20')])
+        baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S50')])
         for i, m in enumerate(self.metrics):
             baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]
         self.metrics = merge_arrays([self.metrics, baseNames], flatten=True, usemask=False)
@@ -82,7 +84,7 @@ class MafRunResults(object):
             self.groups[g] = sorted(list(self.groups[g]))
 
         self.summaryStatOrder = ['Id', 'Identity', 'Median', 'Mean', 'Rms', 'RobustRms',
-                                 'm3Sigma', 'p3Sigma', 'Count', '%ile']
+                                 'N(-3Sigma)', 'N(+3Sigma)', 'Count', '%ile']
         # Add in the table fraction sorting to summary stat ordering.
         tableFractions = list(set([name for name in self.stats['summaryName'] if 'TableFraction' in name]))
         if len(tableFractions) > 0:

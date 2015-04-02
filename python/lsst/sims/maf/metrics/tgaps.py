@@ -1,6 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['Tgaps']
+
 class Tgaps(BaseMetric):
     """Histogram up all the time gaps """
 
@@ -21,17 +23,27 @@ class Tgaps(BaseMetric):
         """
         if plotDict is None:
             plotDict = {}
-        # Force the plotDict to use the same bins as the metric
-        # Need to do this so the slicer uses the same bins
-        plotDict['binMin'] = binMin
-        plotDict['binMax'] = binMax
-        plotDict['binsize'] = binsize
-
+        # If the user has not set the binmin/max/binsize for the plotDict,
+        #   set it here so that the slicer uses the same bins.
+        # (also set it here if the number of the bins set by user doesn't match).
+        # Allow the user to set the bins explicitly though, in case they want a scale change.
+        self.bins=np.arange(binMin, binMax+binsize,binsize)
+        if ('binMin' in plotDict) and ('binMax' in plotDict) and ('binsize' in plotDict):
+            plotbins = np.arange(plotDict['binMin'], plotDict['binMax'] + plotDict['binsize'],
+                                 plotDict['binsize'])
+            if plotbins.size != self.bins.size:
+                warnings.warn('Overriding user set plotting bin parameters for tgaps, to match metric values')
+                plotDict['binMin'] = binMin
+                plotDict['binMax'] = binMax
+                plotDict['binsize'] = binsize
+        else:
+            plotDict['binMin'] = binMin
+            plotDict['binMax'] = binMax
+            plotDict['binsize'] = binsize
         self.timesCol = timesCol
         super(Tgaps, self).__init__(col=[self.timesCol],
                                     metricDtype=object, plotDict=plotDict,
                                     units=units, **kwargs)
-        self.bins=np.arange(binMin, binMax+binsize,binsize)
         self.allGaps = allGaps
 
     def run(self, dataSlice, slicePoint=None):

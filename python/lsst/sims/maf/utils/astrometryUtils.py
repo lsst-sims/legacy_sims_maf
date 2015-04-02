@@ -1,6 +1,8 @@
 import numpy as np
 """Some simple functions that are useful for astrometry calculations. """
 
+__all__ = ['sigma_slope', 'm52snr', 'astrom_precision']
+
 def sigma_slope(x, sigma_y):
     """For fitting a line, the uncertainty in the slope
        is given by the spread in x values and the uncertainties

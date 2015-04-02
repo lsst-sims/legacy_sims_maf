@@ -1,6 +1,8 @@
 import numpy as np
 from .baseSpatialSlicer import BaseSpatialSlicer
 
+__all__ = ['UserPointsSlicer']
+
 class UserPointsSlicer(BaseSpatialSlicer):
     """Use spatial slicer on a user provided point """
     def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',

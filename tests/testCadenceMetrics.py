@@ -88,6 +88,48 @@ class TestCadenceMetrics(unittest.TestCase):
         Ngaps = (data.size-1)*(data.size-1)/2.+(data.size-1)/2.
         assert(np.sum(result3) == Ngaps)
 
+    def testRapidRevisitMetric(self):
+        data = np.zeros(100, dtype=zip(['expMJD'], [float]))
+        # Uniformly distribute time _differences_ between 0 and 100
+        dtimes = np.arange(100)
+        data['expMJD'] = dtimes.cumsum()
+        # Set up "rapid revisit" metric to look for visits between 5 and 25
+        metric = metrics.RapidRevisitMetric(dTmin=5, dTmax=55, minNvisits=50)
+        result = metric.run(data)
+        # This should be uniform.
+        self.assertTrue(result < 0.1)
+        self.assertTrue(result >= 0)
+        # Set up non-uniform distribution of time differences
+        dtimes = np.zeros(100) + 5
+        data['expMJD'] = dtimes.cumsum()
+        result = metric.run(data)
+        self.assertTrue(result >= 0.5)
+        dtimes = np.zeros(100) + 15
+        data['expMJD'] = dtimes.cumsum()
+        result = metric.run(data)
+        self.assertTrue(result >= 0.5)
+        # Let's see how much dmax/result can vary
+        resmin = 1
+        resmax = 0
+        for i in range(10000):
+            dtimes = np.random.rand(100)
+            data['expMJD'] = dtimes.cumsum()
+            metric = metrics.RapidRevisitMetric(dTmin=0.1, dTmax=0.8, minNvisits=50)
+            result = metric.run(data)
+            resmin = np.min([resmin, result])
+            resmax = np.max([resmax, result])
+        print "RapidRevisit .. range", resmin, resmax
+
+    def testNRevisitsMetric(self):
+        data = np.zeros(100, dtype=zip(['expMJD'], [float]))
+        dtimes = np.arange(100)/24./60.
+        data['expMJD'] = dtimes.cumsum()
+        metric = metrics.NRevisitsMetric(dT=50.)
+        result = metric.run(data)
+        self.assertEqual(result, 50)
+        metric = metrics.NRevisitsMetric(dT=50., normed=True)
+        result = metric.run(data)
+        self.assertEqual(result, 0.5)
 
     def testTransientMetric(self):
         names = ['expMJD','fiveSigmaDepth', 'filter']

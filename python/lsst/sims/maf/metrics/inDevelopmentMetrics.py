@@ -3,6 +3,8 @@ import healpy as hp
 from .baseMetric import BaseMetric
 from scipy.spatial import cKDTree as kdtree
 
+__all__ = ['LinkedMetric']
+
 class LinkedMetric(BaseMetric):
     """Calculate how many other healpixels a given observation is linked to.  This is a fairly crude measure of how well the observations are linked for self-calibration pruposes.  An even better metric would look at the chip level since that's how large calibration patches will be.
 

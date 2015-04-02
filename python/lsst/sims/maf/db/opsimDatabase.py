@@ -4,6 +4,8 @@ import warnings
 from .Database import Database
 from lsst.sims.maf.utils.getDateVersion import getDateVersion
 
+__all__ = ['OpsimDatabase']
+
 class OpsimDatabase(Database):
     def __init__(self, dbAddress, dbTables=None, *args, **kwargs):
         """
@@ -127,7 +129,7 @@ class OpsimDatabase(Database):
             raColName = self.raColName
         if decColName is None:
             decColName = self.decColName
-        table = self.tables['summaryTable']
+        table = self.tables['Summary']
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
                                               colnames=[self.fieldIdCol, raColName, decColName],
                                               groupByCol=self.fieldIdCol)
@@ -250,7 +252,7 @@ class OpsimDatabase(Database):
         param: propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
         tableName = 'ObsHistory'
-        query = 'select %s from %s' %(self.mjdCol, self.dbTables[tableName][0])
+        query = 'select count(ObsHistID) from %s' %(self.dbTables[tableName][0])
         if propID is not None:
             query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['ObsHistory_Proposal'][0])
             if hasattr(propID, '__iter__'): # list of propIDs
@@ -262,8 +264,8 @@ class OpsimDatabase(Database):
                 query += ')'
             else: # single proposal ID.
                 query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
-        data = self.queryDatabase(tableName, query)
-        return data.size
+        data = self.tables[tableName].execute_arbitrary(query)
+        return int(data[0][0])
 
     def fetchSeeingColName(self):
         """
@@ -287,7 +289,7 @@ class OpsimDatabase(Database):
 
     def fetchOpsimRunName(self):
         """
-        Returns opsim run name (machine name + session ID) from Session table. 
+        Returns opsim run name (machine name + session ID) from Session table.
         """
         table = self.tables['Session']
         res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
@@ -299,14 +301,14 @@ class OpsimDatabase(Database):
         Returns the total slew time.
         """
         table = self.tables['SlewActivities']
-        res = table.query_columns_Array(constraint='actDelay>0', colnames=['SlewHistory_slewID'])
-        result = np.size(np.unique(res['SlewHistory_slewID']))
-        return result
+        query = 'select count(distinct(slewHistory_slewID)) from slewActivities where actDelay >0'
+        res = table.execute_arbitrary(query)
+        return int(res[0][0])
 
     def fetchRequestedNvisits(self, propId=None):
         """
-        Find the requested number of visits for each proposal.
-        Returns a nested dictionary - Nvisits{propID: {u/g/r/i/z/y} }
+        Find the requested number of visits for proposals in propId.
+        Returns a dictionary - Nvisits{u/g/r/i/z/y}
         """
         visitDict = {}
         if propId is None:
@@ -315,10 +317,10 @@ class OpsimDatabase(Database):
         else:
             # Get the propType info to go with the propId(s).
             if hasattr(propId, '__iter__'):
-                constraint = ''
+                constraint = '('
                 for pi in propId:
                     constraint += '(propId = %d) or ' %(pi)
-                constraint = constraint[:-3] + ')'
+                constraint = constraint[:-4] + ')'
             else:
                 constraint = 'propId = %d' %(propId)
             propData = self.tables['Proposal'].query_columns_Array(colnames=[self.propIdCol, self.propNameCol],
@@ -336,7 +338,13 @@ class OpsimDatabase(Database):
             visitDict[pId] = {}
             for f, N in zip(filterlist, nvisits):
                 visitDict[pId][f] = N
-        return visitDict
+        nvisits = {}
+        for f in ['u', 'g', 'r', 'i', 'z', 'y']:
+            nvisits[f] = 0
+        for pId in visitDict:
+            for f in visitDict[pId]:
+                nvisits[f] += visitDict[pId][f]
+        return nvisits
 
     def _matchParamNameValue(self, configarray, keyword):
         return configarray['paramValue'][np.where(configarray['paramName']==keyword)]

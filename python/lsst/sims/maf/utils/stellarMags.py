@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ['stellarMags']
+
 def stellarMags(stellarType, rmag=19.):
     """
     Given a spectral type (O,B,A,F,G,K,M), return a

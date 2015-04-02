@@ -10,6 +10,7 @@ from functools import wraps
 from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
 from .baseSlicer import BaseSlicer
 
+__all__ = ['MovieSlicer']
 
 class MovieSlicer(BaseSlicer):
     """movie Slicer."""
@@ -59,7 +60,7 @@ class MovieSlicer(BaseSlicer):
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
 
-    def setupSlicer(self, simData):
+    def setupSlicer(self, simData, maps=None):
         """
         Set up bins in slicer.
         """
@@ -102,6 +103,8 @@ class MovieSlicer(BaseSlicer):
         # Set slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
         self.slicePoints['bins'] = self.bins
+        # Add metadata from maps.
+        self._runMaps(maps)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.sliceColName])
         simFieldsSorted = np.sort(simData[self.sliceColName])
