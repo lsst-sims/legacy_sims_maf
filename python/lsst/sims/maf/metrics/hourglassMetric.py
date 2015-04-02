@@ -2,6 +2,8 @@ import numpy as np
 from .baseMetric import BaseMetric
 from lsst.sims.maf.utils.telescopeInfo import TelescopeInfo
 
+__all__ = ['HourglassMetric']
+
 def nearestVal(A, val):
     return A[np.argmin(np.abs(np.array(A)-val))]
 

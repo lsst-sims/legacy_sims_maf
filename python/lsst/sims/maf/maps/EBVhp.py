@@ -3,7 +3,7 @@ import healpy as hp
 import os
 from lsst.sims.maf.utils import radec2pix
 
-
+__all__ = ['EBVhp']
 
 def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
     """

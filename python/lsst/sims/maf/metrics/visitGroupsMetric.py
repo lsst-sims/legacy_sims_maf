@@ -6,6 +6,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['VisitGroupsMetric']
+
 class VisitGroupsMetric(BaseMetric):
     """Count the number of visits per night within deltaTmin and deltaTmax."""
     def __init__(self, timesCol='expMJD', nightsCol='night', metricName='VisitGroups',

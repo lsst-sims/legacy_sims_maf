@@ -2,6 +2,7 @@ import os, warnings
 from .Table import Table
 import inspect
 
+__all__ = ['DatabaseRegistry', 'Database']
 
 class DatabaseRegistry(type):
     """

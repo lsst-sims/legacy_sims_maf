@@ -10,6 +10,8 @@ def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
 
+__all__ = ['ComparisonSliceMetric']
+
 class ComparisonSliceMetric(BaseSliceMetric):
     """
     ComparisonSliceMetric couples slicers and metric data (one slicer per metric data)

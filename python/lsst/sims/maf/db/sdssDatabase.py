@@ -2,6 +2,8 @@ from .Database import Database
 import numpy as np
 import warnings
 
+__all__ = ['SdssDatabase']
+
 class SdssDatabase(Database):
     """Connect to the stripe 82 database"""
     def __init__(self, dbAddress,

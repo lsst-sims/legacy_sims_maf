@@ -4,6 +4,8 @@ import warnings
 from .Database import Database
 from lsst.sims.maf.utils.getDateVersion import getDateVersion
 
+__all__ = ['OpsimDatabase']
+
 class OpsimDatabase(Database):
     def __init__(self, dbAddress, dbTables=None, *args, **kwargs):
         """

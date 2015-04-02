@@ -3,6 +3,8 @@ from .baseMetric import BaseMetric
 from lsst.sims.maf.utils.astrometryUtils import sigma_slope, m52snr, astrom_precision
 import lsst.sims.maf.utils as utils
 
+__all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric']
+
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
     """

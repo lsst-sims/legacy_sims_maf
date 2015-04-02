@@ -11,6 +11,8 @@ import numpy as np
 
 Base = declarative_base()
 
+__all__ = ['ResultsDb']
+
 class MetricRow(Base):
     """
     Define contents and format of metric list table.

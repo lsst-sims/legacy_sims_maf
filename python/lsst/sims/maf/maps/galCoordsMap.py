@@ -1,6 +1,8 @@
 from lsst.sims.coordUtils import AstrometryBase
 from lsst.sims.maf.maps import BaseMap
 
+__all__ = ['galCoordsMap']
+
 class galCoordsMap(BaseMap):
     def __init__(self):
         self.keynames = ['gall', 'galb']

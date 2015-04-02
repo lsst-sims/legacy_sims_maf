@@ -1,6 +1,7 @@
 from scipy import fftpack
 from .baseMetric import BaseMetric
 
+__all__ = ['FftMetric']
 
 class FftMetric(BaseMetric):
     """Calculate a truncated FFT of the exposure times."""

@@ -11,6 +11,9 @@ import time
 def dtime(time_prev):
    return (time.time() - time_prev, time.time())
 
+
+__all__ = ['RunSliceMetric']
+
 class RunSliceMetric(BaseSliceMetric):
     """
     RunSliceMetric couples a single slicer and multiple metrics, in order

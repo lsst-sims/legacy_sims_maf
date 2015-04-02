@@ -3,6 +3,8 @@ from .baseMetric import BaseMetric
 
 # Metrics for dealing with things from the SlewActivities table
 
+__all__ = ['SlewContributionMetric', 'AveSlewFracMetric']
+
 class SlewContributionMetric(BaseMetric):
     def __init__(self, col='actDelay', activity=None, activeCol='activity',
                  inCritCol='inCriticalPath', **kwargs):

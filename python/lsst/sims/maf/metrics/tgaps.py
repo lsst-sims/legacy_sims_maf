@@ -1,6 +1,8 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['Tgaps']
+
 class Tgaps(BaseMetric):
     """Histogram up all the time gaps """
 

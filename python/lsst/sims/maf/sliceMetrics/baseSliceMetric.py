@@ -5,6 +5,8 @@ import lsst.sims.maf.slicers as slicers
 from lsst.sims.maf.db import ResultsDb
 
 
+__all__ = ['BaseSliceMetric']
+
 class BaseSliceMetric(object):
     """
     The BaseSlicemetric class provides base functionality common to all
