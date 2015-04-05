@@ -72,11 +72,12 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
             benchmarkVals['nvisits'][f] = 1
 
     # Generate approximate benchmark values for DD.
-    benchmarkDDVals = {}
-    benchmarkDDVals = utils.scaleBenchmarks(runLength, benchmark='design')
-    benchmarkDDVals['nvisits'] = opsimdb.fetchRequestedNvisits(propId=DDpropid)
-    #benchmarkDDVals['coaddedDepth'] = utils.calcCoaddedDepth(benchmarkDDVals['nvisits'], benchmarkDDVals['singleVisitDepth'])
-    benchmarkDDVals['coaddedDepth'] = {'u':28.5, 'g':28.5, 'r':28.5, 'i':28.5, 'z':28.0, 'y':27.0}
+    if len(DDpropid) > 0:
+        benchmarkDDVals = {}
+        benchmarkDDVals = utils.scaleBenchmarks(runLength, benchmark='design')
+        benchmarkDDVals['nvisits'] = opsimdb.fetchRequestedNvisits(propId=DDpropid)
+        #benchmarkDDVals['coaddedDepth'] = utils.calcCoaddedDepth(benchmarkDDVals['nvisits'], benchmarkDDVals['singleVisitDepth'])
+        benchmarkDDVals['coaddedDepth'] = {'u':28.5, 'g':28.5, 'r':28.5, 'i':28.5, 'z':28.0, 'y':27.0}
 
     # Set values for min/max range of nvisits for All/WFD and DD plots. These are somewhat arbitrary.
     nvisitsRange = {}
@@ -177,6 +178,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                 nvisitsMax = nvisitsRange['all'][f][1]
                 mag_zp = benchmarkVals['coaddedDepth'][f]
             elif prop == 'DD':
+                if len(DDpropid) == 0:
+                    continue
                 subgroup = 'DD'
                 propCaption = ' for all DD proposals'
                 metadata = '%s band, DD' %(f) + slicermetadata
