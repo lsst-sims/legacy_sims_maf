@@ -130,7 +130,7 @@ def scaleBenchmarks(runLength, benchmark='design'):
     if runLength != baseline:
         scalefactor = float(runLength) / float(baseline)
         # Calculate scaled value for design and stretch values of nvisits, per filter.
-        for f in design:
+        for f in design['nvisits']:
             design['nvisits'][f] = int(np.floor(design['nvisits'][f] * scalefactor))
             stretch['nvisits'][f] = int(np.floor(stretch['nvisits'][f] * scalefactor))
 
