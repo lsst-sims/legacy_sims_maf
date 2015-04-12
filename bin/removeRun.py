@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import argparse
 import lsst.sims.maf.db as db
-import os
 
 if __name__ == "__main__":
 
