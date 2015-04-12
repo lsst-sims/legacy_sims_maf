@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import argparse
 import lsst.sims.maf.db as db
-
+import os
 
 if __name__ == "__main__":
 
@@ -11,6 +11,10 @@ if __name__ == "__main__":
     defaultdb = 'sqlite:///' + defaultdb
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
     args = parser.parse_args()
+
+    # If db is just a filename, assume sqlite and prepend address string
+    if not args.trackingDb.startswith('sqlite:///'):
+        args.trackingDb = 'sqlite:///' + args.trackingDb
 
     trackingDb = db.TrackingDb(trackingDbAddress=args.trackingDb)
     trackingDb.delRun(int(args.mafRunId))
