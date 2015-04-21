@@ -1,6 +1,8 @@
 # Collection of utilities for MAF that relate to Opsim specifically.
 
+import os
 import numpy as np
+from .outputUtils import printDict
 
 __all__ = ['connectOpsimDb', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
@@ -19,6 +21,21 @@ def connectOpsimDb(dbAddressDict):
         # For a basic db connection to the sqlite db files.
         opsimdb = db.OpsimDatabase(dbAddressDict['dbAddress'])
     return opsimdb
+
+def writeConfigs(opsimDb, outDir):
+    """
+    Convenience function to get the configuration information from the opsim database
+    and write to text files in the output directory 'outDir', as 'configSummary.txt' and 'configDetails.txt'.
+    """    
+    configSummary, configDetails = opsimDb.fetchConfig()
+    outfile = os.path.join(outDir, 'configSummary.txt')
+    f = open(outfile, 'w')
+    printDict(configSummary, 'Summary', f)
+    f.close()
+    outfile = os.path.join(outDir, 'configDetails.txt')
+    f = open(outfile, 'w')
+    printDict(configDetails, 'Details', f)
+    f.close()
 
 def createSQLWhere(tag, propTags):
     """
