@@ -30,6 +30,11 @@ class MeanMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.mean(dataSlice[self.colname])
 
+class MeanAngleMetric(BaseMetric):
+    """Calculate the mean of an angular (radians) simData column slice."""
+    def run(self, dataSlice, slicePoint=None):
+        return np.mean(dataSlice[self.colname])
+    
 class MedianMetric(BaseMetric):
     """Calculate the median of a simData column slice."""
     def run(self, dataSlice, slicePoint=None):
@@ -55,6 +60,11 @@ class RmsMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.std(dataSlice[self.colname])
 
+class RmsAngleMetric(BaseMetric):
+    """Calculate the standard deviation of a simData angular (radian) column slice."""
+    def run(self, dataSlice, slicePoint=None):
+        return np.std(dataSlice[self.colname]-dataSlice[self.colname].mean())
+    
 class SumMetric(BaseMetric):
     """Calculate the sum of a simData column slice."""
     def run(self, dataSlice, slicePoint=None):
