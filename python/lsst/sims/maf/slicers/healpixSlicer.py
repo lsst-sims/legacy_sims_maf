@@ -26,7 +26,8 @@ class HealpixSlicer(BaseSpatialSlicer):
                                             spatialkey1=spatialkey1, spatialkey2=spatialkey2,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
                                             plotFuncs=plotFuncs,
-                                            useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD')
+                                            useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
+                                            mjdColName=mjdColName)
         # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)
