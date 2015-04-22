@@ -1,8 +1,9 @@
 import importlib
+import os
 import numpy as np
 import warnings
 
-__all__ = ['moduleLoader', 'optimalBins', 'percentileClipping', 'gnomonic_project_toxy']
+__all__ = ['moduleLoader', 'connectResultsDb', 'optimalBins', 'percentileClipping', 'gnomonic_project_toxy']
 
 def moduleLoader(moduleList):
     """
@@ -13,6 +14,18 @@ def moduleLoader(moduleList):
     for m in moduleList:
         importlib.import_module(m)
 
+def connectResultsDb(dbDir, dbFilename='resultsDb_sqlite.db'):
+    """
+    Connect to a MAF-generated results database (usually called 'resultsDb_sqlite.db').
+    """
+    import lsst.sims.maf.db as db
+    dbAddress = 'sqlite:///' + os.path.join(dbDir, dbFilename)
+    database = db.Database(dbAddress, longstrings=True,
+                            dbTables={'metrics':['metrics','metricID'],
+                                      'displays':['displays', 'displayId'],
+                                      'plots':['plots','plotId'],
+                                      'stats':['summarystats','statId']})
+    return database
 
 def optimalBins(datain, binmin=None, binmax=None, nbinMax=200, nbinMin=1):
     """
