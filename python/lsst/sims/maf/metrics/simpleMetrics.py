@@ -189,18 +189,19 @@ class NoutliersNsigmaMetric(BaseMetric):
             outsiders = np.where(dataSlice[self.colname] < boundary)
         return len(dataSlice[self.colname][outsiders])
 
-def _rotateAngles(angledata):
-    angles = np.sort(angledata)
-    diffangles = np.diff(angles)
-    start_to_end = np.array([twopi-angles.max() + angles.min()], float)
+def _rotateAngles(angles):
+    angleidx = np.argsort(angles)
+    diffangles = np.diff(angles[angleidx])
+    start_to_end = np.array([twopi-angles[angleidx][-1] + angles[angleidx][0]], float)
     if start_to_end < 0:
         raise ValueError('Angular metrics expect radians, this seems to be in degrees')
     diffangles = np.concatenate([diffangles, start_to_end])
     maxdiff = np.where(diffangles == diffangles.max())[0]
     if maxdiff == (len(angles)-1):
-        return (0.0, angles)
+        rotation = angles[angleidx][0]
     else:
-        return (angles[maxdiff+1][0], (angles - angles[maxdiff+1]) % twopi)
+        rotation = angles[angleidx][maxdiff+1][0]
+    return (rotation, (angles - rotation) % twopi)
 
 class MeanAngleMetric(BaseMetric):
     """Calculate the mean of an angular (radians) simData column slice."""
