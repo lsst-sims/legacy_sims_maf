@@ -4,7 +4,7 @@ import os
 import numpy as np
 from .outputUtils import printDict
 
-__all__ = ['connectOpsimDb', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
+__all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
 def connectOpsimDb(dbAddressDict):
     """
@@ -26,7 +26,7 @@ def writeConfigs(opsimDb, outDir):
     """
     Convenience function to get the configuration information from the opsim database
     and write to text files in the output directory 'outDir', as 'configSummary.txt' and 'configDetails.txt'.
-    """    
+    """
     configSummary, configDetails = opsimDb.fetchConfig()
     outfile = os.path.join(outDir, 'configSummary.txt')
     f = open(outfile, 'w')
