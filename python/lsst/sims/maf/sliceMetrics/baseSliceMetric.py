@@ -167,6 +167,7 @@ class BaseSliceMetric(object):
           newiids.append(iid)
        return newiids
 
+
     def computeSummaryStatistics(self, iid, summaryMetric):
         """
         Compute single number summary of self.metricValues[iid], using summaryMetric.

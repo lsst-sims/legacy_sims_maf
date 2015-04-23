@@ -297,3 +297,17 @@ class RunSliceMetric(BaseSliceMetric):
               # Evaluate reduced version of metric values.
               for riid, rFunc in zip(riids, reduceFunc):
                  self.metricValues[riid].data[i] = rFunc(mVal)
+
+
+    def summaryAll(self):
+       """
+       Compute all the summary stats for the metrics and save results in a dict.
+       """
+       self.summaryStats = {}
+       for iid in self.metricObjs:
+          if self.metricObjs[iid].summaryStatList is not None:
+             statVals = {}
+             for statMetric in self.metricObjs[iid].summaryStatList:
+                name =  statMetric.name.replace(' metricdata', '')
+                statVals[name] = self.computeSummaryStatistics(iid, statMetric)
+             self.summaryStats[iid] = statVals
