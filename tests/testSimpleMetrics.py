@@ -108,5 +108,18 @@ class TestSimpleMetrics(unittest.TestCase):
         shouldBe = np.size(np.where(data['testdata'] < med - data['testdata'].std())[0])
         self.assertEqual(shouldBe, testmetric.run(data))
 
+    def testFullRangeAngleMetric(self):
+        """Test full range angle metric."""
+        dv1 = np.arange(0, 32, 2.5)
+        dv2 = (dv1 - 20.0) % 360.
+        dv1 = np.radians(dv1)
+        dv2 = np.radians(dv2)
+        dv1 = np.array(zip(dv1), dtype=[('testdata', 'float')])
+        dv2 = np.array(zip(dv2), dtype=[('testdata', 'float')])
+        testmetric = metrics.FullRangeAngleMetric('testdata')
+        result1 = testmetric.run(dv1)
+        result2 = testmetric.run(dv2)
+        self.assertAlmostEqual(result1, result2)
+
 if __name__ == "__main__":
     unittest.main()
