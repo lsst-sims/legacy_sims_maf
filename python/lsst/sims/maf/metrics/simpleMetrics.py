@@ -27,7 +27,6 @@ class MaxMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.max(dataSlice[self.colname])
 
-
 class MeanMetric(BaseMetric):
     """Calculate the mean of a simData column slice."""
     def run(self, dataSlice, slicePoint=None):
@@ -190,6 +189,12 @@ class NoutliersNsigmaMetric(BaseMetric):
         return len(dataSlice[self.colname][outsiders])
 
 def _rotateAngles(angles):
+    """Private utility for the '*Angle' Metrics below.
+
+    This takes a series of angles between 0-2pi and rotates them so that the
+    first angle is at 0, ensuring the biggest 'gap' is at the end of the series.
+    This simplifies calculations like the 'mean' and 'rms' or 'fullrange', removing
+    the discontinuity at 0/2pi. """
     angleidx = np.argsort(angles)
     diffangles = np.diff(angles[angleidx])
     start_to_end = np.array([twopi-angles[angleidx][-1] + angles[angleidx][0]], float)
@@ -204,20 +209,26 @@ def _rotateAngles(angles):
     return (rotation, (angles - rotation) % twopi)
 
 class MeanAngleMetric(BaseMetric):
-    """Calculate the mean of an angular (radians) simData column slice."""
+    """Calculate the mean of an angular (radians) simData column slice.
+
+    'MeanAngle' differs from 'Mean' in that it accounts for wraparound at 2pi."""
     def run(self, dataSlice, slicePoint=None):
         rotation, angles = _rotateAngles(dataSlice[self.colname])
         mean = (np.mean(angles) + rotation) % twopi
         return np.mean(dataSlice[self.colname])
 
 class RmsAngleMetric(BaseMetric):
-    """Calculate the standard deviation of an angular (radians) simData column slice."""
+    """Calculate the standard deviation of an angular (radians) simData column slice.
+
+    'RmsAngle' differs from 'Rms' in that it accounts for wraparound at 2pi."""
     def run(self, dataSlice, slicePoint=None):
         rotation, angles = _rotateAngles(dataSlice[self.colname])
         return np.std(angles)
 
 class FullRangeAngleMetric(BaseMetric):
-    """Calculate the full range of an angular (radians) simData column slice."""
+    """Calculate the full range of an angular (radians) simData column slice.
+
+    'FullRangeAngle' differs from 'FullRange' in that it accounts for wraparound at 2pi."""
     def run(self, dataSlice, slicePoint=None):
         rotation, angles = _rotateAngles(dataSlice[self.colname])
         return angles.max() - angles.min()
