@@ -12,10 +12,10 @@ def connectOpsimDb(dbAddressDict):
     (because needs to be called both from driver and from config file, with same dbAddress dictionary).
     """
     import lsst.sims.maf.db as db
-    if 'summaryTable' in dbAddressDict:
+    if 'Summary' in dbAddressDict:
         # Connect to just the summary table (might be sqlite created from flat dat output file).
         opsimdb = db.OpsimDatabase(dbAddressDict['dbAddress'],
-                                   dbTables={'summaryTable':[dbAddressDict['summaryTable'], 'obsHistID']},
+                                   dbTables={'Summary':[dbAddressDict['Summary'], 'obsHistID']},
                                    defaultdbTables = None)
     else:
         # For a basic db connection to the sqlite db files.
