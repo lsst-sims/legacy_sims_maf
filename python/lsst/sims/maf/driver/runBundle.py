@@ -51,7 +51,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
     if verbose:
         print 'Found %i records, computing metrics' % simdata.size
 
-    sm.runSlices(simdata, simDataName=runName, sqlconstraint=mafBundle['sqlWhere'],
+    sm.runSlices(simdata, simDataName=mafBundle['runName'], sqlconstraint=mafBundle['sqlWhere'],
                  metadata=mafBundle['metadata'])
 
     # Reduce any complex metrics
