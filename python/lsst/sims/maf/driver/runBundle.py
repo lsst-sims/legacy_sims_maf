@@ -40,7 +40,8 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
                                  stackerList=mafBundle['stackerList'])
 
     dbcols = sm.findReqCols()
-    dbcols.remove('metricdata')
+    while 'metricdata' in dbcols:
+        dbcols.remove('metricdata')
     database = db.OpsimDatabase(mafBundle['dbAddress'])
     if verbose:
         print 'Reading in columns:'
