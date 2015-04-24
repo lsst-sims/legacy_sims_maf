@@ -86,9 +86,9 @@ class BaseMetric(object):
     colRegistry = ColRegistry()
     colInfo = ColInfo()
 
-    def __init__(self, col=None, metricName=None, maps=None, units=None,
+    def __init__(self, col='metricdata', metricName=None, maps=None, units=None,
                  metricDtype=None, badval=-666,
-                 plotDict=None, displayDict=None):
+                 plotDict=None, displayDict=None, summaryStatList=None):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
@@ -119,6 +119,10 @@ class BaseMetric(object):
             self.colname = self.colNameArr[0]
         # Add the columns to the colRegistry.
         self.colRegistry.addCols(self.colNameArr)
+        if summaryStatList is None:
+            self.summaryStatList = []
+        else:
+            self.summaryStatList = summaryStatList
         # Set the maps that are needed:
         if maps is None:
             maps = []

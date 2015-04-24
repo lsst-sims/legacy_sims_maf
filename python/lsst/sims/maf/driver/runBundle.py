@@ -40,6 +40,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
                                  stackerList=mafBundle['stackerList'])
 
     dbcols = sm.findDataCols()
+    dbcols.remove('metricdata')
     database = db.OpsimDatabase(mafBundle['dbAddress'])
     if verbose:
         print 'Reading in columns:'
@@ -55,18 +56,22 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
     # Reduce any complex metrics
     sm.reduceAll()
 
+    # Run all the summary stats
+    if verbose:
+        print "Running Summary stats"
+    sm.summaryAll()
+
     if verbose:
         print 'Metrics computed, writing results and plotting.'
     sm.writeAll()
     sm.plotAll()
 
-    # Need to do the summary stats here, maybe make summaryStats a metric kwarg to keep things straight. Maybe update the runSliceMetric to hold onto the results
-
     # Create any needed merged histograms
+    # XXX-todo
 
     # Write the config to the output directory
     try:
-        utils.writeConfigs(opsdb, outDir)
+        utils.writeConfigs(database, outDir)
     except:
         print 'Found no OpSim config.'
 
