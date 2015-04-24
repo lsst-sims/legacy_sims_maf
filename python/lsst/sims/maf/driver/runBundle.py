@@ -39,7 +39,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
     sm.setMetricsSlicerStackers(mafBundle['metricList'], mafBundle['slicer'],
                                  stackerList=mafBundle['stackerList'])
 
-    dbcols = sm.findDataCols()
+    dbcols = sm.findReqCols()
     dbcols.remove('metricdata')
     database = db.OpsimDatabase(mafBundle['dbAddress'])
     if verbose:
@@ -55,7 +55,8 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
 
     # Reduce any complex metrics
     sm.reduceAll()
-
+    # Throw a writeAll in here to get the results database ready for summary stats
+    sm.writeAll()
     # Run all the summary stats
     if verbose:
         print "Running Summary stats"
@@ -63,7 +64,6 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
 
     if verbose:
         print 'Metrics computed, writing results and plotting.'
-    sm.writeAll()
     sm.plotAll()
 
     # Create any needed merged histograms
@@ -71,7 +71,13 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
 
     # Write the config to the output directory
     try:
-        utils.writeConfigs(database, outDir)
+        configSummary, configDetails = database.fetchConfig()
+        f = open(os.path.join(mafBundle['outDir'],'configSummary.txt'), 'w')
+        utils.outputUtils.printDict(configSummary, 'Config Summary', filehandle=f)
+        f.close()
+        f = open(os.path.join(mafBundle['outDir'], 'configDetails.txt'), 'w')
+        utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
+        f.close()
     except:
         print 'Found no OpSim config.'
 

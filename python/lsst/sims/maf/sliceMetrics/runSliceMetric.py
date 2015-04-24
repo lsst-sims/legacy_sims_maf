@@ -304,7 +304,7 @@ class RunSliceMetric(BaseSliceMetric):
        Compute all the summary stats for the metrics and save results in a dict.
        """
        self.summaryStats = {}
-       for iid in self.metricObjs:
+       for iid in self.metricIds:
           if self.metricObjs[iid].summaryStatList is not None:
              statVals = {}
              for statMetric in self.metricObjs[iid].summaryStatList:
