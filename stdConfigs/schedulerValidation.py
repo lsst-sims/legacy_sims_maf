@@ -289,7 +289,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                                                'caption':'Full Range of the Hour Angle in filter %s, %s.'
                                                                %(f, propCaption)}))
                 # Calculate the RMS of the position angle
-                metricList.append(configureMetric('RmsMetric', kwargs={'col':'rotSkyPos'},
+                metricList.append(configureMetric('RmsAngleMetric', kwargs={'col':'rotSkyPos'},
                                                   plotDict={'xMin':0, 'xMax':float(np.pi)},
                                                   displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
                                                                'caption':'RMS of the position angle (angle between "up" in the camera and north on the sky) in filter %s, %s.'

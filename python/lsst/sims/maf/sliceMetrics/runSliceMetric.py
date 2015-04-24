@@ -106,9 +106,9 @@ class RunSliceMetric(BaseSliceMetric):
             if s is not None:
                 self.stackerObjs.add(s)
 
-    def findDataCols(self):
+    def findReqCols(self):
         """
-        Determine the complete list of columns that must be queried from the database.
+        Determine the complete list of required columns that must be queried from the database.
 
         Uses the metrics, slicer, and stackers to determine the necessary columns, returns this list.
         Instantiates any additional necessary stackers.
