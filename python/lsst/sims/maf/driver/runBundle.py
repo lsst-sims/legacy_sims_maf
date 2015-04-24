@@ -71,7 +71,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
 
     # Write the config to the output directory
     try:
-        utils.writeConfigs(opsdb, outDir)
+        utils.writeConfigs(database, outDir)
     except:
         print 'Found no OpSim config.'
 
