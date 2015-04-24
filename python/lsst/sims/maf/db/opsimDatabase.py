@@ -188,7 +188,7 @@ class OpsimDatabase(Database):
             propData = self.tables['Summary'].query_columns_Array(colnames=[self.propIdCol])
             for propid in propData[self.propIdCol]:
                 propIDs[int(propid)] = ''
-            propTags = {}
+            propTags = {'DD':[], 'WFD':[]}
         else:
             table = self.tables['Proposal']
             # Query for all propIDs.
