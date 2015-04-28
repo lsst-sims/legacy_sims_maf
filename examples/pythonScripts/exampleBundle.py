@@ -3,7 +3,7 @@ import lsst.sims.maf.metrics as metrics
 from lsst.sims.maf.driver import runBundle
 
 
-# Pick a slicer
+# Pick a slicer, set resolution
 slicer = slicers.HealpixSlicer(nside=64)
 
 # Configure some metrics
