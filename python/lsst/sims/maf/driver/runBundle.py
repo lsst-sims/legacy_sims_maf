@@ -6,6 +6,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
+import copy
 
 def runBundle(mafBundle, verbose=True, plotOnly=False):
     """
@@ -36,8 +37,10 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
         mafBundle['runName'] = runName
 
     sm = sliceMetrics.RunSliceMetric(outDir = mafBundle['outDir'])
-    sm.setMetricsSlicerStackers(mafBundle['metricList'], mafBundle['slicer'],
-                                 stackerList=mafBundle['stackerList'])
+    # Need to deepcopy here so we don't unexpectedly persist changes in mafBundle.
+    # Otherwise, plotDict can get set and persist.
+    sm.setMetricsSlicerStackers(copy.deepcopy(mafBundle['metricList']), copy.deepcopy(mafBundle['slicer']),
+                                 stackerList=copy.deepcopy(mafBundle['stackerList']))
 
     dbcols = sm.findReqCols()
     # If there are summary stats, need to remove them
