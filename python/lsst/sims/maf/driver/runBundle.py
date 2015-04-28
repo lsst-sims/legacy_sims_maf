@@ -40,6 +40,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
                                  stackerList=mafBundle['stackerList'])
 
     dbcols = sm.findReqCols()
+    # If there are summary stats, need to remove them
     while 'metricdata' in dbcols:
         dbcols.remove('metricdata')
     database = db.OpsimDatabase(mafBundle['dbAddress'])
@@ -47,6 +48,10 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
         print 'Reading in columns:'
         print dbcols
     simdata = utils.getSimData(database, mafBundle['sqlWhere'], dbcols)
+
+    # Run any stackers that have been set manually or automatically
+    for stacker in sm.stackerObjs:
+        simdata = stacker.run(simdata)
 
     if verbose:
         print 'Found %i records, computing metrics' % simdata.size
