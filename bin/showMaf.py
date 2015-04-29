@@ -4,7 +4,7 @@ from tornado import web
 from jinja2 import Environment, FileSystemLoader
 import os, argparse
 
-from lsst.sims.maf.viz import MafTracking
+from lsst.sims.maf.viz import MafTracking, dbController
 import lsst.sims.maf.db as db
 import webbrowser
 
@@ -90,6 +90,31 @@ class MultiColorPageHandler(web.RequestHandler):
         runId = int(self.request.arguments['runId'][0])
         self.write(multiColorTempl.render(runlist=runlist, runId=runId))
 
+class SearchMetrics(web.RequestHandler):
+    def get(self):
+        template = env.get_template("search.html")
+        self.write(template.render())
+        
+class SearchHandler(web.RequestHandler):
+    """return metrics in json format"""
+    def initialize(self, trackingDbAddress):
+        self.controller = dbController.ShowMafDBController(trackingDbAddress)
+
+    def get(self):
+        list_type = self.get_argument('list_type')
+        if list_type == 'metrics':
+            results = self.controller.get_all_metrics()
+        if list_type == 'sim_data':
+            results = self.controller.get_all_sim_data()
+        if list_type == 'slicer':
+            results = self.controller.get_all_slicer()
+        self.write(json.dumps(results))
+
+    def post(self):
+        keywords = self.get_argument('keywords')
+        results = self.controller.search_metrics(json.loads(keywords))
+        self.write(json.dumps(results))		
+		
 def make_app():
     """The tornado global configuration """
     application = web.Application([
@@ -101,7 +126,7 @@ def make_app():
         ("/summaryStats", StatPageHandler),
         ("/allMetricResults", AllMetricResultsPageHandler),
         ("/multiColor", MultiColorPageHandler),
-		("/searchMetrics", searchMetrics),
+		("/searchMetrics", SearchMetrics),
 		web.url(r"/search", SearchHandler, dict(trackingDbAddress=trackingDbAddress), name="search"),
         (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
         (r"/(sorttable.js)", web.StaticFileHandler, {'path':jsPath}),
