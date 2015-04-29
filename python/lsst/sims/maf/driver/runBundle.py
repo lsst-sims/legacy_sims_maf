@@ -1,21 +1,16 @@
-import numpy as np
-import os
-import re
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.metrics as metrics
+import os, re, copy, warnings
 import lsst.sims.maf.sliceMetrics as sliceMetrics
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
-import copy
 
-def runBundle(mafBundle, verbose=True, plotOnly=False):
+def runBundle(mafBundle, verbose=True, makePlots=True):
     """
     mafBundle should be a dict with the following key:value pairs:
-    'metricList':List of instatiated MAF metrics
+    'metricList':List of MAF metric objects
     'slicer': instatiated MAF slicer
     'dbAddress': string that gives the address to the desired DB
     'sqlWhere': string that gives the sql where clause for pulling the data
-    optional mafBundle keys:
+    optional keys:
     'outDir': Output directory
     'stackerList': List of configured MAF stackers
     'metadata': string containing metadata
@@ -23,6 +18,12 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
 
     plotOnly:  Restore the metric values anr re-plot with new plotkwargs XXX-todo
     """
+
+    # Check required input set
+    reqKeys= ['metricList','slicer','dbAddress', 'sqlWhere']
+    for key in reqKeys:
+        if key not in mafBundle.keys():
+            raise ValueError('"%s" not found and required as a key on the input dictionary.' % key)
 
     # Set the optional keys with defaults if missing
     if 'outDir' not in mafBundle.keys():
@@ -37,13 +38,14 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
         mafBundle['runName'] = runName
 
     sm = sliceMetrics.RunSliceMetric(outDir = mafBundle['outDir'])
+
     # Need to deepcopy here so we don't unexpectedly persist changes in mafBundle.
     # Otherwise, plotDict can get set and persist.
     sm.setMetricsSlicerStackers(copy.deepcopy(mafBundle['metricList']), copy.deepcopy(mafBundle['slicer']),
                                  stackerList=copy.deepcopy(mafBundle['stackerList']))
 
     dbcols = sm.findReqCols()
-    # If there are summary stats, need to remove them
+    # If there are summary stats, need to remove the 'metricdata' column
     while 'metricdata' in dbcols:
         dbcols.remove('metricdata')
     database = db.OpsimDatabase(mafBundle['dbAddress'])
@@ -75,7 +77,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
         print 'Metrics computed, writing results and plotting.'
     sm.plotAll()
 
-    # Create any needed merged histograms
+    # Create any needed merged histograms.  hmm, that probably needs to be a seperate scripts.
     # XXX-todo
 
     # Write the config to the output directory
@@ -88,7 +90,7 @@ def runBundle(mafBundle, verbose=True, plotOnly=False):
         utils.outputUtils.printDict(configDetails, 'Config Details', filehandle=f)
         f.close()
     except:
-        print 'Found no OpSim config.'
+        warnings.warn('Found no OpSim config.')
 
     # What to return here? Just the sliceMetric object?
     return sm
