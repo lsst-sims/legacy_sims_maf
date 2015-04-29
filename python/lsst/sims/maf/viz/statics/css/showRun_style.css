@@ -1,0 +1,68 @@
+@font-face {
+    font-family: "OpenSans";
+    src: url(fonts/OpenSans-Regular.ttf);
+}
+@font-face {
+    font-family: "OpenSans Bold";
+    src: url(fonts/OpenSans-Bold.ttf);
+}
+body{
+    font-family: "OpenSans";
+    padding-left: 10px;
+}
+
+
+
+#header #back{
+    width: 85%;
+    margin-right: 20px;
+}
+#header h1{
+    font-family: "OpenSans Bold";
+    color: #0071BC;
+}
+
+#short_run_list{
+    font-size: 0.3em;
+    width: 350px;
+}
+
+#long_run_list{
+    width: 350px;
+}
+
+.run{
+    margin: 10px 0px;
+}
+.run:hover{
+    cursor: pointer;
+    background-color: #CCE3F2;
+}
+
+.runBox{
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -khtml-border-radius: 10px;
+    border-radius: 10px;
+    border: 1px solid #0071BC;
+    
+}
+.run .runIdWrapper{
+    width: 10px;
+}
+.run .mafRnnId{
+    padding-top: 1em;
+    text-align: right;
+    font-family: "OpenSans Bold";    
+    color: #0071BC; 
+}
+.runBox{
+    padding: 0.5em 5px;    
+}
+
+
+.runBox  .section{
+    font-family: "OpenSans Bold";
+    color: #0071BC;
+}
+

@@ -1,0 +1,131 @@
+@font-face {
+    font-family: "OpenSans";
+    src: url(fonts/OpenSans-Regular.ttf);
+}
+@font-face {
+    font-family: "OpenSans Bold";
+    src: url(fonts/OpenSans-Bold.ttf);
+}
+body{
+    font-family: "OpenSans";
+    font-size: 12px;
+    padding: 10px;
+}
+#content{
+    mid-width: 900px;
+}
+#filter{
+    width: 150px;
+    position: fixed;
+    left: 10px;
+    top: 10px;
+}
+
+#filter label{
+    font-weight: normal;
+}
+
+#results{
+    padding-left: 170px;
+}
+
+th:hover{
+    cursor: pointer;
+}
+.st-sort-ascent:after{
+    content: '\25B2';
+}
+
+.st-sort-descent:after{
+    content: '\25BC';
+}
+table {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 1100px;
+}
+
+table * {
+    box-sizing: inherit;
+    -moz-box-sizing: inherit;
+}
+
+thead {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+tbody {
+    display: inline-block;
+}
+
+thead > tr, tbody > tr, tfoot > tr {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+thead, tfoot {
+    flex-shrink: 0;
+}
+
+th, tbody td {
+    width: 20%; /* this can vary */
+    display: inline-block;
+}
+
+tfoot {
+    display: inline-block;
+}
+
+tfoot td {
+    width: 100%;
+    display: inline-block;
+}
+
+.col-5{
+    width: 5%;
+}
+.col-10{
+    width: 10%;
+}
+.col-15{
+    width: 15%;
+}
+.col-20{
+    width: 20%;
+}
+.col-30{
+    width: 30%;
+}
+.col-100{
+    width: 100%;
+}
+
+.filter-bar{
+    width: 100%;
+}
+.filter-box{
+    width: 80%;
+    display: inline-block;
+}
+
+.plots{
+    width: 100%;
+    display: inline-block;
+}
+
+.plot {
+    width: 33%;
+}
+.data{
+    width: 100%;
+}
+
+.table > tbody + tbody {
+  border-top: none;
+}

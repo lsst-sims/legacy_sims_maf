@@ -101,8 +101,12 @@ def make_app():
         ("/summaryStats", StatPageHandler),
         ("/allMetricResults", AllMetricResultsPageHandler),
         ("/multiColor", MultiColorPageHandler),
+		("/searchMetrics", searchMetrics),
+		web.url(r"/search", SearchHandler, dict(trackingDbAddress=trackingDbAddress), name="search"),
         (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
         (r"/(sorttable.js)", web.StaticFileHandler, {'path':jsPath}),
+		(r"/js/(.*)", web.StaticFileHandler, {'path':jsPath}),
+		(r"/css/(.*)", web.StaticFileHandler, {'path':cssPath}),
         (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath})
         ])
     return application
@@ -180,9 +184,11 @@ if __name__ == "__main__":
     mafDir = os.getenv('SIMS_MAF_DIR')
     templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/' )
     global faviconPath
-    faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
+    faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/')
     global jsPath
-    jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
+    jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/js/')
+	global cssPath
+    cssPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/css/')
     env = Environment(loader=FileSystemLoader(templateDir))
     # Add 'zip' to jinja templates.
     env.globals.update(zip=zip)

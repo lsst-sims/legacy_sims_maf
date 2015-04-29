@@ -1,0 +1,164 @@
+@font-face {
+    font-family: "OpenSans";
+    src: url(fonts/OpenSans-Regular.ttf);
+}
+@font-face {
+    font-family: "OpenSans Bold";
+    src: url(fonts/OpenSans-Bold.ttf);
+}
+body{
+    font-family: "OpenSans";
+    padding-left: 10px;
+    overflow: hidden;
+}
+#title{
+    font-family: "OpenSans Bold";
+    color: #0071BC;
+    font-size: 28px;
+    margin-left: 5px;
+}
+
+
+#title:hover, #runList th:hover{
+    cursor: pointer;
+}
+#runList tbody tr:hover{
+    cursor: pointer;
+    background-color: #CCE3F2;
+}
+.st-sort-ascent:after{
+    content: '\25B2';
+}
+
+.st-sort-descent:after{
+    content: '\25BC';
+}
+.animate-if.ng-enter, .animate-if.ng-leave {
+  -webkit-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
+  transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
+}
+
+.animate-if.ng-enter,
+.animate-if.ng-leave.ng-leave-active {
+  opacity:0;
+}
+
+.animate-if.ng-leave,
+.animate-if.ng-enter.ng-enter-active {
+  opacity:1;
+}
+.small{
+    font-size: 0.5em;
+}
+
+
+
+#metricsWrapper{
+
+}
+
+#metricsHeader .section{
+    font-family: "OpenSans Bold";
+    color: #0071BC;
+    font-size: 1.6em;
+    padding-top: 1em;
+    text-align: right;
+}
+
+#metricsHeader .mafDir{
+    color: #aaa;
+}
+#metricsHeader .mafComment, #metricsHeader .opsimRun{
+    font-family: "OpenSans Bold";
+    font-size: 1.6em;
+}
+.run-contents-wrap{
+    height: 600px;
+    overflow-y: auto;
+}
+.plot-control{
+    position: relative;
+}
+.plot-control div{
+    display: inline-block;
+}
+.plot-btn{
+    color: #0071BC;
+    font-size: 1.2em;
+}
+.plot-btn:hover{
+    cursor: pointer;
+}
+
+
+
+.groupName{
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    -khtml-border-radius: 7px;
+    border-radius: 7px;
+    background-color: #338DC9;
+    color: white;
+    height: 1.6em;
+    font-size: 1.5em;
+    padding: 2px 10px;
+    margin: 3px 0;
+}
+.subGroupName{
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    -khtml-border-radius: 7px;
+    border-radius: 7px;
+    background-color: #CCE3F2;
+    height: 1.5em;
+    font-size: 1.4em;
+    padding: 2px 10px;
+}
+
+.metricHeader{
+    font-weight: bold;
+    border-bottom: 1px solid #CCE3F2;
+    margin: 3px 0;
+}
+.metric{
+    border-bottom: 1px solid #CCE3F2;
+    margin: 3px 0;
+}
+.metric a {
+    color: #0071BC;
+}
+
+#plotsWrap{
+    position: relative;
+}
+#plotsWrap .metrics{
+    font-size: 0.5em;
+    width: 200px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+
+}
+#plotsWrap .plots{
+    margin-left: 220px;
+}
+#plotsWrap .metricPlot img{
+    width: 300px;
+
+}
+#plotsWrap .metric-name{
+    display: inline-block;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+#plotsWrap .metric-meta{
+    display: inline-block;
+    margin-left: 20px;
+}
+#plotsWrap .metric-data{
+    display: inline-block;
+    float: right;
+}
+#plotsWrap .metric-caption{
+
+}
