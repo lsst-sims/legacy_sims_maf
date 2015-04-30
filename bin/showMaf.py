@@ -129,7 +129,8 @@ def make_app():
         ("/multiColor", MultiColorPageHandler),
         ("/searchMetrics", SearchMetrics),
         web.url(r"/search", SearchHandler, dict(trackingDbAddress=trackingDbAddress), name="search"),
-        (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
+        (r"/(favicon.ico)", web.StaticFileHandler, {'path':imgPath}),
+        (r"/(ajax-loader.gif)", web.StaticFileHandler, {'path':imgPath}),
         (r"/(sorttable.js)", web.StaticFileHandler, {'path':jsPath}),
         (r"/js/(.*)", web.StaticFileHandler, {'path':jsPath}),
         (r"/css/(.*)", web.StaticFileHandler, {'path':cssPath}),
@@ -209,8 +210,8 @@ if __name__ == "__main__":
     # Set up path to template and favicon paths, and load templates.
     mafDir = os.getenv('SIMS_MAF_DIR')
     templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/' )
-    global faviconPath
-    faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/')
+    global imgPath
+    imgPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/')
     global jsPath
     jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/js/')
     global cssPath

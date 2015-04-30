@@ -1,4 +1,5 @@
 from lsst.sims.maf.db import trackingDb, resultsDb
+import os
 import json
 
 class MetricObj(object):
@@ -56,7 +57,7 @@ class RunObj(object):
             self.metric_objs[metadata['metricId']] = metric_obj
             metric_obj.run = self
             metric_obj.metadata['mafRunId'] = self.metadata['mafRunId']
-            metric_obj.metadata['mafDir'] = self.metadata['mafDir']
+            metric_obj.metadata['mafDir'] = os.path.relpath(self.metadata['mafDir'], os.getcwd()) 
 
         # get all plots
         plots = self.run_db.session.query(resultsDb.PlotRow).all()

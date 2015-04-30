@@ -6,7 +6,6 @@
     });
 
     app.controller('searchController', ['$scope', '$http', '$timeout', function($scope, $http, $timeout){
-        //$scope.runs = [{'opsimComment': '10 yr, 10 cheeses w/undercheese', 'mafComment': 'maf_cadence_ops1_1122', 'opsimDate': '05/18/14', 'mafDir': 'maf_cadence/maf_cadence_ops1_1122', 'mafDate': '11/11/14', 'mafRunId': 1, 'opsimRun': 'ops1_1122'}, {'opsimComment': 'tentative baseline min Alt=20', 'mafComment': 'maf_cadence_ops1_1140', 'opsimDate': '07/29/14', 'mafDir': 'maf_cadence/maf_cadence_ops1_1140', 'mafDate': '11/10/14', 'mafRunId': 2, 'opsimRun': 'ops1_1140'}, {'opsimComment': 'tier 1 #5 min Alt=20', 'mafComment': 'maf_cadence_ops1_1141', 'opsimDate': '07/29/14', 'mafDir': 'maf_cadence/maf_cadence_ops1_1141', 'mafDate': '11/10/14', 'mafRunId': 3, 'opsimRun': 'ops1_1141'}, {'opsimComment': 'tier 1 #9 min Alt=20', 'mafComment': 'maf_cadence_ops1_1144', 'opsimDate': '07/29/14', 'mafDir': 'maf_cadence/maf_cadence_ops1_1144', 'mafDate': '11/11/14', 'mafRunId': 4, 'opsimRun': 'ops1_1144'}, {'opsimComment': 'tier 1 #10 min Alt=20', 'mafComment': 'maf_cadence_ops1_1146', 'opsimDate': '07/29/14', 'mafDir': 'maf_cadence/maf_cadence_ops1_1146', 'mafDate': '11/11/14', 'mafRunId': 5, 'opsimRun': 'ops1_1146'}, {'opsimComment': 'tier 1 #6 min Alt=20', 'mafComment': 'maf_cadence_ops1_1147', 'opsimDate': '07/29/14', 'mafDir': 'maf_cadence/maf_cadence_ops1_1147', 'mafDate': '11/10/14', 'mafRunId': 6, 'opsimRun': 'ops1_1147'}];
         $scope.metric_list = [];
         $scope.metrics = [];
         $scope.itemsByPage = 10;
@@ -20,6 +19,7 @@
                 $scope.metric_list.push.apply($scope.metric_list, data);
                 $scope.metrics = [].concat(data);
                 $scope.$digest();
+                $("#loading").hide();
             });
 
         };
@@ -29,14 +29,12 @@
 
         $.get('/search?list_type=sim_data')
           .done(function(data){
-            // $('#results').text(data);
             $scope.sim_data = JSON.parse(data);
             $scope.$digest();
         });
 
         $.get('/search?list_type=slicer')
           .done(function(data){
-            // $('#results').text(data);
             $scope.slicer = JSON.parse(data);
             $scope.$digest();
         });
@@ -62,7 +60,6 @@
             console.log(keywords);
             $.post('/search', {"keywords": JSON.stringify(keywords)})
               .done(function(data){
-                // $('#results').text(data);
                 data = JSON.parse(data);
                 $scope.metric_list.push.apply($scope.metric_list, data);
                 $scope.metrics = [].concat(data);
