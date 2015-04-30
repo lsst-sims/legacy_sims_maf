@@ -15,28 +15,28 @@ __all__ = ['HealpixSDSSSlicer']
 
 class HealpixSDSSSlicer(HealpixSlicer):
     """For use with SDSS stripe 82 square images """
-    def __init__(self, nside=128, spatialkey1 ='RA1' , spatialkey2='Dec1', verbose=True,
+    def __init__(self, nside=128, lonCol ='RA1' , latCol='Dec1', verbose=True,
                  useCache=True, radius=17./60., leafsize=100, **kwargs):
         """Using one corner of the chip as the spatial key and the diagonal as the radius.  """
         super(HealpixSDSSSlicer,self).__init__(verbose=verbose,
-                                            spatialkey1=spatialkey1, spatialkey2=spatialkey2,
+                                            lonCol=lonCol, latCol=latCol,
                                             radius=radius, leafsize=leafsize,
                                             useCache=useCache,nside=nside )
         self.cornerLables = ['RA1', 'Dec1', 'RA2','Dec2','RA3','Dec3','RA4','Dec4']
 
     def setupSlicer(self, simData, maps=None):
         """
-        Use simData[self.spatialkey1] and simData[self.spatialkey2]
+        Use simData[self.lonCol] and simData[self.latCol]
         (in radians) to set up KDTree.
         """
         self._runMaps(maps)
-        self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
+        self._buildTree(simData[self.lonCol], simData[self.latCol], self.leafsize)
         self._setRad(self.radius)
         self.corners = simData[self.cornerLables]
         @wraps(self._sliceSimData)
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
-            (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+            (slicepoint=lonCol/latCol value .. usually ra/dec)."""
             sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
             # Query against tree.
             initIndices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)

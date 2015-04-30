@@ -29,7 +29,7 @@ class TestSlicers(unittest.TestCase):
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(slicer == slicerBack)
         assert(metadata == header['metadata'])
-        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'lonCol', 'latCol']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
 
@@ -44,7 +44,7 @@ class TestSlicers(unittest.TestCase):
         metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(slicer == slicerBack)
-        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'lonCol', 'latCol']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
 
@@ -62,7 +62,7 @@ class TestSlicers(unittest.TestCase):
         metricValuesBack,slicerBack,header = self.baseslicer.readData(filename)
         np.testing.assert_almost_equal(metricValuesBack,metricValues)
         assert(slicer == slicerBack)
-        attr2check = ['nside', 'nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2']
+        attr2check = ['nside', 'nslice', 'columnsNeeded', 'lonCol', 'latCol']
         for att in attr2check:
             assert(getattr(slicer,att) == getattr(slicerBack,att))
 
@@ -104,7 +104,7 @@ class TestSlicers(unittest.TestCase):
         metricBack, slicerBack,header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
         np.testing.assert_almost_equal(metricBack,metricValues)
-        attr2check = ['nslice', 'columnsNeeded', 'spatialkey1', 'spatialkey2','simDataFieldIDColName']
+        attr2check = ['nslice', 'columnsNeeded', 'lonCol', 'latCol','simDataFieldIDColName']
         for att in attr2check:
             if type(getattr(slicer,att)).__name__ == 'dict':
                 for key in getattr(slicer,att).keys():

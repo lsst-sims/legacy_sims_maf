@@ -90,7 +90,7 @@ class TestHealpixSlicerSetup(unittest.TestCase):
 class TestHealpixSlicerEqual(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
@@ -114,7 +114,7 @@ class TestHealpixSlicerEqual(unittest.TestCase):
 class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.nside = 8
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
@@ -152,7 +152,7 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
         self.nside = 8
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec',
+                                        lonCol='ra', latCol='dec',
                                         radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -189,7 +189,7 @@ class TestHealpixChipGap(unittest.TestCase):
         self.nside = 8
         self.radius = 2.041
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec',
+                                        lonCol='ra', latCol='dec',
                                         radius=self.radius, useCamera=True)
         nvalues = 1000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -224,7 +224,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
         self.nside = 16
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec', radius=self.radius)
+                                        lonCol='ra', latCol='dec', radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
@@ -289,7 +289,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
         """Test a warning gets thrown if wrong plotFunc name used."""
         with warnings.catch_warnings(record=True) as w:
             self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                            spatialkey1='ra', spatialkey2='dec', radius=self.radius,
+                                            lonCol='ra', latCol='dec', radius=self.radius,
                                             plotFuncs='plotNotAName')
             self.assertTrue('NotAName' in str(w[-1].message))
 

@@ -12,8 +12,8 @@ __all__ = ['fOSlicer']
 
 class fOSlicer(HealpixSlicer):
     """fO spatial slicer"""
-    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True, **kwargs):
-        super(fOSlicer, self).__init__(verbose=verbose, spatialkey1=spatialkey1, spatialkey2=spatialkey2,
+    def __init__(self, nside=128, lonCol ='fieldRA' , latCol='fieldDec', verbose=True, **kwargs):
+        super(fOSlicer, self).__init__(verbose=verbose, lonCol=lonCol, latCol=latCol,
                                         nside=nside, **kwargs)
         # Override base plotFuncs dictionary, because we don't want to create plots from Healpix
         #  slicer (skymap, power spectrum, and histogram) -- only fO plot -- when using 'plotData'.
