@@ -7,6 +7,7 @@ import os, argparse
 from lsst.sims.maf.viz import MafTracking, dbController
 import lsst.sims.maf.db as db
 import webbrowser
+import json
 
 class RunSelectHandler(web.RequestHandler):
     def get(self):
@@ -113,8 +114,8 @@ class SearchHandler(web.RequestHandler):
     def post(self):
         keywords = self.get_argument('keywords')
         results = self.controller.search_metrics(json.loads(keywords))
-        self.write(json.dumps(results))		
-		
+        self.write(json.dumps(results))        
+        
 def make_app():
     """The tornado global configuration """
     application = web.Application([
@@ -126,12 +127,12 @@ def make_app():
         ("/summaryStats", StatPageHandler),
         ("/allMetricResults", AllMetricResultsPageHandler),
         ("/multiColor", MultiColorPageHandler),
-		("/searchMetrics", SearchMetrics),
-		web.url(r"/search", SearchHandler, dict(trackingDbAddress=trackingDbAddress), name="search"),
+        ("/searchMetrics", SearchMetrics),
+        web.url(r"/search", SearchHandler, dict(trackingDbAddress=trackingDbAddress), name="search"),
         (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
         (r"/(sorttable.js)", web.StaticFileHandler, {'path':jsPath}),
-		(r"/js/(.*)", web.StaticFileHandler, {'path':jsPath}),
-		(r"/css/(.*)", web.StaticFileHandler, {'path':cssPath}),
+        (r"/js/(.*)", web.StaticFileHandler, {'path':jsPath}),
+        (r"/css/(.*)", web.StaticFileHandler, {'path':cssPath}),
         (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath})
         ])
     return application
@@ -212,7 +213,7 @@ if __name__ == "__main__":
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/')
     global jsPath
     jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/js/')
-	global cssPath
+    global cssPath
     cssPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/statics/css/')
     env = Environment(loader=FileSystemLoader(templateDir))
     # Add 'zip' to jinja templates.
