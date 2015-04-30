@@ -58,6 +58,27 @@ class BaseStacker(object):
         self.colsAddedDtypes = None
         # Optional: provide a list of units for the columns defined in colsAdded.
         self.units = [None]
+#        dirnow = dir(self)
+#        self.stateDict = {}
+#        for key in dirnow:
+#            if '__' not in key:
+#                self.stateDict[key] = getattr(self.key)
+#        del self.stateDict['registry']
+
+    def __eq__(self, otherStacker):
+        """
+        How to tell if two stackers are equal
+        """
+        if self.__class__.__name__ != otherStacker.__class__.__name__:
+            return False
+        stateNow = dir(self)
+        for key in stateNow:
+            if '_' not in key:
+                if ('registry' not in key) & ('run' not in key):
+                    if getattr(self,key) != getattr(otherStacker,key):
+                        return False
+        return True
+
 
     def _addStackers(self, simData):
         """

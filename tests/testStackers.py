@@ -7,6 +7,20 @@ import unittest
 
 class TestStackerClasses(unittest.TestCase):
 
+    def testEQ(self):
+        """
+        Test that stackers can be compared
+        """
+        s1 = stackers.ParallaxFactorStacker()
+        s2 = stackers.ParallaxFactorStacker()
+        assert(s1 == s2)
+
+        s1 = stackers.RandomDitherStacker()
+        s2 = stackers.RandomDitherStacker()
+        assert(s1 == s2)
+
+        s2 = stackers.RandomDitherStacker(decCol='blah')
+        assert(s1 != s2)
 
     def testNormAirmass(self):
         """
