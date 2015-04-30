@@ -109,6 +109,11 @@ class MaxStateChangesWithinMetric(BaseMetric):
                                                            metricName=metricName, units='#', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
+        # This operates slightly differently from the metrics above; those calculate only successive times
+        # between changes, but here we must calculate the actual times of each change. 
+        # Check if there was only one observation (and return 0 if so).
+        if dataSlice[self.changeCol].size == 1:
+            return 0
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
         idxs = np.argsort(dataSlice[self.timeCol])
         changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
