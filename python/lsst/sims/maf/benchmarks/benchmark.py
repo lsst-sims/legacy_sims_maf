@@ -64,7 +64,11 @@ class Benchmark(object):
                         raise ValueError('SummaryStats must only contain lsst.sims.maf.metrics objects')
                     self.summaryStats.append(s)
         else:
-            self.summaryStats = None
+            # Add identity metric to unislicer metric values (to get them into resultsDB).
+            if self.slicerName = 'UniSlicer':
+                self.summaryStats = [metrics.IdentityMetric('metricdata')]
+            else:
+                self.summaryStats = None
         # Set the sqlconstraint and metadata.
         self.sqlconstraint = sqlconstraint
         self.runName = runName
@@ -76,9 +80,9 @@ class Benchmark(object):
             self._buildFileRoot()
         # Determine the columns needed from the database.
         self._findReqCols()
-        
+
         # This is where we store the metric values and summary stats.
-        self.metricValue = None
+        self.metricValues = None
         self.summaryValues = None
 
         if plotDict is None:
@@ -157,3 +161,32 @@ class Benchmark(object):
                 dbcolnames.add(col)
         self.dbColNames = dbcolnames
 
+    def computeSummaryStatistics(self, resultsDb=None):
+        """
+        Compute summary statistics on benchmark metricValues, using summaryStats (benchmark list).
+        """
+        if self.summaryStats is None:
+            self.summaryValues = None
+        else:
+            self.summaryValues = []
+            for m in self.summaryStats:
+                mName = m.name.replace(' metricdata', '')
+                if hasattr(m, 'maskVal'):
+                    # summary metric requests to use the mask value, as specified by itself, rather than skipping masked vals.
+                    rarr = np.array(zip(self.metricValues.filled(summaryMetric.maskVal)),
+                                    dtype=[('metricdata', self.metricValues.dtype)])
+                else:
+                    rarr = np.array(zip(self.metricValues.compressed()),
+                                dtype=[('metricdata', self.metricValues.dtype)])
+                # The summary metric colname should already be set to 'metricdata', but in case it's not:
+                m.colname = 'metricdata'
+                if np.size(rarr) == 0:
+                    summaryVal = self.slicer.badval
+                else:
+                    summaryVal = m.run(rarr)
+                self.summaryValues.append([mName, summaryVal])
+                # Add summary metric info to results database, if applicable.
+                if self.resultsDb:
+                    metricId = resultsDb.updateMetric(self.metric.metricName, self.slicer.slicerName,
+                                                      self.runName, self.sqlconstraint, self.metadata, None)
+                    resultsDb.updateSummaryStat(metricId, summaryName=mName, summaryValue=summaryVal)

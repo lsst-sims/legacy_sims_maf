@@ -48,13 +48,12 @@ class TestResultsDb(unittest.TestCase):
         # Add metric.
         metricId = resultsDb.updateMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
                                         self.metadata, self.metricDataFile)
-        # Try to re-add metric (should be added with distinct 'metricRun' value).
+        # Try to re-add metric (should get back same metric id as previous, with no add).
         metricId2 = resultsDb.updateMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
                                         self.metadata, self.metricDataFile)
-        self.assertNotEqual(metricId, metricId2)
-        run1 = resultsDb.session.query(db.MetricRow.metricRun).filter_by(metricId = metricId).all()
-        run2 = resultsDb.session.query(db.MetricRow.metricRun).filter_by(metricId = metricId2).all()
-        self.assertNotEqual(run1, run2)
+        self.assertEqual(metricId, metricId2)
+        run1 = resultsDb.session.query(db.MetricRow).filter_by(metricId = metricId).all()
+        self.assertEqual(len(run1), 1)
         # Add plot.
         resultsDb.updatePlot(metricId, self.plotType, self.plotName)
         # Add normal summary statistics.
