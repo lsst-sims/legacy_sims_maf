@@ -111,7 +111,8 @@ class Benchmark(object):
         Build an auto-generated output filename root (i.e. minus the plot type or .npz ending).
         """
         # Build basic version.
-        self.fileRoot = '_'.join(self.runName, self.metric.metricName, self.metadata, self.slicer.slicerName[:4].upper())
+        self.fileRoot = '_'.join([self.runName, self.metric.name, self.metadata,
+                                  self.slicer.slicerName[:4].upper()])
         # Sanitize output name if needed.
         # Replace <, > and = signs.
         self.fileRoot = self.fileRoot.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')

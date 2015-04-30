@@ -28,11 +28,11 @@ __all__ = ['BaseSpatialSlicer']
 
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
-    def __init__(self, verbose=True, spatialkey1='fieldRA', spatialkey2='fieldDec',
+    def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75, plotFuncs='all',
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
-        spatialkey1 = ra, spatialkey2 = dec, typically.
+        lonCol = ra, latCol = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
         the simData KDtree
@@ -44,16 +44,16 @@ class BaseSpatialSlicer(BaseSlicer):
 
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval,
                                                 plotFuncs=plotFuncs)
-        self.spatialkey1 = spatialkey1
-        self.spatialkey2 = spatialkey2
+        self.lonCol = lonCol
+        self.latCol = latCol
         self.rotSkyPosColName = rotSkyPosColName
         self.mjdColName = mjdColName
-        self.columnsNeeded = [spatialkey1, spatialkey2]
+        self.columnsNeeded = [lonCol, latCol]
         self.useCamera = useCamera
         if useCamera:
             self.columnsNeeded.append(rotSkyPosColName)
             self.columnsNeeded.append(mjdColName)
-        self.slicer_init={'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
+        self.slicer_init={'lonCol':lonCol, 'latCol':latCol,
                           'radius':radius, 'badval':badval, 'plotFuncs':plotFuncs,
                           'useCamera':useCamera}
         self.radius = radius
@@ -67,7 +67,7 @@ class BaseSpatialSlicer(BaseSlicer):
 
 
     def setupSlicer(self, simData, maps=None):
-        """Use simData[self.spatialkey1] and simData[self.spatialkey2]
+        """Use simData[self.lonCol] and simData[self.latCol]
         (in radians) to set up KDTree.
 
         maps = list of map objects (such as dust extinction) that will run to build up
@@ -82,14 +82,14 @@ class BaseSpatialSlicer(BaseSlicer):
             self._setupLSSTCamera()
             self._presliceFootprint(simData)
         else:
-            self._buildTree(simData[self.spatialkey1], simData[self.spatialkey2], self.leafsize)
+            self._buildTree(simData[self.lonCol], simData[self.latCol], self.leafsize)
 
 
         @wraps(self._sliceSimData)
 
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
-            (slicepoint=spatialkey1/spatialkey2 value .. usually ra/dec)."""
+            (slicepoint=lonCol/latCol value .. usually ra/dec)."""
 
             if self.useCamera:
                 indices = self.sliceLookup[islice]
@@ -127,8 +127,8 @@ class BaseSpatialSlicer(BaseSlicer):
 
         astrometryObject = AstrometryBase()
         # Loop over each unique pointing position
-        for ind,ra,dec,rotSkyPos,mjd in zip(np.arange(simData.size), simData[self.spatialkey1],
-                                            simData[self.spatialkey2],
+        for ind,ra,dec,rotSkyPos,mjd in zip(np.arange(simData.size), simData[self.lonCol],
+                                            simData[self.latCol],
                                             simData[self.rotSkyPosColName], simData[self.mjdColName]):
             dx,dy,dz = self._treexyz(ra,dec)
             # Find healpixels inside the FoV

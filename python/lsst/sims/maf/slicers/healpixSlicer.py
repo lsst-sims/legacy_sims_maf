@@ -18,12 +18,12 @@ __all__ = ['HealpixSlicer']
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
-    def __init__(self, nside=128, spatialkey1 ='fieldRA' , spatialkey2='fieldDec', verbose=True,
+    def __init__(self, nside=128, lonCol ='fieldRA' , latCol='fieldDec', verbose=True,
                  useCache=True, radius=1.75, leafsize=100, plotFuncs='all',
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
-                                            spatialkey1=spatialkey1, spatialkey2=spatialkey2,
+                                            lonCol=lonCol, latCol=latCol,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
                                             plotFuncs=plotFuncs,
                                             useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
@@ -42,7 +42,7 @@ class HealpixSlicer(BaseSpatialSlicer):
             print 'Healpix slicer using NSIDE=%d, '%(self.nside) + \
             'approximate resolution %f arcminutes'%(hp.nside2resol(self.nside,arcmin=True))
         # Set variables so slicer can be re-constructed
-        self.slicer_init = {'nside':nside, 'spatialkey1':spatialkey1, 'spatialkey2':spatialkey2,
+        self.slicer_init = {'nside':nside, 'lonCol':lonCol, 'latCol':latCol,
                             'radius':radius}
 
         if useCache:

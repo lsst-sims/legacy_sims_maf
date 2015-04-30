@@ -408,7 +408,7 @@ class TestPlottingRunSliceMetric(unittest.TestCase):
         # Test a spatial slicer.
         self.testbbm = sliceMetrics.RunSliceMetric(outDir='.')
         self.testbbm._setMetrics([self.m1, ])
-        self.slicer = slicers.HealpixSlicer(nside=4, spatialkey1='ra', spatialkey2='dec', verbose=False)
+        self.slicer = slicers.HealpixSlicer(nside=4, lonCol='ra', latCol='dec', verbose=False)
         self.slicer.setupSlicer(self.dv)
         self.testbbm._setSlicer(self.slicer)
         self.testbbm.runSlices(self.dv, simDataName=self.opsimname,
