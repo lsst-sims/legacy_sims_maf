@@ -65,7 +65,7 @@ class Benchmark(object):
                     self.summaryStats.append(s)
         else:
             # Add identity metric to unislicer metric values (to get them into resultsDB).
-            if self.slicerName = 'UniSlicer':
+            if self.slicer.slicerName == 'UniSlicer':
                 self.summaryStats = [metrics.IdentityMetric('metricdata')]
             else:
                 self.summaryStats = None
