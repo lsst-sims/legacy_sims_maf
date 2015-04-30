@@ -2,7 +2,7 @@ import os, sys, re
 import numpy as np
 import warnings
 from .Database import Database
-from lsst.sims.maf.utils.getDateVersion import getDateVersion
+from lsst.sims.maf.utils import getDateVersion, TelescopeInfo
 
 __all__ = ['OpsimDatabase']
 
@@ -183,12 +183,13 @@ class OpsimDatabase(Database):
         If not using a full database, will return dict of propIDs with empty propnames + empty propTag dict.
         """
         propIDs = {}
+        # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
+        propTags = {'WFD':[], 'DD':[]}
         # If do not have full database available:
         if 'Proposal' not in self.tables:
             propData = self.tables['Summary'].query_columns_Array(colnames=[self.propIdCol])
             for propid in propData[self.propIdCol]:
-                propIDs[int(propid)] = ''
-            propTags = {'DD':[], 'WFD':[]}
+                propIDs[int(propid)] = propid
         else:
             table = self.tables['Proposal']
             # Query for all propIDs.
@@ -197,10 +198,6 @@ class OpsimDatabase(Database):
             for propid, propname in zip(propData[self.propIdCol], propData[self.propConfCol]):
                 # Strip '.conf', 'Prop', and path info.
                 propIDs[int(propid)] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propname)))
-            propTags = {}
-            # Add WFD and DD by default, as we probably expect those every time.
-            propTags['WFD'] = []
-            propTags['DD'] = []
             # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
             table = self.tables['Config']
             sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
@@ -231,39 +228,65 @@ class OpsimDatabase(Database):
 
         runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
         """
-        table = self.tables['Config']
-        runLength = table.query_columns_Array(colnames=['paramValue'], constraint=" paramName = '%s'"%runLengthParam)
-        runLength = float(runLength['paramValue'][0]) # Years
+        if 'Config' not in self.tables:
+            print 'Cannot access Config table to retrieve runLength; using default 10 years'
+            runLength = 10.0
+        else:
+            table = self.tables['Config']
+            runLength = table.query_columns_Array(colnames=['paramValue'], constraint=" paramName = '%s'"%runLengthParam)
+            runLength = float(runLength['paramValue'][0]) # Years
         return runLength
 
     def fetchLatLonHeight(self):
         """
         Returns the latitude, longitude, and height of the telescope used by the config file.
         """
-        table = self.tables['Config']
-        lat = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'latitude'")
-        lon = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'longitude'")
-        height = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'height'")
-        return float(lat['paramValue'][0]),float(lon['paramValue'][0]),float(height['paramValue'][0])
+        if 'Config' not in self.tables:
+            print 'Cannot access Config table to retrieve site parameters; using utils.TelescopeInfo instead.'
+            site = utils.TelescopeInfo('LSST')
+            lat = site.lat
+            lon = site.lon
+            height = site.elev
+        else:
+            table = self.tables['Config']
+            lat = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'latitude'")
+            lat = float(lat['paramValue'][0])
+            lon = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'longitude'")
+            lon = float(lon['paramValue'][0])
+            height = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'height'")
+            height = float(height['paramValue'][0])
+        return lat, lon, height
 
     def fetchNVisits(self, propID=None):
         """
         Returns the total number of visits in the simulation (or total number of visits for a particular propoal).
         param: propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
-        tableName = 'ObsHistory'
-        query = 'select count(ObsHistID) from %s' %(self.dbTables[tableName][0])
-        if propID is not None:
-            query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['ObsHistory_Proposal'][0])
-            if hasattr(propID, '__iter__'): # list of propIDs
-                query += ' and ('
-                for pID in propID:
-                    query += '(Proposal_%s = %d) or ' %(self.propIdCol, int(pID))
-                # Remove the trailing 'or' and add a closing parenthesis.
-                query = query[:-3]
-                query += ')'
-            else: # single proposal ID.
-                query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
+        if 'ObsHistory' in self.dbTables:
+            tableName = 'ObsHistory'
+            query = 'select count(ObsHistID) from %s' %(self.dbTables[tableName][0])
+            if propID is not None:
+                query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['ObsHistory_Proposal'][0])
+                if hasattr(propID, '__iter__'): # list of propIDs
+                    query += ' and ('
+                    for pID in propID:
+                        query += '(Proposal_%s = %d) or ' %(self.propIdCol, int(pID))
+                    # Remove the trailing 'or' and add a closing parenthesis.
+                    query = query[:-3]
+                    query += ')'
+                else: # single proposal ID.
+                    query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
+        else:
+            tableName = 'Summary'
+            query = 'select count(distinct(expMJD)) from %s' %(self.dbTables[tableName][0])
+            if propID is not None:
+                query += ' where '
+                if hasattr(propID, '__iter__'):
+                    for pID in propID:
+                        query += 'propID=%d or ' %(int(pID))
+                    query = query[:-3]
+                else:
+                    query += 'propID = %d' %(int(propID))
         data = self.tables[tableName].execute_arbitrary(query)
         return int(data[0][0])
 
@@ -291,19 +314,28 @@ class OpsimDatabase(Database):
         """
         Returns opsim run name (machine name + session ID) from Session table.
         """
-        table = self.tables['Session']
-        res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
-        runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
+        if 'Session' not in self.tables:
+            print 'Could not access Session table to find this information.'
+            runName = 'opsim'
+        else:
+            table = self.tables['Session']
+            res = table.query_columns_Array(colnames=['sessionID', 'sessionHost'])
+            runName = str(res['sessionHost'][0]) + '_' + str(res['sessionID'][0])
         return runName
 
     def fetchTotalSlewN(self):
         """
         Returns the total slew time.
         """
-        table = self.tables['SlewActivities']
-        query = 'select count(distinct(slewHistory_slewID)) from slewActivities where actDelay >0'
-        res = table.execute_arbitrary(query)
-        return int(res[0][0])
+        if 'SlewActivities' not in self.tables:
+            print 'Could not access SlewActivities table to find this information.'
+            nslew = -1
+        else:
+            table = self.tables['SlewActivities']
+            query = 'select count(distinct(slewHistory_slewID)) from slewActivities where actDelay >0'
+            res = table.execute_arbitrary(query)
+            nslew = int(res[0][0])
+        return nslew
 
     def fetchRequestedNvisits(self, propId=None):
         """
