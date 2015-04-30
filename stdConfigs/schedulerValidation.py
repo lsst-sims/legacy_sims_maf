@@ -21,17 +21,17 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
        ('requested' means look up the requested number of visits for the proposal and use that information).
     """
     #config.mafComment = 'Scheduler Validation'
-    slewStats = True
-    slewStatsOnly = False
+    slewStatsFlag = True
+    slewStatsOnlyFlag = False
     if slewStats.lower() == 'off':
-        slewStats = False
+        slewStatsFlag = False
     elif slewStats.lower() == 'only':
-        slewStatsOnly = True
+        slewStatsOnlyFlag = True
 
     if summaryOnly.lower() =='true':
-        summaryOnly = True
+        summaryOnlyFlag = True
     else:
-        summaryOnly = False
+        summaryOnlyFlag = False
 
     # Setup Database access
     config.outDir = outDir
@@ -39,7 +39,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
         runName = runName.replace('_sqlite.db', '')
     sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
-    if summaryOnly:
+    if summaryOnlyFlag:
         config.dbAddress['Summary'] = 'Summary'
     config.opsimName = runName
     config.figformat = 'pdf'
@@ -877,8 +877,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
         slewStatsList.append(slicer)
 
     # Add the slew statistics back to the big metric/slicer list, if needed.
-    if not summaryOnly and slewStats:
-        if slewStatsOnly:
+    if not summaryOnlyFlag and slewStatsFlag:
+        if slewStatsOnlyFlag:
             # Return the slewStats slicer list only, if only doing slew stats.
             config.slicers=makeDict(*slewStatsList)
             return config
