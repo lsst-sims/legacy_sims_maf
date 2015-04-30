@@ -22,6 +22,9 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
     """
     #config.mafComment = 'Scheduler Validation'
 
+    if summaryOnly=='TRUE' or summaryOnly=='True':
+        summaryOnly = True
+
     # Setup Database access
     config.outDir = outDir
     if runName.endswith('_sqlite.db'):
