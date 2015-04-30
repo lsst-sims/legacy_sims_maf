@@ -6,7 +6,7 @@ import lsst.sims.maf.utils as utils
 import numpy as np
 
 
-def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summaryOnly=False, **kwargs):
+def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summaryOnly='False', slewStats='on', **kwargs):
     """
     A MAF config for SSTAR-like analysis of an opsim run.
 
@@ -21,9 +21,15 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
        ('requested' means look up the requested number of visits for the proposal and use that information).
     """
     #config.mafComment = 'Scheduler Validation'
+    if slewStats.lower() == 'off':
+        slewStats = False
+    else:
+        slewStats = True
 
-    if summaryOnly=='TRUE' or summaryOnly=='True':
+    if summaryOnly.lower() =='true':
         summaryOnly = True
+    else:
+        summaryOnly = False
 
     # Setup Database access
     config.outDir = outDir
@@ -869,7 +875,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
         slewStatsList.append(slicer)
 
     # Add the slew statistics back to the big metric/slicer list, if needed.
-    if not summaryOnly:
+    if not summaryOnly and slewStats:
         for slicer in slewStatsList:
             slicerList.append(slicer)
 
