@@ -191,3 +191,90 @@ class Benchmark(object):
                     metricId = resultsDb.updateMetric(self.metric.metricName, self.slicer.slicerName,
                                                       self.runName, self.sqlconstraint, self.metadata, None)
                     resultsDb.updateSummaryStat(metricId, summaryName=mName, summaryValue=summaryVal)
+
+    def writeMetric(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
+        """
+        Write metricValues (and associated metadata) to disk.
+
+        comment = any additional comments to add to output file (beyond
+                   metric name, simDataName, and metadata).
+        outfileSuffix = additional suffix to add to output files (numerical suffix for movies).
+        """
+        if outfileSuffix is not None:
+            outfile = self.fileRoot + outfileSuffix + '.npz'
+        else:
+            outfile = self.fileRoot + '.npz'
+        self.slicer.writeData(os.path.join(outDir, outfile),
+                                self.metricValues,
+                                metricName = self.metric.name,
+                                simDataName = self.runName,
+                                sqlconstraint = self.sqlconstraint,
+                                metadata = self.metadata + comment,
+                                displayDict = self.displayDict,
+                                plotDict = self.plotDict)
+        if resultsDb:
+            metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
+                                              self.runName, self.sqlconstraint,
+                                              self.metadata, outfile)
+            resultsDb.updateDisplay(metricId, self.displayDict)
+
+    def outputJSON(self):
+        """
+        Set up and call the baseSlicer outputJSON method, to output to IO string.
+        """
+        io = self.slicer.outputJSON(self.metricValues,
+                                    metricName = self.metric.name,
+                                    simDataName = self.runName,
+                                    metadata = self.metadata,
+                                    plotDict = self.plotDict)
+        return io
+
+
+    def reduceMetric(self, reduceFunc, reduceOrder=None):
+        """
+        Run 'reduceFunc' (method on metric object) on self.metricValues.
+
+        reduceFunc can be a list of functions to be applied to the same metric data.
+        reduceOrder can be list of integers to add to the displayDict['order'] value for each
+          reduced metric value (can also be None).
+        """
+        if not isinstance(reduceFunc, list):
+            reduceFunc = [reduceFunc,]
+        # Autogenerate metric reduced value names.
+        rNames = []
+        metricName = self.metric.name
+        for r in reduceFunc:
+            rname = metricName + '_' + r.__name__.replace('reduce', '')
+            rNames.append(rname)
+        # Make sure reduceOrder is available.
+        if reduceOrder is None:
+            reduceOrder = np.zeros(len(reduceFunc), int)
+        if len(reduceOrder) < len(reduceFunc):
+            rOrder = np.zeros(len(reduceFunc), int) + len(reduceFunc)
+            for i, r in enumerate(reduceOrder):
+                rOrder[i] = r
+            reduceOrder = rOrder.copy()
+        # Set up reduced metric values as new benchmarks.
+            
+        # Set up reduced metric values masked arrays, copying metricName's mask,
+        # and copy metadata/plotparameters, etc.
+        riids = np.arange(self.iid_next, self.iid_next+len(rNames), 1)
+        self.iid_next = riids.max() + 1
+        for riid, rName, rOrder in zip(riids, rNames, reduceOrder):
+           self.metricNames[riid] = rName
+           self.slicers[riid] = self.slicer
+           self.simDataNames[riid] = self.simDataNames[iid]
+           self.sqlconstraints[riid] = self.sqlconstraints[iid]
+           self.metadatas[riid] = self.metadatas[iid]
+           self.plotDicts[riid] = self.plotDicts[iid]
+           self.displayDicts[riid] = self.displayDicts[iid].copy()
+           self.displayDicts[riid]['order'] = self.displayDicts[riid]['order'] + rOrder
+           self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
+                                                    mask = self.metricValues[iid].mask,
+                                                    fill_value=self.slicer.badval)
+        # Run through slicepoints/metricValues applying all reduce functions.
+        for i, (mVal, mMask) in enumerate(zip(self.metricValues[iid].data, self.metricValues[iid].mask)):
+           if not mMask:
+              # Evaluate reduced version of metric values.
+              for riid, rFunc in zip(riids, reduceFunc):
+                 self.metricValues[riid].data[i] = rFunc(mVal)
