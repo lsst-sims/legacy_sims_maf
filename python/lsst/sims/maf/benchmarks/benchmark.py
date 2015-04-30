@@ -76,7 +76,7 @@ class Benchmark(object):
             self._buildFileRoot()
         # Determine the columns needed from the database.
         self._findReqCols()
-        
+
         # This is where we store the metric values and summary stats.
         self.metricValue = None
         self.summaryValues = None
@@ -107,7 +107,8 @@ class Benchmark(object):
         Build an auto-generated output filename root (i.e. minus the plot type or .npz ending).
         """
         # Build basic version.
-        self.fileRoot = '_'.join(self.runName, self.metric.metricName, self.metadata, self.slicer.slicerName[:4].upper())
+        self.fileRoot = '_'.join([self.runName, self.metric.name, self.metadata,
+                                  self.slicer.slicerName[:4].upper()])
         # Sanitize output name if needed.
         # Replace <, > and = signs.
         self.fileRoot = self.fileRoot.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
@@ -156,4 +157,3 @@ class Benchmark(object):
             for col in s.colsReq:
                 dbcolnames.add(col)
         self.dbColNames = dbcolnames
-
