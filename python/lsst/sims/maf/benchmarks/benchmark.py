@@ -79,3 +79,15 @@ class Benchmark(object):
             for col in s.colsReq:
                 dbcolnames.add(col)
         return dbcolnames
+
+
+    def saveBenchmark(self):
+        """
+        Save the benchmark.
+        """
+        pass
+    def loadBenchmark(self, filename):
+        """
+        restore a benchmark
+        """
+        pass
