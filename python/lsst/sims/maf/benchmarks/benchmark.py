@@ -6,7 +6,7 @@ class Benchmark(object):
     This is an object to hold instatiated metrics, slicers, stackers etc.
     """
     def __init__(self, metric=None, slicer=None, stackers=None,
-                 summaryStats=None, sqlWhere='', dbAddress=None,
+                 summaryStats=None, maps=None, sqlWhere='', dbAddress=None,
                  filenameBase=None, metadata=None, plotDict=None,
                  displayDict=None, outDir='Out'):
 
@@ -22,6 +22,7 @@ class Benchmark(object):
         self.plotDict = plotDict
         self.displayDict = displayDict
         self.outDir = outDir
+        self.maps = maps
 
     def setMetric(self, metric):
         self.metric = metric
