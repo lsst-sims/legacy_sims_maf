@@ -746,6 +746,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
 
     # Stats for angle:
     angles = ['telAlt', 'telAz', 'rotTelPos']
+    slewStatsList = []
 
     order = 0
     for angle in angles:
@@ -769,9 +770,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata=angle,
                                  metadataVerbatim=True, table='SlewState')
-        slicerList.append(slicer)
+        slewStatsList.append(slicer)
 
-    slewStatsList = []
     # Make some calls to other tables to get slew stats
     colDict = {'domAltSpd':'Dome Alt Speed','domAzSpd':'Dome Az Speed','telAltSpd': 'Tel Alt Speed',
                'telAzSpd': 'Tel Az Speed', 'rotSpd':'Rotation Speed'}
