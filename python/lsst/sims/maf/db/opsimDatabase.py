@@ -243,7 +243,7 @@ class OpsimDatabase(Database):
         """
         if 'Config' not in self.tables:
             print 'Cannot access Config table to retrieve site parameters; using utils.TelescopeInfo instead.'
-            site = utils.TelescopeInfo('LSST')
+            site = TelescopeInfo('LSST')
             lat = site.lat
             lon = site.lon
             height = site.elev
