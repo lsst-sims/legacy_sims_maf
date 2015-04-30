@@ -21,10 +21,12 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
        ('requested' means look up the requested number of visits for the proposal and use that information).
     """
     #config.mafComment = 'Scheduler Validation'
+    slewStats = True
+    slewStatsOnly = False
     if slewStats.lower() == 'off':
         slewStats = False
-    else:
-        slewStats = True
+    elif slewStats.lower() == 'only':
+        slewStatsOnly = True
 
     if summaryOnly.lower() =='true':
         summaryOnly = True
@@ -876,8 +878,14 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summar
 
     # Add the slew statistics back to the big metric/slicer list, if needed.
     if not summaryOnly and slewStats:
-        for slicer in slewStatsList:
-            slicerList.append(slicer)
+        if slewStatsOnly:
+            # Return the slewStats slicer list only, if only doing slew stats.
+            config.slicers=makeDict(*slewStatsList)
+            return config
+        else:
+            # Else, add the slew stats to the general list, which will be returned later.
+            for slicer in slewStatsList:
+                slicerList.append(slicer)
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
