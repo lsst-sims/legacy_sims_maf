@@ -282,8 +282,7 @@ class NRevisitsMetric(BaseMetric):
         self.dT = dT / 60./24. # convert to days
         self.normed = normed
         super(NRevisitsMetric, self).__init__(col=self.timeCol, units=units, metricName=metricName, **kwargs)
-        if ('normVal' not in self.plotDict) and ('zp' not in self.plotDict) and not normed:
-            self.plotDict['cbarFormat'] = '%d'
+        self.metricDtype = 'int'
 
     def run(self, dataSlice, slicePoint=None):
         dtimes = np.diff(np.sort(dataSlice[self.timeCol]))

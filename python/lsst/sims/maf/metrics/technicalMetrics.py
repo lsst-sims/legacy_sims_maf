@@ -288,11 +288,6 @@ class FilterColorsMetric(BaseMetric):
         super(FilterColors, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
                                            metricName=metricName, **kwargs)
         self.metricDtype = 'object'
-        self.plotDict['logScale'] = False
-        self.plotDict['colorMax'] = 10
-        self.plotDict['colorMin'] = 0
-        self.plotDict['cbar'] = False
-        self.plotDict['metricIsColor'] = True
 
     def _scaleColor(self, colorR, colorG, colorB):
         r = colorR.sum()

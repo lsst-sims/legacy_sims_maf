@@ -102,12 +102,7 @@ class BaseMetric(object):
                -- 'object' (if reduce functions are present and value not set in kwarg)
           * every metric object will have the data columns it requires added to the column registry
             (so the driver can know which columns to pull from the database)
-          * every metric object will contain a plotDict dictionary, which may contain only the units.
 
-        plotDict is a dictionary containing instructions for plotting (setting plot titles, limits,
-        x and y labels, etc.).
-        displayGroup is a string defining where the output of the metric should be displayed in the visualization
-        layer (metrics with the same displayGroup parameter are grouped together).
         """
         # Turn cols into numpy array so we know we can iterate over the columns.
         self.colNameArr = np.array(col, copy=False, ndmin=1)
