@@ -58,7 +58,7 @@ class Benchmark(object):
                         raise ValueError('mapsList must only contain lsst.sims.maf.maps objects')
                     self.mapsList.append(m)
         else:
-            self.mapsList = None
+            self.mapsList = []
         # Add the summary stats, if applicable.
         if summaryStats is not None:
             if isinstance(summaryStats, metrics.BaseMetric):

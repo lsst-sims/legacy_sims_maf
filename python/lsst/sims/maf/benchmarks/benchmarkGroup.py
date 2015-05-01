@@ -5,28 +5,28 @@ from collections import OrderedDict
 
 class BenchmarkGroup(object):
     """
-    take a dictionary of Benchmark objects, make sure they have the same SQL constaint, then pull the data
+    take a dictionary of Benchmark objects, make sure they have the same SQL constraint, then pull the data
     """
 
     def __init__(self,benchmarkDict, dbObj, verbose=True):
-
+        self.verbose = verbose
         # Check that all benchmarks have the same sql
-        sql1 = benchmarkDict[benchmarkDict.keys()[0]].sqlconstriant
+        sql1 = benchmarkDict[benchmarkDict.keys()[0]].sqlconstraint
         for bm in benchmarkDict:
-            if benchmarkDict[bm].sqlconstaint != sql1:
-                raise ValueError('Benchmarks must have same sqlconstraint %s != %s' % (sql1, benchmarkDict[bm].sqlconstaint))
+            if benchmarkDict[bm].sqlconstraint != sql1:
+                raise ValueError('Benchmarks must have same sqlconstraint %s != %s' % (sql1, benchmarkDict[bm].sqlconstraint))
 
         self.benchmarkDict = benchmarkDict
         self.dbObj = dbObj
         # Build list of all the columns needed:
         dbCols = []
         for bm in self.benchmarkDict:
-            dbCols.extend(bm.dbCols)
+            dbCols.extend(self.benchmarkDict[bm].dbCols)
         dbCols = list(set(dbCols))
 
         # Pull the data
         if verbose:
-            print "Calling DB with constriant %s"%sql1
+            print "Calling DB with constraint %s"%sql1
         self.simdata = utils.getSimData(dbObj, sql1, dbCols)
         if verbose:
             print "Found %i visits"%self.simdata.size
@@ -43,17 +43,17 @@ class BenchmarkGroup(object):
             self.hasRun[bm] = False
         self.bmKeys = benchmarkDict.keys()
 
-    def _checkCompatable(self,bm1,bm2):
+    def _checkCompatible(self,bm1,bm2):
         """
         figure out which benchmarks are compatable.
-        If the sql constaints the same, slicers the same, and stackers have different names, or are equal.
+        If the sql constraints the same, slicers the same, and stackers have different names, or are equal.
         returns True if the benchmarks could be run together, False if not.
         """
         result = False
         if (bm1.sqlconstraint == bm2.sqlconstraint) & (bm1.slicer == bm2.slicer):
             if bm1.mapsList.sort() == bm2.mapsList.sort():
-                for stacker in bm1.stackers:
-                    for stacker2 in bm2.stackers:
+                for stacker in bm1.stackerList:
+                    for stacker2 in bm2.stackerList:
                         # If the stackers have different names, that's OK, and if they are identical, that's ok.
                         if (stacker.__class__.__name__ != stacker2.__class__.__name__) | (stacker == stacker2):
                             result= True
@@ -66,16 +66,26 @@ class BenchmarkGroup(object):
         """
         while False in self.hasRun.values():
             toRun = []
+
             for bm in self.benchmarkDict:
                 if self.hasRun[bm] is False:
                     if len(toRun) == 0:
                         toRun.append(bm)
                     else:
                         for key in toRun:
-                            if self.checkCompatible(self.benchmarkDict[bm], self.benchmarkDict[key]):
-                                toRun.append(bm)
+                            if key != bm:
+                                if self._checkCompatible(self.benchmarkDict[bm], self.benchmarkDict[key]):
+                                    toRun.append(bm)
 
+            if self.verbose:
+                print 'Running:'
+                for key in toRun:
+                    print key
             self._runCompatable(toRun)
+            if self.verbose:
+                print 'Completed'
+            for key in toRun:
+                self.hasRun[key] = True
 
 
 
@@ -89,13 +99,15 @@ class BenchmarkGroup(object):
         maps = []
         stackers = []
         for bm in keys:
-            for mapList in self.benchmarkDict[bm].mapList:
-                maps.extend(mapList)
+            for mapsList in self.benchmarkDict[bm].mapsList:
+                maps.extend(mapsList)
             for stacker in self.benchmarkDict[bm].stackerList:
-                stackers.extend(stacker)
+                if stacker not in stackers:
+                    stackers.append(stacker)
 
+        # May need to do a more rigerous purge of duplicate stackers and maps
         maps = list(set(maps))
-        stackers = list(set(stackers))
+
         for stacker in stackers:
             # Check that stackers can clobber cols that are already there
             self.simdata = stacker.run(self.simdata)
