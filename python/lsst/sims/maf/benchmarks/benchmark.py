@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import numpy.ma as ma
 
@@ -395,7 +396,7 @@ class Benchmark(object):
         # Make plots.
         plotResults = self.slicer.plotData(self.metricValues, savefig=savefig,
                                            figformat=figformat, dpi=dpi,
-                                           filename=os.path.join(self.outDir, outfile),
+                                           filename=os.path.join(outDir, outfile),
                                            thumbnail = thumbnail, **self.plotDict)
         # Save information about the plotted files.
         if resultsDb:
