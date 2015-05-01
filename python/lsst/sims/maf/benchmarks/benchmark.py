@@ -1,8 +1,12 @@
+import numpy as np
+import numpy.ma as ma
+
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.maps as maps
 from lsst.sims.maf.utils import ColInfo
+
 
 class Benchmark(object):
     """
@@ -321,51 +325,30 @@ class Benchmark(object):
                                                       self.runName, self.sqlconstraint, self.metadata, None)
                     resultsDb.updateSummaryStat(metricId, summaryName=mName, summaryValue=summaryVal)
 
-    def reduceMetric(self, reduceFunc, reduceOrder=None):
+    def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
         """
-        Run 'reduceFunc' (method on metric object) on self.metricValues.
-
-        reduceFunc can be a list of functions to be applied to the same metric data.
-        reduceOrder can be list of integers to add to the displayDict['order'] value for each
-          reduced metric value (can also be None).
+        Run 'reduceFunc' (any function that operates on self.metricValues).
+        Typically reduceFunc will be the metric reduce functions, as they are tailored to expect the
+          metricValues format.
+        reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be applied to the new benchmark.
         """
-        if not isinstance(reduceFunc, list):
-            reduceFunc = [reduceFunc,]
-        # Autogenerate metric reduced value names.
-        rNames = []
-        metricName = self.metric.name
-        for r in reduceFunc:
-            rname = metricName + '_' + r.__name__.replace('reduce', '')
-            rNames.append(rname)
-        # Make sure reduceOrder is available.
-        if reduceOrder is None:
-            reduceOrder = np.zeros(len(reduceFunc), int)
-        if len(reduceOrder) < len(reduceFunc):
-            rOrder = np.zeros(len(reduceFunc), int) + len(reduceFunc)
-            for i, r in enumerate(reduceOrder):
-                rOrder[i] = r
-            reduceOrder = rOrder.copy()
-        # Set up reduced metric values as new benchmarks.
-            
-        # Set up reduced metric values masked arrays, copying metricName's mask,
-        # and copy metadata/plotparameters, etc.
-        riids = np.arange(self.iid_next, self.iid_next+len(rNames), 1)
-        self.iid_next = riids.max() + 1
-        for riid, rName, rOrder in zip(riids, rNames, reduceOrder):
-           self.metricNames[riid] = rName
-           self.slicers[riid] = self.slicer
-           self.simDataNames[riid] = self.simDataNames[iid]
-           self.sqlconstraints[riid] = self.sqlconstraints[iid]
-           self.metadatas[riid] = self.metadatas[iid]
-           self.plotDicts[riid] = self.plotDicts[iid]
-           self.displayDicts[riid] = self.displayDicts[iid].copy()
-           self.displayDicts[riid]['order'] = self.displayDicts[riid]['order'] + rOrder
-           self.metricValues[riid] = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
-                                                    mask = self.metricValues[iid].mask,
-                                                    fill_value=self.slicer.badval)
-        # Run through slicepoints/metricValues applying all reduce functions.
-        for i, (mVal, mMask) in enumerate(zip(self.metricValues[iid].data, self.metricValues[iid].mask)):
-           if not mMask:
-              # Evaluate reduced version of metric values.
-              for riid, rFunc in zip(riids, reduceFunc):
-                 self.metricValues[riid].data[i] = rFunc(mVal)
+        # Generate a name for the metric values processed by the reduceFunc.
+        reduceName = self.metric.name + '_' + reduceFunc.__name__.replace('reduce', '')
+        # Set up benchmark to store new metric values, and add plotDict/displayDict.
+        newbenchmark = Benchmark(metric=metrics.BaseMetric('metricdata'), slicer=self.slicer, stackerList=self.stackerList,
+                                 sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
+                                 plotDict=self.plotDict, displayDict=self.displayDict,
+                                 summaryStats=self.summaryStats, mapsList=self.mapsList, fileRoot=self.fileRoot)
+        newbenchmark.metric.name = reduceName
+        if 'units' in reducePlotDict:
+            newbenchmark.metric.units = reducePlotDict['units']
+        newbenchmark.setPlotDict(reducePlotDict)
+        newbenchmark.setDisplayDict(reduceDisplayDict)
+        # Set up new benchmark's metricValues masked arrays, copying metricValue's mask.
+        newbenchmark.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
+                                                    mask = self.metricValues.mask,
+                                                    fill_value = self.slicer.badval)
+        for i, (mVal, mMask) in enumerate(zip(self.metricValues.data, self.metricValues.mask)):
+            if not mMask:
+                newbenchmark.metricValues.data[i] = reduceFunc(mVal)
+        return newbenchmark
