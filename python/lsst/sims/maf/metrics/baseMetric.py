@@ -87,8 +87,7 @@ class BaseMetric(object):
     colInfo = ColInfo()
 
     def __init__(self, col=None, metricName=None, maps=None, units=None,
-                 metricDtype=None, badval=-666,
-                 plotDict=None, displayDict=None):
+                 metricDtype=None, badval=-666):
         """Instantiate metric.
 
         'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
@@ -110,8 +109,6 @@ class BaseMetric(object):
         displayGroup is a string defining where the output of the metric should be displayed in the visualization
         layer (metrics with the same displayGroup parameter are grouped together).
         """
-        if col is None:
-            raise ValueError('Specify "col" kwarg for metric %s' %(self.__class__.__name__))
         # Turn cols into numpy array so we know we can iterate over the columns.
         self.colNameArr = np.array(col, copy=False, ndmin=1)
         # To support simple metrics operating on a single column, set self.colname
@@ -147,46 +144,12 @@ class BaseMetric(object):
         else:
             self.metricDtype = 'float'
         # Set physical units, for plotting purposes.
-        # (If plotDict has 'units' this will be ignored).
         if units is None:
             units = ' '.join([self.colInfo.getUnits(colName) for colName in self.colNameArr])
             if len(units.replace(' ', '')) == 0:
                 units = ''
         self.units = units
-        # Set more plotting preferences (at the very least, the units).
-        if plotDict is None:
-            self.plotDict = {}
-        else:
-            self.plotDict = plotDict.copy()
-        if 'units' not in self.plotDict:
             self.plotDict['units'] = self.units
-        if 'zp' in self.plotDict:
-            if not np.isfinite(self.plotDict['zp']):
-                warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.name))
-                del self.plotDict['zp']
-        if 'normVal' in self.plotDict:
-            if self.plotDict['normVal'] == 0:
-                warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotDict'
-                              % (self.name))
-                del self.plotDict['normVal']
-        if 'xMin' in self.plotDict and 'colorMin' not in self.plotDict:
-            self.plotDict['colorMin'] = self.plotDict['xMin']
-        if 'xMax' in self.plotDict and 'colorMax' not in self.plotDict:
-            self.plotDict['colorMax'] = self.plotDict['xMax']
-        # Example options for plotting parameters: plotTitle, plotMin, plotMax,
-        #  plotPercentiles (overriden by plotMin/Max).
-        #  These plotDict are used by the sliceMetric, passed to the slicer plotting utilities.
-        # Set up the displayDict.
-        # Set defaults.
-        defaultDisplayDict = {'group':'Ungrouped',
-                              'subgroup':None,
-                              'order':0,
-                              'caption':None}
-        if displayDict is None:
-            self.displayDict = defaultDisplayDict
-        else:
-            defaultDisplayDict.update(displayDict)
-            self.displayDict = defaultDisplayDict
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')
