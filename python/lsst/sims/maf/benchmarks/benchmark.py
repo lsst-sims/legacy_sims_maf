@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import numpy.ma as ma
 
@@ -13,8 +14,8 @@ class Benchmark(object):
     Benchmark holds a combination of a (single) metric, slicer and sqlconstraint, which determines
     a unique combination of an opsim evaluation.
     After the metric is evaluated over the slicer, it will hold the benchmark value (metric values) as well.
-    It also holds a list of summary statistics to be calculated on those metric values, as well as the resulting
-    summary statistic values.
+    It also holds a list of metrics to be used to generate summary statistics (on the metric values),
+    as well as the resulting summary statistic values.
     In addition, it holds plotting parameters (in plotDict) and display parameters for showMaf (in displayDict), as
     well as additional metadata such as the opsim run name.
     Benchmark can autogenerate some metadata, plotting labels, as well as generate plots,
@@ -23,7 +24,7 @@ class Benchmark(object):
     def __init__(self, metric, slicer, sqlconstraint,
                  stackerList=None, runName='opsim', metadata=None,
                  plotDict=None, displayDict=None,
-                 summaryStats=None, mapsList=None,
+                 summaryMetrics=None, mapsList=None,
                  fileRoot=None):
         # Set the metric.
         if not isinstance(metric, metrics.BaseMetric):
@@ -60,21 +61,7 @@ class Benchmark(object):
         else:
             self.mapsList = []
         # Add the summary stats, if applicable.
-        if summaryStats is not None:
-            if isinstance(summaryStats, metrics.BaseMetric):
-                self.summaryStats = [summaryStats]
-            else:
-                self.summaryStats = []
-                for s in summaryStats:
-                    if not isinstance(s, metrics.BaseMetric):
-                        raise ValueError('SummaryStats must only contain lsst.sims.maf.metrics objects')
-                    self.summaryStats.append(s)
-        else:
-            # Add identity metric to unislicer metric values (to get them into resultsDB).
-            if self.slicer.slicerName == 'UniSlicer':
-                self.summaryStats = [metrics.IdentityMetric('metricdata')]
-            else:
-                self.summaryStats = []
+        self.setSummaryMetrics(summaryMetrics)
         # Set the provenance/metadata.
         self.runName = runName
         self._buildMetadata(metadata)
@@ -103,7 +90,7 @@ class Benchmark(object):
         self.slicer = None
         self.sqlconstraint = ''
         self.stackerList = []
-        self.summaryStats = []
+        self.summaryMetrics = []
         self.mapsList = None
         self.runName = 'opsim'
         self.metadata = ''
@@ -186,6 +173,26 @@ class Benchmark(object):
             dbcolnames.remove('metricdata')
         self.dbCols = dbcolnames
 
+    def setSummaryMetrics(self, summaryMetrics):
+        """
+        Set (or reset) the summary metrics for the benchmark.
+        """
+        if summaryMetrics is not None:
+            if isinstance(summaryMetrics, metrics.BaseMetric):
+                self.summaryMetrics = [summaryMetrics]
+            else:
+                self.summaryMetrics = []
+                for s in summaryMetrics:
+                    if not isinstance(s, metrics.BaseMetric):
+                        raise ValueError('SummaryStats must only contain lsst.sims.maf.metrics objects')
+                    self.summaryMetrics.append(s)
+        else:
+            # Add identity metric to unislicer metric values (to get them into resultsDB).
+            if self.slicer.slicerName == 'UniSlicer':
+                self.summaryMetrics = [metrics.IdentityMetric('metricdata')]
+            else:
+                self.summaryMetrics = []
+
     def setPlotDict(self, plotDict=None):
         """
         Set or update any property of plotDict.
@@ -204,6 +211,8 @@ class Benchmark(object):
         else:
             xlabel = self.metric.name  + ' (' + self.metric.units + ')'
             tmpPlotDict['xlabel'] = xlabel
+        if metric.metricDtype == 'int':
+            tmpPlotDict['cbarFormat'] = '%d'
         # Update from self.plotDict (to use existing values, if present).
         tmpPlotDict.update(self.plotDict)
         # And then update from any values being passed now.
@@ -214,11 +223,17 @@ class Benchmark(object):
             if not np.isfinite(self.plotDict['zp']):
                 warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
                 del tmpPlotDict['zp']
+            # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
+            else if 'cbarFormat' not in plotDict:
+                del tmpPlotDict['cbarFormat']
         if 'normVal' in tmpPlotDict:
             if tmpPlotDict['normVal'] == 0:
                 warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotDict'
                               % (self.fileRoot))
                 del tmpPlotDict['normVal']
+            # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
+            else if 'cbarFormat' not in plotDict:
+                del tmpPlotDict['cbarFormat']
         # Reset self.displayDict to this updated dictionary.
         self.plotDict = tmpPlotDict
 
@@ -305,7 +320,7 @@ class Benchmark(object):
         self.metricValues.fill_value = slicer.badval
         # It's difficult to reinstantiate the metric object, as we don't
         # know what it is necessarily -- the metricName can be changed.
-        self.metric = metrics.BaseMetric(col='metricdata')
+        self.metric = metrics.BaseMetric()
         # But, for plot label building, we do need to try to recreate the
         #  metric name and units.
         self.metric.name = header['metricName']
@@ -323,17 +338,21 @@ class Benchmark(object):
             self.setPlotDict(header['plotDict'])
         if 'displayDict' in header:
             self.setDisplayDict(header['displayDict'])
+        path, head = os.path.split(filename)
+        self.fileRoot = head.replace('.npz', '')
 
-    def computeSummaryStatistics(self, resultsDb=None):
+    def computeSummaryStats(self, resultsDb=None):
         """
-        Compute summary statistics on benchmark metricValues, using summaryStats (benchmark list).
+        Compute summary statistics on benchmark metricValues, using summaryMetrics (benchmark list).
         """
-        if self.summaryStats is None:
+        if self.summaryMetrics is None:
             self.summaryValues = None
         else:
             self.summaryValues = []
-            for m in self.summaryStats:
-                mName = m.name.replace(' metricdata', '')
+            for m in self.summaryMetrics:
+                # The summary metric colname should already be set to 'metricdata', but in case it's not:
+                m.colname = 'metricdata'
+                summaryName = m.name.replace(' metricdata', '').replace(' None', '')
                 if hasattr(m, 'maskVal'):
                     # summary metric requests to use the mask value, as specified by itself, rather than skipping masked vals.
                     rarr = np.array(zip(self.metricValues.filled(summaryMetric.maskVal)),
@@ -341,18 +360,16 @@ class Benchmark(object):
                 else:
                     rarr = np.array(zip(self.metricValues.compressed()),
                                 dtype=[('metricdata', self.metricValues.dtype)])
-                # The summary metric colname should already be set to 'metricdata', but in case it's not:
-                m.colname = 'metricdata'
                 if np.size(rarr) == 0:
                     summaryVal = self.slicer.badval
                 else:
                     summaryVal = m.run(rarr)
-                self.summaryValues.append([mName, summaryVal])
+                self.summaryValues.append([summaryName, summaryVal])
                 # Add summary metric info to results database, if applicable.
-                if self.resultsDb:
+                if resultsDb:
                     metricId = resultsDb.updateMetric(self.metric.metricName, self.slicer.slicerName,
                                                       self.runName, self.sqlconstraint, self.metadata, None)
-                    resultsDb.updateSummaryStat(metricId, summaryName=mName, summaryValue=summaryVal)
+                    resultsDb.updateSummaryStat(metricId, summaryName=summaryName, summaryValue=summaryVal)
 
     def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
         """
@@ -367,7 +384,7 @@ class Benchmark(object):
         newbenchmark = Benchmark(metric=metrics.BaseMetric('metricdata'), slicer=self.slicer, stackerList=self.stackerList,
                                  sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
                                  plotDict=self.plotDict, displayDict=self.displayDict,
-                                 summaryStats=self.summaryStats, mapsList=self.mapsList, fileRoot=self.fileRoot)
+                                 summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot=self.fileRoot)
         newbenchmark.metric.name = reduceName
         if 'units' in reducePlotDict:
             newbenchmark.metric.units = reducePlotDict['units']
@@ -382,8 +399,8 @@ class Benchmark(object):
                 newbenchmark.metricValues.data[i] = reduceFunc(mVal)
         return newbenchmark
 
-    def plotMetric(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True, figformat='pdf', dpi=600,
-                   thumbnail=True):
+    def plotBenchmark(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
+                      figformat='pdf', dpi=600, thumbnail=True):
         """
         Create all plots available from the slicer.
         """
@@ -395,7 +412,7 @@ class Benchmark(object):
         # Make plots.
         plotResults = self.slicer.plotData(self.metricValues, savefig=savefig,
                                            figformat=figformat, dpi=dpi,
-                                           filename=os.path.join(self.outDir, outfile),
+                                           filename=os.path.join(outDir, outfile),
                                            thumbnail = thumbnail, **self.plotDict)
         # Save information about the plotted files.
         if resultsDb:
