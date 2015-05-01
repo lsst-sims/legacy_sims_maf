@@ -332,10 +332,17 @@ class BaseSlicer(object):
             metricValues = ma.MaskedArray(data=restored['metricValues'],
                                           mask=restored['mask'],
                                           fill_value=restored['fill'])
-        # Get Metadata & other simData info
-        header = restored['header'][()]  # extra brackets restore dictionary to dictionary status
+        # Get Metadata & other simData info.
+        header = restored['header'][()]  # extra brackets restore dictionary to dictionary status.
         # Get slicer instantiated.
         slicer_init = restored['slicer_init'][()]
+        # Backwards compatibility issue - map 'spatialkey1/spatialkey2' to 'lonCol/latCol'.
+        if 'spatialkey1' in slicer_init:
+            slicer_init['lonCol'] = slicer_init['spatialkey1']
+            del(slicer_init['spatialkey1'])
+        if 'spatialkey2' in slicer_init:
+            slicer_init['latCol'] = slicer_init['spatialkey2']
+            del(slicer_init['spatialkey2'])
         slicer = getattr(slicers, str(restored['slicerName']))(**slicer_init)
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
