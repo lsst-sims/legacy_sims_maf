@@ -20,8 +20,8 @@ class Benchmark(object):
     Benchmark can autogenerate some metadata, plotting labels, as well as generate plots,
     save output to disk, and calculate 'reduce' methods on metrics.
     """
-    def __init__(self, metric, slicer, stackerList=None,
-                 sqlconstraint='', runName='opsim', metadata=None,
+    def __init__(self, metric, slicer, sqlconstraint,
+                 stackerList=None, runName='opsim', metadata=None,
                  plotDict=None, displayDict=None,
                  summaryStats=None, mapsList=None,
                  fileRoot=None):
@@ -33,6 +33,8 @@ class Benchmark(object):
         if not isinstance(slicer, slicers.BaseSlicer):
             raise ValueError('slicer must be an lsst.sims.maf.slicers object')
         self.slicer = slicer
+        # Set the sqlconstraint.
+        self.sqlconstraint = sqlconstraint
         # Set the stackerlist if applicable.
         if stackerList is not None:
             if isinstance(stackerList, stackers.BaseStacker):
@@ -73,8 +75,7 @@ class Benchmark(object):
                 self.summaryStats = [metrics.IdentityMetric('metricdata')]
             else:
                 self.summaryStats = []
-        # Set the sqlconstraint and metadata.
-        self.sqlconstraint = sqlconstraint
+        # Set the provenance/metadata.
         self.runName = runName
         self._buildMetadata(metadata)
         # Build the output filename root if not provided.
@@ -100,8 +101,8 @@ class Benchmark(object):
         """
         self.metric = None
         self.slicer = None
-        self.stackerList = []
         self.sqlconstraint = ''
+        self.stackerList = []
         self.summaryStats = []
         self.mapsList = None
         self.runName = 'opsim'
@@ -180,6 +181,9 @@ class Benchmark(object):
         for s in self.stackerList:
             for col in s.colsReq:
                 dbcolnames.add(col)
+        # Remove 'metricdata' from dbcols if it ended here by default.
+        if 'metricdata' in dbcolnames:
+            dbcolnames.remove('metricdata')
         self.dbCols = dbcolnames
 
     def setPlotDict(self, plotDict=None):
@@ -205,6 +209,16 @@ class Benchmark(object):
         # And then update from any values being passed now.
         if plotDict is not None:
             tmpPlotDict.update(plotDict)
+        # Check for bad zp or normVal values.
+        if 'zp' in tmpPlotDict:
+            if not np.isfinite(self.plotDict['zp']):
+                warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
+                del tmpPlotDict['zp']
+        if 'normVal' in tmpPlotDict:
+            if tmpPlotDict['normVal'] == 0:
+                warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotDict'
+                              % (self.fileRoot))
+                del tmpPlotDict['normVal']
         # Reset self.displayDict to this updated dictionary.
         self.plotDict = tmpPlotDict
 
@@ -231,7 +245,7 @@ class Benchmark(object):
             if 'normVal' in self.plotDict:
               caption += ' Values plotted with a normalization value of %.2f.' %(self.plotDict['normVal'])
             self.displayDict['caption'] = caption
-          if resultsDb is not None:
+        if resultsDb is not None:
             # Update the display values in the resultsDb.
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
                                               self.runName, self.sqlconstraint,
@@ -374,7 +388,7 @@ class Benchmark(object):
         Create all plots available from the slicer.
         """
         # plotData for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
-         if outfileSuffix is not None:
+        if outfileSuffix is not None:
             outfile = self.fileRoot + outfileSuffix
         else:
             outfile = self.fileRoot
