@@ -1,4 +1,7 @@
 import lsst.sims.maf.utils as utils
+import numpy as np
+import numpy.ma as ma
+from collections import OrderedDict
 
 class BenchmarkGroup(object):
     """
@@ -47,11 +50,13 @@ class BenchmarkGroup(object):
         """
         result = False
         if (bm1.sqlconstraint == bm2.sqlconstraint) & (bm1.slicer == bm2.slicer:):
-            for stacker in bm1.stackers:
-                for stacker2 in bm2.stackers:
-                    if (stacker.__class__.__name__ != staker2.__class__.__name__) | (stacker == stacker2):
-                        result= True
-        return result
+            if bm1.mapsList.sort() == bm2.mapsList.sort():
+                for stacker in bm1.stackers:
+                    for stacker2 in bm2.stackers:
+                        # If the stackers have different names, that's OK, and if they are identical, that's ok.
+                        if (stacker.__class__.__name__ != staker2.__class__.__name__) | (stacker == stacker2):
+                            result= True
+            return result
 
 
     def runAll():
@@ -80,10 +85,85 @@ class BenchmarkGroup(object):
         """
         # Maybe add a check that they are indeede compatible
 
+        maps = []
+        stackers = []
         for bm in keys:
+            for maplist in self.benchmarkDict[bm].mapList:
+                maps.extend(mapList)
             for stacker in self.benchmarkDict[bm].stackerList:
-                # Check that stackers can clobber cols that are already there
-                self.simData = stacker.run(simData)
+                stackers.extend(stacker)
+
+        maps = list(set(maps))
+        stackers = list(set(stackers))
+        for stacker in stackers:
+            # Check that stackers can clobber cols that are already there
+            self.simData = stacker.run(self.simData)
+
+        slicer = self.benchmarkDict(keys[0]).slicer
+        if slicer.slicerName == 'OpsimFieldSlicer':
+            slicer.setupSlicer(self.simdata, self.fieldData, maps=maps)
+        else:
+            slicer.setupSlicer(self.simdata, maps=maps)
+
+        # Set up (masked) arrays to store metric data.
+        for key in keys:
+           self.benchmarckDict[key].metricValues = \
+           ma.MaskedArray(data = np.empty(len(self.slicer),self.benchmarkDict[key].metric.metricDtype),
+                          mask = np.zeros(len(self.slicer), 'bool'),
+                          fill_value=self.slicer.badval)
+
+        # Set up an ordered dictionary to be the cache if needed:
+        # (Currently using OrderedDict, it might be faster to use 2 regular Dicts instead)
+        if slicer.cacheSize > 0:
+           cacheDict = OrderedDict()
+           cache = True
+        else:
+           cache = False
+        # Run through all slicepoints and calculate metrics.
+        for i, slice_i in enumerate(slicer):
+            slicedata = simData[slice_i['idxs']]
+            if len(slicedata)==0:
+                # No data at this slicepoint. Mask data values.
+               for key in keys:
+                  self.metricDict[key].metricValues.mask[i] = True
+            else:
+               # There is data! Should we use our data cache?
+               if cache:
+                  # Make the data idxs hashable.
+                  key = str(sorted(slice_i['idxs']))[1:-1].replace(' ','')
+                  # If key exists, set flag to use it, otherwise add it
+                  if cacheKey in cacheDict:
+                     useCache = True
+                  else:
+                     cacheDict[cacheKey] = i
+                     useCache = False
+                     # If we are above the cache size, drop the oldest element from the cache dict
+                     if i > self.slicer.cacheSize:
+                        cacheDict.popitem(last=False) #remove 1st item
+                  for key in keys:
+                     if useCache:
+                        self.benchmarkDict[key].metricValues.data[i] = \
+                                            self.benchmarkDict[key].metricValues.data[cacheDict[cacheKey]]
+                     else:
+                        self.benchmarkDict[key].metricValues.data[i] = \
+                            self.benchmarkDict[key].metric.run(slicedata, slicePoint=slice_i['slicePoint'])
+               # Not using memoize, just calculate things normally
+               else:
+                  for key in keys:
+                     self.benchmarkDict[key].metricValues.data[i] = \
+                                self.benchmarkDict[key].metric.run(slicedata,slicePoint=slice_i['slicePoint'])
+
+        # Mask data where metrics could not be computed (according to metric bad value).
+        for key in keys:
+           if self.benchmarkDict[key].metricValues.dtype.name == 'object':
+              for ind,val in enumerate(self.benchmarkDict[key].metricValues.data):
+                 if val is self.benchmarkDict[key].metricObjs.badval:
+                    self.benchmarkDict[key].metricValues.mask[ind] = True
+           else:
+              # For some reason, this doesn't work for dtype=object arrays.
+              self.benchmarkDict[key].metricValues.mask = \
+                np.where(self.benchmarkDict[key].metricValues.data==self.benchmarkDict[key].metric.badval,
+                         True, self.benchmarkDict[key].metricValues.mask)
 
     def plotAll():
         """
