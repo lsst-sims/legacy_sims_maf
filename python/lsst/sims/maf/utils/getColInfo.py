@@ -20,7 +20,7 @@ class ColInfo(object):
                         'rawSeeing': 'arcsec',
                         'finSeeing': 'arcsec',
                         'seeing': 'arcsec',
-                        'airmass': 'airmass',
+                        'airmass': 'X',
                         'night': 'days',
                         'fieldRA': 'rad',
                         'fieldDec': 'rad',
