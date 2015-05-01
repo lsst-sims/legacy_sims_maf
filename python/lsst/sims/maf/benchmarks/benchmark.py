@@ -61,21 +61,7 @@ class Benchmark(object):
         else:
             self.mapsList = None
         # Add the summary stats, if applicable.
-        if summaryStats is not None:
-            if isinstance(summaryStats, metrics.BaseMetric):
-                self.summaryStats = [summaryStats]
-            else:
-                self.summaryStats = []
-                for s in summaryStats:
-                    if not isinstance(s, metrics.BaseMetric):
-                        raise ValueError('SummaryStats must only contain lsst.sims.maf.metrics objects')
-                    self.summaryStats.append(s)
-        else:
-            # Add identity metric to unislicer metric values (to get them into resultsDB).
-            if self.slicer.slicerName == 'UniSlicer':
-                self.summaryStats = [metrics.IdentityMetric('metricdata')]
-            else:
-                self.summaryStats = []
+        self.setSummaryStats(summaryStats)
         # Set the provenance/metadata.
         self.runName = runName
         self._buildMetadata(metadata)
@@ -186,6 +172,26 @@ class Benchmark(object):
         if 'metricdata' in dbcolnames:
             dbcolnames.remove('metricdata')
         self.dbCols = dbcolnames
+
+    def setSummaryStats(self, summaryStats):
+        """
+        Set (or reset) the summary stats for the benchmark.
+        """
+        if summaryStats is not None:
+            if isinstance(summaryStats, metrics.BaseMetric):
+                self.summaryStats = [summaryStats]
+            else:
+                self.summaryStats = []
+                for s in summaryStats:
+                    if not isinstance(s, metrics.BaseMetric):
+                        raise ValueError('SummaryStats must only contain lsst.sims.maf.metrics objects')
+                    self.summaryStats.append(s)
+        else:
+            # Add identity metric to unislicer metric values (to get them into resultsDB).
+            if self.slicer.slicerName == 'UniSlicer':
+                self.summaryStats = [metrics.IdentityMetric('metricdata')]
+            else:
+                self.summaryStats = []
 
     def setPlotDict(self, plotDict=None):
         """
@@ -306,7 +312,7 @@ class Benchmark(object):
         self.metricValues.fill_value = slicer.badval
         # It's difficult to reinstantiate the metric object, as we don't
         # know what it is necessarily -- the metricName can be changed.
-        self.metric = metrics.BaseMetric(col='metricdata')
+        self.metric = metrics.BaseMetric()
         # But, for plot label building, we do need to try to recreate the
         #  metric name and units.
         self.metric.name = header['metricName']
@@ -324,6 +330,8 @@ class Benchmark(object):
             self.setPlotDict(header['plotDict'])
         if 'displayDict' in header:
             self.setDisplayDict(header['displayDict'])
+        path, head = os.path.split(filename)
+        self.fileRoot = head.replace('.npz', '')
 
     def computeSummaryStatistics(self, resultsDb=None):
         """
@@ -350,7 +358,7 @@ class Benchmark(object):
                     summaryVal = m.run(rarr)
                 self.summaryValues.append([mName, summaryVal])
                 # Add summary metric info to results database, if applicable.
-                if self.resultsDb:
+                if resultsDb:
                     metricId = resultsDb.updateMetric(self.metric.metricName, self.slicer.slicerName,
                                                       self.runName, self.sqlconstraint, self.metadata, None)
                     resultsDb.updateSummaryStat(metricId, summaryName=mName, summaryValue=summaryVal)
