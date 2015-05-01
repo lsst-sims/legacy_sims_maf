@@ -5,36 +5,37 @@ from collections import OrderedDict
 
 class BenchmarkGroup(object):
     """
-    take a dictionary of Benchmark objects, make sure they have the same SQL constaint, then pull the data
+    take a dictionary of Benchmark objects, make sure they have the same SQL constraint, then pull the data
     """
 
-    def __init__(benchmarkDict, dbObj, verbose=True):
-
+    def __init__(self,benchmarkDict, dbObj, verbose=True):
+        self.verbose = verbose
         # Check that all benchmarks have the same sql
-        sql1 = benchmarkDict[benchmarkDict.keys()[0]].sqlconstriant
+        sql1 = benchmarkDict[benchmarkDict.keys()[0]].sqlconstraint
         for bm in benchmarkDict:
-            if benchmarkDict[bm].sqlconstaint != sql1:
-                raise ValueError('Benchmarks must have same sqlconstraint %s != %s' % (sql1, benchmarkDict[bm].sqlconstaint))
+            if benchmarkDict[bm].sqlconstraint != sql1:
+                raise ValueError('Benchmarks must have same sqlconstraint %s != %s' % (sql1, benchmarkDict[bm].sqlconstraint))
 
         self.benchmarkDict = benchmarkDict
         self.dbObj = dbObj
         # Build list of all the columns needed:
         dbCols = []
         for bm in self.benchmarkDict:
-            dbCols.extend(bm.dbCols)
+            dbCols.extend(self.benchmarkDict[bm].dbCols)
         dbCols = list(set(dbCols))
 
         # Pull the data
         if verbose:
-            print "Calling DB with constriant %s"%sql1
-        self.simdata = utils.getSimData(dbObj, sql1, dbcols)
+            print "Calling DB with constraint %s"%sql1
+        self.simdata = utils.getSimData(dbObj, sql1, dbCols)
         if verbose:
             print "Found %i visits"%self.simdata.size
 
         # If we need fieldData, grab it here:
         if benchmarkDict[bm].slicer.slicerName == 'OpsimFieldSlicer':
             self.getFieldData(benchmarkDict[bm].slicer, sql1)
-        else self.fieldData = None
+        else:
+            self.fieldData = None
 
         # Dict to keep track of what's been run:
         self.hasRun = {}
@@ -42,43 +43,53 @@ class BenchmarkGroup(object):
             self.hasRun[bm] = False
         self.bmKeys = benchmarkDict.keys()
 
-    def _checkCompatable(bm1,bm2):
+    def _checkCompatible(self,bm1,bm2):
         """
         figure out which benchmarks are compatable.
-        If the sql constaints the same, slicers the same, and stackers have different names, or are equal.
+        If the sql constraints the same, slicers the same, and stackers have different names, or are equal.
         returns True if the benchmarks could be run together, False if not.
         """
         result = False
-        if (bm1.sqlconstraint == bm2.sqlconstraint) & (bm1.slicer == bm2.slicer:):
+        if (bm1.sqlconstraint == bm2.sqlconstraint) & (bm1.slicer == bm2.slicer):
             if bm1.mapsList.sort() == bm2.mapsList.sort():
-                for stacker in bm1.stackers:
-                    for stacker2 in bm2.stackers:
+                for stacker in bm1.stackerList:
+                    for stacker2 in bm2.stackerList:
                         # If the stackers have different names, that's OK, and if they are identical, that's ok.
-                        if (stacker.__class__.__name__ != staker2.__class__.__name__) | (stacker == stacker2):
+                        if (stacker.__class__.__name__ != stacker2.__class__.__name__) | (stacker == stacker2):
                             result= True
             return result
 
 
-    def runAll():
+    def runAll(self):
         """
         run all the benchmarks
         """
         while False in self.hasRun.values():
             toRun = []
+
             for bm in self.benchmarkDict:
                 if self.hasRun[bm] is False:
                     if len(toRun) == 0:
                         toRun.append(bm)
                     else:
                         for key in toRun:
-                            if self.checkCompatible(self.benchmarkDict[bm], self.benchmarkDict[key]):
-                                toRun.append(bm)
+                            if key != bm:
+                                if self._checkCompatible(self.benchmarkDict[bm], self.benchmarkDict[key]):
+                                    toRun.append(bm)
 
+            if self.verbose:
+                print 'Running:'
+                for key in toRun:
+                    print key
             self._runCompatable(toRun)
+            if self.verbose:
+                print 'Completed'
+            for key in toRun:
+                self.hasRun[key] = True
 
 
 
-    def _runCompatable(keys):
+    def _runCompatable(self,keys):
         """
         given a batch of compatable benchmarks, run them.
         These are the keys to the
@@ -88,16 +99,18 @@ class BenchmarkGroup(object):
         maps = []
         stackers = []
         for bm in keys:
-            for maplist in self.benchmarkDict[bm].mapList:
-                maps.extend(mapList)
+            for mapsList in self.benchmarkDict[bm].mapsList:
+                maps.extend(mapsList)
             for stacker in self.benchmarkDict[bm].stackerList:
-                stackers.extend(stacker)
+                if stacker not in stackers:
+                    stackers.append(stacker)
 
+        # May need to do a more rigerous purge of duplicate stackers and maps
         maps = list(set(maps))
-        stackers = list(set(stackers))
+
         for stacker in stackers:
             # Check that stackers can clobber cols that are already there
-            self.simData = stacker.run(self.simData)
+            self.simdata = stacker.run(self.simdata)
 
         slicer = self.benchmarkDict(keys[0]).slicer
         if slicer.slicerName == 'OpsimFieldSlicer':
@@ -121,7 +134,7 @@ class BenchmarkGroup(object):
            cache = False
         # Run through all slicepoints and calculate metrics.
         for i, slice_i in enumerate(slicer):
-            slicedata = simData[slice_i['idxs']]
+            slicedata = self.simdata[slice_i['idxs']]
             if len(slicedata)==0:
                 # No data at this slicepoint. Mask data values.
                for key in keys:
@@ -130,7 +143,7 @@ class BenchmarkGroup(object):
                # There is data! Should we use our data cache?
                if cache:
                   # Make the data idxs hashable.
-                  key = str(sorted(slice_i['idxs']))[1:-1].replace(' ','')
+                  cacheKey = str(sorted(slice_i['idxs']))[1:-1].replace(' ','')
                   # If key exists, set flag to use it, otherwise add it
                   if cacheKey in cacheDict:
                      useCache = True
@@ -165,14 +178,14 @@ class BenchmarkGroup(object):
                 np.where(self.benchmarkDict[key].metricValues.data==self.benchmarkDict[key].metric.badval,
                          True, self.benchmarkDict[key].metricValues.mask)
 
-    def plotAll():
+    def plotAll(self):
         """
         Generate the plots for all the benchmarks.
         """
         for bm in self.benchmarkDict:
             self.benchmarkDict[bm].plot()
 
-    def writeAll():
+    def writeAll(self):
         """
         Save all the benchmarks
         """
@@ -215,7 +228,7 @@ class BenchmarkGroup(object):
         if 'Field' in self.dbObj.tables:
             self.fieldData = self.dbObj.fetchFieldsFromFieldTable(propids)
         else:
-            fieldID, idx = np.unique(self.simData[slicer.simDataFieldIDColName], return_index=True)
+            fieldID, idx = np.unique(self.simdata[slicer.simDataFieldIDColName], return_index=True)
             ra = self.data[slicer.fieldRaColName][idx]
             dec = self.data[slicer.fieldDecColName][idx]
             self.fieldData = np.core.records.fromarrays([fieldID, ra, dec],
