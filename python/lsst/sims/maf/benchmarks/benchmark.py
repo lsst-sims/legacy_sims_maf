@@ -56,7 +56,7 @@ class Benchmark(object):
                         raise ValueError('mapsList must only contain lsst.sims.maf.maps objects')
                     self.mapsList.append(m)
         else:
-            self.mapsList = []
+            self.mapsList = None
         # Add the summary stats, if applicable.
         if summaryStats is not None:
             if isinstance(summaryStats, metrics.BaseMetric):
@@ -103,7 +103,7 @@ class Benchmark(object):
         self.stackerList = []
         self.sqlconstraint = ''
         self.summaryStats = []
-        self.mapsList = []
+        self.mapsList = None
         self.runName = 'opsim'
         self.metadata = ''
         self.dbCols = None
@@ -208,7 +208,7 @@ class Benchmark(object):
         # Reset self.displayDict to this updated dictionary.
         self.plotDict = tmpPlotDict
 
-    def setDisplayDict(self, displayDict=None):
+    def setDisplayDict(self, displayDict=None, resultsDb=None):
         """
         Set or update any property of displayDict.
         Will set default values.
@@ -222,6 +222,21 @@ class Benchmark(object):
             tmpDisplayDict.update(displayDict)
         # Reset self.displayDict to this updated dictionary.
         self.displayDict = tmpDisplayDict
+        # If we still need to auto-generate a caption, do it.
+        if self.displayDict['caption'] is None:
+            caption = self.metric.name + ' calculated on a %s' %(self.slicer.slicerName)
+            caption += ' basis, using a subset of data selected via %s.' %(self.sqlconstraint)
+            if 'zp' in self.plotDict:
+              caption += ' Values plotted with a zeropoint of %.2f.' %(self.plotDict['zp'])
+            if 'normVal' in self.plotDict:
+              caption += ' Values plotted with a normalization value of %.2f.' %(self.plotDict['normVal'])
+            self.displayDict['caption'] = caption
+          if resultsDb is not None:
+            # Update the display values in the resultsDb.
+            metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
+                                              self.runName, self.sqlconstraint,
+                                              self.metadata, outfile)
+            resultsDb.updateDisplay(metricId, self.displayDict)
 
     def writeBenchmark(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
         """
@@ -352,3 +367,27 @@ class Benchmark(object):
             if not mMask:
                 newbenchmark.metricValues.data[i] = reduceFunc(mVal)
         return newbenchmark
+
+    def plotMetric(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True, figformat='pdf', dpi=600,
+                   thumbnail=True):
+        """
+        Create all plots available from the slicer.
+        """
+        # plotData for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
+         if outfileSuffix is not None:
+            outfile = self.fileRoot + outfileSuffix
+        else:
+            outfile = self.fileRoot
+        # Make plots.
+        plotResults = self.slicer.plotData(self.metricValues, savefig=savefig,
+                                           figformat=figformat, dpi=dpi,
+                                           filename=os.path.join(self.outDir, outfile),
+                                           thumbnail = thumbnail, **self.plotDict)
+        # Save information about the plotted files.
+        if resultsDb:
+            metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
+                                              self.runName, self.sqlconstraint, self.metadata, None)
+            for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
+                froot, fname = os.path.split(filename)
+                resultsDb.updatePlot(metricId=metricId, plotType=filetype, plotFile=fname)
+        return plotResults['figs']
