@@ -149,7 +149,6 @@ class BaseMetric(object):
             if len(units.replace(' ', '')) == 0:
                 units = ''
         self.units = units
-            self.plotDict['units'] = self.units
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')
