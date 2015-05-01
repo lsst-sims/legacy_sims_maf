@@ -382,8 +382,8 @@ class Benchmark(object):
                 newbenchmark.metricValues.data[i] = reduceFunc(mVal)
         return newbenchmark
 
-    def plotMetric(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True, figformat='pdf', dpi=600,
-                   thumbnail=True):
+    def plotBenchmark(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
+                      figformat='pdf', dpi=600, thumbnail=True):
         """
         Create all plots available from the slicer.
         """
