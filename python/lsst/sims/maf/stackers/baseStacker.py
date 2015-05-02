@@ -75,7 +75,7 @@ class BaseStacker(object):
         for key in stateNow:
             if '_' not in key:
                 if ('registry' not in key) & ('run' not in key):
-                    if getattr(self,key) != getattr(otherStacker,key):
+                    if getattr(self,key) != getattr(otherStacker, key):
                         return False
         return True
 
