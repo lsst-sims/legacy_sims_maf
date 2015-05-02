@@ -110,16 +110,16 @@ class OneDSlicer(BaseSlicer):
         if isinstance(otherSlicer, OneDSlicer):
             if self.sliceColName == otherSlicer.sliceColName:
                 # If slicer restored from disk or setup, then 'bins' in slicePoints dict.
-                if 'bins' in self.slicePoints and 'bins' in otherSlicer.slicePoints:
+                if 'bins' in self.slicePoints & 'bins' in otherSlicer.slicePoints:
                     match = np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
                 # Otherwise, try some other things.
                 else:
-                    if self.bins and otherSlicer.bins: # if these are not None
+                    if self.bins & otherSlicer.bins: # if these are not None
                         match = np.all(self.bins == otherSlicer.bins)
-                    elif self.binsize and self.binMin and self.binMax and\
-                        otherSlicer.binsize and otherSlicer.binMin and otherSlicer.binMax:
-                        if (self.binsize == otherSlicer.binsize) and\
-                          (self.binMin == otherSlicer.binMin) and (self.binMax == otherSlicer.binMax):
+                    elif self.binsize & self.binMin & self.binMax &\
+                        otherSlicer.binsize & otherSlicer.binMin & otherSlicer.binMax:
+                        if (self.binsize == otherSlicer.binsize) &\
+                          (self.binMin == otherSlicer.binMin) & (self.binMax == otherSlicer.binMax):
                             match = True
         return match
 
