@@ -39,11 +39,11 @@ class BenchmarkGroup(object):
             if not isinstance(b, Benchmark):
                 raise ValueError('benchmarkDict should contain only benchmark objects.')
         # Check that all benchmarks have the same sql constraint.
-        sql1 = benchmarkDict.itervalues().next().sqlconstraint
-        for b in benchmarkDict.itervalues():
-            if b.sqlconstraint != sql1:
-                raise ValueError('Benchmarks in a BenchmarkGroup must have same sqlconstraint: %s != %s'
-                                 % (sql1, b.sqlconstraint))
+        self.sqlconstraint = benchmarkDict.itervalues().next().sqlconstraint
+        for k, b in benchmarkDict.iteritems():
+            if b.sqlconstraint != self.sqlconstraint:
+                raise ValueError('BenchmarkGroup must have the same sqlconstraint: %s (in Benchmark %s) != %s (first constraint)'
+                                 % (b.sqlconstraint, k, self.sqlconstraint))
         self.benchmarkDict = benchmarkDict
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
@@ -57,16 +57,23 @@ class BenchmarkGroup(object):
             self.resultsDb = False
 
         # Build list of all the columns needed from the database.
-        dbCols = []
+        self.dbCols = []
         for b in self.benchmarkDict.itervalues():
-            dbCols.extend(b.dbCols)
-        dbCols = list(set(dbCols))
+            self.dbCols.extend(b.dbCols)
+        self.dbCols = list(set(self.dbCols))
 
+    def getData(self):
+        """
+        Query the data from the database.
+        """
+        # This could be done automatically on init, but it seems that it's nice to let the user
+        #  be prepared for this step (as it could be a bit long if much data is needed). This way
+        #  they could theoretically also verify which columns could be queries, what the sqlconstraint was, etc.
         # Query the data from the dbObj.
         if verbose:
-            print "Calling DB with constraint %s" % sql1
+            print "Querying database with constraint %s" % self.sqlconstraint
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        self.simdata = utils.getSimData(dbObj, sql1, dbCols)
+        self.simdata = utils.getSimData(dbObj, self.sqlconstraint, self.dbCols)
         if verbose:
             print "Found %i visits" % self.simdata.size
 
@@ -77,7 +84,7 @@ class BenchmarkGroup(object):
             if b.slicer.slicerName == 'OpsimFieldSlicer':
                 needFields = True
         if needFields:
-            self.fieldData = utils.getFieldData(dbObj, sql1)
+            self.fieldData = utils.getFieldData(dbObj, sqlconstraint)
         else:
             self.fieldData = None
 
@@ -85,6 +92,10 @@ class BenchmarkGroup(object):
         self.hasRun = {}
         for bk in benchmarkDict:
             self.hasRun[bk] = False
+
+    def _getDictSubset(self, origdict, subsetkeys):
+        newdict = {key:origdict.get(key) for key in somekeys}
+        return newdict
 
     def _checkCompatible(self, benchmark1, benchmark2):
         """
@@ -94,47 +105,58 @@ class BenchmarkGroup(object):
         Returns True if the benchmarks are compatible, False if not.
         """
         result = False
-        if (benchmark1.sqlconstraint == benchmark2.sqlconstraint) & (benchmark1.slicer == benchmark2.slicer):
+        if (benchmark1.sqlconstraint == benchmark2.sqlconstraint) and (benchmark1.slicer == benchmark2.slicer):
             if benchmark1.mapsList.sort() == benchmark2.mapsList.sort():
-                for stacker in benchmark1.stackerList:
-                    for stacker2 in benchmark2.stackerList:
-                        # If the stackers have different names, that's OK, and if they are identical, that's ok.
-                        if (stacker.__class__.__name__ != stacker2.__class__.__name__) | (stacker == stacker2):
-                            result= True
+                if len(benchmark1.stackerList) == 0 or len(benchmark2.stackerList) == 0:
+                    result = True
+                else:
+                    for stacker in benchmark1.stackerList:
+                        for stacker2 in benchmark2.stackerList:
+                            # If the stackers have different names, that's OK, and if they are identical, that's ok.
+                            if (stacker.__class__.__name__ != stacker2.__class__.__name__) | (stacker == stacker2):
+                                result= True
+                            else:
+                                result = False
         return result
+
+    def _sortCompatible(self):
+        """
+        Find sets of compatible benchmarks from the benchmarkDict.
+        """
+        # Making this explicit lets the user see each set of compatible benchmarks --
+        # This ought to make it easier to pick up and re-run compatible subsets if there are failures.
+        # CompatibleLists stores a list of lists;
+        #   each sublist contains the benchmarkDict keys of a compatible set of benchmarks.
+        compatibleLists = []
+        for k, b in self.benchmarkDict.iteritems():
+            foundCompatible = False
+            for compatibleSubSet in compatibleLists:
+                compareB = self.benchmarkDict[compatibleSubSet[0]]
+                if self._checkCompatible(compareB, b):
+                    # Then compareB and b are compatible; add it to this sublist.
+                    compatibleSubSet.append(k)
+                    foundCompatible = True
+            if not foundCompatible:
+                # Didn't find a pre-existing compatible set; make a new one.
+                compatibleLists.append([k,])
+        self.compatibleLists = compatibleLists
 
 
     def runAll(self):
         """
         Run all the benchmarks in the entire benchmark group.
         """
-        # This could stand some elucidating ..
-        while False in self.hasRun.values():
-            toRun = []
-
-            for bkey in self.benchmarkDict:
-                if self.hasRun[bkey] is False:
-                    if len(toRun) == 0:
-                        toRun.append(bkey)
-                    else:
-                        for key in toRun:
-                            if key != bkey:
-                                if self._checkCompatible(self.benchmarkDict[bkey], self.benchmarkDict[key]):
-                                    toRun.append(bkey)
-
+        self._sortCompatible()
+        for compatibleList in compatibleLists:
             if self.verbose:
-                print 'Running:'
-                for key in toRun:
-                    print key
-            self.runCompatible(toRun)
+                print 'Running: ', compatibleList
+            self.runCompatible(compatibleList)
             if self.verbose:
                 print 'Completed'
-            for key in toRun:
+            for key in compatibleList:
                 self.hasRun[key] = True
 
-
-
-    def runCompatible(self, keys):
+    def runCompatible(self, compatibleList):
         """
         Runs a set of 'compatible' benchmarks in the benchmark group, identified by 'keys'.
         """
@@ -228,12 +250,12 @@ class BenchmarkGroup(object):
         """
         Generate the plots for all the benchmarks.
         """
-        for bm in self.benchmarkDict:
-            self.benchmarkDict[bm].plot()
+        for b in self.benchmarkDict.itervalues():
+            b.plot(outDir=self.outDir, resultsDb=self.resultsDb)
 
     def writeAll(self):
         """
-        Save all the benchmarks
+        Save all the benchmarks to disk.
         """
-        for bm in self.benchmarkDict:
-            self.benchmarkDict[bm].writeBenchmark()
+        for b in self.benchmarkDict.itervalues():
+            b.writeBenchmark(outDir=self.outDir, resultsDb=self.resultsDb)

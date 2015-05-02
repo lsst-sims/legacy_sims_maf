@@ -205,7 +205,7 @@ class Benchmark(object):
         tmpPlotDict['title'] = title
         if self.slicer.slicerName == 'OneDSlicer':
             ylabel = self.metric.name + ' (' + self.metric.units + ')'
-            xlabel = self.slicer.sliceColName  + ' (' + self.slicers.sliceColUnits + ')'
+            xlabel = self.slicer.sliceColName  + ' (' + self.slicer.sliceColUnits + ')'
             tmpPlotDict['ylabel'] = ylabel
             tmpPlotDict['xlabel'] = xlabel
         else:
@@ -263,7 +263,7 @@ class Benchmark(object):
             if 'normVal' in self.plotDict:
                 caption += ' Values plotted with a normalization value of %.2f.' %(self.plotDict['normVal'])
             self.displayDict['caption'] = caption
-        if resultsDb is not None:
+        if resultsDb:
             # Update the display values in the resultsDb.
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
                                               self.runName, self.sqlconstraint,
