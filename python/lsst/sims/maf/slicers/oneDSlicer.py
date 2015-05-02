@@ -106,10 +106,22 @@ class OneDSlicer(BaseSlicer):
 
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""
+        match = False
         if isinstance(otherSlicer, OneDSlicer):
-            return np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
-        else:
-            return False
+            if self.sliceColName == otherSlicer.sliceColName:
+                # If slicer restored from disk or setup, then 'bins' in slicePoints dict.
+                if 'bins' in self.slicePoints and 'bins' in otherSlicer.slicePoints:
+                    match = np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
+                # Otherwise, try some other things.
+                else:
+                    if self.bins and otherSlicer.bins: # if these are not None
+                        match = np.all(self.bins == otherSlicer.bins)
+                    elif self.binsize and self.binMin and self.binMax and\
+                        otherSlicer.binsize and otherSlicer.binMin and otherSlicer.binMax:
+                        if (self.binsize == otherSlicer.binsize) and\
+                          (self.binMin == otherSlicer.binMin) and (self.binMax == otherSlicer.binMax):
+                            match = True
+        return match
 
     def plotBinnedData(self, metricValues, fignum=None,
                        title=None, units=None,

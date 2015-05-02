@@ -59,7 +59,10 @@ class HealpixSlicer(BaseSpatialSlicer):
         """Evaluate if two slicers are equivalent."""
         # If the two slicers are both healpix slicers, check nsides value.
         if isinstance(otherSlicer, HealpixSlicer):
-            return (otherSlicer.nside == self.nside)
+            if otherSlicer.nside == self.nside:
+                if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
+                    if otherSlicer.radius == self.radius:
+                        return True
         else:
             return False
 
