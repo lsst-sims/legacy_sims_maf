@@ -253,12 +253,15 @@ class Benchmark(object):
         self.displayDict = tmpDisplayDict
         # If we still need to auto-generate a caption, do it.
         if self.displayDict['caption'] is None:
-            caption = self.metric.name + ' calculated on a %s' %(self.slicer.slicerName)
-            caption += ' basis, using a subset of data selected via %s.' %(self.sqlconstraint)
+            if self.metric.comment is None:
+                caption = self.metric.name + ' calculated on a %s' %(self.slicer.slicerName)
+                caption += ' basis, using a subset of data selected via %s.' %(self.sqlconstraint)
+            else:
+                caption = self.metric.comment
             if 'zp' in self.plotDict:
-              caption += ' Values plotted with a zeropoint of %.2f.' %(self.plotDict['zp'])
+                caption += ' Values plotted with a zeropoint of %.2f.' %(self.plotDict['zp'])
             if 'normVal' in self.plotDict:
-              caption += ' Values plotted with a normalization value of %.2f.' %(self.plotDict['normVal'])
+                caption += ' Values plotted with a normalization value of %.2f.' %(self.plotDict['normVal'])
             self.displayDict['caption'] = caption
         if resultsDb is not None:
             # Update the display values in the resultsDb.
