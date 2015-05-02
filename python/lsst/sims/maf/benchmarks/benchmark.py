@@ -211,7 +211,7 @@ class Benchmark(object):
         else:
             xlabel = self.metric.name  + ' (' + self.metric.units + ')'
             tmpPlotDict['xlabel'] = xlabel
-        if metric.metricDtype == 'int':
+        if self.metric.metricDtype == 'int':
             tmpPlotDict['cbarFormat'] = '%d'
         # Update from self.plotDict (to use existing values, if present).
         tmpPlotDict.update(self.plotDict)
@@ -224,7 +224,7 @@ class Benchmark(object):
                 warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
                 del tmpPlotDict['zp']
             # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
-            else if 'cbarFormat' not in plotDict:
+            elif 'cbarFormat' not in plotDict:
                 del tmpPlotDict['cbarFormat']
         if 'normVal' in tmpPlotDict:
             if tmpPlotDict['normVal'] == 0:
@@ -232,7 +232,7 @@ class Benchmark(object):
                               % (self.fileRoot))
                 del tmpPlotDict['normVal']
             # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
-            else if 'cbarFormat' not in plotDict:
+            elif 'cbarFormat' not in plotDict:
                 del tmpPlotDict['cbarFormat']
         # Reset self.displayDict to this updated dictionary.
         self.plotDict = tmpPlotDict

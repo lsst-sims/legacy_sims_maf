@@ -1,10 +1,10 @@
 import numpy as np
 import numpy.ma as ma
 from collections import OrderedDict
-
+import os
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
-from .benchmarks import Benchmark
+from .benchmark import Benchmark
 
 class BenchmarkGroup(object):
     """
@@ -22,7 +22,7 @@ class BenchmarkGroup(object):
     Thus, it also tracks the 'outDir' and 'resultsDb'.
     """
 
-    def __init__(self, benchmarkDict, dbObj, outDir='.', useResultsDb=True, resultsDbAddress=None, verbose=True):
+    def __init__(self, benchmarkDict, dbObj, outDir='.', useResultsDb=False, resultsDbAddress=None, verbose=True):
         """
         Set up the benchmark group, check that all benchmarks have the same sql constraint.
         """
@@ -59,7 +59,7 @@ class BenchmarkGroup(object):
         # Build list of all the columns needed from the database.
         dbCols = []
         for b in self.benchmarkDict.itervalues():
-            dbCols.extend(self.b.dbCols)
+            dbCols.extend(b.dbCols)
         dbCols = list(set(dbCols))
 
         # Query the data from the dbObj.
@@ -74,7 +74,7 @@ class BenchmarkGroup(object):
         # Determine if we have a opsimFieldSlicer:
         needFields = False
         for b in self.benchmarkDict.itervalues():
-            if b.slicer.slicerName == 'OpsimFieldSlicer'
+            if b.slicer.slicerName == 'OpsimFieldSlicer':
                 needFields = True
         if needFields:
             self.fieldData = utils.getFieldData(dbObj, sql1)
@@ -115,7 +115,7 @@ class BenchmarkGroup(object):
             for bkey in self.benchmarkDict:
                 if self.hasRun[bkey] is False:
                     if len(toRun) == 0:
-                        toRun.append(benchmark)
+                        toRun.append(bkey)
                     else:
                         for key in toRun:
                             if key != bkey:
@@ -126,7 +126,7 @@ class BenchmarkGroup(object):
                 print 'Running:'
                 for key in toRun:
                     print key
-            self._runCompatible(toRun)
+            self.runCompatible(toRun)
             if self.verbose:
                 print 'Completed'
             for key in toRun:
@@ -158,7 +158,7 @@ class BenchmarkGroup(object):
             # Check that stackers can clobber cols that are already there
             self.simdata = stacker.run(self.simdata)
 
-        slicer = self.benchmarkDict(keys[0]).slicer
+        slicer = self.benchmarkDict[keys[0]].slicer
         if slicer.slicerName == 'OpsimFieldSlicer':
             slicer.setupSlicer(self.simdata, self.fieldData, maps=maps)
         else:
@@ -237,5 +237,3 @@ class BenchmarkGroup(object):
         """
         for bm in self.benchmarkDict:
             self.benchmarkDict[bm].writeBenchmark()
-
- 

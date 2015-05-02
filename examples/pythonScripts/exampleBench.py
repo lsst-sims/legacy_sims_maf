@@ -14,7 +14,7 @@ slicer = slicers.HealpixSlicer(nside=4)
 stackerList = [stackers.NormAirmassStacker()]
 
 bm = benchmarks.Benchmark(metric, slicer, stackerList=stackerList, sqlconstraint='filter="r" and night < 100')
-metic = metrics.RmsMetric(col='airmass')
+metric = metrics.RmsMetric(col='airmass')
 bm2 = benchmarks.Benchmark(metric, slicer, stackerList=stackerList, sqlconstraint='filter="r" and night < 100')
 
 
