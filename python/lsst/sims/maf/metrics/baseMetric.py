@@ -144,6 +144,8 @@ class BaseMetric(object):
             if len(units.replace(' ', '')) == 0:
                 units = ''
         self.units = units
+        # Add the ability to set a comment (that could be propagated automatically to a benchmark's display caption).
+        self.comment = None
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')
