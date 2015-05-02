@@ -129,23 +129,21 @@ class BenchmarkGroup(object):
         # CompatibleLists stores a list of lists;
         #   each (nested) list contains the benchmarkDict keys of a compatible set of benchmarks.
         #
-        # At the moment, this is quite slow, probably because I'm comparing each benchmark against
-        #  (not all, but many of) the other benchmarks. (I think your previous implementation did this too??)
-        # We may want to think about keeping higher-level summary of the properties of a compatible set
-        # (like the stackers) to help cut down a little bit on this comparison.
-        #  ... although a quick test with 'checkCompatible' just returning False indicates the problem might
-        # be in the comparison method (it obviously just takes some time .. not necessarily that there's a tall pole)
-        # Gahh we might have to learn about timing profiling
+        #  .. nevermind (previous comments) - I had a loop control problem that I think is fixed now.
         compatibleLists = []
         for k, b in self.benchmarkDict.iteritems():
             foundCompatible = False
             for compatibleList in compatibleLists:
-                # Must compare all benchmarks in each subset (if they are a potential match),
-                #  as the stackers could be different (and one could be incompatible, not necessarily the first)
-                for comparisonBenchmarkKey in compatibleList:
-                    if not self._checkCompatible(self.benchmarkDict[comparisonBenchmarkKey], b):
-                        # If we find one which is not compatible, stop and go on to the next subset list.
-                        break
+                comparisonBenchmarkKey = compatibleList[0]
+                compatible = self._checkCompatible(self.benchmarkDict[comparisonBenchmarkKey], b)
+                if compatible:
+                    # Must compare all benchmarks in each subset (if they are a potential match),
+                    #  as the stackers could be different (and one could be incompatible, not necessarily the first)
+                    for comparisonBenchmarkKey in compatibleList[1:]:
+                        compatible = self._checkCompatible(self.benchmarkDict[comparisonBenchmarkKey], b)
+                        if not compatible:
+                            # If we find one which is not compatible, stop and go on to the next subset list.
+                            break
                     # Otherwise, we reached the end of the subset and they were all compatible.
                     foundCompatible=True
                     compatibleList.append(k)
