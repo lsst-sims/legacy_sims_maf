@@ -22,5 +22,6 @@ print bm.dbCols
 
 bmD = {0:bm, 1:bm2}
 
-bmg = benchmarks.BenchmarkGroup(bmD, database)
+bmg = benchmarks.BenchmarkGroup(bmD, database, outDir='test')
+bmg.getData()
 bmg.runAll()
