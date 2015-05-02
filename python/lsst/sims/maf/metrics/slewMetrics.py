@@ -19,9 +19,8 @@ class SlewContributionMetric(BaseMetric):
         self.activeCol = activeCol
         self.activity = activity
         super(SlewContributionMetric, self).__init__(col=col, **kwargs)
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Average time for %s activity (in seconds) when in the critical path,' %(activity)
-            self.displayDict['caption'] += ' multiplied by percent of total slews in critical path.'
+        self.comment = 'Average time for %s activity (in seconds) when in the critical path, ' %(activity)
+        self.comment += 'multiplied by the percent of total slews in the critical path.'
 
     def run(self, dataSlice, slicePoint=None):
         # Activities of this type, in critical path.
@@ -51,9 +50,7 @@ class AveSlewFracMetric(BaseMetric):
         self.activeCol = activeCol
         self.activity = activity
         super(AveSlewFracMetric, self).__init__(col=col, **kwargs)
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Average time for %s activity (in seconds),' %(activity)
-            self.displayDict['caption'] += ' multiplied by percent of total slews.'
+        self.comment = 'Average time for %s activity (in seconds), multiplied by percent of total slews.' %(activity)
 
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.activeCol] == self.activity)[0]

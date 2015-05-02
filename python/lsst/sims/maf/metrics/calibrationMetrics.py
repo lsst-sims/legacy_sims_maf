@@ -47,13 +47,15 @@ class ParallaxMetric(BaseMetric):
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Calibration'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Estimated uncertainty in parallax measurement (assuming no proper motion).'
-            if self.normalize:
-                self.displayDict['caption'] = 'Normalized uncertainty in parallax measurement (assuming no proper motion). '
-                self.displayDict['caption'] += 'Values closer to 1 indicate more optimal scheduling for parallax measurement.'
+        self.comment = 'Estimated uncertainty in parallax measurement (assuming no proper motion or that proper motion '
+        self.comment += 'is well fit). Uses measurements in all bandpasses, and estimates astrometric error based on SNR '
+        self.comment += 'in each visit. '
+        if SedTemplate == 'flat':
+            self.comment += 'Assumes a flat SED. '
+        if self.normalize:
+            self.comment += 'This normalized version of the metric displays the estimated uncertainty in the parallax measurement, '
+            self.comment += 'divided by the minimum parallax uncertainty possible (if all visits were six '
+            self.comment += 'months apart). Values closer to 1 indicate more optimal scheduling for parallax measurement.'
 
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
         """Assume parallax in RA and DEC are fit independently, then combined.
@@ -123,14 +125,15 @@ class ProperMotionMetric(BaseMetric):
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Calibration'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Estimated uncertainty of the proper motion fits (assuming no parallax).'
-            if self.normalize:
-                self.displayDict['caption'] = 'Normalized uncertainty in proper motion fits (assuming no parallax). '
-                self.displayDict['caption'] += 'Values closer to 1 indicate more optimal scheduling '
-                self.displayDict['caption'] += 'for proper motion error.'
+        self.comment = 'Estimated uncertainty of the proper motion fit (assuming no parallax or that parallax is well fit). '
+        self.comment += 'Uses visits in all bands, and generates approximate astrometric errors using the SNR in each visit. '
+        if SedTemplate == 'flat':
+            self.comment += 'Assumes a flat SED. '
+        if self.normalize:
+            self.comment += 'This normalized version of the metric represents the estimated uncertainty in the proper '
+            self.comment += 'motion divided by the minimum uncertainty possible (if all visits were '
+            self.comment += 'obtained on the first and last days of the survey). Values closer to 1 '
+            self.comment += 'indicate more optimal scheduling.'
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice['filter'])
