@@ -1,87 +1,132 @@
-import lsst.sims.maf.utils as utils
 import numpy as np
 import numpy.ma as ma
 from collections import OrderedDict
 
+import lsst.sims.maf.db as db
+import lsst.sims.maf.utils as utils
+from .benchmarks import Benchmark
+
 class BenchmarkGroup(object):
     """
-    take a dictionary of Benchmark objects, make sure they have the same SQL constraint, then pull the data
+    Handles groups of Benchmark objects with the same SQL constraint.
+    Primary job is to query data from database, and find and run "compatible" subgroups of benchmarks to
+    populate them with data.
+    A "compatible" subgroup of benchmarks has the same SQL constraint, as well as the same slicer, mapsList, and stackerList.
+    Thus, they modify the data returned from the query in the same way and iterate over the same slicer to generate metric values.
+
+    Each 'group' of benchmarks should be a dictionary.
+    Each group must query on the same database and have the same SQL constraint. The data returned from the db query is stored in
+    the object.
+    This class also provides convenience methods to generate all plots, run all summary statistics, run all reduce functions,
+    and write all benchmarks to disk.
+    Thus, it also tracks the 'outDir' and 'resultsDb'.
     """
 
-    def __init__(self,benchmarkDict, dbObj, verbose=True):
+    def __init__(self, benchmarkDict, dbObj, outDir='.', useResultsDb=True, resultsDbAddress=None, verbose=True):
+        """
+        Set up the benchmark group, check that all benchmarks have the same sql constraint.
+        """
         self.verbose = verbose
-        # Check that all benchmarks have the same sql
-        sql1 = benchmarkDict[benchmarkDict.keys()[0]].sqlconstraint
-        for bm in benchmarkDict:
-            if benchmarkDict[bm].sqlconstraint != sql1:
-                raise ValueError('Benchmarks must have same sqlconstraint %s != %s' % (sql1, benchmarkDict[bm].sqlconstraint))
 
+        # Check for output directory, create it if needed.
+        self.outDir = outDir
+        if not os.path.isdir(self.outDir):
+            os.makedirs(self.outDir)
+        # Do some type checking on the benchmarkDict.
+        if not isinstance(benchmarkDict, dict):
+            raise ValueError('benchmarkDict should be a dictionary containing benchmark objects.')
+        for b in benchmarkDict.itervalues():
+            if not isinstance(b, Benchmark):
+                raise ValueError('benchmarkDict should contain only benchmark objects.')
+        # Check that all benchmarks have the same sql constraint.
+        sql1 = benchmarkDict.itervalues().next().sqlconstraint
+        for b in benchmarkDict.itervalues():
+            if b.sqlconstraint != sql1:
+                raise ValueError('Benchmarks in a BenchmarkGroup must have same sqlconstraint: %s != %s'
+                                 % (sql1, b.sqlconstraint))
         self.benchmarkDict = benchmarkDict
+        # Check the dbObj.
+        if not isinstance(dbObj, db.Database):
+            raise ValueError('dbObj should be an instantiated lsst.sims.maf.db.Database object.')
         self.dbObj = dbObj
-        # Build list of all the columns needed:
+        # Set up resultsDb. (optional for use).
+        if useResultsDb:
+           self.resultsDb = ResultsDb(outDir=self.outDir,
+                                      resultsDbAddress=resultsDbAddress)
+        else:
+            self.resultsDb = False
+
+        # Build list of all the columns needed from the database.
         dbCols = []
-        for bm in self.benchmarkDict:
-            dbCols.extend(self.benchmarkDict[bm].dbCols)
+        for b in self.benchmarkDict.itervalues():
+            dbCols.extend(self.b.dbCols)
         dbCols = list(set(dbCols))
 
-        # Pull the data
+        # Query the data from the dbObj.
         if verbose:
-            print "Calling DB with constraint %s"%sql1
+            print "Calling DB with constraint %s" % sql1
+        # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
         self.simdata = utils.getSimData(dbObj, sql1, dbCols)
         if verbose:
-            print "Found %i visits"%self.simdata.size
+            print "Found %i visits" % self.simdata.size
 
-        # If we need fieldData, grab it here:
-        if benchmarkDict[bm].slicer.slicerName == 'OpsimFieldSlicer':
-            self.getFieldData(benchmarkDict[bm].slicer, sql1)
+        # Query for the fieldData if we need it for the opsimFieldSlicer.
+        # Determine if we have a opsimFieldSlicer:
+        needFields = False
+        for b in self.benchmarkDict.itervalues():
+            if b.slicer.slicerName == 'OpsimFieldSlicer'
+                needFields = True
+        if needFields:
+            self.fieldData = utils.getFieldData(dbObj, sql1)
         else:
             self.fieldData = None
 
         # Dict to keep track of what's been run:
         self.hasRun = {}
-        for bm in benchmarkDict:
-            self.hasRun[bm] = False
-        self.bmKeys = benchmarkDict.keys()
+        for bk in benchmarkDict:
+            self.hasRun[bk] = False
 
-    def _checkCompatible(self,bm1,bm2):
+    def _checkCompatible(self, benchmark1, benchmark2):
         """
-        figure out which benchmarks are compatable.
-        If the sql constraints the same, slicers the same, and stackers have different names, or are equal.
-        returns True if the benchmarks could be run together, False if not.
+        Check if two benchmarks are "compatible".
+        Compatible indicates that the sql constraints, the slicers, and the maps are the same, and
+        that the stackers do not interfere with each other (i.e. are not trying to set the same column in different ways).
+        Returns True if the benchmarks are compatible, False if not.
         """
         result = False
-        if (bm1.sqlconstraint == bm2.sqlconstraint) & (bm1.slicer == bm2.slicer):
-            if bm1.mapsList.sort() == bm2.mapsList.sort():
-                for stacker in bm1.stackerList:
-                    for stacker2 in bm2.stackerList:
+        if (benchmark1.sqlconstraint == benchmark2.sqlconstraint) & (benchmark1.slicer == benchmark2.slicer):
+            if benchmark1.mapsList.sort() == benchmark2.mapsList.sort():
+                for stacker in benchmark1.stackerList:
+                    for stacker2 in benchmark2.stackerList:
                         # If the stackers have different names, that's OK, and if they are identical, that's ok.
                         if (stacker.__class__.__name__ != stacker2.__class__.__name__) | (stacker == stacker2):
                             result= True
-            return result
+        return result
 
 
     def runAll(self):
         """
-        run all the benchmarks
+        Run all the benchmarks in the entire benchmark group.
         """
+        # This could stand some elucidating ..
         while False in self.hasRun.values():
             toRun = []
 
-            for bm in self.benchmarkDict:
-                if self.hasRun[bm] is False:
+            for bkey in self.benchmarkDict:
+                if self.hasRun[bkey] is False:
                     if len(toRun) == 0:
-                        toRun.append(bm)
+                        toRun.append(benchmark)
                     else:
                         for key in toRun:
-                            if key != bm:
-                                if self._checkCompatible(self.benchmarkDict[bm], self.benchmarkDict[key]):
-                                    toRun.append(bm)
+                            if key != bkey:
+                                if self._checkCompatible(self.benchmarkDict[bkey], self.benchmarkDict[key]):
+                                    toRun.append(bkey)
 
             if self.verbose:
                 print 'Running:'
                 for key in toRun:
                     print key
-            self._runCompatable(toRun)
+            self._runCompatible(toRun)
             if self.verbose:
                 print 'Completed'
             for key in toRun:
@@ -89,23 +134,24 @@ class BenchmarkGroup(object):
 
 
 
-    def _runCompatable(self,keys):
+    def runCompatible(self, keys):
         """
-        given a batch of compatable benchmarks, run them.
-        These are the keys to the
+        Runs a set of 'compatible' benchmarks in the benchmark group, identified by 'keys'.
         """
-        # Maybe add a check that they are indeede compatible
+        # think about passing in a subset of the dictionary here? (might not be practical, but might make iteration clearer)
+        # Or at least changing name from keys?
+        # Maybe add a check that they are indeed compatible
 
         maps = []
         stackers = []
-        for bm in keys:
-            for mapsList in self.benchmarkDict[bm].mapsList:
+        for bkey in keys:
+            for mapsList in self.benchmarkDict[bkey].mapsList:
                 maps.extend(mapsList)
-            for stacker in self.benchmarkDict[bm].stackerList:
+            for stacker in self.benchmarkDict[bkey].stackerList:
                 if stacker not in stackers:
                     stackers.append(stacker)
 
-        # May need to do a more rigerous purge of duplicate stackers and maps
+        # May need to do a more rigorous purge of duplicate stackers and maps
         maps = list(set(maps))
 
         for stacker in stackers:
@@ -119,11 +165,11 @@ class BenchmarkGroup(object):
             slicer.setupSlicer(self.simdata, maps=maps)
 
         # Set up (masked) arrays to store metric data.
-        for key in keys:
-           self.benchmarckDict[key].metricValues = \
-           ma.MaskedArray(data = np.empty(len(self.slicer),self.benchmarkDict[key].metric.metricDtype),
-                          mask = np.zeros(len(self.slicer), 'bool'),
-                          fill_value=self.slicer.badval)
+        for k in keys:
+           self.benchmarkDict[k].metricValues = \
+           ma.MaskedArray(data = np.empty(len(slicer), self.benchmarkDict[k].metric.metricDtype),
+                          mask = np.zeros(len(slicer), 'bool'),
+                          fill_value= slicer.badval)
 
         # Set up an ordered dictionary to be the cache if needed:
         # (Currently using OrderedDict, it might be faster to use 2 regular Dicts instead)
@@ -137,8 +183,8 @@ class BenchmarkGroup(object):
             slicedata = self.simdata[slice_i['idxs']]
             if len(slicedata)==0:
                 # No data at this slicepoint. Mask data values.
-               for key in keys:
-                  self.metricDict[key].metricValues.mask[i] = True
+               for k in keys:
+                  self.benchmarkDict[k].metricValues.mask[i] = True
             else:
                # There is data! Should we use our data cache?
                if cache:
@@ -151,32 +197,32 @@ class BenchmarkGroup(object):
                      cacheDict[cacheKey] = i
                      useCache = False
                      # If we are above the cache size, drop the oldest element from the cache dict
-                     if i > self.slicer.cacheSize:
+                     if i > slicer.cacheSize:
                         cacheDict.popitem(last=False) #remove 1st item
-                  for key in keys:
+                  for k in keys:
                      if useCache:
-                        self.benchmarkDict[key].metricValues.data[i] = \
-                                            self.benchmarkDict[key].metricValues.data[cacheDict[cacheKey]]
+                        self.benchmarkDict[k].metricValues.data[i] = \
+                                            self.benchmarkDict[k].metricValues.data[cacheDict[cacheKey]]
                      else:
-                        self.benchmarkDict[key].metricValues.data[i] = \
-                            self.benchmarkDict[key].metric.run(slicedata, slicePoint=slice_i['slicePoint'])
+                        self.benchmarkDict[k].metricValues.data[i] = \
+                            self.benchmarkDict[k].metric.run(slicedata, slicePoint=slice_i['slicePoint'])
                # Not using memoize, just calculate things normally
                else:
-                  for key in keys:
-                     self.benchmarkDict[key].metricValues.data[i] = \
-                                self.benchmarkDict[key].metric.run(slicedata,slicePoint=slice_i['slicePoint'])
+                  for k in keys:
+                     self.benchmarkDict[k].metricValues.data[i] = \
+                                self.benchmarkDict[k].metric.run(slicedata, slicePoint=slice_i['slicePoint'])
 
         # Mask data where metrics could not be computed (according to metric bad value).
-        for key in keys:
-           if self.benchmarkDict[key].metricValues.dtype.name == 'object':
-              for ind,val in enumerate(self.benchmarkDict[key].metricValues.data):
-                 if val is self.benchmarkDict[key].metricObjs.badval:
-                    self.benchmarkDict[key].metricValues.mask[ind] = True
+        for k in keys:
+           if self.benchmarkDict[k].metricValues.dtype.name == 'object':
+              for ind, val in enumerate(self.benchmarkDict[k].metricValues.data):
+                 if val is self.benchmarkDict[k].metricObjs.badval:
+                    self.benchmarkDict[k].metricValues.mask[ind] = True
            else:
               # For some reason, this doesn't work for dtype=object arrays.
-              self.benchmarkDict[key].metricValues.mask = \
-                np.where(self.benchmarkDict[key].metricValues.data==self.benchmarkDict[key].metric.badval,
-                         True, self.benchmarkDict[key].metricValues.mask)
+              self.benchmarkDict[k].metricValues.mask = \
+                np.where(self.benchmarkDict[k].metricValues.data==self.benchmarkDict[k].metric.badval,
+                         True, self.benchmarkDict[k].metricValues.mask)
 
     def plotAll(self):
         """
@@ -192,44 +238,4 @@ class BenchmarkGroup(object):
         for bm in self.benchmarkDict:
             self.benchmarkDict[bm].writeBenchmark()
 
-    def getFieldData(self, slicer, sqlconstraint):
-        """Given an opsim slicer, generate the FieldData """
-        # Do a bunch of parsing to get the propids out of the sqlconstraint.
-        if 'propID' not in sqlconstraint:
-            propids = self.propids.keys()
-        else:
-            # example sqlconstraint: filter = r and (propid = 219 or propid = 155) and propid!= 90
-            sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
-            sqlconstraint = sqlconstraint.replace("'", '').replace('"', '')
-            # Allow for choosing all but a particular proposal.
-            sqlconstraint = sqlconstraint.replace('! =' , ' !=')
-            sqlconstraint = sqlconstraint.replace('  ', ' ')
-            sqllist = sqlconstraint.split(' ')
-            propids = []
-            nonpropids = []
-            i = 0
-            while i < len(sqllist):
-                if sqllist[i].lower() == 'propid':
-                    i += 1
-                    if sqllist[i] == "=":
-                        i += 1
-                        propids.append(int(sqllist[i]))
-                    elif sqllist[i] == '!=':
-                        i += 1
-                        nonpropids.append(int(sqllist[i]))
-                i += 1
-            if len(propids) == 0:
-                propids = self.propids.keys()
-            if len(nonpropids) > 0:
-                for nonpropid in nonpropids:
-                    if nonpropid in propids:
-                        propids.remove(nonpropid)
-        # And query the field Table.
-        if 'Field' in self.dbObj.tables:
-            self.fieldData = self.dbObj.fetchFieldsFromFieldTable(propids)
-        else:
-            fieldID, idx = np.unique(self.simdata[slicer.simDataFieldIDColName], return_index=True)
-            ra = self.data[slicer.fieldRaColName][idx]
-            dec = self.data[slicer.fieldDecColName][idx]
-            self.fieldData = np.core.records.fromarrays([fieldID, ra, dec],
-                                               names=['fieldID', 'fieldRA', 'fieldDec'])
+ 
