@@ -74,11 +74,11 @@ class BenchmarkGroup(object):
         #  be prepared for this step (as it could be a bit long if much data is needed). This way
         #  they could theoretically also verify which columns could be queries, what the sqlconstraint was, etc.
         # Query the data from the dbObj.
-        if verbose:
+        if self.verbose:
             print "Querying database with constraint %s" % self.sqlconstraint
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        self.simdata = utils.getSimData(dbObj, self.sqlconstraint, self.dbCols)
-        if verbose:
+        self.simdata = utils.getSimData(self.dbObj, self.sqlconstraint, self.dbCols)
+        if self.verbose:
             print "Found %i visits" % self.simdata.size
 
         # Query for the fieldData if we need it for the opsimFieldSlicer.
@@ -88,7 +88,7 @@ class BenchmarkGroup(object):
             if b.slicer.slicerName == 'OpsimFieldSlicer':
                 needFields = True
         if needFields:
-            self.fieldData = utils.getFieldData(dbObj, sqlconstraint)
+            self.fieldData = utils.getFieldData(self.dbObj, self.sqlconstraint)
         else:
             self.fieldData = None
 
@@ -157,7 +157,7 @@ class BenchmarkGroup(object):
         Run all the benchmarks in the entire benchmark group.
         """
         self._findCompatibleLists()
-        for compatibleList in compatibleLists:
+        for compatibleList in self.compatibleLists:
             if self.verbose:
                 print 'Running: ', compatibleList
             self.runCompatible(compatibleList)
@@ -193,11 +193,11 @@ class BenchmarkGroup(object):
         # This will be forced back into all of the benchmarks at the end (so that they track
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
         #  ?? (or maybe we just copy the metadata into the other slicers, if they aren't the same object?)
-        slicer = bDict.itervalues().next()
+        slicer = bDict.itervalues().next().slicer
         if slicer.slicerName == 'OpsimFieldSlicer':
-            slicer.setupSlicer(self.simdata, self.fieldData, maps=mapsCompat)
+            slicer.setupSlicer(self.simdata, self.fieldData, maps=compatMaps)
         else:
-            slicer.setupSlicer(self.simdata, maps=mapsCompat)
+            slicer.setupSlicer(self.simdata, maps=compatMaps)
 
         # Set up (masked) arrays to store metric data in each benchmark.
         for b in bDict.itervalues():
