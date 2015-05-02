@@ -101,6 +101,14 @@ class Benchmark(object):
         self.metricValues = None
         self.summaryValues = None
 
+    def _setupMetricValues(self):
+        """
+        Set up the numpy masked array to store the metric value data.
+        """
+        self.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), self.metric.metricDtype),
+                                            mask = np.zeros(len(self.slicer), 'bool'),
+                                            fill_value= self.slicer.badval)
+
     def _buildMetadata(self, metadata):
         """
         If no metadata is provided, process the sqlconstraint
