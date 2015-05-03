@@ -350,7 +350,7 @@ class BaseSlicer(object):
         return metricValues, slicer, header
 
     def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig',
-                 savefig=True, thumbnail=True, **kwargs):
+                 savefig=True, thumbnail=True, plotFunc=None, **kwargs):
         """
         Call all available plotting methods.
 
@@ -370,7 +370,14 @@ class BaseSlicer(object):
                 warnings.warn('Metric data type not float or int. No plots generated.')
                 return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
         # Otherwise, plot.
-        for p in self.plotFuncs:
+        if plotFunc is not None:
+            if plotFunc in self.plotFuncs:
+                plotFuncs = plotFunc
+            else:
+                raise ValueError('plotFunc specified as %s, but not a slicer method.' %(plotFunc))
+        else:
+            plotFuncs = self.plotFuncs
+        for p in plotFuncs:
             plottype = p.replace('plot', '')
             figs[plottype] = self.plotFuncs[p](metricValues, **kwargs)
             if savefig:

@@ -234,8 +234,8 @@ class BenchmarkGroup(object):
                     for b in bDict.itervalues():
                         if useCache:
                             b.metricValues.data[i] = b.metricValues.data[cacheDict[cacheKey]]
-                    else:
-                        b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
+                        else:
+                            b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
                 # Not using memoize, just calculate things normally
                 else:
                     for b in bDict.itervalues():
@@ -258,12 +258,13 @@ class BenchmarkGroup(object):
         """
         pass
 
-    def plotAll(self):
+    def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True):
         """
         Generate the plots for all the benchmarks.
         """
         for b in self.benchmarkDict.itervalues():
-            b.plot(outDir=self.outDir, resultsDb=self.resultsDb)
+            b.plotBenchmark(outDir=self.outDir, resultsDb=self.resultsDb, savefig=savefig,
+                            outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
 
     def writeAll(self):
         """

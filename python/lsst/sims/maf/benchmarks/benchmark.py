@@ -105,7 +105,10 @@ class Benchmark(object):
         """
         Set up the numpy masked array to store the metric value data.
         """
-        self.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), self.metric.metricDtype),
+        dtype = self.metric.metricDtype
+        if dtype == 'int':
+            dtype = 'float'
+        self.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), dtype),
                                             mask = np.zeros(len(self.slicer), 'bool'),
                                             fill_value= self.slicer.badval)
 
@@ -411,7 +414,7 @@ class Benchmark(object):
         return newbenchmark
 
     def plotBenchmark(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
-                      figformat='pdf', dpi=600, thumbnail=True):
+                      figformat='pdf', dpi=600, thumbnail=True, plotFunc=None):
         """
         Create all plots available from the slicer.
         """
@@ -422,9 +425,10 @@ class Benchmark(object):
             outfile = self.fileRoot
         # Make plots.
         plotResults = self.slicer.plotData(self.metricValues, savefig=savefig,
-                                           figformat=figformat, dpi=dpi,
-                                           filename=os.path.join(outDir, outfile),
-                                           thumbnail = thumbnail, **self.plotDict)
+                                            figformat=figformat, dpi=dpi,
+                                            filename=os.path.join(outDir, outfile),
+                                            thumbnail = thumbnail, plotFunc=plotFunc,
+                                            **self.plotDict)
         # Save information about the plotted files.
         if resultsDb:
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
