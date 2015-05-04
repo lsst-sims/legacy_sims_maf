@@ -54,7 +54,7 @@ def createSQLWhere(tag, propTags):
         sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
 
-def getFieldData(self, opsimDb, sqlconstraint):
+def getFieldData(opsimDb, sqlconstraint):
     """Get the FieldData for an OpsimFieldSlicer, for an appropriate sqlconstraint (i.e. one proposal?)."""
     # Get all fields used for all proposals.
     if 'propID' not in sqlconstraint:
