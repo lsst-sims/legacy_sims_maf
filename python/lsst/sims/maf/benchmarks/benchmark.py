@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 import numpy as np
 import numpy.ma as ma
 
@@ -50,7 +51,7 @@ class Benchmark(object):
             self.stackerList = []
         # Set the 'maps' to apply to the slicer, if applicable.
         if mapsList is not None:
-            if isinstance(mapsList, maps.BaseMaps):
+            if isinstance(mapsList, maps.BaseMap):
                 self.mapsList = [mapsList,]
             else:
                 self.mapsList = []
@@ -395,19 +396,32 @@ class Benchmark(object):
         # Generate a name for the metric values processed by the reduceFunc.
         reduceName = self.metric.name + '_' + reduceFunc.__name__.replace('reduce', '')
         # Set up benchmark to store new metric values, and add plotDict/displayDict.
-        newbenchmark = Benchmark(metric=metrics.BaseMetric('metricdata'), slicer=self.slicer, stackerList=self.stackerList,
+        newbenchmark = Benchmark(metric=deepcopy(self.metric), slicer=self.slicer, stackerList=self.stackerList,
                                  sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
-                                 plotDict=self.plotDict, displayDict=self.displayDict,
-                                 summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot=self.fileRoot)
+                                 plotDict=None, displayDict=self.displayDict,
+                                 summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot='')
         newbenchmark.metric.name = reduceName
-        if 'units' in reducePlotDict:
-            newbenchmark.metric.units = reducePlotDict['units']
+        if reducePlotDict is not None:
+            if 'units' in reducePlotDict:
+                newbenchmark.metric.units = reducePlotDict['units']
+        # Build a new output file root name.
+        newbenchmark._buildFileRoot()
+        # Use existing (self) plotDict, without the title/x or y labels (as these get updated with reduceName)
+        cpPlotDict = {}
+        for k, v in self.plotDict.iteritems():
+            if k not in newbenchmark.plotDict:
+                cpPlotDict[k] = v
+        # Then update newbenchmark's plot dictionary with these values (copied from self).
+        newbenchmark.setPlotDict(cpPlotDict)
+        # And update newbenchmark's plot dictionary with any set explicitly by reducePlotDict.
         newbenchmark.setPlotDict(reducePlotDict)
+        # Update the newbenchmark's display dictionary with any set explicitly by reduceDisplayDict.
         newbenchmark.setDisplayDict(reduceDisplayDict)
         # Set up new benchmark's metricValues masked arrays, copying metricValue's mask.
         newbenchmark.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                     mask = self.metricValues.mask,
                                                     fill_value = self.slicer.badval)
+        # Fill the reduced metric data using the reduce function.
         for i, (mVal, mMask) in enumerate(zip(self.metricValues.data, self.metricValues.mask)):
             if not mMask:
                 newbenchmark.metricValues.data[i] = reduceFunc(mVal)
