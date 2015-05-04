@@ -372,7 +372,7 @@ class BaseSlicer(object):
         # Otherwise, plot.
         if plotFunc is not None:
             if plotFunc in self.plotFuncs:
-                plotFuncs = plotFunc
+                plotFuncs = {plotFunc:self.plotFuncs[plotFunc]}
             else:
                 raise ValueError('plotFunc specified as %s, but not a slicer method.' %(plotFunc))
         else:
