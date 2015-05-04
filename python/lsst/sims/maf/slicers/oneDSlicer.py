@@ -110,7 +110,7 @@ class OneDSlicer(BaseSlicer):
         if isinstance(otherSlicer, OneDSlicer):
             if self.sliceColName == otherSlicer.sliceColName:
                 # If slicer restored from disk or setup, then 'bins' in slicePoints dict.
-                if 'bins' in self.slicePoints & 'bins' in otherSlicer.slicePoints:
+                if ('bins' in self.slicePoints) & ('bins' in otherSlicer.slicePoints):
                     match = np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
                 # Otherwise, try some other things.
                 else:
@@ -191,4 +191,3 @@ class OneDSlicer(BaseSlicer):
         if (title!=None):
             plt.title(title)
         return fig.number
-
