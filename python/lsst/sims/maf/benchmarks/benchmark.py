@@ -382,7 +382,7 @@ class Benchmark(object):
                 self.summaryValues.append([summaryName, summaryVal])
                 # Add summary metric info to results database, if applicable.
                 if resultsDb:
-                    metricId = resultsDb.updateMetric(self.metric.metricName, self.slicer.slicerName,
+                    metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
                                                       self.runName, self.sqlconstraint, self.metadata, None)
                     resultsDb.updateSummaryStat(metricId, summaryName=summaryName, summaryValue=summaryVal)
 
