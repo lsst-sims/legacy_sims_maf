@@ -6,27 +6,27 @@ from collections import OrderedDict
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
-from .benchmark import Benchmark
+from .metricBundle import MetricBundle
 
 
-class BenchmarkGroup(object):
+class MetricBundleGroup(object):
     """
-    Handles groups of Benchmark objects with the same SQL constraint.
-    Primary job is to query data from database, and find and run "compatible" subgroups of benchmarks to
+    Handles group of MetricBundle objects with the same SQL constraint.
+    Primary job is to query data from database, and find and run "compatible" subgroups of MetricBundles to
     populate them with data.
-    A compatible subgroup of benchmarks has the same SQL constraint, as well as the same slicer, mapsList, and stackerList.
+    A compatible subgroup of metricbundles has the same SQL constraint, as well as the same slicer, mapsList, and stackerList.
     Thus, they modify the data returned from the query in the same way and iterate over the same slicer to generate metric values.
 
-    Each benchmarkGroup of benchmarks should be a dictionary.
+    Each MetricBundleSet of metric bundles should be a dictionary.
     Each group must query on the same database and have the same SQL constraint.
-    The data returned from the db query is stored in the benchmarkGroup object.
-    BenchmarkGroup also provides convenience methods to generate all plots, run all summary statistics,
-    run all reduce functions, and write all benchmarks to disk.
+    The data returned from the db query is stored in the MetricBundleGroup object.
+    MetricBundleGroup also provides convenience methods to generate all plots, run all summary statistics,
+    run all reduce functions, and write all metricbundles to disk.
     Thus, it also tracks the 'outDir' and 'resultsDb'.
     """
-    def __init__(self, benchmarkDict, dbObj, outDir='.', resultsDb=None, verbose=True):
+    def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True):
         """
-        Set up the benchmark group, check that all benchmarks have the same sql constraint.
+        Set up the MetricBundleGroup, check that all MetricBundles have the same sql constraint.
         """
         self.verbose = verbose
 
@@ -34,19 +34,19 @@ class BenchmarkGroup(object):
         self.outDir = outDir
         if not os.path.isdir(self.outDir):
             os.makedirs(self.outDir)
-        # Do some type checking on the benchmarkDict.
-        if not isinstance(benchmarkDict, dict):
-            raise ValueError('benchmarkDict should be a dictionary containing benchmark objects.')
-        for b in benchmarkDict.itervalues():
-            if not isinstance(b, Benchmark):
-                raise ValueError('benchmarkDict should contain only benchmark objects.')
-        # Check that all benchmarks have the same sql constraint.
-        self.sqlconstraint = benchmarkDict.itervalues().next().sqlconstraint
-        for k, b in benchmarkDict.iteritems():
+        # Do some type checking on the MetricBundle dictionary.
+        if not isinstance(bundleDict, dict):
+            raise ValueError('BundleDict should be a dictionary containing MetricBundle objects.')
+        for b in bundleDict.itervalues():
+            if not isinstance(b, MetricBundle):
+                raise ValueError('bundleDict should contain only MetricBundle objects.')
+        # Check that all metricBundles have the same sql constraint.
+        self.sqlconstraint = bundleDict.itervalues().next().sqlconstraint
+        for k, b in bundleDict.iteritems():
             if b.sqlconstraint != self.sqlconstraint:
-                raise ValueError('BenchmarkGroup must have the same sqlconstraint: %s (in Benchmark %s) != %s (first constraint)'\
-                                 % (b.sqlconstraint, k, self.sqlconstraint))
-        self.benchmarkDict = benchmarkDict
+                raise ValueError('MetricBundleGroup must have the same sqlconstraint:',
+                                 '%s (in MetricBundle %s) != %s (first constraint)' % (b.sqlconstraint, k, self.sqlconstraint))
+        self.bundleDict = bundleDict
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
             raise ValueError('dbObj should be an instantiated lsst.sims.maf.db.Database (or child) object.')
@@ -59,17 +59,17 @@ class BenchmarkGroup(object):
 
         # Build list of all the columns needed from the database.
         self.dbCols = []
-        for b in self.benchmarkDict.itervalues():
+        for b in self.bundleDict.itervalues():
             self.dbCols.extend(b.dbCols)
         self.dbCols = list(set(self.dbCols))
         self.simData = None
 
-        # Find compatible subsets of the benchmark dictionary, which can be run/metrics calculated/ together.
+        # Find compatible subsets of the MetricBundle dictionary, which can be run/metrics calculated/ together.
         self._findCompatibleLists()
 
         # Dict to keep track of what's been run:
         self.hasRun = {}
-        for bk in benchmarkDict:
+        for bk in bundleDict:
             self.hasRun[bk] = False
 
     def getData(self):
@@ -90,7 +90,7 @@ class BenchmarkGroup(object):
         # Query for the fieldData if we need it for the opsimFieldSlicer.
         # Determine if we have a opsimFieldSlicer:
         needFields = False
-        for b in self.benchmarkDict.itervalues():
+        for b in self.bundleDict.itervalues():
             if b.slicer.slicerName == 'OpsimFieldSlicer':
                 needFields = True
         if needFields:
@@ -105,21 +105,21 @@ class BenchmarkGroup(object):
         newdict = {key:origdict.get(key) for key in subsetkeys}
         return newdict
 
-    def _checkCompatible(self, benchmark1, benchmark2):
+    def _checkCompatible(self, metricBundle1, metricBundle2):
         """
-        Check if two benchmarks are "compatible".
+        Check if two MetricBundles are "compatible".
         Compatible indicates that the sql constraints, the slicers, and the maps are the same, and
         that the stackers do not interfere with each other (i.e. are not trying to set the same column in different ways).
-        Returns True if the benchmarks are compatible, False if not.
+        Returns True if the MetricBundles are compatible, False if not.
         """
-        if benchmark1.sqlconstraint != benchmark2.sqlconstraint:
+        if metricBundle1.sqlconstraint != metricBundle2.sqlconstraint:
             return False
-        if benchmark1.slicer != benchmark2.slicer:
+        if metricBundle1.slicer != metricBundle2.slicer:
             return False
-        if benchmark1.mapsList.sort() != benchmark2.mapsList.sort():
+        if metricBundle1.mapsList.sort() != metricBundle2.mapsList.sort():
             return False
-        for stacker in benchmark1.stackerList:
-            for stacker2 in benchmark2.stackerList:
+        for stacker in metricBundle1.stackerList:
+            for stacker2 in metricBundle2.stackerList:
                 # If the stackers have different names, that's OK, and if they are identical, that's ok.
                 if (stacker.__class__.__name__ == stacker2.__class__.__name__) & (stacker != stacker2):
                     return False
@@ -128,25 +128,25 @@ class BenchmarkGroup(object):
 
     def _findCompatibleLists(self):
         """
-        Find sets of compatible benchmarks from the benchmarkDict.
+        Find sets of compatible metricBundles from the bundleDict.
         """
-        # Making this explicit lets the user see each set of compatible benchmarks --
+        # Making this explicit lets the user see each set of compatible metricBundles --
         # This ought to make it easier to pick up and re-run compatible subsets if there are failures.
         # CompatibleLists stores a list of lists;
-        #   each (nested) list contains the benchmarkDict keys of a compatible set of benchmarks.
+        #   each (nested) list contains the bundleDict keys of a compatible set of metricBundles.
         #
         #  .. nevermind (previous comments) - I had a loop control problem that I think is fixed now.
         compatibleLists = []
-        for k, b in self.benchmarkDict.iteritems():
+        for k, b in self.bundleDict.iteritems():
             foundCompatible = False
             for compatibleList in compatibleLists:
-                comparisonBenchmarkKey = compatibleList[0]
-                compatible = self._checkCompatible(self.benchmarkDict[comparisonBenchmarkKey], b)
+                comparisonMetricBundleKey = compatibleList[0]
+                compatible = self._checkCompatible(self.bundleDict[comparisonMetricBundleKey], b)
                 if compatible:
-                    # Must compare all benchmarks in each subset (if they are a potential match),
+                    # Must compare all metricBundles in each subset (if they are a potential match),
                     #  as the stackers could be different (and one could be incompatible, not necessarily the first)
-                    for comparisonBenchmarkKey in compatibleList[1:]:
-                        compatible = self._checkCompatible(self.benchmarkDict[comparisonBenchmarkKey], b)
+                    for comparisonMetricBundleKey in compatibleList[1:]:
+                        compatible = self._checkCompatible(self.bundleDict[comparisonMetricBundleKey], b)
                         if not compatible:
                             # If we find one which is not compatible, stop and go on to the next subset list.
                             break
@@ -160,7 +160,7 @@ class BenchmarkGroup(object):
 
     def runAll(self):
         """
-        Run all the benchmarks in the entire benchmark group.
+        Run all the metricBundles in the entire metricBundle group.
         """
         if self.simData is None:
             self.getData()
@@ -175,10 +175,10 @@ class BenchmarkGroup(object):
 
     def runCompatible(self, compatibleList):
         """
-        Runs a set of 'compatible' benchmarks in the benchmarkGroup dictionary, identified by 'compatibleList' keys.
+        Runs a set of 'compatible' metricbundles in the MetricBundleGroup dictionary, identified by 'compatibleList' keys.
         """
         # Grab a dictionary representation of this subset of the dictionary, for easier iteration.
-        bDict = self._getDictSubset(self.benchmarkDict, compatibleList)
+        bDict = self._getDictSubset(self.bundleDict, compatibleList)
 
         compatMaps = []
         compatStackers = []
@@ -197,7 +197,7 @@ class BenchmarkGroup(object):
             self.simData = stacker.run(self.simData)
 
         # Pull out one of the slicers to use as our 'slicer'.
-        # This will be forced back into all of the benchmarks at the end (so that they track
+        # This will be forced back into all of the metricBundles at the end (so that they track
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
         #  ?? (or maybe we just copy the metadata into the other slicers, if they aren't the same object?)
         slicer = bDict.itervalues().next().slicer
@@ -206,7 +206,7 @@ class BenchmarkGroup(object):
         else:
             slicer.setupSlicer(self.simData, maps=compatMaps)
 
-        # Set up (masked) arrays to store metric data in each benchmark.
+        # Set up (masked) arrays to store metric data in each metricBundle.
         for b in bDict.itervalues():
             b._setupMetricValues()
 
@@ -259,38 +259,47 @@ class BenchmarkGroup(object):
                 b.metricValues.mask = np.where(b.metricValues.data==b.metric.badval,
                                                True, b.metricValues.mask)
 
-    def reduceAll(self):
+    def reduceAll(self, updateSummaries=True):
         """
-        Run all reduce functions for the metric in each benchmark.
+        Run all reduce functions for the metric in each metricBundle.
         """
-        # Create a temporary dictionary to hold the reduced metric benchmarks.
-        reduceBenchmarkDict = {}
-        for b in self.benchmarkDict.itervalues():
-            # If there are no reduce functions associated with the metric, skip this benchmark.
-            if len(b.metric.reduceFuncs) == 0:
-                continue
-            # Apply reduce functions, creating a new benchmark in the process (new metric values).
-            for reduceFunc in b.metric.reduceFuncs.itervalues():
-                newbenchmark = b.reduceMetric(reduceFunc)
-                # Add the new benchmark to our temporary dictionary.
-                reduceBenchmarkDict[newbenchmark.metric.name] = newbenchmark
-        # Add the new benchmarks to the benchmarkGroup dictionary.
-        self.benchmarkDict.update(reduceBenchmarkDict)
+        # Create a temporary dictionary to hold the reduced metricbundles.
+        reduceBundleDict = {}
+        for b in self.bundleDict.itervalues():
+            # If there are no reduce functions associated with the metric, skip this metricBundle.
+            if len(b.metric.reduceFuncs) > 0:
+                # Apply reduce functions, creating a new metricBundle in the process (new metric values).
+                for reduceFunc in b.metric.reduceFuncs.itervalues():
+                    newmetricbundle = b.reduceMetric(reduceFunc)
+                    # Add the new metricBundle to our temporary dictionary.
+                    reduceBundleDict[newmetricbundle.metric.name] = newmetricbundle
+                # Remove summaryMetrics from top level metricbundle if desired.
+                if updateSummaries:
+                    b.summaryMetrics = []
+        # Add the new metricBundles to the MetricBundleGroup dictionary.
+        self.bundleDict.update(reduceBundleDict)
+
+    def summaryAll(self):
+        """
+        Run summary statistics on all metricbundles.
+        """
+        for b in self.bundleDict.itervalues():
+            b.computeSummaryStats(self.resultsDb)
 
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
                 closefigs=False):
         """
-        Generate the plots for all the benchmarks.
+        Generate the plots for all the metricbundles.
         """
-        for b in self.benchmarkDict.itervalues():
-            b.plotBenchmark(outDir=self.outDir, resultsDb=self.resultsDb, savefig=savefig,
-                            outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+        for b in self.bundleDict.itervalues():
+            b.plot(outDir=self.outDir, resultsDb=self.resultsDb, savefig=savefig,
+                   outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         if closefigs:
             plt.close('all')
 
     def writeAll(self):
         """
-        Save all the benchmarks to disk.
+        Save all the metricbundles to disk.
         """
-        for b in self.benchmarkDict.itervalues():
-            b.writeBenchmark(outDir=self.outDir, resultsDb=self.resultsDb)
+        for b in self.bundleDict.itervalues():
+            b.write(outDir=self.outDir, resultsDb=self.resultsDb)
