@@ -256,7 +256,19 @@ class BenchmarkGroup(object):
         """
         Run all reduce functions for the metric in each benchmark.
         """
-        pass
+        # Create a temporary dictionary to hold the reduced metric benchmarks.
+        reduceBenchmarkDict = {}
+        for b in self.benchmarkDict.itervalues():
+            # If there are no reduce functions associated with the metric, skip this benchmark.
+            if len(b.metric.reduceFuncs) == 0:
+                continue
+            # Apply reduce functions, creating a new benchmark in the process (new metric values).
+            for reduceFunc in b.metric.reduceFuncs.itervalues():
+                newbenchmark = benchmark.reduceMetric(reduceFunc)
+                # Add the new benchmark to our temporary dictionary.
+                reduceBenchmarkDict[newbenchmark.fileRoot] = newbenchmark
+        # Add the new benchmarks to the benchmarkGroup dictionary.
+        self.benchmarkDict.update(reduceBenchmarkDict)
 
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True):
         """
