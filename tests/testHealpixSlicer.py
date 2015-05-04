@@ -106,9 +106,9 @@ class TestHealpixSlicerEqual(unittest.TestCase):
     def testSlicerEquivalence(self):
         """Test that slicers are marked equal when appropriate, and unequal when appropriate."""
         # Note that they are judged equal based on nsides (not on data in ra/dec spatial tree).
-        testslicer2 = HealpixSlicer(nside=self.nside, verbose=False)
+        testslicer2 = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         self.assertEqual(self.testslicer, testslicer2)
-        testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False)
+        testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False, lonCol='ra', latCol='dec')
         self.assertNotEqual(self.testslicer, testslicer2)
 
 class TestHealpixSlicerIteration(unittest.TestCase):

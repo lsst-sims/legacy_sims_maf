@@ -79,9 +79,11 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
 
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
-        if isinstance(otherSlicer, OpsimFieldSlicer):
-            return (np.all(otherSlicer.slicePoints['ra'] == self.slicePoints['ra']) and
-                    np.all(otherSlicer.slicePoints['dec'] == self.slicePoints['dec']))
+        if (isinstance(otherSlicer, OpsimFieldSlicer)) & \
+           (otherSlicer.fieldIDColName == self.fieldIDColNam) & \
+           (otherSlicer.fieldRaColName == self.fieldRaColName) & \
+           (otherSlicer.fieldDecColName == self.fieldDecColName):
+            return True
         else:
             return False
 
