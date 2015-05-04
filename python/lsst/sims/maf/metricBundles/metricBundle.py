@@ -10,16 +10,16 @@ import lsst.sims.maf.maps as maps
 from lsst.sims.maf.utils import ColInfo
 
 
-class Benchmark(object):
+class MetricBundle(object):
     """
-    Benchmark holds a combination of a (single) metric, slicer and sqlconstraint, which determines
+    MetricBundle holds a combination of a (single) metric, slicer and sqlconstraint, which determines
     a unique combination of an opsim evaluation.
-    After the metric is evaluated over the slicer, it will hold the benchmark value (metric values) as well.
-    It also holds a list of metrics to be used to generate summary statistics (on the metric values),
+    After the metric is evaluated over the slicer, it will hold the MetricBundle value (metric values) as well.
+    It also holds a list of metrics (in summaryMetrics) to be used to generate summary statistics on the metric values,
     as well as the resulting summary statistic values.
     In addition, it holds plotting parameters (in plotDict) and display parameters for showMaf (in displayDict), as
     well as additional metadata such as the opsim run name.
-    Benchmark can autogenerate some metadata, plotting labels, as well as generate plots,
+    MetricBundle can autogenerate some metadata, plotting labels, as well as generate plots,
     save output to disk, and calculate 'reduce' methods on metrics.
     """
     def __init__(self, metric, slicer, sqlconstraint,
@@ -83,9 +83,9 @@ class Benchmark(object):
         self.metricValues = None
         self.summaryValues = None
 
-    def _resetBenchmark(self):
+    def _resetMetricBundle(self):
         """
-        Reset all properties of benchmark.
+        Reset all properties of MetricBundle.
         """
         self.metric = None
         self.slicer = None
@@ -107,6 +107,7 @@ class Benchmark(object):
         Set up the numpy masked array to store the metric value data.
         """
         dtype = self.metric.metricDtype
+        # Can't store healpix slicer mask values in an int array. 
         if dtype == 'int':
             dtype = 'float'
         self.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), dtype),
@@ -187,7 +188,7 @@ class Benchmark(object):
 
     def setSummaryMetrics(self, summaryMetrics):
         """
-        Set (or reset) the summary metrics for the benchmark.
+        Set (or reset) the summary metrics for the metricbundle.
         """
         if summaryMetrics is not None:
             if isinstance(summaryMetrics, metrics.BaseMetric):
@@ -282,7 +283,7 @@ class Benchmark(object):
                                               self.metadata, outfile)
             resultsDb.updateDisplay(metricId, self.displayDict)
 
-    def writeBenchmark(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
+    def write(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
         """
         Write metricValues (and associated metadata) to disk.
 
@@ -320,12 +321,12 @@ class Benchmark(object):
         return io
 
 
-    def readBenchmark(self, filename):
+    def read(self, filename):
         """
         Read metricValues and associated metadata from disk.
-        Overwrites any data currently in benchmark.
+        Overwrites any data currently in metricbundle.
         """
-        self._resetBenchmark()
+        self._resetMetricBundle()
         # Set up a base slicer to read data (we don't know type yet).
         baseslicer = slicers.BaseSlicer()
         # Use baseslicer to read file.
@@ -358,11 +359,14 @@ class Benchmark(object):
 
     def computeSummaryStats(self, resultsDb=None):
         """
-        Compute summary statistics on benchmark metricValues, using summaryMetrics (benchmark list).
+        Compute summary statistics on metricValues, using summaryMetrics (metricbundle list).
         """
         if self.summaryMetrics is None:
             self.summaryValues = None
         else:
+            # Build array of metric values, to use for (most) summary statistics.
+            rarr_std = np.array(zip(self.metricValues.compressed()),
+                                dtype=[('metricdata', self.metricValues.dtype)])
             self.summaryValues = []
             for m in self.summaryMetrics:
                 # The summary metric colname should already be set to 'metricdata', but in case it's not:
@@ -370,11 +374,10 @@ class Benchmark(object):
                 summaryName = m.name.replace(' metricdata', '').replace(' None', '')
                 if hasattr(m, 'maskVal'):
                     # summary metric requests to use the mask value, as specified by itself, rather than skipping masked vals.
-                    rarr = np.array(zip(self.metricValues.filled(summaryMetric.maskVal)),
+                    rarr = np.array(zip(self.metricValues.filled(m.maskVal)),
                                     dtype=[('metricdata', self.metricValues.dtype)])
                 else:
-                    rarr = np.array(zip(self.metricValues.compressed()),
-                                dtype=[('metricdata', self.metricValues.dtype)])
+                    rarr = rarr_std
                 if np.size(rarr) == 0:
                     summaryVal = self.slicer.badval
                 else:
@@ -388,47 +391,47 @@ class Benchmark(object):
 
     def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
         """
-        Run 'reduceFunc' (any function that operates on self.metricValues).
+        Run 'reduceFunc' (any function that operates on self.metricValues), return a new MetricBundle.
         Typically reduceFunc will be the metric reduce functions, as they are tailored to expect the
           metricValues format.
-        reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be applied to the new benchmark.
+        reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be applied to the new metricBundle.
         """
         # Generate a name for the metric values processed by the reduceFunc.
         reduceName = self.metric.name + '_' + reduceFunc.__name__.replace('reduce', '')
-        # Set up benchmark to store new metric values, and add plotDict/displayDict.
-        newbenchmark = Benchmark(metric=deepcopy(self.metric), slicer=self.slicer, stackerList=self.stackerList,
+        # Set up metricBundle to store new metric values, and add plotDict/displayDict.
+        newmetricBundle = MetricBundle(metric=deepcopy(self.metric), slicer=self.slicer, stackerList=self.stackerList,
                                  sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
                                  plotDict=None, displayDict=self.displayDict,
                                  summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot='')
-        newbenchmark.metric.name = reduceName
+        newmetricBundle.metric.name = reduceName
         if reducePlotDict is not None:
             if 'units' in reducePlotDict:
-                newbenchmark.metric.units = reducePlotDict['units']
+                newmetricBundle.metric.units = reducePlotDict['units']
         # Build a new output file root name.
-        newbenchmark._buildFileRoot()
+        newmetricBundle._buildFileRoot()
         # Use existing (self) plotDict, without the title/x or y labels (as these get updated with reduceName)
         cpPlotDict = {}
         for k, v in self.plotDict.iteritems():
-            if k not in newbenchmark.plotDict:
+            if k not in newmetricBundle.plotDict:
                 cpPlotDict[k] = v
-        # Then update newbenchmark's plot dictionary with these values (copied from self).
-        newbenchmark.setPlotDict(cpPlotDict)
-        # And update newbenchmark's plot dictionary with any set explicitly by reducePlotDict.
-        newbenchmark.setPlotDict(reducePlotDict)
-        # Update the newbenchmark's display dictionary with any set explicitly by reduceDisplayDict.
-        newbenchmark.setDisplayDict(reduceDisplayDict)
-        # Set up new benchmark's metricValues masked arrays, copying metricValue's mask.
-        newbenchmark.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
+        # Then update newmetricBundle's plot dictionary with these values (copied from self).
+        newmetricBundle.setPlotDict(cpPlotDict)
+        # And update newmetricBundle's plot dictionary with any set explicitly by reducePlotDict.
+        newmetricBundle.setPlotDict(reducePlotDict)
+        # Update the newmetricBundle's display dictionary with any set explicitly by reduceDisplayDict.
+        newmetricBundle.setDisplayDict(reduceDisplayDict)
+        # Set up new metricBundle's metricValues masked arrays, copying metricValue's mask.
+        newmetricBundle.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
                                                     mask = self.metricValues.mask,
                                                     fill_value = self.slicer.badval)
         # Fill the reduced metric data using the reduce function.
         for i, (mVal, mMask) in enumerate(zip(self.metricValues.data, self.metricValues.mask)):
             if not mMask:
-                newbenchmark.metricValues.data[i] = reduceFunc(mVal)
-        return newbenchmark
+                newmetricbundle.metricValues.data[i] = reduceFunc(mVal)
+        return newmetricbundle
 
-    def plotBenchmark(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
-                      figformat='pdf', dpi=600, thumbnail=True, plotFunc=None):
+    def plot(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
+             figformat='pdf', dpi=600, thumbnail=True, plotFunc=None):
         """
         Create all plots available from the slicer.
         """
