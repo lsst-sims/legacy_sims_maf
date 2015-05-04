@@ -44,8 +44,8 @@ class MetricBundleGroup(object):
         self.sqlconstraint = bundleDict.itervalues().next().sqlconstraint
         for k, b in bundleDict.iteritems():
             if b.sqlconstraint != self.sqlconstraint:
-                raise ValueError('MetricBundleGroup must have the same sqlconstraint: %s (in MetricBundle %s) != %s (first constraint)'\
-                                 % (b.sqlconstraint, k, self.sqlconstraint))
+                raise ValueError('MetricBundleGroup must have the same sqlconstraint:',
+                                 '%s (in MetricBundle %s) != %s (first constraint)' % (b.sqlconstraint, k, self.sqlconstraint))
         self.bundleDict = bundleDict
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
@@ -112,7 +112,7 @@ class MetricBundleGroup(object):
         that the stackers do not interfere with each other (i.e. are not trying to set the same column in different ways).
         Returns True if the MetricBundles are compatible, False if not.
         """
-        if sqlconstraint.metricBundle1 != metricBundle2.sqlconstraint:
+        if metricBundle1.sqlconstraint != metricBundle2.sqlconstraint:
             return False
         if metricBundle1.slicer != metricBundle2.slicer:
             return False
