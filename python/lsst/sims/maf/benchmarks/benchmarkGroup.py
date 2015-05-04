@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import numpy.ma as ma
+import matplotlib.pyplot as plt
 from collections import OrderedDict
 
 import lsst.sims.maf.db as db
@@ -61,6 +62,11 @@ class BenchmarkGroup(object):
         for b in self.benchmarkDict.itervalues():
             self.dbCols.extend(b.dbCols)
         self.dbCols = list(set(self.dbCols))
+        self.simData = None
+
+        # Find compatible subsets of the benchmark dictionary, which can be run/metrics calculated/ together.
+        self._findCompatibleLists()
+
         # Dict to keep track of what's been run:
         self.hasRun = {}
         for bk in benchmarkDict:
@@ -77,9 +83,9 @@ class BenchmarkGroup(object):
         if self.verbose:
             print "Querying database with constraint %s" % self.sqlconstraint
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        self.simdata = utils.getSimData(self.dbObj, self.sqlconstraint, self.dbCols)
+        self.simData = utils.getSimData(self.dbObj, self.sqlconstraint, self.dbCols)
         if self.verbose:
-            print "Found %i visits" % self.simdata.size
+            print "Found %i visits" % self.simData.size
 
         # Query for the fieldData if we need it for the opsimFieldSlicer.
         # Determine if we have a opsimFieldSlicer:
@@ -156,7 +162,8 @@ class BenchmarkGroup(object):
         """
         Run all the benchmarks in the entire benchmark group.
         """
-        self._findCompatibleLists()
+        if self.simData is None:
+            self.getData()
         for compatibleList in self.compatibleLists:
             if self.verbose:
                 print 'Running: ', compatibleList
@@ -187,7 +194,7 @@ class BenchmarkGroup(object):
 
         for stacker in compatStackers:
             # Check that stackers can clobber cols that are already there
-            self.simdata = stacker.run(self.simdata)
+            self.simData = stacker.run(self.simData)
 
         # Pull out one of the slicers to use as our 'slicer'.
         # This will be forced back into all of the benchmarks at the end (so that they track
@@ -195,9 +202,9 @@ class BenchmarkGroup(object):
         #  ?? (or maybe we just copy the metadata into the other slicers, if they aren't the same object?)
         slicer = bDict.itervalues().next().slicer
         if slicer.slicerName == 'OpsimFieldSlicer':
-            slicer.setupSlicer(self.simdata, self.fieldData, maps=compatMaps)
+            slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
         else:
-            slicer.setupSlicer(self.simdata, maps=compatMaps)
+            slicer.setupSlicer(self.simData, maps=compatMaps)
 
         # Set up (masked) arrays to store metric data in each benchmark.
         for b in bDict.itervalues():
@@ -212,7 +219,7 @@ class BenchmarkGroup(object):
             cache = False
         # Run through all slicepoints and calculate metrics.
         for i, slice_i in enumerate(slicer):
-            slicedata = self.simdata[slice_i['idxs']]
+            slicedata = self.simData[slice_i['idxs']]
             if len(slicedata)==0:
                 # No data at this slicepoint. Mask data values.
                 for b in bDict.itervalues():
@@ -264,19 +271,22 @@ class BenchmarkGroup(object):
                 continue
             # Apply reduce functions, creating a new benchmark in the process (new metric values).
             for reduceFunc in b.metric.reduceFuncs.itervalues():
-                newbenchmark = benchmark.reduceMetric(reduceFunc)
+                newbenchmark = b.reduceMetric(reduceFunc)
                 # Add the new benchmark to our temporary dictionary.
-                reduceBenchmarkDict[newbenchmark.fileRoot] = newbenchmark
+                reduceBenchmarkDict[newbenchmark.metric.name] = newbenchmark
         # Add the new benchmarks to the benchmarkGroup dictionary.
         self.benchmarkDict.update(reduceBenchmarkDict)
 
-    def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True):
+    def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
+                closefigs=False):
         """
         Generate the plots for all the benchmarks.
         """
         for b in self.benchmarkDict.itervalues():
             b.plotBenchmark(outDir=self.outDir, resultsDb=self.resultsDb, savefig=savefig,
                             outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+        if closefigs:
+            plt.close('all')
 
     def writeAll(self):
         """
