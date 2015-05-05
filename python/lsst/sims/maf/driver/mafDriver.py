@@ -26,7 +26,7 @@ class MafDriver(object):
         self.config = configvalues
         # Make sure only legitimate keys are in the dbAddress
         for key in self.config.dbAddress.keys():
-           if key not in ['dbAddress','dbClass']:
+           if key not in ['dbAddress','dbClass', 'Summary']:
               raise ValueError('key value "%s" not valid for dbAddress dict.  Must be "dbAddress" or "dbClass".'%key)
         # If a dbClass isn't specified, use OpsimDatabase
         if 'dbClass' not in self.config.dbAddress.keys():
@@ -49,7 +49,10 @@ class MafDriver(object):
         utils.moduleLoader(self.config.modules)
 
         # Set up database connection.
-        self.opsimdb = db.Database.getClass(self.config.dbAddress['dbClass'])(self.config.dbAddress['dbAddress'])
+        if 'Summary' in self.config.dbAddress:
+            self.opsimdb = utils.connectOpsimDb(self.config.dbAddress)
+        else:
+            self.opsimdb = db.Database.getClass(self.config.dbAddress['dbClass'])(self.config.dbAddress['dbAddress'])
 
         time_prev = time.time()
         self.time_start = time.time()

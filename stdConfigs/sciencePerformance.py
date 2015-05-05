@@ -8,7 +8,7 @@ import lsst.sims.maf.utils as utils
 
 
 def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='fieldRA', decCol='fieldDec',
-             benchmark='design', **kwargs):
+             benchmark='design', summaryOnly=False, **kwargs):
     """
     A MAF config for SSTAR-like analysis of an opsim run.
 
@@ -24,12 +24,17 @@ def mConfig(config, runName, dbDir='.', outDir='ScienceOut', nside=128, raCol='f
     """
     #config.mafComment = 'Science Performance'
 
+    if summaryOnly=='TRUE' or summaryOnly=='True':
+        summaryOnly = True
+
     # Setup Database access
     config.outDir = outDir
     if runName.endswith('_sqlite.db'):
         runName = runName.replace('_sqlite.db', '')
     sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
+    if summaryOnly:
+        config.dbAddress['Summary'] = 'Summary'
     config.opsimName = runName
     config.figformat = 'pdf'
 

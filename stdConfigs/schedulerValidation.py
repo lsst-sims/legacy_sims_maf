@@ -6,7 +6,7 @@ import lsst.sims.maf.utils as utils
 import numpy as np
 
 
-def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwargs):
+def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', summaryOnly='False', slewStats='on', **kwargs):
     """
     A MAF config for SSTAR-like analysis of an opsim run.
 
@@ -21,6 +21,17 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
        ('requested' means look up the requested number of visits for the proposal and use that information).
     """
     #config.mafComment = 'Scheduler Validation'
+    slewStatsFlag = True
+    slewStatsOnlyFlag = False
+    if slewStats.lower() == 'off':
+        slewStatsFlag = False
+    elif slewStats.lower() == 'only':
+        slewStatsOnlyFlag = True
+
+    if summaryOnly.lower() =='true':
+        summaryOnlyFlag = True
+    else:
+        summaryOnlyFlag = False
 
     # Setup Database access
     config.outDir = outDir
@@ -28,6 +39,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
         runName = runName.replace('_sqlite.db', '')
     sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
     config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
+    if summaryOnlyFlag:
+        config.dbAddress['Summary'] = 'Summary'
     config.opsimName = runName
     config.figformat = 'pdf'
 
@@ -147,6 +160,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     totalNVisits = opsimdb.fetchNVisits()
     totalSlewN = opsimdb.fetchTotalSlewN()
 
+
     ####
     # Start specifying metrics and slicers for MAF to run.
 
@@ -170,6 +184,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                 nvisitsMax = nvisitsRange['all'][f][1]
                 mag_zp = benchmarkVals['coaddedDepth'][f]
             elif prop == 'WFD':
+                if len(WFDpropid) == 0:
+                    continue
                 subgroup = 'WFD'
                 propCaption = ' for all WFD proposals'
                 metadata = '%s band, WFD' %(f) + slicermetadata
@@ -393,6 +409,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
             sqlconstraint = ['']
             xlabel = '# visits (All Props) / (# WFD %s value)' %(benchmark)
         if prop == 'WFD':
+            if len(WFDpropid) == 0:
+                continue
             subgroup = 'WFD'
             metadata = 'WFD only'
             sqlconstraint = ['%s' %(wfdWhere)]
@@ -441,6 +459,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                 # Reset histNum to starting value (to combine filters).
                 histNum = startNum
             elif prop == 'WFD':
+                if len(WFDpropid) == 0:
+                    continue
                 subgroup = 'WFD'
                 propCaption = ' for all WFD proposals.'
                 metadata = '%s band, WFD' %(f) + slicermetadata
@@ -611,7 +631,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
     m2 = configureMetric('MinTimeBetweenStatesMetric', kwargs={'changeCol':'filter'},
                         displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
                                      'caption':'Minimum time between filter changes, in minutes.'})
-    order += 1 
+    order += 1
     m3 = configureMetric('NStateChangesFasterThanMetric', kwargs={'changeCol':'filter', 'cutoff':10},
                         displayDict={'group':filtergroup, 'subgroup':'Whole Survey', 'order':order,
                         'caption':'Number of filter changes faster than 10 minutes over the entire survey.'})
@@ -653,6 +673,8 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                 sqlconstraint = sqlconstraint[:-4]
                 metadata = '%s band, all props'%(f)
             elif propid == 'WFD':
+                if len(WFDpropid) == 0:
+                    continue
                 subgroup = 'WFD'
                 sqlconstraint = sqlconstraint+' %s'%(wfdWhere)
                 metadata = '%s band, WFD'%(f)
@@ -732,6 +754,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
 
     # Stats for angle:
     angles = ['telAlt', 'telAz', 'rotTelPos']
+    slewStatsList = []
 
     order = 0
     for angle in angles:
@@ -755,7 +778,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''], metadata=angle,
                                  metadataVerbatim=True, table='SlewState')
-        slicerList.append(slicer)
+        slewStatsList.append(slicer)
 
     # Make some calls to other tables to get slew stats
     colDict = {'domAltSpd':'Dome Alt Speed','domAzSpd':'Dome Az Speed','telAltSpd': 'Tel Alt Speed',
@@ -779,7 +802,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict, constraints=[''],
                                  table='SlewMaxSpeeds', metadata=colDict[key], metadataVerbatim=True)
-        slicerList.append(slicer)
+        slewStatsList.append(slicer)
 
     # Use the slew stats
     slewTypes = ['DomAlt', 'DomAz', 'TelAlt', 'TelAz', 'Rotator', 'Filter',
@@ -816,7 +839,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                  constraints=['actDelay>0 and activity="%s"'%slewType],
                                  table='SlewActivities', metadata=slewType,
                                  metadataVerbatim=True)
-        slicerList.append(slicer)
+        slewStatsList.append(slicer)
         metricList = []
         metricList.append(configureMetric('CountRatioMetric',
                                           kwargs={'col':'actDelay', 'normVal':totalSlewN/100.0,
@@ -836,7 +859,7 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
                                  constraints=['actDelay>0 and inCriticalPath="True" and activity="%s"'%slewType],
                                  table='SlewActivities', metadata=slewType,
                                  metadataVerbatim=True)
-        slicerList.append(slicer)
+        slewStatsList.append(slicer)
         metricList = []
         metricList.append(configureMetric('AveSlewFracMetric',
                                           kwargs={'col':'actDelay','activity':slewType,
@@ -851,7 +874,18 @@ def mConfig(config, runName, dbDir='.', outDir='Out', benchmark='design', **kwar
         metricDict = makeDict(*metricList)
         slicer = configureSlicer('UniSlicer', metricDict=metricDict,constraints=[''],
                                  table='SlewActivities', metadata=slewType, metadataVerbatim=True)
-        slicerList.append(slicer)
+        slewStatsList.append(slicer)
+
+    # Add the slew statistics back to the big metric/slicer list, if needed.
+    if not summaryOnlyFlag and slewStatsFlag:
+        if slewStatsOnlyFlag:
+            # Return the slewStats slicer list only, if only doing slew stats.
+            config.slicers=makeDict(*slewStatsList)
+            return config
+        else:
+            # Else, add the slew stats to the general list, which will be returned later.
+            for slicer in slewStatsList:
+                slicerList.append(slicer)
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
