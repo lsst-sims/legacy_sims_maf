@@ -8,6 +8,12 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 from .metricBundle import MetricBundle
 
+def makeBundleDict(bundleList):
+    """
+    Utility to convert a list of MetricBundles into a dictionary, keyed by the fileRoot names.
+    """
+    bDict = {b.fileRoot:b for b in bundleList}
+    return bDict
 
 class MetricBundleGroup(object):
     """
@@ -161,6 +167,7 @@ class MetricBundleGroup(object):
     def runAll(self):
         """
         Run all the metricBundles in the entire metricBundle group.
+        Also runs 'reduceAll' and then 'summaryAll'.
         """
         if self.simData is None:
             self.getData()
@@ -169,9 +176,17 @@ class MetricBundleGroup(object):
                 print 'Running: ', compatibleList
             self.runCompatible(compatibleList)
             if self.verbose:
-                print 'Completed'
+                print 'Completed metric generation.'
             for key in compatibleList:
                 self.hasRun[key] = True
+        if self.verbose:
+            print 'Running reduce methods.'
+        self.reduceAll()
+        if self.verbose:
+            print 'Running summary statistics.'
+        self.summaryAll()
+        if self.verbose:
+            print 'Completed.'
 
     def runCompatible(self, compatibleList):
         """
@@ -199,12 +214,13 @@ class MetricBundleGroup(object):
         # Pull out one of the slicers to use as our 'slicer'.
         # This will be forced back into all of the metricBundles at the end (so that they track
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
-        #  ?? (or maybe we just copy the metadata into the other slicers, if they aren't the same object?)
         slicer = bDict.itervalues().next().slicer
         if slicer.slicerName == 'OpsimFieldSlicer':
             slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
         else:
             slicer.setupSlicer(self.simData, maps=compatMaps)
+        for b in bDict.itervalues():
+            b.slicer = slicer
 
         # Set up (masked) arrays to store metric data in each metricBundle.
         for b in bDict.itervalues():
@@ -272,7 +288,10 @@ class MetricBundleGroup(object):
                 for reduceFunc in b.metric.reduceFuncs.itervalues():
                     newmetricbundle = b.reduceMetric(reduceFunc)
                     # Add the new metricBundle to our temporary dictionary.
-                    reduceBundleDict[newmetricbundle.metric.name] = newmetricbundle
+                    name = newmetricbundle.metric.name
+                    if name in self.bundleDict:
+                        name = newmetricbundle.fileRoot
+                    reduceBundleDict[name] = newmetricbundle
                 # Remove summaryMetrics from top level metricbundle if desired.
                 if updateSummaries:
                     b.summaryMetrics = []
