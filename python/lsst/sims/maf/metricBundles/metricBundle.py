@@ -399,24 +399,22 @@ class MetricBundle(object):
         # Generate a name for the metric values processed by the reduceFunc.
         reduceName = self.metric.name + '_' + reduceFunc.__name__.replace('reduce', '')
         # Set up metricBundle to store new metric values, and add plotDict/displayDict.
-        newmetricBundle = MetricBundle(metric=deepcopy(self.metric), slicer=self.slicer, stackerList=self.stackerList,
+        newmetric = deepcopy(self.metric)
+        newmetric.name = reduceName
+        if reducePlotDict is not None:
+            if 'units' in reducePlotDict:
+                newmetric.units = reducePlotDict['units']
+        newmetricBundle = MetricBundle(metric=newmetric, slicer=self.slicer, stackerList=self.stackerList,
                                  sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
                                  plotDict=None, displayDict=self.displayDict,
                                  summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot='')
-        newmetricBundle.metric.name = reduceName
-        if reducePlotDict is not None:
-            if 'units' in reducePlotDict:
-                newmetricBundle.metric.units = reducePlotDict['units']
         # Build a new output file root name.
         newmetricBundle._buildFileRoot()
-        # Use existing (self) plotDict, without the title/x or y labels (as these get updated with reduceName)
-        cpPlotDict = {}
+        # Add existing plotDict (except for title/xlabels etc) into new plotDict.
         for k, v in self.plotDict.iteritems():
             if k not in newmetricBundle.plotDict:
-                cpPlotDict[k] = v
-        # Then update newmetricBundle's plot dictionary with these values (copied from self).
-        newmetricBundle.setPlotDict(cpPlotDict)
-        # And update newmetricBundle's plot dictionary with any set explicitly by reducePlotDict.
+                newmetricBundle.plotDict[k] = v
+        # Update newmetricBundle's plot dictionary with any set explicitly by reducePlotDict.
         newmetricBundle.setPlotDict(reducePlotDict)
         # Update the newmetricBundle's display dictionary with any set explicitly by reduceDisplayDict.
         newmetricBundle.setDisplayDict(reduceDisplayDict)
