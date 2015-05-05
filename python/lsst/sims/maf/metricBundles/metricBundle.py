@@ -427,8 +427,8 @@ class MetricBundle(object):
         # Fill the reduced metric data using the reduce function.
         for i, (mVal, mMask) in enumerate(zip(self.metricValues.data, self.metricValues.mask)):
             if not mMask:
-                newmetricbundle.metricValues.data[i] = reduceFunc(mVal)
-        return newmetricbundle
+                newmetricBundle.metricValues.data[i] = reduceFunc(mVal)
+        return newmetricBundle
 
     def plot(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
              figformat='pdf', dpi=600, thumbnail=True, plotFunc=None):
