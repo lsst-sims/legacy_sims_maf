@@ -1,2 +1,2 @@
 from .metricBundle import *
-from .metricBundleSet import *
+from .metricBundleGroup import *
