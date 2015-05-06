@@ -6,7 +6,7 @@ from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-from lsst.sims.maf.metrics.summaryMetrics import fOArea, fONv
+from lsst.sims.maf.metrics import fOArea, fONv, SumMetric
 
 from .plotHandler import BasePlotter
 
@@ -73,5 +73,54 @@ class FOPlot(BasePlotter):
             plt.xlim([xMin,xMax])
         if (yMin is not None) & (yMax is not None):
             plt.ylim([yMin,yMax])
+        return fig.number
 
+
+def consolidateHistogram(BasePlotter):
+    def __init__(self):
+        self.plotType = 'SummaryHistogram'
+        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
+                                'cumulative':False, 'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
+                                'color':'b', 'linestyle':'-', 'histStyle':True
+                                'metricReduce':'SumMetric', 'bins':None}
+
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+        """
+        This plotting method takes the set of values @ each metricValue (i.e. a histogram at each slicer point)
+        and consolidates them into a single histogram that is plotted, effectively marginalizing over the sky.
+        Note that the plotDict['bins'] here should match the bins used with the metric and that
+        plotDict['metricReduce'] will specify the metric used to combine the histograms bin-by-bin from each slicepoint.
+        """
+        fig = plt.figure(fignum)
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+        # Combine the metric values across all slicePoints.
+        if not isinstance(plotDict['metricReduce'], metrics.BaseMetric):
+            raise ValueError('Expected plotDict[metricReduce] to be a MAF metric object.')
+        # Get the data type
+        dt = metricValue.compressed()[0].dtype
+        # Change an array of arrays (dtype=object) to a 2-d array of correct dtype
+        mV = np.array(metricValue.compressed().tolist(), dtype=[('metricValue',dt)])
+        # Make an array to hold the combined result
+        finalHist = np.zeros(mV.shape[1], dtype=float)
+        metric = plotDict['metricReduce']
+        metric.colname = 'metricValue'
+        # Loop over each bin and use the selected metric to combine the results
+        for i in np.arange(finalHist.size):
+            finalHist[i] = metric.run(mV[:,i])
+        bins = plotDict['bins']
+        if plotDict['histStyle']:
+            x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
+            y = np.ravel(zip(finalHist, finalHist))
+        else:
+            # Could use this to plot things like FFT
+            x = bins[:-1]
+            y = finalHist
+        # Make the plot.
+        plt.plot(x,y, linestyle=plotDict['linestyle'], label=plotDict['label'], color=plotDict['color'])
+        # Add labels.
+        plt.xlabel(plotDict['xlabel'])
+        plt.ylabel(plotDict['ylabel'])
+        plt.title(plotDict['title'])
         return fig.number
