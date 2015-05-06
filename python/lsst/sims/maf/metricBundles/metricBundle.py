@@ -361,13 +361,12 @@ class MetricBundle(object):
         """
         Compute summary statistics on metricValues, using summaryMetrics (metricbundle list).
         """
-        if self.summaryMetrics is None:
-            self.summaryValues = None
-        else:
+        if self.summaryValues is None:
+            self.summaryValues = {}
+        if self.summaryMetrics is not None:
             # Build array of metric values, to use for (most) summary statistics.
             rarr_std = np.array(zip(self.metricValues.compressed()),
                                 dtype=[('metricdata', self.metricValues.dtype)])
-            self.summaryValues = []
             for m in self.summaryMetrics:
                 # The summary metric colname should already be set to 'metricdata', but in case it's not:
                 m.colname = 'metricdata'
@@ -382,7 +381,7 @@ class MetricBundle(object):
                     summaryVal = self.slicer.badval
                 else:
                     summaryVal = m.run(rarr)
-                self.summaryValues.append([summaryName, summaryVal])
+                self.summaryValues[summaryName] = summaryVal
                 # Add summary metric info to results database, if applicable.
                 if resultsDb:
                     metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
