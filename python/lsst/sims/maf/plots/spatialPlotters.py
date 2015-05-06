@@ -13,6 +13,8 @@ from matplotlib.collections import PatchCollection
 from lsst.sims.maf.utils import optimalBins, percentileClipping
 from .plotHandler import BasePlotter
 
+from lsst.sims.coordUtils import AstrometryBase
+
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
@@ -207,7 +209,7 @@ class BaseHistogram(BasePlotter):
         self.plotType = 'Histogram'
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
-                                'scsale':1.0, 'xMin':None, 'xMax':None,
+                                'scale':1.0, 'xMin':None, 'xMax':None,
                                 'logScale':'auto', 'color':'b',
                                 'yaxisformat':'%.3f',
                                 'zp':None, 'normVal':None, 'percentileClip':None}
@@ -362,7 +364,7 @@ class BaseSkyMap(BasePlotter):
                                 'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
                                 'raCen':0.0, 'mwZone':True}
 
-    def _plot_tissot_ellipse(self, lon, lat, radius, ax=None):
+    def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
 
         Parameters
@@ -389,7 +391,7 @@ class BaseSkyMap(BasePlotter):
         if ax is None:
             ax = plt.gca()
         for l, b, diam in np.broadcast(lon, lat, radius*2.0):
-            el = Ellipse((l, b), diam / np.cos(b), diam)
+            el = Ellipse((l, b), diam / np.cos(b), diam, **kwargs)
             ellipses.append(el)
         return ellipses
 
@@ -431,10 +433,14 @@ class BaseSkyMap(BasePlotter):
         Plot the sky map of metricValue for a generic spatial slicer.
         """
         fig = plt.figure(fignum)
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+
         metricValue = metricValueIn
-        if 'zp' in plotDict:
+        if plotDict['zp'] is not None :
             metricValue = metricValue - plotDict['zp']
-        if 'normVal' in plotDict:
+        if plotDict['normVal'] is not None:
             metricValue = metricValue/plotDict['normVal']
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
