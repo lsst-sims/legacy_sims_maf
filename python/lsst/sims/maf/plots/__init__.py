@@ -1,3 +1,3 @@
 from .plotHandler import *
-from .plotFuncsSpatial import *
-from .hourglassPlotFuncs import *
+from .spatialPlotters import *
+from .hourglassPlotters import *
