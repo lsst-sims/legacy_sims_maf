@@ -326,14 +326,9 @@ class BaseHistogram(BasePlotter):
         if plotDict['xMax'] is not None:
             plt.xlim(xmax=plotDict['xMax'])
         # Set/Add various labels.
-        if plotDict['xlabel'] is not None:
-            plt.xlabel(plotDict['xlabel'])
-        elif 'units' in plotDict:
-            plt.xlabel(plotDict['units'])
-        if plotDict['ylabel'] is not None:
-            plt.ylabel(plotDict['ylabel'])
-        if plotDict['title'] is not None:
-            plt.title(plotDict['title'])
+        plt.xlabel(plotDict['xlabel'])
+        plt.ylabel(plotDict['ylabel'])
+        plt.title(plotDict['title'])
         # Return figure number
         return fig.number
 
@@ -341,7 +336,7 @@ class BaseHistogram(BasePlotter):
 class BaseSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
-        self.defaultPlotDict = {'title':None, 'xlabel':None, 'units':None, 'label':None,
+        self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'projection':'aitoff', 'radius':np.radians(1.75),
                                 'logScale':'auto', 'cbar':True, 'cbarFormat':'%.2f',
                                 'cmap':cm.jet, 'alpha':1.0,
