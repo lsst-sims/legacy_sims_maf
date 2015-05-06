@@ -30,21 +30,26 @@ class PlotHandler(object):
             self.mBundles.append(mBundles)
             self.slicer = mBundles.slicer
         elif isinstance(mBundles, dict):
-            self.mBundles = [None for i in mBundles.iterkeys()]
             for mB in mBundles.itervalues():
-                vals = mB.filterRoot.split('_')
-                f = [
-                forder = [self.filterorder[f] for f in vals where len(f) == 1 & f in self.filterorder]
-                while self.mBundles[forder] is not None:
-                    forder += 1
-                self.mBundles[forder] = mB
+                vals = mB.fileRoot.split('_')
+                forder = [self.filterorder.get(f, None) for f in vals if len(f) == 1]
+                forder = [o for o in forder if o is not None]
+                if len(forder) == 0:
+                    forder = len(self.mBundles)
+                else:
+                    forder = forder[-1]
+                self.mBundles.insert(forder, mB)
             self.slicer = self.mBundles[0].slicer
         else:
-            self.mBundles = [None for i in mBundles]
             for mB in mBundles:
-                vals = mB.filterRoot.split('_')
-                forder = [self.filterorder[f] for f in vals where len(f)==1 & f in self.filterorder]
-            self.mBundles = mBundles
+                vals = mB.fileRoot.split('_')
+                forder = [self.filterorder.get(f, None) for f in vals if len(f) == 1]
+                forder = [o for o in forder if o is not None]
+                if len(forder) == 0:
+                    forder = len(self.mBundles)
+                else:
+                    forder = forder[-1]
+                self.mBundles.insert(forder, mB)
             self.slicer = self.mBundles[0].slicer
         for mB in self.mBundles:
             if mB.slicer.slicerName != self.slicer.slicerName:
