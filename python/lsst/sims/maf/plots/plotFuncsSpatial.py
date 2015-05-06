@@ -128,7 +128,7 @@ class HealpixPowerSpectrum(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
-        plt.figure(fignum)
+        fig = plt.figure(fignum)
         # If the mask is True everywhere (no data), just plot zeros
         if False not in metricValue.mask:
             return None
