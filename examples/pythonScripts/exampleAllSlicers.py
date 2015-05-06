@@ -64,11 +64,7 @@ counter += 1
 # healpixComplexSlicer
 
 # f0Slicer -- this should just go to a healpixslicer with a different plotter.
-slicer = slicers.HealpixSlicer(nside=16)
-metric = metrics.MeanMetric(col='airmass')
-bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere, )
-bundleDict[counter] = bundle
-counter += 1
+
 
 
 # Run everything above

@@ -189,7 +189,7 @@ class OpsimHistogram(BasePlotter):
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'ylabel':'Number of Fields', 'yaxisFormat':'%d',
                                 'bins':None, 'binsize':None, 'cumulative':False,
-                                'scale':None, 'xMin':None, 'xMax':None,
+                                'scale':1.0, 'xMin':None, 'xMax':None,
                                 'logScale':False, 'color':'b'}
         self.baseHist = BaseHistogram()
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -317,7 +317,10 @@ class BaseHistogram(BasePlotter):
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
-            return plotDict['yaxisformat'] % (y * plotDict['scale'])
+            try:
+                return plotDict['yaxisformat'] % (y * plotDict['scale'])
+            except:
+                import pdb ; pdb.set_trace()
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set y limits.
