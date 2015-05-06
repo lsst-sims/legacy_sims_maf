@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
@@ -62,15 +61,34 @@ bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
 bundleDict[counter] = bundle
 counter += 1
 
-# healpixSDSSSlicer
-
 # healpixComplexSlicer
 
 # f0Slicer -- this should just go to a healpixslicer with a different plotter.
+slicer = slicers.HealpixSlicer(nside=16)
+metric = metrics.MeanMetric(col='airmass')
+bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere, )
+bundleDict[counter] = bundle
+counter += 1
 
 
-
+# Run everything above
 bgroup = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=outDir, resultsDb=resultsDb)
+bgroup.runAll()
+bgroup.plotAll()
+bgroup.writeAll()
+
+
+
+
+# healpixSDSSSlicer
+# need to run setup pymssql to get this part to run. Do we want to add that to our dependencies?
+
+sdssDB = db.SdssDatabase('mssql+pymssql://clue-1:wlZH2xWy@fatboy.npl.washington.edu:1433')
+sqlWhere = "filter='r' and nStars > 0 and nGalaxy > 0"
+slicer = slicers.HealpixSDSSSlicer(nside=64, lonCol='RA1', latCol='Dec1')
+metric = metrics.MeanMetric(col='psfWidth')
+bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
+bgroup = metricBundles.MetricBundleGroup({0:bundle}, sdssDB, outDir=outDir, resultsDb=resultsDb)
 bgroup.runAll()
 bgroup.plotAll()
 bgroup.writeAll()
