@@ -94,7 +94,7 @@ class HealpixSkyMap(BasePlotter):
         rot = (plotDict['rot1'], plotDict['rot2'], plotDict['rot3'])
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
                     min=clims[0], max=clims[1], rot=rot, flip='astro',
-                    cmap=cmap, norm=norm)
+                    cmap=cmap, norm=norm, fig=fig.number)
         # This graticule call can fail with old versions of healpy and matplotlib 1.4.0.
         # Make sure the latest version of healpy in the stack is setup
         hp.graticule(dpar=20, dmer=20, verbose=False)
