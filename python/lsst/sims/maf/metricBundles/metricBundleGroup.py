@@ -8,6 +8,8 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 from .metricBundle import MetricBundle
 
+__all__ = ['makeBundleDict', 'MetricBundleGroup']
+
 def makeBundleDict(bundleList):
     """
     Utility to convert a list of MetricBundles into a dictionary, keyed by the fileRoot names.
@@ -30,12 +32,12 @@ class MetricBundleGroup(object):
     run all reduce functions, and write all metricbundles to disk.
     Thus, it also tracks the 'outDir' and 'resultsDb'.
     """
-    def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True):
+    def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True, saveEarly=True):
         """
         Set up the MetricBundleGroup, check that all MetricBundles have the same sql constraint.
         """
         self.verbose = verbose
-
+        self.saveEarly = saveEarly
         # Check for output directory, create it if needed.
         self.outDir = outDir
         if not os.path.isdir(self.outDir):
@@ -219,8 +221,10 @@ class MetricBundleGroup(object):
             slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
         else:
             slicer.setupSlicer(self.simData, maps=compatMaps)
-        for b in bDict.itervalues():
-            b.slicer = slicer
+        # Copy the slicer (after setup) back into the individual metricBundles.
+        if slicer.slicerName != 'HealpixSlicer' or slicer.slicerName != 'UniSlicer':
+            for b in bDict.itervalues():
+                b.slicer = slicer
 
         # Set up (masked) arrays to store metric data in each metricBundle.
         for b in bDict.itervalues():
@@ -275,6 +279,11 @@ class MetricBundleGroup(object):
                 b.metricValues.mask = np.where(b.metricValues.data==b.metric.badval,
                                                True, b.metricValues.mask)
 
+        # Save data to disk as we go, although this won't keep summary values, etc. (just failsafe).
+        if self.saveEarly:
+            for b in bDict.itervalues():
+                b.write(outDir=self.outDir, resultsDb=self.resultsDb)
+
     def reduceAll(self, updateSummaries=True):
         """
         Run all reduce functions for the metric in each metricBundle.
@@ -292,6 +301,8 @@ class MetricBundleGroup(object):
                     if name in self.bundleDict:
                         name = newmetricbundle.fileRoot
                     reduceBundleDict[name] = newmetricbundle
+                    if self.saveEarly:
+                        newmetricbundle.write(outDir=self.outDir, resultsDb=self.resultsDb)
                 # Remove summaryMetrics from top level metricbundle if desired.
                 if updateSummaries:
                     b.summaryMetrics = []
@@ -320,5 +331,7 @@ class MetricBundleGroup(object):
         """
         Save all the metricbundles to disk.
         """
+        if self.saveEarly and self.verbose:
+            print 'Re-saving metric bundles.'
         for b in self.bundleDict.itervalues():
             b.write(outDir=self.outDir, resultsDb=self.resultsDb)

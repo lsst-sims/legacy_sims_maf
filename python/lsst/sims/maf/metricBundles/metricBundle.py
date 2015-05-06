@@ -9,6 +9,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.maps as maps
 from lsst.sims.maf.utils import ColInfo
 
+__all__ = ['MetricBundle']
 
 class MetricBundle(object):
     """
