@@ -6,20 +6,14 @@ from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.ticker import FuncFormatter
+from matplotlib.patches import Ellipse
+from matplotlib.collections import PatchCollection
 
 from lsst.sims.maf.utils import optimalBins, percentileClipping
+from .plotHandler import BasePlotter
 
-__all__ = ['BasePlotter', 'HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'BaseHistogram']
-
-class BasePlotter(object):
-    """
-    Serve as the base type for MAF plotters and example of API.
-    """
-    def __init__(self):
-        self.plotType = None
-        self.defaultPlotDict = None
-    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
-        pass
+__all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
+           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
 
 class HealpixSkyMap(BasePlotter):
     def __init__(self):
@@ -175,6 +169,26 @@ class HealpixHistogram(BasePlotter):
         fignum = self.baseHist(metricValue, slicer, plotDict, fignum=fignum)
         return fignum
 
+class OpsimHistogram(BasePlotter):
+    def __init__(self):
+        self.plotType = 'Histogram'
+        self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
+                                'ylabel':'Number of Fields', 'yaxisFormat':'%d',
+                                'bins':None, 'binsize':None, 'cumulative':False,
+                                'scale':None, 'xMin':None, 'xMax':None,
+                                'logScale':False, 'color':'b'}
+        self.baseHist = BaseHistogram()
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+        """
+        Histogram metricValue for all healpix points.
+        """
+        if slicer.slicerName != 'OpsimFieldSlicer':
+            raise ValueError('OpsimHistogram is for use with OpsimFieldSlicer.')
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+        fignum = self.baseHist(metricValue, slicer, plotDict, fignum=fignum)
+        return fignum
 
 class BaseHistogram(BasePlotter):
     def __init__(self):
@@ -324,6 +338,184 @@ class BaseHistogram(BasePlotter):
         return fig.number
 
 
+class BaseSkyMap(BasePlotter):
+    def __init__(self):
+        self.plotType = 'SkyMap'
+        self.defaultPlotDict = {'title':None, 'xlabel':None, 'units':None, 'label':None,
+                                'projection':'aitoff', 'radius':np.radians(1.75),
+                                'logScale':'auto', 'cbar':True, 'cbarFormat':'%.2f',
+                                'cmap':cm.jet, 'alpha':1.0,
+                                'zp':None, 'normVal':None,
+                                'colorMin':None, 'colorMax':None, 'percentileClip':False,
+                                'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
+                                'raCen':0.0, 'mwZone':True}
+
+    def _plot_tissot_ellipse(self, lon, lat, radius, ax=None):
+        """Plot Tissot Ellipse/Tissot Indicatrix
+
+        Parameters
+        ----------
+        lon : float or array_like
+        longitude-like of ellipse centers (radians)
+        lat : float or array_like
+        latitude-like of ellipse centers (radians)
+        radius : float or array_like
+        radius of ellipses (radians)
+        ax : Axes object (optional)
+        matplotlib axes instance on which to draw ellipses.
+
+        Other Parameters
+        ----------------
+        other keyword arguments will be passed to matplotlib.patches.Ellipse.
+
+        # The code in this method adapted from astroML, which is BSD-licensed.
+        # See http://github.com/astroML/astroML for details.
+        """
+        # Code adapted from astroML, which is BSD-licensed.
+        # See http://github.com/astroML/astroML for details.
+        ellipses = []
+        if ax is None:
+            ax = plt.gca()
+        for l, b, diam in np.broadcast(lon, lat, radius*2.0):
+            el = Ellipse((l, b), diam / np.cos(b), diam)
+            ellipses.append(el)
+        return ellipses
+
+    def _plot_ecliptic(self, raCen=0, ax=None):
+        """
+        Plot a red line at location of ecliptic.
+        """
+        if ax is None:
+            ax = plt.gca()
+        ecinc = 23.439291*(np.pi/180.0)
+        ra_ec = np.arange(0, np.pi*2., (np.pi*2./360))
+        dec_ec = np.sin(ra_ec) * ecinc
+        lon = -(ra_ec - raCen - np.pi) % (np.pi*2) - np.pi
+        ax.plot(lon, dec_ec, 'r.', markersize=1.8, alpha=0.4)
+
+    def _plot_mwZone(self, raCen=0, peakWidth=np.radians(10.), taperLength=np.radians(80.), ax=None):
+        """
+        Plot blue lines to mark the milky way galactic exclusion zone.
+        """
+        if ax is None:
+            ax = plt.gca()
+        # Calculate galactic coordinates for mw location.
+        step = 0.02
+        galL = np.arange(-np.pi, np.pi+step/2., step)
+        val = peakWidth * np.cos(galL/taperLength*np.pi/2.)
+        galB1 = np.where(np.abs(galL) <= taperLength, val, 0)
+        galB2 = np.where(np.abs(galL) <= taperLength, -val, 0)
+        # Convert to ra/dec.
+        # Convert to lon/lat and plot.
+        ra, dec = AstrometryBase.galacticToEquatorial(galL, galB1)
+        lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
+        ax.plot(lon, dec, 'b.', markersize=1.8, alpha=0.4)
+        ra, dec = AstrometryBase.galacticToEquatorial(galL, galB2)
+        lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
+        ax.plot(lon, dec, 'b.', markersize=1.8, alpha=0.4)
+
+    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
+        """
+        Plot the sky map of metricValue for a generic spatial slicer.
+        """
+        fig = plt.figure(fignum)
+        metricValue = metricValueIn
+        if 'zp' in plotDict:
+            metricValue = metricValue - plotDict['zp']
+        if 'normVal' in plotDict:
+            metricValue = metricValue/plotDict['normVal']
+        # other projections available include
+        # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
+        ax = fig.add_subplot(111, projection=plotDict['projection'])
+        # Set up valid datapoints and colormin/max values.
+        if plotDict['plotMask']:
+            # Plot all data points.
+            mask = np.ones(len(metricValue), dtype='bool')
+        else:
+            # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
+            mask = ~metricValue.mask
+        # Determine color min/max values. metricValue.compressed = non-masked points.
+        if plotDict['percentileClip']:
+            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
+        if plotDict['colorMin'] is None:
+            if plotDict['percentileClip']:
+                plotDict['colorMin'] = pcMin
+            else:
+                plotDict['colorMin'] = metricValue.compressed().min()
+        if plotDict['colorMax'] is None:
+            if plotDict['percentileClip']:
+                plotDict['colorMax'] = pcMax
+            else:
+                plotDict['colorMax'] = metricValue.compressed().max()
+                # Avoid colorbars with no range.
+                if plotDict['colorMax'] == plotDict['colorMin']:
+                    plotDict['colorMax'] = plotDict['colorMax'] + 1
+                    plotDict['colorMin'] = plotDict['colorMin'] - 1
+        # Combine to make clims:
+        clims = [plotDict['colorMin'], plotDict['colorMax']]
+        # Determine whether or not to use auto-log scale.
+        if plotDict['logScale'] == 'auto':
+            if plotDict['colorMin'] > 0:
+                if np.log10(plotDict['colorMax'])-np.log10(plotDict['colorMin']) > 3:
+                    plotDict['logScale'] = True
+                else:
+                    plotDict['logScale'] = False
+            else:
+                plotDict['logScale'] = False
+        if plotDict['logScale']:
+            # Move min/max values to things that can be marked on the colorbar.
+            plotDict['colorMin'] = 10**(int(np.log10(plotDict['colorMin'])))
+            plotDict['colorMax'] = 10**(int(np.log10(plotDict['colorMax'])))
+        # Add ellipses at RA/Dec locations
+        lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi*2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][mask], plotDict['radius'], rasterized=True, ax=ax)
+        if plotDict['metricIsColor']:
+            current = None
+            for ellipse, mVal in zip(ellipses, metricValue.data[mask]):
+                if mVal[3] > 1:
+                    ellipse.set_alpha(1.0)
+                    ellipse.set_facecolor((mVal[0], mVal[1], mVal[2]))
+                    ellipse.set_edgecolor('k')
+                    current = ellipse
+                else:
+                    ellipse.set_alpha(mVal[3])
+                    ellipse.set_color((mVal[0], mVal[1], mVal[2]))
+                ax.add_patch(ellipse)
+            if current:
+                ax.add_patch(current)
+        else:
+            if plotDict['logScale']:
+                norml = colors.LogNorm()
+                p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
+                                    linewidth=0, edgecolor=None, norm=norml, rasterized=True)
+            else:
+                p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
+                                    linewidth=0, edgecolor=None, rasterized=True)
+            p.set_array(metricValue.data[mask])
+            p.set_clim(clims)
+            ax.add_collection(p)
+            # Add color bar (with optional setting of limits)
+            if plotDict['cbar']:
+                cb = plt.colorbar(p, aspect=25, extend='both', extendrect=True, orientation='horizontal',
+                                format=plotDict['cbarFormat'])
+                # If outputing to PDF, this fixes the colorbar white stripes
+                if plotDict['cbar_edge']:
+                    cb.solids.set_edgecolor("face")
+                cb.set_label(plotDict['xlabel'])
+        # Add ecliptic
+        self._plot_ecliptic(plotDict['raCen'], ax=ax)
+        if plotDict['mwZone']:
+            self._plot_mwZone(plotDict['raCen'], ax=ax)
+        ax.grid(True, zorder=1)
+        ax.xaxis.set_ticklabels([])
+        # Add label.
+        if plotDict['label'] is not None:
+            plt.figtext(0.75, 0.9, '%s' %plotDict['label'])
+        if plotDict['title'] is not None:
+            plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center', transform=ax.transAxes)
+        return fig.number
+
+
 class HealpixSDSSSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
@@ -332,6 +524,7 @@ class HealpixSDSSSkyMap(BasePlotter):
                                 'percentileClip':None, 'colorMin':None,
                                 'colorMax':None, 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'label':None}
+
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None, raMin=-90,
                  raMax=90, raLen=45, decMin=-2., decMax=2.):
         """
@@ -343,8 +536,7 @@ class HealpixSDSSSkyMap(BasePlotter):
         decMax: max dec value to plot
         metricValueIn: metric values
         """
-
-        fig = plt.figue(fignum)
+        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
