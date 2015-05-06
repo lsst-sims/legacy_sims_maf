@@ -124,5 +124,3 @@ class OneDSlicer(BaseSlicer):
                           (self.binMin == otherSlicer.binMin) & (self.binMax == otherSlicer.binMax):
                             match = True
         return match
-
- 
