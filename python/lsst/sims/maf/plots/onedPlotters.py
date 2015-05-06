@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lsst.sims.maf.utils import percentileClipping
 
-from .spatialPlotters import BasePlotter
+from .plotHandler import BasePlotter
 
 __all__ = ['OneDBinnedData']
 

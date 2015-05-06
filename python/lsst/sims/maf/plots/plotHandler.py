@@ -1,8 +1,18 @@
 import os
 import matplotlib.pyplot as plt
-#from lsst.sims.maf.metricBundles import MetricBundle
 
-__all__ = ['PlotHandler']
+__all__ = ['PlotHandler', 'BasePlotter']
+
+class BasePlotter(object):
+    """
+    Serve as the base type for MAF plotters and example of API.
+    """
+    def __init__(self):
+        self.plotType = None
+        self.defaultPlotDict = None
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+        pass
+
 
 class PlotHandler(object):
 

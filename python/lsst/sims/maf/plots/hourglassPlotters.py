@@ -1,6 +1,7 @@
 import numpy as np
-from lsst.sims.maf.plots import BasePlotter
 import matplotlib.pyplot as plt
+
+from .plotHandler import BasePlotter
 
 __all__ = ['HourglassPlot']
 
