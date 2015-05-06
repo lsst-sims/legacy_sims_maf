@@ -1,6 +1,6 @@
 import os
 import matplotlib.pyplot as plt
-from lsst.sims.maf.metricBundles import MetricBundle
+#from lsst.sims.maf.metricBundles import MetricBundle
 
 __all__ = ['PlotHandler']
 
@@ -26,10 +26,7 @@ class PlotHandler(object):
         """
         self.mBundles = []
         # Try to add the metricBundles in filter order.
-        if isinstance(mBundles, MetricBundle):
-            self.mBundles.append(mBundles)
-            self.slicer = mBundles.slicer
-        elif isinstance(mBundles, dict):
+        if isinstance(mBundles, dict):
             for mB in mBundles.itervalues():
                 vals = mB.fileRoot.split('_')
                 forder = [self.filterorder.get(f, None) for f in vals if len(f) == 1]

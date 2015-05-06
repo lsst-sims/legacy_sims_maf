@@ -7,6 +7,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.maps as maps
+import lsst.sims.maf.plots as plots
 from lsst.sims.maf.utils import ColInfo
 
 __all__ = ['MetricBundle']
@@ -27,7 +28,7 @@ class MetricBundle(object):
                  stackerList=None, runName='opsim', metadata=None,
                  plotDict=None, displayDict=None,
                  summaryMetrics=None, mapsList=None,
-                 fileRoot=None):
+                 fileRoot=None, plotFuncs=None):
         # Set the metric.
         if not isinstance(metric, metrics.BaseMetric):
             raise ValueError('metric must be an lsst.sims.maf.metrics object')
@@ -74,6 +75,8 @@ class MetricBundle(object):
             self._buildFileRoot()
         # Determine the columns needed from the database.
         self._findReqCols()
+        # Set the plotting classes/functions.
+        self.setPlotFuncs(plotFuncs)
         # Set the plotDict and displayDicts.
         self.plotDict = {}
         self.setPlotDict(plotDict)
@@ -93,6 +96,7 @@ class MetricBundle(object):
         self.sqlconstraint = ''
         self.stackerList = []
         self.summaryMetrics = []
+        self.plotFuncs = []
         self.mapsList = None
         self.runName = 'opsim'
         self.metadata = ''
@@ -108,7 +112,7 @@ class MetricBundle(object):
         Set up the numpy masked array to store the metric value data.
         """
         dtype = self.metric.metricDtype
-        # Can't store healpix slicer mask values in an int array. 
+        # Can't store healpix slicer mask values in an int array.
         if dtype == 'int':
             dtype = 'float'
         self.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), dtype),
@@ -206,6 +210,20 @@ class MetricBundle(object):
                 self.summaryMetrics = [metrics.IdentityMetric('metricdata')]
             else:
                 self.summaryMetrics = []
+
+    def setPlotFuncs(self, plotFuncs):
+        """
+        Set or reset the plotting functions.
+        Default is to use all the plotFuncs associated with a slicer.
+        Note: not testing type of plotFunc here!
+        """
+        if plotFuncs is not None:
+            if len(plotFuncs) == 1:
+                self.plotFuncs = [plotFunc]
+            else:
+                self.plotFuncs = plotFuncs
+        else:
+            self.plotFuncs = self.slicer.plotFuncs
 
     def setPlotDict(self, plotDict=None):
         """
@@ -357,6 +375,7 @@ class MetricBundle(object):
             self.setDisplayDict(header['displayDict'])
         path, head = os.path.split(filename)
         self.fileRoot = head.replace('.npz', '')
+        self.setPlotFuncs(None)
 
     def computeSummaryStats(self, resultsDb=None):
         """
@@ -429,26 +448,28 @@ class MetricBundle(object):
         return newmetricBundle
 
     def plot(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
-             figformat='pdf', dpi=600, thumbnail=True, plotFunc=None):
+             figformat='pdf', dpi=600, thumbnail=True, plotHandler=None, plotFunc=None):
         """
         Create all plots available from the slicer.
         """
-        # plotData for each slicer returns a dictionary with the filenames, filetypes, and fig nums.
-        if outfileSuffix is not None:
-            outfile = self.fileRoot + outfileSuffix
-        else:
-            outfile = self.fileRoot
         # Make plots.
-        plotResults = self.slicer.plotData(self.metricValues, savefig=savefig,
-                                            figformat=figformat, dpi=dpi,
-                                            filename=os.path.join(outDir, outfile),
-                                            thumbnail = thumbnail, plotFunc=plotFunc,
-                                            **self.plotDict)
-        # Save information about the plotted files.
-        if resultsDb:
-            metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
-                                              self.runName, self.sqlconstraint, self.metadata, None)
-            for filename, filetype in zip(plotResults['filenames'], plotResults['filetypes']):
-                froot, fname = os.path.split(filename)
-                resultsDb.updatePlot(metricId=metricId, plotType=filetype, plotFile=fname)
-        return plotResults['figs']
+        if plotHandler is None:
+            plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb,
+                                            savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+        if plotFunc is not None:
+            if isinstance(plotFunc, plots.BasePlotter):
+                plotFunc = plotFunc
+            else:
+                plotFunc = plotFunc()
+
+        plotHandler.setMetricBundles([self])
+        madePlots = {}
+        if plotFunc is not None:
+            fignum = plotHandler.makePlot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+            madePlots[plotFunc.plotType] = fignum
+        else:
+            for plotFunc in self.plotFuncs:
+                plotFunc = plotFunc()
+                fignum = plotHandler.makePlot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+                madePlots[plotFunc.plotType] = fignum
+        return madePlots
