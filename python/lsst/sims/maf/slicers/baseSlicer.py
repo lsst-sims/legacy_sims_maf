@@ -64,9 +64,6 @@ class BaseSlicer(object):
         Minimum set of __init__ kwargs:
         verbose: True/False flag to send extra output to screen
         badval: the value the Slicer uses to fill masked metric data values
-        plotFuncs:  default value of 'all' means the slicer will use all methods that start with 'plot'
-                    to generate plots.  Could be a string or list specifying specific methods that should
-                    be called when plotting.
         """
         self.verbose = verbose
         self.badval = badval

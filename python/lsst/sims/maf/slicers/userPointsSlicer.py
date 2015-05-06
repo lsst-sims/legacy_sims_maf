@@ -7,7 +7,7 @@ __all__ = ['UserPointsSlicer']
 class UserPointsSlicer(BaseSpatialSlicer):
     """Use spatial slicer on a user provided point """
     def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, plotFuncs='all', ra=None, dec=None):
+                 badval=-666, leafsize=100, radius=1.75, ra=None, dec=None):
         """
         ra = list of ra points to use
         dec = list of dec points to use

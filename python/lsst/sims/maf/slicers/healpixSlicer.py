@@ -19,7 +19,7 @@ __all__ = ['HealpixSlicer']
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, lonCol ='fieldRA' , latCol='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100, plotFuncs='all',
+                 useCache=True, radius=1.75, leafsize=100, 
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,

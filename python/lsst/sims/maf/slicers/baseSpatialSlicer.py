@@ -32,8 +32,6 @@ class BaseSpatialSlicer(BaseSlicer):
         'radius' (in degrees) is distance at which matches between
         the simData KDtree
         and slicePoint RA/Dec values will be produced
-        plotFuncs = plotting methods to run. default 'all' runs all methods that start
-        with 'plot'.
         useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
         True means the observations are checked to make sure they fall on a chip."""
 
