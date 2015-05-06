@@ -145,7 +145,7 @@ class MovieSlicer(BaseSlicer):
         else:
             return False
 
-    def plotMovie(self, outfileroot, sliceformat, plotType, figformat, outDir='Output', ips=10.0, fps=10.0):
+    def makeMovie(self, outfileroot, sliceformat, plotType, figformat, outDir='Output', ips=10.0, fps=10.0):
         """
         Takes in metric and slicer metadata and calls ffmpeg to stitch together output files.
         """
