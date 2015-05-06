@@ -2,6 +2,9 @@
 
 import numpy as np
 from functools import wraps
+
+from lsst.sims.maf.plots.spatialPlotters import OpsimHistogram, BaseSkyMap
+
 from .baseSpatialSlicer import BaseSpatialSlicer
 
 __all__ = ['OpsimFieldSlicer']
@@ -19,7 +22,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     def __init__(self, verbose=True, simDataFieldIDColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
-                 badval=-666, plotFuncs='all'):
+                 badval=-666):
         """Instantiate opsim field slicer (an index-based slicer that can do spatial plots).
 
         simDataFieldIDColName = the column name in simData for the field ID
@@ -29,7 +32,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
-        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval, plotFuncs=plotFuncs)
+        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
         self.fieldID = None
         self.simDataFieldIDColName = simDataFieldIDColName
         self.fieldIDColName = fieldIDColName
@@ -44,6 +47,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldIDColName':fieldIDColName,
                           'fieldRaColName':fieldRaColName,
                           'fieldDecColName':fieldDecColName, 'badval':badval}
+        self.plotFuncs = [BaseSkyMap, OpsimHistogram]
 
 
     def setupSlicer(self, simData, fieldData, maps=None):
@@ -96,34 +100,3 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         else:
             return False
 
-    # Add some 'rejiggering' to base histogram to make it look nicer for opsim fields.
-    def plotHistogram(self, metricValue, title=None, xlabel=None, ylabel='Number of Fields',
-                      fignum=None, label=None, addLegend=False, legendloc='upper left',
-                      bins=None, binsize=None, cumulative=False, xMin=None, xMax=None,
-                      logScale=False,
-                      scale=None, color='b', linestyle='-', **kwargs):
-        """Histogram metricValue over the healpix bin points.
-
-        title = the title for the plot (default None)
-        xlabel = x axis label (default None)
-        ylabel = y axis label (default 'Number of Fields')**
-        fignum = the figure number to use (default None - will generate new figure)
-        label = the label to use for the figure legend (default None)
-        addLegend = flag for whether or not to add a legend (default False)
-        bins = bins for histogram (numpy array or # of bins) (default None, uses Freedman-Diaconis rule to set binsize)
-        binsize = size of bins to use.  Will override "bins" if both are set.
-        cumulative = make histogram cumulative (default False)
-        xMin/Max = histogram range (default None, set by matplotlib hist)
-        logScale = use log for y axis (default False)
-        """
-        if ylabel is None:
-            ylabel = 'Number of Fields'
-        fignum = super(OpsimFieldSlicer, self).plotHistogram(metricValue,  xlabel=xlabel,
-                                                             ylabel=ylabel,
-                                                             title=title, fignum=fignum,
-                                                             label=label,
-                                                             addLegend=addLegend, legendloc=legendloc,
-                                                             bins=bins, binsize=binsize, cumulative=cumulative,
-                                                             xMin=xMin, xMax=xMax, logScale=logScale,
-                                                             scale=1, yaxisformat='%d', color=color, **kwargs)
-        return fignum

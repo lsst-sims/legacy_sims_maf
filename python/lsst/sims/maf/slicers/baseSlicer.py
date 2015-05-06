@@ -46,7 +46,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
 
-    def __init__(self, verbose=True, badval=-666, plotFuncs='all'):
+    def __init__(self, verbose=True, badval=-666):
         """
         Instantiate the base slicer object.
 
