@@ -7,6 +7,7 @@ from matplotlib import colors
 import itertools
 from functools import wraps
 
+from lsst.sims.maf.plots.ndPlotters import TwoDSubsetData, OneDSubsetData
 from .baseSlicer import BaseSlicer
 
 __all__ = ['NDSlicer']
@@ -32,6 +33,7 @@ class NDSlicer(BaseSlicer):
             if len(self.binsList) != self.nD:
                 raise Exception('BinsList must be same length as sliceColNames, unless it is a single value')
         self.slicer_init={'sliceColList':sliceColList}
+        self.plotFuncs = [TwoDSubsetData, OneDSubsetData]
 
     def setupSlicer(self, simData, maps=None):
         """Set up bins. """
@@ -115,120 +117,3 @@ class NDSlicer(BaseSlicer):
             return True
         else:
             return False
-
-    def plotBinnedData2D(self, metricValues,
-                        xaxis, yaxis, xlabel=None, ylabel=None,
-                        title=None, fignum=None, logScale=False, units='',
-                        clims=None, cmap=None, cbarFormat=None):
-        """Plot 2 axes from the sliceColList, identified by xaxis/yaxis, given the metricValues at all
-        slicepoints [sums over non-visible axes].
-
-        metricValues = the metric data (as calculated when iterating through slicer)
-        xaxis, yaxis = the x and y dimensions to plot (i.e. 0/1 would plot binsList[0] and
-            binsList[1] data values, with other axis )
-        title = title for the plot (default None)
-        xlabel/ylabel = labels for the x and y axis (default None, uses sliceColList names).
-        fignum = the figure number to use (default None - will generate new figure)
-        logScale = make the colorscale log.
-        """
-        # Reshape the metric data so we can isolate the values to plot
-        # (just new view of data, not copy).
-        newshape = []
-        for b in self.bins:
-            newshape.append(len(b)-1)
-        newshape.reverse()
-        md = metricValues.reshape(newshape)
-        # Sum over other dimensions. Note that masked values are not included in sum.
-        sumaxes = range(self.nD)
-        sumaxes.remove(xaxis)
-        sumaxes.remove(yaxis)
-        sumaxes = tuple(sumaxes)
-        md = md.sum(sumaxes)
-        # Plot the histogrammed data.
-        fig = plt.figure(fignum)
-        # Plot data.
-        x, y = np.meshgrid(self.bins[xaxis][:-1], self.bins[yaxis][:-1])
-        if logScale:
-            norm = colors.LogNorm()
-        else:
-            norm = None
-        if clims is None:
-            im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap)
-        else:
-            im = plt.contourf(x, y, md, 250, norm=norm, extend='both', cmap=cmap,
-                              vmin=clims[0], vmax=clims[1])
-        if xlabel is None:
-            xlabel = self.sliceColList[xaxis]
-        plt.xlabel(xlabel)
-        if ylabel is None:
-            ylabel= self.sliceColList[yaxis]
-        plt.ylabel(ylabel)
-        cb = plt.colorbar(im, aspect=25, extend='both', orientation='horizontal', format=cbarFormat)
-        cb.set_label(units)
-        if title!=None:
-            plt.title(title)
-        return fig.number
-
-    def plotBinnedData1D(self, metricValues, axis, xlabel=None, ylabel=None,
-                         title=None, fignum=None,
-                         histRange=None, units=None,
-                         label=None, addLegend=False, legendloc='upper left',
-                         filled=False, alpha=0.5, logScale=False):
-        """Plot a single axes from the sliceColList, identified by axis, given the metricValues at all
-        slicepoints [sums over non-visible axes].
-
-        metricValues = the values to be plotted at each bin
-        axis = the dimension to plot (i.e. 0 would plot binsList[0])
-        title = title for the plot (default None)
-        xlabel = x axis label (default None)
-        ylabel =  y axis label (default None)
-        histRange = x axis min/max values (default None, use plot defaults)
-        fignum = the figure number to use (default None - will generate new figure)
-        label = the label to use for the figure legend (default None)
-        addLegend = flag for whether or not to add a legend (default False)
-        legendloc = location for legend (default 'upper left')
-        filled = flag to plot histogram as filled bars or lines (default False = lines)
-        alpha = alpha value for plot bins if filled (default 0.5).
-        logScale = make the y-axis log (default False)
-        """
-        # Reshape the metric data so we can isolate the values to plot
-        # (just new view of data, not copy).
-        newshape = []
-        for b in self.bins:
-            newshape.append(len(b)-1)
-        newshape.reverse()
-        md = metricValues.reshape(newshape)
-        # Sum over other dimensions. Note that masked values are not included in sum.
-        sumaxes = range(self.nD)
-        sumaxes.remove(axis)
-        sumaxes = tuple(sumaxes)
-        md = md.sum(sumaxes)
-        # Plot the histogrammed data.
-        fig = plt.figure(fignum)
-        # Plot data.
-        leftedge = self.bins[axis][:-1]
-        width = np.diff(self.bins[axis])
-        if filled:
-            plt.bar(leftedge, md, width, label=label,
-                    linewidth=0, alpha=alpha, log=logScale)
-        else:
-            x = np.ravel(zip(leftedge, leftedge+width))
-            y = np.ravel(zip(md, md))
-            if logScale:
-                plt.semilogy(x, y, label=label)
-            else:
-                plt.plot(x, y, label=label)
-        if ylabel is not None:
-            plt.ylabel(ylabel)
-        if xlabel is None:
-            xlabel=self.sliceColName[axis]
-            if units != None:
-                xlabel += ' (' + units + ')'
-        plt.xlabel(xlabel)
-        if (histRange != None):
-            plt.xlim(histRange)
-        if (addLegend):
-            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
-        if (title!=None):
-            plt.title(title)
-        return fig.number
