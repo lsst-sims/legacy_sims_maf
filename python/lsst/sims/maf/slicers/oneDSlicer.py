@@ -1,10 +1,11 @@
 # oneDSlicer - slices based on values in one data column in simData.
 
 import numpy as np
-import matplotlib.pyplot as plt
 from functools import wraps
 import warnings
-from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
+from lsst.sims.maf.utils import optimalBins, ColInfo
+from lsst.sims.maf.plots.onedPlotters import OneDBinnedData
+
 from .baseSlicer import BaseSlicer
 
 __all__ = ['OneDSlicer']
@@ -38,6 +39,7 @@ class OneDSlicer(BaseSlicer):
             self.sliceColUnits = co.getUnits(self.sliceColName)
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
+        self.plotFuncs = [OneDBinnedData,]
 
     def setupSlicer(self, simData, maps=None):
         """
@@ -123,71 +125,4 @@ class OneDSlicer(BaseSlicer):
                             match = True
         return match
 
-    def plotBinnedData(self, metricValues, fignum=None,
-                       title=None, units=None,
-                       label=None, addLegend=False,
-                       legendloc='upper left',
-                       filled=False, alpha=0.5,
-                       logScale=False, percentileClip=None,
-                       ylabel=None, xlabel=None,
-                       xMin=None, xMax=None, yMin=None, yMax=None,
-                       color='b', linestyle='-', **kwargs):
-        """
-        Plot a set of oneD binned metric data.
-
-        metricValues = the values to be plotted at each bin
-        title = title for the plot (default None)
-        xlabel = x axis label (default None)
-        ylabel =  y axis label (default None)
-        fignum = the figure number to use (default None - will generate new figure)
-        label = the label to use for the figure legend (default None)
-        addLegend = flag for whether or not to add a legend (default False)
-        legendloc = location for legend (default 'upper left')
-        filled = flag to plot histogram as filled bars or lines (default False = lines)
-        alpha = alpha value for plot bins if filled (default 0.5).
-        logScale = make the y-axis log (default False)
-        percentileClip = percentile clip hi/low outliers before setting the y axis limits
-        yMin/Max = min/max for y-axis (overrides percentileClip)
-        xMin/Max = min/max for x-axis (typically set by bin values though)
-        """
-        if color is None:
-            color = 'b'
-        # Plot the histogrammed data.
-        fig = plt.figure(fignum)
-        leftedge = self.slicePoints['bins'][:-1]
-        width = np.diff(self.slicePoints['bins'])
-        if filled:
-            plt.bar(leftedge, metricValues.filled(), width, label=label,
-                    linewidth=0, alpha=alpha, log=logScale, color=color)
-        else:
-            good = np.where(metricValues.mask == False)
-            x = np.ravel(zip(leftedge[good], leftedge[good]+width[good]))
-            y = np.ravel(zip(metricValues[good], metricValues[good]))
-            if logScale:
-                plt.semilogy(x, y, label=label, color=color, linestyle=linestyle, alpha=alpha)
-            else:
-                plt.plot(x, y, label=label, color=color, linestyle=linestyle, alpha=alpha)
-        # The ylabel will always be built by the sliceMetric.
-        if ylabel is not None:
-            plt.ylabel(ylabel)
-        # The xlabel will always be built by the SliceMetric, so this will generally
-        #  be ignored, but is provided for users who may be working directly with Slicer.
-        if xlabel is None:
-            xlabel=self.sliceColName
-            if units != None:
-                xlabel += ' (' + self.sliceColUnits + ')'
-        plt.xlabel(xlabel)
-        # Set y limits (either from values in args, percentileClipping or compressed data values).
-        if (yMin is None) or (yMax is None):
-            if percentileClip:
-                yMin, yMax = percentileClipping(metricValues.compressed(), percentile=percentileClip)
-        if yMin is not None and yMax is not None:
-            plt.ylim(yMin, yMax)
-        # Set x limits if given in kwargs.
-        if (xMin is not None) or (xMax is not None):
-            plt.xlim(xMin, xMax)
-        if (addLegend):
-            plt.legend(fancybox=True, prop={'size':'smaller'}, loc=legendloc, numpoints=1)
-        if (title!=None):
-            plt.title(title)
-        return fig.number
+ 
