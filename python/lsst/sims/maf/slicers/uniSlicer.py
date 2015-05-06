@@ -12,8 +12,7 @@ class UniSlicer(BaseSlicer):
     """UniSlicer."""
     def __init__(self, verbose=True, badval=-666):
         """Instantiate unislicer. """
-        super(UniSlicer, self).__init__(verbose=verbose, badval=badval,
-                                        plotFuncs=plotFuncs)
+        super(UniSlicer, self).__init__(verbose=verbose, badval=badval)
         self.nslice = 1
         self.slicePoints['sid'] = np.array([0,], int)
         self.plotFuncs = []

@@ -6,14 +6,28 @@ from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.ticker import FuncFormatter
+import matplotlib as mpl
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 
 from lsst.sims.maf.utils import optimalBins, percentileClipping
 from .plotHandler import BasePlotter
 
+from lsst.sims.coordUtils import AstrometryBase
+
+
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
+
+class BasePlotter(object):
+    """
+    Serve as the base type for MAF plotters and example of API.
+    """
+    def __init__(self):
+        self.plotType = None
+        self.defaultPlotDict = None
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+        pass
 
 class HealpixSkyMap(BasePlotter):
     def __init__(self):
@@ -195,7 +209,7 @@ class BaseHistogram(BasePlotter):
         self.plotType = 'Histogram'
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
-                                'scsale':1.0, 'xMin':None, 'xMax':None,
+                                'scale':1.0, 'xMin':None, 'xMax':None,
                                 'logScale':'auto', 'color':'b',
                                 'yaxisformat':'%.3f',
                                 'zp':None, 'normVal':None, 'percentileClip':None}
@@ -345,7 +359,7 @@ class BaseSkyMap(BasePlotter):
                                 'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
                                 'raCen':0.0, 'mwZone':True}
 
-    def _plot_tissot_ellipse(self, lon, lat, radius, ax=None):
+    def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
 
         Parameters
@@ -372,7 +386,7 @@ class BaseSkyMap(BasePlotter):
         if ax is None:
             ax = plt.gca()
         for l, b, diam in np.broadcast(lon, lat, radius*2.0):
-            el = Ellipse((l, b), diam / np.cos(b), diam)
+            el = Ellipse((l, b), diam / np.cos(b), diam, **kwargs)
             ellipses.append(el)
         return ellipses
 
@@ -414,10 +428,14 @@ class BaseSkyMap(BasePlotter):
         Plot the sky map of metricValue for a generic spatial slicer.
         """
         fig = plt.figure(fignum)
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+
         metricValue = metricValueIn
-        if 'zp' in plotDict:
+        if plotDict['zp'] is not None :
             metricValue = metricValue - plotDict['zp']
-        if 'normVal' in plotDict:
+        if plotDict['normVal'] is not None:
             metricValue = metricValue/plotDict['normVal']
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
@@ -518,10 +536,11 @@ class HealpixSDSSSkyMap(BasePlotter):
                                 'cbarFormat':'%.2f', 'cmap':cm.jet,
                                 'percentileClip':None, 'colorMin':None,
                                 'colorMax':None, 'zp':None, 'normVal':None,
-                                'cbar_edge':True, 'label':None}
+                                'cbar_edge':True, 'label':None, 'raMin':-90,
+                                'raMax':90, 'raLen':45, 'decMin':-2., 'decMax':2.}
 
-    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None, raMin=-90,
-                 raMax=90, raLen=45, decMin=-2., decMax=2.):
+    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None, ):
+
         """
         Plot the sky map of metricValue using healpy cartview plots in thin strips.
         raMin: Minimum RA to plot (deg)
@@ -531,16 +550,19 @@ class HealpixSDSSSkyMap(BasePlotter):
         decMax: max dec value to plot
         metricValueIn: metric values
         """
+
         fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
         norm = None
-        if self.plotDict['logScale']:
+        if plotDict['logScale']:
             norm = 'log'
-        if self.plotDict['cmap'] is None:
+        if plotDict['cmap'] is None:
             cmap = cm.jet
+        else:
+            cmap = plotDict['cmap']
         if type(cmap) == str:
             cmap = getattr(cm,cmap)
         # Make colormap compatible with healpy
@@ -548,22 +570,22 @@ class HealpixSDSSSkyMap(BasePlotter):
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
-        if self.plotDict['zp']:
-            metricValue = metricValueIn - self.plotDict['zp']
-        elif self.plotDict['normVal']:
-            metricValue = metricValueIn/self.plotDict['normVal']
+        if plotDict['zp']:
+            metricValue = metricValueIn - plotDict['zp']
+        elif plotDict['normVal']:
+            metricValue = metricValueIn/plotDict['normVal']
         else:
             metricValue = metricValueIn
 
-        if self.plotDict['percentileClip']:
+        if plotDict['percentileClip']:
             pcMin, pcMax = percentileClipping(metricValue.compressed(),
-                                              percentile=self.plotDict['percentileClip'])
-        if self.plotDict['colorMin'] is None and self.plotDict['percentileClip']:
-            self.plotDict['colorMin'] = pcMin
-        if self.plotDict['colorMax'] is None and self.plotDict['percentileClip']:
-            self.plotDict['colorMax'] = pcMax
-        if (self.plotDict['colorMin'] is not None) or (self.plotDict['colorMax'] is not None):
-            clims = [self.plotDict['colorMin'], self.plotDict['colorMax']]
+                                              percentile=plotDict['percentileClip'])
+        if plotDict['colorMin'] is None and plotDict['percentileClip']:
+            plotDict['colorMin'] = pcMin
+        if plotDict['colorMax'] is None and plotDict['percentileClip']:
+            plotDict['colorMax'] = pcMax
+        if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
+            clims = [plotDict['colorMin'], plotDict['colorMax']]
         else:
             clims = None
 
@@ -576,24 +598,24 @@ class HealpixSDSSSkyMap(BasePlotter):
             if clims[0] == clims[1]:
                 clims[0] =  clims[0]-1
                 clims[1] =  clims[1]+1
-        racenters=np.arange(raMin,raMax,raLen)
+        racenters=np.arange(plotDict['raMin'],plotDict['raMax'],plotDict['raLen'])
         nframes = racenters.size
         for i, racenter in enumerate(racenters):
             if i == 0:
-                useTitle = title +' /n'+'%i < RA < %i'%(racenter-raLen, racenter+raLen)
+                useTitle = plotDict['title'] +' /n'+'%i < RA < %i'%(racenter-plotDict['raLen'], racenter+plotDict['raLen'])
             else:
-                useTitle = '%i < RA < %i'%(racenter-raLen, racenter+raLen)
-            hp.cartview(metricValue.filled(self.badval), title=useTitle, cbar=False,
+                useTitle = '%i < RA < %i'%(racenter-plotDict['raLen'], racenter+plotDict['raLen'])
+            hp.cartview(metricValue.filled(slicer.badval), title=useTitle, cbar=False,
                         min=clims[0], max=clims[1], flip='astro', rot=(racenter,0,0),
-                        cmap=cmap, norm=norm, lonra=[-raLen,raLen],
-                        latra=[decMin,decMax], sub=(nframes+1,1,i+1), fig=fig)
+                        cmap=cmap, norm=norm, lonra=[-plotDict['raLen'],plotDict['raLen']],
+                        latra=[plotDict['decMin'],plotDict['decMax']], sub=(nframes+1,1,i+1), fig=fig)
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
         fig = plt.gcf()
         ax1 = fig.add_axes([0.1, .15,.8,.075]) #left, bottom, width, height
         # Add label.
-        if label is not None:
-            plt.figtext(0.8, 0.9, '%s' %label)
+        if plotDict['label'] is not None:
+            plt.figtext(0.8, 0.9, '%s' %plotDict['label'])
         # Make the colorbar as a seperate figure,
         # from http://matplotlib.org/examples/api/colorbar_only.html
         cnorm = colors.Normalize(vmin=clims[0], vmax=clims[1])
@@ -601,10 +623,10 @@ class HealpixSDSSSkyMap(BasePlotter):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=cnorm,
-                                            orientation='horizontal', format=self.plotDict['cbarFormat'])
-            cb1.set_label(self.plotDict['xlabel'])
+                                            orientation='horizontal', format=plotDict['cbarFormat'])
+            cb1.set_label(plotDict['xlabel'])
         # If outputing to PDF, this fixes the colorbar white stripes
-        if self.plotDict['cbar_edge']:
+        if plotDict['cbar_edge']:
             cb1.solids.set_edgecolor("face")
         fig = plt.gcf()
         return fig.number

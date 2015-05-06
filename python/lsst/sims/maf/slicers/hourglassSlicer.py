@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
-
+from lsst.sims.maf.plots import HourglassPlot
 from .uniSlicer import UniSlicer
 
 __all__ = ['HourglassSlicer']
@@ -14,7 +14,7 @@ class HourglassSlicer(UniSlicer):
         super(HourglassSlicer,self).__init__(verbose=verbose, badval=badval)
         self.columnsNeeded=[]
         self.slicerName='HourglassSlicer'
-
+        self.plotFuncs = [HourglassPlot,]
 
     def writeData(self, outfilename, metricValues, metricName='', **kwargs):
         """

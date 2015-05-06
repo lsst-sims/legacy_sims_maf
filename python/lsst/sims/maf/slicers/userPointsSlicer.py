@@ -1,5 +1,6 @@
 import numpy as np
 from .baseSpatialSlicer import BaseSpatialSlicer
+from lsst.sims.maf.plots import BaseSkyMap
 
 __all__ = ['UserPointsSlicer']
 
@@ -23,3 +24,4 @@ class UserPointsSlicer(BaseSpatialSlicer):
         self.slicePoints['sid'] = np.arange(np.size(ra))
         self.slicePoints['ra'] = np.array(ra)
         self.slicePoints['dec'] = np.array(dec)
+        self.plotFuncs = ['BaseSkyMap',]

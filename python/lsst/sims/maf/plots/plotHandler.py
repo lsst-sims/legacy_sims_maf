@@ -299,7 +299,8 @@ class PlotHandler(object):
                 plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72)
             # Save information about the file to the resultsDb.
             if self.resultsDb:
-                metricId = resultsDb.updateMetric(self.jointMetricNames, self.slicer.slicerName,
-                                                  self.jointRunNames, self.sqlconstraints, self.jointMetadata, None)
-                resultsDb.updatePlot(metricId=metricId, plotType=plotType, plotFile=plotFile)
+                metricId = self.resultsDb.updateMetric(self.jointMetricNames, self.slicer.slicerName,
+                                                       self.jointRunNames, self.sqlconstraints,
+                                                       self.jointMetadata, None)
+                self.resultsDb.updatePlot(metricId=metricId, plotType=plotType, plotFile=plotFile)
         return fignum

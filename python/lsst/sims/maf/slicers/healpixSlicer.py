@@ -25,7 +25,6 @@ class HealpixSlicer(BaseSpatialSlicer):
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             lonCol=lonCol, latCol=latCol,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
-                                            plotFuncs=plotFuncs,
                                             useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
                                             mjdColName=mjdColName)
         # Valid values of nside are powers of 2.

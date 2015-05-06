@@ -10,6 +10,7 @@ import matplotlib.path as mplPath
 import warnings
 import matplotlib as mpl
 from lsst.sims.maf.utils.mafUtils import gnomonic_project_toxy
+from lsst.sims.maf.plots import HealpixSDSSSkyMap
 
 __all__ = ['HealpixSDSSSlicer']
 
@@ -23,6 +24,7 @@ class HealpixSDSSSlicer(HealpixSlicer):
                                             radius=radius, leafsize=leafsize,
                                             useCache=useCache,nside=nside )
         self.cornerLables = ['RA1', 'Dec1', 'RA2','Dec2','RA3','Dec3','RA4','Dec4']
+        self.plotFuncs = [HealpixSDSSSkyMap,]
 
     def setupSlicer(self, simData, maps=None):
         """
