@@ -11,7 +11,10 @@ import lsst.sims.maf.plots as plots
 from lsst.sims.maf.utils import ColInfo
 import lsst.sims.maf.utils as utils
 
-__all__ = ['MetricBundle']
+__all__ = ['MetricBundle', 'emptyMetricBundle']
+
+def emptyMetricBundle():
+    return MetricBundle(metrics.BaseMetric(), slicers.BaseSlicer(), '')
 
 class MetricBundle(object):
     """
@@ -128,7 +131,8 @@ class MetricBundle(object):
         """
         if metadata is None:
             self.metadata = self.sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-            self.metadata = self.metadata.replace('"', '').replace('  ',' ')
+            self.metadata = self.metadata.replace('"','').replace('  ',' ')
+            self.metadata.strip(' ')
         else:
             self.metadata = metadata
 
