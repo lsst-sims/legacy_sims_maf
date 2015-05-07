@@ -186,32 +186,6 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
         del self.testslicer
         self.testslicer = None
 
-    def testSkyMap(self):
-        """Test plotting the sky map (mean of random data)"""
-        self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
-                        clims=None, logScale=False, cbarFormat='%.2g')
-        self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
-                        clims=None, logScale=False, cbarFormat='%.2g')
-
-
-    def testHistogram(self):
-        """Test plotting the histogram (mean of random data)."""
-        self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
-                                      ylabel='Area (1000s of square degrees)',
-                                      fignum=None, legendLabel=None, addLegend=False,
-                                      legendloc='upper left',
-                                      bins=100, cumulative=False, histRange=None,
-                                      logScale=False, flipXaxis=False, scale=None)
-        plt.figure()
-        plt.hist(self.metricdata.compressed(), bins=100)
-        plt.title('Histogram straight from metric data')
-        self.testslicer.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
-                                      ylabel='Area (1000s of square degrees)',
-                                      fignum=None, legendLabel=None, addLegend=False,
-                                      legendloc='upper left',
-                                      bins=100, cumulative=False, histRange=None,
-                                      logScale=False, flipXaxis=False, scale=None)
-
 
 
 if __name__ == "__main__":
