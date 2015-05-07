@@ -326,7 +326,7 @@ class PlotHandler(object):
         if self.savefig:
             fig = plt.figure(fignum)
             plotFile = outfile + '_' + plotType + '.' + self.figformat
-            plt.savefig(os.path.join(self.outDir, outfile), figformat=self.figformat, dpi=self.dpi)
+            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
             if self.thumbnail:
                 thumbFile = 'thumb.' + outfile + '_' + plotType + '.png'
                 plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72)

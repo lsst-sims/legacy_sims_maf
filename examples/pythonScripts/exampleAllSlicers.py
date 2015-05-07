@@ -33,7 +33,7 @@ counter += 1
 
 # HealpixSlicer
 slicer = slicers.HealpixSlicer(nside=16)
-metric = metrics.MeanMetric(col='airmass')
+metric = metrics.MeanMetric(col='airmass', metricName='MeanAirmass_heal')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
 bundleDict[counter] = bundle
 counter += 1
