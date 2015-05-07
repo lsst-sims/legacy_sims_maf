@@ -220,10 +220,22 @@ class PlotHandler(object):
         """
         Build a plot ylabel from the metric names for a BinnedData plot.
         """
-        if plotType == 'BinnedData':
-            ylabel = self.jointMetricNames
+        if len(self.mBundles) == 1:
+            mB = self.mBundles[0]
+            if 'ylabel' in mB.plotDict:
+                ylabel = mB.plotDict['ylabel']
         else:
-            ylabel = None
+            if plotType == 'BinnedData':
+                ylabel = self.jointMetricNames
+            else:
+                ylabel = set()
+                for mB in self.mBundles:
+                    if ylabel in mB.plotDict:
+                        ylabel.add(mB.plotDict['ylabel'])
+                if len(ylabel) == 1:
+                    ylabel = list(ylabel)[0]
+                else:
+                    ylabel = None
         return ylabel
 
     def _buildLegendLabels(self):
@@ -234,32 +246,41 @@ class PlotHandler(object):
             return [None]
         labels = []
         for mB in self.mBundles:
-            label = ''
-            if len(self.runNames) > 1:
-                label += mB.runName
-            if len(self.metadata) > 1:
-                label += ' ' + mB.metadata
-            if len(self.metricNames) > 1:
-                label += ' ' + mB.metric.name
+            if 'label' in mB.plotDict:
+                label = mb.plotDict['label']
+            else:
+                label = ''
+                if len(self.runNames) > 1:
+                    label += mB.runName
+                if len(self.metadata) > 1:
+                    label += ' ' + mB.metadata
+                if len(self.metricNames) > 1:
+                    label += ' ' + mB.metric.name
             labels.append(label)
         return labels
 
     def _buildColors(self):
         """
-        Try to automatically set an appropriate range of colors for the metric Bundles.
+        Try to set an appropriate range of colors for the metric Bundles.
         """
         if len(self.mBundles) == 1:
-            return ['b']
+            if 'color' in self.mBundles[0].plotDict:
+                return [self.mBundles[0].plotDict['color']]
+            else:
+                return ['b']
         colors = []
         for mB in self.mBundles:
-            if 'filter' in mB.sqlconstraint:
-                vals = mB.sqlconstraint.split('"')
-                for v in vals:
-                    if len(v) == 1:
-                        # Guess that this is the filter value
-                        color = self.filtercolors[v]
+            if 'color' in mB.plotDict:
+                color = mB.plotDict['color']
             else:
-                color = 'b'
+                if 'filter' in mB.sqlconstraint:
+                    vals = mB.sqlconstraint.split('"')
+                    for v in vals:
+                        if len(v) == 1:
+                            # Guess that this is the filter value
+                            color = self.filtercolors[v]
+                else:
+                    color = 'b'
             colors.append(color)
         return colors
 
