@@ -37,7 +37,9 @@ class MetricBundleGroup(object):
         """
         Set up the MetricBundleGroup, check that all MetricBundles have the same sql constraint.
         """
+        # Print occasional messages to screen.
         self.verbose = verbose
+        # Save metric results as soon as possible (in case of crash).
         self.saveEarly = saveEarly
         # Check for output directory, create it if needed.
         self.outDir = outDir
@@ -318,22 +320,29 @@ class MetricBundleGroup(object):
             b.computeSummaryStats(self.resultsDb)
 
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
-                closefigs=False):
+                closefigs=True):
         """
         Generate the plots for all the metricbundles.
         """
+        if self.verbose:
+            print 'Plotting.'
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.bundleDict.itervalues():
             b.plot(plotHandler, outfileSuffix=outfileSuffix)
-        if closefigs:
-            plt.close('all')
+            if closefigs:
+                plt.close('all')
+        if self.verbose:
+            print 'Plotting complete.'
 
     def writeAll(self):
         """
         Save all the metricbundles to disk.
         """
-        if self.saveEarly and self.verbose:
-            print 'Re-saving metric bundles.'
+        if self.verbose:
+            if self.saveEarly:
+                print 'Re-saving metric bundles.'
+            else:
+                print 'Saving metric bundles.'
         for b in self.bundleDict.itervalues():
             b.write(outDir=self.outDir, resultsDb=self.resultsDb)
