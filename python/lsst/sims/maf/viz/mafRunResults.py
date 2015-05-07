@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
-
+import lsst.sims.maf.metricBundles as metricBundles
 
 __all__ = ['MafRunResults']
 
@@ -129,15 +129,13 @@ class MafRunResults(object):
         if filename.upper() == 'NULL':
             return None
         datafile = os.path.join(self.outDir, filename)
-        #sm = sliceMetrics.BaseSliceMetric(useResultsDb=False)
-        # XXX -- Need to update the JSON readin
-        #iids = sm.readMetricData(datafile)
-        #iid = iids[0]
-        #io = sm.outputMetricJSON(iid)
-        #if io is None:
-        #    return None
-        #return io.getvalue()
-        pass
+        # Read data back into a  bundle.
+        mB = metricBundles.emptyMetricBundle()
+        mB.read(datafile)
+        io = mB.outputJSON()
+        if io is None:
+            return None
+        return io.getvalue()
 
     def getNpz(self, metric):
         """
