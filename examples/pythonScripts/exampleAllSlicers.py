@@ -56,7 +56,7 @@ counter += 1
 ra = np.arange(0,101,1)/100.*np.pi
 dec = np.arange(0,101,1)/100.*(-np.pi)
 slicer = slicers.UserPointsSlicer(ra=ra,dec=dec)
-metric = metrics.MeanMetric(col='airmass')
+metric = metrics.MeanMetric(col='airmass', metricName='meanAirmass_user')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
 bundleDict[counter] = bundle
 counter += 1
