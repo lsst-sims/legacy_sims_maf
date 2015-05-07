@@ -157,7 +157,7 @@ class ResultsDb(object):
             metricinfo = prev[0]
         return metricinfo.metricId
 
-    def updateDisplay(self, metricId, displayDict):
+    def updateDisplay(self, metricId, displayDict, overwrite=True):
         """
         Add a row to or update a row in the displays table.
 
@@ -170,8 +170,11 @@ class ResultsDb(object):
         # First check if a display line is present with this metricID.
         displayinfo = self.session.query(DisplayRow).filter_by(metricId=metricId).all()
         if len(displayinfo) > 0:
-            for d in displayinfo:
-                self.session.delete(d)
+            if overwrite:
+                for d in displayinfo:
+                    self.session.delete(d)
+            else:
+                return
         # Then go ahead and add new displayDict.
         for k in displayDict:
             if displayDict[k] is None:
