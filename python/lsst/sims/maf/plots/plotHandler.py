@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.utils as utils
 
@@ -185,7 +186,14 @@ class PlotHandler(object):
             # If the length of any of the 'differences' is 0, then we should stop and not try to subdivide.
             lengths = [len(x) for x in diffdiff]
             if min(lengths) == 0:
-                diffdiff = diff
+                # Sort them in order of length (so it goes 'g', 'g dithered', etc.)
+                tmp = []
+                for d in diff:
+                    tmp.append(list(d)[0])
+                diff = tmp
+                xlengths = [len(x) for x in diff]
+                idx = np.argsort(xlengths)
+                diffdiff = [diff[i] for i in idx]
                 diffcommon = []
             else:
                 # diffdiff is the part where we might expect our filter values to appear; try to put this in order.
@@ -200,8 +208,9 @@ class PlotHandler(object):
                     if d not in diffdiffOrdered:
                         diffdiffEnd.append(d)
                 diffdiff = diffdiffOrdered + diffdiffEnd
+                diffdiff = [' '.join(c) for c in diffdiff]
             # And put it all back together.
-            combo = ', '.join([' '.join(c) for c in diffdiff]) + ' ' + ' '.join([''.join(d) for d in diffcommon]) + ' '\
+            combo = ', '.join([''.join(c) for c in diffdiff]) + ' ' + ' '.join([''.join(d) for d in diffcommon]) + ' '\
                     + ' '.join([''.join(e) for e in common])
             self.jointMetadata = combo
 
