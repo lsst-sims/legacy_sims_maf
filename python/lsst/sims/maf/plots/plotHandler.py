@@ -371,6 +371,7 @@ class PlotHandler(object):
                 subgroup.add(mB.displayDict['subgroup'])
                 if order < mB.displayDict['order']:
                     order = mB.displayDict['order'] + 1
+            displayDict['order']  = order
             if len(group) > 1:
                 displayDict['group'] = 'Comparisons'
             else:
@@ -380,7 +381,7 @@ class PlotHandler(object):
             else:
                 displayDict['subgroup'] = list(subgroup)[0]
             displayDict['caption'] = '%s metric(s) calculated on a %s grid, for opsim runs %s, for metadata values of %s.'\
-              % (self.joinMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
+              % (self.jointMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
             return displayDict
 
     def plot(self, plotFunc, plotDict=None, outfileSuffix=None):
