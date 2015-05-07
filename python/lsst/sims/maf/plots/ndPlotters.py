@@ -9,7 +9,7 @@ from .plotHandler import BasePlotter
 __all__ = ['TwoDSubsetData', 'OneDSubsetData']
 
 
-class TwoDSubsetData(self):
+class TwoDSubsetData(BasePlotter):
     def __init__(self):
         self.plotType = '2DBinnedData'
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'units':None,
