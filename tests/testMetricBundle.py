@@ -1,4 +1,7 @@
 import unittest
+import matplotlib
+matplotlib.use("Agg")
+
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
