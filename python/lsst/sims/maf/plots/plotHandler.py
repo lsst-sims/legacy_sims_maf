@@ -67,17 +67,22 @@ class PlotHandler(object):
         self._combineRunNames()
         self._combineMetadata()
         self._combineSql()
+        self.setPlotDict(reset=True)
 
-    def setPlotDict(self, plotDict=None, plotFunc=None):
+    def setPlotDict(self, plotDict=None, plotFunc=None, reset=False):
         """
-        Set or update the plotDict for the (possibly joint) plots.
+        Set or update (or 'reset') the plotDict for the (possibly joint) plots.
         """
-        tmpPlotDict = {}
+        if reset:
+            tmpPlotDict = {}
+        else:
+            tmpPlotDict = self.plotDict
         tmpPlotDict['title'] = self._buildTitle()
         tmpPlotDict['labels'] = self._buildLegendLabels()
         tmpPlotDict['colors'] = self._buildColors()
         tmpPlotDict['legendloc'] = 'upper right'
         tmpPlotDict['cbarFormat'] = self._buildCbarFormat()
+        # Reset plotDict items set explicitly by plotter.
         if plotFunc is not None:
             tmpPlotDict['xlabel'], tmpPlotDict['ylabel'] = self._buildXYlabels(plotFunc)
             # Replace auto-generated plot dict items with things
@@ -222,18 +227,21 @@ class PlotHandler(object):
         else:
             if len(self.mBundles) == 1:
                 mB = self.mBundles[0]
-                xlabel = mB.metric.name  + ' (' + mB.metric.units + ')'
+                xlabel = mB.metric.name
+                if mB.metric.units is not None:
+                    if len(mB.metric.units)>0:
+                        xlabel +=  ' (' + mB.metric.units + ')'
                 ylabel = None
             else:
                 xlabel = self.jointMetricNames
                 ylabel = set()
                 for mB in self.mBundles:
-                    if 'ylabel' in mBplotDict:
+                    if 'ylabel' in mB.plotDict:
                         ylabel.add(mB.plotDict['ylabel'])
-                    if len(ylabel) == 1:
-                        ylabel = list(ylabel)[0]
-                    else:
-                        ylabel = None
+                if len(ylabel) == 1:
+                    ylabel = list(ylabel)[0]
+                else:
+                    ylabel = None
         return xlabel, ylabel
 
     def _buildLegendLabels(self):
@@ -286,7 +294,7 @@ class PlotHandler(object):
         """
         Set the color bar format.
         """
-        cbarFormat = '%2.f'
+        cbarFormat = None
         if len(self.mBundles) == 1:
             if self.mBundles[0].metric.metricDtype == 'int':
                 cbarFormat = '%d'
@@ -303,8 +311,8 @@ class PlotHandler(object):
         """
         Create plot for mBundles, using plotFunc.
         """
-        # Update x/y labels using plotType. User provided plotDict will override.
-        self.setPlotDict(plotDict, plotFunc)
+        # Update x/y labels using plotType. User provided plotDict will override previous settings.
+        self.setPlotDict(plotDict, plotFunc, reset=False)
         # Set outfile name.
         if outfileSuffix is not None:
             outfile = self.plotDict['title'] + outfileSuffix
@@ -321,6 +329,7 @@ class PlotHandler(object):
             fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
             i += 1
         if len(self.mBundles) > 1:
+            plotType = 'Combo' + plotType
             plt.figure(fignum)
             plt.legend(loc=self.plotDict['legendloc'], fancybox=True, fontsize='smaller')
         # Save to disk and file info to resultsDb if desired.
@@ -336,5 +345,12 @@ class PlotHandler(object):
                 metricId = self.resultsDb.updateMetric(self.jointMetricNames, self.slicer.slicerName,
                                                        self.jointRunNames, self.sqlconstraints,
                                                        self.jointMetadata, None)
+                # Add information to displays table (without overwriting previous information, if present).
+                displayDict = {}
+                displayDict.update(self.mBundles[-1].displayDict)
+                displayDict['order'] += 1
+                displayDict['caption'] = '; '.join([self.jointMetricNames, self.jointMetadata])
+                self.resultsDb.updateDisplay(metricId=metricId, displayDict=displayDict, overwrite=False)
+                # Add plot information to plot table.
                 self.resultsDb.updatePlot(metricId=metricId, plotType=plotType, plotFile=plotFile)
         return fignum
