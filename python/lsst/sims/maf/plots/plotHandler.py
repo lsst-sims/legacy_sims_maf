@@ -317,12 +317,41 @@ class PlotHandler(object):
         if len(self.mBundles) == 1:
             outfile = self.mBundles[0].fileRoot
         else:
-            outfile = '_'.join([self.jointRunNames, self.jointMetricNames, self.jointMetadatas])
+            outfile = '_'.join([self.jointRunNames, self.jointMetricNames, self.jointMetadata])
             outfile += '_' + self.mBundles[0].slicer.slicerName[:4].upper()
         if outfileSuffix is not None:
             outfile += '_' + outfileSuffix
         outfile = utils.nameSanitize(outfile)
         return outfile
+
+    def _buildDisplayDict(self):
+        """
+        Generate a display dictionary.
+        This is most useful for when there are many metricBundles being combined into a single plot.
+        """
+        if len(self.mBundles) == 1:
+            return self.mBundles[0].displayDict
+        else:
+            displayDict = {}
+            group = set()
+            subgroup = set()
+            order = 0
+            for mB in self.mBundles:
+                group.add(mB.displayDict['group'])
+                subgroup.add(mB.displayDict['subgroup'])
+                if order < mB.displayDict['order']:
+                    order = mB.displayDict['order'] + 1
+            if len(group) > 1:
+                displayDict['group'] = 'Comparisons'
+            else:
+                displayDict['group'] = list(group)[0]
+            if len(subgroup) > 1:
+                displayDict['subgroup'] = 'Comparisons'
+            else:
+                displayDict['subgroup'] = list(subgroup)[0]
+            displayDict['caption'] = '%s metric(s) calculated on a %s grid, for opsim runs %s, for metadata values of %s.'\
+              % (self.joinMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
+            return displayDict
 
     def plot(self, plotFunc, plotDict=None, outfileSuffix=None):
         """
@@ -359,10 +388,7 @@ class PlotHandler(object):
                                                        self.jointRunNames, self.sqlconstraints,
                                                        self.jointMetadata, None)
                 # Add information to displays table (without overwriting previous information, if present).
-                displayDict = {}
-                displayDict.update(self.mBundles[-1].displayDict)
-                displayDict['order'] += 1
-                displayDict['caption'] = '; '.join([self.jointMetricNames, self.jointMetadata])
+                displayDict = self._buildDisplayDict()
                 self.resultsDb.updateDisplay(metricId=metricId, displayDict=displayDict, overwrite=False)
                 # Add plot information to plot table.
                 self.resultsDb.updatePlot(metricId=metricId, plotType=plotType, plotFile=plotFile)
