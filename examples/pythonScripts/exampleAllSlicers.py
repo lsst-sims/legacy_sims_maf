@@ -54,7 +54,14 @@ metric = metrics.MeanMetric(col='airmass', metricName='meanAirmass_user')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
 bundleList.append(bundle)
 
-# healpixComplexSlicer
+# healpixComplexSlicer (healpix slicer + summaryHistogram)
+bins = np.arange(0.5, 3.0, 0.1)
+slicer = slicers.HealpixSlicer(nside=16)
+metric = metrics.TgapsMetric(bins=bins)
+plotDict = {'bins':bins}
+plotFuncs = [plots.SummaryHistogram()]
+bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere, plotDict=plotDict, plotFuncs=plotFuncs)
+bundleList.append(bundle)
 
 # f0 plot -- this should just go to a healpixslicer with a different plotter.
 slicer = slicers.HealpixSlicer(nside=64)
