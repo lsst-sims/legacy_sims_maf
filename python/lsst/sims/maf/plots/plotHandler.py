@@ -154,9 +154,12 @@ class PlotHandler(object):
         if len(metadata) == 1:
             self.jointMetadata = ' '.join(metadata)
         else:
+            order = ['u', 'g', 'r', 'i', 'z', 'y']
+            # See if there are any subcomponents we can combine,
+            # splitting on some values we expect to separate metadata clauses.
             splitmetas = []
             for m in self.metadata:
-                # Split metadata into separate phrases (filter / proposal / constraint..).
+                # Try to split metadata into separate phrases (filter / proposal / constraint..).
                 if ' and ' in m:
                     m = m.split(' and ')
                 elif ', ' in m:
@@ -179,9 +182,27 @@ class PlotHandler(object):
                 diffsplit.append(m)
             diffcommon = set.intersection(*diffsplit)
             diffdiff = [x.difference(diffcommon) for x in diffsplit]
+            # If the length of any of the 'differences' is 0, then we should stop and not try to subdivide.
+            lengths = [len(x) for x in diffdiff]
+            if min(lengths) == 0:
+                diffdiff = diff
+                diffcommon = []
+            else:
+                # diffdiff is the part where we might expect our filter values to appear; try to put this in order.
+                diffdiffOrdered = []
+                diffdiffEnd = []
+                for f in order:
+                    for d in diffdiff:
+                        if len(d) == 1:
+                            if list(d)[0] == f:
+                                diffdiffOrdered.append(d)
+                for d in diffdiff:
+                    if d not in diffdiffOrdered:
+                        diffdiffEnd.append(d)
+                diffdiff = diffdiffOrdered + diffdiffEnd
             # And put it all back together.
             combo = ', '.join([' '.join(c) for c in diffdiff]) + ' ' + ' '.join([''.join(d) for d in diffcommon]) + ' '\
-                + ' '.join([''.join(e) for e in common])
+                    + ' '.join([''.join(e) for e in common])
             self.jointMetadata = combo
 
     def _combineSql(self):
