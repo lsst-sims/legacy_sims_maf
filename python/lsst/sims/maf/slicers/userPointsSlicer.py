@@ -1,5 +1,5 @@
 import numpy as np
-from lsst.sims.maf.plots.spatialPlotters import BaseSkyMap
+from lsst.sims.maf.plots.spatialPlotters import BaseSkyMap, BaseHistogram
 from .baseSpatialSlicer import BaseSpatialSlicer
 
 __all__ = ['UserPointsSlicer']
@@ -26,4 +26,4 @@ class UserPointsSlicer(BaseSpatialSlicer):
         self.slicePoints['sid'] = np.arange(np.size(ra))
         self.slicePoints['ra'] = np.array(ra)
         self.slicePoints['dec'] = np.array(dec)
-        self.plotFuncs = [BaseSkyMap,]
+        self.plotFuncs = [BaseSkyMap, BaseHistogram]
