@@ -8,8 +8,8 @@ __all__ = ['HourglassPlot']
 class HourglassPlot(BasePlotter):
     def __init__(self):
         self.plotType = 'Hourglass'
-        self.defaultPlotDict = {'title':'', 'xlabel':'Night - min(Night)',
-                                'ylabel': 'Hours from local midnight'}
+        self.defaultPlotDict = {'title':None, 'xlabel':'Night - min(Night)',
+                                'ylabel':'Hours from local midnight'}
         self.filter2color={'u':'purple','g':'blue','r':'green',
                            'i':'cyan','z':'orange','y':'red'}
 

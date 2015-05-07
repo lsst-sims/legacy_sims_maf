@@ -78,8 +78,22 @@ class MetricBundle(object):
         # Set the plotting classes/functions.
         self.setPlotFuncs(plotFuncs)
         # Set the plotDict and displayDicts.
-        self.plotDict = {}
-        self.setPlotDict(plotDict)
+        self.plotDict={}
+        # Build a dict based on plotter defaults
+        plotterDefaults ={}
+        for plotter in self.plotFuncs:
+            plotterDefaults.update(plotter.defaultPlotDict)
+        # Use method to construct reasonable plotDict guesses
+        buildDefaults = self.setPlotDict(None, buildOnly=True)
+        # Might be wise to only update the keys that actually exist in
+        # plotterDefaults and throw a warning if user tries to set one that
+        # doesn't exist
+        self.plotDict.update(buildDefaults)
+        for kwarg in plotterDefaults:
+            if plotterDefaults[kwarg] is not None:
+                self.plotDict[kwarg] = plotterDefaults[kwarg]
+        if plotDict is not None:
+            self.plotDict.update(plotDict)
         # Update/set displayDict.
         self.displayDict = {}
         self.setDisplayDict(displayDict)
@@ -219,13 +233,13 @@ class MetricBundle(object):
         """
         if plotFuncs is not None:
             if len(plotFuncs) == 1:
-                self.plotFuncs = [plotFunc]
+                self.plotFuncs = [plotFuncs]
             else:
                 self.plotFuncs = plotFuncs
         else:
-            self.plotFuncs = self.slicer.plotFuncs
+            self.plotFuncs = [func() for func in self.slicer.plotFuncs]
 
-    def setPlotDict(self, plotDict=None):
+    def setPlotDict(self, plotDict=None, buildOnly=False):
         """
         Set or update any property of plotDict.
         Will set default values.
@@ -266,8 +280,11 @@ class MetricBundle(object):
             # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
             elif 'cbarFormat' not in plotDict:
                 del tmpPlotDict['cbarFormat']
-        # Reset self.displayDict to this updated dictionary.
-        self.plotDict = tmpPlotDict
+        if buildOnly:
+            return tmpPlotDict
+        else:
+            # Reset self.displayDict to this updated dictionary.
+            self.plotDict = tmpPlotDict
 
     def setDisplayDict(self, displayDict=None, resultsDb=None):
         """
@@ -469,7 +486,7 @@ class MetricBundle(object):
             madePlots[plotFunc.plotType] = fignum
         else:
             for plotFunc in self.plotFuncs:
-                plotFunc = plotFunc()
+                #plotFunc = plotFunc()
                 fignum = plotHandler.makePlot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
                 madePlots[plotFunc.plotType] = fignum
         return madePlots

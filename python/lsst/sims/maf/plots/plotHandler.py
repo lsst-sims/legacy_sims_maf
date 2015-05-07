@@ -66,7 +66,10 @@ class PlotHandler(object):
         self._combineRunNames()
         self._combineMetadata()
         self._combineSql()
-        self.setPlotDict()
+        if len(self.mBundles) == 1:
+               self.setPlotDict(self.mBundles[0].plotDict)
+        else:
+            self.setPlotDict()
 
     def setPlotDict(self, plotDict=None, plotType=None):
         """
@@ -224,6 +227,8 @@ class PlotHandler(object):
             mB = self.mBundles[0]
             if 'ylabel' in mB.plotDict:
                 ylabel = mB.plotDict['ylabel']
+            else:
+                ylabel = None
         else:
             if plotType == 'BinnedData':
                 ylabel = self.jointMetricNames
