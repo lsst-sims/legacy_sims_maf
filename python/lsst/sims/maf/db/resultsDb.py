@@ -28,11 +28,10 @@ class MetricRow(Base):
     sqlConstraint = Column(String)
     metricMetadata = Column(String)
     metricDataFile = Column(String)
-    metricRun = Column(Integer)
     def __repr__(self):
-        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s', metricRun='%d')>" \
+        return "<Metric(metricId='%d', metricName='%s', slicerName='%s', simDataName='%s', sqlConstraint='%s', metadata='%s', metricDataFile='%s')>" \
           %(self.metricId, self.metricName, self.slicerName, self.simDataName,
-            self.sqlConstraint, self.metricMetadata, self.metricDataFile, self.metricRun)
+            self.sqlConstraint, self.metricMetadata, self.metricDataFile)
 
 class DisplayRow(Base):
     """
@@ -133,7 +132,7 @@ class ResultsDb(object):
         - metricDatafile: the data file the metric data is stored in
 
         If same metric (same metricName, slicerName, simDataName, sqlConstraint, metadata)
-        already exists, adds to the db with 'run' value increased by one.
+        already exists, it does nothing.
 
         Returns metricId: the Id number of this metric in the metrics table.
         """
@@ -145,19 +144,20 @@ class ResultsDb(object):
             metricMetadata = 'NULL'
         if metricDataFile is None:
             metricDataFile = 'NULL'
-        metricRun = 0;
         # Check if metric has already been added to database.
         prev = self.session.query(MetricRow).filter_by(metricName=metricName, slicerName=slicerName,
                                                        simDataName=simDataName, metricMetadata=metricMetadata).all()
-        metricRun += len(prev)
-        metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
-                               sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
-                               metricDataFile=metricDataFile, metricRun=metricRun)
-        self.session.add(metricinfo)
-        self.session.commit()
+        if len(prev) == 0:
+            metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
+                                sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
+                                metricDataFile=metricDataFile)
+            self.session.add(metricinfo)
+            self.session.commit()
+        else:
+            metricinfo = prev[0]
         return metricinfo.metricId
 
-    def updateDisplay(self, metricId, displayDict):
+    def updateDisplay(self, metricId, displayDict, overwrite=True):
         """
         Add a row to or update a row in the displays table.
 
@@ -170,8 +170,11 @@ class ResultsDb(object):
         # First check if a display line is present with this metricID.
         displayinfo = self.session.query(DisplayRow).filter_by(metricId=metricId).all()
         if len(displayinfo) > 0:
-            for d in displayinfo:
-                self.session.delete(d)
+            if overwrite:
+                for d in displayinfo:
+                    self.session.delete(d)
+            else:
+                return
         # Then go ahead and add new displayDict.
         for k in displayDict:
             if displayDict[k] is None:

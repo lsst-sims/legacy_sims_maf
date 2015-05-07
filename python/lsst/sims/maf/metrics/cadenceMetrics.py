@@ -68,8 +68,6 @@ class SupernovaMetric(BaseMetric):
         self.filterWave = np.array([375.,476.,621.,754.,870.,980.])/(1.+self.redshift)
         self.filterNames = self.filterNames[np.where( (self.filterWave > 300.) & (self.filterWave < 900.))[0]]
         self.singleDepthLimit = singleDepthLimit
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Cadence'
 
         # It would make sense to put a dict of interpolation functions here keyed on filter that take time
         #and returns the magnitude of a SN.  So, take a SN SED, redshift it, calc it's mag in each filter.
@@ -169,11 +167,6 @@ class TemplateExistsMetric(BaseMetric):
         super(TemplateExistsMetric, self).__init__(col=cols, metricName=metricName, units='fraction', **kwargs)
         self.seeingCol = seeingCol
         self.expMJDCol = expMJDCol
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Cadence'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'The fraction of images which have a previous template image of '
-            self.displayDict['caption'] += 'the same or better seeing quality.'
 
     def run(self, dataSlice, slicePoint=None):
         # Check that data is sorted in expMJD order
@@ -198,12 +191,6 @@ class UniformityMetric(BaseMetric):
         self.expMJDCol = expMJDCol
         super(UniformityMetric,self).__init__(col=self.expMJDCol, units=units, **kwargs)
         self.surveyLength = surveyLength
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Cadence'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Visit uniformity over time. '
-            self.displayDict['caption'] += 'Values of 0 indictate perfectly uniform visits. '
-
 
     def run(self,dataSlice, slicePoint=None):
         """Based on how a KS-Test works:
@@ -282,8 +269,7 @@ class NRevisitsMetric(BaseMetric):
         self.dT = dT / 60./24. # convert to days
         self.normed = normed
         super(NRevisitsMetric, self).__init__(col=self.timeCol, units=units, metricName=metricName, **kwargs)
-        if ('normVal' not in self.plotDict) and ('zp' not in self.plotDict) and not normed:
-            self.plotDict['cbarFormat'] = '%d'
+        self.metricDtype = 'int'
 
     def run(self, dataSlice, slicePoint=None):
         dtimes = np.diff(np.sort(dataSlice[self.timeCol]))

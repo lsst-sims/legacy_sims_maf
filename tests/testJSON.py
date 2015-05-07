@@ -4,7 +4,6 @@ import warnings
 import unittest
 import json
 import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.sliceMetrics as sliceMetrics
 
 
 def makeDataValues(size=100, min=0., max=1., random=True):
@@ -45,7 +44,7 @@ def makeFieldData():
 def makeOpsimDataValues(fieldData, size=10000, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
-    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
+    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
     if random:
         randorder = np.random.rand(size)
@@ -177,57 +176,6 @@ class TestJSONoutOpsimFieldSlicer(unittest.TestCase):
             self.assertEqual(jsndat[2], mval)
 
 
-class TestJSONoutSliceMetric(unittest.TestCase):
-    def setUp(self):
-        dv = makeDataValues(1000)
-        testslicer = slicers.OneDSlicer(sliceColName='testdata')
-        testslicer.setupSlicer(dv)
-        metricValues = makeMetricData(testslicer, 'float')
-        self.testsm = sliceMetrics.BaseSliceMetric(useResultsDb=False)
-        self.testsm.slicers[0] = testslicer
-        self.testsm.metricValues[0] = metricValues
-        self.testsm.metricNames[0] = 'testMetric'
-        self.testsm.simDataNames[0] = 'testSim'
-        self.testsm.metadatas[0] = 'testMeta'
-        plotDict = {'units':'testUnits', 'xlabel':'myX', 'ylabel':'myY', 'title':'myTitle'}
-        self.testsm.plotDicts[0] = plotDict
-        testslicer2 = slicers.HealpixSlicer(nside=4, verbose=False)
-        metricValues = makeMetricData(testslicer2)
-        self.testsm.slicers[1] = testslicer2
-        self.testsm.metricValues[1] = metricValues
-        self.testsm.metricNames[1] =  'testMetric2'
-        self.testsm.simDataNames[1] = 'testSim'
-        self.testsm.metadatas[1] = 'testMeta'
-        self.testsm.plotDicts[1] = {}
-
-    def tearDown(self):
-        del self.testsm
-
-    def test(self):
-        # Test works from slice Metric and includes plotDict.
-        io = self.testsm.outputMetricJSON(0)
-        jsn = json.loads(io.getvalue())
-        jsn_header = jsn[0]
-        jsn_data = jsn[1]
-        self.assertEqual(jsn_header['slicerName'], 'OneDSlicer')
-        self.assertEqual(jsn_header['xlabel'], 'myX')
-        self.assertEqual(jsn_header['ylabel'], 'myY')
-        self.assertEqual(jsn_header['title'], 'myTitle')
-        # Redo to check default plot Dict.
-        self.testsm.plotDicts[0] = {}
-        io = self.testsm.outputMetricJSON(0)
-        jsn = json.loads(io.getvalue())
-        jsn_header = jsn[0]
-        jsn_data = jsn[1]
-        self.assertEqual(jsn_header['slicerName'], 'OneDSlicer')
-        self.assertEqual(jsn_header['xlabel'], 'testdata ()')
-        self.assertEqual(jsn_header['ylabel'], 'testMetric')
-        # And check for healpix slicer.
-        io = self.testsm.outputMetricJSON(1)
-        jsn = json.loads(io.getvalue())
-        jsn_header = jsn[0]
-        self.assertEqual(jsn_header['slicerName'], 'HealpixSlicer')
-        self.assertEqual(jsn_header['xlabel'], 'testMetric2')
 
 if __name__ == '__main__':
     unittest.main()

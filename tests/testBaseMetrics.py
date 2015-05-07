@@ -19,8 +19,8 @@ class TestBaseMetric(unittest.TestCase):
         self.assertEqual(testmetric.name, 'Base testcol1, testcol2')
         # Test explicit setting of metric name
         testmetric = metrics.BaseMetric('testcol', metricName='Test')
-        self.assertEqual(testmetric.name, 'Test')    
-                        
+        self.assertEqual(testmetric.name, 'Test')
+
     def testColRegistry(self):
         """Test column registry adds to colRegistry as expected"""
         cols = 'onecolumn'
@@ -44,8 +44,8 @@ class TestBaseMetric(unittest.TestCase):
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.metricDtype, 'float')
         testmetric = metrics.BaseMetric(cols, metricDtype='object')
-        self.assertEqual(testmetric.metricDtype, 'object')        
-        
+        self.assertEqual(testmetric.metricDtype, 'object')
+
     def testUnits(self):
         """Test unit setting (including units set by utils.getColInfo)"""
         cols = 'onecolumn'
@@ -78,19 +78,6 @@ class TestBaseMetric(unittest.TestCase):
         cols = ['finSeeing', 'finSeeing']
         testmetric = metrics.BaseMetric(cols)
         self.assertEqual(testmetric.units, 'arcsec arcsec')
-
-    def testPlotArgs(self):
-        """Test plot parameter setting"""
-        cols = 'onecolumn'
-        testmetric = metrics.BaseMetric(cols)
-        self.assertTrue(isinstance(testmetric.plotDict, dict))
-        self.assertEqual(testmetric.plotDict.keys(), ['units'])
-        # Set some plot parameters - are they present in dictionary and dictionary contains only needed values?
-        plotDict = {'title':'mytitle'}
-        testmetric = metrics.BaseMetric(cols, plotDict=plotDict)
-        self.assertTrue(isinstance(testmetric.plotDict, dict))
-        self.assertEqual(set(testmetric.plotDict.keys()), set(['title', 'units']))
-        
 
 
 if __name__ == "__main__":

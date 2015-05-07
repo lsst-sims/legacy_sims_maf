@@ -8,7 +8,6 @@ import json
 import warnings
 import numpy as np
 import numpy.ma as ma
-import matplotlib.pyplot as plt
 from lsst.sims.maf.utils import getDateVersion
 
 __all__ = ['SlicerRegistry', 'BaseSlicer']
@@ -47,7 +46,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
 
-    def __init__(self, verbose=True, badval=-666, plotFuncs='all'):
+    def __init__(self, verbose=True, badval=-666):
         """
         Instantiate the base slicer object.
 
@@ -65,9 +64,6 @@ class BaseSlicer(object):
         Minimum set of __init__ kwargs:
         verbose: True/False flag to send extra output to screen
         badval: the value the Slicer uses to fill masked metric data values
-        plotFuncs:  default value of 'all' means the slicer will use all methods that start with 'plot'
-                    to generate plots.  Could be a string or list specifying specific methods that should
-                    be called when plotting.
         """
         self.verbose = verbose
         self.badval = badval
@@ -81,34 +77,12 @@ class BaseSlicer(object):
         self.slicePoints = {}
         self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
-        # Set if the slicer should try to plot objects
-        self.plotObject = False
-        # Add dictionary of plotting methods for each slicer.
-        self.plotFuncs = {}
-        plotNames=[]
-        if plotFuncs is not None:
-            # Add every method that starts with 'plot'
-            for  p in inspect.getmembers(self, predicate=inspect.ismethod):
-                if p[0].startswith('plot'):
-                    self.plotFuncs[p[0]] = p[1]
-                    plotNames.append(p[0])
-            # Remove plotData method if it exists
-            if 'plotData' in self.plotFuncs.keys():
-                del self.plotFuncs['plotData']
-            # If the plotFuncs kwarg is set, only include those plotting methods
-            if (plotFuncs != 'all') & (plotFuncs is not None):
-                for key in self.plotFuncs.keys():
-                    if key not in plotFuncs:
-                        del self.plotFuncs[key]
-        # Raise warning if plotFuncs was specified but didn't match anything
-        if (plotFuncs != 'all') & (plotFuncs is not None) & (len(self.plotFuncs) == 0):
-            warnings.warn('No plotting method matched %s.  Options are: %s'%(plotFuncs,plotNames))
-
-      # Create a dict that saves how to re-init the slicer.
+        # Create a dict that saves how to re-init the slicer.
         #  This may not be the whole set of args/kwargs, but those which carry useful metadata or
         #   are absolutely necesary for init.
         # Will often be overwritten by individual slicer slicer_init dictionaries.
-        self.slicer_init = {'badval':badval,'plotFuncs':plotFuncs }
+        self.slicer_init = {'badval':badval}
+        self.plotFuncs = []
 
     def _runMaps(self, maps):
         """
@@ -332,52 +306,19 @@ class BaseSlicer(object):
             metricValues = ma.MaskedArray(data=restored['metricValues'],
                                           mask=restored['mask'],
                                           fill_value=restored['fill'])
-        # Get Metadata & other simData info
-        header = restored['header'][()]  # extra brackets restore dictionary to dictionary status
+        # Get Metadata & other simData info.
+        header = restored['header'][()]  # extra brackets restore dictionary to dictionary status.
         # Get slicer instantiated.
         slicer_init = restored['slicer_init'][()]
+        # Backwards compatibility issue - map 'spatialkey1/spatialkey2' to 'lonCol/latCol'.
+        if 'spatialkey1' in slicer_init:
+            slicer_init['lonCol'] = slicer_init['spatialkey1']
+            del(slicer_init['spatialkey1'])
+        if 'spatialkey2' in slicer_init:
+            slicer_init['latCol'] = slicer_init['spatialkey2']
+            del(slicer_init['spatialkey2'])
         slicer = getattr(slicers, str(restored['slicerName']))(**slicer_init)
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
         return metricValues, slicer, header
-
-    def plotData(self, metricValues, figformat='pdf', dpi=600, filename='fig',
-                 savefig=True, thumbnail=True, **kwargs):
-        """
-        Call all available plotting methods.
-
-        The __init__ for each slicer builds a dictionary of the individual slicer's plotting methods.
-        This method calls each of the plotting methods in that dictionary, and optionally
-        saves the resulting figures.
-
-        metricValues: the metric values to plot.
-        """
-        # If passed metric data which is not a simple data type, return without plotting.
-        # (thus - override this method if your slicer requires plotting complex 'object' data.
-        filenames=[]
-        filetypes=[]
-        figs={}
-        if not self.plotObject:
-            if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
-                warnings.warn('Metric data type not float or int. No plots generated.')
-                return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}
-        # Otherwise, plot.
-        for p in self.plotFuncs:
-            plottype = p.replace('plot', '')
-            figs[plottype] = self.plotFuncs[p](metricValues, **kwargs)
-            if savefig:
-                outfile = filename + '_' + plottype + '.' + figformat
-                plt.savefig(outfile, figformat=figformat, dpi=dpi)
-                if thumbnail:
-                    filepath, thumbname = os.path.split(outfile)
-                    thumbname = ''.join(thumbname.split('.')[:-1])
-                    thumbname = 'thumb.' + thumbname + '.png'
-                    thumbfile = os.path.join(filepath, thumbname)
-                    plt.savefig(thumbfile, dpi=72)
-                filenames.append(outfile)
-                filetypes.append(plottype)
-            else:
-                filenames.append('NULL')
-                filetypes.append('NULL')
-        return {'figs':figs, 'filenames':filenames, 'filetypes':filetypes}

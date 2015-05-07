@@ -27,7 +27,7 @@ def makeFieldData():
 def makeDataValues(fieldData, size=10000, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
-    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
+    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
     if random:
         randorder = np.random.rand(size)
@@ -77,7 +77,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
 
     def testSlicerEquivalence(self):
         """Test that slicers are marked equal when appropriate, and unequal when appropriate."""
-        # Note that opsimfield slicers are considered 'equal' when all fieldID's, RA and Decs match. 
+        # Note that opsimfield slicers are considered 'equal' when all fieldID's, RA and Decs match.
         testslicer2 = OpsimFieldSlicer()
         fieldData2 = np.copy(self.fieldData)
         testslicer2.setupSlicer(self.simData, fieldData2)
@@ -87,6 +87,13 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         self.assertNotEqual(self.testslicer, testslicer2)
         testslicer2 = UniSlicer()
         self.assertNotEqual(self.testslicer, testslicer2)
+
+        # Test slicers that haven't been setup
+        ts1 = OpsimFieldSlicer()
+        ts2 = OpsimFieldSlicer()
+        self.assertEqual(ts1,ts2)
+        ts2 = OpsimFieldSlicer(fieldRaColName ='WackyName')
+        self.assertNotEqual(ts1,ts2)
 
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
@@ -179,32 +186,6 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
         del self.testslicer
         self.testslicer = None
 
-    def testSkyMap(self):
-        """Test plotting the sky map (mean of random data)"""
-        self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
-                        clims=None, logScale=False, cbarFormat='%.2g')
-        self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
-                        clims=None, logScale=False, cbarFormat='%.2g')
-
-
-    def testHistogram(self):
-        """Test plotting the histogram (mean of random data)."""
-        self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
-                                      ylabel='Area (1000s of square degrees)',
-                                      fignum=None, legendLabel=None, addLegend=False,
-                                      legendloc='upper left',
-                                      bins=100, cumulative=False, histRange=None,
-                                      logScale=False, flipXaxis=False, scale=None)
-        plt.figure()
-        plt.hist(self.metricdata.compressed(), bins=100)
-        plt.title('Histogram straight from metric data')
-        self.testslicer.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
-                                      ylabel='Area (1000s of square degrees)',
-                                      fignum=None, legendLabel=None, addLegend=False,
-                                      legendloc='upper left',
-                                      bins=100, cumulative=False, histRange=None,
-                                      logScale=False, flipXaxis=False, scale=None)
-
 
 
 if __name__ == "__main__":
@@ -221,4 +202,3 @@ if __name__ == "__main__":
     #unittest.TextTestRunner(verbosity=2).run(suite)
     #plt.show()
     unittest.main()
-

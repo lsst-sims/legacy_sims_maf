@@ -90,7 +90,7 @@ class TestHealpixSlicerSetup(unittest.TestCase):
 class TestHealpixSlicerEqual(unittest.TestCase):
     def setUp(self):
         self.nside = 16
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
@@ -106,15 +106,15 @@ class TestHealpixSlicerEqual(unittest.TestCase):
     def testSlicerEquivalence(self):
         """Test that slicers are marked equal when appropriate, and unequal when appropriate."""
         # Note that they are judged equal based on nsides (not on data in ra/dec spatial tree).
-        testslicer2 = HealpixSlicer(nside=self.nside, verbose=False)
+        testslicer2 = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         self.assertEqual(self.testslicer, testslicer2)
-        testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False)
+        testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False, lonCol='ra', latCol='dec')
         self.assertNotEqual(self.testslicer, testslicer2)
 
 class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.nside = 8
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, spatialkey1='ra', spatialkey2='dec')
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
@@ -152,7 +152,7 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
         self.nside = 8
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec',
+                                        lonCol='ra', latCol='dec',
                                         radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -189,7 +189,7 @@ class TestHealpixChipGap(unittest.TestCase):
         self.nside = 8
         self.radius = 2.041
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec',
+                                        lonCol='ra', latCol='dec',
                                         radius=self.radius, useCamera=True)
         nvalues = 1000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -224,7 +224,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
         self.nside = 16
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        spatialkey1='ra', spatialkey2='dec', radius=self.radius)
+                                        lonCol='ra', latCol='dec', radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
@@ -249,49 +249,6 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
         del self.testslicer
         self.testslicer = None
 
-    def testSkyMap(self):
-        """Test plotting the sky map (mean of random data)"""
-        self.testslicer.plotSkyMap(self.metricdata, units=None, title='Mean of random test data',
-                        clims=None, logScale=False, cbarFormat='%.2g')
-        self.testslicer.plotSkyMap(self.metricdata2, units=None, title='Random Test Data',
-                        clims=None, logScale=False, cbarFormat='%.2g')
-
-    def testPowerSpectrum(self):
-        """Test plotting the power spectrum (mean of random data)."""
-        self.testslicer.plotPowerSpectrum(self.metricdata, title='Mean of random test data',
-                                          fignum=None, maxl=500.,
-                                          legendLabel=None, addLegend=False, removeDipole=True,
-                                          verbose=False)
-        self.testslicer.plotPowerSpectrum(self.metricdata2, title='Random test data',
-                                          fignum=None, maxl=500.,
-                                          legendLabel=None, addLegend=False, removeDipole=True,
-                                          verbose=False)
-
-    def testHistogram(self):
-        """Test plotting the histogram (mean of random data)."""
-        self.testslicer.plotHistogram(self.metricdata, title='Mean of random test data', xlabel=None,
-                                      ylabel='Area (1000s of square degrees)',
-                                      fignum=None, legendLabel=None, addLegend=False,
-                                      legendloc='upper left',
-                                      bins=100, cumulative=False, xMin=None, xMax=None,
-                                      logScale=False, flipXaxis=False, scale=None)
-        plt.figure()
-        plt.hist(self.metricdata.compressed(), bins=100)
-        plt.title('Histogram straight from metric data')
-        self.testslicer.plotHistogram(self.metricdata2, title='Random test data', xlabel=None,
-                                      ylabel='Area (1000s of square degrees)',
-                                      fignum=None, legendLabel=None, addLegend=False,
-                                      legendloc='upper left',
-                                      bins=100, cumulative=False, xMin=None, xMax=None,
-                                      logScale=False, flipXaxis=False, scale=None)
-
-    def testWarning(self):
-        """Test a warning gets thrown if wrong plotFunc name used."""
-        with warnings.catch_warnings(record=True) as w:
-            self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                            spatialkey1='ra', spatialkey2='dec', radius=self.radius,
-                                            plotFuncs='plotNotAName')
-            self.assertTrue('NotAName' in str(w[-1].message))
 
 
 if __name__ == "__main__":

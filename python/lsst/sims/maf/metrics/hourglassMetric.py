@@ -11,15 +11,14 @@ def nearestVal(A, val):
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time. Must be used with the Hourglass Slicer."""
     def __init__(self, lat=None, lon=None,
-                 elev=None, plotDict=None, telescope='LSST', **kwargs):
+                 elev=None, telescope='LSST', **kwargs):
 
         metricName='hourglass'
         filtercol = "filter"
         mjdcol = "expMJD"
         nightcol = "night"
         cols = [filtercol, mjdcol, nightcol]
-        super(HourglassMetric,self).__init__(col=cols,metricName=metricName, metricDtype='object',
-                                             plotDict=plotDict, **kwargs)
+        super(HourglassMetric,self).__init__(col=cols,metricName=metricName, metricDtype='object', **kwargs)
         self.nightcol = nightcol
         self.mjdcol = mjdcol
         self.filtercol = filtercol

@@ -59,6 +59,25 @@ class TransientMetric(BaseMetric):
         self.nFilters = nFilters
         self.nPhaseCheck = nPhaseCheck
 
+
+    def lightCurve(self, time, filters):
+        """
+        given the times and filters of an observation, return the magnitudes.
+        """
+
+        lcMags = np.zeros(time.size, dtype=float)
+
+        rise = np.where(time <= self.peakTime)
+        lcMags[rise] += self.riseSlope*time[rise]-self.riseSlope*self.peakTime
+        decline = np.where(time > self.peakTime)
+        lcMags[decline] += self.declineSlope*(time[decline]-self.peakTime)
+
+        for key in self.peaks.keys():
+            fMatch = np.where(filters == key)
+            lcMags[fMatch] += self.peaks[key]
+
+        return lcMags
+
     def run(self, dataSlice, slicePoint=None):
 
         # Total number of transients that could go off back-to-back
@@ -75,19 +94,11 @@ class TransientMetric(BaseMetric):
             if self.surveyStart is None:
                 surveyStart = dataSlice[self.mjdCol].min()
             time = (dataSlice[self.mjdCol] - surveyStart + tshift) % self.transDuration
-            lcMags = np.zeros(dataSlice.size, dtype=float)
 
             # Which lightcurve does each point belong to
             lcNumber = np.floor((dataSlice[self.mjdCol]-surveyStart)/self.transDuration)
 
-            rise = np.where(time <= self.peakTime)
-            lcMags[rise] += self.riseSlope*time[rise]-self.riseSlope*self.peakTime
-            decline = np.where(time > self.peakTime)
-            lcMags[decline] += self.declineSlope*(time[decline]-self.peakTime)
-
-            for key in self.peaks.keys():
-                fMatch = np.where(dataSlice[self.filterCol] == key)
-                lcMags[fMatch] += self.peaks[key]
+            lcMags = self.lightCurve(time, dataSlice[self.filterCol])
 
             # How many criteria needs to be passed
             detectThresh = 0

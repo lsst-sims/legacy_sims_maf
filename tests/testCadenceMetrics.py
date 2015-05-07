@@ -72,7 +72,7 @@ class TestCadenceMetrics(unittest.TestCase):
         # All 1-day gaps
         data['expMJD'] = np.arange(100)
 
-        metric = metrics.Tgaps(binsize=1)
+        metric = metrics.TgapsMetric(bins=np.arange(1,100,1))
         result1 = metric.run(data)
         # By default, should all be in first bin
         assert(result1[0] == data.size-1)
@@ -82,10 +82,12 @@ class TestCadenceMetrics(unittest.TestCase):
         assert(result2[1] == data.size-1)
         assert(np.sum(result2) == data.size-1)
 
-        metric = metrics.Tgaps(allGaps=True, binMax=200, binsize=1)
+        data = np.zeros(4, dtype=zip(names,types))
+        data['expMJD'] = [10,20,30,40]
+        metric = metrics.TgapsMetric(allGaps=True, bins=np.arange(1,100,10))
         result3 =  metric.run(data)
-        assert(result3[1] == data.size-1)
-        Ngaps = (data.size-1)*(data.size-1)/2.+(data.size-1)/2.
+        assert(result3[1] == 2)
+        Ngaps = np.math.factorial(data.size-1)
         assert(np.sum(result3) == Ngaps)
 
     def testRapidRevisitMetric(self):

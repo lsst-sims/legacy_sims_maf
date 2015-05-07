@@ -2,7 +2,7 @@ import numpy as np
 from .baseMetric import BaseMetric
 
 __all__ = ['NChangesMetric',
-           'MinTimeBetweenStatesMetric', 'NStateChangesFasterThanMetric', 
+           'MinTimeBetweenStatesMetric', 'NStateChangesFasterThanMetric',
            'MaxStateChangesWithinMetric',
            'TeffMetric', 'OpenShutterFractionMetric',
            'CompletenessMetric', 'FilterColorsMetric']
@@ -110,7 +110,7 @@ class MaxStateChangesWithinMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         # This operates slightly differently from the metrics above; those calculate only successive times
-        # between changes, but here we must calculate the actual times of each change. 
+        # between changes, but here we must calculate the actual times of each change.
         # Check if there was only one observation (and return 0 if so).
         if dataSlice[self.changeCol].size == 1:
             return 0
@@ -149,6 +149,7 @@ class TeffMetric(BaseMetric):
         self.teffBase = teffBase
         self.normed = normed
         super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName, units='seconds', **kwargs)
+        self.comment = 'Effective time of a series of observations, comparing the achieved m5 depth to a fiducial m5 value.'
 
     def run(self, dataSlice, slicePoint=None):
         filters = np.unique(dataSlice[self.filterCol])
@@ -175,11 +176,9 @@ class OpenShutterFractionMetric(BaseMetric):
         super(OpenShutterFractionMetric, self).__init__(col=[self.expTimeCol, self.visitTimeCol, self.slewTimeCol],
                                                         metricName=metricName, units='OpenShutter/TotalTime',
                                                         **kwargs)
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Technical'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Open shutter time (%s total) divided by (total visit time (%s) + slewtime (%s)).' \
-              %(self.expTimeCol, self.visitTimeCol, self.slewTimeCol)
+        self.comment = 'Open shutter time (%s total) divided by total visit time (%s) + slewtime (%s).' %(self.expTimeCol,
+                                                                                                          self.visitTimeCol,
+                                                                                                          self.slewTimeCol)
 
     def run(self, dataSlice, slicePoint=None):
         result = (np.sum(dataSlice[self.expTimeCol])
@@ -207,17 +206,14 @@ class CompletenessMetric(BaseMetric):
         # Raise exception if number of visits wasn't changed from the default, for at least one filter.
         if len(self.filters) == 0:
             raise ValueError('Please set the requested number of visits for at least one filter.')
-        # Set an order for the reduce functions (for display purposes only).
-        for i, f in enumerate(('u', 'g', 'r', 'i', 'z', 'y', 'Joint')):
+        # Set reduce order, for display purposes.
+        for i, f in enumerate(['u', 'g', 'r', 'i', 'z', 'y', 'Joint']):
             self.reduceOrder[f] = i
-        if self.displayDict['group'] == 'Ungrouped':
-            self.displayDict['group'] = 'Technical'
-        if self.displayDict['caption'] is None:
-            self.displayDict['caption'] = 'Completeness fraction for each filter (and joint across all filters).'
-            self.displayDict['caption'] += ' Calculated as number of visits compared to a benchmark value of:'
-            for i, f in enumerate(self.filters):
-                self.displayDict['caption'] += ' %s: %d' %(f, self.nvisitsRequested[i])
-            self.displayDict['caption'] += '.'
+        self.comment = 'Completeness fraction for each filter (and joint across all filters), calculated'
+        self.comment += ' as the number of visits compared to a benchmark value of :'
+        for i, f in enumerate(self.filters):
+            self.comment += ' %s: %d' %(f, self.nvisitsRequested[i])
+        self.comment += '.'
 
     def run(self, dataSlice, slicePoint=None):
         """
@@ -235,36 +231,43 @@ class CompletenessMetric(BaseMetric):
             return completeness[np.where(self.filters == 'u')[0]]
         else:
             return 1
+
     def reduceg(self, completeness):
         if 'g' in self.filters:
             return completeness[np.where(self.filters == 'g')[0]]
         else:
             return 1
+
     def reducer(self, completeness):
         if 'r' in self.filters:
             return completeness[np.where(self.filters == 'r')[0]]
         else:
             return 1
+
     def reducei(self, completeness):
         if 'i' in self.filters:
             return completeness[np.where(self.filters == 'i')[0]]
         else:
             return 1
+
     def reducez(self, completeness):
         if 'z' in self.filters:
             return completeness[np.where(self.filters == 'z')[0]]
         else:
             return 1
+
     def reducey(self, completeness):
         if 'y' in self.filters:
             return completeness[np.where(self.filters == 'y')[0]]
         else:
             return 1
+
     def reduceJoint(self, completeness):
         """
         The joint completeness is just the minimum completeness for a point/field.
         """
         return completeness[-1]
+
 
 
 class FilterColorsMetric(BaseMetric):
@@ -288,11 +291,7 @@ class FilterColorsMetric(BaseMetric):
         super(FilterColors, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
                                            metricName=metricName, **kwargs)
         self.metricDtype = 'object'
-        self.plotDict['logScale'] = False
-        self.plotDict['colorMax'] = 10
-        self.plotDict['colorMin'] = 0
-        self.plotDict['cbar'] = False
-        self.plotDict['metricIsColor'] = True
+        self.comment = 'Metric specifically to generate colors for the opsim movie'
 
     def _scaleColor(self, colorR, colorG, colorB):
         r = colorR.sum()
