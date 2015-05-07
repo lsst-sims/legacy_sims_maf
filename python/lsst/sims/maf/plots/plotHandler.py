@@ -307,6 +307,23 @@ class PlotHandler(object):
                     cbarFormat = '%d'
         return cbarFormat
 
+
+    def _buildFileRoot(self, outfileSuffix=None):
+        """
+        Build a root filename for plot outputs.
+        If there is only one metricBundle, this is equal to the metricBundle fileRoot + outfileSuffix.
+        For multiple metricBundles, this is created from the runNames, metadata and metric names.
+        """
+        if len(self.mBundles) == 1:
+            outfile = self.mBundles[0].fileRoot
+        else:
+            outfile = '_'.join([self.jointRunNames, self.jointMetricNames, self.jointMetadatas])
+            outfile += '_' + self.mBundles[0].slicer.slicerName[:4].upper()
+        if outfileSuffix is not None:
+            outfile += '_' + outfileSuffix
+        outfile = utils.nameSanitize(outfile)
+        return outfile
+
     def plot(self, plotFunc, plotDict=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
@@ -314,11 +331,7 @@ class PlotHandler(object):
         # Update x/y labels using plotType. User provided plotDict will override previous settings.
         self.setPlotDict(plotDict, plotFunc, reset=False)
         # Set outfile name.
-        if outfileSuffix is not None:
-            outfile = self.plotDict['title'] + outfileSuffix
-        else:
-            outfile = self.plotDict['title']
-        outfile = utils.nameSanitize(outfile)
+        outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
         # Make plot.
         fignum = None
