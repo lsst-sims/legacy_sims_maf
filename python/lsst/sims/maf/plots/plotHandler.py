@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+import lsst.sims.maf.utils as utils
 
 __all__ = ['PlotHandler', 'BasePlotter']
 
@@ -309,7 +310,7 @@ class PlotHandler(object):
             outfile = self.plotDict['title'] + outfileSuffix
         else:
             outfile = self.plotDict['title']
-        outfile = outfile.replace(' ', '_')
+        outfile = utils.nameSanitize(outfile)
         plotType = plotFunc.plotType
         # Make plot.
         fignum = None

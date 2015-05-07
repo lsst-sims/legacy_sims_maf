@@ -9,6 +9,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.maps as maps
 import lsst.sims.maf.plots as plots
 from lsst.sims.maf.utils import ColInfo
+import lsst.sims.maf.utils as utils
 
 __all__ = ['MetricBundle']
 
@@ -139,16 +140,7 @@ class MetricBundle(object):
         self.fileRoot = '_'.join([self.runName, self.metric.name, self.metadata,
                                   self.slicer.slicerName[:4].upper()])
         # Sanitize output name if needed.
-        # Replace <, > and = signs.
-        self.fileRoot = self.fileRoot.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
-        # Strip white spaces (replace with underscores), strip '.'s and ','s
-        self.fileRoot = self.fileRoot.replace('  ', ' ').replace(' ', '_').replace('.', '_').replace(',', '')
-        # and strip quotes and double __'s
-        self.fileRoot = self.fileRoot.replace('"','').replace("'",'').replace('__', '_')
-        # and remove / and \
-        self.fileRoot = self.fileRoot.replace('/', '_').replace('\\', '_')
-        # and remove parentheses
-        self.fileRoot = self.fileRoot.replace('(', '').replace(')', '')
+        self.fileRoot = utils.nameSanitize(self.fileRoot)
 
     def _findReqCols(self):
         """

@@ -70,12 +70,28 @@ plotFuncs = [plots.FOPlot()]
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere, plotFuncs=plotFuncs)
 bundleList.append(bundle)
 
+
 # Run everything above
 bundleDict = metricBundles.makeBundleDict(bundleList)
 bgroup = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=outDir, resultsDb=resultsDb)
 bgroup.runAll()
 bgroup.plotAll()
 bgroup.writeAll()
+
+
+# Make a 6-panel seeing plot
+filters = ['u','g','r','i','z','y']
+slicer = slicers.HealpixSlicer(nside=64)
+metric = metrics.MeanMetric(col='finSeeing')
+for f in filters:
+    bundle = metricBundles.MetricBundle(metric, slicer, 'filter = "%s" and night < 365'%f)
+    bundleDict = metricBundles.makeBundleDict([bundle])
+    bgroup = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=outDir, resultsDb=resultsDb)
+    bgroup.runAll()
+    bgroup.plotAll()
+    bgroup.writeAll()
+
+
 
 
 # healpixSDSSSlicer
