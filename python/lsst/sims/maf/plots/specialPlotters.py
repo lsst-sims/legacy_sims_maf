@@ -6,11 +6,11 @@ from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-from lsst.sims.maf.metrics import fOArea, fONv, SumMetric
+import lsst.sims.maf.metrics as metrics
 
 from .plotHandler import BasePlotter
 
-__all__ = ['FOPlot']
+__all__ = ['FOPlot', 'SummaryHistogram']
 
 class FOPlot(BasePlotter):
     def __init__(self):
@@ -43,14 +43,14 @@ class FOPlot(BasePlotter):
         # Could just calculate summary stats and pass in labels.
         rarr = np.array(zip(metricValue.compressed()),
                 dtype=[('fO', metricValue.dtype)])
-        fOArea_value = fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
-                              nside=slicer.nside).run(rarr)
-        fONv_value = fONv(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
-                          nside=slicer.nside).run(rarr)
-        fOArea_value_n = fOArea(col='fO', Asky=plotDict['Asky'], norm=True,
-                                nside=slicer.nside).run(rarr)
-        fONv_value_n = fONv(col='fo',Nvisit=plotDict['Nvisits'], norm=True,
-                            nside=slicer.nside).run(rarr)
+        fOArea_value = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
+                                        nside=slicer.nside).run(rarr)
+        fONv_value = metrics.fONv(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
+                                    nside=slicer.nside).run(rarr)
+        fOArea_value_n = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=True,
+                                        nside=slicer.nside).run(rarr)
+        fONv_value_n = metrics.fONv(col='fo',Nvisit=plotDict['Nvisits'], norm=True,
+                                    nside=slicer.nside).run(rarr)
 
         plt.axvline(x=plotDict['Nvisits'], linewidth=plotDict['reflinewidth'], color='b')
         plt.axhline(y=plotDict['Asky']/1000., linewidth=plotDict['reflinewidth'],color='r')
@@ -76,13 +76,13 @@ class FOPlot(BasePlotter):
         return fig.number
 
 
-def consolidateHistogram(BasePlotter):
+class SummaryHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'SummaryHistogram'
-        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
+        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':'Count', 'label':None,
                                 'cumulative':False, 'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
                                 'color':'b', 'linestyle':'-', 'histStyle':True,
-                                'metricReduce':'SumMetric', 'bins':None}
+                                'metricReduce':metrics.SumMetric(), 'bins':None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -111,7 +111,7 @@ def consolidateHistogram(BasePlotter):
             finalHist[i] = metric.run(mV[:,i])
         bins = plotDict['bins']
         if plotDict['histStyle']:
-            x = np.ravel(zip(bins[:-1], bins[:-1]+binsize))
+            x = np.ravel(zip(bins[:-1], bins[1:]))
             y = np.ravel(zip(finalHist, finalHist))
         else:
             # Could use this to plot things like FFT
