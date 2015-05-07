@@ -235,7 +235,7 @@ class PlotHandler(object):
             else:
                 ylabel = set()
                 for mB in self.mBundles:
-                    if ylabel in mB.plotDict:
+                    if 'ylabel' in mB.plotDict:
                         ylabel.add(mB.plotDict['ylabel'])
                 if len(ylabel) == 1:
                     ylabel = list(ylabel)[0]
