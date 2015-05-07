@@ -81,7 +81,7 @@ def consolidateHistogram(BasePlotter):
         self.plotType = 'SummaryHistogram'
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
                                 'cumulative':False, 'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
-                                'color':'b', 'linestyle':'-', 'histStyle':True
+                                'color':'b', 'linestyle':'-', 'histStyle':True,
                                 'metricReduce':'SumMetric', 'bins':None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
