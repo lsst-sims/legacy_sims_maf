@@ -207,7 +207,7 @@ class OpsimHistogram(BasePlotter):
 class BaseHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
-        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
+        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':'Count', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
                                 'logScale':'auto', 'color':'b',
