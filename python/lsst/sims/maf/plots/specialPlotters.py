@@ -30,7 +30,7 @@ class FOPlot(BasePlotter):
             raise ValueError('FOPlot to be used with healpix or healpix derived slicers.')
         fig = plt.figure(fignum)
         plotDict = {}
-        plotDict.update(defaultPlotDict)
+        plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
         if plotDict['scale'] is None:
