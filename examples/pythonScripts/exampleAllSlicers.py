@@ -14,43 +14,37 @@ outDir = 'AllSlicers'
 resultsDb = db.ResultsDb(outDir=outDir)
 sqlWhere = 'night < 365'
 
-bundleDict={}
-counter=0
+bundleList = []
 
 # Hourglass slicer
 slicer = slicers.HourglassSlicer()
 metric = metrics.HourglassMetric()
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-bundleDict[counter] = bundle
-counter += 1
+bundleList.append(bundle)
 
 # UniSlicer
 slicer = slicers.UniSlicer()
 metric = metrics.MeanMetric(col='airmass')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-bundleDict[counter] = bundle
-counter += 1
+bundleList.append(bundle)
 
 # HealpixSlicer
 slicer = slicers.HealpixSlicer(nside=16)
 metric = metrics.MeanMetric(col='airmass', metricName='MeanAirmass_heal')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-bundleDict[counter] = bundle
-counter += 1
+bundleList.append(bundle)
 
 # OneDSlicer
 slicer = slicers.OneDSlicer(sliceColName='night', binsize=10)
 metric = metrics.CountMetric(col='expMJD')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-bundleDict[counter] = bundle
-counter += 1
+bundleList.append(bundle)
 
 # OpsimFieldSlicer
 slicer = slicers.OpsimFieldSlicer()
 metric = metrics.MeanMetric(col='airmass')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-bundleDict[counter] = bundle
-counter += 1
+bundleList.append(bundle)
 
 # UserPointsSlicer
 ra = np.arange(0,101,1)/100.*np.pi
@@ -58,22 +52,23 @@ dec = np.arange(0,101,1)/100.*(-np.pi)
 slicer = slicers.UserPointsSlicer(ra=ra,dec=dec)
 metric = metrics.MeanMetric(col='airmass', metricName='meanAirmass_user')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-bundleDict[counter] = bundle
-counter += 1
+bundleList.append(bundle)
 
 # healpixComplexSlicer
 
-# f0Slicer -- this should just go to a healpixslicer with a different plotter.
-
-
+# f0 plot -- this should just go to a healpixslicer with a different plotter.
+slicer = slicers.HealpixSlicer(nside=64)
+metric = metrics.CountMetric('expMJD', metricName='fO')
+plotFuncs = [plots.FOPlot()]
+bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere, plotFuncs=plotFuncs)
+bundleList.append(bundle)
 
 # Run everything above
+bundleDict = metricBundles.makeBundleDict(bundleList)
 bgroup = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=outDir, resultsDb=resultsDb)
 bgroup.runAll()
 bgroup.plotAll()
 bgroup.writeAll()
-
-
 
 
 # healpixSDSSSlicer
