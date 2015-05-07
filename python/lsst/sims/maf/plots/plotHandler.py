@@ -247,7 +247,7 @@ class PlotHandler(object):
         labels = []
         for mB in self.mBundles:
             if 'label' in mB.plotDict:
-                label = mb.plotDict['label']
+                label = mB.plotDict['label']
             else:
                 label = ''
                 if len(self.runNames) > 1:
