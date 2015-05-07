@@ -329,7 +329,7 @@ class MetricBundleGroup(object):
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.bundleDict.itervalues():
-            b.plot(plotHandler, outfileSuffix=outfileSuffix)
+            b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
             if closefigs:
                 plt.close('all')
         if self.verbose:

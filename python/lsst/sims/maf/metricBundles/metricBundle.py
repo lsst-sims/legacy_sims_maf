@@ -419,7 +419,7 @@ class MetricBundle(object):
                 newmetricBundle.metricValues.data[i] = reduceFunc(mVal)
         return newmetricBundle
 
-    def plot(self, plotHandler, plotFunc=None, outfileSuffix=None, savefig=True):
+    def plot(self, plotHandler=None, plotFunc=None, outfileSuffix=None, savefig=False):
         """
         Create all plots available from the slicer. plotHandler holds the output directory info, etc.
         """
