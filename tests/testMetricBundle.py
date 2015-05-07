@@ -21,8 +21,9 @@ class TestMetricBundle(unittest.TestCase):
         sql = 'filter="r"'
 
         metricB = metricBundles.MetricBundle(metric,slicer,sql)
+        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
 
-        dbAddress = 'sqlite:///opsimblitz1_1133_sqlite.db'
+        dbAddress = 'sqlite:///'+os.path.join(filepath, 'opsimblitz1_1133_sqlite.db')
         opsdb = db.OpsimDatabase(dbAddress)
         resultsDb = db.ResultsDb(outDir=self.outDir)
 
