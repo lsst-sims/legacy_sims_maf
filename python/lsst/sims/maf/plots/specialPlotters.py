@@ -45,14 +45,14 @@ class FOPlot(BasePlotter):
                 dtype=[('fO', metricValue.dtype)])
         fOArea_value = fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
                               nside=slicer.nside).run(rarr)
-        fONv_value = fONv(col='fO', Nvisit=plotDict['Nvisit'], norm=False,
+        fONv_value = fONv(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
                           nside=slicer.nside).run(rarr)
         fOArea_value_n = fOArea(col='fO', Asky=plotDict['Asky'], norm=True,
                                 nside=slicer.nside).run(rarr)
-        fONv_value_n = fONv(col='fo',Nvisit=plotDict['Nvisit'], norm=True,
+        fONv_value_n = fONv(col='fo',Nvisit=plotDict['Nvisits'], norm=True,
                             nside=slicer.nside).run(rarr)
 
-        plt.axvline(x=plotDict['Nvisit'], linewidth=plotDict['reflinewidth'], color='b')
+        plt.axvline(x=plotDict['Nvisits'], linewidth=plotDict['reflinewidth'], color='b')
         plt.axhline(y=plotDict['Asky']/1000., linewidth=plotDict['reflinewidth'],color='r')
 
         plt.axhline(y=fONv_value/1000., linewidth=plotDict['reflinewidth'], color='b',
