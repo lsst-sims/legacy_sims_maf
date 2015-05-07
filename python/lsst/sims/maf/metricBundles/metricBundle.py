@@ -283,7 +283,7 @@ class MetricBundle(object):
         outfileSuffix = additional suffix to add to output files (numerical suffix for movies).
         """
         if outfileSuffix is not None:
-            outfile = self.fileRoot + outfileSuffix + '.npz'
+            outfile = self.fileRoot + '_' + outfileSuffix + '.npz'
         else:
             outfile = self.fileRoot + '.npz'
         self.slicer.writeData(os.path.join(outDir, outfile),
