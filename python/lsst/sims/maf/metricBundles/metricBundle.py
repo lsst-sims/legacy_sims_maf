@@ -78,22 +78,8 @@ class MetricBundle(object):
         # Set the plotting classes/functions.
         self.setPlotFuncs(plotFuncs)
         # Set the plotDict and displayDicts.
-        self.plotDict={}
-        # Build a dict based on plotter defaults
-        plotterDefaults ={}
-        for plotter in self.plotFuncs:
-            plotterDefaults.update(plotter.defaultPlotDict)
-        # Use method to construct reasonable plotDict guesses
-        buildDefaults = self.setPlotDict(None, buildOnly=True)
-        # Might be wise to only update the keys that actually exist in
-        # plotterDefaults and throw a warning if user tries to set one that
-        # doesn't exist
-        self.plotDict.update(buildDefaults)
-        for kwarg in plotterDefaults:
-            if plotterDefaults[kwarg] is not None:
-                self.plotDict[kwarg] = plotterDefaults[kwarg]
-        if plotDict is not None:
-            self.plotDict.update(plotDict)
+        self.plotDict = {}
+        self.setPlotDict(plotDict)
         # Update/set displayDict.
         self.displayDict = {}
         self.setDisplayDict(displayDict)
@@ -229,67 +215,40 @@ class MetricBundle(object):
         """
         Set or reset the plotting functions.
         Default is to use all the plotFuncs associated with a slicer.
-        Note: not testing type of plotFunc here!
         """
         if plotFuncs is not None:
-            if len(plotFuncs) == 1:
+            if plotFuncs is isinstance(plotFuncs, plots.BasePlotter):
                 self.plotFuncs = [plotFuncs]
             else:
-                self.plotFuncs = plotFuncs
+                self.plotFuncs = []
+                for pFunc in plotFuncs:
+                    if not isinstance(pFunc, plots.BasePlotter):
+                        raise ValueError('plotFuncs should contain lsst.sims.maf.plotter objects.')
+                    self.plotFuncs.append(pFunc)
         else:
-            self.plotFuncs = [func() for func in self.slicer.plotFuncs]
+            self.plotFuncs = [pFunc() for pFunc in self.slicer.plotFuncs]
 
-    def setPlotDict(self, plotDict=None, buildOnly=False):
+    def setPlotDict(self, plotDict):
         """
         Set or update any property of plotDict.
-        Will set default values.
         """
-        # Set up a temporary dictionary with the default values.
-        tmpPlotDict = {}
-        tmpPlotDict['units'] = self.metric.units
-        title = self.runName + ' ' + self.metadata + ': ' + self.metric.name
-        tmpPlotDict['title'] = title
-        if self.slicer.slicerName == 'OneDSlicer':
-            ylabel = self.metric.name + ' (' + self.metric.units + ')'
-            xlabel = self.slicer.sliceColName  + ' (' + self.slicer.sliceColUnits + ')'
-            tmpPlotDict['ylabel'] = ylabel
-            tmpPlotDict['xlabel'] = xlabel
-        else:
-            xlabel = self.metric.name  + ' (' + self.metric.units + ')'
-            tmpPlotDict['xlabel'] = xlabel
-        if self.metric.metricDtype == 'int':
-            tmpPlotDict['cbarFormat'] = '%d'
-        # Update from self.plotDict (to use existing values, if present).
-        tmpPlotDict.update(self.plotDict)
-        # And then update from any values being passed now.
+        # Don't auto-generate anything here - the plotHandler does it.
         if plotDict is not None:
-            tmpPlotDict.update(plotDict)
+            self.plotDict.update(plotDict)
         # Check for bad zp or normVal values.
-        if 'zp' in tmpPlotDict:
+        if 'zp' in self.plotDict:
             if not np.isfinite(self.plotDict['zp']):
                 warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
-                del tmpPlotDict['zp']
-            # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
-            elif 'cbarFormat' not in plotDict:
-                del tmpPlotDict['cbarFormat']
-        if 'normVal' in tmpPlotDict:
-            if tmpPlotDict['normVal'] == 0:
+                del self.plotDict['zp']
+        if 'normVal' in self.plotDict:
+            if self.plotDict['normVal'] == 0:
                 warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotDict'
                               % (self.fileRoot))
-                del tmpPlotDict['normVal']
-            # And if the user didn't specify cbarFormat (but we did, thinking it was an integer) - remove int format.
-            elif 'cbarFormat' not in plotDict:
-                del tmpPlotDict['cbarFormat']
-        if buildOnly:
-            return tmpPlotDict
-        else:
-            # Reset self.displayDict to this updated dictionary.
-            self.plotDict = tmpPlotDict
+                del self.plotDict['normVal']
 
     def setDisplayDict(self, displayDict=None, resultsDb=None):
         """
         Set or update any property of displayDict.
-        Will set default values.
         """
         # Set up a temporary dictionary with the default values.
         tmpDisplayDict = {'group':None, 'subgroup':None, 'order':0, 'caption':None}
@@ -464,15 +423,11 @@ class MetricBundle(object):
                 newmetricBundle.metricValues.data[i] = reduceFunc(mVal)
         return newmetricBundle
 
-    def plot(self, outDir='.', outfileSuffix=None, resultsDb=None, savefig=True,
-             figformat='pdf', dpi=600, thumbnail=True, plotHandler=None, plotFunc=None):
+    def plot(self, plotHandler, plotFunc=None, outfileSuffix=None):
         """
-        Create all plots available from the slicer.
+        Create all plots available from the slicer. plotHandler holds the output directory info, etc.
         """
         # Make plots.
-        if plotHandler is None:
-            plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb,
-                                            savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         if plotFunc is not None:
             if isinstance(plotFunc, plots.BasePlotter):
                 plotFunc = plotFunc
@@ -482,11 +437,10 @@ class MetricBundle(object):
         plotHandler.setMetricBundles([self])
         madePlots = {}
         if plotFunc is not None:
-            fignum = plotHandler.makePlot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+            fignum = plotHandler.plot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
             madePlots[plotFunc.plotType] = fignum
         else:
             for plotFunc in self.plotFuncs:
-                #plotFunc = plotFunc()
-                fignum = plotHandler.makePlot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+                fignum = plotHandler.plot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
                 madePlots[plotFunc.plotType] = fignum
         return madePlots

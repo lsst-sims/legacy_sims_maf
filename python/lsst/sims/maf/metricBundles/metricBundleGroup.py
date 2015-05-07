@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
+from lsst.sims.maf.plots import PlotHandler
 from .metricBundle import MetricBundle
 
 __all__ = ['makeBundleDict', 'MetricBundleGroup']
@@ -321,9 +322,10 @@ class MetricBundleGroup(object):
         """
         Generate the plots for all the metricbundles.
         """
+        plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
+                                  savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.bundleDict.itervalues():
-            b.plot(outDir=self.outDir, resultsDb=self.resultsDb, savefig=savefig,
-                   outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+            b.plot(plotHandler, outfileSuffix=outfileSuffix)
         if closefigs:
             plt.close('all')
 

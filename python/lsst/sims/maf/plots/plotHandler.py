@@ -35,6 +35,7 @@ class PlotHandler(object):
         The metric bundles have to have the same slicer.
         """
         self.mBundles = []
+        self.plotDict = {}
         # Try to add the metricBundles in filter order.
         if isinstance(mBundles, dict):
             for mB in mBundles.itervalues():
@@ -61,17 +62,12 @@ class PlotHandler(object):
         for mB in self.mBundles:
             if mB.slicer.slicerName != self.slicer.slicerName:
                 raise ValueError('MetricBundle items must have the same type of slicer')
-
         self._combineMetricNames()
         self._combineRunNames()
         self._combineMetadata()
         self._combineSql()
-        if len(self.mBundles) == 1:
-               self.setPlotDict(self.mBundles[0].plotDict)
-        else:
-            self.setPlotDict()
 
-    def setPlotDict(self, plotDict=None, plotType=None):
+    def setPlotDict(self, plotDict=None, plotFunc=None):
         """
         Set or update the plotDict for the (possibly joint) plots.
         """
@@ -80,11 +76,16 @@ class PlotHandler(object):
         tmpPlotDict['labels'] = self._buildLegendLabels()
         tmpPlotDict['colors'] = self._buildColors()
         tmpPlotDict['legendloc'] = 'upper right'
-        if plotType is not None:
-            tmpPlotDict['xlabel'] = self._buildXlabel(plotType)
-            ylabel = self._buildYlabel(plotType)
-            if ylabel is not None:
-                tmpPlotDict['ylabel'] = ylabel
+        tmpPlotDict['cbarFormat'] = self._buildCbarFormat()
+        if plotFunc is not None:
+            tmpPlotDict['xlabel'], tmpPlotDict['ylabel'] = self._buildXYlabels(plotFunc)
+            # Replace auto-generated plot dict items with things
+            #  set by the plotterDefaults, if they are not None.
+            plotterDefaults = plotFunc.defaultPlotDict
+            for k, v in plotterDefaults.iteritems():
+                if v is not None:
+                    tmpPlotDict[k] = v
+        # But replace anything set explicitly by the user in plotDict.
         if plotDict is not None:
             tmpPlotDict.update(plotDict)
         self.plotDict = tmpPlotDict
@@ -130,7 +131,6 @@ class PlotHandler(object):
         """
         Combine runNames.
         """
-        # Find the unique runNames.
         self.runNames = set()
         for mB in self.mBundles:
             self.runNames.add(mB.runName)
@@ -140,7 +140,6 @@ class PlotHandler(object):
         """
         Combine metadata.
         """
-        # Find the unique metadata.
         metadata = set()
         for mB in self.mBundles:
             metadata.add(mB.metadata)
@@ -191,12 +190,10 @@ class PlotHandler(object):
     def _buildTitle(self):
         """
         Build a plot title from the metric names, runNames and metadata.
-        Only called if more than one metricBundle to be plotted (otherwise just uses plotDict of the bundle).
         """
         # Create a plot title from the unique parts of the metric/runName/metadata.
-        plotTitle = ''
         if len(self.runNames) == 1:
-            plotTitle += ' ' + list(self.runNames)[0]
+            plotTitle = list(self.runNames)[0]
         if len(self.metadata) == 1:
             plotTitle += ' ' + list(self.metadata)[0]
         if len(self.metricNames) == 1:
@@ -206,42 +203,37 @@ class PlotHandler(object):
             plotTitle = self.jointMetadata + ' ' + self.jointMetricNames
         return plotTitle
 
-    def _buildXlabel(self, plotType):
+    def _buildXYlabels(self, plotFunc):
         """
-        Build a plot xlabel from the metric names or slicer data.
+        Build a plot x and y label.
         """
-        if plotType == 'BinnedData':
-            xlabel = set()
-            for mB in self.mBundles:
-                xlabel.add(mB.slicer.sliceColName)
-            xlabel = ', '.join(xlabel)
-        else:
-            xlabel = self.jointMetricNames
-        return xlabel
-
-    def _buildYlabel(self, plotType):
-        """
-        Build a plot ylabel from the metric names for a BinnedData plot.
-        """
-        if len(self.mBundles) == 1:
-            mB = self.mBundles[0]
-            if 'ylabel' in mB.plotDict:
-                ylabel = mB.plotDict['ylabel']
+        if plotFunc.plotType == 'BinnedData':
+            if len(self.mBundles) == 1:
+                mB = self.mBundles[0]
+                xlabel = mB.slicer.sliceColName + ' (' + mB.slicer.sliceColUnits + ')'
+                ylabel = mB.metric.name + ' (' + mB.metric.units + ')'
             else:
-                ylabel = None
-        else:
-            if plotType == 'BinnedData':
+                xlabel = set()
+                for mB in self.mBundles:
+                    xlabel.add(mB.slicer.sliceColName)
+                xlabel = ', '.join(xlabel)
                 ylabel = self.jointMetricNames
+        else:
+            if len(self.mBundles) == 1:
+                mB = self.mBundles[0]
+                xlabel = mB.metric.name  + ' (' + mB.metric.units + ')'
+                ylabel = None
             else:
+                xlabel = self.jointMetricNames
                 ylabel = set()
                 for mB in self.mBundles:
-                    if 'ylabel' in mB.plotDict:
+                    if 'ylabel' in mBplotDict:
                         ylabel.add(mB.plotDict['ylabel'])
-                if len(ylabel) == 1:
-                    ylabel = list(ylabel)[0]
-                else:
-                    ylabel = None
-        return ylabel
+                    if len(ylabel) == 1:
+                        ylabel = list(ylabel)[0]
+                    else:
+                        ylabel = None
+        return xlabel, ylabel
 
     def _buildLegendLabels(self):
         """
@@ -289,21 +281,36 @@ class PlotHandler(object):
             colors.append(color)
         return colors
 
-    def makePlot(self, plotFunc, plotDict=None, outfileSuffix=None):
+    def _buildCbarFormat(self):
+        """
+        Set the color bar format.
+        """
+        cbarFormat = '%2.f'
+        if len(self.mBundles) == 1:
+            if self.mBundles[0].metric.metricDtype == 'int':
+                cbarFormat = '%d'
+        else:
+            metricDtypes = set()
+            for mB in self.mBundles:
+                metricDtypes.add(mB.metric.metricDtype)
+            if len(metricDtypes) == 1:
+                if list(metricDtypes)[0] == 'int':
+                    cbarFormat = '%d'
+        return cbarFormat
+
+    def plot(self, plotFunc, plotDict=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
         """
+        # Update x/y labels using plotType. User provided plotDict will override.
+        self.setPlotDict(plotDict, plotFunc)
+        # Set outfile name.
         if outfileSuffix is not None:
             outfile = self.plotDict['title'] + outfileSuffix
         else:
             outfile = self.plotDict['title']
         outfile = outfile.replace(' ', '_')
         plotType = plotFunc.plotType
-        # Update x/y labels using plotType
-        self.setPlotDict(self.plotDict, plotType=plotType)
-        # If user provided plotDict, override auto-generated dictionary.
-        if plotDict is not None:
-            self.plotDict.update(plotDict)
         # Make plot.
         fignum = None
         i = 0
