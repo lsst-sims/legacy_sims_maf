@@ -125,6 +125,7 @@ class HealpixSkyMap(BasePlotter):
 class HealpixPowerSpectrum(BasePlotter):
     def __init__(self):
         self.plotType = 'PowerSpectrum'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
                                 'maxl':500., 'removeDipole':True,
                                 'logScale':True}

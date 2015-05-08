@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import warnings
 import matplotlib.pyplot as plt
 import lsst.sims.maf.utils as utils
 
@@ -390,9 +391,11 @@ class PlotHandler(object):
         """
         if not plotFunc.objectPlotter:
             for mB in self.mBundles:
-                if not mB.plotDict['metricIsColor']:
-                    warnings.warn('Cannot plot object metric values with this plotter.')
-                    return
+                if mB.metric.metricDtype == 'object':
+                    metricIsColor = mB.plotDict.get('metricIsColor', False)
+                    if not metricIsColor:
+                        warnings.warn('Cannot plot object metric values with this plotter.')
+                        return
 
         # Update x/y labels using plotType. User provided plotDict will override previous settings.
         self.setPlotDict(plotDict, plotFunc, reset=False)
