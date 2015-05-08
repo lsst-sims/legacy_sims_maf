@@ -15,6 +15,7 @@ __all__ = ['FOPlot', 'SummaryHistogram']
 class FOPlot(BasePlotter):
     def __init__(self):
         self.plotType = 'FO'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':'Number of visits',
                                 'ylabel':'Area (1000s of square degrees)',
                                 'scale':None, 'Asky':18000., 'Nvisits':825,
@@ -79,6 +80,7 @@ class FOPlot(BasePlotter):
 class SummaryHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'SummaryHistogram'
+        self.objectPlotter = True
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':'Count', 'label':None,
                                 'cumulative':False, 'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
                                 'color':'b', 'linestyle':'-', 'histStyle':True,

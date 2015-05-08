@@ -9,6 +9,7 @@ __all__ = ['OneDBinnedData']
 class OneDBinnedData(BasePlotter):
     def __init__(self):
         self.plotType ='BinnedData'
+        self.objectPlotters = False
         self.defaultPlotDict = {'title':None, 'label':None, 'xlabel':None, 'ylabel':None,
                                 'filled':False, 'alpha':0.5,
                                 'logScale':False, 'percentileClip':None,

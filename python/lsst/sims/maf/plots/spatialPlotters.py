@@ -25,7 +25,9 @@ class BasePlotter(object):
     """
     def __init__(self):
         self.plotType = None
+        self.objectPlotter = False
         self.defaultPlotDict = None
+
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
 
@@ -33,6 +35,7 @@ class HealpixSkyMap(BasePlotter):
     def __init__(self):
         # Set the plotType
         self.plotType = 'SkyMap'
+        self.objectPlotter = False
         # Set up the default plotting parameters.
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'logScale':False, 'cbarFormat':None, 'cmap':cm.jet,
@@ -163,6 +166,7 @@ class HealpixPowerSpectrum(BasePlotter):
 class HealpixHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None,
                                 'ylabel':'Area (1000s of square degrees)', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
@@ -186,6 +190,7 @@ class HealpixHistogram(BasePlotter):
 class OpsimHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'ylabel':'Number of Fields', 'yaxisFormat':'%d',
                                 'bins':None, 'binsize':None, 'cumulative':False,
@@ -207,6 +212,7 @@ class OpsimHistogram(BasePlotter):
 class BaseHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':'Count', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
@@ -353,6 +359,7 @@ class BaseHistogram(BasePlotter):
 class BaseSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
+        self.objectPlotter = False # unless 'metricIsColor' is true..
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'projection':'aitoff', 'radius':np.radians(1.75),
                                 'logScale':'auto', 'cbar':True, 'cbarFormat':None,
@@ -535,6 +542,7 @@ class BaseSkyMap(BasePlotter):
 class HealpixSDSSSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'logScale':False,
                                 'cbarFormat':'%.2f', 'cmap':cm.jet,
                                 'percentileClip':None, 'colorMin':None,

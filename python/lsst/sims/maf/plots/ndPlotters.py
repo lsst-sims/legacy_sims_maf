@@ -12,6 +12,7 @@ __all__ = ['TwoDSubsetData', 'OneDSubsetData']
 class TwoDSubsetData(BasePlotter):
     def __init__(self):
         self.plotType = '2DBinnedData'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'units':None,
                                 'logScale':False, 'clims':None, 'cmap':cm.jet,
                                 'cbarFormat':None}
@@ -74,6 +75,7 @@ class TwoDSubsetData(BasePlotter):
 class OneDSubsetData(BasePlotter):
     def __init__(self):
         self.plotType = '1DBinnedData'
+        self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'label':None, 'units':None,
                                 'logScale':False, 'histRange':None, 'filled':False, 'alpha':0.5,
                                 'cmap':cm.jet, 'cbarFormat':None}
