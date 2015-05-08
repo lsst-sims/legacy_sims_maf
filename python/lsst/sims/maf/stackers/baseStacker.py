@@ -73,11 +73,27 @@ class BaseStacker(object):
             return False
         stateNow = dir(self)
         for key in stateNow:
-            if '_' not in key:
+            if '_' not in key[0]:
                 if ('registry' not in key) & ('run' not in key):
                     if getattr(self,key) != getattr(otherStacker, key):
                         return False
         return True
+
+
+    def __ne__(self, otherStacker):
+        """
+
+        """
+        if self.__class__.__name__ != otherStacker.__class__.__name__:
+            return True
+        stateNow = dir(self)
+        for key in stateNow:
+            if '_' not in key[0]:
+                if ('registry' not in key) & ('run' not in key):
+                    if getattr(self,key) != getattr(otherStacker, key):
+                        return True
+        return False
+
 
 
     def _addStackers(self, simData):
