@@ -42,28 +42,25 @@ class Database(object):
 
     __metaclass__ = DatabaseRegistry
 
-    def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
+    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, defaultdbTables=None,
                  chunksize=1000000, longstrings=False, verbose=False):
         """
         Instantiate database object to handle queries of the database.
 
-        dbAddress = sqlalchemy connection string to database
+        database = Name of database or sqlite filename
+        driver =  Name of database dialect+driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
+        host = Name of database host (optional)
+        port = String port number (optional)
         dbTables = dictionary of names of tables in the code : [names of tables in the database, primary keys]
-
-        The dbAddress sqlalchemy string should look like:
-           dialect+driver://username:password@host:port/database
-
-        Examples:
-           sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
-           mysql://lsst:lsst@localhost/opsim
-        More information on sqlalchemy connection strings can be found at
-          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
         """
         if longstrings:
             typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
                             'TEXT':(str, 1024), 'CLOB':(str, 1024),
                             'STRING':(str, 1024)}
-        self.dbAddress = dbAddress
+        self.driver = driver
+        self.host = host
+        self.port = port
+        self.database = database
         self.chunksize = chunksize
         # Add default values to provided input dictionaries (if not present in input dictionaries)
         if dbTables == None:
@@ -76,8 +73,8 @@ class Database(object):
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
         # Test file exists if connecting to sqlite db.
-        if self.dbAddress.startswith('sqlite:///'):
-            filename = self.dbAddress.replace('sqlite:///', '')
+        if self.driver.startswith('sqlite'):
+            filename = self.database
             if not os.path.isfile(filename):
                 raise IOError('Sqlite database file "%s" not found.' %(filename))
         if self.dbTables is None:
@@ -90,11 +87,13 @@ class Database(object):
                                     %(k, self.dbTables[k]))
                 if longstrings:
                     self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
-                                           self.dbAddress, typeOverRide=typeOverRide,
+                                           database=self.database, driver=self.driver,
+                                           typeOverRide=typeOverRide,
                                            verbose=verbose)
                 else:
                     self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
-                                           self.dbAddress, verbose=verbose)
+                                           database=self.database, driver=self.driver,
+                                           verbose=verbose)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
         """

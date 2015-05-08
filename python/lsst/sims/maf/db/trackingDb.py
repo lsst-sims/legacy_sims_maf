@@ -1,11 +1,11 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.engine import url
 from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import backref
 from sqlalchemy.exc import DatabaseError
+from lsst.daf.persistence import DbAuth
 
 Base = declarative_base()
 
@@ -33,29 +33,44 @@ class RunRow(Base):
 
 class TrackingDb(object):
 
-    def __init__(self, trackingDbAddress=None, verbose=False):
+    def __init__(self, database=None, driver='sqlite', host=None, port=None,
+                 trackingDbverbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
-        self.verbose = verbose
+        self.verbose = trackingDbverbose
         # Connect to database
         # for sqlite, connecting to non-existent database creates it automatically
-        if trackingDbAddress is None:
+        if database is None:
             # Default is a file in the current directory.
-            dbfile = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
-            self.trackingDbAddress = 'sqlite:///' + dbfile
+            self.database = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
+            self.driver = 'sqlite'
         else:
-            self.trackingDbAddress = trackingDbAddress
-        engine = create_engine(self.trackingDbAddress, echo=verbose)
+            self.database  = database
+            self.driver = driver
+            self.host = host
+            self.port = port
+
+        if self.driver == 'sqlite':
+            dbAddress = url.URL(drivername=self.driver, database=self.database)
+        else:
+            dbAddress = url.URL(self.driver,
+                            username=DbAuth.username(self.host, str(self.port)),
+                            password=DbAuth.password(self.host, str(self.port)),
+                            host=self.host,
+                            port=self.port,
+                            database=self.database)
+
+        engine = create_engine(dbAddress, echo=self.verbose)
         if self.verbose:
-            print 'Created or connected to MAF tracking database at %s' %(self.trackingDbAddress)
+            print 'Created or connected to MAF tracking %s database at %s' %(self.driver, self.database)
         self.Session = sessionmaker(bind=engine)
         self.session = self.Session()
         # Create the tables, if they don't already exist.
         try:
             Base.metadata.create_all(engine)
         except DatabaseError:
-            raise DatabaseError("Cannot create a database at %s. Check directory exists." %(trackingDbAddress))
+            raise DatabaseError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
 
     def close(self):
         self.session.close()
