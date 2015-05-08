@@ -2,7 +2,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.utils as utils
-from .spatialPlotters import BaseSkyMap
 
 __all__ = ['PlotHandler', 'BasePlotter']
 
@@ -390,16 +389,11 @@ class PlotHandler(object):
         Create plot for mBundles, using plotFunc.
         """
         if not plotFunc.objectPlotter:
-            if isinstance(plotFunc, BaseSkyMap()):
-                for mB in self.mBundles:
-                    if not mB.plotDict['metricIsColor']:
-                        warnings.warn('Cannot plot object metric values with this plotter.')
-                        return
-            else:
-                for mB in self.mBundles:
-                    if mB.metric.metricDtype == 'object':
-                        warnings.warn('Cannot plot object metric values with this plotter')
-                        return
+            for mB in self.mBundles:
+                if not mB.plotDict['metricIsColor']:
+                    warnings.warn('Cannot plot object metric values with this plotter.')
+                    return
+
         # Update x/y labels using plotType. User provided plotDict will override previous settings.
         self.setPlotDict(plotDict, plotFunc, reset=False)
         # Set outfile name.
