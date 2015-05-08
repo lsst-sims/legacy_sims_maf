@@ -392,6 +392,7 @@ class MetricBundle(object):
         # Set up metricBundle to store new metric values, and add plotDict/displayDict.
         newmetric = deepcopy(self.metric)
         newmetric.name = reduceName
+        newmetric.metricDtype = 'float'
         if reducePlotDict is not None:
             if 'units' in reducePlotDict:
                 newmetric.units = reducePlotDict['units']
