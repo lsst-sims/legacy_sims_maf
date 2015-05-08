@@ -74,7 +74,8 @@ class BaseStacker(object):
         stateNow = dir(self)
         for key in stateNow:
             if '_' not in key[0]:
-                if ('registry' not in key) & ('run' not in key):
+                # If one stacker has an attribute missing, just ignore it.
+                if ('registry' not in key) & ('run' not in key) & (hasattr(otherStacker, key)):
                     if getattr(self,key) != getattr(otherStacker, key):
                         return False
         return True
@@ -89,7 +90,7 @@ class BaseStacker(object):
         stateNow = dir(self)
         for key in stateNow:
             if '_' not in key[0]:
-                if ('registry' not in key) & ('run' not in key):
+                if ('registry' not in key) & ('run' not in key) & (hasattr(otherStacker, key)):
                     if getattr(self,key) != getattr(otherStacker, key):
                         return True
         return False
