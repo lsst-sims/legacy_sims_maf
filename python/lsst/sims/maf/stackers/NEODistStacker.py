@@ -65,7 +65,8 @@ class NEODistStacker(BaseStacker):
             good = np.where(appmag < v5[i])
             simData['NEODist'][i] = np.max(self.deltas[good])
 
-        simData['NEOX'] = -simData['NEODist']*np.cos(elongRad)
-        simData['NEOY'] = simData['NEODist']*np.sin(elongRad)
+        simData['NEOY'] = -simData['NEODist']*np.cos(elongRad)
+        simData['NEOX'] = simData['NEODist']*np.sin(elongRad)
+
 
         return simData

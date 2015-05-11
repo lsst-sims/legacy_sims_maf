@@ -54,6 +54,13 @@ metric = metrics.MeanMetric(col='airmass', metricName='meanAirmass_user')
 bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
 bundleList.append(bundle)
 
+# UserPointsSlicer, turn on the camera focal plane geometry
+slicer = slicers.UserPointsSlicer(ra=ra,dec=dec, useCamera=True)
+metric = metrics.MeanMetric(col='airmass', metricName='meanAirmass_user_w_camera')
+bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
+bundleList.append(bundle)
+
+
 # healpixComplexSlicer (healpix slicer + summaryHistogram)
 bins = np.arange(0.5, 3.0, 0.1)
 slicer = slicers.HealpixSlicer(nside=16)

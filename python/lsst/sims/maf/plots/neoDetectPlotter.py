@@ -35,4 +35,8 @@ class NeoDetectPlotter(BasePlotter):
         ax.set_ylabel(plotDict['ylabel'])
         ax.set_title(plotDict['title'])
 
+        ax.plot([0],[0],marker='o', color='b')
+        ax.plot([0],[-1], marker='o', color='y')
+
+
         return fig.number
