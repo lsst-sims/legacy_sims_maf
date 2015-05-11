@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 
 # A collection of commonly used simple metrics, operating on a single column and returning a float.
 
-__all__ = ['Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetric', 'MedianAbsMetric',
+__all__ = ['PassMetric', 'Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetric', 'MedianAbsMetric',
            'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric', 'CountUniqueMetric',
            'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
            'MaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
@@ -11,6 +11,18 @@ __all__ = ['Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetric', 'MedianAb
            'MeanAngleMetric', 'RmsAngleMetric', 'FullRangeAngleMetric']
 
 twopi = 2.0*np.pi
+
+
+class PassMetric(BaseMetric):
+    """
+    Just pass the entire array through
+    """
+    def __init__(self, cols=None, **kwargs):
+        if cols is None:
+            cols= []
+        super(PassMetric, self).__init__(col=cols, metricDtype='object', **kwargs)
+    def run(self, dataSlice, slicePoint=None):
+        return dataSlice
 
 class Coaddm5Metric(BaseMetric):
     """Calculate the coadded m5 value at this gridpoint."""
