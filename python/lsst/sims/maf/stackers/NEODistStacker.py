@@ -49,12 +49,14 @@ class NEODistStacker(BaseStacker):
 
         simData=self._addStackers(simData)
 
+        elongRad = np.radians(simData[self.elongCol])
+
         v5 = np.zeros(simData.size, dtype=float) + simData[self.m5Col]
         for filterName in self.limitingAdjust:
             good = np.where(simData[self.filterCol] == filterName)
             v5[good] += self.limitingAdjust[filterName]
 
-        for i,elong in enumerate(simData[self.elongCol]):
+        for i,elong in enumerate(elongRad):
             # Law of cosines:
             R = np.sqrt(1.+self.deltas**2-2.*self.deltas*np.cos(elong) )
             alphas = np.arccos( (1.-R**2-self.deltas**2)/(-2.*self.deltas*R) )
@@ -63,7 +65,7 @@ class NEODistStacker(BaseStacker):
             good = np.where(appmag < v5[i])
             simData['NEODist'][i] = np.max(self.deltas[good])
 
-        simData['NEOX'] = -simData['NEODist']*np.cos(simData[self.elongCol])
-        simData['NEOY'] = simData['NEODist']*np.sin(simData[self.elongCol])-1.
+        simData['NEOX'] = -simData['NEODist']*np.cos(elongRad)
+        simData['NEOY'] = simData['NEODist']*np.sin(elongRad)
 
         return simData
