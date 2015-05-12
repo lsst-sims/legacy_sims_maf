@@ -10,7 +10,8 @@ class NEODistStacker(BaseStacker):
     """
 
     def __init__(self, m5Col='fiveSigmaDepth',
-                 stepsize=.001, maxDist=3.,minDist=.3, H=22, elongCol='solarElong', filterCol='filter',**kwargs):
+                 stepsize=.001, maxDist=3.,minDist=.3, H=22, elongCol='solarElong',
+                 filterCol='filter',sunAzCol='sunAz', azCol='azimuth', **kwargs):
 
         """
         stepsize:  The stepsize to use when solving (in AU)
@@ -18,12 +19,15 @@ class NEODistStacker(BaseStacker):
         """
 
         self.units = ['AU','AU','AU']
-        self.colsReq=[elongCol, filterCol,m5Col]
+        # also grab things needed for the HA stacker
+        self.colsReq=[elongCol, filterCol,m5Col,sunAzCol, azCol]
         self.colsAdded=['NEODist', 'NEOX','NEOY']
 
+        self.sunAzCol = sunAzCol
         self.m5Col= m5Col
         self.elongCol = elongCol
         self.filterCol = filterCol
+        self.azCol = azCol
 
         self.H = H
         # Magic numbers that convert an asteroid V-band magnitude to LSST filters:
@@ -42,6 +46,7 @@ class NEODistStacker(BaseStacker):
     def run(self,simData, slicePoint=None):
 
         simData=self._addStackers(simData)
+
 
         elongRad = np.radians(simData[self.elongCol])
 
@@ -71,13 +76,20 @@ class NEODistStacker(BaseStacker):
             simData['NEODist'][i] = np.min(self.deltas[tooFaint])
 
 
+        # Make coords in heliocentric
         interior = np.where(elongRad <= np.pi/2.)
         outer = np.where(elongRad > np.pi/2.)
         simData['NEOX'][interior] = simData['NEODist'][interior]*np.sin(elongRad[interior])
-        simData['NEOY'][interior] = -simData['NEODist'][interior]*np.cos(elongRad[interior])
+        simData['NEOY'][interior] = -simData['NEODist'][interior]*np.cos(elongRad[interior]) + 1.
 
         simData['NEOX'][outer] = simData['NEODist'][outer]*np.sin(np.pi-elongRad[outer])
-        simData['NEOY'][outer] = simData['NEODist'][outer]*np.cos(np.pi-elongRad[outer])
+        simData['NEOY'][outer] = simData['NEODist'][outer]*np.cos(np.pi-elongRad[outer]) + 1.
+
+
+        # Flip the X coord if sun az is negative?
+        flip = np.where( ((simData[self.sunAzCol] > np.pi) & (simData[self.azCol] > np.pi)) |
+                         ((simData[self.sunAzCol] < np.pi) & (simData[self.azCol] > np.pi)) )
+        simData['NEOX'][flip] *= -1.
 
 
         return simData
