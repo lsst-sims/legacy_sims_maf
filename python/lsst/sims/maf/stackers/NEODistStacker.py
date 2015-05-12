@@ -10,7 +10,7 @@ class NEODistStacker(BaseStacker):
     """
 
     def __init__(self, m5Col='fiveSigmaDepth',
-                 stepsize=.001, maxDist=2.5,H=22, elongCol='solarElong', filterCol='filter',**kwargs):
+                 stepsize=.001, maxDist=3.,minDist=.3, H=22, elongCol='solarElong', filterCol='filter',**kwargs):
 
         """
         stepsize:  The stepsize to use when solving (in AU)
@@ -29,7 +29,7 @@ class NEODistStacker(BaseStacker):
         # Magic numbers that convert an asteroid V-band magnitude to LSST filters:
         # V_5 = m_5 + (adjust value)
         self.limitingAdjust = {'u':-2.1, 'g':-0.5,'r':0.2,'i':0.4,'z':0.6,'y':0.6}
-        self.deltas = np.arange(stepsize,maxDist+stepsize,stepsize)
+        self.deltas = np.arange(minDist,maxDist+stepsize,stepsize)
         self.G = 0.15
 
         # magic numbers from  http://adsabs.harvard.edu/abs/2002AJ....124.1776J
@@ -61,11 +61,24 @@ class NEODistStacker(BaseStacker):
             phi2 = np.exp(-self.a2*ta2**self.b2)
 
             alpha_term = 2.5*np.log10( (1.- self.G)*phi1+self.G*phi2)
+            # Waaaait a minute, shouldn't this term disapear for any object
+            # with R and delta > 1 AU?
+            # fullPhase = np.where((R > 1.) & (self.deltas > 1.))
+            # alpha_term[fullPhase] = 0.
             appmag = self.H+5.*np.log10(R*self.deltas)-alpha_term
-            good = np.where(appmag < v5[i])
-            simData['NEODist'][i] = np.max(self.deltas[good])
+            tooFaint = np.where(appmag > v5[i])
+            #simData['NEODist'][i] = np.max(self.deltas[good])
+            simData['NEODist'][i] = np.min(self.deltas[tooFaint])
 
-        simData['NEOX'] = simData['NEODist']*np.cos(elongRad-np.pi/2.)
-        simData['NEOY'] = simData['NEODist']*np.sin(elongRad-np.pi/2.)
+
+        interior = np.where(elongRad <= np.pi/2.)
+        outer = np.where(elongRad > np.pi/2.)
+        simData['NEOX'][interior] = simData['NEODist'][interior]*np.sin(elongRad[interior])
+        simData['NEOY'][interior] = -simData['NEODist'][interior]*np.cos(elongRad[interior])
+
+        simData['NEOX'][outer] = simData['NEODist'][outer]*np.sin(np.pi-elongRad[outer])
+        simData['NEOY'][outer] = simData['NEODist'][outer]*np.cos(np.pi-elongRad[outer])
+
+        #import pdb ; pdb.set_trace()
 
         return simData

@@ -28,8 +28,3 @@ for filterName in filters:
     bgroup = metricBundles.MetricBundleGroup({0:bundle}, opsdb, outDir=outDir, resultsDb=resultsDb)
     bgroup.runAll()
     bgroup.plotAll()
-
-
-#plotter = NeoDetectPlotter()
-#plotter(bundle.metricValues, bundle.slicer, {})
-#plt.show()

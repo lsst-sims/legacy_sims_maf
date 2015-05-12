@@ -28,8 +28,8 @@ class NeoDetectPlotter(BasePlotter):
         for filterName in self.filter2color:
             good = np.where(metricValue[0].data[self.filterColName] == filterName)
             if np.size(good[0]) > 0:
-                ax.scatter( metricValue[0].data['NEOX'], metricValue[0].data['NEOY'],
-                            c=self.filter2color[filterName], alpha=0.1)
+                ax.plot( metricValue[0].data['NEOX'], metricValue[0].data['NEOY'], 'o',
+                            color=self.filter2color[filterName], alpha=0.1, markeredgecolor=None)
 
         ax.set_xlabel(plotDict['xlabel'])
         ax.set_ylabel(plotDict['ylabel'])
