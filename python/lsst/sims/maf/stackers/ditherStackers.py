@@ -62,6 +62,7 @@ class RandomDitherStacker(BaseStacker):
         # Generate the random dither values.
         noffsets = len(simData[self.raCol])
         self._generateRandomOffsets(noffsets)
+        print len(self.xOff)
         # Add to RA and dec values.
         simData['randomRADither'] = simData[self.raCol] + self.xOff/np.cos(simData[self.decCol])
         simData['randomDecDither'] = simData[self.decCol] + self.yOff
@@ -74,7 +75,7 @@ class NightlyRandomDitherStacker(RandomDitherStacker):
     Randomly dither the RA and Dec pointings up to maxDither degrees from center, one dither offset per night.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night', maxDither=1.75, randomSeed=None):
-        # Instantiate the RandomDither object and set internal variables.
+        # Instantiate the NightlyRandomDither object and set internal variables.
         self.raCol = raCol
         self.decCol = decCol
         self.nightCol = nightCol
