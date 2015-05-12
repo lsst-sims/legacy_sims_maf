@@ -6,7 +6,7 @@ from matplotlib.patches import Ellipse
 __all__ = ['NeoDetectPlotter']
 
 class NeoDetectPlotter(BasePlotter):
-    def __init__(self, step=.001):
+    def __init__(self, step=.01):
 
         self.plotType = 'neoxyPlotter'
         self.objectPlotter = True
@@ -37,43 +37,46 @@ class NeoDetectPlotter(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
- #       xvec = np.arange(-plotDict['xMax']-self.step,plotDict['xMax']+self.step, self.step)
- #       y = np.arange(-plotDict['yMax']-self.step,plotDict['yMax']+self.step, self.step)
+        xvec = np.arange(-plotDict['xMax']-self.step,plotDict['xMax']+self.step, self.step)
+        yvec = np.arange(-plotDict['yMax']-self.step,plotDict['yMax']+self.step, self.step)
 
- #       xv,yv = np.meshgrid(x,y, indexing='xy')
- #       image = xv*0
+        xv,yv = np.meshgrid(xvec,yvec, indexing='xy')
+        image = xv*0
+
+        R = (xv**2+(yv-1.)**2)**0.5
+        # make theta span from 0 to 2 pi
+        theta = np.arctan2(xv,yv-1.)
 
 
-
-#        fov = np.radians(3.5.)
-#        for x,y in zip(metricValue[0].data['NEOX'],metricValue[0].data['NEOY']):
-#
-#            if x <0:
-#                xind = np.where( (xvec > x) & (xvec < 0) )
-#            else:
-#                xind = np.where( (xvec < x) & (xvec > 0) )
-#
-#            theta = np.arctan(y/x)
-#            theta1 = theta-fov/2.
-#            y1 =  ( (x**2.+y**2)/(1.+1./(np.tan(theta1)**2)) )**0.5
-#            x1 = ( ( x**2+y**2)/y1 )**0.5
-#
-#            y1line = y1/x1*xvec
-#
-#            theta2 = theta+fov/2.
-#            y2 = ( (x**2.+y**2)/(1.+1./(np.tan(theta1)**2)) )**0.5
-#            x2 = ( ( x**2+y**2)/y2 )**0.5
-#
-#            y2line = y2/x2*xvec
+        fov = np.radians(3.5)
+        for dist,x,y in zip(metricValue[0].data['NEODist'],metricValue[0].data['NEOX'],
+                            metricValue[0].data['NEOY']):
+            polarTheta = np.arctan2(x,y-1.)
+            theta1 = polarTheta+np.radians(fov/2.)
+            theta2 = polarTheta-np.radians(fov/2.)
+            thetas = np.sort(np.array([theta1,theta2]))
 
 
 
+            # XXX--need to catch case where points are in quadrant 1 and 4.
+            if np.abs(theta1 - theta2) > np.pi:
+                good = np.where( (theta >= thetas[0]) & (theta >= thetas[1]) & (R <= dist))
+            else:
+                good = np.where( (theta >= thetas[0]) & (theta <= thetas[1]) & (R <= dist))
 
-        for filterName in self.filter2color:
-            good = np.where(metricValue[0].data[self.filterColName] == filterName)
-            if np.size(good[0]) > 0:
-                ax.plot( metricValue[0].data['NEOX'], metricValue[0].data['NEOY'], 'o',
-                            color=self.filter2color[filterName], alpha=0.1, markeredgecolor=None)
+
+            image[good] += 1
+
+        #blah = ax.imshow(image, extent=[xvec.min(), xvec.max(), yvec.min(),yvec.max()])
+        blah = ax.pcolormesh(image,xv,yv)
+        cb = plt.colorbar(blah, ax=ax)
+
+
+#        for filterName in self.filter2color:
+#            good = np.where(metricValue[0].data[self.filterColName] == filterName)
+#            if np.size(good[0]) > 0:
+#                ax.plot( metricValue[0].data['NEOX'], metricValue[0].data['NEOY'], 'o',
+#                            color=self.filter2color[filterName], alpha=0.1, markeredgecolor=None)
 
         ax.set_xlabel(plotDict['xlabel'])
         ax.set_ylabel(plotDict['ylabel'])
