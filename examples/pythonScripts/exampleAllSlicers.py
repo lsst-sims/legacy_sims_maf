@@ -9,7 +9,7 @@ import lsst.sims.maf.plots as plots
 
 
 # Set up the database connection
-opsdb = db.OpsimDatabase('sqlite:///enigma_1189_sqlite.db')
+opsdb = db.OpsimDatabase('enigma_1189_sqlite.db')
 outDir = 'AllSlicers'
 resultsDb = db.ResultsDb(outDir=outDir)
 sqlWhere = 'night < 365'
@@ -92,18 +92,3 @@ for f in filters:
     bgroup.writeAll()
 
 
-
-
-# healpixSDSSSlicer
-# need to run setup pymssql to get this part to run. Do we want to add that to our dependencies?
-runSDSS = False
-if runSDSS:
-    sdssDB = db.SdssDatabase('mssql+pymssql://clue-1:wlZH2xWy@fatboy.npl.washington.edu:1433')
-    sqlWhere = "filter='r' and nStars > 0 and nGalaxy > 0"
-    slicer = slicers.HealpixSDSSSlicer(nside=64, lonCol='RA1', latCol='Dec1')
-    metric = metrics.MeanMetric(col='psfWidth')
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlWhere)
-    bgroup = metricBundles.MetricBundleGroup({0:bundle}, sdssDB, outDir=outDir, resultsDb=resultsDb)
-    bgroup.runAll()
-    bgroup.plotAll()
-    bgroup.writeAll()
