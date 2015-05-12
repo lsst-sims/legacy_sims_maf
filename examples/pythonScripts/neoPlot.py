@@ -16,6 +16,7 @@ slicer = slicers.UniSlicer()
 metric = metrics.PassMetric(metricName='NEODistances')
 stacker = stackers.NEODistStacker()
 filters = ['u','g','r','i','z','y']
+#filters = ['r']
 counter = 0
 bundleDict = {}
 for filterName in filters:

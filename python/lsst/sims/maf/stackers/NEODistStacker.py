@@ -33,7 +33,7 @@ class NEODistStacker(BaseStacker):
         self.G = 0.15
 
         # magic numbers from  http://adsabs.harvard.edu/abs/2002AJ....124.1776J
-        self.a1 = -3.33
+        self.a1 = 3.33
         self.b1 = 0.63
         self.a2 = 1.87
         self.b2 = 1.22
@@ -79,6 +79,5 @@ class NEODistStacker(BaseStacker):
         simData['NEOX'][outer] = simData['NEODist'][outer]*np.sin(np.pi-elongRad[outer])
         simData['NEOY'][outer] = simData['NEODist'][outer]*np.cos(np.pi-elongRad[outer])
 
-        #import pdb ; pdb.set_trace()
 
         return simData
