@@ -13,7 +13,6 @@ class TestTrackingDb(unittest.TestCase):
         self.mafComment = 'mafcomment'
         self.mafDir = 'mafdir'
         self.trackingDb = 'trackingDb_sqlite.db'
-        self.trackingDbAddress = 'sqlite:///' + self.trackingDb
         self.mafDate = '1/1/11'
         self.opsimDate = '1/1/11'
 
@@ -23,17 +22,17 @@ class TestTrackingDb(unittest.TestCase):
 
     def testTrackingDbCreation(self):
         """Test tracking database creation."""
-        trackingdb = db.TrackingDb(trackingDbAddress = self.trackingDbAddress)
+        trackingdb = db.TrackingDb(database = self.trackingDb)
         self.assertTrue(os.path.isfile(self.trackingDb))
         trackingdb.close()
 
     def testAddRun(self):
         """Test adding a run to the tracking database."""
-        trackingdb = db.TrackingDb(trackingDbAddress = self.trackingDbAddress)
+        trackingdb = db.TrackingDb(database = self.trackingDb)
         trackId = trackingdb.addRun(opsimRun = self.opsimRun, opsimComment = self.opsimComment,
                                     mafComment = self.mafComment, mafDir = self.mafDir,
                                     mafDate = self.mafDate, opsimDate = self.opsimDate)
-        tdb = db.Database(self.trackingDbAddress,
+        tdb = db.Database(self.trackingDb,
                             dbTables={'runs':['runs', 'mafRunId']})
         res = tdb.queryDatabase('runs', 'select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
@@ -51,8 +50,8 @@ class TestTrackingDb(unittest.TestCase):
 
     def testDelRun(self):
         """Test removing a run from the tracking database."""
-        trackingdb = db.TrackingDb(trackingDbAddress = self.trackingDbAddress)
-        tdb = db.Database(self.trackingDbAddress,
+        trackingdb = db.TrackingDb(database = self.trackingDb)
+        tdb = db.Database(self.trackingDb,
                           dbTables={'runs':['runs', 'mafRunId']})
         # Add a run.
         trackId = trackingdb.addRun(opsimRun = self.opsimRun, opsimComment = self.opsimComment,

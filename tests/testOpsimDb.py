@@ -10,12 +10,12 @@ class TestOpsimDb(unittest.TestCase):
     """Test opsim specific database class."""
     def setUp(self):
         filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
-        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1133_sqlite.db'
-        self.oo = db.OpsimDatabase(self.dbAddress)
+        self.dbfile = filepath + 'opsimblitz1_1133_sqlite.db'
+        self.oo = db.OpsimDatabase(self.dbfile)
 
     def tearDown(self):
         del self.oo
-        self.dbAddress = None
+        self.dbfile = None
         self.oo = None
 
     def testOpsimDbSetup(self):
@@ -24,7 +24,7 @@ class TestOpsimDb(unittest.TestCase):
         self.assertTrue(isinstance(self.oo.tables, dict))
         self.assertEqual(self.oo.dbTables['Summary'][0], 'Summary')
         # Test can override default table name/id keys if needed.
-        oo = db.OpsimDatabase(self.dbAddress, dbTables={'Summary':['ObsHistory', 'obsHistID']})
+        oo = db.OpsimDatabase(self.dbfile, dbTables={'Summary':['ObsHistory', 'obsHistID']})
         self.assertEqual(oo.dbTables['Summary'][0], 'ObsHistory')
 
     def testOpsimDbMetricData(self):

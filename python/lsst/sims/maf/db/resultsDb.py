@@ -1,7 +1,7 @@
 import os, warnings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy.engine import url
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy import ForeignKey
@@ -94,27 +94,35 @@ class SummaryStatRow(Base):
           %(self.metricId, self.summaryName, self.summaryValue)
 
 class ResultsDb(object):
-    def __init__(self, outDir= '.', resultsDbAddress=None, verbose=False):
+    def __init__(self, outDir= '.', database=None, driver='sqlite', verbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
         # Connect to database
         # for sqlite, connecting to non-existent database creates it automatically
-        if resultsDbAddress is None:
+        if database is None:
             # Check for output directory, make if needed.
             if not os.path.isdir(outDir):
                 os.makedirs(outDir)
-            self.resultsDbAddress = 'sqlite:///' + os.path.join(outDir, 'resultsDb_sqlite.db')
+            self.database = os.path.join(outDir, 'resultsDb_sqlite.db')
+            self.driver = 'sqlite'
         else:
-            self.resultsDbAddress = resultsDbAddress
-        engine = create_engine(self.resultsDbAddress, echo=verbose)
+            self.database = database
+            self.driver = driver
+
+        if self.driver == 'sqlite':
+            dbAddress = url.URL(self.driver, database=self.database)
+        else:
+            raise NotImplementedError("The capability to connect to non-sqlite db's is in progress.")
+
+        engine = create_engine(dbAddress, echo=verbose)
         self.Session = sessionmaker(bind=engine)
         self.session = self.Session()
         # Create the tables, if they don't already exist.
         try:
             Base.metadata.create_all(engine)
         except DatabaseError:
-            raise ValueError("Cannot create a database at %s. Check directory exists." %(resultsDbAddress))
+            raise ValueError("Cannot create a database at %s. Check directory exists." %(self.database))
 
     def close(self):
         self.session.close()
