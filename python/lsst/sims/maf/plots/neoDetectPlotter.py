@@ -60,24 +60,14 @@ class NeoDetectPlotter(BasePlotter):
             #r_ind = np.searchsorted(Rvec, dist)
             diff = np.abs(thetavec - theta)
             thetaToUse = thetavec[np.where(diff == diff.min())]
-
+            # This is a slow where-clause, should be possible to speed it up using
+            # np.searchsorted+clever slicing or hist2d to build up the map.
             good = np.where( (thetagrid == thetaToUse) & (Rgrid <= dist))
-
             H[good] += 1
 
-        #import pdb ; pdb.set_trace()
 
-
-        #blah = ax.imshow(image, extent=[xvec.min(), xvec.max(), yvec.min(),yvec.max()])
         blah = ax.pcolormesh(xgrid,ygrid+1,H)
         cb = plt.colorbar(blah, ax=ax)
-
-
-#        for filterName in self.filter2color:
-#            good = np.where(metricValue[0].data[self.filterColName] == filterName)
-#            if np.size(good[0]) > 0:
-#                ax.plot( metricValue[0].data['NEOX'], metricValue[0].data['NEOY'], 'o',
-#                            color=self.filter2color[filterName], alpha=0.1, markeredgecolor=None)
 
         ax.set_xlabel(plotDict['xlabel'])
         ax.set_ylabel(plotDict['ylabel'])
