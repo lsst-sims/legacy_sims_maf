@@ -7,7 +7,7 @@ import lsst.sims.maf.db as db
 
 
 
-database = db.OpsimDatabase('sqlite:///enigma_1189_sqlite.db')
+database = db.OpsimDatabase('enigma_1189_sqlite.db')
 
 
 metric = metrics.MeanMetric(col='HA')

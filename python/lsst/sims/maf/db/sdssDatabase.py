@@ -6,11 +6,13 @@ __all__ = ['SdssDatabase']
 
 class SdssDatabase(Database):
     """Connect to the stripe 82 database"""
-    def __init__(self, dbAddress,
+    def __init__(self, database, driver='mssql+pymssql', host=None, port=None,
                  dbTables={'clue.dbo.viewStripe82JoinAll':['viewStripe82JoinAll','id']},
                  defaultdbTables=None,
                  chunksize=1000000, **kwargs):
-       super(SdssDatabase,self).__init__(dbAddress,dbTables=dbTables,defaultdbTables=defaultdbTables,
+        # This will not currently instantiate correctly (waiting on future code).
+        super(SdssDatabase,self).__init__(database=database, driver=driver, host=host, port=port,
+                                        dbTables=dbTables,defaultdbTables=defaultdbTables,
                                         chunksize=chunksize,**kwargs )
 
 
