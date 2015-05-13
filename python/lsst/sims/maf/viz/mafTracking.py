@@ -11,16 +11,15 @@ class MafTracking(object):
     Class to read MAF's tracking database (tracking all MAF runs) and handle the output for web display.
 
     Deals with a single MAF run (one output directory, one resultsDb) only. """
-    def __init__(self, trackingDbAddress=None):
+    def __init__(self, database=None):
         """
         Instantiate the (multi-run) layout visualization class.
         """
-        if trackingDbAddress is None:
-            dbfile = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
-            trackingDbAddress = 'sqlite:///' + dbfile
+        if database is None:
+            database = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
 
         # Read in the results database.
-        database = db.Database(trackingDbAddress, longstrings=True,
+        database = db.Database(database=database, longstrings=True,
                                dbTables={'runs':['runs', 'mafRunId']})
         self.runs = database.queryDatabase('runs', 'select * from runs')
         self.runs = self.sortRuns(self.runs)
