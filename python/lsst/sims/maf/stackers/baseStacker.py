@@ -83,8 +83,13 @@ class BaseStacker(object):
                 if not hasattr(otherStacker, key):
                     return False
                 else:
-                    if getattr(self, key) != getattr(otherStacker, key):
-                        return False
+                    # If the attribute is from numpy, assume it's an array and test it
+                    if type(getattr(self,key)).__module__ == np.__name__:
+                        if not np.array_equal(getattr(self,key), getattr(otherStacker, key)):
+                            return False
+                    else:
+                        if getattr(self, key) != getattr(otherStacker, key):
+                            return False
         return True
 
 
