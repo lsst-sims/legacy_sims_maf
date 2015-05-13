@@ -112,7 +112,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Python script to display MAF output in a web browser."+
                                      "  After launching, point your browser to 'http://localhost:8888/'")
     defaultdb = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
-    defaultdb = 'sqlite:///' + defaultdb
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
     parser.add_argument("-d", "--mafDir", type=str, default=None, help="Add this directory to the trackingDb and open immediately.")
     parser.add_argument("-c", "--mafComment", type=str, default=None, help="Add a comment to the trackingDB describing the MAF analysis of this directory (paired with mafDir argument).")
@@ -123,10 +122,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check tracking DB is sqlite (and add as convenience if forgotten).
-    trackingDbAddress = args.trackingDb
-    if not trackingDbAddress.startswith('sqlite:///'):
-        trackingDbAddress = 'sqlite:///' + trackingDbAddress
-    print 'Using tracking database at %s' %(trackingDbAddress)
+    trackingDb = args.trackingDb
+    print 'Using tracking database at %s' %(trackingDb)
 
     global startRunId
     startRunId = -666
@@ -135,9 +132,9 @@ if __name__ == "__main__":
         mafDir = os.path.realpath(args.mafDir)
         if not os.path.isdir(mafDir):
             print 'There is no directory containing MAF outputs at %s.' %(mafDir)
-            print 'Just opening using tracking db at %s.' %(trackingDbAddress)
+            print 'Just opening using tracking db at %s.' %(trackingDb)
         # Open tracking database to add a run.
-        trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)
+        trackingDb = db.TrackingDb(database=trackingDb)
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
         opsimRun = ''
@@ -159,7 +156,7 @@ if __name__ == "__main__":
                     opsimDate = opsimDate.split('-')
                     opsimDate = opsimDate[1]+'/'+opsimDate[2]+'/'+opsimDate[0][2:]
         # Give some feedback to the user about what we're doing.
-        print 'Adding to tracking database at %s:' %(trackingDbAddress)
+        print 'Adding to tracking database at %s:' %(trackingDb)
         print ' MafDir = %s' %(mafDir)
         print ' MafComment = %s' %(args.mafComment)
         print ' OpsimRun = %s' %(opsimRun)
@@ -173,7 +170,7 @@ if __name__ == "__main__":
 
     # Open tracking database and start visualization.
     global runlist
-    runlist = MafTracking(trackingDbAddress)
+    runlist = MafTracking(trackingDb)
     if startRunId < 0:
         startRunId = runlist.runs[0]['mafRunId']
     # Set up path to template and favicon paths, and load templates.

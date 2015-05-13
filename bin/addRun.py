@@ -13,7 +13,6 @@ if __name__ == "__main__":
     parser.add_argument("--opsimDate", type=str, default=None, help="Date Opsim was run")
     parser.add_argument("--mafDate", type=str, default=None, help="Date MAF was run")
     defaultdb = 'trackingDb_sqlite.db'
-    defaultdb = 'sqlite:///' + defaultdb
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
     args = parser.parse_args()
 
@@ -23,10 +22,7 @@ if __name__ == "__main__":
         print 'Exiting.'
         exit(-1)
 
-    trackingDbAddress = args.trackingDb
-    if not trackingDbAddress.startswith('sqlite:///'):
-        trackingDbAddress = 'sqlite:///' + trackingDbAddress
-    trackingDb = db.TrackingDb(trackingDbAddress=trackingDbAddress)
+    trackingDb = db.TrackingDb(database=args.trackingDb)
 
     # If opsim run name or comment not set, try to set it from maf outputs.
     opsimRun = args.opsimRun
