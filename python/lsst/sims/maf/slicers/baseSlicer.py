@@ -139,8 +139,19 @@ class BaseSlicer(object):
         return self._sliceSimData(islice)
 
     def __eq__(self, otherSlicer):
-        """Evaluate if two slicers are equivalent."""
+        """
+        Evaluate if two slicers are equivalent.
+        """
         raise NotImplementedError()
+
+    def __neq__(self, otherSlicer):
+        """
+        Evaluate if two slicers are not equivalent.
+        """
+        if self == otherSlicer:
+            return False
+        else:
+            return True
 
     def _sliceSimData(self, slicePoint):
         """

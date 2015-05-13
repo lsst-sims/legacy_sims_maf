@@ -8,10 +8,11 @@ import lsst.sims.maf.db as db
 class TestDb(unittest.TestCase):
     def setUp(self):
         filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
-        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1133_sqlite.db'
+        self.database = filepath + 'opsimblitz1_1133_sqlite.db'
+        self.dbAddress = 'sqlite:///' + self.database
 
     def tearDown(self):
-        self.dbAddress = None
+        self.database = None
 
     def testTable(self):
         """Test that we can connect to a DB table and pull data."""
@@ -34,10 +35,10 @@ class TestDb(unittest.TestCase):
     def testBaseDatabase(self):
         """Test base database class."""
         # Test instantation with no dbTables info (and no defaults).
-        basedb = db.Database(self.dbAddress)
+        basedb = db.Database(self.database)
         self.assertEqual(basedb.tables, None)
         # Test instantiation with some tables.
-        basedb = db.Database(self.dbAddress, dbTables={'obsHistTable':['ObsHistory', 'obsHistID'],
+        basedb = db.Database(self.database, dbTables={'obsHistTable':['ObsHistory', 'obsHistID'],
                                                        'fieldTable':['Field', 'fieldID'],
                                                        'obsHistoryProposalTable':['Obshistory_Proposal',
                                                                                   'obsHistory_propID']})
@@ -51,7 +52,7 @@ class TestDb(unittest.TestCase):
 
     def testSqliteFileNotExists(self):
         """Test that db gives useful error message if db file doesn't exist."""
-        self.assertRaises(IOError, db.Database, 'sqlite:///thisdatabasedoesntexist_sqlite.db')
+        self.assertRaises(IOError, db.Database, 'thisdatabasedoesntexist_sqlite.db')
 
     def testArbitraryQuery(self):
         """

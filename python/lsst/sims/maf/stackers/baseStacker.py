@@ -58,43 +58,49 @@ class BaseStacker(object):
         self.colsAddedDtypes = None
         # Optional: provide a list of units for the columns defined in colsAdded.
         self.units = [None]
-#        dirnow = dir(self)
-#        self.stateDict = {}
-#        for key in dirnow:
-#            if '__' not in key:
-#                self.stateDict[key] = getattr(self.key)
-#        del self.stateDict['registry']
 
     def __eq__(self, otherStacker):
         """
-        How to tell if two stackers are equal
+        Evaluate if two stackers are equivalent.
         """
+        # Are we comparing two classes before instantiation?
+        if (self.__class__.__name__ == 'StackerRegistry' and
+            otherStacker.__class__.__name__ == 'StackerRegistry'):
+            if self.__name__ == otherStacker.__name__:
+                return True
+            else:
+                return False
+        # otherwise, we are not and these are instantiated stacker objects.
+        # If the class names are different, they are not 'the same'.
         if self.__class__.__name__ != otherStacker.__class__.__name__:
             return False
+        # Otherwise, this is the same stacker class, but may be instantiated differently.
+        #  We have to delve a little further, and look at the kwargs for each stacker.
+        # We assume that they are equal, unless they have specific attributes which are different.
         stateNow = dir(self)
         for key in stateNow:
-            if '_' not in key[0]:
-                # If one stacker has an attribute missing, just ignore it.
-                if ('registry' not in key) & ('run' not in key) & (hasattr(otherStacker, key)):
-                    if getattr(self,key) != getattr(otherStacker, key):
-                        return False
+            if not key.startswith('_') and key!='registry' and key!='run':
+                if not hasattr(otherStacker, key):
+                    return False
+                else:
+                    # If the attribute is from numpy, assume it's an array and test it
+                    if type(getattr(self,key)).__module__ == np.__name__:
+                        if not np.array_equal(getattr(self,key), getattr(otherStacker, key)):
+                            return False
+                    else:
+                        if getattr(self, key) != getattr(otherStacker, key):
+                            return False
         return True
 
 
     def __ne__(self, otherStacker):
         """
-
+        Evaluate if two stackers are not equal.
         """
-        if self.__class__.__name__ != otherStacker.__class__.__name__:
+        if self == otherStacker:
+            return False
+        else:
             return True
-        stateNow = dir(self)
-        for key in stateNow:
-            if '_' not in key[0]:
-                if ('registry' not in key) & ('run' not in key) & (hasattr(otherStacker, key)):
-                    if getattr(self,key) != getattr(otherStacker, key):
-                        return True
-        return False
-
 
 
     def _addStackers(self, simData):
@@ -117,7 +123,7 @@ class BaseStacker(object):
 
     def run(self, simData):
         """
-        Generate the new stacker columns, given the simdata columns from the database.
+        Example: Generate the new stacker columns, given the simdata columns from the database.
         Returns the new simdata structured aray that includes the new stacker columns.
         """
         # Add new columns

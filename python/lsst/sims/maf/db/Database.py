@@ -1,6 +1,8 @@
 import os, warnings
-from .Table import Table
 import inspect
+from sqlalchemy.engine import url
+
+from .Table import Table
 
 __all__ = ['DatabaseRegistry', 'Database']
 
@@ -42,29 +44,29 @@ class Database(object):
 
     __metaclass__ = DatabaseRegistry
 
-    def __init__(self, dbAddress, dbTables=None, defaultdbTables=None,
+    def __init__(self, database, driver='sqlite', host=None, port=None,
+                 dbTables=None, defaultdbTables=None,
                  chunksize=1000000, longstrings=False, verbose=False):
         """
         Instantiate database object to handle queries of the database.
 
-        dbAddress = sqlalchemy connection string to database
+        database = name of the database to connect to (in the case of sqlite, the filename)
+        driver =  Name of database dialect+driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
+        host = Name of database host (optional)
+        port = String port number (optional)
         dbTables = dictionary of names of tables in the code : [names of tables in the database, primary keys]
-
-        The dbAddress sqlalchemy string should look like:
-           dialect+driver://username:password@host:port/database
-
-        Examples:
-           sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
-           mysql://lsst:lsst@localhost/opsim
-        More information on sqlalchemy connection strings can be found at
-          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
         """
         if longstrings:
             typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
                             'TEXT':(str, 1024), 'CLOB':(str, 1024),
                             'STRING':(str, 1024)}
-        self.dbAddress = dbAddress
+
+        self.driver = driver
+        self.host = host
+        self.port = port
+        self.database = database
         self.chunksize = chunksize
+
         # Add default values to provided input dictionaries (if not present in input dictionaries)
         if dbTables == None:
             self.dbTables = defaultdbTables
@@ -76,10 +78,17 @@ class Database(object):
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
         # Test file exists if connecting to sqlite db.
-        if self.dbAddress.startswith('sqlite:///'):
-            filename = self.dbAddress.replace('sqlite:///', '')
+        if self.driver.startswith('sqlite'):
+            filename = self.database.replace('sqlite:','').replace('///','')
             if not os.path.isfile(filename):
                 raise IOError('Sqlite database file "%s" not found.' %(filename))
+
+        # Build sqlalchemy dbAddress string here for now.
+        if self.driver == 'sqlite':
+            self.dbAddress = url.URL(self.driver, database=self.database)
+        else:
+            raise NotImplementedError("The capability to connect to non-sqlite db's is in progress.")
+
         if self.dbTables is None:
             self.tables = None
         else:
