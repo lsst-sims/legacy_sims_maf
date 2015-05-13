@@ -48,13 +48,6 @@ class NeoDetectPlotter(BasePlotter):
 
         Rgrid,thetagrid = np.meshgrid(Rvec,thetavec)
 
-        neg = np.where(thetagrid < 0.)
-
-        # I want -0 --> 2pi
-        # I want -pi --> pi
-        # I want -pi/2 --> 3pi/2
-        thetagrid[neg] += 2.*np.pi
-
         xgrid = Rgrid*np.cos(thetagrid)
         ygrid = Rgrid*np.sin(thetagrid)
 
@@ -63,10 +56,14 @@ class NeoDetectPlotter(BasePlotter):
                             metricValue[0].data['NEOY']):
 
             theta = np.arctan2(y-1., x)
-            theta_ind = np.searchsorted(thetavec, theta)
-            r_ind = np.searchsorted(Rvec, dist)
+            #theta_ind = np.searchsorted(thetavec, theta)
+            #r_ind = np.searchsorted(Rvec, dist)
+            diff = np.abs(thetavec - theta)
+            thetaToUse = thetavec[np.where(diff == diff.min())]
 
-            H[:r_ind, theta_ind] += 1
+            good = np.where( (thetagrid == thetaToUse) & (Rgrid <= dist))
+
+            H[good] += 1
 
         #import pdb ; pdb.set_trace()
 
