@@ -76,8 +76,12 @@ class BaseStacker(object):
             if '_' not in key[0]:
                 # If one stacker has an attribute missing, just ignore it.
                 if ('registry' not in key) & ('run' not in key) & (hasattr(otherStacker, key)):
-                    if getattr(self,key) != getattr(otherStacker, key):
-                        return False
+                    # XXX--need to check if it's a numpy array, then use array_equal
+                    try:
+                        if getattr(self,key) != getattr(otherStacker, key):
+                            return False
+                    except:
+                        import pdb ; pdb.set_trace()
         return True
 
 
@@ -85,15 +89,10 @@ class BaseStacker(object):
         """
 
         """
-        if self.__class__.__name__ != otherStacker.__class__.__name__:
+        if self == otherStacker:
+            return False
+        else:
             return True
-        stateNow = dir(self)
-        for key in stateNow:
-            if '_' not in key[0]:
-                if ('registry' not in key) & ('run' not in key) & (hasattr(otherStacker, key)):
-                    if getattr(self,key) != getattr(otherStacker, key):
-                        return True
-        return False
 
 
 
