@@ -56,7 +56,10 @@ class MafTracking(object):
             return self.runsPage[mafRunId]
         match = (self.runs['mafRunId'] == mafRunId)
         mafDir = self.runs[match]['mafDir'][0]
-        self.runsPage[mafRunId] = MafRunResults(mafDir)
+        runName = self.runs[match]['opsimRun'][0]
+        if runName == 'NULL':
+            runName = None
+        self.runsPage[mafRunId] = MafRunResults(mafDir, runName)
         return self.runsPage[mafRunId]
 
 
