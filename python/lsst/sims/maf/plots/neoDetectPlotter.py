@@ -23,6 +23,9 @@ class NeoDetectPlotter(BasePlotter):
         fig = plt.figure(fignum)
         ax = fig.add_subplot(111)
 
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
 
         planetProps = {'Earth': 1., 'Venus':0.72, 'Mars':1.52, 'Mercury':0.39}
 
@@ -33,42 +36,43 @@ class NeoDetectPlotter(BasePlotter):
         for planet in planets:
             ax.add_artist(planet)
 
-        plotDict = {}
-        plotDict.update(self.defaultPlotDict)
-        plotDict.update(userPlotDict)
+        # Let's make a 2-d histogram in polar coords, then convert and display in cartisian
 
-        xvec = np.arange(-plotDict['xMax']-self.step,plotDict['xMax']+self.step, self.step)
-        yvec = np.arange(-plotDict['yMax']-self.step,plotDict['yMax']+self.step, self.step)
+        rStep = self.step
+        Rvec = np.arange(0,plotDict['xMax']+rStep, rStep)
+        thetaStep = np.radians(3.5)
+        thetavec = np.arange(0,2*np.pi+thetaStep, thetaStep)-np.pi
 
-        xv,yv = np.meshgrid(xvec,yvec, indexing='xy')
-        image = xv*0
+        # array to hold histogram values
+        H = np.zeros( (thetavec.size, Rvec.size), dtype=float)
 
-        R = (xv**2+(yv-1.)**2)**0.5
-        # make theta span from 0 to 2 pi
-        theta = np.arctan2(xv,yv-1.)
+        Rgrid,thetagrid = np.meshgrid(Rvec,thetavec)
+
+        neg = np.where(thetagrid < 0.)
+
+        # I want -0 --> 2pi
+        # I want -pi --> pi
+        # I want -pi/2 --> 3pi/2
+        thetagrid[neg] += 2.*np.pi
+
+        xgrid = Rgrid*np.cos(thetagrid)
+        ygrid = Rgrid*np.sin(thetagrid)
 
 
-        fov = np.radians(3.5)
         for dist,x,y in zip(metricValue[0].data['NEODist'],metricValue[0].data['NEOX'],
                             metricValue[0].data['NEOY']):
-            polarTheta = np.arctan2(x,y-1.)
-            theta1 = polarTheta+np.radians(fov/2.)
-            theta2 = polarTheta-np.radians(fov/2.)
-            thetas = np.sort(np.array([theta1,theta2]))
 
+            theta = np.arctan2(y-1., x)
+            theta_ind = np.searchsorted(thetavec, theta)
+            r_ind = np.searchsorted(Rvec, dist)
 
+            H[:r_ind, theta_ind] += 1
 
-            # XXX--need to catch case where points are in quadrant 1 and 4.
-            if np.abs(theta1 - theta2) > np.pi:
-                good = np.where( (theta >= thetas[0]) & (theta >= thetas[1]) & (R <= dist))
-            else:
-                good = np.where( (theta >= thetas[0]) & (theta <= thetas[1]) & (R <= dist))
+        #import pdb ; pdb.set_trace()
 
-
-            image[good] += 1
 
         #blah = ax.imshow(image, extent=[xvec.min(), xvec.max(), yvec.min(),yvec.max()])
-        blah = ax.pcolormesh(image,xv,yv)
+        blah = ax.pcolormesh(xgrid,ygrid+1,H)
         cb = plt.colorbar(blah, ax=ax)
 
 
