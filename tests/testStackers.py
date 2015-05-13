@@ -19,6 +19,15 @@ class TestStackerClasses(unittest.TestCase):
         s2 = stackers.RandomDitherStacker()
         assert(s1 == s2)
 
+        # Test if they have numpy array atributes
+        s1.ack = np.arange(10)
+        s2.ack = np.arange(10)
+        assert(s1 == s2)
+
+        # Change the array and test
+        s1.ack += 1
+        assert(s1 != s2)
+
         s2 = stackers.RandomDitherStacker(decCol='blah')
         assert(s1 != s2)
 
