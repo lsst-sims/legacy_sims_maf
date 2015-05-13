@@ -66,7 +66,10 @@ class NeoDetectPlotter(BasePlotter):
             H[good] += 1
 
 
-        blah = ax.pcolormesh(xgrid,ygrid+1,H)
+        # Set the under value to white
+        myCmap = plt.cm.get_cmap('jet')
+        myCmap.set_under('w')
+        blah = ax.pcolormesh(xgrid,ygrid+1,H, cmap=myCmap, vmin=.001)
         cb = plt.colorbar(blah, ax=ax)
 
         ax.set_xlabel(plotDict['xlabel'])
