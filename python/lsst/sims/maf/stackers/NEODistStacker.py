@@ -43,7 +43,7 @@ class NEODistStacker(BaseStacker):
         self.b2 = 1.22
 
 
-    def run(self,simData, slicePoint=None):
+    def run(self,simData):
 
         simData=self._addStackers(simData)
 
