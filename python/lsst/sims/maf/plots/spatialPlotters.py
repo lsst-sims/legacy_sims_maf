@@ -41,7 +41,7 @@ class HealpixSkyMap(BasePlotter):
                                 'logScale':False, 'cbarFormat':None, 'cmap':cm.jet,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
-                                'cbar_edge':True, 'nTicks':None, 'rot1':0, 'rot2':0, 'rot3':0}
+                                'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -94,9 +94,8 @@ class HealpixSkyMap(BasePlotter):
             if clims[0] == clims[1]:
                 clims[0] =  clims[0] - 1
                 clims[1] =  clims[1] + 1
-        rot = (plotDict['rot1'], plotDict['rot2'], plotDict['rot3'])
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
-                    min=clims[0], max=clims[1], rot=rot, flip='astro',
+                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
                     cmap=cmap, norm=norm, fig=fig.number)
         # This graticule call can fail with old versions of healpy and matplotlib 1.4.0.
         # Make sure the latest version of healpy in the stack is setup
