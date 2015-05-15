@@ -1,7 +1,6 @@
 import numpy as np
 import ephem
 from .baseStacker import BaseStacker
-from lsst.sims.maf.utils.telescopeInfo import TelescopeInfo
 from .ditherStackers import wrapRA
 
 
@@ -25,7 +24,7 @@ class EclipticStacker(BaseStacker):
     """
 
     def __init__(self, mjdCol='expMJD', raCol='fieldRA',decCol='fieldDec',
-                 subtractSunLon=False, telescope='LSST'):
+                 subtractSunLon=False):
 
         self.colsReq = [mjdCol,raCol,decCol]
         self.subtractSunLon = subtractSunLon
