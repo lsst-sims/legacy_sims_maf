@@ -9,20 +9,21 @@ from lsst.sims.maf.plots import NeoDetectPlotter
 
 # Set up the database connection
 opsdb = db.OpsimDatabase('sqlite:///enigma_1189_sqlite.db')
-outDir = 'NeoDetect'
+outDir = 'Tmp'
 resultsDb = db.ResultsDb(outDir=outDir)
 
 slicer = slicers.UniSlicer()
 metric = metrics.PassMetric(metricName='NEODistances')
 stacker = stackers.NEODistStacker()
-filters = ['u','g','r','i','z','y']
-#filters = ['r']
+stacker2 = stackers.EclipticStacker()
+#filters = ['u','g','r','i','z','y']
+filters = ['r']
 counter = 0
 bundleDict = {}
 for filterName in filters:
     bundle = metricBundles.MetricBundle(metric, slicer,
                                         'night < 365 and filter="%s"'%filterName,
-                                        stackerList=[stacker],
+                                        stackerList=[stacker,stacker2],
                                         plotDict={'title':'%s-band'%filterName},
                                         plotFuncs=[NeoDetectPlotter()])
 

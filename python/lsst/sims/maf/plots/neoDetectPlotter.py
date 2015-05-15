@@ -6,7 +6,11 @@ from matplotlib.patches import Ellipse
 __all__ = ['NeoDetectPlotter']
 
 class NeoDetectPlotter(BasePlotter):
-    def __init__(self, step=.01):
+    def __init__(self, step=.01, eclipMax=10., eclipMin=-10.):
+
+        """
+        eclipMin/Max:  only plot observations within X degrees of the ecliptic plane
+        """
 
         self.plotType = 'neoxyPlotter'
         self.objectPlotter = True
@@ -17,11 +21,18 @@ class NeoDetectPlotter(BasePlotter):
                            'i':'cyan','z':'orange','y':'red'}
         self.filterColName = 'filter'
         self.step = step
+        self.eclipMax = np.radians(eclipMax)
+        self.eclipMin = np.radians(eclipMin)
 
     def __call__(self, metricValue, slicer,userPlotDict, fignum=None):
 
         fig = plt.figure(fignum)
         ax = fig.add_subplot(111)
+
+
+        inPlane = np.where( (metricValue[0].data['eclipLat'] >= self.eclipMin) &
+                            (metricValue[0].data['eclipLat'] <= self.eclipMax))
+
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
@@ -30,7 +41,6 @@ class NeoDetectPlotter(BasePlotter):
         planetProps = {'Earth': 1., 'Venus':0.72, 'Mars':1.52, 'Mercury':0.39}
 
         planets = []
-        # I am being lazy and drawing planet orbits as circles.
         for prop in planetProps:
             planets.append(Ellipse((0,0), planetProps[prop]*2, planetProps[prop]*2, fill=False ))
 
@@ -53,8 +63,8 @@ class NeoDetectPlotter(BasePlotter):
         ygrid = Rgrid*np.sin(thetagrid)
 
 
-        for dist,x,y in zip(metricValue[0].data['NEOGeoDist'],metricValue[0].data['NEOHelioX'],
-                            metricValue[0].data['NEOHelioY']):
+        for dist,x,y in zip(metricValue[0].data['NEOGeoDist'][inPlane],metricValue[0].data['NEOHelioX'][inPlane],
+                            metricValue[0].data['NEOHelioY'][inPlane]):
 
             theta = np.arctan2(y-1., x)
             #theta_ind = np.searchsorted(thetavec, theta)
