@@ -30,6 +30,7 @@ class NeoDetectPlotter(BasePlotter):
         planetProps = {'Earth': 1., 'Venus':0.72, 'Mars':1.52, 'Mercury':0.39}
 
         planets = []
+        # I am being lazy and drawing planet orbits as circles.
         for prop in planetProps:
             planets.append(Ellipse((0,0), planetProps[prop]*2, planetProps[prop]*2, fill=False ))
 
@@ -52,8 +53,8 @@ class NeoDetectPlotter(BasePlotter):
         ygrid = Rgrid*np.sin(thetagrid)
 
 
-        for dist,x,y in zip(metricValue[0].data['NEODist'],metricValue[0].data['NEOX'],
-                            metricValue[0].data['NEOY']):
+        for dist,x,y in zip(metricValue[0].data['NEOGeoDist'],metricValue[0].data['NEOHelioX'],
+                            metricValue[0].data['NEOHelioY']):
 
             theta = np.arctan2(y-1., x)
             #theta_ind = np.searchsorted(thetavec, theta)

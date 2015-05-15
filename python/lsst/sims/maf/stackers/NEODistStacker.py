@@ -16,12 +16,18 @@ class NEODistStacker(BaseStacker):
         """
         stepsize:  The stepsize to use when solving (in AU)
         maxDist: How far out to try and measure (in AU)
+        H: Asteroid magnitude
+
+        Adds columns:
+        NEOGeoDist:  Geocentric distance to the NEO
+        NEOHelioX: Heliocentric X (with Earth at x,y,z (0,1,0))
+        NEOHelioY: Heliocentric Y (with Earth at (0,1,0))
         """
 
         self.units = ['AU','AU','AU']
         # also grab things needed for the HA stacker
         self.colsReq=[elongCol, filterCol,m5Col,sunAzCol, azCol]
-        self.colsAdded=['NEODist', 'NEOX','NEOY']
+        self.colsAdded=['NEOGeoDist', 'NEOHelioX','NEOHelioY']
 
         self.sunAzCol = sunAzCol
         self.m5Col= m5Col
@@ -66,30 +72,29 @@ class NEODistStacker(BaseStacker):
             phi2 = np.exp(-self.a2*ta2**self.b2)
 
             alpha_term = 2.5*np.log10( (1.- self.G)*phi1+self.G*phi2)
-            # Waaaait a minute, shouldn't this term disapear for any object
-            # with R and delta > 1 AU?
-            # fullPhase = np.where((R > 1.) & (self.deltas > 1.))
-            # alpha_term[fullPhase] = 0.
             appmag = self.H+5.*np.log10(R*self.deltas)-alpha_term
+            # There can be strange local minima/maxima when solving, so
+            # need to find the 1st spot where it is too faint, not the
+            # last spot it is bright enough.
             tooFaint = np.where(appmag > v5[i])
-            #simData['NEODist'][i] = np.max(self.deltas[good])
-            simData['NEODist'][i] = np.min(self.deltas[tooFaint])
+
+            simData['NEOGeoDist'][i] = np.min(self.deltas[tooFaint])
 
 
         # Make coords in heliocentric
         interior = np.where(elongRad <= np.pi/2.)
         outer = np.where(elongRad > np.pi/2.)
-        simData['NEOX'][interior] = simData['NEODist'][interior]*np.sin(elongRad[interior])
-        simData['NEOY'][interior] = -simData['NEODist'][interior]*np.cos(elongRad[interior]) + 1.
+        simData['NEOHelioX'][interior] = simData['NEOGeoDist'][interior]*np.sin(elongRad[interior])
+        simData['NEOHelioY'][interior] = -simData['NEOGeoDist'][interior]*np.cos(elongRad[interior]) + 1.
 
-        simData['NEOX'][outer] = simData['NEODist'][outer]*np.sin(np.pi-elongRad[outer])
-        simData['NEOY'][outer] = simData['NEODist'][outer]*np.cos(np.pi-elongRad[outer]) + 1.
+        simData['NEOHelioX'][outer] = simData['NEOGeoDist'][outer]*np.sin(np.pi-elongRad[outer])
+        simData['NEOHelioY'][outer] = simData['NEOGeoDist'][outer]*np.cos(np.pi-elongRad[outer]) + 1.
 
 
         # Flip the X coord if sun az is negative?
         flip = np.where( ((simData[self.sunAzCol] > np.pi) & (simData[self.azCol] > np.pi)) |
                          ((simData[self.sunAzCol] < np.pi) & (simData[self.azCol] > np.pi)) )
-        simData['NEOX'][flip] *= -1.
+        simData['NEOHelioX'][flip] *= -1.
 
 
         return simData
