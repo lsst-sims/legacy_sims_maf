@@ -1,6 +1,7 @@
 __author__ = 'simon'
 
 import numpy as np
+from sqlalchemy.engine import url
 from sqlalchemy import func
 from sqlalchemy.sql import expression
 
@@ -29,8 +30,9 @@ class Table(CatalogDBObject):
 
         if typeOverRide is not None:
             self.dbTypeMap.update(typeOverRide)
-        super(Table, self).__init__(address=dbAddress)
-
+        dbUrl = url.make_url(dbAddress)
+        super(Table, self).__init__(driver=dbUrl.get_dialect().name,
+                                    **dbUrl.translate_connect_args())
 
     def _get_column_query(self, doGroupBy, colnames=None, aggregate=func.min):
         # Build the sql query - including adding all column names, if columns were None.
