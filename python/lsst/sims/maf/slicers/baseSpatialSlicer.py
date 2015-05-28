@@ -109,7 +109,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.camera = mapper.camera
         self.myCamCoords = CameraCoords()
         self.epoch = 2000.0
-        self.obs_metadata = ObservationMetaData(m5=0.)
+        self.obs_metadata = ObservationMetaData(m5=0., bandpassName='g')
 
     def _presliceFootprint(self, simData):
         """Loop over each pointing and find which sky points are observed """
