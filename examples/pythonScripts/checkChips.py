@@ -11,7 +11,7 @@ camera = mapper.camera
 epoch = 2000.0
 
 # Generate a dummy obs_metadata:
-obs_metadata = ObservationMetaData(m5=0.)
+obs_metadata = ObservationMetaData(m5=0., bandpassName='g')
 obs_metadata.unrefractedRA = np.pi/2.
 obs_metadata.unrefractedDec = 0.
 obs_metadata.rotSkyPos = 0.
