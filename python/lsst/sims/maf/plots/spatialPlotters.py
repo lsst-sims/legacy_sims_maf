@@ -13,7 +13,7 @@ from matplotlib.collections import PatchCollection
 from lsst.sims.maf.utils import optimalBins, percentileClipping
 from .plotHandler import BasePlotter
 
-from lsst.sims.coordUtils import AstrometryBase
+from lsst.sims.utils import equatorialFromGalactic
 
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
@@ -427,10 +427,10 @@ class BaseSkyMap(BasePlotter):
         galB2 = np.where(np.abs(galL) <= taperLength, -val, 0)
         # Convert to ra/dec.
         # Convert to lon/lat and plot.
-        ra, dec = AstrometryBase.galacticToEquatorial(galL, galB1)
+        ra, dec = equatorialFromGalactic(galL, galB1)
         lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
         ax.plot(lon, dec, 'b.', markersize=1.8, alpha=0.4)
-        ra, dec = AstrometryBase.galacticToEquatorial(galL, galB2)
+        ra, dec = equatorialFromGalactic(galL, galB2)
         lon = -(ra - raCen - np.pi) %(np.pi*2) - np.pi
         ax.plot(lon, dec, 'b.', markersize=1.8, alpha=0.4)
 
