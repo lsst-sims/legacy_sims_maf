@@ -34,7 +34,7 @@ def runChips(useCamera=False):
 
     bg = metricBundles.MetricBundleGroup({0:bundle1},opsdb, outDir=outDir, resultsDb=resultsDb)
     bg.runAll()
-    hp.gnomview(bundle1.metricValues, xsize=800,ysize=800, rot=(7,-7,0), unit='Count', min=1,max=21)
+    hp.gnomview(bundle1.metricValues, xsize=800,ysize=800, rot=(7,-7,0), unit='Count', min=1)
     plt.savefig(outDir+'/fig'+tag+'.png')
 
 
@@ -52,3 +52,7 @@ if __name__ == "__main__":
 #--------
 #time without chips = 80.819745
 #time with chips = 92.150030
+#--------
+# night < 800
+#time without chips = 82.370980
+#time with chips = 1035.295138
