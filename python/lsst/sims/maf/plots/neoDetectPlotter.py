@@ -16,7 +16,7 @@ class NeoDetectPlotter(BasePlotter):
         self.objectPlotter = True
         self.defaultPlotDict = {'title':None, 'xlabel':'X (AU)',
                                 'ylabel':'Y (AU)', 'xMin':-1.5, 'xMax':1.5,
-                                'yMin':-.25, 'yMax':2.5}
+                                'yMin':-.25, 'yMax':2.5, 'units':'Count'}
         self.filter2color={'u':'purple','g':'blue','r':'green',
                            'i':'cyan','z':'orange','y':'red'}
         self.filterColName = 'filter'
@@ -82,6 +82,7 @@ class NeoDetectPlotter(BasePlotter):
         myCmap.set_under('w')
         blah = ax.pcolormesh(xgrid,ygrid+1,H, cmap=myCmap, vmin=.001)
         cb = plt.colorbar(blah, ax=ax)
+        cb.set_label(plotDict['units'])
 
         ax.set_xlabel(plotDict['xlabel'])
         ax.set_ylabel(plotDict['ylabel'])

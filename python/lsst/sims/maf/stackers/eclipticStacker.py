@@ -15,14 +15,11 @@ def mjd2djd(mjd):
     djd = mjd-doff
     return djd
 
-
-
 class EclipticStacker(BaseStacker):
     """
     Stack on the ecliptic coordinates of each pointing.  Optionally
     subtract off the sun's ecliptic longitude and wrap.
     """
-
     def __init__(self, mjdCol='expMJD', raCol='fieldRA',decCol='fieldDec',
                  subtractSunLon=False):
 
@@ -30,25 +27,20 @@ class EclipticStacker(BaseStacker):
         self.subtractSunLon = subtractSunLon
         self.colsAdded = ['eclipLat','eclipLon']
         self.units = ['radians', 'radians']
-
         self.mjdCol = mjdCol
         self.raCol = raCol
         self.decCol=decCol
-
 
     def run(self,simData):
         simData=self._addStackers(simData)
 
         for i in np.arange(simData.size):
-
             coord = ephem.Equatorial(simData[self.raCol][i],simData[self.decCol][i], epoch=2000)
             ecl = ephem.Ecliptic(coord)
             simData['eclipLat'][i] = ecl.lat
-            #import pdb ; pdb.set_trace()
             if self.subtractSunLon:
                 djd = mjd2djd(simData[self.mjdCol][i])
                 sun = ephem.Sun(djd)
-                #coord = ephem.Equatorial(sun.ra, sun.dec)
                 sunEcl = ephem.Ecliptic(sun)
                 lon = wrapRA(ecl.lon - sunEcl.lon)
                 simData['eclipLon'][i] = lon
