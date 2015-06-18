@@ -96,7 +96,7 @@ class SummaryStatRow(Base):
           %(self.metricId, self.summaryName, self.summaryValue)
 
 class ResultsDb(object):
-    def __init__(self, outDir=None, database=None, driver='sqlite', verbose=False):
+    def __init__(self, outDir= None, database=None, driver='sqlite', verbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
