@@ -112,7 +112,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Python script to display MAF output in a web browser."+
                                      "  After launching, point your browser to 'http://localhost:8888/'")
     defaultdb = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
-    parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
+    parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database filename.")
     parser.add_argument("-d", "--mafDir", type=str, default=None, help="Add this directory to the trackingDb and open immediately.")
     parser.add_argument("-c", "--mafComment", type=str, default=None, help="Add a comment to the trackingDB describing the MAF analysis of this directory (paired with mafDir argument).")
     parser.add_argument("-p", "--port", type=int, default=8888, help="Port for connecting to showMaf.")

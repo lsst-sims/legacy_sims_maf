@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("--opsimDate", type=str, default=None, help="Date Opsim was run")
     parser.add_argument("--mafDate", type=str, default=None, help="Date MAF was run")
     defaultdb = 'trackingDb_sqlite.db'
-    parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database dbAddress.")
+    parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database filename.")
     args = parser.parse_args()
 
     mafDir = os.path.realpath(args.mafDir)
