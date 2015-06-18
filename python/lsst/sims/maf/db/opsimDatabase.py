@@ -7,27 +7,18 @@ from lsst.sims.maf.utils import getDateVersion, TelescopeInfo
 __all__ = ['OpsimDatabase']
 
 class OpsimDatabase(Database):
-    def __init__(self, dbAddress, dbTables=None, *args, **kwargs):
+    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, *args, **kwargs):
         """
         Instantiate object to handle queries of the opsim database.
         (In general these will be the sqlite database files produced by opsim, but could
         be any database holding those opsim output tables.).
 
-        dbAddress = sqlalchemy connection string to database
-        dbTables = dictionary of names of tables in the code : [names of tables in the database, names of primary keys]
-        Note that for the dbTables there are defaults in the init --
-          you can override (specific key:value pairs only if desired) by passing a dictionary in dbTables.
-
-        The dbAddress sqlalchemy string should look like:
-           dialect+driver://username:password@host:port/database
-        Examples:
-           sqlite:///opsim_sqlite.db   (sqlite is special -- the three /// indicate the start of the path to the file)
-           mysql://lsst:lsst@localhost/opsim
-        More information on sqlalchemy connection strings can be found at
-          http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
+        database = Name of database or sqlite filename
+        driver =  Name of database dialect+driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
+        host = Name of database host (optional)
+        port = String port number (optional)
 
         """
-        self.dbAddress = dbAddress
         # Default dbTables and dbTableIDKey values:
         if 'defaultdbTables' in kwargs:
             defaultdbTables = kwargs.get('defaultdbTables')
@@ -56,7 +47,8 @@ class OpsimDatabase(Database):
                              }
         # Call base init method to set up all tables and place default values
         # into dbTable/dbTablesIdKey if not overriden.
-        super(OpsimDatabase, self).__init__(dbAddress, dbTables=dbTables,
+        super(OpsimDatabase, self).__init__(driver=driver, database=database, host=host, port=port,
+                                            dbTables=dbTables,
                                             defaultdbTables=defaultdbTables,
                                             *args, **kwargs)
         # Save filterlist so that we get the filter info per proposal in this desired order.

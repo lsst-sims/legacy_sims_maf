@@ -36,12 +36,12 @@ class TestResultsDb(unittest.TestCase):
         resultsdb.close()
         # Test can pick custom name in directory that exists.
         sqlitefilename = os.path.join(self.outDir, 'testDb_sqlite.db')
-        resultsdb = db.ResultsDb(resultsDbAddress = 'sqlite:///' + sqlitefilename)
+        resultsdb = db.ResultsDb(database=sqlitefilename)
         self.assertTrue(os.path.isfile(sqlitefilename))
         resultsdb.close()
         # Test that get appropriate exception if directory doesn't exist.
         sqlitefilename = os.path.join(self.outDir + 'test', 'testDb_sqlite.db')
-        self.assertRaises(ValueError, db.ResultsDb, resultsDbAddress='sqlite:///' + sqlitefilename)
+        self.assertRaises(ValueError, db.ResultsDb, database=sqlitefilename)
 
     def testAddData(self):
         resultsDb = db.ResultsDb(outDir=self.outDir)

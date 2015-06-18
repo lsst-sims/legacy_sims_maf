@@ -14,25 +14,30 @@ class Table(CatalogDBObject):
     skipRegistration = True
     objid = 'sims_maf'
 
-    def __init__(self, tableName, idColKey, dbAddress, typeOverRide=None, verbose=False):
+    def __init__(self, tableName, idColKey, database, driver='sqlite', host=None, port=None,
+                 typeOverRide=None, verbose=False):
         """
         Initialize an object for querying OpSim databases
 
         Keyword arguments:
-        @param tableName: Name of the table to query
-        @param idColKey:  Primary key for table
-        @param dbAddress: A string indicating the location of the data to query.
-                          This should be a database connection string.
+        @param tableName:  Name of the table to query
+        @param idColKey:   Primary key for table
+        @param database: Name of database or sqlite filename
+        @param driver:   Name of database driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
+        @param host:     Database hostname (optional)
+        @param port:     Database port number (optional)
         """
         self.idColKey = idColKey
-        self.dbAddress = dbAddress
+        self.driver = driver
+        self.database = database
+        self.host = host
+        self.port = port
         self.tableid = tableName
 
         if typeOverRide is not None:
             self.dbTypeMap.update(typeOverRide)
-        dbUrl = url.make_url(dbAddress)
-        super(Table, self).__init__(driver=dbUrl.get_dialect().name,
-                                    **dbUrl.translate_connect_args())
+
+        super(Table, self).__init__(database=database, driver=driver, host=host, port=port)
 
     def _get_column_query(self, doGroupBy, colnames=None, aggregate=func.min):
         # Build the sql query - including adding all column names, if columns were None.
