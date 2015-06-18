@@ -104,7 +104,7 @@ class ResultsDb(object):
         # for sqlite, connecting to non-existent database creates it automatically
         if database is None:
             # Using default value for database name, should specify directory.
-            if outdir is None:
+            if outDir is None:
                 outDir = '.'
             # Check for output directory, make if needed.
             if not os.path.isdir(outDir):
