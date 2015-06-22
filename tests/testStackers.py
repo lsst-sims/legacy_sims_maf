@@ -3,6 +3,7 @@ matplotlib.use("Agg")
 import numpy as np
 import warnings
 import lsst.sims.maf.stackers as stackers
+from lsst.sims.utils import galacticFromEquatorial
 import unittest
 
 class TestStackerClasses(unittest.TestCase):
@@ -163,6 +164,33 @@ class TestStackerClasses(unittest.TestCase):
         data = np.zeros(600, dtype=zip(['filter'],['|S1']))
         data['filter'] = 'q'
         self.assertRaises(IndexError, stacker.run, data)
+
+    def testGalacticStacker(self):
+        """
+        Test the galactic coordinate stacker
+        """
+        ra,dec = np.meshgrid(np.arange(0,2.*np.pi, 0.1), np.arange(-np.pi,np.pi, 0.1) )
+        ra = np.ravel(ra)
+        dec=np.ravel(dec)
+        data = np.zeros(ra.size, dtype=zip(['ra','dec'],[float]*2))
+        data['ra'] += ra
+        data['dec'] += dec
+        stacker = stackers.GalacticStacker(raCol='ra',decCol='dec')
+        newData = stacker.run(data)
+        expectedL, expectedB = galacticFromEquatorial(ra, dec)
+        np.array_equal(newData['gall'], expectedL )
+        np.array_equal(newData['galb'], expectedB)
+
+        # Check that we have all the quadrants populated
+        q1 = np.where((newData['gall'] < np.pi) & (newData['galb'] < 0.) )[0]
+        q2 = np.where((newData['gall'] < np.pi) & (newData['galb'] > 0.) )[0]
+        q3 = np.where((newData['gall'] > np.pi) & (newData['galb'] < 0.) )[0]
+        q4 = np.where((newData['gall'] > np.pi) & (newData['galb'] > 0.) )[0]
+        assert(q1.size > 0)
+        assert(q2.size > 0)
+        assert(q3.size > 0)
+        assert(q4.size > 0)
+
 
 if __name__ == '__main__':
 
