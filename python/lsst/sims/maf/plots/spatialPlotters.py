@@ -116,7 +116,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.plotType = 'PowerSpectrum'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
-                                'maxl':500., 'removeDipole':True,
+                                'maxl':None, 'removeDipole':True,
                                 'logScale':True}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -134,15 +134,15 @@ class HealpixPowerSpectrum(BasePlotter):
         if False not in metricValue.mask:
             return None
         if plotDict['removeDipole']:
-            cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)))
+            cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
         else:
-            cl = hp.anafast(metricValue.filled(slicer.badval))
+            cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
         l = np.arange(np.size(cl))
         # Plot the results.
         if plotDict['removeDipole']:
-            condition = ((l < plotDict['maxl']) & (l > 1))
+            condition = (l > 1)
         else:
-            condition = (l < plotDict['maxl'])
+            condition = (l >= 0)
         plt.plot(l[condition], (cl[condition]*l[condition]*(l[condition]+1))/2.0/np.pi, label=plotDict['label'])
         if cl[condition].max() > 0 and plotDict['logScale']:
             plt.yscale('log')
