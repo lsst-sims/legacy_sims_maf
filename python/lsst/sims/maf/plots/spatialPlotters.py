@@ -19,17 +19,6 @@ from lsst.sims.utils import equatorialFromGalactic
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
 
-class BasePlotter(object):
-    """
-    Serve as the base type for MAF plotters and example of API.
-    """
-    def __init__(self):
-        self.plotType = None
-        self.objectPlotter = False
-        self.defaultPlotDict = None
-
-    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
-        pass
 
 class HealpixSkyMap(BasePlotter):
     def __init__(self):
