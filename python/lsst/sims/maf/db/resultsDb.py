@@ -96,7 +96,8 @@ class SummaryStatRow(Base):
           %(self.metricId, self.summaryName, self.summaryValue)
 
 class ResultsDb(object):
-    def __init__(self, outDir= None, database=None, driver='sqlite', verbose=False):
+    def __init__(self, outDir= None, database=None, driver='sqlite',
+                 host=None, port=None, verbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
@@ -112,11 +113,18 @@ class ResultsDb(object):
             self.database =os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'
         else:
-            # Using non-default database, but may also specify directory root.
-            if outDir is not None:
-                database = os.path.join(outDir, database)
-            self.database = database
-            self.driver = driver
+            if driver == 'sqlite':
+                # Using non-default database, but may also specify directory root.
+                if outDir is not None:
+                    database = os.path.join(outDir, database)
+                self.database = database
+                self.driver = driver
+            else:
+                # If not sqlite, then 'outDir' doesn't make much sense.
+                self.database = database
+                self.driver = driver
+                self.host = host
+                self.port = port
 
         if self.driver == 'sqlite':
             dbAddress = url.URL(self.driver, database=self.database)
@@ -304,8 +312,9 @@ class ResultsDb(object):
             metricId = [metricId,]
         summarystats = []
         for mid in metricId:
-            query = self.session.query(MetricRow, SummaryStatRow).filter(MetricRow.metricId == SummaryStatRow.metricId).\
-              filter(MetricRow.metricId == mid)
+            # Join the metric table and the summarystat table, based on the metricID (the second filter)
+            query = self.session.query(MetricRow, SummaryStatRow).filter(MetricRow.metricId == mid)\
+              filter(MetricRow.metricId == SummaryStatRow.metricId):
             if summaryName is not None:
                 query = query.filter(SummaryStatRow.summaryName == summaryName)
             for m, s in query:
@@ -320,11 +329,12 @@ class ResultsDb(object):
 
     def getPlotFiles(self, metricId=None):
         if metricId is None:
-            metricId = slef.getAllMetricIds()
+            metricId = self.getAllMetricIds()
         if not hasattr(metricId, '__iter__'):
             metricId = [metricId,]
         plotFiles = []
         for mid in metricId:
+            # Join the metric table and the plot table, based on the metricID (the second filter does the join)
             for m, p in self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid).\
               filter(MetricRow.metricId == PlotRow.metricId):
                 plots = {}
