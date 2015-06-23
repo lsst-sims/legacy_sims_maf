@@ -21,6 +21,7 @@ class MafRunResults(object):
         """
         self.outDir = os.path.relpath(outDir, '.')
         self.runName = runName
+
         self.configSummary = os.path.join(self.outDir, 'configSummary.txt')
         if not os.path.isfile(self.configSummary):
             self.configSummary = 'Config Summary Not Available'
