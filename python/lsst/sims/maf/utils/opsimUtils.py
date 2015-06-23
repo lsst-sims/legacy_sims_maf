@@ -6,20 +6,20 @@ from .outputUtils import printDict
 
 __all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
-def connectOpsimDb(dbAddressDict):
+def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
     """
     Convenience function to handle connecting to database.
     (because needs to be called both from driver and from config file, with same dbAddress dictionary).
     """
     import lsst.sims.maf.db as db
-    if 'Summary' in dbAddressDict:
+    if summaryOnly:
         # Connect to just the summary table (might be sqlite created from flat dat output file).
-        opsimdb = db.OpsimDatabase(dbAddressDict['dbAddress'],
-                                   dbTables={'Summary':[dbAddressDict['Summary'], 'obsHistID']},
+        opsimdb = db.OpsimDatabase(database=database,
+                                   dbTables={'Summary':[summaryTable, 'obsHistID']},
                                    defaultdbTables = None)
     else:
         # For a basic db connection to the sqlite db files.
-        opsimdb = db.OpsimDatabase(dbAddressDict['dbAddress'])
+        opsimdb = db.OpsimDatabase(database=database)
     return opsimdb
 
 def writeConfigs(opsimDb, outDir):
