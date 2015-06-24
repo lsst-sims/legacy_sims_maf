@@ -313,8 +313,8 @@ class ResultsDb(object):
         summarystats = []
         for mid in metricId:
             # Join the metric table and the summarystat table, based on the metricID (the second filter)
-            query = self.session.query(MetricRow, SummaryStatRow).filter(MetricRow.metricId == mid)\
-              filter(MetricRow.metricId == SummaryStatRow.metricId):
+            query = (self.session.query(MetricRow, SummaryStatRow).filter(MetricRow.metricId == mid)
+                     .filter(MetricRow.metricId == SummaryStatRow.metricId))
             if summaryName is not None:
                 query = query.filter(SummaryStatRow.summaryName == summaryName)
             for m, s in query:
@@ -335,8 +335,9 @@ class ResultsDb(object):
         plotFiles = []
         for mid in metricId:
             # Join the metric table and the plot table, based on the metricID (the second filter does the join)
-            for m, p in self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid).\
-              filter(MetricRow.metricId == PlotRow.metricId):
+            query = (self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid)
+                     .filter(MetricRow.metricId == plotRow.metricId))
+            for m, p in query:
                 plots = {}
                 plots['metricName'] = m.metricName
                 plots['metricMetadata'] = m.metricMetadata
