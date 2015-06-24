@@ -4,7 +4,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.metricBundles as metricBundles
-from lsst.sims.maf.plots import NeoDetectPlotter
+from lsst.sims.maf.plots import NeoDistancePlotter
 
 
 # Set up the database connection
@@ -24,7 +24,7 @@ for filterName in filters:
                                         'night < 365 and filter="%s"'%filterName,
                                         stackerList=[stacker,stacker2],
                                         plotDict={'title':'%s-band'%filterName},
-                                        plotFuncs=[NeoDetectPlotter()])
+                                        plotFuncs=[NeoDistancePlotter()])
 
     bgroup = metricBundles.MetricBundleGroup({0:bundle}, opsdb, outDir=outDir, resultsDb=resultsDb)
     bgroup.runAll()

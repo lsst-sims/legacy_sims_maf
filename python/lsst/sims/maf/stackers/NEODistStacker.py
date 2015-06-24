@@ -20,7 +20,7 @@ class NEODistStacker(BaseStacker):
         H: Asteroid magnitude
 
         Adds columns:
-        NEOGeoDist:  Geocentric distance to the NEO
+        MaxGeoDist:  Geocentric distance to the NEO
         NEOHelioX: Heliocentric X (with Earth at x,y,z (0,1,0))
         NEOHelioY: Heliocentric Y (with Earth at (0,1,0))
         """
@@ -28,7 +28,7 @@ class NEODistStacker(BaseStacker):
         self.units = ['AU','AU','AU']
         # Also grab things needed for the HA stacker
         self.colsReq=[elongCol, filterCol,m5Col,sunAzCol, azCol]
-        self.colsAdded=['NEOGeoDist', 'NEOHelioX','NEOHelioY']
+        self.colsAdded=['MaxGeoDist', 'NEOHelioX','NEOHelioY']
 
         self.sunAzCol = sunAzCol
         self.m5Col= m5Col
@@ -37,7 +37,8 @@ class NEODistStacker(BaseStacker):
         self.azCol = azCol
 
         self.H = H
-        # Magic numbers that convert an asteroid V-band magnitude to LSST filters:
+        # Magic numbers (Ivezic '15, private comm.)that convert an asteroid
+        # V-band magnitude to LSST filters:
         # V_5 = m_5 + (adjust value)
         self.limitingAdjust = {'u':-2.1, 'g':-0.5,'r':0.2,'i':0.4,'z':0.6,'y':0.6}
         self.deltas = np.arange(minDist,maxDist+stepsize,stepsize)
@@ -77,16 +78,16 @@ class NEODistStacker(BaseStacker):
             # last spot it is bright enough.
             tooFaint = np.where(appmag > v5[i])
 
-            simData['NEOGeoDist'][i] = np.min(self.deltas[tooFaint])
+            simData['MaxGeoDist'][i] = np.min(self.deltas[tooFaint])
 
         # Make coords in heliocentric
         interior = np.where(elongRad <= np.pi/2.)
         outer = np.where(elongRad > np.pi/2.)
-        simData['NEOHelioX'][interior] = simData['NEOGeoDist'][interior]*np.sin(elongRad[interior])
-        simData['NEOHelioY'][interior] = -simData['NEOGeoDist'][interior]*np.cos(elongRad[interior]) + 1.
+        simData['NEOHelioX'][interior] = simData['MaxGeoDist'][interior]*np.sin(elongRad[interior])
+        simData['NEOHelioY'][interior] = -simData['MaxGeoDist'][interior]*np.cos(elongRad[interior]) + 1.
 
-        simData['NEOHelioX'][outer] = simData['NEOGeoDist'][outer]*np.sin(np.pi-elongRad[outer])
-        simData['NEOHelioY'][outer] = simData['NEOGeoDist'][outer]*np.cos(np.pi-elongRad[outer]) + 1.
+        simData['NEOHelioX'][outer] = simData['MaxGeoDist'][outer]*np.sin(np.pi-elongRad[outer])
+        simData['NEOHelioY'][outer] = simData['MaxGeoDist'][outer]*np.cos(np.pi-elongRad[outer]) + 1.
 
         # Flip the X coord if sun az is negative?
         flip = np.where( ((simData[self.sunAzCol] > np.pi) & (simData[self.azCol] > np.pi)) |

@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 from .plotHandler import BasePlotter
 from matplotlib.patches import Ellipse
 
-__all__ = ['NeoDetectPlotter']
+__all__ = ['NeoDistancePlotter']
 
-class NeoDetectPlotter(BasePlotter):
+class NeoDistancePlotter(BasePlotter):
     def __init__(self, step=.01, eclipMax=10., eclipMin=-10.):
 
         """
         eclipMin/Max:  only plot observations within X degrees of the ecliptic plane
+        step: Step size to use for radial bins. Default is 0.01 AU.
         """
 
         self.plotType = 'neoxyPlotter'
@@ -63,7 +64,7 @@ class NeoDetectPlotter(BasePlotter):
         ygrid = Rgrid*np.sin(thetagrid)
 
 
-        for dist,x,y in zip(metricValue[0].data['NEOGeoDist'][inPlane],metricValue[0].data['NEOHelioX'][inPlane],
+        for dist,x,y in zip(metricValue[0].data['MaxGeoDist'][inPlane],metricValue[0].data['NEOHelioX'][inPlane],
                             metricValue[0].data['NEOHelioY'][inPlane]):
 
             theta = np.arctan2(y-1., x)
