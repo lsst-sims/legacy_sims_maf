@@ -137,13 +137,13 @@ class HealpixPowerSpectrum(BasePlotter):
             cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
         else:
             cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
-        l = np.arange(np.size(cl))
+        ell = np.arange(np.size(cl))
         # Plot the results.
         if plotDict['removeDipole']:
-            condition = (l > 1)
+            condition = (ell > 1)
         else:
-            condition = (l >= 0)
-        plt.plot(l[condition], (cl[condition]*l[condition]*(l[condition]+1))/2.0/np.pi, label=plotDict['label'])
+            condition = (ell >= 0)
+        plt.plot(ell[condition], (cl[condition]*ell[condition]*(ell[condition]+1))/2.0/np.pi, label=plotDict['label'])
         if cl[condition].max() > 0 and plotDict['logScale']:
             plt.yscale('log')
         plt.xlabel(r'$l$')
