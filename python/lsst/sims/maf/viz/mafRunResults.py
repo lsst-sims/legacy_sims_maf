@@ -12,7 +12,7 @@ class MafRunResults(object):
     Class to read MAF's resultsDb_sqlite.db and organize the output for display on web pages.
 
     Deals with a single MAF run (one output directory, one resultsDb) only. """
-    def __init__(self, outDir, resultsDbAddress=None):
+    def __init__(self, outDir, runName=None, resultsDb=None):
         """
         Instantiate the (individual run) layout visualization class.
 
@@ -20,29 +20,32 @@ class MafRunResults(object):
         with the outputs of MAF.
         """
         self.outDir = os.path.relpath(outDir, '.')
-
+        self.runName = runName
         self.configSummary = os.path.join(self.outDir, 'configSummary.txt')
         if not os.path.isfile(self.configSummary):
             self.configSummary = 'Config Summary Not Available'
-            self.runName = 'RunName Not Available'
         else:
             with open (self.configSummary, "r") as myfile:
                 config=myfile.read()
             spot = config.find('RunName')
             if spot == -1:
-                self.runName = 'RunName Not Available'
+                runName = None
             else:
-                self.runName = config[spot:].split('\n')[0][8:]
+                runName = config[spot:].split('\n')[0][8:]
+        if self.runName is None:
+            if runName is None:
+                self.runName == 'RunName not available'
+            else:
+                self.runName = runName
+
         self.configDetails = os.path.join(self.outDir,'configDetails.txt')
         if not os.path.isfile(self.configDetails):
             self.configDetails = 'Config Details Not Available.'
 
-
         # Read in the results database.
-        if resultsDbAddress is None:
-            sqlitefile = os.path.join(outDir, 'resultsDb_sqlite.db')
-            resultsDbAddress = 'sqlite:///'+sqlitefile
-        database = db.Database(resultsDbAddress, longstrings=True,
+        if resultsDb is None:
+            resultsDb = os.path.join(outDir, 'resultsDb_sqlite.db')
+        database = db.Database(resultsDb, longstrings=True,
                                dbTables={'metrics':['metrics','metricID'] ,
                                          'displays':['displays', 'displayId'],
                                          'plots':['plots','plotId'],

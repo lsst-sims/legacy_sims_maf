@@ -7,16 +7,18 @@ import lsst.sims.maf.db as db
 
 class TestDb(unittest.TestCase):
     def setUp(self):
-        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
-        self.dbAddress = 'sqlite:///' + filepath + 'opsimblitz1_1133_sqlite.db'
+        self.database = os.path.join(os.getenv('SIMS_MAF_DIR'),
+                                    'tests', 'opsimblitz1_1133_sqlite.db')
+        self.driver = 'sqlite'
 
     def tearDown(self):
-        self.dbAddress = None
+        del self.driver
+        del self.database
 
     def testTable(self):
         """Test that we can connect to a DB table and pull data."""
         # Make a connection
-        table = db.Table('Summary', 'obsHistID', self.dbAddress)
+        table = db.Table('Summary', 'obsHistID', database=self.database, driver=self.driver)
         # Query a particular column.
         data = table.query_columns_Array(colnames=['finSeeing'])
         self.assertTrue(isinstance(data, np.ndarray))
@@ -34,13 +36,14 @@ class TestDb(unittest.TestCase):
     def testBaseDatabase(self):
         """Test base database class."""
         # Test instantation with no dbTables info (and no defaults).
-        basedb = db.Database(self.dbAddress)
+        basedb = db.Database(database=self.database, driver=self.driver)
         self.assertEqual(basedb.tables, None)
         # Test instantiation with some tables.
-        basedb = db.Database(self.dbAddress, dbTables={'obsHistTable':['ObsHistory', 'obsHistID'],
-                                                       'fieldTable':['Field', 'fieldID'],
-                                                       'obsHistoryProposalTable':['Obshistory_Proposal',
-                                                                                  'obsHistory_propID']})
+        basedb = db.Database(database=self.database, driver=self.driver,
+                             dbTables={'obsHistTable':['ObsHistory', 'obsHistID'],
+                                       'fieldTable':['Field', 'fieldID'],
+                                       'obsHistoryProposalTable':['Obshistory_Proposal',
+                                       'obsHistory_propID']})
         self.assertEqual(set(basedb.tables.keys()),
                          set(['obsHistTable',
                               'obsHistoryProposalTable', 'fieldTable']))
@@ -51,14 +54,14 @@ class TestDb(unittest.TestCase):
 
     def testSqliteFileNotExists(self):
         """Test that db gives useful error message if db file doesn't exist."""
-        self.assertRaises(IOError, db.Database, 'sqlite:///thisdatabasedoesntexist_sqlite.db')
+        self.assertRaises(IOError, db.Database, 'thisdatabasedoesntexist_sqlite.db')
 
     def testArbitraryQuery(self):
         """
         Test that an arbitrary query can be executed.
         No attempt is made to validat the results.
         """
-        table = db.Table('Summary', 'obsHistID', self.dbAddress)
+        table = db.Table('Summary', 'obsHistID', database=self.database, driver=self.driver)
         query = 'select count(expMJD), filter from ObsHistory, ObsHistory_Proposal'
         query += ' where obsHistID = ObsHistory_obsHistID group by Proposal_propID, filter'
         results = table.execute_arbitrary(query)

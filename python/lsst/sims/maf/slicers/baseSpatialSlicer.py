@@ -14,7 +14,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.coordUtils import CameraCoords, AstrometryBase
+from lsst.sims.coordUtils import observedFromICRS, findChipName
 from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
 
 from .baseSlicer import BaseSlicer
@@ -107,7 +107,6 @@ class BaseSpatialSlicer(BaseSlicer):
 
         mapper = LsstSimMapper()
         self.camera = mapper.camera
-        self.myCamCoords = CameraCoords()
         self.epoch = 2000.0
         self.obs_metadata = ObservationMetaData(m5=0., bandpassName='g')
 
@@ -118,7 +117,6 @@ class BaseSpatialSlicer(BaseSlicer):
         # Make a kdtree for the _slicepoints_
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
-        astrometryObject = AstrometryBase()
         # Loop over each unique pointing position
         for ind,ra,dec,rotSkyPos,mjd in zip(np.arange(simData.size), simData[self.lonCol],
                                             simData[self.latCol],
@@ -132,13 +130,13 @@ class BaseSpatialSlicer(BaseSlicer):
                 self.obs_metadata.rotSkyPos = rotSkyPos
                 self.obs_metadata.mjd = mjd
                 # Correct ra,dec for
-                raCorr, decCorr = astrometryObject.correctCoordinates(self.slicePoints['ra'][hpIndices],
-                                                                      self.slicePoints['dec'][hpIndices],
-                                                                      obs_metadata=self.obs_metadata,
-                                                                      epoch=self.epoch)
-                chipNames = self.myCamCoords.findChipName(ra=raCorr,dec=decCorr,
-                                                         epoch=self.epoch,
-                                                         camera=self.camera, obs_metadata=self.obs_metadata)
+                raCorr, decCorr = observedFromICRS(self.slicePoints['ra'][hpIndices],
+                                                   self.slicePoints['dec'][hpIndices],
+                                                   obs_metadata=self.obs_metadata,
+                                                   epoch=self.epoch)
+                chipNames = findChipName(ra=raCorr,dec=decCorr,
+                                         epoch=self.epoch,
+                                         camera=self.camera, obs_metadata=self.obs_metadata)
                 # Find the healpixels that fell on a chip for this pointing
                 hpOnChip = hpIndices[np.where(chipNames != [None])[0]]
                 for i in hpOnChip:

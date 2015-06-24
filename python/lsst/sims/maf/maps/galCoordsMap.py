@@ -1,4 +1,4 @@
-from lsst.sims.coordUtils import AstrometryBase
+from lsst.sims.utils import galacticFromEquatorial
 from lsst.sims.maf.maps import BaseMap
 
 __all__ = ['galCoordsMap']
@@ -8,7 +8,7 @@ class galCoordsMap(BaseMap):
         self.keynames = ['gall', 'galb']
 
     def run(self, slicePoints):
-        gall, galb = AstrometryBase.equatorialToGalactic(slicePoints['ra'],slicePoints['dec'])
+        gall, galb = galacticFromEquatorial(slicePoints['ra'],slicePoints['dec'])
         slicePoints['gall'] = gall
         slicePoints['galb'] = galb
         return slicePoints

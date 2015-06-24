@@ -17,9 +17,9 @@ def runChips(useCamera=False):
 
     print 'Camera setting = ', useCamera
 
-    dbAddress = 'sqlite:///enigma_1189_sqlite.db'
+    database = 'enigma_1189_sqlite.db'
     sqlWhere = 'filter = "r" and night < 800 and fieldRA < %f and fieldDec > %f and fieldDec < 0' % (np.radians(15), np.radians(-15))
-    opsdb = db.OpsimDatabase(dbAddress)
+    opsdb = db.OpsimDatabase(database)
     outDir = 'Camera'
     resultsDb = db.ResultsDb(outDir=outDir)
 
