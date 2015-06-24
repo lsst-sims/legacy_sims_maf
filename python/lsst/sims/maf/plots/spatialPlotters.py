@@ -19,17 +19,6 @@ from lsst.sims.utils import equatorialFromGalactic
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
 
-class BasePlotter(object):
-    """
-    Serve as the base type for MAF plotters and example of API.
-    """
-    def __init__(self):
-        self.plotType = None
-        self.objectPlotter = False
-        self.defaultPlotDict = None
-
-    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
-        pass
 
 class HealpixSkyMap(BasePlotter):
     def __init__(self):
@@ -126,7 +115,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.plotType = 'PowerSpectrum'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
-                                'maxl':500., 'removeDipole':True,
+                                'maxl':None, 'removeDipole':True,
                                 'logScale':True}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -144,17 +133,19 @@ class HealpixPowerSpectrum(BasePlotter):
         if False not in metricValue.mask:
             return None
         if plotDict['removeDipole']:
-            cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)))
+            cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
         else:
-            cl = hp.anafast(metricValue.filled(slicer.badval))
-        l = np.arange(np.size(cl))
-        # Plot the results.
+            cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
+        ell = np.arange(np.size(cl))
         if plotDict['removeDipole']:
-            condition = ((l < plotDict['maxl']) & (l > 1))
+            condition = (ell > 1)
         else:
-            condition = (l < plotDict['maxl'])
-        plt.plot(l[condition], (cl[condition]*l[condition]*(l[condition]+1))/2.0/np.pi, label=plotDict['label'])
-        if cl[condition].max() > 0 and plotDict['logScale']:
+            condition = (ell > 0)
+        ell = ell[condition]
+        cl = cl[condition]
+        # Plot the results.
+        plt.plot(ell, (cl*ell*(ell+1))/2.0/np.pi, label=plotDict['label'])
+        if cl.max() > 0 and plotDict['logScale']:
             plt.yscale('log')
         plt.xlabel(r'$l$')
         plt.ylabel(r'$l(l+1)C_l/(2\pi)$')
