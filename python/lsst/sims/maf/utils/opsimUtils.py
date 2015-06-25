@@ -97,13 +97,13 @@ def getFieldData(opsimDb, sqlconstraint):
 
 def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None):
     """
-    Query the opsim database for the necessary simdata columns, run any needed stackers,
+    Query the database for the necessary simdata columns, run any needed stackers,
     return simdata array.
     """
     # Get data from database.
     simData = opsimDb.fetchMetricData(dbcols, sqlconstraint)
     if len(simData) == 0:
-        raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
+        raise UserWarning('No data found matching sqlconstraint %s' %(sqlconstraint))
     # Now add the stacker columns.
     if stackers is not None:
         for s in stackers:
