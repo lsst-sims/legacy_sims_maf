@@ -96,21 +96,35 @@ class SummaryStatRow(Base):
           %(self.metricId, self.summaryName, self.summaryValue)
 
 class ResultsDb(object):
-    def __init__(self, outDir= '.', database=None, driver='sqlite', verbose=False):
+    def __init__(self, outDir= None, database=None, driver='sqlite',
+                 host=None, port=None, verbose=False):
         """
         Instantiate the results database, creating metrics, plots and summarystats tables.
         """
         # Connect to database
         # for sqlite, connecting to non-existent database creates it automatically
         if database is None:
+            # Using default value for database name, should specify directory.
+            if outDir is None:
+                outDir = '.'
             # Check for output directory, make if needed.
             if not os.path.isdir(outDir):
                 os.makedirs(outDir)
             self.database =os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'
         else:
-            self.database = database
-            self.driver = driver
+            if driver == 'sqlite':
+                # Using non-default database, but may also specify directory root.
+                if outDir is not None:
+                    database = os.path.join(outDir, database)
+                self.database = database
+                self.driver = driver
+            else:
+                # If not sqlite, then 'outDir' doesn't make much sense.
+                self.database = database
+                self.driver = driver
+                self.host = host
+                self.port = port
 
         if self.driver == 'sqlite':
             dbAddress = url.URL(self.driver, database=self.database)
@@ -260,38 +274,84 @@ class ResultsDb(object):
             else:
                 warnings.warn('Warning! Cannot save summary statistic that is not a simple float or int')
 
-    def getMetricIds(self):
+    def getMetricId(self, metricName, slicerName=None, metricMetadata=None, simDataName=None):
         """
-        Return all metric Ids.
+        Return the metricId matching metricName (and optionally, matching slicerName/metricMetadata/simDataName).
         """
         metricId = []
-        for m in self.session.query(MetricRow).all():
+        query = self.session.query(MetricRow.metricId, MetricRow.metricName, MetricRow.slicerName, MetricRow.metricMetadata,
+                                   MetricRow.simDataName).filter(MetricRow.metricName == metricName)
+        if slicerName is not None:
+            query = query.filter(MetricRow.slicerName == slicerName)
+        if metricMetadata is not None:
+            query = query.filter(MetricRow.metricMetadata == metricMetadata)
+        if simDataName is not None:
+            query = query.filter(MetricRow.simDataName == simDataName)
+        query = query.order_by(MetricRow.slicerName, MetricRow.metricMetadata)
+        for m in query:
             metricId.append(m.metricId)
         return metricId
 
-    def getSummaryStats(self, metricId=None):
+    def getAllMetricIds(self):
         """
-        Get the summary stats for all or a single metric.
+        Return all metricIds.
+        """
+        metricIds = []
+        for m in self.session.query(MetricRow.metricId).all():
+            metricIds.append(m.metricId)
+        return metricIds
+
+    def getSummaryStats(self, metricId=None, summaryName=None):
+        """
+        Get the summary stats for all or a single metric, specified by metricId.
+        Optionally, specify the summary metric name.
         """
         if metricId is None:
-            metricId = self.getMetricIds()
+            metricId = self.getAllMetricIds()
         if not hasattr(metricId, '__iter__'):
             metricId = [metricId,]
         summarystats = []
         for mid in metricId:
-            for m, s in self.session.query(MetricRow.metricName, MetricRow.slicerName, MetricRow.metricMetadata,
-                                           SummaryStatRow).\
-              filter(MetricRow.metricId == SummaryStatRow.metricId).\
-              filter(MetricRow.metricId == mid).all():
-              summarystats.append([m.metricName, m.slicerName, m.metricMetadata, s.summaryName, s.summaryValue])
+            # Join the metric table and the summarystat table, based on the metricID (the second filter)
+            query = (self.session.query(MetricRow, SummaryStatRow).filter(MetricRow.metricId == mid)
+                     .filter(MetricRow.metricId == SummaryStatRow.metricId))
+            if summaryName is not None:
+                query = query.filter(SummaryStatRow.summaryName == summaryName)
+            for m, s in query:
+                summary = {}
+                summary['metricName'] = m.metricName
+                summary['slicerName'] = m.slicerName
+                summary['metricMetadata'] = m.metricMetadata
+                summary['summaryName'] = s.summaryName
+                summary['summaryValue'] = s.summaryValue
+                summarystats.append(summary)
         return summarystats
+
+    def getPlotFiles(self, metricId=None):
+        if metricId is None:
+            metricId = self.getAllMetricIds()
+        if not hasattr(metricId, '__iter__'):
+            metricId = [metricId,]
+        plotFiles = []
+        for mid in metricId:
+            # Join the metric table and the plot table, based on the metricID (the second filter does the join)
+            query = (self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid)
+                     .filter(MetricRow.metricId == plotRow.metricId))
+            for m, p in query:
+                plots = {}
+                plots['metricName'] = m.metricName
+                plots['metricMetadata'] = m.metricMetadata
+                plots['plotType'] = p.plotType
+                plots['plotFile'] = p.plotFile
+                plotFiles.append(plots)
+        return plotFiles
 
     def getMetricDataFiles(self, metricId=None):
         """
         Get the metric data filenames for all or a single metric.
         """
         if metricId is None:
-            metricId = self.getMetricIds()
+            metricId = self.getAllMetricIds()
         if not hasattr(metricId, '__iter__'):
             metricId = [metricId,]
         dataFiles = []

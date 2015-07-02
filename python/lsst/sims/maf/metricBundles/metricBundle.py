@@ -219,7 +219,7 @@ class MetricBundle(object):
                 self.plotFuncs = []
                 for pFunc in plotFuncs:
                     if not isinstance(pFunc, plots.BasePlotter):
-                        raise ValueError('plotFuncs should contain lsst.sims.maf.plotter objects.')
+                        raise ValueError('plotFuncs should contain instantiated lsst.sims.maf.plotter objects.')
                     self.plotFuncs.append(pFunc)
         else:
             self.plotFuncs = [pFunc() for pFunc in self.slicer.plotFuncs]

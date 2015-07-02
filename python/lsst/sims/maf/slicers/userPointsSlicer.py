@@ -7,7 +7,7 @@ __all__ = ['UserPointsSlicer']
 class UserPointsSlicer(BaseSpatialSlicer):
     """Use spatial slicer on a user provided point """
     def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, ra=None, dec=None):
+                 badval=-666, leafsize=100, radius=1.75, ra=None, dec=None, **kwargs):
         """
         ra = list of ra points to use
         dec = list of dec points to use
@@ -15,7 +15,7 @@ class UserPointsSlicer(BaseSpatialSlicer):
 
         super(UserPointsSlicer,self).__init__(verbose=verbose,
                                                 lonCol=lonCol, latCol=latCol,
-                                                badval=badval, radius=radius, leafsize=leafsize)
+                                                badval=badval, radius=radius, leafsize=leafsize, **kwargs)
 
         # check that ra and dec are iterable, if not, they are probably naked numbers, wrap in list
         if not hasattr(ra, '__iter__'):

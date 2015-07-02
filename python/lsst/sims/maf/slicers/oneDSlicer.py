@@ -37,6 +37,8 @@ class OneDSlicer(BaseSlicer):
         if sliceColUnits is None:
             co = ColInfo()
             self.sliceColUnits = co.getUnits(self.sliceColName)
+        else:
+            self.sliceColUnits = sliceColUnits
         self.slicer_init = {'sliceColName':self.sliceColName, 'sliceColUnits':sliceColUnits,
                             'badval':badval}
         self.plotFuncs = [OneDBinnedData,]

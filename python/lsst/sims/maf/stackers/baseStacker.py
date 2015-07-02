@@ -82,6 +82,10 @@ class BaseStacker(object):
             if not key.startswith('_') and key!='registry' and key!='run':
                 if not hasattr(otherStacker, key):
                     return False
+                # If the attribute is from numpy, assume it's an array and test it
+                if type(getattr(self,key)).__module__ == np.__name__:
+                    if not np.array_equal(getattr(self,key), getattr(otherStacker, key)):
+                        return False
                 else:
                     # If the attribute is from numpy, assume it's an array and test it
                     if type(getattr(self,key)).__module__ == np.__name__:
@@ -101,7 +105,6 @@ class BaseStacker(object):
             return False
         else:
             return True
-
 
     def _addStackers(self, simData):
         """
