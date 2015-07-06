@@ -18,6 +18,8 @@ class MafTracking(object):
         if database is None:
             database = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
 
+        if type(database) is not str:
+            database = database.database
         # Read in the results database.
         database = db.Database(database=database, longstrings=True,
                                dbTables={'runs':['runs', 'mafRunId']})
@@ -61,5 +63,3 @@ class MafTracking(object):
             runName = None
         self.runsPage[mafRunId] = MafRunResults(mafDir, runName)
         return self.runsPage[mafRunId]
-
-
