@@ -8,18 +8,18 @@ def bundleMatch(bundle1, bundle2):
     """
     result = True
     if bundle1.sqlconstraint != bundle2.sqlconstraint:
-        result = False
+        return False
     for stacker1 in bundle1.stackerList:
         for stacker2 in bundle2.stackerList:
             if stacker1.name == stacker2.name:
                 if stacker1 != stacker2:
-                    result = False
+                    return False
 
     # Possible bug in slicer comparison, with != and == giving same results
     if bundle1.slicer == bundle2.slicer:
         pass
     else:
-        result = False
+        return False
 
     return result
 

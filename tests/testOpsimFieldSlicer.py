@@ -82,9 +82,11 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         fieldData2 = np.copy(self.fieldData)
         testslicer2.setupSlicer(self.simData, fieldData2)
         self.assertEqual(self.testslicer, testslicer2)
+        assert( (self.testslicer != testslicer2) is False)
         fieldData2['fieldID'] = fieldData2['fieldID'] + 1
         testslicer2.setupSlicer(self.simData, fieldData2)
         self.assertNotEqual(self.testslicer, testslicer2)
+        assert( (self.testslicer == testslicer2) is False)
         testslicer2 = UniSlicer()
         self.assertNotEqual(self.testslicer, testslicer2)
 
@@ -92,8 +94,10 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         ts1 = OpsimFieldSlicer()
         ts2 = OpsimFieldSlicer()
         self.assertEqual(ts1,ts2)
+        assert( (ts1 != ts2) is False)
         ts2 = OpsimFieldSlicer(fieldRaColName ='WackyName')
         self.assertNotEqual(ts1,ts2)
+        assert( (ts1 == ts2) is False)
 
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
