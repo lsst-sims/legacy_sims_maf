@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import numpy as np
 import os, sys, argparse
 # Set matplotlib backend (to create plots where DISPLAY is not set).
@@ -7,10 +8,12 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
+import lsst.sims.maf.plots as plotters
 import lsst.sims.maf.metricBundles as metricBundles
+import lsst.sims.maf.utils as utils
 
-
-def makeBundleList(dbFile, nside=128, benchmark='design',):
+def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
+                   raCol='fieldRA', decCol='fieldDec',):
     """
     make a list of metricBundle objects to look at the scientific performance
     of an opsim run.
@@ -27,6 +30,13 @@ def makeBundleList(dbFile, nside=128, benchmark='design',):
 
     # Fetch the telescope location from config
     lat, lon, height = opsimdb.fetchLatLonHeight()
+
+    commonname = ''.join([a for a in raCol if a in decCol])
+    if commonname == 'field':
+        slicermetadata = ' (no dithers)'
+    else:
+        slicermetadata = ' (%s)' %(commonname)
+
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = utils.createSQLWhere('WFD', propTags)
@@ -97,36 +107,36 @@ def makeBundleList(dbFile, nside=128, benchmark='design',):
     for prop in ('All prop', 'WFD only'):
         if prop == 'All prop':
             metadata = 'All Visits' + slicermetadata
-            sqlconstraint = ['']
+            sqlconstraint = ''
         if prop == 'WFD only':
             metadata = 'WFD only' + slicermetadata
-            sqlconstraint = ['%s' %(wfdWhere)]
+            sqlconstraint = '%s' %(wfdWhere)
         # Configure the count metric which is what is used for f0 slicer.
         m1 = metrics.CountMetric(col='expMJD', metricName='fO')
         plotDict={'units':'Number of Visits','Asky':benchmarkVals['Area'],
                   'Nvisit':benchmarkVals['nvisitsTotal'],
-                  'xMin':0, 'xMax':1500})
-        summaryMetrics={'fOArea 1':{'nside':nside, 'norm':False, 'metricName':'fOArea: Nvisits (#)',
-                                    'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']},
-                        'fOArea 2':{'nside':nside, 'norm':True, 'metricName':'fOArea: Nvisits/benchmark',
-                                    'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']},
-                        'fONv 1':{'nside':nside, 'norm':False, 'metricName':'fONv: Area (sqdeg)',
-                                  'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']},
-                        'fONv 2':{'nside':nside, 'norm':True, 'metricName':'fONv: Area/benchmark',
-                                  'Asky':benchmarkVals['Area'],'Nvisit':benchmarkVals['nvisitsTotal']}}
+                  'xMin':0, 'xMax':1500}
+        summaryMetrics=[metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
+                                       Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
+                        metrics.fOArea(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
+                                       Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
+                        metrics.fONv(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
+                                     Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
+                        metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
+                                     Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal'])]
         displayDict={'group':reqgroup, 'subgroup':'F0', 'displayOrder':order, 'caption':
                      'The FO metric evaluates the overall efficiency of observing. fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. fONv: Area = this many square degrees out of %.1f receive at least %d visits.'
                                         %(benchmarkVals['Area'], benchmarkVals['nvisitsTotal'],
                                           benchmarkVals['Area'], benchmarkVals['nvisitsTotal'])}
         order += 1
-        slicer = slicers.fOSlicer(metadata=metadata, metadataVerbatim=True)
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol)
 
         bundle = metricBundles.MetricBundle(m1, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, summaryMetrics=summaryMetrics)
+                                            displayDict=displayDict, summaryMetrics=summaryMetrics,
+                                            plotFuncs=[plotters.FOPlot()],metadata=metadata)
         bundleList.append(bundle)
 
 
-    # For each bundle, we need to set a metric, a slicer, a sql constraint, and optionally a plotDict.
 
 
     return bundleList
@@ -135,20 +145,34 @@ def makeBundleList(dbFile, nside=128, benchmark='design',):
 if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description='Python script to run MAF with the science performance metrics')
+    parser.add_argument('dbFile', type=str, default=None,help="full file path to the opsim sqlite file")
+
     parser.add_argument("--outDir",type=str, default='./Out', help='Output directory for MAF outputs.')
     parser.add_argument("--nside", type=int, default=128,
                         help="Resolution to run Healpix grid at (must be 2^x)")
 
-    parser.add_argument('--dbFile', type=str, default=None,help="full file path to the opsim sqlite file")
 
-    parser.add_arguemnt('--benchmark', type=str, default='design',
+    parser.add_argument('--benchmark', type=str, default='design',
                         help="Can be 'design' or 'requested'")
+    # XXX--check how to do the boolean stuff
+    parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
+                        default=False, help="Reload the metric values and re-plot them")
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
+    bundleList = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark,
+                                plotOnly=args.plotOnly)
 
-    bundleList = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark)
-
-
+    bundleDicts = utils.bundleList2Dicts(bundleList)
     resultsDb = db.ResultsDb(outDir=args.outDir)
+    opsdb = utils.connectOpsimDb(args.dbFile)
+
+    for bdict in bundleDicts:
+        group = metricBundles.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
+        if args.plotOnly:
+            # Load up the results
+            pass
+        else:
+            group.runAll()
+        group.plotAll()
