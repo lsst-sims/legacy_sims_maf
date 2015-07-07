@@ -221,7 +221,7 @@ class BaseHistogram(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
         if plotDict['zp']:
-            metricValue = metricValueIn.compressed() - zp
+            metricValue = metricValueIn.compressed() - plotDict['zp']
         elif plotDict['normVal']:
             metricValue = metricValueIn.compressed()/normVal
         else:

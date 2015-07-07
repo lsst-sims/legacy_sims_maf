@@ -93,7 +93,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                      metrics.PercentileMetric(metricName='25th%ile', percentile=25),
                      metrics.PercentileMetric(metricName='75th%ile', percentile=75),
                      metrics.MinMetric(), metrics.MaxMetric()]
-
+    allStats = commonSummary
 
     # Set up some 'group' labels
     reqgroup = 'A: Required SRD metrics'
@@ -212,6 +212,138 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     bundleList.append(bundle)
     order += 1
 
+
+    # Trigonometric parallax and proper motion @ r=20 and r=24
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    sqlconstraint = ''
+    order = 0
+    metric = metrics.ParallaxMetric(metricName='Parallax 20', rmag=20)
+    summaryStats=allStats
+    plotDict={'cbarFormat':'%.1f', 'xMin':0, 'xMax':3}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':'Parallax precision at r=20. (without refraction).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    order += 1
+    metric=metrics.ParallaxMetric(metricName='Parallax 24', rmag=24)
+    plotDict={'cbarFormat':'%.1f', 'xMin':0, 'xMax':10}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':'Parallax precision at r=24. (without refraction).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    order += 1
+    metric=metrics.ParallaxMetric(metricName='Parallax Normed', rmag=24, normalize=True)
+    plotDict={'xMin':0.5, 'xMax':1.0}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':
+                 'Normalized parallax (normalized to optimum observation cadence, 1=optimal).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    order += 1
+    metric=metrics.ProperMotionMetric(metricName='Proper Motion 20', rmag=20)
+    summaryStats=allStats
+    plotDict={'xMin':0, 'xMax':3}
+    displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
+                 'caption':'Proper Motion precision at r=20.'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    order += 1
+    metric=metrics.ProperMotionMetric(rmag=24, metricName='Proper Motion 24')
+    summaryStats=allStats
+    plotDict={'xMin':0, 'xMax':10}
+    displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
+                 'caption':'Proper Motion precision at r=24.'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    order += 1
+    metric=metrics.ProperMotionMetric(rmag=24,normalize=True, metricName='Proper Motion Normed')
+    plotDict={'xMin':0.2, 'xMax':0.7}
+    displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
+                 'caption':'Normalized proper motion at r=24 (normalized to optimum observation cadence - start/end. 1=optimal).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    order += 1
+
+    # Calculate the time uniformity in each filter, for each year.
+    order = 0
+    yearDates = range(0,int(round(365*runLength))+365,365)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    for i in range(len(yearDates)-1):
+        for f in filters:
+            metadata = '%s band, after year %d' %(f, i+1) + slicermetadata
+            sqlconstraint = 'filter = "%s" and night<=%i' %(f, yearDates[i+1])
+            metric = metrics.UniformityMetric(metricName='Time Uniformity')
+            plotDict={'xMin':0, 'xMax':1}
+            displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
+                           'displayOrder':filtorder[f],
+                           'caption':'Deviation from uniformity in %s band, by the end of year %d of the survey. (0=perfectly uniform, 1=perfectly nonuniform).' %(f, i+1)}
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                displayDict=displayDict, metadata=metadata)
+            bundleList.append(bundle)
+
+    # Depth metrics.
+    startNum = histNum
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    for f in filters:
+        propCaption = '%s band, all proposals %s' %(f, slicermetadata)
+        sqlconstraint = 'filter = "%s"' %(f)
+        metadata = '%s band' %(f) + slicermetadata
+        histNum = startNum
+        # Number of visits.
+        metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
+        plotDict={'units':'Number of visits',
+                  'xMin':nvisitsRange['all'][f][0],
+                  'xMax':nvisitsRange['all'][f][1], 'binsize':5}
+        summaryStats=allStats
+        displayDict={'group':depthgroup, 'subgroup':'Nvisits', 'order':filtorder[f],
+                     'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
+        histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                   'binsize':5,
+                   'xMin':nvisitsRange['all'][f][0], 'xMax':nvisitsRange['all'][f][1],
+                   'legendloc':'upper right'}
+        histNum += 1
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+        bundleList.append(bundle)
+        # Coadded depth.
+        metric = metrics.Coaddm5Metric()
+        plotDict={'zp':benchmarkVals['coaddedDepth'][f], 'xMin':-0.8, 'xMax':0.8,
+                  'units':'coadded m5 - %.1f' %benchmarkVals['coaddedDepth'][f]}
+        summaryStats=allStats
+        histMerge={'histNum':histNum, 'legendloc':'upper right',
+                   'color':colors[f], 'label':'%s' %f, 'binsize':.02}
+        displayDict={'group':depthgroup, 'subgroup':'Coadded Depth',
+                     'order':filtorder[f],'caption':
+                     'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, benchmarkVals['coaddedDepth'][f], propCaption)}
+        histNum += 1
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+        bundleList.append(bundle)
+        # Effective time.
+        metric = metrics.TeffMetric(metricName='Normalized Effective Time',normed=True)
+        plotDict={'xMin':0.1, 'xMax':1.1}
+        summaryStats=allStats
+        histMerge={'histNum':histNum, 'legendLoc':'upper right',
+                   'color':colors[f], 'label':'%s' %f, 'binsize':0.02}
+        displayDict={'group':depthgroup, 'subgroup':'Time Eff.', 'order':filtorder[f],
+                     'caption':'"Time Effective" in filter %s, calculated with fiducial depth %s. Normalized by the fiducial time effective, if every observation was at the fiducial depth.'
+                     %(f, benchmarkVals['singleVisitDepth'][f])}
+        histNum += 1
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+        bundleList.append(bundle)
+
+
+
     return bundleList
 
 
@@ -248,3 +380,5 @@ if __name__=="__main__":
         else:
             group.runAll()
         group.plotAll()
+        # Need to think about how I'm going to handle the mergehist stuff.  I could just open up a list of
+        # figures and then loop through and plot to them as the results come up.

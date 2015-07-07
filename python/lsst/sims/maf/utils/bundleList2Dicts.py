@@ -11,7 +11,7 @@ def bundleMatch(bundle1, bundle2):
         return False
     for stacker1 in bundle1.stackerList:
         for stacker2 in bundle2.stackerList:
-            if stacker1.name == stacker2.name:
+            if stacker1.__class__.__name__ == stacker2.__class__.__name__:
                 if stacker1 != stacker2:
                     return False
 
