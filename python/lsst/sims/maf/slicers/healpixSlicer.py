@@ -19,7 +19,7 @@ __all__ = ['HealpixSlicer']
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
     def __init__(self, nside=128, lonCol ='fieldRA' , latCol='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100, 
+                 useCache=True, radius=1.75, leafsize=100,
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
@@ -58,13 +58,13 @@ class HealpixSlicer(BaseSpatialSlicer):
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
         # If the two slicers are both healpix slicers, check nsides value.
+        result = False
         if isinstance(otherSlicer, HealpixSlicer):
             if otherSlicer.nside == self.nside:
                 if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
                     if otherSlicer.radius == self.radius:
-                        return True
-        else:
-            return False
+                        result= True
+        return result
 
     def _pix2radec(self, islice):
         """Given the pixel number / sliceID, return the RA/Dec of the pointing, in radians."""

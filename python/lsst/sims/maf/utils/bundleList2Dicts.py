@@ -14,6 +14,13 @@ def bundleMatch(bundle1, bundle2):
             if stacker1.name == stacker2.name:
                 if stacker1 != stacker2:
                     result = False
+
+    # Possible bug in slicer comparison, with != and == giving same results
+    if bundle1.slicer == bundle2.slicer:
+        pass
+    else:
+        result = False
+
     return result
 
 def bundleList2Dicts(bundleList):
@@ -28,16 +35,16 @@ def bundleList2Dicts(bundleList):
         newDict = {counter:bundleList[0]}
         counter += 1
         bundleList.remove(bundleList[0])
-
+        toRemove = []
         for bundle in bundleList:
-            compat = True
-            for bd in newDict:
-                if bundleMatch(bundle,newDict[bd]) is False:
-                    compat = False
-            if compat:
+            checks = [bundleMatch(bundle,newDict[bd]) for bd in newDict]
+            if False not in checks:
+                toRemove.append(bundle)
                 newDict[counter] = bundle
                 counter += 1
-                bundleList.remove(bundle)
+        # Can't remove things until finished iterating over list
+        for bundle in toRemove:
+            bundleList.remove(bundle)
 
         result.append(newDict)
 

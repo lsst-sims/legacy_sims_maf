@@ -144,7 +144,7 @@ class BaseSlicer(object):
         """
         raise NotImplementedError()
 
-    def __neq__(self, otherSlicer):
+    def __ne__(self, otherSlicer):
         """
         Evaluate if two slicers are not equivalent.
         """
