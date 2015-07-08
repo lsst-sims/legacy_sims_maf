@@ -134,7 +134,7 @@ if __name__ == "__main__":
             print 'There is no directory containing MAF outputs at %s.' %(mafDir)
             print 'Just opening using tracking db at %s.' %(trackingDb)
         # Open tracking database to add a run.
-        trackingDb = db.TrackingDb(database=trackingDb)
+        trackDb = db.TrackingDb(database=trackingDb)
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
         opsimRun = ''
@@ -164,9 +164,9 @@ if __name__ == "__main__":
         print ' OpsimDate = %s' %(opsimDate)
         print ' MafDate = %s' %(mafDate)
         # Add the run.
-        startRunId = trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
+        startRunId = trackDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
         print ' Used runID %d' %(startRunId)
-        trackingDb.close()
+        trackDb.close()
 
     # Open tracking database and start visualization.
     global runlist
