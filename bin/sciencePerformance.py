@@ -15,7 +15,7 @@ import healpy as hp
 import matplotlib.pylab as plt
 
 def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
-                   lonCol='fieldRA', latCol='fieldDec',):
+                   lonCol='fieldRA', latCol='fieldDec'):
     """
     make a list of metricBundle objects to look at the scientific performance
     of an opsim run.
@@ -439,8 +439,8 @@ if __name__=="__main__":
     parser.add_argument('--benchmark', type=str, default='design',
                         help="Can be 'design' or 'requested'")
 
-#    parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
-#                        default=False, help="Reload the metric values and re-plot them.")
+    parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
+                        default=False, help="Reload the metric values and re-plot them.")
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
@@ -478,6 +478,6 @@ if __name__=="__main__":
 
     for histNum in histBundleDict:
         # Need to plot up the merged histograms and write them to the resultsDb.
-        ph = plots.Plothandler(outDir=args.outDir, resultsDb=resultsDb)
+        ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
         ph.setMetricBundles(histBundleDict[histNum])
         ph.plot(plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
