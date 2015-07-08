@@ -301,60 +301,69 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the Full Range of the hour angle.
-                metricList.append(configureMetric('FullRangeMetric', kwargs={'col':'HA'},
-                                                  plotDict={'xMin':0, 'xMax':12},
-                                                  displayDict={'group':houranglegroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                               'caption':'Full Range of the Hour Angle in filter %s, %s.'
-                                                               %(f, propCaption)}))
+                metric = metrics.FullRangeMetric(col='HA')
+                plotDict={'xMin':0, 'xMax':12}
+                displayDict={'group':houranglegroup, 'subgroup':subgroup, 'order':filtorder[f],
+                             'caption':'Full Range of the Hour Angle in filter %s, %s.'
+                             %(f, propCaption)}
+                bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                    displayDict=displayDict, metadata=metadata,
+                                                    summaryMetrics=summaryStats)
+                bundle.histMerge = histMerge
+                bundleList.append(bundle)
                 # Calculate the RMS of the position angle
-                metricList.append(configureMetric('RmsAngleMetric', kwargs={'col':'rotSkyPos'},
-                                                  plotDict={'xMin':0, 'xMax':float(np.pi)},
-                                                  displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                               'caption':'RMS of the position angle (angle between "up" in the camera and north on the sky) in filter %s, %s.'
-                                                               %(f, propCaption)}))
-            metricDict = makeDict(*metricList)
-            slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
-                                     constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
-            slicerList.append(slicer)
+                metric = metrics.RmsAngleMetric(col='rotSkyPos')
+                plotDict={'xMin':0, 'xMax':float(np.pi)}
+                displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                             'caption':'RMS of the position angle (angle between "up" in the camera and north on the sky) in filter %s, %s.'
+                             %(f, propCaption)}
+                bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                    displayDict=displayDict, metadata=metadata,
+                                                    summaryMetrics=summaryStats)
+                bundle.histMerge = histMerge
+                bundleList.append(bundle)
+
+
             # Tack on an extra copy of Nvisits with a cumulative histogram for WFD.
             if prop == 'WFD':
-                metric = configureMetric('CountMetric', kwargs={'col':'expMJD', 'metricName':'Nvisits cumulative'},
-                                              plotDict={'units':'Number of Visits',
-                                                        'xMin':0,
-                                                        'xMax':nvisitsMax, 'binsize':5,
-                                                        'cumulative':-1},
-                                              displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                                           'caption':'Cumulative number of visits in filter %s, %s.'
-                                                            %(f, propCaption)},
-                                              histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                                                         'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
-                                                         'cumulative':-1})
+                metric = metrics.CountMetric(col='expMJD', metricName='Nvisits cumulative')
+                plotDict={'units':'Number of Visits','xMin':0,
+                          'xMax':nvisitsMax, 'binsize':5, 'cumulative':-1}
+                displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                             'caption':'Cumulative number of visits in filter %s, %s.'
+                             %(f, propCaption)}
+                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                           'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
+                           'cumulative':-1}
                 histNum += 1
-                slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*[metric]),
-                                        constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
-                slicerList.append(slicer)
+                bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                    displayDict=displayDict, metadata=metadata,
+                                                    summaryMetrics=summaryStats)
+                bundle.histMerge = histMerge
+                bundleList.append(bundle)
+
 
     # Count the number of visits in all filters together, WFD only.
-    metricList =[]
+    sqlconstraint = wfdWhere
+    metadata='All filters WFD: histogram only'
+    plotFunc = plots.OpsimHistogram()
     # Make the reverse cumulative histogram
-    metricList.append(configureMetric('CountMetric',
-                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters, cumulative'},
-                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1,
-                                                'xMin':500, 'xMax':1500},
-                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
-                                                   'caption':'Number of visits all filters, WFD only'}))
+    metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters, cumulative')
+    plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1,
+              'xMin':500, 'xMax':1500},
+    displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
+                 'caption':'Number of visits all filters, WFD only'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                    displayDict=displayDict, metadata=metadata,
+                                                    summaryMetrics=summaryStats, plotFuncs=[plotFunc])
+    bundleList.append(bundle)
     # Regular Histogram
-    metricList.append(configureMetric('CountMetric',
-                                      kwargs={'col':'expMJD', 'metricName':'Nvisits, all filters'},
-                                      plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False,
-                                                'xMin':500, 'xMax':1500},
-                                      summaryStats=allStats,
-                                      displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
-                                                   'caption':'Number of visits all filters, WFD only'}))
-    slicer = configureSlicer(slicerName, kwargs=onlyHist, metricDict=makeDict(*metricList),
-                                     constraints=[wfdWhere],
-                                     metadata='All filters WFD: histogram only', metadataVerbatim=True)
-    slicerList.append(slicer)
+    metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters')
+    plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False,
+              'xMin':500, 'xMax':1500}
+    summaryStats=allStats
+    displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
+                 'caption':'Number of visits all filters, WFD only'}
 
     # Count the number of visits per filter for each individual proposal, over the sky.
     #  The min/max limits for these plots are allowed to float, so that we can really see what's going on in each proposal.
@@ -362,45 +371,44 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
     for propid in propids:
         for f in filters:
             # Count the number of visits.
-            m1 = configureMetric('CountMetric',
-                                kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
-                                summaryStats=standardStats,
-                                plotDict={'units':'Number of Visits', 'plotMask':True,
-                                          'binsize':5},
-                                displayDict={'group':nvisitOpsimgroup, 'subgroup':'%s'%(propids[propid]),
-                                             'order':filtorder[f] + propOrder,
-                                             'caption':'Number of visits per opsim field in %s filter, for %s.'
-                                             %(f, propids[propid])},
-                                histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                                           'label':'%s' %f, 'binsize':5})
-            metricDict = makeDict(m1)
-            sqlconstraint = ['filter = "%s" and propID = %s' %(f,propid)]
-            slicer = configureSlicer(slicerName, kwargs=slicerkwargs,
-                                     metricDict=metricDict,
-                                     constraints=sqlconstraint,
-                                     metadata='%s band, %s' %(f, propids[propid]),
-                                     metadataVerbatim=True)
-            slicerList.append(slicer)
+            sqlconstraint = 'filter = "%s" and propID = %s' %(f,propid)
+            metadata = '%s band, %s' %(f, propids[propid])
+            metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
+            summaryStats=standardStats
+            plotDict={'units':'Number of Visits', 'plotMask':True, 'binsize':5},
+            displayDict={'group':nvisitOpsimgroup, 'subgroup':'%s'%(propids[propid]),
+                         'order':filtorder[f] + propOrder,
+                         'caption':'Number of visits per opsim field in %s filter, for %s.'
+                         %(f, propids[propid])}
+            histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
+                       'label':'%s' %f, 'binsize':5}
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                displayDict=displayDict, metadata=metadata,
+                                                summaryMetrics=summaryStats)
+            bundle.histMerge = histMerge
+            bundleList.append(bundle)
+
         propOrder += 100
         histNum += 1
 
     # Run for combined WFD proposals if there's more than one. Similar to above, but with different nvisits limits.
     if len(WFDpropid) > 1:
         for f in filters:
-            m1 = configureMetric('CountMetric',
-                                 kwargs={'col':'expMJD', 'metricName':'NVisits Per Proposal'},
-                                 summaryStats=standardStats,
-                                 plotDict={'units':'Number of Visits', 'binsize':5},
-                                 displayDict={'group':nvisitOpsimgroup, 'subgroup':'WFD',
-                                              'order':filtorder[f] + propOrder,
-                                              'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)},
-                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                            'color':colors[f], 'label':'%s' %f, 'binsize':5})
-            metricDict = makeDict(m1)
-            sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
-            slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict, constraints=sqlconstraint,
-                                     metadata='%s band, WFD' %(f), metadataVerbatim=True)
-            slicerList.append(slicer)
+            sqlconstraint = 'filter = "%s" and %s' %(f, wfdWhere)
+            metadata='%s band, WFD' %(f)
+            metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
+            summaryStats=standardStats
+            plotDict={'units':'Number of Visits', 'binsize':5}
+            displayDict={'group':nvisitOpsimgroup, 'subgroup':'WFD',
+                         'order':filtorder[f] + propOrder,
+                         'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)}
+            histMerge={'histNum':histNum, 'legendloc':'upper right',
+                       'color':colors[f], 'label':'%s' %f, 'binsize':5}
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                displayDict=displayDict, metadata=metadata,
+                                                summaryMetrics=summaryStats)
+            bundle.histMerge = histMerge
+            bundleList.append(bundle)
         histNum += 1
 
     # Calculate the Completeness and Joint Completeness for all proposals and WFD only.
@@ -408,41 +416,43 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
         if prop == 'All Props':
             subgroup = 'All Props'
             metadata = 'All proposals'
-            sqlconstraint = ['']
+            sqlconstraint = ''
             xlabel = '# visits (All Props) / (# WFD %s value)' %(benchmark)
         if prop == 'WFD':
             subgroup = 'WFD'
             metadata = 'WFD only'
-            sqlconstraint = ['%s' %(wfdWhere)]
+            sqlconstraint = '%s' %(wfdWhere)
             xlabel = '# visits (WFD) / (# WFD %s value)' %(benchmark)
         # Configure completeness metric.
-        m1 = configureMetric('CompletenessMetric',
-                            plotDict={'xlabel':xlabel,
-                                        'units':xlabel,
-                                        'xMin':0.5, 'xMax':1.5, 'bins':50},
-                            kwargs={'u':benchmarkVals['nvisits']['u'], 'g':benchmarkVals['nvisits']['g'],
-                                    'r':benchmarkVals['nvisits']['r'], 'i':benchmarkVals['nvisits']['i'],
-                                    'z':benchmarkVals['nvisits']['z'], 'y':benchmarkVals['nvisits']['y']},
-                            summaryStats={'TableFractionMetric':{}},
-                            displayDict={'group':completenessgroup, 'subgroup':subgroup})
-        metricDict = makeDict(m1)
-        slicer = configureSlicer(slicerName, kwargs=slicerkwargs, metricDict=metricDict,
-                                constraints=sqlconstraint, metadata=metadata, metadataVerbatim=True)
-        slicerList.append(slicer)
+        metric = metrics.CompletenessMetric(u=benchmarkVals['nvisits']['u'],
+                                            g=benchmarkVals['nvisits']['g'],
+                                            r=benchmarkVals['nvisits']['r'],
+                                            i=benchmarkVals['nvisits']['i'],
+                                            z=benchmarkVals['nvisits']['z'],
+                                            y=benchmarkVals['nvisits']['y'])
+        plotDict={'xlabel':xlabel, 'units':xlabel, 'xMin':0.5, 'xMax':1.5, 'bins':50}
+        summaryStats={'TableFractionMetric':{}}
+        displayDict={'group':completenessgroup, 'subgroup':subgroup}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+        bundleList.append(bundle)
 
     ## End of all-sky metrics.
 
     ## Hourglass metric.
+    hourSlicer = slicers.HourglassSlicer()
     # Calculate Filter Hourglass plots per year (split to make labelling easier).
     yearDates = range(0,int(round(365*runLength))+365,365)
     for i in range(len(yearDates)-1):
-        constraints = ['night > %i and night <= %i'%(yearDates[i],yearDates[i+1])]
-        m1=configureMetric('HourglassMetric', kwargs={'lat':lat*np.pi/180.,
-                                                      'lon':lon*np.pi/180. , 'elev':height},
-                           displayDict={'group':hourglassgroup, 'subgroup':'Yearly', 'order':i})
-        slicer = configureSlicer('HourglassSlicer', metricDict=makeDict(m1), constraints=constraints,
-                                 metadata='Year %i-%i' %(i, i+1), metadataVerbatim=True)
-        slicerList.append(slicer)
+        sqlconstraint = 'night > %i and night <= %i'%(yearDates[i],yearDates[i+1])
+        metadata='Year %i-%i' %(i, i+1)
+        metric = HourglassMetric(lat=lat*np.pi/180.,lon=lon*np.pi/180. , elev=height)
+        displayDict={'group':hourglassgroup, 'subgroup':'Yearly', 'order':i}
+        bundle = metricBundles.MetricBundle(metric, hourSlicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata)
+        bundleList.append(bundle)
+
 
     ## Histograms of individual output values of Opsim. (one-d slicers).
 
@@ -467,29 +477,34 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 histNum = startNum + 20
             # Set up metrics and slicers for histograms.
             # Histogram the individual visit five sigma limiting magnitude (individual image depth).
-            m1 = configureMetric('CountMetric',
-                                kwargs={'col':'fiveSigmaDepth', 'metricName':'Single Visit Depth Histogram'},
-                                histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s'%f},
-                                displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                            'caption':'Histogram of the single visit depth in %s band, %s.' %(f, propCaption)})
+            metric = metrics.CountMetric(col='fiveSigmaDepth', metricName='Single Visit Depth Histogram')
+            histMerge={'histNum':histNum, 'legendloc':'upper right',
+                       'color':colors[f], 'label':'%s'%f},
+            displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                         'caption':'Histogram of the single visit depth in %s band, %s.' %(f, propCaption)}
             histNum += 1
-            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'fiveSigmaDepth', 'binsize':0.05},
-                                    metricDict=makeDict(m1), constraints=sqlconstraint,
-                                    metadata=metadata, metadataVerbatim=True)
-            slicerList.append(slicer)
+            slicer = slicers.OneDSlicer(sliceColName='fiveSigmaDepth', binsize=0.05)
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+            bundle.histMerge = histMerge
+            bundleList.append(bundle)
+
             # Histogram the individual visit sky brightness.
-            m1 = configureMetric('CountMetric', kwargs={'col':'filtSkyBrightness', 'metricName':'Sky Brightness Histogram'},
-                                histMerge={'histNum':histNum, 'legendloc':'upper right',
-                                        'color':colors[f], 'label':'%s'%f},
-                                displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                                            'caption':'Histogram of the sky brightness in %s band, %s.' %(f, propCaption)})
+            metric = metrics.CountMetric(col='filtSkyBrightness', metricName='Sky Brightness Histogram')
+            histMerge={'histNum':histNum, 'legendloc':'upper right',
+                       'color':colors[f], 'label':'%s'%f}
+            displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
+                         'caption':'Histogram of the sky brightness in %s band, %s.' %(f, propCaption)}
             histNum += 1
-            slicer = configureSlicer('OneDSlicer', kwargs={'sliceColName':'filtSkyBrightness', 'binsize':0.1,
-                                                        'binMin':16, 'binMax':23},
-                                    metricDict=makeDict(m1), constraints=sqlconstraint,
-                                    metadata=metadata, metadataVerbatim=True)
-            slicerList.append(slicer)
+            slicer = slicers.OneDSlicer(sliceColName='filtSkyBrightness', binsize=0.1,
+                                        binMin=16, binMax=23}
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+            bundle.histMerge = histMerge
+            bundleList.append(bundle)
+
             # Histogram the individual visit seeing.
             m1 = configureMetric('CountMetric', kwargs={'col':'finSeeing', 'metricName':'Seeing Histogram'},
                                 histMerge={'histNum':histNum, 'legendloc':'upper right',
