@@ -342,7 +342,76 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                                             summaryMetrics=summaryStats)
         bundleList.append(bundle)
 
+    # Good seeing in r/i band metrics, including in first/second years.
+    startNum = histNum
+    order = 0
+    for tcolor, tlabel, timespan in zip(['k', 'g', 'r'], ['10 years', '1 year', '2 years'],
+                                        ['', ' and night<=365', ' and night<=730']):
+        order += 1
+        histNum = startNum
+        for f in (['r', 'i']):
+            sqlconstraint = 'filter = "%s" %s' %(f, timespan)
+            propCaption = '%s band, all proposals %s, over %s.' %(f, slicermetadata, tlabel)
+            metadata = '%s band, %s' %(f, tlabel) + slicermetadata
+            seeing_limit = 0.7
+            airmass_limit = 1.2
+            metric = metrics.MinMetric(col='finSeeing')
+            summaryStats=allStats,
+            plotDict={'xMin':0.35, 'xMax':0.9}
+            displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
+                         'order':filtorder[f]*100+order,
+                         'caption':'Minimum seeing values in %s.' %(propCaption)}
+            histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                       'binsize':0.03, 'xMin':0.35, 'xMax':0.9, 'legendloc':'upper right'}
+            histNum += 1
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+            bundleList.append(bundle)
 
+            metric = metrics.FracAboveMetric(col='finSeeing', cutoff = seeing_limit)
+            summaryStats=allStats,
+            plotDict={'xMin':0, 'xMax':1}
+            displayDict={'group':seeinggroup, 'subgroup':'Good seeing fraction',
+                         'order':filtorder[f]*100+order,
+                         'caption':'Fraction of total images with seeing worse than %.1f, in %s'
+                         %(seeing_limit, propCaption)}
+            histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                       'binsize':0.05, 'legendloc':'upper right'}
+            histNum += 1
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+            bundleList.append(bundle)
+
+            metric = metrics.MinMetric(col='airmass')
+            plotDict={'xMin':1, 'xMax':1.5}
+            summaryStats=allStats
+            displayDict={'group':seeinggroup, 'subgroup':'Best Airmass',
+                         'order':filtorder[f]*100+order, 'caption':
+                         'Minimum airmass in %s.' %(propCaption)}
+            histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                       'binsize':0.03, 'legendloc':'upper right'}
+            histNum += 1
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+            bundleList.append(bundle)
+
+            metric= metrics.FracAboveMetric(col='airmass', cutoff=airmass_limit)
+            plotDict={'xMin':0, 'xMax':1}
+            summaryStats=allStats
+            displayDict={'group':seeinggroup, 'subgroup':'Low airmass fraction',
+                         'order':filtorder[f]*100+order, 'caption':
+                         'Fraction of total images with airmass higher than %.2f, in %s'
+                         %(airmass_limit, propCaption)}
+            histMerge={'histNum':histNum, 'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                       'binsize':0.05, 'legendloc':'upper right'}
+            histNum += 1
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, metadata=metadata,
+                                            summaryMetrics=summaryStats)
+            bundleList.append(bundle)
 
     return bundleList
 
