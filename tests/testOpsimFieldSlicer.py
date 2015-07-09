@@ -81,23 +81,26 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         testslicer2 = OpsimFieldSlicer()
         fieldData2 = np.copy(self.fieldData)
         testslicer2.setupSlicer(self.simData, fieldData2)
-        self.assertEqual(self.testslicer, testslicer2)
-        assert( (self.testslicer != testslicer2) is False)
+        # These slicers should be equal.
+        self.assertTrue(self.testslicer == testslicer2)
+        self.assertFalse(self.testslicer != testslicer2)
+        # These slicers should not be equal.
         fieldData2['fieldID'] = fieldData2['fieldID'] + 1
         testslicer2.setupSlicer(self.simData, fieldData2)
-        self.assertNotEqual(self.testslicer, testslicer2)
-        assert( (self.testslicer == testslicer2) is False)
+        self.assertTrue(self.testslicer != testslicer2)
+        self.assertFalse(self.testslicer == testslicer2)
+        # Test a slicer that is not the same kind.
         testslicer2 = UniSlicer()
         self.assertNotEqual(self.testslicer, testslicer2)
-
         # Test slicers that haven't been setup
         ts1 = OpsimFieldSlicer()
         ts2 = OpsimFieldSlicer()
-        self.assertEqual(ts1,ts2)
-        assert( (ts1 != ts2) is False)
+        self.assertTrue(ts1 == ts2)
+        self.assertFalse(ts1 != ts2)
+        # Set up one with an odd value.
         ts2 = OpsimFieldSlicer(fieldRaColName ='WackyName')
-        self.assertNotEqual(ts1,ts2)
-        assert( (ts1 == ts2) is False)
+        self.assertTrue(ts1 != ts2)
+        self.assertFalse(ts1 == ts2)
 
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
