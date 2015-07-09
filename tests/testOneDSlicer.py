@@ -212,6 +212,14 @@ class TestOneDSlicerEqual(unittest.TestCase):
         testslicer3 = OneDSlicer(sliceColName='testdata', binMin=0, binMax=1)
         self.assertFalse(testslicer2 == testslicer3)
         self.assertTrue(testslicer2 != testslicer3)
+        usebins = np.arange(0, 1, 0.1)
+        testslicer2 = OneDSlicer(sliceColName='testdata', bins=usebins)
+        testslicer3 = OneDSlicer(sliceColName='testdata', bins=usebins)
+        self.assertTrue(testslicer2 == testslicer3)
+        self.assertFalse(testslicer2 != testslicer3)
+        testslicer3 = OneDSlicer(sliceColName='testdata', bins=usebins+1)
+        self.assertFalse(testslicer2 == testslicer3)
+        self.assertTrue(testslicer2 != testslicer3)
 
 class TestOneDSlicerSlicing(unittest.TestCase):
     def setUp(self):
