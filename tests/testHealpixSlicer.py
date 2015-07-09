@@ -108,8 +108,11 @@ class TestHealpixSlicerEqual(unittest.TestCase):
         # Note that they are judged equal based on nsides (not on data in ra/dec spatial tree).
         testslicer2 = HealpixSlicer(nside=self.nside, verbose=False, lonCol='ra', latCol='dec')
         self.assertEqual(self.testslicer, testslicer2)
+        assert( (self.testslicer !=  testslicer2) is False)
         testslicer2 = HealpixSlicer(nside=self.nside/2.0, verbose=False, lonCol='ra', latCol='dec')
         self.assertNotEqual(self.testslicer, testslicer2)
+        assert( (self.testslicer !=  testslicer2) is True )
+
 
 class TestHealpixSlicerIteration(unittest.TestCase):
     def setUp(self):
