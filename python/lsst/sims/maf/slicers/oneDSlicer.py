@@ -118,10 +118,11 @@ class OneDSlicer(BaseSlicer):
                     match = np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
                 # Otherwise, try some other things.
                 else:
-                    if self.bins & otherSlicer.bins: # if these are not None
+                    if (self.bins is not None) & (otherSlicer.bins is not None): # if these are not None
                         match = np.all(self.bins == otherSlicer.bins)
-                    elif self.binsize & self.binMin & self.binMax &\
-                        otherSlicer.binsize & otherSlicer.binMin & otherSlicer.binMax:
+                    elif (self.binsize is not None) & (self.binMin is not None)& (self.binMax is not None)&\
+                         (otherSlicer.binsize is not None) & (otherSlicer.binMin is not None)&\
+                         (otherSlicer.binMax is not None):
                         if (self.binsize == otherSlicer.binsize) &\
                           (self.binMin == otherSlicer.binMin) & (self.binMax == otherSlicer.binMax):
                             match = True

@@ -151,7 +151,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 subgroup = 'All Props'
                 propCaption = ' for all proposals'
                 metadata = '%s band, all props' %(f) + slicermetadata
-                sqlconstraint = ['filter = "%s"' %(f)]
+                sqlconstraint = 'filter = "%s"' %(f)
                 nvisitsMin = nvisitsRange['all'][f][0]
                 nvisitsMax = nvisitsRange['all'][f][1]
                 mag_zp = benchmarkVals['coaddedDepth'][f]
@@ -159,7 +159,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 subgroup = 'WFD'
                 propCaption = ' for all WFD proposals'
                 metadata = '%s band, WFD' %(f) + slicermetadata
-                sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
+                sqlconstraint = 'filter = "%s" and %s' %(f, wfdWhere)
                 nvisitsMin = nvisitsRange['all'][f][0]
                 nvisitsMax = nvisitsRange['all'][f][1]
                 mag_zp = benchmarkVals['coaddedDepth'][f]
@@ -169,7 +169,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 subgroup = 'DD'
                 propCaption = ' for all DD proposals'
                 metadata = '%s band, DD' %(f) + slicermetadata
-                sqlconstraint = ['filter = "%s" and %s' %(f, ddWhere)]
+                sqlconstraint = 'filter = "%s" and %s' %(f, ddWhere)
                 nvisitsMin = nvisitsRange['DD'][f][0]
                 nvisitsMax = nvisitsRange['DD'][f][1]
                 mag_zp = benchmarkDDVals['coaddedDepth'][f]
@@ -472,21 +472,21 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 subgroup = 'All Props'
                 propCaption = ' for all proposals.'
                 metadata = '%s band, all props' %(f) + slicermetadata
-                sqlconstraint = ['filter = "%s"' %(f)]
+                sqlconstraint = 'filter = "%s"' %(f)
                 # Reset histNum to starting value (to combine filters).
                 histNum = startNum
             elif prop == 'WFD':
                 subgroup = 'WFD'
                 propCaption = ' for all WFD proposals.'
                 metadata = '%s band, WFD' %(f) + slicermetadata
-                sqlconstraint = ['filter = "%s" and %s' %(f, wfdWhere)]
+                sqlconstraint = 'filter = "%s" and %s' %(f, wfdWhere)
                 # Reset histNum to starting value (to combine filters).
                 histNum = startNum + 20
             # Set up metrics and slicers for histograms.
             # Histogram the individual visit five sigma limiting magnitude (individual image depth).
             metric = metrics.CountMetric(col='fiveSigmaDepth', metricName='Single Visit Depth Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s'%f},
+                       'color':colors[f], 'label':'%s'%f}
             displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the single visit depth in %s band, %s.' %(f, propCaption)}
             histNum += 1
@@ -1138,7 +1138,7 @@ if __name__=="__main__":
                                                                                 nside=args.nside,
                                                                                 benchmark=args.benchmark)
 
-    import pdb ; pdb.set_trace()
+
     # Make a dictionary with all the bundles that need to be histogram merged
     histNums = []
     for bundle in bundleList:
@@ -1156,6 +1156,17 @@ if __name__=="__main__":
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
+    # Do the ones that need a different table
+    for bundleL,table in zip( [slewStateBL, slewMaxSpeedsBL, slewActivitiesBL ],['SlewState', 'SlewMaxSpeeds','SlewActivities']):
+        bds = utils.bundleList2Dicts(bundleL)
+        for bd in bds:
+            group = metricBundles.MetricBundleGroup(bd, opsdb, outDir=args.outDir,
+                                                    resultsDb=resultsDb, dbTable=table)
+            group.runAll()
+            group.plotAll()
+
+
+    # Can we do this loop in parallel? I _really_ want to do this in parallel.
     for bdict in bundleDicts:
         group = metricBundles.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
         if args.plotOnly:
@@ -1172,3 +1183,8 @@ if __name__=="__main__":
         ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
         ph.setMetricBundles(histBundleDict[histNum])
         ph.plot(plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
+
+
+
+
+    utils.writeConfigs(opsdb, args.outDir)

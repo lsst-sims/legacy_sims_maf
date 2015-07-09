@@ -8,6 +8,7 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 from lsst.sims.maf.plots import PlotHandler
 from .metricBundle import MetricBundle
+import warnings
 
 __all__ = ['makeBundleDict', 'MetricBundleGroup']
 
@@ -33,7 +34,8 @@ class MetricBundleGroup(object):
     run all reduce functions, and write all metricbundles to disk.
     Thus, it also tracks the 'outDir' and 'resultsDb'.
     """
-    def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True, saveEarly=True):
+    def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
+                 saveEarly=True, dbTable='Summary'):
         """
         Set up the MetricBundleGroup, check that all MetricBundles have the same sql constraint.
         """
@@ -45,6 +47,8 @@ class MetricBundleGroup(object):
         self.outDir = outDir
         if not os.path.isdir(self.outDir):
             os.makedirs(self.outDir)
+        # set the table we're going to be quering
+        self.dbTable = dbTable
         # Do some type checking on the MetricBundle dictionary.
         if not isinstance(bundleDict, dict):
             raise ValueError('BundleDict should be a dictionary containing MetricBundle objects.')
@@ -94,7 +98,15 @@ class MetricBundleGroup(object):
         if self.verbose:
             print "Querying database with constraint %s" % self.sqlconstraint
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        self.simData = utils.getSimData(self.dbObj, self.sqlconstraint, self.dbCols)
+        if self.dbTable != 'Summary':
+            distinctExpMJD = False
+            groupBy = None
+        else:
+            distinctExpMJD = True
+            groupBy='expMJD'
+        self.simData = utils.getSimData(self.dbObj, self.sqlconstraint, self.dbCols,
+                                        tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
+                                        groupBy=groupBy)
         if self.verbose:
             print "Found %i visits" % self.simData.size
 
@@ -176,6 +188,7 @@ class MetricBundleGroup(object):
         """
         if self.simData is None:
             self.getData()
+
         for compatibleList in self.compatibleLists:
             if self.verbose:
                 print 'Running: ', compatibleList
@@ -329,7 +342,11 @@ class MetricBundleGroup(object):
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.bundleDict.itervalues():
-            b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            # Check that there are metric values to plot
+            if np.size(b.metricValues.compressed()) > 0:
+                b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            else:
+                warnings.warn('Skipping metric=%s, sql=%s.  No valid metric values to plot' % (b.metric.name, b.sqlconstraint))
             if closefigs:
                 plt.close('all')
         if self.verbose:

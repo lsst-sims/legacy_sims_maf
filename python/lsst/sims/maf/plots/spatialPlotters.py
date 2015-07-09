@@ -223,7 +223,7 @@ class BaseHistogram(BasePlotter):
         if plotDict['zp']:
             metricValue = metricValueIn.compressed() - plotDict['zp']
         elif plotDict['normVal']:
-            metricValue = metricValueIn.compressed()/normVal
+            metricValue = metricValueIn.compressed()/plotDict['normVal']
         else:
             metricValue = metricValueIn.compressed()
         # Determine percentile clipped X range, if set. (and xmin/max not set).

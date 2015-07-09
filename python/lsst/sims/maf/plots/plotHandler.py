@@ -28,8 +28,8 @@ class PlotHandler(object):
         self.dpi = dpi
         self.thumbnail = thumbnail
         self.filtercolors = {'u':'b', 'g':'g', 'r':'y',
-                             'i':'r', 'z':'m', 'y':'k'}
-        self.filterorder = {'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
+                             'i':'r', 'z':'m', 'y':'k', ' ':None}
+        self.filterorder = {' ':-1,'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
 
     def setMetricBundles(self, mBundles):
         """

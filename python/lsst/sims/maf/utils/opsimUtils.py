@@ -3,6 +3,7 @@
 import os
 import numpy as np
 from .outputUtils import printDict
+import warnings
 
 __all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
@@ -95,15 +96,18 @@ def getFieldData(opsimDb, sqlconstraint):
         fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)
     return fieldData
 
-def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None):
+def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary', distinctExpMJD=True,
+               groupBy='expMJD'):
     """
     Query the opsim database for the necessary simdata columns, run any needed stackers,
     return simdata array.
+
     """
     # Get data from database.
-    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint)
+    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint, tableName=tableName,
+                                      distinctExpMJD=distinctExpMJD, groupBy=groupBy)
     if len(simData) == 0:
-        raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
+        warnings.warn('No simdata found matching constraint %s' %(sqlconstraint))
     # Now add the stacker columns.
     if stackers is not None:
         for s in stackers:
