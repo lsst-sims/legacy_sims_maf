@@ -187,18 +187,31 @@ class TestOneDSlicerEqual(unittest.TestCase):
         dv2 = makeDataValues(nvalues+100, dvmin, dvmax, random=True)
         testslicer2 = OneDSlicer(sliceColName='testdata', bins=bins)
         testslicer2.setupSlicer(dv2)
-        self.assertEqual(self.testslicer, testslicer2)
+        self.assertTrue(self.testslicer == testslicer2)
+        self.assertFalse(self.testslicer != testslicer2)
         # Set up another slicer that should not match (different bins)
         dv2 = makeDataValues(nvalues, dvmin+1, dvmax+1, random=True)
         testslicer2 = OneDSlicer(sliceColName='testdata', bins=len(bins))
         testslicer2.setupSlicer(dv2)
-        self.assertNotEqual(self.testslicer, testslicer2)
+        self.assertTrue(self.testslicer != testslicer2)
+        self.assertFalse(self.testslicer == testslicer2)
         # Set up a different kind of slicer that should not match.
         dv2 = makeDataValues(100, 0, 1, random=True)
         testslicer2 = UniSlicer()
         testslicer2.setupSlicer(dv2)
-        self.assertNotEqual(self.testslicer, testslicer2)
-
+        self.assertTrue(self.testslicer != testslicer2)
+        self.assertFalse(self.testslicer == testslicer2)
+        # Get another oneDslicer that is not set up, and check equivalence.
+        testslicer2 = OneDSlicer(sliceColName='testdata')
+        self.assertTrue(self.testslicer != testslicer2)
+        self.assertFalse(self.testslicer == testslicer2)
+        testslicer2 = OneDSlicer(sliceColName='testdata', binMin=0, binMax=1, binsize=0.5)
+        testslicer3 = OneDSlicer(sliceColName='testdata', binMin=0, binMax=1, binsize=0.5)
+        self.assertTrue(testslicer2 == testslicer3)
+        self.assertFalse(testslicer2 != testslicer3)
+        testslicer3 = OneDSlicer(sliceColName='testdata', binMin=0, binMax=1)
+        self.assertFalse(testslicer2 == testslicer3)
+        self.assertTrue(testslicer2 != testslicer3)
 
 class TestOneDSlicerSlicing(unittest.TestCase):
     def setUp(self):
