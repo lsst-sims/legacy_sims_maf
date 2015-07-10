@@ -1203,7 +1203,7 @@ if __name__=="__main__":
         ph.setMetricBundles(histBundleDict[histNum])
         ph.setPlotDict(plotDict=histBundleDict[histNum][0].histMerge,
                        plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
-        ph.plot()
+        ph.plot(histBundleDict[histNum][0].histMerge['mergeFunc'])
         plt.close('all')
 
 
