@@ -63,7 +63,8 @@ class HealpixSlicer(BaseSpatialSlicer):
             if otherSlicer.nside == self.nside:
                 if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
                     if otherSlicer.radius == self.radius:
-                        result = True
+                        if otherSlicer.useCamera == self.useCamera:
+                            result = True
         return result
 
     def _pix2radec(self, islice):
