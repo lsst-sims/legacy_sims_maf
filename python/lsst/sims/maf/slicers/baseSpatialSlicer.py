@@ -108,7 +108,6 @@ class BaseSpatialSlicer(BaseSlicer):
         mapper = LsstSimMapper()
         self.camera = mapper.camera
         self.epoch = 2000.0
-        self.obs_metadata = ObservationMetaData(m5=0., bandpassName='g')
 
     def _presliceFootprint(self, simData):
         """Loop over each pointing and find which sky points are observed """
@@ -125,18 +124,18 @@ class BaseSpatialSlicer(BaseSlicer):
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
-                self.obs_metadata.unrefractedRA = ra
-                self.obs_metadata.unrefractedDec = dec
-                self.obs_metadata.rotSkyPos = rotSkyPos
-                self.obs_metadata.mjd = mjd
+                obs_metadata = ObservationMetaData(unrefractedRA=np.degrees(ra),
+                                                   unrefractedDec=np.degrees(dec),
+                                                   rotSkyPos=np.degrees(rotSkyPos),
+                                                   mjd=mjd)
                 # Correct ra,dec for refraction (because this is automatically done within findChipNames for the boresight)
                 raCorr, decCorr = observedFromICRS(self.slicePoints['ra'][hpIndices],
                                                    self.slicePoints['dec'][hpIndices],
-                                                   obs_metadata=self.obs_metadata,
+                                                   obs_metadata=obs_metadata,
                                                    epoch=self.epoch)
                 chipNames = findChipName(ra=raCorr,dec=decCorr,
                                          epoch=self.epoch,
-                                         camera=self.camera, obs_metadata=self.obs_metadata)
+                                         camera=self.camera, obs_metadata=obs_metadata)
                 # Find the healpixels that fell on a chip for this pointing
                 hpOnChip = hpIndices[np.where(chipNames != [None])[0]]
                 for i in hpOnChip:
