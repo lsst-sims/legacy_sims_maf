@@ -406,10 +406,12 @@ class PlotHandler(object):
         fignum = None
         i = 0
         for mB in self.mBundles:
-            self.plotDict['label'] = self.plotDict['labels'][i]
-            self.plotDict['color'] = self.plotDict['colors'][i]
-            fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
-            i += 1
+            # Do not try to plot empty metrics
+            if np.size(mB.metricValues.compressed()) > 0:
+                self.plotDict['label'] = self.plotDict['labels'][i]
+                self.plotDict['color'] = self.plotDict['colors'][i]
+                fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
+                i += 1
         if len(self.mBundles) > 1:
             plotType = 'Combo' + plotType
             plt.figure(fignum)
