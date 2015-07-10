@@ -100,6 +100,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
     onlyHist = {'plotFuncs':'plotHistogram'}
 
 
+    opsimHistPlot = plots.OpsimHistogram()
+
     ###
     # Configure some standard summary statistics dictionaries to apply to appropriate metrics.
     # Note there's a complication here, you can't configure multiple versions of a summary metric since that makes a
@@ -186,7 +188,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                          'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
             histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                        'binsize':5, 'xMin':nvisitsMin, 'xMax':nvisitsMax,
-                       'legendloc':'upper right'}
+                       'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
             histNum += 1
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, metadata=metadata,
@@ -200,7 +202,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                       'units':'coadded m5 - %.1f' %mag_zp}
             summaryStats=allStats
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'binsize':.02}
+                       'color':colors[f], 'label':'%s' %f, 'binsize':.02, 'mergeFunc':opsimHistPlot}
             displayDict={'group':coaddeddepthgroup, 'subgroup':subgroup,
                          'order':filtorder[f],
                          'caption':
@@ -226,7 +228,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Number of visits / benchmark',
                            'binsize':.05, 'xMin':0.475, 'xMax':1.525,
-                           'legendloc':'upper right'}
+                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
                 histNum += 1
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
@@ -341,7 +343,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                              %(f, propCaption)}
                 histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
                            'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
-                           'cumulative':-1}
+                           'cumulative':-1, 'mergeFunc':opsimHistPlot}
                 histNum += 1
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
@@ -388,7 +390,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                          'caption':'Number of visits per opsim field in %s filter, for %s.'
                          %(f, propids[propid])}
             histMerge={'histNum':histNum, 'legendloc':'upper right', 'color':colors[f],
-                       'label':'%s' %f, 'binsize':5}
+                       'label':'%s' %f, 'binsize':5, 'mergeFunc':opsimHistPlot}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, metadata=metadata,
                                                 summaryMetrics=summaryStats)
@@ -410,7 +412,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                          'order':filtorder[f] + propOrder,
                          'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)}
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'binsize':5}
+                       'color':colors[f], 'label':'%s' %f, 'binsize':5, 'mergeFunc':opsimHistPlot}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, metadata=metadata,
                                                 summaryMetrics=summaryStats)
@@ -462,7 +464,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
 
 
     ## Histograms of individual output values of Opsim. (one-d slicers).
-
+    histFunc = plots.OneDBinnedData()
     # Histograms per filter for All & WFD only (generally used to produce merged histograms).
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD']):
@@ -486,7 +488,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit five sigma limiting magnitude (individual image depth).
             metric = metrics.CountMetric(col='fiveSigmaDepth', metricName='Single Visit Depth Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s'%f}
+                       'color':colors[f], 'label':'%s'%f, 'mergeFunc':histFunc}
             displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the single visit depth in %s band, %s.' %(f, propCaption)}
             histNum += 1
@@ -500,7 +502,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit sky brightness.
             metric = metrics.CountMetric(col='filtSkyBrightness', metricName='Sky Brightness Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s'%f}
+                       'color':colors[f], 'label':'%s'%f, 'mergeFunc':histFunc}
             displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the sky brightness in %s band, %s.' %(f, propCaption)}
             histNum += 1
@@ -515,7 +517,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit seeing.
             metric = metrics.CountMetric(col='finSeeing', metricName='Seeing Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s'%f}
+                       'color':colors[f], 'label':'%s'%f, 'mergeFunc':histFunc}
             displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the seeing in %s band, %s.' %(f, propCaption)}
             histNum += 1
@@ -529,7 +531,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit airmass values.
             metric = metrics.CountMetric(col='airmass', metricName='Airmass Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'xMin':1.0, 'xMax':2.0}
+                       'color':colors[f], 'label':'%s' %f, 'xMin':1.0, 'xMax':2.0, 'mergeFunc':histFunc}
             displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the airmass in %s band, %s' %(f, propCaption)}
             histNum += 1
@@ -543,7 +545,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit normalized airmass values.
             metric = metrics.CountMetric(col='normairmass', metricName='Normalized Airmass Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'xMin':1.0, 'xMax':2.0}
+                       'color':colors[f], 'label':'%s' %f, 'xMin':1.0, 'xMax':2.0, 'mergeFunc':histFunc}
             displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the normalized airmass in %s band, %s' %(f, propCaption)}
             histNum += 1
@@ -556,7 +558,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit hour angle values.
             metric = metrics.CountMetric(col='HA', metricName='Hour Angle Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'xMin':-6., 'xMax':6}
+                       'color':colors[f], 'label':'%s' %f, 'xMin':-6., 'xMax':6, 'mergeFunc':histFunc}
             displayDict={'group':houranglegroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the hour angle in %s band, %s' %(f, propCaption)}
             histNum += 1
@@ -570,7 +572,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the sky position angles (rotSkyPos)
             metric = metrics.CountMetric(col='rotSkyPos', metricName='Position Angle Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'xMin':0., 'xMax':float(np.pi*2.)}
+                       'color':colors[f], 'label':'%s' %f, 'xMin':0.,
+                       'xMax':float(np.pi*2.), 'mergeFunc':histFunc}
             displayDict={'group':rotatorgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the position angle (in radians) in %s band, %s. The position angle is the angle between "up" in the image and North on the sky.' %(f, propCaption)}
             histNum += 1
@@ -585,7 +588,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             metric = metrics.CountMetric(col='dist2Moon', metricName='Distance to Moon Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
                        'color':colors[f], 'label':'%s'%f,
-                       'xMin':float(np.radians(15.)), 'xMax':float(np.radians(180.))}
+                       'xMin':float(np.radians(15.)), 'xMax':float(np.radians(180.)),
+                       'mergeFunc':histFunc}
             displayDict={'group':dist2moongroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the distance between the field and the moon (in radians) in %s band, %s' %(f, propCaption)}
             histNum += 1
