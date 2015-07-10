@@ -1156,6 +1156,8 @@ if __name__=="__main__":
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
+    import pdb ; pdb.set_trace()
+
     # Do the ones that need a different table
     for bundleL,table in zip( [slewStateBL, slewMaxSpeedsBL, slewActivitiesBL ],['SlewState', 'SlewMaxSpeeds','SlewActivities']):
         bds = utils.bundleList2Dicts(bundleL)
