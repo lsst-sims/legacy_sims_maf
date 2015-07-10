@@ -480,6 +480,8 @@ if __name__=="__main__":
         # Need to plot up the merged histograms and write them to the resultsDb.
         ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
         ph.setMetricBundles(histBundleDict[histNum])
-        ph.plot(plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
+        ph.setPlotDict(plotDict=histBundleDict[histNum][0].histMerge,
+                       plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
+        ph.plot()
 
     utils.writeConfigs(opsdb, args.outDir)

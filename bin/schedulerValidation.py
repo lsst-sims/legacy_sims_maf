@@ -243,6 +243,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
@@ -257,6 +258,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the median delivered seeing.
@@ -270,6 +272,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the median airmass.
@@ -277,6 +280,11 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 plotDict={'units':'X'}
                 displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':'Median airmass in filter %s, %s.' %(f, propCaption)}
+                bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                    displayDict=displayDict, metadata=metadata,
+                                                    summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
+                bundle.histMerge = histMerge
                 # Calculate the median normalized airmass.
                 metric = metrics.MedianMetric(col='normairmass')
                 plotDict={'units':'X'}
@@ -286,6 +294,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the maximum airmass.
@@ -296,6 +305,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the mean of the hour angle.
@@ -307,6 +317,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the Full Range of the hour angle.
@@ -318,6 +329,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
                 # Calculate the RMS of the position angle
@@ -329,6 +341,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
+                histMerge['histNum'] += 1
                 bundle.histMerge = histMerge
                 bundleList.append(bundle)
 
@@ -467,6 +480,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
     histFunc = plots.OneDBinnedData()
     # Histograms per filter for All & WFD only (generally used to produce merged histograms).
     startNum = histNum
+    plotDict=None
     for i, prop in enumerate(['All Props', 'WFD']):
         for f in filters:
             # Set some per-proposal information.
@@ -558,7 +572,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design',
             # Histogram the individual visit hour angle values.
             metric = metrics.CountMetric(col='HA', metricName='Hour Angle Histogram')
             histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'xMin':-6., 'xMax':6, 'mergeFunc':histFunc}
+                       'color':colors[f], 'label':'%s' %f, 'xMin':-10., 'xMax':10, 'mergeFunc':histFunc}
             displayDict={'group':houranglegroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the hour angle in %s band, %s' %(f, propCaption)}
             histNum += 1
@@ -1160,8 +1174,6 @@ if __name__=="__main__":
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
-    import pdb ; pdb.set_trace()
-
     # Do the ones that need a different table
     for bundleL,table in zip( [slewStateBL, slewMaxSpeedsBL, slewActivitiesBL ],['SlewState', 'SlewMaxSpeeds','SlewActivities']):
         bds = utils.bundleList2Dicts(bundleL)
@@ -1181,6 +1193,7 @@ if __name__=="__main__":
         else:
             group.runAll()
         group.plotAll()
+        plt.close('all')
         # Might consider killing bdict here to free up memory? Any bundles I want for later will
         # be persisted in the histBundleDict.
 
@@ -1188,8 +1201,10 @@ if __name__=="__main__":
         # Need to plot up the merged histograms and write them to the resultsDb.
         ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
         ph.setMetricBundles(histBundleDict[histNum])
-        ph.plot(plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
-
+        ph.setPlotDict(plotDict=histBundleDict[histNum][0].histMerge,
+                       plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
+        ph.plot()
+        plt.close('all')
 
 
 
