@@ -129,7 +129,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 self.obs_metadata.unrefractedDec = dec
                 self.obs_metadata.rotSkyPos = rotSkyPos
                 self.obs_metadata.mjd = mjd
-                # Correct ra,dec for
+                # Correct ra,dec for refraction (because this is automatically done within findChipNames for the boresight)
                 raCorr, decCorr = observedFromICRS(self.slicePoints['ra'][hpIndices],
                                                    self.slicePoints['dec'][hpIndices],
                                                    obs_metadata=self.obs_metadata,

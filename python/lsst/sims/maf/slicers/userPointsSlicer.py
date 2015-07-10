@@ -6,8 +6,9 @@ __all__ = ['UserPointsSlicer']
 
 class UserPointsSlicer(BaseSpatialSlicer):
     """Use spatial slicer on a user provided point """
-    def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
-                 badval=-666, leafsize=100, radius=1.75, ra=None, dec=None, **kwargs):
+    def __init__(self, ra, dec, verbose=True, lonCol='fieldRA', latCol='fieldDec',
+                 badval=-666, leafsize=100, radius=1.75,
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """
         ra = list of ra points to use
         dec = list of dec points to use
@@ -15,15 +16,31 @@ class UserPointsSlicer(BaseSpatialSlicer):
 
         super(UserPointsSlicer,self).__init__(verbose=verbose,
                                                 lonCol=lonCol, latCol=latCol,
-                                                badval=badval, radius=radius, leafsize=leafsize, **kwargs)
+                                                badval=badval, radius=radius, leafsize=leafsize,
+                                                useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
+                                                mjdColName=mjdColName)
 
         # check that ra and dec are iterable, if not, they are probably naked numbers, wrap in list
         if not hasattr(ra, '__iter__'):
             ra = [ra]
         if not hasattr(dec, '__iter__'):
             dec = [dec]
+        if len(ra) != len(dec):
+            raise ValueError('RA and Dec must be the same length')
         self.nslice = np.size(ra)
         self.slicePoints['sid'] = np.arange(np.size(ra))
         self.slicePoints['ra'] = np.array(ra)
         self.slicePoints['dec'] = np.array(dec)
         self.plotFuncs = [BaseSkyMap, BaseHistogram]
+
+    def __eq__(self, otherSlicer):
+        """Evaluate if two slicers are equivalent."""
+        result = False
+        if isinstance(otherSlicer, UserPointsSlicer):
+            if otherSlicer.nslice == self.nslice:
+                if np.all(otherSlicer.ra == self.ra) and np.all(otherSlicer.dec == self.dec):
+                    if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
+                        if otherSlicer.radius == self.radius:
+                            if otherSlicer.useCamera == self.useCamera:
+                                result = True
+        return result
