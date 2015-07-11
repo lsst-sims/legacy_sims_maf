@@ -8,7 +8,6 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
-import lsst.sims.maf.plots as plotters
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
@@ -98,9 +97,6 @@ def makeBundleList(dbFile, benchmark='design'):
     #  the rest of slicerkwargs.
     onlyHist = {'plotFuncs':'plotHistogram'}
 
-
-    opsimHistPlot = plots.OpsimHistogram()
-
     ###
     # Configure some standard summary statistics dictionaries to apply to appropriate metrics.
     # Note there's a complication here, you can't configure multiple versions of a summary metric since that makes a
@@ -139,9 +135,19 @@ def makeBundleList(dbFile, benchmark='design'):
     totalNVisits = opsimdb.fetchNVisits()
     totalSlewN = opsimdb.fetchTotalSlewN()
 
-    histNum = 0
-## Metrics calculating values across the sky (opsim slicer).
+    # Set up an object to hold all the bundles that will be merged together
+    opsimHistPlot = plots.OpsimHistogram()
+    mergedHistDict = {'skyCount':plots.PlotBundle(plotFunc=opsimHistPlot),
+                      '': }
+    keys = ['skyCount', 'skyM5Coadd']
+    for prop in ['All Props', 'WFD', 'DD']:
+        for key in keys:
+            mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=opsimHistPlot)
+
+
+    ## Metrics calculating values across the sky (opsim slicer).
     # Loop over a set of standard analysis metrics, for All Proposals, WFD only, and DD only.
+
 
     startNum = histNum
     for i, prop in enumerate(['All Props', 'WFD', 'DD']):
@@ -185,32 +191,36 @@ def makeBundleList(dbFile, benchmark='design'):
             summaryStats=allStats
             displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
-            histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+            histMerge={'color':colors[f], 'label':'%s'%(f),
                        'binsize':5, 'xMin':nvisitsMin, 'xMax':nvisitsMax,
-                       'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-            histNum += 1
+                       'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, metadata=metadata,
                                                 summaryMetrics=summaryStats)
-            bundle.histMerge = histMerge
+            mergedHistDict[prop+'skyCount'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
+            # Make a cumulative plot if it's WFD
+            if prop == 'WFD':
+                histMerge={'units':'Number of Visits', 'color':colors[f], 'label':'%s'%(f),
+                           'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
+                           'cumulative':-1}
+                mergedHistDict[prop+'skyCountCumul'].addBundle(bundle,plotDict=histMerge)
 
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metric = metrics.Coaddm5Metric()
             plotDict={'zp':mag_zp, 'xMin':-0.6, 'xMax':0.6,
                       'units':'coadded m5 - %.1f' %mag_zp}
             summaryStats=allStats
-            histMerge={'histNum':histNum, 'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'binsize':.02, 'mergeFunc':opsimHistPlot}
+            histMerge={'legendloc':'upper right',
+                       'color':colors[f], 'label':'%s' %f, 'binsize':.02}
             displayDict={'group':coaddeddepthgroup, 'subgroup':subgroup,
                          'order':filtorder[f],
                          'caption':
                          'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, mag_zp, propCaption)}
-            histNum += 1
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, metadata=metadata,
                                                 summaryMetrics=summaryStats)
-            bundle.histMerge = histMerge
+            mergedHistDict[prop+'skyM5Coadd'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
             # Only calculate the rest of these metrics for NON-DD proposals.
             if prop != 'DD':
@@ -224,15 +234,14 @@ def makeBundleList(dbFile, benchmark='design'):
                              'order':filtorder[f],
                              'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
                              %(f, benchmark, benchmarkVals['nvisits'][f], propCaption)}
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Number of visits / benchmark',
                            'binsize':.05, 'xMin':0.475, 'xMax':1.525,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
+                           'legendloc':'upper right'}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                bundle.histMerge = histMerge
+                mergedHistDict[prop+'notDDskyCount'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median individual visit five sigma limiting magnitude (individual image depth).
                 metric= metrics.MedianMetric(col='fiveSigmaDepth')
@@ -243,12 +252,11 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Median 5-sigma depth (mags)',
                            'binsize':.05, 'xMin':0.475, 'xMax':1.525,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'notDDskyMedianDepth'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
                 metric = metrics.MedianMetric(col='filtSkyBrightness')
@@ -262,11 +270,10 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'binsize':.05, 'xMin':-2, 'xMax':2,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'notDDskyMedianskyBright'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median delivered seeing.
                 metric = metrics.MedianMetric(col='finSeeing')
@@ -279,12 +286,11 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Seeing/benchmark seeing',
                            'binsize':.05, 'xMin':0.475, 'xMax':1.525,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'MedianSeeing'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median airmass.
                 metric = metrics.MedianMetric(col='airmass')
@@ -294,12 +300,11 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                           'xlabel':'Median Airmass',
-                           'binsize':.05,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                histMerge={'color':colors[f], 'label':'%s'%(f),
+                           'xlabel':'Median Airmass', 'binsize':.05,
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'MedianAirmass'].addBundle(bundle,plotDict=histMerge)
+                bundleList.append(bundle)
                 # Calculate the median normalized airmass.
                 metric = metrics.MedianMetric(col='normairmass')
                 plotDict={'units':'X'}
@@ -309,12 +314,10 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                           'xlabel':'Median Normalized Airmass',
-                           'binsize':.05,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                histMerge={'color':colors[f], 'label':'%s'%(f),
+                           'xlabel':'Median Normalized Airmass', 'binsize':.05,
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'MedianNormAirmass'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the maximum airmass.
                 metric = metrics.MaxMetric(col='airmass')
@@ -324,12 +327,10 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                           'xlabel':'Max Airmass',
-                           'binsize':.05,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                histMerge={'color':colors[f], 'label':'%s'%(f),
+                           'xlabel':'Max Airmass', 'binsize':.05,
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'MaxAirmass'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the mean of the hour angle.
                 metric = metrics.MeanMetric(col='HA')
@@ -340,12 +341,10 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Mean Hour Angle (Hours)',
-                           'binsize':.05,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                           'binsize':.05, 'legendloc':'upper right'}
+                mergedHistDict[prop+'MeanHA'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the Full Range of the hour angle.
                 metric = metrics.FullRangeMetric(col='HA')
@@ -356,12 +355,11 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Full Hour Angle Range',
                            'binsize':.05,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'FullRangeHA'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the RMS of the position angle
                 metric = metrics.RmsAngleMetric(col='rotSkyPos')
@@ -372,31 +370,12 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'color':colors[f], 'label':'%s'%(f),
                            'binsize':.05,
-                           'legendloc':'upper right', 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle.histMerge = histMerge
+                           'legendloc':'upper right'}
+                mergedHistDict[prop+'RMSrotSkyPos'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
 
-
-            # Tack on an extra copy of Nvisits with a cumulative histogram for WFD.
-            if prop == 'WFD':
-                metric = metrics.CountMetric(col='expMJD', metricName='Nvisits cumulative')
-                plotDict={'units':'Number of Visits','xMin':0,
-                          'xMax':nvisitsMax, 'binsize':5, 'cumulative':-1}
-                displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
-                             'caption':'Cumulative number of visits in filter %s, %s.'
-                             %(f, propCaption)}
-                histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
-                           'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
-                           'cumulative':-1, 'mergeFunc':opsimHistPlot}
-                histNum += 1
-                bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                                    displayDict=displayDict, metadata=metadata,
-                                                    summaryMetrics=summaryStats)
-                bundle.histMerge = histMerge
-                bundleList.append(bundle)
 
 
     # Count the number of visits in all filters together, WFD only.
@@ -1241,8 +1220,8 @@ if __name__=="__main__":
             group.runAll()
         group.plotAll()
         plt.close('all')
-        # Might consider killing bdict here to free up memory? Any bundles I want for later will
-        # be persisted in the histBundleDict.
+        # Might consider killing bdict here to free up memory? Any bundles I want for later should
+        # be persisted in the histBundleDict?
 
     for histNum in histBundleDict:
         # Need to plot up the merged histograms and write them to the resultsDb.

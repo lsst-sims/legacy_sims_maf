@@ -385,9 +385,11 @@ class PlotHandler(object):
               % (self.jointMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
             return displayDict
 
-    def plot(self, plotFunc, plotDict=None, outfileSuffix=None):
+    def plot(self, plotFunc, plotDict=None, plotDicts=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
+
+        plotDicts:  List of plotDicts if one wants to use a _new_ plotDict per MetricBundle.
         """
         if not plotFunc.objectPlotter:
             for mB in self.mBundles:
@@ -404,14 +406,21 @@ class PlotHandler(object):
         plotType = plotFunc.plotType
         # Make plot.
         fignum = None
-        i = 0
-        for mB in self.mBundles:
+        for i,mB in enumerate(self.mBundles):
             # Do not try to plot empty metrics
             if np.size(mB.metricValues.compressed()) > 0:
-                self.plotDict['label'] = self.plotDict['labels'][i]
-                self.plotDict['color'] = self.plotDict['colors'][i]
-                fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
-                i += 1
+                if plotDicts is None:
+                    self.plotDict['label'] = self.plotDict['labels'][i]
+                    self.plotDict['color'] = self.plotDict['colors'][i]
+                    fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
+                else:
+                    tmpPD = {}
+                    for key in self.plotDict:
+                        tmpPD[key] = self.plotDict[key]
+                    for key in plotDicts[i]:
+                        tmpPD[key] = plotDicts[i][key]
+                    fignum = plotFunc(mB.metricValues, mB.slicer, tmpPD, fignum=fignum)
+
         if len(self.mBundles) > 1:
             plotType = 'Combo' + plotType
             plt.figure(fignum)
