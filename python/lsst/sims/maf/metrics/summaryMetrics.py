@@ -169,10 +169,10 @@ class TotalPowerMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         # Calculate the power spectrum.
         if self.removeDipole:
-            cl = hp.anafast(hp.remove_dipole(dataSlice[self.colname]))
+            cl = hp.anafast(hp.remove_dipole(dataSlice[self.colname], verbose=False))
         else:
             cl = hp.anafast(dataSlice[self.colname])
-        l = np.arange(np.size(cl))
-        condition = np.where((l <= self.lmax) & (l >= self.lmin))[0]
-        totalpower = np.sum(cl[condition]*l[condition]*(l[condition]+1)/2.0/np.pi)
+        ell = np.arange(np.size(cl))
+        condition = np.where((ell <= self.lmax) & (ell >= self.lmin))[0]
+        totalpower = np.sum(cl[condition]*(2*ell[condition]+1))
         return totalpower
