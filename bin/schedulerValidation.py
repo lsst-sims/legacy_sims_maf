@@ -1201,18 +1201,12 @@ if __name__=="__main__":
         group.plotAll()
         plt.close('all')
         # Might consider killing bdict here to free up memory? Any bundles I want for later should
-        # be persisted in the histBundleDict?
-
-    import pdb ; pdb.set_trace()
+        # be persisted in the mergedHistDict?
 
     for key in mergedHistDict:
-        # Need to plot up the merged histograms and write them to the resultsDb.
-        ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
-        ph.setMetricBundles(mergedHistDict[key].bundleList)
-        ph.setPlotDict(plotDict=None,
-                       plotFunc=mergedHistDict[key].plotFunc)
-        ph.plot(mergedHistDict[key].plotFunc)
-        plt.close('all')
-
+        try:
+            mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
+        except:
+            import pdb ; pdb.set_trace()
 
     utils.writeConfigs(opsdb, args.outDir)

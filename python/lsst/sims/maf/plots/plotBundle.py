@@ -45,7 +45,7 @@ class PlotBundle(object):
             self.plotFunc = plotFunc
 
     def plot(self, outDir='Out', resultsDb=None, closeFigs=True):
-        ph = PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
+        ph = PlotHandler(outDir=outDir, resultsDb=resultsDb)
         ph.setMetricBundles(self.bundleList)
         ph.setPlotDict(plotDict=self.plotDicts[0], plotFunc=self.plotFunc)
         ph.plot(self.plotFunc, plotDicts=self.plotDicts)

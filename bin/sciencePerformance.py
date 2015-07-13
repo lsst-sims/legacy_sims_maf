@@ -102,9 +102,18 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     uniformitygroup = 'C: Uniformity'
     seeinggroup = 'D: Seeing distribution'
 
-    histNum = 0
+
+    # Set up an object to hold all the bundles that will be merged together
+    mergedHistDict = {}
+
     # Set the histogram merge function.
     mergeFunc = plots.HealpixHistogram()
+
+    keys = ['NVisits', 'coaddm5', 'NormEffTime', 'Minseeing', 'seeingAboveLimit', 'minAirmass',
+            'fracAboveAirmass']
+
+    for key in keys:
+        mergedHistDict[key] = plots.PlotBundle(plotFunc=mergeFunc)
 
     # Calculate the fO metrics for all proposals and WFD only.
     order = 0
@@ -291,13 +300,11 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             bundleList.append(bundle)
 
     # Depth metrics.
-    startNum = histNum
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     for f in filters:
         propCaption = '%s band, all proposals %s' %(f, slicermetadata)
         sqlconstraint = 'filter = "%s"' %(f)
         metadata = '%s band' %(f) + slicermetadata
-        histNum = startNum
         # Number of visits.
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
         plotDict={'units':'Number of visits',
@@ -306,55 +313,48 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
         summaryStats=allStats
         displayDict={'group':depthgroup, 'subgroup':'Nvisits', 'order':filtorder[f],
                      'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
-        histMerge={'histNum':histNum, 'color':colors[f], 'label':'%s'%(f),
+        histMerge={'color':colors[f], 'label':'%s'%(f),
                    'binsize':5,
                    'xMin':nvisitsRange['all'][f][0], 'xMax':nvisitsRange['all'][f][1],
-                   'legendloc':'upper right', 'mergeFunc':mergeFunc}
-        histNum += 1
+                   'legendloc':'upper right'}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-        bundle.histMerge = histMerge
+        mergedHistDict['NVisits'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
         # Coadded depth.
         metric = metrics.Coaddm5Metric()
         plotDict={'zp':benchmarkVals['coaddedDepth'][f], 'xMin':-0.8, 'xMax':0.8,
                   'units':'coadded m5 - %.1f' %benchmarkVals['coaddedDepth'][f]}
         summaryStats=allStats
-        histMerge={'histNum':histNum, 'legendloc':'upper right',
-                   'color':colors[f], 'label':'%s' %f, 'binsize':.02, 'mergeFunc':mergeFunc}
+        histMerge={'legendloc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':.02}
         displayDict={'group':depthgroup, 'subgroup':'Coadded Depth',
                      'order':filtorder[f],'caption':
                      'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, benchmarkVals['coaddedDepth'][f], propCaption)}
-        histNum += 1
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-        bundle.histMerge = histMerge
+        mergedHistDict['coaddm5'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
         # Effective time.
         metric = metrics.TeffMetric(metricName='Normalized Effective Time',normed=True)
         plotDict={'xMin':0.1, 'xMax':1.1}
         summaryStats=allStats
-        histMerge={'histNum':histNum, 'legendLoc':'upper right',
-                   'color':colors[f], 'label':'%s' %f, 'binsize':0.02, 'mergeFunc':mergeFunc}
+        histMerge={'legendLoc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':0.02}
         displayDict={'group':depthgroup, 'subgroup':'Time Eff.', 'order':filtorder[f],
                      'caption':'"Time Effective" in filter %s, calculated with fiducial depth %s. Normalized by the fiducial time effective, if every observation was at the fiducial depth.'
                      %(f, benchmarkVals['singleVisitDepth'][f])}
-        histNum += 1
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-        bundle.histMerge = histMerge
+        mergedHistDict['NormEffTime'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
 
     # Good seeing in r/i band metrics, including in first/second years.
-    startNum = histNum
     order = 0
     for tcolor, tlabel, timespan in zip(['k', 'g', 'r'], ['10 years', '1 year', '2 years'],
                                         ['', ' and night<=365', ' and night<=730']):
         order += 1
-        histNum = startNum
         for f in (['r', 'i']):
             sqlconstraint = 'filter = "%s" %s' %(f, timespan)
             propCaption = '%s band, all proposals %s, over %s.' %(f, slicermetadata, tlabel)
@@ -367,14 +367,12 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
                          'order':filtorder[f]*100+order,
                          'caption':'Minimum seeing values in %s.' %(propCaption)}
-            histMerge={'histNum':histNum, 'label':'%s %s' %(f, tlabel),
-                       'binsize':0.03, 'xMin':0.35, 'xMax':0.9, 'legendloc':'upper right',
-                       'mergeFunc':mergeFunc}
-            histNum += 1
+            histMerge={'label':'%s %s' %(f, tlabel), 'color':tcolor,
+                       'binsize':0.03, 'xMin':0.35, 'xMax':0.9, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-            bundle.histMerge = histMerge
+            mergedHistDict['Minseeing'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
 
             metric = metrics.FracAboveMetric(col='finSeeing', cutoff = seeing_limit)
@@ -384,13 +382,12 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                          'order':filtorder[f]*100+order,
                          'caption':'Fraction of total images with seeing worse than %.1f, in %s'
                          %(seeing_limit, propCaption)}
-            histMerge={'histNum':histNum, 'label':'%s %s' %(f, tlabel),
-                       'binsize':0.05, 'legendloc':'upper right', 'mergeFunc':mergeFunc}
-            histNum += 1
+            histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                       'binsize':0.05, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-            bundle.histMerge = histMerge
+            mergedHistDict['seeingAboveLimit'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
 
             metric = metrics.MinMetric(col='airmass')
@@ -399,13 +396,12 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             displayDict={'group':seeinggroup, 'subgroup':'Best Airmass',
                          'order':filtorder[f]*100+order, 'caption':
                          'Minimum airmass in %s.' %(propCaption)}
-            histMerge={'histNum':histNum, 'label':'%s %s' %(f, tlabel),
-                       'binsize':0.03, 'legendloc':'upper right', 'mergeFunc':mergeFunc}
-            histNum += 1
+            histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel),
+                       'binsize':0.03, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-            bundle.histMerge = histMerge
+            mergedHistDict['minAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
 
             metric= metrics.FracAboveMetric(col='airmass', cutoff=airmass_limit)
@@ -415,16 +411,15 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                          'order':filtorder[f]*100+order, 'caption':
                          'Fraction of total images with airmass higher than %.2f, in %s'
                          %(airmass_limit, propCaption)}
-            histMerge={'histNum':histNum, 'label':'%s %s' %(f, tlabel),
-                       'binsize':0.05, 'legendloc':'upper right', 'mergeFunc':mergeFunc}
-            histNum += 1
+            histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel), 'binsize':0.05, 'legendloc':'upper right'}
+
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, metadata=metadata,
                                             summaryMetrics=summaryStats)
-            bundle.histMerge = histMerge
+            mergedHistDict['fracAboveAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
 
-    return bundleList
+    return bundleList, mergedHistDict
 
 
 if __name__=="__main__":
@@ -445,21 +440,9 @@ if __name__=="__main__":
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
-    bundleList = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark,
-                                plotOnly=args.plotOnly)
+    bundleList, mergedHistDict = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark,
+                                                plotOnly=args.plotOnly)
 
-    # Make a dictionary with all the bundles that need to be histogram merged
-    histNums = []
-    for bundle in bundleList:
-        if hasattr(bundle, 'histMerge'):
-            histNums.append(bundle.histMerge['histNum'])
-    histNums = list(set(histNums))
-    histBundleDict={}
-    for num in histNums:
-        histBundleDict[num] = []
-    for bundle in bundleList:
-        if hasattr(bundle, 'histMerge'):
-            histBundleDict[bundle.histMerge['histNum']].append(bundle)
 
     bundleDicts = utils.bundleList2Dicts(bundleList)
     resultsDb = db.ResultsDb(outDir=args.outDir)
@@ -476,12 +459,10 @@ if __name__=="__main__":
         # Might consider killing bdict here to free up memory? Any bundles I want for later will
         # be persisted in the histBundleDict.
 
-    for histNum in histBundleDict:
-        # Need to plot up the merged histograms and write them to the resultsDb.
-        ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
-        ph.setMetricBundles(histBundleDict[histNum])
-        ph.setPlotDict(plotDict=histBundleDict[histNum][0].histMerge,
-                       plotFunc=histBundleDict[histNum][0].histMerge['mergeFunc'])
-        ph.plot(histBundleDict[histNum][0].histMerge['mergeFunc'])
+    for key in mergedHistDict:
+        try:
+            mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
+        except:
+            import pdb ; pdb.set_trace()
 
     utils.writeConfigs(opsdb, args.outDir)
