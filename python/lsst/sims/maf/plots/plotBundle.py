@@ -1,4 +1,4 @@
-import lsst.sims.maf.plots as plots
+from .plotHandler import PlotHandler
 import matplotlib.pylab as plt
 
 __all__=['PlotBundle']
@@ -18,9 +18,11 @@ class PlotBundle(object):
         """
         if bundleList is None:
             self.bundleList = []
+        else:
+            self.bundleList = bundleList
 
         if plotDicts is None:
-            if len(bundleList) > 0:
+            if len(self.bundleList) > 0:
                 self.plotDicts = [{}]
             else:
                 self.plotDicts = []
@@ -34,7 +36,7 @@ class PlotBundle(object):
         Add bundle to the object.
         Optionally add a plotDict and/or replace the plotFunc
         """
-        budlelist.append(bundle)
+        self.bundleList.append(bundle)
         if plotDict is not None:
             self.plotDicts.append(plotDict)
         else:
@@ -43,8 +45,8 @@ class PlotBundle(object):
             self.plotFunc = plotFunc
 
     def plot(self, outDir='Out', resultsDb=None, closeFigs=True):
-        ph = plots.PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
-        ph.setMetricBundles(self.metricBundles)
+        ph = PlotHandler(outDir=args.outDir, resultsDb=resultsDb)
+        ph.setMetricBundles(self.bundleList)
         ph.setPlotDict(plotDict=self.plotDicts[0], plotFunc=self.plotFunc)
         ph.plot(self.plotFunc, plotDicts=self.plotDicts)
         if closeFigs:
