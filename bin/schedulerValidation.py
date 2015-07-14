@@ -265,7 +265,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 # Calculate the median individual visit five sigma limiting magnitude (individual image depth).
                 metric= metrics.MedianMetric(col='fiveSigmaDepth')
                 summaryStats=standardStats
-                plotdict= {}
+                plotDict= {}
                 displayDict={'group':singlevisitdepthgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':'Median single visit depth in filter %s, %s.' %(f, propCaption)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
