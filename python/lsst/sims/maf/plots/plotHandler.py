@@ -425,18 +425,19 @@ class PlotHandler(object):
         fignum = None
         for i,mB in enumerate(self.mBundles):
             # Do not try to plot empty metrics
-            if np.size(mB.metricValues.compressed()) > 0:
-                if plotDicts is None:
-                    self.plotDict['label'] = self.plotDict['labels'][i]
-                    self.plotDict['color'] = self.plotDict['colors'][i]
-                    fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
-                else:
-                    tmpPD = {}
-                    for key in self.plotDict:
-                        tmpPD[key] = self.plotDict[key]
-                    for key in plotDicts[i]:
-                        tmpPD[key] = plotDicts[i][key]
-                    fignum = plotFunc(mB.metricValues, mB.slicer, tmpPD, fignum=fignum)
+            if mB.metricValues is not None:
+                if np.size(mB.metricValues.compressed()) > 0:
+                    if plotDicts is None:
+                        self.plotDict['label'] = self.plotDict['labels'][i]
+                        self.plotDict['color'] = self.plotDict['colors'][i]
+                        fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
+                    else:
+                        tmpPD = {}
+                        for key in self.plotDict:
+                            tmpPD[key] = self.plotDict[key]
+                        for key in plotDicts[i]:
+                            tmpPD[key] = plotDicts[i][key]
+                        fignum = plotFunc(mB.metricValues, mB.slicer, tmpPD, fignum=fignum)
 
         if len(self.mBundles) > 1:
             plotType = 'Combo' + plotType

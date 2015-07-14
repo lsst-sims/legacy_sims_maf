@@ -510,6 +510,7 @@ def makeBundleList(dbFile, benchmark='design'):
     histFunc = plots.OneDBinnedData()
     # Histograms per filter for All & WFD only (generally used to produce merged histograms).
     plotDict=None
+    summaryStats=standardStats
     for i, prop in enumerate(['All Props', 'WFD']):
         for f in filters:
             # Set some per-proposal information.

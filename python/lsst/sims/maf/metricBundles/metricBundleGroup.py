@@ -358,8 +358,9 @@ class MetricBundleGroup(object):
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.bundleDict.itervalues():
             # Check that there are metric values to plot
-            if np.size(b.metricValues.compressed()) > 0:
-                b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            if b.metricValues is not None:
+                if np.size(b.metricValues.compressed()) > 0:
+                    b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
             else:
                 warnings.warn('Skipping metric=%s, sql=%s.  No valid metric values to plot' % (b.metric.name, b.sqlconstraint))
             if closefigs:

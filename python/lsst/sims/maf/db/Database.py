@@ -89,10 +89,12 @@ class Database(object):
                     self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
                                            database=self.database, driver=self.driver,
                                            typeOverRide=typeOverRide,
+                                           host=self.host, port=self.port,
                                            verbose=verbose)
                 else:
                     self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
                                            database=self.database, driver=self.driver,
+                                           host=self.host, port=self.port,
                                            verbose=verbose)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
