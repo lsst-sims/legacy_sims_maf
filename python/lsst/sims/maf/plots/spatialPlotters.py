@@ -116,7 +116,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
                                 'maxl':None, 'removeDipole':True,
-                                'logScale':True}
+                                'logScale':True, 'color':'b', 'linestyle':'-'}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -144,7 +144,8 @@ class HealpixPowerSpectrum(BasePlotter):
         ell = ell[condition]
         cl = cl[condition]
         # Plot the results.
-        plt.plot(ell, (cl*ell*(ell+1))/2.0/np.pi, label=plotDict['label'])
+        plt.plot(ell, (cl*ell*(ell+1))/2.0/np.pi,
+                 color=plotDict['color'], linestyle=plotDict['linestyle'], label=plotDict['label'])
         if cl.max() > 0 and plotDict['logScale']:
             plt.yscale('log')
         plt.xlabel(r'$l$')

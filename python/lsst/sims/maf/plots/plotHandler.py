@@ -82,6 +82,7 @@ class PlotHandler(object):
         tmpPlotDict['title'] = self._buildTitle()
         tmpPlotDict['labels'] = self._buildLegendLabels()
         tmpPlotDict['colors'] = self._buildColors()
+        tmpPlotDict['linestyles'] = self._buildLinestyles()
         tmpPlotDict['legendloc'] = 'upper right'
         tmpPlotDict['cbarFormat'] = self._buildCbarFormat()
         # Reset plotDict items set explicitly by plotter.
@@ -321,6 +322,19 @@ class PlotHandler(object):
             colors.append(color)
         return colors
 
+    def _buildLinestyles(self):
+        """
+        Try to set the linestyle.
+        Note that this really only applies to a few plot types.
+        """
+        linestyles = []
+        for mB in self.mBundles:
+            if 'linestyle' in mB.plotDict:
+                linestyles.append(mB.plotDict['linestyle'])
+            else:
+                linestyles.append('-')
+        return linestyles
+
     def _buildCbarFormat(self):
         """
         Set the color bar format.
@@ -344,6 +358,9 @@ class PlotHandler(object):
         Build a root filename for plot outputs.
         If there is only one metricBundle, this is equal to the metricBundle fileRoot + outfileSuffix.
         For multiple metricBundles, this is created from the runNames, metadata and metric names.
+
+        If you do not wish to use the automatic filenames, then you could set 'savefig' to False and
+          save the file manually to disk, using the plot figure numbers returned by 'plot'.
         """
         if len(self.mBundles) == 1:
             outfile = self.mBundles[0].fileRoot
@@ -408,6 +425,7 @@ class PlotHandler(object):
         for mB in self.mBundles:
             self.plotDict['label'] = self.plotDict['labels'][i]
             self.plotDict['color'] = self.plotDict['colors'][i]
+            self.plotDict['linestyle'] = self.plotDict['linestyles'][i]
             fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
             i += 1
         if len(self.mBundles) > 1:
