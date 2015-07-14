@@ -137,12 +137,22 @@ def makeBundleList(dbFile, benchmark='design'):
 
     # Set up an object to hold all the bundles that will be merged together
     opsimHistPlot = plots.OpsimHistogram()
-    mergedHistDict = {'skyCount':plots.PlotBundle(plotFunc=opsimHistPlot)}
-    keys = ['skyCount', 'skyCountCumul', 'skyM5Coadd', 'notDDskyCount', 'notDDskyMedianDepth',
+    mergedHistDict = {}
+    keys = ['skyCount', 'skyM5Coadd', 'notDDskyCount', 'notDDskyMedianDepth',
             'notDDskyMedianskyBright',
             'MedianSeeing', 'MedianAirmass', 'MedianNormAirmass', 'MaxAirmass', 'MeanHA',
             'FullRangeHA', 'RMSrotSkyPos']
-    for prop in ['All Props', 'WFD', 'DD']:
+    for prop in ['All Props', 'WFD']:
+        for key in keys:
+            mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=opsimHistPlot)
+
+    keys = ['skyCount', 'skyM5Coadd']
+    for prop in ['DD']:
+        for key in keys:
+            mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=opsimHistPlot)
+
+    keys = ['skyCountCumul']
+    for prop in ['WFD']:
         for key in keys:
             mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=opsimHistPlot)
 
@@ -263,8 +273,7 @@ def makeBundleList(dbFile, benchmark='design'):
                                                     summaryMetrics=summaryStats)
                 histMerge={'color':colors[f], 'label':'%s'%(f),
                            'xlabel':'Median 5-sigma depth (mags)',
-                           'binsize':.05, 'xMin':0.475, 'xMax':1.525,
-                           'legendloc':'upper right'}
+                           'binsize':.05, 'legendloc':'upper right'}
                 mergedHistDict[prop+'notDDskyMedianDepth'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
@@ -279,7 +288,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
-                histMerge={'color':colors[f], 'label':'%s'%(f),
+                histMerge={'zp':benchmarkVals['skybrightness'][f],'color':colors[f], 'label':'%s'%(f),
                            'binsize':.05, 'xMin':-2, 'xMax':2,
                            'legendloc':'upper right'}
                 mergedHistDict[prop+'notDDskyMedianskyBright'].addBundle(bundle,plotDict=histMerge)
@@ -610,7 +619,8 @@ def makeBundleList(dbFile, benchmark='design'):
             metric = metrics.CountMetric(col='dist2Moon', metricName='Distance to Moon Histogram')
             histMerge={'legendloc':'upper right',
                        'color':colors[f], 'label':'%s'%f,
-                       'xMin':float(np.radians(15.)), 'xMax':float(np.radians(180.))}
+                       'xMin':float(np.radians(15.)), 'xMax':float(np.radians(180.)),
+                       'xlabel':'Distance to Moon (radians)'}
             displayDict={'group':dist2moongroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the distance between the field and the moon (in radians) in %s band, %s' %(f, propCaption)}
             slicer = slicers.OneDSlicer(sliceColName='dist2Moon', binsize=0.05)
@@ -1204,9 +1214,6 @@ if __name__=="__main__":
         # be persisted in the mergedHistDict?
 
     for key in mergedHistDict:
-        try:
-            mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
-        except:
-            import pdb ; pdb.set_trace()
+        mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
 
     utils.writeConfigs(opsdb, args.outDir)
