@@ -327,7 +327,8 @@ class BaseHistogram(BasePlotter):
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set y limits.
         if 'yMin' in plotDict:
-            plt.ylim(ymin=plotDict['yMin'])
+            if plotDict['yMin'] is not None:
+                plt.ylim(ymin=plotDict['yMin'])
         else:
             # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
             try:

@@ -158,8 +158,12 @@ class TestStackerClasses(unittest.TestCase):
         data['filter'][50:60] = 'y'
         stacker = stackers.FilterColorStacker()
         data = stacker.run(data)
-        # Check if re-run stacker raises exception (adding column twice).
-        self.assertRaises(ValueError, stacker.run, data)
+        # Check if re-run stacker raises warning (adding column twice).
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            data = stacker.run(data)
+            assert len(w) > 1
+            assert "already present in simData" in str(w[-1].message)
         # Check if use non-recognized filter raises exception.
         data = np.zeros(600, dtype=zip(['filter'],['|S1']))
         data['filter'] = 'q'

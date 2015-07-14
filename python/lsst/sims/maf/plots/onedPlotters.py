@@ -58,13 +58,17 @@ class OneDBinnedData(BasePlotter):
                                                                         percentile=plotDict['percentileClip'])
         # Set y and x limits, if provided.
         if 'yMin' in plotDict:
-            plt.ylim(ymin=plotDict['yMin'])
+            if plotDict['yMin'] is not None:
+                plt.ylim(ymin=plotDict['yMin'])
         if 'yMax' in plotDict:
-            plt.ylim(ymax=plotDict['yMax'])
+            if plotDict['yMax'] is not None:
+                plt.ylim(ymax=plotDict['yMax'])
         if 'xMin' in plotDict:
-            plt.xlim(xmin=plotDict['xMin'])
+            if plotDict['xMin'] is not None:
+                plt.xlim(xmin=plotDict['xMin'])
         if 'xMax' in plotDict:
-            plt.xlim(xmax=plotDict['xMax'])
+            if plotDict['xMax'] is not None:
+                plt.xlim(xmax=plotDict['xMax'])
         if 'title' in plotDict:
             plt.title(plotDict['title'])
         return fig.number
