@@ -23,29 +23,29 @@ def bundleMatch(bundle1, bundle2):
 
     return result
 
+
+def list2Dict(inlist):
+    result = {}
+    for i,oneList in enumerate(inlist):
+        result[i] = oneList
+    return result
+
 def bundleList2Dicts(bundleList):
     """
-    Take a list of metricBundle objects and consolidate them into compatible
-    dictionaries.
+    Take a list of metricBundle objects and consolidate them into
+    lists with the same sqlConstriant
     """
-    result = []
 
-    while len(bundleList) != 0:
-        counter = 0
-        newDict = {counter:bundleList[0]}
-        counter += 1
-        bundleList.remove(bundleList[0])
-        toRemove = []
-        for bundle in bundleList:
-            checks = [bundleMatch(bundle,newDict[bd]) for bd in newDict]
-            if False not in checks:
-                toRemove.append(bundle)
-                newDict[counter] = bundle
-                counter += 1
-        # Can't remove things until finished iterating over list
-        for bundle in toRemove:
-            bundleList.remove(bundle)
+    sqls = list(set([b.sqlconstraint for b in bundleList ]))
 
-        result.append(newDict)
+    resultDict = {}
+    for sql in sqls:
+        resultDict[sql] = []
 
-    return result
+    for bundle in bundleList:
+        resultDict[bundle.sqlconstraint].append(bundle)
+
+    for key in resultDict:
+        resultDict[key] = list2Dict(resultDict[key])
+
+    return resultDict

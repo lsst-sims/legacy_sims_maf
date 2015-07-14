@@ -1187,6 +1187,7 @@ if __name__=="__main__":
                                                                                 benchmark=args.benchmark)
 
     bundleDicts = utils.bundleList2Dicts(bundleList)
+
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
@@ -1194,15 +1195,15 @@ if __name__=="__main__":
     for bundleL,table in zip( [slewStateBL, slewMaxSpeedsBL, slewActivitiesBL ],['SlewState', 'SlewMaxSpeeds','SlewActivities']):
         bds = utils.bundleList2Dicts(bundleL)
         for bd in bds:
-            group = metricBundles.MetricBundleGroup(bd, opsdb, outDir=args.outDir,
+            group = metricBundles.MetricBundleGroup(bds[bd], opsdb, outDir=args.outDir,
                                                     resultsDb=resultsDb, dbTable=table)
             group.runAll()
             group.plotAll()
 
 
     # Can we do this loop in parallel? I _really_ want to do this in parallel.
-    for bdict in bundleDicts:
-        group = metricBundles.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
+    for key in bundleDicts:
+        group = metricBundles.MetricBundleGroup(bundleDicts[key], opsdb, outDir=args.outDir, resultsDb=resultsDb)
         if args.plotOnly:
             # Load up the results
             pass

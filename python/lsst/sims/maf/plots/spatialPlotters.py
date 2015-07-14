@@ -14,7 +14,7 @@ from lsst.sims.maf.utils import optimalBins, percentileClipping
 from .plotHandler import BasePlotter
 
 from lsst.sims.utils import equatorialFromGalactic
-
+import inspect
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
@@ -36,7 +36,12 @@ class HealpixSkyMap(BasePlotter):
         """
         Generate a sky map of healpix metric values using healpy's mollweide view.
         """
-        if slicer.slicerName != 'HealpixSlicer':
+        # Check that the slicer is a HealpixSlicer, or subclass thereof
+        # Using the names rather than just comparing the classes themselves
+        # to avoid circular dependency between slicers and plots
+        classes = inspect.getmro(slicer.__class__)
+        cnames = [cls.__name__ for cls in classes]
+        if 'HealpixSlicer' not in cnames:
             raise ValueError('HealpixSkyMap is for use with healpix slicers')
         fig = plt.figure(fignum)
         # Override the default plotting parameters with user specified values.

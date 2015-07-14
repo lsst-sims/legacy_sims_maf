@@ -448,8 +448,10 @@ if __name__=="__main__":
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
-    for bdict in bundleDicts:
-        group = metricBundles.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
+    for key in bundleDicts:
+        group = metricBundles.MetricBundleGroup(bundleDicts[key], opsdb,
+                                                outDir=args.outDir,
+                                                resultsDb=resultsDb)
         if args.plotOnly:
             # Load up the results
             pass
@@ -460,9 +462,6 @@ if __name__=="__main__":
         # be persisted in the histBundleDict.
 
     for key in mergedHistDict:
-        try:
-            mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
-        except:
-            import pdb ; pdb.set_trace()
+        mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
 
     utils.writeConfigs(opsdb, args.outDir)
