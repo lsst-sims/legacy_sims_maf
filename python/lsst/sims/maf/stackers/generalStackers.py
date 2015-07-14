@@ -1,6 +1,8 @@
-import numpy as np
-from .baseStacker import BaseStacker
 import warnings
+import numpy as np
+import palpy
+
+from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
             'FilterColorStacker']
@@ -76,7 +78,6 @@ class ParallaxFactorStacker(BaseStacker):
         return x, y
 
     def run(self, simData):
-        import palpy
         ra_pi_amp = np.zeros(np.size(simData), dtype=[('ra_pi_amp','float')])
         dec_pi_amp = np.zeros(np.size(simData), dtype=[('dec_pi_amp','float')])
         ra_geo1 = np.zeros(np.size(simData), dtype='float')
@@ -111,6 +112,8 @@ class HourAngleStacker(BaseStacker):
 
     def run(self, simData):
         """HA = LST - RA """
+        if len(simData) == 0:
+            return simData
         # Check that LST is reasonable
         if (np.min(simData[self.lstCol]) < 0) | (np.max(simData[self.lstCol]) > 2.*np.pi):
             warnings.warn('LST values are not between 0 and 2 pi')

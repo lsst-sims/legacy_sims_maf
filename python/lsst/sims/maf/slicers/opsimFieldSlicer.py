@@ -84,23 +84,17 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     def __eq__(self, otherSlicer):
         """Evaluate if two grids are equivalent."""
 
-        if not isinstance(otherSlicer, OpsimFieldSlicer):
-            return False
-
-        # Check if one or both slicers have been setup
-        if (self.slicePoints['ra'] is not None) | (otherSlicer.slicePoints['ra'] is not None):
-           if np.array_equal(self.slicePoints['ra'], otherSlicer.slicePoints['ra']) & \
-              np.array_equal(self.slicePoints['dec'], otherSlicer.slicePoints['dec']) & \
-              np.array_equal(self.slicePoints['sid'], otherSlicer.slicePoints['sid']):
-               return True
-           else:
-               return False
-
-        # If they have not been setup, check that they have same fields
-        if (isinstance(otherSlicer, OpsimFieldSlicer)) & \
-           (otherSlicer.fieldIDColName == self.fieldIDColName) & \
-           (otherSlicer.fieldRaColName == self.fieldRaColName) & \
-           (otherSlicer.fieldDecColName == self.fieldDecColName):
-            return True
-        else:
-            return False
+        result = False
+        if isinstance(otherSlicer, OpsimFieldSlicer):
+            # Check if one or both slicers have been setup
+            if (self.slicePoints['ra'] is not None) or (otherSlicer.slicePoints['ra'] is not None):
+                if (np.array_equal(self.slicePoints['ra'], otherSlicer.slicePoints['ra']) &
+                    np.array_equal(self.slicePoints['dec'], otherSlicer.slicePoints['dec']) &
+                    np.array_equal(self.slicePoints['sid'], otherSlicer.slicePoints['sid'])):
+                    result = True
+            # If they have not been setup, check that they have same fields
+            elif ((otherSlicer.fieldIDColName == self.fieldIDColName) &
+                  (otherSlicer.fieldRaColName == self.fieldRaColName) &
+                  (otherSlicer.fieldDecColName == self.fieldDecColName)):
+                result = True
+        return result

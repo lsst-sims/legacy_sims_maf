@@ -107,6 +107,7 @@ class MetricBundleGroup(object):
         self.simData = utils.getSimData(self.dbObj, self.sqlconstraint, self.dbCols,
                                         tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
                                         groupBy=groupBy)
+
         if self.verbose:
             print "Found %i visits" % self.simData.size
 
@@ -187,7 +188,14 @@ class MetricBundleGroup(object):
         Also runs 'reduceAll' and then 'summaryAll'.
         """
         if self.simData is None:
-            self.getData()
+            try:
+                self.getData()
+            except UserWarning:
+                print 'No data matching sqlconstraint %s' %(self.sqlconstraint)
+                return
+            except ValueError:
+                print 'One of the columns requested from the database was not available - skipping sqlconstraint %s' %(self.sqlconstraint)
+                return
 
         for compatibleList in self.compatibleLists:
             if self.verbose:
@@ -210,6 +218,10 @@ class MetricBundleGroup(object):
         """
         Runs a set of 'compatible' metricbundles in the MetricBundleGroup dictionary, identified by 'compatibleList' keys.
         """
+
+        if len(self.simData) == 0:
+            return
+
         # Grab a dictionary representation of this subset of the dictionary, for easier iteration.
         bDict = self._getDictSubset(self.bundleDict, compatibleList)
 
@@ -222,11 +234,14 @@ class MetricBundleGroup(object):
                 if stacker not in compatStackers:
                     compatStackers.append(stacker)
 
-        # May need to do a more rigorous purge of duplicate stackers and maps
+        # Add maps.
+        # May need to do a more rigorous purge of duplicate maps
         compatMaps = list(set(compatMaps))
 
+        # Run stackers.
+        # Note that we've already checked that stackers do not re-create the same columns with different values
         for stacker in compatStackers:
-            # Check that stackers can clobber cols that are already there
+            # Note that stackers will clobber previously existing rows with the same name.
             self.simData = stacker.run(self.simData)
 
         # Pull out one of the slicers to use as our 'slicer'.

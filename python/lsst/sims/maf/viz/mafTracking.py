@@ -14,12 +14,11 @@ class MafTracking(object):
     def __init__(self, database=None):
         """
         Instantiate the (multi-run) layout visualization class.
+        database:  Path to the sqlite tracking database file (string)
         """
         if database is None:
             database = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
 
-        if type(database) is not str:
-            database = database.database
         # Read in the results database.
         database = db.Database(database=database, longstrings=True,
                                dbTables={'runs':['runs', 'mafRunId']})

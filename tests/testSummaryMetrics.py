@@ -78,5 +78,13 @@ class TestSummaryMetrics(unittest.TestCase):
         result = metric.run(data)
         np.testing.assert_equal(result, np.ones(10, float)+5.5)
 
+
+    def testTotalPowerMetric(self):
+        nside=128
+        data = np.ones(12*nside**2, dtype=zip(['testcol'],['float']))
+        metric = metrics.TotalPowerMetric(col='testcol')
+        result = metric.run(data)
+        np.testing.assert_equal(result, 0.0)
+
 if __name__ == '__main__':
     unittest.main()

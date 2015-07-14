@@ -110,20 +110,21 @@ class OneDSlicer(BaseSlicer):
 
     def __eq__(self, otherSlicer):
         """Evaluate if slicers are equivalent."""
-        match = False
+        result = False
         if isinstance(otherSlicer, OneDSlicer):
             if self.sliceColName == otherSlicer.sliceColName:
                 # If slicer restored from disk or setup, then 'bins' in slicePoints dict.
+                # This is preferred method to see if slicers are equal.
                 if ('bins' in self.slicePoints) & ('bins' in otherSlicer.slicePoints):
-                    match = np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
-                # Otherwise, try some other things.
+                    result = np.all(otherSlicer.slicePoints['bins'] == self.slicePoints['bins'])
+                # However, even before we 'setup' the slicer with data, the slicers could be equivalent.
                 else:
-                    if (self.bins is not None) & (otherSlicer.bins is not None): # if these are not None
-                        match = np.all(self.bins == otherSlicer.bins)
-                    elif (self.binsize is not None) & (self.binMin is not None)& (self.binMax is not None)&\
-                         (otherSlicer.binsize is not None) & (otherSlicer.binMin is not None)&\
-                         (otherSlicer.binMax is not None):
-                        if (self.binsize == otherSlicer.binsize) &\
-                          (self.binMin == otherSlicer.binMin) & (self.binMax == otherSlicer.binMax):
-                            match = True
-        return match
+                    if (self.bins is not None) and (otherSlicer.bins is not None):
+                        result = np.all(self.bins == otherSlicer.bins)
+                    elif ((self.binsize is not None) and (self.binMin is not None) & (self.binMax is not None) and
+                          (otherSlicer.binsize is not None) and (otherSlicer.binMin is not None) and (otherSlicer.binMax is not None)):
+                          if ((self.binsize == otherSlicer.binsize) and
+                              (self.binMin == otherSlicer.binMin) and
+                              (self.binMax == otherSlicer.binMax)):
+                              result = True
+        return result
