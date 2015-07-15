@@ -1074,8 +1074,8 @@ def makeBundleList(dbFile, benchmark='design'):
         metadata='%s' %(propids[propid])
 
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
-        summaryMetrics={'IdentityMetric':{'metricName':'Count'},
-                      'NormalizeMetric':{'normVal':totalNVisits, 'metricName':'Fraction of total'}}
+        summaryMetrics=[metrics.IdentityMetric(metricName='Count'),
+                        metrics.NormalizeMetric(normVal=totalNVisits, metricName='Fraction of total')]
         displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':order,
                      'caption':
                      'Number of visits for %s proposal and fraction of total visits.'
@@ -1103,7 +1103,7 @@ def makeBundleList(dbFile, benchmark='design'):
 
 
     metric = metrics.CountMetric(col='expMJD', metricName='TotalNVisits')
-    summaryMetrics={'IdentityMetric':{'metricName':'Count'}},
+    summaryMetrics = [metrics.IdentityMetric(metricName='Count')]
     displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':0}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                          summaryMetrics=summaryMetrics,
@@ -1112,7 +1112,7 @@ def makeBundleList(dbFile, benchmark='design'):
 
     # Count total number of nights
     metric = metrics.CountUniqueMetric(col='night', metricName='Nights with observations')
-    summaryMetrics={'IdentityMetric':{'metricName':'(days)'}},
+    summaryMetrics=[metrics.IdentityMetric(metricName='(days)')]
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':1}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                          summaryMetrics=summaryMetrics,
@@ -1120,7 +1120,7 @@ def makeBundleList(dbFile, benchmark='design'):
     bundleList.append(bundle)
 
     metric = metrics.FullRangeMetric(col='night', metricName='Total nights in survey')
-    summaryMetrics={'ZeropointMetric':{'zp':1, 'metricName':'(days)'}},
+    summaryMetrics=[metrics.ZeropointMetric(zp=1, metricName='(days)')]
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':0}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                          summaryMetrics=summaryMetrics,
@@ -1128,7 +1128,7 @@ def makeBundleList(dbFile, benchmark='design'):
     bundleList.append(bundle)
 
     metric = metrics.TeffMetric(metricName='Total effective time of survey')
-    summaryMetrics={'NormalizeMetric':{'normVal':24.0*60.0*60.0, 'metricName':'(days)'}}
+    summaryMetrics=[metrics.NormalizeMetric(normVal=24.0*60.0*60.0, metricName='(days)')]
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':3}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                          summaryMetrics=summaryMetrics,
@@ -1136,7 +1136,7 @@ def makeBundleList(dbFile, benchmark='design'):
     bundleList.append(bundle)
 
     metric = metrics.TeffMetric(metricName='Normalized total effective time of survey', normed=True)
-    summaryMetrics={'IdentityMetric':{'metricName':'(fraction)'}}
+    summaryMetrics=[metrics.IdentityMetric(metricName='(fraction)')]
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':2}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                          summaryMetrics=summaryMetrics,
@@ -1211,6 +1211,8 @@ if __name__=="__main__":
         plt.close('all')
         # Might consider killing bdict here to free up memory? Any bundles I want for later should
         # be persisted in the mergedHistDict?
+
+    # Can loop through here and update the plotBundle plotDicts['label'] to include percentiles
 
     for key in mergedHistDict:
         mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)

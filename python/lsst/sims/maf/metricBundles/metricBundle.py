@@ -435,12 +435,13 @@ class MetricBundle(object):
                 plotFunc = plotFunc()
 
         plotHandler.setMetricBundles([self])
+        plotHandler.setPlotDicts(plotDicts=[self.plotDict], reset=True)
         madePlots = {}
         if plotFunc is not None:
-            fignum = plotHandler.plot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+            fignum = plotHandler.plot(plotFunc, outfileSuffix=outfileSuffix)
             madePlots[plotFunc.plotType] = fignum
         else:
             for plotFunc in self.plotFuncs:
-                fignum = plotHandler.plot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+                fignum = plotHandler.plot(plotFunc, outfileSuffix=outfileSuffix)
                 madePlots[plotFunc.plotType] = fignum
         return madePlots

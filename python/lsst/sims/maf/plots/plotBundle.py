@@ -47,7 +47,8 @@ class PlotBundle(object):
     def plot(self, outDir='Out', resultsDb=None, closeFigs=True):
         ph = PlotHandler(outDir=outDir, resultsDb=resultsDb)
         ph.setMetricBundles(self.bundleList)
-        ph.setPlotDict(plotDict=self.plotDicts[0], plotFunc=self.plotFunc)
+        # Auto-generate labels and things
+        ph.setPlotDicts(plotDicts=self.plotDicts, plotFunc=self.plotFunc)
         ph.plot(self.plotFunc, plotDicts=self.plotDicts)
         if closeFigs:
             plt.close('all')
