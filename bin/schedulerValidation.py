@@ -93,9 +93,6 @@ def makeBundleList(dbFile, benchmark='design'):
     # Add variables to configure the slicer (in case we want to change it in the future).
     slicer = slicers.OpsimFieldSlicer()
     slicermetadata = ''
-    # For a few slicer/metric combos, we want to only create histograms (not skymaps or power spectra), but keep
-    #  the rest of slicerkwargs.
-    onlyHist = {'plotFuncs':'plotHistogram'}
 
     ###
     # Configure some standard summary statistics dictionaries to apply to appropriate metrics.
@@ -205,7 +202,7 @@ def makeBundleList(dbFile, benchmark='design'):
 
             # Count the total number of visits.
             metric = metrics.CountMetric(col='expMJD', metricName = 'Nvisits')
-            plotDict={'units':'Number of Visits', 'xMin':nvisitsMin,
+            plotDict={'xlabel':'Number of Visits', 'xMin':nvisitsMin,
                       'xMax':nvisitsMax, 'binsize':5}
             summaryStats=allStats
             displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
@@ -220,7 +217,7 @@ def makeBundleList(dbFile, benchmark='design'):
             bundleList.append(bundle)
             # Make a cumulative plot if it's WFD
             if prop == 'WFD':
-                histMerge={'units':'Number of Visits', 'color':colors[f], 'label':'%s'%(f),
+                histMerge={'xlabel':'Number of Visits', 'color':colors[f], 'label':'%s'%(f),
                            'binsize':5, 'xMin':0, 'xMax':nvisitsMax, 'legendloc':'upper right',
                            'cumulative':-1}
                 mergedHistDict[prop+'skyCountCumul'].addBundle(bundle,plotDict=histMerge)
@@ -228,7 +225,7 @@ def makeBundleList(dbFile, benchmark='design'):
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metric = metrics.Coaddm5Metric()
             plotDict={'zp':mag_zp, 'xMin':-0.6, 'xMax':0.6,
-                      'units':'coadded m5 - %.1f' %mag_zp}
+                      'xlabel':'coadded m5 - %.1f' %mag_zp}
             summaryStats=allStats
             histMerge={'legendloc':'upper right',
                        'color':colors[f], 'label':'%s' %f, 'binsize':.02}
@@ -248,7 +245,7 @@ def makeBundleList(dbFile, benchmark='design'):
                                                   metricName='NVisitsRatio')
                 plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
                            'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
-                           'units':'Number of Visits/Benchmark (%d)' %(benchmarkVals['nvisits'][f])}
+                           'xlabel':'Number of Visits/Benchmark (%d)' %(benchmarkVals['nvisits'][f])}
                 displayDict={'group':nvisitgroup, 'subgroup':'%s, ratio' %(subgroup),
                              'order':filtorder[f],
                              'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
@@ -279,7 +276,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
                 metric = metrics.MedianMetric(col='filtSkyBrightness')
                 plotDict={'zp':benchmarkVals['skybrightness'][f],
-                          'units':'Skybrightness - %.2f' %(benchmarkVals['skybrightness'][f]),
+                          'xlabel':'Skybrightness - %.2f' %(benchmarkVals['skybrightness'][f]),
                           'xMin':-2, 'xMax':1}
                 displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
@@ -289,14 +286,14 @@ def makeBundleList(dbFile, benchmark='design'):
                                                     displayDict=displayDict, metadata=metadata,
                                                     summaryMetrics=summaryStats)
                 histMerge={'zp':benchmarkVals['skybrightness'][f],'color':colors[f], 'label':'%s'%(f),
-                           'binsize':.05, 'xMin':-2, 'xMax':2,
+                           'binsize':.05, 'xMin':-2, 'xMax':2, 'xlabel':'Skybrightness - benchmark',
                            'legendloc':'upper right'}
                 mergedHistDict[prop+'notDDskyMedianskyBright'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median delivered seeing.
                 metric = metrics.MedianMetric(col='finSeeing')
                 plotDict={'normVal':benchmarkVals['seeing'][f],
-                          'units':'Median Seeing/(Expected seeing %.2f)'%(benchmarkVals['seeing'][f])}
+                          'xlabel':'Median Seeing/(Expected seeing %.2f)'%(benchmarkVals['seeing'][f])}
                 displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
                              'Median Seeing in filter %s divided by expected value (%.2f), %s.'
@@ -312,7 +309,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundleList.append(bundle)
                 # Calculate the median airmass.
                 metric = metrics.MedianMetric(col='airmass')
-                plotDict={'units':'X'}
+                plotDict={}
                 displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':'Median airmass in filter %s, %s.' %(f, propCaption)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -325,7 +322,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundleList.append(bundle)
                 # Calculate the median normalized airmass.
                 metric = metrics.MedianMetric(col='normairmass')
-                plotDict={'units':'X'}
+                plotDict={}
                 displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':'Median normalized airmass (airmass divided by the minimum airmass a field could reach) in filter %s, %s.'
                              %(f, propCaption)}
@@ -339,7 +336,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundleList.append(bundle)
                 # Calculate the maximum airmass.
                 metric = metrics.MaxMetric(col='airmass')
-                plotDict={'units':'X'}
+                plotDict={}
                 displayDict={'group':airmassgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':'Max airmass in filter %s, %s.' %(f, propCaption)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -402,7 +399,7 @@ def makeBundleList(dbFile, benchmark='design'):
     plotFunc = plots.OpsimHistogram()
     # Make the reverse cumulative histogram
     metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters, cumulative')
-    plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':-1,
+    plotDict={'xlabel':'Number of Visits', 'binsize':5, 'cumulative':-1,
               'xMin':500, 'xMax':1500}
     displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
                  'caption':'Number of visits all filters, WFD only'}
@@ -412,7 +409,7 @@ def makeBundleList(dbFile, benchmark='design'):
     bundleList.append(bundle)
     # Regular Histogram
     metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters')
-    plotDict={'units':'Number of Visits', 'binsize':5, 'cumulative':False,
+    plotDict={'xlabel':'Number of Visits', 'binsize':5, 'cumulative':False,
               'xMin':500, 'xMax':1500}
     summaryStats=allStats
     displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
@@ -428,7 +425,7 @@ def makeBundleList(dbFile, benchmark='design'):
             metadata = '%s band, %s' %(f, propids[propid])
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
             summaryStats=standardStats
-            plotDict={'units':'Number of Visits', 'plotMask':True, 'binsize':5}
+            plotDict={'xlabel':'Number of Visits', 'plotMask':True, 'binsize':5}
             displayDict={'group':nvisitOpsimgroup, 'subgroup':'%s'%(propids[propid]),
                          'order':filtorder[f] + propOrder,
                          'caption':'Number of visits per opsim field in %s filter, for %s.'
@@ -450,7 +447,7 @@ def makeBundleList(dbFile, benchmark='design'):
             metadata='%s band, WFD' %(f)
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
             summaryStats=standardStats
-            plotDict={'units':'Number of Visits', 'binsize':5}
+            plotDict={'xlabel':'Number of Visits', 'binsize':5}
             displayDict={'group':nvisitOpsimgroup, 'subgroup':'WFD',
                          'order':filtorder[f] + propOrder,
                          'caption':'Number of visits per opsim field in %s filter, for WFD.' %(f)}
@@ -674,7 +671,7 @@ def makeBundleList(dbFile, benchmark='design'):
     bundleList.append(bundle)
 
     metric = metrics.NChangesMetric(col='filter', metricName='Filter Changes')
-    plotDict={'units':'Number of Filter Changes'}
+    plotDict={'ylabel':'Number of Filter Changes'}
     displayDict={'group':filtergroup, 'subgroup':'Per Night',
                  'caption':'Number of filter changes per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -1084,7 +1081,7 @@ def makeBundleList(dbFile, benchmark='design'):
                      'Number of visits for %s proposal and fraction of total visits.'
                      %(propids[propid])}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                            summaryMetrics=summaryStats,
+                                            summaryMetrics=summaryMetrics,
                                             displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
         order += 1
@@ -1094,7 +1091,7 @@ def makeBundleList(dbFile, benchmark='design'):
     metadata='WFD'
     metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                            summaryMetrics=summaryStats,
+                                            summaryMetrics=summaryMetrics,
                                             displayDict=displayDict, metadata=metadata)
     bundleList.append(bundle)
 
@@ -1109,7 +1106,7 @@ def makeBundleList(dbFile, benchmark='design'):
     summaryMetrics={'IdentityMetric':{'metricName':'Count'}},
     displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':0}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                         summaryMetrics=summaryStats,
+                                         summaryMetrics=summaryMetrics,
                                          displayDict=displayDict, metadata=metadata)
     bundleList.append(bundle)
 
@@ -1118,7 +1115,7 @@ def makeBundleList(dbFile, benchmark='design'):
     summaryMetrics={'IdentityMetric':{'metricName':'(days)'}},
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':1}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                         summaryMetrics=summaryStats,
+                                         summaryMetrics=summaryMetrics,
                                          displayDict=displayDict, metadata=metadata)
     bundleList.append(bundle)
 
@@ -1126,7 +1123,7 @@ def makeBundleList(dbFile, benchmark='design'):
     summaryMetrics={'ZeropointMetric':{'zp':1, 'metricName':'(days)'}},
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':0}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                         summaryMetrics=summaryStats,
+                                         summaryMetrics=summaryMetrics,
                                          displayDict=displayDict, metadata=metadata)
     bundleList.append(bundle)
 
@@ -1134,7 +1131,7 @@ def makeBundleList(dbFile, benchmark='design'):
     summaryMetrics={'NormalizeMetric':{'normVal':24.0*60.0*60.0, 'metricName':'(days)'}}
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':3}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                         summaryMetrics=summaryStats,
+                                         summaryMetrics=summaryMetrics,
                                          displayDict=displayDict, metadata=metadata)
     bundleList.append(bundle)
 
@@ -1142,7 +1139,7 @@ def makeBundleList(dbFile, benchmark='design'):
     summaryMetrics={'IdentityMetric':{'metricName':'(fraction)'}}
     displayDict={'group':summarygroup, 'subgroup':'2: On-sky Time', 'order':2}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
-                                         summaryMetrics=summaryStats,
+                                         summaryMetrics=summaryMetrics,
                                          displayDict=displayDict, metadata=metadata)
     bundleList.append(bundle)
 
