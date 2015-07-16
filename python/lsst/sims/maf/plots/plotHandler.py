@@ -86,8 +86,8 @@ class PlotHandler(object):
             tmpPlotDict = {}
             tmpPlotDict['title'] = self._buildTitle()
             tmpPlotDict['labels'] = self._buildLegendLabels()[i]
-            tmpPlotDict['colors'] = self._buildColors()[i]
-            tmpPlotDict['linestyles'] = self._buildLinestyles()
+            tmpPlotDict['color'] = self._buildColors()[i]
+            tmpPlotDict['linestyle'] = self._buildLinestyles()
             tmpPlotDict['legendloc'] = 'upper right'
             tmpPlotDict['cbarFormat'] = self._buildCbarFormat()
             # Reset plotDict items set explicitly by plotter.
