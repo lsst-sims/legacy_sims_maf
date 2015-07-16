@@ -81,18 +81,26 @@ class PlotHandler(object):
         else:
             tmpPlotDicts = self.plotDicts
 
+        autoLabels = self._buildLegendLabels()
+        autoColors = self._buildColors()
+        autoLinestyle = self._buildLinestyles()
+        autoCbar = self._buildCbarFormat()
+        autoTitle = self._buildTitle()
+        autoXlabel, autoYlabel = self._buildXYlabels(plotFunc)
+
         # Loop through each bundle and generate a plotDict for it.
         for i,bundle in enumerate(self.mBundles):
             tmpPlotDict = {}
-            tmpPlotDict['title'] = self._buildTitle()
-            tmpPlotDict['label'] = self._buildLegendLabels()[i]
-            tmpPlotDict['color'] = self._buildColors()[i]
-            tmpPlotDict['linestyle'] = self._buildLinestyles()[i]
+            tmpPlotDict['title'] = autoTitle
+            tmpPlotDict['label'] = autoLabels[i]
+            tmpPlotDict['color'] = autoColors[i]
+            tmpPlotDict['linestyle'] = autoLinestyle[i]
             tmpPlotDict['legendloc'] = 'upper right'
-            tmpPlotDict['cbarFormat'] = self._buildCbarFormat()
+            tmpPlotDict['cbarFormat'] = autoCbar
             # Reset plotDict items set explicitly by plotter.
             if plotFunc is not None:
-                tmpPlotDict['xlabel'], tmpPlotDict['ylabel'] = self._buildXYlabels(plotFunc)
+                tmpPlotDict['xlabel'] = autoXlabel
+                tmpPlotDict['ylabel'] = autoYlabel
                 # Replace auto-generated plot dict items with things
                 #  set by the plotterDefaults, if they are not None.
                 plotterDefaults = plotFunc.defaultPlotDict
@@ -108,7 +116,7 @@ class PlotHandler(object):
             self.plotDicts.append(tmpPlotDict)
 
         # Check that the plotDicts are OK
-        self._checkPlotDicts(self.plotDicts)
+        self._checkPlotDicts()
 
     def _combineMetricNames(self):
         """
@@ -413,13 +421,13 @@ class PlotHandler(object):
               % (self.jointMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
             return displayDict
 
-    def _checkPlotDicts(self, plotDicts):
+    def _checkPlotDicts(self):
         """
         Check to make sure there are no conflicts in the plotDicts that are being used
         """
 
         # Check that the length is OK
-        if len(plotDicts) != len(self.mBundles):
+        if len(self.plotDicts) != len(self.mBundles):
             raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(plotDicts), len(self.mBundles) ))
 
         # These are the keys that need to match (or be None)
@@ -429,7 +437,8 @@ class PlotHandler(object):
         for key in keys2Check:
             vals[key] = None
 
-        for pd in plotDicts:
+        reset_keys = []
+        for pd in self.plotDicts:
             for key in keys2Check:
                 if key in pd.keys():
                     if pd[key] is not None:
@@ -437,7 +446,13 @@ class PlotHandler(object):
                             vals[key] = pd[key]
                         else:
                             if pd[key] != vals[key]:
-                                raise ValueError('Incompatible plotDicts with key=%s and values of %s and %s' % (key,pd[key],vals[key]))
+                                warning.warn('Incompatible plotDicts with key=%s and values of %s and %s. Setting to None' % (key,pd[key],vals[key]))
+                                reset_keys.append(key)
+
+        for key in reset_keys:
+            for pd in self.plotDicts:
+                pd[key] = None
+
 
 
     def plot(self, plotFunc, plotDicts=None, outfileSuffix=None):
@@ -446,6 +461,15 @@ class PlotHandler(object):
 
         plotDicts:  List of plotDicts if one wants to use a _new_ plotDict per MetricBundle.
         """
+
+        if type(plotDicts) is dict:
+            singleDict = plotDicts
+            plotDicts = []
+            for b in self.mBundles:
+                tmp ={}
+                tmp.update(singleDict)
+                plotDicts.append(tmp)
+
         if not plotFunc.objectPlotter:
             for mB in self.mBundles:
                 if mB.metric.metricDtype == 'object':
