@@ -126,7 +126,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             sqlconstraint = '%s' %(wfdWhere)
         # Configure the count metric which is what is used for f0 slicer.
         m1 = metrics.CountMetric(col='expMJD', metricName='fO')
-        plotDict={'units':'Number of Visits','Asky':benchmarkVals['Area'],
+        plotDict={'xlabel':'Number of Visits','Asky':benchmarkVals['Area'],
                   'Nvisit':benchmarkVals['nvisitsTotal'],
                   'xMin':0, 'xMax':1500}
         summaryMetrics=[metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
@@ -307,7 +307,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
         metadata = '%s band' %(f) + slicermetadata
         # Number of visits.
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
-        plotDict={'units':'Number of visits',
+        plotDict={'xlabel':'Number of visits',
                   'xMin':nvisitsRange['all'][f][0],
                   'xMax':nvisitsRange['all'][f][1], 'binsize':5}
         summaryStats=allStats
@@ -325,9 +325,10 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
         # Coadded depth.
         metric = metrics.Coaddm5Metric()
         plotDict={'zp':benchmarkVals['coaddedDepth'][f], 'xMin':-0.8, 'xMax':0.8,
-                  'units':'coadded m5 - %.1f' %benchmarkVals['coaddedDepth'][f]}
+                  'xlabel':'coadded m5 - %.1f' %benchmarkVals['coaddedDepth'][f]}
         summaryStats=allStats
-        histMerge={'legendloc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':.02}
+        histMerge={'legendloc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':.02,
+                   'xlabel':'coadded m5 - benchmark value'}
         displayDict={'group':depthgroup, 'subgroup':'Coadded Depth',
                      'order':filtorder[f],'caption':
                      'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, benchmarkVals['coaddedDepth'][f], propCaption)}
