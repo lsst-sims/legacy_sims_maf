@@ -189,7 +189,7 @@ class OpsimHistogram(BasePlotter):
         self.plotType = 'Histogram'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
-                                'ylabel':'Number of Fields', 'yaxisFormat':'%d',
+                                'ylabel':'Number of Fields', 'yaxisformat':'%d',
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
                                 'logScale':False, 'color':'b'}
