@@ -85,7 +85,7 @@ class PlotHandler(object):
         for i,bundle in enumerate(self.mBundles):
             tmpPlotDict = {}
             tmpPlotDict['title'] = self._buildTitle()
-            tmpPlotDict['labels'] = self._buildLegendLabels()[i]
+            tmpPlotDict['label'] = self._buildLegendLabels()[i]
             tmpPlotDict['color'] = self._buildColors()[i]
             tmpPlotDict['linestyle'] = self._buildLinestyles()[i]
             tmpPlotDict['legendloc'] = 'upper right'
@@ -99,11 +99,16 @@ class PlotHandler(object):
                 for k, v in plotterDefaults.iteritems():
                     if v is not None:
                         tmpPlotDict[k] = v
+            # Use the bundle plotDict parameters if they are set
+            tmpPlotDict.update(bundle.plotDict)
 
             # But replace anything set explicitly by the user in plotDict.
             if plotDicts is not None:
                 tmpPlotDict.update(plotDicts[i])
             self.plotDicts.append(tmpPlotDict)
+
+        # Check that the plotDicts are OK
+        self._checkPlotDicts(self.plotDicts)
 
     def _combineMetricNames(self):
         """
@@ -452,8 +457,6 @@ class PlotHandler(object):
         # Update x/y labels using plotType. User provided plotDict will override previous settings.
         if plotDicts is not None:
             self.setPlotDicts(plotDicts, plotFunc, reset=True)
-        # Check that the plotDicts are OK
-        self._checkPlotDicts(self.plotDicts)
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
