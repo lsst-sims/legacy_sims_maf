@@ -81,12 +81,21 @@ class PlotHandler(object):
         else:
             tmpPlotDicts = self.plotDicts
 
+        if isinstance(plotDicts, dict):
+            singleDict = plotDicts
+            plotDicts = []
+            for b in self.mBundles:
+                tmp ={}
+                tmp.update(singleDict)
+                plotDicts.append(tmp)
+
         autoLabels = self._buildLegendLabels()
         autoColors = self._buildColors()
         autoLinestyle = self._buildLinestyles()
         autoCbar = self._buildCbarFormat()
         autoTitle = self._buildTitle()
-        autoXlabel, autoYlabel = self._buildXYlabels(plotFunc)
+        if plotFunc is not None:
+            autoXlabel, autoYlabel = self._buildXYlabels(plotFunc)
 
         # Loop through each bundle and generate a plotDict for it.
         for i,bundle in enumerate(self.mBundles):
@@ -453,22 +462,12 @@ class PlotHandler(object):
             for pd in self.plotDicts:
                 pd[key] = None
 
-
-
     def plot(self, plotFunc, plotDicts=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
 
         plotDicts:  List of plotDicts if one wants to use a _new_ plotDict per MetricBundle.
         """
-
-        if type(plotDicts) is dict:
-            singleDict = plotDicts
-            plotDicts = []
-            for b in self.mBundles:
-                tmp ={}
-                tmp.update(singleDict)
-                plotDicts.append(tmp)
 
         if not plotFunc.objectPlotter:
             for mB in self.mBundles:
@@ -479,8 +478,7 @@ class PlotHandler(object):
                         return
 
         # Update x/y labels using plotType. User provided plotDict will override previous settings.
-        if plotDicts is not None:
-            self.setPlotDicts(plotDicts, plotFunc, reset=True)
+        self.setPlotDicts(plotDicts, plotFunc, reset=False)
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
