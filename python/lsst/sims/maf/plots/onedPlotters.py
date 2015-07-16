@@ -11,10 +11,9 @@ class OneDBinnedData(BasePlotter):
         self.plotType ='BinnedData'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None, 'xlabel':None, 'ylabel':None,
-                                'filled':False, 'alpha':0.5,
+                                'filled':False, 'alpha':0.5, 'linestyle':'-',
                                 'logScale':False, 'percentileClip':None,
-                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
-                                'color':'b', 'linestyle':'-', 'linewidth':1}
+                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """

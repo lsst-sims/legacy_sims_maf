@@ -121,7 +121,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
                                 'maxl':None, 'removeDipole':True,
-                                'logScale':True, 'color':'b', 'linestyle':'-'}
+                                'logScale':True, 'linestyle':'-'}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -168,7 +168,7 @@ class HealpixHistogram(BasePlotter):
                                 'ylabel':'Area (1000s of square degrees)', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':None, 'xMin':None, 'xMax':None,
-                                'logScale':False, 'color':'b'}
+                                'logScale':False, 'linestyle':'-'}
         self.baseHist = BaseHistogram()
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -192,7 +192,7 @@ class OpsimHistogram(BasePlotter):
                                 'ylabel':'Number of Fields', 'yaxisformat':'%d',
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
-                                'logScale':False, 'color':'b'}
+                                'logScale':False, 'linestyle':'-'}
         self.baseHist = BaseHistogram()
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -213,8 +213,8 @@ class BaseHistogram(BasePlotter):
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':'Count', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
-                                'logScale':'auto', 'color':'b',
-                                'yaxisformat':'%.3f',
+                                'logScale':'auto',
+                                'yaxisformat':'%.3f', 'linestyle':'-',
                                 'zp':None, 'normVal':None, 'percentileClip':None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):

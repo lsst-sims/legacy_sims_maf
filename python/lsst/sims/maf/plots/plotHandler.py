@@ -88,7 +88,6 @@ class PlotHandler(object):
 
         autoLabelList = self._buildLegendLabels()
         autoColorList = self._buildColors()
-        autoLinestyleList = self._buildLinestyles()
         autoCbar = self._buildCbarFormat()
         autoTitle = self._buildTitle()
         if plotFunc is not None:
@@ -100,7 +99,6 @@ class PlotHandler(object):
             tmpPlotDict['title'] = autoTitle
             tmpPlotDict['label'] = autoLabelList[i]
             tmpPlotDict['color'] = autoColorList[i]
-            tmpPlotDict['linestyle'] = autoLinestyleList[i]
             tmpPlotDict['legendloc'] = 'upper right'
             tmpPlotDict['cbarFormat'] = autoCbar
             # Reset plotDict items set explicitly by plotter.
@@ -347,19 +345,6 @@ class PlotHandler(object):
             colors.append(color)
         return colors
 
-    def _buildLinestyles(self):
-        """
-        Try to set the linestyle.
-        Note that this really only applies to a few plot types.
-        """
-        linestyles = []
-        for mB in self.mBundles:
-            if 'linestyle' in mB.plotDict:
-                linestyles.append(mB.plotDict['linestyle'])
-            else:
-                linestyles.append('-')
-        return linestyles
-
     def _buildCbarFormat(self):
         """
         Set the color bar format.
@@ -437,7 +422,7 @@ class PlotHandler(object):
             raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(self.plotDicts), len(self.mBundles) ))
 
         # These are the keys that need to match (or be None)
-        keys2Check = ['xlim', 'ylim', 'title', 'legendloc']
+        keys2Check = ['xlim', 'ylim', 'title', 'legendloc', 'colorMin', 'colorMax']
 
         vals = {}
         for key in keys2Check:
