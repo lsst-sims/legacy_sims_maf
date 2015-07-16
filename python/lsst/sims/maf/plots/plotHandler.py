@@ -437,7 +437,7 @@ class PlotHandler(object):
 
         # Check that the length is OK
         if len(self.plotDicts) != len(self.mBundles):
-            raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(plotDicts), len(self.mBundles) ))
+            raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(self.plotDicts), len(self.mBundles) ))
 
         # These are the keys that need to match (or be None)
         keys2Check = ['xlim', 'ylim', 'title', 'legendloc']
