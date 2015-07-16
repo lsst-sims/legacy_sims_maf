@@ -76,10 +76,7 @@ class PlotHandler(object):
         Set or update (or 'reset') the plotDict for the (possibly joint) plots.
         """
         if reset:
-            tmpPlotDicts = []
-            self.plotDicts=[]
-        else:
-            tmpPlotDicts = self.plotDicts
+            self.plotDicts=[{}]*len(self.mBundles)
 
         if isinstance(plotDicts, dict):
             singleDict = plotDicts
@@ -89,9 +86,9 @@ class PlotHandler(object):
                 tmp.update(singleDict)
                 plotDicts.append(tmp)
 
-        autoLabels = self._buildLegendLabels()
-        autoColors = self._buildColors()
-        autoLinestyle = self._buildLinestyles()
+        autoLabelList = self._buildLegendLabels()
+        autoColorList = self._buildColors()
+        autoLinestyleList = self._buildLinestyles()
         autoCbar = self._buildCbarFormat()
         autoTitle = self._buildTitle()
         if plotFunc is not None:
@@ -101,9 +98,9 @@ class PlotHandler(object):
         for i,bundle in enumerate(self.mBundles):
             tmpPlotDict = {}
             tmpPlotDict['title'] = autoTitle
-            tmpPlotDict['label'] = autoLabels[i]
-            tmpPlotDict['color'] = autoColors[i]
-            tmpPlotDict['linestyle'] = autoLinestyle[i]
+            tmpPlotDict['label'] = autoLabelList[i]
+            tmpPlotDict['color'] = autoColorList[i]
+            tmpPlotDict['linestyle'] = autoLinestyleList[i]
             tmpPlotDict['legendloc'] = 'upper right'
             tmpPlotDict['cbarFormat'] = autoCbar
             # Reset plotDict items set explicitly by plotter.
@@ -122,7 +119,7 @@ class PlotHandler(object):
             # But replace anything set explicitly by the user in plotDict.
             if plotDicts is not None:
                 tmpPlotDict.update(plotDicts[i])
-            self.plotDicts.append(tmpPlotDict)
+            self.plotDicts[i] = tmpPlotDict
 
         # Check that the plotDicts are OK
         self._checkPlotDicts()
