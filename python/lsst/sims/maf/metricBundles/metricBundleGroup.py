@@ -149,7 +149,7 @@ class MetricBundleGroup(object):
                 compatibleLists.append([k,])
         self.compatibleLists = compatibleLists
 
-    def runAll(self, clearMemory=False):
+    def runAll(self, clearMemory=False, plotNow=False, plotKwargs=None):
         """
         Runs all the metricBundles in the metricBundleGroup, over all sqlconstraints.
         Also runs 'reduceAll' and 'summaryAll' for each set.
@@ -160,6 +160,11 @@ class MetricBundleGroup(object):
             #  sqlconstraint.
             self._setCurrent(sqlconstraint)
             self.runCurrent(sqlconstraint, clearMemory=clearMemory)
+            if plotNow:
+                if plotKwargs is None:
+                    self.plotCurrent()
+                else:
+                    self.plotCurrent(**plotKwargs)
 
     def runCurrent(self, sqlconstraint, clearMemory=False):
         """
