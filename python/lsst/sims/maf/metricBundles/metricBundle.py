@@ -11,9 +11,9 @@ import lsst.sims.maf.plots as plots
 from lsst.sims.maf.utils import ColInfo
 import lsst.sims.maf.utils as utils
 
-__all__ = ['MetricBundle', 'emptyMetricBundle']
+__all__ = ['MetricBundle', 'createEmptyMetricBundle']
 
-def emptyMetricBundle():
+def createEmptyMetricBundle():
     return MetricBundle(metrics.BaseMetric(), slicers.BaseSlicer(), '')
 
 class MetricBundle(object):
