@@ -11,7 +11,7 @@ class OneDBinnedData(BasePlotter):
         self.plotType ='BinnedData'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None, 'xlabel':None, 'ylabel':None,
-                                'filled':False, 'alpha':0.5, 'linestyle':'-',
+                                'filled':False, 'alpha':0.5, 'linestyle':'-', 'linewidth':1,
                                 'logScale':False, 'percentileClip':None,
                                 'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None}
 
