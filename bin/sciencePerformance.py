@@ -415,12 +415,12 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel), 'binsize':0.05, 'legendloc':'upper right'}
 
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
-                                            summaryMetrics=summaryStats)
+                                                displayDict=displayDict, metadata=metadata,
+                                                summaryMetrics=summaryStats)
             mergedHistDict['fracAboveAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
 
-    return bundleList, mergedHistDict
+    return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict
 
 
 if __name__=="__main__":
@@ -441,26 +441,20 @@ if __name__=="__main__":
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
-    bundleList, mergedHistDict = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark,
+    bundleDict, mergedHistDict = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark,
                                                 plotOnly=args.plotOnly)
 
-
-    bundleDicts = utils.bundleList2Dicts(bundleList)
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
-    for key in bundleDicts:
-        group = metricBundles.MetricBundleGroup(bundleDicts[key], opsdb,
-                                                outDir=args.outDir,
-                                                resultsDb=resultsDb)
-        if args.plotOnly:
-            # Load up the results
-            pass
-        else:
-            group.runAll()
-        group.plotAll()
-        # Might consider killing bdict here to free up memory? Any bundles I want for later will
-        # be persisted in the histBundleDict.
+    group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir,
+                                            resultsDb=resultsDb)
+    if args.plotOnly:
+        # Load up the results
+        pass
+    else:
+        group.runAll()
+    group.plotAll()
 
     for key in mergedHistDict:
         mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)

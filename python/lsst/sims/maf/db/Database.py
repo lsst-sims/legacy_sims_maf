@@ -72,11 +72,6 @@ class Database(object):
                 defaultdbTables.update(self.dbTables)
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
-        # Test file exists if connecting to sqlite db.
-        if self.driver.startswith('sqlite'):
-            filename = self.database.replace('sqlite:','').replace('///','')
-            if not os.path.isfile(filename):
-                raise IOError('Sqlite database file "%s" not found.' %(filename))
         if self.dbTables is None:
             self.tables = None
         else:

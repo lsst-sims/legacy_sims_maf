@@ -88,10 +88,6 @@ def makeBundleList(dbFile, benchmark='design'):
     colors = {'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
-
-    ####
-    # Add variables to configure the slicer (in case we want to change it in the future).
-    slicer = slicers.OpsimFieldSlicer()
     slicermetadata = ''
 
     ###
@@ -198,6 +194,9 @@ def makeBundleList(dbFile, benchmark='design'):
                 nvisitsMin = nvisitsRange['DD'][f][0]
                 nvisitsMax = nvisitsRange['DD'][f][1]
                 mag_zp = benchmarkDDVals['coaddedDepth'][f]
+
+            # Make a new slicer for each metric since they can get setup with different fields later
+            slicer = slicers.OpsimFieldSlicer()
             # Configure the metrics to run for this sql constraint (all proposals/wfd and filter combo).
 
             # Count the total number of visits.
@@ -392,7 +391,7 @@ def makeBundleList(dbFile, benchmark='design'):
                 bundleList.append(bundle)
 
 
-
+    slicer = slicers.OpsimFieldSlicer()
     # Count the number of visits in all filters together, WFD only.
     sqlconstraint = wfdWhere
     metadata='All filters WFD: histogram only'
@@ -408,19 +407,24 @@ def makeBundleList(dbFile, benchmark='design'):
                                                     summaryMetrics=summaryStats, plotFuncs=[plotFunc])
     bundleList.append(bundle)
     # Regular Histogram
+    slicer = slicers.OpsimFieldSlicer()
     metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters')
     plotDict={'xlabel':'Number of Visits', 'binsize':5, 'cumulative':False,
               'xMin':500, 'xMax':1500}
     summaryStats=allStats
     displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
                  'caption':'Number of visits all filters, WFD only'}
-
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, metadata=metadata,
+                                        summaryMetrics=summaryStats, plotFuncs=[plotFunc])
+    bundleList.append(bundle)
     # Count the number of visits per filter for each individual proposal, over the sky.
     #  The min/max limits for these plots are allowed to float, so that we can really see what's going on in each proposal.
     propOrder = 0
     for propid in propids:
         for f in filters:
             # Count the number of visits.
+            slicer = slicers.OpsimFieldSlicer()
             sqlconstraint = 'filter = "%s" and propID = %s' %(f,propid)
             metadata = '%s band, %s' %(f, propids[propid])
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
@@ -443,6 +447,7 @@ def makeBundleList(dbFile, benchmark='design'):
     # Run for combined WFD proposals if there's more than one. Similar to above, but with different nvisits limits.
     if len(WFDpropid) > 1:
         for f in filters:
+            slicer = slicers.OpsimFieldSlicer()
             sqlconstraint = 'filter = "%s" and %s' %(f, wfdWhere)
             metadata='%s band, WFD' %(f)
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
@@ -473,6 +478,7 @@ def makeBundleList(dbFile, benchmark='design'):
             sqlconstraint = '%s' %(wfdWhere)
             xlabel = '# visits (WFD) / (# WFD %s value)' %(benchmark)
         # Configure completeness metric.
+        slicer = slicers.OpsimFieldSlicer()
         metric = metrics.CompletenessMetric(u=benchmarkVals['nvisits']['u'],
                                             g=benchmarkVals['nvisits']['g'],
                                             r=benchmarkVals['nvisits']['r'],
@@ -1145,7 +1151,7 @@ def makeBundleList(dbFile, benchmark='design'):
 
 
     # Check the Alt-Az pointing history
-    slicer = slicers.HealpixSlicer(nside=64, latCol='altitude', lonCol='azimuth', useCache=False)
+    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
     metric = metrics.CountMetric('expMJD')
     plotDict = {'rot':(0,90,0)}
     plotFunc = plots.HealpixSkyMap()
@@ -1158,12 +1164,12 @@ def makeBundleList(dbFile, benchmark='design'):
                                             plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
     displayDict={'group':'AltAzPointing','subgroup':'All Filters'}
-    bundle = metricBundles.MetricBundle(metric, slicer, ''
-                                        , plotDict=plotDict,
-                                        plotFuncs=[plotFunc])
+    bundle = metricBundles.MetricBundle(metric, slicer, '', plotDict=plotDict,
+                                        plotFuncs=[plotFunc], displayDict=displayDict)
     bundleList.append(bundle)
 
-    return bundleList, slewStateBL, slewMaxSpeedsBL, slewActivitiesBL, mergedHistDict
+
+    return metricBundles.makeBundlesDictFromList(bundleList), metricBundles.makeBundlesDictFromList(slewStateBL), metricBundles.makeBundlesDictFromList(slewMaxSpeedsBL), metricBundles.makeBundlesDictFromList(slewActivitiesBL), mergedHistDict
 
 if __name__=="__main__":
 
@@ -1176,41 +1182,32 @@ if __name__=="__main__":
                         help="Can be 'design' or 'requested'")
 
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
-                        default=False, help="Reload the metric values and re-plot them.")
+                        default=False, help="XXX-not implamented yet. Reload the metric values and re-plot them.")
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
-    bundleList, slewStateBL, slewMaxSpeedsBL, slewActivitiesBL, mergedHistDict = makeBundleList(args.dbFile,
+    bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict = makeBundleList(args.dbFile,
                                                                                 benchmark=args.benchmark)
-
-    bundleDicts = utils.bundleList2Dicts(bundleList)
 
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
     # Do the ones that need a different table
-    for bundleL,table in zip( [slewStateBL, slewMaxSpeedsBL, slewActivitiesBL ],['SlewState', 'SlewMaxSpeeds','SlewActivities']):
-        bds = utils.bundleList2Dicts(bundleL)
-        for bd in bds:
-            group = metricBundles.MetricBundleGroup(bds[bd], opsdb, outDir=args.outDir,
-                                                    resultsDb=resultsDb, dbTable=table)
-            group.runAll()
-            group.plotAll()
-
-
-    # Can we do this loop in parallel? I _really_ want to do this in parallel.
-    for key in bundleDicts:
-        group = metricBundles.MetricBundleGroup(bundleDicts[key], opsdb, outDir=args.outDir, resultsDb=resultsDb)
-        if args.plotOnly:
-            # Load up the results
-            pass
-        else:
-            group.runAll()
+    for bundleD,table in zip( [slewStateBD, slewMaxSpeedsBD, slewActivitiesBD ],
+                              ['SlewState', 'SlewMaxSpeeds','SlewActivities']):
+        group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
+                                                resultsDb=resultsDb, dbTable=table)
+        group.runAll()
         group.plotAll()
-        plt.close('all')
-        # Might consider killing bdict here to free up memory? Any bundles I want for later should
-        # be persisted in the mergedHistDict?
+
+    group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
+    if args.plotOnly:
+        # Load up the results
+        pass
+    else:
+        group.runAll()
+    group.plotAll()
 
     # Can loop through here and update the plotBundle plotDicts['label'] to include percentiles
 

@@ -1,6 +1,5 @@
 import os
 import time
-import lsst.sims.maf
 
 __all__ = ['getDateVersion']
 
@@ -8,6 +7,7 @@ def getDateVersion():
     """
     Return a string with today's date and a dict with the MAF version info.
     """
+    import lsst.sims.maf
 
     version = lsst.sims.maf.version
     today_date = time.strftime("%x")
