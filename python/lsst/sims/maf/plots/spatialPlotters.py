@@ -320,10 +320,7 @@ class BaseHistogram(BasePlotter):
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
-            try:
-                return plotDict['yaxisformat'] % (y * plotDict['scale'])
-            except:
-                import pdb ; pdb.set_trace()
+            return plotDict['yaxisformat'] % (y * plotDict['scale'])
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set y limits.

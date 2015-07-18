@@ -72,6 +72,8 @@ class Database(object):
                 defaultdbTables.update(self.dbTables)
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
+        if not os.path.isfile(database):
+            raise IOError('Sqlite database file "%s" not found.' %(database))
         if self.dbTables is None:
             self.tables = None
         else:
