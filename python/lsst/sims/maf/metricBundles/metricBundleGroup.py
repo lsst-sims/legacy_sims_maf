@@ -385,6 +385,8 @@ class MetricBundleGroup(object):
                     b.summaryMetrics = []
         # Add the new metricBundles to the MetricBundleGroup dictionary.
         self.bundleDict.update(reduceBundleDict)
+        # And add to to the currentBundleDict too, so we run as part of 'summaryCurrent'.
+        self.currentBundleDict.update(reduceBundleDict)
 
     def summaryAll(self):
         """
