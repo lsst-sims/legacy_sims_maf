@@ -347,7 +347,7 @@ class MetricBundleGroup(object):
                 b.metricValues.mask = np.where(b.metricValues.data==b.metric.badval,
                                                True, b.metricValues.mask)
 
-        # Save data to disk as we go, although this won't keep summary values, etc. (just failsafe).
+         # Save data to disk as we go, although this won't keep summary values, etc. (just failsafe).
         if self.saveEarly:
             for b in bDict.itervalues():
                 b.write(outDir=self.outDir, resultsDb=self.resultsDb)
@@ -373,7 +373,7 @@ class MetricBundleGroup(object):
                 # Apply reduce functions, creating a new metricBundle in the process (new metric values).
                 for reduceFunc in b.metric.reduceFuncs.itervalues():
                     newmetricbundle = b.reduceMetric(reduceFunc)
-                    # Add the new metricBundle to our temporary dictionary.
+                    # Add the new metricBundle to our metricBundleGroup dictionary.
                     name = newmetricbundle.metric.name
                     if name in self.bundleDict:
                         name = newmetricbundle.fileRoot

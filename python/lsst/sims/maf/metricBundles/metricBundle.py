@@ -396,10 +396,14 @@ class MetricBundle(object):
         if reducePlotDict is not None:
             if 'units' in reducePlotDict:
                 newmetric.units = reducePlotDict['units']
-        newmetricBundle = MetricBundle(metric=newmetric, slicer=self.slicer, stackerList=self.stackerList,
-                                 sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
-                                 plotDict=None, displayDict=self.displayDict,
-                                 summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot='')
+        newmetricBundle = MetricBundle(metric=newmetric, slicer=self.slicer,
+                                       stackerList=self.stackerList,
+                                       sqlconstraint=self.sqlconstraint,
+                                       metadata=self.metadata,
+                                       runName=self.runName,
+                                       plotDict=None, displayDict=self.displayDict,
+                                       summaryMetrics=self.summaryMetrics,
+                                       mapsList=self.mapsList, fileRoot='')
         # Build a new output file root name.
         newmetricBundle._buildFileRoot()
         # Add existing plotDict (except for title/xlabels etc) into new plotDict.

@@ -341,6 +341,8 @@ class PlotHandler(object):
             if 'color' in mB.plotDict:
                 color = mB.plotDict['color']
             else:
+                # If the filter is part of the sql constraint, we'll
+                #  try to use that first.
                 if 'filter' in mB.sqlconstraint:
                     vals = mB.sqlconstraint.split('"')
                     for v in vals:
@@ -464,6 +466,8 @@ class PlotHandler(object):
         """
 
         if not plotFunc.objectPlotter:
+            # Check that metricValues type and plotter are compatible (most are float/float, but
+            #  some plotters expect object data .. and some only do sometimes).
             for mB in self.mBundles:
                 if mB.metric.metricDtype == 'object':
                     metricIsColor = mB.plotDict.get('metricIsColor', False)
