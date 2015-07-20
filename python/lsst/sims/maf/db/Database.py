@@ -64,7 +64,7 @@ class Database(object):
         self.chunksize = chunksize
         # If it's a sqlite file, check that the filename exists.
         #  This gives a more understandable error message than trying to connect to non-existent file later.
-        if driver='sqlite':
+        if driver=='sqlite':
             if not os.path.isfile(database):
                 raise IOError('Sqlite database file "%s" not found.' %(database))
         # Add default values to provided input dictionaries (if not present in input dictionaries)
