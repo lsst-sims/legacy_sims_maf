@@ -74,6 +74,12 @@ class PlotHandler(object):
     def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False):
         """
         Set or update (or 'reset') the plotDict for the (possibly joint) plots.
+
+        Resolution is:
+          auto-generated items (colors/labels/titles)
+            < defaults set by the plotter
+            < explicitly set items in the metricBundle plotDict
+            < explicitly set items in the plotDicts list passed to this method.
         """
         if reset:
             self.plotDicts=[{}]*len(self.mBundles)
