@@ -481,13 +481,17 @@ class PlotHandler(object):
         plotType = plotFunc.plotType
         # Make plot.
         fignum = None
-        for i,mB in enumerate(self.mBundles):
-            # Do not try to plot empty metrics
-            if mB.metricValues is not None:
+        for mB, plotDict in zip(self.mBundles, self.plotDicts):
+            if mB.metricValues is None:
+                # Skip this metricBundle.
+                warnings.warn('MetricBundle (fileroot=%s) has no attribute metricValues' %(mB.fileRoot),
+                              ' Either it has not been calculated or it has been deleted.')
+            else:
+                # Do not try to plot metrics where the data is all masked.
                 if np.size(mB.metricValues.compressed()) > 0:
-                    fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDicts[i], fignum=fignum)
-
+                    fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
         if len(self.mBundles) > 1:
+            # Add a legend if more than metricValue being plotted.
             plotType = 'Combo' + plotType
             plt.figure(fignum)
             plt.legend(loc=self.plotDicts[0]['legendloc'], fancybox=True, fontsize='smaller')
