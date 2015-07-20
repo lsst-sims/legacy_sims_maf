@@ -1183,29 +1183,31 @@ if __name__=="__main__":
                         help="Can be 'design' or 'requested'")
 
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
-                        default=False, help="XXX-not implamented yet. Reload the metric values and re-plot them.")
+                        default=False, help="Reload the metric values and re-plot them.")
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
-    bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict = makeBundleList(args.dbFile,
-                                                                                benchmark=args.benchmark)
 
     resultsDb = db.ResultsDb(outDir=args.outDir)
     opsdb = utils.connectOpsimDb(args.dbFile)
 
-    # Do the ones that need a different table
+    bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict = makeBundleList(args.dbFile,
+                                                                                benchmark=args.benchmark)
+    # Do the ones that need a different (slew) table
     for bundleD,table in zip( [slewStateBD, slewMaxSpeedsBD, slewActivitiesBD ],
                               ['SlewState', 'SlewMaxSpeeds','SlewActivities']):
         group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
                                                 resultsDb=resultsDb, dbTable=table)
-        group.runAll()
+        if args.plotOnly:
+            group.readAll()
+        else:
+            group.runAll()
         group.plotAll()
 
     group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
     if args.plotOnly:
-        # Load up the results
-        pass
+        group.readAll()
     else:
         group.runAll()
     group.plotAll()

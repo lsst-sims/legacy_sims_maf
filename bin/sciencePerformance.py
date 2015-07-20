@@ -451,8 +451,7 @@ if __name__=="__main__":
     group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir,
                                             resultsDb=resultsDb)
     if args.plotOnly:
-        # Load up the results
-        pass
+        group.readAll()
     else:
         group.runAll()
     group.plotAll()

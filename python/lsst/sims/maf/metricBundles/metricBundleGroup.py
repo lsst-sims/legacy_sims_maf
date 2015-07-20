@@ -451,3 +451,18 @@ class MetricBundleGroup(object):
                 print 'Saving metric bundles.'
         for b in self.currentBundleDict.itervalues():
             b.write(outDir=self.outDir, resultsDb=self.resultsDb)
+
+    def readAll(self):
+        """
+        Attempt to read all metricBundles from disk.
+        You must set the metrics/slicer/sqlconstraint/runName for a metricBundle appropriately;
+         then this method will search for files in the location self.outDir/metricBundle.fileRoot.
+        Reads all the files associated with all metricbundles in self.bundleDict.
+        """
+        for b in self.bundleDict:
+            filename = os.path.join(self.outDir, b.fileRoot)
+            try:
+                b.read(filename)
+            except IOError:
+                warnings.warn('Could not read metricBundle associated with %s' %(b.fileRoot))
+
