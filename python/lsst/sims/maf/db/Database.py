@@ -62,6 +62,11 @@ class Database(object):
         self.port = port
         self.database = database
         self.chunksize = chunksize
+        # If it's a sqlite file, check that the filename exists.
+        #  This gives a more understandable error message than trying to connect to non-existent file later.
+        if driver='sqlite':
+            if not os.path.isfile(database):
+                raise IOError('Sqlite database file "%s" not found.' %(database))
         # Add default values to provided input dictionaries (if not present in input dictionaries)
         if dbTables == None:
             self.dbTables = defaultdbTables
@@ -72,8 +77,6 @@ class Database(object):
                 defaultdbTables.update(self.dbTables)
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
-        if not os.path.isfile(database):
-            raise IOError('Sqlite database file "%s" not found.' %(database))
         if self.dbTables is None:
             self.tables = None
         else:
