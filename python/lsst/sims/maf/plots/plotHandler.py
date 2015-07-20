@@ -259,8 +259,9 @@ class PlotHandler(object):
         Build a plot title from the metric names, runNames and metadata.
         """
         # Create a plot title from the unique parts of the metric/runName/metadata.
+        plotTitle = ''
         if len(self.runNames) == 1:
-            plotTitle = list(self.runNames)[0]
+            plotTitle += list(self.runNames)[0]
         if len(self.metadata) == 1:
             plotTitle += ' ' + list(self.metadata)[0]
         if len(self.metricNames) == 1:
