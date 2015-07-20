@@ -485,10 +485,7 @@ class BaseSkyMap(BasePlotter):
             plotDict['colorMin'] = 10**(int(np.log10(plotDict['colorMin'])))
             plotDict['colorMax'] = 10**(int(np.log10(plotDict['colorMax'])))
         # Add ellipses at RA/Dec locations
-        try:
-            lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi*2) - np.pi
-        except:
-            import pdb ; pdb.set_trace()
+        lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi*2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][mask], plotDict['radius'], rasterized=True, ax=ax)
         if plotDict['metricIsColor']:
             current = None

@@ -484,7 +484,7 @@ class PlotHandler(object):
         for mB, plotDict in zip(self.mBundles, self.plotDicts):
             if mB.metricValues is None:
                 # Skip this metricBundle.
-                warnings.warn('MetricBundle (fileroot=%s) has no attribute metricValues' %(mB.fileRoot),
+                warnings.warn('MetricBundle (fileRoot=%s) has no attribute metricValues' % (mB.fileRoot) + \
                               ' Either it has not been calculated or it has been deleted.')
             else:
                 fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)

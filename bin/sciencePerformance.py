@@ -13,6 +13,7 @@ import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
 import healpy as hp
 import matplotlib.pylab as plt
+import warnings
 
 def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                    lonCol='fieldRA', latCol='fieldDec'):
@@ -457,6 +458,9 @@ if __name__=="__main__":
     group.plotAll()
 
     for key in mergedHistDict:
-        mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
+        if len(mergedHistDict[key].bundleList) > 0:
+            mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
+        else:
+            warning.warn('Empty bundleList for %s, skipping merged histogram' % key)
 
     utils.writeConfigs(opsdb, args.outDir)

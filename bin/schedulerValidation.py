@@ -13,6 +13,7 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
 import healpy as hp
 import matplotlib.pylab as plt
+import warnings
 
 
 def makeBundleList(dbFile, benchmark='design'):
@@ -1212,6 +1213,9 @@ if __name__=="__main__":
     # Can loop through here and update the plotBundle plotDicts['label'] to include percentiles
 
     for key in mergedHistDict:
-        mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
+        if len(mergedHistDict[key].bundleList) > 0:
+            mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
+        else:
+            warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
 
     utils.writeConfigs(opsdb, args.outDir)
