@@ -425,12 +425,7 @@ class MetricBundleGroup(object):
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.currentBundleDict.itervalues():
-            # Check that there are metric values to plot
-            if b.metricValues is not None:
-                if np.size(b.metricValues.compressed()) > 0:
-                    b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
-            else:
-                warnings.warn('Skipping metric=%s, sql=%s.  No valid metric values to plot' % (b.metric.name, b.sqlconstraint))
+            b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
             if closefigs:
                 plt.close('all')
         if self.verbose:

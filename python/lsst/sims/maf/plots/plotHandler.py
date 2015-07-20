@@ -487,9 +487,7 @@ class PlotHandler(object):
                 warnings.warn('MetricBundle (fileroot=%s) has no attribute metricValues' %(mB.fileRoot),
                               ' Either it has not been calculated or it has been deleted.')
             else:
-                # Do not try to plot metrics where the data is all masked.
-                if np.size(mB.metricValues.compressed()) > 0:
-                    fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
+                fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
         if len(self.mBundles) > 1:
             # Add a legend if more than metricValue being plotted.
             plotType = 'Combo' + plotType
