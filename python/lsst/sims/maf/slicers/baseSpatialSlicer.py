@@ -15,7 +15,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.coordUtils import observedFromICRS, findChipName
-from lsst.sims.catalogs.generation.db.ObservationMetaData import ObservationMetaData
+from lsst.sims.utils import ObservationMetaData
 
 from .baseSlicer import BaseSlicer
 
