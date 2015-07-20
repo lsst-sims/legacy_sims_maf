@@ -350,6 +350,11 @@ class PlotHandler(object):
                 else:
                     color = 'b'
             colors.append(color)
+        # If we happened to end up with the same color throughout
+        #  (say, the metrics were all in the same filter)
+        #  then go ahead and generate random colors.
+        if (len(self.mBundles) > 1) and (len(np.unique(colors)) == 1):
+            colors = [np.random.rand(3,) for mB in self.mBundles]
         return colors
 
     def _buildCbarFormat(self):
