@@ -27,7 +27,7 @@ class HealpixSkyMap(BasePlotter):
         self.objectPlotter = False
         # Set up the default plotting parameters.
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
-                                'logScale':False, 'cbarFormat':None, 'cmap':cm.jet,
+                                'logScale':False, 'cbarFormat':None, 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
@@ -358,7 +358,7 @@ class BaseSkyMap(BasePlotter):
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'projection':'aitoff', 'radius':np.radians(1.75),
                                 'logScale':'auto', 'cbar':True, 'cbarFormat':None,
-                                'cmap':cm.jet, 'alpha':1.0,
+                                'cmap':cm.cubehelix, 'alpha':1.0,
                                 'zp':None, 'normVal':None,
                                 'colorMin':None, 'colorMax':None, 'percentileClip':False,
                                 'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
@@ -542,7 +542,7 @@ class HealpixSDSSSkyMap(BasePlotter):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'logScale':False,
-                                'cbarFormat':'%.2f', 'cmap':cm.jet,
+                                'cbarFormat':'%.2f', 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None,
                                 'colorMax':None, 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'label':None, 'raMin':-90,
@@ -569,7 +569,7 @@ class HealpixSDSSSkyMap(BasePlotter):
         if plotDict['logScale']:
             norm = 'log'
         if plotDict['cmap'] is None:
-            cmap = cm.jet
+            cmap = cm.cubehelix
         else:
             cmap = plotDict['cmap']
         if type(cmap) == str:
