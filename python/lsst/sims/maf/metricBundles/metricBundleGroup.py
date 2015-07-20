@@ -35,7 +35,7 @@ class MetricBundleGroup(object):
     A compatible subgroup of metricbundles has the same SQL constraint, db Table to query, as well as the same slicer, mapsList, and stackerList.
 
     Each MetricBundleGroup of metric bundles should be a dictionary -- for complex metrics, this allows the user to obtain the
-      additional metricBundles generated when the complex metric is run (they are identified with keys linked to the original dictionary key). 
+      additional metricBundles generated when the complex metric is run (they are identified with keys linked to the original dictionary key).
     Each MetricBundleGroup must query the same database table.
     The data returned from the db query is stored in the MetricBundleGroup object.
     MetricBundleGroup also provides convenience methods to generate all plots, run all summary statistics,
@@ -460,9 +460,8 @@ class MetricBundleGroup(object):
         Reads all the files associated with all metricbundles in self.bundleDict.
         """
         for b in self.bundleDict:
-            filename = os.path.join(self.outDir, b.fileRoot)
+            filename = os.path.join(self.outDir, self.bundleDict[b].fileRoot+'.npz')
             try:
-                b.read(filename)
+                self.bundleDict[b].read(filename)
             except IOError:
-                warnings.warn('Could not read metricBundle associated with %s' %(b.fileRoot))
-
+                warnings.warn('Could not read metricBundle associated with %s' % (self.bundleDict[b].fileRoot))
