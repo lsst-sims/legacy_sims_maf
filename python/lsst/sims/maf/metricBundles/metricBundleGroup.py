@@ -213,7 +213,7 @@ class MetricBundleGroup(object):
         # Optionally: clear results from memory.
         if clearMemory:
             for b in self.currentBundleDict.itervalues():
-                del b.metricValues
+                b.metricValues = None
             if self.verbose:
                 print 'Deleted metricValues from memory.'
 
