@@ -436,27 +436,26 @@ class PlotHandler(object):
             raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(self.plotDicts), len(self.mBundles) ))
 
         # These are the keys that need to match (or be None)
-        keys2Check = ['xlim', 'ylim', 'title', 'legendloc', 'colorMin', 'colorMax']
-
-        vals = {}
-        for key in keys2Check:
-            vals[key] = None
+        keys2Check = ['xlim', 'ylim', 'legendloc', 'colorMin', 'colorMax', 'title']
 
         reset_keys = []
-        for pd in self.plotDicts:
-            for key in keys2Check:
-                if key in pd.keys():
-                    if pd[key] is not None:
-                        if vals[key] is None:
-                            vals[key] = pd[key]
-                        else:
-                            if pd[key] != vals[key]:
-                                warning.warn('Incompatible plotDicts with key=%s and values of %s and %s. Setting to None' % (key,pd[key],vals[key]))
-                                reset_keys.append(key)
+        for key in keys2Check:
+            values = [pd[key] for pd in self.plotDicts if key in pd]
+            if len(np.unique(values)) > 1:
+                warnings.warn('Found more than one value to be set for %s in the plotDicts (%s).',
+                              'Will reset to default value.' %(key, ' '.join(np.unique(values))))
+                reset_keys.append(key)
 
+        # Most of the defaults can be set to None safely.
         for key in reset_keys:
             for pd in self.plotDicts:
                 pd[key] = None
+
+        # But for some, we can/should do better.
+        if 'title' in reset_keys:
+            title = self._buildTitle()
+            for pd in self.plotDicts:
+                pd['title'] = title
 
     def plot(self, plotFunc, plotDicts=None, outfileSuffix=None):
         """
