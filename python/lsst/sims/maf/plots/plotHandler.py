@@ -442,8 +442,8 @@ class PlotHandler(object):
         for key in keys2Check:
             values = [pd[key] for pd in self.plotDicts if key in pd]
             if len(np.unique(values)) > 1:
-                warnings.warn('Found more than one value to be set for %s in the plotDicts (%s).',
-                              'Will reset to default value.' %(key, ' '.join(np.unique(values))))
+                warnings.warn('Found more than one value to be set for %s in the plotDicts (%s).'
+                              %(key, ' '.join(np.unique(values))), 'Will reset to default value.')
                 reset_keys.append(key)
 
         # Most of the defaults can be set to None safely.
