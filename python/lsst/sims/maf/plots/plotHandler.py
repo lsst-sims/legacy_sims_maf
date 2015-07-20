@@ -27,7 +27,7 @@ class PlotHandler(object):
         self.figformat = figformat
         self.dpi = dpi
         self.thumbnail = thumbnail
-        self.filtercolors = {'u':'b', 'g':'g', 'r':'y',
+        self.filtercolors = {'u':'cyan', 'g':'g', 'r':'y',
                              'i':'r', 'z':'m', 'y':'k', ' ':None}
         self.filterorder = {' ':-1,'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
 
