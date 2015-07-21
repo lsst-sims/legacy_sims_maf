@@ -15,7 +15,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
-
+import matplotlib.cm as cm
 
 def makeBundleList(dbFile, runName=None, benchmark='design'):
 
@@ -228,7 +228,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metric = metrics.Coaddm5Metric()
             plotDict={'zp':mag_zp, 'xMin':-0.6, 'xMax':0.6,
-                      'xlabel':'coadded m5 - %.1f' %mag_zp}
+                      'xlabel':'coadded m5 - %.1f' %mag_zp, 'cmap':cm.RdBu}
             summaryStats=allStats
             histMerge={'legendloc':'upper right',
                        'color':colors[f], 'label':'%s' %f, 'binsize':.02}
@@ -248,7 +248,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                                                   metricName='NVisitsRatio')
                 plotDict={ 'binsize':0.05,'cbarFormat':'%2.2f',
                            'colorMin':0.5, 'colorMax':1.5, 'xMin':0.475, 'xMax':1.525,
-                           'xlabel':'Number of Visits/Benchmark (%d)' %(benchmarkVals['nvisits'][f])}
+                           'xlabel':'Number of Visits/Benchmark (%d)' %(benchmarkVals['nvisits'][f]),
+                           'cmap':cm.RdBu}
                 displayDict={'group':nvisitgroup, 'subgroup':'%s, ratio' %(subgroup),
                              'order':filtorder[f],
                              'caption': 'Number of visits in filter %s divided by %s value (%d), %s.'
@@ -278,9 +279,12 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 bundleList.append(bundle)
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
                 metric = metrics.MedianMetric(col='filtSkyBrightness')
+                xMin= -2.
+                xMax = 1.
                 plotDict={'zp':benchmarkVals['skybrightness'][f],
                           'xlabel':'Skybrightness - %.2f' %(benchmarkVals['skybrightness'][f]),
-                          'xMin':-2, 'xMax':1}
+                          'xMin':xMin, 'xMax':xMax,
+                          'cmap':cm.RdBu, 'colorMin':xMin, 'colorMax':xMax}
                 displayDict={'group':skybrightgroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
                              'Median Sky Brightness in filter %s with expected zeropoint (%.2f) subtracted, %s. Fainter sky brightness values are more positive numbers.'
@@ -296,7 +300,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 # Calculate the median delivered seeing.
                 metric = metrics.MedianMetric(col='finSeeing')
                 plotDict={'normVal':benchmarkVals['seeing'][f],
-                          'xlabel':'Median Seeing/(Expected seeing %.2f)'%(benchmarkVals['seeing'][f])}
+                          'xlabel':'Median Seeing/(Expected seeing %.2f)'%(benchmarkVals['seeing'][f]),
+                          'cmap':cm.RdBu, 'colorMin':0.475, 'colorMax':1.525}
                 displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
                              'Median Seeing in filter %s divided by expected value (%.2f), %s.'
