@@ -1,9 +1,13 @@
 #! /usr/bin/env python
-import numpy as np
 import os, sys, argparse
+import numpy as np
 # Set matplotlib backend (to create plots where DISPLAY is not set).
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pylab as plt
+import healpy as hp
+import warnings
+
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
@@ -11,11 +15,9 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
-import healpy as hp
-import matplotlib.pylab as plt
-import warnings
 
-def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
+
+def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                    lonCol='fieldRA', latCol='fieldDec'):
     """
     make a list of metricBundle objects to look at the scientific performance
@@ -27,6 +29,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
 
     # Connect to the databse
     opsimdb = utils.connectOpsimDb(dbFile)
+    if runName is None:
+        runName = os.path.basename(dbFile).replace('_sqlite.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
@@ -34,9 +38,10 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     # Fetch the telescope location from config
     lat, lon, height = opsimdb.fetchLatLonHeight()
 
+    # Add metadata regarding dithering/non-dithered.
     commonname = ''.join([a for a in lonCol if a in latCol])
     if commonname == 'field':
-        slicermetadata = ' (no dithers)'
+        slicermetadata = ' (non-dithered)'
     else:
         slicermetadata = ' (%s)' %(commonname)
 
@@ -87,7 +92,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
 
     # Filter list, and map of colors (for plots) to filters.
     filters = ['u','g','r','i','z','y']
-    colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
+    colors={'u':'cyan','g':'g','r':'y','i':'r','z':'m', 'y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
     # Set up a list of common summary stats
@@ -104,7 +109,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     seeinggroup = 'D: Seeing distribution'
 
 
-    # Set up an object to hold all the bundles that will be merged together
+    # Set up an object to track the metricBundles that we want to combine into merged plots.
     mergedHistDict = {}
 
     # Set the histogram merge function.
@@ -116,6 +121,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     for key in keys:
         mergedHistDict[key] = plots.PlotBundle(plotFunc=mergeFunc)
 
+    ##
     # Calculate the fO metrics for all proposals and WFD only.
     order = 0
     for prop in ('All prop', 'WFD only'):
@@ -138,19 +144,20 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                                      Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
                         metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
                                      Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal'])]
-        displayDict={'group':reqgroup, 'subgroup':'F0', 'displayOrder':order, 'caption':
-                     'The FO metric evaluates the overall efficiency of observing. fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. fONv: Area = this many square degrees out of %.1f receive at least %d visits.'
-                                        %(benchmarkVals['Area'], benchmarkVals['nvisitsTotal'],
-                                          benchmarkVals['Area'], benchmarkVals['nvisitsTotal'])}
+        caption = 'The FO metric evaluates the overall efficiency of observing. '
+        caption += 'fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. ' %(benchmarkVals['Area'], benchmarkVals['nvisitsTotal'])
+        caption += 'fONv: Area = this many square degrees out of %.1f receive at least %d visits.' %(benchmarkVals['Area'], benchmarkVals['nvisitsTotal'])
+        displayDict={'group':reqgroup, 'subgroup':'F0', 'displayOrder':order, 'caption':caption}
         order += 1
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
 
         bundle = metricBundles.MetricBundle(m1, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, summaryMetrics=summaryMetrics,
-                                            plotFuncs=[plots.FOPlot()],metadata=metadata)
+                                            plotFuncs=[plots.FOPlot()],
+                                            runName=runName, metadata=metadata)
         bundleList.append(bundle)
 
-
+    ###
     # Calculate the Rapid Revisit Metrics.
     order = 0
     metadata = 'All Visits' + slicermetadata
@@ -163,47 +170,49 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     cutoff1 = 0.15
     extraStats1 = [metrics.FracBelowMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
     extraStats1.extend(commonSummary)
-    cutoff2 = 800
-    extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
-    extraStats2.extend(commonSummary)
-    cutoff3 = 0.6
-    extraStats3 = [metrics.FracAboveMetric(cutoff=cutoff3, scale=scale, metricName='Area (sq deg)')]
-    extraStats3.extend(commonSummary)
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity',
                                     dTmin=dTmin/60.0/60.0/24.0, dTmax=dTmax/60.0/24.0,
                                     minNvisits=minNvisit)
 
     plotDict={'xMin':0, 'xMax':1}
-
     summaryStats=extraStats1
-    displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
-                   'caption':'Deviation from uniformity for short revisit timescales, between %s and %s seconds, for pointings with at least %d visits in this time range. Summary statistic "Area" below indicates the amount of area on the sky which has a deviation from uniformity of < %.2f.' %(dTmin, dTmax, minNvisit, cutoff1)}
+    caption = 'Deviation from uniformity for short revisit timescales, between %s and %s seconds, ' %(dTmin, dTmax)
+    caption += 'for pointings with at least %d visits in this time range. ' %(minNvisit)
+    caption += 'Summary statistic "Area" below indicates the area on the sky which has a deviation from uniformity of < %.2f.' %(cutoff1)
+    displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order, 'caption':caption}
     bundle = metricBundles.MetricBundle(m1, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
-                                        metadata=metadata)
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
 
     m2 = metrics.NRevisitsMetric(dT=dTmax)
-
     plotDict={'xMin':0, 'xMax':1000}
+    cutoff2 = 800
+    extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
+    extraStats2.extend(commonSummary)
+    caption = 'Number of consecutive visits with return times faster than %.1f minutes, in any filter, all proposals. ' %(dTmax)
+    caption += 'Summary statistic "Area" below indicates the area on the sky which has more than %d revisits within this time window.' %(cutoff2)
     summaryStats= extraStats2
-    displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
-                   'caption':'Number of consecutive visits with return times faster than %.1f minutes, in any filter, all proposals. Summary statistic "Area" below indicates the amount of area on the sky which has more than %d revisits within this time window.' %(dTmax, cutoff2)}
+    displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order, 'caption':caption}
     bundle = metricBundles.MetricBundle(m2, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
-                                        metadata=metadata)
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
     m3 = metrics.NRevisitsMetric(dT=dTmax, normed=True)
     plotDict={'xMin':0, 'xMax':1}
+    cutoff3 = 0.6
+    extraStats3 = [metrics.FracAboveMetric(cutoff=cutoff3, scale=scale, metricName='Area (sq deg)')]
+    extraStats3.extend(commonSummary)
     summaryStats= extraStats3
-    displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order,
-                   'caption':'Fraction of total visits where consecutive visits have return times faster than %.1f minutes, in any filter, all proposals. Summary statistic "Area" below indicates the amount of area on the sky which has more than %.2f of the revisits within this time window.' %(dTmax, cutoff3)}
+    caption = 'Fraction of total visits where consecutive visits have return times faster than %.1f minutes, in any filter, all proposals. ' %(dTmax)
+    caption += 'Summary statistic "Area" below indicates the area on the sky which has more than %d revisits within this time window.' %(cutoff3)
+    displayDict = {'group':reqgroup, 'subgroup':'Rapid Revisit', 'displayOrder':order, 'caption':caption}
     bundle = metricBundles.MetricBundle(m3, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
-                                        metadata=metadata)
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
 
@@ -214,18 +223,18 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     binsize= 3.
     bins = np.arange(binMin/60.0/24.0, (binMax+binsize)/60./24., binsize/60./24.)
     m1 = metrics.TgapsMetric(bins=bins, metricName='dT visits')
-
     plotDict={'bins':bins, 'xlabel':'dT (minutes)'}
     displayDict={'group':reqgroup, 'subgroup':'Rapid Revisit', 'order':order,
                  'caption':'Histogram of the time between consecutive revisits (<%.1f minutes), over entire sky.' %(binMax)}
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     plotFunc = plots.SummaryHistogram()
     bundle = metricBundles.MetricBundle(m1, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
+                                        displayDict=displayDict, runName=runName, metadata=metadata, plotFuncs=[plotFunc])
     bundleList.append(bundle)
     order += 1
 
 
+    ##
     # Trigonometric parallax and proper motion @ r=20 and r=24
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     sqlconstraint = ''
@@ -236,7 +245,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                  'caption':'Parallax precision at r=20. (without refraction).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, summaryMetrics=summaryStats)
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
     metric=metrics.ParallaxMetric(metricName='Parallax 24', rmag=24)
@@ -244,7 +254,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                  'caption':'Parallax precision at r=24. (without refraction).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, summaryMetrics=summaryStats)
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
     metric=metrics.ParallaxMetric(metricName='Parallax Normed', rmag=24, normalize=True)
@@ -253,7 +264,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                  'caption':
                  'Normalized parallax (normalized to optimum observation cadence, 1=optimal).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, summaryMetrics=summaryStats)
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
     metric=metrics.ProperMotionMetric(metricName='Proper Motion 20', rmag=20)
@@ -262,7 +274,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
                  'caption':'Proper Motion precision at r=20.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, summaryMetrics=summaryStats)
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
     metric=metrics.ProperMotionMetric(rmag=24, metricName='Proper Motion 24')
@@ -271,7 +284,8 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
                  'caption':'Proper Motion precision at r=24.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, summaryMetrics=summaryStats)
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
     metric=metrics.ProperMotionMetric(rmag=24,normalize=True, metricName='Proper Motion Normed')
@@ -279,10 +293,12 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
                  'caption':'Normalized proper motion at r=24 (normalized to optimum observation cadence - start/end. 1=optimal).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                        displayDict=displayDict, summaryMetrics=summaryStats)
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
 
+    ##
     # Calculate the time uniformity in each filter, for each year.
     order = 0
     yearDates = range(0,int(round(365*runLength))+365,365)
@@ -293,13 +309,15 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             sqlconstraint = 'filter = "%s" and night<=%i' %(f, yearDates[i+1])
             metric = metrics.UniformityMetric(metricName='Time Uniformity')
             plotDict={'xMin':0, 'xMax':1}
+            caption = 'Deviation from uniformity in %s band, by the end of year %d of the survey. ' %(f, i+1)
+            caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
             displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
-                           'displayOrder':filtorder[f],
-                           'caption':'Deviation from uniformity in %s band, by the end of year %d of the survey. (0=perfectly uniform, 1=perfectly nonuniform).' %(f, i+1)}
+                           'displayOrder':filtorder[f], 'caption': caption}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                                displayDict=displayDict, metadata=metadata)
+                                                displayDict=displayDict, runName=runName, metadata=metadata)
             bundleList.append(bundle)
 
+    ##
     # Depth metrics.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     for f in filters:
@@ -319,7 +337,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
                    'xMin':nvisitsRange['all'][f][0], 'xMax':nvisitsRange['all'][f][1],
                    'legendloc':'upper right'}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
                                             summaryMetrics=summaryStats)
         mergedHistDict['NVisits'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
@@ -330,11 +348,12 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
         summaryStats=allStats
         histMerge={'legendloc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':.02,
                    'xlabel':'coadded m5 - benchmark value'}
+        caption = 'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.'\
+            %(f, benchmark, benchmarkVals['coaddedDepth'][f], propCaption)
         displayDict={'group':depthgroup, 'subgroup':'Coadded Depth',
-                     'order':filtorder[f],'caption':
-                     'Coadded depth in filter %s, with %s value subtracted (%.1f), %s. More positive numbers indicate fainter limiting magnitudes.' %(f, benchmark, benchmarkVals['coaddedDepth'][f], propCaption)}
+                     'order':filtorder[f],'caption':caption}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
+                                            displayDict=displayDict, runName=runName,  metadata=metadata,
                                             summaryMetrics=summaryStats)
         mergedHistDict['coaddm5'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
@@ -343,11 +362,11 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
         plotDict={'xMin':0.1, 'xMax':1.1}
         summaryStats=allStats
         histMerge={'legendLoc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':0.02}
-        displayDict={'group':depthgroup, 'subgroup':'Time Eff.', 'order':filtorder[f],
-                     'caption':'"Time Effective" in filter %s, calculated with fiducial depth %s. Normalized by the fiducial time effective, if every observation was at the fiducial depth.'
-                     %(f, benchmarkVals['singleVisitDepth'][f])}
+        caption = '"Time Effective" in filter %s, calculated with fiducial depth %s. '%(f, benchmarkVals['singleVisitDepth'][f])
+        caption += 'Normalized by the fiducial time effective, if every observation was at the fiducial depth.'
+        displayDict={'group':depthgroup, 'subgroup':'Time Eff.', 'order':filtorder[f], 'caption':caption}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
                                             summaryMetrics=summaryStats)
         mergedHistDict['NormEffTime'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
@@ -372,7 +391,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             histMerge={'label':'%s %s' %(f, tlabel), 'color':tcolor,
                        'binsize':0.03, 'xMin':0.35, 'xMax':0.9, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
                                             summaryMetrics=summaryStats)
             mergedHistDict['Minseeing'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
@@ -387,7 +406,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel),
                        'binsize':0.05, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
                                             summaryMetrics=summaryStats)
             mergedHistDict['seeingAboveLimit'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
@@ -401,7 +420,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel),
                        'binsize':0.03, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            displayDict=displayDict, metadata=metadata,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
                                             summaryMetrics=summaryStats)
             mergedHistDict['minAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
@@ -416,7 +435,7 @@ def makeBundleList(dbFile, nside=128, benchmark='design', plotOnly=False,
             histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel), 'binsize':0.05, 'legendloc':'upper right'}
 
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                                displayDict=displayDict, metadata=metadata,
+                                                displayDict=displayDict, runName=runName, metadata=metadata,
                                                 summaryMetrics=summaryStats)
             mergedHistDict['fracAboveAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
@@ -429,37 +448,48 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Python script to run MAF with the science performance metrics')
     parser.add_argument('dbFile', type=str, default=None,help="full file path to the opsim sqlite file")
 
-    parser.add_argument("--outDir",type=str, default='./Out', help='Output directory for MAF outputs.')
+    parser.add_argument("--outDir",type=str, default='./Out', help='Output directory for MAF outputs. Default "Out"')
     parser.add_argument("--nside", type=int, default=128,
-                        help="Resolution to run Healpix grid at (must be 2^x)")
-
+                        help="Resolution to run Healpix grid at (must be 2^x). Default 128.")
+    parser.add_argument("--lonCol", type=str, default='fieldRA',
+                        help="Column to use for RA values (can be a stacker dither column). Default=fieldRA.")
+    parser.add_argument("--latCol", type=str, default='fieldDec',
+                        help="Column to use for Dec values (can be a stacker dither column). Default=fieldDec.")
     parser.add_argument('--benchmark', type=str, default='design',
                         help="Can be 'design' or 'requested'")
-
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
-                        default=False, help="Reload the metric values and re-plot them.")
+                        default=False, help="Reload the metric values from disk and re-plot them.")
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
-    bundleDict, mergedHistDict = makeBundleList(args.dbFile,nside=args.nside, benchmark=args.benchmark,
-                                                plotOnly=args.plotOnly)
+    # Build metric bundles.
+    bundleDict, mergedHistDict = makeBundleList(args.dbFile, nside=args.nside,
+                                                lonCol=args.lonCol, latCol=args.latCol,
+                                                benchmark=args.benchmark)
 
+    # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
+    # Connect to opsimdb.
     opsdb = utils.connectOpsimDb(args.dbFile)
 
-    group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir,
-                                            resultsDb=resultsDb)
+    # Set up metricBundleGroup.
+    group = metricBundles.MetricBundleGroup(bundleDict, opsdb,
+                                            outDir=args.outDir, resultsDb=resultsDb)
+    # Read or run to get metric values.
     if args.plotOnly:
         group.readAll()
     else:
         group.runAll()
+    # Make plots.
     group.plotAll()
-
+    # Make merged plots.
     for key in mergedHistDict:
         if len(mergedHistDict[key].bundleList) > 0:
             mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
         else:
             warning.warn('Empty bundleList for %s, skipping merged histogram' % key)
-
+    # Get config info and write to disk.
     utils.writeConfigs(opsdb, args.outDir)
+
+    print "Finished sciencePerformance metric calculations."
