@@ -11,9 +11,9 @@ import lsst.sims.maf.plots as plots
 from lsst.sims.maf.utils import ColInfo
 import lsst.sims.maf.utils as utils
 
-__all__ = ['MetricBundle', 'emptyMetricBundle']
+__all__ = ['MetricBundle', 'createEmptyMetricBundle']
 
-def emptyMetricBundle():
+def createEmptyMetricBundle():
     return MetricBundle(metrics.BaseMetric(), slicers.BaseSlicer(), '')
 
 class MetricBundle(object):
@@ -396,10 +396,14 @@ class MetricBundle(object):
         if reducePlotDict is not None:
             if 'units' in reducePlotDict:
                 newmetric.units = reducePlotDict['units']
-        newmetricBundle = MetricBundle(metric=newmetric, slicer=self.slicer, stackerList=self.stackerList,
-                                 sqlconstraint=self.sqlconstraint, metadata=self.metadata, runName=self.runName,
-                                 plotDict=None, displayDict=self.displayDict,
-                                 summaryMetrics=self.summaryMetrics, mapsList=self.mapsList, fileRoot='')
+        newmetricBundle = MetricBundle(metric=newmetric, slicer=self.slicer,
+                                       stackerList=self.stackerList,
+                                       sqlconstraint=self.sqlconstraint,
+                                       metadata=self.metadata,
+                                       runName=self.runName,
+                                       plotDict=None, displayDict=self.displayDict,
+                                       summaryMetrics=self.summaryMetrics,
+                                       mapsList=self.mapsList, fileRoot='')
         # Build a new output file root name.
         newmetricBundle._buildFileRoot()
         # Add existing plotDict (except for title/xlabels etc) into new plotDict.
@@ -435,12 +439,13 @@ class MetricBundle(object):
                 plotFunc = plotFunc()
 
         plotHandler.setMetricBundles([self])
+        plotHandler.setPlotDicts(plotDicts=[self.plotDict], reset=True)
         madePlots = {}
         if plotFunc is not None:
-            fignum = plotHandler.plot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+            fignum = plotHandler.plot(plotFunc, outfileSuffix=outfileSuffix)
             madePlots[plotFunc.plotType] = fignum
         else:
             for plotFunc in self.plotFuncs:
-                fignum = plotHandler.plot(plotFunc, self.plotDict, outfileSuffix=outfileSuffix)
+                fignum = plotHandler.plot(plotFunc, outfileSuffix=outfileSuffix)
                 madePlots[plotFunc.plotType] = fignum
         return madePlots

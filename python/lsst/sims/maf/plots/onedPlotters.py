@@ -11,10 +11,9 @@ class OneDBinnedData(BasePlotter):
         self.plotType ='BinnedData'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None, 'xlabel':None, 'ylabel':None,
-                                'filled':False, 'alpha':0.5,
+                                'filled':False, 'alpha':0.5, 'linestyle':'-', 'linewidth':1,
                                 'logScale':False, 'percentileClip':None,
-                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
-                                'color':'b', 'linestyle':'-', 'linewidth':1}
+                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """
@@ -58,13 +57,17 @@ class OneDBinnedData(BasePlotter):
                                                                         percentile=plotDict['percentileClip'])
         # Set y and x limits, if provided.
         if 'yMin' in plotDict:
-            plt.ylim(ymin=plotDict['yMin'])
+            if plotDict['yMin'] is not None:
+                plt.ylim(ymin=plotDict['yMin'])
         if 'yMax' in plotDict:
-            plt.ylim(ymax=plotDict['yMax'])
+            if plotDict['yMax'] is not None:
+                plt.ylim(ymax=plotDict['yMax'])
         if 'xMin' in plotDict:
-            plt.xlim(xmin=plotDict['xMin'])
+            if plotDict['xMin'] is not None:
+                plt.xlim(xmin=plotDict['xMin'])
         if 'xMax' in plotDict:
-            plt.xlim(xmax=plotDict['xMax'])
+            if plotDict['xMax'] is not None:
+                plt.xlim(xmax=plotDict['xMax'])
         if 'title' in plotDict:
             plt.title(plotDict['title'])
         return fig.number

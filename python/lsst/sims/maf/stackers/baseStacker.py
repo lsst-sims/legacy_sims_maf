@@ -116,7 +116,7 @@ class BaseStacker(object):
         if not hasattr(self, 'colsAddedDtypes') or self.colsAddedDtypes is None:
             self.colsAddedDtypes = [float for col in self.colsAdded]
         for col, dtype in zip(self.colsAdded, self.colsAddedDtypes):
-            if col in simData:
+            if col in simData.dtype.names:
                 warnings.warn('Warning - column %s already present in simData, will be overwritten.'
                               %(col))
             else:

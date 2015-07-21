@@ -14,7 +14,7 @@ class TwoDSubsetData(BasePlotter):
         self.plotType = '2DBinnedData'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'units':None,
-                                'logScale':False, 'clims':None, 'cmap':cm.jet,
+                                'logScale':False, 'clims':None, 'cmap':cm.cubehelix,
                                 'cbarFormat':None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
@@ -78,7 +78,7 @@ class OneDSubsetData(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'label':None, 'units':None,
                                 'logScale':False, 'histRange':None, 'filled':False, 'alpha':0.5,
-                                'cmap':cm.jet, 'cbarFormat':None}
+                                'cmap':cm.cubehelix, 'cbarFormat':None}
 
     def plotBinnedData1D(self, metricValues, slicer, userPlotDict, fignum=None):
         """

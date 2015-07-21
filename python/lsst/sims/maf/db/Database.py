@@ -62,6 +62,11 @@ class Database(object):
         self.port = port
         self.database = database
         self.chunksize = chunksize
+        # If it's a sqlite file, check that the filename exists.
+        #  This gives a more understandable error message than trying to connect to non-existent file later.
+        if driver=='sqlite':
+            if not os.path.isfile(database):
+                raise IOError('Sqlite database file "%s" not found.' %(database))
         # Add default values to provided input dictionaries (if not present in input dictionaries)
         if dbTables == None:
             self.dbTables = defaultdbTables
@@ -72,11 +77,6 @@ class Database(object):
                 defaultdbTables.update(self.dbTables)
                 self.dbTables = defaultdbTables
         # Connect to database tables and store connections.
-        # Test file exists if connecting to sqlite db.
-        if self.driver.startswith('sqlite'):
-            filename = self.database.replace('sqlite:','').replace('///','')
-            if not os.path.isfile(filename):
-                raise IOError('Sqlite database file "%s" not found.' %(filename))
         if self.dbTables is None:
             self.tables = None
         else:
@@ -89,10 +89,12 @@ class Database(object):
                     self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
                                            database=self.database, driver=self.driver,
                                            typeOverRide=typeOverRide,
+                                           host=self.host, port=self.port,
                                            verbose=verbose)
                 else:
                     self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
                                            database=self.database, driver=self.driver,
+                                           host=self.host, port=self.port,
                                            verbose=verbose)
 
     def fetchMetricData(self, colnames, sqlconstraint, **kwargs):

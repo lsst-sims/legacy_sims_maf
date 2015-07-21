@@ -95,6 +95,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         # Test slicers that haven't been setup
         ts1 = OpsimFieldSlicer()
         ts2 = OpsimFieldSlicer()
+
         self.assertTrue(ts1 == ts2)
         self.assertFalse(ts1 != ts2)
         # Set up one with an odd value.

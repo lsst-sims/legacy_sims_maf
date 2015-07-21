@@ -14,7 +14,7 @@ from lsst.sims.maf.utils import optimalBins, percentileClipping
 from .plotHandler import BasePlotter
 
 from lsst.sims.utils import equatorialFromGalactic
-
+import inspect
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
@@ -27,7 +27,7 @@ class HealpixSkyMap(BasePlotter):
         self.objectPlotter = False
         # Set up the default plotting parameters.
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
-                                'logScale':False, 'cbarFormat':None, 'cmap':cm.jet,
+                                'logScale':False, 'cbarFormat':None, 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
@@ -36,7 +36,12 @@ class HealpixSkyMap(BasePlotter):
         """
         Generate a sky map of healpix metric values using healpy's mollweide view.
         """
-        if slicer.slicerName != 'HealpixSlicer':
+        # Check that the slicer is a HealpixSlicer, or subclass thereof
+        # Using the names rather than just comparing the classes themselves
+        # to avoid circular dependency between slicers and plots
+        classes = inspect.getmro(slicer.__class__)
+        cnames = [cls.__name__ for cls in classes]
+        if 'HealpixSlicer' not in cnames:
             raise ValueError('HealpixSkyMap is for use with healpix slicers')
         fig = plt.figure(fignum)
         # Override the default plotting parameters with user specified values.
@@ -116,7 +121,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
                                 'maxl':None, 'removeDipole':True,
-                                'logScale':True, 'color':'b', 'linestyle':'-'}
+                                'logScale':True, 'linestyle':'-'}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -163,7 +168,7 @@ class HealpixHistogram(BasePlotter):
                                 'ylabel':'Area (1000s of square degrees)', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':None, 'xMin':None, 'xMax':None,
-                                'logScale':False, 'color':'b'}
+                                'logScale':False, 'linestyle':'-'}
         self.baseHist = BaseHistogram()
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -184,10 +189,10 @@ class OpsimHistogram(BasePlotter):
         self.plotType = 'Histogram'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
-                                'ylabel':'Number of Fields', 'yaxisFormat':'%d',
+                                'ylabel':'Number of Fields', 'yaxisformat':'%d',
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
-                                'logScale':False, 'color':'b'}
+                                'logScale':False, 'linestyle':'-'}
         self.baseHist = BaseHistogram()
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -208,8 +213,8 @@ class BaseHistogram(BasePlotter):
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':'Count', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':1.0, 'xMin':None, 'xMax':None,
-                                'logScale':'auto', 'color':'b',
-                                'yaxisformat':'%.3f',
+                                'logScale':'auto',
+                                'yaxisformat':'%.3f', 'linestyle':'-',
                                 'zp':None, 'normVal':None, 'percentileClip':None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
@@ -222,9 +227,9 @@ class BaseHistogram(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
         if plotDict['zp']:
-            metricValue = metricValueIn.compressed() - zp
+            metricValue = metricValueIn.compressed() - plotDict['zp']
         elif plotDict['normVal']:
-            metricValue = metricValueIn.compressed()/normVal
+            metricValue = metricValueIn.compressed()/plotDict['normVal']
         else:
             metricValue = metricValueIn.compressed()
         # Determine percentile clipped X range, if set. (and xmin/max not set).
@@ -315,15 +320,13 @@ class BaseHistogram(BasePlotter):
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
-            try:
-                return plotDict['yaxisformat'] % (y * plotDict['scale'])
-            except:
-                import pdb ; pdb.set_trace()
+            return plotDict['yaxisformat'] % (y * plotDict['scale'])
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set y limits.
         if 'yMin' in plotDict:
-            plt.ylim(ymin=plotDict['yMin'])
+            if plotDict['yMin'] is not None:
+                plt.ylim(ymin=plotDict['yMin'])
         else:
             # There is a bug in histype='step' that can screw up the ylim.  Comes up when running allSlicer.Cfg.py
             try:
@@ -355,7 +358,7 @@ class BaseSkyMap(BasePlotter):
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'projection':'aitoff', 'radius':np.radians(1.75),
                                 'logScale':'auto', 'cbar':True, 'cbarFormat':None,
-                                'cmap':cm.jet, 'alpha':1.0,
+                                'cmap':cm.cubehelix, 'alpha':1.0,
                                 'zp':None, 'normVal':None,
                                 'colorMin':None, 'colorMax':None, 'percentileClip':False,
                                 'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
@@ -536,7 +539,7 @@ class HealpixSDSSSkyMap(BasePlotter):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'logScale':False,
-                                'cbarFormat':'%.2f', 'cmap':cm.jet,
+                                'cbarFormat':'%.2f', 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None,
                                 'colorMax':None, 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'label':None, 'raMin':-90,
@@ -563,7 +566,7 @@ class HealpixSDSSSkyMap(BasePlotter):
         if plotDict['logScale']:
             norm = 'log'
         if plotDict['cmap'] is None:
-            cmap = cm.jet
+            cmap = cm.cubehelix
         else:
             cmap = plotDict['cmap']
         if type(cmap) == str:

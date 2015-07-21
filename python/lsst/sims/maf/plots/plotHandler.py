@@ -27,9 +27,9 @@ class PlotHandler(object):
         self.figformat = figformat
         self.dpi = dpi
         self.thumbnail = thumbnail
-        self.filtercolors = {'u':'b', 'g':'g', 'r':'y',
-                             'i':'r', 'z':'m', 'y':'k'}
-        self.filterorder = {'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
+        self.filtercolors = {'u':'cyan', 'g':'g', 'r':'y',
+                             'i':'r', 'z':'m', 'y':'k', ' ':None}
+        self.filterorder = {' ':-1,'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
 
     def setMetricBundles(self, mBundles):
         """
@@ -38,7 +38,7 @@ class PlotHandler(object):
         The metric bundles have to have the same slicer.
         """
         self.mBundles = []
-        self.plotDict = {}
+        self.plotDicts = []
         # Try to add the metricBundles in filter order.
         if isinstance(mBundles, dict):
             for mB in mBundles.itervalues():
@@ -69,35 +69,64 @@ class PlotHandler(object):
         self._combineRunNames()
         self._combineMetadata()
         self._combineSql()
-        self.setPlotDict(reset=True)
+        self.setPlotDicts(reset=True)
 
-    def setPlotDict(self, plotDict=None, plotFunc=None, reset=False):
+    def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False):
         """
         Set or update (or 'reset') the plotDict for the (possibly joint) plots.
+
+        Resolution is:
+          auto-generated items (colors/labels/titles)
+            < defaults set by the plotter
+            < explicitly set items in the metricBundle plotDict
+            < explicitly set items in the plotDicts list passed to this method.
         """
         if reset:
-            tmpPlotDict = {}
-        else:
-            tmpPlotDict = self.plotDict
-        tmpPlotDict['title'] = self._buildTitle()
-        tmpPlotDict['labels'] = self._buildLegendLabels()
-        tmpPlotDict['colors'] = self._buildColors()
-        tmpPlotDict['linestyles'] = self._buildLinestyles()
-        tmpPlotDict['legendloc'] = 'upper right'
-        tmpPlotDict['cbarFormat'] = self._buildCbarFormat()
-        # Reset plotDict items set explicitly by plotter.
+            self.plotDicts=[{}]*len(self.mBundles)
+
+        if isinstance(plotDicts, dict):
+            singleDict = plotDicts
+            plotDicts = []
+            for b in self.mBundles:
+                tmp ={}
+                tmp.update(singleDict)
+                plotDicts.append(tmp)
+
+        autoLabelList = self._buildLegendLabels()
+        autoColorList = self._buildColors()
+        autoCbar = self._buildCbarFormat()
+        autoTitle = self._buildTitle()
         if plotFunc is not None:
-            tmpPlotDict['xlabel'], tmpPlotDict['ylabel'] = self._buildXYlabels(plotFunc)
-            # Replace auto-generated plot dict items with things
-            #  set by the plotterDefaults, if they are not None.
-            plotterDefaults = plotFunc.defaultPlotDict
-            for k, v in plotterDefaults.iteritems():
-                if v is not None:
-                    tmpPlotDict[k] = v
-        # But replace anything set explicitly by the user in plotDict.
-        if plotDict is not None:
-            tmpPlotDict.update(plotDict)
-        self.plotDict = tmpPlotDict
+            autoXlabel, autoYlabel = self._buildXYlabels(plotFunc)
+
+        # Loop through each bundle and generate a plotDict for it.
+        for i,bundle in enumerate(self.mBundles):
+            tmpPlotDict = {}
+            tmpPlotDict['title'] = autoTitle
+            tmpPlotDict['label'] = autoLabelList[i]
+            tmpPlotDict['color'] = autoColorList[i]
+            tmpPlotDict['legendloc'] = 'upper right'
+            tmpPlotDict['cbarFormat'] = autoCbar
+            # Reset plotDict items set explicitly by plotter.
+            if plotFunc is not None:
+                tmpPlotDict['xlabel'] = autoXlabel
+                tmpPlotDict['ylabel'] = autoYlabel
+                # Replace auto-generated plot dict items with things
+                #  set by the plotterDefaults, if they are not None.
+                plotterDefaults = plotFunc.defaultPlotDict
+                for k, v in plotterDefaults.iteritems():
+                    if v is not None:
+                        tmpPlotDict[k] = v
+            # Use the bundle plotDict parameters if they are set
+            tmpPlotDict.update(bundle.plotDict)
+
+            # But replace anything set explicitly by the user in plotDict.
+            if plotDicts is not None:
+                tmpPlotDict.update(plotDicts[i])
+            self.plotDicts[i] = tmpPlotDict
+
+        # Check that the plotDicts are OK
+        self._checkPlotDicts()
 
     def _combineMetricNames(self):
         """
@@ -230,8 +259,9 @@ class PlotHandler(object):
         Build a plot title from the metric names, runNames and metadata.
         """
         # Create a plot title from the unique parts of the metric/runName/metadata.
+        plotTitle = ''
         if len(self.runNames) == 1:
-            plotTitle = list(self.runNames)[0]
+            plotTitle += list(self.runNames)[0]
         if len(self.metadata) == 1:
             plotTitle += ' ' + list(self.metadata)[0]
         if len(self.metricNames) == 1:
@@ -311,6 +341,8 @@ class PlotHandler(object):
             if 'color' in mB.plotDict:
                 color = mB.plotDict['color']
             else:
+                # If the filter is part of the sql constraint, we'll
+                #  try to use that first.
                 if 'filter' in mB.sqlconstraint:
                     vals = mB.sqlconstraint.split('"')
                     for v in vals:
@@ -320,20 +352,12 @@ class PlotHandler(object):
                 else:
                     color = 'b'
             colors.append(color)
+        # If we happened to end up with the same color throughout
+        #  (say, the metrics were all in the same filter)
+        #  then go ahead and generate random colors.
+        if (len(self.mBundles) > 1) and (len(np.unique(colors)) == 1):
+            colors = [np.random.rand(3,) for mB in self.mBundles]
         return colors
-
-    def _buildLinestyles(self):
-        """
-        Try to set the linestyle.
-        Note that this really only applies to a few plot types.
-        """
-        linestyles = []
-        for mB in self.mBundles:
-            if 'linestyle' in mB.plotDict:
-                linestyles.append(mB.plotDict['linestyle'])
-            else:
-                linestyles.append('-')
-        return linestyles
 
     def _buildCbarFormat(self):
         """
@@ -402,11 +426,47 @@ class PlotHandler(object):
               % (self.jointMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
             return displayDict
 
-    def plot(self, plotFunc, plotDict=None, outfileSuffix=None):
+    def _checkPlotDicts(self):
+        """
+        Check to make sure there are no conflicts in the plotDicts that are being used
+        """
+
+        # Check that the length is OK
+        if len(self.plotDicts) != len(self.mBundles):
+            raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(self.plotDicts), len(self.mBundles) ))
+
+        # These are the keys that need to match (or be None)
+        keys2Check = ['xlim', 'ylim', 'legendloc', 'colorMin', 'colorMax', 'title']
+
+        reset_keys = []
+        for key in keys2Check:
+            values = [pd[key] for pd in self.plotDicts if key in pd]
+            if len(np.unique(values)) > 1:
+                warnings.warn('Found more than one value to be set for "%s" in the plotDicts. Will reset to default value'
+                              %(key))
+                reset_keys.append(key)
+
+        # Most of the defaults can be set to None safely.
+        for key in reset_keys:
+            for pd in self.plotDicts:
+                pd[key] = None
+
+        # But for some, we can/should do better.
+        if 'title' in reset_keys:
+            title = self._buildTitle()
+            for pd in self.plotDicts:
+                pd['title'] = title
+
+    def plot(self, plotFunc, plotDicts=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
+
+        plotDicts:  List of plotDicts if one wants to use a _new_ plotDict per MetricBundle.
         """
+
         if not plotFunc.objectPlotter:
+            # Check that metricValues type and plotter are compatible (most are float/float, but
+            #  some plotters expect object data .. and some only do sometimes).
             for mB in self.mBundles:
                 if mB.metric.metricDtype == 'object':
                     metricIsColor = mB.plotDict.get('metricIsColor', False)
@@ -415,23 +475,24 @@ class PlotHandler(object):
                         return
 
         # Update x/y labels using plotType. User provided plotDict will override previous settings.
-        self.setPlotDict(plotDict, plotFunc, reset=False)
+        self.setPlotDicts(plotDicts, plotFunc, reset=False)
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
         # Make plot.
         fignum = None
-        i = 0
-        for mB in self.mBundles:
-            self.plotDict['label'] = self.plotDict['labels'][i]
-            self.plotDict['color'] = self.plotDict['colors'][i]
-            self.plotDict['linestyle'] = self.plotDict['linestyles'][i]
-            fignum = plotFunc(mB.metricValues, mB.slicer, self.plotDict, fignum=fignum)
-            i += 1
+        for mB, plotDict in zip(self.mBundles, self.plotDicts):
+            if mB.metricValues is None:
+                # Skip this metricBundle.
+                warnings.warn('MetricBundle (fileRoot=%s) has no attribute metricValues' % (mB.fileRoot) + \
+                              ' Either it has not been calculated or it has been deleted.')
+            else:
+                fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
         if len(self.mBundles) > 1:
+            # Add a legend if more than metricValue being plotted.
             plotType = 'Combo' + plotType
             plt.figure(fignum)
-            plt.legend(loc=self.plotDict['legendloc'], fancybox=True, fontsize='smaller')
+            plt.legend(loc=self.plotDicts[0]['legendloc'], fancybox=True, fontsize='smaller')
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
             fig = plt.figure(fignum)
