@@ -228,7 +228,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             # Calculate the coadded five sigma limiting magnitude (normalized to a benchmark).
             metric = metrics.Coaddm5Metric()
             plotDict={'zp':mag_zp, 'xMin':-0.6, 'xMax':0.6,
-                      'xlabel':'coadded m5 - %.1f' %mag_zp, 'cmap':cm.RdBu}
+                      'xlabel':'coadded m5 - %.1f' %mag_zp,
+                      'colorMin':-0.6, 'colorMax':0.6, 'cmap':cm.RdBu}
             summaryStats=allStats
             histMerge={'legendloc':'upper right',
                        'color':colors[f], 'label':'%s' %f, 'binsize':.02}

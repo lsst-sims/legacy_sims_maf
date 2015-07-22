@@ -362,7 +362,7 @@ class BaseSkyMap(BasePlotter):
                                 'zp':None, 'normVal':None,
                                 'colorMin':None, 'colorMax':None, 'percentileClip':False,
                                 'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
-                                'raCen':0.0, 'mwZone':True}
+                                'raCen':0.0, 'mwZone':True, 'bgcolor':'gray'}
 
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
@@ -526,6 +526,7 @@ class BaseSkyMap(BasePlotter):
             self._plot_mwZone(plotDict['raCen'], ax=ax)
         ax.grid(True, zorder=1)
         ax.xaxis.set_ticklabels([])
+        ax.set_axis_bgcolor(plotDict['bgcolor'])
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.75, 0.9, '%s' %plotDict['label'])
