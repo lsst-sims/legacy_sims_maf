@@ -232,7 +232,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                       'colorMin':-0.6, 'colorMax':0.6, 'cmap':cm.RdBu}
             summaryStats=allStats
             histMerge={'legendloc':'upper right',
-                       'color':colors[f], 'label':'%s' %f, 'binsize':.02}
+                       'color':colors[f], 'label':'%s' %f, 'xlabel':'coadded m5 - %s value' % benchmark,
+                       'binsize':.02}
             displayDict={'group':coaddeddepthgroup, 'subgroup':subgroup,
                          'order':filtorder[f],
                          'caption':
@@ -302,7 +303,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 metric = metrics.MedianMetric(col='finSeeing')
                 plotDict={'normVal':benchmarkVals['seeing'][f],
                           'xlabel':'Median Seeing/(Expected seeing %.2f)'%(benchmarkVals['seeing'][f]),
-                          'cmap':cm.RdBu, 'colorMin':0.475, 'colorMax':1.525}
+                          'cmap':cm.RdBu_r, 'colorMin':0.475, 'colorMax':1.525}
                 displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
                              'Median Seeing in filter %s divided by expected value (%.2f), %s.'
