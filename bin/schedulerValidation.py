@@ -281,7 +281,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
                 metric = metrics.MedianMetric(col='filtSkyBrightness')
                 xMin= -2.
-                xMax = 1.
+                xMax = 2.
                 plotDict={'zp':benchmarkVals['skybrightness'][f],
                           'xlabel':'Skybrightness - %.2f' %(benchmarkVals['skybrightness'][f]),
                           'xMin':xMin, 'xMax':xMax,

@@ -7,4 +7,3 @@ from .telescopeInfo import *
 from .stellarMags import *
 from .radec2pix import *
 from .nameSanitize import *
-from shiftedColorMap import *
