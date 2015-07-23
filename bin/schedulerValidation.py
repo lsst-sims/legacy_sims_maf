@@ -206,7 +206,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             # Count the total number of visits.
             metric = metrics.CountMetric(col='expMJD', metricName = 'Nvisits')
             plotDict={'xlabel':'Number of Visits', 'xMin':nvisitsMin,
-                      'xMax':nvisitsMax, 'binsize':5}
+                      'xMax':nvisitsMax, 'binsize':5,
+                      'colorMin':nvisitsMin ,'colorMax':nvisitsMax}
             summaryStats=allStats
             displayDict={'group':nvisitgroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
@@ -496,7 +497,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                                             i=benchmarkVals['nvisits']['i'],
                                             z=benchmarkVals['nvisits']['z'],
                                             y=benchmarkVals['nvisits']['y'])
-        plotDict={'xlabel':xlabel, 'units':xlabel, 'xMin':0.5, 'xMax':1.5, 'bins':50}
+        plotDict={'xlabel':xlabel, 'units':xlabel, 'xMin':0.5, 'xMax':1.5, 'bins':50,
+                  'colorMin':0.5, 'colorMax':1.5, 'cmap':cm.RdBu}
         summaryStats=[metrics.TableFractionMetric()]
         displayDict={'group':completenessgroup, 'subgroup':subgroup}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -675,14 +677,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
                  'caption':'Number of visits per night.'}
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
     metric = metrics.OpenShutterFractionMetric()
     displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
                  'caption':'Open shutter fraction per night. This compares the on-sky image time against the on-sky time + slews/filter changes/readout, but does not include downtime due to weather.'}
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
@@ -1163,18 +1165,20 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     # Check the Alt-Az pointing history
     slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
-    metric = metrics.CountMetric('expMJD')
+    metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
     plotDict = {'rot':(0,90,0)}
     plotFunc = plots.HealpixSkyMap()
     for f in filters:
         sqlconstraint = 'filter = "%s"' %(f)
-        displayDict={'group':'AltAzPointing',  'order':filtorder[f],
+        displayDict={'group':houranglegroup,  'order':filtorder[f],
                      'caption':
-                     'Pointing History on the alt-az sky (zenith center)'}
+                     'Pointing History on the alt-az sky (zenith center) for filter %s' % f}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
-    displayDict={'group':'AltAzPointing','subgroup':'All Filters'}
+    displayDict={'group':houranglegroup,'subgroup':'All Filters',
+                 'caption':
+                 'Pointing History on the alt-az sky (zenith center), all filters'}
     bundle = metricBundles.MetricBundle(metric, slicer, '', plotDict=plotDict,
                                         plotFuncs=[plotFunc], displayDict=displayDict)
     bundleList.append(bundle)
