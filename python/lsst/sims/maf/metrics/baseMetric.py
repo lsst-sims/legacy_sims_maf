@@ -9,7 +9,7 @@
 import numpy as np
 import warnings
 import inspect
-from lsst.sims.maf.utils.getColInfo import ColInfo
+from lsst.sims.maf.stackers.getColInfo import ColInfo
 
 __all__ = ['MetricRegistry', 'BaseMetric']
 

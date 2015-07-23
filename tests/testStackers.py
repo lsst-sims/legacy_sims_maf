@@ -147,6 +147,16 @@ class TestStackerClasses(unittest.TestCase):
         data = stacker.run(data)
         np.testing.assert_almost_equal(data['HA'], -6.)
 
+    def testPAStacker(self):
+        """ Test the parallacticAngleStacker"""
+        data = np.zeros(100, dtype=zip(['expMJD','fieldDec', 'fieldRA'], [float]*3))
+        data['expMJD'] = np.arange(100)*.2+5500
+        stacker = stackers.ParallacticAngleStacker()
+        data = stacker.run(data)
+        # Check values are in good range
+        assert(data['PA'].max() <= np.pi )
+        assert(data['PA'].min() >= -np.pi)
+
     def testFilterColorStacker(self):
         """Test the filter color stacker."""
         data = np.zeros(60, dtype=zip(['filter'],['|S1']))

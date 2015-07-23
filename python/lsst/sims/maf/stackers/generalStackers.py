@@ -1,11 +1,13 @@
 import warnings
 import numpy as np
 import palpy
+from lsst.sims.utils import altAzPaFromRaDec
+from lsst.sims.maf.utils import TelescopeInfo
 
 from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
-            'FilterColorStacker']
+            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker']
 
 ### Normalized airmass
 class NormAirmassStacker(BaseStacker):
@@ -31,7 +33,6 @@ class NormAirmassStacker(BaseStacker):
         simData=self._addStackers(simData)
         simData['normairmass'] = simData[self.airmassCol] / min_airmass_possible
         return simData
-
 
 class ZenithDistStacker(BaseStacker):
     """
@@ -127,6 +128,38 @@ class HourAngleStacker(BaseStacker):
         simData=self._addStackers(simData)
         # Convert radians to hours
         simData['HA'] = ha*12/np.pi
+        return simData
+
+class ParallacticAngleStacker(BaseStacker):
+    """
+    Add the parallactic angle (in radians) to each visit.
+    """
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD', latRad=None,
+                 lonRad=None):
+
+        self.raCol = raCol
+        self.decCol = decCol
+        self.mjdCol = mjdCol
+        if latRad is None:
+            TI = TelescopeInfo('LSST')
+            self.latRad = TI.lat
+        else:
+            self.latRad = latRad
+        if lonRad is None:
+            TI = TelescopeInfo('LSST')
+            self.lonRad = TI.lon
+        else:
+            self.lonRad = lonRad
+
+        self.units = ['radians']
+        self.colsAdded = ['PA']
+        self.colsReq = [self.raCol, self.decCol, self.mjdCol]
+
+    def run(self,simData):
+        simData = self._addStackers(simData)
+        alt, az, pa = altAzPaFromRaDec(simData[self.raCol], simData[self.decCol], self.lonRad,
+                                       self.latRad,simData[self.mjdCol])
+        simData['PA'] = pa
         return simData
 
 

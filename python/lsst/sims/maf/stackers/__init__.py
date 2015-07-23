@@ -5,3 +5,4 @@ from .sdssStackers import *
 from galacticStacker import *
 from .NEODistStacker import *
 from .eclipticStacker import *
+from .getColInfo import *
