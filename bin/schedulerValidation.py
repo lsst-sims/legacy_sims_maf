@@ -1220,10 +1220,9 @@ if __name__=="__main__":
         group.runAll()
     group.plotAll()
 
-    # Can loop through here and update the plotBundle plotDicts['label'] to include percentiles
-
     for key in mergedHistDict:
         if len(mergedHistDict[key].bundleList) > 0:
+            mergedHistDict[key].percentileLegend()
             mergedHistDict[key].incrementPlotOrder()
             mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
         else:
