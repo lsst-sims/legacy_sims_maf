@@ -44,6 +44,18 @@ class PlotBundle(object):
         if plotFunc is not None:
             self.plotFunc = plotFunc
 
+    def incrementPlotOrder(self):
+        """
+        Find the maximium order number in the display dicts, and set them to +1 that
+        """
+        maxOrder = 0
+        for mB in self.bundleList:
+            if 'order' in mB.displayDict.keys():
+                maxOrder = max([maxOrder,mB.displayDict['order']])
+
+        for mB in self.bundleList:
+            mB.displayDict['order'] = maxOrder + 1
+
     def plot(self, outDir='Out', resultsDb=None, closeFigs=True):
         ph = PlotHandler(outDir=outDir, resultsDb=resultsDb)
         ph.setMetricBundles(self.bundleList)

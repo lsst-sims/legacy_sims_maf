@@ -685,7 +685,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'caption':'Number of filter changes per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
-                                        summaryStats=summaryStats)
+                                        summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
     metric = metrics.MinTimeBetweenStatesMetric(changeCol='filter')
@@ -694,7 +694,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'caption':'Minimum time between filter changes, in minutes.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
-                                        summaryStats=summaryStats)
+                                        summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
     metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=10)
@@ -703,7 +703,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'caption':'Number of filter changes, where the time between filter changes is shorter than 10 minutes, per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
-                                        summaryStats=summaryStats)
+                                        summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
     metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=20)
@@ -712,7 +712,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'caption':'Number of filter changes, where the time between filter changes is shorter than 20 minutes, per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
-                                        summaryStats=summaryStats)
+                                        summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
     metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=10)
@@ -721,7 +721,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'caption':'Max number of filter changes within a window of 10 minutes, per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
-                                        summaryStats=summaryStats)
+                                        summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
     metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=20)
@@ -730,7 +730,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'caption':'Max number of filter changes within a window of 20 minutes, per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
-                                        summaryStats=summaryStats)
+                                        summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
     ## Unislicer (single number) metrics.
@@ -1224,6 +1224,7 @@ if __name__=="__main__":
 
     for key in mergedHistDict:
         if len(mergedHistDict[key].bundleList) > 0:
+            mergedHistDict[key].incrementPlotOrder()
             mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
         else:
             warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
