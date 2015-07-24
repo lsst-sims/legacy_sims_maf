@@ -388,7 +388,8 @@ class MetricBundle(object):
         reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be applied to the new metricBundle.
         """
         # Generate a name for the metric values processed by the reduceFunc.
-        reduceName = self.metric.name + '_' + reduceFunc.__name__.replace('reduce', '')
+        rName = reduceFunc.__name__.replace('reduce', '')
+        reduceName = self.metric.name + '_' + rName
         # Set up metricBundle to store new metric values, and add plotDict/displayDict.
         newmetric = deepcopy(self.metric)
         newmetric.name = reduceName
@@ -401,7 +402,7 @@ class MetricBundle(object):
                                        sqlconstraint=self.sqlconstraint,
                                        metadata=self.metadata,
                                        runName=self.runName,
-                                       plotDict=None, displayDict=self.displayDict,
+                                       plotDict=None, displayDict=None,
                                        summaryMetrics=self.summaryMetrics,
                                        mapsList=self.mapsList, fileRoot='')
         # Build a new output file root name.
@@ -412,7 +413,12 @@ class MetricBundle(object):
                 newmetricBundle.plotDict[k] = v
         # Update newmetricBundle's plot dictionary with any set explicitly by reducePlotDict.
         newmetricBundle.setPlotDict(reducePlotDict)
-        # Update the newmetricBundle's display dictionary with any set explicitly by reduceDisplayDict.
+        # Copy the parent metric's display dict into the reduce display dict.
+        newmetricBundle.setDisplayDict(self.displayDict)
+        # Set the reduce function display 'order' (this is set in the BaseMetric by default, but can be overriden in a metric).
+        order = newmetric.reduceOrder[rName]
+        newmetricBundle.displayDict['order'] = order
+        # And then update the newmetricBundle's display dictionary with any set explicitly by reduceDisplayDict.
         newmetricBundle.setDisplayDict(reduceDisplayDict)
         # Set up new metricBundle's metricValues masked arrays, copying metricValue's mask.
         newmetricBundle.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
