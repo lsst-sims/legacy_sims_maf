@@ -224,7 +224,10 @@ class MetricBundleGroup(object):
         Set the 'current' currentBundleDict first.
         """
         if self.verbose:
-            print "Querying database with constraint %s" %(sqlconstraint)
+            if sqlconstraint == '':
+                print "Querying database with no constraint."
+            else:
+                print "Querying database with constraint %s" %(sqlconstraint)
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
         if self.dbTable != 'Summary':
             distinctExpMJD = False
