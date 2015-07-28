@@ -7,7 +7,7 @@ __all__ = ['PassMetric', 'Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetr
            'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric', 'CountUniqueMetric',
            'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
            'MaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
-           'PercentileMetric', 'NoutliersNsigmaMetric', 'CountUniqueRatioMetric',
+           'PercentileMetric', 'NoutliersNsigmaMetric', 'UniqueRatioMetric',
            'MeanAngleMetric', 'RmsAngleMetric', 'FullRangeAngleMetric']
 
 twopi = 2.0*np.pi
@@ -79,8 +79,8 @@ class CountUniqueMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.size(np.unique(dataSlice[self.colname]))
 
-class CountUniqueRatioMetric(BaseMetric):
-    """Return the number of unique values """
+class UniqueRatioMetric(BaseMetric):
+    """Return the number of unique values divided by the total"""
     def run(self, dataSlice, slicePoint=None):
         ntot = float(np.size(dataSlice[self.colname]))
         result = np.size(np.unique(dataSlice[self.colname])) / ntot
