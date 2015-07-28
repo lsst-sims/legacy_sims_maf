@@ -164,10 +164,10 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         for key in keys:
             mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=plots.OneDBinnedData())
 
+    mergedHistDict['Nvisits_WFD'] = plots.PlotBundle(plotFunc=opsimHistPlot)
+
     ## Metrics calculating values across the sky (opsim slicer).
     # Loop over a set of standard analysis metrics, for All Proposals, WFD only, and DD only.
-
-
 
     for i, prop in enumerate(['All Props', 'WFD', 'DD']):
         for f in filters:
