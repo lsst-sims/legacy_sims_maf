@@ -100,6 +100,10 @@ class PlotHandler(object):
         if plotFunc is not None:
             autoXlabel, autoYlabel = self._buildXYlabels(plotFunc)
 
+        # For these keys, the plotter defaults will be skipped if there is
+        #  a previously existing value.
+        skipdefaults = ['color', 'linestyle', 'npReduce']
+
         # Loop through each bundle and generate a plotDict for it.
         for i,bundle in enumerate(self.mBundles):
             tmpPlotDict = {}
@@ -119,7 +123,10 @@ class PlotHandler(object):
                 plotterDefaults = plotFunc.defaultPlotDict
                 for k, v in plotterDefaults.iteritems():
                     if v is not None:
-                        tmpPlotDict[k] = v
+                        if k in skipdefaults and k in tmpPlotDict:
+                            pass
+                        else:
+                            tmpPlotDict[k] = v
             # Use the bundle plotDict parameters if they are set
             tmpPlotDict.update(bundle.plotDict)
             # Finally, replace anything set explicitly by the user right now.
