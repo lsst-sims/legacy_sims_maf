@@ -119,8 +119,9 @@ class PlotHandler(object):
                         tmpPlotDict[k] = v
             # Use the bundle plotDict parameters if they are set
             tmpPlotDict.update(bundle.plotDict)
-
-            # But replace anything set explicitly by the user in plotDict.
+            # And use anything previously set in the plotHandler.
+            tmpPlotDict.update(self.plotDicts[i])
+            # Finally, replace anything set explicitly by the user right now.
             if plotDicts is not None:
                 tmpPlotDict.update(plotDicts[i])
             self.plotDicts[i] = tmpPlotDict
