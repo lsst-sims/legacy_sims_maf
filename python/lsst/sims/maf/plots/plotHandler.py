@@ -77,21 +77,20 @@ class PlotHandler(object):
 
         Resolution is:
              auto-generated items (colors/labels/titles)
-            < anything previously set in the plotHandler
             < defaults set by the plotter
+            < anything previously set in the plotHandler
             < explicitly set items in the metricBundle plotDict
             < explicitly set items in the plotDicts list passed to this method.
         """
         if reset:
-            self.plotDicts=[{}]*len(self.mBundles)
+            # Have to explicitly set each dictionary to a (separate) blank dictionary.
+            self.plotDicts = [{} for b in self.mBundles]
 
         if isinstance(plotDicts, dict):
+            # We were passed a single dictionary, not a list.
             singleDict = plotDicts
-            plotDicts = []
-            for b in self.mBundles:
-                tmp ={}
-                tmp.update(singleDict)
-                plotDicts.append(tmp)
+            # This is okay because we won't update plotDicts.
+            plotDicts = [singleDict] * len(self.mBundles)
 
         autoLabelList = self._buildLegendLabels()
         autoColorList = self._buildColors()
@@ -100,20 +99,14 @@ class PlotHandler(object):
         if plotFunc is not None:
             autoXlabel, autoYlabel = self._buildXYlabels(plotFunc)
 
-        # For these keys, the plotter defaults will be skipped if there is
-        #  a previously existing value.
-        skipdefaults = ['color', 'linestyle', 'npReduce']
-
         # Loop through each bundle and generate a plotDict for it.
-        for i,bundle in enumerate(self.mBundles):
+        for i, bundle in enumerate(self.mBundles):
             tmpPlotDict = {}
             tmpPlotDict['title'] = autoTitle
             tmpPlotDict['label'] = autoLabelList[i]
             tmpPlotDict['color'] = autoColorList[i]
             tmpPlotDict['legendloc'] = 'upper right'
             tmpPlotDict['cbarFormat'] = autoCbar
-            # Use anything previously set in the plotHandler.
-            tmpPlotDict.update(self.plotDicts[i])
             # Reset plotDict items set explicitly by plotter.
             if plotFunc is not None:
                 tmpPlotDict['xlabel'] = autoXlabel
@@ -123,18 +116,18 @@ class PlotHandler(object):
                 plotterDefaults = plotFunc.defaultPlotDict
                 for k, v in plotterDefaults.iteritems():
                     if v is not None:
-                        if k in skipdefaults and k in tmpPlotDict:
-                            pass
-                        else:
-                            tmpPlotDict[k] = v
-            # Use the bundle plotDict parameters if they are set
+                        tmpPlotDict[k] = v
+            # Use anything previously set in the plotHandler.
+            tmpPlotDict.update(self.plotDicts[i])
+            # Add/override the bundle plotDict parameters if they are set.
             tmpPlotDict.update(bundle.plotDict)
             # Finally, replace anything set explicitly by the user right now.
             if plotDicts is not None:
                 tmpPlotDict.update(plotDicts[i])
+            # And save this new dictionary back in the class.
             self.plotDicts[i] = tmpPlotDict
 
-        # Check that the plotDicts are OK
+        # Check that the plotDicts do not conflict.
         self._checkPlotDicts()
 
     def _combineMetricNames(self):
@@ -483,14 +476,24 @@ class PlotHandler(object):
                         warnings.warn('Cannot plot object metric values with this plotter.')
                         return
 
-        # Update x/y labels using plotType. User provided plotDict will override previous settings.
-        self.setPlotDicts(plotDicts, plotFunc, reset=False)
+        # Update x/y labels using plotType.
+        self.setPlotDicts(plotDicts=None, plotFunc=plotFunc, reset=False)
+        # Then add any plotDicts passed here, but only as temporary set of plotDicts (userPlotDicts).
+        if isinstance(plotDicts, dict):
+            # We were passed a single dictionary instead of a list.
+            singleDict = plotDicts
+            plotDicts = [singleDict] * len(self.mBundles)
+        userPlotDicts = [{} for b in self.mBundles]
+        for i in range(len(self.mBundles)):
+            userPlotDicts[i].update(self.plotDicts[i])
+            userPlotDicts[i].update(plotDicts[i])
+
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
         # Make plot.
         fignum = None
-        for mB, plotDict in zip(self.mBundles, self.plotDicts):
+        for mB, plotDict in zip(self.mBundles, userPlotDicts):
             if mB.metricValues is None:
                 # Skip this metricBundle.
                 warnings.warn('MetricBundle (fileRoot=%s) has no attribute metricValues' % (mB.fileRoot) + \
@@ -501,7 +504,7 @@ class PlotHandler(object):
             # Add a legend if more than metricValue being plotted.
             plotType = 'Combo' + plotType
             plt.figure(fignum)
-            plt.legend(loc=self.plotDicts[0]['legendloc'], fancybox=True, fontsize='smaller')
+            plt.legend(loc=userPlotDicts[0]['legendloc'], fancybox=True, fontsize='smaller')
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
             fig = plt.figure(fignum)
