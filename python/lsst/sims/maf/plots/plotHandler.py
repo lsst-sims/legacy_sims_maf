@@ -77,8 +77,8 @@ class PlotHandler(object):
 
         Resolution is:
              auto-generated items (colors/labels/titles)
-            < defaults set by the plotter
             < anything previously set in the plotHandler
+            < defaults set by the plotter
             < explicitly set items in the metricBundle plotDict
             < explicitly set items in the plotDicts list passed to this method.
         """
@@ -107,6 +107,8 @@ class PlotHandler(object):
             tmpPlotDict['color'] = autoColorList[i]
             tmpPlotDict['legendloc'] = 'upper right'
             tmpPlotDict['cbarFormat'] = autoCbar
+            # Use anything previously set in the plotHandler, if it's not None.
+            tmpPlotDict.update(self.plotDicts[i])
             # Reset plotDict items set explicitly by plotter.
             if plotFunc is not None:
                 tmpPlotDict['xlabel'] = autoXlabel
@@ -117,8 +119,6 @@ class PlotHandler(object):
                 for k, v in plotterDefaults.iteritems():
                     if v is not None:
                         tmpPlotDict[k] = v
-            # Use anything previously set in the plotHandler.
-            tmpPlotDict.update(self.plotDicts[i])
             # Add/override the bundle plotDict parameters if they are set.
             tmpPlotDict.update(bundle.plotDict)
             # Finally, replace anything set explicitly by the user right now.
