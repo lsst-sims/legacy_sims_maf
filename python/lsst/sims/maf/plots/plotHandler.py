@@ -486,7 +486,8 @@ class PlotHandler(object):
         userPlotDicts = [{} for b in self.mBundles]
         for i in range(len(self.mBundles)):
             userPlotDicts[i].update(self.plotDicts[i])
-            userPlotDicts[i].update(plotDicts[i])
+            if plotDicts is not None:
+                userPlotDicts[i].update(plotDicts[i])
 
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
