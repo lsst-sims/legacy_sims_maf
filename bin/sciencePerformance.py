@@ -107,7 +107,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     depthgroup = 'B: Depth per filter'
     uniformitygroup = 'C: Uniformity'
     seeinggroup = 'D: Seeing distribution'
-
+    transgroup = 'E: Transients'
 
     # Set up an object to track the metricBundles that we want to combine into merged plots.
     mergedHistDict = {}
@@ -370,6 +370,50 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                                             summaryMetrics=summaryStats)
         mergedHistDict['NormEffTime'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
+
+
+    # Put in a z=0.5 Type Ia SN, based on Cambridge 2015 workshop notebook.
+    # Check for 1) detection in any band, 2) detection on the rise in any band,
+    # 3) good characterization
+    peaks = {'uPeak':25.9, 'gPeak':23.6, 'rPeak':22.6, 'iPeak':22.7, 'zPeak':22.7,'yPeak':22.8}
+    peakTime = 15.
+    transDuration = peakTime+30. # Days
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.0,
+                                          transDuration=transDuration, peakTime=peakTime,
+                                          surveyDuration=runLength,
+                                          metricName='SNDetection',**peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are detected in any filter'
+    displayDict={'group':transgroup,  'subgroup':'Detected', 'caption':caption}
+    sqlconstraint = ''
+    metadata = '' + slicermetadata
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.0,
+                                          transDuration=transDuration, peakTime=peakTime,
+                                          surveyDuration=runLength,
+                                          nPrePeak=1, metricName='SNAlert', **peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are detected pre-peak in any filter'
+    displayDict={'group':transgroup,  'subgroup':'Detected on the rise', 'caption':caption}
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.,
+                                     transDuration=transDuration, peakTime=peakTime,
+                                     surveyDuration=runLength, metricName='SNLots',
+                                     nFilters=3, nPrePeak=3, nPerLC=2, **peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are observed 6 times, 3 pre-peak, 3 post-peak, with observations in 3 filters'
+    displayDict={'group':transgroup,  'subgroup':'Well observed', 'caption':caption}
+    sqlconstraint = 'filter="r" or filter="g" or filter="i" or filter="z" '
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+
 
     # Good seeing in r/i band metrics, including in first/second years.
     order = 0

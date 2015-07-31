@@ -216,7 +216,7 @@ class OpsimDatabase(Database):
 
     def fetchRunLength(self, runLengthParam='nRun'):
         """
-        Returns the run length for a particular opsim run.
+        Returns the run length for a particular opsim run (years).
 
         runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
         """
