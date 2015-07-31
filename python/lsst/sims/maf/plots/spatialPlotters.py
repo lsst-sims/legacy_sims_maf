@@ -258,7 +258,7 @@ class BaseHistogram(BasePlotter):
                     bmax = np.max([metricValue.max(), histRange[1]])
                 else:
                     bmax = metricValue.max()
-                bins = np.arange(bmin, bmax+plotDict['binsize']/2.0, plotDict['binsize'])
+                bins = np.arange(bmin, bmax+plotDict['binsize'], plotDict['binsize'])
             #  Else try to set up bins using min/max values if specified, or full data range.
             else:
                 if histRange[0] is not None:
@@ -269,7 +269,7 @@ class BaseHistogram(BasePlotter):
                     bmax = histRange[1]
                 else:
                     bmax = metricValue.max()
-                bins = np.arange(bmin, bmax+plotDict['binsize']/2.0, plotDict['binsize'])
+                bins = np.arange(bmin, bmax+plotDict['binsize'], plotDict['binsize'])
         # Otherwise, determine number of bins, if neither 'bins' or 'binsize' were specified.
         else:
             if plotDict['bins'] is None:
@@ -314,9 +314,8 @@ class BaseHistogram(BasePlotter):
                 if np.min(histRange) is None:
                     histRange = None
                 n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
-                                    cumulative=plotDict['cumulative'], range=histRange,
-                                    label=plotDict['label'], color=plotDict['color'])
-
+                                   cumulative=plotDict['cumulative'], range=histRange,
+                                   label=plotDict['label'], color=plotDict['color'])
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y,  pos):
