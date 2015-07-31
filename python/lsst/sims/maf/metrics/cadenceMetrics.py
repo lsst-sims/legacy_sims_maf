@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric',
            'RapidRevisitMetric', 'NRevisitsMetric', 'IntraNightGapsMetric',
-           'InterNightGapsMetric']
+           'InterNightGapsMetric', 'AveGapMetric']
 
 class SupernovaMetric(BaseMetric):
     """
@@ -278,6 +278,7 @@ class NRevisitsMetric(BaseMetric):
         if self.normed:
             nFastRevisits = nFastRevisits / float(np.size(dataSlice[self.timeCol]))
         return nFastRevisits
+
 class IntraNightGapsMetric(BaseMetric):
     """
     Calculate the gap between consecutive observations within a night.
@@ -335,4 +336,28 @@ class InterNightGapsMetric(BaseMetric):
             lastOfNight = np.searchsorted(dataSlice[self.nightCol], unights, side='right')-1
             diff = dataSlice[self.timeCol][firstOfNight[1:]] - dataSlice[self.timeCol][lastOfNight[:-1]]
             result = self.reduceFunc(diff)
+        return result
+
+
+class AveGapMetric(BaseMetric):
+    """
+    Calculate the gap between consecutive observations.
+    """
+    def __init__(self, timeCol='expMJD', nightCol='night', reduceFunc=np.median,
+                 metricName='AveGap',**kwargs):
+        """
+
+        """
+        units = 'hours'
+        self.timeCol = timeCol
+        self.nightCol = nightCol
+        self.reduceFunc = reduceFunc
+        super(AveGapMetric,self).__init__(col=[self.timeCol,self.nightCol] ,
+                                          units=units, metricName=metricName, **kwargs)
+
+    def run(self,dataSlice, slicePoint=None):
+
+        dataSlice.sort(order=self.timeCol)
+        diff = np.diff(dataSlice[self.timeCol])
+        result = self.reduceFunc(diff)*24.
         return result
