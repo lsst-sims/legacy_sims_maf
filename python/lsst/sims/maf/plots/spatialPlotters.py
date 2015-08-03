@@ -258,7 +258,10 @@ class BaseHistogram(BasePlotter):
                     bmax = np.max([metricValue.max(), histRange[1]])
                 else:
                     bmax = metricValue.max()
-                bins = np.arange(bmin, bmax+plotDict['binsize'], plotDict['binsize'])
+                bins = np.arange(bmin, bmax+plotDict['binsize']/2.0, plotDict['binsize'])
+                # Catch edge-case where there is only 1 bin value
+                if bins.size < 2:
+                    bins = np.arange(bmin, bmax+plotDict['binsize'], plotDict['binsize'])
             #  Else try to set up bins using min/max values if specified, or full data range.
             else:
                 if histRange[0] is not None:
