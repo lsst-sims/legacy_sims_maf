@@ -241,7 +241,7 @@ def stitchMovie(metricList, args):
             else:
                 args.fps = 30.0
         # Create the movie.
-        movieslicer.plotMovie(outfileroot, sliceformat, plotType='SkyMap', figformat='png',
+        movieslicer.makeMovie(outfileroot, sliceformat, plotType='SkyMap', figformat='png',
                                 outDir=args.outDir, ips=args.ips, fps=args.fps)
 
 if __name__ == '__main__':
