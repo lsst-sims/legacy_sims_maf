@@ -452,37 +452,38 @@ class BaseSkyMap(BasePlotter):
             # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
             mask = ~metricValue.mask
         # Determine color min/max values. metricValue.compressed = non-masked points.
-        if plotDict['percentileClip']:
-            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
-        if plotDict['colorMin'] is None:
+        if not plotDict['metricIsColor']:
             if plotDict['percentileClip']:
-                plotDict['colorMin'] = pcMin
-            else:
-                plotDict['colorMin'] = metricValue.compressed().min()
-        if plotDict['colorMax'] is None:
-            if plotDict['percentileClip']:
-                plotDict['colorMax'] = pcMax
-            else:
-                plotDict['colorMax'] = metricValue.compressed().max()
-                # Avoid colorbars with no range.
-                if plotDict['colorMax'] == plotDict['colorMin']:
-                    plotDict['colorMax'] = plotDict['colorMax'] + 1
-                    plotDict['colorMin'] = plotDict['colorMin'] - 1
-        # Combine to make clims:
-        clims = [plotDict['colorMin'], plotDict['colorMax']]
-        # Determine whether or not to use auto-log scale.
-        if plotDict['logScale'] == 'auto':
-            if plotDict['colorMin'] > 0:
-                if np.log10(plotDict['colorMax'])-np.log10(plotDict['colorMin']) > 3:
-                    plotDict['logScale'] = True
+                pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
+            if plotDict['colorMin'] is None:
+                if plotDict['percentileClip']:
+                    plotDict['colorMin'] = pcMin
+                else:
+                    plotDict['colorMin'] = metricValue.compressed().min()
+            if plotDict['colorMax'] is None:
+                if plotDict['percentileClip']:
+                    plotDict['colorMax'] = pcMax
+                else:
+                    plotDict['colorMax'] = metricValue.compressed().max()
+                    # Avoid colorbars with no range.
+                    if plotDict['colorMax'] == plotDict['colorMin']:
+                        plotDict['colorMax'] = plotDict['colorMax'] + 1
+                        plotDict['colorMin'] = plotDict['colorMin'] - 1
+            # Combine to make clims:
+            clims = [plotDict['colorMin'], plotDict['colorMax']]
+            # Determine whether or not to use auto-log scale.
+            if plotDict['logScale'] == 'auto':
+                if plotDict['colorMin'] > 0:
+                    if np.log10(plotDict['colorMax'])-np.log10(plotDict['colorMin']) > 3:
+                        plotDict['logScale'] = True
+                    else:
+                        plotDict['logScale'] = False
                 else:
                     plotDict['logScale'] = False
-            else:
-                plotDict['logScale'] = False
-        if plotDict['logScale']:
-            # Move min/max values to things that can be marked on the colorbar.
-            plotDict['colorMin'] = 10**(int(np.log10(plotDict['colorMin'])))
-            plotDict['colorMax'] = 10**(int(np.log10(plotDict['colorMax'])))
+            if plotDict['logScale']:
+                # Move min/max values to things that can be marked on the colorbar.
+                plotDict['colorMin'] = 10**(int(np.log10(plotDict['colorMin'])))
+                plotDict['colorMax'] = 10**(int(np.log10(plotDict['colorMax'])))
         # Add ellipses at RA/Dec locations
         lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi*2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][mask], plotDict['radius'], rasterized=True, ax=ax)
@@ -525,7 +526,8 @@ class BaseSkyMap(BasePlotter):
             self._plot_mwZone(plotDict['raCen'], ax=ax)
         ax.grid(True, zorder=1)
         ax.xaxis.set_ticklabels([])
-        ax.set_axis_bgcolor(plotDict['bgcolor'])
+        if plotDict['bgcolor'] is not None:
+            ax.set_axis_bgcolor(plotDict['bgcolor'])
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.75, 0.9, '%s' %plotDict['label'])
