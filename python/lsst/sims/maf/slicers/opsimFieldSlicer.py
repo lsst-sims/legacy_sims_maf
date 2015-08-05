@@ -2,7 +2,7 @@
 
 import numpy as np
 from functools import wraps
-
+import warnings
 from lsst.sims.maf.plots.spatialPlotters import OpsimHistogram, BaseSkyMap
 
 from .baseSpatialSlicer import BaseSpatialSlicer
@@ -57,6 +57,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldData = numpy rec array with the field information (ID, RA, Dec),
         Values for the column names are set during 'init'.
         """
+        if hasattr(self,'slicePoints'):
+            warnings.warn('Warning, re-setting up an OpsimFieldSlicer. Could break plotting of previously computed metrics if slicepoints change')
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIDColName])
         # Set needed values for slice metadata.
