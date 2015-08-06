@@ -222,7 +222,7 @@ def stitchMovie(metricList, args):
     for metric in metricList:
         # Identify filenames.
         outfileroot = metric.name
-        plotfiles = fnmatch.filter(os.listdir(args.outDir), outfileroot + '*SkyMap.png')
+        plotfiles = fnmatch.filter(os.listdir(args.outDir), outfileroot + '*_SkyMap.png')
         slicenum = plotfiles[0].replace(outfileroot, '').replace('_SkyMap.png', '').replace('_', '')
         sliceformat = '%s0%dd' %('%', len(slicenum))
         n_images = len(plotfiles)
