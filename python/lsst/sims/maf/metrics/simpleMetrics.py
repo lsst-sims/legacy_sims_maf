@@ -7,7 +7,7 @@ __all__ = ['PassMetric', 'Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetr
            'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric', 'CountUniqueMetric',
            'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
            'MaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
-           'PercentileMetric', 'NoutliersNsigmaMetric',
+           'PercentileMetric', 'NoutliersNsigmaMetric', 'UniqueRatioMetric',
            'MeanAngleMetric', 'RmsAngleMetric', 'FullRangeAngleMetric']
 
 twopi = 2.0*np.pi
@@ -79,6 +79,13 @@ class CountUniqueMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.size(np.unique(dataSlice[self.colname]))
 
+class UniqueRatioMetric(BaseMetric):
+    """Return the number of unique values divided by the total"""
+    def run(self, dataSlice, slicePoint=None):
+        ntot = float(np.size(dataSlice[self.colname]))
+        result = np.size(np.unique(dataSlice[self.colname])) / ntot
+        return result
+
 class CountMetric(BaseMetric):
     """Count the length of a simData column slice. """
     def __init__(self, col=None, **kwargs):
@@ -110,7 +117,6 @@ class CountSubsetMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         count = len(np.where(dataSlice[self.colname] == self.subset)[0])
         return count
-
 
 class RobustRmsMetric(BaseMetric):
     """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation

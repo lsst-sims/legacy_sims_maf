@@ -672,6 +672,12 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                         displayDict=displayDict, runName=runName, metadata=metadata)
     bundleList.append(bundle)
+    metric = metrics.UniqueRatioMetric(col='fieldID')
+    displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
+                 'caption':'Fraction of unique fields observed per night.'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                        displayDict=displayDict, runName=runName, metadata=metadata)
+    bundleList.append(bundle)
     metric = metrics.OpenShutterFractionMetric()
     displayDict={'group':summarygroup, 'subgroup':'3: Obs Per Night',
                  'caption':'Open shutter fraction per night. This compares the on-sky image time against the on-sky time + slews/filter changes/readout, but does not include downtime due to weather.'}
