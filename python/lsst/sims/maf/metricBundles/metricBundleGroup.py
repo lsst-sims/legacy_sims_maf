@@ -22,7 +22,7 @@ def makeBundlesDictFromList(bundleList):
     bDict = {}
     for b in bundleList:
         if b.fileRoot in bDict:
-            raise UserError('More than one metricBundle is using the same fileroot, %s' %(b.fileRoot))
+            raise NameError('More than one metricBundle is using the same fileroot, %s' %(b.fileRoot))
         bDict[b.fileRoot] = b
     return bDict
 
