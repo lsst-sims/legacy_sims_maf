@@ -17,7 +17,7 @@ from lsst.sims.utils import equatorialFromGalactic
 import inspect
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
-           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
+           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
 
 
 class HealpixSkyMap(BasePlotter):
@@ -638,4 +638,45 @@ class HealpixSDSSSkyMap(BasePlotter):
         if plotDict['cbar_edge']:
             cb1.solids.set_edgecolor("face")
         fig = plt.gcf()
+        return fig.number
+
+
+class LambertSkyMap(BasePlotter):
+    """
+    Use basemap and hexbin to make a Lambertian projection.
+    """
+
+    def __init__(self):
+        self.plotType = 'SkyMap'
+        self.objectPlotter = False
+        self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
+                                           'lon_0':0., 'resolution':'l'},
+                                'cbar':True, 'cmap':plt.cm.jet, 'bins':100,
+                                'cbarFormat':'%.2f','cbar_edge':True}
+
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+
+        fig = plt.figure(fignum)
+        ax = fig.add_subplot(111)
+
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+        # Hide this extra dependency down here for now
+        from mpl_toolkits.basemap import Basemap
+
+        m = Basemap(**plotDict['basemap'])
+        x1,y1 = m(np.degrees(slicer.slicePoints['ra']),
+                  np.degrees(slicer.slicePoints['dec']))
+        good = np.where(metricValue != slicer.badval)
+        CS = m.hexbin(x1[good],y1[good], C=metricValue[good],
+                      gridsize=plotDict['bins'], cmap=plotDict['cmap'])
+        m.drawparallels(np.arange(0,81,20))
+        m.drawmeridians(np.arange(-180,181,60))
+        cb = m.colorbar(format=plotDict['cbarFormat'])
+        cb.set_label(plotDict['xlabel'])
+        ax.set_title(plotDict['title'])
+        # If outputing to PDF, this fixes the colorbar white stripes
+        if plotDict['cbar_edge']:
+            cb.solids.set_edgecolor("face")
         return fig.number
