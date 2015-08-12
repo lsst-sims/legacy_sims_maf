@@ -15,9 +15,10 @@ from .plotHandler import BasePlotter
 
 from lsst.sims.utils import equatorialFromGalactic
 import inspect
+from scipy.interpolate import griddata
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
-           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
+           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap', 'ContourSkyMap']
 
 
 class HealpixSkyMap(BasePlotter):
@@ -651,8 +652,9 @@ class LambertSkyMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
                                            'lon_0':0., 'resolution':'l'},
-                                'cbar':True, 'cmap':plt.cm.jet, 'bins':100,
-                                'cbarFormat':'%.2f','cbar_edge':True}
+                                'cbar':True, 'cmap':plt.cm.jet, 'bins':75,
+                                'cbarFormat':'%.2f','cbar_edge':True,
+                                'reduce_C_function':np.mean}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
 
@@ -670,7 +672,8 @@ class LambertSkyMap(BasePlotter):
                   np.degrees(slicer.slicePoints['dec']))
         good = np.where(metricValue != slicer.badval)
         CS = m.hexbin(x1[good],y1[good], C=metricValue[good],
-                      gridsize=plotDict['bins'], cmap=plotDict['cmap'])
+                      gridsize=plotDict['bins'], cmap=plotDict['cmap'],
+                      reduce_C_function=plotDict['reduce_C_function'])
         m.drawparallels(np.arange(0,81,20))
         m.drawmeridians(np.arange(-180,181,60))
         cb = m.colorbar(format=plotDict['cbarFormat'])
@@ -679,4 +682,61 @@ class LambertSkyMap(BasePlotter):
         # If outputing to PDF, this fixes the colorbar white stripes
         if plotDict['cbar_edge']:
             cb.solids.set_edgecolor("face")
+        return fig.number
+
+class ContourSkyMap(BasePlotter):
+    """
+    Use contour to avoid needing Basemap
+    """
+    def __init__(self):
+        self.plotType = 'SkyMap'
+        self.objectPlotter = False
+        self.defaultPlotDict = {'projection':'aitoff',
+                                'cbar':True, 'cmap':plt.cm.jet,
+                                'cbarFormat':'%.2f','cbar_edge':True,
+                                'xlabel':None}
+
+    def _binData(self, x, y, z):
+        """
+        Bin up data
+        """
+        npts = 100
+
+        step = (x.max()-x.min())/npts
+        xEven = np.arange(x.min(),x.max()+step, step)
+        step = (y.max()-y.min())/npts
+        yEven = np.arange(y.min(),y.max()+step, step)
+        xi,yi = np.meshgrid(xEven,yEven)
+
+
+        import pdb ; pdb.set_trace()
+        zi = griddata( (x,y), z, (xi,yi), method='cubic')
+
+        return xi, yi, zi
+
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+
+
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+
+        fig = plt.figure(fignum)
+        # other projections available include
+        # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
+        ax = fig.add_subplot(111, projection=plotDict['projection'])
+
+
+
+        good = np.where(metricValue != slicer.badval)
+
+        #levels = np.arange(zi.min(),zi.max()+1,256)
+
+        p = ax.tricontourf(slicer.slicePoints['dec'][good],
+                           slicer.slicePoints['ra'][good],
+                           metricValue.data[good],
+                           cmap=plotDict['cmap'])
+        cb = plt.colorbar(p, format=plotDict['cbarFormat'])
+        cb.set_label(plotDict['xlabel'])
+
         return fig.number
