@@ -651,32 +651,68 @@ class LambertSkyMap(BasePlotter):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
         self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
-                                           'lon_0':0., 'resolution':'l'},
-                                'cbar':True, 'cmap':plt.cm.jet, 'bins':75,
-                                'cbarFormat':'%.2f','cbar_edge':True,
-                                'reduce_C_function':np.mean}
+                                           'lon_0':0., 'resolution':'l', 'celestial':True},
+                                'cbar':True, 'cmap':plt.cm.jet, 'levels':200,
+                                'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
+                                'normVal':None, 'percentileClip':False, 'colorMin':None,
+                                'colorMax':None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
-
-        fig = plt.figure(fignum)
-        ax = fig.add_subplot(111)
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+
+        if plotDict['zp'] is not None :
+            metricValue = metricValue - plotDict['zp']
+        if plotDict['normVal'] is not None:
+            metricValue = metricValue/plotDict['normVal']
+
+        if plotDict['percentileClip']:
+            pcMin, pcMax = percentileClipping(metricValue.compressed(),
+                                              percentile=plotDict['percentileClip'])
+        if plotDict['colorMin'] is None and plotDict['percentileClip']:
+            plotDict['colorMin'] = pcMin
+        if plotDict['colorMax'] is None and plotDict['percentileClip']:
+            plotDict['colorMax'] = pcMax
+        if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
+            clims = [plotDict['colorMin'], plotDict['colorMax']]
+        else:
+            clims = None
+
+        # Make sure there is some range on the colorbar
+        if clims is None:
+            if metricValue.compressed().size > 0:
+                clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            else:
+                clims = [-1,1]
+            if clims[0] == clims[1]:
+                clims[0] =  clims[0]-1
+                clims[1] =  clims[1]+1
+
+        # Calculate the levels to use for the contour
+        if np.size(plotDict['levels']) > 1:
+            levels = plotDict['levels']
+        else:
+            step = (clims[1]-clims[0])/plotDict['levels']
+            levels = np.arange(clims[0],clims[1]+step, step)
+
+        fig = plt.figure(fignum)
+        ax = fig.add_subplot(111)
+
         # Hide this extra dependency down here for now
         from mpl_toolkits.basemap import Basemap
 
         m = Basemap(**plotDict['basemap'])
-        x1,y1 = m(np.degrees(slicer.slicePoints['ra']),
-                  np.degrees(slicer.slicePoints['dec']))
         good = np.where(metricValue != slicer.badval)
-        CS = m.hexbin(x1[good],y1[good], C=metricValue[good],
-                      gridsize=plotDict['bins'], cmap=plotDict['cmap'],
-                      reduce_C_function=plotDict['reduce_C_function'])
+        CS = m.contourf(np.degrees(slicer.slicePoints['ra'][good]),
+                        np.degrees(slicer.slicePoints['dec'][good]),
+                        metricValue[good], levels, tri=True,
+                        cmap=plotDict['cmap'], ax=ax, latlon=True)
+
         m.drawparallels(np.arange(0,81,20))
         m.drawmeridians(np.arange(-180,181,60))
-        cb = m.colorbar(format=plotDict['cbarFormat'])
+        cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])
         ax.set_title(plotDict['title'])
         # If outputing to PDF, this fixes the colorbar white stripes
@@ -726,15 +762,14 @@ class ContourSkyMap(BasePlotter):
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = fig.add_subplot(111, projection=plotDict['projection'])
 
-
-
         good = np.where(metricValue != slicer.badval)
+        x=slicer.slicePoints['ra'][good]
+        y=slicer.slicePoints['dec'][good]
+        z=metricValue[good]
 
-        #levels = np.arange(zi.min(),zi.max()+1,256)
+        levels = None
 
-        p = ax.tricontourf(slicer.slicePoints['dec'][good],
-                           slicer.slicePoints['ra'][good],
-                           metricValue.data[good],
+        p = ax.tricontourf(x,y,z,
                            cmap=plotDict['cmap'])
         cb = plt.colorbar(p, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])

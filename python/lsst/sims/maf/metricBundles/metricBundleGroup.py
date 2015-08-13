@@ -465,48 +465,49 @@ class MetricBundleGroup(object):
         reduceBundleDict = {}
         for b in self.bundleDict.itervalues():
             filename = os.path.join(self.outDir, b.fileRoot+'.npz')
-            # Create a temporary metricBundle to read the data into.
-            #  (we don't use b directly, as this overrides plotDict/etc).
-            tmpBundle = createEmptyMetricBundle()
-            tmpBundle.read(filename)
-            # Copy the tmpBundle metricValues into b.
-            b.metricValues = ma.copy(tmpBundle.metricValues)
-            del tmpBundle
+            if os.path.isfile(filename):
+                # Create a temporary metricBundle to read the data into.
+                #  (we don't use b directly, as this overrides plotDict/etc).
+                tmpBundle = createEmptyMetricBundle()
+                tmpBundle.read(filename)
+                # Copy the tmpBundle metricValues into b.
+                b.metricValues = ma.copy(tmpBundle.metricValues)
+                del tmpBundle
 
-            # Look to see if this is a complex metric, with associated 'reduce' functions, and read those in.
-            if len(b.metric.reduceFuncs) > 0:
-                origMetricName = b.metric.name
-                for reduceFunc in b.metric.reduceFuncs.itervalues():
-                    reduceName = origMetricName + '_' + reduceFunc.__name__.replace('reduce', '')
-                    # Borrow the fileRoot in b (we'll reset it appropriately afterwards).
-                    b.metric.name = reduceName
+                # Look to see if this is a complex metric, with associated 'reduce' functions, and read those in.
+                if len(b.metric.reduceFuncs) > 0:
+                    origMetricName = b.metric.name
+                    for reduceFunc in b.metric.reduceFuncs.itervalues():
+                        reduceName = origMetricName + '_' + reduceFunc.__name__.replace('reduce', '')
+                        # Borrow the fileRoot in b (we'll reset it appropriately afterwards).
+                        b.metric.name = reduceName
+                        b._buildFileRoot()
+                        filename = os.path.join(self.outDir, b.fileRoot+'.npz')
+                        tmpBundle = createEmptyMetricBundle()
+                        tmpBundle.read(filename)
+                        # This won't necessarily get the plotDict and displayDict the same as if you calculated the
+                        #  reduce metric from scratch. Perhaps update these reduce metric dictionaries after reading them in?
+                        newmetricBundle = MetricBundle(metric=b.metric, slicer=b.slicer, sqlconstraint=b.sqlconstraint,
+                                                       stackerList=b.stackerList, runName=b.runName, metadata=b.metadata,
+                                                       plotDict=b.plotDict, displayDict=b.displayDict,
+                                                       summaryMetrics=b.summaryMetrics, mapsList=b.mapsList,
+                                                       fileRoot=b.fileRoot, plotFuncs=b.plotFuncs)
+                        newmetricBundle.metric.name = reduceName
+                        newmetricBundle.metricValues = ma.copy(tmpBundle.metricValues)
+                        del tmpBundle
+
+                        # Add the new metricBundle to our metricBundleGroup dictionary.
+                        name = newmetricbundle.metric.name
+                        if name in self.bundleDict:
+                            name = newmetricbundle.fileRoot
+                        reduceBundleDict[name] = newmetricbundle
+
+                    # Remove summaryMetrics from top level metricbundle.
+                    b.summaryMetrics = []
+                    # Update parent MetricBundle name.
+                    b.metric.name = origMetricName
                     b._buildFileRoot()
-                    filename = os.path.join(self.outDir, b.fileRoot+'.npz')
-                    tmpBundle = createEmptyMetricBundle()
-                    tmpBundle.read(filename)
-                    # This won't necessarily get the plotDict and displayDict the same as if you calculated the
-                    #  reduce metric from scratch. Perhaps update these reduce metric dictionaries after reading them in?
-                    newmetricBundle = MetricBundle(metric=b.metric, slicer=b.slicer, sqlconstraint=b.sqlconstraint,
-                                                   stackerList=b.stackerList, runName=b.runName, metadata=b.metadata,
-                                                   plotDict=b.plotDict, displayDict=b.displayDict,
-                                                   summaryMetrics=b.summaryMetrics, mapsList=b.mapsList,
-                                                   fileRoot=b.fileRoot, plotFuncs=b.plotFuncs)
-                    newmetricBundle.metric.name = reduceName
-                    newmetricBundle.metricValues = ma.copy(tmpBundle.metricValues)
-                    del tmpBundle
-
-                    # Add the new metricBundle to our metricBundleGroup dictionary.
-                    name = newmetricbundle.metric.name
-                    if name in self.bundleDict:
-                        name = newmetricbundle.fileRoot
-                    reduceBundleDict[name] = newmetricbundle
-
-                # Remove summaryMetrics from top level metricbundle.
-                b.summaryMetrics = []
-                # Update parent MetricBundle name.
-                b.metric.name = origMetricName
-                b._buildFileRoot()
-            if self.verbose:
-                print 'Read %s from disk.' %(b.fileRoot)
+                if self.verbose:
+                    print 'Read %s from disk.' %(b.fileRoot)
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)
