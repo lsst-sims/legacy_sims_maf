@@ -657,7 +657,7 @@ class LambertSkyMap(BasePlotter):
                                 'cbar':True, 'cmap':plt.cm.jet, 'levels':200,
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
-                                'colorMax':None}
+                                'colorMax':None, 'linewidths':0}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
 
@@ -707,6 +707,13 @@ class LambertSkyMap(BasePlotter):
 
         m = Basemap(**plotDict['basemap'])
         good = np.where(metricValue != slicer.badval)
+        # Contour the plot first to remove any anti-aliasing artifacts.  See:
+        # http://stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib-filled-contour-plot-to-pdf-or-eps
+        #tmpContour = m.contour(np.degrees(slicer.slicePoints['ra'][good]),
+        #                       np.degrees(slicer.slicePoints['dec'][good]),
+        #                       metricValue[good], levels,tri=True,
+        #                       cmap=plotDict['cmap'], ax=ax, latlon=True,
+        #                       lw=1)
         CS = m.contourf(np.degrees(slicer.slicePoints['ra'][good]),
                         np.degrees(slicer.slicePoints['dec'][good]),
                         metricValue[good], levels, tri=True,
