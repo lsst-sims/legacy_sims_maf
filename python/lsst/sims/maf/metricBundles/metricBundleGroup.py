@@ -497,10 +497,10 @@ class MetricBundleGroup(object):
                         del tmpBundle
 
                         # Add the new metricBundle to our metricBundleGroup dictionary.
-                        name = newmetricbundle.metric.name
+                        name = newmetricBundle.metric.name
                         if name in self.bundleDict:
-                            name = newmetricbundle.fileRoot
-                        reduceBundleDict[name] = newmetricbundle
+                            name = newmetricBundle.fileRoot
+                        reduceBundleDict[name] = newmetricBundle
 
                     # Remove summaryMetrics from top level metricbundle.
                     b.summaryMetrics = []

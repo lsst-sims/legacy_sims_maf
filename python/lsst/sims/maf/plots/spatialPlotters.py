@@ -18,7 +18,7 @@ import inspect
 from scipy.interpolate import griddata
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
-           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap', 'ContourSkyMap']
+           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
 
 
 class HealpixSkyMap(BasePlotter):
@@ -644,7 +644,9 @@ class HealpixSDSSSkyMap(BasePlotter):
 
 class LambertSkyMap(BasePlotter):
     """
-    Use basemap and hexbin to make a Lambertian projection.
+    Use basemap and contour to make a Lambertian projection.
+    Note that the plotDict can include a 'basemap' key with a dictionary of
+    kwargs to use with the call to Basemap.
     """
 
     def __init__(self):
