@@ -84,15 +84,17 @@ class BaseSpatialSlicer(BaseSlicer):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=lonCol/latCol value .. usually ra/dec)."""
 
+            # Build dict for slicePoint info
+            slicePoint={}
             if self.useCamera:
                 indices = self.sliceLookup[islice]
+                slicePoint['chipNames'] = self.chipNames[islice]
             else:
                 sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
+                self.chipNames = None
 
-            # Build dict for slicePoint info
-            slicePoint={}
             for key in self.slicePoints.keys():
                 # If we have used the _presliceFootprint to
                 if np.size(self.slicePoints[key]) > 1:
@@ -113,6 +115,7 @@ class BaseSpatialSlicer(BaseSlicer):
         """Loop over each pointing and find which sky points are observed """
         # Now to make a list of lists for looking up the relevant observations at each slicepoint
         self.sliceLookup = [[] for dummy in xrange(self.nslice)]
+        self.chipNames = [[] for dummy in xrange(self.nslice)]
         # Make a kdtree for the _slicepoints_
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
@@ -137,9 +140,11 @@ class BaseSpatialSlicer(BaseSlicer):
                                          epoch=self.epoch,
                                          camera=self.camera, obs_metadata=obs_metadata)
                 # Find the healpixels that fell on a chip for this pointing
-                hpOnChip = hpIndices[np.where(chipNames != [None])[0]]
+                good = np.where(chipNames != [None])[0]
+                hpOnChip = hpIndices[good]
                 for i in hpOnChip:
                     self.sliceLookup[i].append(ind)
+                    self.chipNames[i].append(chipNames[good])
 
         if self.verbose:
             "Created lookup table after checking for chip gaps."
