@@ -93,10 +93,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
-                self.chipNames = None
 
             for key in self.slicePoints.keys():
-                # If we have used the _presliceFootprint to
                 if np.size(self.slicePoints[key]) > 1:
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
@@ -142,9 +140,9 @@ class BaseSpatialSlicer(BaseSlicer):
                 # Find the healpixels that fell on a chip for this pointing
                 good = np.where(chipNames != [None])[0]
                 hpOnChip = hpIndices[good]
-                for i in hpOnChip:
+                for i,chipName in zip(hpOnChip,chipNames[good]):
                     self.sliceLookup[i].append(ind)
-                    self.chipNames[i].append(chipNames[good])
+                    self.chipNames[i].append(chipName)
 
         if self.verbose:
             "Created lookup table after checking for chip gaps."
