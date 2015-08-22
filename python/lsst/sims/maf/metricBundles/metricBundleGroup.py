@@ -268,8 +268,7 @@ class MetricBundleGroup(object):
         compatMaps = []
         compatStackers = []
         for b in bDict.itervalues():
-            for mapsList in b.mapsList:
-                compatMaps.extend(mapsList)
+            compatMaps.extend(b.mapsList)
             for stacker in b.stackerList:
                 if stacker not in compatStackers:
                     compatStackers.append(stacker)
