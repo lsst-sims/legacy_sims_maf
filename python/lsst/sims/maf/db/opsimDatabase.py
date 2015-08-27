@@ -3,6 +3,7 @@ import numpy as np
 import warnings
 from .Database import Database
 from lsst.sims.maf.utils import getDateVersion, TelescopeInfo
+from sqlalchemy import text
 
 __all__ = ['OpsimDatabase']
 
@@ -93,6 +94,7 @@ class OpsimDatabase(Database):
             warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
 
         table = self.tables[tableName]
+        sqlconstraint = text(sqlconstraint)
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
@@ -117,6 +119,7 @@ class OpsimDatabase(Database):
         """
         # Fetch field info from the Output table, by selecting unique fieldID + ra/dec values.
         # This implicitly only selects fields which were actually observed by opsim.
+        sqlconstraint = text(sqlconstraint)
         if raColName is None:
             raColName = self.raColName
         if decColName is None:
@@ -186,14 +189,14 @@ class OpsimDatabase(Database):
             table = self.tables['Proposal']
             # Query for all propIDs.
             propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
-                                                           self.propNameCol], constraint='')
+                                                           self.propNameCol], constraint=text(''))
             for propid, propname in zip(propData[self.propIdCol], propData[self.propConfCol]):
                 # Strip '.conf', 'Prop', and path info.
                 propIDs[int(propid)] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propname)))
             # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
             table = self.tables['Config']
             sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
-                                                    constraint="paramName like 'ScienceType'")
+                                                     constraint=text("paramName like 'ScienceType'"))
             if len(sciencetypes) == 0:
                 # Then this was an older opsim run without 'ScienceType' tags,
                 #   so fall back to trying to guess what proposals are WFD or DD.
@@ -225,7 +228,8 @@ class OpsimDatabase(Database):
             runLength = 10.0
         else:
             table = self.tables['Config']
-            runLength = table.query_columns_Array(colnames=['paramValue'], constraint=" paramName = '%s'"%runLengthParam)
+            runLength = table.query_columns_Array(colnames=['paramValue'],
+                                                  constraint=text(" paramName = '%s'"%runLengthParam))
             runLength = float(runLength['paramValue'][0]) # Years
         return runLength
 
@@ -241,11 +245,14 @@ class OpsimDatabase(Database):
             height = site.elev
         else:
             table = self.tables['Config']
-            lat = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'latitude'")
+            lat = table.query_columns_Array(colnames=['paramValue'],
+                                            constraint=text("paramName = 'latitude'"))
             lat = float(lat['paramValue'][0])
-            lon = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'longitude'")
+            lon = table.query_columns_Array(colnames=['paramValue'],
+                                            constraint=text("paramName = 'longitude'"))
             lon = float(lon['paramValue'][0])
-            height = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'height'")
+            height = table.query_columns_Array(colnames=['paramValue'],
+                                               constraint=text("paramName = 'height'"))
             height = float(height['paramValue'][0])
         return lat, lon, height
 
@@ -348,11 +355,11 @@ class OpsimDatabase(Database):
             else:
                 constraint = 'propId = %d' %(propId)
             propData = self.tables['Proposal'].query_columns_Array(colnames=[self.propIdCol, self.propNameCol],
-                                                                   constraint=constraint)
+                                                                   constraint=text(constraint))
         for pId, propType in zip(propData[self.propIdCol], propData[self.propNameCol]):
             perPropConfig = self.tables['Config'].query_columns_Array(colnames=['paramName', 'paramValue'],
-                                                                    constraint = 'nonPropID = %d and paramName!="userRegion"'
-                                                                    %(pId))
+                                                                    constraint = text('nonPropID = %d and paramName!="userRegion"'
+                                                                                      %(pId)))
             filterlist = self._matchParamNameValue(perPropConfig, 'Filter')
             if propType == 'WL':
                 # For WL proposals, the simple 'Filter_Visits' == the requested number of observations.
@@ -502,19 +509,19 @@ class OpsimDatabase(Database):
         # This section has a number of configuration parameter names hard-coded.
         # I've left these here (rather than adding to self_colNames), because I think schema changes will in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
-        constraint = 'moduleName="instrument" and paramName="Telescope_AltMin"'
+        constraint = text('moduleName="instrument" and paramName="Telescope_AltMin"')
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinAlt'] = results['paramValue'][0]
-        constraint = 'moduleName="instrument" and paramName="Telescope_AltMax"'
+        constraint = text('moduleName="instrument" and paramName="Telescope_AltMax"')
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MaxAlt'] = results['paramValue'][0]
-        constraint = 'moduleName="instrument" and paramName="Filter_MoveTime"'
+        constraint = text('moduleName="instrument" and paramName="Filter_MoveTime"')
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['TimeFilterChange'] = results['paramValue'][0]
-        constraint = 'moduleName="instrument" and paramName="Readout_Time"'
+        constraint = text('moduleName="instrument" and paramName="Readout_Time"')
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['TimeReadout'] = results['paramValue'][0]
-        constraint = 'moduleName="scheduler" and paramName="MinDistance2Moon"'
+        constraint = text('moduleName="scheduler" and paramName="MinDistance2Moon"')
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinDist2Moon', 'MinAlt', 'MaxAlt',
@@ -528,17 +535,18 @@ class OpsimDatabase(Database):
         # Make 'nice' proposal names
         propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata[self.propConfCol]])
         # Get 'nice' module names
-        moduledata = table.query_columns_Array(colnames=['moduleName',], constraint='nonPropID=0')
+        moduledata = table.query_columns_Array(colnames=['moduleName',], constraint=text('nonPropID=0'))
         modulenames = np.array([os.path.split(x)[1].replace('.conf', '') for x in moduledata['moduleName']])
         # Grab the config information for each proposal and module.
         cols = ['paramName', 'paramValue', 'comment']
         for longmodname, modname in zip(moduledata['moduleName'], modulenames):
-            config[modname] = table.query_columns_Array(colnames=cols, constraint='moduleName="%s"' %(longmodname))
+            config[modname] = table.query_columns_Array(colnames=cols,
+                                                        constraint=text('moduleName="%s"' %(longmodname)))
             config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
         for propid, propname in zip(propdata[self.propIdCol], propnames):
             config[propname] = table.query_columns_Array(colnames=cols,
                                                          constraint=
-                                                         'nonPropID="%s" and paramName!="userRegion"' %(propid))
+                                                         text('nonPropID="%s" and paramName!="userRegion"' %(propid)))
             config[propname] = config[propname][['paramName', 'paramValue', 'comment']]
         config['keyorder'] = ['Comment', 'LSST', 'site', 'instrument', 'filters',
                               'AstronomicalSky', 'File', 'scheduler',
@@ -560,7 +568,7 @@ class OpsimDatabase(Database):
             propdict['PropType'] = propdata[self.propNameCol][np.where(propnames == propname)]
             propdict['RelPriority'] = self._matchParamNameValue(config[propname], 'RelativeProposalPriority')
             # Get the number of user regions.
-            constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)
+            constraint = text('nonPropID="%s" and paramName="userRegion"' %(propid))
             result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)
             propdict['NumUserRegions'] = result.size
             # Get the number of fields requested in the proposal (all filters).
