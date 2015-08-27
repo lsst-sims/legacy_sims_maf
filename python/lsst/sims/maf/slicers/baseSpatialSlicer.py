@@ -25,7 +25,7 @@ class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
+                 useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
         lonCol = ra, latCol = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -33,7 +33,9 @@ class BaseSpatialSlicer(BaseSlicer):
         the simData KDtree
         and slicePoint RA/Dec values will be produced
         useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
-        True means the observations are checked to make sure they fall on a chip."""
+        True means the observations are checked to make sure they fall on a chip.
+        chipNames = list of raft/chip names to include. By default, all chips are included. This way,
+        one can select only a subset of chips/rafts."""
 
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
@@ -51,6 +53,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.radius = radius
         self.leafsize = leafsize
         self.useCamera = useCamera
+        self.chipsToUse = chipNames
         # RA and Dec are required slicePoint info for any spatial slicer.
         self.slicePoints['sid'] = None
         self.slicePoints['ra'] = None
@@ -137,6 +140,12 @@ class BaseSpatialSlicer(BaseSlicer):
                 chipNames = findChipName(ra=raCorr,dec=decCorr,
                                          epoch=self.epoch,
                                          camera=self.camera, obs_metadata=obs_metadata)
+                # If we are using only a subset of chips
+                if self.chipsToUse != 'all':
+                    checkedChipNames = [chipName in self.chipsToUse for chipName in chipNames]
+                    good = np.where(checkedChipNames)[0]
+                    chipNames = chipNames[good]
+                    hpIndices = hpIndices[good]
                 # Find the healpixels that fell on a chip for this pointing
                 good = np.where(chipNames != [None])[0]
                 hpOnChip = hpIndices[good]
