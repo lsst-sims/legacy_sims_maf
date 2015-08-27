@@ -8,7 +8,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.maps as maps
 import lsst.sims.maf.plots as plots
-from lsst.sims.maf.utils import ColInfo
+from lsst.sims.maf.stackers import ColInfo
 import lsst.sims.maf.utils as utils
 
 __all__ = ['MetricBundle', 'createEmptyMetricBundle']

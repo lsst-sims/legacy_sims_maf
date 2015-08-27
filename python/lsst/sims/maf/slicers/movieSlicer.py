@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import wraps
 
-from lsst.sims.maf.utils import percentileClipping, optimalBins, ColInfo
+from lsst.sims.maf.utils import percentileClipping, optimalBins
+from lsst.sims.maf.stackers import ColInfo
 from .baseSlicer import BaseSlicer
 
 __all__ = ['MovieSlicer']
@@ -166,5 +167,3 @@ class MovieSlicer(BaseSlicer):
         print 'converting to animated gif with:'
         print ' '.join(callList)
         p2 = subprocess.check_call(callList)
-
-
