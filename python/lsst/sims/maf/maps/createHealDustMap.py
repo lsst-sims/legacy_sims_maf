@@ -15,6 +15,4 @@ for nside in nsides:
     # Move dec to +/- 90 degrees
     dec = np.pi/2.0 - lat
     ebvMap = dustmap.calculateEbv(equatorialCoordinates=np.array([ra,dec]), interp=False)
-    # When new API for calculateEbv is out:
-    # ebvMap = dustmap.calculateEbv(np.array([ra,dec]), interp=False)
     np.savez('dust_nside_%s.npz'%nside, ebvMap=ebvMap)
