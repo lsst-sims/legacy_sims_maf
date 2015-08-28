@@ -4,7 +4,6 @@ import os
 import numpy as np
 from .outputUtils import printDict
 import warnings
-from sqlalchemy import text
 
 __all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
