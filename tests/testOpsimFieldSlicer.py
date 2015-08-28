@@ -119,7 +119,7 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
             warnings.simplefilter("always")
             self.testslicer.setupSlicer(self.simData, self.fieldData)
             assert len(w) == 1
-            assert "Could break plotting" in str(w[-1].message)
+            assert "Re-setting up an OpsimFieldSlicer" in str(w[-1].message)
 
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
