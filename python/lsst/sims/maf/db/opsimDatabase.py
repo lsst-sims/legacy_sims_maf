@@ -93,7 +93,6 @@ class OpsimDatabase(Database):
             warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
 
         table = self.tables[tableName]
-        sqlconstraint = sqlconstraint
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
@@ -118,7 +117,6 @@ class OpsimDatabase(Database):
         """
         # Fetch field info from the Output table, by selecting unique fieldID + ra/dec values.
         # This implicitly only selects fields which were actually observed by opsim.
-        sqlconstraint = sqlconstraint
         if raColName is None:
             raColName = self.raColName
         if decColName is None:
