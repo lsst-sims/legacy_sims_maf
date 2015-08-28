@@ -703,11 +703,13 @@ class LambertSkyMap(BasePlotter):
         ax = fig.add_subplot(111)
 
         # Hide this extra dependency down here for now
+        # Note, this should be possible without basemap, but there are
+        # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
         from mpl_toolkits.basemap import Basemap
 
         m = Basemap(**plotDict['basemap'])
         good = np.where(metricValue != slicer.badval)
-        # Contour the plot first to remove any anti-aliasing artifacts.  See:
+        # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
         # http://stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib-filled-contour-plot-to-pdf-or-eps
         #tmpContour = m.contour(np.degrees(slicer.slicePoints['ra'][good]),
         #                       np.degrees(slicer.slicePoints['dec'][good]),
