@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import unittest
 from lsst.sims.maf.slicers.opsimFieldSlicer import OpsimFieldSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
-
+import warnings
 
 def makeFieldData():
     """Set up sample field data."""
@@ -102,6 +102,24 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         ts2 = OpsimFieldSlicer(fieldRaColName ='WackyName')
         self.assertTrue(ts1 != ts2)
         self.assertFalse(ts1 == ts2)
+
+class TestOpsimFieldSlicerWarning(unittest.TestCase):
+    def setUp(self):
+        self.testslicer = OpsimFieldSlicer()
+        self.fieldData = makeFieldData()
+        self.simData = makeDataValues(self.fieldData)
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
+
+    def tearDown(self):
+        del self.testslicer
+        self.testslicer = None
+
+    def testWarning(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.testslicer.setupSlicer(self.simData, self.fieldData)
+            assert len(w) == 1
+            assert "Re-setting up an OpsimFieldSlicer" in str(w[-1].message)
 
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
