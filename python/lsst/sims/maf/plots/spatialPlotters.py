@@ -15,7 +15,6 @@ from .plotHandler import BasePlotter
 
 from lsst.sims.utils import equatorialFromGalactic
 import inspect
-from scipy.interpolate import griddata
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
@@ -439,12 +438,12 @@ class BaseSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-
-        metricValue = metricValueIn
-        if plotDict['zp'] is not None :
-            metricValue = metricValue - plotDict['zp']
-        if plotDict['normVal'] is not None:
-            metricValue = metricValue/plotDict['normVal']
+        if plotDict['zp']:
+            metricValue = metricValueIn - plotDict['zp']
+        elif plotDict['normVal']:
+            metricValue = metricValueIn/plotDict['normVal']
+        else:
+            metricValue = metricValueIn
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = fig.add_subplot(111, projection=plotDict['projection'])
@@ -658,17 +657,24 @@ class LambertSkyMap(BasePlotter):
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
                                 'colorMax':None, 'linewidths':0}
+        # Hide this extra dependency down here for now
+        # Note, this should be possible without basemap, but there are
+        # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
+        from mpl_toolkits.basemap import Basemap
 
-    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
+
+    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
-        if plotDict['zp'] is not None :
-            metricValue = metricValue - plotDict['zp']
-        if plotDict['normVal'] is not None:
-            metricValue = metricValue/plotDict['normVal']
+        if plotDict['zp']:
+            metricValue = metricValueIn - plotDict['zp']
+        elif plotDict['normVal']:
+            metricValue = metricValueIn/plotDict['normVal']
+        else:
+            metricValue = metricValueIn
 
         if plotDict['percentileClip']:
             pcMin, pcMax = percentileClipping(metricValue.compressed(),
@@ -701,11 +707,6 @@ class LambertSkyMap(BasePlotter):
 
         fig = plt.figure(fignum)
         ax = fig.add_subplot(111)
-
-        # Hide this extra dependency down here for now
-        # Note, this should be possible without basemap, but there are
-        # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
-        from mpl_toolkits.basemap import Basemap
 
         m = Basemap(**plotDict['basemap'])
         good = np.where(metricValue != slicer.badval)

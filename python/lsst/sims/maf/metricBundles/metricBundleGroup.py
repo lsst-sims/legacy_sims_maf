@@ -465,7 +465,7 @@ class MetricBundleGroup(object):
         reduceBundleDict = {}
         for b in self.bundleDict.itervalues():
             filename = os.path.join(self.outDir, b.fileRoot+'.npz')
-            if os.path.isfile(filename):
+            try:
                 # Create a temporary metricBundle to read the data into.
                 #  (we don't use b directly, as this overrides plotDict/etc).
                 tmpBundle = createEmptyMetricBundle()
@@ -484,23 +484,26 @@ class MetricBundleGroup(object):
                         b._buildFileRoot()
                         filename = os.path.join(self.outDir, b.fileRoot+'.npz')
                         tmpBundle = createEmptyMetricBundle()
-                        tmpBundle.read(filename)
-                        # This won't necessarily get the plotDict and displayDict the same as if you calculated the
-                        #  reduce metric from scratch. Perhaps update these reduce metric dictionaries after reading them in?
-                        newmetricBundle = MetricBundle(metric=b.metric, slicer=b.slicer, sqlconstraint=b.sqlconstraint,
-                                                       stackerList=b.stackerList, runName=b.runName, metadata=b.metadata,
-                                                       plotDict=b.plotDict, displayDict=b.displayDict,
-                                                       summaryMetrics=b.summaryMetrics, mapsList=b.mapsList,
-                                                       fileRoot=b.fileRoot, plotFuncs=b.plotFuncs)
-                        newmetricBundle.metric.name = reduceName
-                        newmetricBundle.metricValues = ma.copy(tmpBundle.metricValues)
-                        del tmpBundle
+                        try:
+                            tmpBundle.read(filename)
+                            # This won't necessarily get the plotDict and displayDict the same as if you calculated the
+                            #  reduce metric from scratch. Perhaps update these reduce metric dictionaries after reading them in?
+                            newmetricBundle = MetricBundle(metric=b.metric, slicer=b.slicer, sqlconstraint=b.sqlconstraint,
+                                                           stackerList=b.stackerList, runName=b.runName, metadata=b.metadata,
+                                                           plotDict=b.plotDict, displayDict=b.displayDict,
+                                                           summaryMetrics=b.summaryMetrics, mapsList=b.mapsList,
+                                                           fileRoot=b.fileRoot, plotFuncs=b.plotFuncs)
+                            newmetricBundle.metric.name = reduceName
+                            newmetricBundle.metricValues = ma.copy(tmpBundle.metricValues)
+                            del tmpBundle
 
-                        # Add the new metricBundle to our metricBundleGroup dictionary.
-                        name = newmetricBundle.metric.name
-                        if name in self.bundleDict:
-                            name = newmetricBundle.fileRoot
-                        reduceBundleDict[name] = newmetricBundle
+                            # Add the new metricBundle to our metricBundleGroup dictionary.
+                            name = newmetricBundle.metric.name
+                            if name in self.bundleDict:
+                                name = newmetricBundle.fileRoot
+                            reduceBundleDict[name] = newmetricBundle
+                        except:
+                            warning.warn('Warning: file %s not found, bundle not restored.' % filename)
 
                     # Remove summaryMetrics from top level metricbundle.
                     b.summaryMetrics = []
@@ -509,5 +512,7 @@ class MetricBundleGroup(object):
                     b._buildFileRoot()
                 if self.verbose:
                     print 'Read %s from disk.' %(b.fileRoot)
+            except:
+                warning.warn('Warning: file %s not found, bundle not restored.' % filename)
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)
