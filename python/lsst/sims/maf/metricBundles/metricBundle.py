@@ -317,6 +317,9 @@ class MetricBundle(object):
         Read metricValues and associated metadata from disk.
         Overwrites any data currently in metricbundle.
         """
+        if not os.path.isfile(filename):
+            raise NameError('%s not found' %filename)
+
         self._resetMetricBundle()
         # Set up a base slicer to read data (we don't know type yet).
         baseslicer = slicers.BaseSlicer()
