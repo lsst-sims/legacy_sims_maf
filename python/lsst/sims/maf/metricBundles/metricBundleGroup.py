@@ -473,6 +473,8 @@ class MetricBundleGroup(object):
                 # Copy the tmpBundle metricValues into b.
                 b.metricValues = ma.copy(tmpBundle.metricValues)
                 del tmpBundle
+            except:
+                warnings.warn('Warning: file %s not found, bundle not restored.' % filename)
 
                 # Look to see if this is a complex metric, with associated 'reduce' functions, and read those in.
                 if len(b.metric.reduceFuncs) > 0:
@@ -503,7 +505,7 @@ class MetricBundleGroup(object):
                                 name = newmetricBundle.fileRoot
                             reduceBundleDict[name] = newmetricBundle
                         except:
-                            warning.warn('Warning: file %s not found, bundle not restored.' % filename)
+                            warnings.warn('Warning: file %s not found, bundle not restored.' % filename)
 
                     # Remove summaryMetrics from top level metricbundle.
                     b.summaryMetrics = []
@@ -512,7 +514,5 @@ class MetricBundleGroup(object):
                     b._buildFileRoot()
                 if self.verbose:
                     print 'Read %s from disk.' %(b.fileRoot)
-            except:
-                warning.warn('Warning: file %s not found, bundle not restored.' % filename)
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)

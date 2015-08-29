@@ -657,11 +657,6 @@ class LambertSkyMap(BasePlotter):
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
                                 'colorMax':None, 'linewidths':0}
-        # Hide this extra dependency down here for now
-        # Note, this should be possible without basemap, but there are
-        # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
-        from mpl_toolkits.basemap import Basemap
-
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -708,6 +703,11 @@ class LambertSkyMap(BasePlotter):
         fig = plt.figure(fignum)
         ax = fig.add_subplot(111)
 
+        # Hide this extra dependency down here for now
+        # Note, this should be possible without basemap, but there are
+        # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
+        from mpl_toolkits.basemap import Basemap
+
         m = Basemap(**plotDict['basemap'])
         good = np.where(metricValue != slicer.badval)
         # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
@@ -722,7 +722,7 @@ class LambertSkyMap(BasePlotter):
                         metricValue[good], levels, tri=True,
                         cmap=plotDict['cmap'], ax=ax, latlon=True)
 
-        m.drawparallels(np.arange(0,81,20))
+        m.drawparallels(np.arange(0,91,15))
         m.drawmeridians(np.arange(-180,181,60))
         cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])
