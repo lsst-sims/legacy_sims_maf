@@ -288,8 +288,8 @@ class FilterColorsMetric(BaseMetric):
         if self.t0 is None:
             self.t0 = 52939
         self.tStep = tStep
-        super(FilterColors, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
-                                           metricName=metricName, **kwargs)
+        super(FilterColorsMetric, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
+                                                metricName=metricName, **kwargs)
         self.metricDtype = 'object'
         self.comment = 'Metric specifically to generate colors for the opsim movie'
 

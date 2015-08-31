@@ -1,4 +1,4 @@
-# python $SIMS_MAF_DIR/examples/pythonScripts/opsimMovie.py ops2_1088_sqlite.db --sqlConstraint 'night=130' --outDir Output
+# python $SIMS_MAF_DIR/examples/pythonScripts/opsimMovie.py enigma_1189_sqlite.db --sqlConstraint 'night=130' --outDir Output
 #
 # --ips = number of images to stitch together per second of view (default is 10).
 # --fps = frames per second for the output video .. default just matches ips. If specified as higher than ips,
@@ -22,7 +22,8 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
-import lsst.sims.maf.sliceMetrics as sliceMetrics
+import lsst.sims.maf.metricBundles as metricBundles
+import lsst.sims.maf.plots as plots
 from lsst.sims.maf.utils import TelescopeInfo
 
 import time
@@ -53,31 +54,29 @@ def getData(opsDb, sqlconstraint):
 
 def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60., years=0,
                  onlyFilterColors=False, verbose=False):
-    # Set up metrics. Will apply one to ms and one to ms_curr, but note that
-    #  because of the nature of this script, the metrics are applied to cumulative data (from all filters).
+    # Set up metrics and plotDicts (they will be bundled with the appropriate opsim slicers below).
     t = time.time()
     nvisitsMax = 90*(years+1)
     colorMax = int(nvisitsMax/4)
     metricList = []
+    plotDictList = []
     if not onlyFilterColors:
-        metricList.append(metrics.CountMetric('expMJD', metricName='Nvisits',
-                                            plotDict={'colorMin':0, 'colorMax':nvisitsMax,
-                                                    'xlabel':'Number of visits',
-                                                    'title':'Cumulative visits (all bands)'}))
+        metricList.append(metrics.CountMetric('expMJD', metricName='Nvisits'))
+        plotDictList.append({'colorMin':0, 'colorMax':nvisitsMax,
+                             'xlabel':'Number of visits', 'title':'Cumulative visits (all bands)',
+                             'label':plotlabel, 'metricIsColor':False})
         for f in (['u', 'g', 'r', 'i', 'z', 'y']):
-            metricList.append(metrics.CountSubsetMetric('filter', subset=f, metricName='Nvisits_'+f,
-                                                        plotDict={'colorMin':0, 'colorMax':colorMax,
-                                                                    'cbarFormat': '%d', 'xlabel':'Number of Visits',
-                                                                    'title':'%s band' %(f)}))
-        # Apply plotlabel only to nvisits plots (will place it on FilterColors by hand).
-        for m in metricList:
-            m.plotDict['label'] = plotlabel
-    metricList.append(metrics.FilterColorsMetric(t0=t0, tStep=tStep,
-                                                 plotDict={'title':'Simulation %s: %s' %(opsimName, metadata)}))
+            metricList.append(metrics.CountSubsetMetric('filter', subset=f, metricName='Nvisits_'+f))
+            plotDictList.append({'colorMin':0, 'colorMax':colorMax, 'cbarFormat': '%d',
+                                 'xlabel':'Number of Visits', 'title':'%s band' %(f),
+                                 'label':plotlabel, 'metricIsColor':False})
+    metricList.append(metrics.FilterColorsMetric(t0=t0, tStep=tStep))
+    plotDictList.append({'title':'Simulation %s: %s' %(opsimName, metadata), 'bgcolor':None,
+                         'metricIsColor':True})
     dt, t = dtime(t)
     if verbose:
         print 'Set up metrics %f s' %(dt)
-    return metricList
+    return metricList, plotDictList
 
 def setupMovieSlicer(simdata, bins, verbose=False):
     t = time.time()
@@ -87,15 +86,6 @@ def setupMovieSlicer(simdata, bins, verbose=False):
     if verbose:
         print 'Set up movie slicers in %f s' %(dt)
     return movieslicer
-
-def setupOpsimFieldSlicer(verbose=False):
-    t = time.time()
-    ops = slicers.OpsimFieldSlicer(plotFuncs='plotSkyMap')
-    dt, t = dtime(t)
-    if verbose:
-        print 'Set up opsim field slicer in %s' %(dt)
-    return ops
-
 
 def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=TelescopeInfo('LSST').lat, raCen=0.):
     """
@@ -124,7 +114,7 @@ def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=TelescopeInfo('LS
     lon = -(lon - np.pi) % (np.pi*2) - np.pi
     return lon, lat
 
-def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
+def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=False):
     # Set up the movie slicer.
     movieslicer = setupMovieSlicer(simdata, bins)
     # Set up formatting for output suffix.
@@ -151,34 +141,49 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
         days = times_from_start - years*365
         plotlabel = 'Year %d Day %.4f' %(years, days)
         # Set up metrics.
-        metricList = setupMetrics(opsimName, metadata, plotlabel=plotlabel,
+        metricList, plotDictList = setupMetrics(opsimName, metadata, plotlabel=plotlabel,
                                     t0=ms['slicePoint']['binRight'], tStep=tstep, years=years, verbose=verbose)
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
-        ops = setupOpsimFieldSlicer()
-        # Set up sliceMetric to handle healpix slicer + metrics calculation + plotting
-        sm = sliceMetrics.RunSliceMetric(outDir = args.outDir, useResultsDb=False,
-                                                figformat='png', dpi=72, thumbnail=False)
-        sm.setMetricsSlicerStackers(metricList, ops)
-        sm.runSlices(simdatasubset, simDataName=opsimName, fieldData=fields)
+        opslicer = slicers.OpsimFieldSlicer()
+        # Set up metricBundles to combine metrics, plotdicts and slicer.
+        bundles = []
+        sqlconstraint = ''
+        for metric, plotDict in zip(metricList, plotDictList):
+            bundles.append(metricBundles.MetricBundle(metric, opslicer, sqlconstraint=sqlconstraint,
+                                                      metadata=metadata, runName=opsimName,
+                                                      plotDict=plotDict))
+        # Remove (default) stackers from bundles, because we've already run them above on the original data.
+        for mb in bundles:
+            mb.stackerList = []
+        bundledict = metricBundles.makeBundlesDictFromList(bundles)
+        # Set up metricBundleGroup to handle metrics calculation + plotting
+        bg = metricBundles.MetricBundleGroup(bundledict, opsDb, outDir=args.outDir, resultsDb=None, saveEarly=False)
+        # 'Hack' bundleGroup to just go ahead and run the metrics, without querying the database.
+        simData = simdatasubset
+        bg.fieldData = fields
+        bg.setCurrent(sqlconstraint)
+        bg.runCurrent(sqlconstraint = sqlconstraint, simData=simData)
         # Plot data each metric, for this slice of the movie, adding slicenumber as a suffix for output plots.
         # Plotting here, rather than automatically via sliceMetric method because we're going to rotate the sky,
         #  and add extra legend info and figure text (for FilterColors metric).
+        ph = plots.PlotHandler(outDir=args.outDir, figformat='png', dpi=72, thumbnail=False, savefig=False)
         obsnow = np.where(simdatasubset['expMJD'] == simdatasubset['expMJD'].max())[0]
         raCen = np.mean(simdatasubset[obsnow]['lst'])
         # Calculate horizon location.
         horizonlon, horizonlat = addHorizon(lat_telescope=lat_tele, raCen=raCen)
-        # Create the plot for each metric.
-        for mId in sm.metricValues:
-            fignum = ops.plotSkyMap(sm.metricValues[mId], raCen=raCen, **sm.plotDicts[mId])
+        # Create the plot for each metric and save it (after some additional manipulation).
+        for mb in bundles:
+            ph.setMetricBundles([mb])
+            fignum = ph.plot(plotFunc=plots.BaseSkyMap(), plotDicts={'raCen':raCen})
             fig = plt.figure(fignum)
             ax = plt.gca()
             # Add horizon and zenith.
             plt.plot(horizonlon, horizonlat, 'k.', alpha=0.3, markersize=1.8)
             plt.plot(0, lat_tele, 'k+')
             # For the FilterColors metric, add some extra items.
-            if sm.metricNames[mId] == 'FilterColors':
+            if mb.metric.name == 'FilterColors':
                 # Add the time stamp info (plotlabel) with a fancybox.
                 plt.figtext(0.75, 0.9, '%s' %(plotlabel), bbox=dict(boxstyle='Round, pad=0.7', fc='w', ec='k', alpha=0.5))
                 # Add a legend for the filters.
@@ -204,7 +209,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=False):
                 plt.legend(handles=[horizon, zenith, galaxy, ecliptic, moon], loc=[0.1, -0.35], ncol=3, frameon=False,
                     title = 'Aitoff plot showing HA/Dec of simulated survey pointings', numpoints=1, fontsize='small')
             # Save figure.
-            plt.savefig(os.path.join(args.outDir, sm.metricNames[mId] + '_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
+            plt.savefig(os.path.join(args.outDir, mb.metric.name + '_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
             plt.close('all')
             dt, t = dtime(t)
         if verbose:
@@ -217,7 +222,7 @@ def stitchMovie(metricList, args):
     for metric in metricList:
         # Identify filenames.
         outfileroot = metric.name
-        plotfiles = fnmatch.filter(os.listdir(args.outDir), outfileroot + '*SkyMap.png')
+        plotfiles = fnmatch.filter(os.listdir(args.outDir), outfileroot + '*_SkyMap.png')
         slicenum = plotfiles[0].replace(outfileroot, '').replace('_SkyMap.png', '').replace('_', '')
         sliceformat = '%s0%dd' %('%', len(slicenum))
         n_images = len(plotfiles)
@@ -236,7 +241,7 @@ def stitchMovie(metricList, args):
             else:
                 args.fps = 30.0
         # Create the movie.
-        movieslicer.plotMovie(outfileroot, sliceformat, plotType='SkyMap', figformat='png',
+        movieslicer.makeMovie(outfileroot, sliceformat, plotType='SkyMap', figformat='png',
                                 outDir=args.outDir, ips=args.ips, fps=args.fps)
 
 if __name__ == '__main__':
@@ -287,8 +292,8 @@ if __name__ == '__main__':
     if not args.skipComp:
         verbose=False
         # Get db connection info, and connect to database.
-        dbAddress = 'sqlite:///' + os.path.join(args.dbDir, args.opsimDb)
-        oo = db.OpsimDatabase(dbAddress)
+        dbfile = os.path.join(args.dbDir, args.opsimDb)
+        oo = db.OpsimDatabase(dbfile)
         sqlconstraint = args.sqlConstraint
         # Fetch the data from opsim.
         simdata, fields = getData(oo, sqlconstraint)
@@ -310,10 +315,10 @@ if __name__ == '__main__':
             bins[0] = simdata['expMJD'][0]
 
         # Run the movie slicer (and at each step, setup opsim slicer and calculate metrics).
-        runSlices(opsimName, metadata, simdata, fields, bins, args, verbose=verbose)
+        runSlices(opsimName, metadata, simdata, fields, bins, args, oo, verbose=verbose)
 
     # Need to set up the metrics to get their names, but don't need to have realistic arguments.
-    metricList = setupMetrics(opsimName, metadata)
+    metricList, plotDictList = setupMetrics(opsimName, metadata)
     stitchMovie(metricList, args)
     end_t, start_t = dtime(start_t)
     print 'Total time to create movie: ', end_t

@@ -90,9 +90,9 @@ class MetricBundleGroup(object):
         newdict = {key:origdict.get(key) for key in subsetkeys}
         return newdict
 
-    def _setCurrent(self, sqlconstraint):
+    def setCurrent(self, sqlconstraint):
         """
-        Private utility to set the currentBundleDict (i.e. a set of metricBundles with the same SQL constraint).
+        Utility to set the currentBundleDict (i.e. a set of metricBundles with the same SQL constraint).
         """
         self.currentBundleDict = {}
         for k, b in self.bundleDict.iteritems():
@@ -158,7 +158,7 @@ class MetricBundleGroup(object):
         for sqlconstraint in self.sqlconstraints:
             # Set the 'currentBundleDict' which is a dictionary of the metricBundles which match this
             #  sqlconstraint.
-            self._setCurrent(sqlconstraint)
+            self.setCurrent(sqlconstraint)
             self.runCurrent(sqlconstraint, clearMemory=clearMemory)
             if plotNow:
                 if plotKwargs is None:
@@ -166,7 +166,7 @@ class MetricBundleGroup(object):
                 else:
                     self.plotCurrent(**plotKwargs)
 
-    def runCurrent(self, sqlconstraint, clearMemory=False):
+    def runCurrent(self, sqlconstraint, clearMemory=False, simData=None):
         """
         Run all the metricBundles which match this sqlconstraint in the metricBundleGroup.
         Also runs 'reduceAll' and then 'summaryAll'.
@@ -176,17 +176,22 @@ class MetricBundleGroup(object):
         for b in self.currentBundleDict.itervalues():
             self.dbCols.extend(b.dbCols)
         self.dbCols = list(set(self.dbCols))
-        self.simData = None
 
-         # Query and get the simdata.
-        try:
-            self.getData(sqlconstraint)
-        except UserWarning:
-            print 'No data matching sqlconstraint %s' %(sqlconstraint)
-            return
-        except ValueError:
-            print 'One of the columns requested from the database was not available - skipping sqlconstraint %s' %(sqlconstraint)
-            return
+        # Can pass simData directly (if had other method for getting data)
+        if simData is not None:
+            self.simData = simData
+
+        else:
+            self.simData = None
+            # Query for the data.
+            try:
+                self.getData(sqlconstraint)
+            except UserWarning:
+                print 'No data matching sqlconstraint %s' %(sqlconstraint)
+                return
+            except ValueError:
+                print 'One of the columns requested from the database was not available - skipping sqlconstraint %s' %(sqlconstraint)
+                return
 
         # Find compatible subsets of the MetricBundle dictionary, which can be run/metrics calculated/ together.
         self._findCompatibleLists()
@@ -361,7 +366,7 @@ class MetricBundleGroup(object):
         This assumes that 'clearMemory' was false.
         """
         for sqlconstraint in self.sqlconstraints:
-            self._setCurrent(sqlconstraint)
+            self.setCurrent(sqlconstraint)
             self.reduceCurrent(updateSummaries=updateSummaries)
 
     def reduceCurrent(self, updateSummaries=True):
@@ -397,7 +402,7 @@ class MetricBundleGroup(object):
         This assumes that 'clearMemory' was false.
         """
         for sqlconstraint in self.sqlconstraints:
-            self._setCurrent(sqlconstraint)
+            self.setCurrent(sqlconstraint)
             self.summaryCurrent()
 
     def summaryCurrent(self):
@@ -416,7 +421,7 @@ class MetricBundleGroup(object):
         for sqlconstraint in self.sqlconstraints:
             if self.verbose:
                 print 'Plotting figures with %s sqlconstraint now.' %(sqlconstraint)
-            self._setCurrent(sqlconstraint)
+            self.setCurrent(sqlconstraint)
             self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
                              thumbnail=thumbnail, closefigs=closefigs)
 
@@ -440,7 +445,7 @@ class MetricBundleGroup(object):
         Assumes 'clearMemory' was false.
         """
         for sqlconstraint in self.sqlconstraints:
-            self._setCurrent(sqlconstraint)
+            self.setCurrent(sqlconstraint)
             self.writeCurrent()
 
     def writeCurrent(self):
