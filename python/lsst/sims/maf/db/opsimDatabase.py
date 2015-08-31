@@ -193,7 +193,7 @@ class OpsimDatabase(Database):
             # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
             table = self.tables['Config']
             sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
-                                                    constraint="paramName like 'ScienceType'")
+                                                     constraint="paramName like 'ScienceType'")
             if len(sciencetypes) == 0:
                 # Then this was an older opsim run without 'ScienceType' tags,
                 #   so fall back to trying to guess what proposals are WFD or DD.
@@ -225,7 +225,8 @@ class OpsimDatabase(Database):
             runLength = 10.0
         else:
             table = self.tables['Config']
-            runLength = table.query_columns_Array(colnames=['paramValue'], constraint=" paramName = '%s'"%runLengthParam)
+            runLength = table.query_columns_Array(colnames=['paramValue'],
+                                                  constraint=" paramName = '%s'"%runLengthParam)
             runLength = float(runLength['paramValue'][0]) # Years
         return runLength
 
@@ -241,11 +242,14 @@ class OpsimDatabase(Database):
             height = site.elev
         else:
             table = self.tables['Config']
-            lat = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'latitude'")
+            lat = table.query_columns_Array(colnames=['paramValue'],
+                                            constraint="paramName = 'latitude'")
             lat = float(lat['paramValue'][0])
-            lon = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'longitude'")
+            lon = table.query_columns_Array(colnames=['paramValue'],
+                                            constraint="paramName = 'longitude'")
             lon = float(lon['paramValue'][0])
-            height = table.query_columns_Array(colnames=['paramValue'], constraint="paramName = 'height'")
+            height = table.query_columns_Array(colnames=['paramValue'],
+                                               constraint="paramName = 'height'")
             height = float(height['paramValue'][0])
         return lat, lon, height
 
@@ -352,7 +356,7 @@ class OpsimDatabase(Database):
         for pId, propType in zip(propData[self.propIdCol], propData[self.propNameCol]):
             perPropConfig = self.tables['Config'].query_columns_Array(colnames=['paramName', 'paramValue'],
                                                                     constraint = 'nonPropID = %d and paramName!="userRegion"'
-                                                                    %(pId))
+                                                                                      %(pId))
             filterlist = self._matchParamNameValue(perPropConfig, 'Filter')
             if propType == 'WL':
                 # For WL proposals, the simple 'Filter_Visits' == the requested number of observations.
@@ -533,7 +537,8 @@ class OpsimDatabase(Database):
         # Grab the config information for each proposal and module.
         cols = ['paramName', 'paramValue', 'comment']
         for longmodname, modname in zip(moduledata['moduleName'], modulenames):
-            config[modname] = table.query_columns_Array(colnames=cols, constraint='moduleName="%s"' %(longmodname))
+            config[modname] = table.query_columns_Array(colnames=cols,
+                                                        constraint='moduleName="%s"' %(longmodname))
             config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
         for propid, propname in zip(propdata[self.propIdCol], propnames):
             config[propname] = table.query_columns_Array(colnames=cols,

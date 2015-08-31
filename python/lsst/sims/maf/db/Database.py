@@ -1,6 +1,7 @@
 import os, warnings
 from .Table import Table
 import inspect
+from sqlalchemy import text
 
 __all__ = ['DatabaseRegistry', 'Database']
 
@@ -119,6 +120,6 @@ class Database(object):
         Returns numpy recarray with results.
         """
         t = self.tables[tableName]
-        results = t.engine.execute(sqlQuery)
+        results = t.engine.execute(text(sqlQuery))
         data = t._postprocess_results(results.fetchall())
         return data
