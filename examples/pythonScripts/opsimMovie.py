@@ -149,8 +149,9 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         opslicer = slicers.OpsimFieldSlicer()
         # Set up metricBundles to combine metrics, plotdicts and slicer.
         bundles = []
+        sqlconstraint = ''
         for metric, plotDict in zip(metricList, plotDictList):
-            bundles.append(metricBundles.MetricBundle(metric, opslicer, sqlconstraint='',
+            bundles.append(metricBundles.MetricBundle(metric, opslicer, sqlconstraint=sqlconstraint,
                                                       metadata=metadata, runName=opsimName,
                                                       plotDict=plotDict))
         # Remove (default) stackers from bundles, because we've already run them above on the original data.
@@ -160,11 +161,10 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         # Set up metricBundleGroup to handle metrics calculation + plotting
         bg = metricBundles.MetricBundleGroup(bundledict, opsDb, outDir=args.outDir, resultsDb=None, saveEarly=False)
         # 'Hack' bundleGroup to just go ahead and run the metrics, without querying the database.
-        bg.simData = simdatasubset
+        simData = simdatasubset
         bg.fieldData = fields
-        bg.currentBundleDict = bundledict
-        compatibleList = bundledict.keys()
-        bg._runCompatible(compatibleList)
+        bg.setCurrent(sqlconstraint)
+        bg.runCurrent(sqlconstraint = sqlconstraint, simData=simData)
         # Plot data each metric, for this slice of the movie, adding slicenumber as a suffix for output plots.
         # Plotting here, rather than automatically via sliceMetric method because we're going to rotate the sky,
         #  and add extra legend info and figure text (for FilterColors metric).
