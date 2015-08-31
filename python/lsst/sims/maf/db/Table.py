@@ -2,7 +2,7 @@ __author__ = 'simon'
 
 import numpy as np
 from sqlalchemy.engine import url
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.sql import expression
 
 import warnings
@@ -91,7 +91,7 @@ class Table(CatalogDBObject):
         doGroupBy = not groupByCol is None
         query = self._get_column_query(doGroupBy, colnames=colnames)
         if constraint is not None:
-            query = query.filter(constraint)
+            query = query.filter(text(constraint))
 
         if doGroupBy:
             #Either group by a column that gives unique visits

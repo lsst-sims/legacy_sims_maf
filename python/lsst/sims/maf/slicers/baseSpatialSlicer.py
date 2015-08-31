@@ -25,7 +25,7 @@ class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
+                 useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
         lonCol = ra, latCol = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
@@ -33,7 +33,9 @@ class BaseSpatialSlicer(BaseSlicer):
         the simData KDtree
         and slicePoint RA/Dec values will be produced
         useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
-        True means the observations are checked to make sure they fall on a chip."""
+        True means the observations are checked to make sure they fall on a chip.
+        chipNames = list of raft/chip names to include. By default, all chips are included. This way,
+        one can select only a subset of chips/rafts."""
 
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
@@ -51,6 +53,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.radius = radius
         self.leafsize = leafsize
         self.useCamera = useCamera
+        self.chipsToUse = chipNames
         # RA and Dec are required slicePoint info for any spatial slicer.
         self.slicePoints['sid'] = None
         self.slicePoints['ra'] = None
@@ -84,17 +87,17 @@ class BaseSpatialSlicer(BaseSlicer):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=lonCol/latCol value .. usually ra/dec)."""
 
+            # Build dict for slicePoint info
+            slicePoint={}
             if self.useCamera:
                 indices = self.sliceLookup[islice]
+                slicePoint['chipNames'] = self.chipNames[islice]
             else:
                 sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
-            # Build dict for slicePoint info
-            slicePoint={}
             for key in self.slicePoints.keys():
-                # If we have used the _presliceFootprint to
                 if np.size(self.slicePoints[key]) > 1:
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
@@ -113,6 +116,7 @@ class BaseSpatialSlicer(BaseSlicer):
         """Loop over each pointing and find which sky points are observed """
         # Now to make a list of lists for looking up the relevant observations at each slicepoint
         self.sliceLookup = [[] for dummy in xrange(self.nslice)]
+        self.chipNames = [[] for dummy in xrange(self.nslice)]
         # Make a kdtree for the _slicepoints_
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
@@ -136,10 +140,18 @@ class BaseSpatialSlicer(BaseSlicer):
                 chipNames = findChipName(ra=raCorr,dec=decCorr,
                                          epoch=self.epoch,
                                          camera=self.camera, obs_metadata=obs_metadata)
+                # If we are using only a subset of chips
+                if self.chipsToUse != 'all':
+                    checkedChipNames = [chipName in self.chipsToUse for chipName in chipNames]
+                    good = np.where(checkedChipNames)[0]
+                    chipNames = chipNames[good]
+                    hpIndices = hpIndices[good]
                 # Find the healpixels that fell on a chip for this pointing
-                hpOnChip = hpIndices[np.where(chipNames != [None])[0]]
-                for i in hpOnChip:
+                good = np.where(chipNames != [None])[0]
+                hpOnChip = hpIndices[good]
+                for i,chipName in zip(hpOnChip,chipNames[good]):
                     self.sliceLookup[i].append(ind)
+                    self.chipNames[i].append(chipName)
 
         if self.verbose:
             "Created lookup table after checking for chip gaps."

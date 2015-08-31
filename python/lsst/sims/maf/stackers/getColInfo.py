@@ -1,4 +1,4 @@
-import lsst.sims.maf.stackers as stackers
+from .baseStacker import BaseStacker
 
 __all__ = ['ColInfo']
 
@@ -36,7 +36,7 @@ class ColInfo(object):
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}
-        for stackerClass in stackers.BaseStacker.registry.itervalues():
+        for stackerClass in BaseStacker.registry.itervalues():
             stacker = stackerClass()
             for col, units in zip(stacker.colsAdded, stacker.units):
                 self.sourceDict[col] = stackerClass

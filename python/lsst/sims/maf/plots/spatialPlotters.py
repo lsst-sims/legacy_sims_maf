@@ -17,7 +17,7 @@ from lsst.sims.utils import equatorialFromGalactic
 import inspect
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
-           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap']
+           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
 
 
 class HealpixSkyMap(BasePlotter):
@@ -258,7 +258,10 @@ class BaseHistogram(BasePlotter):
                     bmax = np.max([metricValue.max(), histRange[1]])
                 else:
                     bmax = metricValue.max()
-                bins = np.arange(bmin, bmax+plotDict['binsize'], plotDict['binsize'])
+                bins = np.arange(bmin, bmax+plotDict['binsize']/2.0, plotDict['binsize'])
+                # Catch edge-case where there is only 1 bin value
+                if bins.size < 2:
+                    bins = np.arange(bmin, bmax+plotDict['binsize'], plotDict['binsize'])
             #  Else try to set up bins using min/max values if specified, or full data range.
             else:
                 if histRange[0] is not None:
@@ -435,12 +438,12 @@ class BaseSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-
-        metricValue = metricValueIn
-        if plotDict['zp'] is not None :
-            metricValue = metricValue - plotDict['zp']
-        if plotDict['normVal'] is not None:
-            metricValue = metricValue/plotDict['normVal']
+        if plotDict['zp']:
+            metricValue = metricValueIn - plotDict['zp']
+        elif plotDict['normVal']:
+            metricValue = metricValueIn/plotDict['normVal']
+        else:
+            metricValue = metricValueIn
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = fig.add_subplot(111, projection=plotDict['projection'])
@@ -637,4 +640,96 @@ class HealpixSDSSSkyMap(BasePlotter):
         if plotDict['cbar_edge']:
             cb1.solids.set_edgecolor("face")
         fig = plt.gcf()
+        return fig.number
+
+
+class LambertSkyMap(BasePlotter):
+    """
+    Use basemap and contour to make a Lambertian projection.
+    Note that the plotDict can include a 'basemap' key with a dictionary of
+    kwargs to use with the call to Basemap.
+    """
+
+    def __init__(self):
+        self.plotType = 'SkyMap'
+        self.objectPlotter = False
+        self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
+                                           'lon_0':0., 'resolution':'l', 'celestial':True},
+                                'cbar':True, 'cmap':plt.cm.jet, 'levels':200,
+                                'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
+                                'normVal':None, 'percentileClip':False, 'colorMin':None,
+                                'colorMax':None, 'linewidths':0}
+
+    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
+
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        plotDict.update(userPlotDict)
+
+        if plotDict['zp']:
+            metricValue = metricValueIn - plotDict['zp']
+        elif plotDict['normVal']:
+            metricValue = metricValueIn/plotDict['normVal']
+        else:
+            metricValue = metricValueIn
+
+        if plotDict['percentileClip']:
+            pcMin, pcMax = percentileClipping(metricValue.compressed(),
+                                              percentile=plotDict['percentileClip'])
+        if plotDict['colorMin'] is None and plotDict['percentileClip']:
+            plotDict['colorMin'] = pcMin
+        if plotDict['colorMax'] is None and plotDict['percentileClip']:
+            plotDict['colorMax'] = pcMax
+        if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
+            clims = [plotDict['colorMin'], plotDict['colorMax']]
+        else:
+            clims = None
+
+        # Make sure there is some range on the colorbar
+        if clims is None:
+            if metricValue.compressed().size > 0:
+                clims=[metricValue.compressed().min(), metricValue.compressed().max()]
+            else:
+                clims = [-1,1]
+            if clims[0] == clims[1]:
+                clims[0] =  clims[0]-1
+                clims[1] =  clims[1]+1
+
+        # Calculate the levels to use for the contour
+        if np.size(plotDict['levels']) > 1:
+            levels = plotDict['levels']
+        else:
+            step = (clims[1]-clims[0])/plotDict['levels']
+            levels = np.arange(clims[0],clims[1]+step, step)
+
+        fig = plt.figure(fignum)
+        ax = fig.add_subplot(111)
+
+        # Hide this extra dependency down here for now
+        # Note, this should be possible without basemap, but there are
+        # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
+        from mpl_toolkits.basemap import Basemap
+
+        m = Basemap(**plotDict['basemap'])
+        good = np.where(metricValue != slicer.badval)
+        # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
+        # http://stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib-filled-contour-plot-to-pdf-or-eps
+        #tmpContour = m.contour(np.degrees(slicer.slicePoints['ra'][good]),
+        #                       np.degrees(slicer.slicePoints['dec'][good]),
+        #                       metricValue[good], levels,tri=True,
+        #                       cmap=plotDict['cmap'], ax=ax, latlon=True,
+        #                       lw=1)
+        CS = m.contourf(np.degrees(slicer.slicePoints['ra'][good]),
+                        np.degrees(slicer.slicePoints['dec'][good]),
+                        metricValue[good], levels, tri=True,
+                        cmap=plotDict['cmap'], ax=ax, latlon=True)
+
+        m.drawparallels(np.arange(0,91,15))
+        m.drawmeridians(np.arange(-180,181,60))
+        cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
+        cb.set_label(plotDict['xlabel'])
+        ax.set_title(plotDict['title'])
+        # If outputing to PDF, this fixes the colorbar white stripes
+        if plotDict['cbar_edge']:
+            cb.solids.set_edgecolor("face")
         return fig.number

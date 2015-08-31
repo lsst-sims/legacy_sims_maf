@@ -8,7 +8,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.maps as maps
 import lsst.sims.maf.plots as plots
-from lsst.sims.maf.utils import ColInfo
+from lsst.sims.maf.stackers import ColInfo
 import lsst.sims.maf.utils as utils
 
 __all__ = ['MetricBundle', 'createEmptyMetricBundle']
@@ -317,6 +317,9 @@ class MetricBundle(object):
         Read metricValues and associated metadata from disk.
         Overwrites any data currently in metricbundle.
         """
+        if not os.path.isfile(filename):
+            raise NameError('%s not found' %filename)
+
         self._resetMetricBundle()
         # Set up a base slicer to read data (we don't know type yet).
         baseslicer = slicers.BaseSlicer()

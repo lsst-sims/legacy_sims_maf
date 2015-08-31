@@ -3,7 +3,8 @@
 import numpy as np
 from functools import wraps
 import warnings
-from lsst.sims.maf.utils import optimalBins, ColInfo
+from lsst.sims.maf.utils import optimalBins
+from lsst.sims.maf.stackers import ColInfo
 from lsst.sims.maf.plots.onedPlotters import OneDBinnedData
 
 from .baseSlicer import BaseSlicer

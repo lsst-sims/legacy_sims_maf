@@ -13,3 +13,4 @@ from .longGapAGNMetric import *
 from .exgalM5 import *
 from .slewMetrics import *
 from .transientMetrics import *
+from .chipVendorMetric import *

@@ -193,7 +193,8 @@ class TestHealpixChipGap(unittest.TestCase):
         self.radius = 2.041
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
                                         lonCol='ra', latCol='dec',
-                                        radius=self.radius, useCamera=True)
+                                        radius=self.radius, useCamera=True,
+                                        chipNames=['R:1,1 S:1,1'])
         nvalues = 1000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                 ramin=0, ramax=2*np.pi,
