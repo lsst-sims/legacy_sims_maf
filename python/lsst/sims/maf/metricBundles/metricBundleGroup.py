@@ -333,6 +333,7 @@ class MetricBundleGroup(object):
                             b.metricValues.data[i] = b.metricValues.data[cacheDict[cacheKey]]
                         else:
                             b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
+
                 # Not using memoize, just calculate things normally
                 else:
                     for b in bDict.itervalues():
