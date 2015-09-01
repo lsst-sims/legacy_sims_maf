@@ -706,6 +706,8 @@ class LambertSkyMap(BasePlotter):
         ax = fig.add_subplot(111)
 
         # Hide this extra dependency down here for now
+        # if using anaconda, to get basemap:
+        # conda install basemap
         # Note, this should be possible without basemap, but there are
         # matplotlib bugs: http://stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
         from mpl_toolkits.basemap import Basemap
@@ -724,7 +726,8 @@ class LambertSkyMap(BasePlotter):
                         metricValue[good], levels, tri=True,
                         cmap=plotDict['cmap'], ax=ax, latlon=True)
 
-        m.drawparallels(np.arange(0,91,15))
+        para = np.arange(0,89,20)
+        m.drawparallels(para, labels=para)
         m.drawmeridians(np.arange(-180,181,60))
         cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])
