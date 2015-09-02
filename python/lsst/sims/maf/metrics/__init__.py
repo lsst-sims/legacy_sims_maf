@@ -14,3 +14,4 @@ from .exgalM5 import *
 from .slewMetrics import *
 from .transientMetrics import *
 from .chipVendorMetric import *
+from .vectorMetrics import *
