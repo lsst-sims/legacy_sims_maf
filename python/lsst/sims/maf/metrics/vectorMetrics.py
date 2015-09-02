@@ -7,7 +7,7 @@ __all__ = ['BaseVectorMetric','CountVMetric', 'CoaddM5VMetric']
 
 # Create a base metric and set the default dtype to object
 class BaseVectorMetric(BaseMetric):
-    def __init__(self, metricDtype=object, mode='accumulate', **kwargs):
+    def __init__(self, metricDtype=float, mode='accumulate', **kwargs):
         """
         mode: Can be 'accumulate' or 'histogram'
         """
@@ -19,15 +19,18 @@ class BaseVectorMetric(BaseMetric):
     def _pullAccumulateVals(self, result, timeValues, bins):
 
         indices = np.searchsorted(timeValues, bins, side='left')
+        indices[np.where(indices >= np.size(result))] = np.size(result)-1
+        result = result[indices]
         result[np.where(indices == 0)] = self.badval
-        return result[indices]
+
+        return result
 
 
 class CountVMetric(BaseVectorMetric):
     def __init__(self, col='night', units='Count',
-                 statistic='count', **kwargs):
+                 statistic='count', mode='accumulate',**kwargs):
         self.statistic = statistic
-        super(CountVMetric, self).__init__(col=col, units=units, **kwargs)
+        super(CountVMetric, self).__init__(col=col, units=units, mode=mode, **kwargs)
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
         toCount = np.ones(dataSlice.size,dtype=int)
@@ -36,8 +39,12 @@ class CountVMetric(BaseVectorMetric):
             result = self._pullAccumulateVals(result, dataSlice[slicePoint['binCol']],
                                               slicePoint['bins'])
         elif self.mode == 'histogram':
-            result, binEdges,binNumber = stats.binned_statistic(toCount, bins,
+            result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
+                                                                toCount,
+                                                                bins=slicePoint['bins'],
                                                                 statistic=self.statistic)
+            # Need to append a dummy to make same length as bins
+            result = np.append(result,0)
         else:
             raise ValueError('mode kwarg not set to "accumulate" or "histogram"')
 
@@ -59,8 +66,11 @@ class CoaddM5VMetric(BaseVectorMetric):
             result = _pullAccumulateVals(result, dataSlice[slicePoint['binCol']],
                                          slicePoint['bins'])
         elif self.mode == 'histogram':
-            result, binEdges,binNumber = stats.binned_statistic(flux, bins,
+            result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
+                                                                flux, bins=slicePoint['bins'],
                                                                 statistic='sum')
+            # Need to append a dummy to make same length as bins
+            result = np.append(result,0)
         else:
             raise ValueError('mode kwarg not set to "accumulate" or "histogram"')
 

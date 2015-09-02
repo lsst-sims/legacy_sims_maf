@@ -29,3 +29,4 @@ class Healpix2dSlicer(HealpixSlicer):
         self.slicePoints['bins'] = bins
         self.slicePoints['binCol'] = binCol
         self.columnsNeeded.append(binCol)
+        # XXX -- set the plotfunc when I make it
