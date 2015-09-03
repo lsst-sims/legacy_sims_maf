@@ -9,4 +9,4 @@ from .healpixSlicer import *
 from .opsimFieldSlicer import *
 from .healpixSDSSSlicer import *
 from .userPointsSlicer import *
-from .healpix2dSlicer import *
+from .twoDSlicers import *

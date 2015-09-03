@@ -2,53 +2,69 @@ import numpy as np
 from .baseMetric import BaseMetric
 from scipy import stats
 
-__all__ = ['BaseVectorMetric','CountVMetric', 'CoaddM5VMetric']
+__all__ = ['HistogramMetric','AccumulateMetric', 'AccumulateCountMetric',
+           'HistogramM5Metric', 'AccumulateM5Metric']
 
 
-# Create a base metric and set the default dtype to object
-class BaseVectorMetric(BaseMetric):
-    def __init__(self, metricDtype=float, mode='accumulate', **kwargs):
-        """
-        mode: Can be 'accumulate' or 'histogram'
-        """
-        self.mode = mode
-        super(BaseVectorMetric,self).__init__(metricDtype=metricDtype,**kwargs)
+class HistogramMetric(BaseMetric):
+    """
+    A wrapper to stats.binned_statistic
+    """
+    def __init__(self, col='night', units='Count', statistic='count',
+                 metricDtype=float, **kwargs):
+        self.statistic = statistic
+        super(BaseVectorMetric,self).__init__(col=col, units=units,
+                                              metricDtype=metricDtype,**kwargs)
+
     def run(self, dataSlice, slicePoint=None):
-        raise NotImplementedError('Please implement your metric calculation.')
+        dataSlice.sort(order=slicePoint['binCol'])
+        result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
+                                                            self.col,
+                                                            bins=slicePoint['bins'],
+                                                            statistic=self.statistic)
+        # Make the result the same length as bins
+        result = np.append(result,0)
+        return result
 
-    def _pullAccumulateVals(self, result, timeValues, bins):
+class AccumulateMetric(BaseMetric):
+    """
+    Calculate the accumulated stat
+    """
+    def __init__(self, col='night', function=np.add,
+                 metricDtype=float, **kwargs):
+        self.function = function
+        super(BaseVectorMetric,self).__init__(col=col, units=units,
+                                              metricDtype=metricDtype,**kwargs)
 
-        indices = np.searchsorted(timeValues, bins, side='left')
+    def run(self, dataSlice, slicePoint=None):
+        dataSlice.sort(order=slicePoint['binCol'])
+
+        result = self.function.accumulate(dataSlice[self.col])
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], bins, side='left')
         indices[np.where(indices >= np.size(result))] = np.size(result)-1
         result = result[indices]
         result[np.where(indices == 0)] = self.badval
 
         return result
 
-
-class CountVMetric(BaseVectorMetric):
-    def __init__(self, col='night', units='Count',
-                 statistic='count', mode='accumulate',**kwargs):
-        self.statistic = statistic
-        super(CountVMetric, self).__init__(col=col, units=units, mode=mode, **kwargs)
+class AccumulateCountMetric(AccumulateMetric):
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
-        toCount = np.ones(dataSlice.size,dtype=int)
-        if self.mode == 'accumulate':
-            result = np.add.accumulate(toCount)
-            result = self._pullAccumulateVals(result, dataSlice[slicePoint['binCol']],
-                                              slicePoint['bins'])
-        elif self.mode == 'histogram':
-            result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
-                                                                toCount,
-                                                                bins=slicePoint['bins'],
-                                                                statistic=self.statistic)
-            # Need to append a dummy to make same length as bins
-            result = np.append(result,0)
-        else:
-            raise ValueError('mode kwarg not set to "accumulate" or "histogram"')
+        toCount = np.ones(dataSlice.size, dtype=int)
+        result = self.function.accumulate(toCount)
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], bins, side='left')
+        indices[np.where(indices >= np.size(result))] = np.size(result)-1
+        result = result[indices]
+        result[np.where(indices == 0)] = self.badval
 
         return result
+
+class HistogramM5Metric(HistogramMetric):
+    pass
+
+class AccumulateM5Metric(AccumulateMetric):
+    pass
+
 
 class CoaddM5VMetric(BaseVectorMetric):
     def __init__(self, col='night', m5Col = 'fiveSigmaDepth', metricName='CoaddM5',
