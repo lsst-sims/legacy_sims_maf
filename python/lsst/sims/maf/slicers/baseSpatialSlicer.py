@@ -98,7 +98,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
             for key in self.slicePoints.keys():
-                if (np.size(self.slicePoints[key]) > 1) & (key is not 'bins'):
+                if (np.size(self.slicePoints[key]) > 1) & (key is not 'bins') & (key is not 'binCol'):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]

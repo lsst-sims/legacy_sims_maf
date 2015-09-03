@@ -13,7 +13,8 @@ class HistogramMetric(BaseMetric):
     def __init__(self, col='night', units='Count', statistic='count',
                  metricDtype=float, **kwargs):
         self.statistic = statistic
-        super(BaseVectorMetric,self).__init__(col=col, units=units,
+        self.col=col
+        super(HistogramMetric,self).__init__(col=col, units=units,
                                               metricDtype=metricDtype,**kwargs)
 
     def run(self, dataSlice, slicePoint=None):
@@ -33,14 +34,15 @@ class AccumulateMetric(BaseMetric):
     def __init__(self, col='night', function=np.add,
                  metricDtype=float, **kwargs):
         self.function = function
-        super(BaseVectorMetric,self).__init__(col=col, units=units,
+        self.col=col
+        super(AccumulateMetric,self).__init__(col=col,
                                               metricDtype=metricDtype,**kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
 
         result = self.function.accumulate(dataSlice[self.col])
-        indices = np.searchsorted(dataSlice[slicePoint['binCol']], bins, side='left')
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'], side='left')
         indices[np.where(indices >= np.size(result))] = np.size(result)-1
         result = result[indices]
         result[np.where(indices == 0)] = self.badval
@@ -52,7 +54,7 @@ class AccumulateCountMetric(AccumulateMetric):
         dataSlice.sort(order=slicePoint['binCol'])
         toCount = np.ones(dataSlice.size, dtype=int)
         result = self.function.accumulate(toCount)
-        indices = np.searchsorted(dataSlice[slicePoint['binCol']], bins, side='left')
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'], side='left')
         indices[np.where(indices >= np.size(result))] = np.size(result)-1
         result = result[indices]
         result[np.where(indices == 0)] = self.badval
@@ -60,13 +62,17 @@ class AccumulateCountMetric(AccumulateMetric):
         return result
 
 class HistogramM5Metric(HistogramMetric):
-    pass
+    def __init_(self, metricName='HistogramM5Metric',**kwargs):
+        super(HistogramM5Metric,self).__init__(metricName=metricName,**kwargs)
+
 
 class AccumulateM5Metric(AccumulateMetric):
-    pass
+   def __init_(self, metricName='AccumulateM5Metric',**kwargs):
+        super(AccumulateM5Metric,self).__init__(metricName=metricName,**kwargs)
 
 
-class CoaddM5VMetric(BaseVectorMetric):
+
+class CoaddM5VMetric(object):
     def __init__(self, col='night', m5Col = 'fiveSigmaDepth', metricName='CoaddM5',
                  units='mags',**kwargs):
         self.statistic = statistic

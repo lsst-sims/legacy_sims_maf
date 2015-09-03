@@ -1,5 +1,6 @@
 import numpy as np
 from .healpixSlicer import HealpixSlicer
+from .opsimFieldSlicer import OpsimFieldSlicer
 #from lsst.sims.maf.plots.spatialPlotters import twoDPlotter
 
 __all__ = ['Healpix2dSlicer','Opsim2dSlicer']
@@ -40,17 +41,18 @@ class Opsim2dSlicer(OpsimFieldSlicer):
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  badval=-666, **kwargs):
-        super(Opsim2DSlicer,self).__init__(verbose=verbose, simDataFieldIDColName=simDataFieldIDColName,
+        super(Opsim2dSlicer,self).__init__(verbose=verbose, simDataFieldIDColName=simDataFieldIDColName,
                                            simDataFieldRaColName=simDataFieldRaColName,
                                            simDataFieldDecColName=simDataFieldDecColName,
-                                           fieldIDColName=fieldIDColName,f ieldRaColName=fieldRaColName,
+                                           fieldIDColName=fieldIDColName,fieldRaColName=fieldRaColName,
                                            fieldDecColName=fieldDecColName, badval=badval, **kwargs)
         self.slicer_init={'simDataFieldIDColName':simDataFieldIDColName,
                           'simDataFieldRaColName':simDataFieldRaColName,
                           'simDataFieldDecColName':simDataFieldDecColName,
                           'fieldIDColName':fieldIDColName,
                           'fieldRaColName':fieldRaColName,
-                          'fieldDecColName':fieldDecColName, 'badval':badval}
+                          'fieldDecColName':fieldDecColName, 'badval':badval,
+                          'bins':bins, 'binCol':binCol}
         self.slicePoints['bins'] = bins
         self.slicePoints['binCol'] = binCol
         self.columnsNeeded.append(binCol)

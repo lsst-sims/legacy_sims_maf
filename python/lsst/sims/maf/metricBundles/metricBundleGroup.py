@@ -251,7 +251,7 @@ class MetricBundleGroup(object):
         # Determine if we have a opsimFieldSlicer:
         needFields = False
         for b in self.currentBundleDict.itervalues():
-            if b.slicer.slicerName == 'OpsimFieldSlicer':
+            if (b.slicer.slicerName == 'OpsimFieldSlicer') | (b.slicer.slicerName == 'Opsim2dSlicer'):
                 needFields = True
         if needFields:
             self.fieldData = utils.getFieldData(self.dbObj, sqlconstraint)
@@ -292,7 +292,7 @@ class MetricBundleGroup(object):
         # This will be forced back into all of the metricBundles at the end (so that they track
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
         slicer = bDict.itervalues().next().slicer
-        if slicer.slicerName == 'OpsimFieldSlicer':
+        if (slicer.slicerName == 'OpsimFieldSlicer') | (slicer.slicerName == 'Opsim2dSlicer'):
             slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
         else:
             slicer.setupSlicer(self.simData, maps=compatMaps)
