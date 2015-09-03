@@ -62,40 +62,42 @@ class AccumulateCountMetric(AccumulateMetric):
         return result
 
 class HistogramM5Metric(HistogramMetric):
-    def __init_(self, metricName='HistogramM5Metric',**kwargs):
-        super(HistogramM5Metric,self).__init__(metricName=metricName,**kwargs)
+    def __init_(self, col='night', m5Col='fiveSigmaDepth', units='mag',
+                metricName='HistogramM5Metric',**kwargs):
+        self.m5Col=m5Col
+        super(HistogramM5Metric,self).__init__(col=[col,m5Col],
+                                               metricName=metricName,
+                                               units=units**kwargs)
+    def run(self, dataSlice, slicePoint=None):
+        dataSlice.sort(order=slicePoint['binCol'])
+        flux = 10.**(.8*dataSlice[self.m5Col])
+        result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
+                                                            self.m5col,
+                                                            bins=slicePoint['bins'],
+                                                            statistic='sum')
+        result = 1.25*np.log10(result)
+        # Make the result the same length as bins
+        result = np.append(result,self.badval)
+        return result
+
 
 
 class AccumulateM5Metric(AccumulateMetric):
-   def __init_(self, metricName='AccumulateM5Metric',**kwargs):
-        super(AccumulateM5Metric,self).__init__(metricName=metricName,**kwargs)
-
-
-
-class CoaddM5VMetric(object):
-    def __init__(self, col='night', m5Col = 'fiveSigmaDepth', metricName='CoaddM5',
-                 units='mags',**kwargs):
-        self.statistic = statistic
+    def __init__(self, col='night', m5Col='fiveSigmaDepth',
+                metricName='AccumulateM5Metric',**kwargs):
         self.m5Col = m5Col
-        super(CoaddM5VMetric, self).__init__(col=[col,m5Col],  metricName=metricName,
-                                             units=units, **kwargs)
+        super(AccumulateM5Metric,self).__init__(col=[col,m5Col], metricName=metricName,**kwargs)
+
+
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
         flux = 10.**(.8*dataSlice[self.m5Col])
 
-        if self.mode == 'accumulate':
-            result = np.add.accumulate(flux)
-            result = _pullAccumulateVals(result, dataSlice[slicePoint['binCol']],
-                                         slicePoint['bins'])
-        elif self.mode == 'histogram':
-            result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
-                                                                flux, bins=slicePoint['bins'],
-                                                                statistic='sum')
-            # Need to append a dummy to make same length as bins
-            result = np.append(result,0)
-        else:
-            raise ValueError('mode kwarg not set to "accumulate" or "histogram"')
-
+        result = np.add.accumulate(flux)
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'], side='left')
+        indices[np.where(indices >= np.size(result))] = np.size(result)-1
+        result = result[indices]
         result = 1.25*np.log10(result)
+        result[np.where(indices == 0)] = self.badval
 
         return result

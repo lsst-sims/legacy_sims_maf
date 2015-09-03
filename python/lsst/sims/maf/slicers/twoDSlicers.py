@@ -1,7 +1,7 @@
 import numpy as np
 from .healpixSlicer import HealpixSlicer
 from .opsimFieldSlicer import OpsimFieldSlicer
-#from lsst.sims.maf.plots.spatialPlotters import twoDPlotter
+from lsst.sims.maf.plots import TwoDMap
 
 __all__ = ['Healpix2dSlicer','Opsim2dSlicer']
 
@@ -30,7 +30,7 @@ class Healpix2dSlicer(HealpixSlicer):
         self.slicePoints['bins'] = bins
         self.slicePoints['binCol'] = binCol
         self.columnsNeeded.append(binCol)
-        # XXX -- set the plotfunc when I make it
+        self.plotFuncs = [TwoDMap]
 
 
 class Opsim2dSlicer(OpsimFieldSlicer):
@@ -57,4 +57,4 @@ class Opsim2dSlicer(OpsimFieldSlicer):
         self.slicePoints['binCol'] = binCol
         self.columnsNeeded.append(binCol)
 
-        #self.plotFuncs = []
+        self.plotFuncs = [TwoDMap]
