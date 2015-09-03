@@ -11,7 +11,7 @@ class TwoDMap(BasePlotter):
         self.plotType = 'TwoD'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
-                                'logScale':False, 'cbarFormat':None, 'cbarTitle': None ,
+                                'logScale':False, 'cbarFormat':None, 'cbarTitle': 'Count' ,
                                 'cmap':cm.jet,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
@@ -26,7 +26,10 @@ class TwoDMap(BasePlotter):
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
-        plotDict.update(userPlotDict)
+        # Don't clobber with None
+        for key in userPlotDict.keys():
+            if userPlotDict[key] is not None:
+                plotDict[key] = userPlotDict[key]
 
         # Decide if we want all the zeropoint sillyness
 
@@ -52,6 +55,9 @@ class TwoDMap(BasePlotter):
         return figure.number
 
 class VisitPairsHist(BasePlotter):
+    """
+    Given an opsim2dSlicer, figure out what fraction of observations are in singles, pairs, tripples, etc.
+    """
     def __init__(self):
         self.plotType = 'TwoD'
         self.objectPlotter = False
@@ -62,4 +68,15 @@ class VisitPairsHist(BasePlotter):
                                 'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
 
     def call(self, metricValueIn, slicer, userPlotDict, fignum=None):
-        pass
+
+        maxVal = metricValueIn.max()
+        bins = np.arange(0.5,maxVal+0.5,1)
+
+        vals, bins = np.histogram(metricValueIn, bins)
+        xvals = (bins[:-1]+bins[1:])/2.
+
+        figure = plt.figure(fignum)
+        ax = figure.add_subplot(111)
+        ax.plot(xvals, vals*xvals, color=plotDict['color'] )
+
+        return figure.number
