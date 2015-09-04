@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import colors
 from matplotlib import ticker
 import matplotlib.pyplot as plt
@@ -39,7 +40,10 @@ class TwoDMap(BasePlotter):
 
         metricValue = metricValueIn.copy()
 
-
+        # Mask out values below the color minimum so they show up as white
+        if plotDict['colorMin']:
+            lowVals = np.where(metricValue.data < plotDict['colorMin'])
+            metricValue.mask[lowVals] = True
 
         figure = plt.figure(fignum)
         ax = figure.add_subplot(111)
@@ -65,13 +69,21 @@ class VisitPairsHist(BasePlotter):
     def __init__(self):
         self.plotType = 'TwoD'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
+        self.defaultPlotDict = {'title':None, 'xlabel':'N visits per night per field',
+                                'ylabel':'N Visits','label':None,
                                 'logScale':False, 'cbarFormat':None, 'cmap':perceptual_rainbow,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
-                                'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
+                                'cbar_edge':True, 'nTicks':None, 'xlim':[0,20], 'ylim':None}
 
-    def call(self, metricValueIn, slicer, userPlotDict, fignum=None):
+    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
+
+        plotDict = {}
+        plotDict.update(self.defaultPlotDict)
+        # Don't clobber with None
+        for key in userPlotDict.keys():
+            if userPlotDict[key] is not None:
+                plotDict[key] = userPlotDict[key]
 
         maxVal = metricValueIn.max()
         bins = np.arange(0.5,maxVal+0.5,1)
@@ -81,6 +93,11 @@ class VisitPairsHist(BasePlotter):
 
         figure = plt.figure(fignum)
         ax = figure.add_subplot(111)
-        ax.plot(xvals, vals*xvals, color=plotDict['color'] )
+        ax.bar(xvals, vals*xvals, color=plotDict['color'] )
+        ax.set_xlabel(plotDict['xlabel'])
+        ax.set_ylabel(plotDict['ylabel'])
+        ax.set_title(plotDict['title'])
+        ax.set_xlim(plotDict['xlim'])
+        ax.set_ylim(plotDict['ylim'])
 
         return figure.number
