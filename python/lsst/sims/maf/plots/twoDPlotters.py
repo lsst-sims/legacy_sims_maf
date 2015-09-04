@@ -3,8 +3,12 @@ from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from .plotHandler import BasePlotter
+from .perceptual_rainbow import makePRCmap
 
 __all__=['TwoDMap', 'VisitPairsHist']
+
+
+perceptual_rainbow = makePRCmap()
 
 class TwoDMap(BasePlotter):
     def __init__(self):
@@ -12,7 +16,7 @@ class TwoDMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylabel':None, 'label':None,
                                 'logScale':False, 'cbarFormat':None, 'cbarTitle': 'Count' ,
-                                'cmap':cm.jet,
+                                'cmap':perceptual_rainbow,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'nTicks':None, 'aspect':'auto'}
@@ -62,7 +66,7 @@ class VisitPairsHist(BasePlotter):
         self.plotType = 'TwoD'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
-                                'logScale':False, 'cbarFormat':None, 'cmap':cm.cubehelix,
+                                'logScale':False, 'cbarFormat':None, 'cmap':perceptual_rainbow,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
