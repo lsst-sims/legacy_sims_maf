@@ -13,7 +13,8 @@ class OneDBinnedData(BasePlotter):
         self.defaultPlotDict = {'title':None, 'label':None, 'xlabel':None, 'ylabel':None,
                                 'filled':False, 'alpha':0.5, 'linestyle':'-', 'linewidth':1,
                                 'logScale':False, 'percentileClip':None,
-                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None}
+                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
+                                'fontsize':None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """
@@ -47,9 +48,9 @@ class OneDBinnedData(BasePlotter):
                          linestyle=plotDict['linestyle'], linewidth=plotDict['linewidth'],
                          alpha=plotDict['alpha'])
         if 'ylabel' in plotDict:
-            plt.ylabel(plotDict['ylabel'])
+            plt.ylabel(plotDict['ylabel'], fontsize=plotDict['fontsize'])
         if 'xlabel' in plotDict:
-            plt.xlabel(plotDict['xlabel'])
+            plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         # Set y limits (either from values in args, percentileClipping or compressed data values).
         if (plotDict['yMin'] is None) or (plotDict['yMax'] is None):
             if plotDict['percentileClip']:

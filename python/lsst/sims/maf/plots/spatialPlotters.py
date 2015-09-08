@@ -29,7 +29,7 @@ class HealpixSkyMap(BasePlotter):
         self.defaultPlotDict = {'title':None, 'xlabel':None, 'label':None,
                                 'logScale':False, 'cbarFormat':None, 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
-                                'zp':None, 'normVal':None,
+                                'zp':None, 'normVal':None, 'labelsize':None, 'fontsize':None,
                                 'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
@@ -105,7 +105,9 @@ class HealpixSkyMap(BasePlotter):
             warnings.simplefilter("ignore")
             cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
                             extend='both', extendrect=True, format=plotDict['cbarFormat'])
-            cb.set_label(plotDict['xlabel'])
+            cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
+            if plotDict['labelsize'] is not None:
+                cb.ax.tick_params(labelsize=plotDict['labelsize'])
             if plotDict['nTicks'] is not None:
                 tick_locator = ticker.MaxNLocator(nbins=plotDict['nTicks'])
                 cb.locator = tick_locator
@@ -121,6 +123,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'label':None,
                                 'maxl':None, 'removeDipole':True,
+                                'fontsize':None, 'labelsize':None,
                                 'logScale':True, 'linestyle':'-'}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -153,8 +156,11 @@ class HealpixPowerSpectrum(BasePlotter):
                  color=plotDict['color'], linestyle=plotDict['linestyle'], label=plotDict['label'])
         if cl.max() > 0 and plotDict['logScale']:
             plt.yscale('log')
-        plt.xlabel(r'$l$')
-        plt.ylabel(r'$l(l+1)C_l/(2\pi)$')
+        plt.xlabel(r'$l$', fontsize=plotDict['fontsize'])
+        plt.ylabel(r'$l(l+1)C_l/(2\pi)$', fontsize=plotDict['fontsize'])
+        if plotDict['labelsize'] is not None:
+            plt.tick_params(axis='x', labelsize=plotDict['labelsize'])
+            plt.tick_params(axis='y', labelsize=plotDict['labelsize'])
         if plotDict['title'] is not None:
             plt.title(plotDict['title'])
         # Return figure number (so we can reuse/add onto/save this figure if desired).
@@ -168,7 +174,8 @@ class HealpixHistogram(BasePlotter):
                                 'ylabel':'Area (1000s of square degrees)', 'label':None,
                                 'bins':None, 'binsize':None, 'cumulative':False,
                                 'scale':None, 'xMin':None, 'xMax':None,
-                                'logScale':False, 'linestyle':'-'}
+                                'logScale':False, 'linestyle':'-',
+                                'fontsize':None, 'labelsize':None,}
         self.baseHist = BaseHistogram()
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -215,7 +222,8 @@ class BaseHistogram(BasePlotter):
                                 'scale':1.0, 'xMin':None, 'xMax':None,
                                 'logScale':'auto',
                                 'yaxisformat':'%.3f', 'linestyle':'-',
-                                'zp':None, 'normVal':None, 'percentileClip':None}
+                                'zp':None, 'normVal':None, 'percentileClip':None,
+                                'fontsize':None, 'labelsize':None, }
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -346,9 +354,12 @@ class BaseHistogram(BasePlotter):
         if plotDict['xMax'] is not None:
             plt.xlim(xmax=plotDict['xMax'])
         # Set/Add various labels.
-        plt.xlabel(plotDict['xlabel'])
-        plt.ylabel(plotDict['ylabel'])
+        plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
+        plt.ylabel(plotDict['ylabel'], fontsize=plotDict['fontsize'])
         plt.title(plotDict['title'])
+        if plotDict['labelsize'] is not None:
+            plt.tick_params(axis='x', labelsize=plotDict['labelsize'])
+            plt.tick_params(axis='y', labelsize=plotDict['labelsize'])
         # Return figure number
         return fig.number
 
@@ -364,7 +375,8 @@ class BaseSkyMap(BasePlotter):
                                 'zp':None, 'normVal':None,
                                 'colorMin':None, 'colorMax':None, 'percentileClip':False,
                                 'cbar_edge':True, 'plotMask':False, 'metricIsColor':False,
-                                'raCen':0.0, 'mwZone':True, 'bgcolor':'gray'}
+                                'raCen':0.0, 'mwZone':True, 'bgcolor':'gray',
+                                'labelsize':None, 'fontsize':None}
 
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
@@ -523,6 +535,7 @@ class BaseSkyMap(BasePlotter):
                 if plotDict['cbar_edge']:
                     cb.solids.set_edgecolor("face")
                 cb.set_label(plotDict['xlabel'])
+                cb.ax.tick_params(labelsize=plotDict['labelsize'])
         # Add ecliptic
         self._plot_ecliptic(plotDict['raCen'], ax=ax)
         if plotDict['mwZone']:
@@ -548,7 +561,8 @@ class HealpixSDSSSkyMap(BasePlotter):
                                 'percentileClip':None, 'colorMin':None,
                                 'colorMax':None, 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'label':None, 'raMin':-90,
-                                'raMax':90, 'raLen':45, 'decMin':-2., 'decMax':2.}
+                                'raMax':90, 'raLen':45, 'decMin':-2., 'decMax':2.,
+                                'labelsize':None, 'fontsize':None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None, ):
 
@@ -636,6 +650,7 @@ class HealpixSDSSSkyMap(BasePlotter):
             cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=cnorm,
                                             orientation='horizontal', format=plotDict['cbarFormat'])
             cb1.set_label(plotDict['xlabel'])
+            cb1.ax.tick_params(labelsize=plotDict['labelsize'])
         # If outputing to PDF, this fixes the colorbar white stripes
         if plotDict['cbar_edge']:
             cb1.solids.set_edgecolor("face")
@@ -658,7 +673,8 @@ class LambertSkyMap(BasePlotter):
                                 'cbar':True, 'cmap':plt.cm.jet, 'levels':200,
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
-                                'colorMax':None, 'linewidths':0}
+                                'colorMax':None, 'linewidths':0,
+                                'fontsize':None, 'labelsize':None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -731,6 +747,8 @@ class LambertSkyMap(BasePlotter):
         m.drawmeridians(np.arange(-180,181,60))
         cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])
+        if plotDict['labelsize'] is not None:
+            cb.ax.tick_params(labelsize=plotDict['labelsize'])
         ax.set_title(plotDict['title'])
         # If outputing to PDF, this fixes the colorbar white stripes
         if plotDict['cbar_edge']:
