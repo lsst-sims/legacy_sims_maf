@@ -14,7 +14,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.coordUtils import observedFromICRS, findChipName
+from lsst.sims.coordUtils import _observedFromICRS, findChipName
 from lsst.sims.utils import ObservationMetaData
 
 from .baseSlicer import BaseSlicer
@@ -133,7 +133,7 @@ class BaseSpatialSlicer(BaseSlicer):
                                                    rotSkyPos=np.degrees(rotSkyPos),
                                                    mjd=mjd)
                 # Correct ra,dec for refraction (because this is automatically done within findChipNames for the boresight)
-                raCorr, decCorr = observedFromICRS(self.slicePoints['ra'][hpIndices],
+                raCorr, decCorr = _observedFromICRS(self.slicePoints['ra'][hpIndices],
                                                    self.slicePoints['dec'][hpIndices],
                                                    obs_metadata=obs_metadata,
                                                    epoch=self.epoch)
