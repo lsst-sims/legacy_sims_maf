@@ -8,7 +8,8 @@ class UserPointsSlicer(BaseSpatialSlicer):
     """Use spatial slicer on a user provided point """
     def __init__(self, ra, dec, verbose=True, lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD',
+                 chipNames=None):
         """
         ra = list of ra points to use
         dec = list of dec points to use
@@ -18,7 +19,7 @@ class UserPointsSlicer(BaseSpatialSlicer):
                                                 lonCol=lonCol, latCol=latCol,
                                                 badval=badval, radius=radius, leafsize=leafsize,
                                                 useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
-                                                mjdColName=mjdColName)
+                                                mjdColName=mjdColName, chipNames=chipNames)
 
         # check that ra and dec are iterable, if not, they are probably naked numbers, wrap in list
         if not hasattr(ra, '__iter__'):
@@ -42,5 +43,6 @@ class UserPointsSlicer(BaseSpatialSlicer):
                     if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
                         if otherSlicer.radius == self.radius:
                             if otherSlicer.useCamera == self.useCamera:
-                                result = True
+                                if otherSlicer.chipsToUse == self.chipsToUse:
+                                    result = True
         return result
