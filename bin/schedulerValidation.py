@@ -744,7 +744,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     ## Unislicer (single number) metrics.
     slicer = slicers.UniSlicer()
-    sqlcomstraint = ''
+    sqlconstraint = ''
     metadata='All visits'
     order = 0
 
