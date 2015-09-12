@@ -112,17 +112,21 @@ class BaseStacker(object):
         If columns already present in simData, just allows 'run' method to overwrite.
         Returns simData array with these columns added (so 'run' method can set their values).
         """
-        newcolList = [simData]
         if not hasattr(self, 'colsAddedDtypes') or self.colsAddedDtypes is None:
             self.colsAddedDtypes = [float for col in self.colsAdded]
+        # Create description of new recarray.
+        newdtype = simData.dtype.descr
         for col, dtype in zip(self.colsAdded, self.colsAddedDtypes):
             if col in simData.dtype.names:
                 warnings.warn('Warning - column %s already present in simData, will be overwritten.'
                               %(col))
             else:
-                newcol = np.empty(len(simData), dtype=[(col, dtype)])
-                newcolList.append(newcol)
-        return rfn.merge_arrays(newcolList, flatten=True, usemask=False)
+                newdtype += ([(col, dtype)])
+        newData = np.empty(len(simData), dtype=newdtype)
+        # Add references to old data.
+        for col in simData.dtype.names:
+            newData[col] = simData[col]
+        return newData
 
     def run(self, simData):
         """
