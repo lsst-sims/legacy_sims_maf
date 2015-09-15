@@ -15,6 +15,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
+from mafContrib import PhaseGapMetric
 
 
 def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
@@ -572,7 +573,9 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     # Median inter-night gap (each and all filters)
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap')
-    displayDict = {'group':interGroup, 'caption':'Median gap between days'}
+    displayDict = {'group':intergroup, 'caption':'Median gap between days'}
+    sqls = ['filter = "%s"' % f for f in filters]
+    sqls.append('')
     for sql in sqls:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict, runName=runName)
         bundleList.append(bundle)
@@ -580,7 +583,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     # Max inter-night gap in r and all bands
     dslicer = slicers.HealpixSlicer(nside=nside, lonCol='ditheredRA', latCol='ditheredDec')
     metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', reduceFunc=np.max)
-    displayDict = {'group':maxGapGroup, 'caption':'Max gap between nights'}
+    displayDict = {'group':intergroup, 'caption':'Max gap between nights'}
     plotDict = {'percentileClip':95.}
     for sql in sqls:
         bundle = metricBundles.MetricBundle(metric, dslicer, sql, displayDict=displayDict,
