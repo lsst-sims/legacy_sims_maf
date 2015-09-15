@@ -95,6 +95,8 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     colors={'u':'cyan','g':'g','r':'y','i':'r','z':'m', 'y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
+    # Easy way to run through all fi
+
     # Set up a list of common summary stats
     commonSummary = [metrics.MeanMetric(), metrics.RobustRmsMetric(), metrics.MedianMetric(),
                      metrics.PercentileMetric(metricName='25th%ile', percentile=25),
@@ -108,6 +110,11 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     uniformitygroup = 'C: Uniformity'
     seeinggroup = 'D: Seeing distribution'
     transgroup = 'E: Transients'
+    sngroup = 'F: SN Ia'
+    altAzGroup = 'G: Alt Az'
+    rangeGroup = 'H: Range of Dates'
+    intergroup = 'I: Inter-Night'
+    phaseGroup = 'J: Max Phase Gap'
 
     # Set up an object to track the metricBundles that we want to combine into merged plots.
     mergedHistDict = {}
@@ -483,6 +490,119 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                                                 summaryMetrics=summaryStats)
             mergedHistDict['fracAboveAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
+
+# SNe metrics from UK workshop.
+    peaks = {'uPeak':25.9, 'gPeak':23.6, 'rPeak':22.6, 'iPeak':22.7, 'zPeak':22.7,'yPeak':22.8}
+    peakTime = 15.
+    transDuration = peakTime+30. # Days
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.0,
+                                          transDuration=transDuration, peakTime=peakTime,
+                                          surveyDuration=runLength,
+                                          metricName='SNDetection',**peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are detected at any point in their light curve in any filter'
+    displayDict={'group':sngroup,  'subgroup':'Detected', 'caption':caption}
+    sqlconstraint = ''
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.0,
+                                          transDuration=transDuration, peakTime=peakTime,
+                                          surveyDuration=runLength,
+                                          nPrePeak=1, metricName='SNAlert', **peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are detected pre-peak in any filter'
+    displayDict={'group':sngroup,  'subgroup':'Detected on the rise', 'caption':caption}
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.,
+                                     transDuration=transDuration, peakTime=peakTime,
+                                     surveyDuration=runLength, metricName='SNLots',
+                                     nFilters=3, nPrePeak=3, nPerLC=2, **peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are observed 6 times, 3 pre-peak, 3 post-peak, with observations in 3 filters'
+    displayDict={'group':sngroup,  'subgroup':'Well observed', 'caption':caption}
+    sqlconstraint = 'filter="r" or filter="g" or filter="i" or filter="z" '
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+
+    # Full range of dates:
+    metric = metrics.FullRangeMetric(col='expMJD')
+    plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+    caption='Time span of survey.'
+    sqlconstraint = ''
+    plotDict={}
+    displayDict={'group':rangeGroup, 'caption':caption}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+    for filt in filters:
+        for propid in propids:
+            md = '%s, %s' % (filt, propids[propid])
+            sql = 'filter="%s" and propID=%i' % (filt,propid)
+            bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
+                                                metadata=md, plotFuncs=plotFuncs,
+                                                displayDict=displayDict, runName=runName)
+            bundleList.append(bundle)
+
+
+
+    # Alt az plots
+    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
+    metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
+    plotDict = {}
+    plotFuncs = [plots.LambertSkyMap()]
+    displayDict = {'group':altAzGroup, 'caption':'Alt Az pointing distribution'}
+    for filt in filters:
+        for propid in propids:
+            md = '%s, %s' % (filt, propids[propid])
+            sql = 'filter="%s" and propID=%i' % (filt,propid)
+            bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
+                                                plotFuncs=plotFuncs, metadata=md,
+                                                displayDict=displayDict, runName=runName)
+            bundleList.append(bundle)
+
+
+
+    # Median inter-night gap (each and all filters)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap')
+    displayDict = {'group':interGroup, 'caption':'Median gap between days'}
+    for sql in sqls:
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict, runName=runName)
+        bundleList.append(bundle)
+
+    # Max inter-night gap in r and all bands
+    dslicer = slicers.HealpixSlicer(nside=nside, lonCol='ditheredRA', latCol='ditheredDec')
+    metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', reduceFunc=np.max)
+    displayDict = {'group':maxGapGroup, 'caption':'Max gap between nights'}
+    plotDict = {'percentileClip':95.}
+    for sql in sqls:
+        bundle = metricBundles.MetricBundle(metric, dslicer, sql, displayDict=displayDict,
+                                            plotDict=plotDict, runName=runName)
+        bundleList.append(bundle)
+
+
+    # largest phase gap for periods
+    periods = [0.1,1.0,10.,100.]
+    sqls = ['filter = "u"', 'filter="r"', 'filter="g" or filter="r" or filter="i" or filter="z"',
+            '']
+
+    for sql in sqls:
+        for period in periods:
+            displayDict = {'group':phaseGroup, 'subgroup':'period=%.2f days'%period,
+                           'caption':'Maximum phase gaps'}
+            metric = PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period,
+                                    metricName='PhaseGap, %.1f'%period)
+            bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict, runName=runName)
+            bundleList.append(bundle)
+
+
 
     return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict
 

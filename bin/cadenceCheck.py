@@ -34,7 +34,7 @@ def makeBundleList(dbFile, runName=None, nside=128,
     maxGapGroup = 'C: Max Gap'
     maxgapGroup = 'D: Max Day Gap'
     phaseGroup = 'E: Max Phase Gap'
-    transgroup = 'F: SN Ia'
+    sngroup = 'F: SN Ia'
     altAzGroup = 'G: Alt Az'
     rangeGroup = 'H: Range of Dates'
 
@@ -85,8 +85,8 @@ def makeBundleList(dbFile, runName=None, nside=128,
                                           transDuration=transDuration, peakTime=peakTime,
                                           surveyDuration=runLength,
                                           metricName='SNDetection',**peaks)
-    caption = 'Fraction of z=0.5 type Ia SN that are detected in any filter'
-    displayDict={'group':transgroup,  'subgroup':'Detected', 'caption':caption}
+    caption = 'Fraction of z=0.5 type Ia SN that are detected at any point in their light curve in any filter'
+    displayDict={'group':sngroup,  'subgroup':'Detected', 'caption':caption}
     sqlconstraint = ''
     plotDict={}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -98,7 +98,7 @@ def makeBundleList(dbFile, runName=None, nside=128,
                                           surveyDuration=runLength,
                                           nPrePeak=1, metricName='SNAlert', **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are detected pre-peak in any filter'
-    displayDict={'group':transgroup,  'subgroup':'Detected on the rise', 'caption':caption}
+    displayDict={'group':sngroup,  'subgroup':'Detected on the rise', 'caption':caption}
     plotDict={}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName)
@@ -109,7 +109,7 @@ def makeBundleList(dbFile, runName=None, nside=128,
                                      surveyDuration=runLength, metricName='SNLots',
                                      nFilters=3, nPrePeak=3, nPerLC=2, **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are observed 6 times, 3 pre-peak, 3 post-peak, with observations in 3 filters'
-    displayDict={'group':transgroup,  'subgroup':'Well observed', 'caption':caption}
+    displayDict={'group':sngroup,  'subgroup':'Well observed', 'caption':caption}
     sqlconstraint = 'filter="r" or filter="g" or filter="i" or filter="z" '
     plotDict={}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
