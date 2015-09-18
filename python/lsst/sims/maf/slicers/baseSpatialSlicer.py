@@ -14,7 +14,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.coordUtils import observedFromICRS, findChipName
+from lsst.sims.coordUtils import _observedFromICRS, _chipNameFromRaDec
 from lsst.sims.utils import ObservationMetaData
 
 from .baseSlicer import BaseSlicer
@@ -132,14 +132,14 @@ class BaseSpatialSlicer(BaseSlicer):
                                                    unrefractedDec=np.degrees(dec),
                                                    rotSkyPos=np.degrees(rotSkyPos),
                                                    mjd=mjd)
-                # Correct ra,dec for refraction (because this is automatically done within findChipNames for the boresight)
-                raCorr, decCorr = observedFromICRS(self.slicePoints['ra'][hpIndices],
+                # Correct ra,dec for refraction (because this is automatically done within _chipNameFromRaDec for the boresight)
+                raCorr, decCorr = _observedFromICRS(self.slicePoints['ra'][hpIndices],
                                                    self.slicePoints['dec'][hpIndices],
                                                    obs_metadata=obs_metadata,
                                                    epoch=self.epoch)
-                chipNames = findChipName(ra=raCorr,dec=decCorr,
-                                         epoch=self.epoch,
-                                         camera=self.camera, obs_metadata=obs_metadata)
+                chipNames = _chipNameFromRaDec(raCorr,decCorr,
+                                               epoch=self.epoch,
+                                               camera=self.camera, obs_metadata=obs_metadata)
                 # If we are using only a subset of chips
                 if self.chipsToUse != 'all':
                     checkedChipNames = [chipName in self.chipsToUse for chipName in chipNames]

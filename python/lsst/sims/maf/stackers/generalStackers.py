@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 import palpy
-from lsst.sims.utils import altAzPaFromRaDec
+from lsst.sims.utils import _altAzPaFromRaDec
 from lsst.sims.maf.utils import TelescopeInfo
 
 from .baseStacker import BaseStacker
@@ -157,7 +157,7 @@ class ParallacticAngleStacker(BaseStacker):
 
     def run(self,simData):
         simData = self._addStackers(simData)
-        alt, az, pa = altAzPaFromRaDec(simData[self.raCol], simData[self.decCol], self.lonRad,
+        alt, az, pa = _altAzPaFromRaDec(simData[self.raCol], simData[self.decCol], self.lonRad,
                                        self.latRad,simData[self.mjdCol])
         simData['PA'] = pa
         return simData
