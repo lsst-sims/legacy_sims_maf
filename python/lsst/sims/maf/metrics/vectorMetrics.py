@@ -20,7 +20,7 @@ class HistogramMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
         result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
-                                                            self.col,
+                                                            dataSlice[self.col],
                                                             bins=slicePoint['bins'],
                                                             statistic=self.statistic)
         # Make the result the same length as bins
@@ -62,17 +62,21 @@ class AccumulateCountMetric(AccumulateMetric):
         return result
 
 class HistogramM5Metric(HistogramMetric):
+    """
+    Calculate the coadded depth for each bin (e.g., per night).
+    """
     def __init_(self, col='night', m5Col='fiveSigmaDepth', units='mag',
                 metricName='HistogramM5Metric',**kwargs):
         self.m5Col=m5Col
+        self.col = col
         super(HistogramM5Metric,self).__init__(col=[col,m5Col],
                                                metricName=metricName,
                                                units=units**kwargs)
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
         flux = 10.**(.8*dataSlice[self.m5Col])
-        result, binEdges,binNumber = stats.binned_statistic(dataSlice[slicePoint['binCol']],
-                                                            self.m5col,
+        result, binEdges,binNumber = stats.binned_statistic(dataSlice[self.col],
+                                                            flux,
                                                             bins=slicePoint['bins'],
                                                             statistic='sum')
         result = 1.25*np.log10(result)
