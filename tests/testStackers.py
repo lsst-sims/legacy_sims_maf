@@ -3,7 +3,7 @@ matplotlib.use("Agg")
 import numpy as np
 import warnings
 import lsst.sims.maf.stackers as stackers
-from lsst.sims.utils import galacticFromEquatorial
+from lsst.sims.utils import _galacticFromEquatorial
 import unittest
 
 class TestStackerClasses(unittest.TestCase):
@@ -191,7 +191,7 @@ class TestStackerClasses(unittest.TestCase):
         data['dec'] += dec
         stacker = stackers.GalacticStacker(raCol='ra',decCol='dec')
         newData = stacker.run(data)
-        expectedL, expectedB = galacticFromEquatorial(ra, dec)
+        expectedL, expectedB = _galacticFromEquatorial(ra, dec)
         np.array_equal(newData['gall'], expectedL )
         np.array_equal(newData['galb'], expectedB)
 
