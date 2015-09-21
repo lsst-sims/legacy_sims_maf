@@ -36,6 +36,12 @@ class TwoDMap(BasePlotter):
             if userPlotDict[key] is not None:
                 plotDict[key] = userPlotDict[key]
 
+
+        if plotDict['logScale']:
+            norm = colors.LogNorm()
+        else:
+            norm = None
+
         # Decide if we want all the zeropoint sillyness
 
         metricValue = metricValueIn.copy()
@@ -49,7 +55,7 @@ class TwoDMap(BasePlotter):
         ax = figure.add_subplot(111)
 
         image = ax.imshow(metricValue, vmin=plotDict['colorMin'], vmax=plotDict['colorMax'],
-                          aspect=plotDict['aspect'], cmap=plotDict['cmap'])
+                          aspect=plotDict['aspect'], cmap=plotDict['cmap'], norm=norm)
         cb =  plt.colorbar(image)
 
         ax.set_xlabel(plotDict['xlabel'])
