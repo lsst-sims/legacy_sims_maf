@@ -122,7 +122,7 @@ class BaseStacker(object):
                               %(col))
             else:
                 newdtype += ([(col, dtype)])
-        newData = np.empty(len(simData), dtype=newdtype)
+        newData = np.empty(simData.shape, dtype=newdtype)
         # Add references to old data.
         for col in simData.dtype.names:
             newData[col] = simData[col]
