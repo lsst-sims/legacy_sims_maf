@@ -194,7 +194,7 @@ class FilterColorStacker(BaseStacker):
         return simData
 
 
-class SeasonStacker(Basestacker):
+class SeasonStacker(BaseStacker):
     """
     Add an integer label to show which season a given visit is in.
     The season only depends on the RA of the object: we compute the MJD
