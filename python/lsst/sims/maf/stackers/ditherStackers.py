@@ -52,9 +52,10 @@ def inHexagon(xOff, yOff, maxDither):
     b = m*maxDither
     h = m/2.0*maxDither
     # Identify offsets inside hexagon.
-    xAbs = np.abs(m*xOff)
-    inside = np.where((yOff < xAbs + b) &
-                      (yOff - b > xAbs) &
+    inside = np.where((yOff < m*xOff + b) &
+                      (yOff > m*xOff - b) &
+                      (yOff < -m*xOff + b) &
+                      (yOff > -m*xOff -b ) &
                       (yOff < h) & (yOff > -h))[0]
     return inside
 
@@ -125,10 +126,11 @@ class RandomDitherFieldVisitStacker(BaseStacker):
         noffsets = len(simData[self.raCol])
         self._generateRandomOffsets(noffsets)
         # Add to RA and dec values.
-        simData['randomDitherRA'] = simData[self.raCol] + self.xOff/np.cos(simData[self.decCol])
-        simData['randomDitherDec'] = simData[self.decCol] + self.yOff
+        simData['randomDitherFieldVisitRa'] = simData[self.raCol] + self.xOff/np.cos(simData[self.decCol])
+        simData['randomDitherFieldVisitDec'] = simData[self.decCol] + self.yOff
         # Wrap back into expected range.
-        simData['randomDitherRA'], simData['randomDitherDec'] = wrapRADec(simData['randomDitherRa'], simData['randomDitherDec'])
+        simData['randomDitherFieldVisitRa'], simData['randomDitherFieldVisitDec'] = wrapRADec(simData['randomDitherFieldVisitRa'],
+                                                                                              simData['randomDitherFieldVisitDec'])
         return simData
 
 
@@ -263,7 +265,7 @@ class SpiralDitherFieldVisitStacker(BaseStacker):
         return simData
 
 
-class SpiralDitherFieldNightStacker(SpiralDitherStacker):
+class SpiralDitherFieldNightStacker(SpiralDitherFieldVisitStacker):
     """
     Offset along an equidistant spiral with numPoints, out to a maximum radius of maxDither.
     Sequential offset for each night of visits to a field.
@@ -304,7 +306,7 @@ class SpiralDitherNightStacker(SpiralDitherFieldVisitStacker):
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night',
                  numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
-        super(SpiralDitherPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
+        super(SpiralDitherNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
                                                          numPoints=numPoints, maxDither=maxDither, nCoils=nCoils, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the names of the new columns.
@@ -396,7 +398,7 @@ class HexDitherFieldVisitStacker(BaseStacker):
                                                                                         simData['hexDitherFieldVisitDec'])
         return simData
 
-class HexDitherFieldNightStacker(HexDithFieldVisitStacker):
+class HexDitherFieldNightStacker(HexDitherFieldVisitStacker):
     """
     Use offsets from the hexagonal grid of 'hexdither', but visit each vertex sequentially.
     Sequential offset for each night of visits.
@@ -433,7 +435,7 @@ class HexDitherNightStacker(HexDitherFieldVisitStacker):
     Sequential offset per night for all fields.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night', maxDither=1.75, inHex=True):
-        super(SequentialHexDitherPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
+        super(SequentialHexDitherNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
                                                                  maxDither=maxDither, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the names of the new columns.
