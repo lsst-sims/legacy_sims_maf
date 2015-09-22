@@ -65,13 +65,15 @@ class HistogramM5Metric(HistogramMetric):
     """
     Calculate the coadded depth for each bin (e.g., per night).
     """
-    def __init_(self, col='night', m5Col='fiveSigmaDepth', units='mag',
+    def __init__(self, col='night', m5Col='fiveSigmaDepth', units='mag',
                 metricName='HistogramM5Metric',**kwargs):
-        self.m5Col=m5Col
-        self.col = col
+
         super(HistogramM5Metric,self).__init__(col=[col,m5Col],
                                                metricName=metricName,
-                                               units=units**kwargs)
+                                               units=units,**kwargs)
+        self.m5Col=m5Col
+        self.col = col
+
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=slicePoint['binCol'])
         flux = 10.**(.8*dataSlice[self.m5Col])
@@ -79,11 +81,12 @@ class HistogramM5Metric(HistogramMetric):
                                                             flux,
                                                             bins=slicePoint['bins'],
                                                             statistic='sum')
+        noFlux = np.where(result == 0.)
         result = 1.25*np.log10(result)
+        result[noFlux] = self.badval
         # Make the result the same length as bins
         result = np.append(result,self.badval)
         return result
-
 
 class AccumulateM5Metric(AccumulateMetric):
     def __init__(self, col='night', m5Col='fiveSigmaDepth',
