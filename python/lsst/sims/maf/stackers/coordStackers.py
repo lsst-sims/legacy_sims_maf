@@ -8,22 +8,6 @@ from .ditherStackers import wrapRA
 __all__ = ['GalacticStacker',
            'EclipticStacker', 'mjd2djd']
 
-class GalacticStacker(BaseStacker):
-    """
-    Stack on the galactic coordinates of each pointing.
-    """
-    def __init__(self, mjdCol='expMJD', raCol='fieldRA',decCol='fieldDec'):
-
-        self.colsReq = [raCol,decCol]
-        self.colsAdded = ['gall','galb']
-        self.units = ['radians', 'radians']
-        self.raCol = raCol
-        self.decCol=decCol
-
-    def _run(self,simData):
-        simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
-        return simData
-
 def mjd2djd(mjd):
     """
     Convert MJD to Dublin Julian Date used by ephem
@@ -31,6 +15,25 @@ def mjd2djd(mjd):
     doff = ephem.Date(0)-ephem.Date('1858/11/17')
     djd = mjd-doff
     return djd
+
+
+class GalacticStacker(BaseStacker):
+    """
+    Stack on the galactic coordinates of each pointing.
+    """
+    def __init__(self, raCol='fieldRA', decCol='fieldDec'):
+        self.colsReq = [raCol,decCol]
+        self.colsAdded = ['gall','galb']
+        self.units = ['radians', 'radians']
+        self.raCol = raCol
+        self.decCol = decCol
+
+    def _run(self, simData):
+        # raCol and DecCol in radians, gall/b in radians.
+        simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
+        l, b = _galacticFromEquatorial(simData['ra'], simData['dec'])
+        print l.min()
+        return simData, l, b
 
 class EclipticStacker(BaseStacker):
     """
