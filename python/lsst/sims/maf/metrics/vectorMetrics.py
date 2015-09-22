@@ -85,7 +85,6 @@ class HistogramM5Metric(HistogramMetric):
         return result
 
 
-
 class AccumulateM5Metric(AccumulateMetric):
     def __init__(self, col='night', m5Col='fiveSigmaDepth',
                 metricName='AccumulateM5Metric',**kwargs):

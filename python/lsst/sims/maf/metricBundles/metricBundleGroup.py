@@ -69,7 +69,7 @@ class MetricBundleGroup(object):
         self.bundleDict = bundleDict
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
-            raise ValueError('dbObj should be an instantiated lsst.sims.maf.db.Database (or child) object.')
+            warnings.warn('Warning: dbObj should be an instantiated lsst.sims.maf.db.Database (or child) object.')
         self.dbObj = dbObj
         # Check the resultsDb (optional).
         if resultsDb is not None:
