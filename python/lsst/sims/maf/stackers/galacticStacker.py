@@ -1,6 +1,6 @@
 import numpy as np
 from .baseStacker import BaseStacker
-from lsst.sims.utils import galacticFromEquatorial
+from lsst.sims.utils import _galacticFromEquatorial
 
 __all__ = ['GalacticStacker']
 
@@ -18,5 +18,5 @@ class GalacticStacker(BaseStacker):
 
     def run(self,simData):
         simData=self._addStackers(simData)
-        simData['gall'], simData['galb'] = galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
+        simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
         return simData
