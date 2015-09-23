@@ -1202,6 +1202,9 @@ if __name__=="__main__":
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
                         default=False, help="Reload the metric values and re-plot them.")
 
+    parser.add_argument('--skipSlew', dest='skipSlew', action='store_true',
+                        default=False, help='Skip calculation of slew statistics')
+
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
@@ -1211,16 +1214,17 @@ if __name__=="__main__":
 
     bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict = makeBundleList(args.dbFile,
                                                                                 benchmark=args.benchmark)
-    # Do the ones that need a different (slew) table
-    for bundleD,table in zip( [slewStateBD, slewMaxSpeedsBD, slewActivitiesBD ],
-                              ['SlewState', 'SlewMaxSpeeds','SlewActivities']):
-        group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
-                                                resultsDb=resultsDb, dbTable=table)
-        if args.plotOnly:
-            group.readAll()
-        else:
-            group.runAll()
-        group.plotAll()
+    if not args.skipSlew:
+        # Do the ones that need a different (slew) table
+        for bundleD,table in zip( [slewStateBD, slewMaxSpeedsBD, slewActivitiesBD ],
+                                ['SlewState', 'SlewMaxSpeeds','SlewActivities']):
+            group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
+                                                    resultsDb=resultsDb, dbTable=table)
+            if args.plotOnly:
+                group.readAll()
+            else:
+                group.runAll()
+            group.plotAll()
 
     group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
     if args.plotOnly:
