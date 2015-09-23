@@ -159,10 +159,18 @@ class RandomDitherFieldNightStacker(RandomDitherFieldVisitStacker):
         fields = np.unique(simData[self.fieldIdCol])
         nights = np.unique(simData[self.nightCol])
         self._generateRandomOffsets(len(fields)*len(nights))
-        for xoff, yoff, fieldid, night in zip(self.xOff, self.yOff, it.product(fields, nights)):
-            match = np.where((simData[self.fieldIdCol] == fieldid) & (simData[self.nightCol] == night))[0]
-            simData['randomDitherFieldNightRa'][match] = simData[self.raCol][match] + xoff/np.cos(simData[self.decCol][match])
-            simData['randomDitherFieldNightDec'][match] = simData[self.decCol][match] + yoff
+        delta= 0   # counter to ensure new random numbers are chosen every time
+        for fieldid in np.unique(simData[self.fieldIdCol]):
+            # Identify observations of this field.
+            match = np.where(simData[self.fieldIdCol] == fieldid)[0]
+            # Apply dithers, increasing each night.
+            vertexIdxs = np.arange(0, len(match), 1)+delta
+            delta= delta + len(vertexIdxs)   # ensure that the same xOff/yOff entries are not chosen
+            nights = simData[self.nightCol][match]
+            vertexIdxs = np.searchsorted(np.unique(nights), nights)
+            vertexIdxs = vertexIdxs % len(self.xOff)
+            simData['randomDitherFieldNightRa'][match] = simData[self.raCol][match] + self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
+            simData['randomDitherFieldNightDec'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
         # Wrap into expected range.
         simData['randomDitherFieldNightRa'], simData['randomDitherFieldNightDec'] = \
                                 wrapRADec(simData['randomDitherFieldNightRa'], simData['randomDitherFieldNightDec'])
@@ -435,7 +443,7 @@ class HexDitherNightStacker(HexDitherFieldVisitStacker):
     Sequential offset per night for all fields.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night', maxDither=1.75, inHex=True):
-        super(SequentialHexDitherNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
+        super(HexDitherNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
                                                                  maxDither=maxDither, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the names of the new columns.
