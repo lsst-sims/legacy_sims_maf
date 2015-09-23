@@ -1,10 +1,11 @@
+import numpy as np
 import matplotlib
 matplotlib.use("Agg")
-import numpy as np
 import warnings
+import unittest
+
 import lsst.sims.maf.stackers as stackers
 from lsst.sims.utils import _galacticFromEquatorial
-import unittest
 
 class TestStackerClasses(unittest.TestCase):
 
@@ -16,8 +17,8 @@ class TestStackerClasses(unittest.TestCase):
         s2 = stackers.ParallaxFactorStacker()
         assert(s1 == s2)
 
-        s1 = stackers.RandomDitherStacker()
-        s2 = stackers.RandomDitherStacker()
+        s1 = stackers.RandomDitherFieldVisitStacker()
+        s2 = stackers.RandomDitherFieldVisitStacker()
         assert(s1 == s2)
 
         # Test if they have numpy array atributes
@@ -29,7 +30,7 @@ class TestStackerClasses(unittest.TestCase):
         s1.ack += 1
         assert(s1 != s2)
 
-        s2 = stackers.RandomDitherStacker(decCol='blah')
+        s2 = stackers.RandomDitherFieldVisitStacker(decCol='blah')
         assert(s1 != s2)
 
     def testNormAirmass(self):
@@ -73,10 +74,10 @@ class TestStackerClasses(unittest.TestCase):
         # Restrict dithers to area where wraparound is not a problem for comparisons.
         data['fieldRA'] = np.random.rand(600)*(np.pi) + np.pi/2.0
         data['fieldDec'] = np.random.rand(600)*np.pi/2.0 - np.pi/4.0
-        stacker = stackers.RandomDitherStacker(maxDither=maxDither)
+        stacker = stackers.RandomDitherFieldVisitStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['randomRADither'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['randomDecDither']
+        diffsra = (data['fieldRA'] - data['randomDitherFieldVisitRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['randomDitherFieldVisitDec']
         # Check dithers within expected range.
         for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
             self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
@@ -88,7 +89,7 @@ class TestStackerClasses(unittest.TestCase):
         self.assertLess(diffsra.min(), 0)
         self.assertLess(diffsdec.min(), 0)
 
-    def testNightlyRandomDither(self):
+    def testRandomDitherNight(self):
         """
         Test the per-night random dither pattern.
         """
@@ -100,10 +101,10 @@ class TestStackerClasses(unittest.TestCase):
         data['fieldRA'] = np.random.rand(ndata)*(np.pi) + np.pi/2.0
         data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
         data['night'] = np.floor(np.random.rand(ndata)*10).astype('int')
-        stacker = stackers.NightlyRandomDitherStacker(maxDither=maxDither)
+        stacker = stackers.RandomDitherNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['nightlyRandomRADither'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['nightlyRandomDecDither']
+        diffsra = (data['fieldRA'] - data['randomDitherNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['randomDitherNightDec']
         for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
             self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
             self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
@@ -183,17 +184,17 @@ class TestStackerClasses(unittest.TestCase):
         """
         Test the galactic coordinate stacker
         """
-        ra,dec = np.meshgrid(np.arange(0,2.*np.pi, 0.1), np.arange(-np.pi,np.pi, 0.1) )
+        ra,dec = np.meshgrid(np.arange(0, 2.*np.pi, 0.1), np.arange(-np.pi, np.pi, 0.1) )
         ra = np.ravel(ra)
-        dec=np.ravel(dec)
+        dec = np.ravel(dec)
         data = np.zeros(ra.size, dtype=zip(['ra','dec'],[float]*2))
         data['ra'] += ra
         data['dec'] += dec
-        stacker = stackers.GalacticStacker(raCol='ra',decCol='dec')
-        newData = stacker.run(data)
+        s = stackers.GalacticStacker(raCol='ra', decCol='dec')
+        newData = s.run(data)
         expectedL, expectedB = _galacticFromEquatorial(ra, dec)
-        np.array_equal(newData['gall'], expectedL )
-        np.array_equal(newData['galb'], expectedB)
+        np.testing.assert_array_equal(newData['gall'], expectedL)
+        np.testing.assert_array_equal(newData['galb'], expectedB)
 
         # Check that we have all the quadrants populated
         q1 = np.where((newData['gall'] < np.pi) & (newData['galb'] < 0.) )[0]

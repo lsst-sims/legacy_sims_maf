@@ -31,9 +31,7 @@ class GalacticStacker(BaseStacker):
     def _run(self, simData):
         # raCol and DecCol in radians, gall/b in radians.
         simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
-        l, b = _galacticFromEquatorial(simData['ra'], simData['dec'])
-        print l.min()
-        return simData, l, b
+        return simData
 
 class EclipticStacker(BaseStacker):
     """
