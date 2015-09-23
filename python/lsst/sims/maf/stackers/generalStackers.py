@@ -7,7 +7,8 @@ from lsst.sims.maf.utils import TelescopeInfo
 from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
-            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker']
+            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
+           'SeasonStacker']
 
 # Original stackers by Peter Yoachim (yoachim@uw.edu)
 # Filter color stacker by Lynne Jones (lynnej@uw.edu)
