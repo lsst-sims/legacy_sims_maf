@@ -37,6 +37,7 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.nside = int(nside)
         self.pixArea = hp.nside2pixarea(self.nside)
         self.nslice = hp.nside2npix(self.nside)
+        self.shape = self.nslice
         if self.verbose:
             print 'Healpix slicer using NSIDE=%d, '%(self.nside) + \
             'approximate resolution %f arcminutes'%(hp.nside2resol(self.nside,arcmin=True))

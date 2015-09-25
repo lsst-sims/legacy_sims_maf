@@ -248,12 +248,8 @@ class MetricBundleGroup(object):
             print "Found %i visits" %(self.simData.size)
 
         # Query for the fieldData if we need it for the opsimFieldSlicer.
-        # Determine if we have a opsimFieldSlicer:
-        needFields = False
-        for b in self.currentBundleDict.itervalues():
-            if (b.slicer.slicerName == 'OpsimFieldSlicer') | (b.slicer.slicerName == 'Opsim2dSlicer'):
-                needFields = True
-        if needFields:
+        needFields = [b.slicer.needsFields for b in self.currentBundleDict.itervalues()]
+        if True in needFields:
             self.fieldData = utils.getFieldData(self.dbObj, sqlconstraint)
         else:
             self.fieldData = None
@@ -343,7 +339,6 @@ class MetricBundleGroup(object):
                 else:
                     for b in bDict.itervalues():
                         b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
-
         # Mask data where metrics could not be computed (according to metric bad value).
         for b in bDict.itervalues():
             if b.metricValues.dtype.name == 'object':

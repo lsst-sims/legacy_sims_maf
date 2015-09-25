@@ -48,6 +48,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldRaColName':fieldRaColName,
                           'fieldDecColName':fieldDecColName, 'badval':badval}
         self.plotFuncs = [BaseSkyMap, OpsimHistogram]
+        self.needsFields = True
 
 
     def setupSlicer(self, simData, fieldData, maps=None):
@@ -66,6 +67,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
         self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
+        self.shape = self.nslice
         self._runMaps(maps)
         # Set up data slicing.
         self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])

@@ -48,8 +48,8 @@ class Test2D(unittest.TestCase):
         mbg.setCurrent('')
         mbg.fieldData = self.fieldData
         mbg.runCurrent('', simData=self.simData)
-        expected = np.array( [[-666.,   self.n1,   self.n1],
-                              [-666., -666.,   self.n2]])
+        expected = np.array( [[self.n1,   self.n1],
+                              [-666.,   self.n2]])
         assert(np.array_equal(mb.metricValues.data, expected))
 
     def testHealpix2dSlicer(self):
@@ -62,8 +62,8 @@ class Test2D(unittest.TestCase):
         mbg.runCurrent('', simData=self.simData)
 
         good = np.where(mb.metricValues.mask[:,-1] == False)[0]
-        expected =  np.array( [[-666.,   self.n1,   self.n1],
-                              [-666., -666.,   self.n2]])
+        expected =  np.array( [[self.n1,   self.n1],
+                              [-666.,   self.n2]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testHistogramMetric(self):
@@ -76,8 +76,8 @@ class Test2D(unittest.TestCase):
         mbg.runCurrent('', simData=self.simData)
 
         good = np.where(mb.metricValues.mask[:,-1] == False)[0]
-        expected =  np.array( [[self.n1,   0., 0.],
-                              [0.,   self.n2, 0.]])
+        expected =  np.array( [[self.n1,   0.],
+                              [0.,   self.n2]])
 
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
@@ -88,8 +88,8 @@ class Test2D(unittest.TestCase):
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
-        expected = np.array( [[self.m5_1*self.n1, 0., 0.],
-                              [0., self.m5_2*self.n2, 0.]])
+        expected = np.array( [[self.m5_1*self.n1, 0.],
+                              [0., self.m5_2*self.n2]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testAccumulateMetric(self):
@@ -101,8 +101,8 @@ class Test2D(unittest.TestCase):
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
         good = np.where(mb.metricValues.mask[:,-1] == False)[0]
-        expected =  np.array( [[-666., self.n1*self.m5_1, self.n1*self.m5_1],
-                              [-666.,  -666.,  self.n2* self.m5_2]])
+        expected =  np.array( [[self.n1*self.m5_1, self.n1*self.m5_1],
+                              [-666.,  self.n2* self.m5_2]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testHistogramM5Metric(self):
@@ -125,8 +125,8 @@ class Test2D(unittest.TestCase):
         val2 =  checkMetric.run(tempSlice)
 
 
-        expected =  np.array( [[val1, -666., -666.],
-                              [-666.,  val2,  -666. ]])
+        expected =  np.array( [[val1, -666.],
+                              [-666.,  val2]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testAccumulateM5Metric(self):
@@ -147,8 +147,8 @@ class Test2D(unittest.TestCase):
         tempSlice['fiveSigmaDepth'] += self.m5_2
         val2 =  checkMetric.run(tempSlice)
 
-        expected =  np.array( [[-666., val1, val1],
-                              [-666.,  -666., val2 ]])
+        expected =  np.array( [[val1, val1],
+                              [-666., val2 ]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
 if __name__ == "__main__":

@@ -23,8 +23,6 @@ class HistogramMetric(BaseMetric):
                                                             dataSlice[self.col],
                                                             bins=slicePoint['bins'],
                                                             statistic=self.statistic)
-        # Make the result the same length as bins
-        result = np.append(result,0)
         return result
 
 class AccumulateMetric(BaseMetric):
@@ -42,11 +40,10 @@ class AccumulateMetric(BaseMetric):
         dataSlice.sort(order=slicePoint['binCol'])
 
         result = self.function.accumulate(dataSlice[self.col])
-        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'], side='left')
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'][1:], side='right')
         indices[np.where(indices >= np.size(result))] = np.size(result)-1
         result = result[indices]
         result[np.where(indices == 0)] = self.badval
-
         return result
 
 class AccumulateCountMetric(AccumulateMetric):
@@ -54,11 +51,10 @@ class AccumulateCountMetric(AccumulateMetric):
         dataSlice.sort(order=slicePoint['binCol'])
         toCount = np.ones(dataSlice.size, dtype=int)
         result = self.function.accumulate(toCount)
-        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'], side='left')
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'][1:], side='right')
         indices[np.where(indices >= np.size(result))] = np.size(result)-1
         result = result[indices]
         result[np.where(indices == 0)] = self.badval
-
         return result
 
 class HistogramM5Metric(HistogramMetric):
@@ -84,8 +80,6 @@ class HistogramM5Metric(HistogramMetric):
         noFlux = np.where(result == 0.)
         result = 1.25*np.log10(result)
         result[noFlux] = self.badval
-        # Make the result the same length as bins
-        result = np.append(result,self.badval)
         return result
 
 class AccumulateM5Metric(AccumulateMetric):
@@ -100,10 +94,9 @@ class AccumulateM5Metric(AccumulateMetric):
         flux = 10.**(.8*dataSlice[self.m5Col])
 
         result = np.add.accumulate(flux)
-        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'], side='left')
+        indices = np.searchsorted(dataSlice[slicePoint['binCol']], slicePoint['bins'][1:], side='right')
         indices[np.where(indices >= np.size(result))] = np.size(result)-1
         result = result[indices]
         result = 1.25*np.log10(result)
         result[np.where(indices == 0)] = self.badval
-
         return result

@@ -22,12 +22,14 @@ class TwoDMap(BasePlotter):
                                 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'nTicks':None, 'aspect':'auto'}
 
-    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
+    def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
 
         if 'Healpix' in slicer.slicerName:
             self.defaultPlotDict['ylabel'] = 'Healpix ID'
         elif 'Opsim' in slicer.slicerName:
             self.defaultPlotDict['ylabel'] = 'Field ID'
+        elif 'User' in slicer.slicerName:
+            self.defaultPlotDict['ylabel'] = 'User Field ID'
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
@@ -42,10 +44,6 @@ class TwoDMap(BasePlotter):
         else:
             norm = None
 
-        # Decide if we want all the zeropoint sillyness
-
-        metricValue = metricValueIn.copy()
-
         # Mask out values below the color minimum so they show up as white
         if plotDict['colorMin']:
             lowVals = np.where(metricValue.data < plotDict['colorMin'])
@@ -53,9 +51,12 @@ class TwoDMap(BasePlotter):
 
         figure = plt.figure(fignum)
         ax = figure.add_subplot(111)
-
+        yextent = slicer.spatialExtent
+        xextent = [slicer.slicePoints['bins'].min(), slicer.slicePoints['bins'].max()]
         image = ax.imshow(metricValue, vmin=plotDict['colorMin'], vmax=plotDict['colorMax'],
-                          aspect=plotDict['aspect'], cmap=plotDict['cmap'], norm=norm)
+                          aspect=plotDict['aspect'], cmap=plotDict['cmap'], norm=norm,
+                          extent=xextent.extend(yextent),
+                          interpolation='none',)
         cb =  plt.colorbar(image)
 
         ax.set_xlabel(plotDict['xlabel'])

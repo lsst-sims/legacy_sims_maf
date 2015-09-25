@@ -120,15 +120,9 @@ class MetricBundle(object):
         if dtype == 'int':
             dtype = 'float'
         # Check if we have a 2D slicer
-        if 'bins' in self.slicer.slicePoints.keys():
-            shape = (len(self.slicer),np.size(self.slicer.slicePoints['bins']) )
-            self.metricValues = ma.MaskedArray(data = np.empty(shape, dtype),
-                                               mask = np.zeros(shape, 'bool'),
-                                               fill_value= self.slicer.badval)
-        else:
-            self.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), dtype),
-                                               mask = np.zeros(len(self.slicer), 'bool'),
-                                               fill_value= self.slicer.badval)
+        self.metricValues = ma.MaskedArray(data = np.empty(self.slicer.shape, dtype),
+                                           mask = np.zeros(self.slicer.shape, 'bool'),
+                                           fill_value= self.slicer.badval)
 
     def _buildMetadata(self, metadata):
         """

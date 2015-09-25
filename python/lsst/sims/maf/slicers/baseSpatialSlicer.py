@@ -18,6 +18,7 @@ from lsst.sims.coordUtils import _observedFromICRS, _chipNameFromRaDec
 from lsst.sims.utils import ObservationMetaData
 
 from .baseSlicer import BaseSlicer
+from lsst.sims.maf.plots import TwoDMap
 
 __all__ = ['BaseSpatialSlicer']
 
@@ -59,7 +60,10 @@ class BaseSpatialSlicer(BaseSlicer):
         self.slicePoints['ra'] = None
         self.slicePoints['dec'] = None
         self.nslice = None
+        self.shape = None
         self.plotFuncs = [BaseHistogram, BaseSkyMap]
+        # Values in self.slicePoints to pass whole to the metrics
+        self.bulkSlicePointKeys = []
 
 
     def setupSlicer(self, simData, maps=None):
@@ -98,7 +102,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
             for key in self.slicePoints.keys():
-                if (np.size(self.slicePoints[key]) > 1) & (key is not 'bins') & (key is not 'binCol'):
+                if (np.size(self.slicePoints[key]) > 1) & (key not in self.bulkSlicePointKeys):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]
@@ -186,3 +190,21 @@ class BaseSpatialSlicer(BaseSlicer):
         x0, y0, z0 = (1, 0, 0)
         x1, y1, z1 = self._treexyz(np.radians(radius), 0)
         self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
+
+    def _setup2d(self, bins, binCol):
+        """
+        Common code that 2d-slicers will want to use
+        """
+        # Set variables so slicer can be re-constructed
+        self.slicer_init['bins'] = bins
+        self.slicer_init['binCol'] = binCol
+        self.columnsNeeded.append(binCol)
+        self.plotFuncs = [TwoDMap]
+        self.slicePoints['bins'] = bins
+        self.slicePoints['binCol'] = binCol
+        # Set which slicePoint keys should be passed whole, others will be sliced
+        self.bulkSlicePointKeys = ['bins', 'binCol']
+        self.shape = (self.nslice, np.size(self.slicePoints['bins'])-1)
+        # Set the y-axis range be on the two-d plot
+        if self.nslice is not None:
+            self.spatialExtent = [0,self.nslice-1]

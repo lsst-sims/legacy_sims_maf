@@ -74,6 +74,7 @@ class BaseSlicer(object):
         self.cacheSize = 0
         # Set length of Slicer.
         self.nslice = None
+        self.shape = self.nslice
         self.slicePoints = {}
         self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
@@ -83,6 +84,8 @@ class BaseSlicer(object):
         # Will often be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {'badval':badval}
         self.plotFuncs = []
+        # Note if the slicer needs OpSim field ID info
+        self.needsFields = False
 
     def _runMaps(self, maps):
         """
