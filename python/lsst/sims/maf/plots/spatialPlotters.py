@@ -670,7 +670,7 @@ class LambertSkyMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
                                            'lon_0':0., 'resolution':'l', 'celestial':True},
-                                'cbar':True, 'cmap':plt.cm.jet, 'levels':200,
+                                'cbar':True, 'cmap':cm.cubehelix, 'levels':200,
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
                                 'colorMax':None, 'linewidths':0,
