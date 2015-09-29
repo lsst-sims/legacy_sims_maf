@@ -127,7 +127,7 @@ class BaseStacker(object):
     def run(self, simData):
         """
         Example: Generate the new stacker columns, given the simdata columns from the database.
-        Returns the new simdata structured aray that includes the new stacker columns.
+        Returns the new simdata structured array that includes the new stacker columns.
         """
         # Add new columns
         if len(simData) == 0:
@@ -140,4 +140,4 @@ class BaseStacker(object):
         # By moving the calculation of these columns to a separate method, we add the possibility of using
         #  stackers with pandas dataframes. The _addStackers method won't work with dataframes, but the
         #  _run methods are quite likely to (depending on their details), as often they are just adding another column.
-        raise NotImplementedError()
+        raise NotImplementedError('Not Implemented: the child stackers should implement their own _run methods')
