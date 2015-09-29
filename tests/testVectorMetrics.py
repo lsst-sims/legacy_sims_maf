@@ -40,8 +40,8 @@ class Test2D(unittest.TestCase):
         self.fieldData['fieldDec'] = np.radians([0.,-20.])
 
     def testOpsim2dSlicer(self):
-        metric = metrics.AccumulateCountMetric()
-        slicer = slicers.OpsimFieldSlicer(bins=[0.5,1.5,2.5])
+        metric = metrics.AccumulateCountMetric(bins=[0.5,1.5,2.5])
+        slicer = slicers.OpsimFieldSlicer()
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -53,8 +53,8 @@ class Test2D(unittest.TestCase):
         assert(np.array_equal(mb.metricValues.data, expected))
 
     def testHealpix2dSlicer(self):
-        metric = metrics.AccumulateCountMetric()
-        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        metric = metrics.AccumulateCountMetric(bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -67,8 +67,8 @@ class Test2D(unittest.TestCase):
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testHistogramMetric(self):
-        metric = metrics.HistogramMetric()
-        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        metric = metrics.HistogramMetric(bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -83,7 +83,8 @@ class Test2D(unittest.TestCase):
 
         # Check that I can run a different statistic
         metric = metrics.HistogramMetric(col='fiveSigmaDepth',
-                                         statistic='sum')
+                                         statistic='sum',
+                                         bins=[0.5,1.5,2.5])
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
         mbg.setCurrent('')
@@ -93,8 +94,8 @@ class Test2D(unittest.TestCase):
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testAccumulateMetric(self):
-        metric=metrics.AccumulateMetric(col='fiveSigmaDepth')
-        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        metric=metrics.AccumulateMetric(col='fiveSigmaDepth', bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -106,8 +107,8 @@ class Test2D(unittest.TestCase):
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testHistogramM5Metric(self):
-        metric = metrics.HistogramM5Metric()
-        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        metric = metrics.HistogramM5Metric(bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -130,8 +131,8 @@ class Test2D(unittest.TestCase):
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
 
     def testAccumulateM5Metric(self):
-        metric = metrics.AccumulateM5Metric()
-        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        metric = metrics.AccumulateM5Metric(bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -156,8 +157,8 @@ class Test2D(unittest.TestCase):
         Test that a binned slicer and a regular slicer can run together
         """
         bundleList = []
-        metric = metrics.AccumulateM5Metric()
-        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        metric = metrics.AccumulateM5Metric(bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         bundleList.append(metricBundle.MetricBundle(metric,slicer,sql))
         metric = metrics.Coaddm5Metric()

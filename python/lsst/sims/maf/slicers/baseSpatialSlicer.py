@@ -23,7 +23,7 @@ __all__ = ['BaseSpatialSlicer']
 
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
-    def __init__(self, verbose=True, bins=None, binCol='night',
+    def __init__(self, verbose=True,
                  lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
@@ -38,7 +38,7 @@ class BaseSpatialSlicer(BaseSlicer):
         chipNames = list of raft/chip names to include. By default, all chips are included. This way,
         one can select only a subset of chips/rafts."""
 
-        super(BaseSpatialSlicer, self).__init__(verbose=verbose, bins=bins, binCol=binCol, badval=badval)
+        super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
         self.latCol = latCol
         self.rotSkyPosColName = rotSkyPosColName

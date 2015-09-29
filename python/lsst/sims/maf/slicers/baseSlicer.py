@@ -47,7 +47,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
 
-    def __init__(self, bins=None, binCol='night', verbose=True, badval=-666):
+    def __init__(self, verbose=True, badval=-666):
         """
         Instantiate the base slicer object.
 
@@ -89,6 +89,10 @@ class BaseSlicer(object):
         self.needsFields = False
         # Values in self.slicePoints to pass whole to the metrics
         self.noIterateSlicePointKeys = []
+        # Set the y-axis range be on the two-d plot
+        if self.nslice is not None:
+            self.spatialExtent = [0,self.nslice-1]
+
 
     def _runMaps(self, maps):
         """
@@ -341,21 +345,3 @@ class BaseSlicer(object):
         slicer.slicePoints = restored['slicePoints'][()]
         slicer.shape = restored['slicerShape']
         return metricValues, slicer, header
-
-    def _setup2d(self, bins, binCol):
-        """
-        Set things up if the metric will be returning a vector.
-        """
-        # Set variables so slicer can be re-constructed
-        self.slicer_init['bins'] = bins
-        self.slicer_init['binCol'] = binCol
-        self.columnsNeeded.append(binCol)
-        self.plotFuncs = [TwoDMap]
-        self.slicePoints['bins'] = bins
-        self.slicePoints['binCol'] = binCol
-        # Set which slicePoint keys should be passed whole, others will be sliced
-        self.noIterateSlicePointKeys.extend(['bins', 'binCol'])
-        self.shape = (self.nslice, np.size(self.slicePoints['bins'])-1)
-        # Set the y-axis range be on the two-d plot
-        if self.nslice is not None:
-            self.spatialExtent = [0,self.nslice-1]

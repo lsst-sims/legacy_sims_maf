@@ -147,5 +147,8 @@ class BaseMetric(object):
         # Add the ability to set a comment (that could be propagated automatically to a benchmark's display caption).
         self.comment = None
 
+        # Default to only return one metric value per slice
+        self.shape = 1
+
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')

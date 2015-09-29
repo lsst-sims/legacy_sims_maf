@@ -20,7 +20,8 @@ class TwoDMap(BasePlotter):
                                 'cmap':perceptual_rainbow,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
-                                'cbar_edge':True, 'nTicks':None, 'aspect':'auto'}
+                                'cbar_edge':True, 'nTicks':None, 'aspect':'auto',
+                                'xextent':None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
 
@@ -39,6 +40,9 @@ class TwoDMap(BasePlotter):
                 plotDict[key] = userPlotDict[key]
 
 
+        if plotDict['xextent'] is None:
+            plotDict['xextent'] = [0,metricValue[0,:].size]
+
         if plotDict['logScale']:
             norm = colors.LogNorm()
         else:
@@ -52,7 +56,7 @@ class TwoDMap(BasePlotter):
         figure = plt.figure(fignum)
         ax = figure.add_subplot(111)
         yextent = slicer.spatialExtent
-        xextent = [slicer.slicePoints['bins'].min(), slicer.slicePoints['bins'].max()]
+        xextent = plotDict['xextent']
         image = ax.imshow(metricValue, vmin=plotDict['colorMin'], vmax=plotDict['colorMax'],
                           aspect=plotDict['aspect'], cmap=plotDict['cmap'], norm=norm,
                           extent=xextent.extend(yextent),

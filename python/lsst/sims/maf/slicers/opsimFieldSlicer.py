@@ -19,7 +19,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     thus this slicer is not suitable for use in evaluating dithering or high resolution metrics
     (use the healpix slicer instead for those use-cases). """
 
-    def __init__(self, bins=None, binCol='night', verbose=True, simDataFieldIDColName='fieldID',
+    def __init__(self, verbose=True, simDataFieldIDColName='fieldID',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
                  fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  badval=-666):
@@ -32,7 +32,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldRaColName = the column name in the fieldData for the field RA (for plotting only)
         fieldDecColName = the column name in the fieldData for the field Dec (for plotting only).
         """
-        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval, bins=bins, binCol=binCol)
+        super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
         self.fieldID = None
         self.simDataFieldIDColName = simDataFieldIDColName
         self.fieldIDColName = fieldIDColName
@@ -49,10 +49,6 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldDecColName':fieldDecColName, 'badval':badval}
         self.plotFuncs = [BaseSkyMap, OpsimHistogram]
         self.needsFields = True
-        self.bins=bins
-        if bins is not None:
-            self._setup2d(bins, binCol)
-
 
 
     def setupSlicer(self, simData, fieldData, maps=None):
@@ -78,12 +74,9 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
 
-        if self.bins is not None:
-            self.shape = (self.nslice, np.size(self.slicePoints['bins'])-1)
-            self.spatialExtent = [simData[self.simDataFieldIDColName].min(),
-                              simData[self.simDataFieldIDColName].max()]
-        else:
-            self.shape = self.nslice
+        self.spatialExtent = [simData[self.simDataFieldIDColName].min(),
+                                  simData[self.simDataFieldIDColName].max()]
+        self.shape = self.nslice
 
         @wraps(self._sliceSimData)
 
