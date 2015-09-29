@@ -18,11 +18,12 @@ __all__ = ['HealpixSlicer']
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
-    def __init__(self, nside=128, lonCol ='fieldRA' , latCol='fieldDec', verbose=True,
+    def __init__(self, bins=None, binCol='night', nside=128, lonCol ='fieldRA' ,
+                 latCol='fieldDec', verbose=True,
                  useCache=True, radius=1.75, leafsize=100,
                  useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate and set up healpix slicer object."""
-        super(HealpixSlicer, self).__init__(verbose=verbose,
+        super(HealpixSlicer, self).__init__(verbose=verbose,bins=bins, binCol=binCol,
                                             lonCol=lonCol, latCol=latCol,
                                             badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
                                             useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
@@ -55,6 +56,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'], self.slicePoints['dec'] = self._pix2radec(self.slicePoints['sid'])
         # Set the default plotting functions.
         self.plotFuncs = [HealpixSkyMap, HealpixHistogram, HealpixPowerSpectrum]
+        if bins is not None:
+            self._setup2d(bins, binCol)
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
@@ -67,7 +70,8 @@ class HealpixSlicer(BaseSpatialSlicer):
                         if otherSlicer.useCamera == self.useCamera:
                             if otherSlicer.chipsToUse == self.chipsToUse:
                                 if otherSlicer.rotSkyPosColName == self.rotSkyPosColName:
-                                    result = True
+                                    if np.all(otherSlicer.shape == self.shape):
+                                        result = True
         return result
 
     def _pix2radec(self, islice):

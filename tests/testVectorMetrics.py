@@ -6,7 +6,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundle
 
-# Test the 2DSlicers and the vector metrics
+# Test vector metrics
 
 class Test2D(unittest.TestCase):
 
@@ -41,7 +41,7 @@ class Test2D(unittest.TestCase):
 
     def testOpsim2dSlicer(self):
         metric = metrics.AccumulateCountMetric()
-        slicer = slicers.Opsim2dSlicer(bins=[0.5,1.5,2.5])
+        slicer = slicers.OpsimFieldSlicer(bins=[0.5,1.5,2.5])
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -54,7 +54,7 @@ class Test2D(unittest.TestCase):
 
     def testHealpix2dSlicer(self):
         metric = metrics.AccumulateCountMetric()
-        slicer = slicers.Healpix2dSlicer(nside=16, bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -68,7 +68,7 @@ class Test2D(unittest.TestCase):
 
     def testHistogramMetric(self):
         metric = metrics.HistogramMetric()
-        slicer = slicers.Healpix2dSlicer(nside=16, bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -94,7 +94,7 @@ class Test2D(unittest.TestCase):
 
     def testAccumulateMetric(self):
         metric=metrics.AccumulateMetric(col='fiveSigmaDepth')
-        slicer = slicers.Healpix2dSlicer(nside=16, bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -107,7 +107,7 @@ class Test2D(unittest.TestCase):
 
     def testHistogramM5Metric(self):
         metric = metrics.HistogramM5Metric()
-        slicer = slicers.Healpix2dSlicer(nside=16, bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -131,7 +131,7 @@ class Test2D(unittest.TestCase):
 
     def testAccumulateM5Metric(self):
         metric = metrics.AccumulateM5Metric()
-        slicer = slicers.Healpix2dSlicer(nside=16, bins=[0.5,1.5,2.5])
+        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
         mbg = metricBundle.MetricBundleGroup({0:mb}, None)
@@ -150,6 +150,27 @@ class Test2D(unittest.TestCase):
         expected =  np.array( [[val1, val1],
                               [-666., val2 ]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
+
+    def testRunRegularToo(self):
+        """
+        Test that a binned slicer and a regular slicer can run together
+        """
+        bundleList = []
+        metric = metrics.AccumulateM5Metric()
+        slicer = slicers.HealpixSlicer(nside=16, bins=[0.5,1.5,2.5])
+        sql = ''
+        bundleList.append(metricBundle.MetricBundle(metric,slicer,sql))
+        metric = metrics.Coaddm5Metric()
+        slicer = slicers.HealpixSlicer(nside=16)
+        bundleList.append(metricBundle.MetricBundle(metric,slicer,sql))
+        bd = metricBundle.makeBundlesDictFromList(bundleList)
+        mbg = metricBundle.MetricBundleGroup(bd, None)
+        mbg.setCurrent('')
+        mbg.runCurrent('', simData=self.simData)
+
+        assert(np.array_equal(bundleList[0].metricValues[:,1].compressed(),
+                              bundleList[1].metricValues.compressed()))
+
 
 if __name__ == "__main__":
     unittest.main()

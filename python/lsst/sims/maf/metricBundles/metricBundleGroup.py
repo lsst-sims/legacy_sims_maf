@@ -288,7 +288,7 @@ class MetricBundleGroup(object):
         # This will be forced back into all of the metricBundles at the end (so that they track
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
         slicer = bDict.itervalues().next().slicer
-        if (slicer.slicerName == 'OpsimFieldSlicer') | (slicer.slicerName == 'Opsim2dSlicer'):
+        if (slicer.slicerName == 'OpsimFieldSlicer'):
             slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
         else:
             slicer.setupSlicer(self.simData, maps=compatMaps)

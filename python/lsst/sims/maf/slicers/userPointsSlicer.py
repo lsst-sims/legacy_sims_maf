@@ -6,7 +6,7 @@ __all__ = ['UserPointsSlicer']
 
 class UserPointsSlicer(BaseSpatialSlicer):
     """Use spatial slicer on a user provided point """
-    def __init__(self, ra, dec, verbose=True, lonCol='fieldRA', latCol='fieldDec',
+    def __init__(self, ra, dec, bins=None, binCol='night', verbose=True, lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD',
                  chipNames=None):
@@ -15,7 +15,7 @@ class UserPointsSlicer(BaseSpatialSlicer):
         dec = list of dec points to use
         """
 
-        super(UserPointsSlicer,self).__init__(verbose=verbose,
+        super(UserPointsSlicer,self).__init__(verbose=verbose,bins=bins, binCol=binCol,
                                                 lonCol=lonCol, latCol=latCol,
                                                 badval=badval, radius=radius, leafsize=leafsize,
                                                 useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
@@ -34,6 +34,8 @@ class UserPointsSlicer(BaseSpatialSlicer):
         self.slicePoints['ra'] = np.array(ra)
         self.slicePoints['dec'] = np.array(dec)
         self.plotFuncs = [BaseSkyMap, BaseHistogram]
+        if bins is not None:
+            self._setup2d(bins, binCol)
 
     def __eq__(self, otherSlicer):
         """Evaluate if two slicers are equivalent."""
@@ -46,5 +48,6 @@ class UserPointsSlicer(BaseSpatialSlicer):
                             if otherSlicer.useCamera == self.useCamera:
                                 if otherSlicer.chipsToUse == self.chipsToUse:
                                     if otherSlicer.rotSkyPosColName == self.rotSkyPosColName:
-                                        result = True
+                                        if np.all(otherSlicer.shape == self.shape):
+                                            result = True
         return result

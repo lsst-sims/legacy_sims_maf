@@ -119,7 +119,6 @@ class MetricBundle(object):
         # Can't store healpix slicer mask values in an int array.
         if dtype == 'int':
             dtype = 'float'
-        # Check if we have a 2D slicer
         self.metricValues = ma.MaskedArray(data = np.empty(self.slicer.shape, dtype),
                                            mask = np.zeros(self.slicer.shape, 'bool'),
                                            fill_value= self.slicer.badval)

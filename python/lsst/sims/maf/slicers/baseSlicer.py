@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 from lsst.sims.maf.utils import getDateVersion
+from lsst.sims.maf.plots import TwoDMap
 
 __all__ = ['SlicerRegistry', 'BaseSlicer']
 
@@ -46,7 +47,7 @@ class BaseSlicer(object):
     """
     __metaclass__ = SlicerRegistry
 
-    def __init__(self, verbose=True, badval=-666):
+    def __init__(self, bins=None, binCol='night', verbose=True, badval=-666):
         """
         Instantiate the base slicer object.
 
@@ -86,6 +87,8 @@ class BaseSlicer(object):
         self.plotFuncs = []
         # Note if the slicer needs OpSim field ID info
         self.needsFields = False
+        # Values in self.slicePoints to pass whole to the metrics
+        self.noIterateSlicePointKeys = []
 
     def _runMaps(self, maps):
         """
@@ -204,7 +207,8 @@ class BaseSlicer(object):
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
                  slicePoints = self.slicePoints, # slicePoint metadata saved (is a dictionary)
-                 slicerNSlice = self.nslice)
+                 slicerNSlice = self.nslice,
+                 slicerShape = self.shape)
 
     def outputJSON(self, metricValues, metricName='',
                   simDataName ='', metadata='', plotDict=None):
@@ -335,4 +339,23 @@ class BaseSlicer(object):
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
+        slicer.shape = restored['slicerShape']
         return metricValues, slicer, header
+
+    def _setup2d(self, bins, binCol):
+        """
+        Set things up if the metric will be returning a vector.
+        """
+        # Set variables so slicer can be re-constructed
+        self.slicer_init['bins'] = bins
+        self.slicer_init['binCol'] = binCol
+        self.columnsNeeded.append(binCol)
+        self.plotFuncs = [TwoDMap]
+        self.slicePoints['bins'] = bins
+        self.slicePoints['binCol'] = binCol
+        # Set which slicePoint keys should be passed whole, others will be sliced
+        self.noIterateSlicePointKeys.extend(['bins', 'binCol'])
+        self.shape = (self.nslice, np.size(self.slicePoints['bins'])-1)
+        # Set the y-axis range be on the two-d plot
+        if self.nslice is not None:
+            self.spatialExtent = [0,self.nslice-1]
