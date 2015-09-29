@@ -1,10 +1,11 @@
+import numpy as np
 import matplotlib
 matplotlib.use("Agg")
-import numpy as np
 import warnings
+import unittest
+
 import lsst.sims.maf.stackers as stackers
 from lsst.sims.utils import _galacticFromEquatorial
-import unittest
 
 class TestStackerClasses(unittest.TestCase):
 
@@ -16,8 +17,8 @@ class TestStackerClasses(unittest.TestCase):
         s2 = stackers.ParallaxFactorStacker()
         assert(s1 == s2)
 
-        s1 = stackers.RandomDitherStacker()
-        s2 = stackers.RandomDitherStacker()
+        s1 = stackers.RandomDitherFieldVisitStacker()
+        s2 = stackers.RandomDitherFieldVisitStacker()
         assert(s1 == s2)
 
         # Test if they have numpy array atributes
@@ -29,7 +30,7 @@ class TestStackerClasses(unittest.TestCase):
         s1.ack += 1
         assert(s1 != s2)
 
-        s2 = stackers.RandomDitherStacker(decCol='blah')
+        s2 = stackers.RandomDitherFieldVisitStacker(decCol='blah')
         assert(s1 != s2)
 
     def testNormAirmass(self):
@@ -62,6 +63,33 @@ class TestStackerClasses(unittest.TestCase):
         self.assertGreater(min(np.abs(data['ra_pi_amp'])), 0.)
         self.assertGreater(min(np.abs(data['dec_pi_amp'])), 0.)
 
+    def _tDitherRange(self, diffsra, diffsdec, ra, dec, maxDither):
+        self.assertTrue(np.all(np.abs(diffsra) <= np.radians(maxDither)))
+        self.assertTrue(np.all(np.abs(diffsdec) <= np.radians(maxDither)))
+        offsets = np.sqrt(diffsra**2 + diffsdec**2)
+        self.assertLessEqual(offsets.max(), np.radians(maxDither))
+        self.assertGreater(diffsra.max(), 0)
+        self.assertGreater(diffsdec.max(), 0)
+        self.assertLess(diffsra.min(), 0)
+        self.assertLess(diffsdec.min(), 0)
+
+    def _tDitherNight(self, diffsra, diffsdec, ra, dec, nights):
+        n = np.unique(nights)
+        for ni in n:
+            match = np.where(nights == ni)[0]
+            dra_on_night = np.abs(np.diff(diffsra[match]))
+            ddec_on_night = np.abs(np.diff(diffsdec[match]))
+            if dra_on_night.max() > 0.0005:
+                print ni
+                m = np.where(dra_on_night > 0.0005)[0]
+                print diffsra[match][m]
+                print ra[match][m]
+                print dec[match][m]
+                print dra_on_night[m]
+            self.assertAlmostEqual(dra_on_night.max(), 0)
+            self.assertAlmostEqual(ddec_on_night.max(), 0)
+
+
     def testRandomDither(self):
         """
         Test the random dither pattern.
@@ -73,22 +101,14 @@ class TestStackerClasses(unittest.TestCase):
         # Restrict dithers to area where wraparound is not a problem for comparisons.
         data['fieldRA'] = np.random.rand(600)*(np.pi) + np.pi/2.0
         data['fieldDec'] = np.random.rand(600)*np.pi/2.0 - np.pi/4.0
-        stacker = stackers.RandomDitherStacker(maxDither=maxDither)
+        stacker = stackers.RandomDitherFieldVisitStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['randomRADither'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['randomDecDither']
+        diffsra = (data['fieldRA'] - data['randomDitherFieldVisitRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['randomDitherFieldVisitDec']
         # Check dithers within expected range.
-        for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
-            self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
-            self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
+        self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
 
-        # Check dithers not all the same and go positive and negative.
-        self.assertGreater(diffsra.max(), 0)
-        self.assertGreater(diffsdec.max(), 0)
-        self.assertLess(diffsra.min(), 0)
-        self.assertLess(diffsdec.min(), 0)
-
-    def testNightlyRandomDither(self):
+    def testRandomDitherNight(self):
         """
         Test the per-night random dither pattern.
         """
@@ -96,31 +116,64 @@ class TestStackerClasses(unittest.TestCase):
         ndata = 600
         # Set seed so the test is stable
         np.random.seed(42)
-        data = np.zeros(ndata, dtype=zip(['fieldRA', 'fieldDec', 'night'], [float, float, int]))
+        data = np.zeros(ndata, dtype=zip(['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int]))
         data['fieldRA'] = np.random.rand(ndata)*(np.pi) + np.pi/2.0
         data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
+        data['fieldID'] = np.floor(np.random.rand(ndata)*ndata)
         data['night'] = np.floor(np.random.rand(ndata)*10).astype('int')
-        stacker = stackers.NightlyRandomDitherStacker(maxDither=maxDither)
+        stacker = stackers.RandomDitherNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['nightlyRandomRADither'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['nightlyRandomDecDither']
-        for diffra, diffdec, ra, dec in zip(diffsra, diffsdec, data['fieldRA'], data['fieldDec']):
-            self.assertLessEqual(np.abs(diffra), np.radians(maxDither))
-            self.assertLessEqual(np.abs(diffdec), np.radians(maxDither))
-        # Check dithers not all the same and go positive and negative.
-        self.assertGreater(diffsra.max(), 0)
-        self.assertGreater(diffsdec.max(), 0)
-        self.assertLess(diffsra.min(), 0)
-        self.assertLess(diffsdec.min(), 0)
+        diffsra = (data['fieldRA'] - data['randomDitherNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['randomDitherNightDec']
+        self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
-        nights = np.unique(data['night'])
-        for n in nights:
-            match = np.where(data['night'] == n)[0]
-            rarange = np.abs(np.diff(diffsra[match]))
-            decrange = np.abs(np.diff(diffsdec[match]))
-            for r, d in zip(rarange, decrange):
-                self.assertAlmostEqual(r, 0)
-                self.assertAlmostEqual(d, 0)
+        self._tDitherNight(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], data['night'])
+
+
+    def testSpiralDitherNight(self):
+        """
+        Test the per-night spiral dither pattern.
+        """
+        maxDither = 0.5
+        ndata = 2000
+        # Set seed so the test is stable
+        np.random.seed(42)
+        data = np.zeros(ndata, dtype=zip(['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int]))
+        data['fieldRA'] = np.random.rand(ndata)*(np.pi) + np.pi/2.0
+        data['fieldRA'] = np.zeros(ndata) + np.pi/2.0
+        data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
+        data['fieldDec'] = np.zeros(ndata)
+        data['fieldID'] = np.floor(np.random.rand(ndata)*ndata)
+        data['night'] = np.floor(np.random.rand(ndata)*20).astype('int')
+        stacker = stackers.SpiralDitherNightStacker(maxDither=maxDither)
+        data = stacker.run(data)
+        diffsra = (data['fieldRA'] - data['spiralDitherNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['spiralDitherNightDec']
+        self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
+        # Check that dithers on the same night are the same.
+        self._tDitherNight(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], data['night'])
+
+    def testHexDitherNight(self):
+        """
+        Test the per-night hex dither pattern.
+        """
+        maxDither = 0.5
+        ndata = 2000
+        # Set seed so the test is stable
+        np.random.seed(42)
+        data = np.zeros(ndata, dtype=zip(['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int]))
+        data['fieldRA'] = np.random.rand(ndata)*(np.pi) + np.pi/2.0
+        data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
+        data['fieldID'] = np.floor(np.random.rand(ndata)*ndata)
+        data['night'] = np.floor(np.random.rand(ndata)*217).astype('int')
+        stacker = stackers.HexDitherNightStacker(maxDither=maxDither)
+        data = stacker.run(data)
+        diffsra = (data['fieldRA'] - data['hexDitherNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['hexDitherNightDec']
+        self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
+        # Check that dithers on the same night are the same.
+        self._tDitherNight(diffsra, diffsdec,  data['fieldRA'], data['fieldDec'], data['night'])
+
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
@@ -183,17 +236,17 @@ class TestStackerClasses(unittest.TestCase):
         """
         Test the galactic coordinate stacker
         """
-        ra,dec = np.meshgrid(np.arange(0,2.*np.pi, 0.1), np.arange(-np.pi,np.pi, 0.1) )
+        ra,dec = np.meshgrid(np.arange(0, 2.*np.pi, 0.1), np.arange(-np.pi, np.pi, 0.1) )
         ra = np.ravel(ra)
-        dec=np.ravel(dec)
+        dec = np.ravel(dec)
         data = np.zeros(ra.size, dtype=zip(['ra','dec'],[float]*2))
         data['ra'] += ra
         data['dec'] += dec
-        stacker = stackers.GalacticStacker(raCol='ra',decCol='dec')
-        newData = stacker.run(data)
+        s = stackers.GalacticStacker(raCol='ra', decCol='dec')
+        newData = s.run(data)
         expectedL, expectedB = _galacticFromEquatorial(ra, dec)
-        np.array_equal(newData['gall'], expectedL )
-        np.array_equal(newData['galb'], expectedB)
+        np.testing.assert_array_equal(newData['gall'], expectedL)
+        np.testing.assert_array_equal(newData['galb'], expectedB)
 
         # Check that we have all the quadrants populated
         q1 = np.where((newData['gall'] < np.pi) & (newData['galb'] < 0.) )[0]

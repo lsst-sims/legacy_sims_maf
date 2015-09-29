@@ -1,11 +1,12 @@
 import numpy as np
 import ephem
+from lsst.sims.utils import _galacticFromEquatorial
+
 from .baseStacker import BaseStacker
 from .ditherStackers import wrapRA
 
-
-__all__ = ['EclipticStacker', 'mjd2djd']
-
+__all__ = ['GalacticStacker',
+           'EclipticStacker', 'mjd2djd']
 
 def mjd2djd(mjd):
     """
@@ -14,6 +15,23 @@ def mjd2djd(mjd):
     doff = ephem.Date(0)-ephem.Date('1858/11/17')
     djd = mjd-doff
     return djd
+
+
+class GalacticStacker(BaseStacker):
+    """
+    Stack on the galactic coordinates of each pointing.
+    """
+    def __init__(self, raCol='fieldRA', decCol='fieldDec'):
+        self.colsReq = [raCol,decCol]
+        self.colsAdded = ['gall','galb']
+        self.units = ['radians', 'radians']
+        self.raCol = raCol
+        self.decCol = decCol
+
+    def _run(self, simData):
+        # raCol and DecCol in radians, gall/b in radians.
+        simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
+        return simData
 
 class EclipticStacker(BaseStacker):
     """
@@ -31,9 +49,7 @@ class EclipticStacker(BaseStacker):
         self.raCol = raCol
         self.decCol=decCol
 
-    def run(self,simData):
-        simData=self._addStackers(simData)
-
+    def _run(self, simData):
         for i in np.arange(simData.size):
             coord = ephem.Equatorial(simData[self.raCol][i],simData[self.decCol][i], epoch=2000)
             ecl = ephem.Ecliptic(coord)
@@ -46,5 +62,4 @@ class EclipticStacker(BaseStacker):
                 simData['eclipLon'][i] = lon
             else:
                 simData['eclipLon'][i] = ecl.lon
-
         return simData

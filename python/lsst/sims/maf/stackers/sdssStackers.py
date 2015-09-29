@@ -12,9 +12,7 @@ class SdssRADecStacker(BaseStacker):
         self.colsAdded = ['RA1', 'Dec1', 'RA2', 'Dec2', 'RA3','Dec3','RA4','Dec4']
         self.colsReq = pcols
 
-    def run(self, simData):
-        simData = self._addStackers(simData)
-
+    def _run(self, simData):
         for pcol, newcol in zip(self.colsReq, self.colsAdded):
             if newcol[0:2] == 'RA':
                 simData[newcol] = wrapRA(np.radians(simData[pcol]))
