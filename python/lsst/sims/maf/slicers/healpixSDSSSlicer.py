@@ -1,14 +1,7 @@
 import numpy as np
-import healpy as hp
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from matplotlib import colors
-from lsst.sims.maf.utils import percentileClipping
 from .healpixSlicer import HealpixSlicer
 from functools import wraps
 import matplotlib.path as mplPath
-import warnings
-import matplotlib as mpl
 from lsst.sims.maf.utils.mafUtils import gnomonic_project_toxy
 from lsst.sims.maf.plots import HealpixSDSSSkyMap
 

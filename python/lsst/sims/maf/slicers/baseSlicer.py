@@ -1,7 +1,5 @@
 # Base class for all 'Slicer' objects.
 #
-
-import os
 import inspect
 from StringIO import StringIO
 import json
@@ -74,6 +72,7 @@ class BaseSlicer(object):
         self.cacheSize = 0
         # Set length of Slicer.
         self.nslice = None
+        self.shape = self.nslice
         self.slicePoints = {}
         self.slicerName = self.__class__.__name__
         self.columnsNeeded = []
@@ -83,6 +82,12 @@ class BaseSlicer(object):
         # Will often be overwritten by individual slicer slicer_init dictionaries.
         self.slicer_init = {'badval':badval}
         self.plotFuncs = []
+        # Note if the slicer needs OpSim field ID info
+        self.needsFields = False
+        # Set the y-axis range be on the two-d plot
+        if self.nslice is not None:
+            self.spatialExtent = [0,self.nslice-1]
+
 
     def _runMaps(self, maps):
         """
@@ -201,7 +206,8 @@ class BaseSlicer(object):
                  slicer_init = self.slicer_init, # dictionary of instantiation parameters
                  slicerName = self.slicerName, # class name
                  slicePoints = self.slicePoints, # slicePoint metadata saved (is a dictionary)
-                 slicerNSlice = self.nslice)
+                 slicerNSlice = self.nslice,
+                 slicerShape = self.shape)
 
     def outputJSON(self, metricValues, metricName='',
                   simDataName ='', metadata='', plotDict=None):
@@ -332,4 +338,5 @@ class BaseSlicer(object):
         # Restore slicePoint metadata.
         slicer.nslice = restored['slicerNSlice']
         slicer.slicePoints = restored['slicePoints'][()]
+        slicer.shape = restored['slicerShape']
         return metricValues, slicer, header

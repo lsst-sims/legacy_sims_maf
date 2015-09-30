@@ -5,10 +5,7 @@
 # Also requires numpy and pylab (for histogram and power spectrum plotting)
 
 import numpy as np
-import warnings
 import healpy as hp
-
-from lsst.sims.maf.utils import percentileClipping
 from lsst.sims.maf.plots.spatialPlotters import HealpixSkyMap, HealpixHistogram, HealpixPowerSpectrum
 
 from .baseSpatialSlicer import BaseSpatialSlicer
@@ -18,7 +15,8 @@ __all__ = ['HealpixSlicer']
 
 class HealpixSlicer(BaseSpatialSlicer):
     """Healpix spatial slicer."""
-    def __init__(self, nside=128, lonCol ='fieldRA' , latCol='fieldDec', verbose=True,
+    def __init__(self, nside=128, lonCol ='fieldRA' ,
+                 latCol='fieldDec', verbose=True,
                  useCache=True, radius=1.75, leafsize=100,
                  useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate and set up healpix slicer object."""
@@ -37,6 +35,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.nside = int(nside)
         self.pixArea = hp.nside2pixarea(self.nside)
         self.nslice = hp.nside2npix(self.nside)
+        self.spatialExtent = [0,self.nslice-1]
+        self.shape = self.nslice
         if self.verbose:
             print 'Healpix slicer using NSIDE=%d, '%(self.nside) + \
             'approximate resolution %f arcminutes'%(hp.nside2resol(self.nside,arcmin=True))
@@ -66,7 +66,8 @@ class HealpixSlicer(BaseSpatialSlicer):
                         if otherSlicer.useCamera == self.useCamera:
                             if otherSlicer.chipsToUse == self.chipsToUse:
                                 if otherSlicer.rotSkyPosColName == self.rotSkyPosColName:
-                                    result = True
+                                    if np.all(otherSlicer.shape == self.shape):
+                                        result = True
         return result
 
     def _pix2radec(self, islice):
