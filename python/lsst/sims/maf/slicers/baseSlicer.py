@@ -1,7 +1,5 @@
 # Base class for all 'Slicer' objects.
 #
-
-import os
 import inspect
 from StringIO import StringIO
 import json
@@ -9,7 +7,6 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 from lsst.sims.maf.utils import getDateVersion
-from lsst.sims.maf.plots import TwoDMap
 
 __all__ = ['SlicerRegistry', 'BaseSlicer']
 
@@ -87,8 +84,6 @@ class BaseSlicer(object):
         self.plotFuncs = []
         # Note if the slicer needs OpSim field ID info
         self.needsFields = False
-        # Values in self.slicePoints to pass whole to the metrics
-        self.noIterateSlicePointKeys = []
         # Set the y-axis range be on the two-d plot
         if self.nslice is not None:
             self.spatialExtent = [0,self.nslice-1]

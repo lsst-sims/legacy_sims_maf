@@ -8,8 +8,6 @@ import warnings
 import numpy as np
 from functools import wraps
 from scipy.spatial import cKDTree as kdtree
-
-from lsst.sims.maf.utils import optimalBins, percentileClipping
 from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
@@ -99,7 +97,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
             for key in self.slicePoints.keys():
-                if (np.size(self.slicePoints[key]) > 1) & (key not in self.noIterateSlicePointKeys):
+                if (np.size(self.slicePoints[key]) > 1):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]

@@ -5,10 +5,7 @@
 # Also requires numpy and pylab (for histogram and power spectrum plotting)
 
 import numpy as np
-import warnings
 import healpy as hp
-
-from lsst.sims.maf.utils import percentileClipping
 from lsst.sims.maf.plots.spatialPlotters import HealpixSkyMap, HealpixHistogram, HealpixPowerSpectrum
 
 from .baseSpatialSlicer import BaseSpatialSlicer
