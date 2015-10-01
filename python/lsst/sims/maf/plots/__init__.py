@@ -7,4 +7,5 @@ from .specialPlotters import *
 from .neoDistancePlotter import *
 from .plotBundle import *
 from .twoDPlotters import *
+from .moPlotters import *
 from .perceptual_rainbow import *
