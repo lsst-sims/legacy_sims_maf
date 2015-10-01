@@ -4,4 +4,6 @@ from .ditherStackers import *
 from .sdssStackers import *
 from .coordStackers import *
 from .NEODistStacker import *
+from .moStackers import *
 from .getColInfo import *
+
