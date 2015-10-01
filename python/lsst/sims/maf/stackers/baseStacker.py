@@ -1,7 +1,6 @@
 import inspect
 import warnings
 import numpy as np
-import numpy.lib.recfunctions as rfn
 
 __all__ = ['StackerRegistry', 'BaseStacker']
 
