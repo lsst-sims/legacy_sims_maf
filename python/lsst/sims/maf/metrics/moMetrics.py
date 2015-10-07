@@ -513,11 +513,12 @@ class HighVelocityMetric(BaseMoMetric):
     trailed by a factor of (psfFactor)*PSF - i.e. velocity >= psfFactor * seeing / visitExpTime.
     Simply counts the total number of observations with high velocity.
     """
-    def __init__(self, psfFactor=2.0,  snrLimit=None, **kwargs):
+    def __init__(self, psfFactor=2.0,  snrLimit=None, velocityCol='velocity', **kwargs):
         """
         @ psfFactor = factor to multiply seeing/visitExpTime by (velocity(deg/day) >= 24*psfFactor*seeing(")/visitExptime(s))
         """
         super(HighVelocityMetric, self).__init__(**kwargs)
+        self.velocityCol = velocityCol
         self.snrLimit = snrLimit
         self.psfFactor = psfFactor
         self.badval = 0
@@ -529,7 +530,7 @@ class HighVelocityMetric(BaseMoMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
-        highVelocityObs = np.where(ssoObs['velocity'][vis] >=
+        highVelocityObs = np.where(ssoObs[self.velocityCol][vis] >=
                                    (24.*  self.psfFactor * ssoObs[self.seeingCol][vis] / ssoObs[self.expTimeCol][vis]))[0]
         return highVelocityObs.size
 
@@ -540,12 +541,13 @@ class HighVelocityNightsMetric(BaseMoMetric):
     where we require nObsPerNight observations within a given night.
     Counts the total number of nights with enough high-velocity observations.
     """
-    def __init__(self, psfFactor=2.0, nObsPerNight=2, snrLimit=None, **kwargs):
+    def __init__(self, psfFactor=2.0, nObsPerNight=2, snrLimit=None, velocityCol='velocity', **kwargs):
         """
         @ psfFactor = factor to multiply seeing/visitExpTime by (velocity(deg/day) >= 24*psfFactor*seeing(")/visitExptime(s))
         @ nObsPerNight = number of observations required per night
         """
         super(HighVelocityNightsMetric, self).__init__(**kwargs)
+        self.velocityCol = velocityCol
         self.snrLimit = snrLimit
         self.psfFactor = psfFactor
         self.nObsPerNight = nObsPerNight
@@ -558,7 +560,7 @@ class HighVelocityNightsMetric(BaseMoMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
-        highVelocityObs = np.where(ssoObs['velocity'][vis] >=
+        highVelocityObs = np.where(ssoObs[self.velocityCol][vis] >=
                                    (24.*  self.psfFactor * ssoObs[self.seeingCol][vis] / ssoObs[self.expTimeCol][vis]))[0]
         if len(highVelocityObs) == 0:
             return self.badval
