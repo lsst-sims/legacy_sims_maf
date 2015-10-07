@@ -58,11 +58,8 @@ class MoSlicer(MoOrbits):
             self.allObs['magFilter'] = self.allObs['magV'] + self.allObs['dmagColor']
         if 'velocity' not in self.allObs.columns.values:
             self.allObs['velocity'] = np.sqrt(self.allObs['dradt']**2 + self.allObs['ddecdt']**2)
-<<<<<<< 105cbf2ebe5c0349382a49352a26b75b68a6f981
         if 'visitExpTime' not in self.allObs.columns.values:
             self.allObs['visitExpTime'] = np.zeros(len(self.allObs['objId']), float) + 30.0
-=======
->>>>>>> Added moving object slicer
         # If we created intermediate data products by pandas, we may have an inadvertent 'index'
         #  column. Since this creates problems later, drop it here.
         if 'index' in self.allObs.columns.values:
