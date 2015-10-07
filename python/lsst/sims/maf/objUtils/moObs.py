@@ -239,23 +239,15 @@ class MoObs(MoOrbits):
             for f in self.filterlist:
                 self.lsst[f] = Bandpass()
                 self.lsst[f].readThroughput(os.path.join(filterdir, 'total_'+f+'.dat'))
-<<<<<<< 174ecba93c620575af84c78027eb137036ba62e0
             self.seddir = os.getenv('SED_DIR')
             self.vband = Bandpass()
             self.vband.readThroughput(os.path.join(self.seddir, 'harris_V.dat'))
-=======
-            self.vband = Bandpass()
-            self.vband.readThroughput('harris_V.dat')
->>>>>>> Added utilities to create moving object detections
             self.colors = {}
         # See if the sed's colors are in memory already.
         if sedname not in self.colors:
             moSed = Sed()
-<<<<<<< 174ecba93c620575af84c78027eb137036ba62e0
             moSed.readSED_flambda(os.path.join(self.seddir, sedname))
-=======
-            moSed.readSED_flambda(sedname)
->>>>>>> Added utilities to create moving object detections
+            moSed.readSED_flambda(os.path.join(self.seddir, sedname))
             vmag = moSed.calcMag(self.vband)
             self.colors[sedname] = {}
             for f in self.filterlist:
