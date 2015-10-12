@@ -51,7 +51,7 @@ class MinTimeBetweenStatesMetric(BaseMetric):
         prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
                                          dataSlice[self.timeCol][idxs][1:][condition][:-1]))
         dtimes = changetimes - prevchangetime
-        dtimes *= 24.0*60.0
+        dtimes *= 24*60
         if dtimes.size == 0:
             return self.badval
         return dtimes.min()
