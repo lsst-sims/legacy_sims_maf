@@ -46,7 +46,6 @@ class MinTimeBetweenStatesMetric(BaseMetric):
         idxs = np.argsort(dataSlice[self.timeCol])
         changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
         condition = np.where(changes==True)[0]
-        times = dataSlice[self.timeCol][idxs][condition]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
         prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
                                          dataSlice[self.timeCol][idxs][1:][condition][:-1]))
@@ -81,7 +80,6 @@ class NStateChangesFasterThanMetric(BaseMetric):
         idxs = np.argsort(dataSlice[self.timeCol])
         changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
         condition = np.where(changes==True)[0]
-        times = dataSlice[self.timeCol][idxs][condition]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
         prevchangetime = np.concatenate((np.array([dataSlice[self.timeCol][idxs][0]]),
                                          dataSlice[self.timeCol][idxs][1:][condition][:-1]))
@@ -118,7 +116,6 @@ class MaxStateChangesWithinMetric(BaseMetric):
         idxs = np.argsort(dataSlice[self.timeCol])
         changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
         condition = np.where(changes==True)[0]
-        times = dataSlice[self.timeCol][idxs][condition]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
         if dataSlice[self.changeCol][idxs][1] != dataSlice[self.changeCol][idxs][0]:
             changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])

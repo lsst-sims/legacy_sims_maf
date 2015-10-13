@@ -7,7 +7,6 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
-import warnings
 import inspect
 from lsst.sims.maf.stackers.getColInfo import ColInfo
 
