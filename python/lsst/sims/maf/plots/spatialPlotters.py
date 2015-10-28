@@ -108,7 +108,11 @@ class HealpixSkyMap(BasePlotter):
             cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
             if plotDict['labelsize'] is not None:
                 cb.ax.tick_params(labelsize=plotDict['labelsize'])
-            if plotDict['nTicks'] is not None:
+            if norm == 'log':
+                tick_locator = ticker.LogLocator(numticks=plotDict['nTicks'])
+                cb.locator = tick_locator
+                cb.update_ticks()
+            if (plotDict['nTicks'] is not None) & (norm != 'log'):
                 tick_locator = ticker.MaxNLocator(nbins=plotDict['nTicks'])
                 cb.locator = tick_locator
                 cb.update_ticks()
