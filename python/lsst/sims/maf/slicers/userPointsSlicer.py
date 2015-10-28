@@ -29,6 +29,8 @@ class UserPointsSlicer(BaseSpatialSlicer):
         if len(ra) != len(dec):
             raise ValueError('RA and Dec must be the same length')
         self.nslice = np.size(ra)
+        self.shape = self.nslice
+        self.spatialExtent = [0,self.nslice-1]
         self.slicePoints['sid'] = np.arange(np.size(ra))
         self.slicePoints['ra'] = np.array(ra)
         self.slicePoints['dec'] = np.array(dec)
@@ -45,5 +47,6 @@ class UserPointsSlicer(BaseSpatialSlicer):
                             if otherSlicer.useCamera == self.useCamera:
                                 if otherSlicer.chipsToUse == self.chipsToUse:
                                     if otherSlicer.rotSkyPosColName == self.rotSkyPosColName:
-                                        result = True
+                                        if np.all(otherSlicer.shape == self.shape):
+                                            result = True
         return result

@@ -7,7 +7,6 @@
 #  vector we permit multiple 'reduce' functions to be executed on the same data.
 
 import numpy as np
-import warnings
 import inspect
 from lsst.sims.maf.stackers.getColInfo import ColInfo
 
@@ -146,6 +145,9 @@ class BaseMetric(object):
         self.units = units
         # Add the ability to set a comment (that could be propagated automatically to a benchmark's display caption).
         self.comment = None
+
+        # Default to only return one metric value per slice
+        self.shape = 1
 
     def run(self, dataSlice, slicePoint=None):
         raise NotImplementedError('Please implement your metric calculation.')

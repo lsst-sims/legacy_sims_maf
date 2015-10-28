@@ -48,6 +48,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                           'fieldRaColName':fieldRaColName,
                           'fieldDecColName':fieldDecColName, 'badval':badval}
         self.plotFuncs = [BaseSkyMap, OpsimHistogram]
+        self.needsFields = True
 
 
     def setupSlicer(self, simData, fieldData, maps=None):
@@ -72,6 +73,11 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
+
+        self.spatialExtent = [simData[self.simDataFieldIDColName].min(),
+                                  simData[self.simDataFieldIDColName].max()]
+        self.shape = self.nslice
+
         @wraps(self._sliceSimData)
 
         def _sliceSimData(islice):
@@ -79,7 +85,10 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
             # Build dict for slicePoint info
             slicePoint={}
             for key in self.slicePoints.keys():
-                slicePoint[key] = self.slicePoints[key][islice]
+                if (np.size(self.slicePoints[key]) > 1) & (key is not 'bins') & (key is not 'binCol'):
+                    slicePoint[key] = self.slicePoints[key][islice]
+                else:
+                    slicePoint[key] = self.slicePoints[key]
             return {'idxs':idxs, 'slicePoint':slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
 
@@ -88,15 +97,16 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
 
         result = False
         if isinstance(otherSlicer, OpsimFieldSlicer):
-            # Check if one or both slicers have been setup
-            if (self.slicePoints['ra'] is not None) or (otherSlicer.slicePoints['ra'] is not None):
-                if (np.array_equal(self.slicePoints['ra'], otherSlicer.slicePoints['ra']) &
-                    np.array_equal(self.slicePoints['dec'], otherSlicer.slicePoints['dec']) &
-                    np.array_equal(self.slicePoints['sid'], otherSlicer.slicePoints['sid'])):
+            if np.all(otherSlicer.shape == self.shape):
+                # Check if one or both slicers have been setup
+                if (self.slicePoints['ra'] is not None) or (otherSlicer.slicePoints['ra'] is not None):
+                    if (np.array_equal(self.slicePoints['ra'], otherSlicer.slicePoints['ra']) &
+                        np.array_equal(self.slicePoints['dec'], otherSlicer.slicePoints['dec']) &
+                        np.array_equal(self.slicePoints['sid'], otherSlicer.slicePoints['sid'])):
+                        result = True
+                # If they have not been setup, check that they have same fields
+                elif ((otherSlicer.fieldIDColName == self.fieldIDColName) &
+                      (otherSlicer.fieldRaColName == self.fieldRaColName) &
+                      (otherSlicer.fieldDecColName == self.fieldDecColName)):
                     result = True
-            # If they have not been setup, check that they have same fields
-            elif ((otherSlicer.fieldIDColName == self.fieldIDColName) &
-                  (otherSlicer.fieldRaColName == self.fieldRaColName) &
-                  (otherSlicer.fieldDecColName == self.fieldDecColName)):
-                result = True
         return result

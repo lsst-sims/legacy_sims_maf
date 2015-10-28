@@ -8,8 +8,6 @@ import warnings
 import numpy as np
 from functools import wraps
 from scipy.spatial import cKDTree as kdtree
-
-from lsst.sims.maf.utils import optimalBins, percentileClipping
 from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
@@ -23,7 +21,8 @@ __all__ = ['BaseSpatialSlicer']
 
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
-    def __init__(self, verbose=True, lonCol='fieldRA', latCol='fieldDec',
+    def __init__(self, verbose=True,
+                 lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
         """Instantiate the base spatial slicer object.
@@ -59,8 +58,8 @@ class BaseSpatialSlicer(BaseSlicer):
         self.slicePoints['ra'] = None
         self.slicePoints['dec'] = None
         self.nslice = None
+        self.shape = None
         self.plotFuncs = [BaseHistogram, BaseSkyMap]
-
 
     def setupSlicer(self, simData, maps=None):
         """Use simData[self.lonCol] and simData[self.latCol]
@@ -98,7 +97,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
             for key in self.slicePoints.keys():
-                if np.size(self.slicePoints[key]) > 1:
+                if (np.size(self.slicePoints[key]) > 1):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]
