@@ -336,7 +336,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
         plotDict={'xlabel':'Number of visits',
                   'xMin':nvisitsRange['all'][f][0],
-                  'xMax':nvisitsRange['all'][f][1], 'binsize':5}
+                  'xMax':nvisitsRange['all'][f][1], 'binsize':5, 'logScale':True}
         summaryStats=allStats
         displayDict={'group':depthgroup, 'subgroup':'Nvisits', 'order':filtorder[f],
                      'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
