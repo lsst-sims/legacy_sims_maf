@@ -21,7 +21,8 @@ class MetricVsH(BasePlotter):
         self.plotType = 'MetricVsH'
         self.objectPlotter = False
         self.defaultPlotDict = {'title':None, 'xlabel':'H (mag)', 'ylabel':None, 'label':None,
-                                'npReduce':None, 'nbins':None, 'albedo':None, 'Hmark':None}
+                                'npReduce':None, 'nbins':None, 'albedo':None,
+                                'Hmark':None}
         self.minHrange=1.0
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
