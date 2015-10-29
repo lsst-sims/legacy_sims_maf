@@ -1,4 +1,6 @@
 import os, warnings
+import numpy as np
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import url
@@ -109,7 +111,10 @@ class ResultsDb(object):
                 outDir = '.'
             # Check for output directory, make if needed.
             if not os.path.isdir(outDir):
-                os.makedirs(outDir)
+                try:
+                    os.makedirs(outDir)
+                except OSError, msg:
+                    raise OSError(msg, '\n  (If this was the database file (not outDir), remember to use kwarg "database")')
             self.database =os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'
         else:
@@ -328,6 +333,10 @@ class ResultsDb(object):
         return summarystats
 
     def getPlotFiles(self, metricId=None):
+        """
+        Return the metricId, name, metadata, and all plot info for (optional) metricId.
+        Returns a pandas dataframe.
+        """
         if metricId is None:
             metricId = self.getAllMetricIds()
         if not hasattr(metricId, '__iter__'):
@@ -339,6 +348,7 @@ class ResultsDb(object):
                      .filter(MetricRow.metricId == plotRow.metricId))
             for m, p in query:
                 plots = {}
+                plots['metricId'] = m.metricId
                 plots['metricName'] = m.metricName
                 plots['metricMetadata'] = m.metricMetadata
                 plots['plotType'] = p.plotType
@@ -349,6 +359,7 @@ class ResultsDb(object):
     def getMetricDataFiles(self, metricId=None):
         """
         Get the metric data filenames for all or a single metric.
+        Returns a list.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()
@@ -359,3 +370,38 @@ class ResultsDb(object):
             for m in self.session.query(MetricRow).filter(MetricRow.metricId == mid).all():
                 dataFiles.append(m.metricDataFile)
         return dataFiles
+
+
+    def getMetricDisplayInfo(self, metricId=None):
+        """
+        Return the contents of the metrics and displays table, together with the 'basemetricname', in one
+        list.
+        Intended primarily for use for the 'viz' layer.
+        Returns a pandas dataframe.
+        """
+        if metricId is None:
+            metricId = self.getAllMetricIds()
+        if not hasattr(metricId, '__iter__'):
+            metricId = [metricId,]
+        metricInfo = []
+        for mId in metricId:
+            # Query for all rows in metrics and displays that match any of the metricIds.
+            query = (self.session.query(MetricRow, DisplayRow).filter(MetricRow.metricId==mId).filter(MetricRow.metricId==DisplayRow.metricId))
+            for m, d in query:
+                baseMetricName = m.metricName.split('_')[0]
+                mInfo = (m.metricId, m.metricName, baseMetricName, m.slicerName,
+                        m.sqlConstraint, m.metricMetadata, m.metricDataFile,
+                        d.displayGroup, d.displaySubgroup, d.displayOrder, d.displayCaption)
+                metricInfo.append(mInfo)
+        dtype = np.dtype([('metricId', int), ('metricName', np.str_, 1024), ('baseMetricNames', np.str_, 1024),
+                          ('slicerName', np.str_, 512), ('sqlConstraint', np.str_, 1024), ('metricMetadata', np.str_, 1024),
+                          ('metricDataFile', np.str_, 1024), ('displayGroup', np.str_, 512), ('displaySubgroup', np.str_, 512),
+                          ('displayOrder', float), ('displayCaption', np.str_, 2048)])
+        metricInfo = np.array([xx for xx in metricInfo], dtype = dtype)
+        """
+        metricInfo = pd.DataFrame([xx for xx in metricInfo], columns=['metricId', 'metricName', 'baseMetricNames',
+                                                                      'slicerName', 'sqlConstraint', 'metricMetadata',
+                                                                      'metricDataFile', 'displayGroup', 'displaySubgroup',
+                                                                      'displayOrder', 'displayCaption'])
+        """
+        return metricInfo
