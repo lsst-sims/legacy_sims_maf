@@ -44,7 +44,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.OpsimFieldSlicer()
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.fieldData = self.fieldData
         mbg.runCurrent('', simData=self.simData)
@@ -57,7 +57,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
 
@@ -71,7 +71,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
 
@@ -86,7 +86,7 @@ class Test2D(unittest.TestCase):
                                          statistic='sum',
                                          bins=[0.5,1.5,2.5])
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
         expected = np.array( [[self.m5_1*self.n1, 0.],
@@ -98,7 +98,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
         good = np.where(mb.metricValues.mask[:,-1] == False)[0]
@@ -111,7 +111,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
         good = np.where( (mb.metricValues.mask[:,0] == False) |
@@ -135,7 +135,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric,slicer,sql)
-        mbg = metricBundle.MetricBundleGroup({0:mb}, None)
+        mbg = metricBundle.MetricBundleGroup({0:mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
         good = np.where(mb.metricValues.mask[:,-1] == False)[0]
@@ -165,7 +165,7 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         bundleList.append(metricBundle.MetricBundle(metric,slicer,sql))
         bd = metricBundle.makeBundlesDictFromList(bundleList)
-        mbg = metricBundle.MetricBundleGroup(bd, None)
+        mbg = metricBundle.MetricBundleGroup(bd, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
 

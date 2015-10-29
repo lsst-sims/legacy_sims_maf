@@ -172,7 +172,7 @@ class MafRunResults(object):
         """
         metrics = np.empty(len(metricIds), dtype=self.metrics.dtype)
         for i, mId in enumerate(metricIds):
-            match = (self.metrics['metricId'] == mId)
+            match = np.where(self.metrics['metricId'] == mId)
             metrics[i] = self.metrics[match]
         return metrics
 
@@ -204,7 +204,7 @@ class MafRunResults(object):
         """
         if metrics is None:
             metrics = self.metrics
-        match = (metrics['displayGroup'] == group)
+        match = np.where(metrics['displayGroup'] == group)
         return self.sortMetrics(metrics[match])
 
     def metricsInSubgroup(self, group, subgroup, metrics=None):
@@ -272,8 +272,8 @@ class MafRunResults(object):
             metrics = self.metrics
         hasstat = np.zeros(len(metrics))
         for i, m in enumerate(metrics):
-            match = (self.stats['metricId'] == m['metricId'])
-            matchStat = (self.stats['summaryName'][match] == summaryStatName)
+            match = np.where(self.stats['metricId'] == m['metricId'])
+            matchStat = np.where(self.stats['summaryName'][match] == summaryStatName)
             if len(self.stats[matchStat]) > 0:
                 hasstat[i] = 1
         metrics = metrics[np.where(hasstat > 0)]
@@ -290,7 +290,7 @@ class MafRunResults(object):
             metrics = self.metrics
         hasstat = np.zeros(len(metrics))
         for i, m in enumerate(metrics):
-            match = (self.stats['metricId'] == m['metricId'])
+            match = np.where(self.stats['metricId'] == m['metricId'])
             if len(self.stats[match]) > 0:
                 hasstat[i] = 1
         metrics = metrics[np.where(hasstat > 0)]
@@ -316,7 +316,7 @@ class MafRunResults(object):
         """
         if metrics is None:
             metrics = self.metrics
-        match = (metrics['slicerName'] == slicer)
+        match = np.where(metrics['slicerName'] == slicer)
         return metrics[match]
 
     def uniqueMetricNameAndMetadata(self, metrics=None):
@@ -350,7 +350,7 @@ class MafRunResults(object):
         """
         if metrics is None:
             metrics = self.metrics
-        match = (metrics['metricMetadata'] == metadata)
+        match = np.where(metrics['metricMetadata'] == metadata)
         return metrics[match]
 
     def metricsWithMetricName(self, metricName, metrics=None, baseonly=True):
@@ -360,9 +360,9 @@ class MafRunResults(object):
         if metrics is None:
             metrics = self.metrics
         if baseonly:
-            match = (metrics['baseMetricNames'] == metricName)
+            match = np.where(metrics['baseMetricNames'] == metricName)
         else:
-            match = (metrics['metricName'] == metricName)
+            match = np.where(metrics['metricName'] == metricName)
         return metrics[match]
 
     def metricInfo(self, metric, withDataLink=True, withSlicerName=True):
@@ -399,7 +399,7 @@ class MafRunResults(object):
         """
         Return a recarray of the plot which match a given metric.
         """
-        match = (self.plots['metricId'] == metric['metricId'])
+        match = np.where(self.plots['metricId'] == metric['metricId'])
         return self.plots[match]
 
     def plotDict(self, plots):
@@ -504,10 +504,10 @@ class MafRunResults(object):
             metrics = self.metrics
         skymatchPlots = []
         for m in metrics:
-            match = (self.plots['metricId'] == m['metricId'])
+            match = np.where(self.plots['metricId'] == m['metricId'])
             matchPlots = self.plots[match]
             if len(matchPlots) > 0 :
-                match = (matchPlots['plotType'] == 'SkyMap')
+                match = np.where(matchPlots['plotType'] == 'SkyMap')
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
 
@@ -521,10 +521,10 @@ class MafRunResults(object):
 
         Optionally specify a particular statName that you want to match.
         """
-        match = (self.stats['metricId'] == metric['metricId'])
+        match = np.where(self.stats['metricId'] == metric['metricId'])
         stats = self.stats[match]
         if statName is not None:
-            match = (stats['summaryName'] == statName)
+            match = np.where(stats['summaryName'] == statName)
             stats = stats[match]
         return stats
 
@@ -539,7 +539,7 @@ class MafRunResults(object):
         sdict = OrderedDict()
         statnames = self.orderStatNames(stats)
         for n in statnames:
-            match = (stats['summaryName'] == n)
+            match = np.where(stats['summaryName'] == n)
             sdict[stats['summaryName'][match][0]] = stats['summaryValue'][match][0]
         return sdict
 
