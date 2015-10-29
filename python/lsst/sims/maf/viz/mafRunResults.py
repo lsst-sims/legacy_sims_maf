@@ -214,7 +214,7 @@ class MafRunResults(object):
         If 'metrics' is provided, then only consider this subset of metrics.
         """
         metrics = self.metricsInGroup(group, metrics)
-        match = (metrics['displaySubgroup'] == subgroup)
+        match = np.where(metrics['displaySubgroup'] == subgroup)
         metrics = metrics[match]
         return self.sortMetrics(metrics)
 
@@ -241,8 +241,8 @@ class MafRunResults(object):
             metrics = self.metrics
         hasplot = np.zeros(len(metrics))
         for i, m in enumerate(metrics):
-            match = (self.plots['metricId'] == m['metricId'])
-            matchType = (self.plots['plotType'][match] == plotType)
+            match = np.where(self.plots['metricId'] == m['metricId'])
+            matchType = np.where(self.plots['plotType'][match] == plotType)
             if len(self.plots[matchType]) > 0:
                 hasplot[i] = 1
         metrics = metrics[np.where(hasplot > 0)]
