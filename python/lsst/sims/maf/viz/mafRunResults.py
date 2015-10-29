@@ -1,7 +1,6 @@
 import os
 from collections import OrderedDict
 import numpy as np
-from numpy.lib.recfunctions import rec_join, merge_arrays
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metricBundles as metricBundles
 
@@ -46,28 +45,16 @@ class MafRunResults(object):
         # Read in the results database.
         if resultsDb is None:
             resultsDb = os.path.join(outDir, 'resultsDb_sqlite.db')
-        database = db.Database(resultsDb, longstrings=True,
-                               dbTables={'metrics':['metrics','metricID'] ,
-                                         'displays':['displays', 'displayId'],
-                                         'plots':['plots','plotId'],
-                                         'stats':['summarystats','statId']})
-        # Just pull all three tables.
-        # Below, we provide some methods to interface between the numpy rec arrays returned
-        #  by these queries and what the templates need.
-        # The idea being that this should make the template code & presentation layer more
-        #  easily maintainable in the future.
-        self.metrics = database.queryDatabase('metrics', 'select * from metrics')
-        self.displays = database.queryDatabase('displays', 'select * from displays')
-        # Combine metrics and displays arrays (these are one-to-one).
-        self.metrics = rec_join('metricId', self.metrics, self.displays)
-        # Add base metric names (to keep order for reduce methods).
-        baseNames = np.empty(len(self.metrics), dtype=[('baseMetricNames', '|S50')])
-        for i, m in enumerate(self.metrics):
-            baseNames['baseMetricNames'][i] = m['metricName'].split('_')[0]
-        self.metrics = merge_arrays([self.metrics, baseNames], flatten=True, usemask=False)
-        self.metrics = self.sortMetrics(self.metrics)
-        del self.displays
+        database = db.ResultsDb(database=resultsDb)
+        # Get the metric and display info (1-1 match)
+        metrics = database.getMetricDisplayInfo()
+        # Get the plot and stats info (many-1 metric match)
+
+        self.metrics = self.sortMetrics(metrics)
         # Get plot and summary stat info.
+        database = db.Database(resultsDb, longstrings=True,
+                               dbTables={'plots':['plots','plotId'],
+                                         'stats':['summarystats','statId']})
         self.plots = database.queryDatabase('plots', 'select * from plots')
         self.stats = database.queryDatabase('stats', 'select * from summarystats')
 
@@ -196,7 +183,7 @@ class MafRunResults(object):
 
         Default is to sort by group, subgroup, metric name, slicer, display order, then metadata.
         """
-        return np.sort(metrics, order=order)
+        return np.sort(metrics.view(), order=order)
 
     def metricsInGroup(self, group, metrics=None):
         """
@@ -241,6 +228,8 @@ class MafRunResults(object):
             metrics = self.metrics
 
         hasplot = np.zeros(len(metrics))
+        plotMatch = np.where(self.plots['plotType'] == plotType)
+        
         for i, m in enumerate(metrics):
             match = np.where(self.plots['metricId'] == m['metricId'])
             if isinstance(plotType,list):
