@@ -1,6 +1,6 @@
 import os, warnings
-import numpy as np
 import pandas as pd
+from collections import OrderedDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import url
@@ -323,13 +323,13 @@ class ResultsDb(object):
             if summaryName is not None:
                 query = query.filter(SummaryStatRow.summaryName == summaryName)
             for m, s in query:
-                summary = {}
-                summary['metricName'] = m.metricName
-                summary['slicerName'] = m.slicerName
-                summary['metricMetadata'] = m.metricMetadata
-                summary['summaryName'] = s.summaryName
-                summary['summaryValue'] = s.summaryValue
-                summarystats.append(summary)
+                summarystats.append((m.metricId, m.metricName, m.slicerName, m.metricMetadata,
+                                     s.summaryName, s.summaryValue))
+        cols = OrderedDict([('metricId', int), ('metricName', str), ('slicerName', str), ('metricMetadata', str),
+                            ('summaryName', str), ('summaryValue', float)])
+        summarystats = pd.DataFrame([xx for xx in summarystats], columns=cols.keys())
+        for c, dt in cols.iteritems():
+            summarystats[c] = summarystats[c].astype(dt)
         return summarystats
 
     def getPlotFiles(self, metricId=None):
@@ -345,15 +345,18 @@ class ResultsDb(object):
         for mid in metricId:
             # Join the metric table and the plot table, based on the metricID (the second filter does the join)
             query = (self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid)
-                     .filter(MetricRow.metricId == plotRow.metricId))
+                     .filter(MetricRow.metricId == PlotRow.metricId))
             for m, p in query:
-                plots = {}
-                plots['metricId'] = m.metricId
-                plots['metricName'] = m.metricName
-                plots['metricMetadata'] = m.metricMetadata
-                plots['plotType'] = p.plotType
-                plots['plotFile'] = p.plotFile
-                plotFiles.append(plots)
+                thumbfile = 'thumb.' + ''.join(p.plotFile.split('.')[:-1]) + '.png'
+                plotFiles.append((m.metricId, m.metricName, m.metricMetadata, p.plotType, p.plotFile, thumbfile))
+        # Convert to pandas dataframe.
+        cols = OrderedDict([('metricId',int), ('metricName',str), ('metricMetadata', str),
+                            ('plotType', str), ('plotFile', str), ('thumbFile', str)])
+        plotFiles = pd.DataFrame([xx for xx in plotFiles],
+                                 columns=cols.keys())
+        # and cast as the right type (pandas is still a little broken here)
+        for c, dt in cols.iteritems():
+            plotFiles[c] = plotFiles[c].astype(dt)
         return plotFiles
 
     def getMetricDataFiles(self, metricId=None):
@@ -393,15 +396,11 @@ class ResultsDb(object):
                         m.sqlConstraint, m.metricMetadata, m.metricDataFile,
                         d.displayGroup, d.displaySubgroup, d.displayOrder, d.displayCaption)
                 metricInfo.append(mInfo)
-        dtype = np.dtype([('metricId', int), ('metricName', np.str_, 1024), ('baseMetricNames', np.str_, 1024),
-                          ('slicerName', np.str_, 512), ('sqlConstraint', np.str_, 1024), ('metricMetadata', np.str_, 1024),
-                          ('metricDataFile', np.str_, 1024), ('displayGroup', np.str_, 512), ('displaySubgroup', np.str_, 512),
-                          ('displayOrder', float), ('displayCaption', np.str_, 2048)])
-        metricInfo = np.array([xx for xx in metricInfo], dtype = dtype)
-        """
-        metricInfo = pd.DataFrame([xx for xx in metricInfo], columns=['metricId', 'metricName', 'baseMetricNames',
-                                                                      'slicerName', 'sqlConstraint', 'metricMetadata',
-                                                                      'metricDataFile', 'displayGroup', 'displaySubgroup',
-                                                                      'displayOrder', 'displayCaption'])
-        """
+        cols = OrderedDict([('metricId', int), ('metricName', str), ('baseMetricNames', str),
+                            ('slicerName', str), ('sqlConstraint', str), ('metricMetadata', str),
+                            ('metricDatafile', str), ('displayGroup', str), ('displaySubgroup', str),
+                            ('displayOrder', float), ('displayCaption', str)])
+        metricInfo = pd.DataFrame([xx for xx in metricInfo], columns=cols.keys())
+        for c, dt in cols.iteritems():
+            metricInfo[c] = metricInfo[c].astype(dt)
         return metricInfo
