@@ -27,7 +27,7 @@
 {# Show all metric results, including summary stats in a table rather
 than per metric. #}
 
-{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set metricInfo = run.metricInfo() %}
 
 {% for g in run.groups.keys() %}
  {% set groupstart = True %}
@@ -41,7 +41,7 @@ than per metric. #}
    </p>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
   <div id="metricset">
-  {% for metric in subsetMetrics %}
+  {% for i, metric in subsetMetrics.iterrows() %}
     {% set metricInfo = run.metricInfo(metric) %}
     {% set metricPlots = run.plotsForMetric(metric) %}
     {# Only show anything here for this metric if it had plots #}
