@@ -30,7 +30,7 @@
 
 <table>
 
-{% set metricInfo = run.metricInfo(run.metrics[0], withDataLink=True) %}
+{% set metricInfo = run.metricInfo(withDataLink=True) %}
 {% set mInfoLen = metricInfo|length  %}
 
 <tr>
@@ -59,7 +59,7 @@
 	 </td>
         </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
-       {% for metric in metrics %}
+        {% for i,metric in metrics.iterrows() %}
           {% set metricInfo = run.metricInfo(metric, withDataLink=True) %}
           <tr>
 	  <td>

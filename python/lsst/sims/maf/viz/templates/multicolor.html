@@ -16,7 +16,7 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD','neoxyPlotter'], metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set hourglassMetrics = run.metricsWithPlotType(plotType='Hourglass', metrics=subsetMetrics) %}
+   {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglassPlot', metrics=subsetMetrics) %}
    {% set statNames = run.allStatNames(subsetMetrics) %}
    {% set displaygroup = skysetMetrics|length + combosetMetrics|length
   + hourglassMetrics|length + statNames|length %}
@@ -36,10 +36,9 @@
 </ul>
 {% endblock %}
 
-
 {% block content %}
 
-{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set metricInfo = run.metricInfo() %}
 {% set ninfo = metricInfo|length %}
 
 {% for g in run.groups.keys() %}
@@ -75,19 +74,22 @@
      {% set skymaps = run.orderPlots(skymaps) %}
      {% if skymaps|length > 0 %}
       <div id='metricset'>
-       {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId) %}
+       {% set metricLink = 'metricResults?runId=%s&metricId=' %(runId)
+   %}
+       {# add a link to click to the skymap group's details #}
        {% set metricSelect = run.metricsToMetricIds(mskyset)|join('&metricId=') %}
        {% set metricLink = metricLink ~ metricSelect %}
 	<a href={{metricLink}}>{{mname}}</a> </br>
 	<table class='blank'>
-	<tr class='blank'>
-       {% for skymap in skymaps%}
-	{% if skymap['plotId'] < 0 %}
-	  <td class='blank'>
-	  </td>
-	{% else %}
-         {% set plotfile = run.getPlotfile(skymap) %}
-         {% set thumbfile = run.getThumbfile(skymap) %}
+          <tr class='blank'>
+       {# put in the sky map plots #}
+        {% for skymap in skymaps %}
+            {% if skymap['SkyMap']['plotFile']|length == 0 %}
+            <td class='blank'>
+            </td>
+            {% else %}
+         {% set plotfile = skymap['SkyMap']['plotFile'][0] %}
+         {% set thumbfile = skymap['SkyMap']['thumbFile'][0] %}
           <td class='blank' align='center'>
           <a href="{{plotfile}}"> <img class="sm_thumbnail" src='{{thumbfile}}'></a>
 	  </td>
@@ -101,7 +103,7 @@
       </div>
      {% endif %}
    {% endfor %}
-      
+
    {% for m in combosetMetrics %}
      {% set comboplots = run.plotsForMetric(m) %}
      {% set combodict = run.plotDict(comboplots) %}
@@ -120,7 +122,7 @@
 
    {% if hourglassMetrics|length > 0 %}
    <div id='metricset'>
-   {% for h in hourglassMetrics %}
+   {% for i,h in hourglassMetrics.iterrows() %}
       {% set metricInfo = run.metricInfo(h) %}
       {# {{metricInfo['Metadata']|escape}} </br> #}
       {% set hourglassplots = run.plotsForMetric(h) %}
