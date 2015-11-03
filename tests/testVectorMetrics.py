@@ -11,8 +11,8 @@ import lsst.sims.maf.metricBundles as metricBundle
 class Test2D(unittest.TestCase):
 
     def setUp(self):
-        names = ['night', 'fieldID', 'fieldRA', 'fieldDec', 'fiveSigmaDepth']
-        types = [int,int,float,float,float]
+        names = ['night', 'fieldID', 'fieldRA', 'fieldDec', 'fiveSigmaDepth', 'expMJD']
+        types = [int,int,float,float,float,float]
 
         self.m5_1 = 25.
         self.m5_2 = 24.
@@ -38,6 +38,8 @@ class Test2D(unittest.TestCase):
         self.fieldData['fieldID'] = [1,2]
         self.fieldData['fieldRA'] = np.radians([10.,190.])
         self.fieldData['fieldDec'] = np.radians([0.,-20.])
+
+        self.simData['expMJD'] = self.simData['night']
 
     def testOpsim2dSlicer(self):
         metric = metrics.AccumulateCountMetric(bins=[0.5,1.5,2.5])
@@ -151,6 +153,32 @@ class Test2D(unittest.TestCase):
         expected =  np.array( [[val1, val1],
                               [-666., val2 ]])
         assert(np.array_equal(mb.metricValues.data[good,:], expected))
+
+    def testAccumulateUniformityMetric(self):
+        names = ['night']
+        types = ['float']
+        dataSlice = np.zeros(3652, dtype=zip(names,types))
+
+        # Test that a uniform distribution is very close to zero
+        dataSlice['night'] = np.arange(1,dataSlice.size+1)
+        metric=metrics.AccumulateUniformityMetric()
+        result = metric.run(dataSlice)
+        assert( np.max(result) < 1./365.25)
+        assert(np.min(result) >= 0)
+
+        # Test that if everythin on night 1 or last night, then result is ~1
+        dataSlice['night'] = 1
+        result = metric.run(dataSlice)
+        assert(np.max(result) >= 1.-1./365.25)
+        dataSlice['night'] = 3652
+        result = metric.run(dataSlice)
+        assert(np.max(result) >= 1.-1./365.25)
+
+        # Test if all taken in the middle, result ~0.5
+        dataSlice['night'] = 3652/2
+        result = metric.run(dataSlice)
+        assert(np.max(result) >= 0.5-1./365.25)
+
 
     def testRunRegularToo(self):
         """

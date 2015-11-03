@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 from scipy import stats
 
 __all__ = ['HistogramMetric','AccumulateMetric', 'AccumulateCountMetric',
-           'HistogramM5Metric', 'AccumulateM5Metric', 'AccumulateUniformity']
+           'HistogramM5Metric', 'AccumulateM5Metric', 'AccumulateUniformityMetric']
 
 
 class VectorMetric(BaseMetric):
@@ -112,24 +112,29 @@ class AccumulateM5Metric(AccumulateMetric):
         return result
 
 
-class AccumulateUniformity(AccumulateMetric):
+class AccumulateUniformityMetric(AccumulateMetric):
     """
     Make a 2D version of UniformityMetric
     """
     def __init__(self, bins=None, binCol='night', expMJDCol='expMJD',
                  metricName='AccumulateUniformityMetric',surveyLength=10., **kwargs):
         self.expMJDCol = expMJDCol
-        superAccumulateUniformity(AccumulateUniformity,self).__init__(bins=bins, binCol=binCol,col=expMJDCol,
-                                                  metricName=metricName,**kwargs)
+        if bins is None:
+            bins = np.arange(0,np.ceil(surveyLength*365.25))-.5
+        super(AccumulateUniformityMetric,self).__init__(bins=bins, binCol=binCol,col=expMJDCol,
+                                                        metricName=metricName,**kwargs)
         self.surveyLength = surveyLength
 
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=self.binCol)
-        if dataSlice[self.expMJDCol].size == 1:
+        if dataSlice.size == 1:
             return 1
-        dates = (dataSlice[self.expMJDCol]-dataSlice[self.expMJDCol].min())/(self.surveyLength*365.25)
-        n_cum = np.arange(1,dates.size+1)
-        dates.sort() # Just to be sure
 
+        visitsPerNight, blah = np.histogram(dataSlice[self.binCol], bins=self.bins)
+        visitsPerNight = np.add.accumulate(visitsPerNight)
+        expectedPerNight = np.arange(0,self.bins.max())/self.bins.max() * dataSlice.size
 
+        D_max = np.abs(visitsPerNight-expectedPerNight)
+        D_max = np.maximum.accumulate(D_max)
+        result = D_max/expectedPerNight.max()
         return result

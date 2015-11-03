@@ -309,21 +309,22 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     ##
     # Calculate the time uniformity in each filter, for each year.
     order = 0
-    yearDates = range(0,int(round(365*runLength))+365,365)
+
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    for i in range(len(yearDates)-1):
-        for f in filters:
-            metadata = '%s band, after year %d' %(f, i+1) + slicermetadata
-            sqlconstraint = 'filter = "%s" and night<=%i' %(f, yearDates[i+1])
-            metric = metrics.UniformityMetric(metricName='Time Uniformity')
-            plotDict={'xMin':0, 'xMax':1}
-            caption = 'Deviation from uniformity in %s band, by the end of year %d of the survey. ' %(f, i+1)
-            caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
-            displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
-                           'displayOrder':filtorder[f], 'caption': caption}
-            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                                displayDict=displayDict, runName=runName, metadata=metadata)
-            bundleList.append(bundle)
+    plotFuncs = [plots.TwoDMap()]
+    metric = metrics.AccumulateUniformityMetric()
+    plotDict={'xlabel':'Night (days)'}
+    for f in filters:
+        sqlconstraint = 'filter = "%s"' %(f)
+        caption = 'Deviation from uniformity in %s band, by the end of year %d of the survey. ' %(f, i+1)
+        caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
+        displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
+                       'displayOrder':filtorder[f], 'caption': caption}
+        metadata = '%s band' %(f) + slicermetadata
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
+                                            plotFuncs=plotFuncs)
+        bundleList.append(bundle)
 
     ##
     # Depth metrics.
@@ -337,7 +338,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
         plotDict={'xlabel':'Number of visits',
                   'xMin':nvisitsRange['all'][f][0],
                   'xMax':nvisitsRange['all'][f][1], 'binsize':5,
-                  'logScale':True, 'nTicks':3}
+                  'logScale':True, 'nTicks':4, 'colorMin':1}
         summaryStats=allStats
         displayDict={'group':depthgroup, 'subgroup':'Nvisits', 'order':filtorder[f],
                      'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
