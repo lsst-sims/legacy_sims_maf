@@ -117,18 +117,19 @@ class AccumulateUniformityMetric(AccumulateMetric):
     Make a 2D version of UniformityMetric
     """
     def __init__(self, bins=None, binCol='night', expMJDCol='expMJD',
-                 metricName='AccumulateUniformityMetric',surveyLength=10., **kwargs):
+                 metricName='AccumulateUniformityMetric',surveyLength=10.,
+                 units='Fraction', **kwargs):
         self.expMJDCol = expMJDCol
         if bins is None:
             bins = np.arange(0,np.ceil(surveyLength*365.25))-.5
         super(AccumulateUniformityMetric,self).__init__(bins=bins, binCol=binCol,col=expMJDCol,
-                                                        metricName=metricName,**kwargs)
+                                                        metricName=metricName,units=units,**kwargs)
         self.surveyLength = surveyLength
 
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=self.binCol)
         if dataSlice.size == 1:
-            return 1
+            return self.bin*0+1
 
         visitsPerNight, blah = np.histogram(dataSlice[self.binCol], bins=self.bins)
         visitsPerNight = np.add.accumulate(visitsPerNight)

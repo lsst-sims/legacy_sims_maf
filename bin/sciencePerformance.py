@@ -316,9 +316,9 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     plotDict={'xlabel':'Night (days)'}
     for f in filters:
         sqlconstraint = 'filter = "%s"' %(f)
-        caption = 'Deviation from uniformity in %s band, by the end of year %d of the survey. ' %(f, i+1)
+        caption = 'Deviation from uniformity in %s band. ' %(f)
         caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
-        displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
+        displayDict = {'group':uniformitygroup, 'subgroup':'per night',
                        'displayOrder':filtorder[f], 'caption': caption}
         metadata = '%s band' %(f) + slicermetadata
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -564,6 +564,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     displayDict = {'group':altAzGroup, 'caption':'Alt Az pointing distribution'}
     for filt in filters:
         for propid in propids:
+            displayDict = {'group':altAzGroup, 'subgroup':propids[propid], 'caption':'Alt Az pointing distribution'}
             md = '%s, %s' % (filt, propids[propid])
             sql = 'filter="%s" and propID=%i' % (filt,propid)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
@@ -571,6 +572,14 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                                                 displayDict=displayDict, runName=runName)
             bundleList.append(bundle)
 
+    sql = ''
+    md='all observations'
+    displayDict = {'group':altAzGroup, 'subgroup':'All Observations',
+                   'caption':'Alt Az pointing distribution'}
+    bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
+                                        plotFuncs=plotFuncs, metadata=md,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
 
 
     # Median inter-night gap (each and all filters)
