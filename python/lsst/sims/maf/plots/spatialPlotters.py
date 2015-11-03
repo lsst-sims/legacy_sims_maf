@@ -30,7 +30,7 @@ class HealpixSkyMap(BasePlotter):
                                 'logScale':False, 'cbarFormat':None, 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None, 'labelsize':None, 'fontsize':None,
-                                'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
+                                'cbar_edge':True, 'nTicks':15, 'rot':(0,0,0)}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """

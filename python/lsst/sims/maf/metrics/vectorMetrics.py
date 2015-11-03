@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 from scipy import stats
 
 __all__ = ['HistogramMetric','AccumulateMetric', 'AccumulateCountMetric',
-           'HistogramM5Metric', 'AccumulateM5Metric']
+           'HistogramM5Metric', 'AccumulateM5Metric', 'AccumulateUniformity']
 
 
 class VectorMetric(BaseMetric):
@@ -109,4 +109,27 @@ class AccumulateM5Metric(AccumulateMetric):
         result = result[indices]
         result = 1.25*np.log10(result)
         result[np.where(indices == 0)] = self.badval
+        return result
+
+
+class AccumulateUniformity(AccumulateMetric):
+    """
+    Make a 2D version of UniformityMetric
+    """
+    def __init__(self, bins=None, binCol='night', expMJDCol='expMJD',
+                 metricName='AccumulateUniformityMetric',surveyLength=10., **kwargs):
+        self.expMJDCol = expMJDCol
+        superAccumulateUniformity(AccumulateUniformity,self).__init__(bins=bins, binCol=binCol,col=expMJDCol,
+                                                  metricName=metricName,**kwargs)
+        self.surveyLength = surveyLength
+
+    def run(self, dataSlice, slicePoint=None):
+        dataSlice.sort(order=self.binCol)
+        if dataSlice[self.expMJDCol].size == 1:
+            return 1
+        dates = (dataSlice[self.expMJDCol]-dataSlice[self.expMJDCol].min())/(self.surveyLength*365.25)
+        n_cum = np.arange(1,dates.size+1)
+        dates.sort() # Just to be sure
+
+
         return result
