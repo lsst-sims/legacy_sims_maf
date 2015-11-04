@@ -316,7 +316,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     plotDict={'xlabel':'Night (days)'}
     for f in filters:
         sqlconstraint = 'filter = "%s"' %(f)
-        caption = 'Deviation from uniformity in %s band. ' %(f)
+        caption = 'Deviation from uniformity in %s band. Northern Healpixels are at the top of the image.' %(f)
         caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
         displayDict = {'group':uniformitygroup, 'subgroup':'per night',
                        'displayOrder':filtorder[f], 'caption': caption}
@@ -368,11 +368,12 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
         mergedHistDict['coaddm5'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
         # Effective time.
-        metric = metrics.TeffMetric(metricName='Normalized Effective Time',normed=True)
+        metric = metrics.TeffMetric(metricName='Normalized Effective Time',normed=True,
+                                    fiducialDepth= benchmarkVals['singleVisitDepth'])
         plotDict={'xMin':0.1, 'xMax':1.1}
         summaryStats=allStats
         histMerge={'legendLoc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':0.02}
-        caption = '"Time Effective" in filter %s, calculated with fiducial depth %s. '%(f, benchmarkVals['singleVisitDepth'][f])
+        caption = '"Time Effective" in filter %s, calculated with fiducial single-visit depth of %s mag. '%(f, benchmarkVals['singleVisitDepth'][f])
         caption += 'Normalized by the fiducial time effective, if every observation was at the fiducial depth.'
         displayDict={'group':depthgroup, 'subgroup':'Time Eff.', 'order':filtorder[f], 'caption':caption}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
