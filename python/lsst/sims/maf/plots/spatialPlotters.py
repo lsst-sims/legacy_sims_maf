@@ -15,6 +15,8 @@ from .plotHandler import BasePlotter
 
 from lsst.sims.utils import _equatorialFromGalactic
 import inspect
+from .perceptual_rainbow import makePRCmap
+perceptual_rainbow = makePRCmap()
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
@@ -674,7 +676,7 @@ class LambertSkyMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
                                            'lon_0':0., 'resolution':'l', 'celestial':True},
-                                'cbar':True, 'cmap':cm.cubehelix, 'levels':200,
+                                'cbar':True, 'cmap':perceptual_rainbow, 'levels':200,
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
                                 'colorMax':None, 'linewidths':0,
