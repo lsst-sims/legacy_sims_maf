@@ -21,7 +21,7 @@ class TwoDMap(BasePlotter):
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None,
                                 'cbar_edge':True, 'nTicks':None, 'aspect':'auto',
-                                'xextent':None}
+                                'xextent':None, 'origin':None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
 
@@ -29,6 +29,7 @@ class TwoDMap(BasePlotter):
             self.defaultPlotDict['ylabel'] = 'Healpix ID'
         elif 'Opsim' in slicer.slicerName:
             self.defaultPlotDict['ylabel'] = 'Field ID'
+            self.defaultPlotDict['origin'] = 'lower'
         elif 'User' in slicer.slicerName:
             self.defaultPlotDict['ylabel'] = 'User Field ID'
 
@@ -60,7 +61,7 @@ class TwoDMap(BasePlotter):
         image = ax.imshow(metricValue, vmin=plotDict['colorMin'], vmax=plotDict['colorMax'],
                           aspect=plotDict['aspect'], cmap=plotDict['cmap'], norm=norm,
                           extent=xextent.extend(yextent),
-                          interpolation='none',)
+                          interpolation='none',origin=plotDict['origin'])
         cb =  plt.colorbar(image)
 
         ax.set_xlabel(plotDict['xlabel'])
