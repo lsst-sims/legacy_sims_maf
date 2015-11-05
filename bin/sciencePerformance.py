@@ -634,7 +634,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
         displayDict = {'group': NEOGroup, 'subgroup':'xy',
                        'caption':'Observations within 10 degrees of the ecliptic. Distance an H=22 NEO would be detected'}
         plotDict={}
-        sqlconstraint = 'night < 365 and filter = "%s"' %(f)
+        sqlconstraint = 'filter = "%s"' %(f)
         bundle = metricBundles.MetricBundle(metric, slicer,
                                             sqlconstraint, displayDict=displayDict,
                                             stackerList=[stacker,stacker2],
@@ -644,22 +644,24 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
 
 
     # Solar elongation
-    plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
-    displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
-                       'caption':'Median solar elongation in degrees'}
-    sql = ''
-    metric = metrics.MedianMetric('solarElong')
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
-    bundleList.append(bundle)
+    sqls = ['filter = "%s"' % f for f in filters]
+    sqls.append('')
+    for sql in sqls:
+        plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+        displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
+                           'caption':'Median solar elongation in degrees'}
+        metric = metrics.MedianMetric('solarElong')
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
+        bundleList.append(bundle)
 
-    plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
-    displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
-                       'caption':'Minimum solar elongation in degrees'}
-    metric = metrics.MinMetric('solarElong')
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
-    bundleList.append(bundle)
+        plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+        displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
+                           'caption':'Minimum solar elongation in degrees'}
+        metric = metrics.MinMetric('solarElong')
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
+        bundleList.append(bundle)
 
 
     return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict
