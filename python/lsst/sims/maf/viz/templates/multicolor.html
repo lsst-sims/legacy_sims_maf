@@ -14,7 +14,7 @@
   {% set groupstart = True %}
   {% for sg in run.groups[g] %}
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
-   {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD'], metrics=subsetMetrics) %}
+   {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD','neoxyPlotter'], metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
    {% set hourglassMetrics = run.metricsWithPlotType(plotType='Hourglass', metrics=subsetMetrics) %}
    {% set statNames = run.allStatNames(subsetMetrics) %}
@@ -47,7 +47,7 @@
  {% for sg in run.groups[g] %}
    {# Get the metrics, skymaps and combo histograms in this subgroup. #}
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
-   {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD'], metrics=subsetMetrics) %}
+   {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD','neoxyPlotter'], metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
    {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglassPlot', metrics=subsetMetrics) %}
    {% set statNames = run.allStatNames(subsetMetrics) %}
@@ -71,7 +71,7 @@
    {% set metricNames = run.uniqueMetricNames(skysetMetrics, baseonly=True) %}
    {% for mname in metricNames %}
      {% set mskyset = run.metricsWithMetricName(mname, skysetMetrics, baseonly=True) %}
-     {% set skymaps = run.getSkyMaps(mskyset, plotType=['SkyMap','TwoD']) %}
+     {% set skymaps = run.getSkyMaps(mskyset, plotType=['SkyMap','TwoD','neoxyPlotter']) %}
      {% set skymaps = run.orderPlots(skymaps) %}
      {% if skymaps|length > 0 %}
       <div id='metricset'>

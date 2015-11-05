@@ -116,6 +116,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     rangeGroup = 'H: Range of Dates'
     intergroup = 'I: Inter-Night'
     phaseGroup = 'J: Max Phase Gap'
+    NEOGroup = 'K: NEO Detection'
 
     # Set up an object to track the metricBundles that we want to combine into merged plots.
     mergedHistDict = {}
@@ -621,6 +622,44 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                                                 displayDict=displayDict, runName=runName)
             bundleList.append(bundle)
 
+
+
+
+    # NEO XY plots
+    slicer = slicers.UniSlicer()
+    metric = metrics.PassMetric(metricName='NEODistances')
+    stacker = stackers.NEODistStacker()
+    stacker2 = stackers.EclipticStacker()
+    for f in filters:
+        displayDict = {'group': NEOGroup, 'subgroup':'xy',
+                       'caption':'Observations within 10 degrees of the ecliptic. Distance an H=22 NEO would be detected'}
+        plotDict={}
+        sqlconstraint = 'night < 365 and filter = "%s"' %(f)
+        bundle = metricBundles.MetricBundle(metric, slicer,
+                                            sqlconstraint, displayDict=displayDict,
+                                            stackerList=[stacker,stacker2],
+                                            plotDict=plotDict,
+                                            plotFuncs=[plots.NeoDistancePlotter()])
+        bundleList.append(bundle)
+
+
+    # Solar elongation
+    plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+    displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
+                       'caption':'Median solar elongation in degrees'}
+    sql = ''
+    metric = metrics.MedianMetric('solarElong')
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
+    bundleList.append(bundle)
+
+    plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+    displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
+                       'caption':'Minimum solar elongation in degrees'}
+    metric = metrics.MinMetric('solarElong')
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
+    bundleList.append(bundle)
 
 
     return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict
