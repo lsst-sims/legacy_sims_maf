@@ -16,7 +16,7 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD','neoxyPlotter'], metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set hourglassMetrics = run.metricsWithPlotType(plotType='Hourglass', metrics=subsetMetrics) %}
+   {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglass', metrics=subsetMetrics) %}
    {% set statNames = run.allStatNames(subsetMetrics) %}
    {% set displaygroup = skysetMetrics|length + combosetMetrics|length
   + hourglassMetrics|length + statNames|length %}
