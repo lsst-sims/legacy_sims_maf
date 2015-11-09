@@ -631,6 +631,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     stacker = stackers.NEODistStacker()
     stacker2 = stackers.EclipticStacker()
     for f in filters:
+        plotFunc = plots.NeoDistancePlotter(eclipMax=10., eclipMin=-10.)
         displayDict = {'group': NEOGroup, 'subgroup':'xy',
                        'caption':'Observations within 10 degrees of the ecliptic. Distance an H=22 NEO would be detected'}
         plotDict={}
@@ -639,7 +640,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                                             sqlconstraint, displayDict=displayDict,
                                             stackerList=[stacker,stacker2],
                                             plotDict=plotDict,
-                                            plotFuncs=[plots.NeoDistancePlotter()])
+                                            plotFuncs=[plotFunc])
         bundleList.append(bundle)
 
 
