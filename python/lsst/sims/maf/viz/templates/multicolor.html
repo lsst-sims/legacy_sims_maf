@@ -16,7 +16,7 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD','neoxyPlotter'], metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglass', metrics=subsetMetrics) %}
+   {% set hourglassMetrics = run.metricsWithPlotType(plotType='Hourglass', metrics=subsetMetrics) %}
    {% set statNames = run.allStatNames(subsetMetrics) %}
    {% set displaygroup = skysetMetrics|length + combosetMetrics|length
   + hourglassMetrics|length + statNames|length %}
@@ -49,7 +49,7 @@
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType=['SkyMap','TwoD','neoxyPlotter'], metrics=subsetMetrics) %}
    {% set combosetMetrics = run.metricsWithPlotType(plotType='ComboHistogram', metrics=subsetMetrics) %}
-   {% set hourglassMetrics = run.metricsWithPlotType(plotType='hourglassPlot', metrics=subsetMetrics) %}
+   {% set hourglassMetrics = run.metricsWithPlotType(plotType='Hourglass', metrics=subsetMetrics) %}
    {% set statNames = run.allStatNames(subsetMetrics) %}
 
    {% set displaygroup = skysetMetrics|length + combosetMetrics|length + vectorMetrics|length
@@ -125,7 +125,7 @@
       {# {{metricInfo['Metadata']|escape}} </br> #}
       {% set hourglassplots = run.plotsForMetric(h) %}
       {% set hourglassdict = run.plotDict(hourglassplots) %}
-      {% set hourglass = hourglassdict['hourglassPlot'] %}
+      {% set hourglass = hourglassdict['Hourglass'] %}
       {% for plotfile, thumbfile in zip(hourglass['plotFile'], hourglass['thumbFile']) %}
          <a href="{{plotfile}}"> <img class="thumbnail" src='{{thumbfile}}'></a>
       {% endfor %}
