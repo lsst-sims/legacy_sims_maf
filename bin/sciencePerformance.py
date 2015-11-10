@@ -15,7 +15,6 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
-from mafContrib import PhaseGapMetric
 
 
 def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
@@ -616,8 +615,8 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
             displayDict = {'group':phaseGroup,
                            'subgroup':'period=%.2f days, filter=%s' % (period,sql),
                            'caption':'Maximum phase gaps'}
-            metric = PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period,
-                                    metricName='PhaseGap, %.1f'%period)
+            metric = metrics.PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period,
+                                            metricName='PhaseGap, %.1f'%period)
             bundle = metricBundles.MetricBundle(metric, slicer, sqls[sql],
                                                 displayDict=displayDict, runName=runName)
             bundleList.append(bundle)
