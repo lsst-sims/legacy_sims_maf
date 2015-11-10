@@ -239,10 +239,16 @@ class MafRunResults(object):
         """
         if metrics is None:
             metrics = self.metrics
+
         hasplot = np.zeros(len(metrics))
         for i, m in enumerate(metrics):
             match = np.where(self.plots['metricId'] == m['metricId'])
-            matchType = np.where(self.plots['plotType'][match] == plotType)
+            if isinstance(plotType,list):
+                matchType=[]
+                for pT in plotType:
+                    matchType.extend(np.where(self.plots['plotType'][match] == pT)[0].tolist())
+            else:
+                matchType = np.where(self.plots['plotType'][match] == plotType)
             if len(self.plots[matchType]) > 0:
                 hasplot[i] = 1
         metrics = metrics[np.where(hasplot > 0)]
@@ -463,6 +469,8 @@ class MafRunResults(object):
             blankRecord['plotId'] = -1
             blankRecord['metricId'] = -1
             blankRecord['plotFile'] = None
+        else:
+            return []
 
         for f in orderList:
             found = False
@@ -495,7 +503,7 @@ class MafRunResults(object):
 
         return orderedSkymatchPlots
 
-    def getSkyMaps(self, metrics=None):
+    def getSkyMaps(self, metrics=None, plotType='SkyMap'):
         """
         Return a list of the skymaps, optionally for subset of metrics.
         """
@@ -507,7 +515,12 @@ class MafRunResults(object):
             match = np.where(self.plots['metricId'] == m['metricId'])
             matchPlots = self.plots[match]
             if len(matchPlots) > 0 :
-                match = np.where(matchPlots['plotType'] == 'SkyMap')
+                if isinstance(plotType,list):
+                    match = []
+                    for pT in plotType:
+                        match.extend(np.where(matchPlots['plotType'] == pT)[0].tolist())
+                else:
+                    match = np.where(matchPlots['plotType'] == plotType)
                 for skymatch in matchPlots[match]:
                     skymatchPlots.append(skymatch)
 

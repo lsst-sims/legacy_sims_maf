@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 from scipy import stats
 
 __all__ = ['HistogramMetric','AccumulateMetric', 'AccumulateCountMetric',
-           'HistogramM5Metric', 'AccumulateM5Metric']
+           'HistogramM5Metric', 'AccumulateM5Metric', 'AccumulateUniformityMetric']
 
 
 class VectorMetric(BaseMetric):
@@ -109,4 +109,33 @@ class AccumulateM5Metric(AccumulateMetric):
         result = result[indices]
         result = 1.25*np.log10(result)
         result[np.where(indices == 0)] = self.badval
+        return result
+
+
+class AccumulateUniformityMetric(AccumulateMetric):
+    """
+    Make a 2D version of UniformityMetric
+    """
+    def __init__(self, bins=None, binCol='night', expMJDCol='expMJD',
+                 metricName='AccumulateUniformityMetric',surveyLength=10.,
+                 units='Fraction', **kwargs):
+        self.expMJDCol = expMJDCol
+        if bins is None:
+            bins = np.arange(0,np.ceil(surveyLength*365.25))-.5
+        super(AccumulateUniformityMetric,self).__init__(bins=bins, binCol=binCol,col=expMJDCol,
+                                                        metricName=metricName,units=units,**kwargs)
+        self.surveyLength = surveyLength
+
+    def run(self, dataSlice, slicePoint=None):
+        dataSlice.sort(order=self.binCol)
+        if dataSlice.size == 1:
+            return self.bin*0+1
+
+        visitsPerNight, blah = np.histogram(dataSlice[self.binCol], bins=self.bins)
+        visitsPerNight = np.add.accumulate(visitsPerNight)
+        expectedPerNight = np.arange(0,self.bins.max())/self.bins.max() * dataSlice.size
+
+        D_max = np.abs(visitsPerNight-expectedPerNight)
+        D_max = np.maximum.accumulate(D_max)
+        result = D_max/expectedPerNight.max()
         return result

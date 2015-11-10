@@ -15,6 +15,8 @@ from .plotHandler import BasePlotter
 
 from lsst.sims.utils import _equatorialFromGalactic
 import inspect
+from .perceptual_rainbow import makePRCmap
+perceptual_rainbow = makePRCmap()
 
 __all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
            'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
@@ -30,7 +32,7 @@ class HealpixSkyMap(BasePlotter):
                                 'logScale':False, 'cbarFormat':None, 'cmap':cm.cubehelix,
                                 'percentileClip':None, 'colorMin':None, 'colorMax':None,
                                 'zp':None, 'normVal':None, 'labelsize':None, 'fontsize':None,
-                                'cbar_edge':True, 'nTicks':None, 'rot':(0,0,0)}
+                                'cbar_edge':True, 'nTicks':15, 'rot':(0,0,0)}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -108,7 +110,11 @@ class HealpixSkyMap(BasePlotter):
             cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
             if plotDict['labelsize'] is not None:
                 cb.ax.tick_params(labelsize=plotDict['labelsize'])
-            if plotDict['nTicks'] is not None:
+            if norm == 'log':
+                tick_locator = ticker.LogLocator(numticks=plotDict['nTicks'])
+                cb.locator = tick_locator
+                cb.update_ticks()
+            if (plotDict['nTicks'] is not None) & (norm != 'log'):
                 tick_locator = ticker.MaxNLocator(nbins=plotDict['nTicks'])
                 cb.locator = tick_locator
                 cb.update_ticks()
@@ -670,7 +676,7 @@ class LambertSkyMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'basemap':{'projection':'nplaea', 'boundinglat':20,
                                            'lon_0':0., 'resolution':'l', 'celestial':True},
-                                'cbar':True, 'cmap':plt.cm.jet, 'levels':200,
+                                'cbar':True, 'cmap':perceptual_rainbow, 'levels':200,
                                 'cbarFormat':'%.2f','cbar_edge':True, 'zp':None,
                                 'normVal':None, 'percentileClip':False, 'colorMin':None,
                                 'colorMax':None, 'linewidths':0,

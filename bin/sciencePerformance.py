@@ -15,6 +15,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
+from mafContrib import PhaseGapMetric
 
 
 def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
@@ -95,6 +96,8 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     colors={'u':'cyan','g':'g','r':'y','i':'r','z':'m', 'y':'k'}
     filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
 
+    # Easy way to run through all fi
+
     # Set up a list of common summary stats
     commonSummary = [metrics.MeanMetric(), metrics.RobustRmsMetric(), metrics.MedianMetric(),
                      metrics.PercentileMetric(metricName='25th%ile', percentile=25),
@@ -108,6 +111,12 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     uniformitygroup = 'C: Uniformity'
     seeinggroup = 'D: Seeing distribution'
     transgroup = 'E: Transients'
+    sngroup = 'F: SN Ia'
+    altAzGroup = 'G: Alt Az'
+    rangeGroup = 'H: Range of Dates'
+    intergroup = 'I: Inter-Night'
+    phaseGroup = 'J: Max Phase Gap'
+    NEOGroup = 'K: NEO Detection'
 
     # Set up an object to track the metricBundles that we want to combine into merged plots.
     mergedHistDict = {}
@@ -188,7 +197,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     order += 1
 
     m2 = metrics.NRevisitsMetric(dT=dTmax)
-    plotDict={'xMin':0, 'xMax':1000}
+    plotDict={'xMin':0, 'xMax':1000, 'logScale':True}
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     extraStats2.extend(commonSummary)
@@ -202,7 +211,7 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     bundleList.append(bundle)
     order += 1
     m3 = metrics.NRevisitsMetric(dT=dTmax, normed=True)
-    plotDict={'xMin':0, 'xMax':1}
+    plotDict={'xMin':0, 'xMax':1, 'cbarFormat':'%.1f'}
     cutoff3 = 0.6
     extraStats3 = [metrics.FracAboveMetric(cutoff=cutoff3, scale=scale, metricName='Area (sq deg)')]
     extraStats3.extend(commonSummary)
@@ -301,21 +310,22 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
     ##
     # Calculate the time uniformity in each filter, for each year.
     order = 0
-    yearDates = range(0,int(round(365*runLength))+365,365)
+
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    for i in range(len(yearDates)-1):
-        for f in filters:
-            metadata = '%s band, after year %d' %(f, i+1) + slicermetadata
-            sqlconstraint = 'filter = "%s" and night<=%i' %(f, yearDates[i+1])
-            metric = metrics.UniformityMetric(metricName='Time Uniformity')
-            plotDict={'xMin':0, 'xMax':1}
-            caption = 'Deviation from uniformity in %s band, by the end of year %d of the survey. ' %(f, i+1)
-            caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
-            displayDict = {'group':uniformitygroup, 'subgroup':'At year %d' %(i+1),
-                           'displayOrder':filtorder[f], 'caption': caption}
-            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                                displayDict=displayDict, runName=runName, metadata=metadata)
-            bundleList.append(bundle)
+    plotFuncs = [plots.TwoDMap()]
+    metric = metrics.AccumulateUniformityMetric()
+    plotDict={'xlabel':'Night (days)'}
+    for f in filters:
+        sqlconstraint = 'filter = "%s"' %(f)
+        caption = 'Deviation from uniformity in %s band. Northern Healpixels are at the top of the image.' %(f)
+        caption += '(0=perfectly uniform, 1=perfectly nonuniform).'
+        displayDict = {'group':uniformitygroup, 'subgroup':'per night',
+                       'displayOrder':filtorder[f], 'caption': caption}
+        metadata = '%s band' %(f) + slicermetadata
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            displayDict=displayDict, runName=runName, metadata=metadata,
+                                            plotFuncs=plotFuncs)
+        bundleList.append(bundle)
 
     ##
     # Depth metrics.
@@ -328,7 +338,8 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
         plotDict={'xlabel':'Number of visits',
                   'xMin':nvisitsRange['all'][f][0],
-                  'xMax':nvisitsRange['all'][f][1], 'binsize':5}
+                  'xMax':nvisitsRange['all'][f][1], 'binsize':5,
+                  'logScale':True, 'nTicks':4, 'colorMin':1}
         summaryStats=allStats
         displayDict={'group':depthgroup, 'subgroup':'Nvisits', 'order':filtorder[f],
                      'caption':'Number of visits in filter %s, %s.' %(f, propCaption)}
@@ -358,11 +369,12 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
         mergedHistDict['coaddm5'].addBundle(bundle,plotDict=histMerge)
         bundleList.append(bundle)
         # Effective time.
-        metric = metrics.TeffMetric(metricName='Normalized Effective Time',normed=True)
+        metric = metrics.TeffMetric(metricName='Normalized Effective Time',normed=True,
+                                    fiducialDepth= benchmarkVals['singleVisitDepth'])
         plotDict={'xMin':0.1, 'xMax':1.1}
         summaryStats=allStats
         histMerge={'legendLoc':'upper right', 'color':colors[f], 'label':'%s' %f, 'binsize':0.02}
-        caption = '"Time Effective" in filter %s, calculated with fiducial depth %s. '%(f, benchmarkVals['singleVisitDepth'][f])
+        caption = '"Time Effective" in filter %s, calculated with fiducial single-visit depth of %s mag. '%(f, benchmarkVals['singleVisitDepth'][f])
         caption += 'Normalized by the fiducial time effective, if every observation was at the fiducial depth.'
         displayDict={'group':depthgroup, 'subgroup':'Time Eff.', 'order':filtorder[f], 'caption':caption}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -483,6 +495,175 @@ def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
                                                 summaryMetrics=summaryStats)
             mergedHistDict['fracAboveAirmass'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
+
+# SNe metrics from UK workshop.
+    peaks = {'uPeak':25.9, 'gPeak':23.6, 'rPeak':22.6, 'iPeak':22.7, 'zPeak':22.7,'yPeak':22.8}
+    peakTime = 15.
+    transDuration = peakTime+30. # Days
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.0,
+                                          transDuration=transDuration, peakTime=peakTime,
+                                          surveyDuration=runLength,
+                                          metricName='SNDetection',**peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are detected at any point in their light curve in any filter'
+    displayDict={'group':sngroup,  'subgroup':'Detected', 'caption':caption}
+    sqlconstraint = ''
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.0,
+                                          transDuration=transDuration, peakTime=peakTime,
+                                          surveyDuration=runLength,
+                                          nPrePeak=1, metricName='SNAlert', **peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are detected pre-peak in any filter'
+    displayDict={'group':sngroup,  'subgroup':'Detected on the rise', 'caption':caption}
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+    metric = metrics.TransientMetric(riseSlope= -2./peakTime, declineSlope=1.4/30.,
+                                     transDuration=transDuration, peakTime=peakTime,
+                                     surveyDuration=runLength, metricName='SNLots',
+                                     nFilters=3, nPrePeak=3, nPerLC=2, **peaks)
+    caption = 'Fraction of z=0.5 type Ia SN that are observed 6 times, 3 pre-peak, 3 post-peak, with observations in 3 filters'
+    displayDict={'group':sngroup,  'subgroup':'Well observed', 'caption':caption}
+    sqlconstraint = 'filter="r" or filter="g" or filter="i" or filter="z" '
+    plotDict={}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+
+    # Full range of dates:
+    metric = metrics.FullRangeMetric(col='expMJD')
+    plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+    caption='Time span of survey.'
+    sqlconstraint = ''
+    plotDict={}
+
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+    for filt in filters:
+        for propid in propids:
+            displayDict={'group':rangeGroup, 'subgroup':propids[propid] ,'caption':caption}
+            md = '%s, %s' % (filt, propids[propid])
+            sql = 'filter="%s" and propID=%i' % (filt,propid)
+            bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
+                                                metadata=md, plotFuncs=plotFuncs,
+                                                displayDict=displayDict, runName=runName)
+            bundleList.append(bundle)
+
+
+
+    # Alt az plots
+    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
+    metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
+    plotDict = {}
+    plotFuncs = [plots.LambertSkyMap()]
+    displayDict = {'group':altAzGroup, 'caption':'Alt Az pointing distribution'}
+    for filt in filters:
+        for propid in propids:
+            displayDict = {'group':altAzGroup, 'subgroup':propids[propid], 'caption':'Alt Az pointing distribution'}
+            md = '%s, %s' % (filt, propids[propid])
+            sql = 'filter="%s" and propID=%i' % (filt,propid)
+            bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
+                                                plotFuncs=plotFuncs, metadata=md,
+                                                displayDict=displayDict, runName=runName)
+            bundleList.append(bundle)
+
+    sql = ''
+    md='all observations'
+    displayDict = {'group':altAzGroup, 'subgroup':'All Observations',
+                   'caption':'Alt Az pointing distribution'}
+    bundle = metricBundles.MetricBundle(metric,slicer,sql, plotDict=plotDict,
+                                        plotFuncs=plotFuncs, metadata=md,
+                                        displayDict=displayDict, runName=runName)
+    bundleList.append(bundle)
+
+
+    # Median inter-night gap (each and all filters)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap')
+    displayDict = {'group':intergroup, 'subgroup': 'Median Gap','caption':'Median gap between days'}
+    sqls = ['filter = "%s"' % f for f in filters]
+    sqls.append('')
+    for sql in sqls:
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict, runName=runName)
+        bundleList.append(bundle)
+
+    # Max inter-night gap in r and all bands
+    dslicer = slicers.HealpixSlicer(nside=nside, lonCol='ditheredRA', latCol='ditheredDec')
+    metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', reduceFunc=np.max)
+    displayDict = {'group':intergroup, 'subgroup':'Max Gap', 'caption':'Max gap between nights'}
+    plotDict = {'percentileClip':95.}
+    for sql in sqls:
+        bundle = metricBundles.MetricBundle(metric, dslicer, sql, displayDict=displayDict,
+                                            plotDict=plotDict, runName=runName)
+        bundleList.append(bundle)
+
+
+    # largest phase gap for periods
+    periods = [0.1,1.0,10.,100.]
+    sqls = {'u':'filter = "u"', 'r':'filter="r"',
+            'g,r,i,z':'filter="g" or filter="r" or filter="i" or filter="z"',
+            'all':''}
+
+    for sql in sqls.keys():
+        for period in periods:
+            displayDict = {'group':phaseGroup,
+                           'subgroup':'period=%.2f days, filter=%s' % (period,sql),
+                           'caption':'Maximum phase gaps'}
+            metric = PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period,
+                                    metricName='PhaseGap, %.1f'%period)
+            bundle = metricBundles.MetricBundle(metric, slicer, sqls[sql],
+                                                displayDict=displayDict, runName=runName)
+            bundleList.append(bundle)
+
+
+
+
+    # NEO XY plots
+    slicer = slicers.UniSlicer()
+    metric = metrics.PassMetric(metricName='NEODistances')
+    stacker = stackers.NEODistStacker()
+    stacker2 = stackers.EclipticStacker()
+    for f in filters:
+        plotFunc = plots.NeoDistancePlotter(eclipMax=10., eclipMin=-10.)
+        displayDict = {'group': NEOGroup, 'subgroup':'xy',
+                       'caption':'Observations within 10 degrees of the ecliptic. Distance an H=22 NEO would be detected'}
+        plotDict={}
+        sqlconstraint = 'filter = "%s"' %(f)
+        bundle = metricBundles.MetricBundle(metric, slicer,
+                                            sqlconstraint, displayDict=displayDict,
+                                            stackerList=[stacker,stacker2],
+                                            plotDict=plotDict,
+                                            plotFuncs=[plotFunc])
+        bundleList.append(bundle)
+
+
+    # Solar elongation
+    sqls = ['filter = "%s"' % f for f in filters]
+    sqls.append('')
+    for sql in sqls:
+        plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+        displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
+                           'caption':'Median solar elongation in degrees'}
+        metric = metrics.MedianMetric('solarElong')
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
+        bundleList.append(bundle)
+
+        plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+        displayDict = {'group': NEOGroup, 'subgroup':'Solar Elongation',
+                           'caption':'Minimum solar elongation in degrees'}
+        metric = metrics.MinMetric('solarElong')
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        bundle = metricBundles.MetricBundle(metric, slicer,sql, displayDict=displayDict, plotFuncs=plotFuncs)
+        bundleList.append(bundle)
+
 
     return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict
 
