@@ -8,6 +8,39 @@ import lsst.sims.maf.metrics as metrics
 
 class TestCadenceMetrics(unittest.TestCase):
 
+    def testPhaseGapMetric(self):
+        """
+        Test the phase gap metric
+        """
+        data = np.zeros(10, dtype=zip(['expMJD'],[float]))
+        data['expMJD'] += np.arange(10)*.25
+
+        pgm = metrics.PhaseGapMetric(nPeriods=1, periodMin=0.5, periodMax=0.5)
+        metricVal = pgm.run(data)
+
+        meanGap = pgm.reduceMeanGap(metricVal)
+        medianGap = pgm.reduceMedianGap(metricVal)
+        worstPeriod = pgm.reduceWorstPeriod(metricVal)
+        largestGap = pgm.reduceLargestGap(metricVal)
+
+        assert(meanGap == 0.5)
+        assert(medianGap == 0.5)
+        assert(worstPeriod == 0.5)
+        assert(largestGap == 0.5)
+
+        pgm = metrics.PhaseGapMetric(nPeriods=2, periodMin=0.25, periodMax=0.5)
+        metricVal = pgm.run(data)
+
+        meanGap = pgm.reduceMeanGap(metricVal)
+        medianGap = pgm.reduceMedianGap(metricVal)
+        worstPeriod = pgm.reduceWorstPeriod(metricVal)
+        largestGap = pgm.reduceLargestGap(metricVal)
+
+        assert(meanGap == 0.75)
+        assert(medianGap == 0.75)
+        assert(worstPeriod == 0.25)
+        assert(largestGap == 1.)
+
     def testSNMetric(self):
         """
         Test the SN Cadence Metric.
