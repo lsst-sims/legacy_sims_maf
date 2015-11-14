@@ -1,0 +1,94 @@
+import numpy as np
+from lsst.sims.utils import ObservationMetaData
+import healpy as hp
+from lsst.sims.catalogs.generation.db import CatalogDBObject
+from lsst.sims.catUtils.exampleCatalogDefinitions import RefCatalogStarBase
+from lsst.sims.catUtils.exampleCatalogDefinitions import RefCatalogGalaxyBase, PhoSimCatalogPoint,\
+                                                         PhoSimCatalogZPoint, PhoSimCatalogSersic2D
+import lsst.sims.catUtils.baseCatalogModels as bcm
+import sys
+import glob
+
+# Use the catsim framework to loop over a healpy map and generate a stellar density map
+
+# Connect to fatboy with: ssh -L 51433:fatboy-private.phys.washington.edu:1433 gateway.astro.washington.edu
+
+# Set up healpy map and ra,dec centers
+nside = 64
+starDensity = np.zeros(hp.nside2npix(nside), dtype=float)
+lat, ra = hp.pix2ang(nside,np.arange(0,hp.nside2npix(nside)))
+dec = np.pi/2.-lat
+
+# square root of pixel area.
+hpsizeDeg = hp.nside2resol(nside, arcmin=True)/60.
+
+# Limit things to a 1 sq degree area
+hpsizeDeg = np.min([1., hpsizeDeg] )
+
+# options include galaxyBase, cepheidstars, wdstars, rrlystars, msstars, bhbstars, allstars, and more...
+dbobj = CatalogDBObject.from_objid('allstars')
+
+# Faint limit
+magLimits = [15,20,25,28,30]
+densityMaps = {}
+indxMin = 0
+
+for limit in magLimits:
+    savefile = glob.glob('starDensity_nside_%i_rmagLimit_%i.npz' % (nside, limit))
+    if len(savefile) > 0:
+        starmap = np.load(savefile[0])
+        densityMaps[limit] = starmap['starMap'].copy()
+        indxMin = np.min([0,np.where(densityMaps[limit] != 0.)[0]])
+        print 'restored %s, starting at index %i' % (savefile, indxMin)
+    else:
+        densityMaps[limit] = starDensity.copy()
+
+print ''
+# Look at a cirular area the same area as the healpix it's centered on.
+boundLength = hpsizeDeg/np.pi**0.5
+
+blockArea = hpsizeDeg**2 # sq deg
+
+checksize = 500
+printsize = 10
+npix=float(hp.nside2npix(nside))
+
+for i in np.arange(indxMin,npix):
+    lastCP = ''
+    # wonder what the units of boundLength are...degrees! And it's a radius
+    obs_metadata = ObservationMetaData(boundType='circle',
+                                       unrefractedRA=np.degrees(ra[i]),
+                                       unrefractedDec=np.degrees(dec[i]),
+                                       boundLength=boundLength)
+    t = dbobj.getCatalog('ref_catalog_star', obs_metadata=obs_metadata)
+
+    # let's see if I can just querry
+    chunks = t.db_obj.query_columns(colnames=['rmag'], obs_metadata=obs_metadata,
+                                    constraint=None, chunk_size=10000)
+
+    # I could think of setting the chunksize to something really large, then only doing one chunk?
+    # Or maybe setting up a way to break out of the loop if everything gets really dense?
+    for chunk in chunks:
+        for key in densityMaps.keys():
+            good = np.where(chunk['rmag'] < key)[0]
+            densityMaps[key][i] += good.size/blockArea
+    # if there were no stars, set to -1
+    for key in densityMaps.keys():
+        if densityMaps[key][i] == 0:
+            densityMaps[key][i] = -1
+
+    # Checkpoint
+    if (i % checksize == 0) & (i != 0):
+        for key in densityMaps.keys():
+            np.savez('starDensity_nside_%i_rmagLimit_%i.npz' % (nside, key) , starMap=densityMaps[key])
+        lastCP = 'Checkpointed at i=%i of %i' % (i,npix)
+    if i % printsize == 0:
+        sys.stdout.write('\r')
+        perComplete = float(i)/npix*100
+        sys.stdout.write(r'%.2f%% complete. ' %(perComplete) + lastCP)
+        sys.stdout.flush()
+
+
+
+for key in densityMaps.keys():
+    np.savez('starDensity_nside_%i_rmagLimit_%i.npz' % (nside, key) , starMap=densityMaps[key])
