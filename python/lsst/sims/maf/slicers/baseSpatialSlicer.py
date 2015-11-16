@@ -12,7 +12,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.coordUtils import _observedFromICRS, _chipNameFromRaDec
+from lsst.sims.coordUtils import _chipNameFromRaDec
 from lsst.sims.utils import ObservationMetaData
 
 from .baseSlicer import BaseSlicer
@@ -127,16 +127,13 @@ class BaseSpatialSlicer(BaseSlicer):
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
-                obs_metadata = ObservationMetaData(unrefractedRA=np.degrees(ra),
-                                                   unrefractedDec=np.degrees(dec),
+                obs_metadata = ObservationMetaData(pointingRA=np.degrees(ra),
+                                                   pointingDec=np.degrees(dec),
                                                    rotSkyPos=np.degrees(rotSkyPos),
                                                    mjd=mjd)
-                # Correct ra,dec for refraction (because this is automatically done within _chipNameFromRaDec for the boresight)
-                raCorr, decCorr = _observedFromICRS(self.slicePoints['ra'][hpIndices],
-                                                   self.slicePoints['dec'][hpIndices],
-                                                   obs_metadata=obs_metadata,
-                                                   epoch=self.epoch)
-                chipNames = _chipNameFromRaDec(raCorr,decCorr,
+
+                chipNames = _chipNameFromRaDec(self.slicePoints['ra'][hpIndices],
+                                               self.slicePoints['dec'][hpIndices],
                                                epoch=self.epoch,
                                                camera=self.camera, obs_metadata=obs_metadata)
                 # If we are using only a subset of chips
