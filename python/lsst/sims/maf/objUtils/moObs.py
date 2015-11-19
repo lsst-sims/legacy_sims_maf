@@ -11,7 +11,8 @@ import lsst.sims.photUtils.Sed as Sed
 
 from lsst.sims.utils import haversine, ObservationMetaData
 from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.coordUtils import _observedFromICRS, _chipNameFromRaDec # Need master of sims_coordUtils
+from lsst.sims.utils import _observedFromICRS
+from lsst.sims.coordUtils import _chipNameFromRaDec
 
 from .moOrbits import MoOrbits
 
@@ -211,14 +212,14 @@ class MoObs(MoOrbits):
         idxObsRough = np.where(sep<self.cameraFov)[0]
         for idx in idxObsRough:
             mjd = simdata[idx]['expMJD']
-            obs_metadata = ObservationMetaData(unrefractedRA=np.degrees(simdata[idx][simdataRaCol]),
-                                               unrefractedDec=np.degrees(simdata[idx][simdataDecCol]),
+            obs_metadata = ObservationMetaData(pointingRA=np.degrees(simdata[idx][simdataRaCol]),
+                                               pointingDec=np.degrees(simdata[idx][simdataDecCol]),
                                                rotSkyPos=np.degrees(simdata[idx]['rotSkyPos']),
                                                mjd=simdata[idx]['expMJD'])
             raObj = np.radians(np.array([interpfuncs['ra'](simdata[idx]['expMJD'])]))
             decObj = np.radians(np.array([interpfuncs['dec'](simdata[idx]['expMJD'])]))
-            raObj, decObj = _observedFromICRS(raObj, decObj, obs_metadata=obs_metadata, epoch=self.epoch)
-            chipNames = _chipNameFromRaDec(ra=raObj,dec=decObj, epoch=self.epoch, camera=self.camera, obs_metadata=obs_metadata)
+            chipNames = _chipNameFromRaDec(ra=raObj,dec=decObj, epoch=self.epoch, 
+                                           camera=self.camera, obs_metadata=obs_metadata)
             if chipNames != [None]:
                 idxObs.append(idx)
         idxObs = np.array(idxObs)
