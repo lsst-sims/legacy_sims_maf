@@ -14,4 +14,6 @@ from .slewMetrics import *
 from .transientMetrics import *
 from .chipVendorMetric import *
 from .vectorMetrics import *
-from phaseGapMetric import *
+from .phaseGapMetric import *
+from .moMetrics import *
+from .moSummaryMetrics import *
