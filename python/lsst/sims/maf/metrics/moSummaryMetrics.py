@@ -55,7 +55,11 @@ class MO_CompletenessMetric(BaseMoMetric):
     """
     def __init__(self, requiredChances=1, nbins=20, minHrange=1.0,
                  metricName='Completeness', **kwargs):
+<<<<<<< 15c44fd7007ba8bfede76629a5ab693ab60a131f
         super(MO_CompletenessMetric, self).__init__(metricName=metricName, **kwargs)
+=======
+        super(CompletenessMetric, self).__init__(metricName=metricName, **kwargs)
+>>>>>>> Added moving object metrics
         self.units = '@ H'
         self.requiredChances = requiredChances
         # If H is not a cloned distribution, then we need to specify how to bin these values.
@@ -96,9 +100,15 @@ class MO_CumulativeCompletenessMetric(BaseMoMetric):
     completeness estimate (relative to the entire population).
     Require at least 'requiredChances' to count an object as "found".
     """
+<<<<<<< 15c44fd7007ba8bfede76629a5ab693ab60a131f
     def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, Hindex=0.3,
                  metricName='CumulativeCompleteness', **kwargs):
         super(MO_CumulativeCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
+=======
+    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, Hindex=0.3, 
+                 metricName='CumulativeCompleteness', **kwargs):
+        super(CumulativeCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
+>>>>>>> Added moving object metrics
         self.units = '<= H'
         self.requiredChances = requiredChances
         # If H is not a cloned distribution, then we need to specify how to bin these values.
