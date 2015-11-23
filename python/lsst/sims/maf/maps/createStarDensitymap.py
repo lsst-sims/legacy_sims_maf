@@ -15,7 +15,7 @@ import glob
 
 # Set up healpy map and ra,dec centers
 nside = 64
-bins = np.arange(20.,29.5,.5)
+bins = np.arange(20.,28.2,.2)
 starDensity = np.zeros((hp.nside2npix(nside),np.size(bins)-1), dtype=float)
 lat, ra = hp.pix2ang(nside,np.arange(0,hp.nside2npix(nside)))
 dec = np.pi/2.-lat
@@ -43,6 +43,13 @@ indxMin = 0
 #        print 'restored %s, starting at index %i' % (savefile, indxMin)
 #    else:
 #        densityMaps[limit] = starDensity.copy()
+
+restoreFile = glob.glob('starDensity_nside_%i.npz' % (nside))
+if len(restoreFile) > 0:
+    data = np.load(restoreFile[0])
+    starDensity = data['starDensity'].copy()
+    indxMin = data['icheck']
+
 
 print ''
 # Look at a cirular area the same area as the healpix it's centered on.
@@ -85,7 +92,7 @@ for i in np.arange(indxMin,npix):
 
     # Checkpoint
     if (i % checksize == 0) & (i != 0):
-        np.savez('starDensity_nside_%i_%i.npz' % (nside) , starDensity=starDensity)
+        np.savez('starDensity_nside_%i.npz' % (nside) , starDensity=starDensity, bins=bins, icheck=i)
         lastCP = 'Checkpointed at i=%i of %i' % (i,npix)
     if i % printsize == 0:
         sys.stdout.write('\r')
@@ -94,6 +101,4 @@ for i in np.arange(indxMin,npix):
         sys.stdout.flush()
 
 
-
-for key in densityMaps.keys():
-    np.savez('starDensity_nside_%i_%i.npz' % (nside) , starDensity=starDensity)
+np.savez('starDensity_nside_%i.npz' % (nside) , starDensity=starDensity, bins=bins)
