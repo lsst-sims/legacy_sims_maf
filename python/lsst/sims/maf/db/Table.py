@@ -65,9 +65,9 @@ class Table(CatalogDBObject):
         #matter since the entries are almost identical (except for proposalId).
         #Added double-quotes to handle column names that start with a number.
         if doGroupBy:
-            query = self.session.query(aggregate(self.table.c[idColName]).label(idLabel))
+            query = self.connection.session.query(aggregate(self.table.c[idColName]).label(idLabel))
         else:
-            query = self.session.query(self.table.c[idColName].label(idLabel))
+            query = self.connection.session.query(self.table.c[idColName].label(idLabel))
         for col, val in zip(colnames, vals):
             if val is idColName:
                 continue
