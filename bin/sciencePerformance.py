@@ -27,6 +27,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # List to hold everything we're going to make
     bundleList = []
 
+    # List to hold metrics that shouldn't be saved
+    noSaveBundleList = []
+
     # Connect to the databse
     opsimdb = utils.connectOpsimDb(dbFile)
     if runName is None:
@@ -312,8 +315,10 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     plotFuncs = [plots.TwoDMap()]
-    metric = metrics.AccumulateUniformityMetric()
-    plotDict={'xlabel':'Night (days)'}
+    step = 0.5
+    bins = np.arange(0,365.25*10+40,40)-step
+    metric = metrics.AccumulateUniformityMetric(bins=bins)
+    plotDict={'xlabel':'Night (days)', 'xextent':[bins.min()+step,bins.max()+step], 'cbarTitle':'Uniformity'}
     for f in filters:
         sqlconstraint = 'filter = "%s"' %(f)
         caption = 'Deviation from uniformity in %s band. Northern Healpixels are at the top of the image.' %(f)
@@ -324,7 +329,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, runName=runName, metadata=metadata,
                                             plotFuncs=plotFuncs)
-        bundleList.append(bundle)
+        noSaveBundleList.append(bundle)
 
     ##
     # Depth metrics.
@@ -640,7 +645,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                             stackerList=[stacker,stacker2],
                                             plotDict=plotDict,
                                             plotFuncs=[plotFunc])
-        bundleList.append(bundle)
+        noSaveBundleList.append(bundle)
 
 
     # Solar elongation
@@ -664,7 +669,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         bundleList.append(bundle)
 
 
-    return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict
+    return metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict, metricBundles.makeBundlesDictFromList(noSaveBundleList)
 
 
 if __name__=="__main__":
@@ -683,19 +688,27 @@ if __name__=="__main__":
                         help="Can be 'design' or 'requested'")
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
                         default=False, help="Reload the metric values from disk and re-plot them.")
+    parser.add_argument('--skipNoSave', dest='runNoSave', action='store_false', default=True,
+                        help="Skip the metrics that do not get saved as npz files.")
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
     # Build metric bundles.
-    bundleDict, mergedHistDict = makeBundleList(args.dbFile, nside=args.nside,
-                                                lonCol=args.lonCol, latCol=args.latCol,
-                                                benchmark=args.benchmark)
+    bundleDict, mergedHistDict, noSaveBundleDict = makeBundleList(args.dbFile, nside=args.nside,
+                                                                  lonCol=args.lonCol, latCol=args.latCol,
+                                                                  benchmark=args.benchmark)
 
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
     # Connect to opsimdb.
     opsdb = utils.connectOpsimDb(args.dbFile)
+
+    if args.runNoSave:
+        group = metricBundles.MetricBundleGroup(noSaveBundleDict, opsdb, saveEarly=False,
+                                                outDir=args.outDir, resultsDb=resultsDb)
+        group.runAll(clearMemory=True, plotNow=True)
+        del group, noSaveBundleDict
 
     # Set up metricBundleGroup.
     group = metricBundles.MetricBundleGroup(bundleDict, opsdb,

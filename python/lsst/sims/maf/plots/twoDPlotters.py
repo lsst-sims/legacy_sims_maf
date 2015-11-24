@@ -58,9 +58,12 @@ class TwoDMap(BasePlotter):
         ax = figure.add_subplot(111)
         yextent = slicer.spatialExtent
         xextent = plotDict['xextent']
+        extent = []
+        extent.extend(xextent)
+        extent.extend(yextent)
         image = ax.imshow(metricValue, vmin=plotDict['colorMin'], vmax=plotDict['colorMax'],
                           aspect=plotDict['aspect'], cmap=plotDict['cmap'], norm=norm,
-                          extent=xextent.extend(yextent),
+                          extent=extent,
                           interpolation='none',origin=plotDict['origin'])
         cb =  plt.colorbar(image)
 
