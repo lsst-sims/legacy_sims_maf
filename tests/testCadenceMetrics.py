@@ -70,7 +70,7 @@ class TestCadenceMetrics(unittest.TestCase):
         data['expMJD'] = np.arange(10)
         slicePoint = {'sid':0}
         # so here we have 4 images w/o good previous templates
-        metric = metrics.TemplateExistsMetric()
+        metric = metrics.TemplateExistsMetric(seeingCol='finSeeing')
         result = metric.run(data, slicePoint)
         assert(result == 6./10.)
 
