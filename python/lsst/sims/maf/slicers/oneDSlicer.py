@@ -89,6 +89,7 @@ class OneDSlicer(BaseSlicer):
                 self.bins = np.arange(self.binMin, self.binMax+self.binsize/2.0, self.binsize, 'float')
         # Set nbins to be one less than # of bins because last binvalue is RH edge only
         self.nslice = len(self.bins) - 1
+        self.shape = self.nslice
         # Set slicePoint metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
         self.slicePoints['bins'] = self.bins

@@ -17,7 +17,7 @@ import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
 
 
-def makeBundleList(dbFile, runName=None, nside=128, benchmark='design',
+def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    lonCol='fieldRA', latCol='fieldDec'):
     """
     make a list of metricBundle objects to look at the scientific performance
@@ -673,8 +673,8 @@ if __name__=="__main__":
     parser.add_argument('dbFile', type=str, default=None,help="full file path to the opsim sqlite file")
 
     parser.add_argument("--outDir",type=str, default='./Out', help='Output directory for MAF outputs. Default "Out"')
-    parser.add_argument("--nside", type=int, default=128,
-                        help="Resolution to run Healpix grid at (must be 2^x). Default 128.")
+    parser.add_argument("--nside", type=int, default=64,
+                        help="Resolution to run Healpix grid at (must be 2^x). Default 64.")
     parser.add_argument("--lonCol", type=str, default='fieldRA',
                         help="Column to use for RA values (can be a stacker dither column). Default=fieldRA.")
     parser.add_argument("--latCol", type=str, default='fieldDec',
