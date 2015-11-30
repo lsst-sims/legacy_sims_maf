@@ -4,7 +4,9 @@ from scipy.interpolate import interp1d
 __all__ = ['StarDensityMetric']
 
 class StarDensityMetric(BaseMetric):
-    """Just return the stellar density at every point"""
+    """Interpolate the stellar luminosity function to return the number of
+    stars per square arcsecond brighter than the rmagLimit. Note that the
+    map is built from CatSim stars in the range 20 < r < 28."""
 
     def __init__(self, rmagLimit=25., units='stars/sq arcsec', maps=['StellarDensityMap'], **kwargs):
 
