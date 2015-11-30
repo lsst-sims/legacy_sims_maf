@@ -276,6 +276,47 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
+    metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 20',rmag=20)
+    plotDict={}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':
+                 'Parallax factor coverage for an r=20 star (0 is bad, 0.5-1 is good).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+    order += 1
+    metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 24',rmag=24)
+    plotDict={}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':
+                 'Parallax factor coverage for an r=24 star (0 is bad, 0.5-1 is good).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+    order += 1
+    metric = metrics.ParallaxHADegenMetric(metricName='Parallax-DCR degeneracy 20',rmag=20)
+    plotDict={}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':
+                 'Correlation between parallax offset magnitude and hour angle an r=20 star (0 is good, near -1 or 1 is bad).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+    order += 1
+    metric = metrics.ParallaxHADegenMetric(metricName='Parallax-DCR degeneracy 24',rmag=24)
+    plotDict={}
+    displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
+                 'caption':
+                 'Correlation between parallax offset magnitude and hour angle an r=24 star (0 is good, near -1 or 1 is bad).'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, summaryMetrics=summaryStats,
+                                        runName=runName, metadata=metadata)
+    bundleList.append(bundle)
+    order += 1
+
     metric=metrics.ProperMotionMetric(metricName='Proper Motion 20', rmag=20)
     summaryStats=allStats
     plotDict={'xMin':0, 'xMax':3}
