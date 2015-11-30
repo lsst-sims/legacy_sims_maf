@@ -10,12 +10,12 @@ import lsst.sims.maf.maps as maps
 
 
 def makeDataValues(size=100, min=0., max=1., random=True):
-    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
+    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
-    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
+    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     ids = np.arange(size)
@@ -23,8 +23,15 @@ def makeDataValues(size=100, min=0., max=1., random=True):
                           dtype=[('fieldRA', 'float'),
                                  ('fieldDec', 'float'), ('fieldID', 'int')])
     return datavalues
- 
 
+def makeFieldData():
+    names=['fieldID', 'fieldRA','fieldDec']
+    types = [int, float, float]
+    fieldData = np.zeros(100, dtype=zip(names,types))
+    fieldData['fieldID'] = np.arange(100)
+    fieldData['fieldRA'] = np.random.rand(100)
+    fieldData['fieldDec'] = np.random.rand(100)
+    return fieldData
 
 class TestMaps(unittest.TestCase):
 
@@ -33,7 +40,7 @@ class TestMaps(unittest.TestCase):
         mapPath = os.environ['SIMS_DUSTMAPS_DIR']
 
         if os.path.isfile(os.path.join(mapPath, 'DustMaps/dust_nside_128.npz')):
-        
+
             data = makeDataValues()
             dustmap = maps.DustMap()
 
@@ -42,12 +49,7 @@ class TestMaps(unittest.TestCase):
             result1 = dustmap.run(slicer1.slicePoints)
             assert('ebv' in result1.keys())
 
-            names=['fieldID', 'fieldRA','fieldDec']
-            types = [int, float, float]
-            fieldData = np.zeros(100, dtype=zip(names,types))
-            fieldData['fieldID'] = np.arange(100)
-            fieldData['fieldRA'] = np.random.rand(100)
-            fieldData['fieldDec'] = np.random.rand(100)
+            fieldData = makeFieldData()
 
             slicer2 = slicers.OpsimFieldSlicer()
             slicer2.setupSlicer(data, fieldData)
@@ -66,7 +68,26 @@ class TestMaps(unittest.TestCase):
                 self.assertTrue("nside" in str(w[-1].message))
         else:
             print 'Did not find dustmaps, not running testMaps.py'
-        
+
+    def testStarMap(self):
+        data = makeDataValues()
+        starmap = maps.StellarDensityMap()
+        slicer1 = slicers.HealpixSlicer(nside=64)
+        slicer1.setupSlicer(data)
+        result1 = starmap.run(slicer1.slicePoints)
+        assert('starMapBins' in result1.keys())
+        assert('starLumFunc' in result1.keys())
+        assert(np.max(result1['starLumFunc'] > 0))
+
+        fieldData = makeFieldData()
+
+        slicer2 = slicers.OpsimFieldSlicer()
+        slicer2.setupSlicer(data, fieldData)
+        result2 = starmap.run(slicer2.slicePoints)
+        assert('starMapBins' in result2.keys())
+        assert('starLumFunc' in result2.keys())
+        assert(np.max(result2['starLumFunc'] > 0))
+
 
 if __name__ == '__main__':
 

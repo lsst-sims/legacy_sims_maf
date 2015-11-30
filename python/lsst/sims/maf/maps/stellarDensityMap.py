@@ -2,31 +2,41 @@ from lsst.sims.maf.maps import BaseMap
 import numpy as np
 from lsst.utils import getPackageDir
 import os
+import healpy as hp
+from lsst.sims.maf.utils import radec2pix
 
 __all__ = ['StellarDensityMap']
 
 class StellarDensityMap(BaseMap):
     """
-    Return the stellar density for each slicepoint. Units of stars per sq degree
+    Return the cumulative stellar luminosity function for each slicepoint. Units of stars per sq degree.
+    Uses a healpix map of nside=64. Uses the nearest healpix point for other ra,dec values.
     """
-    def __init__(self, nside=64, rmag=25, keyname='stellarDensity'):
+    def __init__(self, keyname='starLumFunc'):
         """
-        rmag: The r-band magnitude limit to return the stellar density at
+
         """
-        self.keyNames = [keyname]
-        self.nside = nside
-        self.rmag = rmag
+        self.keyNames = [keyname, 'starMapBins']
         self.mapDir = os.path.join(getPackageDir('sims_dustmaps'),'StarMaps')
 
+
+    def _readMap(self):
+        filename = 'starDensity_nside_64.npz'
+        starMap = np.load(os.path.join(self.mapDir,filename))
+        self.starMap = starMap['starDensity'].copy()
+        self.starMapBins = starMap['bins'].copy()
+        self.starmapNside = hp.npix2nside(np.size(self.starMap[:,0]))
+
     def run(self, slicePoints):
+        self._readMap()
+
         if 'nside' in slicePoints.keys():
-            if slicePoints['nside'] == 64:
-                mapfile = os.path.join(self.mapDir, 'starDensity_nside_64_rmagLimit_%i.npz' % self.rmag)
-                data = np.load(mapfile)
-                starMap = data['starMap'].copy()
-                slicePoints[self.keyNames[0]] = starMap
+            if slicePoints['nside'] == self.starmapNside:
+                slicePoints['starLumFunc'] = self.starMap
         else:
             # Compute the healpix for each slicepoint on the nside=64 grid
-            pass
+            indx = radec2pix(self.starmapNside, slicePoints['ra'], slicePoints['dec'])
+            slicePoints['starLumFunc'] = self.starMap[indx,:]
 
+        slicePoints['starMapBins'] = self.starMapBins
         return slicePoints
