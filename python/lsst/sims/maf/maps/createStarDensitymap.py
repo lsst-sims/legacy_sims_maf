@@ -21,6 +21,8 @@ starDensity = np.zeros((hp.nside2npix(nside),np.size(bins)-1), dtype=float)
 lat, ra = hp.pix2ang(nside,np.arange(0,hp.nside2npix(nside)))
 dec = np.pi/2.-lat
 
+filterName = 'r'
+
 # square root of pixel area.
 hpsizeDeg = hp.nside2resol(nside, arcmin=True)/60.
 
@@ -32,7 +34,7 @@ dbobj = CatalogDBObject.from_objid('allstars')
 
 indxMin = 0
 
-restoreFile = glob.glob('starDensity_nside_%i.npz' % (nside))
+restoreFile = glob.glob('starDensity_%s_nside_%i.npz' % (filterName,nside))
 if len(restoreFile) > 0:
     data = np.load(restoreFile[0])
     starDensity = data['starDensity'].copy()
@@ -53,20 +55,20 @@ for i in np.arange(indxMin,npix):
     lastCP = ''
     # wonder what the units of boundLength are...degrees! And it's a radius
     obs_metadata = ObservationMetaData(boundType='circle',
-                                       unrefractedRA=np.degrees(ra[i]),
-                                       unrefractedDec=np.degrees(dec[i]),
-                                       boundLength=boundLength)
+                                       pointingRA=np.degrees(ra[i]),
+                                       pointingDec=np.degrees(dec[i]),
+                                       boundLength=boundLength, mjd=5700)
     t = dbobj.getCatalog('ref_catalog_star', obs_metadata=obs_metadata)
 
     # let's see if I can just querry
-    chunks = t.db_obj.query_columns(colnames=['rmag'], obs_metadata=obs_metadata,
+    chunks = t.db_obj.query_columns(colnames=['%smag' % filterName], obs_metadata=obs_metadata,
                                     constraint=None, chunk_size=10000)
 
     # I could think of setting the chunksize to something really large, then only doing one chunk?
     # Or maybe setting up a way to break out of the loop if everything gets really dense?
     tempHist = np.zeros(np.size(bins)-1, dtype=float)
     for chunk in chunks:
-        chunkHist,bins = np.histogram(chunk['rmag'],bins)
+        chunkHist,bins = np.histogram(chunk['%smag'] % filterName,bins)
         tempHist += chunkHist
 
     starDensity[i] = np.add.accumulate(tempHist)/blockArea
@@ -80,7 +82,8 @@ for i in np.arange(indxMin,npix):
 
     # Checkpoint
     if (i % checksize == 0) & (i != 0):
-        np.savez('starDensity_nside_%i.npz' % (nside) , starDensity=starDensity, bins=bins, icheck=i)
+        np.savez('starDensity_%s_nside_%i.npz' % (filterName,nside),
+                 starDensity=starDensity, bins=bins, icheck=i)
         lastCP = 'Checkpointed at i=%i of %i' % (i,npix)
     if i % printsize == 0:
         sys.stdout.write('\r')
@@ -89,4 +92,4 @@ for i in np.arange(indxMin,npix):
         sys.stdout.flush()
 
 
-np.savez('starDensity_nside_%i.npz' % (nside) , starDensity=starDensity, bins=bins)
+np.savez('starDensity_%s_nside_%i.npz' % (filterName,nside), starDensity=starDensity, bins=bins)
