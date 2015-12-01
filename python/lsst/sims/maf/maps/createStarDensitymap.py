@@ -15,7 +15,8 @@ import glob
 
 # Set up healpy map and ra,dec centers
 nside = 64
-bins = np.arange(20.,28.2,.2)
+# set the min to 15 since we saturate there. CatSim max is 28
+bins = np.arange(15.,28.2,.2)
 starDensity = np.zeros((hp.nside2npix(nside),np.size(bins)-1), dtype=float)
 lat, ra = hp.pix2ang(nside,np.arange(0,hp.nside2npix(nside)))
 dec = np.pi/2.-lat
@@ -29,20 +30,7 @@ hpsizeDeg = np.min([1., hpsizeDeg] )
 # options include galaxyBase, cepheidstars, wdstars, rrlystars, msstars, bhbstars, allstars, and more...
 dbobj = CatalogDBObject.from_objid('allstars')
 
-# Faint limit
-#magLimits = [15,20,25,28,30]
-#densityMaps = {}
 indxMin = 0
-
-#for limit in magLimits:
-#    savefile = glob.glob('starDensity_nside_%i_rmagLimit_%i.npz' % (nside, limit))
-#    if len(savefile) > 0:
-#        starmap = np.load(savefile[0])
-#        densityMaps[limit] = starmap['starMap'].copy()
-#        indxMin = np.min([0,np.where(densityMaps[limit] != 0.)[0]])
-#        print 'restored %s, starting at index %i' % (savefile, indxMin)
-#    else:
-#        densityMaps[limit] = starDensity.copy()
 
 restoreFile = glob.glob('starDensity_nside_%i.npz' % (nside))
 if len(restoreFile) > 0:
