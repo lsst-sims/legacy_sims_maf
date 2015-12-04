@@ -15,7 +15,7 @@ import glob
 
 # Set up healpy map and ra,dec centers
 nside = 64
-#nside = 8
+#nside = 16
 # set the min to 15 since we saturate there. CatSim max is 28
 bins = np.arange(15.,28.2,.2)
 starDensity = np.zeros((hp.nside2npix(nside),np.size(bins)-1), dtype=float)
@@ -62,10 +62,18 @@ chunk_size=10000
 for i in np.arange(indxMin,npix):
     lastCP = ''
     # wonder what the units of boundLength are...degrees! And it's a radius
+    # The newer interface:
+    #obs_metadata = ObservationMetaData(boundType='circle',
+    #                                   pointingRA=np.degrees(ra[i]),
+    #                                   pointingDec=np.degrees(dec[i]),
+    #                                   boundLength=boundLength, mjd=5700)
+    # The old one that seems to work better
     obs_metadata = ObservationMetaData(boundType='circle',
-                                       pointingRA=np.degrees(ra[i]),
-                                       pointingDec=np.degrees(dec[i]),
-                                       boundLength=boundLength, mjd=5700)
+                                       unrefractedRA=np.degrees(ra[i]),
+                                       unrefractedDec=np.degrees(dec[i]),
+                                       boundLength=boundLength)
+
+
     t = dbobj.getCatalog('ref_catalog_star', obs_metadata=obs_metadata)
 
     # let's see if I can just querry
