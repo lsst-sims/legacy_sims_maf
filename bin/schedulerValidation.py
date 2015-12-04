@@ -577,7 +577,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                        'color':colors[f], 'label':'%s'%f}
             displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                          'caption':'Histogram of the seeing in %s band, %s. Seeing is %s column.' %(f, propCaption, seeingCol)}
-            slicer = slicers.OneDSlicer(sliceColName=seeingColName, binsize=0.02)
+            slicer = slicers.OneDSlicer(sliceColName=seeingCol, binsize=0.02)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop+'Seeing'].addBundle(bundle, plotDict=histMerge)
