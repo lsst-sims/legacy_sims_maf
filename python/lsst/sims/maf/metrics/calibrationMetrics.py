@@ -12,7 +12,7 @@ class ParallaxMetric(BaseMetric):
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', units = 'mas',
-                 filterCol='filter', seeingCol='finSeeing',rmag=20.,
+                 filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False,**kwargs):
 
@@ -21,7 +21,7 @@ class ParallaxMetric(BaseMetric):
         m5Col = column name for inidivual visit m5
         mjdCol = column name for exposure time dates
         filterCol = column name for filter
-        seeingCol = column name for seeing (assumed FWHM)
+        seeingCol = column name for seeing/FWHMgeom
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         SedTemplate = string of 'flat' or 'O','B','A','F','G','K','M'.
         atm_err = centroiding error due to atmosphere in arcsec
@@ -90,7 +90,7 @@ class ProperMotionMetric(BaseMetric):
     """
     def __init__(self, metricName='properMotion',
                  m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
-                 filterCol='filter', seeingCol='finSeeing',  rmag=20.,
+                 filterCol='filter', seeingCol='FWHMgeom',  rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):

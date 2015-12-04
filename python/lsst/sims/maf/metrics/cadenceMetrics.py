@@ -158,7 +158,7 @@ class TemplateExistsMetric(BaseMetric):
     """
     Calculate the fraction of images with a previous template image of desired quality.
     """
-    def __init__(self, seeingCol = 'finSeeing', expMJDCol='expMJD',
+    def __init__(self, seeingCol = 'FWHMgeom', expMJDCol='expMJD',
                  metricName='TemplateExistsMetric', **kwargs):
         """
         seeingCol = column with final seeing value (arcsec)

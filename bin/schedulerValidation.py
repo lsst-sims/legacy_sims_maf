@@ -17,7 +17,13 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
 import matplotlib.cm as cm
 
-def makeBundleList(dbFile, runName=None, benchmark='design'):
+def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'):
+
+    # The 'seeing' argument is a bit of a hack to accomodate the switchover from old opsim (finSeeing) to new opsim (FWHMeff).
+    if seeingCol == 'FWHMeff':
+        benchmarkSeeing = 'FWHMeff'
+    else:
+        benchmarkSeeing = 'seeing'
 
     # List to hold everything we're going to make
     bundleList = []
@@ -301,14 +307,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 mergedHistDict[prop+'notDDskyMedianskyBright'].addBundle(bundle,plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median delivered seeing.
-                metric = metrics.MedianMetric(col='finSeeing')
-                plotDict={'normVal':benchmarkVals['seeing'][f],
-                          'xlabel':'Median Seeing/(Expected seeing %.2f)'%(benchmarkVals['seeing'][f]),
+                metric = metrics.MedianMetric(col=seeingCol)
+                plotDict={'normVal':benchmarkVals[benchmarkSeeing][f],
+                          'xlabel':'Median Seeing/(Expected Seeing %.2f)' %(benchmarkVals[benchmarkSeeing][f]),
                           'cmap':cm.RdBu_r, 'colorMin':0.475, 'colorMax':1.525}
                 displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
-                             'Median Seeing in filter %s divided by expected value (%.2f), %s.'
-                             %(f, benchmarkVals['seeing'][f], propCaption)}
+                             'Median Seeing in filter %s divided by expected value (%.2f), %s. Seeing is %s column.'
+                             %(f, benchmarkVals['seeing'][f], propCaption, seeingCol)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, runName=runName, metadata=metadata,
                                                     summaryMetrics=summaryStats)
@@ -566,12 +572,12 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             bundleList.append(bundle)
 
             # Histogram the individual visit seeing.
-            metric = metrics.CountMetric(col='finSeeing', metricName='Seeing Histogram')
+            metric = metrics.CountMetric(col=seeingCol, metricName='Seeing Histogram')
             histMerge={'legendloc':'upper right',
                        'color':colors[f], 'label':'%s'%f}
             displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
-                         'caption':'Histogram of the seeing in %s band, %s.' %(f, propCaption)}
-            slicer = slicers.OneDSlicer(sliceColName='finSeeing', binsize=0.02)
+                         'caption':'Histogram of the seeing in %s band, %s. Seeing is %s column.' %(f, propCaption, seeingCol)}
+            slicer = slicers.OneDSlicer(sliceColName=seeingCol, binsize=0.02)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop+'Seeing'].addBundle(bundle, plotDict=histMerge)
@@ -824,7 +830,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 sqlconstraint = sqlconstraint+' propId=%d'%(propid)
                 metadata = '%s band, %s'%(f, propids[propid])
 
-            cols = ['finSeeing', 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth', 'normairmass', 'dist2Moon']
+            cols = [seeingCol, 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth', 'normairmass', 'dist2Moon']
             groups = [seeinggroup, skybrightgroup, airmassgroup, singlevisitdepthgroup, airmassgroup, dist2moongroup]
             for col, group in zip(cols, groups):
                 metric = metrics.MedianMetric(col=col)
@@ -1204,6 +1210,8 @@ if __name__=="__main__":
 
     parser.add_argument('--skipSlew', dest='skipSlew', action='store_true',
                         default=False, help='Skip calculation of slew statistics')
+    parser.add_argument('--seeingCol', dest='seeingCol', default='FWHMeff',
+                        help='Name of the seeing column (FWHMeff or finSeeing). This is temporary to support changeover to v3.4 of the opsim outputs.')
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
@@ -1213,7 +1221,8 @@ if __name__=="__main__":
     opsdb = utils.connectOpsimDb(args.dbFile)
 
     bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict = makeBundleList(args.dbFile,
-                                                                                benchmark=args.benchmark)
+                                                                                                benchmark=args.benchmark,
+                                                                                                seeingCol=args.seeingCol)
     if not args.skipSlew:
         # Do the ones that need a different (slew) table
         for bundleD,table in zip( [slewStateBD, slewMaxSpeedsBD, slewActivitiesBD ],
