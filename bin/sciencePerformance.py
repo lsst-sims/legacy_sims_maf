@@ -18,7 +18,7 @@ import lsst.sims.maf.utils as utils
 
 
 def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
-                   lonCol='fieldRA', latCol='fieldDec'):
+                   lonCol='fieldRA', latCol='fieldDec', seeingCol='FWHMgeom'):
     """
     make a list of metricBundle objects to look at the scientific performance
     of an opsim run.
@@ -250,7 +250,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     sqlconstraint = ''
     order = 0
-    metric = metrics.ParallaxMetric(metricName='Parallax 20', rmag=20)
+    metric = metrics.ParallaxMetric(metricName='Parallax 20', rmag=20, seeingCol=seeingCol)
     summaryStats=allStats
     plotDict={'cbarFormat':'%.1f', 'xMin':0, 'xMax':3}
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
@@ -260,7 +260,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric=metrics.ParallaxMetric(metricName='Parallax 24', rmag=24)
+    metric=metrics.ParallaxMetric(metricName='Parallax 24', rmag=24, seeingCol=seeingCol)
     plotDict={'cbarFormat':'%.1f', 'xMin':0, 'xMax':10}
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                  'caption':'Parallax precision at r=24. (without refraction).'}
@@ -269,7 +269,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric=metrics.ParallaxMetric(metricName='Parallax Normed', rmag=24, normalize=True)
+    metric=metrics.ParallaxMetric(metricName='Parallax Normed', rmag=24, normalize=True,
+                                  seeingCol=seeingCol)
     plotDict={'xMin':0.5, 'xMax':1.0}
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
                  'caption':
@@ -279,7 +280,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric=metrics.ProperMotionMetric(metricName='Proper Motion 20', rmag=20)
+    metric=metrics.ProperMotionMetric(metricName='Proper Motion 20', rmag=20, seeingCol=seeingCol)
     summaryStats=allStats
     plotDict={'xMin':0, 'xMax':3}
     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
@@ -289,7 +290,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric=metrics.ProperMotionMetric(rmag=24, metricName='Proper Motion 24')
+    metric=metrics.ProperMotionMetric(rmag=24, metricName='Proper Motion 24', seeingCol=seeingCol)
     summaryStats=allStats
     plotDict={'xMin':0, 'xMax':10}
     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
@@ -299,7 +300,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric=metrics.ProperMotionMetric(rmag=24,normalize=True, metricName='Proper Motion Normed')
+    metric=metrics.ProperMotionMetric(rmag=24,normalize=True, metricName='Proper Motion Normed',
+                                      seeingCol=seeingCol)
     plotDict={'xMin':0.2, 'xMax':0.7}
     displayDict={'group':reqgroup, 'subgroup':'Proper Motion', 'order':order,
                  'caption':'Normalized proper motion at r=24 (normalized to optimum observation cadence - start/end. 1=optimal).'}
@@ -442,12 +444,12 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             metadata = '%s band, %s' %(f, tlabel) + slicermetadata
             seeing_limit = 0.7
             airmass_limit = 1.2
-            metric = metrics.MinMetric(col='finSeeing')
+            metric = metrics.MinMetric(col=seeingCol)
             summaryStats=allStats
             plotDict={'xMin':0.35, 'xMax':0.9, 'color':tcolor}
             displayDict={'group':seeinggroup, 'subgroup':'Best Seeing',
                          'order':filtorder[f]*100+order,
-                         'caption':'Minimum seeing values in %s.' %(propCaption)}
+                         'caption':'Minimum FWHMgeom values in %s.' %(propCaption)}
             histMerge={'label':'%s %s' %(f, tlabel), 'color':tcolor,
                        'binsize':0.03, 'xMin':0.35, 'xMax':0.9, 'legendloc':'upper right'}
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
@@ -456,12 +458,12 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             mergedHistDict['Minseeing'].addBundle(bundle,plotDict=histMerge)
             bundleList.append(bundle)
 
-            metric = metrics.FracAboveMetric(col='finSeeing', cutoff = seeing_limit)
+            metric = metrics.FracAboveMetric(col=seeingCol, cutoff = seeing_limit)
             summaryStats=allStats
             plotDict={'xMin':0, 'xMax':1, 'color':tcolor}
             displayDict={'group':seeinggroup, 'subgroup':'Good seeing fraction',
                          'order':filtorder[f]*100+order,
-                         'caption':'Fraction of total images with seeing worse than %.1f, in %s'
+                         'caption':'Fraction of total images with FWHMgeom worse than %.1f, in %s'
                          %(seeing_limit, propCaption)}
             histMerge={'color':tcolor, 'label':'%s %s' %(f, tlabel),
                        'binsize':0.05, 'legendloc':'upper right'}
@@ -684,6 +686,8 @@ if __name__=="__main__":
                         help="Column to use for RA values (can be a stacker dither column). Default=fieldRA.")
     parser.add_argument("--latCol", type=str, default='fieldDec',
                         help="Column to use for Dec values (can be a stacker dither column). Default=fieldDec.")
+    parser.add_argument('--seeingCol', type=str, default='FWHMgeom',
+                        help="Column to use for seeing values in order to evaluate astrometric uncertainties. Probably should be FWHMgeom or finSeeing.")
     parser.add_argument('--benchmark', type=str, default='design',
                         help="Can be 'design' or 'requested'")
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
@@ -695,9 +699,10 @@ if __name__=="__main__":
     args, extras = parser.parse_known_args()
 
     # Build metric bundles.
-    bundleDict, mergedHistDict, noSaveBundleDict = makeBundleList(args.dbFile, nside=args.nside,
-                                                                  lonCol=args.lonCol, latCol=args.latCol,
-                                                                  benchmark=args.benchmark)
+
+    bundleDict, mergedHistDict = makeBundleList(args.dbFile, nside=args.nside,
+                                                lonCol=args.lonCol, latCol=args.latCol,
+                                                benchmark=args.benchmark, seeingCol=args.seeingCol)
 
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)

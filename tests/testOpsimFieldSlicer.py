@@ -108,15 +108,16 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
-        self.testslicer.setupSlicer(self.simData, self.fieldData)
 
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
 
     def testWarning(self):
+        warnings.resetwarnings()
+        self.testslicer.setupSlicer(self.simData, self.fieldData)
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
+            warnings.simplefilter('always')
             self.testslicer.setupSlicer(self.simData, self.fieldData)
             assert len(w) == 1
             assert "Re-setting up an OpsimFieldSlicer" in str(w[-1].message)
