@@ -101,7 +101,7 @@ class ProperMotionMetric(BaseMetric):
         filterCol = column name for filter
         seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        sedTemplate = template to use (currently only 'flat' is implamented)
+        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
         atm_err = centroiding error due to atmosphere in arcsec
         normalize = Compare to the uncertainty that would result if half
         the observations were taken at the start of the survey and half
@@ -166,9 +166,9 @@ class ProperMotionMetric(BaseMetric):
 
 class ParallaxCoverageMetric(BaseMetric):
     """
-    Check how well the parallax factor is distributed. subtracts the weighted mean position of the
+    Check how well the parallax factor is distributed. Subtracts the weighted mean position of the
     parallax offsets, then computes the weighted mean radius of the points.
-    If points are well distributed, the radius will be near 1. If phase coverage is bad,
+    If points are well distributed, the mean radius will be near 1. If phase coverage is bad,
     radius will be close to zero.
 
     For points on the Ecliptic, uniform sampling should result in a metric value of ~0.5.
@@ -180,6 +180,19 @@ class ParallaxCoverageMetric(BaseMetric):
                  mjdCol='expMJD', filterCol='filter', seeingCol='finSeeing',
                  rmag=20., SedTemplate='flat', badval=-666,
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
+        """
+        instantiate metric
+
+        m5Col = column name for inidivual visit m5
+        mjdCol = column name for exposure time dates
+        filterCol = column name for filter
+        seeingCol = column name for seeing (assumed FWHM)
+        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
+        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
+        atm_err = centroiding error due to atmosphere in arcsec
+        thetaRange = range of parallax offset angles to demand (in radians) default=0 means no range requirement
+        snrLimit = only include points above the snrLimit (default 5) when computing thetaRange.
+        """
 
         cols = ['ra_pi_amp', 'dec_pi_amp', m5Col, mjdCol, filterCol, seeingCol]
         units = 'ratio'
@@ -266,7 +279,18 @@ class ParallaxHADegenMetric(BaseMetric):
                  m5Col='fiveSigmaDepth', mjdCol='expMJD',
                  filterCol='filter', seeingCol='finSeeing',
                  rmag=20., SedTemplate='flat', badval=-666,
-                 atm_err=0.01,**kwargs ):
+                 **kwargs ):
+        """
+        haCol = Hour angle column name
+        snrLimit = only inlcude observations above the snrLimit
+        m5Col = column name for inidivual visit m5
+        mjdCol = column name for exposure time dates
+        filterCol = column name for filter
+        seeingCol = column name for seeing (assumed FWHM)
+        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
+        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
+        """
+
         cols = ['ra_pi_amp', 'dec_pi_amp']
         self.haCol = haCol
         cols.append(haCol)
@@ -286,7 +310,6 @@ class ParallaxHADegenMetric(BaseMetric):
                 self.mags[f] = rmag
         else:
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
-        self.atm_err = atm_err
 
 
     def run(self, dataSlice, slicePoint=None):
