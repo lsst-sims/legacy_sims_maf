@@ -133,7 +133,7 @@ class AccumulateUniformityMetric(AccumulateMetric):
 
         visitsPerNight, blah = np.histogram(dataSlice[self.binCol], bins=self.bins)
         visitsPerNight = np.add.accumulate(visitsPerNight)
-        expectedPerNight = np.arange(0,self.bins.max())/self.bins.max() * dataSlice.size
+        expectedPerNight = np.arange(0.,self.bins.size-1)/(self.bins.size-2) * dataSlice.size
 
         D_max = np.abs(visitsPerNight-expectedPerNight)
         D_max = np.maximum.accumulate(D_max)
