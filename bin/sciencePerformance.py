@@ -700,9 +700,10 @@ if __name__=="__main__":
 
     # Build metric bundles.
 
-    bundleDict, mergedHistDict = makeBundleList(args.dbFile, nside=args.nside,
-                                                lonCol=args.lonCol, latCol=args.latCol,
-                                                benchmark=args.benchmark, seeingCol=args.seeingCol)
+    bundleDict, mergedHistDict, noSaveBundleDict = makeBundleList(args.dbFile, nside=args.nside,
+                                                                  lonCol=args.lonCol, latCol=args.latCol,
+                                                                  benchmark=args.benchmark,
+                                                                  seeingCol=args.seeingCol)
 
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
