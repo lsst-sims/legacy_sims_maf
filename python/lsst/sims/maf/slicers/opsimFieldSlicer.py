@@ -59,7 +59,10 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         Values for the column names are set during 'init'.
         """
         if hasattr(self,'slicePoints'):
-            warnings.warn('Warning: this OpsimFieldSlicer was already set up. Re-setting up an OpsimFieldSlicer can change the field information. Rerun metrics if this was intentional.')
+            warning_msg = 'Warning: this OpsimFieldSlicer was already set up once. '
+            warning_msg += 'Re-setting up an OpsimFieldSlicer can change the field information. '
+            warning_msg += 'Rerun metrics if this was intentional. '
+            warnings.warn(warning_msg)
         # Set basic properties for tracking field information, in sorted order.
         idxs = np.argsort(fieldData[self.fieldIDColName])
         # Set needed values for slice metadata.
