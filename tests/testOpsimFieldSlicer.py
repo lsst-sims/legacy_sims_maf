@@ -114,7 +114,6 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
         self.testslicer = None
 
     def testWarning(self):
-        warnings.resetwarnings()
         self.testslicer.setupSlicer(self.simData, self.fieldData)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
