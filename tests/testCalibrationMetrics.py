@@ -104,7 +104,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         data['dec_pi_amp'] = 1.
 
         # All the parallax amplitudes are the same, should return zero
-        metric = metrics.ParallaxCoverageMetric()
+        metric = metrics.ParallaxCoverageMetric(seeingCol='finSeeing')
         val = metric.run(data)
         assert(val == 0)
 

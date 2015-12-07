@@ -177,7 +177,7 @@ class ParallaxCoverageMetric(BaseMetric):
     Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
     """
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
-                 mjdCol='expMJD', filterCol='filter', seeingCol='finSeeing',
+                 mjdCol='expMJD', filterCol='filter', seeingCol='FWHMgeom',
                  rmag=20., SedTemplate='flat', badval=-666,
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
         """
@@ -277,7 +277,7 @@ class ParallaxHADegenMetric(BaseMetric):
     """
     def __init__(self, metricName='ParallaxHADegenMetric',haCol='HA', snrLimit=5.,
                  m5Col='fiveSigmaDepth', mjdCol='expMJD',
-                 filterCol='filter', seeingCol='finSeeing',
+                 filterCol='filter', seeingCol='FWHMgeom',
                  rmag=20., SedTemplate='flat', badval=-666,
                  **kwargs ):
         """
