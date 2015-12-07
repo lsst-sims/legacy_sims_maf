@@ -120,6 +120,6 @@ class Database(object):
         Returns numpy recarray with results.
         """
         t = self.tables[tableName]
-        results = t.engine.execute(text(sqlQuery))
+        results = t.connection.engine.execute(text(sqlQuery))
         data = t._postprocess_results(results.fetchall())
         return data
