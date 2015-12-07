@@ -26,13 +26,13 @@ class TestCalibrationMetrics(unittest.TestCase):
         for flag in normFlags:
             data['finSeeing'] = 0.7
             data['fiveSigmaDepth'] = 24.                        
-            baseline = metrics.ParallaxMetric(normalize=flag).run(data, slicePoint)
+            baseline = metrics.ParallaxMetric(normalize=flag, seeingCol='finSeeing').run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
-            worse1 = metrics.ParallaxMetric(normalize=flag).run(data, slicePoint)
-            worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data, slicePoint)
-            worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
+            worse1 = metrics.ParallaxMetric(normalize=flag, seeingCol='finSeeing').run(data, slicePoint)
+            worse2 = metrics.ParallaxMetric(normalize=flag,rmag=22., seeingCol='finSeeing').run(data, slicePoint)
+            worse3 = metrics.ParallaxMetric(normalize=flag,rmag=22., seeingCol='finSeeing').run(data[0:300], slicePoint)
             data['fiveSigmaDepth'] = data['fiveSigmaDepth']-1.
-            worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
+            worse4 = metrics.ParallaxMetric(normalize=flag,rmag=22., seeingCol='finSeeing').run(data[0:300], slicePoint)
             # Make sure the RMS increases as seeing increases, the star gets fainter,
             #    the background gets brighter, or the baseline decreases.
             if flag:
@@ -68,13 +68,13 @@ class TestCalibrationMetrics(unittest.TestCase):
         for flag in normFlags:
             data['finSeeing'] = 0.7
             data['fiveSigmaDepth'] = 24
-            baseline = metrics.ProperMotionMetric(normalize=flag).run(data, slicePoint)
+            baseline = metrics.ProperMotionMetric(normalize=flag, seeingCol='finSeeing').run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
-            worse1 = metrics.ProperMotionMetric(normalize=flag).run(data, slicePoint)
-            worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data, slicePoint)
-            worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22.).run(data[0:300], slicePoint)
+            worse1 = metrics.ProperMotionMetric(normalize=flag, seeingCol='finSeeing').run(data, slicePoint)
+            worse2 = metrics.ProperMotionMetric(normalize=flag,rmag=22., seeingCol='finSeeing').run(data, slicePoint)
+            worse3 = metrics.ProperMotionMetric(normalize=flag,rmag=22., seeingCol='finSeeing').run(data[0:300], slicePoint)
             data['fiveSigmaDepth'] = data['fiveSigmaDepth']-1.
-            worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22.).run(data[0:300], slicePoint)
+            worse4 = metrics.ProperMotionMetric(normalize=flag, rmag=22., seeingCol='finSeeing').run(data[0:300], slicePoint)
             # Make sure the RMS increases as seeing increases, the star gets fainter,
             # the background gets brighter, or the baseline decreases.
             if flag:

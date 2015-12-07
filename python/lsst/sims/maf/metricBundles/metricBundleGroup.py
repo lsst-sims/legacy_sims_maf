@@ -159,14 +159,11 @@ class MetricBundleGroup(object):
             # Set the 'currentBundleDict' which is a dictionary of the metricBundles which match this
             #  sqlconstraint.
             self.setCurrent(sqlconstraint)
-            self.runCurrent(sqlconstraint, clearMemory=clearMemory)
-            if plotNow:
-                if plotKwargs is None:
-                    self.plotCurrent()
-                else:
-                    self.plotCurrent(**plotKwargs)
+            self.runCurrent(sqlconstraint, clearMemory=clearMemory,
+                            plotNow=plotNow,plotKwargs=plotKwargs)
 
-    def runCurrent(self, sqlconstraint, clearMemory=False, simData=None):
+
+    def runCurrent(self, sqlconstraint, clearMemory=False, simData=None, plotNow=False, plotKwargs=None):
         """
         Run all the metricBundles which match this sqlconstraint in the metricBundleGroup.
         Also runs 'reduceAll' and then 'summaryAll'.
@@ -196,7 +193,6 @@ class MetricBundleGroup(object):
         # Find compatible subsets of the MetricBundle dictionary, which can be run/metrics calculated/ together.
         self._findCompatibleLists()
 
-
         for compatibleList in self.compatibleLists:
             if self.verbose:
                 print 'Running: ', compatibleList
@@ -215,6 +211,11 @@ class MetricBundleGroup(object):
         self.summaryCurrent()
         if self.verbose:
             print 'Completed.'
+        if plotNow:
+            if plotKwargs is None:
+                self.plotCurrent()
+            else:
+                self.plotCurrent(**plotKwargs)
         # Optionally: clear results from memory.
         if clearMemory:
             for b in self.currentBundleDict.itervalues():
