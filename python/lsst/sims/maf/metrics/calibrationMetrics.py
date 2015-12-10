@@ -1,7 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from lsst.sims.maf.utils.astrometryUtils import sigma_slope, m52snr, astrom_precision
-import lsst.sims.maf.utils as utils
+import lsst.sims.maf.utils as mafUtils
 from scipy.stats import spearmanr
 
 __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
@@ -46,7 +45,7 @@ class ParallaxMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         self.comment = 'Estimated uncertainty in parallax measurement (assuming no proper motion or that proper motion '
@@ -75,8 +74,8 @@ class ParallaxMetric(BaseMetric):
         # compute SNR for all observations
         for filt in filters:
             good = np.where(dataslice[self.filterCol] == filt)
-            snr[good] = m52snr(self.mags[filt], dataslice[self.m5Col][good])
-        position_errors = np.sqrt(astrom_precision(dataslice[self.seeingCol], snr)**2+self.atm_err**2)
+            snr[good] = mafUtils.m52snr(self.mags[filt], dataslice[self.m5Col][good])
+        position_errors = np.sqrt(mafUtils.astrom_precision(dataslice[self.seeingCol], snr)**2+self.atm_err**2)
         sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp'],dataslice['dec_pi_amp'] )
         if self.normalize:
             # Leave the dec parallax as zero since one can't have ra and dec maximized at the same time.
@@ -123,7 +122,7 @@ class ProperMotionMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
@@ -145,19 +144,19 @@ class ProperMotionMetric(BaseMetric):
             if np.size(observations[0]) < 2:
                 precis[observations] = self.badval
             else:
-                snr = m52snr(self.mags[f],
+                snr = mafUtils.m52snr(self.mags[f],
                    dataslice[self.m5Col][observations])
-                precis[observations] = astrom_precision(
+                precis[observations] = mafUtils.astrom_precision(
                     dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
-        result = sigma_slope(dataslice['expMJD'][good], precis[good])
+        result = mafUtils.sigma_slope(dataslice['expMJD'][good], precis[good])
         result = result*365.25*1e3 #convert to mas/yr
         if (self.normalize) & (good[0].size > 0):
             new_dates=dataslice['expMJD'][good]*0
             nDates = new_dates.size
             new_dates[nDates/2:] = self.baseline*365.25
-            result = (sigma_slope(new_dates,  precis[good])*365.25*1e3)/result
+            result = (mafUtils.sigma_slope(new_dates,  precis[good])*365.25*1e3)/result
         # Observations that are very close together can still fail
         if np.isnan(result):
             result = self.badval
@@ -173,6 +172,10 @@ class ParallaxCoverageMetric(BaseMetric):
 
     For points on the Ecliptic, uniform sampling should result in a metric value of ~0.5.
     At the poles, uniform sampling would result in a metric value of ~1.
+    Conceptually, it is helpful to remember that the parallax motion of a star at the pole is
+    a (nearly circular) ellipse while the motion of a star on the ecliptic is a straight line. Thus, any
+    pair of observations seperated by 6 months will give the full parallax range for a star on the pole
+    but only observations on very spefic dates will give the full range for a star on the ecliptic.
 
     Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
     """
@@ -214,7 +217,7 @@ class ParallaxCoverageMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
 
     def _thetaCheck(self, ra_pi_amp, dec_pi_amp, snr):
@@ -231,13 +234,13 @@ class ParallaxCoverageMetric(BaseMetric):
                 result = 1
         return result
 
-    def computeWeights(self, dataSlice, snr):
+    def _computeWeights(self, dataSlice, snr):
         # Compute centroid uncertainty in each visit
-        position_errors = np.sqrt(astrom_precision(dataSlice[self.seeingCol], snr)**2+self.atm_err**2)
+        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol], snr)**2+self.atm_err**2)
         weights = 1./position_errors**2
         return weights
 
-    def weightedR(self, dec_pi_amp, ra_pi_amp, weights):
+    def _weightedR(self, dec_pi_amp, ra_pi_amp, weights):
         ycoord = dec_pi_amp-np.average(dec_pi_amp, weights=weights)
         xcoord = ra_pi_amp-np.average(ra_pi_amp,weights=weights)
         radius = np.sqrt(xcoord**2+ycoord**2)
@@ -253,11 +256,11 @@ class ParallaxCoverageMetric(BaseMetric):
         snr = np.zeros(len(dataSlice), dtype='float')
         # compute SNR for all observations
         for filt in filters:
-            good = np.where(dataSlice[self.filterCol] == filt)
-            snr[good] = m52snr(self.mags[filt], dataSlice[self.m5Col][good])
+            inFilt = np.where(dataSlice[self.filterCol] == filt)
+            snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
 
-        weights = self.computeWeights(dataSlice, snr)
-        aveR = self.weightedR(dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp'], weights)
+        weights = self._computeWeights(dataSlice, snr)
+        aveR = self._weightedR(dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp'], weights)
         if self.thetaRange > 0:
             thetaCheck = self._thetaCheck(dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp'], snr)
         else:
@@ -309,7 +312,7 @@ class ParallaxHADegenMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
 
 
     def run(self, dataSlice, slicePoint=None):
@@ -321,7 +324,7 @@ class ParallaxHADegenMetric(BaseMetric):
         # compute SNR for all observations
         for filt in filters:
             good = np.where(dataSlice[self.filterCol] == filt)
-            snr[good] = m52snr(self.mags[filt], dataSlice[self.m5Col][good])
+            snr[good] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][good])
         # Compute total parallax distance
         pf = np.sqrt(dataSlice['ra_pi_amp']**2+dataSlice['dec_pi_amp']**2)
         # Correlation between parallax factor and hour angle

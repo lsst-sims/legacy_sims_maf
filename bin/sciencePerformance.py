@@ -282,9 +282,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     order += 1
     metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 20',rmag=20, seeingCol=seeingCol)
     plotDict={}
+    caption = """Parallax factor coverage for an r=20 star (0 is bad, 0.5-1 is good). One expects the parallax factor coverage to vary because stars on the ecliptic can be observed when they have no parallax offset while stars at the pole are always offset by the full parallax offset."""
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
-                 'caption':
-                 'Parallax factor coverage for an r=20 star (0 is bad, 0.5-1 is good).'}
+                 'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
                                         runName=runName, metadata=metadata)
@@ -292,9 +292,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     order += 1
     metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 24',rmag=24, seeingCol=seeingCol)
     plotDict={}
+    caption = """Parallax factor coverage for an r=24 star (0 is bad, 0.5-1 is good). One expects the parallax factor coverage to vary because stars on the ecliptic can be observed when they have no parallax offset while stars at the pole are always offset by the full parallax offset."""
     displayDict={'group':reqgroup, 'subgroup':'Parallax', 'order':order,
-                 'caption':
-                 'Parallax factor coverage for an r=24 star (0 is bad, 0.5-1 is good).'}
+                 'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
                                         runName=runName, metadata=metadata)
