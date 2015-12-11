@@ -1,5 +1,5 @@
 import os, warnings
-import pandas as pd
+import numpy as np
 from collections import OrderedDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -149,8 +149,12 @@ class ResultsDb(object):
             Base.metadata.create_all(engine)
         except DatabaseError:
             raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
+        self.stype = 'S1024'
 
     def close(self):
+        """
+        Close connection to database.
+        """
         self.session.close()
 
     def updateMetric(self, metricName, slicerName, simDataName, sqlConstraint,
@@ -281,7 +285,8 @@ class ResultsDb(object):
 
     def getMetricId(self, metricName, slicerName=None, metricMetadata=None, simDataName=None):
         """
-        Return the metricId matching metricName (and optionally, matching slicerName/metricMetadata/simDataName).
+        Given a metric name and optional slicerName/metricMetadata/simData information,
+        Return a list of the matching metricIds.
         """
         metricId = []
         query = self.session.query(MetricRow.metricId, MetricRow.metricName, MetricRow.slicerName, MetricRow.metricMetadata,
@@ -299,7 +304,7 @@ class ResultsDb(object):
 
     def getAllMetricIds(self):
         """
-        Return all metricIds.
+        Return a list of all metricIds.
         """
         metricIds = []
         for m in self.session.query(MetricRow.metricId).all():
@@ -308,8 +313,9 @@ class ResultsDb(object):
 
     def getSummaryStats(self, metricId=None, summaryName=None):
         """
-        Get the summary stats for all or a single metric, specified by metricId.
+        Get the summary stats for a list of metricIds, (if None, then returns results for all metrics).
         Optionally, specify the summary metric name.
+        Returns a numpy array of the metric information + summary statistic information.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()
@@ -325,17 +331,16 @@ class ResultsDb(object):
             for m, s in query:
                 summarystats.append((m.metricId, m.metricName, m.slicerName, m.metricMetadata,
                                      s.summaryName, s.summaryValue))
-        cols = OrderedDict([('metricId', int), ('metricName', str), ('slicerName', str), ('metricMetadata', str),
-                            ('summaryName', str), ('summaryValue', float)])
-        summarystats = pd.DataFrame([xx for xx in summarystats], columns=cols.keys())
-        for c, dt in cols.iteritems():
-            summarystats[c] = summarystats[c].astype(dt)
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('slicerName', self.stype),
+                          ('metricMetadata', self.stype), ('summaryName', self.stype), ('summaryValue', float)])
+        summarystats = np.array(summarystats, dtype)
         return summarystats
 
     def getPlotFiles(self, metricId=None):
         """
         Return the metricId, name, metadata, and all plot info for (optional) metricId.
-        Returns a pandas dataframe.
+        Returns a numpy array of the metric information + plot file names.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()
@@ -349,14 +354,10 @@ class ResultsDb(object):
             for m, p in query:
                 thumbfile = 'thumb.' + ''.join(p.plotFile.split('.')[:-1]) + '.png'
                 plotFiles.append((m.metricId, m.metricName, m.metricMetadata, p.plotType, p.plotFile, thumbfile))
-        # Convert to pandas dataframe.
-        cols = OrderedDict([('metricId',int), ('metricName',str), ('metricMetadata', str),
-                            ('plotType', str), ('plotFile', str), ('thumbFile', str)])
-        plotFiles = pd.DataFrame([xx for xx in plotFiles],
-                                 columns=cols.keys())
-        # and cast as the right type (pandas is still a little broken here)
-        for c, dt in cols.iteritems():
-            plotFiles[c] = plotFiles[c].astype(dt)
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('slicerName', self.stype),
+                          ('metricMetadata', self.stype), ('plotType', self.stype), ('plotFile', self.stype), ('thumbFile', self.stype)])
+        plotFiles = np.array(plotFiles, dtype)
         return plotFiles
 
     def getMetricDataFiles(self, metricId=None):
@@ -380,7 +381,7 @@ class ResultsDb(object):
         Return the contents of the metrics and displays table, together with the 'basemetricname', in one
         list.
         Intended primarily for use for the 'viz' layer.
-        Returns a pandas dataframe.
+        Returns a numpy array of the metric information + display information.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()
@@ -396,11 +397,10 @@ class ResultsDb(object):
                         m.sqlConstraint, m.metricMetadata, m.metricDataFile,
                         d.displayGroup, d.displaySubgroup, d.displayOrder, d.displayCaption)
                 metricInfo.append(mInfo)
-        cols = OrderedDict([('metricId', int), ('metricName', str), ('baseMetricNames', str),
-                            ('slicerName', str), ('sqlConstraint', str), ('metricMetadata', str),
-                            ('metricDatafile', str), ('displayGroup', str), ('displaySubgroup', str),
-                            ('displayOrder', float), ('displayCaption', str)])
-        metricInfo = pd.DataFrame([xx for xx in metricInfo], columns=cols.keys())
-        for c, dt in cols.iteritems():
-            metricInfo[c] = metricInfo[c].astype(dt)
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('baseMetricNames', self.stype),
+                          ('slicerName', self.stype), ('sqlConstraint', self.stype), ('metricMetadata', self.stype),
+                          ('displayGroup', self.stype), ('displaySubgroup', self.stype), ('displayOrder', float),
+                          ('displayCaption', self.stype*5)])
+        metricInfo = np.array(metricInfo, dtype)
         return metricInfo
