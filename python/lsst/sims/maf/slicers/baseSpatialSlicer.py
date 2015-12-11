@@ -96,12 +96,16 @@ class BaseSpatialSlicer(BaseSlicer):
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
+            # Loop through all the slicePoint keys. If the first dimension of slicepoint[key] has
+            # the same shape as the slicer, assume it is information per slicepoint.
+            # Otherwise, pass the whole slicePoint[key] information. Useful for stellar LF maps
+            # where we want to pass only the relevant LF and the bins that go with it.
             for key in self.slicePoints.keys():
                 if len(np.shape(self.slicePoints[key])) == 0:
-                    shape = 0
+                    keyShape = 0
                 else:
-                    shape = np.shape(self.slicePoints[key])[0]
-                if (shape == self.nslice):
+                    keyShape = np.shape(self.slicePoints[key])[0]
+                if (keyShape == self.nslice):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]

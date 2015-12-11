@@ -71,13 +71,16 @@ class TestMaps(unittest.TestCase):
 
     def testStarMap(self):
         data = makeDataValues()
-        starmap = maps.StellarDensityMap()
-        slicer1 = slicers.HealpixSlicer(nside=64)
-        slicer1.setupSlicer(data)
-        result1 = starmap.run(slicer1.slicePoints)
-        assert('starMapBins' in result1.keys())
-        assert('starLumFunc' in result1.keys())
-        assert(np.max(result1['starLumFunc'] > 0))
+        # check that it works if nside does not match map nside of 64
+        nsides = [32,64,128]
+        for nside in nsides:
+            starmap = maps.StellarDensityMap()
+            slicer1 = slicers.HealpixSlicer(nside=nside)
+            slicer1.setupSlicer(data)
+            result1 = starmap.run(slicer1.slicePoints)
+            assert('starMapBins' in result1.keys())
+            assert('starLumFunc' in result1.keys())
+            assert(np.max(result1['starLumFunc'] > 0))
 
         fieldData = makeFieldData()
 

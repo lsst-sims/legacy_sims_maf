@@ -1,4 +1,4 @@
-from lsst.sims.maf.maps import BaseMap
+from . import BaseMap
 import numpy as np
 from lsst.utils import getPackageDir
 import os
@@ -31,10 +31,12 @@ class StellarDensityMap(BaseMap):
     def run(self, slicePoints):
         self._readMap()
 
+        nsideMatch = False
         if 'nside' in slicePoints.keys():
             if slicePoints['nside'] == self.starmapNside:
                 slicePoints['starLumFunc'] = self.starMap
-        else:
+                nsideMatch = True
+        if not nsideMatch:
             # Compute the healpix for each slicepoint on the nside=64 grid
             indx = radec2pix(self.starmapNside, slicePoints['ra'], slicePoints['dec'])
             slicePoints['starLumFunc'] = self.starMap[indx,:]
