@@ -159,7 +159,7 @@
       </tr>
 
      {# Add the summary stat info. #}
-     {% for i, metric in slicermetrics.iterrows() %}
+     {% for metric in slicermetrics %}
        {% set metricInfo = run.metricInfo(metric, withDataLink=False, withSlicerName=False) %}
        {% set stats = run.statsForMetric(metric) %}
        {% set statDict = run.statDict(stats) %}
@@ -196,7 +196,7 @@
       {# Table header. #}
       <tr>
 	<th></th>
-      {% for i,m in slicermetrics.iterrows() %}
+      {% for m in slicermetrics %}
   	  {% set mInfo = run.metricInfo(m, withDataLink=False, withSlicerName=False) %}
 	  <th>
 	   {{mInfo['MetricName']}}
@@ -205,7 +205,7 @@
       </tr>
       <tr>
 	<th></th>
-      {% for i,m in slicermetrics.iterrows() %}
+      {% for m in slicermetrics %}
 	  {% set mInfo = run.metricInfo(m, withDataLink=False, withSlicerName=False) %}
 	  <th>
 	   {{mInfo['Metadata']}}
@@ -218,7 +218,7 @@
         <tr>
 	<td><b>{{statName}}</b> </td>
 	{# Find metric that matches the metric name for this column and this statName. #}
-	{% for i,m in slicermetrics.iterrows() %}
+	{% for m in slicermetrics %}
            {% set stats = run.statsForMetric(m, statName=statName) %}
            {# there should only ever be either 1 or 0
       statName/metricName/metricMetadata combo #}
