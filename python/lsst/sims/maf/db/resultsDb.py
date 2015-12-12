@@ -149,7 +149,8 @@ class ResultsDb(object):
             Base.metadata.create_all(engine)
         except DatabaseError:
             raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
-        self.stype = 'S1024'
+        self.slen = 1024
+        self.stype = 'S%d' %(self.slen)
 
     def close(self):
         """
@@ -355,8 +356,8 @@ class ResultsDb(object):
                 thumbfile = 'thumb.' + ''.join(p.plotFile.split('.')[:-1]) + '.png'
                 plotFiles.append((m.metricId, m.metricName, m.metricMetadata, p.plotType, p.plotFile, thumbfile))
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('slicerName', self.stype),
-                          ('metricMetadata', self.stype), ('plotType', self.stype), ('plotFile', self.stype), ('thumbFile', self.stype)])
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('metricMetadata', self.stype),
+                          ('plotType', self.stype), ('plotFile', self.stype), ('thumbFile', self.stype)])
         plotFiles = np.array(plotFiles, dtype)
         return plotFiles
 
@@ -399,8 +400,9 @@ class ResultsDb(object):
                 metricInfo.append(mInfo)
         # Convert to numpy array.
         dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('baseMetricNames', self.stype),
-                          ('slicerName', self.stype), ('sqlConstraint', self.stype), ('metricMetadata', self.stype),
+                          ('slicerName', self.stype), ('sqlConstraint', self.stype),
+                          ('metricMetadata', self.stype), ('metricDatafile', self.stype),
                           ('displayGroup', self.stype), ('displaySubgroup', self.stype), ('displayOrder', float),
-                          ('displayCaption', self.stype*5)])
+                          ('displayCaption', 'S%d' %(self.slen*10))])
         metricInfo = np.array(metricInfo, dtype)
         return metricInfo
