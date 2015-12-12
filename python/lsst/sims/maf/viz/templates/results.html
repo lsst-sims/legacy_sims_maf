@@ -38,7 +38,7 @@ metricIdList) %}
    {% endif %}
    <a name = "{{g|escape}}_{{sg|escape}}"> </a>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
-  {% for i,metric in subsetMetrics.iterrows() %}  
+  {% for metric in subsetMetrics %}
     {% set metricInfo = run.metricInfo(metric) %}
     <div id="metricset">
 

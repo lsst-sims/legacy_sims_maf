@@ -59,7 +59,7 @@
 	 </td>
         </tr>
        {% set metrics = run.metricsInSubgroup(group, subgroup) %}
-        {% for i,metric in metrics.iterrows() %}
+        {% for metric in metrics %}
           {% set metricInfo = run.metricInfo(metric, withDataLink=True) %}
           <tr>
 	  <td>
