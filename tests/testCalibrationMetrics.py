@@ -4,12 +4,12 @@ import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
-        
-class TestCalibrationMetrics(unittest.TestCase):                
+
+class TestCalibrationMetrics(unittest.TestCase):
     def testParallaxMetric(self):
         """
         Test the parallax metric.
-        """        
+        """
         names = ['expMJD','finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float,float,float,float,'|S1']
         data = np.zeros(700, dtype=zip(names,types))
@@ -25,7 +25,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         normFlags = [False, True]
         for flag in normFlags:
             data['finSeeing'] = 0.7
-            data['fiveSigmaDepth'] = 24.                        
+            data['fiveSigmaDepth'] = 24.
             baseline = metrics.ParallaxMetric(normalize=flag, seeingCol='finSeeing').run(data, slicePoint)
             data['finSeeing'] = data['finSeeing']+.3
             worse1 = metrics.ParallaxMetric(normalize=flag, seeingCol='finSeeing').run(data, slicePoint)
@@ -40,7 +40,7 @@ class TestCalibrationMetrics(unittest.TestCase):
                 # hmm, I need to think how to test the scheduling
                 #assert(worse1 < baseline)
                 #assert(worse2 < worse1)
-                #assert(worse3 < worse2) 
+                #assert(worse3 < worse2)
                 #assert(worse4 < worse3)
             else:
                 assert(worse1 > baseline)
@@ -80,7 +80,7 @@ class TestCalibrationMetrics(unittest.TestCase):
             if flag:
                 # When normalized, mag of star and m5 don't matter (just scheduling).
                 self.assertAlmostEqual(worse2, worse1)
-                self.assertAlmostEqual(worse4, worse3) 
+                self.assertAlmostEqual(worse4, worse3)
                 # But using fewer points should make proper motion worse.
                 #survey assumed to have same seeing and limiting mags.
                 assert(worse3 < worse2)
@@ -89,6 +89,77 @@ class TestCalibrationMetrics(unittest.TestCase):
                 assert(worse2 > worse1)
                 assert(worse3 > worse2)
                 assert(worse4 > worse3)
+
+    def testParallaxCoverageMetric(self):
+        """
+        Test the parallax coverage
+        """
+        names = ['expMJD','finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+                 'filter', 'ra_pi_amp', 'dec_pi_amp']
+        types = [float, float,float,float,float,'|S1', float,float]
+        data = np.zeros(100, dtype=zip(names,types))
+        data['filter'] = 'r'
+        data['fiveSigmaDepth'] = 25.
+        data['ra_pi_amp'] = 1.
+        data['dec_pi_amp'] = 1.
+
+        # All the parallax amplitudes are the same, should return zero
+        metric = metrics.ParallaxCoverageMetric(seeingCol='finSeeing')
+        val = metric.run(data)
+        assert(val == 0)
+
+        # Half at (1,1), half at (0.5,0.5)
+        data['ra_pi_amp'][0:50] = 1
+        data['dec_pi_amp'][0:50] = 1
+        data['ra_pi_amp'][50:] = -1
+        data['dec_pi_amp'][50:] = -1
+        val = metric.run(data)
+        self.assertAlmostEqual(val, 2.**0.5)
+
+        data['ra_pi_amp'][0:50] = 0.5
+        data['dec_pi_amp'][0:50] = 0.5
+        data['ra_pi_amp'][50:] = -0.5
+        data['dec_pi_amp'][50:] = -0.5
+        val = metric.run(data)
+        self.assertAlmostEqual(val, 0.5*2**0.5)
+
+        data['ra_pi_amp'][0:50] = 1
+        data['dec_pi_amp'][0:50] = 0
+        data['ra_pi_amp'][50:] = -1
+        data['dec_pi_amp'][50:] = 0
+        val = metric.run(data)
+        assert(val == 1)
+
+
+    def testParallaxHADegenMetric(self):
+        np.random.seed = 42
+        names = ['expMJD','finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+                 'filter', 'ra_pi_amp', 'dec_pi_amp', 'HA']
+        types = [float, float,float,float,float,'|S1',float,float,float]
+        data = np.zeros(100, dtype=zip(names,types))
+        data['filter'] = 'r'
+        data['fiveSigmaDepth'] = 25.
+        data['ra_pi_amp'] = np.arange(0,1,.01)
+        data['dec_pi_amp'] = np.arange(0,1,.01)
+        data['HA'] = np.arange(0,1,.01)
+
+        # Perfectly correlated
+        metric = metrics.ParallaxHADegenMetric()
+        val = metric.run(data)
+        assert(val == 1)
+
+        # Anti-correlated
+        data['HA'] *= -1
+        val = metric.run(data)
+        assert(val == -1)
+
+        # Random values should be uncorrelated
+        data['ra_pi_amp'] = np.random.rand(100)
+        data['dec_pi_amp'] = np.random.rand(100)
+        data['HA'] = np.random.rand(100)
+        val = metric.run(data)
+        assert(val > -0.5)
+        assert(val < 0.5)
 
     def testRadiusObsMetric(self):
         """
