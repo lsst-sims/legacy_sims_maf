@@ -314,8 +314,8 @@ class ResultsDb(object):
 
     def getSummaryStats(self, metricId=None, summaryName=None):
         """
-        Get the summary stats for a list of metricIds, (if None, then returns results for all metrics).
-        Optionally, specify the summary metric name.
+        Get the summary stats (optionally for metricId list).
+        Optionally, also specify the summary metric name.
         Returns a numpy array of the metric information + summary statistic information.
         """
         if metricId is None:
@@ -340,7 +340,7 @@ class ResultsDb(object):
 
     def getPlotFiles(self, metricId=None):
         """
-        Return the metricId, name, metadata, and all plot info for (optional) metricId.
+        Return the metricId, name, metadata, and all plot info (optionally for metricId list).
         Returns a numpy array of the metric information + plot file names.
         """
         if metricId is None:
@@ -379,9 +379,7 @@ class ResultsDb(object):
 
     def getMetricDisplayInfo(self, metricId=None):
         """
-        Return the contents of the metrics and displays table, together with the 'basemetricname', in one
-        list.
-        Intended primarily for use for the 'viz' layer.
+        Get the contents of the metrics and displays table, together with the 'basemetricname' (optionally, for metricId list).
         Returns a numpy array of the metric information + display information.
         """
         if metricId is None:
