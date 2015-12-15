@@ -159,7 +159,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
         for key in keys:
             mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=opsimHistPlot)
 
-    keys = ['Nvisits' ]
+    keys = ['NVisits' ]
     for propid in propids:
         for key in keys:
             mergedHistDict[str(propid)+key] = plots.PlotBundle(plotFunc=opsimHistPlot)
@@ -170,7 +170,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
         for key in keys:
             mergedHistDict[prop+key] = plots.PlotBundle(plotFunc=plots.OneDBinnedData())
 
-    mergedHistDict['Nvisits_WFD'] = plots.PlotBundle(plotFunc=opsimHistPlot)
+    mergedHistDict['NVisits_WFD'] = plots.PlotBundle(plotFunc=opsimHistPlot)
 
     ## Metrics calculating values across the sky (opsim slicer).
     # Loop over a set of standard analysis metrics, for All Proposals, WFD only, and DD only.
@@ -210,7 +210,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
             # Configure the metrics to run for this sql constraint (all proposals/wfd and filter combo).
 
             # Count the total number of visits.
-            metric = metrics.CountMetric(col='expMJD', metricName = 'Nvisits')
+            metric = metrics.CountMetric(col='expMJD', metricName = 'NVisits')
             plotDict={'xlabel':'Number of Visits', 'xMin':nvisitsMin,
                       'xMax':nvisitsMax, 'binsize':5,
                       'colorMin':nvisitsMin ,'colorMax':nvisitsMax}
@@ -314,7 +314,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict={'group':seeinggroup, 'subgroup':subgroup, 'order':filtorder[f],
                              'caption':
                              'Median Seeing in filter %s divided by expected value (%.2f), %s. Seeing is %s column.'
-                             %(f, benchmarkVals['seeing'][f], propCaption, seeingCol)}
+                             %(f, benchmarkVals[benchmarkSeeing][f], propCaption, seeingCol)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, runName=runName, metadata=metadata,
                                                     summaryMetrics=summaryStats)
@@ -412,21 +412,22 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     slicer = slicers.OpsimFieldSlicer()
     # Count the number of visits in all filters together, WFD only.
     sqlconstraint = wfdWhere
-    metadata='All filters WFD: histogram only'
+    metadata='All filters, WFD, cumulative'
     plotFunc = plots.OpsimHistogram()
     # Make the reverse cumulative histogram
-    metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters, cumulative')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     plotDict={'xlabel':'Number of Visits', 'binsize':5, 'cumulative':-1,
               'xMin':500, 'xMax':1500}
     displayDict={'group':nvisitgroup, 'subgroup':'WFD', 'order':0,
-                 'caption':'Number of visits all filters, WFD only'}
+                 'caption':'Number of visits all filters, WFD only. Cumulative plot.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, runName=runName, metadata=metadata,
                                                     summaryMetrics=summaryStats, plotFuncs=[plotFunc])
     bundleList.append(bundle)
     # Regular Histogram
     slicer = slicers.OpsimFieldSlicer()
-    metric = metrics.CountMetric(col='expMJD', metricName='Nvisits, all filters')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
+    metadata='All filters, WFD'
     plotDict={'xlabel':'Number of Visits', 'binsize':5, 'cumulative':False,
               'xMin':500, 'xMax':1500}
     summaryStats=allStats
@@ -457,7 +458,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata,
                                                 summaryMetrics=summaryStats)
-            mergedHistDict[str(propid)+'Nvisits'].addBundle(bundle, plotDict=histMerge)
+            mergedHistDict[str(propid)+'NVisits'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
 
         propOrder += 100
@@ -479,7 +480,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata,
                                                 summaryMetrics=summaryStats)
-            mergedHistDict['Nvisits_WFD'].addBundle(bundle, plotDict=histMerge)
+            mergedHistDict['NVisits_WFD'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
 
 
@@ -1101,7 +1102,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
         sqlconstraint = 'propID = %s' %(propid)
         metadata='%s' %(propids[propid])
 
-        metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
+        metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
         summaryMetrics=[metrics.IdentityMetric(metricName='Count'),
                         metrics.NormalizeMetric(normVal=totalNVisits, metricName='Fraction of total')]
         displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':order,
@@ -1117,7 +1118,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     # Count visits in WFD (as well as ratio of number of visits compared to total number of visits).
     sqlconstraint = '%s' %(wfdWhere)
     metadata='WFD'
-    metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                             summaryMetrics=summaryMetrics,
                                             displayDict=displayDict, runName=runName, metadata=metadata)
@@ -1130,7 +1131,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     metadata='All Visits'
 
 
-    metric = metrics.CountMetric(col='expMJD', metricName='TotalNVisits')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     summaryMetrics = [metrics.IdentityMetric(metricName='Count')]
     displayDict={'group':summarygroup, 'subgroup':'1: NVisits', 'order':0}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -1174,7 +1175,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
 
     # Check the Alt-Az pointing history
     slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
-    metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
+    metric = metrics.CountMetric('expMJD', metricName='NVisits Alt/Az')
     plotDict = {'rot':(0,90,0)}
     plotFunc = plots.HealpixSkyMap()
     for f in filters:
