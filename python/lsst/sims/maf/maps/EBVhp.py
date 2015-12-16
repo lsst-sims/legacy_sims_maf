@@ -25,7 +25,7 @@ def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
 
     if (not hasattr(EBVhp, 'dustmap')) | (EBVhp.nside != nside) :
         EBVhp.nside = nside
-        ebvDataDir=os.environ.get("SIMS_DUSTMAPS_DIR")
+        ebvDataDir = os.environ.get("SIMS_MAPS_DIR")
         filename = 'DustMaps/dust_nside_%i.npz'%EBVhp.nside
         EBVhp.dustMap = np.load(os.path.join(ebvDataDir,filename))['ebvMap']
 

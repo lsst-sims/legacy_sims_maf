@@ -30,7 +30,7 @@ class TestMaps(unittest.TestCase):
 
     def testDustMap(self):
 
-        mapPath = os.environ['SIMS_DUSTMAPS_DIR']
+        mapPath = os.environ['SIMS_MAPS_DIR']
 
         if os.path.isfile(os.path.join(mapPath, 'DustMaps/dust_nside_128.npz')):
         
