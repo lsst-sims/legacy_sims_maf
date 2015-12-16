@@ -9,7 +9,7 @@ setupRequired(sims_utils)
 setupRequired(sims_catalogs_generation)
 setupRequired(sims_photUtils)
 setupRequired(sims_coordUtils)
-setupRequired(sims_dustmaps)
+setupRequired(sims_maps)
 setupRequired(obs_lsstSim)
 
 # other requirements (not in LSST stack)
