@@ -19,7 +19,17 @@ import shlex
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../python/lsst/sims/maf/metrics'))
+
+# Modify docs to remove long registry lists
+from sphinx.ext.autodoc import ClassLevelDocumenter, AttributeDocumenter
+def add_directive_header(self, sig):
+    ClassLevelDocumenter.add_directive_header(self, sig)
+    # Rest of original method ignored
+AttributeDocumenter.add_directive_header = add_directive_header
+
+
+
 
 # -- General configuration ------------------------------------------------
 
@@ -38,8 +48,11 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'sphinxcontrib.napoleon'
+    #'numpydoc'
+    'sphinx.ext.napoleon'
 ]
+
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -117,7 +130,7 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
