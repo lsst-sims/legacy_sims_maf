@@ -4,9 +4,11 @@ import numpy as np
 __all__ = ['sigma_slope', 'm52snr', 'astrom_precision']
 
 def sigma_slope(x, sigma_y):
-    """For fitting a line, the uncertainty in the slope
-       is given by the spread in x values and the uncertainties
-       in the y values.  Resulting units are x/sigma_y"""
+    """
+    For fitting a line, the uncertainty in the slope
+    is given by the spread in x values and the uncertainties
+    in the y values.  Resulting units are x/sigma_y
+    """
     w = 1./sigma_y**2
     denom = np.sum(w)*np.sum(w*x**2)-np.sum(w*x)**2
     if denom <= 0:

@@ -92,9 +92,10 @@ def createSQLWhere(tag, propTags):
 def getFieldData(opsimDb, sqlconstraint):
     """
     Find the fields (ra/dec/fieldID) relevant for a given sql constraint.
-    If the opsimDb contains a Fields table, it uses :meth:`OpsimDatabase.fetchFieldsFromFieldTable`
+    If the opsimDb contains a Fields table, it uses
+    :meth:`OpsimDatabase.fetchFieldsFromFieldTable()`
     to get the fields. If the opsimDb contains only a Summary, it uses
-    :meth:`OpsimDatabase.fetchFieldsFromSummaryTable`.
+    :meth:`OpsimDatabase.fetchFieldsFromSummaryTable()`.
 
     Parameters
     ----------
