@@ -88,7 +88,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
             # Build dict for slicePoint info
             slicePoint={}
             for key in self.slicePoints.keys():
-                if (np.size(self.slicePoints[key]) > 1) & (key is not 'bins') & (key is not 'binCol'):
+                if (np.shape(self.slicePoints[key])[0] == self.nslice) & (key is not 'bins') & (key is not 'binCol'):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]
