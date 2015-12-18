@@ -28,14 +28,6 @@ lsst.sims.maf.utils.mafUtils module
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.utils.nameSanitize module
----------------------------------------
-
-.. automodule:: lsst.sims.maf.utils.nameSanitize
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 lsst.sims.maf.utils.opsimUtils module
 -------------------------------------
 
@@ -48,14 +40,6 @@ lsst.sims.maf.utils.outputUtils module
 --------------------------------------
 
 .. automodule:: lsst.sims.maf.utils.outputUtils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-lsst.sims.maf.utils.radec2pix module
-------------------------------------
-
-.. automodule:: lsst.sims.maf.utils.radec2pix
     :members:
     :undoc-members:
     :show-inheritance:
