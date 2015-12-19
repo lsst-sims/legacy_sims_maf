@@ -11,7 +11,8 @@ class CrowdingMetric(BaseMetric):
     Calculate whether the coadded depth in r has exceeded the confusion limit
     """
     def __init__(self, crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
-                 fiveSigCol='fiveSigmaDepth', maps=['lumFuncMap'], **kwargs):
+                 fiveSigCol='fiveSigmaDepth', units='mag', maps=['lumFuncMap'],
+                 metricName='Crowding To Precision', **kwargs):
         """
         Parameters
         ----------
@@ -31,10 +32,10 @@ class CrowdingMetric(BaseMetric):
         self.fiveSigCol = fiveSigCol
         self.lumAreaArcsec = lumArea*3600.0**2
 
-        super(CrowdingMetric, self).__init__(col=cols, maps=maps, **kwargs)
+        super(CrowdingMetric, self).__init__(col=cols, maps=maps, units=units, metricName=metricName, **kwargs)
 
 
-    def _compCrowdError(self, magVector, lumFunc, seeing):
+    def _compCrowdError(self, magVector, lumFunc, seeing, singleMag=None):
         """
         Compute the crowding error for each observation
         Need seeing to be a single value, or magVector and lumFunc should be single values
@@ -42,7 +43,12 @@ class CrowdingMetric(BaseMetric):
         lumVector = 10**(-0.4*magVector)
         coeff=np.sqrt(np.pi/self.lumAreaArcsec)*seeing/2.
         myIntergral = (np.add.accumulate((lumVector**2*lumFunc)[::-1]))[::-1]
-        crowdError = coeff*np.sqrt(myIntergral)/lumVector
+        temp = np.sqrt(myIntergral)/lumVector
+        if singleMag is not None:
+            interp = interp1d(magVector, temp)
+            temp = interp(singleMag)
+
+        crowdError = coeff*temp
 
         return crowdError
 
@@ -53,11 +59,7 @@ class CrowdingMetric(BaseMetric):
 
         crowdError =self._compCrowdError(magVector, lumFunc, seeing=min(dataSlice[self.seeingCol]) )
 
-        #Crowding errors calculated for the best seeing image at each slice point
-        #bestSeeing = min(dataSlice[self.seeingCol])
-
-
-        #Locate at which point crowding error is greater than user-defined limit
+        # Locate at which point crowding error is greater than user-defined limit
         aboveCrowd = np.where(crowdError >= self.crowding_error)[0]
 
         if np.size(aboveCrowd) == 0:
@@ -76,35 +78,41 @@ class CrowdingMagUncertMetric(CrowdingMetric):
     """
     Given a stellar magnitude, calculate the uncertainty on the magnitude, using the crowding uncertainty if dominant
     """
-    def __init__(self, rmag=20., crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
-                 fiveSigCol='fiveSigmaDepth', maps=['lumFuncMap'], **kwargs):
+    def __init__(self, rmag=20., bestResult=True, crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
+                 fiveSigCol='fiveSigmaDepth', maps=['lumFuncMap'], units='mag',
+                 metricName='CrowdingMagUncert', **kwargs):
         """
         Parameters
         ----------
         rmag : float
             The magnitude of the star to consider
+        best : bool
+            Return the best result, otherwise the full vector
         """
         self.rmag = rmag
-        super(CrowdingMetric, self).__init__(crowding_error=crowding_error, lumArea=lumArea,
-                                             seeingCol=seeingCol,fiveSigCol=fiveSigCol, maps=maps, **kwargs)
+        self.best = bestResult
+        super(CrowdingMagUncertMetric, self).__init__(crowding_error=crowding_error, lumArea=lumArea,
+                                                      seeingCol=seeingCol,fiveSigCol=fiveSigCol,
+                                                      maps=maps, units=units, metricName=metricName,
+                                                      **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
 
         magVector = slicePoint['starMapBins'][1:]
         lumFunc = slicePoint['starLumFunc']
 
-        # Interpolate the luminosity function to the requested magnitude
-        interp = interp1d(magVector, lumFunc)
-        magVector = self.rmag
-        lumFunc = interp(self.rmag)
-
-        dmagCrowd = self._compCrowdError(self, magVector, lumFunc, dataSlice[self.seeingCol])
+        # Magnitude uncertainty given crowding
+        dmagCrowd = self._compCrowdError(magVector, lumFunc,
+                                         dataSlice[self.seeingCol], singleMag=self.rmag)
 
         # compute the magnitude uncertainty from the usual m5 depth
         snr = m52snr(self.rmag, dataSlice[self.fiveSigCol])
+        # Magnitude uncertainty, given 5-sigma limiting depth
         dmagRegular = 2.5*np.log10(1.+1./snr)
 
-
-
-
-    # dmag = 2.5*log10(1.+N/S)
+        # Take the max, assume one is dominant.
+        result = np.maximum(dmagCrowd,dmagRegular)
+        # The best now that we've taken crowding into account
+        if self.best:
+            result = np.min(result)
+        return result
