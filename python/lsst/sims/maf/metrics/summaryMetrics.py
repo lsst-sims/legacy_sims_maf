@@ -9,7 +9,7 @@ __all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
 
 class fOArea(BaseMetric):
     """
-    Metric to calculate the FO Area; works with FO slicer only.
+    Metric to calculate the FO Area.
     """
     def __init__(self, col='metricdata', Asky=18000., Nvisit=825,
                  metricName='fOArea', nside=128, norm=True, **kwargs):
@@ -37,7 +37,7 @@ class fOArea(BaseMetric):
 
 class fONv(BaseMetric):
     """
-    Metric to calculate the FO_Nv; works with FO slicer only.
+    Metric to calculate the FO_Nv.
     """
     def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825,
                  nside=128, norm=True, **kwargs):
@@ -70,16 +70,16 @@ class TableFractionMetric(BaseMetric):
 
     This metric is meant to be used as a summary statistic on something like the completeness metric.
     The output is DIFFERENT FROM SSTAR and is:
-        element   matching values
-        0         0 == P
-        1         0 < P < .1
-        2         .1 <= P < .2
-        3         .2 <= P < .3
-        ...
-        10        .9 <= P < 1
-        11        1 == P
-        12        1 < P
-        Note the 1st and last elements do NOT obey the numpy histogram conventions.
+    element   matching values
+    0         0 == P
+    1         0 < P < .1
+    2         .1 <= P < .2
+    3         .2 <= P < .3
+    ...
+    10        .9 <= P < 1
+    11        1 == P
+    12        1 < P
+    Note the 1st and last elements do NOT obey the numpy histogram conventions.
     """
     def __init__(self, col='metricdata',  nbins=10):
         """

@@ -215,10 +215,11 @@ class BaseSlicer(object):
         Send metric data to JSON streaming API, along with a little bit of metadata.
 
         Output is
-           header dictionary with 'metricName/metadata/simDataName/slicerName' and plot labels from plotDict (if provided).
-           then data for plot:
-             if oneDSlicer, it's [ [bin_left_edge, value], [bin_left_edge, value]..].
-             if a spatial slicer, it's [ [lon, lat, value], [lon, lat, value] ..].
+        header dictionary with 'metricName/metadata/simDataName/slicerName' and plot labels from plotDict (if provided).
+        then data for plot:
+        if oneDSlicer, it's [ [bin_left_edge, value], [bin_left_edge, value]..].
+        if a spatial slicer, it's [ [lon, lat, value], [lon, lat, value] ..].
+
         This method will only work for non-complex metrics (i.e. metrics where the metric value is a float or int),
         as JSON will not interpret more complex data properly. These values can't be plotted anyway though.
         """
