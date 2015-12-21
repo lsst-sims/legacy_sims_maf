@@ -67,6 +67,9 @@ class MetricBundle(object):
                     self.mapsList.append(m)
         else:
             self.mapsList = []
+
+        # XXX--add any needed maps that metrics think they need.
+
         # Add the summary stats, if applicable.
         self.setSummaryMetrics(summaryMetrics)
         # Set the provenance/metadata.

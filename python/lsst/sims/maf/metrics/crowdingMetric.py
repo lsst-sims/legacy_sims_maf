@@ -11,7 +11,7 @@ class CrowdingMetric(BaseMetric):
     Calculate whether the coadded depth in r has exceeded the confusion limit
     """
     def __init__(self, crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
-                 fiveSigCol='fiveSigmaDepth', units='mag', maps=['lumFuncMap'],
+                 fiveSigCol='fiveSigmaDepth', units='mag', maps=['StellarDensityMap'],
                  metricName='Crowding To Precision', **kwargs):
         """
         Parameters
@@ -79,7 +79,7 @@ class CrowdingMagUncertMetric(CrowdingMetric):
     Given a stellar magnitude, calculate the uncertainty on the magnitude, using the crowding uncertainty if dominant
     """
     def __init__(self, rmag=20., bestResult=True, crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
-                 fiveSigCol='fiveSigmaDepth', maps=['lumFuncMap'], units='mag',
+                 fiveSigCol='fiveSigmaDepth', maps=['StellarDensityMap'], units='mag',
                  metricName='CrowdingMagUncert', **kwargs):
         """
         Parameters
