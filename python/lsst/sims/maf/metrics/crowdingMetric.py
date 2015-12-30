@@ -76,9 +76,9 @@ class CrowdingMetric(BaseMetric):
 
 class CrowdingMagUncertMetric(CrowdingMetric):
     """
-    Given a stellar magnitude, calculate the uncertainty on the magnitude, using the crowding uncertainty if dominant
+    Given a stellar magnitude, calculate the mean uncertainty on the magnitude from crowding.
     """
-    def __init__(self, rmag=20., bestResult=True, crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
+    def __init__(self, rmag=20., lumArea=10., seeingCol='finSeeing',
                  fiveSigCol='fiveSigmaDepth', maps=['StellarDensityMap'], units='mag',
                  metricName='CrowdingMagUncert', **kwargs):
         """
@@ -90,8 +90,7 @@ class CrowdingMagUncertMetric(CrowdingMetric):
             Return the best result, otherwise the full vector
         """
         self.rmag = rmag
-        self.best = bestResult
-        super(CrowdingMagUncertMetric, self).__init__(crowding_error=crowding_error, lumArea=lumArea,
+        super(CrowdingMagUncertMetric, self).__init__(lumArea=lumArea,
                                                       seeingCol=seeingCol,fiveSigCol=fiveSigCol,
                                                       maps=maps, units=units, metricName=metricName,
                                                       **kwargs)
@@ -100,19 +99,9 @@ class CrowdingMagUncertMetric(CrowdingMetric):
 
         magVector = slicePoint['starMapBins'][1:]
         lumFunc = slicePoint['starLumFunc']
-
         # Magnitude uncertainty given crowding
         dmagCrowd = self._compCrowdError(magVector, lumFunc,
                                          dataSlice[self.seeingCol], singleMag=self.rmag)
 
-        # compute the magnitude uncertainty from the usual m5 depth
-        snr = m52snr(self.rmag, dataSlice[self.fiveSigCol])
-        # Magnitude uncertainty, given 5-sigma limiting depth
-        dmagRegular = 2.5*np.log10(1.+1./snr)
-
-        # Take the max, assume one is dominant.
-        result = np.maximum(dmagCrowd,dmagRegular)
-        # The best now that we've taken crowding into account
-        if self.best:
-            result = np.min(result)
+        result = np.mean(dmagCrowd)
         return result
