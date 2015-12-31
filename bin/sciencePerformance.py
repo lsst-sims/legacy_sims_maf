@@ -592,6 +592,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     caption='Time span of survey.'
     sqlconstraint = ''
     plotDict={}
+    displayDict={'group':rangeGroup, 'caption':caption}
 
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName)
