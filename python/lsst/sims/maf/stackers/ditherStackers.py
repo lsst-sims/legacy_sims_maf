@@ -21,8 +21,19 @@ __all__ = ['wrapRADec', 'wrapRA', 'inHexagon', 'polygonCoords',
 
 def wrapRADec(ra, dec):
     """
-    Wrap RA and Dec values so RA between 0-2pi (using mod),
-      and Dec in +/- pi/2.
+    Wrap RA into 0-2pi and Dec into +/0 pi/2.
+
+    Parameters
+    ----------
+    ra : numpy.ndarray
+        RA in radians
+    dec : numpy.ndarray
+        Dec in radians
+
+    Returns
+    -------
+    numpy.ndarray, numpy.ndarray
+        Wrapped RA/Dec values.
     """
     # Wrap dec.
     low = np.where(dec < -np.pi/2.0)[0]

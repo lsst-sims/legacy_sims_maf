@@ -5,12 +5,26 @@ import numpy as np
 from .outputUtils import printDict
 import warnings
 
-__all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
+__all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere',
+           'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
 def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
     """
     Convenience function to handle connecting to database.
-    (because needs to be called both from driver and from config file, with same dbAddress dictionary).
+
+    Parameters
+    ----------
+    database : str
+        The path to the OpSim sqlite database file.
+    summaryOnly : bool
+        Flag indicating that the opsim database only contains a summary table (or not - in which case,
+        a sqlite database file with all tables is expected).
+    summaryTable : str
+        The name of the summary table.
+
+    Returns
+    -------
+    OpsimDatabase
     """
     import lsst.sims.maf.db as db
     if summaryOnly:
@@ -25,8 +39,16 @@ def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
 
 def writeConfigs(opsimDb, outDir):
     """
-    Convenience function to get the configuration information from the opsim database
-    and write to text files in the output directory 'outDir', as 'configSummary.txt' and 'configDetails.txt'.
+    Convenience function to get the configuration information from the opsim database and write
+    this information to text files 'configSummary.txt' and 'configDetails.txt'.
+
+    Parameters
+    ----------
+    opsimDb : OpsimDatabase
+        The opsim database from which to pull the opsim configuration information.
+        Opsim SQLite databases save this configuration information in their config table.
+    outputDir : str
+        The path to the output directory, where to write the config*.txt files.
     """
     configSummary, configDetails = opsimDb.fetchConfig()
     outfile = os.path.join(outDir, 'configSummary.txt')
@@ -40,9 +62,21 @@ def writeConfigs(opsimDb, outDir):
 
 def createSQLWhere(tag, propTags):
     """
-    Create a SQL 'where' clause for 'tag' using the information in the propTags dictionary.
-    (i.e. create a where clause for WFD proposals).
-    Returns SQL clause.
+    Create a SQL constraint to identify observations taken for a particular proposal,
+    using the information in the propTags dictionary.
+
+    Parameters
+    ----------
+    tag : str
+        The name of the proposal for which to create a SQLwhere clause (WFD or DD).
+    propTags : dict
+        A dictionary of {proposal name : [proposal ids]}
+        This can be created using OpsimDatabase.fetchPropInfo()
+
+    Returns
+    -------
+    str
+        The SQL constraint, such as '(propID = 365) or (propID = 366)'
     """
     sqlWhere = ''
     if (tag not in propTags) or (len(propTags[tag]) == 0):
@@ -56,7 +90,25 @@ def createSQLWhere(tag, propTags):
     return sqlWhere
 
 def getFieldData(opsimDb, sqlconstraint):
-    """Get the FieldData for an OpsimFieldSlicer, for an appropriate sqlconstraint (i.e. one proposal?)."""
+    """
+    Find the fields (ra/dec/fieldID) relevant for a given sql constraint.
+    If the opsimDb contains a Fields table, it uses
+    :meth:`OpsimDatabase.fetchFieldsFromFieldTable()`
+    to get the fields. If the opsimDb contains only a Summary, it uses
+    :meth:`OpsimDatabase.fetchFieldsFromSummaryTable()`.
+
+    Parameters
+    ----------
+    opsimDb : OpsimDatabase
+        An opsim database to use to query for field information.
+    sqlconstraint : str
+        A SQL constraint to apply to the query (i.e. find all fields for DD proposal)
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy structured array containing the field information.
+    """
     # Get all fields used for all proposals.
     if 'propID' not in sqlconstraint:
         propids, propTags = opsimDb.fetchPropInfo()
@@ -99,9 +151,29 @@ def getFieldData(opsimDb, sqlconstraint):
 def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary', distinctExpMJD=True,
                groupBy='expMJD'):
     """
-    Query the database for the necessary simdata columns, run any needed stackers,
-    return simdata array.
+    Query an opsim database for the needed data columns and run any required stackers.
 
+    Parameters
+    ----------
+    opsimDb : OpsimDatabase
+    sqlconstraint : str
+        SQL constraint to apply to query for observations.
+    dbcols : list of str
+        Columns required from the database.
+    stackers : list of Stackers
+        Stackers to be used to generate additional columns.
+    tableName : str
+        Name of the table to query.
+    distinctExpMJD : bool
+        Only select observations with a distinct expMJD value. This is overriden if groupBy is not expMJD.
+    groupBy : str
+        Column name to group SQL results by.
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy structured array with columns resulting from dbcols + stackers, for observations matching
+        the SQLconstraint.
     """
     # Get data from database.
     simData = opsimDb.fetchMetricData(dbcols, sqlconstraint, tableName=tableName,
@@ -117,12 +189,24 @@ def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary
 
 def scaleBenchmarks(runLength, benchmark='design'):
     """
-    Given the runLength and a benchmark name ('design' or 'stretch'),
-    returns the default benchmark expected values for seeing, skybrightness, single visit depth and number of visits,
-     scaled to the run length.
+    Set the design and stretch values of the number of visits, area of the footprint,
+    seeing values, FWHMeff values, skybrightness, and single visit depth (based on SRD values).
+    Scales number of visits for the length of the run, relative to 10 years.
 
-    Note that the number of visits is scaled to a truncated number rather than rounded.
-    If the benchmark name is 'requested', returns the design values of the other parameters.
+    Parameters
+    ----------
+    runLength : float
+        The length (in years) of the run.
+    benchmark : str
+        design or stretch - which version of the SRD values to return.
+        requested is another option, in which case the values of the number of visits requested
+        by the OpSim run (recorded in the Config table) is returned.
+
+    Returns
+    -------
+    dict of floats
+       A dictionary containing the number of visits, area of footprint, seeing and FWHMeff values,
+       skybrightness and single visit depth for either the design or stretch SRD values.
     """
     # Set baseline (default) numbers for the baseline survey length (10 years).
     baseline = 10.
@@ -167,8 +251,19 @@ def scaleBenchmarks(runLength, benchmark='design'):
 
 def calcCoaddedDepth(nvisits, singleVisitDepth):
     """
-    Given dictionaries of nvisits and singleVisitDepth (per filter),
-    Returns a dictionary containing the expected coadded depth.
+    Calculate the coadded depth expected for a given number of visits and single visit depth.
+
+    Parameters
+    ----------
+    nvisits : dict of ints or floats
+        Dictionary (per filter) of number of visits
+    singleVisitDepth : dict of floats
+        Dictionary (per filter) of the single visit depth
+
+    Returns
+    -------
+    dict of floats
+        Dictionary of coadded depths per filter.
     """
     coaddedDepth = {}
     for f in nvisits:

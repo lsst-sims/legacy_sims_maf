@@ -28,7 +28,7 @@ class StackerRegistry(type):
             cls.registry[stackername] = cls
     def getClass(cls, stackername):
         return cls.registry[stackername]
-    def list(cls, doc=False):
+    def help(cls, doc=False):
         for stackername in sorted(cls.registry):
             if not doc:
                 print stackername

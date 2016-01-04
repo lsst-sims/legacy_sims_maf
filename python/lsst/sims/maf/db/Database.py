@@ -29,7 +29,7 @@ class DatabaseRegistry(type):
             cls.registry[databasename] = cls
     def getClass(cls, databasename):
         return cls.registry[databasename]
-    def list(cls, doc=False):
+    def help(cls, doc=False):
         for databasename in sorted(cls.registry):
             if not doc:
                 print databasename

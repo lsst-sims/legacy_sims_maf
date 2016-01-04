@@ -17,7 +17,7 @@ def makeBundlesDictFromList(bundleList):
     Utility to convert a list of MetricBundles into a dictionary, keyed by the fileRoot names.
 
     Raises an exception if the fileroot duplicates another metricBundle.
-     (Note this should alert to potential cases of filename duplication).
+    (Note this should alert to potential cases of filename duplication).
     """
     bDict = {}
     for b in bundleList:
@@ -28,19 +28,9 @@ def makeBundlesDictFromList(bundleList):
 
 class MetricBundleGroup(object):
     """
-    Handles dictionaries of MetricBundle objects that will be querying from a single database table.
-    The metricBundleGroup then identifies metricBundles with the same sqlconstraint, and queries the data for those
-     metricBundles from the database.
-    It then identifies the 'compatible' subgroups of metricBundles to calculate their metric values, and does so.
-    A compatible subgroup of metricbundles has the same SQL constraint, db Table to query, as well as the same slicer, mapsList, and stackerList.
-
-    Each MetricBundleGroup of metric bundles should be a dictionary -- for complex metrics, this allows the user to obtain the
-      additional metricBundles generated when the complex metric is run (they are identified with keys linked to the original dictionary key).
-    Each MetricBundleGroup must query the same database table.
-    The data returned from the db query is stored in the MetricBundleGroup object.
-    MetricBundleGroup also provides convenience methods to generate all plots, run all summary statistics,
-    run all reduce functions, and write all metricbundles to disk.
-    Thus, it also tracks the 'outDir' and 'resultsDb'.
+    Calculates the metric values for dictionaries of MetricBundles that will be querying from a single database table
+    (such as the 'summary' table). Almost all MetricBundles that users create can be placed into a dictionary and just run
+    through a single MetricBundleGroup. The MetricBundleGroup will group the MetricBundles efficiently and run them all.
     """
     def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
                  saveEarly=True, dbTable='Summary'):
@@ -460,7 +450,7 @@ class MetricBundleGroup(object):
         """
         Attempt to read all metricBundles from disk.
         You must set the metrics/slicer/sqlconstraint/runName for a metricBundle appropriately;
-         then this method will search for files in the location self.outDir/metricBundle.fileRoot.
+        then this method will search for files in the location self.outDir/metricBundle.fileRoot.
         Reads all the files associated with all metricbundles in self.bundleDict.
         """
         reduceBundleDict = {}

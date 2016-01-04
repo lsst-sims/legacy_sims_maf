@@ -282,9 +282,16 @@ class MetricBundle(object):
         """
         Write metricValues (and associated metadata) to disk.
 
-        comment = any additional comments to add to output file (beyond
-                   metric name, simDataName, and metadata).
-        outfileSuffix = additional suffix to add to output files (numerical suffix for movies).
+        Parameters
+        ----------
+        comment : str
+            Any additional comments to add to the output file
+        outDir : str
+            The output directory
+        outfileSuffix : str
+            Additional suffix to add to the output files (typically a numerical suffix for movies)
+        resultsD : ResultsDb
+            Results database to store information on the file output
         """
         if outfileSuffix is not None:
             outfile = self.fileRoot + '_' + outfileSuffix + '.npz'
@@ -391,7 +398,7 @@ class MetricBundle(object):
         """
         Run 'reduceFunc' (any function that operates on self.metricValues), return a new MetricBundle.
         Typically reduceFunc will be the metric reduce functions, as they are tailored to expect the
-          metricValues format.
+        metricValues format.
         reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be applied to the new metricBundle.
         """
         # Generate a name for the metric values processed by the reduceFunc.

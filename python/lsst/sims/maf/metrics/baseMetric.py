@@ -35,14 +35,14 @@ class MetricRegistry(type):
             cls.registry[metricname] = cls
     def getClass(cls, metricname):
         return cls.registry[metricname]
-    def list(cls, doc=False):
+    def help(cls, doc=False):
         for metricname in sorted(cls.registry):
             if not doc:
                 print metricname
             if doc:
                 print '---- ', metricname, ' ----'
                 print inspect.getdoc(cls.registry[metricname])
-    def help(cls, metricname):
+    def help_metric(cls, metricname):
         print metricname
         print inspect.getdoc(cls.registry[metricname])
         args, varargs, kwargs, defaults = inspect.getargspec(cls.registry[metricname].__init__)
@@ -56,18 +56,26 @@ class ColRegistry(object):
     """
     ColRegistry tracks the columns needed for all metric objects (kept internally in a set).
 
-    ColRegistry.colSet returns a list of all unique columns required for metrics;
-    ColRegistry.dbCols returns the subset of these which come from the database.
-    ColRegistry.stackerCols returns the dictionary of [columns: stacker class].
+    ColRegistry.colSet : a set of all unique columns required for metrics.
+    ColRegistry.dbCols : the subset of these which come from the database.
+    ColRegistry.stackerCols : the dictionary of [columns: stacker class].
     """
     colInfo = ColInfo()
     def __init__(self):
         self.colSet = set()
         self.dbSet = set()
         self.stackerDict = {}
+
     def addCols(self, colArray):
-        """
-        Add the columns in colArray into the ColRegistry set and identifies their source, using utils.ColInfo.
+        """Add the columns in ColArray into the ColRegistry.
+
+        Add the columns in colArray into the ColRegistry set (self.colSet) and identifies their source,
+         using ColInfo (lsst.sims.maf.stackers.getColInfo).
+
+        Parameters
+        ----------
+        colArray : list
+            list of columns used in a metric.
         """
         for col in colArray:
             self.colSet.add(col)
@@ -89,19 +97,28 @@ class BaseMetric(object):
                  metricDtype=None, badval=-666):
         """Instantiate metric.
 
-        'col' is a kwarg for purposes of the MAF driver; when actually using a metric, it must be set to
-        the names of the data columns that the metric will operate on. This can be a single string or a list.
+        Sets up some basic functionality for the MAF framework: after __init__ every metric will
+        record the columns (and stackers) it requires into the column registry, and the metricName,
+        metricDtype, and units for the metric will be set.
 
-        'maps' is a list of any maps that the metric will need, accessed via slicePoint that is passed from the slicer.
-
-        After inheriting from this base metric :
-          * every metric object will have metricDtype (the type of data it calculates) set according to:
-               -- kwarg (metricDtype='float', 'int', etc)
-               -- 'float' (assumes float if not specified in kwarg)
-               -- 'object' (if reduce functions are present and value not set in kwarg)
-          * every metric object will have the data columns it requires added to the column registry
-            (so the driver can know which columns to pull from the database)
-
+        Parameters
+        ----------
+        col : str or list
+           Names of the data columns that the metric will use.
+           The columns required for each metric is tracked in the ColRegistry, and used to retrieve data
+           from the opsim database. Can be a single string or a list.
+        metricName : str
+           Name to use for the metric (optional - if not set, will be derived).
+        maps : list
+           The maps that the metric will need (passed from the slicer).
+        units : str
+           The units for the value returned by the metric (optional - if not set,
+           will be derived from the ColInfo).
+        metricDtype : str
+           The type of value returned by the metric - 'int', 'float', 'object'.
+           If not set, will be derived by introspection.
+        badval : float
+           The value indicating "bad" values calculated by the metric.
         """
         # Turn cols into numpy array so we know we can iterate over the columns.
         self.colNameArr = np.array(col, copy=False, ndmin=1)
@@ -150,4 +167,19 @@ class BaseMetric(object):
         self.shape = 1
 
     def run(self, dataSlice, slicePoint=None):
+        """Calculate metric values.
+
+        Parameters
+        ----------
+        dataSlice : numpy.NDarray
+           Values passed to metric by the slicer, which the metric will use to calculate metric values at each slicePoint.
+        slicePoint : Dict
+           Dictionary of slicePoint metadata passed to each metric.
+           E.g. the ra/dec of the healpix pixel or opsim fieldID.
+
+        Returns
+        -------
+        int, float or object
+            The metric value at each slicePoint.
+        """
         raise NotImplementedError('Please implement your metric calculation.')

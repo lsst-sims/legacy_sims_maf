@@ -1,37 +1,35 @@
 import importlib
 import os
 import numpy as np
+import healpy as hp
 import warnings
 
-__all__ = ['moduleLoader', 'connectResultsDb', 'optimalBins', 'percentileClipping', 'gnomonic_project_toxy']
+__all__ = ['optimalBins', 'percentileClipping',
+           'gnomonic_project_toxy', 'radec2pix']
 
-def moduleLoader(moduleList):
-    """
-    Load additional modules (beyond standard MAF modules) provided by the user at runtime.
-    If the modules contain metrics, slicers or stackers inheriting from MAF base classes, these
-    will then be available from the driver configuration file identified by 'modulename.classname'.
-    """
-    for m in moduleList:
-        importlib.import_module(m)
-
-def connectResultsDb(dbDir, dbFilename='resultsDb_sqlite.db'):
-    """
-    Connect to a MAF-generated results database (usually called 'resultsDb_sqlite.db').
-    """
-    import lsst.sims.maf.db as db
-    dbAddress = 'sqlite:///' + os.path.join(dbDir, dbFilename)
-    database = db.Database(dbAddress, longstrings=True,
-                            dbTables={'metrics':['metrics','metricID'],
-                                      'displays':['displays', 'displayId'],
-                                      'plots':['plots','plotId'],
-                                      'stats':['summarystats','statId']})
-    return database
 
 def optimalBins(datain, binmin=None, binmax=None, nbinMax=200, nbinMin=1):
     """
-    Use Freedman-Diaconis rule to set binsize.
-    Allow user to pass min/max data values to consider.
-    nbinMax sets the maximum value (to keep it from trying to make a trillion bins)
+    Set an 'optimal' number of bins using the Freedman-Diaconis rule.
+
+    Parameters
+    ----------
+    datain : numpy.ndarray or numpy.ma.MaskedArray
+        The data for which we want to set the binsize.
+    binmin : float
+        The minimum bin value to consider (if None, uses minimum data value).
+    binmax : float
+        The maximum bin value to consider (if None, uses maximum data value).
+    nbinMax : int
+        The maximum number of bins to create. Sometimes the 'optimal binsize' implies
+        an unreasonably large number of bins, if the data distribution is unusual.
+    nbinMin : int
+        The minimum number of bins to create. Default is 1.
+
+    Returns
+    -------
+    int
+        The number of bins.
     """
     # if it's a masked array, only use unmasked values
     if hasattr(datain, 'compressed'):
@@ -72,9 +70,21 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=200, nbinMin=1):
 
 def percentileClipping(data, percentile=95.):
     """
-    Clip off high and low outliers from a distribution in a numpy array.
-    Returns the max and min values of the clipped data.
-    Useful for determining plotting ranges.
+    Calculate the minimum and maximum values of a distribution of points, after
+    discarding data more than 'percentile' from the median.
+    This is useful for determining useful data ranges for plots.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        The data to clip.
+    percentile : float
+        Retain values within percentile of the median.
+
+    Returns
+    -------
+    float, float
+        The minimum and maximum values of the clipped data.
     """
     if np.size(data) > 0:
         # Use absolute value to get both high and low outliers.
@@ -91,9 +101,49 @@ def percentileClipping(data, percentile=95.):
     return  min_value, max_value
 
 def gnomonic_project_toxy(RA1, Dec1, RAcen, Deccen):
-    """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccen.
-    Input radians."""
+    """
+    Calculate the x/y values of RA1/Dec1 in a gnomonic projection with center at RAcen/Deccen.
+
+    Parameters
+    ----------
+    RA1 : numpy.ndarray
+        RA values of the data to be projected, in radians.
+    Dec1 : numpy.ndarray
+        Dec values of the data to be projected, in radians.
+    RAcen: float
+        RA value of the center of the projection, in radians.
+    Deccen : float
+        Dec value of the center of the projection, in radians.
+
+    Returns
+    -------
+    numpy.ndarray, numpy.ndarray
+        The x/y values of the projected RA1/Dec1 positions.
+    """
     cosc = np.sin(Deccen) * np.sin(Dec1) + np.cos(Deccen) * np.cos(Dec1) * np.cos(RA1-RAcen)
     x = np.cos(Dec1) * np.sin(RA1-RAcen) / cosc
     y = (np.cos(Deccen)*np.sin(Dec1) - np.sin(Deccen)*np.cos(Dec1)*np.cos(RA1-RAcen)) / cosc
     return x, y
+
+
+def radec2pix(nside, ra, dec):
+    """
+    Calculate the nearest healpixel ID of an RA/Dec array, assuming nside.
+
+    Parameters
+    ----------
+    nside : int
+        The nside value of the healpix grid.
+    ra : numpy.ndarray
+        The RA values to be converted to healpix ids, in radians.
+    dec : numpy.ndarray
+        The Dec values to be converted to healpix ids, in radians.
+
+    Returns
+    -------
+    numpy.ndarray
+        The healpix ids.
+    """
+    lat = np.pi/2. - dec
+    hpid = hp.ang2pix(nside, lat, ra )
+    return hpid

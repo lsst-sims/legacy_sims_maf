@@ -1,12 +1,39 @@
 import sys
 import numpy as np
 
-__all__ = ['printDict', 'printSimpleDict']
+__all__ = ['nameSanitize', 'printDict', 'printSimpleDict']
+
+def nameSanitize(inString):
+    """
+    Convert a string to a more file name friendly format.
+
+    Parameters
+    ----------
+    inString : str
+        The input string to be sanitized. Typically these are combinations of metric names and metadata.
+
+    Returns
+    -------
+    str
+        The string after removal/replacement of non-filename friendly characters.
+    """
+    # Replace <, > and = signs.
+    outString = inString.replace('>', 'gt').replace('<', 'lt').replace('=', 'eq')
+    # Remove single-spaces, strip '.'s and ','s
+    outString = outString.replace(' ', '_').replace('.', '_').replace(',', '')
+    # and remove / and \
+    outString = outString.replace('/', '_').replace('\\', '_')
+    # and remove parentheses
+    outString = outString.replace('(', '').replace(')', '')
+    # Remove ':' and ';"
+    outString = outString.replace(':','_').replace(';','_')
+    # Remove '__'
+    while '__' in outString:
+        outString = outString.replace('__','_')
+    return outString
 
 def _myformat(args, delimiter=' '):
-    """
-    Generic line formatter (to let you specify delimiter between text fields).
-    """
+    # Generic line formatter to let you specify delimiter between text fields.
     writestring = ''
     for a in args:
         if isinstance(a, list):
@@ -20,6 +47,7 @@ def _myformat(args, delimiter=' '):
     return writestring
 
 def _myformatdict(adict, delimiter=' '):
+    # Generic line formatter used for dictionaries.
     writestring = ''
     for k,v in adict.iteritems():
         if isinstance(v, list):
@@ -37,12 +65,20 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     """
     Print dictionaries (and/or nested dictionaries) nicely.
     Can also print other simpler items (such as numpy ndarray) nicely too.
+    This is used to print the config files.
 
-    content = dictionary,
-    label = header, 
-    filehandle = the file object for output .. if 'None' (default) prints to standard out.
-    delimiter = the user specified delimiter between fields.
-    _level is for internal use (controls level of indent).
+    Parameters
+    ----------
+    content : dict
+        The content to pretty print.
+    label : str
+        A header for this level of the dictionary.
+    filename : file
+        Output destination. If None, prints to stdout.
+    delimiter : str
+        User specified delimiter between fields.
+    _level : int
+        Internal use (controls level of indent).
     """
     # Get set up with basic file output information.
     if filehandle is None:
@@ -91,10 +127,18 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
 def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
     """
     Print a simple one-level nested dictionary nicely across the screen,
-     with one line per top-level key and all sub-level keys aligned.
+    with one line per top-level key and all sub-level keys aligned.
 
-    filehandle = the file object for output .. if 'None' (default) prints to standard out.
-    delimiter = the user specified delimiter between fields.
+    Parameters
+    ----------
+    topdict : dict
+        The dictionary to pretty print
+    subkeyorder : list of strings
+        The order to print the values of the dictionary.
+    filehandle : file
+        File output object, if None then uses stdout.
+    delimiter : str
+        User specified delimiter between fields.
     """
     # Get set up with basic file output information.
     if filehandle is None:
