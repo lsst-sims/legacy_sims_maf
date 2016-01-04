@@ -1,6 +1,7 @@
 import importlib
 import os
 import numpy as np
+import healpy as hp
 import warnings
 
 __all__ = ['optimalBins', 'percentileClipping',
