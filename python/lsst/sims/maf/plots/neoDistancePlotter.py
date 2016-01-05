@@ -30,10 +30,8 @@ class NeoDistancePlotter(BasePlotter):
         fig = plt.figure(fignum)
         ax = fig.add_subplot(111)
 
-
-        inPlane = np.where( (metricValue[0].data['eclipLat'] >= self.eclipMin) &
-                            (metricValue[0].data['eclipLat'] <= self.eclipMax))
-
+        inPlane = np.where( (metricValue[0]['eclipLat'] >= self.eclipMin) &
+                                (metricValue[0]['eclipLat'] <= self.eclipMax))
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
@@ -64,8 +62,8 @@ class NeoDistancePlotter(BasePlotter):
         ygrid = Rgrid*np.sin(thetagrid)
 
 
-        for dist,x,y in zip(metricValue[0].data['MaxGeoDist'][inPlane],metricValue[0].data['NEOHelioX'][inPlane],
-                            metricValue[0].data['NEOHelioY'][inPlane]):
+        for dist,x,y in zip(metricValue[0]['MaxGeoDist'][inPlane],metricValue[0]['NEOHelioX'][inPlane],
+                            metricValue[0]['NEOHelioY'][inPlane]):
 
             theta = np.arctan2(y-1., x)
             #theta_ind = np.searchsorted(thetavec, theta)

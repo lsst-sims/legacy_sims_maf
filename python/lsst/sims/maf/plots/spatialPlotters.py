@@ -106,7 +106,7 @@ class HealpixSkyMap(BasePlotter):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
-                            extend='both', extendrect=True, format=plotDict['cbarFormat'])
+                              format=plotDict['cbarFormat'], extendrect=True)
             cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
             if plotDict['labelsize'] is not None:
                 cb.ax.tick_params(labelsize=plotDict['labelsize'])
