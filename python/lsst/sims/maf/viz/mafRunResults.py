@@ -382,8 +382,9 @@ class MafRunResults(object):
         """
         Given an array of plots (for a single metric usually).
         Returns an ordered dict with 'plotType' for interfacing with jinja2 templates.
-          plotDict == {'SkyMap': {'plotFile': [], 'thumbFile', []}, 'Histogram': {}..}
-          If no plot of a particular type, the plotFile and thumbFile are empty lists.
+        plotDict == {'SkyMap': {'plotFile': [], 'thumbFile', []}, 'Histogram': {}..}
+
+        If no plot of a particular type, the plotFile and thumbFile are empty lists.
         Calling with plots=None returns a blank plotDict.
         """
         plotDict = OrderedDict()
@@ -518,8 +519,8 @@ class MafRunResults(object):
         Returns an ordered dictionary with statName:statValue for an array of stats.
 
         Note that if you pass 'stats' from multiple metrics with the same summary names, they
-         will be overwritten in the resulting dictionary!
-         So just use stats from one metric, with unique summaryNames.
+        will be overwritten in the resulting dictionary!
+        So just use stats from one metric, with unique summaryNames.
         """
         # Result = dict with key == summary stat name, value = summary stat value.
         sdict = OrderedDict()

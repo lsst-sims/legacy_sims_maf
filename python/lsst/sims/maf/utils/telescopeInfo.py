@@ -5,7 +5,7 @@ class TelescopeInfo(object):
     Store the latitude, longitude and elevation of the telescope site.
 
     Parameters
-    ---------
+    ----------
     name : str
         The name of the telescope. If "LSST", uses default lat/long/elevation values.
     """
