@@ -2,7 +2,6 @@ import warnings
 import numpy as np
 import palpy
 from lsst.sims.utils import _altAzPaFromRaDec, ObservationMetaData, Site
-from lsst.sims.maf.utils import TelescopeInfo
 
 from .baseStacker import BaseStacker
 
@@ -140,14 +139,13 @@ class ParallacticAngleStacker(BaseStacker):
         self.raCol = raCol
         self.decCol = decCol
         self.mjdCol = mjdCol
+        default_site = Site(name='LSST')
         if latRad is None:
-            TI = TelescopeInfo('LSST')
-            self.latRad = TI.lat
+            self.latRad = default_site.latitude_rad
         else:
             self.latRad = latRad
         if lonRad is None:
-            TI = TelescopeInfo('LSST')
-            self.lonRad = TI.lon
+            self.lonRad = default_site.longitude_rad
         else:
             self.lonRad = lonRad
 
@@ -158,9 +156,13 @@ class ParallacticAngleStacker(BaseStacker):
     def _run(self, simData):
         pa_arr = []
         for ra, dec, mjd in zip(simData[self.raCol], simData[self.decCol], simData[self.mjdCol]):
+            # Note: to transform from RA, Dec to Alt, Az, we need to account for atmospheric refraction.
+            # That implies a complete Site specification (with atmospheric pressure, humidity, temperature
+            # and lapse rate).  Absent that data at themoment, we will default to LSST values here.
             alt, az, pa = _altAzPaFromRaDec(ra, dec,
-                                            ObservationMetaData(mjd=mjd,site=Site(longitude=self.lonRad,
-                                                                                  latitude=self.latRad)))
+                                            ObservationMetaData(mjd=mjd,site=Site(longitude=np.degrees(self.lonRad),
+                                                                                  latitude=np.degrees(self.latRad),
+                                                                                  name='LSST')))
 
             pa_arr.append(pa)
 

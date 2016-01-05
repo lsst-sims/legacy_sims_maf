@@ -24,7 +24,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.plots as plots
-from lsst.sims.maf.utils import TelescopeInfo
+from lsst.sims.utils import Site
 
 import time
 import warnings
@@ -87,7 +87,7 @@ def setupMovieSlicer(simdata, bins, verbose=False):
         print 'Set up movie slicers in %f s' %(dt)
     return movieslicer
 
-def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=TelescopeInfo('LSST').lat, raCen=0.):
+def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=Site(name='LSST').latitude_rad, raCen=0.):
     """
     Adds a horizon at horizon_altitude, using the telescope latitude lat_telescope.
     Returns the lon/lat points that would be appropriate to add to a SkyMap plot centered on raCen.
@@ -120,7 +120,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
     # Set up formatting for output suffix.
     sliceformat = '%s0%dd' %('%', int(np.log10(len(movieslicer)))+1)
     # Get the telescope latitude info.
-    lat_tele = TelescopeInfo('LSST').lat
+    lat_tele = Site(name='LSST').latitude_rad
     # Run through the movie slicer slicePoints and generate plots at each point.
     for i, ms in enumerate(movieslicer):
         t = time.time()
