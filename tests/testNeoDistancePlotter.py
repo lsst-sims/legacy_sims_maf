@@ -23,4 +23,10 @@ class TestNeoDistancePlotter(unittest.TestCase):
         Just test that it can make a figure without throwing an error.
         """
         plotter = plots.NeoDistancePlotter()
-        fig = plotter(self.metricValues, None, None)
+        # Need to wrap in a list because it will usually go through the
+        # UniSlicer, and will thus be an array inside a 1-element masked array
+        fig = plotter([self.metricValues], None, {})
+
+
+if __name__ == "__main__":
+    unittest.main()
