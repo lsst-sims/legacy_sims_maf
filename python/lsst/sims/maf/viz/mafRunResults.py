@@ -1,4 +1,5 @@
-import os, re
+import os
+import re
 from collections import OrderedDict
 import numpy as np
 import lsst.sims.maf.db as db
@@ -28,8 +29,8 @@ class MafRunResults(object):
         # if the config summary existed and we don't know the runName, find it.
         elif self.runName is None:
             # Read the config file to get the runName.
-            with open (self.configSummary, "r") as myfile:
-                config=myfile.read()
+            with open(self.configSummary, "r") as myfile:
+                config = myfile.read()
             spot = config.find('RunName')
             # If we found the runName, use that.
             if spot != -1:
@@ -38,8 +39,7 @@ class MafRunResults(object):
             else:
                 self.runName = 'RunName not available'
 
-
-        self.configDetails = os.path.join(self.outDir,'configDetails.txt')
+        self.configDetails = os.path.join(self.outDir, 'configDetails.txt')
         if not os.path.isfile(self.configDetails):
             self.configDetails = 'Config Details Not Available.'
 
@@ -67,7 +67,8 @@ class MafRunResults(object):
                                  'N(-3Sigma)', 'N(+3Sigma)', 'Count',
                                  '25th%ile', '75th%ile', 'Min', 'Max']
         # Add in the table fraction sorting to summary stat ordering.
-        tableFractions = [x for x in list(np.unique(self.stats['summaryName'])) if x.startswith('TableFraction')]
+        tableFractions = [x for x in list(np.unique(self.stats['summaryName']))
+                          if x.startswith('TableFraction')]
         if len(tableFractions) > 0:
             tableFractions.remove('TableFraction 0 == P')
             tableFractions.remove('TableFraction 1 == P')
@@ -81,7 +82,7 @@ class MafRunResults(object):
 
         self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
 
-    ## Methods to deal with metricIds
+    # Methods to deal with metricIds
 
     def convertSelectToMetrics(self, groupList, metricIdList):
         """
@@ -160,8 +161,7 @@ class MafRunResults(object):
         """
         return list(metrics['metricId'])
 
-
-    ## Methods to deal with metrics in numpy recarray.
+    # Methods to deal with metrics in numpy recarray.
 
     def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup',
                                           'baseMetricNames', 'slicerName', 'displayOrder',
@@ -189,7 +189,8 @@ class MafRunResults(object):
 
     def metricsInSubgroup(self, group, subgroup, metrics=None):
         """
-        Given a group and subgroup, return a dataframe of the metrics belonging to these group/subgroups, in display order.
+        Given a group and subgroup, return a dataframe of the metrics belonging to these
+        group/subgroups, in display order.
 
         If 'metrics' is provided, then only consider this subset of metrics.
         """
@@ -269,8 +270,8 @@ class MafRunResults(object):
             metrics = self.metrics
         # Identify metricIds which are also in stats.
         metrics = metrics[np.in1d(metrics['metricId'], self.stats['metricId'])]
-        metrics = self.sortMetrics(metrics, order = ['displayGroup', 'displaySubgroup', 'slicerName',
-                                                     'displayOrder', 'metricMetadata', 'baseMetricNames'])
+        metrics = self.sortMetrics(metrics, order=['displayGroup', 'displaySubgroup', 'slicerName',
+                                                   'displayOrder', 'metricMetadata', 'baseMetricNames'])
         return metrics
 
     def uniqueSlicerNames(self, metrics=None):
@@ -370,7 +371,7 @@ class MafRunResults(object):
         else:
             return caption
 
-    ## Methods for plots.
+    # Methods for plots.
 
     def plotsForMetric(self, metric):
         """
@@ -446,13 +447,13 @@ class MafRunResults(object):
         if len(skyPlots) == 0:
             return orderedSkyPlots
 
-        orderList = ['u','g','r','i','z','y']
+        orderList = ['u', 'g', 'r', 'i', 'z', 'y']
         blankPlotDict = self.plotDict(None)
 
         # Look for filter names in the plot filenames.
         tooManyPlots = False
         for f in orderList:
-            pattern = '_'+f+'_'
+            pattern = '_' + f + '_'
             matches = np.array([bool(re.search(pattern, x)) for x in skyPlots['plotFile']])
             matchSkyPlot = skyPlots[matches]
             # in pandas: matchSkyPlot = skyPlots[skyPlots.plotFile.str.contains(pattern)]
@@ -465,12 +466,12 @@ class MafRunResults(object):
                 tooManyPlots = True
                 break
 
-        if not (tooManyPlots):
-            # Add on any additional non-filter plots (e.g. joint completeness) that do NOT match original _*_ pattern.
-            pattern = '_[ugrizy]_' # for regex
+        if tooManyPlots is False:
+            # Add on any additional non-filter plots (e.g. joint completeness)
+            #  that do NOT match original _*_ pattern.
+            pattern = '_[ugrizy]_'
             nonmatches = np.array([bool(re.search(pattern, x)) for x in skyPlots['plotFile']])
-            nonmatchSkyPlots = skyPlots[nonmatches==False]
-            # in pandas: nonmatchSkyPlots = skyPlots[skyPlots.plotFile.str.contains(pattern, regex=True) == False]
+            nonmatchSkyPlots = skyPlots[nonmatches == False]
             if len(nonmatchSkyPlots) > 0:
                 for skyPlot in nonmatchSkyPlots:
                     orderedSkyPlots.append(self.plotDict(np.array([skyPlot])))
@@ -501,7 +502,7 @@ class MafRunResults(object):
         plotMatch = plotMetricMatch[np.in1d(plotMetricMatch['plotType'], plotType)]
         return plotMatch
 
-    ## Set of methods to deal with summary stats.
+    # Set of methods to deal with summary stats.
 
     def statsForMetric(self, metric, statName=None):
         """
@@ -552,7 +553,8 @@ class MafRunResults(object):
         Given an array of metrics, return a list containing all the unique 'summaryNames'
         in a default ordering.
         """
-        names = list(np.unique(self.stats['summaryName'][np.in1d(self.stats['metricId'], metrics['metricId'])]))
+        names = np.unique(self.stats['summaryName'][np.in1d(self.stats['metricId'], metrics['metricId'])])
+        names = list(names)
         # Add some default sorting.
         namelist = []
         for nord in self.summaryStatOrder:
