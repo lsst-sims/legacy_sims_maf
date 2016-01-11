@@ -46,14 +46,15 @@ class MafRunComparison(object):
         # Open access to all results database files in any subdirectories under 'runs'.
         self.runresults = {}
         for r, rdir in zip(self.runlist, self.rundirs):
+            self.runresults[r] = {}
             if not os.path.isdir(os.path.join(self.baseDir, r)):
                 warnings.warn('Warning: could not find a directory containing analysis results at %s'\
                               %(os.path.join(self.baseDir, r)))
-            self.runresults[r] = {}
-            sublist = os.listdir(os.path.join(self.baseDir, r))
-            for s in sublist:
-                if os.path.isfile(os.path.join(self.baseDir, r, s, 'resultsDb_sqlite.db')):
-                    self.runresults[r][s] = ResultsDb(outDir=os.path.join(self.baseDir, r, s))
+            else:
+                sublist = os.listdir(os.path.join(self.baseDir, r))
+                for s in sublist:
+                    if os.path.isfile(os.path.join(self.baseDir, r, s, 'resultsDb_sqlite.db')):
+                        self.runresults[r][s] = ResultsDb(outDir=os.path.join(self.baseDir, r, s))
         # Remove any runs from runlist which we could not find results databases for.
         for r in self.runlist:
             if len(self.runresults[r]) == 0:
@@ -135,8 +136,8 @@ class MafRunComparison(object):
             stats[i][0] = statName
             for j, r in enumerate(self.runlist):
                 try:
-                    i = summaryNames[r].index(statName)
-                    stats[i][j+1] = summaryValues[r][i]
+                    sidx = summaryNames[r].index(statName)
+                    stats[i][j+1] = summaryValues[r][sidx]
                 except ValueError:
                     stats[i][j+1] = np.nan
         return stats
