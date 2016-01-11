@@ -122,7 +122,7 @@ if __name__ == '__main__':
     pandaprint(summary)
 
     # Median r band seeing
-    metricName = 'Median finSeeing'
+    metricName = 'Median FWHMeff'
     metricMetadata = 'r band, all props'
     slicerName = None
     summaryName = 'Identity'
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     pandaprint(summary)
 
     # Median r and i band seeing
-    metricName = 'Median finSeeing'
+    metricName = 'Median FWHMeff'
     slicerName = None
     summaryName = None
     metricMetadata = []
