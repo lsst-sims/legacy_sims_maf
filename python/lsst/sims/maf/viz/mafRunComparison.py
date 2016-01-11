@@ -1,6 +1,6 @@
-import os, warnings
+import os
+import warnings
 import numpy as np
-import matplotlib.pyplot as plt
 from lsst.sims.maf.db import ResultsDb
 
 __all__ = ['MafRunComparison']
@@ -26,7 +26,7 @@ class MafRunComparison(object):
             A list of runs to compare.
         rundirs : list
             A list of directories (relative to baseDir) where the runs in runlist reside.
-            Optional - if not provided, assumes directories are simply the names of runlist. 
+            Optional - if not provided, assumes directories are simply the names of runlist.
         """
         self.baseDir = baseDir
         self.runlist = runlist
@@ -48,8 +48,8 @@ class MafRunComparison(object):
         for r, rdir in zip(self.runlist, self.rundirs):
             self.runresults[r] = {}
             if not os.path.isdir(os.path.join(self.baseDir, r)):
-                warnings.warn('Warning: could not find a directory containing analysis results at %s'\
-                              %(os.path.join(self.baseDir, r)))
+                warnings.warn('Warning: could not find a directory containing analysis results at %s'
+                              % (os.path.join(self.baseDir, r)))
             else:
                 sublist = os.listdir(os.path.join(self.baseDir, r))
                 for s in sublist:
@@ -58,8 +58,8 @@ class MafRunComparison(object):
         # Remove any runs from runlist which we could not find results databases for.
         for r in self.runlist:
             if len(self.runresults[r]) == 0:
-                warnings.warn('Warning: could not find any results databases for run %s'\
-                              %(os.path.join(self.baseDir, r)))
+                warnings.warn('Warning: could not find any results databases for run %s'
+                              % (os.path.join(self.baseDir, r)))
                 self.runlist.remove(r)
 
     def close(self):
@@ -75,8 +75,8 @@ class MafRunComparison(object):
 
     def findSummaryStats(self, metricName, metricMetadata=None, slicerName=None, summaryName=None):
         """
-        Look for summary metric values matching metricName (and optionally metricMetadata, slicerName and summaryName)
-        among the results databases for each run.
+        Look for summary metric values matching metricName (and optionally metricMetadata, slicerName
+        and summaryName) among the results databases for each run.
 
         Parameters
         ----------
@@ -103,8 +103,9 @@ class MafRunComparison(object):
             summaryNames[r] = []
             # Note that we may have more than one matching summary metric value per run.
             for s in self.runresults[r]:
-                mId = self.runresults[r][s].getMetricId(metricName=metricName, metricMetadata=metricMetadata, slicerName=slicerName)
-                if len(mId)>0:
+                mId = self.runresults[r][s].getMetricId(metricName=metricName, metricMetadata=metricMetadata,
+                                                        slicerName=slicerName)
+                if len(mId) > 0:
                     # And we may have more than one summary metric value per resultsDb
                     stats = self.runresults[r][s].getSummaryStats(mId, summaryName=summaryName)
                     for i in range(len(stats['summaryName'])):
@@ -119,10 +120,9 @@ class MafRunComparison(object):
                         summaryNames[r] += [' '.join([name, mName, mMetadata, sName]).rstrip(' ').lstrip(' ')]
                         summaryValues[r] += [stats['summaryValue'][i]]
             if len(summaryValues[r]) == 0:
-                warnings.warn("Warning: Found no metric results for %s %s %s %s in run %s"\
-                             %(metricName, metricMetadata, slicerName, summaryName, r))
+                warnings.warn("Warning: Found no metric results for %s %s %s %s in run %s"
+                              % (metricName, metricMetadata, slicerName, summaryName, r))
         # Recompose into a numpy structured array, now we know how much data we have.
-        n_runs = len(self.runlist)
         unique_stats = set()
         for r in self.runlist:
             for name in summaryNames[r]:
@@ -137,8 +137,7 @@ class MafRunComparison(object):
             for j, r in enumerate(self.runlist):
                 try:
                     sidx = summaryNames[r].index(statName)
-                    stats[i][j+1] = summaryValues[r][sidx]
+                    stats[i][j + 1] = summaryValues[r][sidx]
                 except ValueError:
-                    stats[i][j+1] = np.nan
+                    stats[i][j + 1] = np.nan
         return stats
-

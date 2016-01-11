@@ -1,20 +1,24 @@
-import os, argparse
-import numpy as np
+import os
+import argparse
 from lsst.sims.maf.viz import MafRunComparison
 
 def pandaprint(stats):
     for i in range(len(stats)):
         writestring = ''
         for j in range(len(stats[i])):
-            writestring += ' %s;' %stats[i][j]
-        print writestring.lstrip(' ')
+            writestring += ' %s;' % (stats[i][j])
+        print writestring.lstrip(' ').rstrip(';')
 
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Python script to run simple comparison between multiple opsim runs.')
-    parser.add_argument('--baseDir', type=str, default=None, help='Root directory containing file with list of runs and top directory containing MAF results.')
-    parser.add_argument('--runlist', type=str, default=None, help='File containing the names of the runs to compare '
+    parser = argparse.ArgumentParser(description='Run a simple comparison of a set of defined metrics between'
+                                     ' multiple opsim runs.')
+    parser.add_argument('--baseDir', type=str, default=None,
+                        help='Root directory containing:'
+                        ' file with list of runs and top directory containing MAF results.')
+    parser.add_argument('--runlist', type=str, default=None,
+                        help='File containing the names of the runs to compare '
                         '(and optionally the directories, relative to baseDir, where they reside).')
     parser.set_defaults()
     args = parser.parse_args()
@@ -32,13 +36,12 @@ if __name__ == '__main__':
         else:
             rundirs.append(line.split()[0])
 
-    runCompare = MafRunComparison(baseDir = baseDir, runlist = runlist, rundirs = rundirs)
+    runCompare = MafRunComparison(baseDir=baseDir, runlist=runlist, rundirs=rundirs)
 
-
-    writestring = 'Summary Name; '
+    writestring = 'Summary_Name; '
     for r in runlist:
-        writestring += '%s; ' %r
-    print writestring
+        writestring += '%s; ' % r
+    print writestring.rstrip('; ')
 
     # Get 'overview' statistics.
 
@@ -82,8 +85,9 @@ if __name__ == '__main__':
     slicerName = 'OpsimFieldSlicer'
     for summaryName in ('Mean', 'Median'):
         for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-            metricMetadata = '%s band, all props' %f
-            summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+            metricMetadata = '%s band, all props' % f
+            summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName,
+                                                  summaryName=summaryName)
             pandaprint(summary)
 
     # Median number of visits per night
@@ -161,7 +165,7 @@ if __name__ == '__main__':
     metricMetadata = []
     summaryName = 'Identity'
     for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-        metricMetadata.append('%s band, WFD' %f)
+        metricMetadata.append('%s band, WFD' % f)
     for md in metricMetadata:
         summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
         pandaprint(summary)
@@ -172,7 +176,7 @@ if __name__ == '__main__':
     metricMetadata = []
     summaryName = 'Median'
     for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-        metricMetadata.append('%s band, WFD' %f)
+        metricMetadata.append('%s band, WFD' % f)
     for md in metricMetadata:
         summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
         pandaprint(summary)
@@ -183,7 +187,7 @@ if __name__ == '__main__':
     metricMetadata = []
     summaryName = 'Median'
     for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-        metricMetadata.append('%s band, WFD' %f)
+        metricMetadata.append('%s band, WFD' % f)
     for md in metricMetadata:
         summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
         pandaprint(summary)
@@ -205,7 +209,7 @@ if __name__ == '__main__':
     summaryName = None
     metricMetadata = []
     for f in (['r', 'i']):
-        metricMetadata.append('%s band, WFD' %f)
+        metricMetadata.append('%s band, WFD' % f)
     for md in metricMetadata:
         summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
         pandaprint(summary)
@@ -214,9 +218,9 @@ if __name__ == '__main__':
     metricName = 'Median filtSkyBrightness'
     slicerName = 'UniSlicer'
     metricMetadata = []
-    summaryName= None
+    summaryName = None
     for f in (['u', 'r', 'y']):
-        metricMetadata.append('%s band, WFD' %f)
+        metricMetadata.append('%s band, WFD' % f)
     for md in metricMetadata:
         summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
         pandaprint(summary)
