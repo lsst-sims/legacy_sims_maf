@@ -1,4 +1,6 @@
 import os, warnings
+import numpy as np
+from collections import OrderedDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import url
@@ -109,7 +111,10 @@ class ResultsDb(object):
                 outDir = '.'
             # Check for output directory, make if needed.
             if not os.path.isdir(outDir):
-                os.makedirs(outDir)
+                try:
+                    os.makedirs(outDir)
+                except OSError, msg:
+                    raise OSError(msg, '\n  (If this was the database file (not outDir), remember to use kwarg "database")')
             self.database =os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'
         else:
@@ -144,8 +149,13 @@ class ResultsDb(object):
             Base.metadata.create_all(engine)
         except DatabaseError:
             raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
+        self.slen = 1024
+        self.stype = 'S%d' %(self.slen)
 
     def close(self):
+        """
+        Close connection to database.
+        """
         self.session.close()
 
     def updateMetric(self, metricName, slicerName, simDataName, sqlConstraint,
@@ -276,7 +286,8 @@ class ResultsDb(object):
 
     def getMetricId(self, metricName, slicerName=None, metricMetadata=None, simDataName=None):
         """
-        Return the metricId matching metricName (and optionally, matching slicerName/metricMetadata/simDataName).
+        Given a metric name and optional slicerName/metricMetadata/simData information,
+        Return a list of the matching metricIds.
         """
         metricId = []
         query = self.session.query(MetricRow.metricId, MetricRow.metricName, MetricRow.slicerName, MetricRow.metricMetadata,
@@ -294,7 +305,7 @@ class ResultsDb(object):
 
     def getAllMetricIds(self):
         """
-        Return all metricIds.
+        Return a list of all metricIds.
         """
         metricIds = []
         for m in self.session.query(MetricRow.metricId).all():
@@ -303,8 +314,9 @@ class ResultsDb(object):
 
     def getSummaryStats(self, metricId=None, summaryName=None):
         """
-        Get the summary stats for all or a single metric, specified by metricId.
-        Optionally, specify the summary metric name.
+        Get the summary stats (optionally for metricId list).
+        Optionally, also specify the summary metric name.
+        Returns a numpy array of the metric information + summary statistic information.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()
@@ -318,16 +330,19 @@ class ResultsDb(object):
             if summaryName is not None:
                 query = query.filter(SummaryStatRow.summaryName == summaryName)
             for m, s in query:
-                summary = {}
-                summary['metricName'] = m.metricName
-                summary['slicerName'] = m.slicerName
-                summary['metricMetadata'] = m.metricMetadata
-                summary['summaryName'] = s.summaryName
-                summary['summaryValue'] = s.summaryValue
-                summarystats.append(summary)
+                summarystats.append((m.metricId, m.metricName, m.slicerName, m.metricMetadata,
+                                     s.summaryName, s.summaryValue))
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('slicerName', self.stype),
+                          ('metricMetadata', self.stype), ('summaryName', self.stype), ('summaryValue', float)])
+        summarystats = np.array(summarystats, dtype)
         return summarystats
 
     def getPlotFiles(self, metricId=None):
+        """
+        Return the metricId, name, metadata, and all plot info (optionally for metricId list).
+        Returns a numpy array of the metric information + plot file names.
+        """
         if metricId is None:
             metricId = self.getAllMetricIds()
         if not hasattr(metricId, '__iter__'):
@@ -336,19 +351,20 @@ class ResultsDb(object):
         for mid in metricId:
             # Join the metric table and the plot table, based on the metricID (the second filter does the join)
             query = (self.session.query(MetricRow, PlotRow).filter(MetricRow.metricId == mid)
-                     .filter(MetricRow.metricId == plotRow.metricId))
+                     .filter(MetricRow.metricId == PlotRow.metricId))
             for m, p in query:
-                plots = {}
-                plots['metricName'] = m.metricName
-                plots['metricMetadata'] = m.metricMetadata
-                plots['plotType'] = p.plotType
-                plots['plotFile'] = p.plotFile
-                plotFiles.append(plots)
+                thumbfile = 'thumb.' + ''.join(p.plotFile.split('.')[:-1]) + '.png'
+                plotFiles.append((m.metricId, m.metricName, m.metricMetadata, p.plotType, p.plotFile, thumbfile))
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('metricMetadata', self.stype),
+                          ('plotType', self.stype), ('plotFile', self.stype), ('thumbFile', self.stype)])
+        plotFiles = np.array(plotFiles, dtype)
         return plotFiles
 
     def getMetricDataFiles(self, metricId=None):
         """
         Get the metric data filenames for all or a single metric.
+        Returns a list.
         """
         if metricId is None:
             metricId = self.getAllMetricIds()
@@ -359,3 +375,32 @@ class ResultsDb(object):
             for m in self.session.query(MetricRow).filter(MetricRow.metricId == mid).all():
                 dataFiles.append(m.metricDataFile)
         return dataFiles
+
+
+    def getMetricDisplayInfo(self, metricId=None):
+        """
+        Get the contents of the metrics and displays table, together with the 'basemetricname' (optionally, for metricId list).
+        Returns a numpy array of the metric information + display information.
+        """
+        if metricId is None:
+            metricId = self.getAllMetricIds()
+        if not hasattr(metricId, '__iter__'):
+            metricId = [metricId,]
+        metricInfo = []
+        for mId in metricId:
+            # Query for all rows in metrics and displays that match any of the metricIds.
+            query = (self.session.query(MetricRow, DisplayRow).filter(MetricRow.metricId==mId).filter(MetricRow.metricId==DisplayRow.metricId))
+            for m, d in query:
+                baseMetricName = m.metricName.split('_')[0]
+                mInfo = (m.metricId, m.metricName, baseMetricName, m.slicerName,
+                        m.sqlConstraint, m.metricMetadata, m.metricDataFile,
+                        d.displayGroup, d.displaySubgroup, d.displayOrder, d.displayCaption)
+                metricInfo.append(mInfo)
+        # Convert to numpy array.
+        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('baseMetricNames', self.stype),
+                          ('slicerName', self.stype), ('sqlConstraint', self.stype),
+                          ('metricMetadata', self.stype), ('metricDatafile', self.stype),
+                          ('displayGroup', self.stype), ('displaySubgroup', self.stype), ('displayOrder', float),
+                          ('displayCaption', 'S%d' %(self.slen*10))])
+        metricInfo = np.array(metricInfo, dtype)
+        return metricInfo

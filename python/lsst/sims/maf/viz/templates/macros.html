@@ -38,16 +38,21 @@
 {%- endmacro %}
 
 {# # #}
-{% macro FormatSummaryStat(statname, statvalue) %}
- {% if 'Count' in statname or 'm3Sigma' in statname or 'p3Sigma' in statname or 'TableFraction' in statname %}
+  {% macro FormatSummaryStat(statname, statvalue) %}
+  {% if False %}
+  {{statvalue}}
+  {% else %}
+  {# convert statvalue from series to single value #}
+  {% if 'Count' in statname or '-3Sigma' in statname or '+3Sigma' in statname or 'TableFraction' in statname %}
    {{ '%d'|format(statvalue) }}
- {% else %}
-   {% if statvalue|abs < 0.03 %}
+  {% else %}
+   {% if statvalue|abs < 0.03 %} 
       {{ '%.4f'|format(statvalue) }}
    {% else %}
       {{ '%.2f'|format(statvalue) }}
    {% endif %}
- {% endif %}
+  {% endif %}
+  {% endif %}
 {%- endmacro %}
 
 {# # #}
@@ -59,26 +64,23 @@
 {#                   OR stat rows x metric cols (if #stats > #metrics) #}
 {#                   OR metadata rows x metric cols (if only single summary stat)  #}
 
-{# Check that there is *some* summary stat info to put into a table #}
-{% set statNames = run.allStatNames(metrics) %}
-{% if statNames|length == 0 %}
-  {# just pass, no tables to make at all #}
+{# Check that there is *some* summary stat info from this group/subgroup to put into a table #}
+  {% set statNames = run.allStatNames(metrics) %}
 
-{% else %}
+{% if statNames|length > 0 %}
+   {# we have some good stats, let's show them. #}
   {# Put in a link to jump to this part of the page. #}
   <a name="{{group}}_{{subgroup}}"> </a>
 
-  {% set metricInfo = run.metricInfo(metrics[0], withDataLink=False, withSlicerName=False) %}
+  {% set metricInfo = run.metricInfo(withDataLink=False, withSlicerName=False) %}
   {% set lenMinfo = metricInfo|length %}
 
   {% set slicers = run.uniqueSlicerNames(metrics) %}
-
   {% for slicer in slicers %}
    {# Set up and make table, one per slicer. #}
 
    {% set slicermetrics = run.metricsWithSlicer(slicer, metrics) %}
    {% set slicermetrics = run.metricsWithStats(slicermetrics) %}
-
    {% if slicermetrics|length > 0 %}
 
     {# Count number of metric names. #}
@@ -119,20 +121,18 @@
          <tr>
      	 <td><b>{{meta}}</b> </td>
 	 {# Find metric that matches the metric name for this column and this metadata. #}
-	 {% for mName in metricNames %}
+         {% for mName in metricNames %}
 	    {% set mset = run.metricsWithMetricName(mName, slicermetrics, baseonly=False) %}
-	    {% set m = run.metricsWithMetadata(meta, mset) %}
-	    {% set stats = run.statsForMetric(m) %}
-	    {% if stats|length == 1 %}
-               <td> {{ FormatSummaryStat(mName, stats['summaryValue'])}} </td>
-	    {% else %}
-	       {% if stats|length == 0 %}
-	          <td> -- </td>
-	       {% else %}
-	          <td> {{stats['summaryValue'] }} </td>
-	       {% endif %}
-	    {% endif %}
-	   {% endfor %}
+            {% set m = run.metricsWithMetadata(meta, mset) %}
+            {% if m|length > 0 %}
+              {% set stats = run.statsForMetric(m) %}
+              {% set statDict = run.statDict(stats) %}
+                <td> {{ FormatSummaryStat(mName, statDict[statName])}}
+                </td>
+                {% else %}
+                 <td> -- </td>
+             {% endif %}
+  	   {% endfor %}
 	   </tr>
         {% endfor %}
         </table>
@@ -165,7 +165,8 @@
        {% set statDict = run.statDict(stats) %}
 
        {% if statDict|length > 0 %}
-         <tr>
+      <tr>
+        {# print the metric info - metricname/slicer/metadata #}
          {% for key in metricInfo %}
            <td><b>{{ metricInfo[key]|escape }}</b></td>
          {% endfor %}
@@ -218,15 +219,14 @@
 	<td><b>{{statName}}</b> </td>
 	{# Find metric that matches the metric name for this column and this statName. #}
 	{% for m in slicermetrics %}
-	    {% set stats = run.statsForMetric(m, statName=statName) %}
-	    {% if stats|length == 1 %}
-	        <td> {{ FormatSummaryStat(statName, stats['summaryValue']) }} </td>
-            {% else %}
-		{% if stats|length == 0 %}
-		   <td> -- </td>
-		{% else %}
-		   <td> {{stats['summaryValue']}} </td>
-		{% endif %}
+           {% set stats = run.statsForMetric(m, statName=statName) %}
+           {# there should only ever be either 1 or 0
+      statName/metricName/metricMetadata combo #}
+           {% if stats|length == 0 %}
+                <td> -- </td>
+           {% else %}
+             {% set statDict = run.statDict(stats) %}
+	     <td> {{ FormatSummaryStat(statName, statDict[statName]) }} </td>
 	    {% endif %}
 	 {% endfor %}
 	 </tr>

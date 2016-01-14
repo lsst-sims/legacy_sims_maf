@@ -27,7 +27,7 @@
 {# Show all metric results, including summary stats in a table rather
 than per metric. #}
 
-{% set metricInfo = run.metricInfo(run.metrics[0]) %}
+{% set metricInfo = run.metricInfo() %}
 
 {% for g in run.groups.keys() %}
  {% set groupstart = True %}

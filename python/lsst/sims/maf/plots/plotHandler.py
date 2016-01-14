@@ -76,11 +76,11 @@ class PlotHandler(object):
         Set or update (or 'reset') the plotDict for the (possibly joint) plots.
 
         Resolution is:
-             auto-generated items (colors/labels/titles)
-            < anything previously set in the plotHandler
-            < defaults set by the plotter
-            < explicitly set items in the metricBundle plotDict
-            < explicitly set items in the plotDicts list passed to this method.
+        auto-generated items (colors/labels/titles)
+        < anything previously set in the plotHandler
+        < defaults set by the plotter
+        < explicitly set items in the metricBundle plotDict
+        < explicitly set items in the plotDicts list passed to this method.
         """
         if reset:
             # Have to explicitly set each dictionary to a (separate) blank dictionary.

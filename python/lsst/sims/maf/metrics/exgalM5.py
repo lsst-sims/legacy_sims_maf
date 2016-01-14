@@ -5,12 +5,23 @@ from lsst.sims.photUtils import Sed
 __all__ = ['ExgalM5']
 
 class ExgalM5(BaseMetric):
-    """Calculate co-added five-sigma limiting depth after dust extinction."""
+    """
+    Calculate co-added five-sigma limiting depth after dust extinction.
 
+    Uses photUtils
+    """
     def __init__(self, m5Col='fiveSigmaDepth', units='mag', maps=['DustMap'],
                  lsstFilter='r', wavelen_min=None , wavelen_max=None , wavelen_step=1., **kwargs ):
         """
-
+        Args:
+            m5Col (str): Column name that ('fiveSigmaDepth')
+            units (str): units of the metric ('mag')
+            maps (list): List of maps to use with the metric (['DustMap'])
+            lsstFilter (str): Which LSST filter to calculate m5 for
+            wavelen_min (float): Minimum wavength of your filter (None)
+            wavelen_max (float): (None)
+            wavelen_step (float): (1.)
+            **kwargs:
         """
 
         waveMins={'u':330.,'g':403.,'r':552.,'i':691.,'z':818.,'y':950.}
@@ -33,6 +44,15 @@ class ExgalM5(BaseMetric):
 
 
     def run(self, dataSlice, slicePoint=None):
+        """
+        Compute the co-added m5 depth and then apply extinction to that magnitude.
+
+        Args:
+            dataSlice (np.array):
+            slicePoint (dict):
+        Returns:
+             float that is the dust atennuated co-added m5-depth.
+        """
 
         m5 = self.Coaddm5Metric.run(dataSlice)
         A_x = (self.a[0]+self.b[0]/self.R_v)*(self.R_v*slicePoint['ebv'])

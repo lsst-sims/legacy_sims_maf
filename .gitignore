@@ -9,6 +9,7 @@ config.log
 doc/htmlDir
 tests/.tests
 ups/*.cfgc
+doc/build
 python/lsst/sims/maf/version.py
 *.pdf
 *.png

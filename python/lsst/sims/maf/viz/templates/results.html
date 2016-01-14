@@ -4,7 +4,8 @@
 {% set active_page = "listMetrics" %}
 
 {% set run = runlist.getRun(runId) %}
-{% set selectMetrics = run.convertSelectToMetrics(groupList, metricIdList) %}
+{% set selectMetrics = run.convertSelectToMetrics(groupList,
+metricIdList) %}
 {% set selectGroups = run.metricsToSubgroups(selectMetrics) %}
 
 
@@ -27,6 +28,7 @@
 
 {# show metric information for each metric selected from 'select' page #}
 
+
 {% for g in selectGroups.keys() %}
  {% set groupstart = True %}
  {% for sg in selectGroups[g] %}
@@ -36,7 +38,7 @@
    {% endif %}
    <a name = "{{g|escape}}_{{sg|escape}}"> </a>
   {% set subsetMetrics = run.metricsInSubgroup(g, sg, metrics=selectMetrics) %}
-  {% for metric in subsetMetrics %}  
+  {% for metric in subsetMetrics %}
     {% set metricInfo = run.metricInfo(metric) %}
     <div id="metricset">
 

@@ -27,7 +27,7 @@ class MapsRegistry(type):
     def getClass(cls, mapsname):
         return cls.registry[mapsname]
 
-    def list(cls, doc=False):
+    def help(cls, doc=False):
         for mapsname in sorted(cls.registry):
             if not doc:
                 print mapsname

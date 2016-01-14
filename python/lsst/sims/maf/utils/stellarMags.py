@@ -4,11 +4,24 @@ __all__ = ['stellarMags']
 
 def stellarMags(stellarType, rmag=19.):
     """
-    Given a spectral type (O,B,A,F,G,K,M), return a
-    dict with expected mags in LSST filters, normalized to the r-band.
+    Calculates the expected magnitudes in LSST filters for a
+    typical star of the given spectral type.
 
     Based on mapping of Kuruz models to specrtal types here:
     http://www.stsci.edu/hst/observatory/crds/k93models.html
+
+
+    Parameters
+    ----------
+    stellarType : str
+        Spectral type of a star (O,B,A,F,G,K,M)
+    rmag : float
+        The expected r-band magnitude of the star.
+
+    Returns
+    -------
+    dict of floats
+        The expected magnitudes in LSST filters.
     """
 
     # If this is the first time running the function, set up the data array
@@ -39,6 +52,5 @@ def stellarMags(stellarType, rmag=19.):
     results['y'] = results['z']-stellarMags.data[stellarType]['z-y']
     results['g'] = stellarMags.data[stellarType]['g-r']+results['r']
     results['u'] = stellarMags.data[stellarType]['u-g']+results['g']
-
     return results
 

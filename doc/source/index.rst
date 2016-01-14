@@ -1,10 +1,10 @@
-.. Metrics Analysis Framework documentation master file, created by
-   sphinx-quickstart on Tue Dec 10 10:22:39 2013.
+.. MAF documentation master file, created by
+   sphinx-quickstart on Thu Dec 17 12:01:40 2015.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Metrics Analysis Framework's documentation!
-======================================================
+Welcome to MAF's documentation!
+===============================
 
 Contents:
 

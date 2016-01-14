@@ -21,7 +21,7 @@ class VisitGroupsMetric(BaseMetric):
         'deltaTmin' = minimum time of window: units are days (default 15 min),
         'deltaTmax' = maximum time of window: units are days (default 90 min),
         'minNVisits' = the minimum number of visits within a night (with spacing between deltaTmin/max
-                       from any other visit) required,
+        from any other visit) required,
         'window' = the number of nights to consider within a window (for reduce methods),
         'minNNights' = the minimum required number of nights within window to make a full 'group'.
         """
@@ -61,15 +61,15 @@ class VisitGroupsMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         """
         Return a dictionary of:
-         the number of visits within a night (within delta tmin/tmax of another visit),
-         and the nights with visits > minNVisits.
+        the number of visits within a night (within delta tmin/tmax of another visit),
+        and the nights with visits > minNVisits.
         Count two visits which are within tmin of each other, but which have another visit
-         within tmin/tmax interval, as one and a half (instead of two).
+        within tmin/tmax interval, as one and a half (instead of two).
 
         So for example: 4 visits, where 1, 2, 3 were all within deltaTMax of each other, and 4 was later but
-          within deltaTmax of visit 3 -- would give you 4 visits. If visit 1 and 2 were closer together
-          than deltaTmin, the two would be counted as 1.5 visits together (if only 1 and 2 existed,
-          then there would be 0 visits as none would be within the qualifying time interval).
+        within deltaTmax of visit 3 -- would give you 4 visits. If visit 1 and 2 were closer together
+        than deltaTmin, the two would be counted as 1.5 visits together (if only 1 and 2 existed,
+        then there would be 0 visits as none would be within the qualifying time interval).
         """
         uniquenights = np.unique(dataSlice[self.nights])
         nights = []

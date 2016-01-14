@@ -232,9 +232,10 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     binMin = 0
     binMax = 120.
     binsize= 3.
-    bins = np.arange(binMin/60.0/24.0, (binMax+binsize)/60./24., binsize/60./24.)
-    m1 = metrics.TgapsMetric(bins=bins, metricName='dT visits')
-    plotDict={'bins':bins, 'xlabel':'dT (minutes)'}
+    bins_metric = np.arange(binMin/60.0/24.0, (binMax+binsize)/60./24., binsize/60./24.)
+    bins_plot = bins_metric * 24.0*60.0
+    m1 = metrics.TgapsMetric(bins=bins_metric, metricName='dT visits')
+    plotDict={'bins':bins_plot, 'xlabel':'dT (minutes)'}
     displayDict={'group':reqgroup, 'subgroup':'Rapid Revisit', 'order':order,
                  'caption':'Histogram of the time between consecutive revisits (<%.1f minutes), over entire sky.' %(binMax)}
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
@@ -592,6 +593,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     caption='Time span of survey.'
     sqlconstraint = ''
     plotDict={}
+    displayDict={'group':rangeGroup, 'caption':caption}
 
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName)

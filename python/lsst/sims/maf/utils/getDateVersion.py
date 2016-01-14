@@ -5,7 +5,13 @@ __all__ = ['getDateVersion']
 
 def getDateVersion():
     """
-    Return a string with today's date and a dict with the MAF version info.
+    Get today's date and a dictionary with the MAF version information.
+    This is written into configuration output files, to help track MAF runs.
+
+    Returns
+    -------
+    str, dict
+        String with today's date, Dictionary with version information.
     """
     import lsst.sims.maf
 

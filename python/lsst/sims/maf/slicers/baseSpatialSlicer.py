@@ -25,7 +25,8 @@ class BaseSpatialSlicer(BaseSlicer):
                  lonCol='fieldRA', latCol='fieldDec',
                  badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
-        """Instantiate the base spatial slicer object.
+        """
+        Instantiate the base spatial slicer object.
         lonCol = ra, latCol = dec, typically.
         'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
         'radius' (in degrees) is distance at which matches between
@@ -34,8 +35,8 @@ class BaseSpatialSlicer(BaseSlicer):
         useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
         True means the observations are checked to make sure they fall on a chip.
         chipNames = list of raft/chip names to include. By default, all chips are included. This way,
-        one can select only a subset of chips/rafts."""
-
+        one can select only a subset of chips/rafts.
+        """
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
         self.latCol = latCol
@@ -66,7 +67,7 @@ class BaseSpatialSlicer(BaseSlicer):
         (in radians) to set up KDTree.
 
         maps = list of map objects (such as dust extinction) that will run to build up
-           additional metadata at each slicePoint (available to metrics via slicePoint dictionary).
+        additional metadata at each slicePoint (available to metrics via slicePoint dictionary).
         """
         if maps is not None:
             if self.cacheSize != 0 and len(maps)>0:
