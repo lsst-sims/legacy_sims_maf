@@ -1,17 +1,18 @@
 import matplotlib
-matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.plots as plots
+matplotlib.use("Agg")
+
 
 class TestNeoDistancePlotter(unittest.TestCase):
     def setUp(self):
-        names = ['eclipLat','eclipLon', 'MaxGeoDist',
+        names = ['eclipLat', 'eclipLon', 'MaxGeoDist',
                  'NEOHelioX', 'NEOHelioY', 'filter']
         types = [float]*5
         types.append('|S1')
         npts = 100
-        self.metricValues = np.zeros(npts, zip(names,types))
+        self.metricValues = np.zeros(npts, zip(names, types))
         self.metricValues['MaxGeoDist'] = np.random.rand(npts)*2.
         self.metricValues['eclipLat'] = np.random.rand(npts)
         self.metricValues['NEOHelioX'] = np.random.rand(npts)*3-1.5
