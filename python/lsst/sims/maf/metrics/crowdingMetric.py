@@ -10,16 +10,14 @@ class CrowdingMetric(BaseMetric):
     """
     Calculate whether the coadded depth in r has exceeded the confusion limit
     """
-    def __init__(self, crowding_error=0.1, lumArea=10., seeingCol='finSeeing',
+    def __init__(self, crowding_error=0.1, seeingCol='finSeeing',
                  fiveSigCol='fiveSigmaDepth', units='mag', maps=['StellarDensityMap'],
                  metricName='Crowding To Precision', **kwargs):
         """
         Parameters
         ----------
         crowding_error : float (0.1)
-            mags?
-        lumArea : float (10.)
-            Area in square degrees. XXX-not sure what this is?
+            The magnitude uncertainty from crowding. (mags)
 
         Returns
         -------
@@ -30,7 +28,7 @@ class CrowdingMetric(BaseMetric):
         self.crowding_error = crowding_error
         self.seeingCol = seeingCol
         self.fiveSigCol = fiveSigCol
-        self.lumAreaArcsec = lumArea*3600.0**2
+        self.lumAreaArcsec = 3600.0**2
 
         super(CrowdingMetric, self).__init__(col=cols, maps=maps, units=units, metricName=metricName, **kwargs)
 
@@ -38,7 +36,27 @@ class CrowdingMetric(BaseMetric):
     def _compCrowdError(self, magVector, lumFunc, seeing, singleMag=None):
         """
         Compute the crowding error for each observation
-        Need seeing to be a single value, or magVector and lumFunc should be single values
+
+        Parameters
+        ----------
+        magVector : np.array
+            Stellar magnitudes.
+        lumFunc : np.array
+            Stellar luminosity function.
+        seeing : float
+            The best seeing conditions. Assuming forced-photometry can use the best seeing conditions
+            to help with confusion errors.
+        singleMag : float (None)
+            If singleMag is None, the crowding error is calculated for each mag in magVector. If
+            singleMag is a float, the corwding error is interpolated to that single value.
+
+        Returns
+        -------
+        np.array
+            Magnitude uncertainties.
+
+
+        Equation from Olsen, Blum, & Rigaut 2003, AJ, 126, 452
         """
         lumVector = 10**(-0.4*magVector)
         coeff=np.sqrt(np.pi/self.lumAreaArcsec)*seeing/2.
@@ -68,30 +86,26 @@ class CrowdingMetric(BaseMetric):
             crowdMag = magVector[max(aboveCrowd[0]-1,0)]
             return crowdMag
 
-# Questions I have:
-# 1) What is the definition of lumArea, and why is the default 10?
-# 2) Is there a cite I can drop in the code so people can look up where the
-#    equation came from (I made it pretty unreadable getting rid of the lop)
-# 3) Why pick the best seeing case?  Are you just assuming that with the best seeing image you can do forced-photometry on the rest? What if the best seeing case happens to be in bright time?
-
 class CrowdingMagUncertMetric(CrowdingMetric):
     """
     Given a stellar magnitude, calculate the mean uncertainty on the magnitude from crowding.
     """
-    def __init__(self, rmag=20., lumArea=10., seeingCol='finSeeing',
+    def __init__(self, rmag=20., seeingCol='finSeeing',
                  fiveSigCol='fiveSigmaDepth', maps=['StellarDensityMap'], units='mag',
                  metricName='CrowdingMagUncert', **kwargs):
         """
         Parameters
         ----------
         rmag : float
-            The magnitude of the star to consider
-        best : bool
-            Return the best result, otherwise the full vector
+            The magnitude of the star to consider.
+
+        Returns
+        -------
+        float
+            The uncertainty in magnitudes caused by crowding for a star of rmag.
         """
         self.rmag = rmag
-        super(CrowdingMagUncertMetric, self).__init__(lumArea=lumArea,
-                                                      seeingCol=seeingCol,fiveSigCol=fiveSigCol,
+        super(CrowdingMagUncertMetric, self).__init__(seeingCol=seeingCol,fiveSigCol=fiveSigCol,
                                                       maps=maps, units=units, metricName=metricName,
                                                       **kwargs)
 
