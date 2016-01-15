@@ -1,8 +1,8 @@
 import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.plots as plots
-matplotlib.use("Agg")
 
 
 class TestNeoDistancePlotter(unittest.TestCase):
