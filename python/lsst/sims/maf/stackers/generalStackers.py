@@ -134,20 +134,28 @@ class ParallacticAngleStacker(BaseStacker):
     Add the parallactic angle (in radians) to each visit.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD', latRad=None,
-                 lonRad=None):
+                 lonRad=None, height=None, tempCentigrade=None, lapseRate=None,
+                 humidity=None, pressure=None):
 
         self.raCol = raCol
         self.decCol = decCol
         self.mjdCol = mjdCol
-        default_site = Site(name='LSST')
+
         if latRad is None:
-            self.latRad = default_site.latitude_rad
+            latDeg = None
         else:
-            self.latRad = latRad
+            latDeg = np.degrees(latRad)
+
         if lonRad is None:
-            self.lonRad = default_site.longitude_rad
+            lonDeg = None
         else:
-            self.lonRad = lonRad
+            lonDeg = np.degrees(lonRad)
+
+        self.site = Site(longitude=lonDeg, latitude=latDeg,
+                         temperature=tempCentigrade,
+                         height=height, humidity=humidity,
+                         pressure=pressure, lapseRate=lapseRate,
+                         name='LSST')
 
         self.units = ['radians']
         self.colsAdded = ['PA']
@@ -156,13 +164,8 @@ class ParallacticAngleStacker(BaseStacker):
     def _run(self, simData):
         pa_arr = []
         for ra, dec, mjd in zip(simData[self.raCol], simData[self.decCol], simData[self.mjdCol]):
-            # Note: to transform from RA, Dec to Alt, Az, we need to account for atmospheric refraction.
-            # That implies a complete Site specification (with atmospheric pressure, humidity, temperature
-            # and lapse rate).  Absent that data at themoment, we will default to LSST values here.
             alt, az, pa = _altAzPaFromRaDec(ra, dec,
-                                            ObservationMetaData(mjd=mjd,site=Site(longitude=np.degrees(self.lonRad),
-                                                                                  latitude=np.degrees(self.latRad),
-                                                                                  name='LSST')))
+                                            ObservationMetaData(mjd=mjd,site=self.site))
 
             pa_arr.append(pa)
 
