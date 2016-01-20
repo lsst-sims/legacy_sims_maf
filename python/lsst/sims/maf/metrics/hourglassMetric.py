@@ -1,6 +1,6 @@
 import numpy as np
 from .baseMetric import BaseMetric
-from lsst.sims.maf.utils.telescopeInfo import TelescopeInfo
+from lsst.sims.utils import Site
 
 __all__ = ['HourglassMetric']
 
@@ -22,10 +22,8 @@ class HourglassMetric(BaseMetric):
         self.nightcol = nightcol
         self.mjdcol = mjdcol
         self.filtercol = filtercol
-        self.telescope = TelescopeInfo(telescope)
-        if lat != None:  self.telescope.lat = lat
-        if lon != None:  self.telescope.lon = lon
-        if elev != None: self.telescope.elev = elev
+        self.telescope = Site(name=telescope, latitude=np.degrees(lat), longitude=np.degrees(lon), height=elev)
+
 
     def run(self, dataSlice, slicePoint=None):
 
