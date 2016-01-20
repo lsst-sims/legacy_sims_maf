@@ -2,18 +2,15 @@ import numpy as np
 from lsst.sims.utils import ObservationMetaData
 import healpy as hp
 from lsst.sims.catalogs.generation.db import CatalogDBObject
-from lsst.sims.catUtils.exampleCatalogDefinitions import RefCatalogStarBase
-from lsst.sims.catUtils.exampleCatalogDefinitions import RefCatalogGalaxyBase, PhoSimCatalogPoint,\
-                                                         PhoSimCatalogZPoint, PhoSimCatalogSersic2D
-import lsst.sims.catUtils.baseCatalogModels as bcm
 import sys
 import glob
 
 # Use the catsim framework to loop over a healpy map and generate a stellar density map
 
 # Connect to fatboy with: ssh -L 51433:fatboy-private.phys.washington.edu:1433 gateway.astro.washington.edu
+# If non-astro user, use simsuser@gateway.astro.washington.edu
 
-in __name__ =='__main__':
+if __name__ =='__main__':
 
     # Set up healpy map and ra,dec centers
     nside = 64
@@ -65,15 +62,10 @@ in __name__ =='__main__':
         lastCP = ''
         # wonder what the units of boundLength are...degrees! And it's a radius
         # The newer interface:
-        #obs_metadata = ObservationMetaData(boundType='circle',
-        #                                   pointingRA=np.degrees(ra[i]),
-        #                                   pointingDec=np.degrees(dec[i]),
-        #                                   boundLength=boundLength, mjd=5700)
-        # The old one that seems to work better
         obs_metadata = ObservationMetaData(boundType='circle',
-                                           unrefractedRA=np.degrees(ra[i]),
-                                           unrefractedDec=np.degrees(dec[i]),
-                                           boundLength=boundLength)
+                                           pointingRA=np.degrees(ra[i]),
+                                           pointingDec=np.degrees(dec[i]),
+                                           boundLength=boundLength, mjd=5700)
 
 
         t = dbobj.getCatalog('ref_catalog_star', obs_metadata=obs_metadata)

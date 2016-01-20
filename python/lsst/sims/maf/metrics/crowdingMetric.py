@@ -48,7 +48,7 @@ class CrowdingMetric(BaseMetric):
             to help with confusion errors.
         singleMag : float (None)
             If singleMag is None, the crowding error is calculated for each mag in magVector. If
-            singleMag is a float, the corwding error is interpolated to that single value.
+            singleMag is a float, the crowding error is interpolated to that single value.
 
         Returns
         -------
