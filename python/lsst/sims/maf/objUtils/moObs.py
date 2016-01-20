@@ -248,7 +248,6 @@ class MoObs(MoOrbits):
         if sedname not in self.colors:
             moSed = Sed()
             moSed.readSED_flambda(os.path.join(self.seddir, sedname))
-            moSed.readSED_flambda(os.path.join(self.seddir, sedname))
             vmag = moSed.calcMag(self.vband)
             self.colors[sedname] = {}
             for f in self.filterlist:
