@@ -1,281 +1,257 @@
 import os
-import copy
-import numpy as np
-from lsst.sims.maf.db import ResultsDb
+import argparse
+from lsst.sims.maf.viz import MafRunComparison
+
+# Make the output of this file be 'nice' to read back into pandas.
+def pandaprint(stats):
+    for i in range(len(stats)):
+        writestring = ''
+        for j in range(len(stats[i])):
+            writestring += '%s,' % (stats[i][j])
+        print writestring.lstrip(' ').rstrip(',')
 
 
-def printResult(summary):
-    for s in summary:
-        print s['metricName'], s['metricMetadata'], s['slicerName'], s['summaryName'], s['summaryValue']
+if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser(description='Run a simple comparison of a set of defined metrics between'
+                                     ' multiple opsim runs.', formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--baseDir', type=str, default=None,
+                        help='Root directory containing the MAF results.')
+    parser.add_argument('--runlist', type=str, default=None,
+                        help='File containing the names of the runs to compare\n'
+                        '(and optionally the paths to each directory to use, relative to baseDir).'
+                        '\n '
+                        'Example: (using specific subdirectories under minion_1016/ and minion_1012/)'
+                        '\n '
+                        'minion_1016    minion_1016/scheduler'
+                        '\n '
+                        'minion_1016    minion_1016/science'
+                        '\n '
+                        'minion_1012    minion_1012/scheduler'
+                        '\n '
+                        'minion_1012    minion_1012/science2'
+                        '\n '
+                        'Example: (using all subdirectories under minion_1016/ and minion_1012/)'
+                        '\n '
+                        'minion_1016'
+                        '\n '
+                        'minion_1012'
+                        '\n ')
+    parser.set_defaults()
+    args = parser.parse_args()
 
-def printShortresult(runlist, summary, scale=1, scalelabel=None):
-    # Keep a (stationary, for the loop) copy of the remaining summary statistics to be printed
-    summaryRemaining = copy.deepcopy(summary)
-    # Clean out any empty keys
-    lengthDict = {}
-    for sr in summaryRemaining:
-        lengthDict[sr] = len(summaryRemaining[sr])
+    baseDir = args.baseDir
 
-    for key in lengthDict:
-        if lengthDict[key] == 0:
-            del summaryRemaining[key]
-
-    while len(summaryRemaining) > 0:
-        # Set our "working copy" to the remaining summary statistics
-        summary = copy.deepcopy(summaryRemaining)
-        sLine = summaryRemaining[summaryRemaining.keys()[0]][0]
-        sLineMetricName = sLine['metricName']
-        sLineMetricMetadata = sLine['metricMetadata']
-        sLineSummaryName = sLine['summaryName']
-        #if sLineSummaryName == 'Identity':
-        #    sLineSummaryName = ''
-        output = '%s ; %s; %s;' %(sLineMetricName.replace(';', ''), sLineMetricMetadata.replace(';', ''),
-                                  sLineSummaryName.replace(';', ''))
-        if scalelabel is not None:
-            output += ' (%s);' %(scalelabel)
+    # Read the runs to be compared from 'runlist'.
+    f = open(os.path.join(args.runlist), 'r')
+    runlist = []
+    rundirs = []
+    for line in f:
+        runlist.append(line.split()[0])
+        if len(line.split()) > 1:
+            rundirs.append(line.split()[1])
         else:
-            output += ' ;'
-        for r in runlist:
-            if r not in summary:
-                output += ' ;'
-            else:
-                foundStat = False
-                slist = summary[r]
-                for s in slist:
-                    if (s['metricName'] == sLineMetricName) and (s['metricMetadata'] == sLineMetricMetadata):
-                        output += ' %f;' %(s['summaryValue']*scale)
-                        # Delete this summary statistic from the stats which remain to be printed.
-                        summaryRemaining[r].remove(s)
-                        if len(summaryRemaining[r]) == 0:
-                            del summaryRemaining[r]
-                        foundStat = True
-                if not foundStat:
-                    output += ' ;'
-        print output
+            rundirs.append(line.split()[0])
 
-def findStats(runresults, runlist, metricName, metricMetadata=None, slicerName=None, summaryName=None):
-    """
-    runresults - a dictionary (of dictionaries) of results database objects - top level of dictionary is one per opsim run,
-    second level of dictionary is if there are multiple resultsDb's per opsim run (scheduler + science, for example).
-    """
-    summary = {}
+    runCompare = MafRunComparison(baseDir=baseDir, runlist=runlist, rundirs=rundirs)
+
+    writestring = 'Summary_Name; '
     for r in runlist:
-        summary[r] = []
-        for d in runresults[r]:
-            mId = runresults[r][d].getMetricId(metricName=metricName, metricMetadata=metricMetadata, slicerName=slicerName)
-            if len(mId)>0:
-                summary[r] += runresults[r][d].getSummaryStats(mId, summaryName=summaryName)
-        if len(summary) == 0:
-            print "Found no metric results for %s %s %s %s in run %s" %(metricName, metricMetadata, slicerName, summaryName, r)
-    return summary
+        writestring += '%s,' % r
+    print writestring.rstrip(',')
 
+    # Get 'overview' statistics.
 
+    # Total number of visits
+    metricName = 'NVisits'
+    metricMetadata = 'All Visits'
+    slicerName = 'UniSlicer'
+    summaryName = 'Count'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-###
+    # Total open shutter time (in megasec)
+    # Need to add this to MAF
 
+    # Percentage of visits for each proposal
+    metricName = 'NVisits'
+    metricMetadata = None
+    slicerName = 'UniSlicer'
+    summaryName = 'Fraction of total'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-runs = ['kraken_1032','kraken_1028','kraken_1029','kraken_1030','kraken_1025',
-        'kraken_1031','enigma_1189','enigma_1257',
-        'enigma_1258','enigma_1259','ops2_1094', 'kraken_1033', 'kraken_1034',
-        'kraken_1035','kraken_1036', 'kraken_1037','kraken_1038',]
+    # Mean Surveying efficiency (??)
+    metricName = 'Total effective time of survey'
+    metricMetadata = 'All Visits'
+    slicerName = None
+    summaryName = '(days)'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
+    # Number of nights with observations
+    metricName = 'Nights with observations'
+    metricMetadata = 'All Visits'
+    slicerName = 'UniSlicer'
+    summaryName = '(days)'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Open access to all the results database files.
-runresults = {}
-for r in runs:
-    runresults[r] = {}
-    for d in (['sched', 'sci']):
-        resultsDbfile = os.path.join(os.path.join(r, d), 'resultsDb_sqlite.db')
-        if os.path.isfile(resultsDbfile):
-            runresults[r][d] = ResultsDb(outDir = os.path.join(r, d))
-            #print '# Connected to results database at %s' %(resultsDbfile)
+    # Median number of visits per night
+    metricName = 'NVisits'
+    metricMetadata = 'Per night'
+    slicerName = 'OneDSlicer'
+    summaryName = 'Median'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
+    # Median open shutter fraction
+    metricName = 'OpenShutterFraction'
+    metricMetadata = 'Per night'
+    slicerName = None
+    summaryName = 'Median'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Get 'overview' statistics.
+    # Mean slew time
+    metricName = 'Mean slewTime'
+    slicerName = None
+    metricMetadata = None
+    summaryName = None
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-output = 'metricName; metricMetadata; summaryName; scaleLabel;'
-for r in runs:
-    output +='%s;' %r
-print output
+    # Mean and Median number of visits per field
+    metricName = 'NVisits'
+    slicerName = 'OpsimFieldSlicer'
+    for summaryName in ('Mean', 'Median'):
+        for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+            metricMetadata = '%s band, all props' % f
+            summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName,
+                                                  summaryName=summaryName)
+            pandaprint(summary)
 
-# Total number of visits (in millions)
-metricName = 'TotalNVisits'
-metricMetadata = 'All Visits'
-summaryName = 'Count'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary, scale=1/1000000., scalelabel='Millions')
+    # fO NV and Area
+    metricName = 'fO'
+    metricMetadata = 'All Visits (non-dithered)'
+    slicerName = None
+    summaryName = 'fONv: Area (sqdeg)'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
+    summaryName = 'fOArea: Nvisits (#)'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Total open shutter time (in megasec)
-# Need to add this to MAF
+    # Median r band seeing
+    metricName = 'Median FWHMeff'
+    metricMetadata = 'r band, all props'
+    slicerName = None
+    summaryName = 'Identity'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Percentage of visits for each proposal
-metricName = 'NVisits Per Proposal'
-summaryName = 'Fraction of total'
-summary = findStats(runresults, runs, metricName, summaryName=summaryName)
-printShortresult(runs, summary, scale=100., scalelabel='percent')
+    # Median r band airmass
+    metricName = 'Median airmass'
+    metricMetadata = 'r band, all props'
+    slicerName = 'UniSlicer'
+    summaryName = 'Identity'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Mean Surveying efficiency (??)
-metricName = 'Total effective time of survey'
-metricMetadata = 'All Visits'
-summaryName = '(days)'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median proper motion accuracy @20
+    metricName = 'Proper Motion 20'
+    metricMetadata = None
+    slicerName = None
+    summaryName = 'Median'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Median open shutter fraction
-metricName = 'OpenShutterFraction'
-metricMetadata = 'Per night'
-summaryName = 'Median'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median proper motion accuracy @24
+    metricName = 'Proper Motion 24'
+    metricMetadata = None
+    slicerName = None
+    summaryName = 'Median'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Mean and Median number of visits per field
-metricName = 'Nvisits'
-metricMetadata = []
-for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-    metricMetadata.append('%s band, all props' %f)
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, summaryName='Mean')
-    printShortresult(runs, summary)
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, summaryName='Median')
-    printShortresult(runs, summary)
+    # WFD performance metrics
 
-# Median number of visits per night
-metricName = 'NVisits'
-metricMetadata = 'Per night'
-slicerName = 'OneDSlicer'
-summaryName = 'Median'
-summary = findStats(runresults, runs, metricName, metricMetadata, slicerName, summaryName)
-printShortresult(runs, summary)
+    # Median single visit depth in ugrizy (all visits)
+    metricName = 'Median fiveSigmaDepth'
+    slicerName = 'UniSlicer'
+    metricMetadata = []
+    summaryName = 'Identity'
+    for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+        metricMetadata.append('%s band, WFD' % f)
+    for md in metricMetadata:
+        summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
+        pandaprint(summary)
 
-# Number of nights with observations
-metricName = 'Nights with observations'
-metricMetadata = 'All Visits'
-summaryName = '(days)'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median number of visits per field
+    metricName = 'NVisits'
+    slicerName = 'OpsimFieldSlicer'
+    metricMetadata = []
+    summaryName = 'Median'
+    for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+        metricMetadata.append('%s band, WFD' % f)
+    for md in metricMetadata:
+        summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
+        pandaprint(summary)
 
-# Mean slew time
-metricName = 'Mean slewTime'
-summary = findStats(runresults, runs, metricName)
-printShortresult(runs, summary)
+    # Median coadded depth per field
+    metricName = 'CoaddM5'
+    slicerName = 'OpsimFieldSlicer'
+    metricMetadata = []
+    summaryName = 'Median'
+    for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+        metricMetadata.append('%s band, WFD' % f)
+    for md in metricMetadata:
+        summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
+        pandaprint(summary)
 
-# fO NV and Area
-metricName = 'fO'
-metricMetadata = 'All Visits (non-dithered)'
-summaryName = 'fONv: Area (sqdeg)'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
-summaryName = 'fOArea: Nvisits (#)'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
+    # fO Nv and A
+    metricName = 'fO'
+    metricMetadata = 'WFD only (non-dithered)'
+    slicerName = None
+    summaryName = 'fONv: Area (sqdeg)'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
+    summaryName = 'fOArea: Nvisits (#)'
+    summary = runCompare.findSummaryStats(metricName, metricMetadata, slicerName, summaryName=summaryName)
+    pandaprint(summary)
 
-# Median r band seeing
-metricName = 'Median finSeeing'
-metricMetadata = 'r band, all props'
-summaryName = 'Identity'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median r and i band seeing
+    metricName = 'Median FWHMeff'
+    slicerName = 'UniSlicer'
+    summaryName = None
+    metricMetadata = []
+    for f in (['r', 'i']):
+        metricMetadata.append('%s band, WFD' % f)
+    for md in metricMetadata:
+        summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
+        pandaprint(summary)
 
-# Median r band airmass
-metricName = 'Median airmass'
-metricMetadata = 'r band, all props'
-summaryName = 'Identity'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median ury band sky brightness
+    metricName = 'Median filtSkyBrightness'
+    slicerName = 'UniSlicer'
+    metricMetadata = []
+    summaryName = None
+    for f in (['u', 'r', 'y']):
+        metricMetadata.append('%s band, WFD' % f)
+    for md in metricMetadata:
+        summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
+        pandaprint(summary)
+    # Median ury band airmass
+    metricName = 'Median airmass'
+    for md in metricMetadata:
+        summary = runCompare.findSummaryStats(metricName, md, slicerName, summaryName=summaryName)
+        pandaprint(summary)
 
-# Median proper motion accuracy @20
-metricName = 'Proper Motion 20'
-summaryName = 'Median'
-summary = findStats(runresults, runs, metricName, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median ury band normalized airmass
+    # don't calculate this in maf standard output yet
 
-# Median proper motion accuracy @24
-metricName = 'Proper Motion 24'
-summaryName = 'Median'
-summary = findStats(runresults, runs, metricName, summaryName=summaryName)
-printShortresult(runs, summary)
+    # Median ury hour angle
+    # don't calculate this in maf standard output yet
 
-# WFD performance metrics
-
-# Median single visit depth in ugrizy (all visits)
-metricName = 'Median fiveSigmaDepth'
-slicerName = 'UniSlicer'
-metricMetadata = []
-summaryName = 'Identity'
-for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-    metricMetadata.append('%s band, WFD' %f)
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, slicerName=slicerName, summaryName=summaryName)
-    printShortresult(runs, summary)
-
-# Median number of visits per field
-metricName = 'Nvisits'
-slicerName = 'OpsimFieldSlicer'
-metricMetadata = []
-summaryName = 'Median'
-for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-    metricMetadata.append('%s band, WFD' %f)
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, slicerName=slicerName, summaryName=summaryName)
-    printShortresult(runs, summary)
-
-# Median coadded depth per field
-metricName = 'CoaddM5'
-slicerName = 'OpsimFieldSlicer'
-metricMetadata = []
-summaryName = 'Median'
-for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-    metricMetadata.append('%s band, WFD' %f)
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, slicerName=slicerName, summaryName=summaryName)
-    printShortresult(runs, summary)
-
-# fO Nv and A
-metricName = 'fO'
-metricMetadata = 'WFD only (non-dithered)'
-summaryName = 'fONv: Area (sqdeg)'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
-summaryName = 'fOArea: Nvisits (#)'
-summary = findStats(runresults, runs, metricName, metricMetadata, summaryName=summaryName)
-printShortresult(runs, summary)
-
-# Median r and i band seeing
-metricName = 'Median finSeeing'
-metricMetadata = []
-for f in (['r', 'i']):
-    metricMetadata.append('%s band, WFD' %f)
-slicerName = 'UniSlicer'
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, slicerName)
-    printShortresult(runs, summary)
-
-# Median ury band sky brightness
-metricName = 'Median filtSkyBrightness'
-metricMetadata = []
-for f in (['u', 'r', 'y']):
-    metricMetadata.append('%s band, WFD' %f)
-slicerName = 'UniSlicer'
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, slicerName)
-    printShortresult(runs, summary)
-
-# Median ury band airmass
-metricName = 'Median airmass'
-for md in metricMetadata:
-    summary = findStats(runresults, runs, metricName, md, slicerName)
-    printShortresult(runs, summary)
-
-# Median ury band normalized airmass
-# don't calculate this in maf standard output yet
-
-# Median ury hour angle
-# don't calculate this in maf standard output yet
-
-# Close access to the results database files.
-for r in runs:
-    for d in runresults[r]:
-        #print '# Closing %s %s' %(r, d)
-        runresults[r][d].close()
+    # Close access to the results database files.
+    runCompare.close()

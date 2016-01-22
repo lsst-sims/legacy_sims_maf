@@ -26,7 +26,7 @@ class MafTracking(object):
 
         # Read in the results database.
         database = db.Database(database=database, longstrings=True,
-                               dbTables={'runs':['runs', 'mafRunId']})
+                               dbTables={'runs': ['runs', 'mafRunId']})
         self.runs = database.queryDatabase('runs', 'select * from runs')
         self.runs = self.sortRuns(self.runs)
         self.runsPage = {}
