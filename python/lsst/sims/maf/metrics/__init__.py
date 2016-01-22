@@ -16,3 +16,4 @@ from .chipVendorMetric import *
 from .vectorMetrics import *
 from .phaseGapMetric import *
 from .starDensity import *
+from .crowdingMetric import *

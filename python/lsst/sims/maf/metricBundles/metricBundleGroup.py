@@ -7,6 +7,7 @@ from collections import OrderedDict
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 from lsst.sims.maf.plots import PlotHandler
+import lsst.sims.maf.maps as maps
 from .metricBundle import MetricBundle, createEmptyMetricBundle
 import warnings
 
@@ -265,9 +266,17 @@ class MetricBundleGroup(object):
                 if stacker not in compatStackers:
                     compatStackers.append(stacker)
 
-        # Add maps.
-        # May need to do a more rigorous purge of duplicate maps
+        # Add maps. If a metric knows that it requires a map that isn't already
+        # in any of the bundles, instatiate it.
         compatMaps = list(set(compatMaps))
+        mapNames = [compatMap.__class__.__name__ for compatMap in compatMaps]
+        for b in bDict.itervalues():
+            if hasattr(b.metric,'maps'):
+                for mapName in b.metric.maps:
+                    if mapName not in mapNames:
+                        tempMap = getattr(maps,mapName)()
+                        compatMaps.append(tempMap)
+                        mapNames.append(mapName)
 
         # Run stackers.
         # Note that we've already checked that stackers do not re-create the same columns with different values
