@@ -322,6 +322,10 @@ class MetricBundleGroup(object):
                     # If key exists, set flag to use it, otherwise add it
                     if cacheKey in cacheDict:
                         useCache = True
+                        cacheVal = cacheDict[cacheKey]
+                        # Move this value to the end of the OrderedDict
+                        del cacheDict[cacheKey]
+                        cacheDict[cacheKey] = cacheVal
                     else:
                         cacheDict[cacheKey] = i
                         useCache = False
@@ -330,9 +334,9 @@ class MetricBundleGroup(object):
                             b.metricValues.data[i] = b.metricValues.data[cacheDict[cacheKey]]
                         else:
                             b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
-                    # If we are above the cache size, drop the oldest element from the cache dict
+                    # If we are above the cache size, drop the oldest element from the cache dict.
                     if len(cacheDict) > slicer.cacheSize:
-                        cacheDict.popitem(last=False)
+                        del cacheDict[cacheDict.keys()[0]]
 
                 # Not using memoize, just calculate things normally
                 else:
