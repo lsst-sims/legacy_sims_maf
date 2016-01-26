@@ -13,6 +13,7 @@ import warnings
 
 __all__ = ['makeBundlesDictFromList', 'MetricBundleGroup']
 
+
 def makeBundlesDictFromList(bundleList):
     """
     Utility to convert a list of MetricBundles into a dictionary, keyed by the fileRoot names.
@@ -23,9 +24,10 @@ def makeBundlesDictFromList(bundleList):
     bDict = {}
     for b in bundleList:
         if b.fileRoot in bDict:
-            raise NameError('More than one metricBundle is using the same fileroot, %s' %(b.fileRoot))
+            raise NameError('More than one metricBundle is using the same fileroot, %s' % (b.fileRoot))
         bDict[b.fileRoot] = b
     return bDict
+
 
 class MetricBundleGroup(object):
     """
@@ -73,12 +75,11 @@ class MetricBundleGroup(object):
         for bk in bundleDict:
             self.hasRun[bk] = False
 
-
     def _getDictSubset(self, origdict, subsetkeys):
         """
         Private utility to return a dictionary with a subset of an original dictionary, identified by subsetkeys.
         """
-        newdict = {key:origdict.get(key) for key in subsetkeys}
+        newdict = {key: origdict.get(key) for key in subsetkeys}
         return newdict
 
     def setCurrent(self, sqlconstraint):
@@ -133,11 +134,11 @@ class MetricBundleGroup(object):
                             # If we find one which is not compatible, stop and go on to the next subset list.
                             break
                     # Otherwise, we reached the end of the subset and they were all compatible.
-                    foundCompatible=True
+                    foundCompatible = True
                     compatibleList.append(k)
             if not foundCompatible:
                 # Didn't find a pre-existing compatible set; make a new one.
-                compatibleLists.append([k,])
+                compatibleLists.append([k, ])
         self.compatibleLists = compatibleLists
 
     def runAll(self, clearMemory=False, plotNow=False, plotKwargs=None):
@@ -151,8 +152,7 @@ class MetricBundleGroup(object):
             #  sqlconstraint.
             self.setCurrent(sqlconstraint)
             self.runCurrent(sqlconstraint, clearMemory=clearMemory,
-                            plotNow=plotNow,plotKwargs=plotKwargs)
-
+                            plotNow=plotNow, plotKwargs=plotKwargs)
 
     def runCurrent(self, sqlconstraint, clearMemory=False, simData=None, plotNow=False, plotKwargs=None):
         """
@@ -175,10 +175,10 @@ class MetricBundleGroup(object):
             try:
                 self.getData(sqlconstraint)
             except UserWarning:
-                print 'No data matching sqlconstraint %s' %(sqlconstraint)
+                print 'No data matching sqlconstraint %s' % (sqlconstraint)
                 return
             except ValueError:
-                print 'One of the columns requested from the database was not available - skipping sqlconstraint %s' %(sqlconstraint)
+                print 'One of the columns requested from the database was not available - skipping sqlconstraint %s' % (sqlconstraint)
                 return
 
         # Find compatible subsets of the MetricBundle dictionary, which can be run/metrics calculated/ together.
@@ -214,7 +214,6 @@ class MetricBundleGroup(object):
             if self.verbose:
                 print 'Deleted metricValues from memory.'
 
-
     def getData(self, sqlconstraint):
         """
         Query the data from the database.
@@ -224,20 +223,20 @@ class MetricBundleGroup(object):
             if sqlconstraint == '':
                 print "Querying database with no constraint."
             else:
-                print "Querying database with constraint %s" %(sqlconstraint)
+                print "Querying database with constraint %s" % (sqlconstraint)
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
         if self.dbTable != 'Summary':
             distinctExpMJD = False
             groupBy = None
         else:
             distinctExpMJD = True
-            groupBy='expMJD'
+            groupBy = 'expMJD'
         self.simData = utils.getSimData(self.dbObj, sqlconstraint, self.dbCols,
                                         tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
                                         groupBy=groupBy)
 
         if self.verbose:
-            print "Found %i visits" %(self.simData.size)
+            print "Found %i visits" % (self.simData.size)
 
         # Query for the fieldData if we need it for the opsimFieldSlicer.
         needFields = [b.slicer.needsFields for b in self.currentBundleDict.itervalues()]
@@ -271,10 +270,10 @@ class MetricBundleGroup(object):
         compatMaps = list(set(compatMaps))
         mapNames = [compatMap.__class__.__name__ for compatMap in compatMaps]
         for b in bDict.itervalues():
-            if hasattr(b.metric,'maps'):
+            if hasattr(b.metric, 'maps'):
                 for mapName in b.metric.maps:
                     if mapName not in mapNames:
-                        tempMap = getattr(maps,mapName)()
+                        tempMap = getattr(maps, mapName)()
                         compatMaps.append(tempMap)
                         mapNames.append(mapName)
 
@@ -311,7 +310,7 @@ class MetricBundleGroup(object):
         # Run through all slicepoints and calculate metrics.
         for i, slice_i in enumerate(slicer):
             slicedata = self.simData[slice_i['idxs']]
-            if len(slicedata)==0:
+            if len(slicedata) == 0:
                 # No data at this slicepoint. Mask data values.
                 for b in bDict.itervalues():
                     b.metricValues.mask[i] = True
@@ -319,21 +318,25 @@ class MetricBundleGroup(object):
                 # There is data! Should we use our data cache?
                 if cache:
                     # Make the data idxs hashable.
-                    cacheKey = str(sorted(slice_i['idxs']))[1:-1].replace(' ','')
+                    cacheKey = frozenset(slice_i['idxs'])
                     # If key exists, set flag to use it, otherwise add it
                     if cacheKey in cacheDict:
                         useCache = True
+                        cacheVal = cacheDict[cacheKey]
+                        # Move this value to the end of the OrderedDict
+                        del cacheDict[cacheKey]
+                        cacheDict[cacheKey] = cacheVal
                     else:
                         cacheDict[cacheKey] = i
                         useCache = False
-                    # If we are above the cache size, drop the oldest element from the cache dict
-                    if i > slicer.cacheSize:
-                        cacheDict.popitem(last=False) #remove 1st item
                     for b in bDict.itervalues():
                         if useCache:
                             b.metricValues.data[i] = b.metricValues.data[cacheDict[cacheKey]]
                         else:
                             b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
+                    # If we are above the cache size, drop the oldest element from the cache dict.
+                    if len(cacheDict) > slicer.cacheSize:
+                        del cacheDict[cacheDict.keys()[0]]
 
                 # Not using memoize, just calculate things normally
                 else:
@@ -347,10 +350,10 @@ class MetricBundleGroup(object):
                         b.metricValues.mask[ind] = True
             else:
                 # For some reason, this doesn't work for dtype=object arrays.
-                b.metricValues.mask = np.where(b.metricValues.data==b.metric.badval,
+                b.metricValues.mask = np.where(b.metricValues.data == b.metric.badval,
                                                True, b.metricValues.mask)
 
-         # Save data to disk as we go, although this won't keep summary values, etc. (just failsafe).
+        # Save data to disk as we go, although this won't keep summary values, etc. (just failsafe).
         if self.saveEarly:
             for b in bDict.itervalues():
                 b.write(outDir=self.outDir, resultsDb=self.resultsDb)
@@ -415,7 +418,7 @@ class MetricBundleGroup(object):
         """
         for sqlconstraint in self.sqlconstraints:
             if self.verbose:
-                print 'Plotting figures with %s sqlconstraint now.' %(sqlconstraint)
+                print 'Plotting figures with %s sqlconstraint now.' % (sqlconstraint)
             self.setCurrent(sqlconstraint)
             self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
                              thumbnail=thumbnail, closefigs=closefigs)
@@ -513,6 +516,6 @@ class MetricBundleGroup(object):
                     b.metric.name = origMetricName
                     b._buildFileRoot()
                 if self.verbose:
-                    print 'Read %s from disk.' %(b.fileRoot)
+                    print 'Read %s from disk.' % (b.fileRoot)
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)

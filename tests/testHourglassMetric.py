@@ -6,17 +6,16 @@ import unittest
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
 
+
 class TestHourglassmetric(unittest.TestCase):
-    
-# This throws a segfault on macs, but not on my linux box.  Hmmm.
-    '''
+
     def testHourglassMetric(self):
         """Test the hourglass metric """
         names = [ 'expMJD', 'night','filter']
         types = [float,float,str]
         data = np.zeros(10, dtype = zip(names,types))
-        data['night'] = np.round(np.arange(0,2,.1))[:10]
-        data['expMJD'] = np.sort(np.random.rand(10))+data['night'] 
+        data['night'] = np.round(np.arange(0, 2, .1))[:10]
+        data['expMJD'] = np.sort(np.random.rand(10)) + data['night']
         data['filter'] = 'r'
         slicePoint = [0]
         metric = metrics.HourglassMetric()
@@ -26,12 +25,7 @@ class TestHourglassmetric(unittest.TestCase):
         # Check that the format is right at least
         assert(np.size(perfilter) == 2*data.size)
         assert(len(pernight.dtype.names) == 9)
-    
-    def testinDevelopmentMetrics(self):
-        """ Test Metrics in Development, just passes and ignores"""
-        pass
-    '''
-        
+
 
 if __name__ == '__main__':
 
