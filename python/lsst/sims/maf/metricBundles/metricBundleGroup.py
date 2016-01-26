@@ -325,15 +325,14 @@ class MetricBundleGroup(object):
                     else:
                         cacheDict[cacheKey] = i
                         useCache = False
-                    # If we are above the cache size, drop the oldest element from the cache dict
-                    if i > slicer.cacheSize:
-                        #  Remove 1st item
-                        cacheDict.popitem(last=False)
                     for b in bDict.itervalues():
                         if useCache:
                             b.metricValues.data[i] = b.metricValues.data[cacheDict[cacheKey]]
                         else:
                             b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
+                    # If we are above the cache size, drop the oldest element from the cache dict
+                    if len(cacheDict) > slicer.cacheSize:
+                        cacheDict.popitem(last=False)
 
                 # Not using memoize, just calculate things normally
                 else:
