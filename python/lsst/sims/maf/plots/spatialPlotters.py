@@ -62,21 +62,21 @@ class HealpixSkyMap(BasePlotter):
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
-        if plotDict['zp']:
+        if plotDict['zp'] is not None:
             metricValue = metricValueIn - plotDict['zp']
-        elif plotDict['normVal']:
+        elif plotDict['normVal'] is not None:
             metricValue = metricValueIn/plotDict['normVal']
         else:
             metricValue = metricValueIn
         # Set up color bar limits.
-        if plotDict['percentileClip']:
-            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
         colorMin = plotDict['colorMin']
         colorMax = plotDict['colorMax']
-        if colorMin is None and plotDict['percentileClip']:
-            colorMin = pcMin
-        if colorMax is None and plotDict['percentileClip']:
-            colorMax = pcMax
+        if plotDict['percentileClip'] is not None:
+            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
+            if colorMin is None and plotDict['percentileClip']:
+                colorMin = pcMin
+            if colorMax is None and plotDict['percentileClip']:
+                colorMax = pcMax
         if (colorMin is not None) or (colorMax is not None):
             clims = [colorMin, colorMax]
         else:
@@ -245,9 +245,9 @@ class BaseHistogram(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        if plotDict['zp']:
+        if plotDict['zp'] is not None:
             metricValue = metricValueIn.compressed() - plotDict['zp']
-        elif plotDict['normVal']:
+        elif plotDict['normVal'] is not None:
             metricValue = metricValueIn.compressed()/plotDict['normVal']
         else:
             metricValue = metricValueIn.compressed()
@@ -462,9 +462,9 @@ class BaseSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        if plotDict['zp']:
+        if plotDict['zp'] is not None:
             metricValue = metricValueIn - plotDict['zp']
-        elif plotDict['normVal']:
+        elif plotDict['normVal'] is not None:
             metricValue = metricValueIn/plotDict['normVal']
         else:
             metricValue = metricValueIn
@@ -480,7 +480,7 @@ class BaseSkyMap(BasePlotter):
             mask = ~metricValue.mask
         # Determine color min/max values. metricValue.compressed = non-masked points.
         if not plotDict['metricIsColor']:
-            if plotDict['percentileClip']:
+            if plotDict['percentileClip'] is not None:
                 pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
             if plotDict['colorMin'] is None:
                 if plotDict['percentileClip']:
@@ -607,20 +607,20 @@ class HealpixSDSSSkyMap(BasePlotter):
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
-        if plotDict['zp']:
+        if plotDict['zp'] is not None:
             metricValue = metricValueIn - plotDict['zp']
-        elif plotDict['normVal']:
+        elif plotDict['normVal'] is not None:
             metricValue = metricValueIn/plotDict['normVal']
         else:
             metricValue = metricValueIn
 
-        if plotDict['percentileClip']:
+        if plotDict['percentileClip'] is not None:
             pcMin, pcMax = percentileClipping(metricValue.compressed(),
                                               percentile=plotDict['percentileClip'])
-        if plotDict['colorMin'] is None and plotDict['percentileClip']:
-            plotDict['colorMin'] = pcMin
-        if plotDict['colorMax'] is None and plotDict['percentileClip']:
-            plotDict['colorMax'] = pcMax
+            if plotDict['colorMin'] is None:
+                plotDict['colorMin'] = pcMin
+            if plotDict['colorMax'] is None:
+                plotDict['colorMax'] = pcMax
         if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
             clims = [plotDict['colorMin'], plotDict['colorMax']]
         else:
@@ -695,20 +695,20 @@ class LambertSkyMap(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
-        if plotDict['zp']:
+        if plotDict['zp'] is not None:
             metricValue = metricValueIn - plotDict['zp']
-        elif plotDict['normVal']:
+        elif plotDict['normVal'] is not None:
             metricValue = metricValueIn/plotDict['normVal']
         else:
             metricValue = metricValueIn
 
-        if plotDict['percentileClip']:
+        if plotDict['percentileClip'] is not None:
             pcMin, pcMax = percentileClipping(metricValue.compressed(),
                                               percentile=plotDict['percentileClip'])
-        if plotDict['colorMin'] is None and plotDict['percentileClip']:
-            plotDict['colorMin'] = pcMin
-        if plotDict['colorMax'] is None and plotDict['percentileClip']:
-            plotDict['colorMax'] = pcMax
+            if plotDict['colorMin'] is None:
+                plotDict['colorMin'] = pcMin
+            if plotDict['colorMax'] is None:
+                plotDict['colorMax'] = pcMax
         if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
             clims = [plotDict['colorMin'], plotDict['colorMax']]
         else:

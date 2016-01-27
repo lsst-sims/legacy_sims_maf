@@ -53,7 +53,7 @@ class OneDBinnedData(BasePlotter):
             plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         # Set y limits (either from values in args, percentileClipping or compressed data values).
         if (plotDict['yMin'] is None) or (plotDict['yMax'] is None):
-            if plotDict['percentileClip']:
+            if plotDict['percentileClip'] is not None:
                 plotDict['yMin'], plotDict['yMax'] = percentileClipping(metricValues.compressed(),
                                                                         percentile=plotDict['percentileClip'])
         # Set y and x limits, if provided.

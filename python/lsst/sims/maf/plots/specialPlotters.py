@@ -70,9 +70,9 @@ class FOPlot(BasePlotter):
         xMax = plotDict['xMax']
         yMin = plotDict['yMin']
         yMax = plotDict['yMax']
-        if (xMin is not None) & (xMax is not None):
+        if (xMin is not None) or (xMax is not None):
             plt.xlim([xMin,xMax])
-        if (yMin is not None) & (yMax is not None):
+        if (yMin is not None) or (yMax is not None):
             plt.ylim([yMin,yMax])
         return fig.number
 

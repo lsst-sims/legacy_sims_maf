@@ -50,7 +50,7 @@ class TwoDMap(BasePlotter):
             norm = None
 
         # Mask out values below the color minimum so they show up as white
-        if plotDict['colorMin']:
+        if plotDict['colorMin'] is not None:
             lowVals = np.where(metricValue.data < plotDict['colorMin'])
             metricValue.mask[lowVals] = True
 
