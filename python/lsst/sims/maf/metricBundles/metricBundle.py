@@ -238,9 +238,10 @@ class MetricBundle(object):
             self.plotDict.update(plotDict)
         # Check for bad zp or normVal values.
         if 'zp' in self.plotDict:
-            if not np.isfinite(self.plotDict['zp']):
-                warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
-                del self.plotDict['zp']
+            if self.plotDict['zp'] is not None:
+                if not np.isfinite(self.plotDict['zp']):
+                    warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
+                    del self.plotDict['zp']
         if 'normVal' in self.plotDict:
             if self.plotDict['normVal'] == 0:
                 warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotDict'
