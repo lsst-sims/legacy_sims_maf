@@ -4,10 +4,10 @@ lsst.sims.maf.db package
 Submodules
 ----------
 
-lsst.sims.maf.db.Database module
+lsst.sims.maf.db.database module
 --------------------------------
 
-.. automodule:: lsst.sims.maf.db.Database
+.. automodule:: lsst.sims.maf.db.database
     :members:
     :undoc-members:
     :show-inheritance:
