@@ -1,4 +1,4 @@
-from .Database import Database
+from .database import Database
 import numpy as np
 import warnings
 
