@@ -5,3 +5,4 @@ from .sdssStackers import *
 from .coordStackers import *
 from .NEODistStacker import *
 from .getColInfo import *
+from m5OptimalStacker import *

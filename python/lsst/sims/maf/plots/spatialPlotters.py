@@ -32,7 +32,7 @@ class HealpixSkyMap(BasePlotter):
         self.objectPlotter = False
         # Set up the default plotting parameters.
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                                'logScale': False, 'cbarFormat': None, 'cmap': cm.cubehelix,
+                                'logScale': False, 'cbarFormat': None, 'cmap': perceptual_rainbow,
                                 'percentileClip': None, 'colorMin': None, 'colorMax': None,
                                 'zp': None, 'normVal': None, 'labelsize': None, 'fontsize': None,
                                 'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0)}

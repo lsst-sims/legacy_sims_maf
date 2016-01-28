@@ -17,3 +17,4 @@ from .vectorMetrics import *
 from .phaseGapMetric import *
 from .starDensity import *
 from .crowdingMetric import *
+from .optimalM5Metric import *
