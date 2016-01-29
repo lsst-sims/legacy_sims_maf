@@ -1,7 +1,7 @@
 import os, sys, re
 import numpy as np
 import warnings
-from .Database import Database
+from .database import Database
 from lsst.sims.utils import Site
 from lsst.sims.maf.utils import getDateVersion
 

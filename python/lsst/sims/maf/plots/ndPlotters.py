@@ -1,31 +1,46 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
 from matplotlib import colors
-
 from .plotHandler import BasePlotter
+from .perceptual_rainbow import makePRCmap
 
 __all__ = ['TwoDSubsetData', 'OneDSubsetData']
 
+perceptual_rainbow = makePRCmap()
 
 class TwoDSubsetData(BasePlotter):
+    """
+    Plot 2 axes from the slicer.sliceColList, identified by
+    plotDict['xaxis']/['yaxis'], given the metricValues at all
+    slicepoints [sums over non-visible axes].
+    """
     def __init__(self):
         self.plotType = '2DBinnedData'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'units':None,
-                                'logScale':False, 'clims':None, 'cmap':cm.cubehelix,
-                                'cbarFormat':None}
+        self.defaultPlotDict = {'title': None, 'xlabel': None, 'ylable': None, 'units': None,
+                                'logScale': False, 'clims': None, 'cmap': perceptual_rainbow,
+                                'cbarFormat': None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """
-        Plot 2 axes from the slicer.sliceColList, identified by
-        plotDict['xaxis']/['yaxis'], given the metricValues at all
-        slicepoints [sums over non-visible axes].
+        Parameters
+        ----------
+        metricValue : numpy.ma.MaskedArray
+        slicer : lsst.sims.maf.slicers.NDSlicer
+        userPlotDict: dict
+            Dictionary of plot parameters set by user (overrides default values).
+            'xaxis' and 'yaxis' values define which axes of the nd data to plot along the x/y axes.
+        fignum : int
+            Matplotlib figure number to use (default = None, starts new figure).
+
+        Returns
+        -------
+        int
+           Matplotlib figure number used to create the plot.
         """
         if slicer.slicerName != 'NDSlicer':
             raise ValueError('TwoDSubsetData plots ndSlicer metric values')
-        fig = plt.figure(fig)
+        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
@@ -37,7 +52,7 @@ class TwoDSubsetData(BasePlotter):
         # (just new view of data, not copy).
         newshape = []
         for b in slicer.bins:
-            newshape.append(len(b)-1)
+            newshape.append(len(b) - 1)
         newshape.reverse()
         md = metricValues.reshape(newshape)
         # Sum over other dimensions. Note that masked values are not included in sum.
@@ -64,30 +79,47 @@ class TwoDSubsetData(BasePlotter):
         plt.xlabel(xlabel)
         ylabel = plotDict['ylabel']
         if ylabel is None:
-            ylabel= slicer.sliceColList[yaxis]
+            ylabel = slicer.sliceColList[yaxis]
         plt.ylabel(ylabel)
-        cb = plt.colorbar(im, aspect=25, extend='both', orientation='horizontal', format=plotDict['cbarFormat'])
+        cb = plt.colorbar(im, aspect=25, extend='both',
+                          orientation='horizontal', format=plotDict['cbarFormat'])
         cb.set_label(plotDict['units'])
         plt.title(plotDict['title'])
         return fig.number
 
 
 class OneDSubsetData(BasePlotter):
+    """
+    Plot a single axes from the sliceColList, identified by plotDict['axis'],
+    given the metricValues at all slicepoints [sums over non-visible axes].
+    """
     def __init__(self):
         self.plotType = '1DBinnedData'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title':None, 'xlabel':None, 'ylable':None, 'label':None, 'units':None,
-                                'logScale':False, 'histRange':None, 'filled':False, 'alpha':0.5,
-                                'cmap':cm.cubehelix, 'cbarFormat':None}
+        self.defaultPlotDict = {'title': None, 'xlabel': None, 'ylabel': None, 'label': None, 'units': None,
+                                'logScale': False, 'histRange': None, 'filled': False, 'alpha': 0.5,
+                                'cmap': perceptual_rainbow, 'cbarFormat': None}
 
     def plotBinnedData1D(self, metricValues, slicer, userPlotDict, fignum=None):
         """
-        Plot a single axes from the sliceColList, identified by plotDict['axis'],
-        given the metricValues at all slicepoints [sums over non-visible axes].
+        Parameters
+        ----------
+        metricValue : numpy.ma.MaskedArray
+        slicer : lsst.sims.maf.slicers.NDSlicer
+        userPlotDict: dict
+            Dictionary of plot parameters set by user (overrides default values).
+            'axis' keyword identifies which axis to show in the plot (along xaxis of plot).
+        fignum : int
+            Matplotlib figure number to use (default = None, starts new figure).
+
+        Returns
+        -------
+        int
+           Matplotlib figure number used to create the plot.
         """
         if slicer.slicerName != 'NDSlicer':
             raise ValueError('TwoDSubsetData plots ndSlicer metric values')
-        fig = plt.figure(fig)
+        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
@@ -98,7 +130,7 @@ class OneDSubsetData(BasePlotter):
         axis = plotDict['axis']
         newshape = []
         for b in slicer.bins:
-            newshape.append(len(b)-1)
+            newshape.append(len(b) - 1)
         newshape.reverse()
         md = metricValues.reshape(newshape)
         # Sum over other dimensions. Note that masked values are not included in sum.
@@ -113,7 +145,7 @@ class OneDSubsetData(BasePlotter):
             plt.bar(leftedge, md, width, label=plotDict['label'],
                     linewidth=0, alpha=plotDict['alpha'], log=plotDict['logScale'])
         else:
-            x = np.ravel(zip(leftedge, leftedge+width))
+            x = np.ravel(zip(leftedge, leftedge + width))
             y = np.ravel(zip(md, md))
             if plotDict['logScale']:
                 plt.semilogy(x, y, label=plotDict['label'])
@@ -122,7 +154,7 @@ class OneDSubsetData(BasePlotter):
         plt.ylabel(plotDict['ylabel'])
         xlabel = plotDict['xlabel']
         if xlabel is None:
-            xlabel=slicer.sliceColName[axis]
+            xlabel = slicer.sliceColName[axis]
             if plotDict['units'] != None:
                 xlabel += ' (' + plotDict['units'] + ')'
         plt.xlabel(xlabel)

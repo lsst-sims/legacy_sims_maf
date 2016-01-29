@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 import numpy as np
 import numpy.ma as ma
+import warnings
 
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
@@ -13,20 +14,32 @@ import lsst.sims.maf.utils as utils
 
 __all__ = ['MetricBundle', 'createEmptyMetricBundle']
 
+
 def createEmptyMetricBundle():
+    """Create an empty metric bundle.
+
+    Returns
+    -------
+    MetricBundle
+        An empty metric bundle, configured with just the :class:`BaseMetric` and :class:`BaseSlicer`.
+    """
     return MetricBundle(metrics.BaseMetric(), slicers.BaseSlicer(), '')
 
+
 class MetricBundle(object):
-    """
-    MetricBundle holds a combination of a (single) metric, slicer and sqlconstraint, which determines
-    a unique combination of an opsim evaluation.
-    After the metric is evaluated over the slicer, it will hold the MetricBundle value (metric values) as well.
-    It also holds a list of metrics (in summaryMetrics) to be used to generate summary statistics on the metric values,
-    as well as the resulting summary statistic values.
-    In addition, it holds plotting parameters (in plotDict) and display parameters for showMaf (in displayDict), as
-    well as additional metadata such as the opsim run name.
-    MetricBundle can autogenerate some metadata, plotting labels, as well as generate plots,
-    save output to disk, and calculate 'reduce' methods on metrics.
+    """The MetricBundle is defined by a combination of a (single) metric, slicer and
+    sqlconstraint - together these define a unique combination of an opsim benchmark.
+    An example would be: a CountMetric, a HealpixSlicer, and a sqlconstraint 'filter="r"'.
+
+    After the metric is evaluated over the slicePoints of the slicer, the resulting
+    metric values are saved in the MetricBundle.
+
+    The MetricBundle also saves the summary metrics to be used to generate summary
+    statistics over those metric values, as well as the resulting summary statistic values.
+
+    Plotting parameters and display parameters (for showMaf) are saved in the MetricBundle,
+    as well as additional metadata such as the opsim run name, and relevant stackers and maps
+    to apply when calculating the metric values.
     """
     def __init__(self, metric, slicer, sqlconstraint,
                  stackerList=None, runName='opsim', metadata=None,
@@ -46,7 +59,7 @@ class MetricBundle(object):
         # Set the stackerlist if applicable.
         if stackerList is not None:
             if isinstance(stackerList, stackers.BaseStacker):
-                self.stackerList = [stackerList,]
+                self.stackerList = [stackerList, ]
             else:
                 self.stackerList = []
                 for s in stackerList:
@@ -58,7 +71,7 @@ class MetricBundle(object):
         # Set the 'maps' to apply to the slicer, if applicable.
         if mapsList is not None:
             if isinstance(mapsList, maps.BaseMap):
-                self.mapsList = [mapsList,]
+                self.mapsList = [mapsList, ]
             else:
                 self.mapsList = []
                 for m in mapsList:
@@ -93,8 +106,7 @@ class MetricBundle(object):
         self.summaryValues = None
 
     def _resetMetricBundle(self):
-        """
-        Reset all properties of MetricBundle.
+        """Reset all properties of MetricBundle.
         """
         self.metric = None
         self.slicer = None
@@ -113,30 +125,28 @@ class MetricBundle(object):
         self.summaryValues = None
 
     def _setupMetricValues(self):
-        """
-        Set up the numpy masked array to store the metric value data.
+        """Set up the numpy masked array to store the metric value data.
         """
         dtype = self.metric.metricDtype
         # Can't store healpix slicer mask values in an int array.
         if dtype == 'int':
             dtype = 'float'
         if self.metric.shape == 1:
-            shape =   self.slicer.shape
+            shape = self.slicer.shape
         else:
             shape = (self.slicer.shape, self.metric.shape)
-        self.metricValues = ma.MaskedArray(data = np.empty(shape, dtype),
-                                           mask = np.zeros(shape, 'bool'),
-                                           fill_value= self.slicer.badval)
+        self.metricValues = ma.MaskedArray(data=np.empty(shape, dtype),
+                                           mask=np.zeros(shape, 'bool'),
+                                           fill_value=self.slicer.badval)
 
     def _buildMetadata(self, metadata):
-        """
-        If no metadata is provided, process the sqlconstraint
+        """If no metadata is provided, process the sqlconstraint
         (by removing extra spaces, quotes, the word 'filter' and equal signs) to make a metadata version.
         e.g. 'filter = "r"' becomes 'r'
         """
         if metadata is None:
-            self.metadata = self.sqlconstraint.replace('=','').replace('filter','').replace("'",'')
-            self.metadata = self.metadata.replace('"','').replace('  ',' ')
+            self.metadata = self.sqlconstraint.replace('=', '').replace('filter', '').replace("'", '')
+            self.metadata = self.metadata.replace('"', '').replace('  ', ' ')
             self.metadata.strip(' ')
         else:
             self.metadata = metadata
@@ -152,10 +162,11 @@ class MetricBundle(object):
         self.fileRoot = utils.nameSanitize(self.fileRoot)
 
     def _findReqCols(self):
-        """
-        Find the columns needed by the metrics, slicers, and stackers.
-        If there are any additional stackers required, instatiate them and add them to the self.stackers list.
-        (default stackers have to be instantiated to determine what additional columns are needed from database).
+        """Find the columns needed by the metrics, slicers, and stackers.
+        If there are any additional stackers required, instatiate them and add them to
+        the self.stackers list.
+        (default stackers have to be instantiated to determine what additional columns
+        are needed from database).
         """
         # Find the columns required  by the metrics and slicers (including if they come from stackers).
         colInfo = ColInfo()
@@ -193,8 +204,12 @@ class MetricBundle(object):
         self.dbCols = dbcolnames
 
     def setSummaryMetrics(self, summaryMetrics):
-        """
-        Set (or reset) the summary metrics for the metricbundle.
+        """Set (or reset) the summary metrics for the metricbundle.
+
+        Parameters
+        ----------
+        summaryMetrics : List[BaseMetric]
+            Instantiated summary metrics to use to calculate summary statistics for this metric.
         """
         if summaryMetrics is not None:
             if isinstance(summaryMetrics, metrics.BaseMetric):
@@ -213,9 +228,15 @@ class MetricBundle(object):
                 self.summaryMetrics = []
 
     def setPlotFuncs(self, plotFuncs):
-        """
-        Set or reset the plotting functions.
-        Default is to use all the plotFuncs associated with a slicer.
+        """Set or reset the plotting functions.
+
+        The default is to use all the plotFuncs associated with the slicer, which
+        is what happens in self.plot if setPlotFuncs is not used to override self.plotFuncs.
+
+        Parameters
+        ----------
+        plotFuncs : List[BasePlotter]
+            The plotter or plotters to use to generate visuals for this metric.
         """
         if plotFuncs is not None:
             if plotFuncs is isinstance(plotFuncs, plots.BasePlotter):
@@ -224,23 +245,31 @@ class MetricBundle(object):
                 self.plotFuncs = []
                 for pFunc in plotFuncs:
                     if not isinstance(pFunc, plots.BasePlotter):
-                        raise ValueError('plotFuncs should contain instantiated lsst.sims.maf.plotter objects.')
+                        raise ValueError('plotFuncs should contain instantiated ' +
+                                         'lsst.sims.maf.plotter objects.')
                     self.plotFuncs.append(pFunc)
         else:
             self.plotFuncs = [pFunc() for pFunc in self.slicer.plotFuncs]
 
     def setPlotDict(self, plotDict):
-        """
-        Set or update any property of plotDict.
+        """Set or update any property of plotDict.
+
+        Parameters
+        ----------
+        plotDict : dict
+            A dictionary of plotting parameters.
+            The usable keywords vary with each lsst.sims.maf.plots Plotter.
         """
         # Don't auto-generate anything here - the plotHandler does it.
         if plotDict is not None:
             self.plotDict.update(plotDict)
         # Check for bad zp or normVal values.
         if 'zp' in self.plotDict:
-            if not np.isfinite(self.plotDict['zp']):
-                warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict' %(self.fileRoot))
-                del self.plotDict['zp']
+            if self.plotDict['zp'] is not None:
+                if not np.isfinite(self.plotDict['zp']):
+                    warnings.warn('Warning! Plot zp for %s was infinite: removing zp from plotDict'
+                                  % (self.fileRoot))
+                    del self.plotDict['zp']
         if 'normVal' in self.plotDict:
             if self.plotDict['normVal'] == 0:
                 warnings.warn('Warning! Plot normalization value for %s was 0: removing normVal from plotDict'
@@ -248,11 +277,21 @@ class MetricBundle(object):
                 del self.plotDict['normVal']
 
     def setDisplayDict(self, displayDict=None, resultsDb=None):
-        """
-        Set or update any property of displayDict.
+        """Set or update any property of displayDict.
+
+        Parameters
+        ----------
+        displayDict : Optional[dict]
+            Dictionary of display parameters for showMaf.
+            Expected keywords: 'group', 'subgroup', 'order', 'caption'.
+            'group', 'subgroup', and 'order' control where the metric results are shown on the showMaf page.
+            'caption' provides a caption to use with the metric results.
+            These values are saved in the results database.
+        resultsDb : Optional[ResultsDb]
+            A MAF results database, used to save the display parameters.
         """
         # Set up a temporary dictionary with the default values.
-        tmpDisplayDict = {'group':None, 'subgroup':None, 'order':0, 'caption':None}
+        tmpDisplayDict = {'group': None, 'subgroup': None, 'order': 0, 'caption': None}
         # Update from self.displayDict (to use existing values, if present).
         tmpDisplayDict.update(self.displayDict)
         # And then update from any values being passed now.
@@ -263,35 +302,34 @@ class MetricBundle(object):
         # If we still need to auto-generate a caption, do it.
         if self.displayDict['caption'] is None:
             if self.metric.comment is None:
-                caption = self.metric.name + ' calculated on a %s' %(self.slicer.slicerName)
-                caption += ' basis, using a subset of data selected via %s.' %(self.sqlconstraint)
+                caption = self.metric.name + ' calculated on a %s' % (self.slicer.slicerName)
+                caption += ' basis, using a subset of data selected via %s.' % (self.sqlconstraint)
             else:
                 caption = self.metric.comment
             if 'zp' in self.plotDict:
-                caption += ' Values plotted with a zeropoint of %.2f.' %(self.plotDict['zp'])
+                caption += ' Values plotted with a zeropoint of %.2f.' % (self.plotDict['zp'])
             if 'normVal' in self.plotDict:
-                caption += ' Values plotted with a normalization value of %.2f.' %(self.plotDict['normVal'])
+                caption += ' Values plotted with a normalization value of %.2f.' % (self.plotDict['normVal'])
             self.displayDict['caption'] = caption
         if resultsDb:
             # Update the display values in the resultsDb.
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
                                               self.runName, self.sqlconstraint,
-                                              self.metadata, outfile)
+                                              self.metadata, None)
             resultsDb.updateDisplay(metricId, self.displayDict)
 
     def write(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
-        """
-        Write metricValues (and associated metadata) to disk.
+        """Write metricValues (and associated metadata) to disk.
 
         Parameters
         ----------
-        comment : str
+        comment : Optional[str]
             Any additional comments to add to the output file
-        outDir : str
+        outDir : Optional[str]
             The output directory
-        outfileSuffix : str
+        outfileSuffix : Optional[str]
             Additional suffix to add to the output files (typically a numerical suffix for movies)
-        resultsD : ResultsDb
+        resultsD : Optional[ResultsDb]
             Results database to store information on the file output
         """
         if outfileSuffix is not None:
@@ -299,13 +337,13 @@ class MetricBundle(object):
         else:
             outfile = self.fileRoot + '.npz'
         self.slicer.writeData(os.path.join(outDir, outfile),
-                                self.metricValues,
-                                metricName = self.metric.name,
-                                simDataName = self.runName,
-                                sqlconstraint = self.sqlconstraint,
-                                metadata = self.metadata + comment,
-                                displayDict = self.displayDict,
-                                plotDict = self.plotDict)
+                              self.metricValues,
+                              metricName=self.metric.name,
+                              simDataName=self.runName,
+                              sqlconstraint=self.sqlconstraint,
+                              metadata=self.metadata + comment,
+                              displayDict=self.displayDict,
+                              plotDict=self.plotDict)
         if resultsDb:
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
                                               self.runName, self.sqlconstraint,
@@ -313,24 +351,31 @@ class MetricBundle(object):
             resultsDb.updateDisplay(metricId, self.displayDict)
 
     def outputJSON(self):
-        """
-        Set up and call the baseSlicer outputJSON method, to output to IO string.
+        """Set up and call the baseSlicer outputJSON method, to output to IO string.
+
+        Returns
+        -------
+        io
+           IO object containing JSON data representing the metric bundle data.
         """
         io = self.slicer.outputJSON(self.metricValues,
-                                    metricName = self.metric.name,
-                                    simDataName = self.runName,
-                                    metadata = self.metadata,
-                                    plotDict = self.plotDict)
+                                    metricName=self.metric.name,
+                                    simDataName=self.runName,
+                                    metadata=self.metadata,
+                                    plotDict=self.plotDict)
         return io
 
-
     def read(self, filename):
-        """
-        Read metricValues and associated metadata from disk.
+        """Read metricValues and associated metadata from disk.
         Overwrites any data currently in metricbundle.
+
+        Parameters
+        ----------
+        filename : str
+           The file from which to read the metric bundle data.
         """
         if not os.path.isfile(filename):
-            raise NameError('%s not found' %filename)
+            raise NameError('%s not found' % filename)
 
         self._resetMetricBundle()
         # Set up a base slicer to read data (we don't know type yet).
@@ -365,8 +410,12 @@ class MetricBundle(object):
         self.setPlotFuncs(None)
 
     def computeSummaryStats(self, resultsDb=None):
-        """
-        Compute summary statistics on metricValues, using summaryMetrics (metricbundle list).
+        """Compute summary statistics on metricValues, using summaryMetrics (metricbundle list).
+
+        Parameters
+        ----------
+        resultsDb : Optional[ResultsDb]
+            ResultsDb object to use to store the summary statistic values on disk.
         """
         if self.summaryValues is None:
             self.summaryValues = {}
@@ -379,7 +428,8 @@ class MetricBundle(object):
                 m.colname = 'metricdata'
                 summaryName = m.name.replace(' metricdata', '').replace(' None', '')
                 if hasattr(m, 'maskVal'):
-                    # summary metric requests to use the mask value, as specified by itself, rather than skipping masked vals.
+                    # summary metric requests to use the mask value, as specified by itself,
+                    #  rather than skipping masked vals.
                     rarr = np.array(zip(self.metricValues.filled(m.maskVal)),
                                     dtype=[('metricdata', self.metricValues.dtype)])
                 else:
@@ -396,11 +446,26 @@ class MetricBundle(object):
                     resultsDb.updateSummaryStat(metricId, summaryName=summaryName, summaryValue=summaryVal)
 
     def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
-        """
-        Run 'reduceFunc' (any function that operates on self.metricValues), return a new MetricBundle.
+        """Run 'reduceFunc' (any function that operates on self.metricValues).
         Typically reduceFunc will be the metric reduce functions, as they are tailored to expect the
         metricValues format.
-        reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be applied to the new metricBundle.
+        reduceDisplayDict and reducePlotDicts are displayDicts and plotDicts to be
+        applied to the new metricBundle.
+
+        Parameters
+        ----------
+        reduceFunc : Func
+            Any function that will operate on self.metricValues (typically metric.reduce* function).
+        reducePlotDict : Optional[dict]
+            Plot dictionary for the results of the reduce function.
+        reduceDisplayDict : Optional[dict]
+            Display dictionary for the results of the reduce function.
+
+        Returns
+        -------
+        MetricBundle
+           New metric bundle, inheriting metadata from this metric bundle, but containing the new
+           metric values calculated with the 'reduceFunc'.
         """
         # Generate a name for the metric values processed by the reduceFunc.
         rName = reduceFunc.__name__.replace('reduce', '')
@@ -430,15 +495,17 @@ class MetricBundle(object):
         newmetricBundle.setPlotDict(reducePlotDict)
         # Copy the parent metric's display dict into the reduce display dict.
         newmetricBundle.setDisplayDict(self.displayDict)
-        # Set the reduce function display 'order' (this is set in the BaseMetric by default, but can be overriden in a metric).
+        # Set the reduce function display 'order' (this is set in the BaseMetric
+        # by default, but can be overriden in a metric).
         order = newmetric.reduceOrder[rName]
         newmetricBundle.displayDict['order'] = order
-        # And then update the newmetricBundle's display dictionary with any set explicitly by reduceDisplayDict.
+        # And then update the newmetricBundle's display dictionary with any set
+        # explicitly by reduceDisplayDict.
         newmetricBundle.setDisplayDict(reduceDisplayDict)
         # Set up new metricBundle's metricValues masked arrays, copying metricValue's mask.
-        newmetricBundle.metricValues = ma.MaskedArray(data = np.empty(len(self.slicer), 'float'),
-                                                    mask = self.metricValues.mask,
-                                                    fill_value = self.slicer.badval)
+        newmetricBundle.metricValues = ma.MaskedArray(data=np.empty(len(self.slicer), 'float'),
+                                                      mask=self.metricValues.mask,
+                                                      fill_value=self.slicer.badval)
         # Fill the reduced metric data using the reduce function.
         for i, (mVal, mMask) in enumerate(zip(self.metricValues.data, self.metricValues.mask)):
             if not mMask:
@@ -448,6 +515,24 @@ class MetricBundle(object):
     def plot(self, plotHandler=None, plotFunc=None, outfileSuffix=None, savefig=False):
         """
         Create all plots available from the slicer. plotHandler holds the output directory info, etc.
+
+        Parameters
+        ----------
+        plotHandler : Optional[PlotHandler]
+           The plotHandler saves the output location and resultsDb connection for a set of plots.
+        plotFunc : Optional[BasePlotter]
+           Any plotter function. If not specified, the plotters in self.plotFuncs will be used.
+        outfileSuffix : Optional[str]
+           Optional string to append to the end of the plot output files.
+           Useful when creating sequences of images for movies.
+        savefig : Optional[bool]
+           Flag indicating whether or not to save the figure to disk. Default is False.
+
+        Returns
+        -------
+        dict
+            Dictionary of plotType:figure number key/value pairs, indicating what plots were created
+            and what matplotlib figure numbers were used.
         """
         # Generate a plotHandler if none was set.
         if plotHandler is None:

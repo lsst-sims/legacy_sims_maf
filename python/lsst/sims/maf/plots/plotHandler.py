@@ -13,9 +13,9 @@ class BasePlotter(object):
     def __init__(self):
         self.plotType = None
         self.defaultPlotDict = None
+
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
-
 
 class PlotHandler(object):
 
@@ -27,9 +27,9 @@ class PlotHandler(object):
         self.figformat = figformat
         self.dpi = dpi
         self.thumbnail = thumbnail
-        self.filtercolors = {'u':'cyan', 'g':'g', 'r':'y',
-                             'i':'r', 'z':'m', 'y':'k', ' ':None}
-        self.filterorder = {' ':-1,'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
+        self.filtercolors = {'u': 'cyan', 'g': 'g', 'r': 'y',
+                             'i': 'r', 'z': 'm', 'y': 'k', ' ': None}
+        self.filterorder = {' ': -1, 'u': 0, 'g': 1, 'r': 2, 'i': 3, 'z': 4, 'y': 5}
 
     def setMetricBundles(self, mBundles):
         """
@@ -199,7 +199,7 @@ class PlotHandler(object):
                 elif ', ' in m:
                     m = m.split(', ')
                 else:
-                    m = [m,]
+                    m = [m, ]
                 # Strip white spaces from individual elements.
                 m = set([im.strip() for im in m])
                 splitmetas.append(m)
@@ -209,7 +209,7 @@ class PlotHandler(object):
             # Now look within the 'diff' elements and see if there are any common words to split off.
             diffsplit = []
             for d in diff:
-                if len(d) >0:
+                if len(d) > 0:
                     m = set([x.split() for x in d][0])
                 else:
                     m = set()
@@ -229,7 +229,8 @@ class PlotHandler(object):
                 diffdiff = [diff[i] for i in idx]
                 diffcommon = []
             else:
-                # diffdiff is the part where we might expect our filter values to appear; try to put this in order.
+                # diffdiff is the part where we might expect our filter values to appear;
+                # try to put this in order.
                 diffdiffOrdered = []
                 diffdiffEnd = []
                 for f in order:
@@ -243,8 +244,9 @@ class PlotHandler(object):
                 diffdiff = diffdiffOrdered + diffdiffEnd
                 diffdiff = [' '.join(c) for c in diffdiff]
             # And put it all back together.
-            combo = ', '.join([''.join(c) for c in diffdiff]) + ' ' + ' '.join([''.join(d) for d in diffcommon]) + ' '\
-                    + ' '.join([''.join(e) for e in common])
+            combo = (', '.join([''.join(c) for c in diffdiff]) + ' ' +
+                     ' '.join([''.join(d) for d in diffcommon]) + ' ' +
+                     ' '.join([''.join(e) for e in common]))
             self.jointMetadata = combo
 
     def _combineSql(self):
@@ -293,8 +295,8 @@ class PlotHandler(object):
                 mB = self.mBundles[0]
                 xlabel = mB.metric.name
                 if mB.metric.units is not None:
-                    if len(mB.metric.units)>0:
-                        xlabel +=  ' (' + mB.metric.units + ')'
+                    if len(mB.metric.units) > 0:
+                        xlabel += ' (' + mB.metric.units + ')'
                 ylabel = None
             else:
                 xlabel = self.jointMetricNames
@@ -378,7 +380,6 @@ class PlotHandler(object):
                     cbarFormat = '%d'
         return cbarFormat
 
-
     def _buildFileRoot(self, outfileSuffix=None):
         """
         Build a root filename for plot outputs.
@@ -415,7 +416,7 @@ class PlotHandler(object):
                 subgroup.add(mB.displayDict['subgroup'])
                 if order < mB.displayDict['order']:
                     order = mB.displayDict['order'] + 1
-            displayDict['order']  = order
+            displayDict['order'] = order
             if len(group) > 1:
                 displayDict['group'] = 'Comparisons'
             else:
@@ -424,8 +425,10 @@ class PlotHandler(object):
                 displayDict['subgroup'] = 'Comparisons'
             else:
                 displayDict['subgroup'] = list(subgroup)[0]
-            displayDict['caption'] = '%s metric(s) calculated on a %s grid, for opsim runs %s, for metadata values of %s.'\
-              % (self.jointMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata)
+            displayDict['caption'] = ('%s metric(s) calculated on a %s grid, ' +
+                                      'for opsim runs %s, for metadata values of %s.'
+                                      % (self.jointMetricNames, self.mBundles[0].slicer.slicerName,
+                                         self.jointRunNames, self.jointMetadata))
             return displayDict
 
     def _checkPlotDicts(self):
@@ -435,7 +438,8 @@ class PlotHandler(object):
 
         # Check that the length is OK
         if len(self.plotDicts) != len(self.mBundles):
-            raise ValueError('plotDicts (%i) must be same length as mBundles (%i)' % (len(self.plotDicts), len(self.mBundles) ))
+            raise ValueError('plotDicts (%i) must be same length as mBundles (%i)'
+                             % (len(self.plotDicts), len(self.mBundles)))
 
         # These are the keys that need to match (or be None)
         keys2Check = ['xlim', 'ylim', 'legendloc', 'colorMin', 'colorMax', 'title']
@@ -444,8 +448,8 @@ class PlotHandler(object):
         for key in keys2Check:
             values = [pd[key] for pd in self.plotDicts if key in pd]
             if len(np.unique(values)) > 1:
-                warnings.warn('Found more than one value to be set for "%s" in the plotDicts. Will reset to default value'
-                              %(key))
+                warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
+                              ' Will reset to default value')
                 reset_keys.append(key)
 
         # Most of the defaults can be set to None safely.
@@ -497,7 +501,7 @@ class PlotHandler(object):
         for mB, plotDict in zip(self.mBundles, userPlotDicts):
             if mB.metricValues is None:
                 # Skip this metricBundle.
-                warnings.warn('MetricBundle (fileRoot=%s) has no attribute metricValues' % (mB.fileRoot) + \
+                warnings.warn('MetricBundle (fileRoot=%s) has no attribute metricValues' % (mB.fileRoot) +
                               ' Either it has not been calculated or it has been deleted.')
             else:
                 fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
