@@ -119,8 +119,8 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
         self.testslicer.setupSlicer(self.simData, self.fieldData)
         with warnings.catch_warnings(record=True) as w:
             self.testslicer.setupSlicer(self.simData, self.fieldData)
-            assert len(w) == 1
-            assert "Re-setting up an OpsimFieldSlicer" in str(w[-1].message)
+            self.assertEqual(len(w), 1)
+            self.assertIn("Re-setting up an OpsimFieldSlicer", str(w[-1].message))
 
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
