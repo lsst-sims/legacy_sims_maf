@@ -70,7 +70,7 @@ class TestMaps(unittest.TestCase):
             warnings.warn('Did not find dustmaps, not running testMaps.py')
 
     def testStarMap(self):
-        mapPath = os.environ['SIMS_DUSTMAPS_DIR']
+        mapPath = os.environ['SIMS_MAPS_DIR']
 
         if os.path.isfile(os.path.join(mapPath, 'StarMaps/starDensity_r_nside_64.npz')):
             data = makeDataValues()
