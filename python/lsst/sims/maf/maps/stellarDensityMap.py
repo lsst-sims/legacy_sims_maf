@@ -17,7 +17,7 @@ class StellarDensityMap(BaseMap):
 
         """
         self.keyNames = [keyname, 'starMapBins']
-        self.mapDir = os.path.join(getPackageDir('sims_dustmaps'),'StarMaps')
+        self.mapDir = os.path.join(getPackageDir('sims_maps'),'StarMaps')
         self.filtername = filtername
 
 
