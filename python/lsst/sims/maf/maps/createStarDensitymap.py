@@ -2,8 +2,12 @@ import numpy as np
 from lsst.sims.utils import ObservationMetaData
 import healpy as hp
 from lsst.sims.catalogs.generation.db import CatalogDBObject
+# Import the bits needed to get the catalog to work
+from lsst.sims.catUtils.baseCatalogModels import *
+from lsst.sims.catUtils.exampleCatalogDefinitions import *
 import sys
 import glob
+import argparse
 
 # Use the catsim framework to loop over a healpy map and generate a stellar density map
 
@@ -11,6 +15,15 @@ import glob
 # If non-astro user, use simsuser@gateway.astro.washington.edu
 
 if __name__ =='__main__':
+
+
+    parser = argparse.ArgumentParser(description="Build a stellar density healpix map")
+    parser.add_argument("filtername", type=str, default='r',help="which filter: u,g,r,i,z,y")
+
+    args = parser.parse_args()
+
+    filterName = args.filtername
+    colName = filterName+'mag'
 
     # Set up healpy map and ra,dec centers
     nside = 64
@@ -22,8 +35,6 @@ if __name__ =='__main__':
     lat, ra = hp.pix2ang(nside,np.arange(0,hp.nside2npix(nside)))
     dec = np.pi/2.-lat
 
-    filterName = 'r'
-    colName = 'rmag'
 
     # square root of pixel area.
     hpsizeDeg = hp.nside2resol(nside, arcmin=True)/60.
