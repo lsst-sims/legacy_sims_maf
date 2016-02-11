@@ -1,34 +1,36 @@
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
-import healpy as hp
 import unittest
 import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.stackers as stackers
 
-'''
+
 class TestHourglassmetric(unittest.TestCase):
-    # Bizare random fails again
 
     def testHourglassMetric(self):
         """Test the hourglass metric """
-        names = [ 'expMJD', 'night','filter']
-        types = [float,float,str]
-        data = np.zeros(10, dtype = zip(names,types))
-        data['night'] = np.round(np.arange(0, 2, .1))[:10]
-        data['expMJD'] = np.sort(np.random.rand(10)) + data['night']
+        names = ['expMJD', 'night', 'filter']
+        types = [float, float, str]
+        npts = 50
+        data = np.zeros(npts, dtype=zip(names, types))
+        day0 = 59000
+        data['expMJD'] = np.arange(0, 10, .2)[:npts] + day0
+        data['night'] = np.floor(data['expMJD']-day0)
         data['filter'] = 'r'
+        data['filter'][-1] = 'g'
         slicePoint = [0]
         metric = metrics.HourglassMetric()
         result = metric.run(data, slicePoint)
         pernight = result['pernight']
         perfilter = result['perfilter']
-        # Check that the format is right at least
+
+        assert(np.size(pernight) == np.size(np.unique(data['night'])))
+        # All the gaps are larger than 2 min.
         assert(np.size(perfilter) == 2*data.size)
+        # Check that the format is right at least
         assert(len(pernight.dtype.names) == 9)
 
 
 if __name__ == '__main__':
 
     unittest.main()
-'''
