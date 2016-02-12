@@ -403,7 +403,7 @@ class BaseSkyMap(BasePlotter):
                                 'logScale': 'auto', 'cbar': True, 'cbarFormat': None,
                                 'cmap': cm.cubehelix, 'alpha': 1.0,
                                 'zp': None, 'normVal': None,
-                                'colorMin': None, 'colorMax': None, 'percentileClip': False,
+                                'colorMin': None, 'colorMax': None, 'percentileClip': None,
                                 'cbar_edge': True, 'plotMask': False, 'metricIsColor': False,
                                 'raCen': 0.0, 'mwZone': True, 'bgcolor': 'gray',
                                 'labelsize': None, 'fontsize': None}
@@ -705,7 +705,7 @@ class LambertSkyMap(BasePlotter):
                                             'lon_0': 0., 'resolution': 'l', 'celestial': True},
                                 'cbar': True, 'cmap': perceptual_rainbow, 'levels': 200,
                                 'cbarFormat': '%.2f', 'cbar_edge': True, 'zp': None,
-                                'normVal': None, 'percentileClip': False, 'colorMin': None,
+                                'normVal': None, 'percentileClip': None, 'colorMin': None,
                                 'colorMax': None, 'linewidths': 0,
                                 'fontsize': None, 'labelsize': None}
 
