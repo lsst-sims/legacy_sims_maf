@@ -5,8 +5,6 @@ setupRequired(matplotlib)
 setupRequired(pyephem)
 # For palpy coordinate transforms
 setupRequired(palpy)
-# For a basic database class?? (why do we need pymssql?)
-setupRequired(pymssql)
 # For the healpy slicer and grid
 setupRequired(healpy)
 # For basic sims utilities
