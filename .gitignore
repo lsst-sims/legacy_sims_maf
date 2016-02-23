@@ -6,6 +6,7 @@
 .sconf_temp
 .sconsign.dblite
 config.log
+bin/
 doc/htmlDir
 tests/.tests
 ups/*.cfgc
