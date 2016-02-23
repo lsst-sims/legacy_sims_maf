@@ -1,13 +1,14 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+
 import argparse
 import subprocess
 
 
-if __name__=="__main__":
-
+if __name__ == "__main__":
     """
-    Merge the u,g,r,i,z,y plots into a 3x2 grid.
-    Requires pdfjam: http://www2.warwick.ac.uk/fac/sci/statistics/staff/academic-research/firth/software/pdfjam
+    Merge u,g,r,i,z,y plots into a 3x2 grid.
+    Requires pdfjam:
+    http://www2.warwick.ac.uk/fac/sci/statistics/staff/academic-research/firth/software/pdfjam
     Can be used with .pdf or .png files, but the output will always be a pdf
 
     examples:
@@ -24,28 +25,29 @@ if __name__=="__main__":
     if '/' in fileBase:
         fileBase = fileBase.split('/')
         path = fileBase[:-1]
-        path = '/'.join(path)+'/'
+        path = '/'.join(path) + '/'
         fileBase = fileBase[-1]
     else:
-        path=''
+        path = ''
 
     # Make a list of the 6 files:
-    filters = ['u','g','r','i','z','y']
+    filters = ['u', 'g', 'r', 'i', 'z', 'y']
     for f in filters:
-        if '_'+f+'_' in fileBase:
-            fileBase = fileBase.split('_'+f+'_')
+        if '_' + f + '_' in fileBase:
+            fileBase = fileBase.split('_' + f + '_')
 
-    fileList = [ path+fileBase[0]+'_'+f+'_'+fileBase[1] for f in filters]
+    fileList = [path + fileBase[0] + '_' + f + '_' + fileBase[1] for f in filters]
     if args.outfile is None:
-        outfile = fileBase[0]+'_6_'+fileBase[1]
+        outfile = fileBase[0] + '_6_' + fileBase[1]
     else:
         outfile = args.outfile
 
     # can only output pdf files
     if outfile[-3:] == 'png':
-         outfile = outfile[:-3]+'pdf'
+        outfile = outfile[:-3] + 'pdf'
 
-    callList = ["pdfjoin", "--nup 3x2 ", "--outfile "+outfile]+fileList
-    command=''
-    for item in callList: command=command+' '+item
+    callList = ["pdfjoin", "--nup 3x2 ", "--outfile " + outfile] + fileList
+    command = ''
+    for item in callList:
+        command = command + ' ' + item
     subprocess.call([command], shell=True)

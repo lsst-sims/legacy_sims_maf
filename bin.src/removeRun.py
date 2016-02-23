@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+
 import argparse
 import lsst.sims.maf.db as db
 

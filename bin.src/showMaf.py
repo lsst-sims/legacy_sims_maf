@@ -1,12 +1,15 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+
+import os
+import argparse
 from tornado import ioloop
 from tornado import web
-from jinja2 import Environment, FileSystemLoader
-import os, argparse
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+import webbrowser
 
 from lsst.sims.maf.viz import MafTracking
 import lsst.sims.maf.db as db
-import webbrowser
 
 class RunSelectHandler(web.RequestHandler):
     def get(self):
@@ -37,7 +40,7 @@ class MetricResultsPageHandler(web.RequestHandler):
         else:
             groupList = []
         self.write(resultsTempl.render(metricIdList=metricIdList, groupList=groupList,
-                                    runId=runId, runlist=runlist))
+                                       runId=runId, runlist=runlist))
 
 class DataHandler(web.RequestHandler):
     def get(self):
@@ -62,7 +65,7 @@ class DataHandler(web.RequestHandler):
             else:
                 self.write(jsn)
         else:
-            self.write('Data type "%s" not understood.' %(datatype))
+            self.write('Data type "%s" not understood.' % (datatype))
 
 class ConfigPageHandler(web.RequestHandler):
     def get(self):
@@ -101,20 +104,23 @@ def make_app():
         ("/summaryStats", StatPageHandler),
         ("/allMetricResults", AllMetricResultsPageHandler),
         ("/multiColor", MultiColorPageHandler),
-        (r"/(favicon.ico)", web.StaticFileHandler, {'path':faviconPath}),
-        (r"/(sorttable.js)", web.StaticFileHandler, {'path':jsPath}),
-        (r"/*/(.*)", web.StaticFileHandler, {'path':staticpath})
-        ])
+        (r"/(favicon.ico)", web.StaticFileHandler, {'path': faviconPath}),
+        (r"/(sorttable.js)", web.StaticFileHandler, {'path': jsPath}),
+        (r"/*/(.*)", web.StaticFileHandler, {'path': staticpath})])
     return application
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Python script to display MAF output in a web browser."+
+    parser = argparse.ArgumentParser(description="Python script to display MAF output in a web browser." +
                                      "  After launching, point your browser to 'http://localhost:8888/'")
     defaultdb = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
-    parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database filename.")
-    parser.add_argument("-d", "--mafDir", type=str, default=None, help="Add this directory to the trackingDb and open immediately.")
-    parser.add_argument("-c", "--mafComment", type=str, default=None, help="Add a comment to the trackingDB describing the MAF analysis of this directory (paired with mafDir argument).")
+    parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb,
+                        help="Tracking database filename.")
+    parser.add_argument("-d", "--mafDir", type=str, default=None,
+                        help="Add this directory to the trackingDb and open immediately.")
+    parser.add_argument("-c", "--mafComment", type=str, default=None,
+                        help="Add a comment to the trackingDB describing the " +
+                        " MAF analysis of this directory (paired with mafDir argument).")
     parser.add_argument("-p", "--port", type=int, default=8888, help="Port for connecting to showMaf.")
     parser.add_argument("--noBrowser", dest='noBrowser', default=False,
                         action='store_true', help="Do not open a new browser tab")
@@ -123,7 +129,7 @@ if __name__ == "__main__":
 
     # Check tracking DB is sqlite (and add as convenience if forgotten).
     trackingDb = args.trackingDb
-    print 'Using tracking database at %s' %(trackingDb)
+    print 'Using tracking database at %s' % (trackingDb)
 
     global startRunId
     startRunId = -666
@@ -131,8 +137,8 @@ if __name__ == "__main__":
     if args.mafDir is not None:
         mafDir = os.path.realpath(args.mafDir)
         if not os.path.isdir(mafDir):
-            print 'There is no directory containing MAF outputs at %s.' %(mafDir)
-            print 'Just opening using tracking db at %s.' %(trackingDb)
+            print 'There is no directory containing MAF outputs at %s.' % (mafDir)
+            print 'Just opening using tracking db at %s.' % (trackingDb)
         # Open tracking database to add a run.
         trackDb = db.TrackingDb(database=trackingDb)
         # Set opsim comment and name from the config files from the run.
@@ -149,23 +155,23 @@ if __name__ == "__main__":
                 if tmp[0].startswith('RunComment'):
                     opsimComment = ' '.join(tmp[1:])
                 if tmp[0].startswith('MAFVersion'):
-                    mafDate =  tmp[-1]
+                    mafDate = tmp[-1]
                 if tmp[0].startswith('OpsimVersion'):
                     opsimDate = tmp[-2]
                     # Let's go ahead and make the formats match
                     opsimDate = opsimDate.split('-')
-                    opsimDate = opsimDate[1]+'/'+opsimDate[2]+'/'+opsimDate[0][2:]
+                    opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
         # Give some feedback to the user about what we're doing.
-        print 'Adding to tracking database at %s:' %(trackingDb)
-        print ' MafDir = %s' %(mafDir)
-        print ' MafComment = %s' %(args.mafComment)
-        print ' OpsimRun = %s' %(opsimRun)
-        print ' OpsimComment = %s' %(opsimComment)
-        print ' OpsimDate = %s' %(opsimDate)
-        print ' MafDate = %s' %(mafDate)
+        print 'Adding to tracking database at %s:' % (trackingDb)
+        print ' MafDir = %s' % (mafDir)
+        print ' MafComment = %s' % (args.mafComment)
+        print ' OpsimRun = %s' % (opsimRun)
+        print ' OpsimComment = %s' % (opsimComment)
+        print ' OpsimDate = %s' % (opsimDate)
+        print ' MafDate = %s' % (mafDate)
         # Add the run.
         startRunId = trackDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
-        print ' Used runID %d' %(startRunId)
+        print ' Used runID %d' % (startRunId)
         trackDb.close()
 
     # Open tracking database and start visualization.
@@ -175,7 +181,7 @@ if __name__ == "__main__":
         startRunId = runlist.runs[0]['mafRunId']
     # Set up path to template and favicon paths, and load templates.
     mafDir = os.getenv('SIMS_MAF_DIR')
-    templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/' )
+    templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/')
     global faviconPath
     faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
     global jsPath
@@ -190,7 +196,7 @@ if __name__ == "__main__":
     # Start up tornado app.
     application = make_app()
     application.listen(args.port)
-    print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' %(args.port)
+    print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' % (args.port)
     if not args.noBrowser:
         webbrowser.open_new_tab('http://localhost:%d' % (args.port))
     ioloop.IOLoop.instance().start()
