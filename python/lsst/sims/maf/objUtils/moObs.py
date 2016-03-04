@@ -1,4 +1,5 @@
 import os
+import warnings
 import numpy as np
 import pandas as pd
 
@@ -9,10 +10,11 @@ from scipy import interpolate
 import lsst.sims.photUtils.Bandpass as Bandpass
 import lsst.sims.photUtils.Sed as Sed
 
-from lsst.sims.utils import haversine, ObservationMetaData
+from lsst.sims.utils import haversine
+from lsst.sims.utils import ModifiedJulianDate
+from lsst.sims.utils import ObservationMetaData
 from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.utils import _observedFromICRS
-from lsst.sims.coordUtils import _chipNameFromRaDec
+from lsst.sims.coordUtils import chipNameFromRaDec
 
 from .moOrbits import MoOrbits
 
@@ -103,7 +105,7 @@ class MoObs(MoOrbits):
         """
         Initialize oorb. (call once)
         """
-        oo.pyoorb.oorb_init(ephemeris_fname="")
+        oo.pyoorb.oorb_init(ephemeris_fname=os.path.join(os.getenv('OORB_DATA'), 'de405.dat'))
 
     def _generateOorbEphs(self, oorbArray, ephTimes=None, obscode=807):
         """
@@ -211,15 +213,19 @@ class MoObs(MoOrbits):
         idxObs = []
         idxObsRough = np.where(sep<self.cameraFov)[0]
         for idx in idxObsRough:
-            mjd = simdata[idx]['expMJD']
+            mjd_date = simdata[idx]['expMJD']
+            mjd = ModifiedJulianDate(TAI=mjd_date)
             obs_metadata = ObservationMetaData(pointingRA=np.degrees(simdata[idx][simdataRaCol]),
                                                pointingDec=np.degrees(simdata[idx][simdataDecCol]),
                                                rotSkyPos=np.degrees(simdata[idx]['rotSkyPos']),
-                                               mjd=simdata[idx]['expMJD'])
-            raObj = np.radians(np.array([interpfuncs['ra'](simdata[idx]['expMJD'])]))
-            decObj = np.radians(np.array([interpfuncs['dec'](simdata[idx]['expMJD'])]))
-            chipNames = _chipNameFromRaDec(ra=raObj,dec=decObj, epoch=self.epoch, 
-                                           camera=self.camera, obs_metadata=obs_metadata)
+                                               mjd=mjd)
+            raObj = np.array([interpfuncs['ra'](simdata[idx]['expMJD'])])
+            decObj = np.array([interpfuncs['dec'](simdata[idx]['expMJD'])])
+            # Catch the warnings from astropy about the time being in the future.
+            with warnings.catch_warnings(record=False):
+                warnings.simplefilter('ignore')
+                chipNames = chipNameFromRaDec(ra=raObj,dec=decObj, epoch=self.epoch,
+                                              camera=self.camera, obs_metadata=obs_metadata)
             if chipNames != [None]:
                 idxObs.append(idx)
         idxObs = np.array(idxObs)
@@ -241,6 +247,8 @@ class MoObs(MoOrbits):
                 self.lsst[f] = Bandpass()
                 self.lsst[f].readThroughput(os.path.join(filterdir, 'total_'+f+'.dat'))
             self.seddir = os.getenv('SED_DIR')
+            if self.seddir is None:
+                self.seddir = '.'
             self.vband = Bandpass()
             self.vband.readThroughput(os.path.join(self.seddir, 'harris_V.dat'))
             self.colors = {}
@@ -274,7 +282,7 @@ class MoObs(MoOrbits):
 
     def writeObs(self, objId, interpfuncs, simdata, idxObs, outfileName='out.txt',
                  sedname='C.dat', tol=1e-8,
-                 seeingCol='finSeeing', expTimeCol='visitExpTime'):
+                 seeingCol='FWHMgeom', expTimeCol='visitExpTime'):
         """
         Call for each object; write out the observations of each object.
         """
@@ -358,8 +366,10 @@ def runMoObs(orbitfile, outfileName, opsimfile,
     if dbcols is None:
         dbcols = []
     # Be sure the columns that we need are in place.
+    #reqcols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
+    #           'visitExpTime', 'finSeeing', 'fiveSigmaDepth', 'solarElong']
     reqcols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
-               'visitExpTime', 'finSeeing', 'fiveSigmaDepth', 'solarElong']
+               'visitExpTime', 'FWHMeff', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong']
     for col in reqcols:
         if col not in dbcols:
             dbcols.append(col)
