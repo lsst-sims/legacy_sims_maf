@@ -1,8 +1,9 @@
 import os, sys, re
 import numpy as np
 import warnings
-from .Database import Database
-from lsst.sims.maf.utils import getDateVersion, TelescopeInfo
+from .database import Database
+from lsst.sims.utils import Site
+from lsst.sims.maf.utils import getDateVersion
 
 __all__ = ['OpsimDatabase']
 
@@ -235,10 +236,10 @@ class OpsimDatabase(Database):
         Returns the latitude, longitude, and height of the telescope used by the config file.
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve site parameters; using utils.TelescopeInfo instead.'
-            site = TelescopeInfo('LSST')
-            lat = site.lat
-            lon = site.lon
+            print 'Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.'
+            site = Site(name='LSST')
+            lat = site.latitude_rad
+            lon = site.longitude_rad
             height = site.elev
         else:
             table = self.tables['Config']

@@ -384,7 +384,7 @@ class HexDitherFieldVisitStacker(BaseStacker):
         # Values required for framework operation: this specifies the names of the new columns.
         self.colsAdded = ['hexDitherFieldVisitRa', 'hexDitherFieldVisitDec']
         # Values required for framework operation: this specifies the data columns required from the database.
-        self.colsReq = [self.raCol, self.decCol]
+        self.colsReq = [self.raCol, self.decCol, self.fieldIdCol]
 
     def _generateHexOffsets(self):
         # Set up basics of dither pattern.
@@ -500,4 +500,3 @@ class HexDitherNightStacker(HexDitherFieldVisitStacker):
         simData['hexDitherNightRa'], simData['hexDitherNightDec'] = \
                             wrapRADec(simData['hexDitherNightRa'],simData['hexDitherNightDec'])
         return simData
-

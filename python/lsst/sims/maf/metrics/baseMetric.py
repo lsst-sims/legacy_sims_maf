@@ -12,6 +12,7 @@ from lsst.sims.maf.stackers.getColInfo import ColInfo
 
 __all__ = ['MetricRegistry', 'BaseMetric']
 
+
 class MetricRegistry(type):
     """
     Meta class for metrics, to build a registry of metric classes.
@@ -30,11 +31,13 @@ class MetricRegistry(type):
                 modname = modname + '.'
         metricname = modname + name
         if metricname in cls.registry:
-            raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' %(metricname))
+            raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' % (metricname))
         if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
             cls.registry[metricname] = cls
+
     def getClass(cls, metricname):
         return cls.registry[metricname]
+
     def help(cls, doc=False):
         for metricname in sorted(cls.registry):
             if not doc:
@@ -42,6 +45,7 @@ class MetricRegistry(type):
             if doc:
                 print '---- ', metricname, ' ----'
                 print inspect.getdoc(cls.registry[metricname])
+
     def help_metric(cls, metricname):
         print metricname
         print inspect.getdoc(cls.registry[metricname])
@@ -61,6 +65,7 @@ class ColRegistry(object):
     ColRegistry.stackerCols : the dictionary of [columns: stacker class].
     """
     colInfo = ColInfo()
+
     def __init__(self):
         self.colSet = set()
         self.dbSet = set()
@@ -88,38 +93,37 @@ class ColRegistry(object):
 
 
 class BaseMetric(object):
-    """Base class for the metrics."""
+    """
+    Base class for the metrics.
+    Sets up some basic functionality for the MAF framework: after __init__ every metric will
+    record the columns (and stackers) it requires into the column registry, and the metricName,
+    metricDtype, and units for the metric will be set.
+
+    Parameters
+    ----------
+    col : str or list
+        Names of the data columns that the metric will use.
+        The columns required for each metric is tracked in the ColRegistry, and used to retrieve data
+        from the opsim database. Can be a single string or a list.
+    metricName : str
+        Name to use for the metric (optional - if not set, will be derived).
+    maps : list of lsst.sims.maf.maps objects
+        The maps that the metric will need (passed from the slicer).
+    units : str
+        The units for the value returned by the metric (optional - if not set,
+        will be derived from the ColInfo).
+    metricDtype : str
+        The type of value returned by the metric - 'int', 'float', 'object'.
+        If not set, will be derived by introspection.
+    badval : float
+        The value indicating "bad" values calculated by the metric.
+    """
     __metaclass__ = MetricRegistry
     colRegistry = ColRegistry()
     colInfo = ColInfo()
 
     def __init__(self, col=None, metricName=None, maps=None, units=None,
                  metricDtype=None, badval=-666):
-        """Instantiate metric.
-
-        Sets up some basic functionality for the MAF framework: after __init__ every metric will
-        record the columns (and stackers) it requires into the column registry, and the metricName,
-        metricDtype, and units for the metric will be set.
-
-        Parameters
-        ----------
-        col : str or list
-           Names of the data columns that the metric will use.
-           The columns required for each metric is tracked in the ColRegistry, and used to retrieve data
-           from the opsim database. Can be a single string or a list.
-        metricName : str
-           Name to use for the metric (optional - if not set, will be derived).
-        maps : list
-           The maps that the metric will need (passed from the slicer).
-        units : str
-           The units for the value returned by the metric (optional - if not set,
-           will be derived from the ColInfo).
-        metricDtype : str
-           The type of value returned by the metric - 'int', 'float', 'object'.
-           If not set, will be derived by introspection.
-        badval : float
-           The value indicating "bad" values calculated by the metric.
-        """
         # Turn cols into numpy array so we know we can iterate over the columns.
         self.colNameArr = np.array(col, copy=False, ndmin=1)
         # To support simple metrics operating on a single column, set self.colname
@@ -137,8 +141,8 @@ class BaseMetric(object):
         self.name = metricName
         if self.name is None:
             # If none provided, construct our own from the class name and the data columns.
-            self.name = self.__class__.__name__.replace('Metric', '', 1) + ' ' + \
-              ', '.join(map(str, self.colNameArr))
+            self.name = (self.__class__.__name__.replace('Metric', '', 1) + ' ' +
+                         ', '.join(map(str, self.colNameArr)))
         # Set up dictionary of reduce functions (may be empty).
         self.reduceFuncs = {}
         self.reduceOrder = {}
@@ -160,7 +164,8 @@ class BaseMetric(object):
             if len(units.replace(' ', '')) == 0:
                 units = ''
         self.units = units
-        # Add the ability to set a comment (that could be propagated automatically to a benchmark's display caption).
+        # Add the ability to set a comment
+        # (that could be propagated automatically to a benchmark's display caption).
         self.comment = None
 
         # Default to only return one metric value per slice
@@ -172,7 +177,8 @@ class BaseMetric(object):
         Parameters
         ----------
         dataSlice : numpy.NDarray
-           Values passed to metric by the slicer, which the metric will use to calculate metric values at each slicePoint.
+           Values passed to metric by the slicer, which the metric will use to calculate
+           metric values at each slicePoint.
         slicePoint : Dict
            Dictionary of slicePoint metadata passed to each metric.
            E.g. the ra/dec of the healpix pixel or opsim fieldID.

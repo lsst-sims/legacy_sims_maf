@@ -522,7 +522,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     for i in range(len(yearDates)-1):
         sqlconstraint = 'night > %i and night <= %i'%(yearDates[i],yearDates[i+1])
         metadata='Year %i-%i' %(i, i+1)
-        metric = metrics.HourglassMetric(lat=lat*np.pi/180.,lon=lon*np.pi/180. , elev=height)
+        metric = metrics.HourglassMetric()
         displayDict={'group':hourglassgroup, 'subgroup':'Yearly', 'order':i}
         bundle = metricBundles.MetricBundle(metric, hourSlicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, runName=runName, metadata=metadata)

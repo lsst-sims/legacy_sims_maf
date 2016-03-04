@@ -1,7 +1,7 @@
 from .plotHandler import PlotHandler
 import matplotlib.pylab as plt
 
-__all__=['PlotBundle']
+__all__ = ['PlotBundle']
 
 class PlotBundle(object):
     """
@@ -51,7 +51,7 @@ class PlotBundle(object):
         maxOrder = 0
         for mB in self.bundleList:
             if 'order' in mB.displayDict.keys():
-                maxOrder = max([maxOrder,mB.displayDict['order']])
+                maxOrder = max([maxOrder, mB.displayDict['order']])
 
         for mB in self.bundleList:
             mB.displayDict['order'] = maxOrder + 1
@@ -60,16 +60,16 @@ class PlotBundle(object):
         """
         Go through the bundles and change the lables if there are the correct summary stats
         """
-        for i,mB in enumerate(self.bundleList):
+        for i, mB in enumerate(self.bundleList):
             if mB.summaryValues is not None:
                 keys = mB.summaryValues.keys()
                 if ('25th%ile' in keys) & ('75th%ile' in keys) & ('Median' in keys):
                     if 'label' not in self.plotDicts[i].keys():
                         self.plotDicts[i]['label'] = ''
-                    newstr = '%0.1f/%0.1f/%0.1f '% (mB.summaryValues['25th%ile'],
-                                                    mB.summaryValues['Median'],
-                                                    mB.summaryValues['75th%ile'],)
-                    self.plotDicts[i]['label'] = newstr+self.plotDicts[i]['label']
+                    newstr = '%0.1f/%0.1f/%0.1f ' % (mB.summaryValues['25th%ile'],
+                                                     mB.summaryValues['Median'],
+                                                     mB.summaryValues['75th%ile'])
+                    self.plotDicts[i]['label'] = newstr + self.plotDicts[i]['label']
 
     def plot(self, outDir='Out', resultsDb=None, closeFigs=True):
         ph = PlotHandler(outDir=outDir, resultsDb=resultsDb)

@@ -8,13 +8,13 @@ __all__ = ['OneDBinnedData']
 
 class OneDBinnedData(BasePlotter):
     def __init__(self):
-        self.plotType ='BinnedData'
+        self.plotType = 'BinnedData'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title':None, 'label':None, 'xlabel':None, 'ylabel':None,
-                                'filled':False, 'alpha':0.5, 'linestyle':'-', 'linewidth':1,
-                                'logScale':False, 'percentileClip':None,
-                                'xMin':None, 'xMax':None, 'yMin':None, 'yMax':None,
-                                'fontsize':None}
+        self.defaultPlotDict = {'title': None, 'label': None, 'xlabel': None, 'ylabel': None,
+                                'filled': False, 'alpha': 0.5, 'linestyle': '-', 'linewidth': 1,
+                                'logScale': False, 'percentileClip': None,
+                                'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
+                                'fontsize': None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """
@@ -37,7 +37,7 @@ class OneDBinnedData(BasePlotter):
                     color=plotDict['color'])
         else:
             good = np.where(metricValues.mask == False)
-            x = np.ravel(zip(leftedge[good], leftedge[good]+width[good]))
+            x = np.ravel(zip(leftedge[good], leftedge[good] + width[good]))
             y = np.ravel(zip(metricValues[good], metricValues[good]))
             if plotDict['logScale']:
                 plt.semilogy(x, y, label=plotDict['label'], color=plotDict['color'],
@@ -53,7 +53,7 @@ class OneDBinnedData(BasePlotter):
             plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         # Set y limits (either from values in args, percentileClipping or compressed data values).
         if (plotDict['yMin'] is None) or (plotDict['yMax'] is None):
-            if plotDict['percentileClip']:
+            if plotDict['percentileClip'] is not None:
                 plotDict['yMin'], plotDict['yMax'] = percentileClipping(metricValues.compressed(),
                                                                         percentile=plotDict['percentileClip'])
         # Set y and x limits, if provided.

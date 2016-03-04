@@ -2,7 +2,6 @@ import warnings
 import numpy as np
 import palpy
 from lsst.sims.utils import _altAzPaFromRaDec, ObservationMetaData, Site
-from lsst.sims.maf.utils import TelescopeInfo
 
 from .baseStacker import BaseStacker
 
@@ -135,21 +134,28 @@ class ParallacticAngleStacker(BaseStacker):
     Add the parallactic angle (in radians) to each visit.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD', latRad=None,
-                 lonRad=None):
+                 lonRad=None, height=None, tempCentigrade=None, lapseRate=None,
+                 humidity=None, pressure=None):
 
         self.raCol = raCol
         self.decCol = decCol
         self.mjdCol = mjdCol
+
         if latRad is None:
-            TI = TelescopeInfo('LSST')
-            self.latRad = TI.lat
+            latDeg = None
         else:
-            self.latRad = latRad
+            latDeg = np.degrees(latRad)
+
         if lonRad is None:
-            TI = TelescopeInfo('LSST')
-            self.lonRad = TI.lon
+            lonDeg = None
         else:
-            self.lonRad = lonRad
+            lonDeg = np.degrees(lonRad)
+
+        self.site = Site(longitude=lonDeg, latitude=latDeg,
+                         temperature=tempCentigrade,
+                         height=height, humidity=humidity,
+                         pressure=pressure, lapseRate=lapseRate,
+                         name='LSST')
 
         self.units = ['radians']
         self.colsAdded = ['PA']
@@ -159,8 +165,7 @@ class ParallacticAngleStacker(BaseStacker):
         pa_arr = []
         for ra, dec, mjd in zip(simData[self.raCol], simData[self.decCol], simData[self.mjdCol]):
             alt, az, pa = _altAzPaFromRaDec(ra, dec,
-                                            ObservationMetaData(mjd=mjd,site=Site(longitude=self.lonRad,
-                                                                                  latitude=self.latRad)))
+                                            ObservationMetaData(mjd=mjd,site=self.site))
 
             pa_arr.append(pa)
 

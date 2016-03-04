@@ -2,8 +2,11 @@ import numpy as np
 import healpy as hp
 import os
 from lsst.sims.maf.utils import radec2pix
+from lsst.utils import getPackageDir
+
 
 __all__ = ['EBVhp']
+
 
 def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
     """
@@ -25,7 +28,7 @@ def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
 
     if (not hasattr(EBVhp, 'dustmap')) | (EBVhp.nside != nside) :
         EBVhp.nside = nside
-        ebvDataDir=os.environ.get("SIMS_DUSTMAPS_DIR")
+        ebvDataDir = getPackageDir('sims_maps')
         filename = 'DustMaps/dust_nside_%i.npz'%EBVhp.nside
         EBVhp.dustMap = np.load(os.path.join(ebvDataDir,filename))['ebvMap']
 
@@ -42,5 +45,3 @@ def EBVhp(nside, ra=None,dec=None, pixels=None, interp=False):
             result = EBVhp.dustMap[pixels]
 
     return result
-
-
