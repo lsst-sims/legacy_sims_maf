@@ -704,7 +704,7 @@ class LambertSkyMap(BasePlotter):
         self.defaultPlotDict = {'basemap': {'projection': 'nplaea', 'boundinglat': 20,
                                             'lon_0': 0., 'resolution': 'l', 'celestial': True},
                                 'cbar': True, 'cmap': perceptual_rainbow, 'levels': 200,
-                                'cbarFormat': '%.2f', 'cbar_edge': True, 'zp': None,
+                                'cbarFormat': '%i', 'cbar_edge': True, 'zp': None,
                                 'normVal': None, 'percentileClip': None, 'colorMin': None,
                                 'colorMax': None, 'linewidths': 0,
                                 'fontsize': None, 'labelsize': None}
@@ -777,6 +777,10 @@ class LambertSkyMap(BasePlotter):
                         metricValue[good], levels, tri=True,
                         cmap=plotDict['cmap'], ax=ax, latlon=True)
 
+        # Try to fix the ugly pdf contour problem
+        for c in CS.collections:
+            c.set_edgecolor("face")
+
         para = np.arange(0, 89, 20)
         m.drawparallels(para, labels=para)
         m.drawmeridians(np.arange(-180, 181, 60))
@@ -784,7 +788,8 @@ class LambertSkyMap(BasePlotter):
         cb.set_label(plotDict['xlabel'])
         if plotDict['labelsize'] is not None:
             cb.ax.tick_params(labelsize=plotDict['labelsize'])
-        ax.set_title(plotDict['title'])
+        # Pop in an extra line to raise the title a bit
+        ax.set_title(plotDict['title']+'\n ')
         # If outputing to PDF, this fixes the colorbar white stripes
         if plotDict['cbar_edge']:
             cb.solids.set_edgecolor("face")
