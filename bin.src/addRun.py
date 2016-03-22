@@ -1,5 +1,7 @@
-#! /usr/bin/env python
-import os,argparse
+#!/usr/bin/env python
+
+import os
+import argparse
 import lsst.sims.maf.db as db
 
 
@@ -18,7 +20,7 @@ if __name__ == "__main__":
 
     mafDir = os.path.realpath(args.mafDir)
     if not os.path.isdir(mafDir):
-        print 'There is no directory containing MAF outputs at %s.' %(mafDir)
+        print 'There is no directory containing MAF outputs at %s.' % (mafDir)
         print 'Exiting.'
         exit(-1)
 
@@ -42,21 +44,20 @@ if __name__ == "__main__":
                         opsimComment = ' '.join(tmp[1:])
                 if tmp[0].startswith('MAFVersion'):
                     if mafDate is None:
-                        mafDate =  tmp[-1]
+                        mafDate = tmp[-1]
                 if tmp[0].startswith('OpsimVersion'):
                     if opsimDate is None:
                         opsimDate = tmp[-2]
                         # Let's go ahead and make the formats match
                         opsimDate = opsimDate.split('-')
-                        opsimDate = opsimDate[1]+'/'+opsimDate[2]+'/'+opsimDate[0][2:]
+                        opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
 
-    print 'Adding to tracking database at %s:' %(args.trackingDb)
-    print ' MafDir = %s' %(mafDir)
-    print ' MafComment = %s' %(args.mafComment)
-    print ' OpsimRun = %s' %(opsimRun)
-    print ' OpsimComment = %s' %(opsimComment)
-    print ' OpsimDate = %s' %(opsimDate)
-    print ' MafDate = %s' %(mafDate)
+    print 'Adding to tracking database at %s:' % (args.trackingDb)
+    print ' MafDir = %s' % (mafDir)
+    print ' MafComment = %s' % (args.mafComment)
+    print ' OpsimRun = %s' % (opsimRun)
+    print ' OpsimComment = %s' % (opsimComment)
+    print ' OpsimDate = %s' % (opsimDate)
+    print ' MafDate = %s' % (mafDate)
 
     trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
-
