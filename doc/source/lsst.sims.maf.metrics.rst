@@ -36,6 +36,14 @@ lsst.sims.maf.metrics.chipVendorMetric module
     :undoc-members:
     :show-inheritance:
 
+lsst.sims.maf.metrics.crowdingMetric module
+-------------------------------------------
+
+.. automodule:: lsst.sims.maf.metrics.crowdingMetric
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst.sims.maf.metrics.exgalM5 module
 ------------------------------------
 
@@ -68,6 +76,14 @@ lsst.sims.maf.metrics.longGapAGNMetric module
     :undoc-members:
     :show-inheritance:
 
+lsst.sims.maf.metrics.optimalM5Metric module
+--------------------------------------------
+
+.. automodule:: lsst.sims.maf.metrics.optimalM5Metric
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst.sims.maf.metrics.phaseGapMetric module
 -------------------------------------------
 
@@ -88,6 +104,14 @@ lsst.sims.maf.metrics.slewMetrics module
 ----------------------------------------
 
 .. automodule:: lsst.sims.maf.metrics.slewMetrics
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+lsst.sims.maf.metrics.starDensity module
+----------------------------------------
+
+.. automodule:: lsst.sims.maf.metrics.starDensity
     :members:
     :undoc-members:
     :show-inheritance:
