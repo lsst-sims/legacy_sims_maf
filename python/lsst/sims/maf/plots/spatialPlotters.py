@@ -72,8 +72,7 @@ class HealpixSkyMap(BasePlotter):
         cmap = plotDict['cmap']
         if type(cmap) == str:
             cmap = getattr(cm, cmap)
-        # Make colormap compatible with healpy
-        cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
+        # Set background and masked pixel colors default healpy white and gray.
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
