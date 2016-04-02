@@ -67,8 +67,8 @@ class ParallaxMetric(BaseMetric):
         All inputs assumed to be arcsec """
         sigma_A = position_errors/ra_pi_amp
         sigma_B = position_errors/dec_pi_amp
-        sigma_ra = np.sqrt(1./np.sum(1./sigma_A**2))
-        sigma_dec = np.sqrt(1./np.sum(1./sigma_B**2))
+        sigma_ra = np.sqrt(1./np.sum(1./sigma_A**2, axis=1))
+        sigma_dec = np.sqrt(1./np.sum(1./sigma_B**2, axis=1))
 
         #  Combine RA and Dec uncertainties, convert to mas
         sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2))*1e3
@@ -76,13 +76,17 @@ class ParallaxMetric(BaseMetric):
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice[self.filterCol])
-        snr = np.zeros(len(dataslice), dtype='float')
+        snr = np.zeros((len(dataslice), self.shape), dtype='float')
         # compute SNR for all observations
         for filt in filters:
             good = np.where(dataslice[self.filterCol] == filt)
-            snr[good] = mafUtils.m52snr(self.mags[filt], dataslice[self.m5Col][good])
+            if self.shape > 1:
+                for i, mag in enumerate(self.mags[filt]):
+                    snr[good, i] = mafUtils.m52snr(mag, dataslice[self.m5Col][good])
+            else:
+                snr[good, 0] = mafUtils.m52snr(self.mags[filt], dataslice[self.m5Col][good])
         position_errors = np.sqrt(mafUtils.astrom_precision(dataslice[self.seeingCol],
-                                                            snr)**2+self.atm_err**2)
+                                                            snr.T)**2+self.atm_err**2)
         sigma = self._final_sigma(position_errors, dataslice['ra_pi_amp'], dataslice['dec_pi_amp'])
         if self.normalize:
             # Leave the dec parallax as zero since one can't have ra and dec maximized at the same time.
@@ -123,8 +127,8 @@ class ProperMotionMetric(BaseMetric):
         # set return type
         self.seeingCol = seeingCol
         self.m5Col = m5Col
-        filters=['u', 'g', 'r', 'i', 'z', 'y']
-        self.mags={}
+        filters = ['u', 'g', 'r', 'i', 'z', 'y']
+        self.mags = {}
         if SedTemplate == 'flat':
             for f in filters:
                 self.mags[f] = rmag
