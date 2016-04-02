@@ -177,9 +177,14 @@ class TestCadenceMetrics(unittest.TestCase):
         dataSlice['filter'] = 'g'
 
         metric = metrics.TransientMetric(surveyDuration=ndata/365.25)
+        metric2 = metrics.TransientMetric(surveyDuration=ndata/365.25, nPhaseCheck=3)
 
         # Should detect everything
         assert(metric.run(dataSlice) == 1.)
+
+        # Should detect everything
+        #assert(metric2.run(dataSlice) == 1.)
+
 
         # Double to survey duration, should now only detect half
         metric = metrics.TransientMetric(surveyDuration=ndata/365.25*2)

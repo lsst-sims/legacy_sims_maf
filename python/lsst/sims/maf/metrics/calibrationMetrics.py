@@ -4,7 +4,8 @@ import lsst.sims.maf.utils as mafUtils
 from scipy.stats import spearmanr
 
 __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
-           'ParallaxCoverageMetric','ParallaxHADegenMetric']
+           'ParallaxCoverageMetric', 'ParallaxHADegenMetric']
+
 
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
@@ -13,7 +14,7 @@ class ParallaxMetric(BaseMetric):
                  mjdCol='expMJD', units = 'mas',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
-                 atm_err=0.01, normalize=False,**kwargs):
+                 atm_err=0.01, normalize=False, **kwargs):
 
         """ Instantiate metric.
 
@@ -30,7 +31,7 @@ class ParallaxMetric(BaseMetric):
 
         return uncertainty in mas. Or normalized map as a fraction
         """
-        Cols = [m5Col, mjdCol,filterCol,seeingCol, 'ra_pi_amp', 'dec_pi_amp']
+        Cols = [m5Col, mjdCol, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
             units = 'ratio'
         super(ParallaxMetric, self).__init__(Cols, metricName=metricName, units=units,
@@ -39,8 +40,11 @@ class ParallaxMetric(BaseMetric):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
-        filters=['u','g','r','i','z','y']
-        self.mags={}
+        filters = ['u', 'g', 'r', 'i', 'z', 'y']
+        self.mags = {}
+        # Make this a possible vector metric
+        self.shape = np.size(rmag)
+
         if SedTemplate == 'flat':
             for f in filters:
                 self.mags[f] = rmag
@@ -65,7 +69,9 @@ class ParallaxMetric(BaseMetric):
         sigma_B = position_errors/dec_pi_amp
         sigma_ra = np.sqrt(1./np.sum(1./sigma_A**2))
         sigma_dec = np.sqrt(1./np.sum(1./sigma_B**2))
-        sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2))*1e3 #combine RA and Dec uncertainties, convert to mas
+
+        #  Combine RA and Dec uncertainties, convert to mas
+        sigma = np.sqrt(1./(1./sigma_ra**2+1./sigma_dec**2))*1e3
         return sigma
 
     def run(self, dataslice, slicePoint=None):
@@ -75,13 +81,14 @@ class ParallaxMetric(BaseMetric):
         for filt in filters:
             good = np.where(dataslice[self.filterCol] == filt)
             snr[good] = mafUtils.m52snr(self.mags[filt], dataslice[self.m5Col][good])
-        position_errors = np.sqrt(mafUtils.astrom_precision(dataslice[self.seeingCol], snr)**2+self.atm_err**2)
-        sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp'],dataslice['dec_pi_amp'] )
+        position_errors = np.sqrt(mafUtils.astrom_precision(dataslice[self.seeingCol],
+                                                            snr)**2+self.atm_err**2)
+        sigma = self._final_sigma(position_errors, dataslice['ra_pi_amp'], dataslice['dec_pi_amp'])
         if self.normalize:
             # Leave the dec parallax as zero since one can't have ra and dec maximized at the same time.
-            sigma = self._final_sigma(position_errors,dataslice['ra_pi_amp']*0+1.,dataslice['dec_pi_amp']*0 )/sigma
+            sigma = self._final_sigma(position_errors, dataslice['ra_pi_amp']*0+1.,
+                                      dataslice['dec_pi_amp']*0)/sigma
         return sigma
-
 
 
 class ProperMotionMetric(BaseMetric):
@@ -89,7 +96,7 @@ class ProperMotionMetric(BaseMetric):
     """
     def __init__(self, metricName='properMotion',
                  m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
-                 filterCol='filter', seeingCol='FWHMgeom',  rmag=20.,
+                 filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
@@ -108,7 +115,7 @@ class ProperMotionMetric(BaseMetric):
         while a poorly scheduled survey will be close to zero.
         baseline = The length of the survey used for the normalization (years)
         """
-        cols = [m5Col, mjdCol,filterCol,seeingCol]
+        cols = [m5Col, mjdCol, filterCol, seeingCol]
         if normalize:
             units = 'ratio'
         super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units,
@@ -116,7 +123,7 @@ class ProperMotionMetric(BaseMetric):
         # set return type
         self.seeingCol = seeingCol
         self.m5Col = m5Col
-        filters=['u','g','r','i','z','y']
+        filters=['u', 'g', 'r', 'i', 'z', 'y']
         self.mags={}
         if SedTemplate == 'flat':
             for f in filters:
@@ -145,18 +152,18 @@ class ProperMotionMetric(BaseMetric):
                 precis[observations] = self.badval
             else:
                 snr = mafUtils.m52snr(self.mags[f],
-                   dataslice[self.m5Col][observations])
+                                      dataslice[self.m5Col][observations])
                 precis[observations] = mafUtils.astrom_precision(
                     dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
         result = mafUtils.sigma_slope(dataslice['expMJD'][good], precis[good])
-        result = result*365.25*1e3 #convert to mas/yr
+        result = result*365.25*1e3  # convert to mas/yr
         if (self.normalize) & (good[0].size > 0):
-            new_dates=dataslice['expMJD'][good]*0
+            new_dates = dataslice['expMJD'][good]*0
             nDates = new_dates.size
             new_dates[nDates/2:] = self.baseline*365.25
-            result = (mafUtils.sigma_slope(new_dates,  precis[good])*365.25*1e3)/result
+            result = (mafUtils.sigma_slope(new_dates, precis[good])*365.25*1e3)/result
         # Observations that are very close together can still fail
         if np.isnan(result):
             result = self.badval
@@ -201,7 +208,7 @@ class ParallaxCoverageMetric(BaseMetric):
         units = 'ratio'
         super(ParallaxCoverageMetric, self).__init__(cols,
                                                      metricName=metricName, units=units,
-                                                      **kwargs)
+                                                     **kwargs)
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
@@ -211,8 +218,8 @@ class ParallaxCoverageMetric(BaseMetric):
         self.thetaRange = thetaRange
         self.snrLimit = snrLimit
 
-        filters=['u','g','r','i','z','y']
-        self.mags={}
+        filters = ['u', 'g', 'r', 'i', 'z', 'y']
+        self.mags = {}
         if SedTemplate == 'flat':
             for f in filters:
                 self.mags[f] = rmag
@@ -236,13 +243,14 @@ class ParallaxCoverageMetric(BaseMetric):
 
     def _computeWeights(self, dataSlice, snr):
         # Compute centroid uncertainty in each visit
-        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol], snr)**2+self.atm_err**2)
+        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol],
+                                                            snr)**2+self.atm_err**2)
         weights = 1./position_errors**2
         return weights
 
     def _weightedR(self, dec_pi_amp, ra_pi_amp, weights):
         ycoord = dec_pi_amp-np.average(dec_pi_amp, weights=weights)
-        xcoord = ra_pi_amp-np.average(ra_pi_amp,weights=weights)
+        xcoord = ra_pi_amp-np.average(ra_pi_amp, weights=weights)
         radius = np.sqrt(xcoord**2+ycoord**2)
         aveRad = np.average(radius, weights=weights)
         return aveRad
@@ -268,6 +276,7 @@ class ParallaxCoverageMetric(BaseMetric):
         result = aveR*thetaCheck
         return result
 
+
 class ParallaxHADegenMetric(BaseMetric):
     """
     Check for degeneracy between parallax and DCR.  Value of zero means there is no correlation.
@@ -278,11 +287,11 @@ class ParallaxHADegenMetric(BaseMetric):
     could be in different directions. This metric only looks at the magnitude of the parallax
     displacement and checks that it is not correlated with hour angle.
     """
-    def __init__(self, metricName='ParallaxHADegenMetric',haCol='HA', snrLimit=5.,
+    def __init__(self, metricName='ParallaxHADegenMetric', haCol='HA', snrLimit=5.,
                  m5Col='fiveSigmaDepth', mjdCol='expMJD',
                  filterCol='filter', seeingCol='FWHMgeom',
                  rmag=20., SedTemplate='flat', badval=-666,
-                 **kwargs ):
+                 **kwargs):
         """
         haCol = Hour angle column name
         snrLimit = only inlcude observations above the snrLimit
@@ -306,14 +315,13 @@ class ParallaxHADegenMetric(BaseMetric):
         self.seeingCol = seeingCol
         self.filterCol = filterCol
         self.mjdCol = mjdCol
-        filters=['u','g','r','i','z','y']
-        self.mags={}
+        filters = ['u', 'g', 'r', 'i', 'z', 'y']
+        self.mags = {}
         if SedTemplate == 'flat':
             for f in filters:
                 self.mags[f] = rmag
         else:
             self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
-
 
     def run(self, dataSlice, slicePoint=None):
 
@@ -331,13 +339,14 @@ class ParallaxHADegenMetric(BaseMetric):
         aboveLimit = np.where(snr >= self.snrLimit)[0]
         if np.size(aboveLimit) < 2:
             return self.badval
-        rho,p = spearmanr(pf[aboveLimit], dataSlice[self.haCol][aboveLimit])
+        rho, p = spearmanr(pf[aboveLimit], dataSlice[self.haCol][aboveLimit])
         return rho
 
-## Check radius of observations to look for calibration effects.
+# Check radius of observations to look for calibration effects.
+
 
 def calcDist_cosines(RA1, Dec1, RA2, Dec2):
-    #taken from simSelfCalib.py
+    #  Taken from simSelfCalib.py
     """Calculates distance on a sphere using spherical law of cosines.
 
     Give this function RA/Dec values in radians. Returns angular distance(s), in radians.
@@ -349,25 +358,28 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
     D = np.arccos(D)
     return D
 
+
 class RadiusObsMetric(BaseMetric):
     """find the radius in the focal plane. """
 
-    def __init__(self, metricName='radiusObs', raCol='fieldRA',decCol='fieldDec',
+    def __init__(self, metricName='radiusObs', raCol='fieldRA', decCol='fieldDec',
                  units='radians', **kwargs):
         self.raCol = raCol
-        self.decCol=decCol
-        super(RadiusObsMetric,self).__init__(col=[self.raCol, self.decCol],
-                                             metricName=metricName, units=units, **kwargs)
+        self.decCol = decCol
+        super(RadiusObsMetric, self).__init__(col=[self.raCol, self.decCol],
+                                              metricName=metricName, units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint):
         ra = slicePoint['ra']
         dec = slicePoint['dec']
-        distances = calcDist_cosines(ra,dec, dataSlice[self.raCol], dataSlice[self.decCol])
+        distances = calcDist_cosines(ra, dec, dataSlice[self.raCol], dataSlice[self.decCol])
         return distances
 
     def reduceMean(self, distances):
         return np.mean(distances)
-    def reduceRMS(self,distances):
+
+    def reduceRMS(self, distances):
         return np.std(distances)
-    def reduceFullRange(self,distances):
+
+    def reduceFullRange(self, distances):
         return np.max(distances)-np.min(distances)
