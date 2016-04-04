@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 from lsst.sims.utils import ObservationMetaData
 import healpy as hp
@@ -11,15 +13,21 @@ import argparse
 
 # Use the catsim framework to loop over a healpy map and generate a stellar density map
 
-# Connect to fatboy with: ssh -L 51433:fatboy-private.phys.washington.edu:1433 gateway.astro.washington.edu
+# Connect to fatboy with: ssh -L 51433:fatboy.phys.washington.edu:1433 gateway.astro.washington.edu
 # If non-astro user, use simsuser@gateway.astro.washington.edu
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Build a stellar density healpix map")
-    parser.add_argument("filtername", type=str, default='r', help="which filter: u, g, r, i, z, y")
+    parser.add_argument("--filtername", type=str, default='r', help="which filter: u, g, r, i, z, y")
+    parser.add_argument("--stars", type=str, default='allstars', help="the stellar type to pull from CatSim")
 
     args = parser.parse_args()
+
+    if args.stars == 'allstars':
+        starNames = ''
+    else:
+        starNames = args.stars
 
     filterName = args.filtername
     colName = filterName+'mag'
@@ -41,11 +49,11 @@ if __name__ == '__main__':
     hpsizeDeg = np.min([10./60., hpsizeDeg])
 
     # Options include galaxyBase, cepheidstars, wdstars, rrlystars, msstars, bhbstars, allstars, and more...
-    dbobj = CatalogDBObject.from_objid('allstars')
+    dbobj = CatalogDBObject.from_objid(args.stars)
 
     indxMin = 0
 
-    restoreFile = glob.glob('starDensity_%s_nside_%i.npz' % (filterName, nside))
+    restoreFile = glob.glob('starDensity_%s_%snside_%i.npz' % (filterName, starNames, nside))
     if len(restoreFile) > 0:
         data = np.load(restoreFile[0])
         starDensity = data['starDensity'].copy()
@@ -96,7 +104,7 @@ if __name__ == '__main__':
 
         # Checkpoint
         if (i % checksize == 0) & (i != 0):
-            np.savez('starDensity_%s_nside_%i.npz' % (filterName, nside),
+            np.savez('starDensity_%s_%snside_%i.npz' % (filterName, starNames, nside),
                      starDensity=starDensity, bins=bins, icheck=i, overMaxMask=overMaxMask)
             lastCP = 'Checkpointed at i=%i of %i' % (i, npix)
         if i % printsize == 0:
@@ -105,7 +113,7 @@ if __name__ == '__main__':
             sys.stdout.write(r'%.2f%% complete. ' % (perComplete) + lastCP)
             sys.stdout.flush()
 
-    np.savez('starDensity_%s_nside_%i.npz' % (filterName, nside), starDensity=starDensity,
+    np.savez('starDensity_%s_%snside_%i.npz' % (filterName, starNames, nside), starDensity=starDensity,
              bins=bins, overMaxMask=overMaxMask)
     print ''
     print 'Completed!'
