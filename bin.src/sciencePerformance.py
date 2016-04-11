@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import os
 import argparse
 import warnings
@@ -8,8 +7,6 @@ import numpy as np
 import healpy as hp
 import matplotlib
 
-matplotlib.use('Agg')
-
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
@@ -17,6 +14,8 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
+
+matplotlib.use('Agg')
 
 
 def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
@@ -208,8 +207,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     extraStats2.extend(commonSummary)
-    caption = 'Number of consecutive visits with return times faster than %.1f minutes, in any filter,'
-    caption += 'all proposals. ' % (dTmax)
+    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % dTmax
+    caption += 'in any filter, all proposals. '
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more than '
     caption += '%d revisits within this time window.' % (cutoff2)
     summaryStats = extraStats2
