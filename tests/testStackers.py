@@ -17,8 +17,8 @@ class TestStackerClasses(unittest.TestCase):
         s2 = stackers.ParallaxFactorStacker()
         assert(s1 == s2)
 
-        s1 = stackers.RandomDitherFieldVisitStacker()
-        s2 = stackers.RandomDitherFieldVisitStacker()
+        s1 = stackers.RandomDitherFieldPerVisitStacker()
+        s2 = stackers.RandomDitherFieldPerVisitStacker()
         assert(s1 == s2)
 
         # Test if they have numpy array atributes
@@ -30,7 +30,7 @@ class TestStackerClasses(unittest.TestCase):
         s1.ack += 1
         assert(s1 != s2)
 
-        s2 = stackers.RandomDitherFieldVisitStacker(decCol='blah')
+        s2 = stackers.RandomDitherFieldPerVisitStacker(decCol='blah')
         assert(s1 != s2)
 
     def testNormAirmass(self):
@@ -73,7 +73,7 @@ class TestStackerClasses(unittest.TestCase):
         self.assertLess(diffsra.min(), 0)
         self.assertLess(diffsdec.min(), 0)
 
-    def _tDitherNight(self, diffsra, diffsdec, ra, dec, nights):
+    def _tDitherPerNight(self, diffsra, diffsdec, ra, dec, nights):
         n = np.unique(nights)
         for ni in n:
             match = np.where(nights == ni)[0]
@@ -101,14 +101,14 @@ class TestStackerClasses(unittest.TestCase):
         # Restrict dithers to area where wraparound is not a problem for comparisons.
         data['fieldRA'] = np.random.rand(600)*(np.pi) + np.pi/2.0
         data['fieldDec'] = np.random.rand(600)*np.pi/2.0 - np.pi/4.0
-        stacker = stackers.RandomDitherFieldVisitStacker(maxDither=maxDither)
+        stacker = stackers.RandomDitherFieldPerVisitStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['randomDitherFieldVisitRa'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['randomDitherFieldVisitDec']
+        diffsra = (data['fieldRA'] - data['randomDitherFieldPerVisitRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['randomDitherFieldPerVisitDec']
         # Check dithers within expected range.
         self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
 
-    def testRandomDitherNight(self):
+    def testRandomDitherPerNight(self):
         """
         Test the per-night random dither pattern.
         """
@@ -121,16 +121,16 @@ class TestStackerClasses(unittest.TestCase):
         data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
         data['fieldID'] = np.floor(np.random.rand(ndata)*ndata)
         data['night'] = np.floor(np.random.rand(ndata)*10).astype('int')
-        stacker = stackers.RandomDitherNightStacker(maxDither=maxDither)
+        stacker = stackers.RandomDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['randomDitherNightRa'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['randomDitherNightDec']
+        diffsra = (data['fieldRA'] - data['randomDitherPerNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['randomDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
-        self._tDitherNight(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], data['night'])
+        self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], data['night'])
 
 
-    def testSpiralDitherNight(self):
+    def testSpiralDitherPerNight(self):
         """
         Test the per-night spiral dither pattern.
         """
@@ -145,15 +145,15 @@ class TestStackerClasses(unittest.TestCase):
         data['fieldDec'] = np.zeros(ndata)
         data['fieldID'] = np.floor(np.random.rand(ndata)*ndata)
         data['night'] = np.floor(np.random.rand(ndata)*20).astype('int')
-        stacker = stackers.SpiralDitherNightStacker(maxDither=maxDither)
+        stacker = stackers.SpiralDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['spiralDitherNightRa'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['spiralDitherNightDec']
+        diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['spiralDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
-        self._tDitherNight(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], data['night'])
+        self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], data['night'])
 
-    def testHexDitherNight(self):
+    def testHexDitherPerNight(self):
         """
         Test the per-night hex dither pattern.
         """
@@ -166,13 +166,13 @@ class TestStackerClasses(unittest.TestCase):
         data['fieldDec'] = np.random.rand(ndata)*np.pi/2.0 - np.pi/4.0
         data['fieldID'] = np.floor(np.random.rand(ndata)*ndata)
         data['night'] = np.floor(np.random.rand(ndata)*217).astype('int')
-        stacker = stackers.HexDitherNightStacker(maxDither=maxDither)
+        stacker = stackers.HexDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['hexDitherNightRa'])*np.cos(data['fieldDec'])
-        diffsdec = data['fieldDec'] - data['hexDitherNightDec']
+        diffsra = (data['fieldRA'] - data['hexDitherPerNightRa'])*np.cos(data['fieldDec'])
+        diffsdec = data['fieldDec'] - data['hexDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
-        self._tDitherNight(diffsra, diffsdec,  data['fieldRA'], data['fieldDec'], data['night'])
+        self._tDitherPerNight(diffsra, diffsdec,  data['fieldRA'], data['fieldDec'], data['night'])
 
 
     def testHAStacker(self):
