@@ -1,6 +1,5 @@
 import numpy as np
 from .baseStacker import BaseStacker
-from .generalStackers import SeasonStacker
 
 __all__ = ['wrapRADec', 'wrapRA', 'inHexagon', 'polygonCoords',
            'RandomDitherFieldPerVisitStacker', 'RandomDitherFieldPerNightStacker', 'RandomDitherPerNightStacker',
