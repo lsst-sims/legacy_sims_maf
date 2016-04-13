@@ -105,7 +105,7 @@ class RandomDitherFieldPerVisitStacker(BaseStacker):
         # self.units used for plot labels
         self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the names of the new columns.
-        self.colsAdded = ['randomDitherFieldVisitRa', 'randomDitherFieldVisitDec']
+        self.colsAdded = ['randomDitherFieldPerVisitRa', 'randomDitherFieldPerVisitDec']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol]
 
@@ -140,11 +140,11 @@ class RandomDitherFieldPerVisitStacker(BaseStacker):
         noffsets = len(simData[self.raCol])
         self._generateRandomOffsets(noffsets)
         # Add to RA and dec values.
-        simData['randomDitherFieldVisitRa'] = simData[self.raCol] + self.xOff/np.cos(simData[self.decCol])
-        simData['randomDitherFieldVisitDec'] = simData[self.decCol] + self.yOff
+        simData['randomDitherFieldPerVisitRa'] = simData[self.raCol] + self.xOff/np.cos(simData[self.decCol])
+        simData['randomDitherFieldPerVisitDec'] = simData[self.decCol] + self.yOff
         # Wrap back into expected range.
-        simData['randomDitherFieldVisitRa'], simData['randomDitherFieldVisitDec'] = wrapRADec(simData['randomDitherFieldVisitRa'],
-                                                                                              simData['randomDitherFieldVisitDec'])
+        simData['randomDitherFieldPerVisitRa'], simData['randomDitherFieldPerVisitDec'] = wrapRADec(simData['randomDitherFieldPerVisitRa'],
+                                                                                              simData['randomDitherFieldPerVisitDec'])
         return simData
 
 
@@ -252,7 +252,7 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
         # self.units used for plot labels
         self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the names of the new columns.
-        self.colsAdded = ['spiralDitherFieldVisitRa', 'spiralDitherFieldVisitDec']
+        self.colsAdded = ['spiralDitherFieldPerVisitRa', 'spiralDitherFieldPerVisitDec']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol, self.fieldIdCol]
 
@@ -288,12 +288,12 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
             # Apply sequential dithers, increasing with each visit.
             vertexIdxs = np.arange(0, len(match), 1)
             vertexIdxs = vertexIdxs % self.numPoints
-            simData['spiralDitherFieldVisitRa'][match] = simData[self.raCol][match] + \
+            simData['spiralDitherFieldPerVisitRa'][match] = simData[self.raCol][match] + \
               self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
-            simData['spiralDitherFieldVisitDec'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
+            simData['spiralDitherFieldPerVisitDec'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
         # Wrap into expected range.
-        simData['spiralDitherFieldVisitRa'], simData['spiralDitherFieldVisitDec'] = wrapRADec(simData['spiralDitherFieldVisitRa'],
-                                                                                              simData['spiralDitherFieldVisitDec'])
+        simData['spiralDitherFieldPerVisitRa'], simData['spiralDitherFieldPerVisitDec'] = wrapRADec(simData['spiralDitherFieldPerVisitRa'],
+                                                                                              simData['spiralDitherFieldPerVisitDec'])
         return simData
 
 
@@ -382,7 +382,7 @@ class HexDitherFieldPerVisitStacker(BaseStacker):
         # self.units used for plot labels
         self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the names of the new columns.
-        self.colsAdded = ['hexDitherFieldVisitRa', 'hexDitherFieldVisitDec']
+        self.colsAdded = ['hexDitherFieldPerVisitRa', 'hexDitherFieldPerVisitDec']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol, self.fieldIdCol]
 
@@ -425,12 +425,12 @@ class HexDitherFieldPerVisitStacker(BaseStacker):
             # Apply sequential dithers, increasing with each visit.
             vertexIdxs = np.arange(0, len(match), 1)
             vertexIdxs = vertexIdxs % self.numPoints
-            simData['hexDitherFieldVisitRa'][match] = simData[self.raCol][match] + \
+            simData['hexDitherFieldPerVisitRa'][match] = simData[self.raCol][match] + \
               self.xOff[vertexIdxs]/np.cos(simData[self.decCol][match])
-            simData['hexDitherFieldVisitDec'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
+            simData['hexDitherFieldPerVisitDec'][match] = simData[self.decCol][match] + self.yOff[vertexIdxs]
         # Wrap into expected range.
-        simData['hexDitherFieldVisitRa'], simData['hexDitherFieldVisitDec'] = wrapRADec(simData['hexDitherFieldVisitRa'],
-                                                                                        simData['hexDitherFieldVisitDec'])
+        simData['hexDitherFieldPerVisitRa'], simData['hexDitherFieldPerVisitDec'] = wrapRADec(simData['hexDitherFieldPerVisitRa'],
+                                                                                        simData['hexDitherFieldPerVisitDec'])
         return simData
 
 class HexDitherFieldPerNightStacker(HexDitherFieldPerVisitStacker):
