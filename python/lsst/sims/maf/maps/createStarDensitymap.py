@@ -27,7 +27,7 @@ if __name__ == '__main__':
     if args.stars == 'allstars':
         starNames = ''
     else:
-        starNames = args.stars
+        starNames = args.stars+'_'
 
     filterName = args.filtername
     colName = filterName+'mag'
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     indxMin = 0
 
-    restoreFile = glob.glob('starDensity_%s_%snside_%i.npz' % (filterName, starNames, nside))
+    restoreFile = glob.glob('starDensity_%s_%s_nside_%i.npz' % (filterName, starNames, nside))
     if len(restoreFile) > 0:
         data = np.load(restoreFile[0])
         starDensity = data['starDensity'].copy()

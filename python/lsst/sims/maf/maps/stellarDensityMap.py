@@ -19,10 +19,10 @@ class StellarDensityMap(BaseMap):
 
         startype : str ('allstars', 'wdstars')
             Load the luminosity function for all stars ('allstars'), which includes main-sequence stars
-            white dwarfs, blue horozontal branch, RR Lyrae, and Cepheids. The 'wdstars' option only includes 
+            white dwarfs, blue horozontal branch, RR Lyrae, and Cepheids. The 'wdstars' option only includes
             white dwarf stars.
 
-        filtername : str 
+        filtername : str
             Filter to use. Options of u,g,r,i,z,y
         """
         self.mapDir = os.path.join(getPackageDir('sims_maps'),'StarMaps')
@@ -30,7 +30,7 @@ class StellarDensityMap(BaseMap):
         if startype == 'allstars':
             self.startype = ''
         else:
-            self.startype = startype
+            self.startype = startype+'_'
 
 
     def _readMap(self):
