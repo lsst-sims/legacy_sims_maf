@@ -1,6 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
 import lsst.sims.maf.utils as mafUtils
+import lsst.sims.utils as utils
 from scipy.stats import spearmanr
 
 __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
@@ -45,7 +46,7 @@ class ParallaxMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         self.comment = 'Estimated uncertainty in parallax measurement (assuming no proper motion or that proper motion '
@@ -122,7 +123,7 @@ class ProperMotionMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
@@ -217,7 +218,7 @@ class ParallaxCoverageMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
 
     def _thetaCheck(self, ra_pi_amp, dec_pi_amp, snr):
@@ -312,7 +313,7 @@ class ParallaxHADegenMetric(BaseMetric):
             for f in filters:
                 self.mags[f] = rmag
         else:
-            self.mags = mafUtils.stellarMags(SedTemplate, rmag=rmag)
+            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
 
 
     def run(self, dataSlice, slicePoint=None):
