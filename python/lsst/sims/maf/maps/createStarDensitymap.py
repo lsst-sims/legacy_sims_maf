@@ -1,10 +1,6 @@
 import numpy as np
 from lsst.sims.utils import ObservationMetaData
 import healpy as hp
-from lsst.sims.catalogs.generation.db import CatalogDBObject
-# Import the bits needed to get the catalog to work
-from lsst.sims.catUtils.baseCatalogModels import *
-from lsst.sims.catUtils.exampleCatalogDefinitions import *
 import sys
 import glob
 import argparse
@@ -15,6 +11,13 @@ import argparse
 # If non-astro user, use simsuser@gateway.astro.washington.edu
 
 if __name__ == '__main__':
+
+    # Hide imports here so documentation builds
+    from lsst.sims.catalogs.generation.db import CatalogDBObject
+    # Import the bits needed to get the catalog to work
+    from lsst.sims.catUtils.baseCatalogModels import *
+    from lsst.sims.catUtils.exampleCatalogDefinitions import *
+
 
     parser = argparse.ArgumentParser(description="Build a stellar density healpix map")
     parser.add_argument("filtername", type=str, default='r', help="which filter: u, g, r, i, z, y")
