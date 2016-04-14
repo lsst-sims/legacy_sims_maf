@@ -4,6 +4,14 @@ lsst.sims.maf.viz package
 Submodules
 ----------
 
+lsst.sims.maf.viz.mafRunComparison module
+-----------------------------------------
+
+.. automodule:: lsst.sims.maf.viz.mafRunComparison
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst.sims.maf.viz.mafRunResults module
 --------------------------------------
 

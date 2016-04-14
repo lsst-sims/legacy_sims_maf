@@ -52,6 +52,14 @@ lsst.sims.maf.stackers.getColInfo module
     :undoc-members:
     :show-inheritance:
 
+lsst.sims.maf.stackers.m5OptimalStacker module
+----------------------------------------------
+
+.. automodule:: lsst.sims.maf.stackers.m5OptimalStacker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst.sims.maf.stackers.sdssStackers module
 ------------------------------------------
 

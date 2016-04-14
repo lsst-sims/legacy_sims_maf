@@ -28,6 +28,14 @@ lsst.sims.maf.maps.createHealDustMap module
     :undoc-members:
     :show-inheritance:
 
+lsst.sims.maf.maps.createStarDensitymap module
+----------------------------------------------
+
+.. automodule:: lsst.sims.maf.maps.createStarDensitymap
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst.sims.maf.maps.dustMap module
 ---------------------------------
 
@@ -40,6 +48,14 @@ lsst.sims.maf.maps.galCoordsMap module
 --------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.galCoordsMap
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+lsst.sims.maf.maps.stellarDensityMap module
+-------------------------------------------
+
+.. automodule:: lsst.sims.maf.maps.stellarDensityMap
     :members:
     :undoc-members:
     :show-inheritance:
