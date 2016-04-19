@@ -6,6 +6,8 @@ from scipy.interpolate import interp1d
 # Modifying from Knut Olson's fork at:
 # https://github.com/knutago/sims_maf_contrib/blob/master/tutorials/CrowdingMetric.ipynb
 
+__all__ = ['CrowdingMetric', 'CrowdingMagUncertMetric']
+
 class CrowdingMetric(BaseMetric):
     """
     Calculate whether the coadded depth in r has exceeded the confusion limit
