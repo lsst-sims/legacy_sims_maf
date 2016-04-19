@@ -50,9 +50,9 @@ class MafTracking(object):
         runInfo['OpsimRun'] = run['opsimRun']
         runInfo['MafComment'] = run['mafComment']
         runInfo['OpsimComment'] = run['opsimComment']
-        runInfo['SQLite File'] = [run['dbFile'], os.path.split(run['dbFile'])[1]]
+        runInfo['SQLite File'] = [os.path.relpath(run['dbFile']), os.path.split(run['dbFile'])[1]]
         runInfo['MafDir'] = run['mafDir']
-        runInfo['ResultsDb'] = os.path.join(run['mafDir'], 'resultsDb_sqlite.db')
+        runInfo['ResultsDb'] = os.path.relpath(os.path.join(run['mafDir'], 'resultsDb_sqlite.db'))
         runInfo['OpsimDate'] = run['opsimDate']
         runInfo['MafDate'] = run['mafDate']
         return runInfo
