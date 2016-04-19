@@ -134,6 +134,8 @@ class MafRunResults(object):
     def getResultsDb(self):
         """
         Return the summary results sqlite filename.
+
+        Note that this assumes the resultsDB is stored in 'resultsDB_sqlite.db'.
         """
         return os.path.join(self.outDir, 'resultsDb_sqlite.db')
 
