@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database filename.")
     args = parser.parse_args()
 
-    mafDir = os.path.realpath(args.mafDir)
+    mafDir = os.path.abspath(args.mafDir)
     if not os.path.isdir(mafDir):
         print 'There is no directory containing MAF outputs at %s.' % (mafDir)
         print 'Exiting.'
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     opsimComment = args.opsimComment
     opsimDate = args.opsimDate
     mafDate = args.mafDate
-    dbFile = os.path.realpath(args.dbFile)
+    dbFile = os.path.abspath(args.dbFile)
     if (opsimRun is None) or (opsimComment is None) or (opsimDate is None) or (mafDate is None):
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
             file = open(os.path.join(mafDir, 'configSummary.txt'))
