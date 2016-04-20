@@ -19,7 +19,7 @@ import shlex
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('../python/lsst/sims/maf/metrics'))
+sys.path.insert(0, os.path.abspath('.'))
 
 # Modify docs to remove long registry lists
 from sphinx.ext.autodoc import ClassLevelDocumenter, AttributeDocumenter
@@ -322,3 +322,6 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 
 
+# Generate metriclist page automatically.
+import metricList
+metricList.makeMetricList('metricList.rst')
