@@ -15,6 +15,7 @@ class TestTrackingDb(unittest.TestCase):
         self.trackingDb = 'trackingDb_sqlite.db'
         self.mafDate = '1/1/11'
         self.opsimDate = '1/1/11'
+        self.dbFile = None
 
     def tearDown(self):
         if os.path.isfile(self.trackingDb):
@@ -29,22 +30,25 @@ class TestTrackingDb(unittest.TestCase):
     def testAddRun(self):
         """Test adding a run to the tracking database."""
         trackingdb = db.TrackingDb(database=self.trackingDb)
-        trackId = trackingdb.addRun(opsimRun = self.opsimRun, opsimComment = self.opsimComment,
-                                    mafComment = self.mafComment, mafDir = self.mafDir,
-                                    mafDate = self.mafDate, opsimDate = self.opsimDate)
+        trackId = trackingdb.addRun(opsimRun=self.opsimRun, opsimComment=self.opsimComment,
+                                    mafComment=self.mafComment, mafDir=self.mafDir,
+                                    mafDate=self.mafDate, opsimDate=self.opsimDate,
+                                    dbFile=self.dbFile)
         tdb = db.Database(database=self.trackingDb,
-                            dbTables={'runs':['runs', 'mafRunId']})
+                            dbTables={'runs': ['runs', 'mafRunId']})
         res = tdb.queryDatabase('runs', 'select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
         # Try adding this run again. Should just return previous trackId without adding.
-        trackId2 = trackingdb.addRun(opsimRun = self.opsimRun, opsimComment = self.opsimComment,
-                                     mafComment = self.mafComment, mafDir = self.mafDir,
-                                     mafDate = self.mafDate, opsimDate = self.opsimDate)
+        trackId2 = trackingdb.addRun(opsimRun=self.opsimRun, opsimComment=self.opsimComment,
+                                     mafComment=self.mafComment, mafDir=self.mafDir,
+                                     mafDate=self.mafDate, opsimDate=self.opsimDate,
+                                     dbFile=self.dbFile)
         self.assertEqual(trackId, trackId2)
         # Test will add run, if we use 'override=True'. Also works to use None's.
-        trackId3 = trackingdb.addRun(opsimRun = None, opsimComment=None, mafComment=None,
-                                     mafDir = self.mafDir, override=True,
-                                     mafDate = self.mafDate, opsimDate = self.opsimDate)
+        trackId3 = trackingdb.addRun(opsimRun=None, opsimComment=None, mafComment=None,
+                                     mafDir=self.mafDir, override=True,
+                                     mafDate=self.mafDate, opsimDate=self.opsimDate,
+                                     dbFile=self.dbFile)
         self.assertNotEqual(trackId, trackId3)
         trackingdb.close()
 
@@ -54,9 +58,10 @@ class TestTrackingDb(unittest.TestCase):
         tdb = db.Database(database=self.trackingDb,
                           dbTables={'runs':['runs', 'mafRunId']})
         # Add a run.
-        trackId = trackingdb.addRun(opsimRun = self.opsimRun, opsimComment = self.opsimComment,
-                                    mafComment = self.mafComment, mafDir = self.mafDir,
-                                    mafDate = self.mafDate, opsimDate = self.opsimDate)
+        trackId = trackingdb.addRun(opsimRun=self.opsimRun, opsimComment=self.opsimComment,
+                                    mafComment=self.mafComment, mafDir=self.mafDir,
+                                    mafDate=self.mafDate, opsimDate=self.opsimDate,
+                                    dbFile=self.dbFile)
         res = tdb.queryDatabase('runs', 'select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
         # Test removal works.

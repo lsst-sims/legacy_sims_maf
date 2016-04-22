@@ -14,11 +14,12 @@ if __name__ == "__main__":
     parser.add_argument("--opsimComment", type=str, default=None, help="Comment on OpSim run.")
     parser.add_argument("--opsimDate", type=str, default=None, help="Date Opsim was run")
     parser.add_argument("--mafDate", type=str, default=None, help="Date MAF was run")
+    parser.add_argument("--dbFile", type=str, default=None, help="Opsim Sqlite filename")
     defaultdb = 'trackingDb_sqlite.db'
     parser.add_argument("-t", "--trackingDb", type=str, default=defaultdb, help="Tracking database filename.")
     args = parser.parse_args()
 
-    mafDir = os.path.realpath(args.mafDir)
+    mafDir = os.path.abspath(args.mafDir)
     if not os.path.isdir(mafDir):
         print 'There is no directory containing MAF outputs at %s.' % (mafDir)
         print 'Exiting.'
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     opsimComment = args.opsimComment
     opsimDate = args.opsimDate
     mafDate = args.mafDate
+    dbFile = os.path.abspath(args.dbFile)
     if (opsimRun is None) or (opsimComment is None) or (opsimDate is None) or (mafDate is None):
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
             file = open(os.path.join(mafDir, 'configSummary.txt'))
@@ -59,5 +61,6 @@ if __name__ == "__main__":
     print ' OpsimComment = %s' % (opsimComment)
     print ' OpsimDate = %s' % (opsimDate)
     print ' MafDate = %s' % (mafDate)
+    print ' DbFile = %s' % (dbFile)
 
-    trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
+    trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate, dbFile)
