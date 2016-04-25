@@ -32,7 +32,7 @@ class HealpixSkyMap(BasePlotter):
         self.objectPlotter = False
         # Set up the default plotting parameters.
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                                'logScale': False, 'cbarFormat': None, 'cmap': cm.cubehelix,
+                                'logScale': False, 'cbarFormat': None, 'cmap': perceptual_rainbow,
                                 'percentileClip': None, 'colorMin': None, 'colorMax': None,
                                 'zp': None, 'normVal': None, 'labelsize': None, 'fontsize': None,
                                 'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0)}
@@ -72,8 +72,7 @@ class HealpixSkyMap(BasePlotter):
         cmap = plotDict['cmap']
         if type(cmap) == str:
             cmap = getattr(cm, cmap)
-        # Make colormap compatible with healpy
-        cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
+        # Set background and masked pixel colors default healpy white and gray.
         cmap.set_over(cmap(1.0))
         cmap.set_under('w')
         cmap.set_bad('gray')
@@ -401,7 +400,7 @@ class BaseSkyMap(BasePlotter):
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
                                 'projection': 'aitoff', 'radius': np.radians(1.75),
                                 'logScale': 'auto', 'cbar': True, 'cbarFormat': None,
-                                'cmap': cm.cubehelix, 'alpha': 1.0,
+                                'cmap': perceptual_rainbow, 'alpha': 1.0,
                                 'zp': None, 'normVal': None,
                                 'colorMin': None, 'colorMax': None, 'percentileClip': None,
                                 'cbar_edge': True, 'plotMask': False, 'metricIsColor': False,
@@ -589,7 +588,7 @@ class HealpixSDSSSkyMap(BasePlotter):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'logScale': False,
-                                'cbarFormat': '%.2f', 'cmap': cm.cubehelix,
+                                'cbarFormat': '%.2f', 'cmap': perceptual_rainbow,
                                 'percentileClip': None, 'colorMin': None,
                                 'colorMax': None, 'zp': None, 'normVal': None,
                                 'cbar_edge': True, 'label': None, 'raMin': -90,
@@ -704,7 +703,7 @@ class LambertSkyMap(BasePlotter):
         self.defaultPlotDict = {'basemap': {'projection': 'nplaea', 'boundinglat': 20,
                                             'lon_0': 0., 'resolution': 'l', 'celestial': True},
                                 'cbar': True, 'cmap': perceptual_rainbow, 'levels': 200,
-                                'cbarFormat': '%.2f', 'cbar_edge': True, 'zp': None,
+                                'cbarFormat': '%i', 'cbar_edge': True, 'zp': None,
                                 'normVal': None, 'percentileClip': None, 'colorMin': None,
                                 'colorMax': None, 'linewidths': 0,
                                 'fontsize': None, 'labelsize': None}
@@ -777,6 +776,10 @@ class LambertSkyMap(BasePlotter):
                         metricValue[good], levels, tri=True,
                         cmap=plotDict['cmap'], ax=ax, latlon=True)
 
+        # Try to fix the ugly pdf contour problem
+        for c in CS.collections:
+            c.set_edgecolor("face")
+
         para = np.arange(0, 89, 20)
         m.drawparallels(para, labels=para)
         m.drawmeridians(np.arange(-180, 181, 60))
@@ -784,7 +787,8 @@ class LambertSkyMap(BasePlotter):
         cb.set_label(plotDict['xlabel'])
         if plotDict['labelsize'] is not None:
             cb.ax.tick_params(labelsize=plotDict['labelsize'])
-        ax.set_title(plotDict['title'])
+        # Pop in an extra line to raise the title a bit
+        ax.set_title(plotDict['title']+'\n ')
         # If outputing to PDF, this fixes the colorbar white stripes
         if plotDict['cbar_edge']:
             cb.solids.set_edgecolor("face")

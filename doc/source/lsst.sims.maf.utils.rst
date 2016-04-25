@@ -44,22 +44,6 @@ lsst.sims.maf.utils.outputUtils module
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.utils.stellarMags module
---------------------------------------
-
-.. automodule:: lsst.sims.maf.utils.stellarMags
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-lsst.sims.maf.utils.telescopeInfo module
-----------------------------------------
-
-.. automodule:: lsst.sims.maf.utils.telescopeInfo
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------

@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+
 import argparse
 import subprocess
 import warnings
@@ -15,8 +16,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Copy MAF output directory using rsync")
     parser.add_argument("dirSource", type=str, help="directory to copy")
     parser.add_argument("dirDest", type=str, help="destination to copy to")
-    parser.add_argument("--noNpz", dest='noNpz', default=False, action='store_true', help="skip the .npz files")
-    parser.add_argument("--noPdf", dest='noPdf', default=False, action='store_true', help="skip the .pdf files")
+    parser.add_argument("--noNpz", dest='noNpz', default=False, action='store_true',
+                        help="skip the .npz files")
+    parser.add_argument("--noPdf", dest='noPdf', default=False, action='store_true',
+                        help="skip the .pdf files")
     args = parser.parse_args()
     source = args.dirSource
     while source[-1] == '/':
@@ -30,7 +33,6 @@ if __name__ == "__main__":
         callList.append("--exclude '*.npz'")
     if args.noPdf:
         callList.append("--exclude '*.pdf'")
-    callList = callList+[source, dest]
+    callList = callList + [source, dest]
     command = ' '.join(callList)
     subprocess.call([command], shell=True)
-

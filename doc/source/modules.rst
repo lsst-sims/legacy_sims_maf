@@ -1,5 +1,5 @@
-python
-======
+Python API documentation
+========================
 
 .. toctree::
    :maxdepth: 4
