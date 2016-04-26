@@ -39,7 +39,7 @@ class MetricVsH(BasePlotter):
             # We have a simple set of values to plot against H.
             # This may be due to running a secondary metric, such as completeness.
             mVals = metricValue.filled()
-        elif len(Hvals) == slicer.slicerShape[1]:
+        elif len(Hvals) == slicer.shape[1]:
             # Using cloned H distribution.
             # Apply 'npReduce' method directly to metric values, and plot at matching H values.
             mVals = reduceFunc(metricValue, axis=0)
@@ -149,7 +149,7 @@ class MetricVsOrbit(BasePlotter):
         Hwidth = plotDict['Hwidth']
         if Hwidth is None:
             Hwidth = 1.0
-        if len(Hvals) == slicer.slicerShape[1]:
+        if len(Hvals) == slicer.shape[1]:
             if plotDict['Hval'] is None:
                 Hidx = len(Hvals) / 2
                 Hval = Hvals[Hidx]
@@ -164,7 +164,7 @@ class MetricVsOrbit(BasePlotter):
             else:
                 Hval = plotDict['Hvals']
                 Hidx = np.where(np.abs(Hvals - Hval) <= Hwidth/2.0)[0]
-        if len(Hvals) == slicer.slicerShape[1]:
+        if len(Hvals) == slicer.shape[1]:
             mVals = np.swapaxes(metricValue, 1, 0)[Hidx].filled()
         else:
             mVals = metricValue[Hidx].filled()
@@ -238,13 +238,13 @@ class MetricVsOrbitPoints(BasePlotter):
         if Hwidth is None:
             Hwidth = 1.0
         if plotDict['Hval'] is None:
-            if len(Hvals) == slicer.slicerShape[1]:
+            if len(Hvals) == slicer.shape[1]:
                 Hidx = len(Hvals) / 2
                 Hval = Hvals[Hidx]
             else:
                 Hval = np.median(Hvals)
                 Hidx = np.where(np.abs(Hvals - Hval) <= Hwidth/2.0)[0]
-        if len(Hvals) == slicer.slicerShape[1]:
+        if len(Hvals) == slicer.shape[1]:
             mVals = np.swapaxes(metricValue, 1, 0)[Hidx]
         else:
             mVals = metricValue[Hidx]

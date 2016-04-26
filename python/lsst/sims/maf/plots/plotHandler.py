@@ -68,7 +68,7 @@ class PlotHandler(object):
         self._combineMetricNames()
         self._combineRunNames()
         self._combineMetadata()
-        self._combineSql()
+        self._combineConstraints()
         self.setPlotDicts(reset=True)
 
     def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False):
@@ -249,14 +249,14 @@ class PlotHandler(object):
                      ' '.join([''.join(e) for e in common]))
             self.jointMetadata = combo
 
-    def _combineSql(self):
+    def _combineConstraints(self):
         """
-        Combine the sql constraints.
+        Combine the constraints.
         """
-        sqlconstraints = set()
+        constraints = set()
         for mB in self.mBundles:
-            sqlconstraints.add(mB.sqlconstraint)
-        self.sqlconstraints = '; '.join(sqlconstraints)
+            constraints.add(mB.constraint)
+        self.constraints = '; '.join(constraints)
 
     def _buildTitle(self):
         """
@@ -289,6 +289,12 @@ class PlotHandler(object):
                 for mB in self.mBundles:
                     xlabel.add(mB.slicer.sliceColName)
                 xlabel = ', '.join(xlabel)
+                ylabel = self.jointMetricNames
+        elif plotFunc.plotType == 'MetricVsH':
+            if len(self.mBundles) == 1:
+                mB = self.mBundles[0]
+                ylabel = mB.metric.name + ' (' + mB.metric.units + ')'
+            else:
                 ylabel = self.jointMetricNames
         else:
             if len(self.mBundles) == 1:
@@ -347,8 +353,8 @@ class PlotHandler(object):
             else:
                 # If the filter is part of the sql constraint, we'll
                 #  try to use that first.
-                if 'filter' in mB.sqlconstraint:
-                    vals = mB.sqlconstraint.split('"')
+                if 'filter' in mB.constraint:
+                    vals = mB.constraint.split('"')
                     for v in vals:
                         if len(v) == 1:
                             # Guess that this is the filter value
@@ -426,7 +432,11 @@ class PlotHandler(object):
             else:
                 displayDict['subgroup'] = list(subgroup)[0]
 
-            displayDict['caption'] = ('%s metric(s) calculated on a %s grid, for opsim runs %s, for metadata values of %s.' % (self.jointMetricNames, self.mBundles[0].slicer.slicerName, self.jointRunNames, self.jointMetadata))
+            displayDict['caption'] = ('%s metric(s) calculated on a %s grid, '
+                                      'for opsim runs %s, for metadata values of %s.'
+                                      % (self.jointMetricNames,
+                                         self.mBundles[0].slicer.slicerName,
+                                         self.jointRunNames, self.jointMetadata))
 
             return displayDict
 
@@ -520,7 +530,7 @@ class PlotHandler(object):
             # Save information about the file to the resultsDb.
             if self.resultsDb:
                 metricId = self.resultsDb.updateMetric(self.jointMetricNames, self.slicer.slicerName,
-                                                       self.jointRunNames, self.sqlconstraints,
+                                                       self.jointRunNames, self.constraints,
                                                        self.jointMetadata, None)
                 # Add information to displays table (without overwriting previous information, if present).
                 displayDict = self._buildDisplayDict()

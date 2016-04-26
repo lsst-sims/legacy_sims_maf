@@ -62,6 +62,8 @@ class BaseMoMetric(BaseMetric):
             self.childMetrics = childMetrics
             self.metricDtype = 'object'
 
+        self.shape = 1
+
     def run(self, ssoObs, orb, Hval):
         raise NotImplementedError
 

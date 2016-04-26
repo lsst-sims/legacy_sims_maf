@@ -37,7 +37,7 @@ class MetricBundleGroup(object):
     MetricBundles.
 
     The MetricBundleGroup will query data from a single database table (for multiple
-    sqlconstraints), use that data to calculate metric values for multiple slicers,
+    constraints), use that data to calculate metric values for multiple slicers,
     and calculate summary statistics and generate plots for all metrics included in
     the dictionary passed to the MetricBundleGroup.
 
@@ -96,9 +96,9 @@ class MetricBundleGroup(object):
         for b in bundleDict.itervalues():
             if not isinstance(b, MetricBundle):
                 raise ValueError('bundleDict should contain only MetricBundle objects.')
-        # Identify the series of sqlconstraints.
-        self.sqlconstraints = list(set([b.sqlconstraint for b in bundleDict.values()]))
-        # Set the bundleDict (all bundles, with all sqlconstraints)
+        # Identify the series of constraints.
+        self.constraints = list(set([b.constraint for b in bundleDict.values()]))
+        # Set the bundleDict (all bundles, with all constraints)
         self.bundleDict = bundleDict
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
@@ -122,19 +122,19 @@ class MetricBundleGroup(object):
         newdict = {key: origdict.get(key) for key in subsetkeys}
         return newdict
 
-    def setCurrent(self, sqlconstraint):
+    def setCurrent(self, constraint):
         """Utility to set the currentBundleDict (i.e. a set of metricBundles with the same SQL constraint).
 
         Parameters
         ----------
-        sqlconstraint : str
-            The subset of MetricBundles with metricBundle.sqlconstraint == sqlconstraint will be
+        constraint : str
+            The subset of MetricBundles with metricBundle.constraint == constraint will be
             included in a subset identified as the currentBundleDict.
             These are the active metrics to be calculated and plotted, etc.
         """
         self.currentBundleDict = {}
         for k, b in self.bundleDict.iteritems():
-            if b.sqlconstraint == sqlconstraint:
+            if b.constraint == constraint:
                 self.currentBundleDict[k] = b
 
     def _checkCompatible(self, metricBundle1, metricBundle2):
@@ -153,7 +153,7 @@ class MetricBundleGroup(object):
         -------
         bool
         """
-        if metricBundle1.sqlconstraint != metricBundle2.sqlconstraint:
+        if metricBundle1.constraint != metricBundle2.constraint:
             return False
         if metricBundle1.slicer != metricBundle2.slicer:
             return False
@@ -198,7 +198,7 @@ class MetricBundleGroup(object):
         self.compatibleLists = compatibleLists
 
     def runAll(self, clearMemory=False, plotNow=False, plotKwargs=None):
-        """Runs all the metricBundles in the metricBundleGroup, over all sqlconstraints.
+        """Runs all the metricBundles in the metricBundleGroup, over all constraints.
 
         Calculates metric values, then runs reduce functions and summary statistics for
         all MetricBundles.
@@ -206,29 +206,29 @@ class MetricBundleGroup(object):
         Parameters
         ----------
         clearMemory : Optional[bool]
-            If True, deletes metric values from memory after running each sqlconstraint group.
+            If True, deletes metric values from memory after running each constraint group.
         plotNow : Optional[bool]
             If True, plots the metric values immediately after calculation.
         plotKwargs : Optional[kwargs]
             kwargs to pass to plotCurrent.
         """
-        for sqlconstraint in self.sqlconstraints:
+        for constraint in self.constraints:
             # Set the 'currentBundleDict' which is a dictionary of the metricBundles which match this
-            #  sqlconstraint.
-            self.setCurrent(sqlconstraint)
-            self.runCurrent(sqlconstraint, clearMemory=clearMemory,
+            #  constraint.
+            self.setCurrent(constraint)
+            self.runCurrent(constraint, clearMemory=clearMemory,
                             plotNow=plotNow, plotKwargs=plotKwargs)
 
-    def runCurrent(self, sqlconstraint, simData=None, clearMemory=False, plotNow=False, plotKwargs=None):
-        """Run all the metricBundles which match this sqlconstraint in the metricBundleGroup.
+    def runCurrent(self, constraint, simData=None, clearMemory=False, plotNow=False, plotKwargs=None):
+        """Run all the metricBundles which match this constraint in the metricBundleGroup.
 
         Calculates the metric values, then runs reduce functions and summary statistics for
         metrics in the current set only (see self.setCurrent).
 
         Parameters
         ----------
-        sqlconstraint : str
-           Sqlconstraint to use to set the currently active metrics
+        constraint : str
+           constraint to use to set the currently active metrics
         simData : Optional[numpy.ndarray]
            If simData is not None, then this numpy structured array is used instead of querying
            data from the dbObj.
@@ -236,7 +236,7 @@ class MetricBundleGroup(object):
            If True, metric values are deleted from memory after they are calculated (and saved to disk).
         plotNow : Optional[bool]
            Plot immediately after calculating metric values (instead of the usual procedure, which
-           is to plot after metric values are calculated for all sqlconstraints).
+           is to plot after metric values are calculated for all constraints).
         plotKwargs : Optional[kwargs]
            Plotting kwargs to pass to plotCurrent.
         """
@@ -254,13 +254,13 @@ class MetricBundleGroup(object):
             self.simData = None
             # Query for the data.
             try:
-                self.getData(sqlconstraint)
+                self.getData(constraint)
             except UserWarning:
-                warnings.warn('No data matching sqlconstraint %s' % sqlconstraint)
+                warnings.warn('No data matching constraint %s' % constraint)
                 return
             except ValueError:
                 warnings.warn('One of the columns requested from the database was not available.' +
-                              ' Skipping sqlconstraint %s' % sqlconstraint)
+                              ' Skipping constraint %s' % constraint)
                 return
 
         # Find compatible subsets of the MetricBundle dictionary,
@@ -297,21 +297,21 @@ class MetricBundleGroup(object):
             if self.verbose:
                 print 'Deleted metricValues from memory.'
 
-    def getData(self, sqlconstraint):
+    def getData(self, constraint):
         """Query the data from the database.
 
         The currently bundleDict should generally be set before calling getData (using setCurrent).
 
         Parameters
         ----------
-        sqlconstraint : str
-           The sqlconstraint for the currently active set of MetricBundles.
+        constraint : str
+           The constraint for the currently active set of MetricBundles.
         """
         if self.verbose:
-            if sqlconstraint == '':
+            if constraint == '':
                 print "Querying database with no constraint."
             else:
-                print "Querying database with constraint %s" % (sqlconstraint)
+                print "Querying database with constraint %s" % (constraint)
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
         if self.dbTable != 'Summary':
             distinctExpMJD = False
@@ -319,7 +319,7 @@ class MetricBundleGroup(object):
         else:
             distinctExpMJD = True
             groupBy = 'expMJD'
-        self.simData = utils.getSimData(self.dbObj, sqlconstraint, self.dbCols,
+        self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
                                         tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
                                         groupBy=groupBy)
 
@@ -329,7 +329,7 @@ class MetricBundleGroup(object):
         # Query for the fieldData if we need it for the opsimFieldSlicer.
         needFields = [b.slicer.needsFields for b in self.currentBundleDict.itervalues()]
         if True in needFields:
-            self.fieldData = utils.getFieldData(self.dbObj, sqlconstraint)
+            self.fieldData = utils.getFieldData(self.dbObj, constraint)
         else:
             self.fieldData = None
 
@@ -338,8 +338,8 @@ class MetricBundleGroup(object):
         identified by 'compatibleList' keys.
 
         A compatible list of MetricBundles is a subset of the currentBundleDict.
-        The currentBundleDict == set of MetricBundles with the same sqlconstraint.
-        The compatibleBundles == set of MetricBundles with the same sqlconstraint, the same
+        The currentBundleDict == set of MetricBundles with the same constraint.
+        The compatibleBundles == set of MetricBundles with the same constraint, the same
         slicer, the same maps applied to the slicer, and stackers which do not clobber each other's data.
 
         This is where the work of calculating the metric values is done.
@@ -463,8 +463,8 @@ class MetricBundleGroup(object):
             MetricBundle. Usually this should be True, as summary metrics are generally
             intended to run on the simpler data produced by reduce metrics.
         """
-        for sqlconstraint in self.sqlconstraints:
-            self.setCurrent(sqlconstraint)
+        for constraint in self.constraints:
+            self.setCurrent(constraint)
             self.reduceCurrent(updateSummaries=updateSummaries)
 
     def reduceCurrent(self, updateSummaries=True):
@@ -506,8 +506,8 @@ class MetricBundleGroup(object):
         Calculating all summary statistics, for all MetricBundles, at this
         point assumes that clearMemory was False.
         """
-        for sqlconstraint in self.sqlconstraints:
-            self.setCurrent(sqlconstraint)
+        for constraint in self.constraints:
+            self.setCurrent(constraint)
             self.summaryCurrent()
 
     def summaryCurrent(self):
@@ -541,10 +541,10 @@ class MetricBundleGroup(object):
             Close the matplotlib figures after they are saved to disk. If many figures are
             generated, closing the figures saves significant memory. Default True.
         """
-        for sqlconstraint in self.sqlconstraints:
+        for constraint in self.constraints:
             if self.verbose:
-                print 'Plotting figures with %s sqlconstraint now.' % (sqlconstraint)
-            self.setCurrent(sqlconstraint)
+                print 'Plotting figures with %s constraint now.' % (constraint)
+            self.setCurrent(constraint)
             self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
                              thumbnail=thumbnail, closefigs=closefigs)
 
@@ -584,8 +584,8 @@ class MetricBundleGroup(object):
 
         Saving all MetricBundles to disk at this point assumes that clearMemory was False.
         """
-        for sqlconstraint in self.sqlconstraints:
-            self.setCurrent(sqlconstraint)
+        for constraint in self.constraints:
+            self.setCurrent(constraint)
             self.writeCurrent()
 
     def writeCurrent(self):
@@ -602,7 +602,7 @@ class MetricBundleGroup(object):
     def readAll(self):
         """Attempt to read all MetricBundles from disk.
 
-        You must set the metrics/slicer/sqlconstraint/runName for a metricBundle appropriately;
+        You must set the metrics/slicer/constraint/runName for a metricBundle appropriately;
         then this method will search for files in the location self.outDir/metricBundle.fileRoot.
         Reads all the files associated with all metricbundles in self.bundleDict.
         """
@@ -637,7 +637,7 @@ class MetricBundleGroup(object):
                             # as they would have been made if you calculated the reduce metric from scratch.
                             # Perhaps update these metric reduce dictionaries after reading them in?
                             newmetricBundle = MetricBundle(metric=b.metric, slicer=b.slicer,
-                                                           sqlconstraint=b.sqlconstraint,
+                                                           constraint=b.constraint,
                                                            stackerList=b.stackerList, runName=b.runName,
                                                            metadata=b.metadata,
                                                            plotDict=b.plotDict, displayDict=b.displayDict,

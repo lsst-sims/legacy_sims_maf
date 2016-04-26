@@ -20,7 +20,7 @@ class MoSlicer(MoOrbits):
           - iterate over each orbit;
             - if Hrange is not None, for each orbit, iterate over Hrange.
         """
-        self.slicerName = 'MoSlicer'
+        self.slicerName = 'MoObjSlicer'
         # Read orbits (inherited from MoOrbits).
         self.readOrbits(orbitfile)
         self.slicePoints = {}
@@ -29,10 +29,10 @@ class MoSlicer(MoOrbits):
         self.Hrange = Hrange
         # And set the slicer shape/size.
         if self.Hrange is not None:
-            self.slicerShape = [self.nSso, len(Hrange)]
+            self.shape = [self.nSso, len(Hrange)]
             self.slicePoints['H'] = Hrange
         else:
-            self.slicerShape = [self.nSso, 1]
+            self.shape = [self.nSso, 1]
             self.slicePoints['H'] = self.orbits['H']
         # Set the rest of the slicePoint information once
         self.badval = 0
@@ -139,10 +139,13 @@ class MoSlicer(MoOrbits):
         else:
             return True
 
-    def write(self, filename, metricBundle):
+    def writeData(self, outfilename, metricValues, metricName='',
+                  simDataName='', constraint=None, metadata='', plotDict=None, displayDict=None):
         """
         Cheap and dirty write to disk.
+        Need to expand to include writing summary statistics to disk and info about slicer,
+        plus make it read-able.
         """
         #store = pd.HDFStore(filename+'.h5')
-        df = pd.DataFrame(metricBundle.metricValues)
-        df.to_csv(filename)
+        df = pd.DataFrame(metricValues)
+        df.to_csv(outfilename)

@@ -10,12 +10,14 @@ from lsst.sims.maf.stackers import AllMoStackers
 import lsst.sims.maf.utils as utils
 from lsst.sims.maf.plots import PlotHandler, BasePlotter
 
+from .metricBundle import MetricBundle
 
-class MoMetricBundle(object):
+class MoMetricBundle(MetricBundle):
     def __init__(self, metric, slicer, constraint=None,
                  runName='opsim', metadata=None,
                  fileRoot=None,
                  plotDict=None, plotFuncs=None,
+                 displayDict=None,
                  childMetrics=None,
                  summaryMetrics=None):
         """
@@ -26,101 +28,63 @@ class MoMetricBundle(object):
         if constraint == '':
             constraint = None
         self.constraint = constraint
-        # For compatibility with plotHandler/etc until we reconcile this better.
-        self.sqlconstraint = constraint
-        if self.sqlconstraint is None:
-            self.sqlconstraint = ''
+        # Add the summary stats, if applicable.
+        self.setSummaryMetrics(summaryMetrics)
+        # Set the provenance/metadata.
         self.runName = runName
         self._buildMetadata(metadata)
-        # Set output file root name.
-        self._buildFileRoot(fileRoot)
-        self.plotDict = {'units':'@H'}
-        self.setPlotDict(plotDict)
+        # Build the output filename root if not provided.
+        if fileRoot is not None:
+            self.fileRoot = fileRoot
+        else:
+            self._buildFileRoot()
+        # Set the plotting classes/functions.
         self.setPlotFuncs(plotFuncs)
-        self.setSummaryMetrics(summaryMetrics)
+        # Set the plotDict and displayDicts.
+        self.plotDict = {'units': '@H'}
+        self.setPlotDict(plotDict)
+        # Update/set displayDict.
+        self.displayDict = {}
+        self.setDisplayDict(displayDict)
+        # Set the list of child metrics.
         self.setChildBundles(childMetrics)
-        # Set up metric value storage.
+        # This is where we store the metric values and summary stats.
         self.metricValues = None
         self.summaryValues = None
 
-    def _buildFileRoot(self, fileRoot=None):
+    def _resetMetricBundle(self):
+        """Reset all properties of MetricBundle.
         """
-        Build an auto-generated output filename root (i.e. minus the plot type or .npz ending).
-        """
-        if fileRoot is None:
-            # Build basic version.
-            self.fileRoot = '_'.join([self.runName, self.metric.name, self.metadata])
-        else:
-            self.fileRoot = fileRoot
-        # Sanitize output name if needed.
-        self.fileRoot = utils.nameSanitize(self.fileRoot)
+        self.metric = None
+        self.slicer = None
+        self.constraint = None
+        self.summaryMetrics = []
+        self.plotFuncs = []
+        self.runName = 'opsim'
+        self.metadata = ''
+        self.dbCols = None
+        self.fileRoot = None
+        self.plotDict = {}
+        self.displayDict = {}
+        self.childMetrics = None
+        self.metricValues = None
+        self.summaryValues = None
 
     def _buildMetadata(self, metadata):
+        """If no metadata is provided, auto-generate it from the obsFile + constraint.
         """
-        Combine any provided metadata and constraint.
-        """
-        # Use obsfile name for metadata if none provided.
-        if metadata is not None:
+        if metadata is None:
+            self.metadata = self.slicer.obsfile.replace('.txt', '').replace('.dat', '')
+            self.metadata = self.metadata.replace('_obs', '').replace('_allObs', '')
+            # And modify by constraint.
+            if self.constraint is not None:
+                self.metadata += ' ' + self.constraint
+        else:
             self.metadata = metadata
-        else:
-            self.metadata = self.slicer.obsfile.replace('.txt', '').replace('_allObs', '').replace('.dat', '')
-        # And modify by constraint.
-        if self.constraint is not None:
-            self.metadata += ' ' + self.constraint
 
-    def _setupMetricValues(self):
-        """
-        Set up the numpy masked array to store the metric value data.
-        """
-        dtype = self.metric.metricDtype
-        # Can't store some mask values in an int array.
-        if dtype == 'int':
-            dtype = 'float'
-        self.metricValues = ma.MaskedArray(data = np.empty(self.slicer.slicerShape, dtype),
-                                            mask = np.zeros(self.slicer.slicerShape, 'bool'),
-                                            fill_value= self.slicer.badval)
-
-    def setSummaryMetrics(self, summaryMetrics):
-        """
-        Set (or reset) the summary metrics for the metricbundle.
-        """
-        if summaryMetrics is not None:
-            if isinstance(summaryMetrics, BaseMoMetric):
-                self.summaryMetrics = [summaryMetrics]
-            else:
-                self.summaryMetrics = []
-                for s in summaryMetrics:
-                    if not isinstance(s, BaseMoMetric):
-                        raise ValueError('SummaryStats must only contain instantiated moving object metric objects')
-                    self.summaryMetrics.append(s)
-        else:
-            self.summaryMetrics = []
-
-    def setPlotDict(self, plotDict):
-        """
-        Set or update any property of plotDict.
-        """
-        # Don't auto-generate anything here - the plotHandler does it.
-        if plotDict is not None:
-            self.plotDict.update(plotDict)
-
-    def setPlotFuncs(self, plotFuncs=None):
-        """
-        Set or reset the plotting functions.
-        Default is to use all the plotFuncs associated with a slicer.
-        """
-        if plotFuncs is not None:
-            if plotFuncs is isinstance(plotFuncs, BasePlotter):
-                self.plotFuncs = [plotFuncs]
-            else:
-                self.plotFuncs = []
-                for pFunc in plotFuncs:
-                    if not isinstance(pFunc, BasePlotter):
-                        raise ValueError('plotFuncs should contain instantiated lsst.sims.maf.plotter objects.')
-                    self.plotFuncs.append(pFunc)
-        else:
-            # Moving object slicers keep instantiated plotters in the self.slicer.plotFuncs.
-            self.plotFuncs = [pFunc for pFunc in self.slicer.plotFuncs]
+    def _findReqCols(self):
+        # Doesn't quite work the same way yet. No stacker list, for example.
+        raise NotImplementedError
 
     def setChildBundles(self, childMetrics=None):
         """
@@ -156,47 +120,8 @@ class MoMetricBundle(object):
                                                       self.runName, self.constraint, self.metadata, None)
                     resultsDb.updateSummaryStat(metricId, summaryName=summaryName, summaryValue=summaryVal)
 
-    def plot(self, plotHandler=None, plotFunc=None, outfileSuffix=None, savefig=False):
-        """
-        Create all plots available from the slicer. plotHandler holds the output directory info, etc.
-        """
-        # Generate a plotHandler if none was set.
-        if plotHandler is None:
-            plotHandler = PlotHandler(savefig=savefig)
-        # Make plots.
-        if plotFunc is not None:
-            if isinstance(plotFunc, BasePlotter):
-                plotFunc = plotFunc
-            else:
-                plotFunc = plotFunc()
-
-        plotHandler.setMetricBundles([self])
-        # The plotDict will be automatically accessed when the plotHandler calls the plotting method.
-        madePlots = {}
-        if plotFunc is not None:
-            # We haven't updated plotHandler to know about these kinds of plots yet.
-            # and we want to automatically set some values for the ylabel for metricVsH.
-            tmpDict = {}
-            if plotFunc.plotType == 'MetricVsH':
-                if 'ylabel' not in self.plotDict:
-                    tmpDict['ylabel'] = self.metric.name
-            fignum = plotHandler.plot(plotFunc, plotDicts=tmpDict, outfileSuffix=outfileSuffix)
-            madePlots[plotFunc.plotType] = fignum
-        else:
-            for plotFunc in self.plotFuncs:
-                # We haven't updated plotHandler to know about these kinds of plots yet.
-                # and we want to automatically set some values for the ylabel for metricVsH.
-                tmpDict = {}
-                if plotFunc.plotType == 'MetricVsH':
-                    if 'ylabel' not in self.plotDict:
-                        tmpDict['ylabel'] = self.metric.name
-                fignum = plotHandler.plot(plotFunc, plotDicts=tmpDict, outfileSuffix=outfileSuffix)
-                madePlots[plotFunc.plotType] = fignum
-        return madePlots
-
-    def write(self):
-        # This doesn't really do the full job yet.
-        self.slicer.write(self.fileRoot, self)
+    def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
+        raise NotImplementedError
 
 
 ####
@@ -218,8 +143,7 @@ class MoMetricBundleGroup(object):
         self.constraints = list(set([b.constraint for b in bundleDict.values()]))
 
     def _setCurrent(self, constraint):
-        """
-        Private utility to set the currentBundleDict (i.e. a set of metricBundles with the same constraint).
+        """Private utility to set the currentBundleDict (i.e. set of metricBundles with the same constraint).
         """
         self.currentBundleDict = {}
         for k, b in self.bundleDict.iteritems():
@@ -227,8 +151,8 @@ class MoMetricBundleGroup(object):
                 self.currentBundleDict[k] = b
 
     def runCurrent(self, constraint):
-        """
-        Calculate the metric values for set of (parent and child) bundles using the same constraint and slicer.
+        """Calculate the metric values for set of (parent and child) bundles,
+        using the same constraint and slicer.
         """
         # Identify the observations which are relevant for this constraint.
         self.slicer.subsetObs(constraint)
@@ -312,3 +236,23 @@ class MoMetricBundleGroup(object):
         for constraint in self.constraints:
             self._setCurrent(constraint)
             self.summaryCurrent()
+
+    def writeAll(self):
+        """Save all the MetricBundles to disk.
+
+        Saving all MetricBundles to disk at this point assumes that clearMemory was False.
+        """
+        for constraint in self.constraints:
+            self.setCurrent(constraint)
+            self.writeCurrent()
+
+    def writeCurrent(self):
+        """Save all the MetricBundles in the currently active set to disk.
+        """
+        if self.verbose:
+            if self.saveEarly:
+                print 'Re-saving metric bundles.'
+            else:
+                print 'Saving metric bundles.'
+        for b in self.currentBundleDict.itervalues():
+            b.write(outDir=self.outDir, resultsDb=self.resultsDb)
