@@ -27,4 +27,4 @@ if __name__ == '__main__':
     else:
         obsFile = args.obsFile
 
-    runMoObs(args.orbitFile, outFile, args.opsimDb, tstep=args.tStep, useCamera=True)
+    runMoObs(args.orbitFile, obsFile, args.opsimDb, tstep=args.tStep, useCamera=True)
