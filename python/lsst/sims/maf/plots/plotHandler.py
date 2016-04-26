@@ -296,6 +296,7 @@ class PlotHandler(object):
                 ylabel = mB.metric.name + ' (' + mB.metric.units + ')'
             else:
                 ylabel = self.jointMetricNames
+            xlabel = 'H (mag)'
         else:
             if len(self.mBundles) == 1:
                 mB = self.mBundles[0]

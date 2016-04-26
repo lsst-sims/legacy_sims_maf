@@ -4,9 +4,9 @@ import warnings
 
 from .moMetrics import BaseMoMetric
 
-__all__ = ['ValueAtHMetric',
-            'MO_CompletenessMetric', 'MO_CumulativeCompletenessMetric',
-            'integrateOverH']
+__all__ = ['integrateOverH', 'ValueAtHMetric',
+           'MO_CompletenessMetric', 'MO_CumulativeCompletenessMetric']
+
 
 def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
     # Set expected H distribution.
@@ -15,6 +15,7 @@ def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
     # dn = cumulative size distribution (number in this bin and brighter)
     intVals = np.cumsum(Mvalues*dndh)/np.cumsum(dndh)
     return intVals
+
 
 class ValueAtHMetric(BaseMoMetric):
     """
@@ -36,16 +37,21 @@ class ValueAtHMetric(BaseMoMetric):
             # Hvals matched the points where the metric values were calculated (clone H distribution).
             eps = 1.0e-6
             # Hvals is an array used for each metric value,
-            #  we have to pick out the particular metricValues to use.
+            # we have to pick out the particular metricValues to use.
             diffs = np.abs(self.Hmark - Hvals)
             Hidx = np.where(diffs == diffs.min())[0]
-            result = metricVals.swapaxes(0,1)[Hidx]
+            value = metricVals.swapaxes(0,1)[Hidx]
             Hmark = Hvals[Hidx]
             self.name = 'Value At H=%.1f' %(Hmark)
         else:
             # We have a range of metric values, one per Hval.
-            result = np.interpolate([self.Hmark], Hvals, metricVals.swapaxes(0, 1))
-        return result, Hmark
+            value = np.interpolate([self.Hmark], Hvals, metricVals.swapaxes(0, 1))
+        # Combine Hmark and Value into a structured array to match resultsDB expectations.
+        summaryVal = np.empty(1, dtype=[('name', '|S20'), ('value', float)])
+        summaryVal['name'] = self.name
+        summaryVal['value'] = value
+        return summaryVal
+
 
 class MO_CompletenessMetric(BaseMoMetric):
     """
@@ -87,7 +93,11 @@ class MO_CompletenessMetric(BaseMoMetric):
             n_found, b = np.histogram(discoveriesH[0][condition], bins)
             completeness = n_found.astype(float) / n_all.astype(float)
             completeness = np.where(n_all==0, 0, completeness)
-        return completeness, Hvals
+        summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
+        summaryVal['value'] = completeness
+        for i, Hval in enumerate(Hvals):
+            summaryVal['name'][i] = 'H = %f' % (Hval)
+        return summaryVal
 
 
 class MO_CumulativeCompletenessMetric(BaseMoMetric):
@@ -132,4 +142,8 @@ class MO_CumulativeCompletenessMetric(BaseMoMetric):
             completeness = n_found.astype(float) / n_all.astype(float)
             completeness = np.where(n_all==0, 0, completeness)
         completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
-        return completenessInt, Hvals
+        summaryVal = np.empty(len(completenessInt), dtype=[('name', '|S20'), ('value', float)])
+        summaryVal['value'] = completenessInt
+        for i, Hval in enumerate(Hvals):
+            summaryVal['name'][i] = 'H >= %f' % (Hval)
+        return summaryVal
