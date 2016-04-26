@@ -22,3 +22,4 @@ python/lsst/sims/maf/version.py
 op*_sqlite.db
 *maf_config_asRan.py
 *~
+.idea/*
