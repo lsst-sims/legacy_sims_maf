@@ -82,8 +82,8 @@ def setupMetrics(slicer, runName=None, metadata='', albedo=None, Hmark=None):
 def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', plotDict={}):
     # Make a 'mock' metric bundle from a bundle which had the MO_Completeness or MO_CumulativeCompleteness
     # summary metrics run. This lets us use a normal plotHandler to generate combined plots.
-    completeness = ma.MaskedArray(data=bundle.summaryValues[summaryName][0],
-                                  mask=np.zeros(len(bundle.summaryValues[summaryName][0])),
+    completeness = ma.MaskedArray(data=bundle.summaryValues[summaryName]['value'],
+                                  mask=np.zeros(len(bundle.summaryValues[summaryName]['value'])),
                                   fill_value=0)
     mb = mmb.MoMetricBundle(metrics.MO_CompletenessMetric(metricName=summaryName),
                             slicer, constraint=None,
@@ -156,24 +156,45 @@ def runMetrics(allBundles, outDir):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run moving object metrics for a particular opsim run.")
-    parser.add_argument("--opsimRun", type=str, help="Name of opsim run")
-    parser.add_argument("--outDir", type=str, default='.', help="Output directory for moving object metrics.")
     parser.add_argument("--orbitFile", type=str, help="File containing the moving object orbits.")
-    parser.add_argument("--obsFile", type=str, help="File containing the observations of the moving objects.")
+    parser.add_argument("--obsFile", type=str,
+                        help="File containing the observations of the moving objects.")
+    parser.add_argument("--opsimRun", type=str, default=None,
+                        help="Name of opsim run. Will attempt to extract from obsFile if not specified.")
+    parser.add_argument("--outDir", type=str, default='.',
+                        help="Output directory for moving object metrics. Default '.'")
     parser.add_argument("--hMin", type=float, default=5.0, help="Minimum H value. Default 5.")
     parser.add_argument("--hMax", type=float, default=27.0, help="Maximum H value. Default 27.")
     parser.add_argument("--hStep", type=float, default=0.25, help="Stepsizes in H values.")
-    parser.add_argument("--metadata", type=str, default='', help="Base string to add to all metric metadata.")
+    parser.add_argument("--metadata", type=str, default='',
+                        help="Base string to add to all metric metadata.")
     parser.add_argument("--albedo", type=float, default=None,
                         help="Albedo value, to add diameters to upper scales on plots. Default None.")
     parser.add_argument("--hMark", type=float, default=None,
                         help="Add vertical lines at H=hMark on plots. Default None.")
     args = parser.parse_args()
 
-    Hrange = np.arange(args.hMin, args.hMax+args.hStep, args.hStep)
+    if args.orbitFile is None:
+        print('Must specify an orbitFile')
+        exit()
+    if args.obsFile is None:
+        print('Must specify an obsFile')
+        exit()
+    if args.opsimRun is None:
+        if len(args.obsFile.split('__')) == 2:
+            args.opsimRun = args.obsFile.split('__')[0]
+        else:
+            args.opsimRun = '_'.join(args.obsFile.split('_')[0:2])
+        print('opsimRun name was not specified, using %s' % (args.opsimRun))
+
+    print('Output directory %s' % (args.outDir))
+    if not (os.path.isdir(args.outDir)):
+        os.makedirs(args.outDir)
+
+    Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
     slicer = readObservations(args.orbitFile, args.obsFile, Hrange)
 
     bundleDict = setupMetrics(slicer, runName=args.opsimRun, metadata=args.metadata,
                               albedo=args.albedo, Hmark=args.hMark)
 
-    runMetrics(bundleDict, args.opsimRun)
+    runMetrics(bundleDict, args.outDir)

@@ -23,7 +23,7 @@ if __name__ == '__main__':
     orbitbase = '.'.join(os.path.split(args.orbitFile)[-1].split('.')[:-1])
     opsimRun = os.path.split(args.opsimDb)[-1].replace('_sqlite.db', '')
     if args.obsFile is None:
-        obsFile = os.path.join(args.outDir, '%s_%s_obs.txt' % (opsimRun, orbitbase))
+        obsFile = os.path.join(args.outDir, '%s__%s_obs.txt' % (opsimRun, orbitbase))
     else:
         obsFile = args.obsFile
 
