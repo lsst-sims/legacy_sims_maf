@@ -255,7 +255,8 @@ class PlotHandler(object):
         """
         constraints = set()
         for mB in self.mBundles:
-            constraints.add(mB.constraint)
+            if mB.constraint is not None:
+                constraints.add(mB.constraint)
         self.constraints = '; '.join(constraints)
 
     def _buildTitle(self):
@@ -352,14 +353,15 @@ class PlotHandler(object):
             if 'color' in mB.plotDict:
                 color = mB.plotDict['color']
             else:
-                # If the filter is part of the sql constraint, we'll
-                #  try to use that first.
-                if 'filter' in mB.constraint:
-                    vals = mB.constraint.split('"')
-                    for v in vals:
-                        if len(v) == 1:
-                            # Guess that this is the filter value
-                            color = self.filtercolors[v]
+                if mB.constraint is not None:
+                    # If the filter is part of the sql constraint, we'll
+                    #  try to use that first.
+                    if 'filter' in mB.constraint:
+                        vals = mB.constraint.split('"')
+                        for v in vals:
+                            if len(v) == 1:
+                                # Guess that this is the filter value
+                                color = self.filtercolors[v]
                 else:
                     color = 'b'
             colors.append(color)
