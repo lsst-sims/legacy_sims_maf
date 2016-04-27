@@ -372,7 +372,7 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
     maxFraction = np.zeros(len(bins), float)
     Hidx = 0
     for i, bin in enumerate(bins):
-        b = allBundles[obj]['ActivityPeriod'][bin]
+        b = allBundles['ActivityPeriod'][bin]
         meanFraction[i] = np.mean(b.metricValues.swapaxes(0, 1)[Hidx])
         minFraction[i] = np.min(b.metricValues.swapaxes(0, 1)[Hidx])
         maxFraction[i] = np.max(b.metricValues.swapaxes(0, 1)[Hidx])
