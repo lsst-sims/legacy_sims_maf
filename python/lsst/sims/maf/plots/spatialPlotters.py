@@ -101,9 +101,16 @@ class HealpixSkyMap(BasePlotter):
                 clims = [metricValue.compressed().min(), metricValue.compressed().max()]
             else:
                 clims = [-1, 1]
-            if clims[0] == clims[1]:
-                clims[0] = clims[0] - 1
-                clims[1] = clims[1] + 1
+        if clims[0] == clims[1]:
+            clims[0] = clims[0] - 1
+            clims[1] = clims[1] + 1
+        # Avoid trying to log scale with zero as min
+        if (norm == 'log') & (clims[0] == 0):
+            above = metricValue[np.where(metricValue > 0)]
+            if np.size(above) > 0:
+                clims[0] = above.min()
+            else:
+                clims[0] += 0.1
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
                     min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
                     cmap=cmap, norm=norm, fig=fig.number)
