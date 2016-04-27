@@ -361,7 +361,7 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
     plt.xlabel('Length of activity (days)')
     plt.ylabel('Chance of detecting activity lasting X days')
     plt.title('Chances of detecting activity (for H=%.1f %s)' % (b.slicer.Hrange[Hidx],
-                                                                 metadata)
+                                                                 metadata))
     plt.grid()
     plt.savefig(os.path.join(outDir, '%s_%s_activityTime.pdf' % (b.runName, metadata)),
                 format='pdf', dpi=600)
@@ -382,7 +382,7 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
     plt.plot(bins / 360., maxFraction, 'g--', label='Max')
     plt.xlabel('Length of activity (fraction of period)')
     plt.ylabel('Chance of detecting activity lasting X/Period')
-    plt.title('Chances of detecting activity (for H=%.1f %s)' % (b.slicer.Hrange[Hidx], metadata)
+    plt.title('Chances of detecting activity (for H=%.1f %s)' % (b.slicer.Hrange[Hidx], metadata))
     plt.grid()
     plt.savefig(os.path.join(outDir, '%s_%s_activityPeriod.pdf' % (b.runName, metadata)),
                 format='pdf', dpi=600)
