@@ -4,8 +4,8 @@ import warnings
 
 from .moMetrics import BaseMoMetric
 
-__all__ = ['integrateOverH', 'ValueAtHMetric',
-           'MO_CompletenessMetric', 'MO_CumulativeCompletenessMetric']
+__all__ = ['integrateOverH', 'ValueAtHMetric', 'MeanValueAtHMetric',
+           'MoCompletenessMetric', 'MoCumulativeCompletenessMetric']
 
 
 def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
@@ -52,8 +52,43 @@ class ValueAtHMetric(BaseMoMetric):
         summaryVal['value'] = value
         return summaryVal
 
+class MeanValueAtHMetric(BaseMoMetric):
+    """
+    Return the value of a metric at a given H.
+    """
+    def __init__(self, Hmark=22, **kwargs):
+        metricName = 'Mean Value At H=%.1f' %(Hmark)
+        super(MeanValueAtHMetric, self).__init__(metricName=metricName, **kwargs)
+        self.Hmark = Hmark
 
-class MO_CompletenessMetric(BaseMoMetric):
+    def run(self, metricVals, Hvals):
+        # Check if desired H value is within range of H values.
+        if (self.Hmark < Hvals.min()) or (self.Hmark > Hvals.max()):
+            warnings.warn('Desired H value of metric outside range of provided H values.')
+            return None
+        nHvals = len(Hvals)
+        nHMetricVals = metricVals.shape[1]
+        if nHvals == nHMetricVals:
+            # Hvals matched the points where the metric values were calculated (clone H distribution).
+            eps = 1.0e-6
+            # Hvals is an array used for each metric value,
+            # we have to pick out the particular metricValues to use.
+            diffs = np.abs(self.Hmark - Hvals)
+            Hidx = np.where(diffs == diffs.min())[0]
+            value = np.mean(metricVals.swapaxes(0,1)[Hidx])
+            Hmark = Hvals[Hidx]
+            self.name = 'Mean Value At H=%.1f' %(Hmark)
+        else:
+            # We have a range of metric values, one per Hval.
+            value = np.interpolate([self.Hmark], Hvals, np.mean(metricVals.swapaxes(0, 1)))
+        # Combine Hmark and Value into a structured array to match resultsDB expectations.
+        summaryVal = np.empty(1, dtype=[('name', '|S20'), ('value', float)])
+        summaryVal['name'] = self.name
+        summaryVal['value'] = value
+        return summaryVal
+
+
+class MoCompletenessMetric(BaseMoMetric):
     """
     Take the discoveryChances metric results and turn it into
     completeness estimate (relative to the entire population).
@@ -61,7 +96,7 @@ class MO_CompletenessMetric(BaseMoMetric):
     """
     def __init__(self, requiredChances=1, nbins=20, minHrange=1.0,
                  metricName='Completeness', **kwargs):
-        super(MO_CompletenessMetric, self).__init__(metricName=metricName, **kwargs)
+        super(MoCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
         self.units = '@ H'
         self.requiredChances = requiredChances
         # If H is not a cloned distribution, then we need to specify how to bin these values.
@@ -100,7 +135,7 @@ class MO_CompletenessMetric(BaseMoMetric):
         return summaryVal
 
 
-class MO_CumulativeCompletenessMetric(BaseMoMetric):
+class MoCumulativeCompletenessMetric(BaseMoMetric):
     """
     Take the discoveryChances metric results and turn it into
     completeness estimate (relative to the entire population).
@@ -108,7 +143,7 @@ class MO_CumulativeCompletenessMetric(BaseMoMetric):
     """
     def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, Hindex=0.3,
                  metricName='CumulativeCompleteness', **kwargs):
-        super(MO_CumulativeCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
+        super(MoCumulativeCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
         self.units = '<= H'
         self.requiredChances = requiredChances
         # If H is not a cloned distribution, then we need to specify how to bin these values.

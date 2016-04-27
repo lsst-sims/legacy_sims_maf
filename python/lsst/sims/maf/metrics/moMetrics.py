@@ -283,10 +283,11 @@ class Discovery_TimeMetric(BaseMoMetric):
     """
     Returns the time of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, tStart=None, **kwargs):
         super(Discovery_TimeMetric, self).__init__(**kwargs)
         self.parentMetric = parentDiscoveryMetric
         self.i = i
+        self.tStart = tStart
 
     def run(self, ssoObs, orb, Hval, metricValues):
         """
@@ -295,7 +296,10 @@ class Discovery_TimeMetric(BaseMoMetric):
         if self.i>=len(metricValues['start']):
             return 0
         startIdx = metricValues['start'][self.i]
-        return ssoObs[self.expMJDCol][startIdx]
+        tDisc = ssoObs[self.expMJDCol][startIdx]
+        if self.tStart is not None:
+            tDisc = tDisc - self.tStart
+        return tDisc
 
 class Discovery_RADecMetric(BaseMoMetric):
     """
@@ -349,7 +353,7 @@ class ActivityOverTimeMetric(BaseMoMetric):
         self.surveyYears = surveyYears
         self.windowBins = np.arange(0, self.surveyYears*365 + self.window/2.0, self.window)
         self.nWindows = len(self.windowBins)
-        self.units = '%f Day Windows' %(self.window)
+        self.units = '%.1f Day Windows' %(self.window)
 
     def run(self, ssoObs, orb,  Hval):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
@@ -371,14 +375,15 @@ class ActivityOverPeriodMetric(BaseMoMetric):
     observations, in order to have a chance to detect activity.
     """
     def __init__(self, binsize, snrLimit=5,
-                 aCol='a', tPeriCol='tPeri', metricName=None, **kwargs):
+                 qCol='q', eCol='e', tPeriCol='tPeri', metricName=None, **kwargs):
         """
         @ binsize : size of orbit slice, in degrees.
         """
         if metricName is None:
             metricName = 'Chance of detecting activity in %.1f of the orbit' %(window)
         super(ActivityOverPeriodMetric, self).__init__(metricName=metricName, **kwargs)
-        self.aCol = aCol
+        self.qCol = qCol
+        self.eCol = eCol
         self.tPeriCol = tPeriCol
         self.snrLimit = snrLimit
         self.binsize = np.radians(binsize)
@@ -389,8 +394,9 @@ class ActivityOverPeriodMetric(BaseMoMetric):
     def run(self, ssoObs, orb, Hval):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
-        period = np.power(orb[self.aCol], 3./2.) * 365.25
-        anomaly = ((ssoObs[self.expMJDCol] - orb[self.tPeriCol]) / period) % (2*np.pi)
+        a = orb[self.qCol] / (1 - orb[self.eCol])
+        period = np.power(a, 3./2.) * 365.25
+        anomaly = ((ssoObs[self.expMJDCol] - orb[self.tPeriCol]) / period) % (2 * np.pi)
         if self.snrLimit is not None:
             vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
         else:
