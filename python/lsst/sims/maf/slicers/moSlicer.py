@@ -1,28 +1,37 @@
 import os
 import numpy as np
+import numpy.ma as ma
 import pandas as pd
 
+from .baseSlicer import BaseSlicer
 from lsst.sims.maf.plots.moPlotters import MetricVsH, MetricVsOrbit
-from lsst.sims.maf.objUtils import MoOrbits
 
-__all__ = ['MoSlicer']
+from lsst.sims.movingObjects import Orbits
+
+__all__ = ['MoObjSlicer']
 
 
-class MoSlicer(MoOrbits):
+class MoObjSlicer(BaseSlicer):
+    """ Slice moving object _observations_, per object and optionally clone/per H value.
 
-    def __init__(self, orbitfile, Hrange=None):
-        """
-        Instantiate the MoSlicer object.
+    Iteration over the MoObjSlicer will go as:
+    - iterate over each orbit;
+    - if Hrange is not None, for each orbit, iterate over Hrange.
+    """
+    def __init__(self, verbose=True, badval=0):
+        super(MoObjSlicer, self).__init__(verbose=verbose, badval=badval)
+        # Set default plotFuncs.
+        self.plotFuncs = [MetricVsH(),
+                          MetricVsOrbit(xaxis='q', yaxis='e'),
+                          MetricVsOrbit(xaxis='q', yaxis='inc')]
 
-        orbitfile = the file with the orbit information on the objects.
-
-        Iteration over the MoSlicer will go as:
-          - iterate over each orbit;
-            - if Hrange is not None, for each orbit, iterate over Hrange.
-        """
-        self.slicerName = 'MoObjSlicer'
-        # Read orbits (inherited from MoOrbits).
-        self.readOrbits(orbitfile)
+    def readOrbits(self, orbitFile, Hrange, delim=None, skiprows=None):
+        # Use sims_movingObjects to read orbit files.
+        orb = Orbits()
+        orb.readOrbits(orbitFile, delim=delim, skiprows=skiprows)
+        self.orbits = orb.orbits
+        # Then go on as previously. Need to refactor this into 'setupSlicer' style.
+        self.nSso = len(self.orbits)
         self.slicePoints = {}
         self.slicePoints['orbits'] = self.orbits
         # See if we're cloning orbits.
@@ -35,12 +44,7 @@ class MoSlicer(MoOrbits):
             self.shape = [self.nSso, 1]
             self.slicePoints['H'] = self.orbits['H']
         # Set the rest of the slicePoint information once
-        self.badval = 0
-        # Set default plotFuncs.
-        self.plotFuncs = [MetricVsH(),
-                          MetricVsOrbit(xaxis='q', yaxis='e'),
-                          MetricVsOrbit(xaxis='q', yaxis='inc')]
-
+        self.nslice = self.shape[0] * self.shape[1]
 
     def readObs(self, obsfile):
         """
@@ -124,28 +128,32 @@ class MoSlicer(MoOrbits):
         Evaluate if two slicers are equal.
         """
         result = False
-        if isinstance(otherSlicer, MoSlicer):
+        if isinstance(otherSlicer, MoObjSlicer):
             if otherSlicer.obsfile == self.obsfile:
                 if np.all(otherSlicer.slicePoints['H'] == self.slicePoints['H']):
                     result = True
         return result
 
-    def __ne__(self, otherSlicer):
-        """
-        Evaluate if two slicers are not equal.
-        """
-        if self == otherSlicer:
-            return False
-        else:
-            return True
-
     def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName='', constraint=None, metadata='', plotDict=None, displayDict=None):
+                  simDataName='', constraint=None, metadata='',
+                  plotDict=None, displayDict=None):
         """
         Cheap and dirty write to disk.
         Need to expand to include writing summary statistics to disk and info about slicer,
         plus make it read-able.
         """
-        #store = pd.HDFStore(filename+'.h5')
-        df = pd.DataFrame(metricValues)
-        df.to_csv(outfilename)
+        df = pd.DataFrame(metricValues, columns=self.Hrange, index=None)
+        df.to_hdf(outfilename.replace('.npz', '.h5'), 'df_with_missing')
+
+    def readData(self, infilename):
+        "Cheap and dirty read."
+        slicer = MoObjSlicer()
+        df = pd.read_hdf(infilename, 'df_with_missing')
+        slicer.Hrange = df.columns.values
+        slicer.shape = [len(df.values), len(slicer.Hrange)]
+        slicer.orbits = None
+        metricValues = ma.MaskedArray(data=df.values,
+                                      mask=np.zeros(slicer.shape, 'bool'),
+                                      fill_value=slicer.badval)
+        metricValues.mask = np.where(np.isnan(df.values), 1, 0)
+        return metricValues, slicer
