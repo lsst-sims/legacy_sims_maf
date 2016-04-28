@@ -104,13 +104,17 @@ class HealpixSkyMap(BasePlotter):
         if clims[0] == clims[1]:
             clims[0] = clims[0] - 1
             clims[1] = clims[1] + 1
-        # Avoid trying to log scale where zero is in the range.
+        # Avoid trying to log scale when zero is in the range.
         if (norm == 'log') & ((clims[0] <= 0 <= clims[1]) | (clims[0] >= 0 >= clims[1])):
+            # Try something simple
             above = metricValue[np.where(metricValue > 0)]
-            if np.size(above) > 0:
-                clims[0] = above.min()
-            else:
-                clims[0] += 0.1
+            if len(above) > 0:
+                clims[0] = above.max()
+            # If still bad, give up and turn off norm
+            if ((clims[0] <= 0 <= clims[1]) | (clims[0] >= 0 >= clims[1])):
+                norm = None
+            warnings.warn("Using norm was set to log, but color limits pass through 0. Adjusting so plotting doesn't fail")
+            
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
                     min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
                     cmap=cmap, norm=norm, fig=fig.number)
