@@ -11,7 +11,7 @@ class TestMoMetrics1(unittest.TestCase):
         # Note that ssoObs is a numpy recarray.
         # The expected set of columns in ssoObs is:
         cols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
-                'visitExpTime', 'finSeeing', 'fiveSigmaDepth', 'solarElong',
+                'visitExpTime', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong',
                 'delta', 'ra', 'dec', 'magV', 'time', 'dradt', 'ddecdt', 'phase', 'solarelon',
                 'velocity', 'magFilter', 'dmagColor', 'dmagTrail', 'dmagDetect']
         # And stackers will often add
@@ -86,7 +86,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         # Note that ssoObs is a numpy recarray.
         # The expected set of columns in ssoObs is:
         cols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
-                'visitExpTime', 'finSeeing', 'fiveSigmaDepth', 'solarElong',
+                'visitExpTime', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong',
                 'delta', 'ra', 'dec', 'magV', 'time', 'dradt', 'ddecdt', 'phase', 'solarelon',
                 'velocity', 'magFilter', 'dmagColor', 'dmagTrail', 'dmagDetect']
         # And stackers will often add
@@ -103,7 +103,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'), ('ecLon', '<f8'), ('ecLat', '<f8'),
                                                    ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'), ('magLimit', '<f8'), ('velocity', '<f8'),
                                                    ('SNR', '<f8'), ('vis', '<f8'), ('magFilter', '<f8'),
-                                                   ('fiveSigmaDepth', '<f8'), ('finSeeing', '<f8'), ('visitExpTime', '<f8'), ('dmagDetect', '<f8')]))
+                                                   ('fiveSigmaDepth', '<f8'), ('FWHMgeom', '<f8'), ('visitExpTime', '<f8'), ('dmagDetect', '<f8')]))
 
         ssoObs['time'] = times
         ssoObs['expMJD'] = times
@@ -121,7 +121,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         ssoObs['vis'] = np.zeros(len(times), dtype='float') + 1
         ssoObs['vis'][0:5] = 0
         ssoObs['velocity'] = np.random.rand(len(times))
-        ssoObs['finSeeing'] = np.ones(len(times), 'float')
+        ssoObs['FWHMgeom'] = np.ones(len(times), 'float')
         ssoObs['visitExpTime'] = np.ones(len(times), 'float') * 24.0
         self.ssoObs = ssoObs
         self.orb = np.recarray([len(times)], dtype=([('H', '<f8')]))
