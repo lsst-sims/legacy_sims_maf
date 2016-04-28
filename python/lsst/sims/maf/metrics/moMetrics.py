@@ -10,7 +10,8 @@ __all__ = ['BaseMoMetric', 'NObsMetric', 'NObsNoSinglesMetric',
            'Discovery_TimeMetric', 'Discovery_RADecMetric', 'Discovery_EcLonLatMetric',
            'ActivityOverTimeMetric', 'ActivityOverPeriodMetric',
            'DiscoveryChancesMetric', 'MagicDiscoveryMetric',
-           'HighVelocityMetric', 'HighVelocityNightsMetric']
+           'HighVelocityMetric', 'HighVelocityNightsMetric',
+           'LightcurveInversionMetric', 'ColorDeterminationMetric']
 
 
 class BaseMoMetric(BaseMetric):
@@ -21,8 +22,8 @@ class BaseMoMetric(BaseMetric):
                  appMagCol='appMag', m5Col='magLimit',
                  nightCol='night', expMJDCol='expMJD',
                  snrCol='SNR',  visCol='vis',
-                 raCol='ra', decCol='dec', seeingCol='finSeeing',
-                 expTimeCol='visitExpTime'):
+                 raCol='ra', decCol='dec', seeingCol='FWHMgeom',
+                 expTimeCol='visitExpTime', filterCol='filter'):
         # Set metric name.
         self.name = metricName
         if self.name is None:
@@ -42,6 +43,7 @@ class BaseMoMetric(BaseMetric):
         self.decCol = decCol
         self.seeingCol = seeingCol
         self.expTimeCol = expTimeCol
+        self.filterCol = filterCol
         self.colsReq = [self.appMagCol, self.m5Col,
                         self.nightCol, self.expMJDCol,
                         self.snrCol, self.visCol]
@@ -258,6 +260,7 @@ class Discovery_N_ChancesMetric(BaseMoMetric):
         nchances = metricValues['start'].size
         return nchances
 
+
 class Discovery_N_ObsMetric(BaseMoMetric):
     """
     Calculates the number of observations in the i-th discovery track.
@@ -278,6 +281,7 @@ class Discovery_N_ObsMetric(BaseMoMetric):
         endIdx = metricValues['end'][self.i]
         nobs = endIdx - startIdx
         return nobs
+
 
 class Discovery_TimeMetric(BaseMoMetric):
     """
@@ -300,6 +304,7 @@ class Discovery_TimeMetric(BaseMoMetric):
         if self.tStart is not None:
             tDisc = tDisc - self.tStart
         return tDisc
+
 
 class Discovery_RADecMetric(BaseMoMetric):
     """
@@ -583,3 +588,77 @@ class HighVelocityNightsMetric(BaseMoMetric):
         # Find the nights with at least nObsPerNight visits (this is already looking at only high velocity observations).
         nWithXObs = n[np.where(obsPerNight >= self.nObsPerNight)]
         return nWithXObs.size
+
+
+class LightcurveInversionMetric(BaseMoMetric):
+    """Identify objects which would have observations suitable to do lightcurve inversion.
+
+    This is roughly defined as objects which have more than nObs observations with SNR greater than snrLimit,
+    within nDays.
+    """
+    def __init__(self, nObs=100, snrLimit=20., nDays=5*365, **kwargs):
+        super(LightcurveInversionMetric, self).__init__(**kwargs)
+        self.nObs = nObs
+        self.snrLimit = snrLimit
+        self.nDays = nDays
+        self.badval = -666
+
+    def run(self, ssoObs, orb, Hval):
+        vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        if len(vis) < self.nObs:
+            return 0
+        nights = ssoObs[self.nightCol][vis]
+        ncounts = np.bincount(nights)
+        # ncounts covers the range = np.arange(nights.min(), nights.max() + 1, 1)
+        if self.nDays % 2 == 0:
+            lWindow = self.nDays / 2
+            rWindow = self.nDays / 2
+        else:
+            lWindow = int(self.nDays / 2)
+            rWindow = int(self.nDays / 2) + 1
+        found = 0
+        for i in xrange(lWindow, len(ncounts) - rWindow):
+            nobs = ncounts[i - lWindow:i + rWindow].sum()
+            if nobs > self.nObs:
+                found = 1
+                break
+        return found
+
+
+class ColorDeterminationMetric(BaseMoMetric):
+    """Identify objects which could have observations suitable to determine colors.
+
+    This is roughly defined as objects which have more than nPairs pairs of observations
+    with SNR greater than snrLimit, in bands bandOne and bandTwo, within nHours.
+    """
+    def __init__(self, nPairs=1, snrLimit=10, nHours=2.0, bOne='g', bTwo='r', **kwargs):
+        super(ColorDeterminationMetric, self).__init__(**kwargs)
+        self.nPairs = nPairs
+        self.snrLimit = snrLimit
+        self.nHours = nHours
+        self.bOne = bOne
+        self.bTwo = bTwo
+        self.badval = -666
+
+    def run(self, ssoObs, orb, Hval):
+        vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        if len(vis) < self.nPairs * 2:
+            return 0
+        bOneObs = np.where(ssoObs[self.filterCol][vis] == self.bOne)[0]
+        bTwoObs = np.where(ssoObs[self.filterCol][vis] == self.bTwo)[0]
+        timesbOne = ssoObs[self.expMJDCol][vis][bOneObs]
+        timesbTwo = ssoObs[self.expMJDCol][vis][bTwoObs]
+        if len(timesbOne) == 0 or len(timesbTwo) == 0:
+            return 0
+        dTime = self.nHours / 24.0
+        # Calculate the time between the closest pairs of observations.
+        inOrder = np.searchsorted(timesbOne, timesbTwo, 'right')
+        inOrder = np.where(inOrder - 1 > 0, inOrder - 1, 0)
+        dtPairs = timesbTwo - timesbOne[inOrder]
+        if len(np.where(dtPairs < dTime)[0]) >= self.nPairs:
+            found = 1
+        else:
+            found = 0
+        return found
+
+

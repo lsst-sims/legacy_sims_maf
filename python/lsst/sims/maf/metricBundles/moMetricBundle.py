@@ -26,7 +26,7 @@ def createEmptyMoMetricBundle():
     MoMetricBundle
         An empty metric bundle, configured with just the :class:`BaseMetric` and :class:`BaseSlicer`.
     """
-    return MoMetricBundle(BaseMetric(), BaseSlicer(), None)
+    return MoMetricBundle(BaseMoMetric(), MoObjSlicer(), None)
 
 
 class MoMetricBundle(MetricBundle):
@@ -149,7 +149,7 @@ class MoMetricBundle(MetricBundle):
     def read(self, filename):
         "Read metric data back into a metricBundle, as best as possible."
         if not os.path.isfile(filename):
-            raise NameError('%s not found' % filename)
+            raise IOError('%s not found' % filename)
         self._resetMetricBundle()
         # Must read the data using a moving object slicer.
         slicer = MoObjSlicer()

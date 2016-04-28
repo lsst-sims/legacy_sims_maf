@@ -524,20 +524,23 @@ class PlotHandler(object):
             plt.legend(loc=userPlotDicts[0]['legendloc'], fancybox=True, fontsize='smaller')
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
-            fig = plt.figure(fignum)
-            plotFile = outfile + '_' + plotType + '.' + self.figformat
-            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
-            if self.thumbnail:
-                thumbFile = 'thumb.' + outfile + '_' + plotType + '.png'
-                plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72)
-            # Save information about the file to the resultsDb.
-            if self.resultsDb:
-                metricId = self.resultsDb.updateMetric(self.jointMetricNames, self.slicer.slicerName,
-                                                       self.jointRunNames, self.constraints,
-                                                       self.jointMetadata, None)
-                # Add information to displays table (without overwriting previous information, if present).
-                displayDict = self._buildDisplayDict()
-                self.resultsDb.updateDisplay(metricId=metricId, displayDict=displayDict, overwrite=False)
-                # Add plot information to plot table.
-                self.resultsDb.updatePlot(metricId=metricId, plotType=plotType, plotFile=plotFile)
+            displayDict = self._buildDisplayDict()
+            self.saveFig(fignum, outfile, plotType, self.jointMetricNames, self.slicer.slicerName,
+                         self.jointRunNames, self.constraints, self.jointMetadata, displayDict)
         return fignum
+
+    def saveFig(self, fignum, outfileRoot, plotType, metricName, slicerName,
+                runName, constraint, metadata, displayDict=None):
+        fig = plt.figure(fignum)
+        plotFile = outfileRoot + '_' + plotType + '.' + self.figformat
+        fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
+        # Generate a png thumbnail.
+        if self.thumbnail:
+            thumbFile = 'thumb.' + outfileRoot + '_' + plotType + '.png'
+            plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72)
+        # Save information about the file to resultsDb.
+        if self.resultsDb:
+            metricId = self.resultsDb.updateMetric(metricName, slicerName, runName, constraint,
+                                                   metadata, None)
+            self.resultsDb.updateDisplay(metricId=metricId, displayDict=displayDict, overwrite=False)
+            self.resultsDb.updatePlot(metricId=metricId, plotType=plotType, plotFile=plotFile)

@@ -112,6 +112,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
                                     summaryMetrics=summaryMetrics)
         allBundles['discoveryChances'][md] = bundle
 
+    """
     # More complicated discovery metric, with child metrics.
     allBundles['discovery'] = {}
     for nyr in nyears:
@@ -195,6 +196,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
                                     plotDict=plotDict, plotFuncs=plotFuncs)
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
+    """
 
     allBundles['nObs'] = {}
     constraint = None
@@ -226,6 +228,9 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
     for w in windows:
         constraint = None
         md = metadata + ' activity lasting %.0f days' % w
+        plotDict = {'nxbins': 200, 'nybins': 200,
+                    'title': '%s: Chances of detecting %s' % (runName, md),
+                    'ylabel': 'Probability of detection per %.0f day window' % w}
         metricName = 'Chances of detecting activity lasting %.0f days' % w
         metric = metrics.ActivityOverTimeMetric(w, metricName=metricName)
         bundle = mmb.MoMetricBundle(metric, slicer, constraint,
@@ -237,6 +242,9 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
     for b in bins:
         constraint = None
         md = metadata + ' activity lasting %.2f of period' % (b/360.)
+        plotDict = {'nxbins': 200, 'nybins': 200,
+                    'title': '%s: Chances of detecting %s' % (runName, md),
+                    'ylabel': 'Probability of detection per %.2f deg window' % b}
         metricName = 'Chances of detecting activity lasting %.2f of the period' % (b/360.)
         metric = metrics.ActivityOverPeriodMetric(b, metricName=metricName)
         bundle = mmb.MoMetricBundle(metric, slicer, constraint,
@@ -244,24 +252,69 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
                                     plotDict=plotDict, plotFuncs=plotFuncs)
         allBundles['ActivityPeriod'][b] = bundle
 
+    allBundles['lightcurveInversion'] = {}
+    constraint = None
+    md = metadata
+    plotDict = {'nxbins': 200, 'nybins': 200,
+                'title': '%s: Fraction with potential lightcurve inversion %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.LightcurveInversionMetric(snrLimit=20, nObs=100, nDays=5*365)
+    bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                summaryMetrics=None)
+    allBundles['lightcurveInversion'][md] = bundle
+
+    allBundles['colorDetermination'] = {}
+    constraint = None
+    md = metadata + ' u-g color'
+    plotDict = {'nxbins': 200, 'nybins': 200,
+                'title': '%s: Fraction with potential u-g color measurement %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='u', bTwo='g')
+    bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                summaryMetrics=None)
+    allBundles['colorDetermination'][md] = bundle
+
+    constraint = None
+    md = metadata + ' g-r color'
+    plotDict = {'nxbins': 200, 'nybins': 200,
+                'title': '%s: Fraction with potential g-r color measurement %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='g', bTwo='r')
+    bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                summaryMetrics=None)
+    allBundles['colorDetermination'][md] = bundle
+
+    constraint = None
+    md = metadata + ' r-i color'
+    plotDict = {'nxbins': 200, 'nybins': 200,
+                'title': '%s: Fraction with potential r-i color measurement %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='r', bTwo='i')
+    bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                summaryMetrics=None)
+    allBundles['colorDetermination'][md] = bundle
+
+    constraint = None
+    md = metadata + ' i-z color'
+    plotDict = {'nxbins': 200, 'nybins': 200,
+                'title': '%s: Fraction with potential i-z color measurement %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='i', bTwo='z')
+    bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                summaryMetrics=None)
+    allBundles['colorDetermination'][md] = bundle
+
     return allBundles
-
-
-
-def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', plotDict={}):
-    # Make a 'mock' metric bundle from a bundle which had the MO_Completeness or MO_CumulativeCompleteness
-    # summary metrics run. This lets us use a normal plotHandler to generate combined plots.
-    completeness = ma.MaskedArray(data=bundle.summaryValues[summaryName]['value'],
-                                  mask=np.zeros(len(bundle.summaryValues[summaryName]['value'])),
-                                  fill_value=0)
-    plotDict = {}
-    plotDict.update(bundle.plotDict)
-    plotDict['label'] = bundle.metadata
-    mb = mmb.MoMetricBundle(metrics.MoCompletenessMetric(metricName=summaryName),
-                            bundle.slicer, constraint=None, metadata=bundle.metadata,
-                            runName=bundle.runName, plotDict=plotDict)
-    mb.metricValues = completeness
-    return mb
 
 
 def runMetrics(allBundles, outDir):
@@ -289,7 +342,24 @@ def runMetrics(allBundles, outDir):
     bg.plotAll()
     return allBundles, resultsDb
 
-def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
+
+def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness'):
+    # Make a 'mock' metric bundle from a bundle which had the MO_Completeness or MO_CumulativeCompleteness
+    # summary metrics run. This lets us use a normal plotHandler to generate combined plots.
+    completeness = ma.MaskedArray(data=bundle.summaryValues[summaryName]['value'],
+                                  mask=np.zeros(len(bundle.summaryValues[summaryName]['value'])),
+                                  fill_value=0)
+    plotDict = {}
+    plotDict.update(bundle.plotDict)
+    plotDict['label'] = bundle.metadata
+    mb = mmb.MoMetricBundle(metrics.MoCompletenessMetric(metricName=summaryName),
+                            bundle.slicer, constraint=None, metadata=bundle.metadata,
+                            runName=bundle.runName, plotDict=plotDict)
+    mb.metricValues = completeness
+    return mb
+
+
+def plotMoreMetrics(allBundles, outDir, resultsDb, metadata, Hmark):
     # Combine differential completeness summary values, over multiple years for discoveryChances.
     ph = plots.PlotHandler(outDir=outDir, savefig=True, resultsDb=resultsDb,
                            figformat='pdf', dpi=600, thumbnail=True)
@@ -306,7 +376,7 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
     plotDict = {'title': '%s Differential Completeness - %s' % (b.runName, b.metadata.split(',')[1]),
                 'ylabel': 'Completeness @ H', 'yMin': 0, 'yMax': 1,
                 'albedo': b.plotDict['albedo'], 'Hmark': b.plotDict['Hmark'],
-                'legendloc': 'upper right'}
+                'legendloc': 'lower left'}
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDict)
     plt.close()
 
@@ -322,9 +392,34 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
     plotDict = {'title': '%s Cumulative Completeness - %s' % (b.runName, b.metadata.split(',')[1]),
                 'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
                 'albedo': b.plotDict['albedo'], 'Hmark': b.plotDict['Hmark'],
-                'legendloc': 'upper right'}
+                'legendloc': 'lower left'}
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDict)
     plt.close()
+
+    # Plot the cumulative completeness as a function of years.
+    k = 'discoveryChances'
+    strategy = '3 pairs in 15 nights'
+    completeness_at_year = np.zeros(len(nyears), float)
+    b = allBundles[k]['%s year 10, %s' % (metadata, strategy)]
+    # Pick a point to 'count' the completeness at.
+    if Hmark is not None:
+        hIdx = np.abs(b.slicer.Hrange - Hmark).argmin()
+    else:
+        hIdx = int(len(b.slicer.Hrange) / 3)
+    for i, nyr in enumerate(nyears):
+        md = '%s year %d, %s' % (metadata, nyr, strategy)
+        b = allBundles[k][md]
+        completeness_at_year[i] = b.summaryValues['CumulativeCompleteness']['value'][hIdx]
+    fig = plt.figure()
+    plt.plot(nyears, completeness_at_year, label='%s H<=%.2f' % (metadata, b.slicer.Hrange[hIdx]))
+    plt.xlabel('Years into survey')
+    plt.ylabel('Completeness @ H <= %.2f' % (b.slicer.Hrange[hIdx]))
+    plt.title('Cumulative completeness as a function of time')
+    plt.legend(loc=(0.7, 0.1), fancybox=True, fontsize='smaller')
+    plotmetadata = 'years %s' % (' '.join(['%d' % nyr for nyr in nyears]))
+    filename = '%s_%s_CompletenessOverTime_%.2f' % (b.runName, metadata, b.slicer.Hrange[hIdx])
+    ph.saveFig(fig.number, filename, 'Completeness', 'Cumulative completeness as a function of time',
+               b.slicer.slicerName, b.runName, b.constraint, plotmetadata)
 
     # Plot all of the cumulative completeness values, for year 10, for different discovery strategies.
     plotbundles = []
@@ -340,7 +435,7 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
     plotDict = {'title': '%s Cumulative Completeness - %s' % (b.runName, b.metadata.split(',')[0]),
                 'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
                 'albedo': b.plotDict['albedo'], 'Hmark': b.plotDict['Hmark'],
-                'legendloc': 'upper right'}
+                'legendloc': 'lower left'}
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDict)
     plt.close()
 
@@ -354,17 +449,19 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
         meanFraction[i] = np.mean(b.metricValues.swapaxes(0, 1)[Hidx])
         minFraction[i] = np.min(b.metricValues.swapaxes(0, 1)[Hidx])
         maxFraction[i] = np.max(b.metricValues.swapaxes(0, 1)[Hidx])
-    plt.figure()
+    fig = plt.figure()
     plt.plot(windows, meanFraction, 'r', label='Mean')
     plt.plot(windows, minFraction, 'b:', label='Min')
     plt.plot(windows, maxFraction, 'g--', label='Max')
     plt.xlabel('Length of activity (days)')
-    plt.ylabel('Chance of detecting activity lasting X days')
+    plt.ylabel('Probability of detecting activity')
     plt.title('Chances of detecting activity (for H=%.1f %s)' % (b.slicer.Hrange[Hidx],
                                                                  metadata))
     plt.grid()
-    plt.savefig(os.path.join(outDir, '%s_%s_activityTime.pdf' % (b.runName, metadata)),
-                format='pdf', dpi=600)
+    plotmetadata = 'windows from %.1f to %.1f days' % (windows[0], windows[-1])
+    filename = '%s_%s_Activity_%s' % (b.runName, metadata, plotmetadata)
+    ph.saveFig(fig.number, filename, 'Activity', 'Chances of detecting Activity lasting X days',
+               b.slicer.slicerName, b.runName, b.constraint, plotmetadata)
 
     # Make a joint 'chance of detecting activity over period' plots, for the brightest objects.
     meanFraction = np.zeros(len(bins), float)
@@ -376,16 +473,19 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata):
         meanFraction[i] = np.mean(b.metricValues.swapaxes(0, 1)[Hidx])
         minFraction[i] = np.min(b.metricValues.swapaxes(0, 1)[Hidx])
         maxFraction[i] = np.max(b.metricValues.swapaxes(0, 1)[Hidx])
-    plt.figure()
+    fig = plt.figure()
     plt.plot(bins / 360., meanFraction, 'r', label='Mean')
     plt.plot(bins / 360., minFraction, 'b:', label='Min')
     plt.plot(bins / 360., maxFraction, 'g--', label='Max')
     plt.xlabel('Length of activity (fraction of period)')
-    plt.ylabel('Chance of detecting activity lasting X/Period')
-    plt.title('Chances of detecting activity (for H=%.1f %s)' % (b.slicer.Hrange[Hidx], metadata))
+    plt.ylabel('Probabilty of detecting activity')
+    plt.title('Chances of detecting activity (for H=%.1f %s)' % (b.slicer.Hrange[Hidx],
+                                                                                  metadata))
     plt.grid()
-    plt.savefig(os.path.join(outDir, '%s_%s_activityPeriod.pdf' % (b.runName, metadata)),
-                format='pdf', dpi=600)
+    plotmetadata = 'bins from %.2f to %.2f' % (bins[0], bins[-1])
+    filename = '%s_%s_Activity_%s' % (b.runName, metadata, plotmetadata)
+    ph.saveFig(fig.number, filename, 'Activity', 'Chances of detecting Activity lasting X of period',
+               b.slicer.slicerName, b.runName, b.constraint, plotmetadata)
 
     return
 
@@ -436,4 +536,4 @@ if __name__ == '__main__':
 
     allBundles, resultsDb = runMetrics(allBundles, args.outDir)
 
-    plotMoreMetrics(allBundles, args.outDir, resultsDb, args.metadata)
+    plotMoreMetrics(allBundles, args.outDir, resultsDb, args.metadata, args.hMark)

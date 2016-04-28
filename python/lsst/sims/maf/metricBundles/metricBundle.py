@@ -380,7 +380,7 @@ class MetricBundle(object):
            The file from which to read the metric bundle data.
         """
         if not os.path.isfile(filename):
-            raise NameError('%s not found' % filename)
+            raise IOError('%s not found' % filename)
 
         self._resetMetricBundle()
         # Set up a base slicer to read data (we don't know type yet).
