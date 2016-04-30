@@ -4,18 +4,15 @@ from __future__ import print_function, division
 
 import os
 import argparse
-import inspect
 import numpy as np
 import numpy.ma as ma
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
 # Needs MafSSO branch from sims_maf.
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metricBundles as mmb
@@ -24,14 +21,15 @@ import lsst.sims.maf.metricBundles as mmb
 # using make_movingObject_obs.py.
 
 nyears = [2, 4, 6, 8, 10]
-bins = np.arange(5, 95, 10.)
-windows = np.arange(1, 200, 15)
+bins = np.arange(5, 95, 10.)  # binsize to split period (360deg)
+windows = np.arange(1, 200, 15)  # binsize to split time (days)
 
-def readObservations(orbitFile, obsFile, Hrange):
+def setupSlicer(orbitFile, Hrange, obsFile=None):
     # Read the orbit file and set the H values for the slicer.
     slicer = slicers.MoObjSlicer()
     slicer.readOrbits(orbitFile, Hrange=Hrange)
-    slicer.readObs(obsFile)
+    if obsFile is not None:
+        slicer.readObs(obsFile)
     return slicer
 
 
@@ -49,7 +47,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
         # 3 nights in 15
         constraint = 'night < %d' %(nyr * 365 + 1)
         md = metadata + ' year %d, 3 pairs in 15 nights' % nyr
-        plotDict = {'nxbins': 200, 'nybins': 200,
+        plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                     'title': '%s: Discovery Chances %s' % (runName, md)}
         plotDict.update(basicPlotDict)
         metric = metrics.DiscoveryChancesMetric(nObsPerNight=2, tNight=90./60./24.,
@@ -62,7 +60,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
         # 3 nights in 30
         constraint = 'night < %d' %(nyr * 365 + 1)
         md = metadata + ' year %d, 3 pairs in 30 nights' % nyr
-        plotDict = {'nxbins': 200, 'nybins': 200,
+        plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                     'title': '%s: Discovery Chances %s' % (runName, md)}
         plotDict.update(basicPlotDict)
         metric = metrics.DiscoveryChancesMetric(nObsPerNight=2, tNight=90./60./24.,
@@ -75,7 +73,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
         # 4 nights in 20
         constraint = 'night < %d' %(nyr * 365 + 1)
         md = metadata + ' year %d, 4 pairs in 20 nights' % nyr
-        plotDict = {'nxbins': 200, 'nybins': 200,
+        plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                     'title': '%s: Discovery Chances %s' % (runName, md)}
         plotDict.update(basicPlotDict)
         metric = metrics.DiscoveryChancesMetric(nObsPerNight=2, tNight=90./60./24.,
@@ -88,7 +86,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
         # 3 triplets in 30
         constraint = 'night < %d' %(nyr * 365 + 1)
         md = metadata + ' year %d, 3 triplets in 30 nights' % nyr
-        plotDict = {'nxbins': 200, 'nybins': 200,
+        plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                     'title': '%s: Discovery Chances %s' % (runName, md)}
         plotDict.update(basicPlotDict)
         metric = metrics.DiscoveryChancesMetric(nObsPerNight=3, tNight=120./60./24.,
@@ -101,7 +99,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
         # 3 quads in 30
         constraint = 'night < %d' % (nyr * 365 + 1)
         md = metadata + ' year %d, 3 quads in 30 nights' % nyr
-        plotDict = {'nxbins': 200, 'nybins': 200,
+        plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                     'title': '%s: Discovery Chances %s' % (runName, md)}
         plotDict.update(basicPlotDict)
         metric = metrics.DiscoveryChancesMetric(nObsPerNight=4, tNight=150. / 60. / 24.,
@@ -256,6 +254,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
     constraint = None
     md = metadata
     plotDict = {'nxbins': 200, 'nybins': 200,
+                'yMin': 0, 'yMax': 1, 'ylabel': 'Fraction of objects',
                 'title': '%s: Fraction with potential lightcurve inversion %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.LightcurveInversionMetric(snrLimit=20, nObs=100, nDays=5*365)
@@ -268,7 +267,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
     allBundles['colorDetermination'] = {}
     constraint = None
     md = metadata + ' u-g color'
-    plotDict = {'nxbins': 200, 'nybins': 200,
+    plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                 'title': '%s: Fraction with potential u-g color measurement %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='u', bTwo='g')
@@ -280,7 +279,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
 
     constraint = None
     md = metadata + ' g-r color'
-    plotDict = {'nxbins': 200, 'nybins': 200,
+    plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                 'title': '%s: Fraction with potential g-r color measurement %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='g', bTwo='r')
@@ -292,7 +291,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
 
     constraint = None
     md = metadata + ' r-i color'
-    plotDict = {'nxbins': 200, 'nybins': 200,
+    plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                 'title': '%s: Fraction with potential r-i color measurement %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='r', bTwo='i')
@@ -304,7 +303,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
 
     constraint = None
     md = metadata + ' i-z color'
-    plotDict = {'nxbins': 200, 'nybins': 200,
+    plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                 'title': '%s: Fraction with potential i-z color measurement %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='i', bTwo='z')
@@ -314,10 +313,22 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark):
                                 summaryMetrics=None)
     allBundles['colorDetermination'][md] = bundle
 
+    constraint = None
+    md = metadata + ' z-y color'
+    plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
+                'title': '%s: Fraction with potential z-y color measurement %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.ColorDeterminationMetric(nPairs=1, snrLimit=10, nHours=2.0, bOne='z', bTwo='y')
+    bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                summaryMetrics=None)
+    allBundles['colorDetermination'][md] = bundle
+
     return allBundles
 
 
-def runMetrics(allBundles, outDir):
+def runMetrics(allBundles, outDir, resultsDb=None, Hmark=None):
     # Run metrics, write basic output in outDir.
     # Un-nest dictionaries to run all at once.
     bundleDict = {}
@@ -332,112 +343,200 @@ def runMetrics(allBundles, outDir):
             count += 1
     print("Counted %d top-level metric bundles." % count)
 
-    # Set up resultsDb.
-    resultsDb = db.ResultsDb(outDir=outDir)
-
     bg = mmb.MoMetricBundleGroup(bundleDict, outDir=outDir, resultsDb=resultsDb)
     bg.runAll()
     bg.summaryAll()
     bg.writeAll()
-    bg.plotAll()
-    return allBundles, resultsDb
+    allBundles = addAllCompletenessBundles(allBundles, Hmark, resultsDb)
+    return allBundles
 
 
-def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness'):
-    # Make a 'mock' metric bundle from a bundle which had the MO_Completeness or MO_CumulativeCompleteness
-    # summary metrics run. This lets us use a normal plotHandler to generate combined plots.
+def addAllCompletenessBundles(allBundles, Hmark, resultsDb):
+    # Add completeness bundles and write completeness at Hmark to resultsDb.
+    allBundles['DifferentialCompleteness'] = {}
+    allBundles['CumulativeCompleteness'] = {}
+    k = 'discoveryChances'
+    for md in allBundles[k]:
+        b = allBundles[k][md]
+        allBundles['DifferentialCompleteness'][md] = \
+            makeCompletenessBundle(b, summaryName='Completeness', Hmark=Hmark, resultsDb=resultsDb)
+        allBundles['CumulativeCompleteness'][md] = \
+            makeCompletenessBundle(b, summaryName='CumulativeCompleteness', Hmark=Hmark, resultsDb=resultsDb)
+    return allBundles
+
+
+def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness',
+                           Hmark=None, resultsDb=None):
+    # Make a 'mock' metric bundle from a bundle which had the
+    # MoCompleteness or MoCumulativeCompleteness summary metrics run.
+    # This lets us use a normal plotHandler to generate combined plots.
+    try:
+        bundle.summaryValues[summaryName]
+    except (TypeError, KeyError):
+        if summaryName == 'Completeness':
+            metric = metrics.MoCompletenessMetric()
+        else:
+            metric = metrics.MoCumulativeCompletenessMetric()
+        bundle.setSummaryMetrics(metric)
+        bundle.computeSummaryStats(resultsDb)
     completeness = ma.MaskedArray(data=bundle.summaryValues[summaryName]['value'],
                                   mask=np.zeros(len(bundle.summaryValues[summaryName]['value'])),
                                   fill_value=0)
+    mb = mmb.MoMetricBundle(metrics.MoCompletenessMetric(metricName=summaryName),
+                            bundle.slicer, constraint=None, metadata=bundle.metadata,
+                            runName=bundle.runName)
     plotDict = {}
     plotDict.update(bundle.plotDict)
     plotDict['label'] = bundle.metadata
-    mb = mmb.MoMetricBundle(metrics.MoCompletenessMetric(metricName=summaryName),
-                            bundle.slicer, constraint=None, metadata=bundle.metadata,
-                            runName=bundle.runName, plotDict=plotDict)
     mb.metricValues = completeness
+    if Hmark is not None:
+        metric = metrics.ValueAtHMetric(Hmark=Hmark)
+        mb.setSummaryMetrics(metric)
+        mb.computeSummaryStats(resultsDb)
+        val = mb.summaryValues['Value At H=%.1f' % Hmark]
+        if summaryName == 'Completeness':
+            plotDict['label'] += ' : @ H(=%.1f) = %.1f%s' % (Hmark, val*100, '%')
+        else:
+            plotDict['label'] += ' : @ H(<=%.1f) = %.1f%s' % (Hmark, val*100, '%')
+    mb.setPlotDict(plotDict)
     return mb
 
 
-def plotMoreMetrics(allBundles, outDir, resultsDb, metadata, Hmark):
+def plotMetrics(allBundles, outDir, metadata, runName, Hmark=None, resultsDb=None):
+    # Make the plots.
+
+    colorlist = ['cyan', 'g', 'burlywood', 'r', 'm', 'b', 'wheat']
     # Combine differential completeness summary values, over multiple years for discoveryChances.
     ph = plots.PlotHandler(outDir=outDir, savefig=True, resultsDb=resultsDb,
                            figformat='pdf', dpi=600, thumbnail=True)
 
-    # Plot all of the differential completeness values, for each year, for standard discovery strategy.
-    plotbundles = []
+    # Make basic plots of metric values that we want to see on a single plot.
+    for k in ['nObs', 'obsArc', 'lightcurveInversion']:
+        for md in allBundles[k]:
+            allBundles[k][md].plot(plotHandler=ph)
+
+    # Plot the discovery chances at year 10, for different discovery strategies.
     k = 'discoveryChances'
-    strategy = '3 pairs in 15 nights'
-    mdmatch = ['%s year %d, %s' % (metadata, nyr, strategy) for nyr in nyears]
-    for md in mdmatch:
-        b = allBundles[k][md]
-        plotbundles.append(makeCompletenessBundle(b, summaryName='Completeness'))
+    year = 10
+    strategies = ['3 pairs in 15 nights', '3 pairs in 30 nights',
+                  '4 pairs in 20 nights', '3 triplets in 30 nights',
+                  '3 quads in 30 nights']
+    plotbundles = []
+    plotDicts = []
+    basePlotDict = {'title': '%s Discovery Chances at year %d - %s' % (runName, year, metadata),
+                    'legendloc': 'upper right'}
+    for i, strategy in enumerate(strategies):
+        md = '%s year %d, %s' % (metadata, year, strategy)
+        plotbundles.append(allBundles[k][md])
+        tmpPlotDict = {'color': colorlist[i], 'label': strategy}
+        tmpPlotDict.update(basePlotDict)
+        plotDicts.append(tmpPlotDict)
     ph.setMetricBundles(plotbundles)
-    plotDict = {'title': '%s Differential Completeness - %s' % (b.runName, b.metadata.split(',')[1]),
-                'ylabel': 'Completeness @ H', 'yMin': 0, 'yMax': 1,
-                'albedo': b.plotDict['albedo'], 'Hmark': b.plotDict['Hmark'],
-                'legendloc': 'lower left'}
-    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDict)
+    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts)
     plt.close()
 
-    # Plot all of the cumulative completeness values, for each year, for standard discovery strategy.
+    # Plot the differential completeness at year 10, for different discovery strategies.
+    k = 'DifferentialCompleteness'
+    strategies = ['3 pairs in 15 nights', '3 pairs in 30 nights',
+                  '4 pairs in 20 nights', '3 triplets in 30 nights', '3 quads in 30 nights']
+    year = 10
     plotbundles = []
-    k = 'discoveryChances'
-    strategy = '3 pairs in 15 nights'
-    mdmatch = ['%s year %d, %s' % (metadata, nyr, strategy) for nyr in nyears]
-    for md in mdmatch:
-        b = allBundles[k][md]
-        plotbundles.append(makeCompletenessBundle(b, summaryName='CumulativeCompleteness'))
+    plotDicts = []
+    basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
+                    'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
+                    'legendloc': 'lower left'}
+    for i, strategy in enumerate(strategies):
+        md = '%s year %d, %s' % (metadata, year, strategy)
+        plotbundles.append(allBundles[k][md])
+        tmpPlotDict = {'color': colorlist[i]}
+        tmpPlotDict.update(basePlotDict)
+        plotDicts.append(tmpPlotDict)
     ph.setMetricBundles(plotbundles)
-    plotDict = {'title': '%s Cumulative Completeness - %s' % (b.runName, b.metadata.split(',')[1]),
-                'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
-                'albedo': b.plotDict['albedo'], 'Hmark': b.plotDict['Hmark'],
-                'legendloc': 'lower left'}
-    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDict)
+    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts)
     plt.close()
 
-    # Plot the cumulative completeness as a function of years.
-    k = 'discoveryChances'
+    # Plot the cumulative completeness at year 10, for different discovery strategies.
+    k = 'CumulativeCompleteness'
+    strategies = ['3 pairs in 15 nights', '3 pairs in 30 nights',
+                  '4 pairs in 20 nights', '3 triplets in 30 nights', '3 quads in 30 nights']
+    year = 10
+    plotbundles = []
+    plotDicts = []
+    basePlotDict = {'title': '%s Cumulative Completeness at year %d - %s' % (runName, year, metadata),
+                    'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
+                    'legendloc': 'lower left'}
+    for i, strategy in enumerate(strategies):
+        md = '%s year %d, %s' % (metadata, year, strategy)
+        plotbundles.append(allBundles[k][md])
+        tmpPlotDict = {'color': colorlist[i]}
+        tmpPlotDict.update(basePlotDict)
+        plotDicts.append(tmpPlotDict)
+    ph.setMetricBundles(plotbundles)
+    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts)
+    plt.close()
+
+    # Plot the differential completeness values, for each year, for standard discovery strategy.
+    k = 'DifferentialCompleteness'
     strategy = '3 pairs in 15 nights'
-    completeness_at_year = np.zeros(len(nyears), float)
+    mdmatch = ['%s year %d, %s' % (metadata, nyr, strategy) for nyr in nyears]
+    plotbundles = []
+    plotDicts = []
+    basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
+                    'ylabel': 'Completeness @ H', 'yMin': 0, 'yMax': 1,
+                    'legendloc': 'lower left'}
+    for i, md in enumerate(mdmatch):
+        plotbundles.append(allBundles[k][md])
+        tmpPlotDict = {'color': colorlist[i % len(colorlist)]}
+        tmpPlotDict.update(basePlotDict)
+        plotDicts.append(tmpPlotDict)
+    ph.setMetricBundles(plotbundles)
+    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts)
+    plt.close()
+
+    # Plot the cumulative completeness values, for each year, for standard discovery strategy.
+    k = 'CumulativeCompleteness'
+    strategy = '3 pairs in 15 nights'
+    mdmatch = ['%s year %d, %s' % (metadata, nyr, strategy) for nyr in nyears]
+    plotbundles = []
+    plotDicts = []
+    basePlotDict = {'title': '%s Cumulative Completeness - %s' % (runName, metadata),
+                    'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
+                    'legendloc': 'lower left'}
+    for i, md in enumerate(mdmatch):
+        plotbundles.append(allBundles[k][md])
+        tmpPlotDict = {'color': colorlist[i % len(colorlist)]}
+        tmpPlotDict.update(basePlotDict)
+        plotDicts.append(tmpPlotDict)
+    ph.setMetricBundles(plotbundles)
+    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts)
+    plt.close()
+
+    # Pull out and plot the cumulative completeness as a function of years.
+    k = 'CumulativeCompleteness'
+    strategy = '3 pairs in 15 nights'
+    yrs = [0] + nyears
+    completeness_at_year = np.zeros(len(yrs), float)
     b = allBundles[k]['%s year 10, %s' % (metadata, strategy)]
     # Pick a point to 'count' the completeness at.
     if Hmark is not None:
         hIdx = np.abs(b.slicer.Hrange - Hmark).argmin()
     else:
         hIdx = int(len(b.slicer.Hrange) / 3)
+    completeness_at_year[0] = 0
     for i, nyr in enumerate(nyears):
         md = '%s year %d, %s' % (metadata, nyr, strategy)
         b = allBundles[k][md]
-        completeness_at_year[i] = b.summaryValues['CumulativeCompleteness']['value'][hIdx]
+        completeness_at_year[i+1] = b.metricValues[hIdx]
     fig = plt.figure()
-    plt.plot(nyears, completeness_at_year, label='%s H<=%.2f' % (metadata, b.slicer.Hrange[hIdx]))
+    plt.plot(yrs, completeness_at_year, label='%s H<=%.2f' % (metadata, b.slicer.Hrange[hIdx]))
     plt.xlabel('Years into survey')
     plt.ylabel('Completeness @ H <= %.2f' % (b.slicer.Hrange[hIdx]))
     plt.title('Cumulative completeness as a function of time')
     plt.legend(loc=(0.7, 0.1), fancybox=True, fontsize='smaller')
     plotmetadata = 'years %s' % (' '.join(['%d' % nyr for nyr in nyears]))
-    filename = '%s_%s_CompletenessOverTime_%.2f' % (b.runName, metadata, b.slicer.Hrange[hIdx])
-    ph.saveFig(fig.number, filename, 'Completeness', 'Cumulative completeness as a function of time',
+    filename = '%s_%s_CompletenessOverTime_%.0f' % (b.runName, metadata, b.slicer.Hrange[hIdx])
+    ph.saveFig(fig.number, filename, 'Combo', 'Cumulative completeness as a function of time',
                b.slicer.slicerName, b.runName, b.constraint, plotmetadata)
-
-    # Plot all of the cumulative completeness values, for year 10, for different discovery strategies.
-    plotbundles = []
-    k = 'discoveryChances'
-    for mdmatch in ['%s year 10, 3 pairs in 15 nights' % metadata,
-                    '%s year 10, 3 pairs in 30 nights' % metadata,
-                    '%s year 10, 4 pairs in 20 nights' % metadata,
-                    '%s year 10, 3 triplets in 30 nights' % metadata,
-                    '%s year 10, 3 quads in 30 nights' % metadata]:
-        b = allBundles[k][mdmatch]
-        plotbundles.append(makeCompletenessBundle(b, summaryName='CumulativeCompleteness'))
-    ph.setMetricBundles(plotbundles)
-    plotDict = {'title': '%s Cumulative Completeness - %s' % (b.runName, b.metadata.split(',')[0]),
-                'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
-                'albedo': b.plotDict['albedo'], 'Hmark': b.plotDict['Hmark'],
-                'legendloc': 'lower left'}
-    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDict)
-    plt.close()
 
     # Make joint 'chance of detecting activity over time' plots, for the brightest objects.
     meanFraction = np.zeros(len(windows), float)
@@ -487,7 +586,51 @@ def plotMoreMetrics(allBundles, outDir, resultsDb, metadata, Hmark):
     ph.saveFig(fig.number, filename, 'Activity', 'Chances of detecting Activity lasting X of period',
                b.slicer.slicerName, b.runName, b.constraint, plotmetadata)
 
+    # Make a plot of the fraction of objects which could get colors.
+    plotbundles = []
+    plotDicts = []
+    colors = {'%s u-g color' % metadata: 'cyan',
+              '%s g-r color' % metadata: 'g',
+              '%s r-i color' % metadata: 'burlywood',
+              '%s i-z color' % metadata: 'magenta'}
+    # '%s z-y color' % metadata: 'k'}
+    for md in ['u-g', 'g-r', 'r-i', 'i-z']: #  'z-y']
+        name = '%s %s color' % (metadata, md)
+        plotbundles.append(allBundles['colorDetermination'][name])
+        plotDicts.append({'label': name, 'npReduce': np.mean, 'color': colors[name], 'Hmark': None,
+                          'ylabel': 'Fraction of objects', 'yMin': 0, 'yMax': 1,
+                          'title': '%s: %s with color measurements' % (runName, metadata)})
+    ph.setMetricBundles(plotbundles)
+    ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts)
+
     return
+
+
+def readMetricValues(bundle, tmpdir):
+    filename = os.path.join(tmpdir, bundle.fileRoot + '.h5')
+    metricValues, slicer = bundle.slicer.readData(filename)
+    bundle.metricValues = metricValues
+    bundle.metricValues.fill_value = 0
+    bundle.slicer = slicer
+    return bundle
+
+
+def readAll(allBundles, orbitFile, outDir):
+    # Read all (except completeness) bundles back from disk.
+    missingBundles = []
+    for k in allBundles:
+        for md in allBundles[k]:
+            b = allBundles[k][md]
+            try:
+                b = readMetricValues(b, outDir)
+                b.slicer.readOrbits(orbitFile, Hrange=b.slicer.Hrange)
+            except IOError as e:
+                print('Problems with bundle %s %s, so skipping. \n %s'
+                      % (k, md, e))
+                missingBundles.append([k, md])
+    for i in missingBundles:
+        del allBundles[i[0]][i[1]]
+    return allBundles
 
 
 if __name__ == '__main__':
@@ -496,44 +639,50 @@ if __name__ == '__main__':
     parser.add_argument("--orbitFile", type=str, help="File containing the moving object orbits.")
     parser.add_argument("--obsFile", type=str,
                         help="File containing the observations of the moving objects.")
-    parser.add_argument("--opsimRun", type=str, default=None,
-                        help="Name of opsim run. Will attempt to extract from obsFile if not specified.")
+    parser.add_argument("--opsimRun", type=str, default='opsim',
+                        help="Name of opsim run. Default 'opsim'.")
     parser.add_argument("--outDir", type=str, default='.',
                         help="Output directory for moving object metrics. Default '.'")
     parser.add_argument("--hMin", type=float, default=5.0, help="Minimum H value. Default 5.")
     parser.add_argument("--hMax", type=float, default=27.0, help="Maximum H value. Default 27.")
     parser.add_argument("--hStep", type=float, default=0.25, help="Stepsizes in H values.")
     parser.add_argument("--metadata", type=str, default='',
-                        help="Base string to add to all metric metadata.")
+                        help="Base string to add to all metric metadata. Typically the object type.")
     parser.add_argument("--albedo", type=float, default=None,
                         help="Albedo value, to add diameters to upper scales on plots. Default None.")
     parser.add_argument("--hMark", type=float, default=None,
                         help="Add vertical lines at H=hMark on plots. Default None.")
+    parser.add_argument("--plotOnly", action='store_true', default=False,
+                        help="Reload metric values from disk and replot them.")
     args = parser.parse_args()
 
     if args.orbitFile is None:
         print('Must specify an orbitFile')
         exit()
-    if args.obsFile is None:
-        print('Must specify an obsFile')
-        exit()
-    if args.opsimRun is None:
-        if len(args.obsFile.split('__')) == 2:
-            args.opsimRun = args.obsFile.split('__')[0]
-        else:
-            args.opsimRun = '_'.join(args.obsFile.split('_')[0:2])
-        print('opsimRun name was not specified, using %s' % (args.opsimRun))
 
-    print('Output directory %s' % (args.outDir))
-    if not (os.path.isdir(args.outDir)):
-        os.makedirs(args.outDir)
+    if args.plotOnly:
+        # Set up resultsDb.
+        resultsDb = db.ResultsDb(outDir=args.outDir)
+        tmpslicer = slicers.MoObjSlicer()
+        allBundles = setupMetrics(tmpslicer, runName=args.opsimRun, metadata=args.metadata,
+                                  albedo=args.albedo, Hmark=args.hMark)
+        allBundles = readAll(allBundles, args.orbitFile, args.outDir)
+        allBundles = addAllCompletenessBundles(allBundles, args.hMark, resultsDb=None)
 
-    Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
-    slicer = readObservations(args.orbitFile, args.obsFile, Hrange)
+    else:
+        if args.obsFile is None:
+            print('Must specify an obsFile when calculating the metrics.')
+            exit()
+        # Set up resultsDb.
+        if not (os.path.isdir(args.outDir)):
+            os.makedirs(args.outDir)
+        resultsDb = db.ResultsDb(outDir=args.outDir)
 
-    allBundles = setupMetrics(slicer, runName=args.opsimRun, metadata=args.metadata,
-                              albedo=args.albedo, Hmark=args.hMark)
+        Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
+        slicer = readObservations(args.orbitFile, args.obsFile, Hrange)
+        allBundles = setupMetrics(slicer, runName=args.opsimRun, metadata=args.metadata,
+                                  albedo=args.albedo, Hmark=args.hMark)
+        allBundles, resultsDb = runMetrics(allBundles, args.outDir, args.hMark, resultsDb)
 
-    allBundles, resultsDb = runMetrics(allBundles, args.outDir)
-
-    plotMoreMetrics(allBundles, args.outDir, resultsDb, args.metadata, args.hMark)
+    plotMetrics(allBundles, args.outDir, args.metadata, args.opsimRun,
+                Hmark=args.hMark, resultsDb=resultsDb)
