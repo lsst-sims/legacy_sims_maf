@@ -150,6 +150,7 @@ class MoObjSlicer(BaseSlicer):
         slicer = MoObjSlicer()
         df = pd.read_hdf(infilename, 'df_with_missing')
         slicer.Hrange = df.columns.values
+        slicer.slicePoints['H'] = slicer.Hrange
         slicer.shape = [len(df.values), len(slicer.Hrange)]
         slicer.orbits = None
         metricValues = ma.MaskedArray(data=df.values,
