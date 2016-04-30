@@ -32,24 +32,31 @@ class ValueAtHMetric(BaseMoMetric):
             warnings.warn('Desired H value of metric outside range of provided H values.')
             return None
         nHvals = len(Hvals)
-        nHMetricVals = metricVals.shape[1]
-        if nHvals == nHMetricVals:
-            # Hvals matched the points where the metric values were calculated (clone H distribution).
-            eps = 1.0e-6
-            # Hvals is an array used for each metric value,
-            # we have to pick out the particular metricValues to use.
-            diffs = np.abs(self.Hmark - Hvals)
-            Hidx = np.where(diffs == diffs.min())[0]
-            value = metricVals.swapaxes(0,1)[Hidx]
-            Hmark = Hvals[Hidx]
-            self.name = 'Value At H=%.1f' %(Hmark)
-        else:
-            # We have a range of metric values, one per Hval.
-            value = np.interpolate([self.Hmark], Hvals, metricVals.swapaxes(0, 1))
-        # Combine Hmark and Value into a structured array to match resultsDB expectations.
-        summaryVal = np.empty(1, dtype=[('name', '|S20'), ('value', float)])
-        summaryVal['name'] = self.name
-        summaryVal['value'] = value
+        try:
+            nHMetricVals = metricVals.shape[1]
+            if nHvals == nHMetricVals:
+                # Hvals matched the points where the metric values were calculated (clone H distribution).
+                eps = 1.0e-6
+                # Hvals is an array used for each metric value,
+                # we have to pick out the particular metricValues to use.
+                diffs = np.abs(self.Hmark - Hvals)
+                Hidx = np.where(diffs == diffs.min())[0]
+                value = metricVals.swapaxes(0,1)[Hidx]
+                Hmark = Hvals[Hidx]
+                self.name = 'Value At H=%.1f' %(Hmark)
+            else:
+                # We have a range of metric values, one per Hval.
+                value = np.interp([self.Hmark], Hvals, metricVals.swapaxes(0, 1))
+            summaryVal = np.empty(1, dtype=[('name', '|S20'), ('value', float)])
+            summaryVal['name'] = self.name
+            summaryVal['value'] = value
+        except IndexError:  # this was already a simplified metric value, such as completeness values.
+            nHMetricVals = metricVals.shape[0]
+            if nHvals != nHMetricVals:
+                warnings.warn('Found a simple metric value, such as completeness, but length of metricValues'
+                              ' did not match length of Hvals. Giving up.')
+                return None
+            summaryVal = np.interp([self.Hmark], Hvals, metricVals)[0]
         return summaryVal
 
 class MeanValueAtHMetric(BaseMoMetric):
