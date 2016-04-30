@@ -217,6 +217,12 @@ class ResultsDb(object):
         for k in displayDict:
             if displayDict[k] is None:
                 displayDict[k] = 'NULL'
+        keys = ['group', 'subgroup', 'order', 'caption']
+        for k in keys:
+            if k not in displayDict:
+                displayDict[k] = 'NULL'
+        if displayDict['order'] == 'NULL':
+            displayDict['order'] = 0
         displayGroup = displayDict['group']
         displaySubgroup = displayDict['subgroup']
         displayOrder = displayDict['order']
