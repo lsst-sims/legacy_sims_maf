@@ -295,7 +295,7 @@ class ParallaxHADegenMetric(BaseMetric):
         seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
-        useSpearmanR = use spearman-r coefficient for correlation? (Default False
+        useSpearmanR = use spearman-r coefficient for correlation? (Default False)
         """
 
         cols = ['ra_pi_amp', 'dec_pi_amp']
