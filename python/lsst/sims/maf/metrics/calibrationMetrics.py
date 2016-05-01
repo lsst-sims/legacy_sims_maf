@@ -2,7 +2,7 @@ import numpy as np
 from .baseMetric import BaseMetric
 import lsst.sims.maf.utils as mafUtils
 import lsst.sims.utils as utils
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, pearsonr
 
 __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
            'ParallaxCoverageMetric','ParallaxHADegenMetric']
@@ -273,7 +273,7 @@ class ParallaxHADegenMetric(BaseMetric):
     """
     Check for degeneracy between parallax and DCR.  Value of zero means there is no correlation.
     Values of +/-1 mean correlation (or anti-correlation, which is probably just as bad). Uses
-    Spearman R statistic to look for correlation.
+    Pearson r statistic to look for correlation (Spearman R can be used instead:  useSpearmanR=True).
 
     Note this is a conservative metric, as the parallax displacement and DCR displacement
     could be in different directions. This metric only looks at the magnitude of the parallax
@@ -282,7 +282,9 @@ class ParallaxHADegenMetric(BaseMetric):
     def __init__(self, metricName='ParallaxHADegenMetric',haCol='HA', snrLimit=5.,
                  m5Col='fiveSigmaDepth', mjdCol='expMJD',
                  filterCol='filter', seeingCol='FWHMgeom',
-                 rmag=20., SedTemplate='flat', badval=-666,
+                 rmag=20., SedTemplate='flat', \
+                     useSpearmanR=False,\
+                     badval=-666,
                  **kwargs ):
         """
         haCol = Hour angle column name
@@ -293,6 +295,7 @@ class ParallaxHADegenMetric(BaseMetric):
         seeingCol = column name for seeing (assumed FWHM)
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
+        useSpearmanR = use spearman-r coefficient for correlation? (Default False
         """
 
         cols = ['ra_pi_amp', 'dec_pi_amp']
@@ -300,9 +303,17 @@ class ParallaxHADegenMetric(BaseMetric):
         cols.append(haCol)
         units = 'Correlation'
         self.snrLimit = snrLimit
+
+        # 2016-05-01: New instance-level variable - what correlation
+        # method are we using?
+        self.correlMethod = pearsonr
+        if useSpearmanR:
+            self.correlMethod = spearmanr
+
         super(ParallaxHADegenMetric, self).__init__(cols,
                                                     metricName=metricName,
-                                                    units=units, **kwargs)
+                                                    units=units, \
+                                                        **kwargs)
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
@@ -332,8 +343,11 @@ class ParallaxHADegenMetric(BaseMetric):
         aboveLimit = np.where(snr >= self.snrLimit)[0]
         if np.size(aboveLimit) < 2:
             return self.badval
-        rho,p = spearmanr(pf[aboveLimit], dataSlice[self.haCol][aboveLimit])
+
+        # 2016-05-01: use the chosen method for correlation
+        rho,p = self.correlMethod(pf[aboveLimit], dataSlice[self.haCol][aboveLimit])
         return rho
+
 
 ## Check radius of observations to look for calibration effects.
 
