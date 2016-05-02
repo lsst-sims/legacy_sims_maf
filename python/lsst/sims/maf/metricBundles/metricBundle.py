@@ -482,7 +482,8 @@ class MetricBundle(object):
                                        sqlconstraint=self.sqlconstraint,
                                        metadata=self.metadata,
                                        runName=self.runName,
-                                       plotDict=None, displayDict=None,
+                                       plotDict=None, plotFuncs=self.plotFuncs,
+                                       displayDict=None,
                                        summaryMetrics=self.summaryMetrics,
                                        mapsList=self.mapsList, fileRoot='')
         # Build a new output file root name.
