@@ -146,12 +146,12 @@ class TestCalibrationMetrics(unittest.TestCase):
         # Perfectly correlated
         metric = metrics.ParallaxHADegenMetric()
         val = metric.run(data)
-        assert(val == 1)
+        assert(val > .999)
 
         # Anti-correlated
         data['HA'] *= -1
         val = metric.run(data)
-        assert(val == -1)
+        assert(val < -0.999)
 
         # Random values should be uncorrelated
         data['ra_pi_amp'] = np.random.rand(100)
