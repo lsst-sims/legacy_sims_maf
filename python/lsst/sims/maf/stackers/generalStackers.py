@@ -15,7 +15,6 @@ __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
 # modified by Humna Awan (humna.awan@rutgers.edu)
 
 
-# Normalized airmass
 class NormAirmassStacker(BaseStacker):
     """
     Calculate the normalized airmass for each opsim pointing.
@@ -57,7 +56,6 @@ class ZenithDistStacker(BaseStacker):
         return simData
 
 
-# Parallax factors
 class ParallaxFactorStacker(BaseStacker):
     """
     Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
@@ -90,8 +88,10 @@ class ParallaxFactorStacker(BaseStacker):
         dec_geo = np.zeros(np.size(simData), dtype='float')
         for i, ack in enumerate(simData):
             mtoa_params = palpy.mappa(2000., simData[self.dateCol][i])
+            # Object with a 1 arcsec parallax
             ra_geo1[i], dec_geo1[i] = palpy.mapqk(simData[self.raCol][i], simData[self.decCol][i],
                                                   0., 0., 1., 0., mtoa_params)
+            # Object with no parallax
             ra_geo[i], dec_geo[i] = palpy.mapqk(simData[self.raCol][i], simData[self.decCol][i],
                                                 0., 0., 0., 0., mtoa_params)
         x_geo1, y_geo1 = self._gnomonic_project_toxy(ra_geo1, dec_geo1,
@@ -101,6 +101,38 @@ class ParallaxFactorStacker(BaseStacker):
         dec_pi_amp[:] = np.degrees(y_geo1-y_geo)*3600.
         simData['ra_pi_amp'] = ra_pi_amp
         simData['dec_pi_amp'] = dec_pi_amp
+        return simData
+
+
+class DcrStacker(BaseStacker):
+    """
+    Similar to the parallax stacker, calculate the x,y offset in the gnomic
+    projection for an object based on DCR.
+    """
+
+    def __init__(self, zdCol='zenithDistance', paCol='PA', filterCol='filter',
+                 raCol='fieldRA', decCol='fieldDec',
+                 dcr_magnitudes={'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}):
+        self.zdCol = zdCol
+        self.paCol = paCol
+        self.filterCol = filterCol
+        self.raCol = raCol
+        self.decCol = decCol
+        self.dcr_magnitudes = dcr_magnitudes
+        self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp']
+        self.colsReq = [zdCol, paCol, filterCol, raCol, decCol]
+        self.units = ['arcsec', 'arcsec']
+
+    def _run(self, simData):
+        dcr_in_ra = np.tan(simData[self.zdCol])*np.sin(simData[self.paCol])
+        dcr_in_dec = np.tan(simData[self.zdCol])*np.cos(simData[self.paCol])
+        for filtername in np.unique(simData[self.filterCol]):
+            fmatch = np.where(simData[self.filterCol] == filtername)
+            dcr_in_ra[fmatch] = self.dcr_magnitudes[filtername] * dcr_in_ra[fmatch]
+            dcr_in_dec[fmatch] = self.dcr_magnitudes[filtername] * dcr_in_dec[fmatch]
+        simData['ra_dcr_amp'] = np.degrees(dcr_in_ra)*3600.
+        simData['dec_dcr_amp'] = np.degrees(dcr_in_dec)*3600.
+
         return simData
 
 
