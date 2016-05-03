@@ -6,15 +6,16 @@ from lsst.sims.utils import _altAzPaFromRaDec, ObservationMetaData, Site
 from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
-            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
+           'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
            'SeasonStacker']
 
 # Original stackers by Peter Yoachim (yoachim@uw.edu)
 # Filter color stacker by Lynne Jones (lynnej@uw.edu)
-# Season stacker by Phil Marshall (dr.phil.marshall@gmail.com), modified by Humna Awan (humna.awan@rutgers.edu)
+# Season stacker by Phil Marshall (dr.phil.marshall@gmail.com),
+# modified by Humna Awan (humna.awan@rutgers.edu)
 
 
-### Normalized airmass
+# Normalized airmass
 class NormAirmassStacker(BaseStacker):
     """
     Calculate the normalized airmass for each opsim pointing.
@@ -38,11 +39,12 @@ class NormAirmassStacker(BaseStacker):
         simData['normairmass'] = simData[self.airmassCol] / min_airmass_possible
         return simData
 
+
 class ZenithDistStacker(BaseStacker):
     """
     Calculate the zenith distance for each pointing.
     """
-    def __init__(self,altCol = 'altitude'):
+    def __init__(self, altCol = 'altitude'):
         self.altCol = altCol
         self.units = ['radians']
         self.colsAdded = ['zenithDistance']
@@ -55,7 +57,7 @@ class ZenithDistStacker(BaseStacker):
         return simData
 
 
-### Parallax factors
+# Parallax factors
 class ParallaxFactorStacker(BaseStacker):
     """
     Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
@@ -80,25 +82,27 @@ class ParallaxFactorStacker(BaseStacker):
         return x, y
 
     def _run(self, simData):
-        ra_pi_amp = np.zeros(np.size(simData), dtype=[('ra_pi_amp','float')])
-        dec_pi_amp = np.zeros(np.size(simData), dtype=[('dec_pi_amp','float')])
+        ra_pi_amp = np.zeros(np.size(simData), dtype=[('ra_pi_amp', 'float')])
+        dec_pi_amp = np.zeros(np.size(simData), dtype=[('dec_pi_amp', 'float')])
         ra_geo1 = np.zeros(np.size(simData), dtype='float')
         dec_geo1 = np.zeros(np.size(simData), dtype='float')
         ra_geo = np.zeros(np.size(simData), dtype='float')
         dec_geo = np.zeros(np.size(simData), dtype='float')
-        for i,ack in enumerate(simData):
+        for i, ack in enumerate(simData):
             mtoa_params = palpy.mappa(2000., simData[self.dateCol][i])
-            ra_geo1[i],dec_geo1[i] = palpy.mapqk(simData[self.raCol][i],simData[self.decCol][i],
-                                                   0.,0.,1.,0.,mtoa_params)
-            ra_geo[i],dec_geo[i] = palpy.mapqk(simData[self.raCol][i],simData[self.decCol][i],
-                                                 0.,0.,0.,0.,mtoa_params)
-        x_geo1,y_geo1 = self._gnomonic_project_toxy(ra_geo1, dec_geo1, simData[self.raCol],simData[self.decCol])
+            ra_geo1[i], dec_geo1[i] = palpy.mapqk(simData[self.raCol][i], simData[self.decCol][i],
+                                                  0., 0., 1., 0., mtoa_params)
+            ra_geo[i], dec_geo[i] = palpy.mapqk(simData[self.raCol][i], simData[self.decCol][i],
+                                                0., 0., 0., 0., mtoa_params)
+        x_geo1, y_geo1 = self._gnomonic_project_toxy(ra_geo1, dec_geo1,
+                                                     simData[self.raCol], simData[self.decCol])
         x_geo, y_geo = self._gnomonic_project_toxy(ra_geo, dec_geo, simData[self.raCol], simData[self.decCol])
         ra_pi_amp[:] = np.degrees(x_geo1-x_geo)*3600.
         dec_pi_amp[:] = np.degrees(y_geo1-y_geo)*3600.
         simData['ra_pi_amp'] = ra_pi_amp
         simData['dec_pi_amp'] = dec_pi_amp
         return simData
+
 
 class HourAngleStacker(BaseStacker):
     """
@@ -128,6 +132,7 @@ class HourAngleStacker(BaseStacker):
         # Convert radians to hours
         simData['HA'] = ha*12/np.pi
         return simData
+
 
 class ParallacticAngleStacker(BaseStacker):
     """
@@ -165,7 +170,7 @@ class ParallacticAngleStacker(BaseStacker):
         pa_arr = []
         for ra, dec, mjd in zip(simData[self.raCol], simData[self.decCol], simData[self.mjdCol]):
             alt, az, pa = _altAzPaFromRaDec(ra, dec,
-                                            ObservationMetaData(mjd=mjd,site=self.site))
+                                            ObservationMetaData(mjd=mjd, site=self.site))
 
             pa_arr.append(pa)
 
@@ -177,13 +182,13 @@ class FilterColorStacker(BaseStacker):
     """
     Translate filters ('u', 'g', 'r' ..) into RGB tuples.
     """
-    def __init__(self, filterCol='filter', filterMap={'u':1, 'g':2, 'r':3, 'i':4, 'z':5, 'y':6}):
-        self.filter_rgb_map = {'u':(0,0,1),   #dark blue
-                                'g':(0,1,1),  #cyan
-                                'r':(0,1,0),    #green
-                                'i':(1,0.5,0.3),  #orange
-                                'z':(1,0,0),    #red
-                                'y':(1,0,1)}  #magenta
+    def __init__(self, filterCol='filter', filterMap={'u': 1, 'g': 2, 'r': 3, 'i': 4, 'z': 5, 'y': 6}):
+        self.filter_rgb_map = {'u': (0, 0, 1),   # dark blue
+                               'g': (0, 1, 1),  # cyan
+                               'r': (0, 1, 0),    # green
+                               'i': (1, 0.5, 0.3),  # orange
+                               'z': (1, 0, 0),    # red
+                               'y': (1, 0, 1)}  # magenta
         self.filterCol = filterCol
         # self.units used for plot labels
         self.units = ['rChan', 'gChan', 'bChan']
@@ -192,13 +197,12 @@ class FilterColorStacker(BaseStacker):
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.filterCol]
 
-
     def _run(self, simData):
         # Translate filter names into numbers.
         filtersUsed = np.unique(simData[self.filterCol])
         for f in filtersUsed:
             if f not in self.filter_rgb_map:
-                raise IndexError('Filter %s not in filter_rgb_map' %(f))
+                raise IndexError('Filter %s not in filter_rgb_map' % (f))
             match = np.where(simData[self.filterCol] == f)[0]
             simData['rRGB'][match] = self.filter_rgb_map[f][0]
             simData['gRGB'][match] = self.filter_rgb_map[f][1]
@@ -215,13 +219,13 @@ class SeasonStacker(BaseStacker):
     The season index range is 0-10.
     Must wrap 0th and 10th to get a total of 10 seasons.
     """
-    def __init__(self, expMJDCol='expMJD',RACol='fieldRA'):
+    def __init__(self, expMJDCol='expMJD', RACol='fieldRA'):
         # Names of columns we want to add.
         self.colsAdded = ['year', 'season']
         # Names of columns we need from database.
         self.colsReq = [expMJDCol, RACol]
         # List of units for our new columns.
-        self.units = ['','']
+        self.units = ['', '']
         # And save the column names.
         self.expMJDCol = expMJDCol
         self.RACol = RACol
@@ -229,12 +233,12 @@ class SeasonStacker(BaseStacker):
     def _run(self, simData):
         # Define year number: (note that opsim defines "years" in flat 365 days).
         year = np.floor((simData[self.expMJDCol] - simData[self.expMJDCol][0]) / 365)
-        objRA= np.degrees(simData[self.RACol])/15.0   # in hrs
+        objRA = np.degrees(simData[self.RACol])/15.0   # in hrs
         # objRA=0 on autumnal equinox.
         # autumnal equinox 2014 happened on Sept 23 --> Equinox MJD
         Equinox = 2456923.5 - 2400000.5
         # Use 365.25 for the length of a year here, because we're dealing with real seasons.
-        daysSinceEquinox = 0.5*objRA*(365.25/12.0)  # 0.5 to go from RA to month; 365.25/12.0 for months to days
+        daysSinceEquinox = 0.5*objRA*(365.25/12.0)  # 0.5 to go from RA to month; 365.25/12.0 months to days
         firstSeasonBegan = Equinox + daysSinceEquinox - 0.5*365.25   # in MJD
         # Now we can compute the number of years since the first season
         # began, and so assign a global integer season number:
