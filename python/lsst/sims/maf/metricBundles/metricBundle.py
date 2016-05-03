@@ -28,7 +28,7 @@ def createEmptyMetricBundle():
 
 class MetricBundle(object):
     """The MetricBundle is defined by a combination of a (single) metric, slicer and
-    sqlconstraint - together these define a unique combination of an opsim benchmark.
+    constraint - together these define a unique combination of an opsim benchmark.
     An example would be: a CountMetric, a HealpixSlicer, and a sqlconstraint 'filter="r"'.
 
     After the metric is evaluated over the slicePoints of the slicer, the resulting
@@ -41,7 +41,7 @@ class MetricBundle(object):
     as well as additional metadata such as the opsim run name, and relevant stackers and maps
     to apply when calculating the metric values.
     """
-    def __init__(self, metric, slicer, sqlconstraint,
+    def __init__(self, metric, slicer, constraint=None, sqlconstraint=None,
                  stackerList=None, runName='opsim', metadata=None,
                  plotDict=None, displayDict=None,
                  summaryMetrics=None, mapsList=None,
@@ -54,8 +54,16 @@ class MetricBundle(object):
         if not isinstance(slicer, slicers.BaseSlicer):
             raise ValueError('slicer must be an lsst.sims.maf.slicers object')
         self.slicer = slicer
-        # Set the sqlconstraint.
-        self.sqlconstraint = sqlconstraint
+        # Set the constraint.
+        self.constraint = constraint
+        if self.constraint is None:
+            # Provide backwards compatibility for now - phase out sqlconstraint eventually.
+            if sqlconstraint is not None:
+                warnings.warn('Future warning - "sqlconstraint" will be deprecated in favor of '
+                              '"constraint" in a future release.')
+                self.constraint = sqlconstraint
+            else:
+                self.constraint = ''
         # Set the stackerlist if applicable.
         if stackerList is not None:
             if isinstance(stackerList, stackers.BaseStacker):
@@ -110,7 +118,7 @@ class MetricBundle(object):
         """
         self.metric = None
         self.slicer = None
-        self.sqlconstraint = ''
+        self.constraint = None
         self.stackerList = []
         self.summaryMetrics = []
         self.plotFuncs = []
@@ -140,12 +148,12 @@ class MetricBundle(object):
                                            fill_value=self.slicer.badval)
 
     def _buildMetadata(self, metadata):
-        """If no metadata is provided, process the sqlconstraint
+        """If no metadata is provided, process the constraint
         (by removing extra spaces, quotes, the word 'filter' and equal signs) to make a metadata version.
         e.g. 'filter = "r"' becomes 'r'
         """
         if metadata is None:
-            self.metadata = self.sqlconstraint.replace('=', '').replace('filter', '').replace("'", '')
+            self.metadata = self.constraint.replace('=', '').replace('filter', '').replace("'", '')
             self.metadata = self.metadata.replace('"', '').replace('  ', ' ')
             self.metadata.strip(' ')
         else:
@@ -249,7 +257,12 @@ class MetricBundle(object):
                                          'lsst.sims.maf.plotter objects.')
                     self.plotFuncs.append(pFunc)
         else:
-            self.plotFuncs = [pFunc() for pFunc in self.slicer.plotFuncs]
+            self.plotFuncs = []
+            for pFunc in self.slicer.plotFuncs:
+                if isinstance(pFunc, plots.BasePlotter):
+                    self.plotFuncs.append(pFunc)
+                else:
+                    self.plotFuncs.append(pFunc())
 
     def setPlotDict(self, plotDict):
         """Set or update any property of plotDict.
@@ -303,7 +316,7 @@ class MetricBundle(object):
         if self.displayDict['caption'] is None:
             if self.metric.comment is None:
                 caption = self.metric.name + ' calculated on a %s' % (self.slicer.slicerName)
-                caption += ' basis, using a subset of data selected via %s.' % (self.sqlconstraint)
+                caption += ' basis, using a subset of data selected via %s.' % (self.constraint)
             else:
                 caption = self.metric.comment
             if 'zp' in self.plotDict:
@@ -314,7 +327,7 @@ class MetricBundle(object):
         if resultsDb:
             # Update the display values in the resultsDb.
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
-                                              self.runName, self.sqlconstraint,
+                                              self.runName, self.constraint,
                                               self.metadata, None)
             resultsDb.updateDisplay(metricId, self.displayDict)
 
@@ -340,13 +353,13 @@ class MetricBundle(object):
                               self.metricValues,
                               metricName=self.metric.name,
                               simDataName=self.runName,
-                              sqlconstraint=self.sqlconstraint,
+                              constraint=self.constraint,
                               metadata=self.metadata + comment,
                               displayDict=self.displayDict,
                               plotDict=self.plotDict)
         if resultsDb:
             metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
-                                              self.runName, self.sqlconstraint,
+                                              self.runName, self.constraint,
                                               self.metadata, outfile)
             resultsDb.updateDisplay(metricId, self.displayDict)
 
@@ -375,7 +388,7 @@ class MetricBundle(object):
            The file from which to read the metric bundle data.
         """
         if not os.path.isfile(filename):
-            raise NameError('%s not found' % filename)
+            raise IOError('%s not found' % filename)
 
         self._resetMetricBundle()
         # Set up a base slicer to read data (we don't know type yet).
@@ -397,7 +410,10 @@ class MetricBundle(object):
         else:
             self.metric.units = ''
         self.runName = header['simDataName']
-        self.sqlconstraint = header['sqlconstraint']
+        try:
+            self.constraint = header['constraint']
+        except KeyError:
+            self.constraint = header['sqlconstraint']
         self.metadata = header['metadata']
         if self.metadata is None:
             self._buildMetadata()
@@ -442,7 +458,7 @@ class MetricBundle(object):
                 # Add summary metric info to results database, if applicable.
                 if resultsDb:
                     metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
-                                                      self.runName, self.sqlconstraint, self.metadata, None)
+                                                      self.runName, self.constraint, self.metadata, None)
                     resultsDb.updateSummaryStat(metricId, summaryName=summaryName, summaryValue=summaryVal)
 
     def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
@@ -479,7 +495,7 @@ class MetricBundle(object):
                 newmetric.units = reducePlotDict['units']
         newmetricBundle = MetricBundle(metric=newmetric, slicer=self.slicer,
                                        stackerList=self.stackerList,
-                                       sqlconstraint=self.sqlconstraint,
+                                       constraint=self.constraint,
                                        metadata=self.metadata,
                                        runName=self.runName,
                                        plotDict=None, plotFuncs=self.plotFuncs,
