@@ -125,7 +125,13 @@ class BaseSpatialSlicer(BaseSlicer):
         self.sliceLookup = [[] for dummy in xrange(self.nslice)]
         self.chipNames = [[] for dummy in xrange(self.nslice)]
         # Make a kdtree for the _slicepoints_
-        self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
+        # Using scipy 0.16 or later
+        try:
+            self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize,
+                            balanced_tree=False, compact_nodes=False)
+        except:
+            # Using old scipy
+            self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
         # Loop over each unique pointing position
         for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), simData[self.lonCol],
