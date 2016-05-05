@@ -129,7 +129,7 @@ class BaseSpatialSlicer(BaseSlicer):
         try:
             self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize,
                             balanced_tree=False, compact_nodes=False)
-        except:
+        except TypeError:
             # Using old scipy
             self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
