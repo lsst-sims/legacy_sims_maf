@@ -19,6 +19,7 @@ from .baseSlicer import BaseSlicer
 
 __all__ = ['BaseSpatialSlicer']
 
+
 class BaseSpatialSlicer(BaseSlicer):
     """Base slicer object, with added slicing functions for spatial slicer."""
     def __init__(self, verbose=True,
@@ -47,9 +48,9 @@ class BaseSpatialSlicer(BaseSlicer):
         if useCamera:
             self.columnsNeeded.append(rotSkyPosColName)
             self.columnsNeeded.append(mjdColName)
-        self.slicer_init={'lonCol':lonCol, 'latCol':latCol,
-                          'radius':radius, 'badval':badval,
-                          'useCamera':useCamera}
+        self.slicer_init = {'lonCol': lonCol, 'latCol': latCol,
+                            'radius': radius, 'badval': badval,
+                            'useCamera': useCamera}
         self.radius = radius
         self.leafsize = leafsize
         self.useCamera = useCamera
@@ -70,7 +71,7 @@ class BaseSpatialSlicer(BaseSlicer):
         additional metadata at each slicePoint (available to metrics via slicePoint dictionary).
         """
         if maps is not None:
-            if self.cacheSize != 0 and len(maps)>0:
+            if self.cacheSize != 0 and len(maps) > 0:
                 warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
             self._runMaps(maps)
         self._setRad(self.radius)
@@ -80,15 +81,13 @@ class BaseSpatialSlicer(BaseSlicer):
         else:
             self._buildTree(simData[self.lonCol], simData[self.latCol], self.leafsize)
 
-
         @wraps(self._sliceSimData)
-
         def _sliceSimData(islice):
             """Return indexes for relevant opsim data at slicepoint
             (slicepoint=lonCol/latCol value .. usually ra/dec)."""
 
             # Build dict for slicePoint info
-            slicePoint={}
+            slicePoint = {}
             if self.useCamera:
                 indices = self.sliceLookup[islice]
                 slicePoint['chipNames'] = self.chipNames[islice]
@@ -110,7 +109,7 @@ class BaseSpatialSlicer(BaseSlicer):
                     slicePoint[key] = self.slicePoints[key][islice]
                 else:
                     slicePoint[key] = self.slicePoints[key]
-            return {'idxs':indices, 'slicePoint':slicePoint}
+            return {'idxs': indices, 'slicePoint': slicePoint}
         setattr(self, '_sliceSimData', _sliceSimData)
 
     def _setupLSSTCamera(self):
@@ -129,10 +128,10 @@ class BaseSpatialSlicer(BaseSlicer):
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
         # Loop over each unique pointing position
-        for ind,ra,dec,rotSkyPos,mjd in zip(np.arange(simData.size), simData[self.lonCol],
-                                            simData[self.latCol],
-                                            simData[self.rotSkyPosColName], simData[self.mjdColName]):
-            dx,dy,dz = self._treexyz(ra,dec)
+        for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), simData[self.lonCol],
+                                                simData[self.latCol],
+                                                simData[self.rotSkyPosColName], simData[self.mjdColName]):
+            dx, dy, dz = self._treexyz(ra, dec)
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
@@ -154,7 +153,7 @@ class BaseSpatialSlicer(BaseSlicer):
                 # Find the healpixels that fell on a chip for this pointing
                 good = np.where(chipNames != [None])[0]
                 hpOnChip = hpIndices[good]
-                for i,chipName in zip(hpOnChip,chipNames[good]):
+                for i, chipName in zip(hpOnChip, chipNames[good]):
                     self.sliceLookup[i].append(ind)
                     self.chipNames[i].append(chipName)
 
@@ -169,8 +168,7 @@ class BaseSpatialSlicer(BaseSlicer):
         z = np.sin(dec)
         return x, y, z
 
-    def _buildTree(self, simDataRa, simDataDec,
-                  leafsize=100):
+    def _buildTree(self, simDataRa, simDataDec, leafsize=100):
         """Build KD tree on simDataRA/Dec and set radius (via setRad) for matching.
 
         simDataRA, simDataDec = RA and Dec values (in radians).
@@ -178,7 +176,7 @@ class BaseSpatialSlicer(BaseSlicer):
         if np.any(np.abs(simDataRa) > np.pi*2.0) or np.any(np.abs(simDataDec) > np.pi*2.0):
             raise ValueError('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
-        data = zip(x,y,z)
+        data = zip(x, y, z)
         if np.size(data) > 0:
             self.opsimtree = kdtree(data, leafsize=leafsize)
         else:
