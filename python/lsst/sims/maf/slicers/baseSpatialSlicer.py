@@ -126,12 +126,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.chipNames = [[] for dummy in xrange(self.nslice)]
         # Make a kdtree for the _slicepoints_
         # Using scipy 0.16 or later
-        try:
-            self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize,
-                            balanced_tree=False, compact_nodes=False)
-        except TypeError:
-            # Using old scipy
-            self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
+        self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
         # Loop over each unique pointing position
         for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), simData[self.lonCol],
@@ -184,7 +179,10 @@ class BaseSpatialSlicer(BaseSlicer):
         x, y, z = self._treexyz(simDataRa, simDataDec)
         data = zip(x, y, z)
         if np.size(data) > 0:
-            self.opsimtree = kdtree(data, leafsize=leafsize)
+            try:
+                self.opsimtree = kdtree(data, leafsize=leafsize, balanced_tree=False, compact_nodes=False)
+            except TypeError:
+                self.opsimtree = kdtree(data, leafsize=leafsize)
         else:
             raise ValueError('SimDataRA and Dec should have length greater than 0.')
 
