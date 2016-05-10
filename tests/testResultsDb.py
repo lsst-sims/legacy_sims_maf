@@ -13,7 +13,7 @@ class TestResultsDb(unittest.TestCase):
         self.metricName = 'Count ExpMJD'
         self.slicerName = 'OneDSlicer'
         self.runName = 'fakeopsim'
-        self.sqlconstraint = ''
+        self.constraint = ''
         self.metadata = 'Dithered'
         self.metricDataFile = 'testmetricdatafile.npz'
         self.plotType = 'BinnedData'
@@ -46,11 +46,13 @@ class TestResultsDb(unittest.TestCase):
     def testAddData(self):
         resultsDb = db.ResultsDb(outDir=self.outDir)
         # Add metric.
-        metricId = resultsDb.updateMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                        self.metadata, self.metricDataFile)
+        metricId = resultsDb.updateMetric(self.metricName, self.slicerName,
+                                          self.runName, self.constraint,
+                                          self.metadata, self.metricDataFile)
         # Try to re-add metric (should get back same metric id as previous, with no add).
-        metricId2 = resultsDb.updateMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                        self.metadata, self.metricDataFile)
+        metricId2 = resultsDb.updateMetric(self.metricName, self.slicerName,
+                                           self.runName, self.constraint,
+                                           self.metadata, self.metricDataFile)
         self.assertEqual(metricId, metricId2)
         run1 = resultsDb.session.query(db.MetricRow).filter_by(metricId = metricId).all()
         self.assertEqual(len(run1), 1)
@@ -85,7 +87,7 @@ class TestUseResultsDb(unittest.TestCase):
         self.metricName = 'Count ExpMJD'
         self.slicerName = 'OneDSlicer'
         self.runName = 'fakeopsim'
-        self.sqlconstraint = ''
+        self.constraint = ''
         self.metadata = 'Dithered'
         self.metricDataFile = 'testmetricdatafile.npz'
         self.plotType = 'BinnedData'
@@ -95,15 +97,20 @@ class TestUseResultsDb(unittest.TestCase):
         self.summaryStatName2 = 'Median'
         self.summaryStatValue2 = 18
         self.resultsDb = db.ResultsDb(outDir=self.outDir)
-        self.metricId = self.resultsDb.updateMetric(self.metricName, self.slicerName, self.runName, self.sqlconstraint,
-                                            self.metadata, self.metricDataFile)
+        self.metricId = self.resultsDb.updateMetric(self.metricName, self.slicerName,
+                                                    self.runName, self.constraint,
+                                                    self.metadata, self.metricDataFile)
         self.resultsDb.updatePlot(self.metricId, self.plotType, self.plotName)
         self.resultsDb.updateSummaryStat(self.metricId, self.summaryStatName1, self.summaryStatValue1)
         self.resultsDb.updateSummaryStat(self.metricId, self.summaryStatName2, self.summaryStatValue2)
 
     def getIds(self):
-        mids = self.resultsDb.getMetricIds()
+        mids = self.resultsDb.getAllMetricIds()
         self.assertEqual(mids[0], self.metricId)
+        mid = self.resultsDb.getMetricId(self.metricName)
+        self.assertEqual(mid[0], self.metricId)
+        mid = self.resultsDb.getMetricId('notreal')
+        self.assertEqual(len(mid), 0)
 
     def showSummary(self):
         self.resultsDb.getSummaryStats()

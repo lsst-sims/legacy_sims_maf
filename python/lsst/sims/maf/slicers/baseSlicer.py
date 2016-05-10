@@ -45,8 +45,7 @@ class BaseSlicer(object):
     __metaclass__ = SlicerRegistry
 
     def __init__(self, verbose=True, badval=-666):
-        """
-        Instantiate the base slicer object.
+        """Instantiate the base slicer object.
 
         After first init with a 'blank' slicer: slicer should be ready for setupSlicer to
         define slicePoints.
@@ -90,16 +89,14 @@ class BaseSlicer(object):
 
 
     def _runMaps(self, maps):
-        """
-        Add map metadata to slicePoints.
+        """Add map metadata to slicePoints.
         """
         if maps is not None:
             for m in maps:
                 self.slicePoints = m.run(self.slicePoints)
 
     def setupSlicer(self, simData, maps=None):
-        """
-        Set up Slicer for data slicing.
+        """Set up Slicer for data slicing.
 
         Set up internal parameters necessary for slicer to slice data and generates indexes on simData.
         Also sets _sliceSimData for a particular slicer.
@@ -109,14 +106,12 @@ class BaseSlicer(object):
 
 
     def getSlicePoints(self):
-        """
-        Return the slicePoint metadata, for all slice points.
+        """Return the slicePoint metadata, for all slice points.
         """
         return self.slicePoints
 
     def __len__(self):
-        """
-        Return nslice, the number of slicePoints in the slicer.
+        """Return nslice, the number of slicePoints in the slicer.
         """
         return self.nslice
 
@@ -127,12 +122,11 @@ class BaseSlicer(object):
         return self
 
     def next(self):
-        """
-        Returns results of self._sliceSimData when iterating over slicer.
+        """Returns results of self._sliceSimData when iterating over slicer.
 
         Results of self._sliceSimData should be dictionary of
-           {'idxs' - the data indexes relevant for this slice of the slicer,
-           'slicePoint' - the metadata for the slicePoint .. always includes ['sid'] key for ID of slicePoint.}
+        {'idxs': the data indexes relevant for this slice of the slicer,
+        'slicePoint': the metadata for the slicePoint, which always includes 'sid' key for ID of slicePoint.}
         """
         if self.islice >= self.nslice:
             raise StopIteration
@@ -169,7 +163,7 @@ class BaseSlicer(object):
         raise NotImplementedError('This method is set up by "setupSlicer" - run that first.')
 
     def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName ='', sqlconstraint='', metadata='', plotDict=None, displayDict=None):
+                  simDataName ='', constraint=None, metadata='', plotDict=None, displayDict=None):
         """
         Save metric values along with the information required to re-build the slicer.
 
@@ -178,7 +172,7 @@ class BaseSlicer(object):
         """
         header = {}
         header['metricName']=metricName
-        header['sqlconstraint'] = sqlconstraint
+        header['constraint'] = constraint
         header['metadata'] = metadata
         header['simDataName'] = simDataName
         date, versionInfo = getDateVersion()
