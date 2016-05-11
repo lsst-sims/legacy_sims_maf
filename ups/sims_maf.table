@@ -20,6 +20,10 @@ setupRequired(sims_maps)
 # For camera footprint
 setupRequired(obs_lsstSim)
 
+# For moving objects.
+setupRequired(oorb)
+setupRequired(sims_movingObjects)
+
 # other requirements (not in LSST stack)
 # both are supplied by Anaconda
 # scipy
