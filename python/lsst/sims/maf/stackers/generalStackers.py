@@ -110,8 +110,8 @@ class DcrStacker(BaseStacker):
     projection for an object based on DCR.
     """
 
-    def __init__(self, zdCol='zenithDistance', paCol='PA', filterCol='filter',
-                 raCol='fieldRA', decCol='fieldDec',
+    def __init__(self, zdCol='zenithDistance', filterCol='filter',
+                 raCol='fieldRA', decCol='fieldDec', paCol='PA',
                  dcr_magnitudes={'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}):
         self.zdCol = zdCol
         self.paCol = paCol
@@ -119,11 +119,18 @@ class DcrStacker(BaseStacker):
         self.raCol = raCol
         self.decCol = decCol
         self.dcr_magnitudes = dcr_magnitudes
-        self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp']
-        self.colsReq = [zdCol, paCol, filterCol, raCol, decCol]
+        self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp', 'zenithDistance', 'PA']
+        self.colsReq = [filterCol, raCol, decCol, 'altitude']
         self.units = ['arcsec', 'arcsec']
 
+        self.zstacker = ZenithDistStacker()
+        self.pastacker = ParallacticAngleStacker()
+
     def _run(self, simData):
+        # Need to make sure the Zenith stacker gets run first
+        simData = self.zstacker._run(simData)
+        simData = self.pastacker._run(simData)
+
         dcr_in_ra = np.tan(simData[self.zdCol])*np.sin(simData[self.paCol])
         dcr_in_dec = np.tan(simData[self.zdCol])*np.cos(simData[self.paCol])
         for filtername in np.unique(simData[self.filterCol]):

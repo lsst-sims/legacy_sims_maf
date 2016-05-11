@@ -285,13 +285,15 @@ class ParallaxDcrDegenMetric(BaseMetric):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         units = 'Covariance'
-        cols = ['ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp']
+        # just put all the columns that all the stackers will need here?
+        cols = ['ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp',
+                seeingCol, m5Col]
         super(ParallaxDcrDegenMetric, self).__init__(cols, metricName=metricName, units=units,
                                                      **kwargs)
-        filters = ['u', 'g', 'r', 'i', 'z', 'y']
+        self.filters = ['u', 'g', 'r', 'i', 'z', 'y']
         self.mags = {}
         if SedTemplate == 'flat':
-            for f in filters:
+            for f in self.filters:
                 self.mags[f] = rmag
         else:
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
@@ -301,27 +303,35 @@ class ParallaxDcrDegenMetric(BaseMetric):
         """
         Function to find parallax and dcr covariance
 
-        """
+        x should be a vector with [[parallax_x1, parallax_x2..., parallax_y1, parallax_y1...],
+        [dcr_x1, dcr_x2...]]
 
+        """
+        result = a*x[0, :] + b*x[1, :]
+        result = np.sum(result, axis=0)
+        return result
 
     def run(self, dataSlice, slicePoint=None):
 
         # Compute the uncertainties
         snr = np.zeros(len(dataSlice), dtype='float')
         # compute SNR for all observations
-        for filt in filters:
+        for filt in self.filters:
             inFilt = np.where(dataSlice[self.filterCol] == filt)
             snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
         position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol],
                                                             snr)**2+self.atm_err**2)
-
         # Use curve_fit to find the covariance matrix
         # Assumes ydata = f(xdata, *params) + eps
         # Need to set absolute sigma to get the correct errors I think
-        # curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=True)
+        xdata = np.empty(2, dataSlice.size*2)
+        xdata[0, :] = [dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']]
+        xdata[1, :] = [dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']]
+        ydata = np.sum(xdata, axis=0)
 
-
-        popt, pcov = curve_fit(func, xdata, ydata, p0=[1., 1.], sigma=)
+        popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9], sigma=position_errors,
+                               absolute_sigma=True)
+        result = pcov[1, 1]
 
         return result
 
