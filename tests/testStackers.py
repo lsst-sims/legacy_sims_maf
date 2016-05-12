@@ -4,7 +4,7 @@ import warnings
 import unittest
 
 import lsst.sims.maf.stackers as stackers
-from lsst.sims.utils import _galacticFromEquatorial
+from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast
 
 matplotlib.use("Agg")
 
@@ -221,8 +221,10 @@ class TestStackerClasses(unittest.TestCase):
     def testPAStacker(self):
         """ Test the parallacticAngleStacker"""
         data = np.zeros(100, dtype=zip(
-            ['expMJD', 'fieldDec', 'fieldRA'], [float] * 3))
+            ['expMJD', 'fieldDec', 'fieldRA', 'lst'], [float] * 4))
         data['expMJD'] = np.arange(100) * .2 + 5500
+        data['lst'], last = calcLmstLast(data['expMJD'], np.pi)
+        data['lst'] = data['lst']*np.pi/12.
         stacker = stackers.ParallacticAngleStacker()
         data = stacker.run(data)
         # Check values are in good range
