@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 import palpy
-from lsst.sims.utils import _altAzPaFromRaDec, ObservationMetaData, Site
+from lsst.sims.utils import Site
 
 from .baseStacker import BaseStacker
 
@@ -110,8 +110,8 @@ class DcrStacker(BaseStacker):
     projection for an object based on DCR.
     """
 
-    def __init__(self, zdCol='zenithDistance', filterCol='filter',
-                 raCol='fieldRA', decCol='fieldDec', paCol='PA',
+    def __init__(self, zdCol='zenithDistance', filterCol='filter', altitudeCol='altitude',
+                 raCol='fieldRA', decCol='fieldDec', paCol='PA', lstCol='lst',
                  dcr_magnitudes={'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}):
         self.zdCol = zdCol
         self.paCol = paCol
@@ -119,8 +119,8 @@ class DcrStacker(BaseStacker):
         self.raCol = raCol
         self.decCol = decCol
         self.dcr_magnitudes = dcr_magnitudes
-        self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp', 'zenithDistance', 'PA']
-        self.colsReq = [filterCol, raCol, decCol, 'altitude']
+        self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp', 'zenithDistance', 'PA', 'HA']
+        self.colsReq = [filterCol, raCol, decCol, altitudeCol, lstCol]
         self.units = ['arcsec', 'arcsec']
 
         self.zstacker = ZenithDistStacker()
@@ -177,10 +177,12 @@ class ParallacticAngleStacker(BaseStacker):
     """
     Add the parallactic angle (in radians) to each visit.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD', latRad=None,
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD',
+                 lstCol='lst', latRad=None,
                  lonRad=None, height=None, tempCentigrade=None, lapseRate=None,
                  humidity=None, pressure=None):
 
+        self.lstCol = lstCol
         self.raCol = raCol
         self.decCol = decCol
         self.mjdCol = mjdCol
@@ -202,21 +204,18 @@ class ParallacticAngleStacker(BaseStacker):
                          name='LSST')
 
         self.units = ['radians']
-        self.colsAdded = ['PA']
-        self.colsReq = [self.raCol, self.decCol, self.mjdCol]
+        self.colsAdded = ['PA', 'HA']
+        self.colsReq = [self.raCol, self.decCol, self.mjdCol, self.lstCol]
+        self.haStacker = HourAngleStacker(lstCol=lstCol, RaCol=raCol)
 
     def _run(self, simData):
-        pa_arr = []
-        for ra, dec, mjd in zip(simData[self.raCol], simData[self.decCol], simData[self.mjdCol]):
-            # Catch time warnings since we don't have future leap seconds
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                alt, az, pa = _altAzPaFromRaDec(ra, dec,
-                                                ObservationMetaData(mjd=mjd, site=self.site))
-
-            pa_arr.append(pa)
-
-        simData['PA'] = np.array(pa_arr)
+        # http://www.gb.nrao.edu/~rcreager/GBTMetrology/140ft/l0058/gbtmemo52/memo52.html
+        # or
+        # http://www.gb.nrao.edu/GBT/DA/gbtidl/release2pt9/contrib/contrib/parangle.pro
+        simData = self.haStacker._run(simData)
+        simData['PA'] = np.arctan(np.sin(simData['HA'])/(np.cos(simData[self.decCol]) *
+                                                         np.tan(self.site.latitude_rad) -
+                                                         np.sin(simData[self.decCol])*np.cos(simData['HA'])))
         return simData
 
 

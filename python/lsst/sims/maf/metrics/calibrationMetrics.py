@@ -309,7 +309,6 @@ class ParallaxDcrDegenMetric(BaseMetric):
 
         """
         result = a*x[0, :] + b*x[1, :]
-        result = np.sum(result, axis=0)
         return result
 
     def run(self, dataSlice, slicePoint=None):
@@ -322,14 +321,13 @@ class ParallaxDcrDegenMetric(BaseMetric):
             snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
         position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol],
                                                             snr)**2+self.atm_err**2)
-        # Use curve_fit to find the covariance matrix
-        # Assumes ydata = f(xdata, *params) + eps
-        # Need to set absolute sigma to get the correct errors I think
+
+        # Construct the vectors
         xdata = np.empty((2, dataSlice.size*2), dtype=float)
         xdata[0, :] = np.concatenate((dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']))
         xdata[1, :] = np.concatenate((dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']))
         ydata = np.sum(xdata, axis=0)
-
+        # Use curve_fit to compute covariance between parallax and dcr amplitudes
         popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9],
                                sigma=np.concatenate((position_errors, position_errors)),
                                absolute_sigma=True)
