@@ -137,8 +137,8 @@ class DcrStacker(BaseStacker):
             fmatch = np.where(simData[self.filterCol] == filtername)
             dcr_in_ra[fmatch] = self.dcr_magnitudes[filtername] * dcr_in_ra[fmatch]
             dcr_in_dec[fmatch] = self.dcr_magnitudes[filtername] * dcr_in_dec[fmatch]
-        simData['ra_dcr_amp'] = np.degrees(dcr_in_ra)*3600.
-        simData['dec_dcr_amp'] = np.degrees(dcr_in_dec)*3600.
+        simData['ra_dcr_amp'] = dcr_in_ra
+        simData['dec_dcr_amp'] = dcr_in_dec
 
         return simData
 
@@ -208,8 +208,11 @@ class ParallacticAngleStacker(BaseStacker):
     def _run(self, simData):
         pa_arr = []
         for ra, dec, mjd in zip(simData[self.raCol], simData[self.decCol], simData[self.mjdCol]):
-            alt, az, pa = _altAzPaFromRaDec(ra, dec,
-                                            ObservationMetaData(mjd=mjd, site=self.site))
+            # Catch time warnings since we don't have future leap seconds
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                alt, az, pa = _altAzPaFromRaDec(ra, dec,
+                                                ObservationMetaData(mjd=mjd, site=self.site))
 
             pa_arr.append(pa)
 

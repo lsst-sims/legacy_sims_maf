@@ -281,9 +281,10 @@ class ParallaxDcrDegenMetric(BaseMetric):
     """
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='FWHMgeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
-                 **kwargs):
+                 filterCol='filter', **kwargs):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
+        self.filterCol = filterCol
         units = 'Covariance'
         # just put all the columns that all the stackers will need here?
         cols = ['ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp',
@@ -324,15 +325,18 @@ class ParallaxDcrDegenMetric(BaseMetric):
         # Use curve_fit to find the covariance matrix
         # Assumes ydata = f(xdata, *params) + eps
         # Need to set absolute sigma to get the correct errors I think
-        xdata = np.empty(2, dataSlice.size*2)
-        xdata[0, :] = [dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']]
-        xdata[1, :] = [dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']]
+        xdata = np.empty((2, dataSlice.size*2), dtype=float)
+        xdata[0, :] = np.concatenate((dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']))
+        xdata[1, :] = np.concatenate((dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']))
         ydata = np.sum(xdata, axis=0)
 
-        popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9], sigma=position_errors,
+        popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9],
+                               sigma=np.concatenate((position_errors, position_errors)),
                                absolute_sigma=True)
         result = pcov[1, 1]
-
+        # This can throw infs.
+        if np.isinf(result):
+            result = self.badval
         return result
 
 
