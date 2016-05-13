@@ -29,6 +29,8 @@ class UserPointsSlicer(BaseSpatialSlicer):
         if len(ra) != len(dec):
             raise ValueError('RA and Dec must be the same length')
         self.nslice = np.size(ra)
+        self.ra = ra
+        self.dec = dec
         self.shape = self.nslice
         self.spatialExtent = [0,self.nslice-1]
         self.slicePoints['sid'] = np.arange(np.size(ra))

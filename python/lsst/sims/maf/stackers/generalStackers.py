@@ -213,9 +213,10 @@ class ParallacticAngleStacker(BaseStacker):
         # or
         # http://www.gb.nrao.edu/GBT/DA/gbtidl/release2pt9/contrib/contrib/parangle.pro
         simData = self.haStacker._run(simData)
-        simData['PA'] = np.arctan(np.sin(simData['HA'])/(np.cos(simData[self.decCol]) *
-                                                         np.tan(self.site.latitude_rad) -
-                                                         np.sin(simData[self.decCol])*np.cos(simData['HA'])))
+        simData['PA'] = np.arctan(np.sin(simData['HA']*np.pi/12.)/(np.cos(simData[self.decCol]) *
+                                                                   np.tan(self.site.latitude_rad) -
+                                                                   np.sin(simData[self.decCol]) *
+                                                                   np.cos(simData['HA']*np.pi/12.)))
         return simData
 
 
