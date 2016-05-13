@@ -278,6 +278,9 @@ class ParallaxCoverageMetric(BaseMetric):
 class ParallaxDcrDegenMetric(BaseMetric):
     """
     Use the full parallax and DCR displacement vectors to find if they are degenerate.
+
+    returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
+    Values close to zero are good, values close to 1 are bad. I...don't know about -1...
     """
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='FWHMgeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
@@ -285,7 +288,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
-        units = 'Covariance'
+        units = 'Correlation'
         # just put all the columns that all the stackers will need here?
         cols = ['ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp',
                 seeingCol, m5Col]
@@ -302,7 +305,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
 
     def _positions(self, x, a, b):
         """
-        Function to find parallax and dcr covariance
+        Function to find parallax and dcr amplitudes
 
         x should be a vector with [[parallax_x1, parallax_x2..., parallax_y1, parallax_y1...],
         [dcr_x1, dcr_x2...]]
@@ -313,7 +316,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
 
-        # Compute the uncertainties
+        # Compute the centroiding uncertainties
         snr = np.zeros(len(dataSlice), dtype='float')
         # compute SNR for all observations
         for filt in self.filters:
@@ -331,7 +334,11 @@ class ParallaxDcrDegenMetric(BaseMetric):
         popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9],
                                sigma=np.concatenate((position_errors, position_errors)),
                                absolute_sigma=True)
-        result = pcov[1, 1]
+        cov = pcov[0, 1]
+        # Convert covarience between parallax and DCR amplitudes to normalized correlation
+        perr = np.sqrt(np.diag(pcov))
+        correlation = cov/(perr[0]*perr[1])
+        result = correlation
         # This can throw infs.
         if np.isinf(result):
             result = self.badval
