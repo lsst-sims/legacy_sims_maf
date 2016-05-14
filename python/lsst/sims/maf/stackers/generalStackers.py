@@ -178,30 +178,14 @@ class ParallacticAngleStacker(BaseStacker):
     Add the parallactic angle (in radians) to each visit.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD',
-                 lstCol='lst', latRad=None,
-                 lonRad=None, height=None, tempCentigrade=None, lapseRate=None,
-                 humidity=None, pressure=None):
+                 lstCol='lst', site='LSST'):
 
         self.lstCol = lstCol
         self.raCol = raCol
         self.decCol = decCol
         self.mjdCol = mjdCol
 
-        if latRad is None:
-            latDeg = None
-        else:
-            latDeg = np.degrees(latRad)
-
-        if lonRad is None:
-            lonDeg = None
-        else:
-            lonDeg = np.degrees(lonRad)
-
-        self.site = Site(longitude=lonDeg, latitude=latDeg,
-                         temperature=tempCentigrade,
-                         height=height, humidity=humidity,
-                         pressure=pressure, lapseRate=lapseRate,
-                         name='LSST')
+        self.site = Site(name=site)
 
         self.units = ['radians']
         self.colsAdded = ['PA', 'HA']
@@ -209,14 +193,14 @@ class ParallacticAngleStacker(BaseStacker):
         self.haStacker = HourAngleStacker(lstCol=lstCol, RaCol=raCol)
 
     def _run(self, simData):
+        # Equation from:
         # http://www.gb.nrao.edu/~rcreager/GBTMetrology/140ft/l0058/gbtmemo52/memo52.html
         # or
         # http://www.gb.nrao.edu/GBT/DA/gbtidl/release2pt9/contrib/contrib/parangle.pro
         simData = self.haStacker._run(simData)
-        simData['PA'] = np.arctan(np.sin(simData['HA']*np.pi/12.)/(np.cos(simData[self.decCol]) *
-                                                                   np.tan(self.site.latitude_rad) -
-                                                                   np.sin(simData[self.decCol]) *
-                                                                   np.cos(simData['HA']*np.pi/12.)))
+        simData['PA'] = np.arctan2(np.sin(simData['HA']*np.pi/12.), (np.cos(simData[self.decCol]) *
+                                   np.tan(self.site.latitude_rad) - np.sin(simData[self.decCol]) *
+                                   np.cos(simData['HA']*np.pi/12.)))
         return simData
 
 

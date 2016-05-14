@@ -4,7 +4,7 @@ import warnings
 import unittest
 
 import lsst.sims.maf.stackers as stackers
-from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast
+from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast, Site, _altAzPaFromRaDec, ObservationMetaData
 
 matplotlib.use("Agg")
 
@@ -222,14 +222,24 @@ class TestStackerClasses(unittest.TestCase):
         """ Test the parallacticAngleStacker"""
         data = np.zeros(100, dtype=zip(
             ['expMJD', 'fieldDec', 'fieldRA', 'lst'], [float] * 4))
-        data['expMJD'] = np.arange(100) * .2 + 5500
-        data['lst'], last = calcLmstLast(data['expMJD'], np.pi)
+        data['expMJD'] = np.arange(100) * .2 + 50000
+        site = Site(name='LSST')
+        data['lst'], last = calcLmstLast(data['expMJD'], site.longitude_rad)
         data['lst'] = data['lst']*np.pi/12.
         stacker = stackers.ParallacticAngleStacker()
         data = stacker.run(data)
         # Check values are in good range
         assert(data['PA'].max() <= np.pi)
         assert(data['PA'].min() >= -np.pi)
+
+        # Check compared to the util
+        check_pa = []
+        for ra, dec, mjd in zip(data['fieldRA'], data['fieldDec'], data['expMJD']):
+            alt, az, pa = _altAzPaFromRaDec(ra, dec,
+                                            ObservationMetaData(mjd=mjd, site=site))
+
+            check_pa.append(pa)
+        np.testing.assert_array_almost_equal(data['PA'], check_pa, decimal=2)
 
     def testFilterColorStacker(self):
         """Test the filter color stacker."""
