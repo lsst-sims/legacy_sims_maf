@@ -2,11 +2,10 @@ import numpy as np
 from .baseMetric import BaseMetric
 import lsst.sims.maf.utils as mafUtils
 import lsst.sims.utils as utils
-from scipy.stats import spearmanr, pearsonr
 from scipy.optimize import curve_fit
 
 __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
-           'ParallaxCoverageMetric', 'ParallaxHADegenMetric', 'ParallaxDcrDegenMetric']
+           'ParallaxCoverageMetric', 'ParallaxDcrDegenMetric']
 
 
 class ParallaxMetric(BaseMetric):
@@ -343,82 +342,6 @@ class ParallaxDcrDegenMetric(BaseMetric):
         if np.isinf(result):
             result = self.badval
         return result
-
-
-class ParallaxHADegenMetric(BaseMetric):
-    """
-    Check for degeneracy between parallax and DCR.  Value of zero means there is no correlation.
-    Values of +/-1 mean correlation (or anti-correlation, which is probably just as bad). Uses
-    Pearson r statistic to look for correlation (Spearman R can be used instead:  useSpearmanR=True).
-
-    Note this is a conservative metric, as the parallax displacement and DCR displacement
-    could be in different directions. This metric only looks at the magnitude of the parallax
-    displacement and checks that it is not correlated with hour angle.
-    """
-    def __init__(self, metricName='ParallaxHADegenMetric', haCol='HA', snrLimit=5.,
-                 m5Col='fiveSigmaDepth', mjdCol='expMJD',
-                 filterCol='filter', seeingCol='FWHMgeom',
-                 rmag=20., SedTemplate='flat', useSpearmanR=False,
-                 badval=-666, **kwargs):
-        """
-        haCol = Hour angle column name
-        snrLimit = only inlcude observations above the snrLimit
-        m5Col = column name for inidivual visit m5
-        mjdCol = column name for exposure time dates
-        filterCol = column name for filter
-        seeingCol = column name for seeing (assumed FWHM)
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
-        useSpearmanR = use spearman-r coefficient for correlation? (Default False)
-        """
-
-        cols = ['ra_pi_amp', 'dec_pi_amp']
-        self.haCol = haCol
-        cols.append(haCol)
-        units = 'Correlation'
-        self.snrLimit = snrLimit
-
-        # 2016-05-01: New instance-level variable - what correlation
-        # method are we using?
-        self.correlMethod = pearsonr
-        if useSpearmanR:
-            self.correlMethod = spearmanr
-
-        super(ParallaxHADegenMetric, self).__init__(cols,
-                                                    metricName=metricName,
-                                                    units=units, **kwargs)
-        self.m5Col = m5Col
-        self.seeingCol = seeingCol
-        self.filterCol = filterCol
-        self.mjdCol = mjdCol
-        filters = ['u', 'g', 'r', 'i', 'z', 'y']
-        self.mags = {}
-        if SedTemplate == 'flat':
-            for f in filters:
-                self.mags[f] = rmag
-        else:
-            self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
-
-    def run(self, dataSlice, slicePoint=None):
-
-        if np.size(dataSlice) < 2:
-            return self.badval
-        filters = np.unique(dataSlice[self.filterCol])
-        snr = np.zeros(len(dataSlice), dtype='float')
-        # compute SNR for all observations
-        for filt in filters:
-            good = np.where(dataSlice[self.filterCol] == filt)
-            snr[good] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][good])
-        # Compute total parallax distance
-        pf = np.sqrt(dataSlice['ra_pi_amp']**2+dataSlice['dec_pi_amp']**2)
-        # Correlation between parallax factor and hour angle
-        aboveLimit = np.where(snr >= self.snrLimit)[0]
-        if np.size(aboveLimit) < 2:
-            return self.badval
-
-        # 2016-05-01: use the chosen method for correlation
-        rho, p = self.correlMethod(pf[aboveLimit], dataSlice[self.haCol][aboveLimit])
-        return rho
 
 # Check radius of observations to look for calibration effects.
 
