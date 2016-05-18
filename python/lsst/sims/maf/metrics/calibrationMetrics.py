@@ -333,7 +333,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
         popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9],
                                sigma=np.concatenate((position_errors, position_errors)),
                                absolute_sigma=True)
-        cov = pcov[0, 1]
+        cov = pcov[1, 0]
         # Convert covarience between parallax and DCR amplitudes to normalized correlation
         perr = np.sqrt(np.diag(pcov))
         correlation = cov/(perr[0]*perr[1])

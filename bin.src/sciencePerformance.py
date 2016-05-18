@@ -17,7 +17,6 @@ import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
 
 
-
 def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    lonCol='fieldRA', latCol='fieldDec', seeingCol='FWHMgeom'):
     """
@@ -318,8 +317,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric = metrics.ParallaxHADegenMetric(metricName='Parallax-DCR degeneracy 20', rmag=20,
-                                           seeingCol=seeingCol)
+    metric = metrics.ParallaxDcrDegenMetric(metricName='Parallax-DCR degeneracy 20', rmag=20,
+                                            seeingCol=seeingCol)
     plotDict = {}
     caption = 'Correlation between parallax offset magnitude and hour angle an r=20 star.'
     caption += ' (0 is good, near -1 or 1 is bad).'
@@ -330,8 +329,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric = metrics.ParallaxHADegenMetric(metricName='Parallax-DCR degeneracy 24', rmag=24,
-                                           seeingCol=seeingCol)
+    metric = metrics.ParallaxDcrDegenMetric(metricName='Parallax-DCR degeneracy 24', rmag=24,
+                                            seeingCol=seeingCol)
     plotDict = {}
     caption = 'Correlation between parallax offset magnitude and hour angle an r=24 star.'
     caption += ' (0 is good, near -1 or 1 is bad).'

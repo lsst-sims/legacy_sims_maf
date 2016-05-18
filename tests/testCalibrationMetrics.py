@@ -132,6 +132,47 @@ class TestCalibrationMetrics(unittest.TestCase):
         val = metric.run(data)
         assert(val == 1)
 
+    def testParallaxDcrDegenMetric(self):
+        """
+        Test the parallax-DCR degeneracy metric
+        """
+        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+                 'filter', 'ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp']
+        types = [float, float, float, float, float, '|S1', float,
+                 float, float, float]
+        data = np.zeros(100, dtype=zip(names, types))
+        data['filter'] = 'r'
+        data['fiveSigmaDepth'] = 25.
+
+        # Set so ra is perfecly correlated
+        data['ra_pi_amp'] = 1.
+        data['dec_pi_amp'] = 0.01
+        data['ra_dcr_amp'] = 0.2
+
+        metric = metrics.ParallaxDcrDegenMetric(seeingCol='finSeeing')
+        val = metric.run(data)
+        np.testing.assert_almost_equal(np.abs(val), 1., decimal=2)
+
+        # set so the offsets are always nearly perpendicular
+        data['ra_pi_amp'] = 0.001
+        data['dec_pi_amp'] = 1.
+        data['ra_dcr_amp'] = 0.2
+
+        metric = metrics.ParallaxDcrDegenMetric(seeingCol='finSeeing')
+        val = metric.run(data)
+        np.testing.assert_almost_equal(val, 0., decimal=2)
+
+        # Generate a random distribution that should have little or no correlation
+        np.random.seed = 42
+
+        data['ra_pi_amp'] = np.random.rand(100)*2-1.
+        data['dec_pi_amp'] = np.random.rand(100)*2-1.
+        data['ra_dcr_amp'] = np.random.rand(100)*2-1.
+        data['dec_dcr_amp'] = np.random.rand(100)*2-1.
+
+        val = metric.run(data)
+        assert(np.abs(val) < 0.2)
+
     def testRadiusObsMetric(self):
         """
         Test the RadiusObsMetric
