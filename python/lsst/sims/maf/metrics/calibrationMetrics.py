@@ -275,18 +275,44 @@ class ParallaxCoverageMetric(BaseMetric):
 
 
 class ParallaxDcrDegenMetric(BaseMetric):
-    """
-    Use the full parallax and DCR displacement vectors to find if they are degenerate.
+    """Use the full parallax and DCR displacement vectors to find if they are degenerate.
 
-    returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
-    Values close to zero are good, values close to 1 are bad. I...don't know about -1...
+    Parameters
+    ----------
+    metricName : str
+        Default 'ParallaxDcrDegenMetric'.
+    seeingCol : str
+        Default 'FWHMgeom'
+    m5Col : str
+        Default 'fiveSigmaDepth'
+    fitlerCol : str
+        Default 'filter'
+    atm_err : float
+        Minimum error in photometry centroids introduced by the atmosphere (arcseconds). Default 0.01.
+    rmag : float
+        r-band magnitude of the fiducual star that is being used (mag).
+    SedTemplate : str
+        The SED template to use for fiducia star colors, passed to lsst.sims.utils.stellarMags.
+        Default 'flat'
+    tol : float
+        Tolerance for how well curve_fit needs to work before believing the covariance result.
+        Default 0.05.
+
+    Returns
+    -------
+    metricValue : float
+        returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
+        The RA and Dec offsets are fit simultaneously. Values close to zero are good, values close to +/- 1
+        are bad. Experience with fitting Monte Carlo simulations suggests the astrometric fits start
+        becoming poor around a correlation of 0.7.
     """
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='FWHMgeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
-                 filterCol='filter', **kwargs):
+                 filterCol='filter', tol = 0.05, **kwargs):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
+        self.tol = tol
         units = 'Correlation'
         # just put all the columns that all the stackers will need here?
         cols = ['ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp',
@@ -306,21 +332,20 @@ class ParallaxDcrDegenMetric(BaseMetric):
         """
         Function to find parallax and dcr amplitudes
 
-        x should be a vector with [[parallax_x1, parallax_x2..., parallax_y1, parallax_y1...],
-        [dcr_x1, dcr_x2...]]
-
+        x should be a vector with [[parallax_x1, parallax_x2..., parallax_y1, parallax_y2...],
+        [dcr_x1, dcr_x2..., dcr_y1, dcr_y2...]]
         """
         result = a*x[0, :] + b*x[1, :]
         return result
 
     def run(self, dataSlice, slicePoint=None):
 
-        # Compute the centroiding uncertainties
         snr = np.zeros(len(dataSlice), dtype='float')
         # compute SNR for all observations
         for filt in self.filters:
             inFilt = np.where(dataSlice[self.filterCol] == filt)
             snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
+        # Compute the centroiding uncertainties
         position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol],
                                                             snr)**2+self.atm_err**2)
 
@@ -330,9 +355,14 @@ class ParallaxDcrDegenMetric(BaseMetric):
         xdata[1, :] = np.concatenate((dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']))
         ydata = np.sum(xdata, axis=0)
         # Use curve_fit to compute covariance between parallax and dcr amplitudes
+        # Set the initial guess slightly off from the correct [1,1] to make sure it iterates.
         popt, pcov = curve_fit(self._positions, xdata, ydata, p0=[1.1, 0.9],
                                sigma=np.concatenate((position_errors, position_errors)),
                                absolute_sigma=True)
+        # Catch if the fit failed to converge on the correct solution.
+        if np.max(np.abs(popt - np.array([1., 1.]))) > self.tol:
+            return self.badval
+        # Covariance between best fit parallax amplitude and DCR amplitude.
         cov = pcov[1, 0]
         # Convert covarience between parallax and DCR amplitudes to normalized correlation
         perr = np.sqrt(np.diag(pcov))
@@ -342,8 +372,6 @@ class ParallaxDcrDegenMetric(BaseMetric):
         if np.isinf(result):
             result = self.badval
         return result
-
-# Check radius of observations to look for calibration effects.
 
 
 def calcDist_cosines(RA1, Dec1, RA2, Dec2):

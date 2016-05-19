@@ -105,26 +105,52 @@ class ParallaxFactorStacker(BaseStacker):
 
 
 class DcrStacker(BaseStacker):
-    """
-    Similar to the parallax stacker, calculate the x,y offset in the gnomic
-    projection for an object based on DCR.
+    """Calculate the RA,Dec offset expected for an object due to differential chromatic refraction.
+
+    Parameters
+    ----------
+    filterCol : str
+        The name of the column with filter names. Default 'fitler'.
+    altCol : str
+        Name of the column with altitude info. Default 'altitude'.
+    raCol : str
+        Name of the column with RA. Default 'fieldRA'.
+    decCol : str
+        Name of the column with Dec. Default 'fieldDec'.
+    lstCol : str
+        Name of the column with local sidereal time. Default 'lst'.
+    site : str or lsst.sims.utils.Site
+        Name of the observory or a lsst.sims.utils.Site object. Default 'LSST'.
+    mjdCol : str
+        Name of column with modified julian date. Default 'expMJD'
+    dcr_magnitudes : dict
+        Magitude of the DCR offset for each filter at altitude/zenith distance of 45 degrees.
+        Defaults u=0.07, g=0.07, r=0.50, i=0.045, z=0.042, y=0.04 (all arcseconds).
+
+    Returns
+    -------
+    numpy.array
+        Returns array with additional columns 'ra_dcr_amp' and 'dec_dcr_amp' with the DCR offsets
+        for each observation.  Also runs ZenithDistStacker and ParallacticAngleStacker.
     """
 
-    def __init__(self, zdCol='zenithDistance', filterCol='filter', altitudeCol='altitude',
-                 raCol='fieldRA', decCol='fieldDec', paCol='PA', lstCol='lst',
+    def __init__(self, filterCol='filter', altCol='altitude',
+                 raCol='fieldRA', decCol='fieldDec', lstCol='lst', site='LSST', mjdCol='expMJD',
                  dcr_magnitudes={'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}):
-        self.zdCol = zdCol
-        self.paCol = paCol
+
+        self.zdCol = 'zenithDistance'
+        self.paCol = 'PA'
         self.filterCol = filterCol
         self.raCol = raCol
         self.decCol = decCol
         self.dcr_magnitudes = dcr_magnitudes
         self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp', 'zenithDistance', 'PA', 'HA']
-        self.colsReq = [filterCol, raCol, decCol, altitudeCol, lstCol]
+        self.colsReq = [filterCol, raCol, decCol, altCol, lstCol]
         self.units = ['arcsec', 'arcsec']
 
-        self.zstacker = ZenithDistStacker()
-        self.pastacker = ParallacticAngleStacker()
+        self.zstacker = ZenithDistStacker(altCol = altCol)
+        self.pastacker = ParallacticAngleStacker(raCol=raCol, decCol=decCol, mjdCol=mjdCol,
+                                                 lstCol=lstCol, site=site)
 
     def _run(self, simData):
         # Need to make sure the Zenith stacker gets run first
