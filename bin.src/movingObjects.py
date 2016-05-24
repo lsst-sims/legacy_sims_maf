@@ -812,7 +812,7 @@ if __name__ == '__main__':
         slicer = setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
         allBundles = setupMetrics(slicer, runName=args.opsimRun, metadata=args.metadata,
                                   albedo=args.albedo, Hmark=args.hMark, mparams=mparams)
-        allBundles, resultsDb = runMetrics(allBundles, args.outDir, resultsDb, args.hMark)
+        allBundles = runMetrics(allBundles, args.outDir, resultsDb, args.hMark)
 
     plotMetrics(allBundles, args.outDir, args.metadata, args.opsimRun, mparams,
                 Hmark=args.hMark, resultsDb=resultsDb)
