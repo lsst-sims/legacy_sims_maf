@@ -56,8 +56,11 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
                                     plotDict=plotDict, plotFuncs=plotFuncs,
                                     summaryMetrics=summaryMetrics)
         allBundles['discoveryChances'][md] = bundle
-    # The non-standard discovery/completeness metrics, calculate only at the last year.
-    for nyr in [mParams['nyears'].max()]:
+    # The non-standard discovery/completeness metrics, calculate only a subset of the years.
+    years = [mParams['nyears'].max()]
+    if max(years) > 10:
+        years = [12] + years
+    for nyr in years:
         # 3 nights in 30
         constraint = 'night < %d' %(nyr * 365 + 1)
         md = metadata + ' year %d, 3 pairs in 30 nights' % nyr
@@ -123,6 +126,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
                                     runName=runName, metadata=md,
                                     plotDict=plotDict, plotFuncs=plotFuncs,
                                     summaryMetrics=summaryMetrics)
+        allBundles['discoveryChances'][md] = bundle
         # 3 pairs in 15, with SNR = 3
         constraint = 'night < %d' % (nyr * 365 + 1)
         md = metadata + ' year %d, 3 pairs in 15 nights, SNR=3' % nyr
@@ -483,8 +487,8 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             allBundles[k][md].plot(plotHandler=ph)
 
     years = [mParams['nyears'].max()]
-    if years.max > 10:
-        years = [12] + years
+    #if max(years) > 10:
+    #    years = [12] + years
     order = 0
     for year in years:
         # Plot the discovery chances at 'year', for different discovery strategies.
@@ -559,8 +563,9 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         # Plot the differential completeness at 'year', for the odd discovery strategies.
         order += 1
         k = 'DifferentialCompleteness'
-        strategies = ['3 pairs in 15 nights', 'Single detection'
-                                              '3 pairs in 15 nights, SNR=0', '3 pairs in 15 nights, SNR=3']
+        print(allBundles[k].keys())
+        strategies = ['3 pairs in 15 nights', 'Single detection',
+                      '3 pairs in 15 nights, SNR=3']  #'3 pairs in 15 nights, SNR=0']
         plotbundles = []
         plotDicts = []
         basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
@@ -584,8 +589,8 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
 
         # Plot the cumulative completeness at 'year', for the odd discovery strategies.
         k = 'CumulativeCompleteness'
-        strategies = ['3 pairs in 15 nights', 'Single detection'
-                                              '3 pairs in 15 nights, SNR=0', '3 pairs in 15 nights, SNR=3']
+        strategies = ['3 pairs in 15 nights', 'Single detection',
+                      '3 pairs in 15 nights, SNR=3']  #'3 pairs in 15 nights, SNR=0']
         plotbundles = []
         plotDicts = []
         basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
@@ -642,6 +647,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
                     'legendloc': 'lower left'}
     caption = 'Cumulative completeness (fraction of population with H<=X) discovered at different years.'
     caption += ' Assumes standard discovery strategy of 3 pairs in 15 nights.'
+    caption += ' Each observation must have a SNR of 5 (including trailing losses).'
     displayDict = {'group': 'A: Discovery', 'subgroup': 'Cumulative completeness',
                    'order': order, 'caption': caption}
     for i, md in enumerate(mdmatch):
@@ -753,7 +759,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
               '%s r-i color' % metadata: 'burlywood',
               '%s i-z color' % metadata: 'magenta',
               '%s z-y color' % metadata: 'k'}
-    b = allBundles['colorDetermination'].keys()[0]
+    b = allBundles['colorDetermination'].values()[0]
     caption = 'Mean likelihood of obtaining observations suitable for gathering a high-quality color '
     caption += 'measurement, as a function of H magnitude. '
     caption += 'Assumes that if %d pair(s) of observations are taken within %.2f hours, with SNR>%.2f, ' \
