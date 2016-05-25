@@ -147,7 +147,20 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
                     'title': '%s: Discovery Chances %s' % (runName, md)}
         plotDict.update(basicPlotDict)
-        metric = metrics.DiscoveryChancesMetric(nObsPerNight=1, tNight=150. / 60. / 24.,
+        metric = metrics.DiscoveryChancesMetric(nObsPerNight=1, tNight=90. / 60. / 24.,
+                                                nNightsPerWindow=1, tWindow=5)
+        bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                    runName=runName, metadata=md,
+                                    plotDict=plotDict, plotFuncs=plotFuncs,
+                                    summaryMetrics=summaryMetrics)
+        allBundles['discoveryChances'][md] = bundle
+        # Single pair of detections, normal SNR.
+        constraint = 'night < %d' % (nyr * 365 + 1)
+        md = metadata + ' year %d, Single pair' % nyr
+        plotDict = {'nxbins': 200, 'nybins': 200, 'label': md,
+                    'title': '%s: Discovery Chances %s' % (runName, md)}
+        plotDict.update(basicPlotDict)
+        metric = metrics.DiscoveryChancesMetric(nObsPerNight=2, tNight=90. / 60. / 24.,
                                                 nNightsPerWindow=1, tWindow=5)
         bundle = mmb.MoMetricBundle(metric, slicer, constraint,
                                     runName=runName, metadata=md,
@@ -567,7 +580,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         order += 1
         k = 'DifferentialCompleteness'
         print(allBundles[k].keys())
-        strategies = ['3 pairs in 15 nights', 'Single detection',
+        strategies = ['3 pairs in 15 nights', 'Single detection', 'Single pair',
                       '3 pairs in 15 nights, SNR=3', '3 pairs in 15 nights, SNR=0']
         plotbundles = []
         plotDicts = []
@@ -593,7 +606,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
 
         # Plot the cumulative completeness at 'year', for the odd discovery strategies.
         k = 'CumulativeCompleteness'
-        strategies = ['3 pairs in 15 nights', 'Single detection',
+        strategies = ['3 pairs in 15 nights', 'Single detection', 'Single pair',
                       '3 pairs in 15 nights, SNR=3', '3 pairs in 15 nights, SNR=0']
         plotbundles = []
         plotDicts = []
