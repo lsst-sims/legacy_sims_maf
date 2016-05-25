@@ -244,7 +244,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
     allBundles['nObs'] = {}
     constraint = None
     md = metadata
-    plotDict = {'nxbins': 200, 'nybins': 200,
+    plotDict = {'nxbins': 200, 'nybins': 200, 'ylabel': 'Number of observations (#)',
                 'title': '%s: Number of observations %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.NObsMetric()
@@ -257,7 +257,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
     allBundles['obsArc'] = {}
     constraint = None
     md = metadata
-    plotDict = {'nxbins': 200, 'nybins': 200,
+    plotDict = {'nxbins': 200, 'nybins': 200, 'ylabel': 'Observational Arc (days)',
                 'title': '%s: Observational Arc Length %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.ObsArcMetric()
@@ -483,7 +483,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             caption += 'as a function of H magnitude, for %s objects.' % (metadata)
             displayDict = {'group': 'B: Characterization', 'subgroup': subgroup, 'order': 0,
                            'caption': caption}
-            allBundles[k][md].setDisplayDict(displayDict)
+            allBundles[k][md].setDisplayDict(displayDict=displayDict, resultsDb=resultsDb)
             allBundles[k][md].plot(plotHandler=ph)
 
     years = [mParams['nyears'].max()]
@@ -511,6 +511,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
+        ph.jointMetadata = '%s Year %d: 3 pairs in 15 nights -- 3 quads in 30 nights' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
 
@@ -534,6 +535,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
+        ph.jointMetadata = '%s Year %d: 3 pairs in 15 nights -- 3 quads in 30 nights' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
 
@@ -557,6 +559,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
+        ph.jointMetadata = '%s Year %d: 3 pairs in 15 nights -- 3 quads in 30 nights' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
 
@@ -584,6 +587,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
+        ph.jointMetadata = '%s Year %d: non-realistic discovery options' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
 
@@ -609,6 +613,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
+        ph.jointMetadata = '%s Year %d: non-realistic discovery options' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
         order += 1
@@ -620,7 +625,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     mdmatch = ['%s year %d, %s' % (metadata, nyr, strategy) for nyr in mParams['nyears']]
     plotbundles = []
     plotDicts = []
-    basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
+    basePlotDict = {'title': '%s %s Differential Completeness' % (runName, metadata),
                     'ylabel': 'Completeness @ H', 'yMin': 0, 'yMax': 1,
                     'legendloc': 'lower left'}
     caption = 'Differential completeness (fraction of population with H=X) discovered at different years.'
@@ -633,6 +638,8 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         tmpPlotDict.update(basePlotDict)
         plotDicts.append(tmpPlotDict)
     ph.setMetricBundles(plotbundles)
+    ph.jointMetadata = '%s %s Years %d to %d' % (metadata, strategy,
+                                                 mParams['nyears'].min(), mParams['nyears'].max())
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
     plt.close()
 
@@ -642,7 +649,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     mdmatch = ['%s year %d, %s' % (metadata, nyr, strategy) for nyr in mParams['nyears']]
     plotbundles = []
     plotDicts = []
-    basePlotDict = {'title': '%s Cumulative Completeness - %s' % (runName, metadata),
+    basePlotDict = {'title': '%s %s Cumulative Completeness ' % (runName, metadata),
                     'ylabel': 'Completeness <= H', 'yMin': 0, 'yMax': 1,
                     'legendloc': 'lower left'}
     caption = 'Cumulative completeness (fraction of population with H<=X) discovered at different years.'
@@ -656,6 +663,8 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         tmpPlotDict.update(basePlotDict)
         plotDicts.append(tmpPlotDict)
     ph.setMetricBundles(plotbundles)
+    ph.jointMetadata = '%s %s Years %d to %d' % (metadata, strategy,
+                                                 mParams['nyears'].min(), mParams['nyears'].max())
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
     plt.close()
 
