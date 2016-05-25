@@ -487,8 +487,8 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             allBundles[k][md].plot(plotHandler=ph)
 
     years = [mParams['nyears'].max()]
-    #if max(years) > 10:
-    #    years = [12] + years
+    if max(years) > 10:
+        years = [12] + years
     order = 0
     for year in years:
         # Plot the discovery chances at 'year', for different discovery strategies.
@@ -565,7 +565,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         k = 'DifferentialCompleteness'
         print(allBundles[k].keys())
         strategies = ['3 pairs in 15 nights', 'Single detection',
-                      '3 pairs in 15 nights, SNR=3']  #'3 pairs in 15 nights, SNR=0']
+                      '3 pairs in 15 nights, SNR=3', '3 pairs in 15 nights, SNR=0']
         plotbundles = []
         plotDicts = []
         basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
@@ -590,7 +590,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         # Plot the cumulative completeness at 'year', for the odd discovery strategies.
         k = 'CumulativeCompleteness'
         strategies = ['3 pairs in 15 nights', 'Single detection',
-                      '3 pairs in 15 nights, SNR=3']  #'3 pairs in 15 nights, SNR=0']
+                      '3 pairs in 15 nights, SNR=3', '3 pairs in 15 nights, SNR=0']
         plotbundles = []
         plotDicts = []
         basePlotDict = {'title': '%s Differential Completeness at year %d - %s' % (runName, year, metadata),
