@@ -450,7 +450,7 @@ class DiscoveryChancesMetric(BaseMoMetric):
         else:
             # Now to identify where observations meet the timing requirements.
             #  Identify visits where the 'night' changes.
-            visSort = np.argsort(ssoObs[self.nightCol])[vis]
+            visSort = np.argsort(ssoObs[self.expMJDCol][vis])
             n = np.unique(ssoObs[self.nightCol][visSort])
             # Identify all the indexes where the night changes (swap from one night to next)
             nIdx = np.searchsorted(ssoObs[self.nightCol][visSort], n)
