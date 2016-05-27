@@ -43,6 +43,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
 
     # Set up discovery metrics; calculate at all years.
     allBundles['discovery'] = {}
+    allBundles['velocity'] = {}
     for nyr in mParams['nyears']:
         # First standard SNR / probabilistic visibility (SNR~5)
         # 3 pairs in 15
@@ -88,7 +89,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 triplets in 30
-        md = metadata + ' year %d, 4 pairs in 20 nights' % nyr
+        md = metadata + ' year %d, 3 triplets in 30 nights' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -115,8 +116,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         allBundles['discovery'][md] = bundle
         # Play with SNR.  SNR=4
         # 3 pairs in 15
-        constraint = 'night < %d' % (nyr * 365 + 1)
-        md = metadata + ' year %d, 3 pairs in 15 nights' % nyr
+        md = metadata + ' year %d, 3 pairs in 15 nights, SNR=4' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -131,7 +131,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 pairs in 30
-        md = metadata + ' year %d, 3 pairs in 30 nights' % nyr
+        md = metadata + ' year %d, 3 pairs in 30 nights, SNR=4' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -144,7 +144,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 4 pairs in 20
-        md = metadata + ' year %d, 4 pairs in 20 nights' % nyr
+        md = metadata + ' year %d, 4 pairs in 20 nights, SNR=4' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -157,7 +157,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 triplets in 30
-        md = metadata + ' year %d, 4 pairs in 20 nights' % nyr
+        md = metadata + ' year %d, 3 triplets in 30 nights, SNR=4' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -170,7 +170,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 quads in 30
-        md = metadata + ' year %d, 3 quads in 30 nights' % nyr
+        md = metadata + ' year %d, 3 quads in 30 nights, SNR=4' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -184,8 +184,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         allBundles['discovery'][md] = bundle
         # Play with SNR.  SNR=3
         # 3 pairs in 15
-        constraint = 'night < %d' % (nyr * 365 + 1)
-        md = metadata + ' year %d, 3 pairs in 15 nights' % nyr
+        md = metadata + ' year %d, 3 pairs in 15 nights, SNR=3' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -200,7 +199,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 pairs in 30
-        md = metadata + ' year %d, 3 pairs in 30 nights' % nyr
+        md = metadata + ' year %d, 3 pairs in 30 nights, SNR=3' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -213,7 +212,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 4 pairs in 20
-        md = metadata + ' year %d, 4 pairs in 20 nights' % nyr
+        md = metadata + ' year %d, 4 pairs in 20 nights, SNR=3' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -226,7 +225,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 triplets in 30
-        md = metadata + ' year %d, 4 pairs in 20 nights' % nyr
+        md = metadata + ' year %d, 3 triplets in 30 nights, SNR=3' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -239,7 +238,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # 3 quads in 30
-        md = metadata + ' year %d, 3 quads in 30 nights' % nyr
+        md = metadata + ' year %d, 3 quads in 30 nights, SNR=3' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -253,8 +252,7 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         allBundles['discovery'][md] = bundle
         # SNR = 0
         # 3 pairs in 15
-        constraint = 'night < %d' % (nyr * 365 + 1)
-        md = metadata + ' year %d, 3 pairs in 15 nights' % nyr
+        md = metadata + ' year %d, 3 pairs in 15 nights, SNR=0' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
         plotDict.update(basicPlotDict)
@@ -268,7 +266,6 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         allBundles['discovery'][md] = bundle
         # Play with strategy.
         # Single detection.
-        constraint = 'night < %d' % (nyr * 365 + 1)
         md = metadata + ' year %d, Single detection' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
@@ -282,7 +279,6 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
         # Single pair of detections.
-        constraint = 'night < %d' % (nyr * 365 + 1)
         md = metadata + ' year %d, Single pair' % nyr
         plotDict = {'nxbins': 200, 'nybins': 200,
                     'title': '%s: %s' % (runName, md)}
@@ -295,7 +291,17 @@ def setupMetrics(slicer, runName, metadata, albedo, Hmark, mParams):
                                     plotDict=plotDict, plotFuncs=plotFuncs)
         bundle.childBundles['N_Chances'].setSummaryMetrics(summaryMetrics)
         allBundles['discovery'][md] = bundle
-
+        # High velocity detections.
+        md = metadata + ' year %d, High velocity pair' % nyr
+        plotDict = {'nxbins': 200, 'nybins': 200,
+                    'title': '%s: %s' % (runName, md)}
+        plotDict.update(basicPlotDict)
+        metric = metrics.HighVelocityNightsMetric(psfFactor=2., nObsPerNight=2)
+        bundle = mmb.MoMetricBundle(metric, slicer, constraint,
+                                    runName=runName, metadata=md,
+                                    plotDict=plotDict, plotFuncs=plotFuncs, 
+                                    summaryMetrics=summaryMetrics)
+        allBundles['velocity'][md] = bundle
 
 
     allBundles['nObs'] = {}
@@ -472,6 +478,13 @@ def addAllCompletenessBundles(allBundles, Hmark, resultsDb):
             makeCompletenessBundle(b, summaryName='Completeness', Hmark=Hmark, resultsDb=resultsDb)
         allBundles['CumulativeCompleteness'][md] = \
             makeCompletenessBundle(b, summaryName='CumulativeCompleteness', Hmark=Hmark, resultsDb=resultsDb)
+    k = 'velocity'
+    for md in allBundles[k]:
+        b = allBundles[k][md]
+        allBundles['DifferentialCompleteness'][md] = \
+            makeCompletenessBundle(b, summaryName='Completeness', Hmark=Hmark, resultsDb=resultsDb)
+        allBundles['CumulativeCompleteness'][md] = \
+            makeCompletenessBundle(b, summaryName='CumulativeCompleteness', Hmark=Hmark, resultsDb=resultsDb)
     return allBundles
 
 def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness',
@@ -558,6 +571,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
                         'legendloc': 'upper right'}
         caption = 'Mean number of discovery chances, for various discovery strategies, ' \
                   'at the end of year %d.' % (year)
+        caption += ' Detection is based on probability of detecting source, given threshhold of 5-sigma.'
         displayDict = {'group':'A: Discovery', 'subgroup': 'Number of chances',
                        'order': order, 'caption': caption}
         for i, strategy in enumerate(strategies):
@@ -568,6 +582,32 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
         ph.jointMetadata = '%s Year %d: 3 pairs in 15 nights -- 3 quads in 30 nights' % (metadata, year)
+        ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
+        plt.close()
+
+        # Plot the discovery chances at 'year', for different discovery strategies, for SNR=4 bundles
+        order += 1
+        k = 'discovery'
+        strategies = ['3 pairs in 15 nights, SNR=4', '3 pairs in 30 nights, SNR=4',
+                      '4 pairs in 20 nights, SNR=4', '3 triplets in 30 nights, SNR=4',
+                      '3 quads in 30 nights, SNR=4']
+        plotbundles = []
+        plotDicts = []
+        basePlotDict = {'title': '%s Discovery Chances at year %d - %s' % (runName, year, metadata),
+                        'legendloc': 'upper right'}
+        caption = 'Mean number of discovery chances, for various discovery strategies, ' \
+                  'at the end of year %d.' % (year)
+        caption += ' Detection is based on achieving SNR=4 in each visit.'
+        displayDict = {'group':'A: Discovery', 'subgroup': 'Number of chances',
+                       'order': order, 'caption': caption}
+        for i, strategy in enumerate(strategies):
+            md = '%s year %d, %s' % (metadata, year, strategy)
+            plotbundles.append(allBundles[k][md].childBundles['N_Chances'])
+            tmpPlotDict = {'color': colorlist[i], 'label': strategy}
+            tmpPlotDict.update(basePlotDict)
+            plotDicts.append(tmpPlotDict)
+        ph.setMetricBundles(plotbundles)
+        ph.jointMetadata = '%s Year %d: 3 pairs in 15 nights -- 3 quads in 30 nights, SNR=4' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
 
