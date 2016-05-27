@@ -327,7 +327,7 @@ class Discovery_RADecMetric(BaseMoMetric):
 
 class Discovery_EcLonLatMetric(BaseMoMetric):
     """
-    Returns the ecliptic lon/lat (in degrees) of the i-th discovery opportunity.
+    Returns the ecliptic lon/lat and solar elongation (in degrees) of the i-th discovery opportunity.
     """
     def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
         super(Discovery_EcLonLatMetric, self).__init__(**kwargs)
@@ -339,8 +339,24 @@ class Discovery_EcLonLatMetric(BaseMoMetric):
         if self.i>=len(metricValues['start']):
             return (-999, -999)
         startIdx = metricValues['start'][self.i]
-        return (ssoObs['ecLon'][startIdx], ssoObs['ecLat'][startIdx])
+        return (ssoObs['ecLon'][startIdx], ssoObs['ecLat'][startIdx],
+                np.degrees(ssoObs['solarElong'][startIdx]))
 
+class Discovery_VelocityMetric(BaseMoMetric):
+    """
+    Returns the sky velocity of the i-th discovery opportunity.
+    """
+    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
+        super(Discovery_VelocityMetric, self).__init__(**kwargs)
+        self.parentMetric = parentDiscoveryMetric
+        self.i = i
+        self.metricDtype = 'float'
+
+    def run(self, ssoObs, orb, Hval, metricValues):
+        if self.i>=len(metricValues['start']):
+            return -999
+        startIdx = metricValues['start'][self.i]
+        return ssoObs['velocity'][startIdx]
 
 class ActivityOverTimeMetric(BaseMoMetric):
     """
