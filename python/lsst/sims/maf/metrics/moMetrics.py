@@ -269,25 +269,32 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
     Child metric to be used with DiscoveryMetric.
     Calculates total number of discovery opportunities in a window between nightStart / nightEnd.
     """
-    def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, snrLimit=None, **kwargs):
         super(Discovery_N_ChancesMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         if nightStart is None:
             self.nightStart = 0
         else:
             self.nightStart = nightStart
         self.nightEnd = nightEnd
+        self.snrLimit = snrLimit
         # Update the metric name to use the nightStart/nightEnd values, if an overriding name is not given.
         if 'metricName' not in kwargs:
             if nightStart is not None:
-                self.name = self.name + '_nightStart'
+                self.name = self.name + '_%d' % (nightStart)
             if nightEnd is not None:
-                self.name = self.name + '_nightEnd'
+                self.name = self.name + '_%d' % (nightEnd)
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         """
         Return the number of different discovery chances we had for each object/H combination.
         """
-        startNights = ssoObs[self.nightCol][metricValues['start']]
+        if self.snrLimit is not None:
+            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        else:
+            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        if len(vis) == 0:
+            return self.badval
+        startNights = ssoObs[self.nightCol][vis][metricValues['start']]
         if self.nightEnd is None:
             valid = np.where(startNights >= self.nightStart)[0]
         else:
@@ -320,17 +327,24 @@ class Discovery_TimeMetric(BaseChildMetric):
     """
     Returns the time of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, tStart=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, tStart=None, snrLimit=None, **kwargs):
         super(Discovery_TimeMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.i = i
         self.tStart = tStart
+        self.snrLimit = snrLimit
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         """
         Return the time of the i-th discovery opportunity.
         """
         if self.i>=len(metricValues['start']):
-            return 0
+            return self.badval
+        if self.snrLimit is not None:
+            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        else:
+            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        if len(vis) == 0:
+            return self.badval
         startIdx = metricValues['start'][self.i]
         tDisc = ssoObs[self.expMJDCol][startIdx]
         if self.tStart is not None:
@@ -342,17 +356,24 @@ class Discovery_RADecMetric(BaseChildMetric):
     """
     Returns the RA/Dec of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, snrLimit=None, **kwargs):
         super(Discovery_RADecMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.metricDtype = 'object'
         self.i = i
+        self.snrLimit = snrLimit
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         """
         Return the RA/Dec of the i-th discovery opportunity.
         """
         if self.i>=len(metricValues['start']):
-            return (-999, -999)
+            return self.badval
+        if self.snrLimit is not None:
+            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        else:
+            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        if len(vis) == 0:
+            return self.badval
         startIdx = metricValues['start'][self.i]
         return (ssoObs[self.raCol][startIdx], ssoObs[self.decCol][startIdx])
 
@@ -360,14 +381,21 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
     """
     Returns the ecliptic lon/lat and solar elongation (in degrees) of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0,  snrLimit=None, **kwargs):
         super(Discovery_EcLonLatMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.i = i
+        self.snrLimit = snrLimit
         self.metricDtype = 'object'
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
-            return (-999, -999)
+            return self.badval
+        if self.snrLimit is not None:
+            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        else:
+            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        if len(vis) == 0:
+            return self.badval
         startIdx = metricValues['start'][self.i]
         return (ssoObs['ecLon'][startIdx], ssoObs['ecLat'][startIdx],
                 np.degrees(ssoObs['solarElong'][startIdx]))
@@ -376,13 +404,20 @@ class Discovery_VelocityMetric(BaseChildMetric):
     """
     Returns the sky velocity of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, snrLimit=None, **kwargs):
         super(Discovery_VelocityMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.i = i
+        self.snrLimit = snrLimit
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
-            return -999
+            return self.badval
+        if self.snrLimit is not None:
+            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        else:
+            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        if len(vis) == 0:
+            return self.badval
         startIdx = metricValues['start'][self.i]
         return ssoObs['velocity'][startIdx]
 
