@@ -189,19 +189,20 @@ class DiscoveryMetric(BaseMoMetric):
         @ snrLimit .. if snrLimit is None then uses 'completeness' calculation in 'vis' column.
                    .. if snrLimit is not None, then uses this SNR value as a cutoff.
         """
-        self.childMetrics = {'N_Chances':Discovery_N_ChancesMetric(self),
-                             'N_Obs':Discovery_N_ObsMetric(self),
-                             'Time':Discovery_TimeMetric(self),
-                             'RADec':Discovery_RADecMetric(self),
-                             'EcLonLat':Discovery_EcLonLatMetric(self)}
-        super(DiscoveryMetric, self).__init__(childMetrics = self.childMetrics, **kwargs)
         self.snrLimit = snrLimit
+        self.childMetrics = {'N_Chances': Discovery_N_ChancesMetric(self),
+                             'N_Obs': Discovery_N_ObsMetric(self),
+                             'Time': Discovery_TimeMetric(self),
+                             'RADec': Discovery_RADecMetric(self),
+                             'EcLonLat': Discovery_EcLonLatMetric(self)}
+        if 'badval' not in kwargs:
+            kwargs['badval'] = None
+        super(DiscoveryMetric, self).__init__(childMetrics = self.childMetrics, **kwargs)
         self.nObsPerNight = nObsPerNight
         self.tMin = tMin
         self.tMax = tMax
         self.nNightsPerWindow = nNightsPerWindow
         self.tWindow = tWindow
-        self.badval = None
 
     def run(self, ssoObs, orb, Hval):
         if self.snrLimit is not None:
