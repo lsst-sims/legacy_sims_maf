@@ -215,25 +215,29 @@ class MoMetricBundleGroup(object):
                 ssoObs = allStackers.run(ssoObs, slicePoint['orbit']['H'], Hval)
                 # Run all the parent metrics.
                 for b in self.currentBundleDict.itervalues():
+                    # Mask the parent metric (and then child metrics) if there was no data.
                     if len(ssoObs) == 0:
-                        # Mask the parent metric value if there was no data.
                         b.metricValues.mask[i][j] = True
-                        # Mask the child metric values.
                         for cb in b.childBundles.itervalues():
                             cb.metricValues.mask[i][j] = True
+                    # Otherwise, calculate the metric value for the parent, and then child.
                     else:
-                        # Calculate the metric value for the parent and child.
+                        # Calculate for the parent.
                         mVal = b.metric.run(ssoObs, slicePoint['orbit'], Hval)
+                        # Mask if the parent metric returned a bad value.
                         if mVal == b.metric.badval:
                             b.metricValues.mask[i][j] = True
                             for cb in b.childBundles.itervalues():
                                 cb.metricValues.mask[i][j] = True
+                        # Otherwise, set the parent value and calculate the child metric values as well.
                         else:
                             b.metricValues.data[i][j] = mVal
                             for cb in b.childBundles.itervalues():
-                                cb.metricValues.data[i][j] = cb.metric.run(ssoObs,
-                                                                           slicePoint['orbit'],
-                                                                           Hval, mVal)
+                                childVal = cb.metric.runChild(ssoObs, slicePoint['orbit'], Hval, mVal)
+                                if childVal == cb.metric.badval:
+                                    cb.metricValues.mask[i][j] = True
+                                else:
+                                    cb.metricValues.data[i][j] = childVal
 
     def runAll(self):
         """
