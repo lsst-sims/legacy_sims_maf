@@ -269,14 +269,14 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
     Child metric to be used with DiscoveryMetric.
     Calculates total number of discovery opportunities in a window between nightStart / nightEnd.
     """
-    def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, snrLimit=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, **kwargs):
         super(Discovery_N_ChancesMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         if nightStart is None:
             self.nightStart = 0
         else:
             self.nightStart = nightStart
         self.nightEnd = nightEnd
-        self.snrLimit = snrLimit
+        self.snrLimit = parentDiscoveryMetric.snrLimit
         # Update the metric name to use the nightStart/nightEnd values, if an overriding name is not given.
         if 'metricName' not in kwargs:
             if nightStart is not None:
@@ -327,11 +327,11 @@ class Discovery_TimeMetric(BaseChildMetric):
     """
     Returns the time of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, tStart=None, snrLimit=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, tStart=None, **kwargs):
         super(Discovery_TimeMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.i = i
         self.tStart = tStart
-        self.snrLimit = snrLimit
+        self.snrLimit = parentDiscoveryMetric.snrLimit
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         """
@@ -356,11 +356,11 @@ class Discovery_RADecMetric(BaseChildMetric):
     """
     Returns the RA/Dec of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, snrLimit=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
         super(Discovery_RADecMetric, self).__init__(parentDiscoveryMetric, **kwargs)
-        self.metricDtype = 'object'
         self.i = i
-        self.snrLimit = snrLimit
+        self.snrLimit = parentDiscoveryMetric.snrLimit
+        self.metricDtype = 'object'
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         """
@@ -381,10 +381,10 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
     """
     Returns the ecliptic lon/lat and solar elongation (in degrees) of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0,  snrLimit=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0,  **kwargs):
         super(Discovery_EcLonLatMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.i = i
-        self.snrLimit = snrLimit
+        self.snrLimit = parentDiscoveryMetric.snrLimit
         self.metricDtype = 'object'
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
@@ -404,10 +404,10 @@ class Discovery_VelocityMetric(BaseChildMetric):
     """
     Returns the sky velocity of the i-th discovery opportunity.
     """
-    def __init__(self, parentDiscoveryMetric, i=0, snrLimit=None, **kwargs):
+    def __init__(self, parentDiscoveryMetric, i=0, **kwargs):
         super(Discovery_VelocityMetric, self).__init__(parentDiscoveryMetric, **kwargs)
         self.i = i
-        self.snrLimit = snrLimit
+        self.snrLimit = parentDiscoveryMetric.snrLimit
 
     def runChild(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
