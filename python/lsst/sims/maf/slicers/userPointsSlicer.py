@@ -4,23 +4,53 @@ from .baseSpatialSlicer import BaseSpatialSlicer
 
 __all__ = ['UserPointsSlicer']
 
+
 class UserPointsSlicer(BaseSpatialSlicer):
-    """Use spatial slicer on a user provided point """
-    def __init__(self, ra, dec, verbose=True, lonCol='fieldRA', latCol='fieldDec',
+    """A spatial slicer that evaluates pointings overlapping user-provided list of points.
+
+    Parameters
+    ----------
+    ra : list or numpy.ndarray
+        User-selected RA points, in degrees. Stored (and used) internally in radians.
+    dec : list or numpy.ndarray
+        User-selected Dec points, in degrees. Stored internally in radians.
+    lonCol : str, optional
+        Name of the longitude (RA equivalent) column to use from the input data.
+        Default fieldRA
+    latCol : str, optional
+        Name of the latitude (Dec equivalent) column to use from the input data.
+        Default fieldDec
+    verbose : boolean, optional
+        Flag to indicate whether or not to write additional information to stdout during runtime.
+        Default True.
+    badval : float, optional
+        Bad value flag, relevant for plotting. Default -666.
+    leafsize : int, optional
+        Leafsize value for kdtree. Default 100.
+    radius : float, optional
+        Radius for matching in the kdtree. Equivalent to the radius of the FOV. Degrees.
+        Default 1.75.
+    useCamera : boolean, optional
+        Flag to indicate whether to use the LSST camera footprint or not.
+        Default False.
+    rotSkyPosColName : str, optional
+        Name of the rotSkyPos column in the input  data. Only used if useCamera is True.
+        Describes the orientation of the camera orientation compared to the sky.
+        Default rotSkyPos.
+    mjdColName : str, optional
+        Name of the exposure time column. Only used if useCamera is True.
+        Default expMJD.
+    chipNames : array-like, optional
+        List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
+        Default 'all' - this uses all chips in the camera.
+    """
+    def __init__(self, ra, dec, lonCol='fieldRA', latCol='fieldDec', verbose=True,
                  badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD',
-                 chipNames=None):
-        """
-        ra = list of ra points to use
-        dec = list of dec points to use
-        """
-
-        super(UserPointsSlicer,self).__init__(verbose=verbose,
-                                                lonCol=lonCol, latCol=latCol,
-                                                badval=badval, radius=radius, leafsize=leafsize,
-                                                useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
-                                                mjdColName=mjdColName, chipNames=chipNames)
-
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD', chipNames='all'):
+        super(UserPointsSlicer, self).__init__(lonCol=lonCol, latCol=latCol, verbose=verbose,
+                                               badval=badval, radius=radius, leafsize=leafsize,
+                                               useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
+                                               mjdColName=mjdColName, chipNames=chipNames)
         # check that ra and dec are iterable, if not, they are probably naked numbers, wrap in list
         if not hasattr(ra, '__iter__'):
             ra = [ra]
@@ -28,12 +58,19 @@ class UserPointsSlicer(BaseSpatialSlicer):
             dec = [dec]
         if len(ra) != len(dec):
             raise ValueError('RA and Dec must be the same length')
-        self.nslice = np.size(ra)
-        self.shape = self.nslice
-        self.spatialExtent = [0,self.nslice-1]
+        ra = np.radians(ra)
+        dec = np.radians(dec)
         self.slicePoints['sid'] = np.arange(np.size(ra))
         self.slicePoints['ra'] = np.array(ra)
         self.slicePoints['dec'] = np.array(dec)
+        self.nslice = np.size(ra)
+        self.shape = self.nslice
+        self.spatialExtent = [0, self.nslice - 1]
+        self.slicer_init = {'ra': ra,
+                            'dec': dec,
+                            'lonCol': lonCol,
+                            'latCol': latCol,
+                            'radius': radius}
         self.plotFuncs = [BaseSkyMap, BaseHistogram]
 
     def __eq__(self, otherSlicer):
@@ -41,7 +78,8 @@ class UserPointsSlicer(BaseSpatialSlicer):
         result = False
         if isinstance(otherSlicer, UserPointsSlicer):
             if otherSlicer.nslice == self.nslice:
-                if np.all(otherSlicer.ra == self.ra) and np.all(otherSlicer.dec == self.dec):
+                if np.all(otherSlicer.slicePoints['ra'] == self.slicePoints['ra']) \
+                        and np.all(otherSlicer.slicePoints['dec'] == self.slicePoints['dec']):
                     if (otherSlicer.lonCol == self.lonCol and otherSlicer.latCol == self.latCol):
                         if otherSlicer.radius == self.radius:
                             if otherSlicer.useCamera == self.useCamera:
