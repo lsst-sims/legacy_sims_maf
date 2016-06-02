@@ -41,27 +41,30 @@ class SlicerRegistry(type):
 class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.
+
+    After first construction, the slicer should be ready for setupSlicer to define slicePoints, which will
+    let the slicer 'slice' data and generate plots.
+    After init after a restore: everything necessary for using slicer for plotting or
+    saving/restoring metric data should be present (although slicer does not need to be able to
+    slice data again and generally will not be able to).
+
+    The sliceMetric has a 'memo-ize' functionality that can save previous indexes & return
+    metric data value calculated for same set of previous indexes, if desired.
+    CacheSize = 0 effectively turns this off, otherwise cacheSize should be set by the slicer.
+    (Most useful for healpix slicer, where many healpixels may have same set of LSST visits).
+
+    Parameters
+    ----------
+    verbose: boolean, optional
+        True/False flag to send extra output to screen.
+        Default True.
+    badval: int or float, optional
+        The value the Slicer uses to fill masked metric data values
+        Default -666.
     """
     __metaclass__ = SlicerRegistry
 
     def __init__(self, verbose=True, badval=-666):
-        """Instantiate the base slicer object.
-
-        After first init with a 'blank' slicer: slicer should be ready for setupSlicer to
-        define slicePoints.
-        After init after a restore: everything necessary for using slicer for plotting or
-        saving/restoring metric data should be present (although slicer does not need to be able to
-        slice data again and generally will not be able to).
-
-        The sliceMetric has a 'memo-ize' functionality that can save previous indexes & return
-        metric data value calculated for same set of previous indexes, if desired.
-        CacheSize = 0 effectively turns this off, otherwise cacheSize should be set by the slicer.
-        (Most useful for healpix slicer, where many healpixels may have same set of LSST visits).
-
-        Minimum set of __init__ kwargs:
-        verbose: True/False flag to send extra output to screen
-        badval: the value the Slicer uses to fill masked metric data values
-        """
         self.verbose = verbose
         self.badval = badval
         # Set cacheSize : each slicer will be able to override if appropriate.
@@ -86,7 +89,6 @@ class BaseSlicer(object):
         # Set the y-axis range be on the two-d plot
         if self.nslice is not None:
             self.spatialExtent = [0,self.nslice-1]
-
 
     def _runMaps(self, maps):
         """Add map metadata to slicePoints.

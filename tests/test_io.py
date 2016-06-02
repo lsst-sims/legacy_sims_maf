@@ -85,25 +85,25 @@ class TestSlicers(unittest.TestCase):
                 assert(getattr(slicer,att) == getattr(slicerBack,att))
 
     def test_opsimFieldSlicer(self):
-        slicer=slicers.OpsimFieldSlicer(np.arange(100))
-        names=['fieldRA','fieldDec','fieldID',]
-        dt = ['float','float','int']
+        slicer=slicers.OpsimFieldSlicer()
+        names = ['fieldRA','fieldDec','fieldID']
+        dt = ['float', 'float', 'int']
         metricValues = np.random.rand(100)
-        fieldData = np.zeros(100, dtype=zip(names,dt))
+        fieldData = np.zeros(100, dtype=zip(names, dt))
         fieldData['fieldRA'] = np.random.rand(100)
         fieldData['fieldDec'] = np.random.rand(100)
         fieldData['fieldID'] = np.arange(100)
-        names=['data1','data2','fieldID',]
-        simData = np.zeros(100, dtype=zip(names,dt))
+        names=['data1','data2','fieldID']
+        simData = np.zeros(100, dtype=zip(names, dt))
         simData['data1'] = np.random.rand(100)
         simData['fieldID'] = np.arange(100)
-        slicer.setupSlicer(simData,fieldData)
+        slicer.setupSlicer(simData, fieldData)
         filename = 'opsimslicer_test.npz'
         self.filenames.append(filename)
         slicer.writeData(filename, metricValues)
-        metricBack, slicerBack,header = self.baseslicer.readData(filename)
+        metricBack, slicerBack, header = self.baseslicer.readData(filename)
         assert(slicer == slicerBack)
-        np.testing.assert_almost_equal(metricBack,metricValues)
+        np.testing.assert_almost_equal(metricBack, metricValues)
         attr2check = ['nslice', 'columnsNeeded', 'lonCol', 'latCol','simDataFieldIDColName']
         for att in attr2check:
             if type(getattr(slicer,att)).__name__ == 'dict':

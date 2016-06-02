@@ -13,16 +13,62 @@ from .baseSpatialSlicer import BaseSpatialSlicer
 
 __all__ = ['HealpixSlicer']
 
+
 class HealpixSlicer(BaseSpatialSlicer):
-    """Healpix spatial slicer."""
-    def __init__(self, nside=128, lonCol ='fieldRA' ,
-                 latCol='fieldDec', verbose=True,
-                 useCache=True, radius=1.75, leafsize=100,
-                 useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
+    """
+    A spatial slicer that evaluates pointings on a healpix-based grid.
+
+    Parameters
+    ----------
+    nside : int, optional
+        The nside parameter of the healpix grid. Must be a power of 2.
+        Default 128.
+    lonCol : str, optional
+        Name of the longitude (RA equivalent) column to use from the input data.
+        Default fieldRA
+    latCol : str, optional
+        Name of the latitude (Dec equivalent) column to use from the input data.
+        Default fieldDec
+    verbose : boolean, optional
+        Flag to indicate whether or not to write additional information to stdout during runtime.
+        Default True.
+    badval : float, optional
+        Bad value flag, relevant for plotting. Default the hp.UNSEEN value (in order to properly flag
+        bad data points for plotting with the healpix plotting routines). This should not be changed.
+    useCache : boolean
+        Flag allowing the user to indicate whether or not to cache (and reuse) metric results
+        calculated with the same set of simulated data pointings.
+        This can be safely set to True for slicers not using maps and will result in increased speed.
+        When calculating metric results using maps, the metadata at each individual ra/dec point may
+        influence the metric results and so useCache should be set to False.
+        Default True.
+    leafsize : int, optional
+        Leafsize value for kdtree. Default 100.
+    radius : float, optional
+        Radius for matching in the kdtree. Equivalent to the radius of the FOV. Degrees.
+        Default 1.75.
+    useCamera : boolean, optional
+        Flag to indicate whether to use the LSST camera footprint or not.
+        Default False.
+    rotSkyPosColName : str, optional
+        Name of the rotSkyPos column in the input  data. Only used if useCamera is True.
+        Describes the orientation of the camera orientation compared to the sky.
+        Default rotSkyPos.
+    mjdColName : str, optional
+        Name of the exposure time column. Only used if useCamera is True.
+        Default expMJD.
+    chipNames : array-like, optional
+        List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
+        Default 'all' - this uses all chips in the camera.
+    """
+    def __init__(self, nside=128, lonCol ='fieldRA',
+                 latCol='fieldDec', verbose=True, badval=hp.UNSEEN,
+                 useCache=True, leafsize=100, radius=1.75,
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD', chipNames='all'):
         """Instantiate and set up healpix slicer object."""
         super(HealpixSlicer, self).__init__(verbose=verbose,
                                             lonCol=lonCol, latCol=latCol,
-                                            badval=hp.UNSEEN, radius=radius, leafsize=leafsize,
+                                            badval=badval, radius=radius, leafsize=leafsize,
                                             useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
                                             mjdColName=mjdColName, chipNames=chipNames)
         # Valid values of nside are powers of 2.
@@ -35,17 +81,17 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.nside = int(nside)
         self.pixArea = hp.nside2pixarea(self.nside)
         self.nslice = hp.nside2npix(self.nside)
-        self.spatialExtent = [0,self.nslice-1]
+        self.spatialExtent = [0, self.nslice-1]
         self.shape = self.nslice
         if self.verbose:
-            print 'Healpix slicer using NSIDE=%d, '%(self.nside) + \
-            'approximate resolution %f arcminutes'%(hp.nside2resol(self.nside,arcmin=True))
+            print 'Healpix slicer using NSIDE=%d, ' % (self.nside) + \
+                  'approximate resolution %f arcminutes' % (hp.nside2resol(self.nside, arcmin=True))
         # Set variables so slicer can be re-constructed
-        self.slicer_init = {'nside':nside, 'lonCol':lonCol, 'latCol':latCol,
-                            'radius':radius}
+        self.slicer_init = {'nside': nside, 'lonCol': lonCol, 'latCol': latCol,
+                            'radius': radius}
         if useCache:
             # useCache set the size of the cache for the memoize function in sliceMetric.
-            binRes = hp.nside2resol(nside) # Pixel size in radians
+            binRes = hp.nside2resol(nside)  # Pixel size in radians
             # Set the cache size to be ~2x the circumference
             self.cacheSize = int(np.round(4.*np.pi/binRes))
         # Set up slicePoint metadata.

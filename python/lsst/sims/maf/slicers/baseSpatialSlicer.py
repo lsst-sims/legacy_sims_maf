@@ -21,23 +21,44 @@ __all__ = ['BaseSpatialSlicer']
 
 
 class BaseSpatialSlicer(BaseSlicer):
-    """Base slicer object, with added slicing functions for spatial slicer."""
-    def __init__(self, verbose=True,
-                 lonCol='fieldRA', latCol='fieldDec',
+    """Base spatial slicer object, contains additional functionality for spatial slicing,
+    including setting up and traversing a kdtree containing the simulated data points.
+
+    Parameters
+    ----------
+    lonCol : str, optional
+        Name of the longitude (RA equivalent) column to use from the input data.
+        Default fieldRA
+    latCol : str, optional
+        Name of the latitude (Dec equivalent) column to use from the input data.
+        Default fieldDec
+    verbose : boolean, optional
+        Flag to indicate whether or not to write additional information to stdout during runtime.
+        Default True.
+    badval : float, optional
+        Bad value flag, relevant for plotting. Default -666.
+    leafsize : int, optional
+        Leafsize value for kdtree. Default 100.
+    radius : float, optional
+        Radius for matching in the kdtree. Equivalent to the radius of the FOV. Degrees.
+        Default 1.75.
+    useCamera : boolean, optional
+        Flag to indicate whether to use the LSST camera footprint or not.
+        Default False.
+    rotSkyPosColName : str, optional
+        Name of the rotSkyPos column in the input  data. Only used if useCamera is True.
+        Describes the orientation of the camera orientation compared to the sky.
+        Default rotSkyPos.
+    mjdColName : str, optional
+        Name of the exposure time column. Only used if useCamera is True.
+        Default expMJD.
+    chipNames : array-like, optional
+        List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
+        Default 'all' - this uses all chips in the camera.
+    """
+    def __init__(self, lonCol='fieldRA', latCol='fieldDec', verbose=True,
                  badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, chipNames='all', rotSkyPosColName='rotSkyPos', mjdColName='expMJD'):
-        """
-        Instantiate the base spatial slicer object.
-        lonCol = ra, latCol = dec, typically.
-        'leafsize' is the number of RA/Dec pointings in each leaf node of KDtree
-        'radius' (in degrees) is distance at which matches between
-        the simData KDtree
-        and slicePoint RA/Dec values will be produced
-        useCamera = boolean. False means all observations that fall in the radius are assumed to be observed
-        True means the observations are checked to make sure they fall on a chip.
-        chipNames = list of raft/chip names to include. By default, all chips are included. This way,
-        one can select only a subset of chips/rafts.
-        """
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD', chipNames='all'):
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
         self.latCol = latCol
@@ -55,7 +76,7 @@ class BaseSpatialSlicer(BaseSlicer):
         self.leafsize = leafsize
         self.useCamera = useCamera
         self.chipsToUse = chipNames
-        # RA and Dec are required slicePoint info for any spatial slicer.
+        # RA and Dec are required slicePoint info for any spatial slicer. Slicepoint RA/Dec are in radians.
         self.slicePoints['sid'] = None
         self.slicePoints['ra'] = None
         self.slicePoints['dec'] = None
@@ -64,15 +85,21 @@ class BaseSpatialSlicer(BaseSlicer):
         self.plotFuncs = [BaseHistogram, BaseSkyMap]
 
     def setupSlicer(self, simData, maps=None):
-        """Use simData[self.lonCol] and simData[self.latCol]
-        (in radians) to set up KDTree.
+        """Use simData[self.lonCol] and simData[self.latCol] (in radians) to set up KDTree.
 
-        maps = list of map objects (such as dust extinction) that will run to build up
-        additional metadata at each slicePoint (available to metrics via slicePoint dictionary).
+        Parameters
+        -----------
+        simData : numpy.recarray
+            The simulated data, including the location of each pointing.
+        maps : list of lsst.sims.maf.maps objects, optional
+            List of maps (such as dust extinction) that will run to build up additional metadata at each
+            slicePoint. This additional metadata is available to metrics via the slicePoint dictionary.
+            Default None.
         """
         if maps is not None:
             if self.cacheSize != 0 and len(maps) > 0:
-                warnings.warn('Warning:  Loading maps but cache on. Should probably set useCache=False in slicer.')
+                warnings.warn('Warning:  Loading maps but cache on.'
+                              'Should probably set useCache=False in slicer.')
             self._runMaps(maps)
         self._setRad(self.radius)
         if self.useCamera:
@@ -92,7 +119,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.sliceLookup[islice]
                 slicePoint['chipNames'] = self.chipNames[islice]
             else:
-                sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice], self.slicePoints['dec'][islice])
+                sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice],
+                                           self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
@@ -114,7 +142,6 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def _setupLSSTCamera(self):
         """If we want to include the camera chip gaps, etc"""
-
         mapper = LsstSimMapper()
         self.camera = mapper.camera
         self.epoch = 2000.0
