@@ -215,7 +215,7 @@ class DiscoveryMetric(BaseMoMetric):
         # Identify discovery opportunities.
         #  Identify visits where the 'night' changes.
         visSort = np.argsort(ssoObs[self.expMJDCol][vis])
-        nights = ssoObs[self.nightCol][visSort]
+        nights = ssoObs[self.nightCol][vis][visSort]
         #print 'all nights', nights
         n = np.unique(nights)
         # Identify all the indexes where the night changes in value.
@@ -231,14 +231,14 @@ class DiscoveryMetric(BaseMoMetric):
         nIdxMany = np.searchsorted(nights, nWithXObs)
         nIdxManyEnd = np.searchsorted(nights, nWithXObs, side='right') - 1
         # Check that nObsPerNight observations are within tMin/tMax
-        timesStart = ssoObs[self.expMJDCol][visSort][nIdxMany]
-        timesEnd = ssoObs[self.expMJDCol][visSort][nIdxManyEnd]
+        timesStart = ssoObs[self.expMJDCol][vis][visSort][nIdxMany]
+        timesEnd = ssoObs[self.expMJDCol][vis][visSort][nIdxManyEnd]
         # Identify the nights with 'clearly good' observations.
         good = np.where((timesEnd - timesStart >= self.tMin) & (timesEnd - timesStart <= self.tMax), 1, 0)
         # Identify the nights where we need more investigation (a subset of the visits may be within the interval).
         check = np.where((good==0) & (nIdxManyEnd + 1 - nIdxMany > self.nObsPerNight) & (timesEnd-timesStart > self.tMax))[0]
         for i, j, c in zip(visSort[nIdxMany][check], visSort[nIdxManyEnd][check], check):
-            t = ssoObs[self.expMJDCol][i:j+1]
+            t = ssoObs[self.expMJDCol][vis][visSort][i:j+1]
             dtimes = (np.roll(t, 1- self.nObsPerNight) - t)[:-1]
             tidx = np.where((dtimes >= self.tMin) & (dtimes <= self.tMax))[0]
             if len(tidx) > 0:
@@ -250,20 +250,20 @@ class DiscoveryMetric(BaseMoMetric):
         #print 'good tracklets', nights[goodIdx]
         if len(goodIdx) < self.nNightsPerWindow:
             return self.badval
-        deltaNights = np.roll(ssoObs[self.nightCol][goodIdx], 1 - self.nNightsPerWindow) - ssoObs[self.nightCol][goodIdx]
+        deltaNights = np.roll(ssoObs[self.nightCol][vis][goodIdx], 1 - self.nNightsPerWindow) - ssoObs[self.nightCol][vis][goodIdx]
         # Identify the index in ssoObs[vis][goodIdx] (sorted by expMJD) where the discovery opportunity starts.
         startIdxs = np.where((deltaNights >= 0) & (deltaNights <= self.tWindow))[0]
         # Identify the index where the discovery opportunity ends.
         endIdxs = np.zeros(len(startIdxs), dtype='int')
         for i, sIdx in enumerate(startIdxs):
-            inWindow = np.where(ssoObs[self.nightCol][goodIdx] - ssoObs[self.nightCol][goodIdx][sIdx] <= self.tWindow)[0]
+            inWindow = np.where(ssoObs[self.nightCol][vis][goodIdx] - ssoObs[self.nightCol][vis][goodIdx][sIdx] <= self.tWindow)[0]
             endIdxs[i] = np.array([inWindow.max()])
         # Convert back to index based on ssoObs[vis] (sorted by expMJD).
         startIdxs = goodIdx[startIdxs]
         endIdxs = goodIdxEnds[endIdxs]
         #print 'start', startIdxs,  nights[startIdxs]#, orb['objId'], Hval
         #print 'end', endIdxs, nights[endIdxs]#, orb['objId'], Hval
-        return {'start':startIdxs, 'end':endIdxs, 'trackletNights':ssoObs[self.nightCol][goodIdx]}
+        return {'start':startIdxs, 'end':endIdxs, 'trackletNights':ssoObs[self.nightCol][vis][goodIdx]}
 
 
 class Discovery_N_ChancesMetric(BaseChildMetric):
@@ -297,7 +297,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
         if len(vis) == 0:
             return self.badval
         visSort = np.argsort(ssoObs[self.expMJDCol][vis])
-        nights = ssoObs[self.nightCol][visSort]
+        nights = ssoObs[self.nightCol][vis][visSort]
         startNights = nights[metricValues['start']]
         endNights = nights[metricValues['end']]
         if self.nightEnd is None:
@@ -535,7 +535,7 @@ class DiscoveryChancesMetric(BaseMoMetric):
             # Now to identify where observations meet the timing requirements.
             #  Identify visits where the 'night' changes.
             visSort = np.argsort(ssoObs[self.expMJDCol][vis])
-            nights = ssoObs[self.nightCol][visSort]
+            nights = ssoObs[self.nightCol][vis][visSort]
             #print 'all nights', nights
             n = np.unique(nights)
             # Identify all the indexes where the night changes (swap from one night to next)
@@ -550,14 +550,14 @@ class DiscoveryChancesMetric(BaseMoMetric):
             nIdxMany = np.searchsorted(nights, nWithXObs)
             nIdxManyEnd = np.searchsorted(nights, nWithXObs, side='right') - 1
             # Check that nObsPerNight observations are within tNight
-            timesStart = ssoObs[self.expMJDCol][visSort][nIdxMany]
-            timesEnd = ssoObs[self.expMJDCol][visSort][nIdxManyEnd]
+            timesStart = ssoObs[self.expMJDCol][vis][visSort][nIdxMany]
+            timesEnd = ssoObs[self.expMJDCol][vis][visSort][nIdxManyEnd]
             # Identify the nights with 'clearly good' observations.
             good = np.where(timesEnd - timesStart <= self.tNight, 1, 0)
             # Identify the nights where we need more investigation (a subset of the visits may be within the interval).
             check = np.where((good==0) & (nIdxManyEnd + 1 - nIdxMany > self.nObsPerNight) & (timesEnd-timesStart > self.tNight))[0]
             for i, j, c in zip(visSort[nIdxMany][check], visSort[nIdxManyEnd][check], check):
-                t = ssoObs[self.expMJDCol][i:j+1]
+                t = ssoObs[self.expMJDCol][vis][visSort][i:j+1]
                 dtimes = (np.roll(t, 1- self.nObsPerNight) - t)[:-1]
                 if np.any(dtimes <= self.tNight):
                     good[c] = 1
@@ -570,7 +570,7 @@ class DiscoveryChancesMetric(BaseMoMetric):
             if len(goodIdx) < self.nNightsPerWindow:
                 discoveryChances = self.badval
             else:
-                dnights = (np.roll(ssoObs[self.nightCol][goodIdx], 1-self.nNightsPerWindow) - ssoObs[self.nightCol][goodIdx])
+                dnights = (np.roll(ssoObs[self.nightCol][vis][goodIdx], 1-self.nNightsPerWindow) - ssoObs[self.nightCol][vis][goodIdx])
                 discoveryChances = len(np.where((dnights >= 0) & (dnights <= self.tWindow))[0])
         return discoveryChances
 
