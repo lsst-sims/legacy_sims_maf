@@ -132,12 +132,28 @@ class AllMoStackers(BaseStacker):
     Since for moving objects we usually want to run all of these at once/in order,
     provide a convenient way to do it.
     """
-    def __init__(self):
-        self.appMag = AppMagStacker()
-        self.magLimit = MagLimitStacker()
-        self.snr = SNRStacker()
-        self.vis = VisStacker()
-        self.ec = EclStacker()
+    def __init__(self, appMagStacker=None, magLimitStacker=None, snrStacker=None,
+                 visStacker=None, eclStacker=None):
+        if appMagStacker is not None:
+            self.appMag = appMagStacker
+        else:
+            self.appMag = AppMagStacker()
+        if magLimitStacker is not None:
+            self.magLimit = magLimitStacker
+        else:
+            self.magLimit = MagLimitStacker()
+        if snrStacker is not None:
+            self.snr = snrStacker
+        else:
+            self.snr = SNRStacker()
+        if visStacker is not None:
+            self.vis = visStacker
+        else:
+            self.vis = VisStacker()
+        if eclStacker is not None:
+            self.ec = eclStacker
+        else:
+            self.ec = EclStacker()
         # Grab all the columns added/required.
         self.colsAdded = []
         self.colsReq = []

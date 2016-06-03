@@ -168,8 +168,8 @@ class MoMetricBundle(MetricBundle):
 
 
 class MoMetricBundleGroup(object):
-    def __init__(self, bundleDict, outDir='.', resultsDb=None, verbose=True,
-                 saveEarly=False):
+    def __init__(self, bundleDict, outDir='.', resultsDb=None, allStackers=None,
+                 verbose=True, saveEarly=False):
         # Not really handling resultsDb yet.
         self.verbose = verbose
         self.bundleDict = bundleDict
@@ -181,8 +181,14 @@ class MoMetricBundleGroup(object):
         self.slicer = self.bundleDict.itervalues().next().slicer
         for b in self.bundleDict.itervalues():
             if b.slicer != self.slicer:
-                raise ValueError('Currently, the slicers for the MoMetricBundleGroup must be equal - using the same observations and Hvals.')
+                raise ValueError('Currently, the slicers for the MoMetricBundleGroup must be equal,'
+                                 ' using the same observations and Hvals.')
         self.constraints = list(set([b.constraint for b in bundleDict.values()]))
+
+        if allStackers is not None:
+            self.allStackers = allStackers
+        else:
+            self.allStackers = AllMoStackers()
 
         self.saveEarly = saveEarly
 
@@ -200,8 +206,6 @@ class MoMetricBundleGroup(object):
         """
         # Identify the observations which are relevant for this constraint.
         self.slicer.subsetObs(constraint)
-        # Set up all the stackers (this assumes we run all of the stackers all of the time).
-        allStackers = AllMoStackers()
         # Set up all of the metric values, including for the child bundles.
         for b in self.currentBundleDict.itervalues():
             b._setupMetricValues()
@@ -212,7 +216,7 @@ class MoMetricBundleGroup(object):
             ssoObs = slicePoint['obs']
             for j, Hval in enumerate(slicePoint['Hvals']):
                 # Run stackers to add extra columns (that depend on H)
-                ssoObs = allStackers.run(ssoObs, slicePoint['orbit']['H'], Hval)
+                ssoObs = self.allStackers.run(ssoObs, slicePoint['orbit']['H'], Hval)
                 # Run all the parent metrics.
                 for b in self.currentBundleDict.itervalues():
                     # Mask the parent metric (and then child metrics) if there was no data.
@@ -233,7 +237,7 @@ class MoMetricBundleGroup(object):
                         else:
                             b.metricValues.data[i][j] = mVal
                             for cb in b.childBundles.itervalues():
-                                childVal = cb.metric.runChild(ssoObs, slicePoint['orbit'], Hval, mVal)
+                                childVal = cb.metric.run(ssoObs, slicePoint['orbit'], Hval, mVal)
                                 if childVal == cb.metric.badval:
                                     cb.metricValues.mask[i][j] = True
                                 else:
