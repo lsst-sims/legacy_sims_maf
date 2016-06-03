@@ -535,9 +535,11 @@ class DiscoveryChancesMetric(BaseMoMetric):
             # Now to identify where observations meet the timing requirements.
             #  Identify visits where the 'night' changes.
             visSort = np.argsort(ssoObs[self.expMJDCol][vis])
-            n = np.unique(ssoObs[self.nightCol][visSort])
+            nights = ssoObs[self.nightCol][visSort]
+            #print 'all nights', nights
+            n = np.unique(nights)
             # Identify all the indexes where the night changes (swap from one night to next)
-            nIdx = np.searchsorted(ssoObs[self.nightCol][visSort], n)
+            nIdx = np.searchsorted(nights, n)
             # Count the number of observations per night (except last night)
             obsPerNight = (nIdx - np.roll(nIdx, 1))[1:]
             # Add the number of observations on the last night.
@@ -545,8 +547,8 @@ class DiscoveryChancesMetric(BaseMoMetric):
             obsPerNight = np.concatenate((obsPerNight, obsLastNight))
             # Find the nights with at least nObsPerNight visits.
             nWithXObs = n[np.where(obsPerNight >= self.nObsPerNight)]
-            nIdxMany = np.searchsorted(ssoObs[self.nightCol][visSort], nWithXObs)
-            nIdxManyEnd = np.searchsorted(ssoObs[self.nightCol][visSort], nWithXObs, side='right') - 1
+            nIdxMany = np.searchsorted(nights, nWithXObs)
+            nIdxManyEnd = np.searchsorted(nights, nWithXObs, side='right') - 1
             # Check that nObsPerNight observations are within tNight
             timesStart = ssoObs[self.expMJDCol][visSort][nIdxMany]
             timesEnd = ssoObs[self.expMJDCol][visSort][nIdxManyEnd]
