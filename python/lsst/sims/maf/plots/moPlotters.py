@@ -38,12 +38,12 @@ class MetricVsH(BasePlotter):
             reduceFunc = np.mean
         if Hvals.shape == metricValue.shape:
             # We have a simple set of values to plot against H.
-            # This may be due to running a secondary metric, such as completeness.
+            # This may be due to running a summary metric, such as completeness.
             mVals = metricValue.filled()
         elif len(Hvals) == slicer.shape[1]:
             # Using cloned H distribution.
             # Apply 'npReduce' method directly to metric values, and plot at matching H values.
-            mVals = reduceFunc(metricValue, axis=0)
+            mVals = reduceFunc(metricValue.filled(), axis=0)
         else:
             # Probably each object has its own H value.
             hrange = Hvals.max() - Hvals.min()
