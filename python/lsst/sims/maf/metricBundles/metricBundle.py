@@ -41,7 +41,7 @@ class MetricBundle(object):
     as well as additional metadata such as the opsim run name, and relevant stackers and maps
     to apply when calculating the metric values.
     """
-    def __init__(self, metric, slicer, constraint,
+    def __init__(self, metric, slicer, constraint=None, sqlconstraint=None,
                  stackerList=None, runName='opsim', metadata=None,
                  plotDict=None, displayDict=None,
                  summaryMetrics=None, mapsList=None,
@@ -56,6 +56,14 @@ class MetricBundle(object):
         self.slicer = slicer
         # Set the constraint.
         self.constraint = constraint
+        if self.constraint is None:
+            # Provide backwards compatibility for now - phase out sqlconstraint eventually.
+            if sqlconstraint is not None:
+                warnings.warn('Future warning - "sqlconstraint" will be deprecated in favor of '
+                              '"constraint" in a future release.')
+                self.constraint = sqlconstraint
+            else:
+                self.constraint = ''
         # Set the stackerlist if applicable.
         if stackerList is not None:
             if isinstance(stackerList, stackers.BaseStacker):
@@ -402,7 +410,10 @@ class MetricBundle(object):
         else:
             self.metric.units = ''
         self.runName = header['simDataName']
-        self.constraint = header['constraint']
+        try:
+            self.constraint = header['constraint']
+        except KeyError:
+            self.constraint = header['sqlconstraint']
         self.metadata = header['metadata']
         if self.metadata is None:
             self._buildMetadata()
@@ -487,7 +498,8 @@ class MetricBundle(object):
                                        constraint=self.constraint,
                                        metadata=self.metadata,
                                        runName=self.runName,
-                                       plotDict=None, displayDict=None,
+                                       plotDict=None, plotFuncs=self.plotFuncs,
+                                       displayDict=None,
                                        summaryMetrics=self.summaryMetrics,
                                        mapsList=self.mapsList, fileRoot='')
         # Build a new output file root name.

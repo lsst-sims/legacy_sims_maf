@@ -129,7 +129,7 @@ class AccumulateUniformityMetric(AccumulateMetric):
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=self.binCol)
         if dataSlice.size == 1:
-            return self.bin*0+1
+            return np.ones(self.bins.size-1, dtype=float)
 
         visitsPerNight, blah = np.histogram(dataSlice[self.binCol], bins=self.bins)
         visitsPerNight = np.add.accumulate(visitsPerNight)

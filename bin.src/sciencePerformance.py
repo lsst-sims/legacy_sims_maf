@@ -3,9 +3,10 @@ import os
 import argparse
 import warnings
 # Set matplotlib backend (to create plots where DISPLAY is not set).
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import healpy as hp
-import matplotlib
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
@@ -15,7 +16,6 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as utils
 
-matplotlib.use('Agg')
 
 
 def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
@@ -412,7 +412,10 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
         plotDict = {'xlabel': 'Number of visits',
                     'xMin': nvisitsRange['all'][f][0],
-                    'xMax': nvisitsRange['all'][f][1], 'binsize': 5,
+                    'xMax': nvisitsRange['all'][f][1],
+                    'colorMin': nvisitsRange['all'][f][0],
+                    'colorMax': nvisitsRange['all'][f][1],
+                    'binsize': 5,
                     'logScale': True, 'nTicks': 4, 'colorMin': 1}
         summaryStats = allStats
         displayDict = {'group': depthgroup, 'subgroup': 'Nvisits', 'order': filtorder[f],

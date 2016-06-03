@@ -6,6 +6,8 @@ import copy
 import numpy as np
 import warnings
 import matplotlib
+# Set matplotlib backend (to create plots where DISPLAY is not set).
+matplotlib.use('Agg')
 import matplotlib.cm as cm
 
 import lsst.sims.maf.db as db
@@ -14,9 +16,6 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
-
-# Set matplotlib backend (to create plots where DISPLAY is not set).
-matplotlib.use('Agg')
 
 
 def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'):

@@ -170,7 +170,8 @@ if __name__ == "__main__":
         print ' OpsimDate = %s' % (opsimDate)
         print ' MafDate = %s' % (mafDate)
         # Add the run.
-        startRunId = trackDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate)
+        startRunId = trackDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir,
+                                    opsimDate, mafDate, trackingDb)
         print ' Used runID %d' % (startRunId)
         trackDb.close()
 

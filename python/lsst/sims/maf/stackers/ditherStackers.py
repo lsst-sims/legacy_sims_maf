@@ -10,7 +10,7 @@ __all__ = ['wrapRADec', 'wrapRA', 'inHexagon', 'polygonCoords',
            'HexDitherPerNightStacker']
 
 # Stacker naming scheme:
-# [Pattern]Dither[Field][Timescale].
+# [Pattern]Dither[Field]Per[Timescale].
 #  Timescale indicates how often the dither offset is changed.
 #  The presence of 'Field' indicates that a new offset is chosen per field, on the indicated timescale.
 #  The absence of 'Field' indicates that all visits within the indicated timescale use the same dither offset.
