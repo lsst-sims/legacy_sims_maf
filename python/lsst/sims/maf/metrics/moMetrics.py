@@ -543,7 +543,7 @@ class DiscoveryChancesMetric(BaseMoMetric):
             # Count the number of observations per night (except last night)
             obsPerNight = (nIdx - np.roll(nIdx, 1))[1:]
             # Add the number of observations on the last night.
-            obsLastNight = np.array([len(visSort) - nIdx[-1]])
+            obsLastNight = np.array([len(nights) - nIdx[-1]])
             obsPerNight = np.concatenate((obsPerNight, obsLastNight))
             # Find the nights with at least nObsPerNight visits.
             nWithXObs = n[np.where(obsPerNight >= self.nObsPerNight)]
