@@ -41,27 +41,25 @@ class SlicerRegistry(type):
 class BaseSlicer(object):
     """
     Base class for all slicers: sets required methods and implements common functionality.
+
+    After first construction, the slicer should be ready for setupSlicer to define slicePoints, which will
+    let the slicer 'slice' data and generate plots.
+    After init after a restore: everything necessary for using slicer for plotting or
+    saving/restoring metric data should be present (although slicer does not need to be able to
+    slice data again and generally will not be able to).
+
+    Parameters
+    ----------
+    verbose: boolean, optional
+        True/False flag to send extra output to screen.
+        Default True.
+    badval: int or float, optional
+        The value the Slicer uses to fill masked metric data values
+        Default -666.
     """
     __metaclass__ = SlicerRegistry
 
     def __init__(self, verbose=True, badval=-666):
-        """Instantiate the base slicer object.
-
-        After first init with a 'blank' slicer: slicer should be ready for setupSlicer to
-        define slicePoints.
-        After init after a restore: everything necessary for using slicer for plotting or
-        saving/restoring metric data should be present (although slicer does not need to be able to
-        slice data again and generally will not be able to).
-
-        The sliceMetric has a 'memo-ize' functionality that can save previous indexes & return
-        metric data value calculated for same set of previous indexes, if desired.
-        CacheSize = 0 effectively turns this off, otherwise cacheSize should be set by the slicer.
-        (Most useful for healpix slicer, where many healpixels may have same set of LSST visits).
-
-        Minimum set of __init__ kwargs:
-        verbose: True/False flag to send extra output to screen
-        badval: the value the Slicer uses to fill masked metric data values
-        """
         self.verbose = verbose
         self.badval = badval
         # Set cacheSize : each slicer will be able to override if appropriate.
@@ -87,7 +85,6 @@ class BaseSlicer(object):
         if self.nslice is not None:
             self.spatialExtent = [0,self.nslice-1]
 
-
     def _runMaps(self, maps):
         """Add map metadata to slicePoints.
         """
@@ -100,6 +97,13 @@ class BaseSlicer(object):
 
         Set up internal parameters necessary for slicer to slice data and generates indexes on simData.
         Also sets _sliceSimData for a particular slicer.
+
+        Parameters
+        -----------
+        simData : np.recarray
+            The simulated data to be sliced.
+        maps : list of lsst.sims.maf.maps objects, optional.
+            Maps to apply at each slicePoint, to add to the slicePoint metadata. Default None.
         """
         # Typically args will be simData, but opsimFieldSlicer also uses fieldData.
         raise NotImplementedError()
@@ -167,8 +171,12 @@ class BaseSlicer(object):
         """
         Save metric values along with the information required to re-build the slicer.
 
-        outfilename: the output file
-        metricValues: the metric values to save to disk
+        Parameters
+        -----------
+        outfilename : str
+            The output file name.
+        metricValues : np.ma.MaskedArray or np.ndarray
+            The metric values to save to disk.
         """
         header = {}
         header['metricName']=metricName
@@ -208,14 +216,29 @@ class BaseSlicer(object):
         """
         Send metric data to JSON streaming API, along with a little bit of metadata.
 
-        Output is
-        header dictionary with 'metricName/metadata/simDataName/slicerName' and plot labels from plotDict (if provided).
-        then data for plot:
-        if oneDSlicer, it's [ [bin_left_edge, value], [bin_left_edge, value]..].
-        if a spatial slicer, it's [ [lon, lat, value], [lon, lat, value] ..].
-
-        This method will only work for non-complex metrics (i.e. metrics where the metric value is a float or int),
+        This method will only work for metrics where the metricDtype is float or int,
         as JSON will not interpret more complex data properly. These values can't be plotted anyway though.
+
+        Parameters
+        -----------
+        metricValues : np.ma.MaskedArray or np.ndarray
+            The metric values.
+        metricName : str, optional
+            The name of the metric. Default ''.
+        simDataName : str, optional
+            The name of the simulated data source. Default ''.
+        metadata : str, optional
+            The metadata about this metric. Default ''.
+        plotDict : dict, optional.
+            The plotDict for this metric bundle. Default None.
+
+        Returns
+        --------
+        StringIO
+            StringIO object containing a header dictionary with metricName/metadata/simDataName/slicerName,
+            and plot labels from plotDict, and metric values/data for plot.
+            if oneDSlicer, the data is [ [bin_left_edge, value], [bin_left_edge, value]..].
+            if a spatial slicer, the data is [ [lon, lat, value], [lon, lat, value] ..].
         """
         # Bail if this is not a good data type for JSON.
         if not (metricValues.dtype == 'float') or (metricValues.dtype == 'int'):
@@ -307,7 +330,16 @@ class BaseSlicer(object):
         """
         Read metric data from disk, along with the info to rebuild the slicer (minus new slicing capability).
 
-        infilename: the filename containing the metric data.
+        Parameters
+        -----------
+        infilename: str
+            The filename containing the metric data.
+
+        Returns
+        -------
+        np.ma.MaskedArray, lsst.sims.maf.slicer, dict
+            MetricValues stored in data file, the slicer basis for those metric values, and a dictionary
+            containing header information (runName, metadata, etc.).
         """
         import lsst.sims.maf.slicers as slicers
         restored = np.load(infilename)
