@@ -100,10 +100,13 @@ class TestDiscoveryMetrics(unittest.TestCase):
                           10.1, 10.2,
                           13.1, 13.5],
                           dtype='float')
-        ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'), ('ecLon', '<f8'), ('ecLat', '<f8'),
-                                                   ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'), ('magLimit', '<f8'), ('velocity', '<f8'),
+        ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'),
+                                                   ('ecLon', '<f8'), ('ecLat', '<f8'), ('solarElong', '<f8'),
+                                                   ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'),
+                                                   ('magLimit', '<f8'), ('velocity', '<f8'),
                                                    ('SNR', '<f8'), ('vis', '<f8'), ('magFilter', '<f8'),
-                                                   ('fiveSigmaDepth', '<f8'), ('FWHMgeom', '<f8'), ('visitExpTime', '<f8'), ('dmagDetect', '<f8')]))
+                                                   ('fiveSigmaDepth', '<f8'), ('FWHMgeom', '<f8'),
+                                                   ('visitExpTime', '<f8'), ('dmagDetect', '<f8')]))
 
         ssoObs['time'] = times
         ssoObs['expMJD'] = times
@@ -112,6 +115,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         ssoObs['dec'] = np.arange(len(times)) + 5
         ssoObs['ecLon'] = ssoObs['ra'] + 10
         ssoObs['ecLat'] = ssoObs['dec'] + 20
+        ssoObs['solarElong'] = ssoObs['ra'] + 30
         ssoObs['appMag'] = np.zeros(len(times), dtype='float') + 24.0
         ssoObs['magFilter'] = np.zeros(len(times), dtype='float') + 24.0
         ssoObs['fiveSigmaDepth'] = np.zeros(len(times), dtype='float') + 25.0
@@ -152,7 +156,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.assertEqual(ra, 0)
         self.assertEqual(dec, 5)
         child = metrics.Discovery_EcLonLatMetric(discMetric, i=0)
-        lon, lat = child.run(self.ssoObs, self.orb, self.Hval, metricValue)
+        lon, lat, solarElong = child.run(self.ssoObs, self.orb, self.Hval, metricValue)
         self.assertEqual(lon, 10)
         self.assertEqual(lat, 25)
 
