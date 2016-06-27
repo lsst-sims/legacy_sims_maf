@@ -4,7 +4,6 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
-from lsst.sims.maf.slicers import MoObjSlicer
 from lsst.sims.maf.metrics import BaseMoMetric
 from lsst.sims.maf.slicers import MoObjSlicer
 from lsst.sims.maf.stackers import AllMoStackers
