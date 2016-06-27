@@ -403,7 +403,7 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
             return self.badval
         startIdx = metricValues['start'][self.i]
         return (ssoObs['ecLon'][startIdx], ssoObs['ecLat'][startIdx],
-                np.degrees(ssoObs['solarElong'][startIdx]))
+                ssoObs['solarElong'][startIdx])
 
 class Discovery_VelocityMetric(BaseChildMetric):
     """
