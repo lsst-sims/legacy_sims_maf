@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from matplotlib.patches import Ellipse
-from matplotlib.collections import PatchCollection
 
 from .plotHandler import BasePlotter
 
@@ -36,10 +34,10 @@ class MetricVsH(BasePlotter):
         reduceFunc = plotDict['npReduce']
         if reduceFunc is None:
             reduceFunc = np.mean
-        if Hvals.shape == metricValue.shape:
+        if Hvals.shape[0] == 1:
             # We have a simple set of values to plot against H.
             # This may be due to running a summary metric, such as completeness.
-            mVals = metricValue.filled()
+            mVals = metricValue[0].filled()
         elif len(Hvals) == slicer.shape[1]:
             # Using cloned H distribution.
             # Apply 'npReduce' method directly to metric values, and plot at matching H values.
