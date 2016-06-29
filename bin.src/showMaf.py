@@ -143,7 +143,7 @@ if __name__ == "__main__":
         trackDb = db.TrackingDb(database=trackingDb)
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
-        opsimRun = ''
+        opsimRun = 'NULL'
         opsimDate = ''
         mafDate = ''
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):

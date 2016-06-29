@@ -355,21 +355,9 @@ class MetricBundleGroup(object):
         compatStackers = []
         for b in bDict.itervalues():
             compatMaps.extend(b.mapsList)
-            for stacker in b.stackerList:
-                if stacker not in compatStackers:
-                    compatStackers.append(stacker)
-
-        # Add maps. If a metric knows that it requires a map that isn't already
-        # in any of the bundles, instatiate it.
+            compatStackers.extend(b.stackerList)
+        compatStackers = list(set(compatStackers))
         compatMaps = list(set(compatMaps))
-        mapNames = [compatMap.__class__.__name__ for compatMap in compatMaps]
-        for b in bDict.itervalues():
-            if hasattr(b.metric, 'maps'):
-                for mapName in b.metric.maps:
-                    if mapName not in mapNames:
-                        tempMap = getattr(maps, mapName)()
-                        compatMaps.append(tempMap)
-                        mapNames.append(mapName)
 
         # Run stackers.
         for stacker in compatStackers:
