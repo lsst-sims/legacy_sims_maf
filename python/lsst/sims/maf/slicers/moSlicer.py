@@ -1,7 +1,7 @@
-import os
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
+import warnings
 
 from .baseSlicer import BaseSlicer
 from lsst.sims.maf.plots.moPlotters import MetricVsH, MetricVsOrbit
@@ -156,5 +156,8 @@ class MoObjSlicer(BaseSlicer):
         metricValues = ma.MaskedArray(data=df.values,
                                       mask=np.zeros(slicer.shape, 'bool'),
                                       fill_value=slicer.badval)
-        metricValues.mask = np.where(np.isnan(df.values), 1, 0)
+        try:
+            metricValues.mask = np.where(np.isnan(df.values), 1, 0)
+        except TypeError:
+            warnings.warn('Could not mask metricValues, as they are complex type.')
         return metricValues, slicer
