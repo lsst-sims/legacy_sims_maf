@@ -183,8 +183,11 @@ class ResultsDb(object):
         if metricDataFile is None:
             metricDataFile = 'NULL'
         # Check if metric has already been added to database.
-        prev = self.session.query(MetricRow).filter_by(metricName=metricName, slicerName=slicerName,
-                                                       simDataName=simDataName, metricMetadata=metricMetadata).all()
+        prev = self.session.query(MetricRow).filter_by(metricName=metricName,
+                                                       slicerName=slicerName,
+                                                       simDataName=simDataName,
+                                                       metricMetadata=metricMetadata,
+                                                       sqlConstraint=sqlConstraint).all()
         if len(prev) == 0:
             metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
                                    sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
