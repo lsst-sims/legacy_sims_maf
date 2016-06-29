@@ -270,7 +270,7 @@ class ResultsDb(object):
         """
         # Allow for special summary statistics which return data in a np structured array with
         #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic).
-        if np.size(summaryValue) > 1:
+        if isinstance(summaryValue, np.ndarray):
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:
                     summarystat = SummaryStatRow(metricId=metricId,
