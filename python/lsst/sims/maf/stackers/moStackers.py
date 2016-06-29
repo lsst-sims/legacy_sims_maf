@@ -2,99 +2,90 @@ import numpy as np
 from .baseStacker import BaseStacker
 import warnings
 
+__all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
 
-__all__ = ['AppMagStacker', 'MagLimitStacker', 'SNRStacker', 'VisStacker',
-           'EclStacker', 'AllMoStackers']
+class BaseMoStacker(BaseStacker):
+    """Base class for moving object stackers.
 
-class AppMagStacker(BaseStacker):
-    """
-    Add the apparent magnitude of an object with a given Hval to the observations dataframe.
-    """
-    def __init__(self, magFilterCol='magFilter'):
-        self.magFilterCol = magFilterCol
-        self.colsReq = [self.magFilterCol]
-        self.colsAdded = ['appMag']
-        self.units = ['mag']
-
-    def run(self, ssoObs, Href, Hval):
+    Provided to add moving-object specific API for 'run' method of moving object stackers."""
+    def run(self, ssoObs, Href, Hval=None):
+        # Redefine this here, as the API does not match BaseStacker.
+        if Hval is None:
+            Hval = Href
+        if len(ssoObs) == 0:
+            return ssoObs
+        # Add the columns.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            ssoObs = self._addStackers(ssoObs)
         ssoObs = self._addStackers(ssoObs)
-        return self._run(ssoObs, Href=Href, Hval=Hval)
-
-    def _run(self, ssoObs, Href=None, Hval=None):
-        ssoObs['appMag'] = ssoObs[self.magFilterCol] + Hval - Href
-        return ssoObs
+        return self._run(ssoObs, Href, Hval)
 
 
-class MagLimitStacker(BaseStacker):
+class MoMagStacker(BaseMoStacker):
+    """Add columns relevant to moving object apparent magnitudes and visibility to the slicer ssoObs
+    dataframe, given a particular Href and current Hval.
+
+    Specifically, this stacker adds magLimit, appMag, SNR, and vis.
+    magLimit indicates the appropriate limiting magnitude to consider for a particular object in a particular
+    observation, when combined with the losses due to detection (dmagDetect) or trailing (dmagTrail).
+    appMag adds the apparent magnitude in the filter of the current object, at the current Hval.
+    SNR adds the SNR of this object, given the magLimit.
+    vis adds a flag (0/1) indicating whether an object was visible (assuming a 5sigma threshhold including
+    some probabilistic determination of visibility).
+
+    Parameters
+    ----------
+    magFilterCol : str, opt
+        Name of the column describing the magnitude of the object, in the visit filter. Default magFilter.
+    m5Col : str, opt
+        Name of the column describing the 5 sigma depth of each visit. Default fiveSigmaDepth.
+    lossCol : str, opt
+        Name of the column describing the magnitude losses,
+        due to trailing (dmagTrail) or detection (dmagDetect). Default dmagDetect.
+    gamma : float, opt
+        The 'gamma' value for calculating SNR. Default 0.038.
+        LSST range under normal conditions is about 0.037 to 0.039.
+    sigma : float, opt
+        The 'sigma' value for probabilistic prediction of whether or not an object is visible at 5sigma.
+        Default 0.12.
+        The probabilistic prediction of visibility is based on Fermi-Dirac completeness formula (see SDSS,
+        eqn 24, Stripe82 analysis: http://iopscience.iop.org/0004-637X/794/2/120/pdf/apj_794_2_120.pdf).
     """
-    Add the apparent magnitude limit with trailing or detection losses to the observations dataframe.
-    """
-    def __init__(self, m5Col='fiveSigmaDepth', lossCol='dmagDetect'):
+    def __init__(self, magFilterCol='magFilter', m5Col='fiveSigmaDepth', lossCol='dmagDetect',
+                 gamma=0.038, sigma=0.12):
+        self.magFilterCol = magFilterCol
         self.m5Col = m5Col
         self.lossCol = lossCol
-        self.colsReq = [self.m5Col, self.lossCol]
-        self.colsAdded = ['magLimit']
-        self.units = ['mag']
-
-    def run(self, ssoObs, Href=None, Hval=None):
-        ssoObs = self._addStackers(ssoObs)
-        return self._run(ssoObs, Href=Href, Hval=Hval)
-
-    def _run(self, ssoObs, Href=None, Hval=None):
-        ssoObs['magLimit'] = ssoObs[self.m5Col] - ssoObs[self.lossCol]
-        return ssoObs
-
-class SNRStacker(BaseStacker):
-    """
-    Add the SNR to the observations dataframe.
-    """
-    def __init__(self, magLimitCol='magLimit', appMagCol='appMag',gamma=0.038):
-        self.appMagCol = appMagCol
-        self.magLimitCol = magLimitCol
-        self.colsReq = [self.appMagCol, self.magLimitCol]
-        self.colsAdded = ['SNR']
         self.gamma = gamma
-        self.units = ['SNR']
-
-    def run(self, ssoObs, Href=None, Hval=None):
-        ssoObs = self._addStackers(ssoObs)
-        return self._run(ssoObs, Href=Href, Hval=Hval)
-
-    def _run(self, ssoObs, Href=None, Hval=None):
-        xval = np.power(10, 0.5*(ssoObs[self.appMagCol] - ssoObs[self.magLimitCol]))
-        ssoObs['SNR'] = 1.0 / np.sqrt((0.04 - self.gamma)*xval + self.gamma*xval*xval)
-        return ssoObs
-
-class VisStacker(BaseStacker):
-    """
-    Calculate whether an object is visible according to
-    Fermi-Dirac completeness formula (see SDSS, eqn 24, Stripe82 analysis:
-    http://iopscience.iop.org/0004-637X/794/2/120/pdf/apj_794_2_120.pdf).
-    Calculate estimated completeness/probability of detection,
-    then evaluates if this object could be visible.
-    """
-    def __init__(self, magLimitCol='magLimit',
-                appMagCol='appMag', sigma=0.12):
-        self.magLimitCol = magLimitCol
-        self.appMagCol = appMagCol
         self.sigma = sigma
-        self.colsReq = [self.magLimitCol, self.appMagCol]
-        self.colsAdded = ['vis']
-        self.units = ['']
+        self.colsReq = [self.magFilterCol, self.m5Col, self.lossCol]
+        self.colsAdded = ['magLimit', 'appMag', 'SNR', 'vis']
+        self.units = ['mag', 'mag', 'SNR', '']
 
-    def run(self, ssoObs, Href=None, Hval=None):
-        ssoObs = self._addStackers(ssoObs)
-        return self._run(ssoObs, Href=Href, Hval=Hval)
-
-    def _run(self, ssoObs, Href=None, Hval=None):
-        completeness = 1.0 / (1 + np.exp((ssoObs[self.appMagCol] - ssoObs[self.magLimitCol])/self.sigma))
-        probability = np.random.random_sample(len(ssoObs[self.appMagCol]))
+    def _run(self, ssoObs, Href, Hval):
+        ssoObs['appMag'] = ssoObs[self.magFilterCol] + Hval - Href
+        ssoObs['magLimit'] = ssoObs[self.m5Col] - ssoObs[self.lossCol]
+        xval = np.power(10, 0.5 * (ssoObs['appMag'] - ssoObs['magLimit']))
+        ssoObs['SNR'] = 1.0 / np.sqrt((0.04 - self.gamma) * xval + self.gamma * xval * xval)
+        completeness = 1.0 / (1 + np.exp((ssoObs['appMag'] - ssoObs['magLimit'])/self.sigma))
+        probability = np.random.random_sample(len(ssoObs['appMag']))
         ssoObs['vis'] = np.where(probability <= completeness, 1, 0)
         return ssoObs
 
-class EclStacker(BaseStacker):
+
+class EclStacker(BaseMoStacker):
     """
-    Add ecliptic latitude/longitude to ssoObs (in degrees).
+    Add ecliptic latitude/longitude (ecLat/ecLon) to the slicer ssoObs (in degrees).
+
+    Parameters
+    -----------
+    raCol : str, opt
+        Name of the RA column to convert to ecliptic lat/long. Default 'ra'.
+    decCol : str, opt
+        Name of the Dec column to convert to ecliptic lat/long. Default 'dec'.
+    inDeg : bool, opt
+        Flag indicating whether RA/Dec are in degrees. Default True.
     """
     def __init__(self, raCol='ra', decCol='dec', inDeg=True):
         self.raCol = raCol
@@ -106,11 +97,7 @@ class EclStacker(BaseStacker):
         self.ecnode = 0.0
         self.ecinc = np.radians(23.439291)
 
-    def run(self, ssoObs, Href=None, Hval=None):
-        ssoObs = self._addStackers(ssoObs)
-        return self._run(ssoObs, Href=Href, Hval=Hval)
-
-    def _run(self, ssoObs, Href=None, Hval=None):
+    def _run(self, ssoObs, Href, Hval):
         ra = ssoObs[self.raCol]
         dec = ssoObs[self.decCol]
         if self.inDeg:
@@ -125,60 +112,4 @@ class EclStacker(BaseStacker):
         ssoObs['ecLat'] = np.degrees(np.arcsin(zp))
         ssoObs['ecLon'] = np.degrees(np.arctan2(yp, xp))
         ssoObs['ecLon'] = ssoObs['ecLon'] % 360
-        return ssoObs
-
-class AllMoStackers(BaseStacker):
-    """
-    Since for moving objects we usually want to run all of these at once/in order,
-    provide a convenient way to do it.
-    """
-    def __init__(self, appMagStacker=None, magLimitStacker=None, snrStacker=None,
-                 visStacker=None, eclStacker=None):
-        if appMagStacker is not None:
-            self.appMag = appMagStacker
-        else:
-            self.appMag = AppMagStacker()
-        if magLimitStacker is not None:
-            self.magLimit = magLimitStacker
-        else:
-            self.magLimit = MagLimitStacker()
-        if snrStacker is not None:
-            self.snr = snrStacker
-        else:
-            self.snr = SNRStacker()
-        if visStacker is not None:
-            self.vis = visStacker
-        else:
-            self.vis = VisStacker()
-        if eclStacker is not None:
-            self.ec = eclStacker
-        else:
-            self.ec = EclStacker()
-        # Grab all the columns added/required.
-        self.colsAdded = []
-        self.colsReq = []
-        self.units = []
-        for s in (self.appMag, self.magLimit, self.snr, self.vis, self.ec):
-            self.colsAdded += s.colsAdded
-            self.colsReq += s.colsReq
-            self.units += s.units
-        # Remove duplicates.
-        self.colsAdded = list(set(self.colsAdded))
-        self.colsReq = list(set(self.colsReq))
-
-    def run(self, ssoObs, Href, Hval=None):
-        if Hval is None:
-            Hval = Href
-        if len(ssoObs) == 0:
-            return ssoObs
-        # Add the columns.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            ssoObs = self._addStackers(ssoObs)
-        # Run the individual stackers, without individually adding columns.
-        ssoObs = self.ec._run(ssoObs, Href, Hval)
-        ssoObs = self.appMag._run(ssoObs, Href, Hval)
-        ssoObs = self.magLimit._run(ssoObs, Href, Hval)
-        ssoObs = self.snr._run(ssoObs, Href, Hval)
-        ssoObs = self.vis._run(ssoObs, Href, Hval)
         return ssoObs
