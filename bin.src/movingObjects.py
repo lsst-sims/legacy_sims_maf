@@ -974,7 +974,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
-        ph.jointMetadata = '%s Year %d: non-realistic discovery options' % (metadata, year)
+        ph.jointMetadata = '%s Year %d: dm-hard discovery options' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
 
@@ -1001,7 +1001,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
             tmpPlotDict.update(basePlotDict)
             plotDicts.append(tmpPlotDict)
         ph.setMetricBundles(plotbundles)
-        ph.jointMetadata = '%s Year %d: non-realistic discovery options' % (metadata, year)
+        ph.jointMetadata = '%s Year %d: dm-hard discovery options' % (metadata, year)
         ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
         plt.close()
         order += 1
@@ -1083,6 +1083,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         md = '%s %s' % (metadata, strategy)
         plt.plot(yrs, completeness_at_year[strategy],
                  label='%s' % (md))
+    plt.grid(True)
     plt.xlabel('Years into survey')
     plt.ylabel('Completeness @ H = %.2f' % (b.slicer.Hrange[hIdx]))
     plt.title('Differential completeness as a function of time')
@@ -1124,6 +1125,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         md = '%s %s' % (metadata, strategy)
         plt.plot(yrs, completeness_at_year[strategy],
                  label='%s' % (md))
+    plt.grid(True)
     plt.xlabel('Years into survey')
     plt.ylabel('Completeness @ H <= %.2f' % (b.slicer.Hrange[hIdx]))
     plt.title('Cumulative completeness as a function of time')
@@ -1261,6 +1263,9 @@ if __name__ == '__main__':
                         help="Name of opsim run. Default 'opsim'.")
     parser.add_argument("--outDir", type=str, default='.',
                         help="Output directory for moving object metrics. Default '.'")
+    parser.add_argument("--opsimDb", type=str, default=None,
+                        help="Path and filename of opsim db, to write config* files to output directory."
+                        " Optional: if not provided, config* files won't be created but analysis will run.")
     parser.add_argument("--hMin", type=float, default=5.0, help="Minimum H value. Default 5.")
     parser.add_argument("--hMax", type=float, default=27.0, help="Maximum H value. Default 27.")
     parser.add_argument("--hStep", type=float, default=0.25, help="Stepsizes in H values.")
@@ -1316,3 +1321,7 @@ if __name__ == '__main__':
 
     plotMetrics(allBundles, args.outDir, args.metadata, args.opsimRun, mParams,
                 Hmark=args.hMark, resultsDb=resultsDb)
+
+    if args.opsimDb is not None:
+        opsdb = db.OpsimDatabase(args.opsimDb)
+        utils.writeConfigs(opsdb, args.outDir)
