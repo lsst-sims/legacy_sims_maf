@@ -507,6 +507,18 @@ class OpsimDatabase(Database):
         # This section has a number of configuration parameter names hard-coded.
         # I've left these here (rather than adding to self_colNames), because I think schema changes will in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
+        constraint = 'moduleName="Config" and paramName="sha1"'
+        results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
+        try:
+            configSummary['Version']['Config sha1'] = results['paramValue'][0]
+        except IndexError:
+            configSummary['Version']['Config sha1'] = 'Unavailable'
+        constraint = 'moduleName="Config" and paramName="changedFiles"'
+        results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
+        try:
+            configSummary['Version']['Config changed files'] = results['paramValue'][0]
+        except IndexError:
+            configSummary['Version']['Config changed files'] = 'Unavailable'
         constraint = 'moduleName="instrument" and paramName="Telescope_AltMin"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinAlt'] = results['paramValue'][0]
