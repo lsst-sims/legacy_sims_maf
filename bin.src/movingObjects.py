@@ -28,6 +28,7 @@ groups = {'discovery': 'A: Discovery',
           'characterization': 'B: Characterization'}
 subgroups ={'cumulative': '1: Cumulative Completeness',
             'differential': '2: Differential Completeness',
+            'completenessVal': '3 : Completeness @ Hmark'
             'nchances': '3 : Number of Chances',
             'nObs': '1: Number of Obs',
             'obsArc': '2: Obs Arc',
@@ -673,6 +674,7 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
     # Add completeness bundles and write completeness at Hmark to resultsDb.
     allBundles['DifferentialCompleteness'] = {}
     allBundles['CumulativeCompleteness'] = {}
+    subgroups['completenessVal'] = '3: Completeness @ H=%.1f' % (Hmark)
     k = 'discovery'
     if k in allBundles:
         for md in allBundles[k]:
@@ -708,11 +710,11 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
     # Write the completeness bundles to disk, so we can re-read them later.
     for md in allBundles['DifferentialCompleteness']:
         allBundles['DifferentialCompleteness'][md].setDisplayDict({'group': groups['discovery'],
-                                                                   'subgroup': subgroups['differential']})
+                                                                   'subgroup': subgroups['completenessVal']})
         allBundles['DifferentialCompleteness'][md].write(outDir=outDir, resultsDb=resultsDb)
     for md in allBundles['CumulativeCompleteness']:
         allBundles['CumulativeCompleteness'][md].setDisplayDict({'group': groups['discovery'],
-                                                                 'subgroup': subgroups['cumulative']})
+                                                                 'subgroup': subgroups['completenessVal']})
         allBundles['CumulativeCompleteness'][md].write(outDir=outDir, resultsDb=resultsDb)
     return allBundles
 
