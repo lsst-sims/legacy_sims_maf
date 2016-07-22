@@ -28,7 +28,7 @@ groups = {'discovery': 'A: Discovery',
           'characterization': 'B: Characterization'}
 subgroups ={'cumulative': '1: Cumulative Completeness',
             'differential': '2: Differential Completeness',
-            'completenessVal': '3 : Completeness @ Hmark'
+            'completenessVal': '3 : Completeness @ Hmark',
             'nchances': '3 : Number of Chances',
             'nObs': '1: Number of Obs',
             'obsArc': '2: Obs Arc',
