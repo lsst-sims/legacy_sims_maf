@@ -104,7 +104,7 @@ class TestUseResultsDb(unittest.TestCase):
         self.resultsDb.updateSummaryStat(self.metricId, self.summaryStatName1, self.summaryStatValue1)
         self.resultsDb.updateSummaryStat(self.metricId, self.summaryStatName2, self.summaryStatValue2)
 
-    def getIds(self):
+    def testgetIds(self):
         mids = self.resultsDb.getAllMetricIds()
         self.assertEqual(mids[0], self.metricId)
         mid = self.resultsDb.getMetricId(self.metricName)
@@ -112,7 +112,7 @@ class TestUseResultsDb(unittest.TestCase):
         mid = self.resultsDb.getMetricId('notreal')
         self.assertEqual(len(mid), 0)
 
-    def showSummary(self):
+    def testshowSummary(self):
         self.resultsDb.getSummaryStats()
 
     def tearDown(self):
