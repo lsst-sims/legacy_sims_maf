@@ -28,8 +28,9 @@ groups = {'discovery': 'A: Discovery',
           'characterization': 'B: Characterization'}
 subgroups ={'cumulative': '1: Cumulative Completeness',
             'differential': '2: Differential Completeness',
-            'completenessVal': '3 : Completeness @ Hmark',
             'nchances': '3 : Number of Chances',
+            'completenessVal': '4: Completeness @ Hmark',
+            'completenessTable': '5: Completeness Table',
             'nObs': '1: Number of Obs',
             'obsArc': '2: Obs Arc',
             'activity': '3 : Activity',
@@ -106,8 +107,10 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].metadata = parentBundle.metadata + \
                                                                           ' yr %d' % nyr
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setSummaryMetrics(summaryMetrics)
+            dispDict = {'group': groups['discovery'], 'subgroup': subgroups['completenesstable']}
+            parentBundle.childBundles['N_Chances_yr_%d' % nyr].setDisplayDict(dispDict)
 
-    displayDict = {'group':groups['discovery']}
+    displayDict = {'group': groups['discovery']}
 
     # Set up discovery metrics; calculate at all years using child metrics.
     allBundles['discovery'] = {}
@@ -773,7 +776,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     years = [mParams['nyears'].max()]
     if max(years) > 10:
         years = [10, 12] + years
-    order = 0
+    order = 1
     for year in years:
         # Plot the discovery chances at 'year', for standard basic discovery strategies with varying window.
         k = 'discovery'
@@ -1169,16 +1172,16 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     plt.grid(True)
     plt.xlabel('Years into survey')
     plt.ylabel('Completeness @ H = %.2f' % (b.slicer.Hrange[hIdx]))
-    plt.title('Differential completeness as a function of time')
+    plt.title('%s Differential completeness as a function of time' % runName)
     plt.legend(loc='lower right', fancybox=True, fontsize='smaller')
     plotmetadata = 'years %s' % (' '.join(['%d' % nyr for nyr in mParams['nyears']]))
     caption = 'Differential completeness at H=%.2f, as a function of time. ' % (b.slicer.Hrange[hIdx])
     caption += 'Assumes various discovery strategies, indicated in the legend.'
     displayDict = {'group': groups['discovery'], 'subgroup': subgroups['differential'],
-                   'order': order, 'caption': caption}
+                   'order': 0, 'caption': caption}
     filename = '%s_%s_DifferentialCompletenessOverTime_%.0f' % (b.runName, metadata, b.slicer.Hrange[hIdx])
     filename = utils.nameSanitize(filename)
-    ph.saveFig(fig.number, filename, 'Combo', 'Cumulative completeness as a function of time',
+    ph.saveFig(fig.number, filename, 'Combo', 'Differential completeness as a function of time',
                b.slicer.slicerName, b.runName, b.constraint, plotmetadata, displayDict=displayDict)
 
     # Plot the cumulative completeness at a particular value of H for std discovery, as a function of years.
@@ -1210,17 +1213,48 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     plt.grid(True)
     plt.xlabel('Years into survey')
     plt.ylabel('Completeness @ H <= %.2f' % (b.slicer.Hrange[hIdx]))
-    plt.title('Cumulative completeness as a function of time')
+    plt.title('%s Cumulative completeness as a function of time' % runName)
     plt.legend(loc='lower right', fancybox=True, fontsize='smaller')
     plotmetadata = 'years %s' % (' '.join(['%d' % nyr for nyr in mParams['nyears']]))
     caption = 'Cumulative completeness at H=%.2f, as a function of time. ' % (b.slicer.Hrange[hIdx])
     caption += 'Assuming various discovery strategies, indicated by legend.'
     displayDict = {'group': groups['discovery'], 'subgroup': subgroups['cumulative'],
-                   'order': order, 'caption': caption}
-    filename = '%s_%s_CompletenessOverTime_%.0f' % (b.runName, metadata, b.slicer.Hrange[hIdx])
+                   'order': 0, 'caption': caption}
+    filename = '%s_%s_CumulativeCompletenessOverTime_%.0f' % (b.runName, metadata, b.slicer.Hrange[hIdx])
     filename = utils.nameSanitize(filename)
     ph.saveFig(fig.number, filename, 'Combo', 'Cumulative completeness as a function of time',
                b.slicer.slicerName, b.runName, b.constraint, plotmetadata, displayDict=displayDict)
+
+    # Plot the cumulative completeness at a particular value of H, as a function of MOPS window.
+    k = 'CumulativeCompleteness'
+    strategies = ['3 pairs in 12 nights', '3 pairs in 15 nights', '3 pairs in 20 nights',
+                  '3 pairs in 25 nights', '3 pairs in 30 nights']
+    b = allBundles[k].values()[0]
+    # Pick a point to 'count' the completeness at.
+    if Hmark is not None:
+        hIdx = np.abs(b.slicer.Hrange - Hmark).argmin()
+    else:
+        hIdx = int(len(b.slicer.Hrange) / 3)
+    Href = b.slicer.Hrange[hIdx]
+    windows = np.zeros(len(strategies), float)
+    completeness_at_window = np.zeros(len(strategies), float)
+    for i, strategy in enumerate(strategies):
+        windows[i] = float(strategy.split()[3])
+        b = allBundles[k][strategy]
+        completeness_at_window[i] = b.metricValues[0][hIdx]
+    fig = plt.figure()
+    plt.plot(windows, completeness_at_window, marker='o')
+    plt.xlabel('MOPS window (days)')
+    plt.ylabel('Cumulative completeness H<=%.1f' % Href)
+    plt.title('%s Cumulative completeness H<=%.1f' % Href)
+    plotmetadata = 'MOPS windows %s' % (' '.join([%d % window for window in windows]))
+    caption = 'Cumulative completeness at H<=%.2f, as a function of MOPS windows length.' % (Href)
+    displayDict = {'group': groups['discovery'], 'subgroup': subgroups['cumulative'],
+                   'order': order, 'caption': caption}
+    filename = '%s_%s_CumulativeCompletenessWithMOPSwindow_%.0f' % (runName, metadata, Href)
+    filename = utils.nameSanitize(filename)
+    ph.saveFig(fig.number, filename, 'Combo', 'Cumulative completeness as a function of MOPS window',
+               b.slicer.slicerName, runName, b.constraint, plotmetadata, displayDict=displayDict)
 
     # Make joint 'chance of detecting activity over time' plots, for the brightest objects.
     meanFraction = np.zeros(len(mParams['windows']), float)
