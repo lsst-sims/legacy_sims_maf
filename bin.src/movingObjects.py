@@ -107,7 +107,7 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].metadata = parentBundle.metadata + \
                                                                           ' yr %d' % nyr
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setSummaryMetrics(summaryMetrics)
-            dispDict = {'group': groups['discovery'], 'subgroup': subgroups['completenesstable']}
+            dispDict = {'group': groups['discovery'], 'subgroup': subgroups['completenessTable']}
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setDisplayDict(dispDict)
 
     displayDict = {'group': groups['discovery']}
@@ -1247,7 +1247,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     plt.xlabel('MOPS window (days)')
     plt.ylabel('Cumulative completeness H<=%.1f' % Href)
     plt.title('%s Cumulative completeness H<=%.1f' % Href)
-    plotmetadata = 'MOPS windows %s' % (' '.join([%d % window for window in windows]))
+    plotmetadata = 'MOPS windows %s' % (' '.join(['%d' % w for w in windows]))
     caption = 'Cumulative completeness at H<=%.2f, as a function of MOPS windows length.' % (Href)
     displayDict = {'group': groups['discovery'], 'subgroup': subgroups['cumulative'],
                    'order': order, 'caption': caption}
