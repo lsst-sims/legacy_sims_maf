@@ -1229,6 +1229,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     k = 'CumulativeCompleteness'
     strategies = ['3 pairs in 12 nights', '3 pairs in 15 nights', '3 pairs in 20 nights',
                   '3 pairs in 25 nights', '3 pairs in 30 nights']
+    nyr = mParams['nyears'].max()
     b = allBundles[k].values()[0]
     # Pick a point to 'count' the completeness at.
     if Hmark is not None:
@@ -1240,7 +1241,8 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     completeness_at_window = np.zeros(len(strategies), float)
     for i, strategy in enumerate(strategies):
         windows[i] = float(strategy.split()[3])
-        b = allBundles[k][strategy]
+        md = '%s %s yr %d' % (metadata, strategy, nyr)
+        b = allBundles[k][md]
         completeness_at_window[i] = b.metricValues[0][hIdx]
     fig = plt.figure()
     plt.plot(windows, completeness_at_window, marker='o')
