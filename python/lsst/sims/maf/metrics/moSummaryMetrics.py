@@ -152,5 +152,5 @@ class MoCumulativeCompletenessMetric(BaseMoMetric):
         summaryVal = np.empty(len(completenessInt), dtype=[('name', '|S20'), ('value', float)])
         summaryVal['value'] = completenessInt
         for i, Hval in enumerate(Hvals):
-            summaryVal['name'][i] = 'H >= %f' % (Hval)
+            summaryVal['name'][i] = 'H <= %f' % (Hval)
         return summaryVal
