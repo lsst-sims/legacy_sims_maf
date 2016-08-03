@@ -39,7 +39,7 @@ def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=N
     bundle : ~lsst.sims.maf.metricBundles.MetricBundle
         The metric bundle with a completeness summary statistic.
     summaryName : str, opt
-        The name of the summary statistic. Default "Completeness".
+        The name of the summary statistic. Default "CumulativeCompleteness".
     Hmark : float, opt
         The Hmark value to add to the plotting dictionary of the new mock bundle. Default None.
     resultsDb : ~lsst.sims.maf.db.ResultsDb, opt
@@ -53,10 +53,10 @@ def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=N
         bundle.summaryValues[summaryName]
     # Assume metric just wasn't run yet, and run it.
     except (TypeError, KeyError):
-        if summaryName == 'Completeness':
-            metric = MoCompletenessMetric()
+        if summaryName == 'DifferentialCompleteness':
+            metric = MoCompletenessMetric(cumulative=False)
         else:
-            metric = MoCumulativeCompletenessMetric()
+            metric = MoCompletenessMetric(cumulative=True)
         bundle.setSummaryMetrics(metric)
         bundle.computeSummaryStats(resultsDb)
     # Make up the bundle, including the metric values.
@@ -74,10 +74,10 @@ def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=N
         mb.setSummaryMetrics(metric)
         mb.computeSummaryStats(resultsDb)
         val = mb.summaryValues['Value At H=%.1f' % Hmark]
-        if summaryName == 'Completeness':
-            plotDict['label'] += ' : @ H(=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
-        else:
+        if summaryName == 'CumulativeCompleteness':
             plotDict['label'] += ' : @ H(<=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
+        else:
+            plotDict['label'] += ' : @ H(=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
     mb.setPlotDict(plotDict)
     return mb
 
