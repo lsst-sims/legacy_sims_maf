@@ -91,15 +91,16 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
     allBundles = {}
 
     basicPlotDict = {'albedo': albedo, 'Hmark': Hmark, 'npReduce': npReduce}
-    summaryMetrics = [metrics.MoCompletenessMetric(),
-                      metrics.MoCumulativeCompletenessMetric()]
+    summaryMetrics = [metrics.MoCompletenessMetric(cumulative=False),
+                      metrics.MoCompletenessMetric(cumulative=True)]
     plotFuncs = [plots.MetricVsH()]
     # Little subroutine to configure child discovery metrics in each year.
     def _setup_child_metrics(parentMetric, years):
         childMetrics = {}
         for nyr in years:
             childname = 'N_Chances_yr_%d' % nyr
-            childmetric = metrics.Discovery_N_ChancesMetric(parentMetric, nightEnd=(nyr * 365))
+            childmetric = metrics.Discovery_N_ChancesMetric(parentMetric, nightEnd=(nyr * 365),
+                                                            metricName = 'Discovery_N_Chances_yr_%d' % nyr)
             childMetrics[childname] = childmetric
         return childMetrics
     def _configure_child_bundles(parentBundle, years, summaryMetrics):
@@ -420,6 +421,7 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
     allBundles['discovery'][md] = bundle
 
     # High velocity detections and 'magic' detections.
+    displayDict = {'group': groups['discovery'], 'subgroup': subgroups['completenessTable']}
     allBundles['velocity'] = {}
     allBundles['magic'] = {}
     for nyr in mParams['nyears']:
@@ -686,7 +688,7 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
                     b = allBundles[k][md].childBundles[submd]
                     compmd = ' '.join([md, submd.lstrip("N_Chances")]).replace('_', ' ')
                     allBundles['DifferentialCompleteness'][compmd] = \
-                        mmb.makeCompletenessBundle(b, summaryName='Completeness', Hmark=Hmark,
+                        mmb.makeCompletenessBundle(b, summaryName='DifferentalCompleteness', Hmark=Hmark,
                                                    resultsDb=resultsDb)
                     allBundles['CumulativeCompleteness'][compmd] = \
                         mmb.makeCompletenessBundle(b, summaryName='CumulativeCompleteness', Hmark=Hmark,
@@ -696,7 +698,8 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
         for md in allBundles[k]:
             b = allBundles[k][md]
             allBundles['DifferentialCompleteness'][md] = \
-                mmb.makeCompletenessBundle(b, summaryName='Completeness', Hmark=Hmark, resultsDb=resultsDb)
+                mmb.makeCompletenessBundle(b, summaryName='DifferentialCompleteness',
+                                           Hmark=Hmark, resultsDb=resultsDb)
             allBundles['CumulativeCompleteness'][md] = \
                 mmb.makeCompletenessBundle(b, summaryName='CumulativeCompleteness',
                                            Hmark=Hmark, resultsDb=resultsDb)
@@ -705,7 +708,8 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
         for md in allBundles[k]:
             b = allBundles[k][md]
             allBundles['DifferentialCompleteness'][md] = \
-                mmb.makeCompletenessBundle(b, summaryName='Completeness', Hmark=Hmark, resultsDb=resultsDb)
+                mmb.makeCompletenessBundle(b, summaryName='DifferentialCompleteness',
+                                           Hmark=Hmark, resultsDb=resultsDb)
             allBundles['CumulativeCompleteness'][md] = \
                 mmb.makeCompletenessBundle(b, summaryName='CumulativeCompleteness',
                                            Hmark=Hmark, resultsDb=resultsDb)
@@ -1356,8 +1360,9 @@ def readMetricValues(bundle, tmpdir):
 
 
 def readAll(allBundles, orbitFile, outDir):
-    # Read all (except completeness) bundles back from disk.
+    # Read all bundles back from disk, including child bundles and completeness bundles.
     missingBundles = []
+    missingChildBundles = []
     for k in allBundles:
         for md in allBundles[k]:
             b = allBundles[k][md]
@@ -1368,6 +1373,18 @@ def readAll(allBundles, orbitFile, outDir):
                 print('Problems with bundle %s %s, so skipping. \n %s'
                       % (k, md, e))
                 missingBundles.append([k, md])
+            if len(b.childBundles) > 0:
+                for bChild in b.childBundles:
+                    bC = b.childBundles[bChild]
+                    try:
+                        bC = readMetricValues(bC, outDir)
+                        bC.slicer = b.slicer
+                    except IOErorr as e:
+                        print('Problems with child bundle %s %s %s, so skipping. \n %s'
+                              % (k, md, bChild, e))
+                        missingBundles.append([k, md, bChild])
+    for i in missingChildBundles:
+        del allBundles[i[0]][i][1].childBundles[i[2]]
     for i in missingBundles:
         del allBundles[i[0]][i[1]]
     return allBundles
