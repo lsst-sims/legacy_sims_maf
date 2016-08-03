@@ -1252,7 +1252,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     plt.plot(windows, completeness_at_window, marker='o')
     plt.xlabel('MOPS window (days)')
     plt.ylabel('Cumulative completeness H<=%.1f' % Href)
-    plt.title('%s Cumulative completeness H<=%.1f' % Href)
+    plt.title('%s Cumulative completeness H<=%.1f' % (runName, Href))
     plotmetadata = 'MOPS windows %s' % (' '.join(['%d' % w for w in windows]))
     caption = 'Cumulative completeness at H<=%.2f, as a function of MOPS windows length.' % (Href)
     displayDict = {'group': groups['discovery'], 'subgroup': subgroups['cumulative'],
