@@ -5,10 +5,27 @@ import warnings
 from .moMetrics import BaseMoMetric
 
 __all__ = ['integrateOverH', 'ValueAtHMetric', 'MeanValueAtHMetric',
-           'MoCompletenessMetric', 'MoCumulativeCompletenessMetric']
+           'MoCompletenessMetric']
 
 
 def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
+    """Function to calculate a metric value integrated over an Hrange, assuming a power-law distribution.
+
+    Parameters
+    ----------
+    Mvalues : numpy.ndarray
+        The metric values at each H value.
+    Hvalues : numpy.ndarray
+        The H values corresponding to each Mvalue (must be the same length).
+    Hindex : float, opt
+        The power-law index expected for the H value distribution.
+        Default is 0.3  (dN/dH = 10^(Hindex * H) ).
+
+    Returns
+    --------
+    numpy.ndarray
+       The integrated or cumulative metric values.
+    """
     # Set expected H distribution.
     # dndh = differential size distribution (number in this bin)
     dndh = np.power(10., Hindex*(Hvalues-Hvalues.min()))
@@ -18,8 +35,14 @@ def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
 
 
 class ValueAtHMetric(BaseMoMetric):
-    """
-    Return the value of a metric at a given H.
+    """Return the metric value at a given H value.
+
+    Requires the metric values to be one-dimensional (typically, completeness values).
+
+    Parameters
+    ----------
+    Hmark : float, opt
+        The H value at which to look up the metric value. Default = 22.
     """
     def __init__(self, Hmark=22, **kwargs):
         metricName = 'Value At H=%.1f' %(Hmark)
@@ -39,8 +62,14 @@ class ValueAtHMetric(BaseMoMetric):
 
 
 class MeanValueAtHMetric(BaseMoMetric):
-    """
-    Return the value of a metric at a given H.
+    """Return the mean value of a metric at a given H.
+
+    Allows the metric values to be multi-dimensional (i.e. use a cloned H distribution).
+
+    Parameters
+    ----------
+    Hmark : float, opt
+        The H value at which to look up the metric value. Default = 22.
     """
     def __init__(self, Hmark=22, **kwargs):
         metricName = 'Mean Value At H=%.1f' %(Hmark)
@@ -61,62 +90,37 @@ class MeanValueAtHMetric(BaseMoMetric):
 
 
 class MoCompletenessMetric(BaseMoMetric):
-    """
-    Take the discoveryChances metric results and turn it into
-    completeness estimate (relative to the entire population).
-    Require at least 'requiredChances' to count an object as "found".
-    """
-    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0,
-                 metricName='Completeness', **kwargs):
-        super(MoCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
-        self.units = '@ H'
-        self.requiredChances = requiredChances
-        # If H is not a cloned distribution, then we need to specify how to bin these values.
-        self.nbins = nbins
-        self.minHrange = minHrange
+    """Calculate the completeness (relative to the entire population), given the counts of discovery chances.
 
-    def run(self, discoveryChances, Hvals):
-        nSsos = discoveryChances.shape[0]
-        nHval = len(Hvals)
-        discoveriesH = discoveryChances.swapaxes(0, 1)
-        if nHval == discoveryChances.shape[1]:
-            # Hvals array is probably the same as the cloned H array.
-            completeness = np.zeros(len(Hvals), float)
-            for i, H in enumerate(Hvals):
-                completeness[i] = np.where(discoveriesH[i].filled(0) >= self.requiredChances)[0].size
-            completeness = completeness / float(nSsos)
+    Input values of the number of discovery chances can come from the DiscoveryChances metric or the
+    Discovery_N_Chances (child) metric.
+
+    Parameters
+    ----------
+    requiredChances : int, opt
+        Require at least this many discovery opportunities before counting the object as 'found'. Default = 1.
+    nbins : int, opt
+        If the H values for the metric are not a cloned distribution, then split up H into this many bins.
+        Default 20.
+    minHrange : float, opt
+        If the H values for the metric are not a cloned distribution, then split up H into at least this
+        range (otherwise just use the min/max of the H values). Default 1.0
+    cumulative : bool, opt
+        If True, calculate the cumulative completeness (completeness <= H).
+        If False, calculate the differential completeness (completeness @ H).
+        Default True.
+    Hindex : float, opt
+        Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
+    """
+    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.3, **kwargs):
+        self.cumulative = cumulative
+        if self.cumulative:
+            metricName = 'CumulativeCompleteness'
+            units = '<= H'
         else:
-            # The Hvals are spread more randomly among the objects (we probably used one per object).
-            hrange = Hvals.max() - Hvals.min()
-            minH = Hvals.min()
-            if hrange < self.minHrange:
-                hrange = self.minHrange
-                minH = Hvals.min() - hrange/2.0
-            stepsize = hrange / float(self.nbins)
-            bins = np.arange(minH, minH + hrange + stepsize/2.0, stepsize)
-            Hvals = bins[:-1]
-            n_all, b = np.histogram(discoveriesH[0], bins)
-            condition = np.where(discoveriesH[0] >= self.requiredChances)[0]
-            n_found, b = np.histogram(discoveriesH[0][condition], bins)
-            completeness = n_found.astype(float) / n_all.astype(float)
-            completeness = np.where(n_all==0, 0, completeness)
-        summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
-        summaryVal['value'] = completeness
-        for i, Hval in enumerate(Hvals):
-            summaryVal['name'][i] = 'H = %f' % (Hval)
-        return summaryVal
-
-
-class MoCumulativeCompletenessMetric(BaseMoMetric):
-    """
-    Take the discoveryChances metric results and turn it into
-    completeness estimate (relative to the entire population).
-    Require at least 'requiredChances' to count an object as "found".
-    """
-    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, Hindex=0.3,
-                 metricName='CumulativeCompleteness', **kwargs):
-        super(MoCumulativeCompletenessMetric, self).__init__(metricName=metricName, **kwargs)
-        self.units = '<= H'
+            metricName = 'DifferentialCompleteness'
+            units = '@ H'
+        super(MoCompletenessMetric, self).__init__(metricName=metricName, units=units, **kwargs)
         self.requiredChances = requiredChances
         # If H is not a cloned distribution, then we need to specify how to bin these values.
         self.nbins = nbins
@@ -148,9 +152,15 @@ class MoCumulativeCompletenessMetric(BaseMoMetric):
             n_found, b = np.histogram(discoveriesH[0][condition], bins)
             completeness = n_found.astype(float) / n_all.astype(float)
             completeness = np.where(n_all==0, 0, completeness)
-        completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
-        summaryVal = np.empty(len(completenessInt), dtype=[('name', '|S20'), ('value', float)])
-        summaryVal['value'] = completenessInt
-        for i, Hval in enumerate(Hvals):
-            summaryVal['name'][i] = 'H <= %f' % (Hval)
+        if self.cumulative:
+            completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
+            summaryVal = np.empty(len(completenessInt), dtype=[('name', '|S20'), ('value', float)])
+            summaryVal['value'] = completenessInt
+            for i, Hval in enumerate(Hvals):
+                summaryVal['name'][i] = 'H <= %f' % (Hval)
+            summaryVal[]
+        else:
+            summaryVal['value'] = completeness
+            for i, Hval in enumerate(Hvals):
+                summaryVal['name'][i] = 'H = %f' % (Hval)
         return summaryVal
