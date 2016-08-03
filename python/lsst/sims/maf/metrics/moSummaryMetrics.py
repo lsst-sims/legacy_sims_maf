@@ -160,6 +160,7 @@ class MoCompletenessMetric(BaseMoMetric):
                 summaryVal['name'][i] = 'H <= %f' % (Hval)
             summaryVal[]
         else:
+            summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
             summaryVal['value'] = completeness
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H = %f' % (Hval)
