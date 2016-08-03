@@ -5,7 +5,7 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 
 from lsst.sims.maf.metrics import BaseMoMetric
-from lsst.sims.maf.metrics import MoCompletenessMetric, MoCumulativeCompletenessMetric, ValueAtHMetric
+from lsst.sims.maf.metrics import MoCompletenessMetric, ValueAtHMetric
 from lsst.sims.maf.slicers import MoObjSlicer
 from lsst.sims.maf.stackers import BaseMoStacker, MoMagStacker
 import lsst.sims.maf.utils as utils
