@@ -138,16 +138,16 @@ class TransientMetric(BaseMetric):
         """
         # Total number of transients that could go off back-to-back
         if self.countMethod == 'partialLC':
-            nTransMax = self.surveyDuration / (self.transDuration / 365.25)
+            _nTransMax = np.ceil(self.surveyDuration / (self.transDuration / 365.25))
         else:
-            nTransMax = np.floor(self.surveyDuration / (self.transDuration / 365.25))
+            _nTransMax = np.floor(self.surveyDuration / (self.transDuration / 365.25))
         tshifts = np.arange(self.nPhaseCheck) * self.transDuration / float(self.nPhaseCheck)
         nDetected = 0
         nTransMax = 0
         for tshift in tshifts:
             # Compute the total number of back-to-back transients are possible to detect
             # given the survey duration and the transient duration.
-            nTransMax += np.floor(self.surveyDuration / (self.transDuration / 365.25))
+            nTransMax += _nTransMax
             if tshift != 0:
                 nTransMax -= 1
             if self.surveyStart is None:
