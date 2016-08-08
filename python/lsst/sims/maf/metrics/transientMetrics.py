@@ -61,13 +61,18 @@ class TransientMetric(BaseMetric):
         One can imagine pathological cadences where many objects pass the detection criteria,
         but would not if the observations were offset by a phase-shift.
         Default 1.
+    countMethod : {'full' 'partialLC'}, defaults to 'full'
+        Sets the method of counting max number of transients. if 'full', the
+        only full light curves that fit the survey duration are counted. If
+        'partialLC', then the max number of possible transients is taken to be
+        the integer floor
     """
     def __init__(self, metricName='TransientDetectMetric', mjdCol='expMJD',
                  m5Col='fiveSigmaDepth', filterCol='filter',
                  transDuration=10., peakTime=5., riseSlope=0., declineSlope=0.,
                  surveyDuration=10., surveyStart=None, detectM5Plus=0.,
                  uPeak=20, gPeak=20, rPeak=20, iPeak=20, zPeak=20, yPeak=20,
-                 nPrePeak=0, nPerLC=1, nFilters=1, nPhaseCheck=1,
+                 nPrePeak=0, nPerLC=1, nFilters=1, nPhaseCheck=1, countMethod='full',
                  **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -87,6 +92,7 @@ class TransientMetric(BaseMetric):
         self.nPerLC = nPerLC
         self.nFilters = nFilters
         self.nPhaseCheck = nPhaseCheck
+        self.countMethod = countMethod
 
     def lightCurve(self, time, filters):
         """
@@ -131,7 +137,10 @@ class TransientMetric(BaseMetric):
             The total number of transients that could be detected.
         """
         # Total number of transients that could go off back-to-back
-        nTransMax = np.floor(self.surveyDuration / (self.transDuration / 365.25))
+        if self.countMethod == 'partialLC':
+            nTransMax = self.surveyDuration / (self.transDuration / 365.25)
+        else:
+            nTransMax = np.floor(self.surveyDuration / (self.transDuration / 365.25))
         tshifts = np.arange(self.nPhaseCheck) * self.transDuration / float(self.nPhaseCheck)
         nDetected = 0
         nTransMax = 0
