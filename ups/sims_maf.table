@@ -10,7 +10,7 @@ setupRequired(healpy)
 # For basic sims utilities
 setupRequired(sims_utils)
 # For access to the db classes
-setupRequired(sims_catalogs_generation)
+setupRequired(sims_catalogs)
 # For magnitude and SNR calculations
 setupRequired(sims_photUtils)
 # For unit conversions
