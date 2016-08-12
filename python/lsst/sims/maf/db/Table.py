@@ -8,7 +8,7 @@ from sqlalchemy.sql import expression
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    from lsst.sims.catalogs.generation.db import CatalogDBObject, ChunkIterator
+    from lsst.sims.catalogs.db import CatalogDBObject, ChunkIterator
 
 class Table(CatalogDBObject):
     skipRegistration = True
