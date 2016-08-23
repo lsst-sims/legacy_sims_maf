@@ -3,6 +3,7 @@ matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics
+import lsst.utils.tests
 
 
 class TestHourglassmetric(unittest.TestCase):
@@ -32,6 +33,14 @@ class TestHourglassmetric(unittest.TestCase):
         assert(len(pernight.dtype.names) == 9)
 
 
-if __name__ == '__main__':
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()

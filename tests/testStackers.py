@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib
 import warnings
 import unittest
-
+import lsst.utils.tests
 import lsst.sims.maf.stackers as stackers
 from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast, Site, _altAzPaFromRaDec, ObservationMetaData
 
@@ -291,6 +291,14 @@ class TestStackerClasses(unittest.TestCase):
         assert(q4.size > 0)
 
 
-if __name__ == '__main__':
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()

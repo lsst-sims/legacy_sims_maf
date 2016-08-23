@@ -5,12 +5,15 @@ import unittest
 import numpy as np
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils.outputUtils as out
+import lsst.utils.tests
+
 
 class TestOpsimDb(unittest.TestCase):
     """Test opsim specific database class."""
+
     def setUp(self):
-        self.database  = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
-                                      'opsimblitz1_1133_sqlite.db')
+        self.database = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
+                                     'opsimblitz1_1133_sqlite.db')
         self.oo = db.OpsimDatabase(database=self.database)
 
     def tearDown(self):
@@ -25,12 +28,12 @@ class TestOpsimDb(unittest.TestCase):
         self.assertEqual(self.oo.dbTables['Summary'][0], 'Summary')
         # Test can override default table name/id keys if needed.
         oo = db.OpsimDatabase(database=self.database,
-                              dbTables={'Summary':['ObsHistory', 'obsHistID']})
+                              dbTables={'Summary': ['ObsHistory', 'obsHistID']})
         self.assertEqual(oo.dbTables['Summary'][0], 'ObsHistory')
 
     def testOpsimDbMetricData(self):
         """Test queries for sim data. """
-        data = self.oo.fetchMetricData(['finSeeing',], 'filter="r" and finSeeing<1.0')
+        data = self.oo.fetchMetricData(['finSeeing', ], 'filter="r" and finSeeing<1.0')
         self.assertEqual(data.dtype.names, ('obsHistID', 'finSeeing'))
         self.assertTrue(data['finSeeing'].max() <= 1.0)
 
@@ -89,8 +92,16 @@ class TestOpsimDb(unittest.TestCase):
                 propidsSummary.append(configsummary['Proposals'][propname]['propID'])
         self.assertEqual(set(propidsSummary), set(propids))
         out.printDict(configsummary, 'Summary')
-        #out.printDict(configdetails, 'Details')
+
+
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
 
 
 if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()

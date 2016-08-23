@@ -1,13 +1,16 @@
 import matplotlib
 matplotlib.use("Agg")
-import os, warnings
+import os
+import warnings
 import unittest
-import lsst.utils.tests as utilsTests
 import numpy as np
 import lsst.sims.maf.db as db
 import shutil
+import lsst.utils.tests
+
 
 class TestResultsDb(unittest.TestCase):
+
     def setUp(self):
         self.outDir = 'Out'
         self.metricName = 'Count ExpMJD'
@@ -25,9 +28,9 @@ class TestResultsDb(unittest.TestCase):
         self.summaryStatName3 = 'TableFrac'
         self.summaryStatValue3 = np.empty(10, dtype=[('name', '|S12'), ('value', float)])
         for i in range(10):
-            self.summaryStatValue3['name'] = 'test%d' %(i)
+            self.summaryStatValue3['name'] = 'test%d' % (i)
             self.summaryStatValue3['value'] = i
-        self.displayDict = {'group':'seeing', 'subgroup':'all', 'order':1, 'caption':'lalalalal'}
+        self.displayDict = {'group': 'seeing', 'subgroup': 'all', 'order': 1, 'caption': 'lalalalal'}
 
     def testDbCreation(self):
         # Test default sqlite file created (even if outDir doesn't exist)
@@ -54,7 +57,7 @@ class TestResultsDb(unittest.TestCase):
                                            self.runName, self.constraint,
                                            self.metadata, self.metricDataFile)
         self.assertEqual(metricId, metricId2)
-        run1 = resultsDb.session.query(db.MetricRow).filter_by(metricId = metricId).all()
+        run1 = resultsDb.session.query(db.MetricRow).filter_by(metricId=metricId).all()
         self.assertEqual(len(run1), 1)
         # Add plot.
         resultsDb.updatePlot(metricId, self.plotType, self.plotName)
@@ -82,6 +85,7 @@ class TestResultsDb(unittest.TestCase):
 
 
 class TestUseResultsDb(unittest.TestCase):
+
     def setUp(self):
         self.outDir = 'Out'
         self.metricName = 'Count ExpMJD'
@@ -120,17 +124,15 @@ class TestUseResultsDb(unittest.TestCase):
         if os.path.isdir(self.outDir):
             shutil.rmtree(self.outDir)
 
-def suite():
-    """Returns a suite containing all the test cases in this module."""
-    utilsTests.init()
-    suites = []
-    suites += unittest.makeSuite(TestResultsDb)
-    suites += unittest.makeSuite(TestUseResultsDb)
-    return unittest.TestSuite(suites)
 
-def run(shouldExit=False):
-    """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()
