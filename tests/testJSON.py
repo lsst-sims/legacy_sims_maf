@@ -1,9 +1,9 @@
 import numpy as np
 import numpy.ma as ma
-import warnings
 import unittest
 import json
 import lsst.sims.maf.slicers as slicers
+import lsst.utils.tests
 
 
 def makeDataValues(size=100, min=0., max=1., random=True):
@@ -18,10 +18,11 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     datavalues = np.array(zip(datavalues), dtype=[('testdata', 'float')])
     return datavalues
 
+
 def makeMetricData(slicer, dtype='float'):
     metricValues = np.random.rand(len(slicer)).astype(dtype)
     metricValues = ma.MaskedArray(data=metricValues,
-                                  mask = np.zeros(len(slicer), 'bool'),
+                                  mask=np.zeros(len(slicer), 'bool'),
                                   fill_value=slicer.badval)
     return metricValues
 
@@ -30,16 +31,21 @@ def makeFieldData():
     """Set up sample field data."""
     # These are a subset of the fields from opsim.
     fieldId = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010]
-    fieldRA = [1.4961071750760884, 4.009380232682723, 2.2738050744968632, 2.7527439701957053, 6.043715459855715,
-               0.23946974745438585, 3.4768050063149119, 2.8063803008646744, 4.0630173623005916, 2.2201678117208452]
-    fieldDec = [-0.25205231807872636, -0.25205228478831621, -0.25205228478831621, -0.25205228478831621, -0.25205145255075168,
-                -0.25205145255075168, -0.24630904473998308, -0.24630904473998308, -0.24630894487049795, -0.24630894487049795]
+    fieldRA = [1.4961071750760884, 4.009380232682723, 2.2738050744968632,
+               2.7527439701957053, 6.043715459855715,
+               0.23946974745438585, 3.4768050063149119, 2.8063803008646744, 4.0630173623005916,
+               2.2201678117208452]
+    fieldDec = [-0.25205231807872636, -0.25205228478831621, -0.25205228478831621,
+                -0.25205228478831621, -0.25205145255075168,
+                -0.25205145255075168, -0.24630904473998308, -0.24630904473998308,
+                -0.24630894487049795, -0.24630894487049795]
     fieldId = np.array(fieldId, 'int')
     fieldRA = np.array(fieldRA, 'float')
     fieldDec = np.array(fieldDec, 'float')
     fieldData = np.core.records.fromarrays([fieldId, fieldRA, fieldDec],
-                                            names = ['fieldID', 'fieldRA', 'fieldDec'])
+                                           names=['fieldID', 'fieldRA', 'fieldDec'])
     return fieldData
+
 
 def makeOpsimDataValues(fieldData, size=10000, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
@@ -60,6 +66,7 @@ def makeOpsimDataValues(fieldData, size=10000, min=0., max=1., random=True):
 
 
 class TestJSONoutUniSlicer(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = slicers.UniSlicer()
 
@@ -69,7 +76,7 @@ class TestJSONoutUniSlicer(unittest.TestCase):
     def test(self):
         metricVal = makeMetricData(self.testslicer, 'float')
         io = self.testslicer.outputJSON(metricVal, metricName='testMetric',
-                                    simDataName ='testSim', metadata='testmeta')
+                                        simDataName='testSim', metadata='testmeta')
         jsn = json.loads(io.getvalue())
         jsn_header = jsn[0]
         jsn_data = jsn[1]
@@ -80,30 +87,9 @@ class TestJSONoutUniSlicer(unittest.TestCase):
         self.assertEqual(jsn_header['slicerLen'], 1)
         self.assertEqual(len(jsn_data), 1)
 
-class TestJSONoutOneDSlicer(unittest.TestCase):
-    def setUp(self):
-        # Set up a slicer and some metric data for that slicer.
-        dv = makeDataValues(1000)
-        self.testslicer = slicers.OneDSlicer(sliceColName='testdata')
-        self.testslicer.setupSlicer(dv)
 
-    def tearDown(self):
-        del self.testslicer
+class TestJSONoutOneDSlicer2(unittest.TestCase):
 
-    def test(self):
-        metricVal = makeMetricData(self.testslicer, 'float')
-        io = self.testslicer.outputJSON(metricVal)
-        jsn = json.loads(io.getvalue())
-        jsn_header = jsn[0]
-        jsn_data = jsn[1]
-        self.assertEqual(jsn_header['slicerName'], 'OneDSlicer')
-        self.assertEqual(jsn_header['slicerLen'], len(self.testslicer))
-        self.assertEqual(len(jsn_data), len(metricVal))
-        for jsndat, binleft, mval in zip(jsn_data, self.testslicer.bins[:-1], metricVal.data):
-            self.assertEqual(jsndat[0], binleft)
-            self.assertEqual(jsndat[1], mval)
-
-class TestJSONoutOneDSlicer(unittest.TestCase):
     def setUp(self):
         # Set up a slicer and some metric data for that slicer.
         dv = makeDataValues(1000)
@@ -126,7 +112,9 @@ class TestJSONoutOneDSlicer(unittest.TestCase):
             self.assertEqual(jsndat[0], binleft)
             self.assertEqual(jsndat[1], mval)
 
+
 class TestJSONoutHealpixSlicer(unittest.TestCase):
+
     def setUp(self):
         # Set up a slicer and some metric data for that slicer.
         self.testslicer = slicers.HealpixSlicer(nside=4, verbose=False)
@@ -149,7 +137,9 @@ class TestJSONoutHealpixSlicer(unittest.TestCase):
             self.assertAlmostEqual(jsndat[1], dec/np.pi*180.)
             self.assertEqual(jsndat[2], mval)
 
+
 class TestJSONoutOpsimFieldSlicer(unittest.TestCase):
+
     def setUp(self):
         # Set up a slicer and some metric data for that slicer.
         self.testslicer = slicers.OpsimFieldSlicer()
@@ -176,6 +166,14 @@ class TestJSONoutOpsimFieldSlicer(unittest.TestCase):
             self.assertEqual(jsndat[2], mval)
 
 
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
 
-if __name__ == '__main__':
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()
