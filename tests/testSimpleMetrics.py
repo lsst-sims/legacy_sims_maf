@@ -3,9 +3,11 @@ matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics
+import lsst.utils.tests
 
 
 class TestSimpleMetrics(unittest.TestCase):
+
     def setUp(self):
         dv = np.arange(0, 10, .5)
         self.dv = np.array(zip(dv), dtype=[('testdata', 'float')])
@@ -97,9 +99,8 @@ class TestSimpleMetrics(unittest.TestCase):
         self.assertEqual(testmetric.run(self.dv),
                          2.0*np.size(np.where(self.dv['testdata'] <= cutoff)[0])/float(np.size(self.dv)))
 
-
     def testNoutliersNsigma(self):
-        data=self.dv
+        data = self.dv
         testmetric = metrics.NoutliersNsigmaMetric('testdata', nSigma=1.)
         med = np.mean(data['testdata'])
         shouldBe = np.size(np.where(data['testdata'] > med + data['testdata'].std())[0])
@@ -126,7 +127,7 @@ class TestSimpleMetrics(unittest.TestCase):
         result = testmetric.run(dv)
         result = np.degrees(result)
         self.assertAlmostEqual(result, 180)
-        
+
     def testFullRangeAngleMetric(self):
         """Test full range angle metric."""
         dv1 = np.arange(0, 32, 2.5)
@@ -152,5 +153,15 @@ class TestSimpleMetrics(unittest.TestCase):
         result = np.degrees(result)
         self.assertGreater(result, 355)
 
+
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
 if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()

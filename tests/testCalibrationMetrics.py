@@ -4,9 +4,11 @@ import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
+import lsst.utils.tests
 
 
 class TestCalibrationMetrics(unittest.TestCase):
+
     def testParallaxMetric(self):
         """
         Test the parallax metric.
@@ -193,6 +195,14 @@ class TestCalibrationMetrics(unittest.TestCase):
                                        np.max(np.abs(data['fieldDec']))-np.min(np.abs(data['fieldDec'])))
 
 
-if __name__ == '__main__':
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()

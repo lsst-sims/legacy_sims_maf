@@ -5,40 +5,43 @@ import matplotlib.pyplot as plt
 import unittest
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 from lsst.sims.maf.slicers.oneDSlicer import OneDSlicer
+import lsst.utils.tests
+
 
 def makeDataValues(size=100, min=0., max=1., random=True):
-    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""    
+    """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
-    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min()) 
+    datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
     if random:
-        randorder = np.random.rand(size)        
+        randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     datavalues = np.array(zip(datavalues), dtype=[('testdata', 'float')])
     return datavalues
-    
 
-class TestUniSlicerSetupAndSlice(unittest.TestCase):    
+
+class TestUniSlicerSetupAndSlice(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = UniSlicer()
-        
+
     def tearDown(self):
         del self.testslicer
         self.testslicer = None
 
     def testSlicertype(self):
-        """Test instantiation of slicer sets slicer type as expected."""        
+        """Test instantiation of slicer sets slicer type as expected."""
         self.assertEqual(self.testslicer.slicerName, self.testslicer.__class__.__name__)
         self.assertEqual(self.testslicer.slicerName, 'UniSlicer')
 
     def testSlicerNbins(self):
         self.assertEqual(self.testslicer.nslice, 1)
-        
+
     def testSetupSlicerIndices(self):
         """Test slicer returns correct indices (all) after setup. Note this also tests slicing."""
         dvmin = 0
-        dvmax = 1        
+        dvmax = 1
         nvalues = 1000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         self.testslicer.setupSlicer(dv)
@@ -48,6 +51,7 @@ class TestUniSlicerSetupAndSlice(unittest.TestCase):
 
 
 class TestUniSlicerIteration(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = UniSlicer()
 
@@ -74,15 +78,17 @@ class TestUniSlicerIteration(unittest.TestCase):
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
         self.testslicer.setupSlicer(dv)
         self.assertEqual(self.testslicer[0]['slicePoint']['sid'], 0)
-        
+
+
 class TestUniSlicerEqual(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = UniSlicer()
         dvmin = 0
         dvmax = 1
         nvalues = 1000
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        self.testslicer.setupSlicer(dv)    
+        self.testslicer.setupSlicer(dv)
 
     def tearDown(self):
         del self.testslicer
@@ -102,7 +108,16 @@ class TestUniSlicerEqual(unittest.TestCase):
         testslicer2 = OneDSlicer(sliceColName='testdata', bins=10)
         testslicer2.setupSlicer(dv2)
         self.assertNotEqual(self.testslicer, testslicer2)
-            
-if __name__ == "__main__":
-   unittest.main()
 
+
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
+    unittest.main()

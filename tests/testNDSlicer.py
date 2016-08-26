@@ -5,11 +5,12 @@ import numpy as np
 import numpy.lib.recfunctions as rfn
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import itertools
 import unittest
 from lsst.sims.maf.slicers.nDSlicer import NDSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
+import lsst.utils.tests
+
 
 def makeDataValues(size=100, min=0., max=1., nd=3, random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, in nd dimensions, but (optional)
@@ -23,13 +24,14 @@ def makeDataValues(size=100, min=0., max=1., nd=3, random=True):
             randorder = np.random.rand(size)
             randind = np.argsort(randorder)
             datavalues = datavalues[randind]
-        datavalues = np.array(zip(datavalues), dtype=[('testdata'+ '%d' %(d), 'float')])
+        datavalues = np.array(zip(datavalues), dtype=[('testdata' + '%d' % (d), 'float')])
         data.append(datavalues)
     data = rfn.merge_arrays(data, flatten=True, usemask=False)
     return data
 
 
 class TestNDSlicerSetup(unittest.TestCase):
+
     def setUp(self):
         self.dvmin = 0
         self.dvmax = 1
@@ -37,7 +39,6 @@ class TestNDSlicerSetup(unittest.TestCase):
         self.nd = 3
         self.dv = makeDataValues(nvalues, self.dvmin, self.dvmax, self.nd, random=True)
         self.dvlist = self.dv.dtype.names
-
 
     def testSlicertype(self):
         """Test instantiation of slicer sets slicer type as expected."""
@@ -87,7 +88,7 @@ class TestNDSlicerSetup(unittest.TestCase):
         """Test handling case of data being single values."""
         dv = makeDataValues(100, 0, 0, self.nd, random=False)
         nbins = 10
-        testslicer = NDSlicer(self.dvlist, binsList = nbins)
+        testslicer = NDSlicer(self.dvlist, binsList=nbins)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             testslicer.setupSlicer(dv)
@@ -97,11 +98,8 @@ class TestNDSlicerSetup(unittest.TestCase):
             expectednbins *= (nbins + d)
         self.assertTrue(testslicer.nslice, expectednbins)
 
-
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
-        dvmin = 0
-        dvmax = 1
         for nbins in (20, 105):
             testslicer = NDSlicer(self.dvlist, binsList=nbins)
             bins = makeDataValues(nbins+1, self.dvmin, self.dvmax, self.nd, random=False)
@@ -116,6 +114,7 @@ class TestNDSlicerSetup(unittest.TestCase):
 
 
 class TestNDSlicerEqual(unittest.TestCase):
+
     def setUp(self):
         self.dvmin = 0
         self.dvmax = 1
@@ -157,8 +156,8 @@ class TestNDSlicerEqual(unittest.TestCase):
         self.assertNotEqual(self.testslicer, testslicer2)
 
 
-
 class TestNDSlicerIteration(unittest.TestCase):
+
     def setUp(self):
         self.dvmin = 0
         self.dvmax = 1
@@ -193,7 +192,9 @@ class TestNDSlicerIteration(unittest.TestCase):
             self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], s['slicePoint']['binLeft'])
         self.assertEqual(self.testslicer[0]['slicePoint']['binLeft'], (0.0, 0.0, 0.0))
 
+
 class TestNDSlicerSlicing(unittest.TestCase):
+
     def setUp(self):
         self.dvmin = 0
         self.dvmax = 1
@@ -222,7 +223,7 @@ class TestNDSlicerSlicing(unittest.TestCase):
                 idxs = s['idxs']
                 dataslice = dv[idxs]
                 sum += len(idxs)
-                if len(dataslice)>0:
+                if len(dataslice) > 0:
                     for i, dvname, b in zip(range(self.nd), self.dvlist, s['slicePoint']['binLeft']):
                         self.assertGreaterEqual((dataslice[dvname].min() - b), 0)
                     if i < self.testslicer.nslice-1:
@@ -234,13 +235,14 @@ class TestNDSlicerSlicing(unittest.TestCase):
             self.assertEqual(sum, nvalues)
 
 
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
 
 if __name__ == "__main__":
-    suitelist = []
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSetup))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerEqual))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerIteration))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestNDSlicerSlicing))
-    suite = unittest.TestSuite(suitelist)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    lsst.utils.tests.init()
     unittest.main()

@@ -1,12 +1,12 @@
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
-import numpy.ma as ma
-import matplotlib.pyplot as plt
 import warnings
 import unittest
 from lsst.sims.maf.slicers.oneDSlicer import OneDSlicer
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
+import lsst.utils.tests
+
 
 def makeDataValues(size=100, min=0., max=1., random=True):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
@@ -22,6 +22,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
 
 
 class TestOneDSlicerSetup(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = OneDSlicer(sliceColName='testdata')
 
@@ -109,7 +110,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         dvmax = 1
         dv = makeDataValues(1000, dvmin, dvmax, random=True)
         # Test basic use.
-        binsize=0.5
+        binsize = 0.5
         self.testslicer = OneDSlicer(sliceColName='testdata', binsize=binsize)
         self.testslicer.setupSlicer(dv)
         # When binsize is specified, oneDslicer adds an extra bin to first/last spots.
@@ -117,11 +118,10 @@ class TestOneDSlicerSetup(unittest.TestCase):
         # Test that warning works.
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            self.testslicer = OneDSlicer(sliceColName='testdata',bins=200,binsize=binsize)
+            self.testslicer = OneDSlicer(sliceColName='testdata', bins=200, binsize=binsize)
             self.testslicer.setupSlicer(dv)
             # Verify some things
             self.assertTrue("binsize" in str(w[-1].message))
-
 
     def testSetupSlicerFreedman(self):
         """Test that setting up the slicer using bins=None works."""
@@ -137,6 +137,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
 
 
 class TestOneDSlicerIteration(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = OneDSlicer(sliceColName='testdata')
         dvmin = 0
@@ -144,7 +145,7 @@ class TestOneDSlicerIteration(unittest.TestCase):
         nvalues = 1000
         self.bins = np.arange(dvmin, dvmax, 0.01)
         dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
-        self.testslicer = OneDSlicer(sliceColName='testdata',bins=self.bins)
+        self.testslicer = OneDSlicer(sliceColName='testdata', bins=self.bins)
         self.testslicer.setupSlicer(dv)
 
     def tearDown(self):
@@ -153,7 +154,7 @@ class TestOneDSlicerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration."""
-        for i,(s, b) in enumerate(zip(self.testslicer, self.bins)):
+        for i, (s, b) in enumerate(zip(self.testslicer, self.bins)):
             self.assertEqual(s['slicePoint']['sid'], i)
             self.assertEqual(s['slicePoint']['binLeft'], b)
 
@@ -163,7 +164,9 @@ class TestOneDSlicerIteration(unittest.TestCase):
             self.assertEqual(self.testslicer[i]['slicePoint']['sid'], i)
             self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], self.bins[i])
 
+
 class TestOneDSlicerEqual(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = OneDSlicer(sliceColName='testdata')
 
@@ -221,7 +224,9 @@ class TestOneDSlicerEqual(unittest.TestCase):
         self.assertFalse(testslicer2 == testslicer3)
         self.assertTrue(testslicer2 != testslicer3)
 
+
 class TestOneDSlicerSlicing(unittest.TestCase):
+
     def setUp(self):
         self.testslicer = OneDSlicer(sliceColName='testdata')
 
@@ -234,7 +239,6 @@ class TestOneDSlicerSlicing(unittest.TestCase):
         dvmin = 0
         dvmax = 1
         nbins = 100
-        binsize = (dvmax - dvmin) / (float(nbins))
         # Test that testbinner raises appropriate error before it's set up (first time)
         self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
         for nvalues in (1000, 10000, 100000):
@@ -246,20 +250,22 @@ class TestOneDSlicerSlicing(unittest.TestCase):
                 idxs = s['idxs']
                 dataslice = dv['testdata'][idxs]
                 sum += len(idxs)
-                if len(dataslice)>0:
+                if len(dataslice) > 0:
                     self.assertTrue(len(dataslice), nvalues/float(nbins))
                 else:
                     self.assertTrue(len(dataslice) > 0,
-                            'Data in test case expected to always be > 0 len after slicing')
+                                    'Data in test case expected to always be > 0 len after slicing')
             self.assertTrue(sum, nvalues)
 
 
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
 if __name__ == "__main__":
-    suitelist = []
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSetup))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerIteration))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerEqual))
-    suitelist.append(unittest.TestLoader().loadTestsFromTestCase(TestOneDSlicerSlicing))
-    suite = unittest.TestSuite(suitelist)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    lsst.utils.tests.init()
     unittest.main()

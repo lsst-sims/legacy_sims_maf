@@ -3,9 +3,11 @@ matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.plots as plots
+import lsst.utils.tests
 
 
 class TestNeoDistancePlotter(unittest.TestCase):
+
     def setUp(self):
         names = ['eclipLat', 'eclipLon', 'MaxGeoDist',
                  'NEOHelioX', 'NEOHelioY', 'filter']
@@ -29,5 +31,14 @@ class TestNeoDistancePlotter(unittest.TestCase):
         fig = plotter([self.metricValues], None, {})
 
 
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
 if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()
