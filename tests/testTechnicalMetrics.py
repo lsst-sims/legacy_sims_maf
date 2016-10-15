@@ -3,6 +3,8 @@ matplotlib.use("Agg")
 import numpy as np
 import unittest
 import lsst.sims.maf.metrics as metrics
+import lsst.utils.tests
+
 
 class TestTechnicalMetrics(unittest.TestCase):
 
@@ -29,11 +31,11 @@ class TestTechnicalMetrics(unittest.TestCase):
         Test the minTimeBetweenStates metric.
         """
         filters = np.array(['u', 'g', 'g', 'r'])
-        visitTimes = np.array([0, 5, 6, 7]) #days
+        visitTimes = np.array([0, 5, 6, 7])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.MinTimeBetweenStatesMetric()
-        result = metric.run(data) # minutes
+        result = metric.run(data)  # minutes
         self.assertEqual(result, 2*24.0*60.0)
         data['filter'] = np.array(['u', 'u', 'u', 'u'])
         result = metric.run(data)
@@ -44,11 +46,11 @@ class TestTechnicalMetrics(unittest.TestCase):
         Test the NStateChangesFasterThan metric.
         """
         filters = np.array(['u', 'g', 'g', 'r'])
-        visitTimes = np.array([0, 5, 6, 7]) #days
+        visitTimes = np.array([0, 5, 6, 7])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.NStateChangesFasterThanMetric(cutoff=3*24*60)
-        result = metric.run(data) # minutes
+        result = metric.run(data)  # minutes
         self.assertEqual(result, 1)
 
     def testMaxStateChangesWithinMetric(self):
@@ -56,20 +58,19 @@ class TestTechnicalMetrics(unittest.TestCase):
         Test the MaxStateChangesWithin metric.
         """
         filters = np.array(['u', 'g', 'r', 'u', 'g', 'r'])
-        visitTimes = np.array([0, 1, 1, 4, 6, 7]) #days
+        visitTimes = np.array([0, 1, 1, 4, 6, 7])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
-        result = metric.run(data) # minutes
+        result = metric.run(data)  # minutes
         self.assertEqual(result, 2)
         filters = np.array(['u', 'g', 'g', 'u', 'g', 'r', 'g', 'r'])
-        visitTimes = np.array([0, 1, 1, 4, 4, 7, 8, 8]) #days
+        visitTimes = np.array([0, 1, 1, 4, 4, 7, 8, 8])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
                                           names=['expMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
-        result = metric.run(data) # minutes
+        result = metric.run(data)  # minutes
         self.assertEqual(result, 2)
-
 
     def testTeffMetric(self):
         """
@@ -78,16 +79,16 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['g', 'g', 'g', 'g', 'g'])
         m5 = np.zeros(len(filters), float) + 25.0
         data = np.core.records.fromarrays([m5, filters],
-                                        names=['fiveSigmaDepth', 'filter'])
-        metric = metrics.TeffMetric(fiducialDepth={'g':25}, teffBase=30.0)
+                                          names=['fiveSigmaDepth', 'filter'])
+        metric = metrics.TeffMetric(fiducialDepth={'g': 25}, teffBase=30.0)
         result = metric.run(data)
         self.assertEqual(result, 30.0*m5.size)
         filters = np.array(['g', 'g', 'g', 'u', 'u'])
         m5 = np.zeros(len(filters), float) + 25.0
         m5[3:5] = 20.0
         data = np.core.records.fromarrays([m5, filters],
-                                        names=['fiveSigmaDepth', 'filter'])
-        metric = metrics.TeffMetric(fiducialDepth={'u':20, 'g':25}, teffBase=30.0)
+                                          names=['fiveSigmaDepth', 'filter'])
+        metric = metrics.TeffMetric(fiducialDepth={'u': 20, 'g': 25}, teffBase=30.0)
         result = metric.run(data)
         self.assertEqual(result, 30.0*m5.size)
 
@@ -112,10 +113,10 @@ class TestTechnicalMetrics(unittest.TestCase):
         Test the completeness metric.
         """
         # Generate some test data.
-        data = np.zeros(600, dtype=zip(['filter'],['|S1']))
+        data = np.zeros(600, dtype=zip(['filter'], ['|S1']))
         data['filter'][:100] = 'u'
         data['filter'][100:200] = 'g'
-        data['filter'][200:300]= 'r'
+        data['filter'][200:300] = 'r'
         data['filter'][300:400] = 'i'
         data['filter'][400:550] = 'z'
         data['filter'][550:600] = 'y'
@@ -156,5 +157,14 @@ class TestTechnicalMetrics(unittest.TestCase):
         self.assertRaises(ValueError, metrics.CompletenessMetric, 'filter')
 
 
-if __name__ == '__main__':
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()

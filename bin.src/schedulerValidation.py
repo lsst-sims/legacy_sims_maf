@@ -461,6 +461,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         displayDict=displayDict, runName=runName, metadata=metadata,
                                         summaryMetrics=summaryStats, plotFuncs=[plotFunc])
     bundleList.append(bundle)
+
+    metadata = 'All Filters'
+    sqlconstraint = ''
+    displayDict = {'group': nvisitgroup, 'order': 0,
+                   'caption': 'Number of visits all filters'}
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                        displayDict=displayDict, runName=runName, metadata=metadata,
+                                        summaryMetrics=summaryStats)
     # Count the number of visits per filter for each individual proposal, over the sky.
     # The min/max limits for these plots are allowed to float, so that we can
     # really see what's going on in each proposal.

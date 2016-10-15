@@ -4,9 +4,9 @@ import numpy as np
 import unittest
 import warnings
 import os
-
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.maps as maps
+import lsst.utils.tests
 
 
 def makeDataValues(size=100, min=0., max=1., random=True):
@@ -24,14 +24,16 @@ def makeDataValues(size=100, min=0., max=1., random=True):
                                  ('fieldDec', 'float'), ('fieldID', 'int')])
     return datavalues
 
+
 def makeFieldData():
-    names=['fieldID', 'fieldRA','fieldDec']
+    names = ['fieldID', 'fieldRA', 'fieldDec']
     types = [int, float, float]
-    fieldData = np.zeros(100, dtype=zip(names,types))
+    fieldData = np.zeros(100, dtype=zip(names, types))
     fieldData['fieldID'] = np.arange(100)
     fieldData['fieldRA'] = np.random.rand(100)
     fieldData['fieldDec'] = np.random.rand(100)
     return fieldData
+
 
 class TestMaps(unittest.TestCase):
 
@@ -59,12 +61,13 @@ class TestMaps(unittest.TestCase):
             # Check interpolation works
             dustmap = maps.DustMap(interp=True)
             result3 = dustmap.run(slicer2.slicePoints)
+            assert('ebv' in result3.keys())
 
             # Check warning gets raised
             dustmap = maps.DustMap(nside=4)
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                result4 = dustmap.run(slicer1.slicePoints)
+                dustmap.run(slicer1.slicePoints)
                 self.assertTrue("nside" in str(w[-1].message))
         else:
             warnings.warn('Did not find dustmaps, not running testMaps.py')
@@ -75,7 +78,7 @@ class TestMaps(unittest.TestCase):
         if os.path.isfile(os.path.join(mapPath, 'StarMaps/starDensity_r_nside_64.npz')):
             data = makeDataValues()
             # check that it works if nside does not match map nside of 64
-            nsides = [32,64,128]
+            nsides = [32, 64, 128]
             for nside in nsides:
                 starmap = maps.StellarDensityMap()
                 slicer1 = slicers.HealpixSlicer(nside=nside)
@@ -97,6 +100,15 @@ class TestMaps(unittest.TestCase):
         else:
             warnings.warn('Did not find stellar density map, skipping test.')
 
-if __name__ == '__main__':
 
+class TestMemory(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
     unittest.main()
