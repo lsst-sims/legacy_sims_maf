@@ -37,7 +37,8 @@ class MoOrbits(object):
         # Normalize the column names, as different inputs tend to have some commonly-different names.
         ssoCols = orbits.columns.values.tolist()
         nSso = len(orbits)
-        outCols = ['objId', 'q', 'e', 'inc', 'node', 'argPeri', 'tPeri', 'epoch', 'H', 'g', 'a', 'meanAnom', 'sed_filename']
+        outCols = ['objId', 'q', 'e', 'inc', 'node', 'argPeri', 'tPeri', 'epoch', 'H', 'g', 'a', 'meanAnom',
+                   'sed_filename']
         # Create mapping between column names read from disk and desired column names.
         colMap = {}
         for o in outCols:
@@ -96,7 +97,8 @@ class MoOrbits(object):
             sedvals = orbits[colMap['sed_filename']]
 
         # And some columns that can be generated from the input data we do have.
-        # This is probably not as reliable as it needs to be .. converting from a/M to q/tPeri is not accurate enough.
+        # This is probably not as reliable as it needs to be ..
+        # converting from a/M to q/tPeri is not accurate enough.
         if 'a' not in colMap:
             aval = orbits[colMap['q']] / (1 - orbits[colMap['e']])
         else:

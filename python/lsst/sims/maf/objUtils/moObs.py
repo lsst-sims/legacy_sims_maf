@@ -52,8 +52,9 @@ class MoObs(MoOrbits):
 
 
     def _packOorbElem(self, sso=None):
-        """
-        Convert row from pandas dataframe (or numpy recarray) of orbital elements into the array OpenOrb needs as input.
+        """Convert row from pandas dataframe (or numpy recarray) of orbital elements into the
+        array OpenOrb needs as input.
+
         'sso' can be the orbital elements of a single object or of multiple objects.
         To normalize the column names to those expected here, read in data using 'readOrbits'.
         """
@@ -69,7 +70,7 @@ class MoObs(MoOrbits):
         # 10: magHv
         # 11: G
         #
-        #  so we have to do a little translating from the orbits DataFrame to the elements we want in this array.
+        #  we have to do a little translating from the orbits DataFrame to the elements we want in this array.
         if sso is None:
             sso = self.orbits
         # Do we have a single item (Series) or multiples (Dataframe)?
@@ -113,7 +114,8 @@ class MoObs(MoOrbits):
         """
         if ephTimes is None:
             ephTimes = self.ephTimes
-        oorbephems, err = oo.pyoorb.oorb_ephemeris(in_orbits = oorbArray, in_obscode=obscode, in_date_ephems=ephTimes)
+        oorbephems, err = oo.pyoorb.oorb_ephemeris(in_orbits = oorbArray,
+                                                   in_obscode=obscode, in_date_ephems=ephTimes)
         if err != 0:
             print 'Oorb returned error %s' %(err)
         return oorbephems
@@ -139,17 +141,20 @@ class MoObs(MoOrbits):
         # 7 = ddec/dt (deg/day) sky motion
         # 8 = phase angle (deg)
         # 9 = solar elongation angle (deg)
-        # So usually we want to swap the axes at least, so that instead of all the ephemeris information @ a particular time
-        # being the accessible bit of information, we have all the RA values over time for a single object ('byObject')
+        # Usually we want to swap the axes at least, so that instead of all the
+        # ephemeris information @ a particular time being the accessible bit of information,
+        # we have all the RA values over time for a single object ('byObject')
         # Alternatively, we may want all the RA values for all objects at one time.
         #     This is also an option, by setting 'byObject' to False.
         ephs = np.swapaxes(oorbephems, 2, 0)
-        # oorbcols=['delta', 'ra', 'dec', 'magV', 'time', 'timescale', 'dradt', 'ddecdt', 'phase', 'solarelon']
+        # oorbcols = ['delta', 'ra', 'dec', 'magV', 'time', 'timescale',
+        #             'dradt', 'ddecdt', 'phase', 'solarelon']
         velocity = np.sqrt(ephs[6]**2 + ephs[7]**2)
         if byObject:
             ephs = np.swapaxes(ephs, 2, 1)
             velocity = np.swapaxes(velocity, 1, 0)
-        # Create a numpy recarray. (not using a dAtaframe here, because the numpy recarray is just easier to swap around later).
+        # Create a numpy recarray.
+        # (not using a dataframe here, because the numpy recarray is just easier to swap around later).
         ephs = np.rec.fromarrays([ephs[0], ephs[1], ephs[2], ephs[3], ephs[4],
                                   ephs[6], ephs[7], ephs[8], ephs[9], velocity],
                                   names=['delta', 'ra', 'dec', 'magV', 'time', 'dradt',
@@ -157,11 +162,11 @@ class MoObs(MoOrbits):
         return ephs
 
     def generateEphs(self, sso=None):
-        """
-        Combines several private methods to pack and unpack oorb-format orbital elements and ephemerides,
+        """Combines several private methods to pack and unpack oorb-format orbital elements and ephemerides,
         into a single easy-access point to generate numpy arrays of ephemerides.
 
-        Use the individual private methods if you want to unpack the ephemerides in a manner other than 'byObject'.
+        Use the individual private methods if you want to unpack the ephemerides in a manner
+        other than 'byObject'.
         """
         if sso is None:
             sso = self.orbits
@@ -302,7 +307,8 @@ class MoObs(MoOrbits):
         for n in interpfuncs:
             ephs[n] = interpfuncs[n](tvis)
         ephs['time'] = tvis
-        # Calculate the extra columns we want to write out (dmag due to color, trailing loss, and detection loss)
+        # Calculate the extra columns we want to write out
+        # (dmag due to color, trailing loss, and detection loss)
         # First calculate and match the color dmag term.
         dmagColor = np.zeros(len(idxObs), float)
         dmagColorDict = self._calcColors(sedname)
@@ -384,7 +390,8 @@ def runMoObs(orbitfile, outfileName, opsimfile,
         ephs = moogen.generateEphs(sso)
         interpfuncs = moogen.interpolateEphs(ephs)
         idxObs = moogen.ssoInFov(interpfuncs, simdata, rFov=rFov, useCamera=useCamera)
-        moogen.writeObs(sso['objId'], interpfuncs, simdata, idxObs,  sedname=sso['sed_filename'],  outfileName=outfileName)
+        moogen.writeObs(sso['objId'], interpfuncs, simdata, idxObs,  sedname=sso['sed_filename'],
+                        outfileName=outfileName)
     print "Wrote output observations to file %s" %(outfileName)
 
 # Test example:

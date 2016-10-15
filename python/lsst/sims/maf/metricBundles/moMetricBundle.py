@@ -49,9 +49,10 @@ def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=N
     -------
     ~lsst.sims.maf.metricBundles.MoMetricBundle
     """
+    # First look for summary value:
     try:
         bundle.summaryValues[summaryName]
-    # Assume metric just wasn't run yet, and run it.
+    # If not found, then just run it (assuming it's completeness metric).
     except (TypeError, KeyError):
         if summaryName == 'DifferentialCompleteness':
             metric = MoCompletenessMetric(cumulative=False)

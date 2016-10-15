@@ -52,23 +52,25 @@ class MoMagStacker(BaseMoStacker):
         The probabilistic prediction of visibility is based on Fermi-Dirac completeness formula (see SDSS,
         eqn 24, Stripe82 analysis: http://iopscience.iop.org/0004-637X/794/2/120/pdf/apj_794_2_120.pdf).
     """
-    def __init__(self, magFilterCol='magFilter', m5Col='fiveSigmaDepth', lossCol='dmagDetect',
-                 gamma=0.038, sigma=0.12):
+    def __init__(self, vMagCol='magV', colorCol='dmagColor', magFilterCol='magFilter',
+                 lossCol='dmagDetect', m5Col='fiveSigmaDepth', gamma=0.038, sigma=0.12):
+        self.vMagCol = vMagCol
+        self.colorCol = colorCol
         self.magFilterCol = magFilterCol
         self.m5Col = m5Col
         self.lossCol = lossCol
         self.gamma = gamma
         self.sigma = sigma
         self.colsReq = [self.magFilterCol, self.m5Col, self.lossCol]
-        self.colsAdded = ['magLimit', 'appMag', 'SNR', 'vis']
+        self.colsAdded = ['appMagV', 'appMag', 'SNR', 'vis']
         self.units = ['mag', 'mag', 'SNR', '']
 
     def _run(self, ssoObs, Href, Hval):
-        ssoObs['appMag'] = ssoObs[self.magFilterCol] + Hval - Href
-        ssoObs['magLimit'] = ssoObs[self.m5Col] - ssoObs[self.lossCol]
-        xval = np.power(10, 0.5 * (ssoObs['appMag'] - ssoObs['magLimit']))
+        ssoObs['appMagV'] = ssoObs[self.vMagCol] + Hval - Href + ssoObs[self.lossCol]
+        ssoObs['appMag'] = ssoObs[self.magFilterCol] + Hval - Href + ssoObs[self.lossCol]
+        xval = np.power(10, 0.5 * (ssoObs['appMag'] - ssoObs[self.m5Col]))
         ssoObs['SNR'] = 1.0 / np.sqrt((0.04 - self.gamma) * xval + self.gamma * xval * xval)
-        completeness = 1.0 / (1 + np.exp((ssoObs['appMag'] - ssoObs['magLimit'])/self.sigma))
+        completeness = 1.0 / (1 + np.exp((ssoObs['appMag'] - ssoObs[self.m5Col])/self.sigma))
         probability = np.random.random_sample(len(ssoObs['appMag']))
         ssoObs['vis'] = np.where(probability <= completeness, 1, 0)
         return ssoObs

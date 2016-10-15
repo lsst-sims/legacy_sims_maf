@@ -113,13 +113,22 @@ class MoCompletenessMetric(BaseMoMetric):
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
     def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.3, **kwargs):
-        self.cumulative = cumulative
-        if self.cumulative:
-            metricName = 'CumulativeCompleteness'
-            units = '<= H'
+        if 'metricName' in kwargs:
+            metricName = kwargs.pop('metricName')
+            if metricName.startswith('Cumulative'):
+                self.cumulative=True
+                units = '<= H'
+            else:
+                self.cumulative=False
+                units = '@ H'
         else:
-            metricName = 'DifferentialCompleteness'
-            units = '@ H'
+            self.cumulative = cumulative
+            if self.cumulative:
+                metricName = 'CumulativeCompleteness'
+                units = '<= H'
+            else:
+                metricName = 'DifferentialCompleteness'
+                units = '@ H'
         super(MoCompletenessMetric, self).__init__(metricName=metricName, units=units, **kwargs)
         self.requiredChances = requiredChances
         # If H is not a cloned distribution, then we need to specify how to bin these values.
