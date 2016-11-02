@@ -70,7 +70,7 @@ class TestTechnicalMetrics(unittest.TestCase):
                                           names=['expMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data)  # minutes
-        self.assertEqual(result, 2)
+        self.assertEqual(result, 3)
 
     def testTeffMetric(self):
         """

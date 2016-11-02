@@ -37,7 +37,7 @@ class MinTimeBetweenStatesMetric(BaseMetric):
         self.changeCol = changeCol
         self.timeCol = timeCol
         if metricName is None:
-            metricName = 'Minimum time between %s changes' %(changeCol)
+            metricName = 'Minimum time between %s changes minutes' %(changeCol)
         super(MinTimeBetweenStatesMetric, self).__init__(col=[changeCol, timeCol], metricName=metricName,
                                                         units='minutes', **kwargs)
 
@@ -114,18 +114,19 @@ class MaxStateChangesWithinMetric(BaseMetric):
             return 0
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
         idxs = np.argsort(dataSlice[self.timeCol])
-        changes = (dataSlice[self.changeCol][idxs][1:] != dataSlice[self.changeCol][idxs][:-1])
+        changes = (dataSlice[self.changeCol][idxs][:-1] != dataSlice[self.changeCol][idxs][1:])
         condition = np.where(changes==True)[0]
         changetimes = dataSlice[self.timeCol][idxs][1:][condition]
-        if dataSlice[self.changeCol][idxs][1] != dataSlice[self.changeCol][idxs][0]:
-            changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])
+        #if dataSlice[self.changeCol][idxs][1] != dataSlice[self.changeCol][idxs][0]:
+        #    changetimes = np.concatenate([np.array([dataSlice[self.timeCol][idxs][0]]), changetimes])
         # If there are 0 filter changes ...
         if changetimes.size == 0:
             return 0
         # Otherwise ..
-        nchanges = np.zeros(changetimes.size, int)
-        for i, t in enumerate(changetimes):
-            nchanges[i] = np.where(np.abs(t - changetimes) <= self.timespan)[0].size - 1
+        ct_plus = changetimes + self.timespan
+        indx2 = np.searchsorted(changetimes, ct_plus, side='right')
+        indx1 = np.arange(changetimes.size)
+        nchanges = indx2-indx1
         return nchanges.max()
 
 class TeffMetric(BaseMetric):
