@@ -72,6 +72,23 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data)  # minutes
         self.assertEqual(result, 3)
 
+        filters = np.array(['u', 'g'])
+        visitTimes = np.array([0, 1])  # days
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
+        result = metric.run(data)  # minutes
+        self.assertEqual(result, 1)
+
+        filters = np.array(['u', 'u'])
+        visitTimes = np.array([0, 1])  # days
+        data = np.core.records.fromarrays([visitTimes, filters],
+                                          names=['expMJD', 'filter'])
+        metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
+        result = metric.run(data)  # minutes
+        self.assertEqual(result, 0)
+
+
     def testTeffMetric(self):
         """
         Test the Teff (time_effective) metric.
