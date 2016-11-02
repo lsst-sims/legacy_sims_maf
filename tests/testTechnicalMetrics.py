@@ -88,7 +88,6 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data)  # minutes
         self.assertEqual(result, 0)
 
-
     def testTeffMetric(self):
         """
         Test the Teff (time_effective) metric.
