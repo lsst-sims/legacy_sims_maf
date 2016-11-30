@@ -5,9 +5,14 @@ import unittest
 import numpy as np
 import lsst.sims.maf.db as db
 import lsst.utils.tests
+from lsst.sims.catalogs.db import _close_all_connections
 
 
 class TestDb(unittest.TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        _close_all_connections()
 
     def setUp(self):
         self.database = os.path.join(os.getenv('SIMS_MAF_DIR'),

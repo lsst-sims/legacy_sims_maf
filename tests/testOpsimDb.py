@@ -6,10 +6,15 @@ import numpy as np
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils.outputUtils as out
 import lsst.utils.tests
+from lsst.sims.catalogs.db import _close_all_connections
 
 
 class TestOpsimDb(unittest.TestCase):
     """Test opsim specific database class."""
+
+    @classmethod
+    def tearDownClass(cls):
+        _close_all_connections()
 
     def setUp(self):
         self.database = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
