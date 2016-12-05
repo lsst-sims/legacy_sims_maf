@@ -139,8 +139,7 @@ class MoObjSlicer(BaseSlicer):
                   plotDict=None, displayDict=None):
         """
         Cheap and dirty write to disk.
-        Need to expand to include writing summary statistics to disk and info about slicer,
-        plus make it read-able.
+        Need to expand to include writing summary statistics to disk and info about slicer.
         """
         df = pd.DataFrame(metricValues, columns=self.Hrange, index=None)
         df.to_hdf(outfilename.replace('.npz', '.h5'), 'df_with_missing')

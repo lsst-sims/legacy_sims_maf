@@ -5,7 +5,7 @@ import warnings
 from .moMetrics import BaseMoMetric
 
 __all__ = ['integrateOverH', 'ValueAtHMetric', 'MeanValueAtHMetric',
-           'MoCompletenessMetric']
+           'MoCompletenessMetric', 'MoCompletenessAtTimeMetric']
 
 
 def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
@@ -172,4 +172,69 @@ class MoCompletenessMetric(BaseMoMetric):
             summaryVal['value'] = completeness
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H = %f' % (Hval)
+        return summaryVal
+
+class MoCompletenessAtTimeMetric(BaseMoMetric):
+    """Calculate the completeness (relative to the entire population) <= a given H as a function of time,
+    given the times of each discovery.
+
+    Input values of the discovery times can come from the Discovery_Time (child) metric or the
+    KnownObjects metric.
+
+    Parameters
+    ----------
+    times : numpy.ndarray like
+        The bins to distribute the discovery times into.
+    Hval : float, opt
+        The value of H to count completeness at (or cumulative completeness to). Default H=22.
+    cumulative : bool, opt
+        If True, calculate the cumulative completeness (completeness <= H).
+        If False, calculate the differential completeness (completeness @ H).
+        Default True.
+    Hindex : float, opt
+        Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
+    """
+
+    def __init__(self, times, Hval=22, cumulative=True, Hindex=0.3, **kwargs):
+        if 'metricName' in kwargs:
+            metricName = kwargs.pop('metricName')
+            if metricName.startswith('Cumulative'):
+                self.cumulative = True
+                units = 'H <=%.1f' % (Hval)
+            else:
+                self.cumulative = False
+                units = 'H = %.1f' % (Hval)
+        else:
+            self.cumulative = cumulative
+            if self.cumulative:
+                metricName = 'CumulativeCompleteness@Time'
+                units = 'H <=%.1f' % (Hval)
+            else:
+                metricName = 'DifferentialCompleteness@Time'
+                units = 'H = %.1f' % (Hval)
+        super(MoCompletenessAtTimeMetric, self).__init__(metricName=metricName, units=units, **kwargs)
+        self.Hval = Hval
+        self.times = times
+        self.Hindex = Hindex
+
+    def run(self, discoveryTimes, Hvals):
+        if len(Hvals) != discoveryTimes.shape[1]:
+            warnings.warn("This summary metric expects cloned H distribution. Cannot calculate summary.")
+            return
+        nSsos = discoveryTimes.shape[0]
+        timesinH = discoveryTimes.swapaxes(0, 1)
+        completenessH = np.empty([len(Hvals), len(self.times)], float)
+        for i, H in enumerate(Hvals):
+            n, b = np.histogram(timesinH[i], bins=self.times)
+            completenessH[i][0] = 0
+            completenessH[i][1:] = n.cumsum()
+        completenessH = completenessH / float(nSsos)
+        completeness = completenessH.swapaxes(0, 1)
+        if self.cumulative:
+            for i, t in enumerate(self.times):
+                completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
+        summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
+        summaryVal['value'] = completeness
+        for i, time in enumerate(self.times):
+            summaryVal['name'][i] = '%s @ %.2f' % (self.units, time)
         return summaryVal

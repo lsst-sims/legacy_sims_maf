@@ -352,8 +352,10 @@ class Discovery_TimeMetric(BaseChildMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
+        visSort = np.argsort(ssoObs[self.expMJDCol][vis])
+        times = ssoObs[self.expMJDCol][vis][visSort]
         startIdx = metricValues['start'][self.i]
-        tDisc = ssoObs[self.expMJDCol][startIdx]
+        tDisc = times[startIdx]
         if self.tStart is not None:
             tDisc = tDisc - self.tStart
         return tDisc
@@ -381,8 +383,11 @@ class Discovery_RADecMetric(BaseChildMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
+        visSort = np.argsort(ssoObs[self.expMJDCol][vis])
+        ra = ssoObs[self.raCol][vis][visSort]
+        dec = ssoObs[self.decCol][vis][visSort]
         startIdx = metricValues['start'][self.i]
-        return (ssoObs[self.raCol][startIdx], ssoObs[self.decCol][startIdx])
+        return (ra[startIdx], dec[startIdx])
 
 class Discovery_EcLonLatMetric(BaseChildMetric):
     """
@@ -403,9 +408,12 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
+        visSort = np.argsort(ssoObs[self.expMJDCol][vis])
+        ecLon = ssoObs['ecLon'][vis][visSort]
+        ecLat = ssoObs['ecLat'][vis][visSort]
+        solarElong = ssoObs['solarElong'][vis][visSort]
         startIdx = metricValues['start'][self.i]
-        return (ssoObs['ecLon'][startIdx], ssoObs['ecLat'][startIdx],
-                ssoObs['solarElong'][startIdx])
+        return (ecLon[startIdx], ecLat[startIdx], solarElong[startIdx])
 
 class Discovery_VelocityMetric(BaseChildMetric):
     """
@@ -425,8 +433,10 @@ class Discovery_VelocityMetric(BaseChildMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
+        visSort = np.argsort(ssoObs[self.expMJDCol][vis])
+        velocity = ssoObs['velocity'][vis][visSort]
         startIdx = metricValues['start'][self.i]
-        return ssoObs['velocity'][startIdx]
+        return velocity[startIdx]
 
 class ActivityOverTimeMetric(BaseMoMetric):
     """
@@ -478,7 +488,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         self.tPeriCol = tPeriCol
         self.snrLimit = snrLimit
         self.binsize = np.radians(binsize)
-        self.anomalyBins = np.arange(0, 2*np.pi + self.binsize/2.0, self.binsize)
+        self.anomalyBins = np.arange(0, 2 * np.pi + self.binsize / 2.0, self.binsize)
         self.nBins = len(self.anomalyBins)
         self.units = '%.1f deg' %(np.degrees(self.binsize))
 
@@ -771,21 +781,24 @@ class PeakVMagMetric(BaseMoMetric):
 
 
 class KnownObjectsMetric(BaseMoMetric):
-    """Identify objects which could be classified as 'previously known' based on their peak V magnitude.
+    """Identify objects which could be classified as 'previously known' based on their peak V magnitude,
+    returning the time at which each first reached that peak V magnitude.
 
     Parameters
     -----------
     vMagThresh : float, opt
-        The magnitude threshhold for previously known objects. Default 21.0
+        The magnitude threshhold for previously known objects. Default 20.0.
+        This is calibrated using NEOs discovered in the last 15 years and assuming a current 25% completeness.
     """
-    def __init__(self, vMagThresh=21.0, **kwargs):
+    def __init__(self, vMagThresh=20.0, expMJDCol='MJD(UTC)', **kwargs):
         super(KnownObjectsMetric, self).__init__(**kwargs)
         self.vMagThresh = vMagThresh
+        self.expMJDCol = expMJDCol
 
     def run(self, ssoObs, orb, Hval):
-        peakVmag = np.min(ssoObs[self.appMagVCol])
-        if peakVmag <= self.vMagThresh:
-            known = 1
+        overPeak = np.where(ssoObs[self.appMagVCol] <= self.vMagThresh)[0]
+        if len(overPeak) == 0:
+            discoveryTime = self.badval
         else:
-            known = 0
-        return known
+            discoveryTime = ssoObs[self.expMJDCol][overPeak].min()
+        return discoveryTime

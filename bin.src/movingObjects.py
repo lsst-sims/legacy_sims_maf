@@ -97,6 +97,9 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
     # Little subroutine to configure child discovery metrics in each year.
     def _setup_child_metrics(parentMetric, years):
         childMetrics = {}
+        childname = 'Time'
+        childmetric = metrics.Discovery_TimeMetric(parentMetric)
+        childMetrics[childname] = childmetric
         for nyr in years:
             childname = 'N_Chances_yr_%d' % nyr
             childmetric = metrics.Discovery_N_ChancesMetric(parentMetric, nightEnd=(nyr * 365),
@@ -104,11 +107,13 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
             childMetrics[childname] = childmetric
         return childMetrics
     def _configure_child_bundles(parentBundle, years, summaryMetrics):
+        dispDict = {'group': groups['discovery'], 'subgroup': subgroups['completenessTable']}
+        parentBundle.childBundles['Time'].metadata = parentBundle.metadata
+        parentBundle.childBundles['Time'].setDisplayDict(dispDict)
         for nyr in years:
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].metadata = parentBundle.metadata + \
                                                                           ' yr %d' % nyr
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setSummaryMetrics(summaryMetrics)
-            dispDict = {'group': groups['discovery'], 'subgroup': subgroups['completenessTable']}
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setDisplayDict(dispDict)
 
     displayDict = {'group': groups['discovery']}
@@ -1200,7 +1205,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
         Hcaption = ['H =', 'H <=']
         for k, hcap in zip(keys, Hcaption):
             strategies = ['3 pairs in 15 nights', '3 pairs in 30 nights',
-                          '6 pairs in 60 nights']
+                          '6 detections in 60 nights']
             yrs = np.concatenate([[0], mParams['nyears']])
             completeness_at_year = {}
             for strategy in strategies:
@@ -1394,7 +1399,7 @@ def readAll(allBundles, orbitFile, outDir):
                     try:
                         bC = readMetricValues(bC, outDir)
                         bC.slicer = b.slicer
-                    except IOErorr as e:
+                    except IOError as e:
                         print('Problems with child bundle %s %s %s, so skipping. \n %s'
                               % (k, md, bChild, e))
                         missingBundles.append([k, md, bChild])
