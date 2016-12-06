@@ -10,14 +10,14 @@ import glob
 import os
 import shutil
 import lsst.utils.tests
-from lsst.sims.catalogs.db import _close_all_connections
+from lsst.sims.utils.CodeUtilities import sims_clean_up
 
 
 class TestMetricBundle(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        _close_all_connections()
+        sims_clean_up()
 
     def setUp(self):
         self.outDir = 'TMB'
