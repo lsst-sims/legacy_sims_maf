@@ -3,7 +3,6 @@
 import os
 import numpy as np
 from .outputUtils import printDict
-import warnings
 
 __all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere',
            'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
@@ -148,8 +147,8 @@ def getFieldData(opsimDb, sqlconstraint):
         fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)
     return fieldData
 
-def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary', distinctExpMJD=True,
-               groupBy='expMJD'):
+
+def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, distinctExpMJD=True, groupBy='default'):
     """
     Query an opsim database for the needed data columns and run any required stackers.
 
@@ -176,10 +175,10 @@ def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary
         the SQLconstraint.
     """
     # Get data from database.
-    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint, tableName=tableName,
+    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint,
                                       distinctExpMJD=distinctExpMJD, groupBy=groupBy)
     if len(simData) == 0:
-        raise UserWarning('No data found matching sqlconstraint %s' %(sqlconstraint))
+        raise UserWarning('No data found matching sqlconstraint %s' % (sqlconstraint))
     # Now add the stacker columns.
     if stackers is not None:
         for s in stackers:
@@ -247,7 +246,8 @@ def scaleBenchmarks(runLength, benchmark='design'):
     elif benchmark == 'stretch':
         return stretch
     else:
-        raise ValueError("Benchmark value %s not understood: use 'design' or 'stretch'" %(benchmark))
+        raise ValueError("Benchmark value %s not understood: use 'design' or 'stretch'" % (benchmark))
+
 
 def calcCoaddedDepth(nvisits, singleVisitDepth):
     """

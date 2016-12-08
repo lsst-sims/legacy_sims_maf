@@ -7,8 +7,10 @@ from lsst.sims.maf.utils import getDateVersion
 
 __all__ = ['OpsimDatabase']
 
+
 class OpsimDatabase(Database):
-    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, *args, **kwargs):
+    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None,
+                 summaryTable=None, v4=False, *args, **kwargs):
         """
         Instantiate object to handle queries of the opsim database.
         (In general these will be the sqlite database files produced by opsim, but could
@@ -46,6 +48,27 @@ class OpsimDatabase(Database):
                              'SlewMaxSpeeds':['SlewMaxSpeeds', 'slewMaxSpeedID'],
                              'SlewState':['SlewState', 'slewIniStatID']
                              }
+            if v4:
+                defaultdbTables = {
+                                 'SummaryAllProps': ['SummaryAllProps', 'obsHistID'],
+                                 'Config': ['Config', 'configID'],
+                                 'Field': ['Field', 'fieldID'],
+                                 'ObsExposures': ['ObsExposures', 'exposureId'],
+                                 'ObsHistory': ['ObsHistory', 'obsHistID'],
+                                 'ObsProposalHistory': ['ObsProposalHistory', 'propHistId'],
+                                 'Proposal':['Proposal', 'propID'],
+                                 'ScheduledDowntime': ['ScheduledDowntime', 'night'],
+                                 'Session': ['Session', 'sessionID'],
+                                 'SlewActivities': ['SlewActivities', 'slewActivityID'],
+                                 'SlewFinalState': ['SlewFinalState', 'slewStateId'],
+                                 'SlewHistory': ['SlewHistory', 'slewID'],
+                                 'SlewInitialState': ['SlewInitialState', 'slewStateId'],
+                                 'SlewMaxSpeeds': ['SlewMaxSpeeds', 'slewMaxSpeedId'],
+                                 'TargetExposures': ['TargetExposures', 'exposureId'],
+                                 'TargetHistory': ['TargetHistory', 'targetId'],
+                                 'TargetProposalHistory': ['TargetProposalHistory', 'propHistId'],
+                                 'UnscheduledDowntime': ['UnscheduledDowntime', 'night']
+                                  }
         # Call base init method to set up all tables and place default values
         # into dbTable/dbTablesIdKey if not overriden.
         super(OpsimDatabase, self).__init__(driver=driver, database=database, host=host, port=port,
@@ -54,6 +77,12 @@ class OpsimDatabase(Database):
                                             *args, **kwargs)
         # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
+        if v4:
+            self.summaryTable = 'SummaryAllProps'
+            self.version = 4
+        else:
+            self.summaryTable = 'Summary'
+            self.version = 3
         # Set internal variables for column names.
         self._colNames()
 
@@ -65,7 +94,10 @@ class OpsimDatabase(Database):
         It is NOT meant to function as a general column map, just to abstract values
         which are used *within this class*.
         """
-        self.mjdCol = 'expMJD'
+        if self.version == 4:
+            self.mjdCol = 'observationStartMJD'
+        elif self.version == 3:
+            self.mjdCol = 'expMJD'
         self.fieldIdCol = 'fieldID'
         self.raCol = 'fieldRA'
         self.decCol = 'fieldDec'
@@ -77,8 +109,7 @@ class OpsimDatabase(Database):
         self.sessionDateCol = 'sessionDate'
         self.runCommentCol = 'runComment'
 
-    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='expMJD',
-                        tableName='Summary'):
+    def fetchMetricData(self, colnames, sqlconstraint, distinctExpMJD=True, groupBy='default'):
         """
         Fetch 'colnames' from 'tableName'.
 
@@ -90,10 +121,13 @@ class OpsimDatabase(Database):
         """
         # To fetch data for a particular proposal only, add 'propID=[proposalID number]' as constraint,
         #  and to fetch data for a particular filter only, add 'filter ="[filtername]"' as a constraint.
+        if groupBy == 'default':
+            groupBy = self.mjdCol
+
         if (groupBy is None) and (distinctExpMJD is False):
             warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
 
-        table = self.tables[tableName]
+        table = self.tables[self.summaryTable]
         if (groupBy is not None) and (groupBy != 'expMJD'):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
@@ -102,15 +136,14 @@ class OpsimDatabase(Database):
                                                    colnames = colnames, groupByCol = groupBy)
         elif distinctExpMJD:
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
-                                                    constraint = sqlconstraint,
-                                                    colnames = colnames,
-                                                    groupByCol = self.mjdCol)
+                                                   constraint = sqlconstraint,
+                                                   colnames = colnames,
+                                                   groupByCol = self.mjdCol)
         else:
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
                                                    constraint = sqlconstraint,
                                                    colnames = colnames)
         return metricdata
-
 
     def fetchFieldsFromSummaryTable(self, sqlconstraint, raColName=None, decColName=None):
         """
@@ -122,12 +155,11 @@ class OpsimDatabase(Database):
             raColName = self.raColName
         if decColName is None:
             decColName = self.decColName
-        table = self.tables['Summary']
+        table = self.tables[self.summaryTable]
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
                                               colnames=[self.fieldIdCol, raColName, decColName],
                                               groupByCol=self.fieldIdCol)
         return fielddata
-
 
     def fetchFieldsFromFieldTable(self, propID=None, degreesToRadians=True):
         """
@@ -294,15 +326,17 @@ class OpsimDatabase(Database):
         """
         # Really this is just a bit of a hack to see whether we should be using seeing or finseeing.
         # With time, this should probably just go away.
-        table = self.tables['Summary']
-        try:
-            table.query_columns_Array(colnames=['seeing',], numLimit=1)
-            seeingcol = 'seeing'
-        except ValueError:
+        table = self.tables[self.summaryTable]
+        possible_seeings = ['seeingFwhmEff', 'seeing', 'finSeeing']
+        seeingcol = None
+        for ps in possible_seeings:
             try:
-                table.query_columns_Array(colnames=['finSeeing',], numLimit=1)
-                seeingcol = 'finSeeing'
-            except ValueError:
+                table.query_columns_Array(colnames=[ps,], numLimit=1)
+                seeingcol = ps
+                return seeingcol
+            except:
+                pass
+        if seeingcol is None:
                 raise ValueError('Cannot find appropriate column name for seeing.')
         print 'Using %s for seeing column name.' %(seeingcol)
         return seeingcol
@@ -627,3 +661,5 @@ class OpsimDatabase(Database):
             propdict['PerFilter']['keyorder'] = ['Filters', 'VisitTime', 'MaxSeeing', 'MinSky',
                                                  'MaxSky', 'NumVisits']
         return configSummary, config
+
+
