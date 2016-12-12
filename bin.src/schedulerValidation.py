@@ -18,11 +18,11 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
 
 
-def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'):
+def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFwhmEff'):
 
     # The 'seeing' argument is a bit of a hack to accomodate the switchover
     # from old opsim (finSeeing) to new opsim (FWHMeff).
-    if seeingCol == 'FWHMeff':
+    if ('eff' in seeingCol) | ('Eff' in seeingCol):
         benchmarkSeeing = 'FWHMeff'
     else:
         benchmarkSeeing = 'seeing'
@@ -32,6 +32,11 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
 
     # Connect to the databse
     opsimdb = utils.connectOpsimDb(dbFile)
+    if opsimdb.version == 3:
+        propCol = 'propID'
+    elif opsimdb.version == 4:
+        propCol = 'proposalId'
+
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
 
@@ -477,7 +482,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
         for f in filters:
             # Count the number of visits.
             slicer = slicers.OpsimFieldSlicer()
-            sqlconstraint = 'filter = "%s" and propID = %s' % (f, propid)
+            sqlconstraint = 'filter = "%s" and %s = %s' % (f, propCol, propid)
             metadata = '%s band, %s' % (f, propids[propid])
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
             summaryStats = standardStats
@@ -1156,7 +1161,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     order = 1
     slicer = slicers.UniSlicer()
     for propid in propids:
-        sqlconstraint = 'propID = %s' % (propid)
+        sqlconstraint = '%s = %s' % (propCol, propid)
         metadata = '%s' % (propids[propid])
 
         metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
@@ -1270,7 +1275,7 @@ if __name__ == "__main__":
     parser.add_argument('--skipSlew', dest='skipSlew', action='store_true',
                         default=False, help='Skip calculation of slew statistics')
     parser.add_argument('--seeingCol', dest='seeingCol', default='FWHMeff',
-                        help='Name of the seeing column (FWHMeff or finSeeing). ' +
+                        help='Name of the seeing column (seeingFwhmEff, FWHMeff, finSeeing). ' +
                         'This is temporary to support changeover to v3.4 of the opsim outputs.')
 
     parser.set_defaults()

@@ -7,6 +7,7 @@ from .outputUtils import printDict
 __all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere',
            'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
+
 def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
     """
     Convenience function to handle connecting to database.
@@ -33,7 +34,10 @@ def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
                                    defaultdbTables = None)
     else:
         # For a basic db connection to the sqlite db files.
-        opsimdb = db.OpsimDatabase(database=database)
+        try:
+            opsimdb = db.OpsimDatabase(database=database, v4=True)
+        except:
+            opsimdb = db.OpsimDatabase(database=database, v4=False)
     return opsimdb
 
 def writeConfigs(opsimDb, outDir):

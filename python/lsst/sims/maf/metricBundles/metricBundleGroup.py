@@ -320,7 +320,7 @@ class MetricBundleGroup(object):
             distinctExpMJD = True
             groupBy = 'expMJD'
         self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
-                                        tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
+                                        distinctExpMJD=distinctExpMJD,
                                         groupBy=groupBy)
 
         if self.verbose:

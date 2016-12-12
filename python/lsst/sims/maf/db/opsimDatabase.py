@@ -51,17 +51,17 @@ class OpsimDatabase(Database):
             if v4:
                 defaultdbTables = {
                                  'SummaryAllProps': ['SummaryAllProps', 'obsHistID'],
-                                 'Config': ['Config', 'configID'],
-                                 'Field': ['Field', 'fieldID'],
+                                 'Config': ['Config', 'configId'],
+                                 'Field': ['Field', 'fieldId'],
                                  'ObsExposures': ['ObsExposures', 'exposureId'],
-                                 'ObsHistory': ['ObsHistory', 'obsHistID'],
+                                 'ObsHistory': ['ObsHistory', 'obsHistId'],
                                  'ObsProposalHistory': ['ObsProposalHistory', 'propHistId'],
-                                 'Proposal':['Proposal', 'propID'],
+                                 'Proposal':['Proposal', 'propId'],
                                  'ScheduledDowntime': ['ScheduledDowntime', 'night'],
-                                 'Session': ['Session', 'sessionID'],
-                                 'SlewActivities': ['SlewActivities', 'slewActivityID'],
+                                 'Session': ['Session', 'sessionId'],
+                                 'SlewActivities': ['SlewActivities', 'slewActivityId'],
                                  'SlewFinalState': ['SlewFinalState', 'slewStateId'],
-                                 'SlewHistory': ['SlewHistory', 'slewID'],
+                                 'SlewHistory': ['SlewHistory', 'slewId'],
                                  'SlewInitialState': ['SlewInitialState', 'slewStateId'],
                                  'SlewMaxSpeeds': ['SlewMaxSpeeds', 'slewMaxSpeedId'],
                                  'TargetExposures': ['TargetExposures', 'exposureId'],
@@ -96,12 +96,17 @@ class OpsimDatabase(Database):
         """
         if self.version == 4:
             self.mjdCol = 'observationStartMJD'
+            self.propIdCol = 'propId'
+            self.slewID = 'slewActivityId'
+            self.delayCol = 'activityDelay'
         elif self.version == 3:
             self.mjdCol = 'expMJD'
+            self.propIdCol = 'propID'
+            self.slewID = 'slewHistory_slewID'
+            self.delayCol = 'actDelay'
         self.fieldIdCol = 'fieldID'
         self.raCol = 'fieldRA'
         self.decCol = 'fieldDec'
-        self.propIdCol = 'propID'
         self.propConfCol = 'propConf'
         self.propNameCol = 'propName' #(propname == proptype)
         # For config parsing.
@@ -209,20 +214,33 @@ class OpsimDatabase(Database):
         """
         propIDs = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
-        propTags = {'WFD':[], 'DD':[]}
-        # If do not have full database available:
-        if 'Proposal' not in self.tables:
-            propData = self.tables['Summary'].query_columns_Array(colnames=[self.propIdCol])
-            for propid in propData[self.propIdCol]:
-                propIDs[int(propid)] = propid
-        else:
+        propTags = {'WFD': [], 'DD': []}
+
+        if self.version == 4:
             table = self.tables['Proposal']
-            # Query for all propIDs.
-            propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
-                                                           self.propNameCol], constraint='')
-            for propid, propname in zip(propData[self.propIdCol], propData[self.propConfCol]):
-                # Strip '.conf', 'Prop', and path info.
-                propIDs[int(propid)] = re.sub('Prop','', re.sub('.conf','', re.sub('.*/', '', propname)))
+            propData = table.query_columns_Array(colnames=[self.propIdCol, self.propNameCol], constraint='')
+            for propID, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
+                propIDs[propID] = propName
+                if 'weaklensing' in propName.lower():
+                    propTags['WFD'].append(propID)
+                if 'deep' in propName.lower():
+                    propTags['DD'].append(propID)
+
+        elif self.verion == 3:
+            # If do not have full database available:
+            if 'Proposal' not in self.tables:
+                propData = self.tables[self.summaryTable].query_columns_Array(colnames=[self.propIdCol])
+                for propid in propData[self.propIdCol]:
+                    propIDs[int(propid)] = propid
+            else:
+                table = self.tables['Proposal']
+                # Query for all propIDs.
+                propData = table.query_columns_Array(colnames=[self.propIdCol, self.propConfCol,
+                                                               self.propNameCol], constraint='')
+                for propid, propname in zip(propData[self.propIdCol], propData[self.propConfCol]):
+                    # Strip '.conf', 'Prop', and path info.
+                    propIDs[int(propid)] = re.sub('Prop', '', re.sub('.conf', '',
+                                                                     re.sub('.*/', '', propname)))
             # Find the 'ScienceType' from the config table, to indicate DD/WFD/Rolling, etc.
             table = self.tables['Config']
             sciencetypes = table.query_columns_Array(colnames=['paramValue', 'nonPropID'],
@@ -244,23 +262,31 @@ class OpsimDatabase(Database):
                         if sciencetype in propTags:
                             propTags[sciencetype].append(int(sc['nonPropID']))
                         else:
-                            propTags[sciencetype] = [int(sc['nonPropID']),]
+                            propTags[sciencetype] = [int(sc['nonPropID']), ]
+
         return propIDs, propTags
 
-    def fetchRunLength(self, runLengthParam='nRun'):
+    def fetchRunLength(self, runLengthParam='default'):
         """
         Returns the run length for a particular opsim run (years).
 
         runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
         """
+        if self.version == 4:
+            runLengthParam = 'survey/duration'
+        elif self.version == 3:
+            runLengthParam = 'nRun'
+
         if 'Config' not in self.tables:
             print 'Cannot access Config table to retrieve runLength; using default 10 years'
             runLength = 10.0
         else:
             table = self.tables['Config']
             runLength = table.query_columns_Array(colnames=['paramValue'],
-                                                  constraint=" paramName = '%s'"%runLengthParam)
-            runLength = float(runLength['paramValue'][0]) # Years
+                                                  constraint=" paramName = '%s'" % (runLengthParam))
+            runLength = float(runLength['paramValue'][0])  # Years
+            if self.version == 4:
+                runLength = runLength / 365.25
         return runLength
 
     def fetchLatLonHeight(self):
@@ -274,15 +300,19 @@ class OpsimDatabase(Database):
             lon = site.longitude_rad
             height = site.elev
         else:
+            if self.version == 4:
+                pre = 'observing_site/'
+            elif self.version == 3:
+                pre = ''
             table = self.tables['Config']
             lat = table.query_columns_Array(colnames=['paramValue'],
-                                            constraint="paramName = 'latitude'")
+                                            constraint="paramName = '%slatitude'" % pre)
             lat = float(lat['paramValue'][0])
             lon = table.query_columns_Array(colnames=['paramValue'],
-                                            constraint="paramName = 'longitude'")
+                                            constraint="paramName = '%slongitude'" % pre)
             lon = float(lon['paramValue'][0])
             height = table.query_columns_Array(colnames=['paramValue'],
-                                               constraint="paramName = 'height'")
+                                               constraint="paramName = '%sheight'" % pre)
             height = float(height['paramValue'][0])
         return lat, lon, height
 
@@ -291,31 +321,34 @@ class OpsimDatabase(Database):
         Returns the total number of visits in the simulation (or total number of visits for a particular propoal).
         param: propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
-        if 'ObsHistory' in self.dbTables:
+        if ('ObsHistory' in self.dbTables) & (self.version == 3):
             tableName = 'ObsHistory'
-            query = 'select count(ObsHistID) from %s' %(self.dbTables[tableName][0])
+            query = 'select count(ObsHistID) from %s' % (self.dbTables[tableName][0])
             if propID is not None:
-                query += ', %s where obsHistID=ObsHistory_obsHistID' %(self.dbTables['ObsHistory_Proposal'][0])
-                if hasattr(propID, '__iter__'): # list of propIDs
+                query += ', %s where obsHistID=ObsHistory_obsHistID' % (self.dbTables['ObsHistory_Proposal'][0])
+                if hasattr(propID, '__iter__'):  # list of propIDs
                     query += ' and ('
                     for pID in propID:
-                        query += '(Proposal_%s = %d) or ' %(self.propIdCol, int(pID))
+                        query += '(Proposal_%s = %d) or ' % (self.propIdCol, int(pID))
                     # Remove the trailing 'or' and add a closing parenthesis.
                     query = query[:-3]
                     query += ')'
-                else: # single proposal ID.
-                    query += ' and (Proposal_%s = %d) ' %(self.propIdCol, int(propID))
+                else:  # single proposal ID.
+                    query += ' and (Proposal_%s = %d) ' % (self.propIdCol, int(propID))
         else:
-            tableName = 'Summary'
-            query = 'select count(distinct(expMJD)) from %s' %(self.dbTables[tableName][0])
+            tableName = self.summaryTable
+            query = 'select count(distinct(%s)) from %s' % (self.mjdCol, self.dbTables[tableName][0])
             if propID is not None:
                 query += ' where '
                 if hasattr(propID, '__iter__'):
                     for pID in propID:
-                        query += 'propID=%d or ' %(int(pID))
+                        query += 'propID=%d or ' % (int(pID))
                     query = query[:-3]
                 else:
-                    query += 'propID = %d' %(int(propID))
+                    query += 'propID = %d' % (int(propID))
+
+        if self.version == 4:
+            query = query.replace('ID', 'Id')
         data = self.tables[tableName].execute_arbitrary(query)
         return int(data[0][0])
 
@@ -363,7 +396,9 @@ class OpsimDatabase(Database):
             nslew = -1
         else:
             table = self.tables['SlewActivities']
-            query = 'select count(distinct(slewHistory_slewID)) from slewActivities where actDelay >0'
+            query = 'select count(distinct(%s)) from slewActivities where %s >0' % (self.slewID, self.delayCol)
+            if self.version == 4.:
+                query = query.replace('ID', 'Id')
             res = table.execute_arbitrary(query)
             nslew = int(res[0][0])
         return nslew

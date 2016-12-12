@@ -18,7 +18,7 @@ import lsst.sims.maf.utils as utils
 
 
 def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
-                   lonCol='fieldRA', latCol='fieldDec', seeingCol='FWHMgeom'):
+                   lonCol='fieldRA', latCol='fieldDec', seeingCol='seeingFwhmGeom'):
     """
     make a list of metricBundle objects to look at the scientific performance
     of an opsim run.
@@ -775,7 +775,7 @@ if __name__ == "__main__":
                         " Default=fieldDec.")
     parser.add_argument('--seeingCol', type=str, default='FWHMgeom',
                         help="Column to use for seeing values in order to evaluate astrometric" +
-                        " uncertainties. Probably should be FWHMgeom or finSeeing.")
+                        " uncertainties. Probably should be seeingFwhmGeom, FWHMgeom, or finSeeing.")
     parser.add_argument('--benchmark', type=str, default='design',
                         help="Can be 'design' or 'requested'")
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
