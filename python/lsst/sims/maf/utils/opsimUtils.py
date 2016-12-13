@@ -30,15 +30,14 @@ def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
     if summaryOnly:
         # Connect to just the summary table (might be sqlite created from flat dat output file).
         opsimdb = db.OpsimDatabase(database=database,
-                                   dbTables={'Summary':[summaryTable, 'obsHistID']},
+                                   dbTables={'Summary': [summaryTable, 'obsHistID']},
                                    defaultdbTables = None)
     else:
         # For a basic db connection to the sqlite db files.
-        try:
-            opsimdb = db.OpsimDatabase(database=database, v4=True)
-        except:
-            opsimdb = db.OpsimDatabase(database=database, v4=False)
+        opsimdb = db.OpsimDatabase(database=database)
+
     return opsimdb
+
 
 def writeConfigs(opsimDb, outDir):
     """
@@ -63,6 +62,7 @@ def writeConfigs(opsimDb, outDir):
     printDict(configDetails, 'Details', f)
     f.close()
 
+
 def createSQLWhere(tag, propTags):
     """
     Create a SQL constraint to identify observations taken for a particular proposal,
@@ -83,14 +83,15 @@ def createSQLWhere(tag, propTags):
     """
     sqlWhere = ''
     if (tag not in propTags) or (len(propTags[tag]) == 0):
-        print 'No %s proposals found' %(tag)
+        print 'No %s proposals found' % (tag)
         # Create a sqlWhere clause that will not return anything as a query result.
         sqlWhere = 'propID like "NO PROP"'
     elif len(propTags[tag]) == 1:
-        sqlWhere = "propID = %d" %(propTags[tag][0])
+        sqlWhere = "propID = %d" % (propTags[tag][0])
     else:
         sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
+
 
 def getFieldData(opsimDb, sqlconstraint):
     """
@@ -122,7 +123,7 @@ def getFieldData(opsimDb, sqlconstraint):
         sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
         sqlconstraint = sqlconstraint.replace("'", '').replace('"', '')
         # Allow for choosing all but a particular proposal.
-        sqlconstraint = sqlconstraint.replace('! =' , ' !=')
+        sqlconstraint = sqlconstraint.replace('! =', ' !=')
         sqlconstraint = sqlconstraint.replace('  ', ' ')
         sqllist = sqlconstraint.split(' ')
         propids = []
@@ -139,7 +140,7 @@ def getFieldData(opsimDb, sqlconstraint):
                     nonpropids.append(int(sqllist[i]))
             i += 1
         if len(propids) == 0:
-            propids = self.propids.keys()
+            propids = propids.keys()
         if len(nonpropids) > 0:
             for nonpropid in nonpropids:
                 if nonpropid in propids:

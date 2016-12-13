@@ -13,7 +13,7 @@ class TestOpsimDb(unittest.TestCase):
 
     def setUp(self):
         self.database = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
-                                     'opsimblitz1_1133_sqlite.db')
+                                     'pontus_1074.db')
         self.oo = db.OpsimDatabase(database=self.database)
 
     def tearDown(self):
@@ -25,24 +25,24 @@ class TestOpsimDb(unittest.TestCase):
         """Test opsim specific database class setup/instantiation."""
         # Test tables were connected to.
         self.assertTrue(isinstance(self.oo.tables, dict))
-        self.assertEqual(self.oo.dbTables['Summary'][0], 'Summary')
+        self.assertEqual(self.oo.dbTables['SummaryAllProps'][0], 'SummaryAllProps')
         # Test can override default table name/id keys if needed.
         oo = db.OpsimDatabase(database=self.database,
-                              dbTables={'Summary': ['ObsHistory', 'obsHistID']})
-        self.assertEqual(oo.dbTables['Summary'][0], 'ObsHistory')
+                              dbTables={'SummaryAllProps': ['ObsHistory', 'obsHistId']})
+        self.assertEqual(oo.dbTables['SummaryAllProps'][0], 'ObsHistory')
 
     def testOpsimDbMetricData(self):
         """Test queries for sim data. """
-        data = self.oo.fetchMetricData(['finSeeing', ], 'filter="r" and finSeeing<1.0')
-        self.assertEqual(data.dtype.names, ('obsHistID', 'finSeeing'))
-        self.assertTrue(data['finSeeing'].max() <= 1.0)
+        data = self.oo.fetchMetricData(['seeingFwhmEff', ], 'filter="r" and seeingFwhmEff<1.0')
+        self.assertEqual(data.dtype.names, ('observationId', 'seeingFwhmEff'))
+        self.assertTrue(data['seeingFwhmEff'].max() <= 1.0)
 
     def testOpsimDbPropID(self):
         """Test queries for prop ID"""
         propids, propTags = self.oo.fetchPropInfo()
         self.assertTrue(len(propids.keys()) > 0)
         self.assertTrue(len(propTags['WFD']) > 0)
-        self.assertTrue(len(propTags['DD']) > 0)
+        self.assertTrue(len(propTags['DD']) >= 0)
         for w in propTags['WFD']:
             self.assertTrue(w in propids)
         for d in propTags['DD']:
@@ -52,32 +52,24 @@ class TestOpsimDb(unittest.TestCase):
         """Test queries for field data."""
         # Fetch field data for all fields.
         dataAll = self.oo.fetchFieldsFromFieldTable()
-        self.assertEqual(dataAll.dtype.names, ('fieldID', 'fieldRA', 'fieldDec'))
+        self.assertEqual(dataAll.dtype.names, ('fieldId', 'ra', 'dec'))
         # Fetch field data for all fields requested by a particular propid.
-        propids, proptags = self.oo.fetchPropInfo()
-        propid = propids.keys()[0]
-        dataProp1 = self.oo.fetchFieldsFromFieldTable(propID=propid)
-        # Fetch field data for all fields requested by all proposals.
-        dataPropAll = self.oo.fetchFieldsFromFieldTable(propID=propids.keys())
-        self.assertTrue(dataProp1.size < dataPropAll.size)
-        # And check that did not return multiple copies of the same field.
-        self.assertEqual(len(dataPropAll['fieldID']), len(np.unique(dataPropAll['fieldID'])))
 
     def testOpsimDbRunLength(self):
         """Test query for length of opsim run."""
         nrun = self.oo.fetchRunLength()
-        self.assertEqual(nrun, 0.0794)
+        self.assertEqual(nrun, 1.)
 
     def testOpsimDbSimName(self):
         """Test query for opsim name."""
         simname = self.oo.fetchOpsimRunName()
         self.assertTrue(isinstance(simname, str))
-        self.assertEqual(simname, 'opsimblitz1_1133')
+        self.assertEqual(simname, 'pontus_1074')
 
     def testOpsimDbSeeingColName(self):
         """Test query to pull out column name for seeing (seeing or finSeeing)."""
         seeingcol = self.oo.fetchSeeingColName()
-        self.assertTrue(seeingcol, 'finSeeing')
+        self.assertTrue(seeingcol, 'seeingFwhmEff')
 
     def testOpsimDbConfig(self):
         """Test generation of config data. """

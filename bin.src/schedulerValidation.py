@@ -32,10 +32,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
 
     # Connect to the databse
     opsimdb = utils.connectOpsimDb(dbFile)
-    if opsimdb.version == 3:
-        propCol = 'propID'
-    elif opsimdb.version == 4:
-        propCol = 'proposalId'
+    propCol = 'proposalId'
 
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
