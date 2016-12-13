@@ -7,7 +7,7 @@ from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
-           'SeasonStacker', 'DcrStacker']
+           'SeasonStacker', 'DcrStacker', 'RADecRadiansStacker']
 
 # Original stackers by Peter Yoachim (yoachim@uw.edu)
 # Filter color stacker by Lynne Jones (lynnej@uw.edu)
@@ -15,11 +15,28 @@ __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
 # modified by Humna Awan (humna.awan@rutgers.edu)
 
 
+class RADecRadiansStacker(BaseStacker):
+    """
+    Convert Ra and Dec to radians
+    """
+    def __init__(self, raDegCol='fieldRA', decDegCol='fieldDec'):
+        self.units = ['radians', 'radians']
+        self.colsReq = [raDegCol, decDegCol]
+        self.colsAdded = ['ra_rad', 'dec_rad']
+        self.raCol = raDegCol
+        self.decCol = decDegCol
+
+    def _run(self, simData):
+        simData['ra_rad'] = np.radians(simData[self.raCol])
+        simData['dec_rad'] = np.radians(simData[self.decCol])
+        return simData
+
+
 class NormAirmassStacker(BaseStacker):
     """
     Calculate the normalized airmass for each opsim pointing.
     """
-    def __init__(self, airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388):
+    def __init__(self, airmassCol='airmass', decCol='dec_rad', telescope_lat = -30.2446388):
 
         self.units = ['airmass/(minimum possible airmass)']
         self.colsAdded = ['normairmass']
@@ -60,7 +77,7 @@ class ParallaxFactorStacker(BaseStacker):
     """
     Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', dateCol='expMJD'):
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', dateCol='observationStartMJD'):
         self.raCol = raCol
         self.decCol = decCol
         self.dateCol = dateCol
@@ -122,7 +139,7 @@ class DcrStacker(BaseStacker):
     site : str or lsst.sims.utils.Site
         Name of the observory or a lsst.sims.utils.Site object. Default 'LSST'.
     mjdCol : str
-        Name of column with modified julian date. Default 'expMJD'
+        Name of column with modified julian date. Default 'observationStartMJD'
     dcr_magnitudes : dict
         Magitude of the DCR offset for each filter at altitude/zenith distance of 45 degrees.
         Defaults u=0.07, g=0.07, r=0.50, i=0.045, z=0.042, y=0.04 (all arcseconds).
@@ -135,7 +152,7 @@ class DcrStacker(BaseStacker):
     """
 
     def __init__(self, filterCol='filter', altCol='altitude',
-                 raCol='fieldRA', decCol='fieldDec', lstCol='lst', site='LSST', mjdCol='expMJD',
+                 raCol='ra_rad', decCol='dec_rad', lstCol='lst', site='LSST', mjdCol='observationStartMJD',
                  dcr_magnitudes={'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}):
 
         self.zdCol = 'zenithDistance'
@@ -173,7 +190,7 @@ class HourAngleStacker(BaseStacker):
     """
     Add the Hour Angle for each observation.
     """
-    def __init__(self, lstCol='lst', RaCol='fieldRA'):
+    def __init__(self, lstCol='lst', RaCol='ra_rad'):
         self.units = ['Hours']
         self.colsAdded = ['HA']
         self.colsReq = [lstCol, RaCol]
@@ -203,7 +220,7 @@ class ParallacticAngleStacker(BaseStacker):
     """
     Add the parallactic angle (in radians) to each visit.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', mjdCol='observationStartMJD',
                  lstCol='lst', site='LSST'):
 
         self.lstCol = lstCol
@@ -271,7 +288,7 @@ class SeasonStacker(BaseStacker):
     The season index range is 0-10.
     Must wrap 0th and 10th to get a total of 10 seasons.
     """
-    def __init__(self, expMJDCol='expMJD', RACol='fieldRA'):
+    def __init__(self, expMJDCol='observationStartMJD', RACol='ra_rad'):
         # Names of columns we want to add.
         self.colsAdded = ['year', 'season']
         # Names of columns we need from database.

@@ -44,9 +44,10 @@ class UserPointsSlicer(BaseSpatialSlicer):
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
-    def __init__(self, ra, dec, lonCol='fieldRA', latCol='fieldDec', verbose=True,
+    def __init__(self, ra, dec, lonCol='ra_rad', latCol='dec_rad', verbose=True,
                  badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD', chipNames='all'):
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
+                 chipNames='all'):
         super(UserPointsSlicer, self).__init__(lonCol=lonCol, latCol=latCol, verbose=verbose,
                                                badval=badval, radius=radius, leafsize=leafsize,
                                                useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,

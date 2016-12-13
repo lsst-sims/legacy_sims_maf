@@ -499,108 +499,112 @@ class OpsimDatabase(Database):
         #configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinAlt', 'MaxAlt',
                                                 'TimeFilterChange', 'TimeReadout']
-        # Now build up config dict with 'nice' group names (proposal name and short module name)
-        #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
-        # Match proposal IDs with names.
-        query = 'select %s, %s, %s from Proposal group by %s' %(self.propIdCol, self.propConfCol,
-                                                                self.propNameCol, self.propIdCol)
-        propdata = self.queryDatabase('Proposal', query)
-        # Make 'nice' proposal names
-        propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata[self.propConfCol]])
-        # Get 'nice' module names
-        moduledata = table.query_columns_Array(colnames=['moduleName',], constraint='nonPropID=0')
-        modulenames = np.array([os.path.split(x)[1].replace('.conf', '') for x in moduledata['moduleName']])
-        # Grab the config information for each proposal and module.
-        cols = ['paramName', 'paramValue', 'comment']
-        for longmodname, modname in zip(moduledata['moduleName'], modulenames):
-            config[modname] = table.query_columns_Array(colnames=cols,
-                                                        constraint='moduleName="%s"' %(longmodname))
-            config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
-        for propid, propname in zip(propdata[self.propIdCol], propnames):
-            config[propname] = table.query_columns_Array(colnames=cols,
-                                                         constraint=
-                                                         'nonPropID="%s" and paramName!="userRegion"' %(propid))
-            config[propname] = config[propname][['paramName', 'paramValue', 'comment']]
-        config['keyorder'] = ['Comment', 'LSST', 'site', 'instrument', 'filters',
-                              'AstronomicalSky', 'File', 'scheduler',
-                              'schedulingData', 'schedDown', 'unschedDown']
-        # Now finish building the summary to add proposal information.
-        # Loop through all proposals to add summary information.
-        configSummary['Proposals'] = {}
-        propidorder = sorted(propdata[self.propIdCol])
-        # Generate a keyorder to print proposals in order of propid.
-        configSummary['Proposals']['keyorder'] = []
-        for propid in propidorder:
-            configSummary['Proposals']['keyorder'].append(propnames[np.where(propdata[self.propIdCol] == propid)][0])
-        for propid, propname in zip(propdata[self.propIdCol], propnames):
-            configSummary['Proposals'][propname] = {}
-            propdict = configSummary['Proposals'][propname]
-            propdict['keyorder'] = [self.propIdCol, self.propNameCol, 'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
-            propdict[self.propNameCol] = propname
-            propdict[self.propIdCol] = propid
-            propdict['PropType'] = propdata[self.propNameCol][np.where(propnames == propname)]
-            propdict['RelPriority'] = self._matchParamNameValue(config[propname], 'RelativeProposalPriority')
-            # Get the number of user regions.
-            constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)
-            result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)
-            propdict['NumUserRegions'] = result.size
-            # Get the number of fields requested in the proposal (all filters).
-            propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
-            # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
-            # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
-            #   The order of these entries in the config array matters.
-            propdict['PerFilter'] = {}
-            for key, keyword in zip(['Filters', 'MaxSeeing', 'MinSky', 'MaxSky'],
-                                    ['Filter', 'Filter_MaxSeeing', 'Filter_MinBrig', 'Filter_MaxBrig']):
-                temp = self._matchParamNameValue(config[propname], keyword)
+
+        poop = False
+        if poop:                            
+            # Now build up config dict with 'nice' group names (proposal name and short module name)
+            #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
+            # Match proposal IDs with names.
+            query = 'select %s, %s, %s from Proposal group by %s' %(self.propIdCol, self.propConfCol,
+                                                                    self.propNameCol, self.propIdCol)
+            propdata = self.queryDatabase('Proposal', query)
+            # Make 'nice' proposal names
+            propnames = np.array([os.path.split(x)[1].replace('.conf', '') for x in propdata[self.propConfCol]])
+            # Get 'nice' module names
+            moduledata = table.query_columns_Array(colnames=['moduleName',], constraint='nonPropID=0')
+            modulenames = np.array([os.path.split(x)[1].replace('.conf', '') for x in moduledata['moduleName']])
+            # Grab the config information for each proposal and module.
+            cols = ['paramName', 'paramValue', 'comment']
+            for longmodname, modname in zip(moduledata['moduleName'], modulenames):
+                config[modname] = table.query_columns_Array(colnames=cols,
+                                                            constraint='moduleName="%s"' %(longmodname))
+                config[modname] = config[modname][['paramName', 'paramValue', 'comment']]
+            for propid, propname in zip(propdata[self.propIdCol], propnames):
+                config[propname] = table.query_columns_Array(colnames=cols,
+                                                             constraint=
+                                                             'nonPropID="%s" and paramName!="userRegion"' %(propid))
+                config[propname] = config[propname][['paramName', 'paramValue', 'comment']]
+            config['keyorder'] = ['Comment', 'LSST', 'site', 'instrument', 'filters',
+                                  'AstronomicalSky', 'File', 'scheduler',
+                                  'schedulingData', 'schedDown', 'unschedDown']
+            # Now finish building the summary to add proposal information.
+            # Loop through all proposals to add summary information.
+            configSummary['Proposals'] = {}
+            propidorder = sorted(propdata[self.propIdCol])
+            # Generate a keyorder to print proposals in order of propid.
+            configSummary['Proposals']['keyorder'] = []
+
+            for propid in propidorder:
+                configSummary['Proposals']['keyorder'].append(propnames[np.where(propdata[self.propIdCol] == propid)][0])
+            for propid, propname in zip(propdata[self.propIdCol], propnames):
+                configSummary['Proposals'][propname] = {}
+                propdict = configSummary['Proposals'][propname]
+                propdict['keyorder'] = [self.propIdCol, self.propNameCol, 'PropType', 'RelPriority', 'NumUserRegions', 'NumFields']
+                propdict[self.propNameCol] = propname
+                propdict[self.propIdCol] = propid
+                propdict['PropType'] = propdata[self.propNameCol][np.where(propnames == propname)]
+                propdict['RelPriority'] = self._matchParamNameValue(config[propname], 'RelativeProposalPriority')
+                # Get the number of user regions.
+                constraint = 'nonPropID="%s" and paramName="userRegion"' %(propid)
+                result = table.query_columns_Array(colnames=['paramName',], constraint=constraint)
+                propdict['NumUserRegions'] = result.size
+                # Get the number of fields requested in the proposal (all filters).
+                propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
+                # Find number of visits requested per filter for the proposal, along with min/max sky and airmass values.
+                # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
+                #   The order of these entries in the config array matters.
+                propdict['PerFilter'] = {}
+                for key, keyword in zip(['Filters', 'MaxSeeing', 'MinSky', 'MaxSky'],
+                                        ['Filter', 'Filter_MaxSeeing', 'Filter_MinBrig', 'Filter_MaxBrig']):
+                    temp = self._matchParamNameValue(config[propname], keyword)
+                    if len(temp) > 0:
+                        propdict['PerFilter'][key] = temp
+                # Add exposure time, potentially looking for scaling per filter.
+                exptime = float(self._matchParamNameValue(config[propname], 'ExposureTime')[0])
+                temp = self._matchParamNameValue(config[propname], 'Filter_ExpFactor')
                 if len(temp) > 0:
-                    propdict['PerFilter'][key] = temp
-            # Add exposure time, potentially looking for scaling per filter.
-            exptime = float(self._matchParamNameValue(config[propname], 'ExposureTime')[0])
-            temp = self._matchParamNameValue(config[propname], 'Filter_ExpFactor')
-            if len(temp) > 0:
-                propdict['PerFilter']['VisitTime'] = temp * exptime
-            else:
-                propdict['PerFilter']['VisitTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
-                propdict['PerFilter']['VisitTime'] *= exptime
-            # And count how many total exposures are requested per filter.
-            # First check if 'RestartCompleteSequences' is true:
-            #   if both are true, then basically an indefinite number of visits are requested, although we're
-            #   not going to count this way (as the proposals still make an approximate number of requests).
-            restartComplete = False
-            temp = self._matchParamNameValue(config[propname], 'RestartCompleteSequences')
-            if len(temp) > 0:
-                if temp[0] == 'True':
-                    restartComplete = True
-            propdict['RestartCompleteSequences'] = restartComplete
-            # Grab information on restarting lost sequences so we can print this too.
-            restartLost = False
-            tmp = self._matchParamNameValue(config[propname], 'RestartLostSequences')
-            if len(temp) > 0:
-                if temp[0]  == 'True':
-                    restartLost = True
-            propdict['RestartLostSequences'] = restartLost
-            if propdict['PropType'] == 'WL':
-                # Simple 'Filter_Visits' request for number of observations.
-                propdict['PerFilter']['NumVisits'] = np.array(self._matchParamNameValue(config[propname],
-                                                                                   'Filter_Visits'), int)
-            elif propdict['PropType'] == 'WLTSS':
-                # Proposal contains subsequences and possible nested subseq, so must delve further.
-                # Make a dictionary to hold the subsequence info (keyed per subsequence).
-                propdict['SubSeq'], Nvisits = self._parseSequences(config[propname], propdict['PerFilter']['Filters'])
-                propdict['PerFilter']['NumVisits'] = Nvisits
-                propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events', 'SubSeqInt']
-            # Sort the filter information so it's ugrizy instead of order in opsim config db.
-            idx = []
-            for f in self.filterlist:
-                filterpos = np.where(propdict['PerFilter']['Filters'] == f)
-                if len(filterpos[0]) > 0:
-                    idx.append(filterpos[0][0])
-            idx = np.array(idx, int)
-            for k in propdict['PerFilter']:
-                propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
-            propdict['PerFilter']['keyorder'] = ['Filters', 'VisitTime', 'MaxSeeing', 'MinSky',
-                                                 'MaxSky', 'NumVisits']
+                    propdict['PerFilter']['VisitTime'] = temp * exptime
+                else:
+                    propdict['PerFilter']['VisitTime'] = np.ones(len(propdict['PerFilter']['Filters']), float)
+                    propdict['PerFilter']['VisitTime'] *= exptime
+                # And count how many total exposures are requested per filter.
+                # First check if 'RestartCompleteSequences' is true:
+                #   if both are true, then basically an indefinite number of visits are requested, although we're
+                #   not going to count this way (as the proposals still make an approximate number of requests).
+                restartComplete = False
+                temp = self._matchParamNameValue(config[propname], 'RestartCompleteSequences')
+                if len(temp) > 0:
+                    if temp[0] == 'True':
+                        restartComplete = True
+                propdict['RestartCompleteSequences'] = restartComplete
+                # Grab information on restarting lost sequences so we can print this too.
+                restartLost = False
+                tmp = self._matchParamNameValue(config[propname], 'RestartLostSequences')
+                if len(temp) > 0:
+                    if temp[0]  == 'True':
+                        restartLost = True
+                propdict['RestartLostSequences'] = restartLost
+                if propdict['PropType'] == 'WL':
+                    # Simple 'Filter_Visits' request for number of observations.
+                    propdict['PerFilter']['NumVisits'] = np.array(self._matchParamNameValue(config[propname],
+                                                                                       'Filter_Visits'), int)
+                elif propdict['PropType'] == 'WLTSS':
+                    # Proposal contains subsequences and possible nested subseq, so must delve further.
+                    # Make a dictionary to hold the subsequence info (keyed per subsequence).
+                    propdict['SubSeq'], Nvisits = self._parseSequences(config[propname], propdict['PerFilter']['Filters'])
+                    propdict['PerFilter']['NumVisits'] = Nvisits
+                    propdict['SubSeq']['keyorder'] = ['SubSeqName', 'SubSeqNested', 'Events', 'SubSeqInt']
+                # Sort the filter information so it's ugrizy instead of order in opsim config db.
+                idx = []
+                for f in self.filterlist:
+                    filterpos = np.where(propdict['PerFilter']['Filters'] == f)
+                    if len(filterpos[0]) > 0:
+                        idx.append(filterpos[0][0])
+                idx = np.array(idx, int)
+                for k in propdict['PerFilter']:
+                    propdict['PerFilter'][k] = propdict['PerFilter'][k][idx]
+                propdict['PerFilter']['keyorder'] = ['Filters', 'VisitTime', 'MaxSeeing', 'MinSky',
+                                                     'MaxSky', 'NumVisits']
         return configSummary, config
 
 

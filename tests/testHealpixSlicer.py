@@ -48,7 +48,7 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     rot = np.random.rand(len(dec))*2*np.pi
     data.append(np.array(rot, dtype=[('rotSkyPos', 'float')]))
     mjd = np.arange(len(dec))*.1
-    data.append(np.array(mjd, dtype=[('expMJD', 'float')]))
+    data.append(np.array(mjd, dtype=[('observationStartMJD', 'float')]))
     data = rfn.merge_arrays(data, flatten=True, usemask=False)
     return data
 
