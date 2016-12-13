@@ -488,16 +488,16 @@ class OpsimDatabase(Database):
         constraint = 'paramName="observatory/telescope/altitude_maxpos"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MaxAlt'] = results['paramValue'][0]
-        constraint = 'moduleName="instrument" and paramName="Filter_MoveTime"'
+        constraint = 'paramName="observatory/camera/filter_change_time"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['TimeFilterChange'] = results['paramValue'][0]
-        constraint = 'moduleName="instrument" and paramName="Readout_Time"'
+        constraint = 'paramName="observatory/camera/readout_time"'
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['TimeReadout'] = results['paramValue'][0]
-        constraint = 'moduleName="scheduler" and paramName="MinDistance2Moon"'
-        results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
-        configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
-        configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinDist2Moon', 'MinAlt', 'MaxAlt',
+        #constraint = 'moduleName="scheduler" and paramName="MinDistance2Moon"'
+        #results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
+        #configSummary['RunInfo']['MinDist2Moon'] = results['paramValue'][0]
+        configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinAlt', 'MaxAlt',
                                                 'TimeFilterChange', 'TimeReadout']
         # Now build up config dict with 'nice' group names (proposal name and short module name)
         #  Each dict entry is a numpy array with the paramName/paramValue/comment values.
