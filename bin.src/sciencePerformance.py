@@ -142,7 +142,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             metadata = 'WFD only' + slicermetadata
             sqlconstraint = '%s' % (wfdWhere)
         # Configure the count metric which is what is used for f0 slicer.
-        m1 = metrics.CountMetric(col='expMJD', metricName='fO')
+        m1 = metrics.CountMetric(col='observationStartMJD', metricName='fO')
         plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkVals['Area'],
                     'Nvisit': benchmarkVals['nvisitsTotal'], 'xMin': 0, 'xMax': 1500}
         summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
@@ -408,7 +408,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         sqlconstraint = 'filter = "%s"' % (f)
         metadata = '%s band' % (f) + slicermetadata
         # Number of visits.
-        metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
+        metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
         plotDict = {'xlabel': 'Number of visits',
                     'xMin': nvisitsRange['all'][f][0],
                     'xMax': nvisitsRange['all'][f][1],
@@ -623,7 +623,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         orderVal += 100
 
     # Full range of dates:
-    metric = metrics.FullRangeMetric(col='expMJD')
+    metric = metrics.FullRangeMetric(col='observationStartMJD')
     plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
     caption = 'Time span of survey.'
     sqlconstraint = ''
@@ -646,7 +646,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     # Alt az plots
     slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
-    metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
+    metric = metrics.CountMetric('observationStartMJD', metricName='Nvisits as function of Alt/Az')
     plotDict = {}
     plotFuncs = [plots.LambertSkyMap()]
     displayDict = {'group': altAzGroup, 'caption': 'Alt Az pointing distribution'}
@@ -773,7 +773,7 @@ if __name__ == "__main__":
     parser.add_argument("--latCol", type=str, default='fieldDec',
                         help="Column to use for Dec values (can be a stacker dither column)." +
                         " Default=fieldDec.")
-    parser.add_argument('--seeingCol', type=str, default='FWHMgeom',
+    parser.add_argument('--seeingCol', type=str, default='seeingFwhmGeom',
                         help="Column to use for seeing values in order to evaluate astrometric" +
                         " uncertainties. Probably should be seeingFwhmGeom, FWHMgeom, or finSeeing.")
     parser.add_argument('--benchmark', type=str, default='design',

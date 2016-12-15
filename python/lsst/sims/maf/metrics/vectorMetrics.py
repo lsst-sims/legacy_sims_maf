@@ -116,7 +116,7 @@ class AccumulateUniformityMetric(AccumulateMetric):
     """
     Make a 2D version of UniformityMetric
     """
-    def __init__(self, bins=None, binCol='night', expMJDCol='expMJD',
+    def __init__(self, bins=None, binCol='night', expMJDCol='observationStartMJD',
                  metricName='AccumulateUniformityMetric',surveyLength=10.,
                  units='Fraction', **kwargs):
         self.expMJDCol = expMJDCol

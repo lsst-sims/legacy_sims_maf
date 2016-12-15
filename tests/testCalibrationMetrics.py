@@ -13,7 +13,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax metric.
         """
-        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad', 'filter']
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float, float, float, float, '|S1']
         data = np.zeros(700, dtype=zip(names, types))
         slicePoint = {'sid': 0}
@@ -53,7 +53,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the ProperMotion metric.
         """
-        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad', 'filter']
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
         types = [float, float, float, float, float, '|S1']
         data = np.zeros(700, dtype=zip(names, types))
         slicePoint = [0]
@@ -98,7 +98,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax coverage
         """
-        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad',
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
                  'filter', 'ra_pi_amp', 'dec_pi_amp']
         types = [float, float, float, float, float, '|S1', float, float]
         data = np.zeros(100, dtype=zip(names, types))
@@ -138,7 +138,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax-DCR degeneracy metric
         """
-        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad',
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
                  'filter', 'ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp']
         types = [float, float, float, float, float, '|S1', float,
                  float, float, float]
@@ -180,19 +180,19 @@ class TestCalibrationMetrics(unittest.TestCase):
         Test the RadiusObsMetric
         """
 
-        names = ['ra_rad', 'dec_rad']
+        names = ['fieldRA', 'fieldDec']
         dt = ['float']*2
         data = np.zeros(3, dtype=zip(names, dt))
-        data['dec_rad'] = [-.1, 0, .1]
+        data['fieldDec'] = [-.1, 0, .1]
         slicePoint = {'ra': 0., 'dec': 0.}
         metric = metrics.RadiusObsMetric()
         result = metric.run(data, slicePoint)
         for i, r in enumerate(result):
-            np.testing.assert_almost_equal(r, abs(data['dec_rad'][i]))
+            np.testing.assert_almost_equal(r, abs(data['fieldDec'][i]))
         assert(metric.reduceMean(result) == np.mean(result))
         assert(metric.reduceRMS(result) == np.std(result))
         np.testing.assert_almost_equal(metric.reduceFullRange(result),
-                                       np.max(np.abs(data['dec_rad']))-np.min(np.abs(data['dec_rad'])))
+                                       np.max(np.abs(data['fieldDec']))-np.min(np.abs(data['fieldDec'])))
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

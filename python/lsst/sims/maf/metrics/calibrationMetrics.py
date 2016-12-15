@@ -13,7 +13,7 @@ class ParallaxMetric(BaseMetric):
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  mjdCol='observationStartMJD', units = 'mas',
-                 filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
+                 filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False, **kwargs):
 
@@ -93,7 +93,7 @@ class ProperMotionMetric(BaseMetric):
     """
     def __init__(self, metricName='properMotion',
                  m5Col='fiveSigmaDepth', mjdCol='observationStartMJD', units='mas/yr',
-                 filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
+                 filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
@@ -184,7 +184,7 @@ class ParallaxCoverageMetric(BaseMetric):
     Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
     """
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
-                 mjdCol='observationStartMJD', filterCol='filter', seeingCol='FWHMgeom',
+                 mjdCol='observationStartMJD', filterCol='filter', seeingCol='seeingFwhmGeom',
                  rmag=20., SedTemplate='flat', badval=-666,
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
         """
@@ -306,7 +306,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
         are bad. Experience with fitting Monte Carlo simulations suggests the astrometric fits start
         becoming poor around a correlation of 0.7.
     """
-    def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='FWHMgeom',
+    def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='seeingFwhmGeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
                  filterCol='filter', tol = 0.05, **kwargs):
         self.m5Col = m5Col
@@ -389,9 +389,9 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 
 
 class RadiusObsMetric(BaseMetric):
-    """find the radius in the focal plane. """
+    """find the radius in the focal plane. returns things in degrees."""
 
-    def __init__(self, metricName='radiusObs', raCol='ra_rad', decCol='dec_rad',
+    def __init__(self, metricName='radiusObs', raCol='fieldRA', decCol='fieldDec',
                  units='radians', **kwargs):
         self.raCol = raCol
         self.decCol = decCol
@@ -401,7 +401,9 @@ class RadiusObsMetric(BaseMetric):
     def run(self, dataSlice, slicePoint):
         ra = slicePoint['ra']
         dec = slicePoint['dec']
-        distances = calcDist_cosines(ra, dec, dataSlice[self.raCol], dataSlice[self.decCol])
+        distances = calcDist_cosines(ra, dec, np.radians(dataSlice[self.raCol]),
+                                     np.radians(dataSlice[self.decCol]))
+        distances = np.degrees(distances)
         return distances
 
     def reduceMean(self, distances):

@@ -56,7 +56,7 @@ class BaseSpatialSlicer(BaseSlicer):
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
-    def __init__(self, lonCol='ra_rad', latCol='dec_rad', verbose=True,
+    def __init__(self, lonCol='fieldRA', latCol='fieldDec', verbose=True,
                  badval=-666, leafsize=100, radius=1.75, latLonDeg=True,
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
                  chipNames='all'):

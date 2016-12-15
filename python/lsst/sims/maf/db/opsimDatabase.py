@@ -204,10 +204,7 @@ class OpsimDatabase(Database):
             lon = site.longitude_rad
             height = site.elev
         else:
-            if self.version == 4:
-                pre = 'observing_site/'
-            elif self.version == 3:
-                pre = ''
+            pre = 'observing_site/'
             table = self.tables['Config']
             lat = table.query_columns_Array(colnames=['paramValue'],
                                             constraint="paramName = '%slatitude'" % pre)
@@ -225,34 +222,18 @@ class OpsimDatabase(Database):
         Returns the total number of visits in the simulation (or total number of visits for a particular propoal).
         param: propID = the proposal ID (default None), if selecting particular proposal - can be a list
         """
-        if ('ObsHistory' in self.dbTables) & (self.version == 3):
-            tableName = 'ObsHistory'
-            query = 'select count(ObsHistID) from %s' % (self.dbTables[tableName][0])
-            if propID is not None:
-                query += ', %s where obsHistID=ObsHistory_obsHistID' % (self.dbTables['ObsHistory_Proposal'][0])
-                if hasattr(propID, '__iter__'):  # list of propIDs
-                    query += ' and ('
-                    for pID in propID:
-                        query += '(Proposal_%s = %d) or ' % (self.propIdCol, int(pID))
-                    # Remove the trailing 'or' and add a closing parenthesis.
-                    query = query[:-3]
-                    query += ')'
-                else:  # single proposal ID.
-                    query += ' and (Proposal_%s = %d) ' % (self.propIdCol, int(propID))
-        else:
-            tableName = self.summaryTable
-            query = 'select count(distinct(%s)) from %s' % (self.mjdCol, self.dbTables[tableName][0])
-            if propID is not None:
-                query += ' where '
-                if hasattr(propID, '__iter__'):
-                    for pID in propID:
-                        query += 'propID=%d or ' % (int(pID))
-                    query = query[:-3]
-                else:
-                    query += 'propID = %d' % (int(propID))
+        tableName = self.summaryTable
+        query = 'select count(distinct(%s)) from %s' % (self.mjdCol, self.dbTables[tableName][0])
+        if propID is not None:
+            query += ' where '
+            if hasattr(propID, '__iter__'):
+                for pID in propID:
+                    query += 'propID=%d or ' % (int(pID))
+                query = query[:-3]
+            else:
+                query += 'propID = %d' % (int(propID))
 
-        if self.version == 4:
-            query = query.replace('ID', 'Id')
+        query = query.replace('ID', 'Id')
         data = self.tables[tableName].execute_arbitrary(query)
         return int(data[0][0])
 

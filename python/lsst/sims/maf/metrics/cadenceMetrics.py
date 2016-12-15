@@ -190,7 +190,7 @@ class SupernovaMetric(BaseMetric):
 class TemplateExistsMetric(BaseMetric):
     """Calculate the fraction of images with a previous template image of desired quality.
     """
-    def __init__(self, seeingCol='FWHMgeom', observationStartMJDCol='observationStartMJD',
+    def __init__(self, seeingCol='seeingFwhmGeom', observationStartMJDCol='observationStartMJD',
                  metricName='TemplateExistsMetric', **kwargs):
         cols = [seeingCol, observationStartMJDCol]
         super(TemplateExistsMetric, self).__init__(col=cols, metricName=metricName,
