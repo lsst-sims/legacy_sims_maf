@@ -43,7 +43,7 @@ def makeFieldData():
     ra_rad = np.array(ra_rad, 'float')
     dec_rad = np.array(dec_rad, 'float')
     fieldData = np.core.records.fromarrays([fieldId, ra_rad, dec_rad],
-                                           names=['fieldId', 'ra_rad', 'dec_rad'])
+                                           names=['fieldId', 'ra', 'dec'])
     return fieldData
 
 

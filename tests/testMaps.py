@@ -20,18 +20,18 @@ def makeDataValues(size=100, min=0., max=1., random=True):
         datavalues = datavalues[randind]
     ids = np.arange(size)
     datavalues = np.array(zip(datavalues, datavalues, ids),
-                          dtype=[('ra_rad', 'float'),
-                                 ('dec_rad', 'float'), ('fieldId', 'int')])
+                          dtype=[('fieldRA', 'float'),
+                                 ('fieldDec', 'float'), ('fieldId', 'int')])
     return datavalues
 
 
 def makeFieldData():
-    names = ['fieldId', 'ra_rad', 'dec_rad']
+    names = ['fieldId', 'ra', 'dec']
     types = [int, float, float]
     fieldData = np.zeros(100, dtype=zip(names, types))
     fieldData['fieldId'] = np.arange(100)
-    fieldData['ra_rad'] = np.random.rand(100)
-    fieldData['dec_rad'] = np.random.rand(100)
+    fieldData['ra'] = np.random.rand(100)
+    fieldData['dec'] = np.random.rand(100)
     return fieldData
 
 
@@ -46,14 +46,14 @@ class TestMaps(unittest.TestCase):
             data = makeDataValues()
             dustmap = maps.DustMap()
 
-            slicer1 = slicers.HealpixSlicer()
+            slicer1 = slicers.HealpixSlicer(latLonDeg=False)
             slicer1.setupSlicer(data)
             result1 = dustmap.run(slicer1.slicePoints)
             assert('ebv' in result1.keys())
 
             fieldData = makeFieldData()
 
-            slicer2 = slicers.OpsimFieldSlicer()
+            slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = dustmap.run(slicer2.slicePoints)
             assert('ebv' in result2.keys())
@@ -81,7 +81,7 @@ class TestMaps(unittest.TestCase):
             nsides = [32, 64, 128]
             for nside in nsides:
                 starmap = maps.StellarDensityMap()
-                slicer1 = slicers.HealpixSlicer(nside=nside)
+                slicer1 = slicers.HealpixSlicer(nside=nside, latLonDeg=False)
                 slicer1.setupSlicer(data)
                 result1 = starmap.run(slicer1.slicePoints)
                 assert('starMapBins' in result1.keys())
@@ -90,7 +90,7 @@ class TestMaps(unittest.TestCase):
 
             fieldData = makeFieldData()
 
-            slicer2 = slicers.OpsimFieldSlicer()
+            slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = starmap.run(slicer2.slicePoints)
             assert('starMapBins' in result2.keys())
