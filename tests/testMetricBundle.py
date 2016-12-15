@@ -26,9 +26,9 @@ class TestMetricBundle(unittest.TestCase):
         sql = 'filter="r"'
 
         metricB = metricBundles.MetricBundle(metric, slicer, sql)
-        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/pontus_1074.db')
+        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests')
 
-        database = os.path.join(filepath, '')
+        database = os.path.join(filepath, 'pontus_1150.db')
         opsdb = db.OpsimDatabase(database=database)
         resultsDb = db.ResultsDb(outDir=self.outDir)
 

@@ -8,10 +8,10 @@ class ColInfo(object):
         """
         self.defaultDataSource = None
         self.defaultUnit = ''
-        self.unitDict = {'fieldID': '#',
+        self.unitDict = {'fieldId': '#',
                          'filter': 'filter',
                          'seqnNum' : '#',
-                         'expMJD': 'MJD',
+                         'observationStartMJD': 'MJD',
                          'expTime': 's',
                          'slewTime': 's',
                          'slewDist': 'rad',
@@ -22,8 +22,8 @@ class ColInfo(object):
                          'seeing': 'arcsec',
                          'airmass': 'X',
                          'night': 'days',
-                         'fieldRA': 'rad',
-                         'fieldDec': 'rad',
+                         'ra_rad': 'rad',
+                         'dec_rad': 'rad',
                          'moonRA': 'rad',
                          'moonDec': 'rad',
                          'moonAlt': 'rad',

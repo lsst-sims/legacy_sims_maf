@@ -19,7 +19,7 @@ class RADecRadiansStacker(BaseStacker):
     """
     Convert Ra and Dec to radians
     """
-    def __init__(self, raDegCol='fieldRA', decDegCol='fieldDec'):
+    def __init__(self, raDegCol='ra_rad', decDegCol='dec_rad'):
         self.units = ['radians', 'radians']
         self.colsReq = [raDegCol, decDegCol]
         self.colsAdded = ['ra_rad', 'dec_rad']
@@ -131,9 +131,9 @@ class DcrStacker(BaseStacker):
     altCol : str
         Name of the column with altitude info. Default 'altitude'.
     raCol : str
-        Name of the column with RA. Default 'fieldRA'.
+        Name of the column with RA. Default 'ra_rad'.
     decCol : str
-        Name of the column with Dec. Default 'fieldDec'.
+        Name of the column with Dec. Default 'dec_rad'.
     lstCol : str
         Name of the column with local sidereal time. Default 'lst'.
     site : str or lsst.sims.utils.Site
@@ -288,20 +288,20 @@ class SeasonStacker(BaseStacker):
     The season index range is 0-10.
     Must wrap 0th and 10th to get a total of 10 seasons.
     """
-    def __init__(self, expMJDCol='observationStartMJD', RACol='ra_rad'):
+    def __init__(self, observationStartMJDCol='observationStartMJD', RACol='ra_rad'):
         # Names of columns we want to add.
         self.colsAdded = ['year', 'season']
         # Names of columns we need from database.
-        self.colsReq = [expMJDCol, RACol]
+        self.colsReq = [observationStartMJDCol, RACol]
         # List of units for our new columns.
         self.units = ['', '']
         # And save the column names.
-        self.expMJDCol = expMJDCol
+        self.observationStartMJDCol = observationStartMJDCol
         self.RACol = RACol
 
     def _run(self, simData):
         # Define year number: (note that opsim defines "years" in flat 365 days).
-        year = np.floor((simData[self.expMJDCol] - simData[self.expMJDCol][0]) / 365)
+        year = np.floor((simData[self.observationStartMJDCol] - simData[self.observationStartMJDCol][0]) / 365)
         objRA = np.degrees(simData[self.RACol])/15.0   # in hrs
         # objRA=0 on autumnal equinox.
         # autumnal equinox 2014 happened on Sept 23 --> Equinox MJD
@@ -311,7 +311,7 @@ class SeasonStacker(BaseStacker):
         firstSeasonBegan = Equinox + daysSinceEquinox - 0.5*365.25   # in MJD
         # Now we can compute the number of years since the first season
         # began, and so assign a global integer season number:
-        globalSeason = np.floor((simData[self.expMJDCol] - firstSeasonBegan)/365.25)
+        globalSeason = np.floor((simData[self.observationStartMJDCol] - firstSeasonBegan)/365.25)
         # Subtract off season number of first observation:
         season = globalSeason - np.min(globalSeason)
         simData['year'] = year

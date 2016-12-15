@@ -16,10 +16,10 @@ class UserPointsSlicer(BaseSpatialSlicer):
         User-selected Dec points, in degrees. Stored internally in radians.
     lonCol : str, optional
         Name of the longitude (RA equivalent) column to use from the input data.
-        Default fieldRA
+        Default ra_rad
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
-        Default fieldDec
+        Default dec_rad
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.
@@ -39,7 +39,7 @@ class UserPointsSlicer(BaseSpatialSlicer):
         Default rotSkyPos.
     mjdColName : str, optional
         Name of the exposure time column. Only used if useCamera is True.
-        Default expMJD.
+        Default observationStartMJD.
     chipNames : array-like, optional
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.

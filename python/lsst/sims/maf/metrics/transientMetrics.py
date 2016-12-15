@@ -67,7 +67,7 @@ class TransientMetric(BaseMetric):
         'partialLC', then the max number of possible transients is taken to be
         the integer floor
     """
-    def __init__(self, metricName='TransientDetectMetric', mjdCol='expMJD',
+    def __init__(self, metricName='TransientDetectMetric', mjdCol='observationStartMJD',
                  m5Col='fiveSigmaDepth', filterCol='filter',
                  transDuration=10., peakTime=5., riseSlope=0., declineSlope=0.,
                  surveyDuration=10., surveyStart=None, detectM5Plus=0.,

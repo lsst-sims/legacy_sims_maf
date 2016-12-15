@@ -13,7 +13,7 @@ class NChangesMetric(BaseMetric):
     Compute the number of times a column value changes.
     (useful for filter changes in particular).
     """
-    def __init__(self, col='filter', orderBy='expMJD', **kwargs):
+    def __init__(self, col='filter', orderBy='observationStartMJD', **kwargs):
         self.col = col
         self.orderBy = orderBy
         super(NChangesMetric, self).__init__(col=[col, orderBy], units='#', **kwargs)
@@ -30,7 +30,7 @@ class MinTimeBetweenStatesMetric(BaseMetric):
     (useful for calculating fastest time between filter changes in particular).
     Returns delta time in minutes!
     """
-    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, **kwargs):
         """
         changeCol = column that changes state
         timeCol = column tracking time of each visit
@@ -63,7 +63,7 @@ class NStateChangesFasterThanMetric(BaseMetric):
     (useful for calculating time between filter changes in particular).
     'cutoff' should be in minutes.
     """
-    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, cutoff=20, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, cutoff=20, **kwargs):
         """
         col = column tracking changes in
         timeCol = column keeping the time of each visit
@@ -95,7 +95,7 @@ class MaxStateChangesWithinMetric(BaseMetric):
     (useful for calculating time between filter changes in particular).
     'timespan' should be in minutes.
     """
-    def __init__(self, changeCol='filter', timeCol='expMJD', metricName=None, timespan=20, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, timespan=20, **kwargs):
         """
         col = column tracking changes in
         timeCol = column keeping the time of each visit
@@ -279,7 +279,7 @@ class FilterColorsMetric(BaseMetric):
     Calculate an RGBA value that accounts for the filters used up to time t0.
     """
     def __init__(self, rRGB='rRGB', gRGB='gRGB', bRGB='bRGB',
-                 timeCol='expMJD', t0=None, tStep=40./60./60./24.,
+                 timeCol='observationStartMJD', t0=None, tStep=40./60./60./24.,
                  metricName='FilterColors', **kwargs):
         """
         t0 = the current time

@@ -25,10 +25,12 @@ class HealpixSlicer(BaseSpatialSlicer):
         Default 128.
     lonCol : str, optional
         Name of the longitude (RA equivalent) column to use from the input data.
-        Default fieldRA
+        Default ra_rad
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
-        Default fieldDec
+        Default dec_rad
+    latLonDeg : bool (True)
+        Assume the input latitude and longitudes are in degrees
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.
@@ -56,13 +58,13 @@ class HealpixSlicer(BaseSpatialSlicer):
         Default rotSkyPos.
     mjdColName : str, optional
         Name of the exposure time column. Only used if useCamera is True.
-        Default expMJD.
+        Default observationStartMJD.
     chipNames : array-like, optional
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
-    def __init__(self, nside=128, lonCol ='ra_rad',
-                 latCol='dec_rad', verbose=True, badval=hp.UNSEEN,
+    def __init__(self, nside=128, lonCol ='fieldRA',
+                 latCol='fieldDec', latLonDeg=True, verbose=True, badval=hp.UNSEEN,
                  useCache=True, leafsize=100, radius=1.75,
                  useCamera=False, rotSkyPosColName='rotSkyPos',
                  mjdColName='observationStartMJD', chipNames='all'):
@@ -71,7 +73,7 @@ class HealpixSlicer(BaseSpatialSlicer):
                                             lonCol=lonCol, latCol=latCol,
                                             badval=badval, radius=radius, leafsize=leafsize,
                                             useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
-                                            mjdColName=mjdColName, chipNames=chipNames)
+                                            mjdColName=mjdColName, chipNames=chipNames, latLonDeg=latLonDeg)
         # Valid values of nside are powers of 2.
         # nside=64 gives about 1 deg resolution
         # nside=256 gives about 13' resolution (~1 CCD)

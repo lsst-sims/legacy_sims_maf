@@ -8,7 +8,7 @@ class LongGapAGNMetric(BaseMetric):
     """
 
     def __init__(self, metricName='longGapAGNMetric',
-                 mjdcol='expMJD', units='days', xgaps=10, badval=-666,
+                 mjdcol='observationStartMJD', units='days', xgaps=10, badval=-666,
                  **kwargs):
         """ Instantiate metric.
         mjdcol = column name for exposure time dates

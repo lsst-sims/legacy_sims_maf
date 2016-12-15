@@ -15,7 +15,7 @@ class HourglassMetric(BaseMetric):
 
         metricName = 'hourglass'
         filtercol = "filter"
-        mjdcol = "expMJD"
+        mjdcol = "observationStartMJD"
         nightcol = "night"
         cols = [filtercol, mjdcol, nightcol]
         super(HourglassMetric, self).__init__(col=cols, metricName=metricName, metricDtype='object', **kwargs)
@@ -34,7 +34,7 @@ class HourglassMetric(BaseMetric):
                  'twi12_set', 'twi18_rise', 'twi18_set']
         types = ['float']*len(names)
         pernight = np.zeros(len(unights), dtype=zip(names, types))
-        pernight['mjd'] = dataSlice['expMJD'][uindx]
+        pernight['mjd'] = dataSlice['observationStartMJD'][uindx]
 
         left = np.searchsorted(dataSlice[self.nightcol], unights)
 
@@ -83,7 +83,7 @@ class HourglassMetric(BaseMetric):
         names = ['mjd', 'midnight', 'filter']
         types = ['float', 'float', '|S1']
         perfilter = np.zeros((good.size), dtype=zip(names, types))
-        perfilter['mjd'] = dataSlice['expMJD'][good]
+        perfilter['mjd'] = dataSlice['observationStartMJD'][good]
         perfilter['filter'] = dataSlice['filter'][good]
         for i, mjd in enumerate(perfilter['mjd']):
             mjd = mjd - doff

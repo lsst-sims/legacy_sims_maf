@@ -39,7 +39,7 @@ class M5OptimalStacker(BaseStacker):
     ----------
     airmassCol : str ('airmass')
         Column name for the airmass per pointing.
-    decCol : str ('fieldDec')
+    decCol : str ('dec_rad')
         Column name for the pointing declination.
     skyBrightCol: str ('filtSkyBrightness')
         Column name for the sky brighntess per pointing.
@@ -61,7 +61,7 @@ class M5OptimalStacker(BaseStacker):
         been if the observation had been taken on the meridian.
     """
 
-    def __init__(self, airmassCol='airmass', decCol='fieldDec',
+    def __init__(self, airmassCol='airmass', decCol='dec_rad',
                  skyBrightCol='filtSkyBrightness', seeingCol='FWHMeff',
                  filterCol='filter', m5Col ='fiveSigmaDepth',
                  moonAltCol='moonAlt', sunAltCol='sunAlt',

@@ -12,8 +12,8 @@ class TestCadenceMetrics(unittest.TestCase):
         """
         Test the phase gap metric
         """
-        data = np.zeros(10, dtype=zip(['expMJD'], [float]))
-        data['expMJD'] += np.arange(10)*.25
+        data = np.zeros(10, dtype=zip(['observationStartMJD'], [float]))
+        data['observationStartMJD'] += np.arange(10)*.25
 
         pgm = metrics.PhaseGapMetric(nPeriods=1, periodMin=0.5, periodMax=0.5)
         metricVal = pgm.run(data)
@@ -45,10 +45,10 @@ class TestCadenceMetrics(unittest.TestCase):
         """
         Test the SN Cadence Metric.
         """
-        names = ['expMJD', 'filter', 'fiveSigmaDepth']
+        names = ['observationStartMJD', 'filter', 'fiveSigmaDepth']
         types = [float, '|S1', float]
         data = np.zeros(700, dtype=zip(names, types))
-        data['expMJD'] = np.arange(0., 100., 1/7.)  # So, 100 days are well sampled in 2 filters
+        data['observationStartMJD'] = np.arange(0., 100., 1/7.)  # So, 100 days are well sampled in 2 filters
         data['filter'] = 'r'
         data['filter'][np.arange(0, 700, 2)] = 'g'
         data['fiveSigmaDepth'] = 30.
@@ -63,11 +63,11 @@ class TestCadenceMetrics(unittest.TestCase):
         """
         Test the TemplateExistsMetric.
         """
-        names = ['finSeeing', 'expMJD']
+        names = ['finSeeing', 'observationStartMJD']
         types = [float, float]
         data = np.zeros(10, dtype=zip(names, types))
         data['finSeeing'] = [2., 2., 3., 1., 1., 1., 0.5, 1., 0.4, 1.]
-        data['expMJD'] = np.arange(10)
+        data['observationStartMJD'] = np.arange(10)
         slicePoint = {'sid': 0}
         # so here we have 4 images w/o good previous templates
         metric = metrics.TemplateExistsMetric(seeingCol='finSeeing')
@@ -75,20 +75,20 @@ class TestCadenceMetrics(unittest.TestCase):
         assert(result == 6./10.)
 
     def testUniformityMetric(self):
-        names = ['expMJD']
+        names = ['observationStartMJD']
         types = [float]
         data = np.zeros(100, dtype=zip(names, types))
         metric = metrics.UniformityMetric()
         result1 = metric.run(data)
         # If all the observations are on the 1st day, should be 1
         assert(result1 == 1)
-        data['expMJD'] = data['expMJD']+365.25*10
+        data['observationStartMJD'] = data['observationStartMJD']+365.25*10
         slicePoint = {'sid': 0}
         result2 = metric.run(data, slicePoint)
         # All on last day should also be 1
         assert(result1 == 1)
         # Make a perfectly uniform dist
-        data['expMJD'] = np.arange(0., 365.25*10, 365.25*10/100)
+        data['observationStartMJD'] = np.arange(0., 365.25*10, 365.25*10/100)
         result3 = metric.run(data, slicePoint)
         # Result should be zero for uniform
         np.testing.assert_almost_equal(result3, 0.)
@@ -98,24 +98,24 @@ class TestCadenceMetrics(unittest.TestCase):
         assert(result4 == 1)
 
     def testTGapMetric(self):
-        names = ['expMJD']
+        names = ['observationStartMJD']
         types = [float]
         data = np.zeros(100, dtype=zip(names, types))
         # All 1-day gaps
-        data['expMJD'] = np.arange(100)
+        data['observationStartMJD'] = np.arange(100)
 
         metric = metrics.TgapsMetric(bins=np.arange(1, 100, 1))
         result1 = metric.run(data)
         # By default, should all be in first bin
         assert(result1[0] == data.size-1)
         assert(np.sum(result1) == data.size-1)
-        data['expMJD'] = np.arange(0, 200, 2)
+        data['observationStartMJD'] = np.arange(0, 200, 2)
         result2 = metric.run(data)
         assert(result2[1] == data.size-1)
         assert(np.sum(result2) == data.size-1)
 
         data = np.zeros(4, dtype=zip(names, types))
-        data['expMJD'] = [10, 20, 30, 40]
+        data['observationStartMJD'] = [10, 20, 30, 40]
         metric = metrics.TgapsMetric(allGaps=True, bins=np.arange(1, 100, 10))
         result3 = metric.run(data)
         assert(result3[1] == 2)
@@ -123,10 +123,10 @@ class TestCadenceMetrics(unittest.TestCase):
         assert(np.sum(result3) == Ngaps)
 
     def testRapidRevisitMetric(self):
-        data = np.zeros(100, dtype=zip(['expMJD'], [float]))
+        data = np.zeros(100, dtype=zip(['observationStartMJD'], [float]))
         # Uniformly distribute time _differences_ between 0 and 100
         dtimes = np.arange(100)
-        data['expMJD'] = dtimes.cumsum()
+        data['observationStartMJD'] = dtimes.cumsum()
         # Set up "rapid revisit" metric to look for visits between 5 and 25
         metric = metrics.RapidRevisitMetric(dTmin=5, dTmax=55, minNvisits=50)
         result = metric.run(data)
@@ -135,11 +135,11 @@ class TestCadenceMetrics(unittest.TestCase):
         self.assertTrue(result >= 0)
         # Set up non-uniform distribution of time differences
         dtimes = np.zeros(100) + 5
-        data['expMJD'] = dtimes.cumsum()
+        data['observationStartMJD'] = dtimes.cumsum()
         result = metric.run(data)
         self.assertTrue(result >= 0.5)
         dtimes = np.zeros(100) + 15
-        data['expMJD'] = dtimes.cumsum()
+        data['observationStartMJD'] = dtimes.cumsum()
         result = metric.run(data)
         self.assertTrue(result >= 0.5)
         # Let's see how much dmax/result can vary
@@ -147,7 +147,7 @@ class TestCadenceMetrics(unittest.TestCase):
         resmax = 0
         for i in range(10000):
             dtimes = np.random.rand(100)
-            data['expMJD'] = dtimes.cumsum()
+            data['observationStartMJD'] = dtimes.cumsum()
             metric = metrics.RapidRevisitMetric(dTmin=0.1, dTmax=0.8, minNvisits=50)
             result = metric.run(data)
             resmin = np.min([resmin, result])
@@ -155,9 +155,9 @@ class TestCadenceMetrics(unittest.TestCase):
         print "RapidRevisit .. range", resmin, resmax
 
     def testNRevisitsMetric(self):
-        data = np.zeros(100, dtype=zip(['expMJD'], [float]))
+        data = np.zeros(100, dtype=zip(['observationStartMJD'], [float]))
         dtimes = np.arange(100)/24./60.
-        data['expMJD'] = dtimes.cumsum()
+        data['observationStartMJD'] = dtimes.cumsum()
         metric = metrics.NRevisitsMetric(dT=50.)
         result = metric.run(data)
         self.assertEqual(result, 50)
@@ -166,12 +166,12 @@ class TestCadenceMetrics(unittest.TestCase):
         self.assertEqual(result, 0.5)
 
     def testTransientMetric(self):
-        names = ['expMJD', 'fiveSigmaDepth', 'filter']
+        names = ['observationStartMJD', 'fiveSigmaDepth', 'filter']
         types = [float, float, '|S1']
 
         ndata = 100
         dataSlice = np.zeros(ndata, dtype=zip(names, types))
-        dataSlice['expMJD'] = np.arange(ndata)
+        dataSlice['observationStartMJD'] = np.arange(ndata)
         dataSlice['fiveSigmaDepth'] = 25
         dataSlice['filter'] = 'g'
 

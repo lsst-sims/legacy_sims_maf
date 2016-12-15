@@ -20,18 +20,18 @@ def makeDataValues(size=100, min=0., max=1., random=True):
         datavalues = datavalues[randind]
     ids = np.arange(size)
     datavalues = np.array(zip(datavalues, datavalues, ids),
-                          dtype=[('fieldRA', 'float'),
-                                 ('fieldDec', 'float'), ('fieldID', 'int')])
+                          dtype=[('ra_rad', 'float'),
+                                 ('dec_rad', 'float'), ('fieldId', 'int')])
     return datavalues
 
 
 def makeFieldData():
-    names = ['fieldID', 'fieldRA', 'fieldDec']
+    names = ['fieldId', 'ra_rad', 'dec_rad']
     types = [int, float, float]
     fieldData = np.zeros(100, dtype=zip(names, types))
-    fieldData['fieldID'] = np.arange(100)
-    fieldData['fieldRA'] = np.random.rand(100)
-    fieldData['fieldDec'] = np.random.rand(100)
+    fieldData['fieldId'] = np.arange(100)
+    fieldData['ra_rad'] = np.random.rand(100)
+    fieldData['dec_rad'] = np.random.rand(100)
     return fieldData
 
 

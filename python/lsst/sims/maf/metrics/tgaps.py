@@ -6,7 +6,7 @@ __all__ = ['TgapsMetric']
 class TgapsMetric(BaseMetric):
     """Histogram up all the time gaps """
 
-    def __init__(self, timesCol='expMJD', allGaps=False, bins=np.arange(0.5, 60.0, 0.5), units='days',
+    def __init__(self, timesCol='observationStartMJD', allGaps=False, bins=np.arange(0.5, 60.0, 0.5), units='days',
                  **kwargs):
         """
         Metric to measure the gaps between observations.  By default, only gaps

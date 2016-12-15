@@ -11,7 +11,7 @@ import lsst.utils.tests
 class Test2D(unittest.TestCase):
 
     def setUp(self):
-        names = ['night', 'fieldID', 'fieldRA', 'fieldDec', 'fiveSigmaDepth', 'expMJD']
+        names = ['night', 'fieldId', 'ra_rad', 'dec_rad', 'fiveSigmaDepth', 'observationStartMJD']
         types = [int, int, float, float, float, float]
 
         self.m5_1 = 25.
@@ -23,23 +23,23 @@ class Test2D(unittest.TestCase):
         # Picking RA and Dec values that will hit nside=16 healpixels
         self.simData = np.zeros(self.n1+self.n2, dtype=zip(names, types))
         self.simData['night'][0:self.n1] = 1
-        self.simData['fieldID'][0:self.n1] = 1
-        self.simData['fieldRA'][0:self.n1] = np.radians(10.)
-        self.simData['fieldDec'][0:self.n1] = 0
+        self.simData['fieldId'][0:self.n1] = 1
+        self.simData['ra_rad'][0:self.n1] = np.radians(10.)
+        self.simData['dec_rad'][0:self.n1] = 0
         self.simData['fiveSigmaDepth'][0:self.n1] = self.m5_1
 
         self.simData['night'][self.n1:] = 2
-        self.simData['fieldID'][self.n1:] = 2
-        self.simData['fieldRA'][self.n1:] = np.radians(190.)
-        self.simData['fieldDec'][self.n1:] = np.radians(-20.)
+        self.simData['fieldId'][self.n1:] = 2
+        self.simData['ra_rad'][self.n1:] = np.radians(190.)
+        self.simData['dec_rad'][self.n1:] = np.radians(-20.)
         self.simData['fiveSigmaDepth'][self.n1:] = self.m5_2
 
-        self.fieldData = np.zeros(2, dtype=zip(['fieldID', 'fieldRA', 'fieldDec'], [int, float, float]))
-        self.fieldData['fieldID'] = [1, 2]
-        self.fieldData['fieldRA'] = np.radians([10., 190.])
-        self.fieldData['fieldDec'] = np.radians([0., -20.])
+        self.fieldData = np.zeros(2, dtype=zip(['fieldId', 'ra_rad', 'dec_rad'], [int, float, float]))
+        self.fieldData['fieldId'] = [1, 2]
+        self.fieldData['ra_rad'] = np.radians([10., 190.])
+        self.fieldData['dec_rad'] = np.radians([0., -20.])
 
-        self.simData['expMJD'] = self.simData['night']
+        self.simData['observationStartMJD'] = self.simData['night']
 
     def testOpsim2dSlicer(self):
         metric = metrics.AccumulateCountMetric(bins=[0.5, 1.5, 2.5])
@@ -66,7 +66,22 @@ class Test2D(unittest.TestCase):
         good = np.where(mb.metricValues.mask[:, -1] == False)[0]
         expected = np.array([[self.n1, self.n1],
                              [-666., self.n2]])
+        
         assert(np.array_equal(mb.metricValues.data[good, :], expected))
+
+    def testTemp(self):
+        metric = metrics.CountMetric(col='night')
+        slicer = slicers.HealpixSlicer(nside=16)
+        sql = ''
+        mb = metricBundle.MetricBundle(metric, slicer, sql)
+        mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
+        mbg.setCurrent('')
+        mbg.runCurrent('', simData=self.simData)
+
+        good = np.where(mb.metricValues.mask == False)[0]
+        import pdb ; pdb.set_trace()
+        assert(False)
+
 
     def testHistogramMetric(self):
         metric = metrics.HistogramMetric(bins=[0.5, 1.5, 2.5])
@@ -80,7 +95,6 @@ class Test2D(unittest.TestCase):
         good = np.where(mb.metricValues.mask[:, -1] == False)[0]
         expected = np.array([[self.n1, 0.],
                              [0., self.n2]])
-
         assert(np.array_equal(mb.metricValues.data[good, :], expected))
 
         # Check that I can run a different statistic

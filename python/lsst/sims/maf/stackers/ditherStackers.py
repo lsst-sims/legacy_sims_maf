@@ -138,10 +138,10 @@ class RandomDitherFieldPerVisitStacker(BaseStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     maxDither : float, optional
         The radius of the maximum dither offset, in degrees.
         Default 1.75 degrees.
@@ -153,7 +153,7 @@ class RandomDitherFieldPerVisitStacker(BaseStacker):
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', maxDither=1.75,
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', maxDither=1.75,
                  inHex=True, randomSeed=None):
         """
         @ MaxDither in degrees
@@ -223,14 +223,14 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     nightCol : str, optional
         The name of the night column in the data.
         Default 'night'.
@@ -245,7 +245,7 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldId', nightCol='night',
                  maxDither=1.75, inHex=True, randomSeed=None):
         """
         @ MaxDither in degrees
@@ -301,10 +301,10 @@ class RandomDitherPerNightStacker(RandomDitherFieldPerVisitStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     nightCol : str, optional
         The name of the night column in the data.
         Default 'night'.
@@ -319,7 +319,7 @@ class RandomDitherPerNightStacker(RandomDitherFieldPerVisitStacker):
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', nightCol='night',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', nightCol='night',
                  maxDither=1.75, inHex=True, randomSeed=None):
         """
         @ MaxDither in degrees
@@ -362,14 +362,14 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     numPoints : int, optional
         The number of points in the spiral.
         Default 60.
@@ -384,7 +384,7 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldId',
                  numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
@@ -456,14 +456,14 @@ class SpiralDitherFieldPerNightStacker(SpiralDitherFieldPerVisitStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     nightCol : str, optional
         The name of the night column in the data.
         Default 'night'.
@@ -481,7 +481,7 @@ class SpiralDitherFieldPerNightStacker(SpiralDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldId', nightCol='night',
                  numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
@@ -525,14 +525,14 @@ class SpiralDitherPerNightStacker(SpiralDitherFieldPerVisitStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     nightCol : str, optional
         The name of the night column in the data.
         Default 'night'.
@@ -550,7 +550,7 @@ class SpiralDitherPerNightStacker(SpiralDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', nightCol='night',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldId', nightCol='night',
                  numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
@@ -588,14 +588,14 @@ class HexDitherFieldPerVisitStacker(BaseStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     maxDither : float, optional
         The radius of the maximum dither offset, in degrees.
         Default 1.75 degrees.
@@ -604,7 +604,7 @@ class HexDitherFieldPerVisitStacker(BaseStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID', maxDither=1.75, inHex=True):
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldId', maxDither=1.75, inHex=True):
         """
         @ MaxDither in degrees
         """
@@ -678,14 +678,14 @@ class HexDitherFieldPerNightStacker(HexDitherFieldPerVisitStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     nightCol : str, optional
         The name of the night column in the data.
         Default 'night'.
@@ -697,7 +697,7 @@ class HexDitherFieldPerNightStacker(HexDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldIdCol', nightCol='night',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldIdCol', nightCol='night',
                  maxDither=1.75, inHex=True):
         """
         @ MaxDither in degrees
@@ -740,14 +740,14 @@ class HexDitherPerNightStacker(HexDitherFieldPerVisitStacker):
     ----------
     raCol : str, optional
         The name of the RA column in the data.
-        Default 'fieldRA'.
+        Default 'ra_rad'.
     decCol : str, optional
         The name of the Dec column in the data.
-        Default 'fieldDec'.
+        Default 'dec_rad'.
     fieldIdCol : str, optional
-        The name of the fieldID column in the data.
+        The name of the fieldId column in the data.
         Used to identify fields which should be identified as the 'same'.
-        Default 'fieldID'.
+        Default 'fieldId'.
     nightCol : str, optional
         The name of the night column in the data.
         Default 'night'.
@@ -759,7 +759,7 @@ class HexDitherPerNightStacker(HexDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', fieldIdCol='fieldID',
+    def __init__(self, raCol='ra_rad', decCol='dec_rad', fieldIdCol='fieldId',
                  nightCol='night', maxDither=1.75, inHex=True):
         """
         @ MaxDither in degrees

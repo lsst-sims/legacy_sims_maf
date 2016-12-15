@@ -13,11 +13,11 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax metric.
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad', 'filter']
         types = [float, float, float, float, float, '|S1']
         data = np.zeros(700, dtype=zip(names, types))
         slicePoint = {'sid': 0}
-        data['expMJD'] = np.arange(700)+56762
+        data['observationStartMJD'] = np.arange(700)+56762
         data['finSeeing'] = 0.7
         data['filter'][0:100] = 'r'
         data['filter'][100:200] = 'u'
@@ -53,13 +53,13 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the ProperMotion metric.
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad', 'filter']
         types = [float, float, float, float, float, '|S1']
         data = np.zeros(700, dtype=zip(names, types))
         slicePoint = [0]
         stacker = stackers.ParallaxFactorStacker()
         normFlags = [False, True]
-        data['expMJD'] = np.arange(700)+56762
+        data['observationStartMJD'] = np.arange(700)+56762
         data['finSeeing'] = 0.7
         data['filter'][0:100] = 'r'
         data['filter'][100:200] = 'u'
@@ -98,7 +98,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax coverage
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad',
                  'filter', 'ra_pi_amp', 'dec_pi_amp']
         types = [float, float, float, float, float, '|S1', float, float]
         data = np.zeros(100, dtype=zip(names, types))
@@ -138,7 +138,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax-DCR degeneracy metric
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'ra_rad', 'dec_rad',
                  'filter', 'ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp']
         types = [float, float, float, float, float, '|S1', float,
                  float, float, float]
@@ -180,19 +180,19 @@ class TestCalibrationMetrics(unittest.TestCase):
         Test the RadiusObsMetric
         """
 
-        names = ['fieldRA', 'fieldDec']
+        names = ['ra_rad', 'dec_rad']
         dt = ['float']*2
         data = np.zeros(3, dtype=zip(names, dt))
-        data['fieldDec'] = [-.1, 0, .1]
+        data['dec_rad'] = [-.1, 0, .1]
         slicePoint = {'ra': 0., 'dec': 0.}
         metric = metrics.RadiusObsMetric()
         result = metric.run(data, slicePoint)
         for i, r in enumerate(result):
-            np.testing.assert_almost_equal(r, abs(data['fieldDec'][i]))
+            np.testing.assert_almost_equal(r, abs(data['dec_rad'][i]))
         assert(metric.reduceMean(result) == np.mean(result))
         assert(metric.reduceRMS(result) == np.std(result))
         np.testing.assert_almost_equal(metric.reduceFullRange(result),
-                                       np.max(np.abs(data['fieldDec']))-np.min(np.abs(data['fieldDec'])))
+                                       np.max(np.abs(data['dec_rad']))-np.min(np.abs(data['dec_rad'])))
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

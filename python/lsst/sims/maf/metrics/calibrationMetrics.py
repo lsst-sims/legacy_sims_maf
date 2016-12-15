@@ -12,7 +12,7 @@ class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
-                 mjdCol='expMJD', units = 'mas',
+                 mjdCol='observationStartMJD', units = 'mas',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False, **kwargs):
@@ -92,7 +92,7 @@ class ProperMotionMetric(BaseMetric):
     """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
     """
     def __init__(self, metricName='properMotion',
-                 m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
+                 m5Col='fiveSigmaDepth', mjdCol='observationStartMJD', units='mas/yr',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
@@ -154,10 +154,10 @@ class ProperMotionMetric(BaseMetric):
                     dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
-        result = mafUtils.sigma_slope(dataslice['expMJD'][good], precis[good])
+        result = mafUtils.sigma_slope(dataslice['observationStartMJD'][good], precis[good])
         result = result*365.25*1e3  # Convert to mas/yr
         if (self.normalize) & (good[0].size > 0):
-            new_dates = dataslice['expMJD'][good]*0
+            new_dates = dataslice['observationStartMJD'][good]*0
             nDates = new_dates.size
             new_dates[nDates/2:] = self.baseline*365.25
             result = (mafUtils.sigma_slope(new_dates, precis[good])*365.25*1e3)/result
@@ -184,7 +184,7 @@ class ParallaxCoverageMetric(BaseMetric):
     Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
     """
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
-                 mjdCol='expMJD', filterCol='filter', seeingCol='FWHMgeom',
+                 mjdCol='observationStartMJD', filterCol='filter', seeingCol='FWHMgeom',
                  rmag=20., SedTemplate='flat', badval=-666,
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
         """
@@ -391,7 +391,7 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 class RadiusObsMetric(BaseMetric):
     """find the radius in the focal plane. """
 
-    def __init__(self, metricName='radiusObs', raCol='fieldRA', decCol='fieldDec',
+    def __init__(self, metricName='radiusObs', raCol='ra_rad', decCol='dec_rad',
                  units='radians', **kwargs):
         self.raCol = raCol
         self.decCol = decCol

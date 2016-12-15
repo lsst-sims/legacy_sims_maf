@@ -7,12 +7,12 @@ class PhaseGapMetric(BaseMetric):
     """
     Measure the maximum gap in phase coverage for observations of periodic variables.
     """
-    def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3,
+    def __init__(self, col='observationStartMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3,
                  metricName='Phase Gap', **kwargs):
         """
         Construct an instance of a PhaseGapMetric class
 
-        :param col: Name of the column to use for the observation times, commonly 'expMJD'
+        :param col: Name of the column to use for the observation times, commonly 'observationStartMJD'
         :param nPeriods: Number of periods to test
         :param periodMin: Minimum period to test (days)
         :param periodMax: Maximimum period to test (days)

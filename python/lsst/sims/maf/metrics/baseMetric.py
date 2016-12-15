@@ -181,7 +181,7 @@ class BaseMetric(object):
            metric values at each slicePoint.
         slicePoint : Dict
            Dictionary of slicePoint metadata passed to each metric.
-           E.g. the ra/dec of the healpix pixel or opsim fieldID.
+           E.g. the ra/dec of the healpix pixel or opsim fieldId.
 
         Returns
         -------
