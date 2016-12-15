@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 from .baseStacker import BaseStacker
 from lsst.sims.utils import Site
+from .generalStackers import FiveSigmaStacker
 
 __all__ = ['M5OptimalStacker', 'generate_sky_slopes']
 
@@ -63,26 +64,29 @@ class M5OptimalStacker(BaseStacker):
 
     def __init__(self, airmassCol='airmass', decCol='dec_rad',
                  skyBrightCol='filtSkyBrightness', seeingCol='FWHMeff',
-                 filterCol='filter', m5Col ='fiveSigmaDepth',
+                 filterCol='filter',
                  moonAltCol='moonAlt', sunAltCol='sunAlt',
                  site='LSST'):
 
         self.site = Site(site)
         self.units = ['mags']
-        self.colsAdded = ['m5Optimal']
+        self.colsAdded = ['m5Optimal', 'fiveSigmaDepth']
         self.colsReq = [airmassCol, decCol, skyBrightCol,
-                        seeingCol, filterCol, m5Col, moonAltCol, sunAltCol]
+                        seeingCol, filterCol, moonAltCol, sunAltCol]
 
         self.airmassCol = airmassCol
         self.decCol = decCol
         self.skyBrightCol = skyBrightCol
         self.seeingCol = seeingCol
         self.filterCol = filterCol
-        self.m5Col = m5Col
         self.moonAltCol = moonAltCol
         self.sunAltCol = sunAltCol
+        self.m5_stacker = FiveSigmaStacker()
+        self.colsReq.extend(self.m5_stacker.colsReq)
+        self.colsReq = list(set(self.colsReq))
 
     def _run(self, simData):
+        simData = self.m5_stacker._run(simData)
         # kAtm values from lsst.sims.operations gen_output.py
         kAtm = {'u': 0.50, 'g': 0.21, 'r': 0.13, 'i': 0.10,
                 'z': 0.07, 'y': 0.18}

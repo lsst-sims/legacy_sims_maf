@@ -16,10 +16,10 @@ class UserPointsSlicer(BaseSpatialSlicer):
         User-selected Dec points, in degrees. Stored internally in radians.
     lonCol : str, optional
         Name of the longitude (RA equivalent) column to use from the input data.
-        Default ra_rad
+        Default fieldRA
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
-        Default dec_rad
+        Default fieldDec
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.

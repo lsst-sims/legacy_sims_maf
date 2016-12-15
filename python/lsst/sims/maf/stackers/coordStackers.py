@@ -21,7 +21,7 @@ class GalacticStacker(BaseStacker):
     """
     Stack on the galactic coordinates of each pointing.
     """
-    def __init__(self, raCol='ra_rad', decCol='dec_rad'):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec'):
         self.colsReq = [raCol,decCol]
         self.colsAdded = ['gall','galb']
         self.units = ['radians', 'radians']
@@ -30,7 +30,8 @@ class GalacticStacker(BaseStacker):
 
     def _run(self, simData):
         # raCol and DecCol in radians, gall/b in radians.
-        simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
+        simData['gall'], simData['galb'] = _galacticFromEquatorial(np.radians(simData[self.raCol]),
+                                                                   np.radians(simData[self.decCol]))
         return simData
 
 class EclipticStacker(BaseStacker):
@@ -38,7 +39,7 @@ class EclipticStacker(BaseStacker):
     Stack on the ecliptic coordinates of each pointing.  Optionally
     subtract off the sun's ecliptic longitude and wrap.
     """
-    def __init__(self, mjdCol='observationStartMJD', raCol='ra_rad',decCol='dec_rad',
+    def __init__(self, mjdCol='observationStartMJD', raCol='fieldRA',decCol='fieldDec',
                  subtractSunLon=False):
 
         self.colsReq = [mjdCol,raCol,decCol]
@@ -51,7 +52,8 @@ class EclipticStacker(BaseStacker):
 
     def _run(self, simData):
         for i in np.arange(simData.size):
-            coord = ephem.Equatorial(simData[self.raCol][i],simData[self.decCol][i], epoch=2000)
+            coord = ephem.Equatorial(np.radians(simData[self.raCol][i]),
+                                     np.radians(simData[self.decCol][i]), epoch=2000)
             ecl = ephem.Ecliptic(coord)
             simData['eclipLat'][i] = ecl.lat
             if self.subtractSunLon:

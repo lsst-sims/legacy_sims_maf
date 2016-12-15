@@ -25,10 +25,10 @@ class HealpixSlicer(BaseSpatialSlicer):
         Default 128.
     lonCol : str, optional
         Name of the longitude (RA equivalent) column to use from the input data.
-        Default ra_rad
+        Default fieldRA
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
-        Default dec_rad
+        Default fieldDec
     latLonDeg : bool (True)
         Assume the input latitude and longitudes are in degrees
     verbose : boolean, optional
