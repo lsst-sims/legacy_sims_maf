@@ -277,7 +277,7 @@ class TestStackerClasses(unittest.TestCase):
         data['dec'] += dec
         s = stackers.GalacticStacker(raCol='ra', decCol='dec')
         newData = s.run(data)
-        expectedL, expectedB = _galacticFromEquatorial(ra, dec)
+        expectedL, expectedB = _galacticFromEquatorial(np.radians(ra), np.radians(dec))
         np.testing.assert_array_equal(newData['gall'], expectedL)
         np.testing.assert_array_equal(newData['galb'], expectedB)
 

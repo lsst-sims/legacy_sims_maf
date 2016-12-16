@@ -318,7 +318,7 @@ class MetricBundleGroup(object):
             groupBy = None
         else:
             distinctExpMJD = True
-            groupBy = 'expMJD'
+            groupBy = 'observationStartMJD'
         self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
                                         distinctExpMJD=distinctExpMJD,
                                         groupBy=groupBy)

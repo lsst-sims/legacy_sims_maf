@@ -160,7 +160,10 @@ if __name__ == "__main__":
                     opsimDate = tmp[-2]
                     # Let's go ahead and make the formats match
                     opsimDate = opsimDate.split('-')
-                    opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
+                    try:
+                        opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
+                    except:
+                        opsimDate = 'XXX'
         # Give some feedback to the user about what we're doing.
         print 'Adding to tracking database at %s:' % (trackingDb)
         print ' MafDir = %s' % (mafDir)

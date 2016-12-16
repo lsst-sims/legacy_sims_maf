@@ -46,6 +46,8 @@ class Test2D(unittest.TestCase):
         slicer = slicers.OpsimFieldSlicer()
         sql = ''
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.fieldData = self.fieldData
@@ -59,6 +61,8 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
@@ -74,6 +78,8 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
@@ -88,6 +94,8 @@ class Test2D(unittest.TestCase):
                                          statistic='sum',
                                          bins=[0.5, 1.5, 2.5])
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
@@ -100,6 +108,8 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
@@ -113,6 +123,8 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
@@ -136,6 +148,8 @@ class Test2D(unittest.TestCase):
         slicer = slicers.HealpixSlicer(nside=16)
         sql = ''
         mb = metricBundle.MetricBundle(metric, slicer, sql)
+        # Clobber the stacker that gets auto-added
+        mb.stackerList = []
         mbg = metricBundle.MetricBundleGroup({0: mb}, None, saveEarly=False)
         mbg.setCurrent('')
         mbg.runCurrent('', simData=self.simData)
@@ -190,6 +204,8 @@ class Test2D(unittest.TestCase):
         metric = metrics.Coaddm5Metric()
         slicer = slicers.HealpixSlicer(nside=16)
         bundleList.append(metricBundle.MetricBundle(metric, slicer, sql))
+        for bundle in bundleList:
+            bundle.stackerList = []
         bd = metricBundle.makeBundlesDictFromList(bundleList)
         mbg = metricBundle.MetricBundleGroup(bd, None, saveEarly=False)
         mbg.setCurrent('')

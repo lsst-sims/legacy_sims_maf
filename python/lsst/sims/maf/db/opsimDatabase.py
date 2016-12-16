@@ -100,7 +100,7 @@ class OpsimDatabase(Database):
             warnings.warn('Doing no groupBy, data could contain repeat visits that satisfy multiple proposals')
 
         table = self.tables[self.summaryTable]
-        if (groupBy is not None) and (groupBy != 'expMJD'):
+        if (groupBy is not None) and (groupBy != self.mjdCol):
             if distinctExpMJD:
                 warnings.warn('Cannot group by more than one column. Using explicit groupBy col %s' %(groupBy))
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
