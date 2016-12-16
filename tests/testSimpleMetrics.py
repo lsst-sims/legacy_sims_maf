@@ -113,27 +113,23 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test mean angle metric."""
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
-        dv1 = np.radians(dv1)
-        dv2 = np.radians(dv2)
         dv1 = np.array(zip(dv1), dtype=[('testdata', 'float')])
         dv2 = np.array(zip(dv2), dtype=[('testdata', 'float')])
         testmetric = metrics.MeanAngleMetric('testdata')
-        result1 = np.degrees(testmetric.run(dv1))
-        result2 = np.degrees(testmetric.run(dv2))
+        result1 = testmetric.run(dv1)
+        result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, (result2+20)%360.)
         dv = np.random.rand(10000)*360.0
-        dv = np.radians(dv)
+        dv = dv
         dv = np.array(zip(dv), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
-        result = np.degrees(result)
+        result = result
         self.assertAlmostEqual(result, 180)
 
     def testFullRangeAngleMetric(self):
         """Test full range angle metric."""
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
-        dv1 = np.radians(dv1)
-        dv2 = np.radians(dv2)
         dv1 = np.array(zip(dv1), dtype=[('testdata', 'float')])
         dv2 = np.array(zip(dv2), dtype=[('testdata', 'float')])
         testmetric = metrics.FullRangeAngleMetric('testdata')
@@ -141,16 +137,13 @@ class TestSimpleMetrics(unittest.TestCase):
         result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, result2)
         dv = np.arange(0, 358, 5)
-        dv = np.radians(dv)
         dv = np.array(zip(dv), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
-        result = np.degrees(result)
         self.assertAlmostEqual(result, 355)
         dv = np.random.rand(10000)*360.0
-        dv = np.radians(dv)
         dv = np.array(zip(dv), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
-        result = np.degrees(result)
+        result = result
         self.assertGreater(result, 355)
 
 

@@ -85,11 +85,11 @@ def createSQLWhere(tag, propTags):
     if (tag not in propTags) or (len(propTags[tag]) == 0):
         print 'No %s proposals found' % (tag)
         # Create a sqlWhere clause that will not return anything as a query result.
-        sqlWhere = 'propID like "NO PROP"'
+        sqlWhere = 'proposalId like "NO PROP"'
     elif len(propTags[tag]) == 1:
-        sqlWhere = "propID = %d" % (propTags[tag][0])
+        sqlWhere = "proposalId = %d" % (propTags[tag][0])
     else:
-        sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
+        sqlWhere = "(" + " or ".join(["proposalId = %d"%(propid) for propid in propTags[tag]]) + ")"
     return sqlWhere
 
 
@@ -114,7 +114,7 @@ def getFieldData(opsimDb, sqlconstraint):
         A numpy structured array containing the field information.
     """
     # Get all fields used for all proposals.
-    if 'propID' not in sqlconstraint:
+    if 'proposalId' not in sqlconstraint:
         propids, propTags = opsimDb.fetchPropInfo()
         propids = propids.keys()
     else:
@@ -130,7 +130,7 @@ def getFieldData(opsimDb, sqlconstraint):
         nonpropids = []
         i = 0
         while i < len(sqllist):
-            if sqllist[i].lower() == 'propid':
+            if sqllist[i].lower() == 'propsalid':
                 i += 1
                 if sqllist[i] == "=":
                     i += 1
@@ -140,6 +140,7 @@ def getFieldData(opsimDb, sqlconstraint):
                     nonpropids.append(int(sqllist[i]))
             i += 1
         if len(propids) == 0:
+            propids, propTags = opsimDb.fetchPropInfo()
             propids = propids.keys()
         if len(nonpropids) > 0:
             for nonpropid in nonpropids:

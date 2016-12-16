@@ -84,7 +84,7 @@ class ZenithDistStacker(BaseStacker):
     def _run(self, simData):
         """Calculate new column for zenith distance."""
         if self.degrees:
-            zenithDist = np.pi-np.randians(simData[self.altCol])
+            zenithDist = np.pi-np.radians(simData[self.altCol])
         else:
             zenithDist = np.pi-simData[self.altCol]
         simData['zenithDistance'] = zenithDist

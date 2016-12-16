@@ -215,7 +215,7 @@ def _rotateAngles(angles):
     angleidx = np.argsort(angles)
     diffangles = np.diff(angles[angleidx])
     start_to_end = np.array([twopi-angles[angleidx][-1] + angles[angleidx][0]], float)
-    if start_to_end < 0:
+    if start_to_end < -2.*np.pi:
         raise ValueError('Angular metrics expect radians, this seems to be in degrees')
     diffangles = np.concatenate([diffangles, start_to_end])
     maxdiff = np.where(diffangles == diffangles.max())[0]
@@ -228,15 +228,15 @@ def _rotateAngles(angles):
     return (rotation, (angles - rotation) % twopi)
 
 class MeanAngleMetric(BaseMetric):
-    """Calculate the mean of an angular (radians) simData column slice.
+    """Calculate the mean of an angular (degree) simData column slice.
 
     'MeanAngle' differs from 'Mean' in that it accounts for wraparound at 2pi."""
     def run(self, dataSlice, slicePoint=None):
         """Calculate mean angle via unit vectors.
         If unit vector 'strength' is less than 0.1, then just set mean to 180 degrees
         (as this indicates nearly uniformly distributed angles). """
-        x = np.cos(dataSlice[self.colname])
-        y = np.sin(dataSlice[self.colname])
+        x = np.cos(np.radians(dataSlice[self.colname]))
+        y = np.sin(np.radians(dataSlice[self.colname]))
         meanx = np.mean(x)
         meany = np.mean(y)
         angle = np.arctan2(meany, meanx)
@@ -244,20 +244,20 @@ class MeanAngleMetric(BaseMetric):
         mean = angle % twopi
         if radius < 0.1:
             mean = np.pi
-        return mean
+        return np.degrees(mean)
 
 class RmsAngleMetric(BaseMetric):
-    """Calculate the standard deviation of an angular (radians) simData column slice.
+    """Calculate the standard deviation of an angular (degrees) simData column slice.
 
     'RmsAngle' differs from 'Rms' in that it accounts for wraparound at 2pi."""
     def run(self, dataSlice, slicePoint=None):
-        rotation, angles = _rotateAngles(dataSlice[self.colname])
-        return np.std(angles)
+        rotation, angles = _rotateAngles(np.radians(dataSlice[self.colname]))
+        return np.std(np.degrees(angles))
 
 class FullRangeAngleMetric(BaseMetric):
-    """Calculate the full range of an angular (radians) simData column slice.
+    """Calculate the full range of an angular (degrees) simData column slice.
 
     'FullRangeAngle' differs from 'FullRange' in that it accounts for wraparound at 2pi."""
     def run(self, dataSlice, slicePoint=None):
-        rotation, angles = _rotateAngles(dataSlice[self.colname])
-        return angles.max() - angles.min()
+        rotation, angles = _rotateAngles(np.radians(dataSlice[self.colname]))
+        return np.degrees(angles.max() - angles.min())

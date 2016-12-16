@@ -17,19 +17,19 @@ class TestUtils(unittest.TestCase):
         #  is simply 'propId = 4'
         tag = 'DD'
         sqlWhere = utils.createSQLWhere(tag, propTags)
-        self.assertEqual(sqlWhere, 'propID = 4')
+        self.assertEqual(sqlWhere, 'proposalId = 4')
         # if multiple proposals with the same tag, all should be in list.
         tag = 'WFD'
         sqlWhere = utils.createSQLWhere(tag, propTags)
-        self.assertEqual(sqlWhere.split()[0], '(propID')
+        self.assertEqual(sqlWhere.split()[0], '(proposalId')
         for id in propTags['WFD']:
             self.assertTrue('%s' % (id) in sqlWhere)
         # And the same id can be in multiple proposals.
         tag = 'Rolling'
         sqlWhere = utils.createSQLWhere(tag, propTags)
-        self.assertEqual(sqlWhere, 'propID = 2')
+        self.assertEqual(sqlWhere, 'proposalId = 2')
         # And tags not in propTags are handled.
-        badprop = 'propID like "NO PROP"'
+        badprop = 'proposalId like "NO PROP"'
         tag = 'nogo'
         sqlWhere = utils.createSQLWhere(tag, propTags)
         self.assertEqual(sqlWhere, badprop)
