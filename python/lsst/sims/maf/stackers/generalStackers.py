@@ -76,7 +76,7 @@ class ZenithDistStacker(BaseStacker):
     """
     def __init__(self, altCol = 'altitude', degrees=True):
         self.altCol = altCol
-        self.units = ['radians']
+        self.units = ['degrees']
         self.colsAdded = ['zenithDistance']
         self.colsReq = [self.altCol]
         self.degrees = degrees
@@ -87,7 +87,7 @@ class ZenithDistStacker(BaseStacker):
             zenithDist = np.pi-np.radians(simData[self.altCol])
         else:
             zenithDist = np.pi-simData[self.altCol]
-        simData['zenithDistance'] = zenithDist
+        simData['zenithDistance'] = np.degrees(zenithDist)
         return simData
 
 

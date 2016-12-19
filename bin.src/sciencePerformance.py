@@ -638,7 +638,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             displayDict = {'group': rangeGroup, 'subgroup': propids[propid], 'caption': caption,
                            'order': filtorder[f]}
             md = '%s, %s' % (f, propids[propid])
-            sql = 'filter="%s" and propID=%i' % (f, propid)
+            sql = 'filter="%s" and proposalId=%i' % (f, propid)
             bundle = metricBundles.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                                                 metadata=md, plotFuncs=plotFuncs,
                                                 displayDict=displayDict, runName=runName)
@@ -656,7 +656,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                            'caption': 'Alt Az pointing distribution',
                            'order': filtorder[f]}
             md = '%s, %s' % (f, propids[propid])
-            sql = 'filter="%s" and propID=%i' % (f, propid)
+            sql = 'filter="%s" and proposalId=%i' % (f, propid)
             bundle = metricBundles.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                                                 plotFuncs=plotFuncs, metadata=md,
                                                 displayDict=displayDict, runName=runName)
