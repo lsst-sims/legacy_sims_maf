@@ -162,15 +162,15 @@ class OpsimDatabase(Database):
         """
         propIDs = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
-        propTags = {'WFD': [], 'DD': []}
+        propTags = {'WideFastDeep': [], 'DD': []}
 
         table = self.tables['Proposal']
         propData = table.query_columns_Array(colnames=[self.propIdCol, self.propNameCol], constraint='')
         for propID, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
             propIDs[propID] = propName
-            if 'weaklensing' in propName.lower():
-                propTags['WFD'].append(propID)
-            if 'deep' in propName.lower():
+            if 'widefastdeep' in propName.lower():
+                propTags['WideFastDeep'].append(propID)
+            if 'drill' in propName.lower():
                 propTags['DD'].append(propID)
 
         return propIDs, propTags
@@ -311,10 +311,10 @@ class OpsimDatabase(Database):
                                                                    constraint=constraint)
         for pId, propType in zip(propData[self.propIdCol], propData[self.propNameCol]):
             perPropConfig = self.tables['Config'].query_columns_Array(colnames=['paramName', 'paramValue'],
-                                                                      constraint = 'nonPropId = %d and paramName!="userRegion"'
+                                                                      constraint = 'configId = %d and paramName!="userRegion"'
                                                                                       %(pId))
             filterlist = self._matchParamNameValue(perPropConfig, 'Filter')
-            if propType == 'WL':
+            if propType == 'WideFastDeep':
                 # For WL proposals, the simple 'Filter_Visits' == the requested number of observations.
                 nvisits = np.array(self._matchParamNameValue(perPropConfig, 'Filter_Visits'), int)
             elif propType == 'WLTSS':

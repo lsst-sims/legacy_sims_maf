@@ -40,13 +40,13 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
     DDpropid = propTags['DD']
-    WFDpropid = propTags['WFD']
+    WFDpropid = propTags['WideFastDeep']
 
     # Fetch the telescope location from config
     lat, lon, height = opsimdb.fetchLatLonHeight()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = utils.createSQLWhere('WFD', propTags)
+    wfdWhere = utils.createSQLWhere('WideFastDeep', propTags)
     print '#FYI: WFD "where" clause: %s' % (wfdWhere)
     ddWhere = utils.createSQLWhere('DD', propTags)
     print '#FYI: DD "where" clause: %s' % (ddWhere)

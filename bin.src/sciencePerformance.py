@@ -202,7 +202,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     order += 1
 
     m2 = metrics.NRevisitsMetric(dT=dTmax)
-    plotDict = {'xMin': 0, 'xMax': 1000, 'logScale': True}
+    plotDict = {'xMin': 0.1, 'xMax': 2000, 'logScale': True}
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     extraStats2.extend(commonSummary)
