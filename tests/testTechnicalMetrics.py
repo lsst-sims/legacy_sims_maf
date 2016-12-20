@@ -119,7 +119,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         visitTime = np.ones(nvisit, dtype='float')*(exptime+0.0)
         slewTime = np.ones(nvisit, dtype='float')*slewtime
         data = np.core.records.fromarrays([visitExpTime, visitTime, slewTime],
-                                          names=['visitExpTime', 'visitTime', 'slewTime'])
+                                          names=['visitExposureTime', 'visitTime', 'slewTime'])
         metric = metrics.OpenShutterFractionMetric()
         result = metric.run(data)
         self.assertEqual(result, .5)

@@ -175,13 +175,12 @@ class OpsimDatabase(Database):
 
         return propIDs, propTags
 
-    def fetchRunLength(self, runLengthParam='default'):
+    def fetchRunLength(self, runLengthParam='survey/duration'):
         """
         Returns the run length for a particular opsim run (years).
 
         runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
         """
-        runLengthParam = 'survey/duration'
 
         if 'Config' not in self.tables:
             print 'Cannot access Config table to retrieve runLength; using default 10 years'
@@ -190,7 +189,7 @@ class OpsimDatabase(Database):
             table = self.tables['Config']
             runLength = table.query_columns_Array(colnames=['paramValue'],
                                                   constraint=" paramName = '%s'" % (runLengthParam))
-            runLength = float(runLength['paramValue'][0])  # Years
+            runLength = float(runLength['paramValue'][0])*10.  # Years
         return runLength
 
     def fetchLatLonHeight(self):

@@ -218,7 +218,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
             metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
             plotDict = {'xlabel': 'Number of Visits', 'xMin': nvisitsMin,
                         'xMax': nvisitsMax, 'binsize': 5,
-                        'colorMin': nvisitsMin, 'colorMax': nvisitsMax}
+                        'colorMax': nvisitsMax}
             summaryStats = allStats
             displayDict = {'group': nvisitgroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': 'Number of visits in filter %s, %s.' % (f, propCaption)}
@@ -420,7 +420,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
                 bundleList.append(bundle)
                 # Calculate the RMS of the position angle
                 metric = metrics.RmsAngleMetric(col='rotSkyPos')
-                plotDict = {'xMin': 0, 'xMax': np.pi, 'colorMin': 0, 'colorMax': np.pi}
+                plotDict = {'xMin': 0, 'xMax': 180., 'colorMin': 0, 'colorMax': 180.}
                 caption = 'RMS of the position angle (angle between "up" in the camera and north '
                 caption += 'on the sky) in filter %s, %s.' % (f, propCaption)
                 displayDict = {'group': rotatorgroup, 'subgroup': subgroup, 'order': filtorder[f],
@@ -658,12 +658,12 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
             metric = metrics.CountMetric(col='rotSkyPos', metricName='Position Angle Histogram')
             histMerge = {'legendloc': 'upper right',
                          'color': colors[f], 'label': '%s' % f, 'xMin': 0.,
-                         'xMax': float(np.pi * 2.)}
-            caption = 'Histogram of the position angle (in radians) in %s band, %s. ' % (f, propCaption)
+                         'xMax': 360.}
+            caption = 'Histogram of the position angle (in degrees) in %s band, %s. ' % (f, propCaption)
             caption += 'The position angle is the angle between "up" in the image and North on the sky.'
             displayDict = {'group': rotatorgroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': caption}
-            slicer = slicers.OneDSlicer(sliceColName='rotSkyPos', binsize=0.05)
+            slicer = slicers.OneDSlicer(sliceColName='rotSkyPos', binsize=5.)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop + 'rotSkyPos'].addBundle(bundle, plotDict=histMerge)
@@ -673,13 +673,13 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
             metric = metrics.CountMetric(col='moonDistance', metricName='Distance to Moon Histogram')
             histMerge = {'legendloc': 'upper right',
                          'color': colors[f], 'label': '%s' % f,
-                         'xMin': float(np.radians(15.)), 'xMax': float(np.radians(180.)),
-                         'xlabel': 'Distance to Moon (radians)'}
+                         'xMin': 15., 'xMax': 180.,
+                         'xlabel': 'Distance to Moon (degrees)'}
             caption = 'Histogram of the distance between the field and the moon (in radians) '
             caption += 'in %s band, %s' % (f, propCaption)
             displayDict = {'group': moonDistancegroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': caption}
-            slicer = slicers.OneDSlicer(sliceColName='moonDistance', binsize=0.05)
+            slicer = slicers.OneDSlicer(sliceColName='moonDistance', binsize=5.)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop + 'moonDistance'].addBundle(bundle, plotDict=histMerge)
@@ -700,7 +700,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
     plotDict = {'logScale': True, 'ylabel': 'Count'}
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew distances for all visits.'}
-    slicer = slicers.OneDSlicer(sliceColName='slewDistance', binsize=0.05)
+    slicer = slicers.OneDSlicer(sliceColName='slewDistance', binsize=3.)
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict)
     bundleList.append(bundle)
@@ -1037,8 +1037,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
         order += 1
 
     # Make some calls to other tables to get slew stats
-    colDict = {'domAltSpd': 'Dome Alt Speed', 'domAzSpd': 'Dome Az Speed', 'telAltSpd': 'Tel Alt Speed',
-               'telAzSpd': 'Tel Az Speed', 'rotSpd': 'Rotation Speed'}
+    colDict = {'domAltSpeed': 'Dome Alt Speed', 'domAzSpeed': 'Dome Az Speed', 'telAltSpeed': 'Tel Alt Speed',
+               'telAzSpeed': 'Tel Az Speed', 'rotatorSpeed': 'Rotation Speed'}
     order = 0
     slicer = slicers.UniSlicer()
     sqlconstraint = ''
@@ -1083,7 +1083,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
     for slewType in slewTypes:
         metadata = slewType
 
-        metric = metrics.CountRatioMetric(col='actDelay', normVal=totalSlewN / 100.0,
+        metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
                                           metricName='ActivePerc')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
                        'caption': 'Percent of total slews which include %s movement.'
@@ -1093,7 +1093,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
         slewActivitiesBL.append(bundle)
 
         order += 1
-        metric = metrics.MeanMetric(col='actDelay', metricName='ActiveAve')
+        metric = metrics.MeanMetric(col='activityDelay', metricName='ActiveAve')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
                        'caption': 'Mean amount of time (in seconds) for %s movements.'
                        % (slewType)}
@@ -1102,7 +1102,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
         slewActivitiesBL.append(bundle)
 
         order += 1
-        metric = metrics.MaxMetric(col='actDelay', metricName='Max')
+        metric = metrics.MaxMetric(col='activityDelay', metricName='Max')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
                        'caption': 'Max amount of time (in seconds) for %s movement.'
                        % (slewType)}
@@ -1112,10 +1112,10 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
 
         order += 1
 
-        sqlconstraint = 'actDelay>0 and inCriticalPath="True" and activity="%s"' % slewType
+        sqlconstraint = 'activityDelay>0 and inCriticalPath="True" and activity="%s"' % slewType
         metadata = slewType
 
-        metric = metrics.CountRatioMetric(col='actDelay', normVal=totalSlewN / 100.0,
+        metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
                                           metricName='ActivePerc in crit')
         caption = 'Percent of total slew which include %s movement, and are in critical path.' % (slewType)
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
@@ -1125,7 +1125,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
         slewActivitiesBL.append(bundle)
 
         order += 1
-        metric = metrics.MeanMetric(col='actDelay', metricName='ActiveAve in crit')
+        metric = metrics.MeanMetric(col='activityDelay', metricName='ActiveAve in crit')
         caption = 'Mean time (in seconds) for %s movements, when in critical path.' % (slewType)
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
                        'caption': caption}
@@ -1138,14 +1138,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
         sqlconstraint = ''
         metadata = slewType
 
-        metric = metrics.AveSlewFracMetric(col='actDelay', activity=slewType, metricName='Total Ave')
+        metric = metrics.AveSlewFracMetric(col='activityDelay', activity=slewType, metricName='Total Ave')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                             displayDict=displayDict, runName=runName, metadata=metadata)
         slewActivitiesBL.append(bundle)
 
         order += 1
-        metric = metrics.SlewContributionMetric(col='actDelay', activity=slewType,
+        metric = metrics.SlewContributionMetric(col='activityDelay', activity=slewType,
                                                 metricName='Contribution')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -1285,8 +1285,8 @@ if __name__ == "__main__":
         = makeBundleList(args.dbFile, benchmark=args.benchmark, seeingCol=args.seeingCol)
     if not args.skipSlew:
         # Do the ones that need a different (slew) table
-        for bundleD, table in zip([slewStateBD, slewMaxSpeedsBD, slewActivitiesBD],
-                                  ['SlewState', 'SlewMaxSpeeds', 'SlewActivities']):
+        for bundleD, table in zip([slewMaxSpeedsBD, slewActivitiesBD],
+                                  ['SlewMaxSpeeds', 'SlewActivities']):
             group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
                                                     resultsDb=resultsDb, dbTable=table)
             if args.plotOnly:

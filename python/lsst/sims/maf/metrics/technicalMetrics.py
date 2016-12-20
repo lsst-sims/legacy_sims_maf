@@ -171,7 +171,7 @@ class OpenShutterFractionMetric(BaseMetric):
     Compute the fraction of time the shutter is open compared to the total time spent observing.
     """
     def __init__(self, metricName='OpenShutterFraction',
-                 slewTimeCol='slewTime', expTimeCol='visitExpTime', visitTimeCol='visitTime',
+                 slewTimeCol='slewTime', expTimeCol='visitExposureTime', visitTimeCol='visitTime',
                  **kwargs):
         self.expTimeCol = expTimeCol
         self.visitTimeCol = visitTimeCol

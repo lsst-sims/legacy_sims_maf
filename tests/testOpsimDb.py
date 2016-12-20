@@ -59,7 +59,7 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbRunLength(self):
         """Test query for length of opsim run."""
         nrun = self.oo.fetchRunLength()
-        self.assertEqual(nrun, 1.)
+        self.assertEqual(nrun, 10.)
 
     def testOpsimDbSimName(self):
         """Test query for opsim name."""
