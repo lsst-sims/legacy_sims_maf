@@ -483,7 +483,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
             metadata = '%s band, %s' % (f, propids[propid])
             metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits Per Proposal')
             summaryStats = standardStats
-            plotDict = {'xlabel': 'Number of Visits', 'plotMask': True, 'binsize': 5}
+            plotDict = {'xlabel': 'Number of Visits', 'binsize': 5}
             displayDict = {'group': nvisitOpsimgroup, 'subgroup': '%s' % (propids[propid]),
                            'order': filtorder[f] + propOrder,
                            'caption': 'Number of visits per opsim field in %s filter, for %s.'
