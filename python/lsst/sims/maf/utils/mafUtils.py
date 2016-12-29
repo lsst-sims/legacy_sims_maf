@@ -43,9 +43,9 @@ def optimalBins(datain, binmin=None, binmax=None, nbinMax=200, nbinMin=1):
     # Else proceed.
     else:
         if binmin is None:
-            binmin = data.min()
+            binmin = np.nanmin(data)
         if binmax is None:
-            binmax = data.max()
+            binmax = np.nanmax(data)
         cond = np.where((data >= binmin)  & (data <= binmax))[0]
         # Check if any data points remain within binmin/binmax.
         if np.size(data[cond]) == 0:

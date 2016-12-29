@@ -276,6 +276,8 @@ class BaseHistogram(BasePlotter):
             metricValue = metricValueIn.compressed() / plotDict['normVal']
         else:
             metricValue = metricValueIn.compressed()
+        # Toss any NaNs or infs
+        metricValue = metricValue[np.isfinite(metricValue)]
         # Determine percentile clipped X range, if set. (and xmin/max not set).
         if plotDict['xMin'] is None and plotDict['xMax'] is None:
             if plotDict['percentileClip']:
