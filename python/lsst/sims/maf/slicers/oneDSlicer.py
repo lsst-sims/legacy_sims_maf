@@ -53,9 +53,9 @@ class OneDSlicer(BaseSlicer):
         sliceCol = simData[self.sliceColName]
         # Set bin min/max values.
         if self.binMin is None:
-            self.binMin = sliceCol.min()
+            self.binMin = np.nanmin(sliceCol)
         if self.binMax is None:
-            self.binMax = sliceCol.max()
+            self.binMax = np.nanmax(sliceCol)
         # Give warning if binMin = binMax, and do something at least slightly reasonable.
         if self.binMin == self.binMax:
             warnings.warn('binMin = binMax (maybe your data is single-valued?). '
