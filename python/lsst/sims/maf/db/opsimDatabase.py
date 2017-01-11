@@ -189,7 +189,7 @@ class OpsimDatabase(Database):
             table = self.tables['Config']
             runLength = table.query_columns_Array(colnames=['paramValue'],
                                                   constraint=" paramName = '%s'" % (runLengthParam))
-            runLength = float(runLength['paramValue'][0])*10.  # Years
+            runLength = float(runLength['paramValue'][0])  # Years
         return runLength
 
     def fetchLatLonHeight(self):
