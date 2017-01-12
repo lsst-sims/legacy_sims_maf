@@ -195,6 +195,7 @@ class TransientMetric(BaseMetric):
                 dataSlice = dataSlice[ord]
                 detected = detected[ord]
                 lcNumber = lcNumber[ord]
+                time = time[ord]
                 ulcNumber = np.unique(lcNumber)
                 left = np.searchsorted(lcNumber, ulcNumber)
                 right = np.searchsorted(lcNumber, ulcNumber, side='right')
