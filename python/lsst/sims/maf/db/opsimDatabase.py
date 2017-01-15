@@ -119,9 +119,9 @@ class OpsimDatabase(Database):
         # Fetch field info from the Output table, by selecting unique fieldID + ra/dec values.
         # This implicitly only selects fields which were actually observed by opsim.
         if raColName is None:
-            raColName = self.raColName
+            raColName = self.raCol
         if decColName is None:
-            decColName = self.decColName
+            decColName = self.decCol
         table = self.tables['Summary']
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
                                               colnames=[self.fieldIdCol, raColName, decColName],

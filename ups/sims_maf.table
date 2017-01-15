@@ -2,7 +2,7 @@ setupRequired(base)
 setupRequired(numpy)
 setupRequired(matplotlib)
 # For the sunrise/sunset -- this should be replaced by palpy
-setupRequired(ephem)
+setupRequired(pyephem)
 # For palpy coordinate transforms
 setupRequired(palpy)
 # For the healpy slicer and grid
