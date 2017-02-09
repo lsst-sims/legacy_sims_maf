@@ -786,19 +786,39 @@ class KnownObjectsMetric(BaseMoMetric):
 
     Parameters
     -----------
-    vMagThresh : float, opt
+    elongThresh : float, opt
+        The cutoff in solar elongation to consider an object 'visible'. Default 60 deg.
+    vMagThresh1 : float, opt
         The magnitude threshhold for previously known objects. Default 20.0.
         This is calibrated using NEOs discovered in the last 15 years and assuming a current 25% completeness.
+    vMagThresh2 : float, opt
+        The magnitude threshhold for previously known objects. Default 22.0.
+        This is based on assuming PS and other surveys will be efficient down to V=22.
+    tSwitch : float, opt
+        The time to switch between evaluating against vMagThresh1 to vMagThresh2. Default 57023 (start of 2015).
     """
-    def __init__(self, vMagThresh=20.0, expMJDCol='MJD(UTC)', **kwargs):
+    def __init__(self, elongThresh=60., vMagThresh1=20.0, vMagThresh2=22.0, tSwitch=57023,
+                 elongCol='Elongation', expMJDCol='MJD(UTC)', **kwargs):
         super(KnownObjectsMetric, self).__init__(**kwargs)
-        self.vMagThresh = vMagThresh
+        self.elongThresh = elongThresh
+        self.elongCol = elongCol
+        self.vMagThresh1 = vMagThresh1
+        self.vMagThresh2 = vMagThresh2
+        self.tSwitch = tSwitch
         self.expMJDCol = expMJDCol
 
     def run(self, ssoObs, orb, Hval):
-        overPeak = np.where(ssoObs[self.appMagVCol] <= self.vMagThresh)[0]
-        if len(overPeak) == 0:
-            discoveryTime = self.badval
+        visible = np.where(ssoObs[self.elongCol] >= self.elongThresh, 1, 0)
+        # Discovery before tSwitch?
+        earlyObs = np.where((ssoObs[self.expMJDCol] < self.tSwitch) & visible)[0]
+        overPeak = np.where(ssoObs[self.appMagVCol][earlyObs] <= self.vMagThresh1)[0]
+        if len(overPeak) > 0:
+            discoveryTime = ssoObs[self.expMJDCol][earlyObs][overPeak].min()
         else:
-            discoveryTime = ssoObs[self.expMJDCol][overPeak].min()
+            lateObs = np.where((ssoObs[self.expMJDCol] >= self.tSwitch) & visible)[0]
+            overPeak = np.where(ssoObs[self.appMagVCol][lateObs] <= self.vMagThresh2)[0]
+            if len(overPeak) > 0:
+                discoveryTime = ssoObs[self.expMJDCol][lateObs][overPeak].min()
+            else:
+                discoveryTime = self.badval
         return discoveryTime
