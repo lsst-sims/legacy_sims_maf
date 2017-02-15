@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 import palpy
-from lsst.sims.utils import Site, photo_m5
+from lsst.sims.utils import Site, m5_flat_sed
 
 from .baseStacker import BaseStacker
 
@@ -34,10 +34,11 @@ class FiveSigmaStacker(BaseStacker):
         filts = np.unique(simData[self.filterCol])
         for filtername in filts:
             infilt = np.where(simData[self.filterCol] == filtername)
-            simData['fiveSigmaDepth'][infilt] = photo_m5(filtername, simData[infilt][self.skybrightnessCol],
-                                                         simData[infilt][self.seeingCol],
-                                                         simData[infilt][self.exptimeCol],
-                                                         simData[infilt][self.airmassCol])
+            simData['fiveSigmaDepth'][infilt] = m5_flat_sed(filtername,
+                                                            simData[infilt][self.skybrightnessCol],
+                                                            simData[infilt][self.seeingCol],
+                                                            simData[infilt][self.exptimeCol],
+                                                            simData[infilt][self.airmassCol])
         return simData
 
 
