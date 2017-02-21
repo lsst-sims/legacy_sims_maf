@@ -318,9 +318,13 @@ class OpsimDatabase(Database):
                 nvisits = np.array(self._matchParamNameValue(perPropConfig, 'Filter_Visits'), int)
             elif propType == 'WLTSS':
                 seqDict, nvisits = self._parseSequences(perPropConfig, filterlist)
+            elif 'DeepDrilling' in propType:
+                # XXX--No idea what should go here.
+                nvisits = []
             visitDict[pId] = {}
             for f, N in zip(filterlist, nvisits):
                 visitDict[pId][f] = N
+
         nvisits = {}
         for f in ['u', 'g', 'r', 'i', 'z', 'y']:
             nvisits[f] = 0
