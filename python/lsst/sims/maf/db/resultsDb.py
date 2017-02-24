@@ -410,7 +410,7 @@ class ResultsDb(object):
         # Convert to numpy array.
         dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('baseMetricNames', self.stype),
                           ('slicerName', self.stype), ('sqlConstraint', self.stype),
-                          ('metricMetadata', self.stype), ('metricDatafile', self.stype),
+                          ('metricMetadata', self.stype), ('metricDataFile', self.stype),
                           ('displayGroup', self.stype), ('displaySubgroup', self.stype),
                           ('displayOrder', float), ('displayCaption', 'S%d' %(self.slen*10))])
         metricInfo = np.array(metricInfo, dtype)
