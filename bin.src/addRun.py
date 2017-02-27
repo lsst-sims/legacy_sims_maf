@@ -44,15 +44,12 @@ if __name__ == "__main__":
                 if tmp[0].startswith('RunComment'):
                     if opsimComment is None:
                         opsimComment = ' '.join(tmp[1:])
-                if tmp[0].startswith('MAFVersion'):
+                if tmp[0].startswith('MAFDate'):
                     if mafDate is None:
                         mafDate = tmp[-1]
-                if tmp[0].startswith('OpsimVersion'):
+                if tmp[0].startswith('OpsimDate'):
                     if opsimDate is None:
-                        opsimDate = tmp[-2]
-                        # Let's go ahead and make the formats match
-                        opsimDate = opsimDate.split('-')
-                        opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
+                        opsimDate = tmp[1]
 
     print 'Adding to tracking database at %s:' % (args.trackingDb)
     print ' MafDir = %s' % (mafDir)
