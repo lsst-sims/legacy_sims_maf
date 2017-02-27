@@ -73,6 +73,7 @@ def percentileClipping(data, percentile=95.):
     Calculate the minimum and maximum values of a distribution of points, after
     discarding data more than 'percentile' from the median.
     This is useful for determining useful data ranges for plots.
+    Note that 'percentile' percent of the data is retained.
 
     Parameters
     ----------
@@ -86,18 +87,10 @@ def percentileClipping(data, percentile=95.):
     float, float
         The minimum and maximum values of the clipped data.
     """
-    if np.size(data) > 0:
-        # Use absolute value to get both high and low outliers.
-        temp_data = np.abs(data-np.median(data))
-        indx = np.argsort(temp_data)
-        # Find the indices of those values which are closer than percentile to the median.
-        indx = indx[:len(indx)*percentile/100.]
-        # Find min/max values of those (original) data values.
-        min_value = data[indx].min()
-        max_value = data[indx].max()
-    else:
-        min_value = 0
-        max_value = 0
+    upper_percentile = (100 - percentile) / 2.0
+    lower_percentile = 100 - upper_percentile
+    min_value = np.percentile(data, lower_percentile)
+    max_value = np.percentile(data, upper_percentile)
     return  min_value, max_value
 
 def gnomonic_project_toxy(RA1, Dec1, RAcen, Deccen):
