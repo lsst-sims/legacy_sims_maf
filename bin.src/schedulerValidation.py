@@ -18,14 +18,10 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
 
 
-def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFwhmEff'):
+def makeBundleList(dbFile, runName=None, benchmark='design'):
 
-    # The 'seeing' argument is a bit of a hack to accomodate the switchover
-    # from old opsim (finSeeing) to new opsim (FWHMeff).
-    if ('eff' in seeingCol) | ('Eff' in seeingCol):
-        benchmarkSeeing = 'FWHMeff'
-    else:
-        benchmarkSeeing = 'seeing'
+    seeingCol = 'seeingFwhmEff'
+    benchmarkSeeing = 'FWHMeff'
 
     # List to hold everything we're going to make
     bundleList = []
@@ -40,13 +36,13 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
     DDpropid = propTags['DD']
-    WFDpropid = propTags['WideFastDeep']
+    WFDpropid = propTags['WFD']
 
     # Fetch the telescope location from config
     lat, lon, height = opsimdb.fetchLatLonHeight()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = utils.createSQLWhere('WideFastDeep', propTags)
+    wfdWhere = utils.createSQLWhere('WFD', propTags)
     print '#FYI: WFD "where" clause: %s' % (wfdWhere)
     ddWhere = utils.createSQLWhere('DD', propTags)
     print '#FYI: DD "where" clause: %s' % (ddWhere)
@@ -77,11 +73,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='seeingFw
 
     # Generate approximate benchmark values for DD.
     if len(DDpropid) > 0:
-        benchmarkDDVals = {}
         benchmarkDDVals = utils.scaleBenchmarks(runLength, benchmark='design')
-        benchmarkDDVals['nvisits'] = opsimdb.fetchRequestedNvisits(propId=DDpropid)
-        # benchmarkDDVals['coaddedDepth'] = utils.calcCoaddedDepth(benchmarkDDVals['nvisits'],
-        #                                                         benchmarkDDVals['singleVisitDepth'])
         benchmarkDDVals['coaddedDepth'] = {'u': 28.5, 'g': 28.5, 'r': 28.5, 'i': 28.5, 'z': 28.0, 'y': 27.0}
 
     # Set values for min/max range of nvisits for All/WFD and DD plots. These are somewhat arbitrary.
@@ -1271,9 +1263,6 @@ if __name__ == "__main__":
 
     parser.add_argument('--skipSlew', dest='skipSlew', action='store_true',
                         default=False, help='Skip calculation of slew statistics')
-    parser.add_argument('--seeingCol', dest='seeingCol', default='seeingFwhmEff',
-                        help='Name of the seeing column (seeingFwhmEff, FWHMeff, finSeeing). ' +
-                        'This is temporary to support changeover to v3.4 of the opsim outputs.')
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
@@ -1282,7 +1271,7 @@ if __name__ == "__main__":
     opsdb = utils.connectOpsimDb(args.dbFile)
 
     (bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict) \
-        = makeBundleList(args.dbFile, benchmark=args.benchmark, seeingCol=args.seeingCol)
+        = makeBundleList(args.dbFile, benchmark=args.benchmark)
     if not args.skipSlew:
         # Do the ones that need a different (slew) table
         for bundleD, table in zip([slewMaxSpeedsBD, slewActivitiesBD],

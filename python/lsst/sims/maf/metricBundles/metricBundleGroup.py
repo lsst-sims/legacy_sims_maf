@@ -314,13 +314,10 @@ class MetricBundleGroup(object):
                 print "Querying database with constraint %s" % (constraint)
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
         if self.dbTable != 'Summary':
-            distinctExpMJD = False
             groupBy = None
         else:
-            distinctExpMJD = True
             groupBy = 'observationStartMJD'
         self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
-                                        distinctExpMJD=distinctExpMJD,
                                         groupBy=groupBy)
 
         if self.verbose:

@@ -37,7 +37,6 @@ class TestOpsimDb(unittest.TestCase):
         self.assertEqual(data.dtype.names, ('observationId', 'seeingFwhmEff'))
         self.assertTrue(data['seeingFwhmEff'].max() <= 1.0)
 
-    @unittest.skip("14 Dec 2016 -- need to update fetchPropInfo for new OpSim")
     def testOpsimDbPropID(self):
         """Test queries for prop ID"""
         propids, propTags = self.oo.fetchPropInfo()
@@ -67,11 +66,6 @@ class TestOpsimDb(unittest.TestCase):
         self.assertTrue(isinstance(simname, str))
         self.assertEqual(simname, 'pontus_1150')
 
-    def testOpsimDbSeeingColName(self):
-        """Test query to pull out column name for seeing (seeing or finSeeing)."""
-        seeingcol = self.oo.fetchSeeingColName()
-        self.assertTrue(seeingcol, 'seeingFwhmEff')
-
     def testOpsimDbConfig(self):
         """Test generation of config data. """
         configsummary, configdetails = self.oo.fetchConfig()
@@ -79,12 +73,12 @@ class TestOpsimDb(unittest.TestCase):
         self.assertTrue(isinstance(configdetails, dict))
         #  self.assertEqual(set(configsummary.keys()), set(['Version', 'RunInfo', 'Proposals', 'keyorder']))
         propids, proptags = self.oo.fetchPropInfo()
-#        propidsSummary = []
-#        for propname in configsummary['Proposals']:
-#            if propname != 'keyorder':
-#                propidsSummary.append(configsummary['Proposals'][propname]['propID'])
-#        self.assertEqual(set(propidsSummary), set(propids))
-#        out.printDict(configsummary, 'Summary')
+        propidsSummary = []
+        for propname in configsummary['Proposals']:
+            if propname != 'keyorder':
+                propidsSummary.append(configsummary['Proposals'][propname]['PropId'])
+        self.assertEqual(set(propidsSummary), set(propids))
+        out.printDict(configsummary, 'Summary')
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

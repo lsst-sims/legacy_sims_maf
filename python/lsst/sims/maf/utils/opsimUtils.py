@@ -154,7 +154,7 @@ def getFieldData(opsimDb, sqlconstraint):
     return fieldData
 
 
-def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, distinctExpMJD=True, groupBy='default'):
+def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, groupBy='default'):
     """
     Query an opsim database for the needed data columns and run any required stackers.
 
@@ -181,8 +181,7 @@ def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, distinctExpMJD=Tru
         the SQLconstraint.
     """
     # Get data from database.
-    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint,
-                                      distinctExpMJD=distinctExpMJD, groupBy=groupBy)
+    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint, groupBy=groupBy)
     if len(simData) == 0:
         raise UserWarning('No data found matching sqlconstraint %s' % (sqlconstraint))
     # Now add the stacker columns.
