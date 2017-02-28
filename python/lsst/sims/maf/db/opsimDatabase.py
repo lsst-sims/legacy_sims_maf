@@ -155,7 +155,7 @@ class OpsimDatabase(Database):
                                               groupByCol=self.fieldIdCol)
         return fielddata
 
-    def fetchFieldsFromFieldTable(self, degreesToRadians=True):
+    def fetchFieldsFromFieldTable(self, propId=None, degreesToRadians=False):
         """
         Fetch field information (fieldID/RA/Dec) from the Field table.
 
@@ -164,6 +164,9 @@ class OpsimDatabase(Database):
 
         Parameters
         ----------
+        propId : int or list of ints
+            Proposal ID or list of proposal IDs to use to select fields.
+            Deprecated with v4 currently.
         degreesToRadians : bool, opt
             If True, convert degrees in Field table into radians.
 
@@ -172,6 +175,9 @@ class OpsimDatabase(Database):
         np.recarray
             Structured array containing the field data (fieldID, fieldRA, fieldDec).
         """
+        if propId is not None:
+            warnings.warn('Cannot select field IDs associated only with proposals at present.'
+                          'Selecting all fields.')
         tableName = 'Field'
         table = self.tables[tableName]
         fielddata = table.query_columns_Array(colnames=[self.fieldIdCol, 'ra', 'dec'],
