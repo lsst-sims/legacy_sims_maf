@@ -201,13 +201,13 @@ class BaseSlicer(object):
             fill = None
         # npz file acts like dictionary: each keyword/value pair below acts as a dictionary in loaded NPZ file.
         np.savez(outfilename,
-                 header = header, # header saved as dictionary
-                 metricValues = data, # metric data values
-                 mask = mask, # metric mask values
-                 fill = fill, # metric badval/fill val
-                 slicer_init = self.slicer_init, # dictionary of instantiation parameters
-                 slicerName = self.slicerName, # class name
-                 slicePoints = self.slicePoints, # slicePoint metadata saved (is a dictionary)
+                 header = header,  # header saved as dictionary
+                 metricValues = data,  # metric data values
+                 mask = mask,  # metric mask values
+                 fill = fill,  # metric badval/fill val
+                 slicer_init = self.slicer_init,  # dictionary of instantiation parameters
+                 slicerName = self.slicerName,  # class name
+                 slicePoints = self.slicePoints,  # slicePoint metadata saved (is a dictionary)
                  slicerNSlice = self.nslice,
                  slicerShape = self.shape)
 
