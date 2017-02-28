@@ -14,7 +14,7 @@ class OneDBinnedData(BasePlotter):
                                 'filled': False, 'alpha': 0.5, 'linestyle': '-', 'linewidth': 1,
                                 'logScale': False, 'percentileClip': None,
                                 'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
-                                'fontsize': None}
+                                'fontsize': None, 'figsize': None}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """
@@ -22,10 +22,10 @@ class OneDBinnedData(BasePlotter):
         """
         if slicer.slicerName != 'OneDSlicer':
             raise ValueError('OneDBinnedData plotter is for use with OneDSlicer')
-        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # Plot the histogrammed data.
         if 'bins' not in slicer.slicePoints:
             raise ValueError('OneDSlicer has to contain bins in slicePoints metadata')
@@ -52,23 +52,25 @@ class OneDBinnedData(BasePlotter):
         if 'xlabel' in plotDict:
             plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         # Set y limits (either from values in args, percentileClipping or compressed data values).
-        if (plotDict['yMin'] is None) or (plotDict['yMax'] is None):
-            if plotDict['percentileClip'] is not None:
-                plotDict['yMin'], plotDict['yMax'] = percentileClipping(metricValues.compressed(),
-                                                                        percentile=plotDict['percentileClip'])
+        if plotDict['percentileClip'] is not None:
+            yMin, yMax = percentileClipping(metricValues.compressed(),
+                                            percentile=plotDict['percentileClip'])
+            if plotDict['yMin'] is None:
+                plotDict['yMin'] = yMin
+            if plotDict['yMax'] is None:
+                plotDict['yMax'] = yMax
+
+        if plotDict['yMin'] is None and metricValues.filled().min() == 0:
+            plotDict['yMin'] = 0
+
         # Set y and x limits, if provided.
-        if 'yMin' in plotDict:
-            if plotDict['yMin'] is not None:
-                plt.ylim(ymin=plotDict['yMin'])
-        if 'yMax' in plotDict:
-            if plotDict['yMax'] is not None:
-                plt.ylim(ymax=plotDict['yMax'])
-        if 'xMin' in plotDict:
-            if plotDict['xMin'] is not None:
-                plt.xlim(xmin=plotDict['xMin'])
-        if 'xMax' in plotDict:
-            if plotDict['xMax'] is not None:
-                plt.xlim(xmax=plotDict['xMax'])
-        if 'title' in plotDict:
-            plt.title(plotDict['title'])
+        if plotDict['yMin'] is not None:
+            plt.ylim(ymin=plotDict['yMin'])
+        if plotDict['yMax'] is not None:
+            plt.ylim(ymax=plotDict['yMax'])
+        if plotDict['xMin'] is not None:
+            plt.xlim(xmin=plotDict['xMin'])
+        if plotDict['xMax'] is not None:
+            plt.xlim(xmax=plotDict['xMax'])
+        plt.title(plotDict['title'])
         return fig.number
