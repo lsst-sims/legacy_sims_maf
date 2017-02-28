@@ -130,7 +130,7 @@ def getFieldData(opsimDb, sqlconstraint):
         nonpropids = []
         i = 0
         while i < len(sqllist):
-            if sqllist[i].lower() == 'propsalid':
+            if sqllist[i].lower() == 'proposalid':
                 i += 1
                 if sqllist[i] == "=":
                     i += 1
