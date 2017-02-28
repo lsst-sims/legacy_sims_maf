@@ -35,7 +35,7 @@ class HealpixSkyMap(BasePlotter):
                                 'logScale': False, 'cbarFormat': None, 'cmap': perceptual_rainbow,
                                 'percentileClip': None, 'colorMin': None, 'colorMax': None,
                                 'zp': None, 'normVal': None, 'labelsize': None, 'fontsize': None,
-                                'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0)}
+                                'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0), 'figsize': None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -60,12 +60,12 @@ class HealpixSkyMap(BasePlotter):
         cnames = [cls.__name__ for cls in classes]
         if 'HealpixSlicer' not in cnames:
             raise ValueError('HealpixSkyMap is for use with healpix slicers')
-        fig = plt.figure(fignum)
         # Override the default plotting parameters with user specified values.
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
         # Generate a Mollweide full-sky plot.
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         norm = None
         if plotDict['logScale']:
             norm = 'log'
@@ -156,7 +156,7 @@ class HealpixPowerSpectrum(BasePlotter):
         self.defaultPlotDict = {'title': None, 'label': None,
                                 'maxl': None, 'removeDipole': True,
                                 'fontsize': None, 'labelsize': None,
-                                'logScale': True, 'linestyle': '-'}
+                                'logScale': True, 'linestyle': '-', 'figsize': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -168,7 +168,7 @@ class HealpixPowerSpectrum(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
-        fig = plt.figure(fignum)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # If the mask is True everywhere (no data), just plot zeros
         if False not in metricValue.mask:
             return None
@@ -208,7 +208,7 @@ class HealpixHistogram(BasePlotter):
                                 'bins': None, 'binsize': None, 'cumulative': False,
                                 'scale': None, 'xMin': None, 'xMax': None,
                                 'logScale': False, 'linestyle': '-',
-                                'fontsize': None, 'labelsize': None, }
+                                'fontsize': None, 'labelsize': None, 'figsize': None}
         self.baseHist = BaseHistogram()
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -234,7 +234,7 @@ class OpsimHistogram(BasePlotter):
                                 'ylabel': 'Number of Fields', 'yaxisformat': '%d',
                                 'bins': None, 'binsize': None, 'cumulative': False,
                                 'scale': 1.0, 'xMin': None, 'xMax': None,
-                                'logScale': False, 'linestyle': '-'}
+                                'logScale': False, 'linestyle': '-', 'figsize': None}
         self.baseHist = BaseHistogram()
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -260,7 +260,7 @@ class BaseHistogram(BasePlotter):
                                 'logScale': 'auto',
                                 'yaxisformat': '%.3f', 'linestyle': '-',
                                 'zp': None, 'normVal': None, 'percentileClip': None,
-                                'fontsize': None, 'labelsize': None, }
+                                'fontsize': None, 'labelsize': None, 'figsize': None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -325,7 +325,7 @@ class BaseHistogram(BasePlotter):
             else:
                 bins = plotDict['bins']
         # Generate plots.
-        fig = plt.figure(fignum)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         if plotDict['cumulative'] is not False:
             # If cumulative is set, generate histogram without using histRange (to use full range of data).
             n, b, p = plt.hist(metricValue, bins=bins, histtype='step', log=plotDict['logScale'],
@@ -416,7 +416,7 @@ class BaseSkyMap(BasePlotter):
                                 'colorMin': None, 'colorMax': None, 'percentileClip': None,
                                 'cbar_edge': True, 'plotMask': False, 'metricIsColor': False,
                                 'raCen': 0.0, 'mwZone': True, 'bgcolor': 'gray',
-                                'labelsize': None, 'fontsize': None}
+                                'labelsize': None, 'fontsize': None, 'figsize': None}
 
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
@@ -486,7 +486,6 @@ class BaseSkyMap(BasePlotter):
         """
         Plot the sky map of metricValue for a generic spatial slicer.
         """
-        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
@@ -496,6 +495,7 @@ class BaseSkyMap(BasePlotter):
             metricValue = metricValueIn / plotDict['normVal']
         else:
             metricValue = metricValueIn
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
         ax = fig.add_subplot(111, projection=plotDict['projection'])
@@ -717,7 +717,7 @@ class LambertSkyMap(BasePlotter):
                                 'cbarFormat': '%i', 'cbar_edge': True, 'zp': None,
                                 'normVal': None, 'percentileClip': None, 'colorMin': None,
                                 'colorMax': None, 'linewidths': 0,
-                                'fontsize': None, 'labelsize': None}
+                                'fontsize': None, 'labelsize': None, 'figsize': None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -761,7 +761,7 @@ class LambertSkyMap(BasePlotter):
             step = (clims[1] - clims[0]) / plotDict['levels']
             levels = np.arange(clims[0], clims[1] + step, step)
 
-        fig = plt.figure(fignum)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         ax = fig.add_subplot(111)
 
         # Hide this extra dependency down here for now
