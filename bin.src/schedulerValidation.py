@@ -32,6 +32,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+        runName = runName.replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
