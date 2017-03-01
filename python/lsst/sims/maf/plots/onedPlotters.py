@@ -22,13 +22,15 @@ class OneDBinnedData(BasePlotter):
         """
         if slicer.slicerName != 'OneDSlicer':
             raise ValueError('OneDBinnedData plotter is for use with OneDSlicer')
+        if 'bins' not in slicer.slicePoints:
+            errMessage = 'OneDSlicer must contain "bins" in slicePoints metadata.'
+            errMessage += ' SlicePoints only contains keys %s.' % (slicer.slicePoints.keys())
+            raise ValueError(errMessage)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # Plot the histogrammed data.
-        if 'bins' not in slicer.slicePoints:
-            raise ValueError('OneDSlicer has to contain bins in slicePoints metadata')
         leftedge = slicer.slicePoints['bins'][:-1]
         width = np.diff(slicer.slicePoints['bins'])
         if plotDict['filled']:
