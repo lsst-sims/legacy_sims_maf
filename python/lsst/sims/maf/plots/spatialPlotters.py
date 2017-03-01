@@ -105,13 +105,13 @@ class HealpixSkyMap(BasePlotter):
             clims[0] = clims[0] - 1
             clims[1] = clims[1] + 1
         # Avoid trying to log scale when zero is in the range.
-        if (norm == 'log') & ((clims[0] <= 0 <= clims[1]) | (clims[0] >= 0 >= clims[1])):
+        if (norm == 'log') & ((clims[0] <= 0 <= clims[1]) or (clims[0] >= 0 >= clims[1])):
             # Try something simple
             above = metricValue[np.where(metricValue > 0)]
             if len(above) > 0:
                 clims[0] = above.max()
             # If still bad, give up and turn off norm
-            if ((clims[0] <= 0 <= clims[1]) | (clims[0] >= 0 >= clims[1])):
+            if ((clims[0] <= 0 <= clims[1]) or (clims[0] >= 0 >= clims[1])):
                 norm = None
             warnings.warn("Using norm was set to log, but color limits pass through 0. Adjusting so plotting doesn't fail")
             
@@ -486,6 +486,10 @@ class BaseSkyMap(BasePlotter):
         """
         Plot the sky map of metricValue for a generic spatial slicer.
         """
+        if 'ra' not in slicer.slicePoints or 'dec' not in slicer.slicePoints:
+            errMessage = 'SpatialSlicer must contain "ra" and "dec" in slicePoints metadata.'
+            errMessage += ' SlicePoints only contains keys %s.' % (slicer.slicePoints.keys())
+            raise ValueError(errMessage)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
@@ -720,6 +724,11 @@ class LambertSkyMap(BasePlotter):
                                 'fontsize': None, 'labelsize': None, 'figsize': None}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
+
+        if 'ra' not in slicer.slicePoints or 'dec' not in slicer.slicePoints:
+            errMessage = 'SpatialSlicer must contain "ra" and "dec" in slicePoints metadata.'
+            errMessage += ' SlicePoints only contains keys %s.' % (slicer.slicePoints.keys())
+            raise ValueError(errMessage)
 
         plotDict = {}
         plotDict.update(self.defaultPlotDict)

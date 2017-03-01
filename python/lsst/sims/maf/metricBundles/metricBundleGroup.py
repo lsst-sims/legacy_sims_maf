@@ -543,7 +543,7 @@ class MetricBundleGroup(object):
         """
         for constraint in self.constraints:
             if self.verbose:
-                print 'Plotting figures with %s constraint now.' % (constraint)
+                print 'Plotting figures with "%s" constraint now.' % (constraint)
             self.setCurrent(constraint)
             self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
                              thumbnail=thumbnail, closefigs=closefigs)
@@ -573,7 +573,12 @@ class MetricBundleGroup(object):
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.currentBundleDict.itervalues():
-            b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            try:
+                b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            except ValueError as ve:
+                message = 'Plotting failed for metricBundle %s.' % (b.fileRoot)
+                message += ' Error message: %s' % (ve.message)
+                warnings.warn(message)
             if closefigs:
                 plt.close('all')
         if self.verbose:
@@ -615,8 +620,9 @@ class MetricBundleGroup(object):
                 tmpBundle = createEmptyMetricBundle()
                 tmpBundle.read(filename)
                 # Copy the tmpBundle metricValues into b.
-                b.metricValues = ma.copy(tmpBundle.metricValues)
-                del tmpBundle
+                b.metricValues = tmpBundle.metricValues
+                # And copy the slicer into b, to get slicePoints.
+                b.slicer = tmpBundle.slicer
             except:
                 warnings.warn('Warning: file %s not found, bundle not restored.' % filename)
 
@@ -654,14 +660,15 @@ class MetricBundleGroup(object):
                                 name = newmetricBundle.fileRoot
                             reduceBundleDict[name] = newmetricBundle
                         except:
-                            warnings.warn('Warning: file %s not found, bundle not restored.' % filename)
+                            warnings.warn('Warning: file %s not found, bundle not restored ("reduce" metric).'
+                                          % filename)
 
                     # Remove summaryMetrics from top level metricbundle.
                     b.summaryMetrics = []
                     # Update parent MetricBundle name.
                     b.metric.name = origMetricName
                     b._buildFileRoot()
-                if self.verbose:
-                    print 'Read %s from disk.' % (b.fileRoot)
+            if self.verbose:
+                print 'Read %s from disk.' % (b.fileRoot)
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)
