@@ -112,7 +112,7 @@ class OpsimDatabase(Database):
         if tableName not in self.dbTables:
             raise ValueError('Table %s not recognized; not in list of database tables.' % (tableName))
 
-        if groupBy == 'default' and (tableName == 'SummaryAllProps' or tableName == self.summaryTable):
+        if groupBy == 'default' and (tableName == self.summaryTable):
             groupBy = self.mjdCol
 
         if tableName == 'SummaryAllProps':
@@ -146,9 +146,9 @@ class OpsimDatabase(Database):
             Structured array containing the field data (fieldID, fieldRA, fieldDec). RA/Dec in degrees.
         """
         if raColName is None:
-            raColName = self.raColName
+            raColName = self.raCol
         if decColName is None:
-            decColName = self.decColName
+            decColName = self.decCol
         table = self.tables[self.summaryTable]
         fielddata = table.query_columns_Array(constraint=sqlconstraint,
                                               colnames=[self.fieldIdCol, raColName, decColName],
