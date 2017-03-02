@@ -82,6 +82,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldData : numpy.recarray
             Contains the field information (ID, Ra, Dec) about how to slice the simData.
             For example, only fields in the fieldData table will be matched against the simData.
+            RA and Dec should be in degrees.
         maps : list of lsst.sims.maf.maps objects, optional
             Maps to run and provide additional metadata at each slicePoint. Default None.
         """
@@ -94,8 +95,8 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         idxs = np.argsort(fieldData[self.fieldIdColName])
         # Set needed values for slice metadata.
         self.slicePoints['sid'] = fieldData[self.fieldIdColName][idxs]
-        self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
-        self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
+        self.slicePoints['ra'] = np.radians(fieldData[self.fieldRaColName][idxs])
+        self.slicePoints['dec'] = np.radians(fieldData[self.fieldDecColName][idxs])
         self.nslice = len(self.slicePoints['sid'])
         self._runMaps(maps)
         # Set up data slicing.
