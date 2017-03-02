@@ -8,7 +8,7 @@ __all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere',
            'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
 
 
-def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
+def connectOpsimDb(database, summaryOnly=False, summaryTable='SummaryAllProps'):
     """
     Convenience function to handle connecting to database.
 
@@ -30,7 +30,7 @@ def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
     if summaryOnly:
         # Connect to just the summary table (might be sqlite created from flat dat output file).
         opsimdb = db.OpsimDatabase(database=database,
-                                   dbTables={'Summary': [summaryTable, 'obsHistID']},
+                                   dbTables={'SummaryAllProps': [summaryTable, 'obsHistID']},
                                    defaultdbTables = None)
     else:
         # For a basic db connection to the sqlite db files.
