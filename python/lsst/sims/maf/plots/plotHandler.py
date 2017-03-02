@@ -456,20 +456,26 @@ class PlotHandler(object):
         for key in keys2Check:
             values = [pd[key] for pd in self.plotDicts if key in pd]
             if len(np.unique(values)) > 1:
-                warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
-                              ' Will reset to default value. (found values %s)' % values)
-                reset_keys.append(key)
+                # We will reset some of the keys to the default, but for some we should do better.
+                if key.endswith('Max'):
+                    for pd in self.plotDicts:
+                        pd[key] = np.max(values)
+                elif key.endswith('Min'):
+                    for pd in self.plotDicts:
+                        pd[key] = np.min(values)
+                elif key == 'title':
+                    title = self._buildTitle()
+                    for pd in self.plotDicts:
+                        pd['title'] = title
+                else:
+                    warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
+                                  ' Will reset to default value. (found values %s)' % values)
+                    reset_keys.append(key)
 
-        # Most of the defaults can be set to None safely.
+        # Reset the most of the keys to defaults; this can generally be done safely.
         for key in reset_keys:
             for pd in self.plotDicts:
                 pd[key] = None
-
-        # But for some, we can/should do better.
-        if 'title' in reset_keys:
-            title = self._buildTitle()
-            for pd in self.plotDicts:
-                pd['title'] = title
 
     def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None):
         """
