@@ -10,9 +10,14 @@ import glob
 import os
 import shutil
 import lsst.utils.tests
+from lsst.sims.utils.CodeUtilities import sims_clean_up
 
 
 class TestMetricBundle(unittest.TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        sims_clean_up()
 
     def setUp(self):
         self.outDir = 'TMB'

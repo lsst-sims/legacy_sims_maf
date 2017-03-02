@@ -2,9 +2,14 @@ import unittest
 import numpy as np
 from lsst.sims.photUtils import EBV
 import lsst.utils.tests
+from lsst.sims.utils.CodeUtilities import sims_clean_up
 
 
 class TestDustMap(unittest.TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        sims_clean_up()
 
     def testCreate(self):
         """ Test that we can create the dustmap"""

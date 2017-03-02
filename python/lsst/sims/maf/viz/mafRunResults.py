@@ -108,12 +108,15 @@ class MafRunResults(object):
         """
         Return the JSON string containing the data for a particular metric.
         """
+        if len(metric) > 1:
+            return None
+        metric = metric[0]
         filename = metric['metricDataFile']
         if filename.upper() == 'NULL':
             return None
         datafile = os.path.join(self.outDir, filename)
         # Read data back into a  bundle.
-        mB = metricBundles.emptyMetricBundle()
+        mB = metricBundles.createEmptyMetricBundle()
         mB.read(datafile)
         io = mB.outputJSON()
         if io is None:
@@ -124,6 +127,9 @@ class MafRunResults(object):
         """
         Return the npz data.
         """
+        if len(metric) > 1:
+            return None
+        metric = metric[0]
         filename = metric['metricDataFile']
         if filename.upper() == 'NULL':
             return None
@@ -359,8 +365,8 @@ class MafRunResults(object):
         metricInfo['Metadata'] = metric['metricMetadata']
         if withDataLink:
             metricInfo['Data'] = []
-            metricInfo['Data'].append(metric['metricDatafile'])
-            metricInfo['Data'].append(os.path.join(self.outDir, metric['metricDatafile']))
+            metricInfo['Data'].append(metric['metricDataFile'])
+            metricInfo['Data'].append(os.path.join(self.outDir, metric['metricDataFile']))
         return metricInfo
 
     def captionForMetric(self, metric):
