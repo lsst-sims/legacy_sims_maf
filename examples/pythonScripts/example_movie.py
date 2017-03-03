@@ -91,13 +91,13 @@ def setupMetrics(opsimName, metadata, tstart, tnow, plotlabel='', cumulative=Fal
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5Metric'))
     plotDictList.append({'colorMin':coaddMin, 'colorMax':coaddMax,
                          'label': plotlabel, 'title': title, 'figsize': figsize})
-    metricList.append(metrics.CountMetric('observationStartMJD', metricName='N_Visits'))
+    metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits'))
     plotDictList.append({'colorMin':nvisitsMin, 'colorMax':nvisitsMax,
                          'cbarFormat': '%d',
                           'label': plotlabel, 'title': title + 'NVisits', 'figsize': figsize})
     # Uniformity wants survey length in years.
     surveyLength = (tnow - tstart) / 365.0
-    metricList.append(metrics.UniformityMetric('observationStartMJD', surveyLength=surveyLength))
+    metricList.append(metrics.UniformityMetric('expMJD', surveyLength=surveyLength))
     plotDictList.append({'colorMin':0, 'colorMax':1, 'cbarFormat':'%.2f',
                          'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
     dt, t = dtime(t)
@@ -139,7 +139,7 @@ def setupMovieSlicer(simdata, binsize = 365.0, cumulative=True, verbose=False):
     Returns the movie slicer.
     """
     t = time.time()
-    ms = slicers.MovieSlicer(sliceColName='observationStartMJD', binsize=binsize, cumulative=cumulative)
+    ms = slicers.MovieSlicer(sliceColName='expMJD', binsize=binsize, cumulative=cumulative)
     ms.setupSlicer(simdata)
     dt, t = dtime(t)
     if verbose:
@@ -308,7 +308,8 @@ if __name__ == '__main__':
         .replace('"', '').replace('/', '.')
 
     # Define metrics, stackers and slicer so that we can see what columns we need from database.
-    metricList, plotDictList = setupMetrics(opsimName, metadata, 0, 0, plotlabel='', cumulative=args.cumulative)
+    metricList, plotDictList = setupMetrics(opsimName, metadata, 0, 0, plotlabel='',
+                                            cumulative=args.cumulative)
     # Define any non-default stackers to be used.
     stackerList = setupStackers(args)
     # Define the slicer to be used at each step of the movie slicer.
@@ -318,11 +319,11 @@ if __name__ == '__main__':
         # Connect to database.
         opsDb = OpsimDatabase(os.path.join(args.dbDir, args.opsimDb))
         # Get data from database.
-        dbcols = ['observationStartMJD', 'fiveSigmaDepth', args.raCol, args.decCol]
+        dbcols = ['expMJD', 'fiveSigmaDepth', args.raCol, args.decCol]
         simdata = utils.getSimData(opsDb, sqlconstraint, dbcols, stackers=stackerList)
         # Generate the bins for the movie slicer.
-        start_date = simdata['observationStartMJD'].min()
-        end_date = simdata['observationStartMJD'].max()
+        start_date = simdata['expMJD'].min()
+        end_date = simdata['expMJD'].max()
         bins = np.arange(start_date, end_date+args.movieStepsize/2.0, args.movieStepsize, float)
         # Run the movie slicer (and at each step, healpix slicer and calculate metrics).
         gm = runSlices(opsimName, metadata, simdata, bins, args)
