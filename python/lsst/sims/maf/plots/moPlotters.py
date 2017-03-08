@@ -20,16 +20,16 @@ class MetricVsH(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title': None, 'xlabel': 'H (mag)', 'ylabel': None, 'label': None,
                                 'npReduce': None, 'nbins': None, 'albedo': None,
-                                'Hmark': None, 'HmarkLinestyle': ':'}
+                                'Hmark': None, 'HmarkLinestyle': ':', 'figsize': None}
         self.minHrange=1.0
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         if 'linestyle' not in userPlotDict:
             userPlotDict['linestyle'] = '-'
-        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         Hvals = slicer.slicePoints['H']
         reduceFunc = plotDict['npReduce']
         if reduceFunc is None:
@@ -111,18 +111,18 @@ class MetricVsOrbit(BasePlotter):
     def __init__(self, xaxis='q', yaxis='e'):
         self.plotType = 'MetricVsOrbit_%s%s' %(xaxis, yaxis)
         self.objectPlotter = False
-        self.defaultPlotDict = {'title':None, 'xlabel':xaxis, 'ylabel':yaxis,
-                                'xaxis':xaxis, 'yaxis':yaxis,
-                                'label':None, 'cmap':cm.cubehelix,
-                                'npReduce':None,
-                                'nxbins':None, 'nybins':None, 'levels':None,
-                                'Hval':None, 'Hwidth':None}
+        self.defaultPlotDict = {'title': None, 'xlabel': xaxis, 'ylabel': yaxis,
+                                'xaxis': xaxis, 'yaxis': yaxis,
+                                'label': None, 'cmap': cm.viridis,
+                                'npReduce': None,
+                                'nxbins': None, 'nybins': None, 'levels': None,
+                                'Hval': None, 'Hwidth': None, 'figsize': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
-        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         xvals = slicer.slicePoints['orbits'][plotDict['xaxis']]
         yvals = slicer.slicePoints['orbits'][plotDict['yaxis']]
         # Set x/y bins.
@@ -219,11 +219,11 @@ class MetricVsOrbitPoints(BasePlotter):
     def __init__(self, xaxis='q', yaxis='e'):
         self.plotType = 'MetricVsOrbit'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title':None, 'xlabel':xaxis, 'ylabel':yaxis,
-                                'label':None, 'cmap':cm.cubehelix,
-                                'xaxis':xaxis, 'yaxis':yaxis,
-                                'Hval':None, 'Hwidth':None,
-                                'foregroundPoints':True, 'backgroundPoints':False}
+        self.defaultPlotDict = {'title': None, 'xlabel': xaxis, 'ylabel': yaxis,
+                                'label': None, 'cmap': cm.viridis,
+                                'xaxis': xaxis, 'yaxis': yaxis,
+                                'Hval': None, 'Hwidth': None,
+                                'foregroundPoints': True, 'backgroundPoints': False}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         fig = plt.figure(fignum)
