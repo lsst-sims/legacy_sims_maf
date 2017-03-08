@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.ma as ma
 import warnings
 
 from .moMetrics import BaseMoMetric
@@ -184,7 +183,7 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
     Parameters
     ----------
     times : numpy.ndarray like
-        The bins to distribute the discovery times into.
+        The bins to distribute the discovery times into. Same units as the discovery time (typically MJD).
     Hval : float, opt
         The value of H to count completeness at (or cumulative completeness to). Default H=22.
     cumulative : bool, opt

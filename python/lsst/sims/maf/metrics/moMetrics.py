@@ -1,6 +1,4 @@
-import inspect
 import numpy as np
-import numpy.ma as ma
 
 from .baseMetric import BaseMetric
 
@@ -70,6 +68,21 @@ class BaseMoMetric(BaseMetric):
         self.shape = 1
 
     def run(self, ssoObs, orb, Hval):
+        """Calculate the metric value.
+
+        Parameters
+        ----------
+        ssoObs: np.ndarray
+            The input data to the metric (same as the parent metric).
+        orb: np.ndarray
+            The information about the orbit for which the metric is being calculated.
+        Hval : float
+            The H value for which the metric is being calculated.
+
+        Returns
+        -------
+        float or np.ndarray or dict
+        """
         raise NotImplementedError
 
 
@@ -78,6 +91,10 @@ class BaseChildMetric(BaseMoMetric):
 
     Parameters
     ----------
+    parentDiscoveryMetric: BaseMoMetric
+        The 'parent' metric which generated the metric data used to calculate this 'child' metric.
+    badval: float, opt
+        Value to return when metric cannot be calculated.
     """
     def __init__(self, parentDiscoveryMetric, badval=0, **kwargs):
         super(BaseChildMetric, self).__init__(badval=badval, **kwargs)
@@ -89,6 +106,23 @@ class BaseChildMetric(BaseMoMetric):
             self.metricDtype = 'float'
 
     def run(self, ssoObs, orb, Hval, metricValues):
+        """Calculate the child metric value.
+
+        Parameters
+        ----------
+        ssoObs: np.ndarray
+            The input data to the metric (same as the parent metric).
+        orb: np.ndarray
+            The information about the orbit for which the metric is being calculated.
+        Hval : float
+            The H value for which the metric is being calculated.
+        metricValues : dict or np.ndarray
+            The return value from the parent metric.
+
+        Returns
+        -------
+        float
+        """
         raise NotImplementedError
 
 
@@ -137,8 +171,7 @@ class NObsNoSinglesMetric(BaseMoMetric):
 
 
 class NNightsMetric(BaseMoMetric):
-    """
-    Count the number of distinct nights an object is observed.
+    """Count the number of distinct nights an object is observed.
     """
     def __init__(self, snrLimit=None, **kwargs):
         """
@@ -159,8 +192,7 @@ class NNightsMetric(BaseMoMetric):
         return nights
 
 class ObsArcMetric(BaseMoMetric):
-    """
-    Calculate the difference between the first and last observation of an object.
+    """Calculate the difference between the first and last observation of an object.
     """
     def __init__(self, snrLimit=None, **kwargs):
         super(ObsArcMetric, self).__init__(**kwargs)
@@ -269,8 +301,7 @@ class DiscoveryMetric(BaseMoMetric):
 
 
 class Discovery_N_ChancesMetric(BaseChildMetric):
-    """
-    Child metric to be used with DiscoveryMetric.
+    """Child metric to be used with DiscoveryMetric.
     Calculates total number of discovery opportunities in a window between nightStart / nightEnd.
     """
     def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, badval=0, **kwargs):
@@ -289,8 +320,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
                 self.name = self.name + '_n%d' % (nightEnd)
 
     def run(self, ssoObs, orb, Hval, metricValues):
-        """
-        Return the number of different discovery chances we had for each object/H combination.
+        """Return the number of different discovery chances we had for each object/H combination.
         """
         if self.snrLimit is not None:
             vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
@@ -310,8 +340,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
 
 
 class Discovery_N_ObsMetric(BaseChildMetric):
-    """
-    Calculates the number of observations in the i-th discovery track.
+    """Calculates the number of observations in the i-th discovery track.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=0, **kwargs):
         super(Discovery_N_ObsMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -319,9 +348,6 @@ class Discovery_N_ObsMetric(BaseChildMetric):
         self.i = i
 
     def run(self, ssoObs, orb, Hval, metricValues):
-        """
-        Return the number of observations in the i-th discovery opportunity.
-        """
         if self.i >= len(metricValues['start']):
             return 0
         startIdx = metricValues['start'][self.i]
@@ -331,8 +357,7 @@ class Discovery_N_ObsMetric(BaseChildMetric):
 
 
 class Discovery_TimeMetric(BaseChildMetric):
-    """
-    Returns the time of the i-th discovery opportunity.
+    """Returns the time of the i-th discovery opportunity.
     """
     def __init__(self, parentDiscoveryMetric, i=0, tStart=None, badval=-999, **kwargs):
         super(Discovery_TimeMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -341,9 +366,6 @@ class Discovery_TimeMetric(BaseChildMetric):
         self.snrLimit = parentDiscoveryMetric.snrLimit
 
     def run(self, ssoObs, orb, Hval, metricValues):
-        """
-        Return the time of the i-th discovery opportunity.
-        """
         if self.i>=len(metricValues['start']):
             return self.badval
         if self.snrLimit is not None:
@@ -362,8 +384,7 @@ class Discovery_TimeMetric(BaseChildMetric):
 
 
 class Discovery_RADecMetric(BaseChildMetric):
-    """
-    Returns the RA/Dec of the i-th discovery opportunity.
+    """Returns the RA/Dec of the i-th discovery opportunity.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=None, **kwargs):
         super(Discovery_RADecMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -372,9 +393,6 @@ class Discovery_RADecMetric(BaseChildMetric):
         self.metricDtype = 'object'
 
     def run(self, ssoObs, orb, Hval, metricValues):
-        """
-        Return the RA/Dec of the i-th discovery opportunity.
-        """
         if self.i>=len(metricValues['start']):
             return self.badval
         if self.snrLimit is not None:
@@ -390,8 +408,7 @@ class Discovery_RADecMetric(BaseChildMetric):
         return (ra[startIdx], dec[startIdx])
 
 class Discovery_EcLonLatMetric(BaseChildMetric):
-    """
-    Returns the ecliptic lon/lat and solar elongation (in degrees) of the i-th discovery opportunity.
+    """Returns the ecliptic lon/lat and solar elongation (in degrees) of the i-th discovery opportunity.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=None, **kwargs):
         super(Discovery_EcLonLatMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -416,8 +433,7 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
         return (ecLon[startIdx], ecLat[startIdx], solarElong[startIdx])
 
 class Discovery_VelocityMetric(BaseChildMetric):
-    """
-    Returns the sky velocity of the i-th discovery opportunity.
+    """Returns the sky velocity of the i-th discovery opportunity.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=-999, **kwargs):
         super(Discovery_VelocityMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -510,8 +526,9 @@ class ActivityOverPeriodMetric(BaseMoMetric):
 
 
 class DiscoveryChancesMetric(BaseMoMetric):
-    """
-    Count the number of discovery opportunities for an object.
+    """Count the number of discovery opportunities for an object.
+
+    Superseded by the DiscoveryMetric + NChances child metric.
     """
     def __init__(self, nObsPerNight=2, tNight=90./60./24.,
                  nNightsPerWindow=3, tWindow=15, snrLimit=None,
@@ -592,8 +609,7 @@ class DiscoveryChancesMetric(BaseMoMetric):
 
 
 class MagicDiscoveryMetric(BaseMoMetric):
-    """
-    Count the number of discovery opportunities with very good software.
+    """Count the number of discovery opportunities with very good software.
     """
     def __init__(self, nObs=6, tWindow=60, snrLimit=None, **kwargs):
         """
