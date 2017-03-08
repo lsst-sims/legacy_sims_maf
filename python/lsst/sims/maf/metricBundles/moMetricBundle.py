@@ -8,9 +8,7 @@ from lsst.sims.maf.metrics import BaseMoMetric
 from lsst.sims.maf.metrics import MoCompletenessMetric, ValueAtHMetric
 from lsst.sims.maf.slicers import MoObjSlicer
 from lsst.sims.maf.stackers import BaseMoStacker, MoMagStacker
-import lsst.sims.maf.utils as utils
 from lsst.sims.maf.plots import PlotHandler
-from lsst.sims.maf.plots import BasePlotter
 from lsst.sims.maf.plots import MetricVsH
 
 from .metricBundle import MetricBundle

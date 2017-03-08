@@ -21,7 +21,6 @@ setupRequired(sims_maps)
 setupRequired(obs_lsstSim)
 
 # For moving objects.
-setupRequired(oorb)
 setupRequired(sims_movingObjects)
 
 # other requirements (not in LSST stack)
