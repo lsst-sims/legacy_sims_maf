@@ -183,8 +183,11 @@ class ResultsDb(object):
         if metricDataFile is None:
             metricDataFile = 'NULL'
         # Check if metric has already been added to database.
-        prev = self.session.query(MetricRow).filter_by(metricName=metricName, slicerName=slicerName,
-                                                       simDataName=simDataName, metricMetadata=metricMetadata).all()
+        prev = self.session.query(MetricRow).filter_by(metricName=metricName,
+                                                       slicerName=slicerName,
+                                                       simDataName=simDataName,
+                                                       metricMetadata=metricMetadata,
+                                                       sqlConstraint=sqlConstraint).all()
         if len(prev) == 0:
             metricinfo = MetricRow(metricName=metricName, slicerName=slicerName, simDataName=simDataName,
                                    sqlConstraint=sqlConstraint, metricMetadata=metricMetadata,
@@ -270,7 +273,7 @@ class ResultsDb(object):
         """
         # Allow for special summary statistics which return data in a np structured array with
         #   'name' and 'value' columns.  (specificially needed for TableFraction summary statistic).
-        if np.size(summaryValue) > 1:
+        if isinstance(summaryValue, np.ndarray):
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:
                     summarystat = SummaryStatRow(metricId=metricId,

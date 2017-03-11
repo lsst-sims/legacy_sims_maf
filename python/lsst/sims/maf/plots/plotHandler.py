@@ -471,7 +471,7 @@ class PlotHandler(object):
             for pd in self.plotDicts:
                 pd['title'] = title
 
-    def plot(self, plotFunc, plotDicts=None, outfileSuffix=None):
+    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
 
@@ -517,7 +517,8 @@ class PlotHandler(object):
             plt.legend(loc=legendloc, fancybox=True, fontsize='smaller')
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
-            displayDict = self._buildDisplayDict()
+            if displayDict is None:
+                displayDict = self._buildDisplayDict()
             self.saveFig(fignum, outfile, plotType, self.jointMetricNames, self.slicer.slicerName,
                          self.jointRunNames, self.constraints, self.jointMetadata, displayDict)
         return fignum

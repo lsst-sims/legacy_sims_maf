@@ -18,3 +18,5 @@ from .phaseGapMetric import *
 from .starDensity import *
 from .crowdingMetric import *
 from .optimalM5Metric import *
+from .moMetrics import *
+from .moSummaryMetrics import *
