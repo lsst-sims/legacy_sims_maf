@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 import warnings
 import healpy as hp
@@ -173,7 +174,9 @@ class HealpixPowerSpectrum(BasePlotter):
         if False not in metricValue.mask:
             return None
         if plotDict['removeDipole']:
-            cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
+            warnings.warn('XXX-Not removing dipole, need healpy updated on python 3 first')
+            #cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
+            cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
         else:
             cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
         ell = np.arange(np.size(cl))
@@ -334,19 +337,19 @@ class BaseHistogram(BasePlotter):
         else:
             # Plot non-cumulative histogram.
             # First, test if data falls within histRange, because otherwise histogram generation will fail.
-            if np.min(histRange) is not None:
+            if None in histRange:
                 if (histRange[0] is None) and (histRange[1] is not None):
                     condition = (metricValue <= histRange[1])
                 elif (histRange[1] is None) and (histRange[0] is not None):
                     condition = (metricValue >= histRange[0])
                 else:
-                    condition = ((metricValue >= histRange[0]) & (metricValue <= histRange[1]))
+                    condition = []
                 plotValue = metricValue[condition]
             else:
                 plotValue = metricValue
             # If there is only one value to histogram, need to set histRange, otherwise histogram will fail.
             rangePad = 20.
-            if (np.unique(plotValue).size == 1) & (np.min(histRange) is None):
+            if (np.unique(plotValue).size == 1) & (None in histRange):
                 warnings.warn('Only one metric value, making a guess at a good histogram range.')
                 histRange = [plotValue.min() - rangePad, plotValue.max() + rangePad]
                 if (plotValue.min() >= 0) & (histRange[0] < 0):

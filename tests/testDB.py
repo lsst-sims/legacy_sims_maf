@@ -81,7 +81,7 @@ class TestDb(unittest.TestCase):
         query = 'select sessionID, version, sessionDate, runComment from Session'
         dtype = np.dtype([('id', int), ('version', str, 256), ('date', str, 256), ('comment', str, 256)])
         results = table.execute_arbitrary(query, dtype=dtype)
-        self.assertTrue(isinstance(results[0][0], int))
+        self.assertTrue(isinstance(results[0][0], int) | (issubclass(type(results[0][0]), np.integer)))
         self.assertTrue(isinstance(results[0][1], str))
         self.assertTrue(isinstance(results[0][2], str))
         self.assertTrue(isinstance(results[0][3], str))

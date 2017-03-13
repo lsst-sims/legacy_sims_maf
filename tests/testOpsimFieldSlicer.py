@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import str
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np

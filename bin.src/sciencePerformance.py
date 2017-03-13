@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from builtins import zip
 import os
 import argparse
 import warnings
@@ -703,7 +704,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             'g,r,i,z': 'filter="g" or filter="r" or filter="i" or filter="z"',
             'all': ''}
 
-    for sql in sqls.keys():
+    for sql in sqls:
         for period in periods:
             displayDict = {'group': phaseGroup,
                            'subgroup': 'period=%.2f days, filter=%s' % (period, sql),

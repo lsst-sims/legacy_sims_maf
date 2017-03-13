@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import object
 from .baseStacker import BaseStacker
 
 __all__ = ['ColInfo']
@@ -41,7 +43,7 @@ class ColInfo(object):
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}
-        for stackerClass in BaseStacker.registry.itervalues():
+        for stackerClass in BaseStacker.registry.values():
             stacker = stackerClass()
             for col, units in zip(stacker.colsAdded, stacker.units):
                 self.sourceDict[col] = stackerClass

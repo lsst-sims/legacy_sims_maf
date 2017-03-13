@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import str
 # DOCUMENTATION & EXAMPLES -CM
 #--------------------------------------------------------------
 # python example_movie.py opsimblitz2_1060_sqlite.db --ips 2

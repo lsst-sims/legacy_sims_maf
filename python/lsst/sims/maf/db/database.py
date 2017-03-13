@@ -1,8 +1,10 @@
 from __future__ import print_function
+from builtins import object
 import os, warnings
 from .Table import Table
 import inspect
 from sqlalchemy import text
+from future.utils import with_metaclass
 
 __all__ = ['DatabaseRegistry', 'Database']
 
@@ -39,10 +41,8 @@ class DatabaseRegistry(type):
                 print(inspect.getdoc(cls.registry[databasename]))
 
 
-class Database(object):
+class Database(with_metaclass(DatabaseRegistry, object)):
     """Base class for database access."""
-
-    __metaclass__ = DatabaseRegistry
 
     def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, defaultdbTables=None,
                  chunksize=1000000, longstrings=False, verbose=False):

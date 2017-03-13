@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -12,7 +13,7 @@ class TestSummaryMetrics(unittest.TestCase):
     def testTableFractionMetric(self):
         """Test the table summary metric """
         metricdata1 = np.arange(0, 1.5, .02)
-        metricdata = np.array(zip(metricdata1), dtype=[('testdata', 'float')])
+        metricdata = np.array(list(zip(metricdata1)), dtype=[('testdata', 'float')])
         for nbins in [10, 20, 5]:
             metric = metrics.TableFractionMetric('testdata', nbins=nbins)
             table = metric.run(metricdata)
@@ -25,7 +26,7 @@ class TestSummaryMetrics(unittest.TestCase):
     def testIdentityMetric(self):
         """Test identity metric."""
         dv = np.arange(0, 10, .5)
-        dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         testmetric = metrics.IdentityMetric('testdata')
         np.testing.assert_equal(testmetric.run(dv), dv['testdata'])
 
@@ -38,7 +39,7 @@ class TestSummaryMetrics(unittest.TestCase):
         npix = hp.nside2npix(nside)
         names = ['blah']
         types = [float]
-        data = np.zeros(npix, dtype=zip(names, types))
+        data = np.zeros(npix, dtype=list(zip(names, types)))
         # Set all the pixels to have 826 counts
         data['blah'] = data['blah']+826
         slicePoint = {'sid': 0}
@@ -56,7 +57,7 @@ class TestSummaryMetrics(unittest.TestCase):
         npix = hp.nside2npix(nside)
         names = ['blah']
         types = [float]
-        data = np.zeros(npix, dtype=zip(names, types))
+        data = np.zeros(npix, dtype=list(zip(names, types)))
         # Set all the pixels to have 826 counts
         data['blah'] = data['blah']+826
         slicePoint = {'sid': 0}
@@ -67,21 +68,21 @@ class TestSummaryMetrics(unittest.TestCase):
 
     def testNormalizeMetric(self):
         """Test normalize metric."""
-        data = np.ones(10, dtype=zip(['testcol'], ['float']))
+        data = np.ones(10, dtype=list(zip(['testcol'], ['float'])))
         metric = metrics.NormalizeMetric(col='testcol', normVal=5.5)
         result = metric.run(data)
         np.testing.assert_equal(result, np.ones(10, float)/5.5)
 
     def testZeropointMetric(self):
         """Test zeropoint metric."""
-        data = np.ones(10, dtype=zip(['testcol'], ['float']))
+        data = np.ones(10, dtype=list(zip(['testcol'], ['float'])))
         metric = metrics.ZeropointMetric(col='testcol', zp=5.5)
         result = metric.run(data)
         np.testing.assert_equal(result, np.ones(10, float)+5.5)
 
     def testTotalPowerMetric(self):
         nside = 128
-        data = np.ones(12*nside**2, dtype=zip(['testcol'], ['float']))
+        data = np.ones(12*nside**2, dtype=list(zip(['testcol'], ['float'])))
         metric = metrics.TotalPowerMetric(col='testcol')
         result = metric.run(data)
         np.testing.assert_equal(result, 0.0)

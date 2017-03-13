@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import os
 import numpy as np
 import numpy.ma as ma
@@ -256,7 +257,7 @@ class MoMetricBundleGroup(object):
             os.makedirs(self.outDir)
         self.resultsDb = resultsDb
 
-        self.slicer = self.bundleDict.values()[0].slicer
+        self.slicer = list(self.bundleDict.values())[0].slicer
         for b in self.bundleDict.values():
             if b.slicer != self.slicer:
                 raise ValueError('Currently, the slicers for the MoMetricBundleGroup must be equal,'
@@ -405,7 +406,7 @@ class MoMetricBundleGroup(object):
                     # Mask the parent metric (and then child metrics) if there was no data.
                     if len(ssoObs) == 0:
                         b.metricValues.mask[i][j] = True
-                        for cb in b.childBundles.values():
+                        for cb in list(b.childBundles.values()):
                             cb.metricValues.mask[i][j] = True
                     # Otherwise, calculate the metric value for the parent, and then child.
                     else:
@@ -445,7 +446,7 @@ class MoMetricBundleGroup(object):
             print('Calculated and saved all metrics.')
 
     def plotCurrent(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
-                closefigs=True):
+                    closefigs=True):
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
         for b in self.currentBundleDict.values():

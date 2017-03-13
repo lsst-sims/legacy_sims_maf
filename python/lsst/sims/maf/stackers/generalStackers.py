@@ -2,8 +2,8 @@ import warnings
 import numpy as np
 import palpy
 from lsst.sims.utils import Site
-
 from .baseStacker import BaseStacker
+from builtins import str
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
@@ -252,10 +252,17 @@ class FilterColorStacker(BaseStacker):
     def _run(self, simData):
         # Translate filter names into numbers.
         filtersUsed = np.unique(simData[self.filterCol])
+        filtersUsed = [str(f) for f in filtersUsed]
+        if issubclass(type(filtersUsed[0]), bytes):
+            filtersUsed = [str(f.decode('utf-8')) for f in filtersUsed]
+        filterMap_filters = list(self.filter_rgb_map.keys())
+        filterMap_filters = [str(f) for f in filterMap_filters]
+        print('XXX-filterMap_filters', filterMap_filters)
+        print('XXX-filtersUsed', filtersUsed)
         for f in filtersUsed:
-            if f not in self.filter_rgb_map:
+            if f not in filterMap_filters:
                 raise IndexError('Filter %s not in filter_rgb_map' % (f))
-            match = np.where(simData[self.filterCol] == f)[0]
+            match = np.where(str(simData[self.filterCol]) == str(f))[0]
             simData['rRGB'][match] = self.filter_rgb_map[f][0]
             simData['gRGB'][match] = self.filter_rgb_map[f][1]
             simData['bRGB'][match] = self.filter_rgb_map[f][2]

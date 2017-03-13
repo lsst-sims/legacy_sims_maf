@@ -1,4 +1,6 @@
 from __future__ import print_function
+from builtins import str
+from builtins import zip
 import os, sys, re
 import numpy as np
 import warnings
@@ -158,8 +160,8 @@ class OpsimDatabase(Database):
             query += ' group by f.%s' %(self.fieldIdCol)
             fielddata = self.queryDatabase(tableName, query)
             if len(fielddata) == 0:
-                fielddata = np.zeros(0, dtype=zip([self.fieldIdCol, self.raCol, self.decCol],
-                                                  ['int', 'float', 'float']))
+                fielddata = np.zeros(0, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                  ['int', 'float', 'float'])))
         else:
             table = self.tables[tableName]
             fielddata = table.query_columns_Array(colnames=[self.fieldIdCol, self.raCol, self.decCol],
@@ -199,7 +201,7 @@ class OpsimDatabase(Database):
             if len(sciencetypes) == 0:
                 # Then this was an older opsim run without 'ScienceType' tags,
                 #   so fall back to trying to guess what proposals are WFD or DD.
-                for propid, propname in propIDs.iteritems():
+                for propid, propname in propIDs.items():
                     if 'universal' in propname.lower():
                         propTags['WFD'].append(propid)
                     if 'deep' in propname.lower():

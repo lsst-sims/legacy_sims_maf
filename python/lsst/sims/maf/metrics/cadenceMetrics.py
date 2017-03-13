@@ -5,6 +5,7 @@ __all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric',
            'RapidRevisitMetric', 'NRevisitsMetric', 'IntraNightGapsMetric',
            'InterNightGapsMetric', 'AveGapMetric']
 
+
 class SupernovaMetric(BaseMetric):
     """Measure how many time series meet a given time and filter distribution requirement.
 
@@ -117,9 +118,9 @@ class SupernovaMetric(BaseMetric):
         time = time / (1. + self.redshift)
         # Creat time steps to evaluate at
         finetime = np.arange(0., np.ceil(np.max(time)), self.resolution)
-        #index for each time point
+        # index for each time point
         ind = np.arange(finetime.size)
-        #index for each time point + Tmax - Tmin
+        # index for each time point + Tmax - Tmin
         right = np.searchsorted(time, finetime + self.Tmax - self.Tmin, side='right')
         left = np.searchsorted(time, finetime, side='left')
         # Demand enough visits in window
@@ -187,6 +188,7 @@ class SupernovaMetric(BaseMetric):
             result = self.badval
         return result
 
+
 class TemplateExistsMetric(BaseMetric):
     """Calculate the fraction of images with a previous template image of desired quality.
     """
@@ -223,6 +225,7 @@ class TemplateExistsMetric(BaseMetric):
         good = np.where(seeing_diff[1:] >= 0.)[0]
         frac = (good.size) / float(dataSlice[self.seeingCol].size)
         return frac
+
 
 class UniformityMetric(BaseMetric):
     """Calculate how uniformly the observations are spaced in time.

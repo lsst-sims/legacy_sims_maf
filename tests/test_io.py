@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -91,12 +92,12 @@ class TestSlicers(unittest.TestCase):
         names = ['fieldRA', 'fieldDec', 'fieldID']
         dt = ['float', 'float', 'int']
         metricValues = np.random.rand(100)
-        fieldData = np.zeros(100, dtype=zip(names, dt))
+        fieldData = np.zeros(100, dtype=list(zip(names, dt)))
         fieldData['fieldRA'] = np.random.rand(100)
         fieldData['fieldDec'] = np.random.rand(100)
         fieldData['fieldID'] = np.arange(100)
         names = ['data1', 'data2', 'fieldID']
-        simData = np.zeros(100, dtype=zip(names, dt))
+        simData = np.zeros(100, dtype=list(zip(names, dt)))
         simData['data1'] = np.random.rand(100)
         simData['fieldID'] = np.arange(100)
         slicer.setupSlicer(simData, fieldData)
@@ -109,7 +110,7 @@ class TestSlicers(unittest.TestCase):
         attr2check = ['nslice', 'columnsNeeded', 'lonCol', 'latCol', 'simDataFieldIDColName']
         for att in attr2check:
             if type(getattr(slicer, att)).__name__ == 'dict':
-                for key in getattr(slicer, att).keys():
+                for key in getattr(slicer, att):
                     np.testing.assert_almost_equal(getattr(slicer, att)[key], getattr(slicerBack, att)[key])
             else:
                 assert(getattr(slicer, att) == getattr(slicerBack, att))

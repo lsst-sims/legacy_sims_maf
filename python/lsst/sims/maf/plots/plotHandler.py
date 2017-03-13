@@ -1,3 +1,6 @@
+from builtins import zip
+from builtins import range
+from builtins import object
 import os
 import numpy as np
 import warnings
@@ -40,7 +43,7 @@ class PlotHandler(object):
         self.mBundles = []
         # Try to add the metricBundles in filter order.
         if isinstance(mBundles, dict):
-            for mB in mBundles.itervalues():
+            for mB in mBundles.values():
                 vals = mB.fileRoot.split('_')
                 forder = [self.filterorder.get(f, None) for f in vals if len(f) == 1]
                 forder = [o for o in forder if o is not None]
@@ -113,7 +116,7 @@ class PlotHandler(object):
                 # Replace auto-generated plot dict items with things
                 #  set by the plotterDefaults, if they are not None.
                 plotterDefaults = plotFunc.defaultPlotDict
-                for k, v in plotterDefaults.iteritems():
+                for k, v in plotterDefaults.items():
                     if v is not None:
                         tmpPlotDict[k] = v
             # Then add/override based on the bundle plotDict parameters if they are set.

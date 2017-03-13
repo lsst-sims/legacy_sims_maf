@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from builtins import zip
+from builtins import str
+from builtins import range
 import os
 import argparse
 import copy
@@ -552,7 +555,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     # Hourglass metric.
     hourSlicer = slicers.HourglassSlicer()
     # Calculate Filter Hourglass plots per year (split to make labelling easier).
-    yearDates = range(0, int(round(365 * runLength)) + 365, 365)
+    yearDates = list(range(0, int(round(365 * runLength)) + 365, 365))
     for i in range(len(yearDates) - 1):
         sqlconstraint = 'night > %i and night <= %i' % (yearDates[i], yearDates[i + 1])
         metadata = 'Year %i-%i' % (i, i + 1)
@@ -852,7 +855,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
 
     # Calculate some basic summary info about run, per filter, per proposal and for all proposals.
     propOrder = 0
-    props = propids.keys() + ['All Props'] + ['WFD']
+    props = list(propids.keys()) + ['All Props'] + ['WFD']
     slicer = slicers.UniSlicer()
     for i, propid in enumerate(props):
         propOrder += 500

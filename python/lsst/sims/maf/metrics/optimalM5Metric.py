@@ -1,3 +1,4 @@
+from builtins import str
 from .baseMetric import BaseMetric
 from .simpleMetrics import Coaddm5Metric
 import numpy as np

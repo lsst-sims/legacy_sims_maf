@@ -1,5 +1,7 @@
 from __future__ import print_function
+from builtins import object
 import inspect
+from future.utils import with_metaclass
 
 __all__ = ['MapsRegistry', 'BaseMap']
 
@@ -38,9 +40,8 @@ class MapsRegistry(type):
                 maps = cls.registry[mapsname]()
                 print(' added to SlicePoint: ', ','.join(maps.keynames))
 
-class BaseMap(object):
+class BaseMap(with_metaclass(MapsRegistry, object)):
     """ """
-    __metaclass__ = MapsRegistry
 
     def __init__(self,**kwargs):
         self.keyname = 'newkey'

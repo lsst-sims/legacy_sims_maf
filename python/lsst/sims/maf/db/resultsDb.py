@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import os, warnings
 import numpy as np
 from collections import OrderedDict
@@ -277,7 +279,7 @@ class ResultsDb(object):
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:
                     summarystat = SummaryStatRow(metricId=metricId,
-                                                summaryName=summaryName + ' ' + value['name'],
+                                                summaryName=summaryName + ' ' + str(value['name']),
                                                 summaryValue=value['value'])
                     self.session.add(summarystat)
                     self.session.commit()

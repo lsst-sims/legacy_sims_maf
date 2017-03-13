@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import os
 import numpy as np
 import numpy.ma as ma
@@ -94,7 +95,7 @@ class MetricBundleGroup(object):
         # Do some type checking on the MetricBundle dictionary.
         if not isinstance(bundleDict, dict):
             raise ValueError('bundleDict should be a dictionary containing MetricBundle objects.')
-        for b in bundleDict.itervalues():
+        for b in bundleDict.values():
             if not isinstance(b, MetricBundle):
                 raise ValueError('bundleDict should contain only MetricBundle objects.')
         # Identify the series of constraints.
@@ -134,7 +135,7 @@ class MetricBundleGroup(object):
             These are the active metrics to be calculated and plotted, etc.
         """
         self.currentBundleDict = {}
-        for k, b in self.bundleDict.iteritems():
+        for k, b in self.bundleDict.items():
             if b.constraint == constraint:
                 self.currentBundleDict[k] = b
 
@@ -175,7 +176,7 @@ class MetricBundleGroup(object):
         #   each (nested) list contains the bundleDict _keys_ of a compatible set of metricBundles.
         #
         compatibleLists = []
-        for k, b in self.currentBundleDict.iteritems():
+        for k, b in self.currentBundleDict.items():
             foundCompatible = False
             for compatibleList in compatibleLists:
                 comparisonMetricBundleKey = compatibleList[0]
@@ -243,7 +244,7 @@ class MetricBundleGroup(object):
         """
         # Build list of all the columns needed from the database.
         self.dbCols = []
-        for b in self.currentBundleDict.itervalues():
+        for b in self.currentBundleDict.values():
             self.dbCols.extend(b.dbCols)
         self.dbCols = list(set(self.dbCols))
 
@@ -293,7 +294,7 @@ class MetricBundleGroup(object):
                 self.plotCurrent(**plotKwargs)
         # Optionally: clear results from memory.
         if clearMemory:
-            for b in self.currentBundleDict.itervalues():
+            for b in self.currentBundleDict.values():
                 b.metricValues = None
             if self.verbose:
                 print('Deleted metricValues from memory.')
@@ -328,7 +329,7 @@ class MetricBundleGroup(object):
             print("Found %i visits" % (self.simData.size))
 
         # Query for the fieldData if we need it for the opsimFieldSlicer.
-        needFields = [b.slicer.needsFields for b in self.currentBundleDict.itervalues()]
+        needFields = [b.slicer.needsFields for b in self.currentBundleDict.values()]
         if True in needFields:
             self.fieldData = utils.getFieldData(self.dbObj, constraint)
         else:
@@ -354,7 +355,7 @@ class MetricBundleGroup(object):
 
         compatMaps = []
         compatStackers = []
-        for b in bDict.itervalues():
+        for b in bDict.values():
             compatMaps.extend(b.mapsList)
             compatStackers.extend(b.stackerList)
         compatStackers = list(set(compatStackers))
@@ -368,18 +369,18 @@ class MetricBundleGroup(object):
         # Pull out one of the slicers to use as our 'slicer'.
         # This will be forced back into all of the metricBundles at the end (so that they track
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
-        slicer = bDict.itervalues().next().slicer
+        slicer = list(bDict.values())[0].slicer
         if (slicer.slicerName == 'OpsimFieldSlicer'):
             slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
         else:
             slicer.setupSlicer(self.simData, maps=compatMaps)
         # Copy the slicer (after setup) back into the individual metricBundles.
         if slicer.slicerName != 'HealpixSlicer' or slicer.slicerName != 'UniSlicer':
-            for b in bDict.itervalues():
+            for b in bDict.values():
                 b.slicer = slicer
 
         # Set up (masked) arrays to store metric data in each metricBundle.
-        for b in bDict.itervalues():
+        for b in bDict.values():
             b._setupMetricValues()
 
         # Set up an ordered dictionary to be the cache if needed:
@@ -394,7 +395,7 @@ class MetricBundleGroup(object):
             slicedata = self.simData[slice_i['idxs']]
             if len(slicedata) == 0:
                 # No data at this slicepoint. Mask data values.
-                for b in bDict.itervalues():
+                for b in bDict.values():
                     b.metricValues.mask[i] = True
             else:
                 # There is data! Should we use our data cache?
@@ -411,21 +412,21 @@ class MetricBundleGroup(object):
                     else:
                         cacheDict[cacheKey] = i
                         useCache = False
-                    for b in bDict.itervalues():
+                    for b in bDict.values():
                         if useCache:
                             b.metricValues.data[i] = b.metricValues.data[cacheDict[cacheKey]]
                         else:
                             b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
                     # If we are above the cache size, drop the oldest element from the cache dict.
                     if len(cacheDict) > slicer.cacheSize:
-                        del cacheDict[cacheDict.keys()[0]]
+                        del cacheDict[list(cacheDict.keys())[0]]
 
                 # Not using memoize, just calculate things normally
                 else:
-                    for b in bDict.itervalues():
+                    for b in bDict.values():
                         b.metricValues.data[i] = b.metric.run(slicedata, slicePoint=slice_i['slicePoint'])
         # Mask data where metrics could not be computed (according to metric bad value).
-        for b in bDict.itervalues():
+        for b in bDict.values():
             if b.metricValues.dtype.name == 'object':
                 for ind, val in enumerate(b.metricValues.data):
                     if val is b.metric.badval:
@@ -437,7 +438,7 @@ class MetricBundleGroup(object):
 
         # Save data to disk as we go, although this won't keep summary values, etc. (just failsafe).
         if self.saveEarly:
-            for b in bDict.itervalues():
+            for b in bDict.values():
                 b.write(outDir=self.outDir, resultsDb=self.resultsDb)
 
     def reduceAll(self, updateSummaries=True):
@@ -468,11 +469,11 @@ class MetricBundleGroup(object):
         """
         # Create a temporary dictionary to hold the reduced metricbundles.
         reduceBundleDict = {}
-        for b in self.currentBundleDict.itervalues():
+        for b in self.currentBundleDict.values():
             # If there are no reduce functions associated with the metric, skip this metricBundle.
             if len(b.metric.reduceFuncs) > 0:
                 # Apply reduce functions, creating a new metricBundle in the process (new metric values).
-                for reduceFunc in b.metric.reduceFuncs.itervalues():
+                for reduceFunc in b.metric.reduceFuncs.values():
                     newmetricbundle = b.reduceMetric(reduceFunc)
                     # Add the new metricBundle to our metricBundleGroup dictionary.
                     name = newmetricbundle.metric.name
@@ -502,7 +503,7 @@ class MetricBundleGroup(object):
     def summaryCurrent(self):
         """Run summary statistics on all the metricBundles in the currently active set of MetricBundles.
         """
-        for b in self.currentBundleDict.itervalues():
+        for b in self.currentBundleDict.values():
             b.computeSummaryStats(self.resultsDb)
 
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
@@ -561,7 +562,7 @@ class MetricBundleGroup(object):
         """
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
-        for b in self.currentBundleDict.itervalues():
+        for b in self.currentBundleDict.values():
             b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
             if closefigs:
                 plt.close('all')
@@ -585,7 +586,7 @@ class MetricBundleGroup(object):
                 print('Re-saving metric bundles.')
             else:
                 print('Saving metric bundles.')
-        for b in self.currentBundleDict.itervalues():
+        for b in self.currentBundleDict.values():
             b.write(outDir=self.outDir, resultsDb=self.resultsDb)
 
     def readAll(self):
@@ -596,7 +597,7 @@ class MetricBundleGroup(object):
         Reads all the files associated with all metricbundles in self.bundleDict.
         """
         reduceBundleDict = {}
-        for b in self.bundleDict.itervalues():
+        for b in self.bundleDict.values():
             filename = os.path.join(self.outDir, b.fileRoot + '.npz')
             try:
                 # Create a temporary metricBundle to read the data into.
@@ -613,7 +614,7 @@ class MetricBundleGroup(object):
                 # and read those in too.
                 if len(b.metric.reduceFuncs) > 0:
                     origMetricName = b.metric.name
-                    for reduceFunc in b.metric.reduceFuncs.itervalues():
+                    for reduceFunc in b.metric.reduceFuncs.values():
                         reduceName = origMetricName + '_' + reduceFunc.__name__.replace('reduce', '')
                         # Borrow the fileRoot in b (we'll reset it appropriately afterwards).
                         b.metric.name = reduceName
