@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Base class for metrics - defines methods which must be implemented.
 # If a metric calculates a vector or list at each gridpoint, then there
 #  should be additional 'reduce_*' functions defined, to convert the vector
@@ -41,19 +42,19 @@ class MetricRegistry(type):
     def help(cls, doc=False):
         for metricname in sorted(cls.registry):
             if not doc:
-                print metricname
+                print(metricname)
             if doc:
-                print '---- ', metricname, ' ----'
-                print inspect.getdoc(cls.registry[metricname])
+                print('---- ', metricname, ' ----')
+                print(inspect.getdoc(cls.registry[metricname]))
 
     def help_metric(cls, metricname):
-        print metricname
-        print inspect.getdoc(cls.registry[metricname])
+        print(metricname)
+        print(inspect.getdoc(cls.registry[metricname]))
         args, varargs, kwargs, defaults = inspect.getargspec(cls.registry[metricname].__init__)
         args_with_defaults = args[-len(defaults):]
-        print ' Metric __init__ keyword args and defaults: '
+        print(' Metric __init__ keyword args and defaults: ')
         for a, d in zip(args_with_defaults, defaults):
-            print '     ', a, d
+            print('     ', a, d)
 
 
 class ColRegistry(object):

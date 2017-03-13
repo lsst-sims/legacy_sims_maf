@@ -112,7 +112,7 @@ class ResultsDb(object):
             if not os.path.isdir(outDir):
                 try:
                     os.makedirs(outDir)
-                except OSError, msg:
+                except OSError as msg:
                     raise OSError(msg, '\n  (If this was the database file (not outDir), remember to use kwarg "database")')
             self.database = os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import numpy as np
 
@@ -91,17 +92,17 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     # Print data (this is also the termination of the recursion if given nested dictionaries).
     if not isinstance(content, dict):
         if isinstance(content, str) or isinstance(content, float) or isinstance(content, int):
-            print >> filehandle, '%s%s%s%s' %(indent, label, delimiter, str(content))
+            print('%s%s%s%s' %(indent, label, delimiter, str(content)), file=filehandle)
         else:
             if isinstance(content, np.ndarray):
                 if content.dtype.names is not None:
-                    print >> filehandle, '%s%s%s' %(indent, delimiter, label)
+                    print('%s%s%s' %(indent, delimiter, label), file=filehandle)
                     for element in content:
-                        print >> filehandle, '%s%s%s%s%s' %(indent, delimiter, indent, delimiter, _myformat(element))
+                        print('%s%s%s%s%s' %(indent, delimiter, indent, delimiter, _myformat(element)), file=filehandle)
                 else:
-                    print >> filehandle, '%s%s%s%s' %(indent, label, delimiter, _myformat(content))
+                    print('%s%s%s%s' %(indent, label, delimiter, _myformat(content)), file=filehandle)
             else:
-                print >> filehandle, '%s%s%s%s' %(indent, label, delimiter, _myformat(content))
+                print('%s%s%s%s' %(indent, label, delimiter, _myformat(content)), file=filehandle)
         return
     # Allow user to specify print order of (some or all) items in order via 'keyorder'.
     #  'keyorder' is list stored in the dictionary.
@@ -117,7 +118,7 @@ def printDict(content, label, filehandle=None, delimiter=' ',  _level=0):
     else:
         keys = sorted(content.keys())
     # Print data from dictionary.
-    print >> filehandle, '%s%s%s:' %(indent, delimiter, label)
+    print('%s%s%s:' %(indent, delimiter, label), file=filehandle)
     _level += 2
     for k in keys:
         printDict(content[k], k, filehandle, delimiter, _level)
@@ -158,7 +159,7 @@ def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
     writestring = '#'
     for s in subkeys:
         writestring += '%s%s' %(s, delimiter)
-    print >> filehandle, writestring
+    print(writestring, file=filehandle)
     # Now go through and print.
     for k in topdict:
         writestring = ''
@@ -172,4 +173,4 @@ def printSimpleDict(topdict, subkeyorder, filehandle=None, delimiter=' '):
                     writestring += '%s%s' %(_myformat(topdict[k][s]), delimiter)
             else:
                 writestring += '%s' %(delimiter)
-        print >> filehandle, writestring
+        print(writestring, file=filehandle)

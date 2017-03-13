@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Collection of utilities for MAF that relate to Opsim specifically.
 
 import os
@@ -80,7 +81,7 @@ def createSQLWhere(tag, propTags):
     """
     sqlWhere = ''
     if (tag not in propTags) or (len(propTags[tag]) == 0):
-        print 'No %s proposals found' %(tag)
+        print('No %s proposals found' %(tag))
         # Create a sqlWhere clause that will not return anything as a query result.
         sqlWhere = 'propID like "NO PROP"'
     elif len(propTags[tag]) == 1:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import argparse
 from lsst.sims.maf.viz import MafRunComparison
@@ -9,7 +10,7 @@ def pandaprint(stats):
         writestring = ''
         for j in range(len(stats[i])):
             writestring += '%s;' % (stats[i][j])
-        print writestring.lstrip(' ').rstrip(';')
+        print(writestring.lstrip(' ').rstrip(';'))
 
 
 if __name__ == '__main__':
@@ -59,7 +60,7 @@ if __name__ == '__main__':
     writestring = 'Summary_Name;'
     for r in runlist:
         writestring += '%s;' % r
-    print writestring.rstrip(';')
+    print(writestring.rstrip(';'))
 
     # Get 'overview' statistics.
 

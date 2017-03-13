@@ -1,3 +1,4 @@
+from __future__ import print_function
 import inspect
 
 __all__ = ['MapsRegistry', 'BaseMap']
@@ -30,12 +31,12 @@ class MapsRegistry(type):
     def help(cls, doc=False):
         for mapsname in sorted(cls.registry):
             if not doc:
-                print mapsname
+                print(mapsname)
             if doc:
-                print '---- ', mapsname, ' ----'
-                print cls.registry[mapsname].__doc__
+                print('---- ', mapsname, ' ----')
+                print(cls.registry[mapsname].__doc__)
                 maps = cls.registry[mapsname]()
-                print ' added to SlicePoint: ', ','.join(maps.keynames)
+                print(' added to SlicePoint: ', ','.join(maps.keynames))
 
 class BaseMap(object):
     """ """

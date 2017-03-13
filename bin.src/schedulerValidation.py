@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os
 import argparse
 import copy
@@ -45,9 +46,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = utils.createSQLWhere('WFD', propTags)
-    print '#FYI: WFD "where" clause: %s' % (wfdWhere)
+    print('#FYI: WFD "where" clause: %s' % (wfdWhere))
     ddWhere = utils.createSQLWhere('DD', propTags)
-    print '#FYI: DD "where" clause: %s' % (ddWhere)
+    print('#FYI: DD "where" clause: %s' % (ddWhere))
 
     # Set up benchmark values, scaled to length of opsim run. These are applied to 'all' and 'WFD' plots.
     runLength = opsimdb.fetchRunLength()
@@ -70,7 +71,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     # Check that nvisits is not set to zero (for very short run length).
     for f in benchmarkVals['nvisits']:
         if benchmarkVals['nvisits'][f] == 0:
-            print 'Updating benchmark nvisits value in %s to be nonzero' % (f)
+            print('Updating benchmark nvisits value in %s to be nonzero' % (f))
             benchmarkVals['nvisits'][f] = 1
 
     # Generate approximate benchmark values for DD.

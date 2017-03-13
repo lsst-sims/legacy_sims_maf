@@ -1,3 +1,4 @@
+from __future__ import print_function
 import inspect
 import warnings
 import numpy as np
@@ -30,13 +31,13 @@ class StackerRegistry(type):
     def help(cls, doc=False):
         for stackername in sorted(cls.registry):
             if not doc:
-                print stackername
+                print(stackername)
             if doc:
-                print '---- ', stackername, ' ----'
-                print cls.registry[stackername].__doc__
+                print('---- ', stackername, ' ----')
+                print(cls.registry[stackername].__doc__)
                 stacker = cls.registry[stackername]()
-                print ' Columns added to SimData: ', ','.join(stacker.colsAdded)
-                print ' Default columns required: ', ','.join(stacker.colsReq)
+                print(' Columns added to SimData: ', ','.join(stacker.colsAdded))
+                print(' Default columns required: ', ','.join(stacker.colsReq))
 
 
 class BaseStacker(object):

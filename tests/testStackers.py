@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import matplotlib
 import warnings
@@ -84,12 +85,12 @@ class TestStackerClasses(unittest.TestCase):
             dra_on_night = np.abs(np.diff(diffsra[match]))
             ddec_on_night = np.abs(np.diff(diffsdec[match]))
             if dra_on_night.max() > 0.0005:
-                print ni
+                print(ni)
                 m = np.where(dra_on_night > 0.0005)[0]
-                print diffsra[match][m]
-                print ra[match][m]
-                print dec[match][m]
-                print dra_on_night[m]
+                print(diffsra[match][m])
+                print(ra[match][m])
+                print(dec[match][m])
+                print(dra_on_night[m])
             self.assertAlmostEqual(dra_on_night.max(), 0)
             self.assertAlmostEqual(ddec_on_night.max(), 0)
 

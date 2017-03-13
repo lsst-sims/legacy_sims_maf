@@ -1,3 +1,4 @@
+from __future__ import print_function
 __author__ = 'simon'
 
 import numpy as np

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import numpy as np
 import numpy.ma as ma
@@ -269,22 +270,22 @@ class MetricBundleGroup(object):
 
         for compatibleList in self.compatibleLists:
             if self.verbose:
-                print 'Running: ', compatibleList
+                print('Running: ', compatibleList)
             self._runCompatible(compatibleList)
             if self.verbose:
-                print 'Completed metric generation.'
+                print('Completed metric generation.')
             for key in compatibleList:
                 self.hasRun[key] = True
         # Run the reduce methods.
         if self.verbose:
-            print 'Running reduce methods.'
+            print('Running reduce methods.')
         self.reduceCurrent()
         # Run the summary statistics.
         if self.verbose:
-            print 'Running summary statistics.'
+            print('Running summary statistics.')
         self.summaryCurrent()
         if self.verbose:
-            print 'Completed.'
+            print('Completed.')
         if plotNow:
             if plotKwargs is None:
                 self.plotCurrent()
@@ -295,7 +296,7 @@ class MetricBundleGroup(object):
             for b in self.currentBundleDict.itervalues():
                 b.metricValues = None
             if self.verbose:
-                print 'Deleted metricValues from memory.'
+                print('Deleted metricValues from memory.')
 
     def getData(self, constraint):
         """Query the data from the database.
@@ -309,9 +310,9 @@ class MetricBundleGroup(object):
         """
         if self.verbose:
             if constraint == '':
-                print "Querying database with no constraint."
+                print("Querying database with no constraint.")
             else:
-                print "Querying database with constraint %s" % (constraint)
+                print("Querying database with constraint %s" % (constraint))
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
         if self.dbTable != 'Summary':
             distinctExpMJD = False
@@ -324,7 +325,7 @@ class MetricBundleGroup(object):
                                         groupBy=groupBy)
 
         if self.verbose:
-            print "Found %i visits" % (self.simData.size)
+            print("Found %i visits" % (self.simData.size))
 
         # Query for the fieldData if we need it for the opsimFieldSlicer.
         needFields = [b.slicer.needsFields for b in self.currentBundleDict.itervalues()]
@@ -531,7 +532,7 @@ class MetricBundleGroup(object):
         """
         for constraint in self.constraints:
             if self.verbose:
-                print 'Plotting figures with %s constraint now.' % (constraint)
+                print('Plotting figures with %s constraint now.' % (constraint))
             self.setCurrent(constraint)
             self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
                              thumbnail=thumbnail, closefigs=closefigs)
@@ -565,7 +566,7 @@ class MetricBundleGroup(object):
             if closefigs:
                 plt.close('all')
         if self.verbose:
-            print 'Plotting complete.'
+            print('Plotting complete.')
 
     def writeAll(self):
         """Save all the MetricBundles to disk.
@@ -581,9 +582,9 @@ class MetricBundleGroup(object):
         """
         if self.verbose:
             if self.saveEarly:
-                print 'Re-saving metric bundles.'
+                print('Re-saving metric bundles.')
             else:
-                print 'Saving metric bundles.'
+                print('Saving metric bundles.')
         for b in self.currentBundleDict.itervalues():
             b.write(outDir=self.outDir, resultsDb=self.resultsDb)
 
@@ -650,6 +651,6 @@ class MetricBundleGroup(object):
                     b.metric.name = origMetricName
                     b._buildFileRoot()
                 if self.verbose:
-                    print 'Read %s from disk.' % (b.fileRoot)
+                    print('Read %s from disk.' % (b.fileRoot))
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Base class for all 'Slicer' objects.
 #
 import inspect
@@ -31,10 +32,10 @@ class SlicerRegistry(type):
     def help(cls, doc=False):
         for slicername in sorted(cls.registry):
             if not doc:
-                print slicername
+                print(slicername)
             if doc:
-                print '---- ', slicername, ' ----'
-                print inspect.getdoc(cls.registry[slicername])
+                print('---- ', slicername, ' ----')
+                print(inspect.getdoc(cls.registry[slicername]))
 
 
 

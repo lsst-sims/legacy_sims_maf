@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, warnings
 from .Table import Table
 import inspect
@@ -32,10 +33,10 @@ class DatabaseRegistry(type):
     def help(cls, doc=False):
         for databasename in sorted(cls.registry):
             if not doc:
-                print databasename
+                print(databasename)
             if doc:
-                print '---- ', databasename, ' ----'
-                print inspect.getdoc(cls.registry[databasename])
+                print('---- ', databasename, ' ----')
+                print(inspect.getdoc(cls.registry[databasename]))
 
 
 class Database(object):

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -152,7 +153,7 @@ class TestCadenceMetrics(unittest.TestCase):
             result = metric.run(data)
             resmin = np.min([resmin, result])
             resmax = np.max([resmax, result])
-        print "RapidRevisit .. range", resmin, resmax
+        print("RapidRevisit .. range", resmin, resmax)
 
     def testNRevisitsMetric(self):
         data = np.zeros(100, dtype=zip(['expMJD'], [float]))

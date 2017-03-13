@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys, re
 import numpy as np
 import warnings
@@ -222,7 +223,7 @@ class OpsimDatabase(Database):
         runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve runLength; using default 10 years'
+            print('Cannot access Config table to retrieve runLength; using default 10 years')
             runLength = 10.0
         else:
             table = self.tables['Config']
@@ -236,7 +237,7 @@ class OpsimDatabase(Database):
         Returns the latitude, longitude, and height of the telescope used by the config file.
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.'
+            print('Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.')
             site = Site(name='LSST')
             lat = site.latitude_rad
             lon = site.longitude_rad
@@ -304,7 +305,7 @@ class OpsimDatabase(Database):
                 seeingcol = 'finSeeing'
             except ValueError:
                 raise ValueError('Cannot find appropriate column name for seeing.')
-        print 'Using %s for seeing column name.' %(seeingcol)
+        print('Using %s for seeing column name.' %(seeingcol))
         return seeingcol
 
     def fetchOpsimRunName(self):
@@ -312,7 +313,7 @@ class OpsimDatabase(Database):
         Returns opsim run name (machine name + session ID) from Session table.
         """
         if 'Session' not in self.tables:
-            print 'Could not access Session table to find this information.'
+            print('Could not access Session table to find this information.')
             runName = 'opsim'
         else:
             table = self.tables['Session']
@@ -325,7 +326,7 @@ class OpsimDatabase(Database):
         Returns the total slew time.
         """
         if 'SlewActivities' not in self.tables:
-            print 'Could not access SlewActivities table to find this information.'
+            print('Could not access SlewActivities table to find this information.')
             nslew = -1
         else:
             table = self.tables['SlewActivities']

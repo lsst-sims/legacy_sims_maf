@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.engine import url
@@ -67,7 +68,7 @@ class TrackingDb(object):
 
         engine = create_engine(dbAddress, echo=self.verbose)
         if self.verbose:
-            print 'Created or connected to MAF tracking %s database at %s' %(self.driver, self.database)
+            print('Created or connected to MAF tracking %s database at %s' %(self.driver, self.database))
         self.Session = sessionmaker(bind=engine)
         self.session = self.Session()
         # Create the tables, if they don't already exist.
@@ -102,8 +103,8 @@ class TrackingDb(object):
                 runIds = []
                 for run in prevruns:
                     runIds.append(run.mafRunId)
-                print 'This maf directory %s is already present in tracking db with mafRunId(s) %s.' %(mafDir, runIds)
-                print 'Not currently adding this run to tracking DB (use override=True to add anyway).'
+                print('This maf directory %s is already present in tracking db with mafRunId(s) %s.' %(mafDir, runIds))
+                print('Not currently adding this run to tracking DB (use override=True to add anyway).')
                 return runIds[0]
         # Run did not exist in database or we received override: add it.
         runinfo = RunRow(opsimRun=opsimRun, opsimComment=opsimComment, mafComment=mafComment,
@@ -121,7 +122,7 @@ class TrackingDb(object):
             raise Exception('Could not find run with mafRunId %d' %(runId))
         if len(runinfo) > 1:
             raise Exception('Found more than one run with mafRunId %d' %(runId))
-        print 'Removing run info for runId %d ' %(runId)
-        print ' ', runinfo
+        print('Removing run info for runId %d ' %(runId))
+        print(' ', runinfo)
         self.session.delete(runinfo[0])
         self.session.commit()
