@@ -88,7 +88,7 @@ def setupMetrics(opsimName, metadata, tstart, tnow, plotlabel='', cumulative=Fal
         coaddMax = 26.5
     figsize = (8, 8)
     title = 'Simulation %s: %s' % (opsimName, metadata)
-    metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5Metric'))
+    metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5'))
     plotDictList.append({'colorMin':coaddMin, 'colorMax':coaddMax,
                          'label': plotlabel, 'title': title, 'figsize': figsize})
     metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits'))
@@ -96,10 +96,10 @@ def setupMetrics(opsimName, metadata, tstart, tnow, plotlabel='', cumulative=Fal
                          'cbarFormat': '%d',
                           'label': plotlabel, 'title': title + 'NVisits', 'figsize': figsize})
     # Uniformity wants survey length in years.
-    surveyLength = (tnow - tstart) / 365.0
-    metricList.append(metrics.UniformityMetric('expMJD', surveyLength=surveyLength))
-    plotDictList.append({'colorMin':0, 'colorMax':1, 'cbarFormat':'%.2f',
-                         'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
+    #surveyLength = (tnow - tstart) / 365.0
+    #metricList.append(metrics.UniformityMetric('expMJD', surveyLength=surveyLength))
+    #plotDictList.append({'colorMin':0, 'colorMax':1, 'cbarFormat':'%.2f',
+    #                     'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
     dt, t = dtime(t)
     if verbose:
         print 'Set up metrics %f s' %(dt)
@@ -182,7 +182,6 @@ def runSlices(opsimName, metadata, simdata, bins, args, verbose=False):
         hs = setupHealpixSlicer(args)
 
         bundles = []
-        sqlconstraint = ''
         for metric, plotDict in zip(metricList, plotDictList):
             bundles.append(mB.MetricBundle(metric, hs, sqlconstraint=args.sqlConstraint,
                                            metadata=metadata, runName=opsimName, plotDict=plotDict,
@@ -194,8 +193,8 @@ def runSlices(opsimName, metadata, simdata, bins, args, verbose=False):
         # Set up metricBundleGroup to handle metrics calculation + plotting
         bg = mB.MetricBundleGroup(bundledict, opsDb, outDir=args.outDir, resultsDb=None, saveEarly=False)
         # Calculate metric data values for simdatasubset (this also sets up indexing in the slicer)
-        bg.setCurrent(sqlconstraint)
-        bg.runCurrent(constraint = sqlconstraint, simData=simdatasubset)
+        bg.setCurrent(args.sqlConstraint)
+        bg.runCurrent(constraint=args.sqlConstraint, simData=simdatasubset)
         # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
         bg.plotAll(outfileSuffix=slicenumber, closefigs=True, dpi=72, thumbnail=False, figformat='png')
         # Write the data -- uncomment if you want to do this.
@@ -205,7 +204,7 @@ def runSlices(opsimName, metadata, simdata, bins, args, verbose=False):
             print 'Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt)
 
 
-def stitchMovie(metricList, args):
+def stitchMovie(metricList, metadata, args):
     """
     Create a movie for each metric from the plots generated in runSlices.
     Uses metricList to identify which metrics should be used as input for movies.
@@ -219,7 +218,10 @@ def stitchMovie(metricList, args):
         mName = metric.name.replace('  ', ' ').replace(' ', '_').replace('.', '_').replace(',', '')
         dbName = args.opsimDb.replace('_sqlite.db', '')
         dbName = dbName.replace('.db', '')
-        outfileroots.append(dbName + '_' + mName + '_' + 'HEAL')
+        if metadata != '':
+            outfileroots.append('_'.join([dbName, mName, metadata, 'HEAL']))
+        else:
+            outfileroots.append('_'.join([dbName, mName, 'HEAL']))
 
     for outfileroot in outfileroots:
         # Identify filenames.
@@ -329,7 +331,7 @@ if __name__ == '__main__':
         gm = runSlices(opsimName, metadata, simdata, bins, args)
 
     # Build movie.
-    stitchMovie(metricList, args)
+    stitchMovie(metricList, metadata, args)
 
     end_t, start_t = dtime(start_t)
     print 'Total time: ', end_t

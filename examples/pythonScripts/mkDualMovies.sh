@@ -7,16 +7,50 @@
 ## (edit this file to change the sql constraint).
 
 set opsimRun = $1
+# Example of sqlconstraint & metadata for filter=r
 set sqlconstraint = 'filter="r"'
-set sqlconstraint = ''
+# Because this is a somewhat stupid shell script, please provide the metadata translation of the sqlconstraint
+# (i.e. the string that MAF turns your sqlconstraint into in the output images)
+set metadata = 'r'
 
-echo "python example_movie.py "$opsimRun"_sqlite.db --movieStepsize 30 --nside 32 --ips 5 --sqlConstraint '"$sqlconstraint"' --outDir "$opsimRun"_cumulative"
+# Example of no sqlconstraint
+#set sqlconstraint = ''
+#set metadata = ''
 
-echo "python example_movie.py "$opsimRun"_sqlite.db --movieStepsize 30 --nside 32 --ips 5 --sqlConstraint '"$sqlconstraint"' --binned --outDir "$opsimRun"_binned"
+set stepsize = 365
+set nside = 32
 
-echo "ffmpeg -i "$opsimRun"_cumulative/"$opsimRun"_N_Visits_HEAL_SkyMap_5.0_5.0.mp4 -i "$opsimRun"_binned/"$opsimRun"_N_Visits_HEAL_SkyMap_5.0_5.0.mp4 -filter_complex 'nullsrc=size=1152x576 [background]; [0:v] setpts=PTS-STARTPTS [left]; [1:v] setpts=PTS-STARTPTS [right]; [background][left] overlay=shortest=1 [background+left]; [background+left][right] overlay=shortest=1:x=576 [left+right]' -map '[left+right]' -r 5  -pix_fmt yuv420p "$opsimRun"_N_Visits.mp4"
+echo "python example_movie.py "$opsimRun"_sqlite.db --movieStepsize "$stepsize" --nside "$nside" --ips 5 \\
+  --sqlConstraint '"$sqlconstraint"' --outDir "$opsimRun"_"$sqlconstraint"_cumulative"
 
-echo "ffmpeg -i "$opsimRun"_cumulative/"$opsimRun"_Coaddm5Metric_HEAL_SkyMap_5.0_5.0.mp4 -i "$opsimRun"_binned/"$opsimRun"_Coaddm5Metric_HEAL_SkyMap_5.0_5.0.mp4 -filter_complex 'nullsrc=size=1224x388 [background]; [0:v] setpts=PTS-STARTPTS [left]; [1:v] setpts=PTS-STARTPTS [right]; [background][left] overlay=shortest=1 [background+left]; [background+left][right] overlay=shortest=1:x=612 [left+right]' -map '[left+right]' -r 5 -pix_fmt yuv420p "$opsimRun"_Coaddm5.mp4"
+echo "python example_movie.py "$opsimRun"_sqlite.db --movieStepsize "$stepsize" --nside "$nside" --ips 5 \\
+  --sqlConstraint '"$sqlconstraint"' --binned --outDir "$opsimRun"_"$sqlconstraint"_binned"
+
+set metric = "N_Visits"
+set moviename = $opsimRun"_"$metric"_"$metadata"_HEAL_SkyMap_5.0_5.0.mp4"
+if $metadata == '' then
+  set moviename = $opsimRun"_"$metric"_HEAL_SkyMap_5.0_5.0.mp4"
+endif
+
+
+echo "ffmpeg -i "$opsimRun"_"$sqlconstraint"_cumulative/"$moviename" \\
+ -i "$opsimRun"_"$sqlconstraint"_binned/"$moviename" \\
+ -filter_complex 'nullsrc=size=1152x576 [background]; [0:v] setpts=PTS-STARTPTS [left]; [1:v] setpts=PTS-STARTPTS \\
+ [right]; [background][left] overlay=shortest=1 [background+left]; [background+left][right] overlay=shortest=1:x=576 \\
+ [left+right]' -map '[left+right]' -r 5  -pix_fmt yuv420p "$opsimRun"_"$metadata"_N_Visits.mp4"
+
+set metric = "Coaddm5"
+set moviename = $opsimRun"_"$metric"_"$metadata"_HEAL_SkyMap_5.0_5.0.mp4"
+if $metadata == '' then
+  set moviename = $opsimRun"_"$metric"_HEAL_SkyMap_5.0_5.0.mp4"
+endif
+
+
+echo "ffmpeg -i "$opsimRun"_"$sqlconstraint"_cumulative/"$moviename" \\
+ -i "$opsimRun"_"$sqlconstraint"_binned/"$moviename" \\
+ -filter_complex 'nullsrc=size=1152x576 [background]; [0:v] setpts=PTS-STARTPTS [left]; [1:v] setpts=PTS-STARTPTS \\
+ [right]; [background][left] overlay=shortest=1 [background+left]; [background+left][right] overlay=shortest=1:x=576 \\
+ [left+right]' -map '[left+right]' -r 5 -pix_fmt yuv420p "$opsimRun"_"$metadata"_Coaddm5.mp4"
 
 
 
