@@ -63,19 +63,20 @@ def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60.,
     colorMax = int(nvisitsMax/4)
     metricList = []
     plotDictList = []
+    figsize = (8, 8)
     if not onlyFilterColors:
         metricList.append(metrics.CountMetric('expMJD', metricName='Nvisits'))
         plotDictList.append({'colorMin':0, 'colorMax':nvisitsMax,
                              'xlabel':'Number of visits', 'title':'Cumulative visits (all bands)',
-                             'label':plotlabel, 'metricIsColor':False})
+                             'label':plotlabel, 'metricIsColor':False, 'figsize': figsize})
         for f in (['u', 'g', 'r', 'i', 'z', 'y']):
             metricList.append(metrics.CountSubsetMetric('filter', subset=f, metricName='Nvisits_'+f))
             plotDictList.append({'colorMin':0, 'colorMax':colorMax, 'cbarFormat': '%d',
                                  'xlabel':'Number of Visits', 'title':'%s band' %(f),
-                                 'label':plotlabel, 'metricIsColor':False})
+                                 'label':plotlabel, 'metricIsColor':False, 'figsize': figsize})
     metricList.append(metrics.FilterColorsMetric(t0=t0, tStep=tStep))
     plotDictList.append({'title':'Simulation %s: %s' %(opsimName, metadata), 'bgcolor':None,
-                         'metricIsColor':True})
+                         'metricIsColor':True, 'figsize': figsize})
     dt, t = dtime(t)
     if verbose:
         print('Set up metrics %f s' %(dt))
@@ -90,7 +91,7 @@ def setupMovieSlicer(simdata, bins, verbose=False):
         print('Set up movie slicers in %f s' %(dt))
     return movieslicer
 
-def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=Site(name='LSST').latitude_rad, raCen=0.):
+def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=Site(name='LSST').latitude_rad):
     """
     Adds a horizon at horizon_altitude, using the telescope latitude lat_telescope.
     Returns the lon/lat points that would be appropriate to add to a SkyMap plot centered on raCen.
@@ -154,7 +155,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         bundles = []
         sqlconstraint = ''
         for metric, plotDict in zip(metricList, plotDictList):
-            bundles.append(metricBundles.MetricBundle(metric, opslicer, sqlconstraint=sqlconstraint,
+            bundles.append(metricBundles.MetricBundle(metric, opslicer, constraint=sqlconstraint,
                                                       metadata=metadata, runName=opsimName,
                                                       plotDict=plotDict))
         # Remove (default) stackers from bundles, because we've already run them above on the original data.
@@ -162,12 +163,13 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
             mb.stackerList = []
         bundledict = metricBundles.makeBundlesDictFromList(bundles)
         # Set up metricBundleGroup to handle metrics calculation + plotting
-        bg = metricBundles.MetricBundleGroup(bundledict, opsDb, outDir=args.outDir, resultsDb=None, saveEarly=False)
+        bg = metricBundles.MetricBundleGroup(bundledict, opsDb, outDir=args.outDir,
+                                             resultsDb=None, saveEarly=False)
         # 'Hack' bundleGroup to just go ahead and run the metrics, without querying the database.
         simData = simdatasubset
         bg.fieldData = fields
         bg.setCurrent(sqlconstraint)
-        bg.runCurrent(sqlconstraint = sqlconstraint, simData=simData)
+        bg.runCurrent(constraint = sqlconstraint, simData=simData)
         # Plot data each metric, for this slice of the movie, adding slicenumber as a suffix for output plots.
         # Plotting here, rather than automatically via sliceMetric method because we're going to rotate the sky,
         #  and add extra legend info and figure text (for FilterColors metric).
@@ -175,7 +177,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         obsnow = np.where(simdatasubset['expMJD'] == simdatasubset['expMJD'].max())[0]
         raCen = np.mean(simdatasubset[obsnow]['lst'])
         # Calculate horizon location.
-        horizonlon, horizonlat = addHorizon(lat_telescope=lat_tele, raCen=raCen)
+        horizonlon, horizonlat = addHorizon(lat_telescope=lat_tele)
         # Create the plot for each metric and save it (after some additional manipulation).
         for mb in bundles:
             ph.setMetricBundles([mb])
@@ -188,7 +190,8 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
             # For the FilterColors metric, add some extra items.
             if mb.metric.name == 'FilterColors':
                 # Add the time stamp info (plotlabel) with a fancybox.
-                plt.figtext(0.75, 0.9, '%s' %(plotlabel), bbox=dict(boxstyle='Round, pad=0.7', fc='w', ec='k', alpha=0.5))
+                plt.figtext(0.75, 0.9, '%s' %(plotlabel), bbox=dict(boxstyle='Round, pad=0.7',
+                                                                    fc='w', ec='k', alpha=0.5))
                 # Add a legend for the filters.
                 filterstacker = stackers.FilterColorStacker()
                 for i, f in enumerate(['u', 'g', 'r', 'i', 'z', 'y']):
