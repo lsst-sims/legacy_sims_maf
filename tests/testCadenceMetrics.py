@@ -58,7 +58,6 @@ class TestCadenceMetrics(unittest.TestCase):
         slicePoint = {'sid': 0}
         metric = metrics.SupernovaMetric()
         result = metric.run(data, slicePoint)
-        print('XXX-result', result)
         np.testing.assert_array_almost_equal(metric.reduceMedianMaxGap(result), 1/7.)
         assert(metric.reduceNsequences(result) == 10)
         assert((metric.reduceMedianNobs(result) < 561) & (metric.reduceMedianNobs(result) > 385))
@@ -190,7 +189,6 @@ class TestCadenceMetrics(unittest.TestCase):
 
         # Set half of the m5 of the observations very bright, so kill another half.
         dataSlice['fiveSigmaDepth'][0:50] = 20
-        print('XXX-metric.run(dataSlice))=', metric.run(dataSlice))
         assert(metric.run(dataSlice) == 0.25)
 
         dataSlice['fiveSigmaDepth'] = 25
