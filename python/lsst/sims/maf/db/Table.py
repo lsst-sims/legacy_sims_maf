@@ -119,6 +119,6 @@ class Table(CatalogDBObject):
         if rescount > 0:
             simdata = np.hstack(chunkList)
         else: # If there were no results from query, return an empty array
-            dt = ['float']*len(colnames)
-            simdata = np.zeros(0, dtype=list(zip(colnames,dt)))
+            dataType = [(str(name), float) for name in colnames]
+            simdata = np.zeros(0, dtype=dataType)
         return simdata
