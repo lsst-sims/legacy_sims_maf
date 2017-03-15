@@ -565,7 +565,7 @@ class MetricBundleGroup(object):
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
                                   savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
 
-        for b in self.currentBundleDict.itervalues():
+        for b in self.currentBundleDict.values():
             try:
                 b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
             except ValueError as ve:
