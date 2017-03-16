@@ -329,7 +329,7 @@ class BaseHistogram(BasePlotter):
                 bins = plotDict['bins']
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
-        if plotDict['cumulative'] is not False:
+        if plotDict['cumulative']:
             # If cumulative is set, generate histogram without using histRange (to use full range of data).
             n, b, p = plt.hist(metricValue, bins=bins, histtype='step', log=plotDict['logScale'],
                                cumulative=plotDict['cumulative'], label=plotDict['label'],
@@ -365,9 +365,14 @@ class BaseHistogram(BasePlotter):
                 # Generate histogram.
                 if np.min(histRange) is None:
                     histRange = None
-                n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
-                                   cumulative=plotDict['cumulative'], range=histRange,
-                                   label=plotDict['label'], color=plotDict['color'])
+                if np.where((plotValue > np.min(histRange)) & (plotValue < np.max(histRange)))[0].size < 1:
+                    histRange = None
+                try:
+                    n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
+                                       cumulative=plotDict['cumulative'], range=histRange,
+                                       label=plotDict['label'], color=plotDict['color'])
+                except:
+                    import pdb ; pdb.set_trace()
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
 
