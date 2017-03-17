@@ -580,7 +580,7 @@ class BaseSkyMap(BasePlotter):
                 # If outputing to PDF, this fixes the colorbar white stripes
                 if plotDict['cbar_edge']:
                     cb.solids.set_edgecolor("face")
-                cb.set_label(plotDict['xlabel'])
+                cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
                 cb.ax.tick_params(labelsize=plotDict['labelsize'])
         # Add ecliptic
         self._plot_ecliptic(plotDict['raCen'], ax=ax)
@@ -592,9 +592,16 @@ class BaseSkyMap(BasePlotter):
             ax.set_axis_bgcolor(plotDict['bgcolor'])
         # Add label.
         if plotDict['label'] is not None:
-            plt.figtext(0.75, 0.9, '%s' % plotDict['label'])
+            if plotDict['fontsize'] is not None:
+                plt.figtext(0.75, 0.9, '%s' % plotDict['label'], fontsize=plotDict['fontsize'])
+            else:
+                plt.figtext(0.75, 0.9, '%s' % plotDict['label'])
         if plotDict['title'] is not None:
-            plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center', transform=ax.transAxes)
+            if plotDict['fontsize'] is not None:
+                plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center',
+                         transform=ax.transAxes, fontsize=plotDict['fontsize'])
+            else:
+                plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center', transform=ax.transAxes)
         return fig.number
 
 
