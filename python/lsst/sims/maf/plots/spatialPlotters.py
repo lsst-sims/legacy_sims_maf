@@ -367,6 +367,8 @@ class BaseHistogram(BasePlotter):
                     histRange = None
                 if np.where((plotValue > np.min(histRange)) & (plotValue < np.max(histRange)))[0].size < 1:
                     histRange = None
+                if np.where((plotValue > np.min(bins)) & (plotValue < np.max(bins)))[0].size < 1:
+                    bins = 25
                 try:
                     n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
                                        cumulative=plotDict['cumulative'], range=histRange,

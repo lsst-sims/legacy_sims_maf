@@ -41,6 +41,8 @@ class PairMetric(BaseMetric):
         result = 0
         for binadd in bins_to_check:
             result += np.size(np.intersect1d(bins_w_obs, bins_w_obs+binadd))
+        if result == 0:
+            result = self.badval
         return result
 
 
