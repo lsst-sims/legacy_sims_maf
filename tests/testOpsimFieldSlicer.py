@@ -76,7 +76,7 @@ def makeFieldData():
     fieldId = np.array(fieldId, 'int')
     ra_rad = np.array(ra_rad, 'float')
     dec_rad = np.array(dec_rad, 'float')
-    fieldData = np.core.records.fromarrays([fieldId, ra_rad, dec_rad],
+    fieldData = np.core.records.fromarrays([fieldId, np.degrees(ra_rad), np.degrees(dec_rad)],
                                            names=['fieldId', 'ra', 'dec'])
     return fieldData
 
@@ -196,8 +196,8 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
-        for fid, ra, dec, s in zip(self.fieldData['fieldId'], self.fieldData['ra'],
-                                   self.fieldData['dec'], self.testslicer):
+        for fid, ra, dec, s in zip(self.fieldData['fieldId'], np.radians(self.fieldData['ra']),
+                                   np.radians(self.fieldData['dec']), self.testslicer):
             self.assertEqual(fid, s['slicePoint']['sid'])
             self.assertEqual(ra, s['slicePoint']['ra'])
             self.assertEqual(dec, s['slicePoint']['dec'])
@@ -215,12 +215,12 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
             self.assertDictEqual(dict1['slicePoint'], dict2['slicePoint'])
         n = 0
         self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldId'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['ra'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['dec'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], np.radians(self.fieldData['ra'][n]))
+        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], np.radians(self.fieldData['dec'][n]))
         n = len(self.testslicer) - 1
         self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldId'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['ra'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['dec'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], np.radians(self.fieldData['ra'][n]))
+        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], np.radians(self.fieldData['dec'][n]))
 
 
 class TestOpsimFieldSlicerSlicing(unittest.TestCase):
