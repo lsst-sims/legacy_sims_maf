@@ -100,7 +100,7 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='ditheredDec', lonCol='dith
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Python script to run the science performance metrics.')
+    parser = argparse.ArgumentParser(description='Python script to generate a report on a single night.')
     parser.add_argument('dbFile', type=str, default=None, help="full file path to the opsim sqlite file")
     parser.add_argument("--outDir", type=str, default='./Out', help='Output directory for MAF outputs.' +
                         ' Default "Out"')
