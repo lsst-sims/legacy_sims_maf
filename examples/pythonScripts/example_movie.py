@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 # DOCUMENTATION & EXAMPLES -CM
 #--------------------------------------------------------------
 # python example_movie.py opsimblitz2_1060_sqlite.db --ips 2
@@ -102,7 +104,7 @@ def setupMetrics(opsimName, metadata, tstart, tnow, plotlabel='', cumulative=Fal
     #                     'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
     dt, t = dtime(t)
     if verbose:
-        print 'Set up metrics %f s' %(dt)
+        print('Set up metrics %f s' % (dt))
     return metricList, plotDictList
 
 def setupStackers(args, verbose=False):
@@ -128,7 +130,7 @@ def setupHealpixSlicer(args, verbose=False):
     hs = slicers.HealpixSlicer(nside=args.nside, lonCol=args.raCol, latCol=args.decCol)
     dt, t = dtime(t)
     if verbose:
-        print 'Set up healpix slicer %f s' %(dt)
+        print('Set up healpix slicer %f s' %(dt))
     return hs
 
 def setupMovieSlicer(simdata, binsize = 365.0, cumulative=True, verbose=False):
@@ -143,7 +145,7 @@ def setupMovieSlicer(simdata, binsize = 365.0, cumulative=True, verbose=False):
     ms.setupSlicer(simdata)
     dt, t = dtime(t)
     if verbose:
-        print 'Set up movie slicer in %f s' %(dt)
+        print('Set up movie slicer in %f s' %(dt))
     return ms
 
 
@@ -201,7 +203,7 @@ def runSlices(opsimName, metadata, simdata, bins, args, verbose=False):
         # sm.writeAll(outfileSuffix=slicenumber)
         if verbose:
             dt, t = dtime(t)
-            print 'Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt)
+            print('Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt))
 
 
 def stitchMovie(metricList, metadata, args):
@@ -236,7 +238,7 @@ def stitchMovie(metricList, metadata, args):
         if args.movieLength != 0.0:
             #calculate images/second rate
             args.ips = n_images/float(args.movieLength)
-            print "For a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips
+            print("For a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips)
         if args.fps == 0.0:
             warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
             if args.ips <= 30.0:
@@ -334,4 +336,4 @@ if __name__ == '__main__':
     stitchMovie(metricList, metadata, args)
 
     end_t, start_t = dtime(start_t)
-    print 'Total time: ', end_t
+    print('Total time: ', end_t)

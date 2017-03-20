@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 import matplotlib.pyplot as plt
 from lsst.sims.maf.utils import percentileClipping
@@ -39,8 +40,8 @@ class OneDBinnedData(BasePlotter):
                     color=plotDict['color'])
         else:
             good = np.where(metricValues.mask == False)
-            x = np.ravel(zip(leftedge[good], leftedge[good] + width[good]))
-            y = np.ravel(zip(metricValues[good], metricValues[good]))
+            x = np.ravel(list(zip(leftedge[good], leftedge[good] + width[good])))
+            y = np.ravel(list(zip(metricValues[good], metricValues[good])))
             if plotDict['logScale']:
                 plt.semilogy(x, y, label=plotDict['label'], color=plotDict['color'],
                              linestyle=plotDict['linestyle'], linewidth=plotDict['linewidth'],

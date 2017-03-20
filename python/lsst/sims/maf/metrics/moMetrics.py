@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import range
 import numpy as np
 
 from .baseMetric import BaseMetric
@@ -740,7 +742,7 @@ class LightcurveInversionMetric(BaseMoMetric):
             lWindow = int(self.nDays / 2)
             rWindow = int(self.nDays / 2) + 1
         found = 0
-        for i in xrange(lWindow, len(ncounts) - rWindow):
+        for i in range(lWindow, len(ncounts) - rWindow):
             nobs = ncounts[i - lWindow:i + rWindow].sum()
             if nobs > self.nObs:
                 found = 1

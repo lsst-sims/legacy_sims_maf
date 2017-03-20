@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -17,7 +19,7 @@ def makeTimes(size=100, min=0., max=10., random=True):
         randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
-    datavalues = np.array(zip(datavalues), dtype=[('times', 'float')])
+    datavalues = np.array(list(zip(datavalues)), dtype=[('times', 'float')])
     return datavalues
 
 
@@ -74,7 +76,7 @@ class TestMovieSlicerSetup(unittest.TestCase):
     def testSetupSlicerNbinsZeros(self):
         """Test what happens if give slicer test data that is all single-value."""
         dv = np.zeros(100, float)
-        dv = np.array(zip(dv), dtype=[('times', 'float')])
+        dv = np.array(list(zip(dv)), dtype=[('times', 'float')])
         nbins = 10
         self.testslicer = MovieSlicer(sliceColName='times', bins=nbins, cumulative=False, forceNoFfmpeg=True)
         with warnings.catch_warnings(record=True) as w:

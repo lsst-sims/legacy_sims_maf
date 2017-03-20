@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import str
+from builtins import zip
 import os, sys, re
 import numpy as np
 import warnings
@@ -157,8 +160,8 @@ class OpsimDatabase(Database):
             query += ' group by f.%s' %(self.fieldIdCol)
             fielddata = self.queryDatabase(tableName, query)
             if len(fielddata) == 0:
-                fielddata = np.zeros(0, dtype=zip([self.fieldIdCol, self.raCol, self.decCol],
-                                                  ['int', 'float', 'float']))
+                fielddata = np.zeros(0, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                  ['int', 'float', 'float'])))
         else:
             table = self.tables[tableName]
             fielddata = table.query_columns_Array(colnames=[self.fieldIdCol, self.raCol, self.decCol],
@@ -198,7 +201,7 @@ class OpsimDatabase(Database):
             if len(sciencetypes) == 0:
                 # Then this was an older opsim run without 'ScienceType' tags,
                 #   so fall back to trying to guess what proposals are WFD or DD.
-                for propid, propname in propIDs.iteritems():
+                for propid, propname in propIDs.items():
                     if 'universal' in propname.lower():
                         propTags['WFD'].append(propid)
                     if 'deep' in propname.lower():
@@ -222,7 +225,7 @@ class OpsimDatabase(Database):
         runLengthParam = the 'paramName' in the config table identifying the run length (default nRun).
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve runLength; using default 10 years'
+            print('Cannot access Config table to retrieve runLength; using default 10 years')
             runLength = 10.0
         else:
             table = self.tables['Config']
@@ -236,7 +239,7 @@ class OpsimDatabase(Database):
         Returns the latitude, longitude, and height of the telescope used by the config file.
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.'
+            print('Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.')
             site = Site(name='LSST')
             lat = site.latitude_rad
             lon = site.longitude_rad
@@ -304,7 +307,7 @@ class OpsimDatabase(Database):
                 seeingcol = 'finSeeing'
             except ValueError:
                 raise ValueError('Cannot find appropriate column name for seeing.')
-        print 'Using %s for seeing column name.' %(seeingcol)
+        print('Using %s for seeing column name.' %(seeingcol))
         return seeingcol
 
     def fetchOpsimRunName(self):
@@ -312,7 +315,7 @@ class OpsimDatabase(Database):
         Returns opsim run name (machine name + session ID) from Session table.
         """
         if 'Session' not in self.tables:
-            print 'Could not access Session table to find this information.'
+            print('Could not access Session table to find this information.')
             runName = 'opsim'
         else:
             table = self.tables['Session']
@@ -325,7 +328,7 @@ class OpsimDatabase(Database):
         Returns the total slew time.
         """
         if 'SlewActivities' not in self.tables:
-            print 'Could not access SlewActivities table to find this information.'
+            print('Could not access SlewActivities table to find this information.')
             nslew = -1
         else:
             table = self.tables['SlewActivities']

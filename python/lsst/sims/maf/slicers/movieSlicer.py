@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 # cumulative one dimensional movie slicer
 import os
 import warnings
@@ -157,13 +159,13 @@ class MovieSlicer(BaseSlicer):
                     os.path.join(outDir,'%s_%s_%s.%s'%(outfileroot, sliceformat, plotType, figformat)),
                     '-r', str(fps), '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'slower',
                     os.path.join(outDir,'%s_%s_%s_%s.mp4' %(outfileroot, plotType, str(ips), str(fps)))]
-        print 'Attempting to call ffmpeg with:'
-        print ' '.join(callList)
+        print('Attempting to call ffmpeg with:')
+        print(' '.join(callList))
         p = subprocess.check_call(callList)
         #make thumbnail gif
         callList = ['ffmpeg','-i',os.path.join(outDir,'%s_%s_%s_%s.mp4' %(outfileroot, plotType, str(ips), str(fps))),
                                                '-vf', 'scale=%s:%s' %(str(320),str(-1)), '-t', str(10), '-r', str(10),
                     os.path.join(outDir,'%s_%s_%s_%s.gif' %(outfileroot, plotType, str(ips), str(fps)))]
-        print 'converting to animated gif with:'
-        print ' '.join(callList)
+        print('converting to animated gif with:')
+        print(' '.join(callList))
         p2 = subprocess.check_call(callList)

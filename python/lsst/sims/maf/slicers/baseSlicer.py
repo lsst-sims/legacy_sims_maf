@@ -1,12 +1,20 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import zip
+from builtins import range
+from builtins import object
 # Base class for all 'Slicer' objects.
 #
 import inspect
-from StringIO import StringIO
+from io import StringIO
 import json
 import warnings
 import numpy as np
 import numpy.ma as ma
 from lsst.sims.maf.utils import getDateVersion
+from future.utils import with_metaclass
 
 __all__ = ['SlicerRegistry', 'BaseSlicer']
 
@@ -31,14 +39,14 @@ class SlicerRegistry(type):
     def help(cls, doc=False):
         for slicername in sorted(cls.registry):
             if not doc:
-                print slicername
+                print(slicername)
             if doc:
-                print '---- ', slicername, ' ----'
-                print inspect.getdoc(cls.registry[slicername])
+                print('---- ', slicername, ' ----')
+                print(inspect.getdoc(cls.registry[slicername]))
 
 
 
-class BaseSlicer(object):
+class BaseSlicer(with_metaclass(SlicerRegistry, object)):
     """
     Base class for all slicers: sets required methods and implements common functionality.
 
@@ -57,7 +65,6 @@ class BaseSlicer(object):
         The value the Slicer uses to fill masked metric data values
         Default -666.
     """
-    __metaclass__ = SlicerRegistry
 
     def __init__(self, verbose=True, badval=-666):
         self.verbose = verbose
@@ -125,7 +132,7 @@ class BaseSlicer(object):
         self.islice = 0
         return self
 
-    def next(self):
+    def __next__(self):
         """Returns results of self._sliceSimData when iterating over slicer.
 
         Results of self._sliceSimData should be dictionary of
@@ -189,7 +196,7 @@ class BaseSlicer(object):
             displayDict = {'group':'Ungrouped'}
         header['displayDict'] = displayDict
         header['plotDict'] = plotDict
-        for key in versionInfo.keys():
+        for key in versionInfo:
             header[key] = versionInfo[key]
         if hasattr(metricValues, 'mask'): # If it is a masked array
             data = metricValues.data

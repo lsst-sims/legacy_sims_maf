@@ -3,6 +3,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['LongGapAGNMetric']
 
+
 class LongGapAGNMetric(BaseMetric):
     """max delta-t and average of the top-10 longest gaps.
     """
@@ -17,11 +18,11 @@ class LongGapAGNMetric(BaseMetric):
         super(LongGapAGNMetric, self).__init__(cols, metricName, units=units, **kwargs)
         self.badval = badval
         self.mjdcol = mjdcol
-	self.xgaps = xgaps
+        self.xgaps = xgaps
         self.units = units
 
     def run(self, dataslice, slicePoint=None):
-	metricval = np.diff(dataslice[self.mjdcol])
+        metricval = np.diff(dataslice[self.mjdcol])
         return metricval
 
     def reduceMaxGap(self, metricval):
@@ -29,7 +30,7 @@ class LongGapAGNMetric(BaseMetric):
             result = np.max(metricval)
         else:
             result = self.badval
-	return result
+        return result
 
     def reduceAverageLongestXGaps(self, metricval):
         if np.size(metricval)-self.xgaps > 0:

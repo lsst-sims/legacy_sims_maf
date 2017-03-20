@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import os, warnings
 import numpy as np
 from collections import OrderedDict
@@ -112,7 +114,7 @@ class ResultsDb(object):
             if not os.path.isdir(outDir):
                 try:
                     os.makedirs(outDir)
-                except OSError, msg:
+                except OSError as msg:
                     raise OSError(msg, '\n  (If this was the database file (not outDir), remember to use kwarg "database")')
             self.database = os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'
@@ -277,7 +279,7 @@ class ResultsDb(object):
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:
                     summarystat = SummaryStatRow(metricId=metricId,
-                                                summaryName=summaryName + ' ' + value['name'],
+                                                summaryName=summaryName + ' ' + str(value['name']),
                                                 summaryValue=value['value'])
                     self.session.add(summarystat)
                     self.session.commit()

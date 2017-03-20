@@ -1,3 +1,4 @@
+from __future__ import print_function
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.db as db
 
@@ -15,8 +16,8 @@ slicer.setupSlicer(simdata)
 # Slice Point for index zero
 ind = slicer._sliceSimData(0)
 expMJDs = simdata[ind['idxs']]['expMJD']
-print 'mjd for the 1st user defined point', expMJDs
+print('mjd for the 1st user defined point', expMJDs)
 # Find the expMJDs for the 2nd point
 ind = slicer._sliceSimData(1)
 expMJDs = simdata[ind['idxs']]['expMJD']
-print 'mjd for the 2nd user defined point', expMJDs
+print('mjd for the 2nd user defined point', expMJDs)

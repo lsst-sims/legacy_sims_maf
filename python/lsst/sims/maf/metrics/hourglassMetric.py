@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 from .baseMetric import BaseMetric
 from lsst.sims.utils import Site
@@ -33,7 +34,7 @@ class HourglassMetric(BaseMetric):
         names = ['mjd', 'midnight', 'moonPer', 'twi6_rise', 'twi6_set', 'twi12_rise',
                  'twi12_set', 'twi18_rise', 'twi18_set']
         types = ['float']*len(names)
-        pernight = np.zeros(len(unights), dtype=zip(names, types))
+        pernight = np.zeros(len(unights), dtype=list(zip(names, types)))
         pernight['mjd'] = dataSlice['expMJD'][uindx]
 
         left = np.searchsorted(dataSlice[self.nightcol], unights)
@@ -78,11 +79,11 @@ class HourglassMetric(BaseMetric):
         good = np.unique(good)
         left = good[:-1]
         right = good[1:]-1
-        good = np.ravel(zip(left, right))
+        good = np.ravel(list(zip(left, right)))
 
         names = ['mjd', 'midnight', 'filter']
         types = ['float', 'float', '|S1']
-        perfilter = np.zeros((good.size), dtype=zip(names, types))
+        perfilter = np.zeros((good.size), dtype=list(zip(names, types)))
         perfilter['mjd'] = dataSlice['expMJD'][good]
         perfilter['filter'] = dataSlice['filter'][good]
         for i, mjd in enumerate(perfilter['mjd']):

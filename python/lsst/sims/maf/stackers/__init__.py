@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from .baseStacker import *
 from .generalStackers import *
 from .ditherStackers import *
@@ -6,4 +7,4 @@ from .coordStackers import *
 from .NEODistStacker import *
 from .moStackers import *
 from .getColInfo import *
-from m5OptimalStacker import *
+from .m5OptimalStacker import *

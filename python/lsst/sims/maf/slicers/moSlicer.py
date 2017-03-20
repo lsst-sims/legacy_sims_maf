@@ -109,7 +109,7 @@ class MoObjSlicer(BaseSlicer):
         self.idx = 0
         return self
 
-    def next(self):
+    def __next__(self):
         """
         Returns result of self._getObs when iterating over moSlicer.
         """

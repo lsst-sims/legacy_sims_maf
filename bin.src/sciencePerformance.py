@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from builtins import zip
 import os
 import argparse
 import warnings
@@ -50,9 +52,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = utils.createSQLWhere('WFD', propTags)
-    print '#FYI: WFD "where" clause: %s' % (wfdWhere)
+    print('#FYI: WFD "where" clause: %s' % (wfdWhere))
     ddWhere = utils.createSQLWhere('DD', propTags)
-    print '#FYI: DD "where" clause: %s' % (ddWhere)
+    print('#FYI: DD "where" clause: %s' % (ddWhere))
 
     # Set up benchmark values, scaled to length of opsim run.
     runLength = opsimdb.fetchRunLength()
@@ -75,7 +77,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # Check that nvisits is not set to zero (for very short run length).
     for f in benchmarkVals['nvisits']:
         if benchmarkVals['nvisits'][f] == 0:
-            print 'Updating benchmark nvisits value in %s to be nonzero' % (f)
+            print('Updating benchmark nvisits value in %s to be nonzero' % (f))
             benchmarkVals['nvisits'][f] = 1
 
     # Set values for min/max range of nvisits for All/WFD and DD plots. These are somewhat arbitrary.
@@ -702,7 +704,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             'g,r,i,z': 'filter="g" or filter="r" or filter="i" or filter="z"',
             'all': ''}
 
-    for sql in sqls.keys():
+    for sql in sqls:
         for period in periods:
             displayDict = {'group': phaseGroup,
                            'subgroup': 'period=%.2f days, filter=%s' % (period, sql),
@@ -824,4 +826,4 @@ if __name__ == "__main__":
     # Get config info and write to disk.
     utils.writeConfigs(opsdb, args.outDir)
 
-    print "Finished sciencePerformance metric calculations."
+    print("Finished sciencePerformance metric calculations.")

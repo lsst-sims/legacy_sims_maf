@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import range
 import numpy as np
 from .baseStacker import BaseStacker
 
@@ -126,7 +128,7 @@ def polygonCoords(nside, radius, rotationAngle):
     for i in range(0, nside):
         xCoords[i] = np.sin(eachAngle * i + rotationAngle) * radius
         yCoords[i] = np.cos(eachAngle * i + rotationAngle) * radius
-    return zip(xCoords, yCoords)
+    return list(zip(xCoords, yCoords))
 
 
 class RandomDitherFieldPerVisitStacker(BaseStacker):

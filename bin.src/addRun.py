@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os
 import argparse
 import lsst.sims.maf.db as db
@@ -21,8 +22,8 @@ if __name__ == "__main__":
 
     mafDir = os.path.abspath(args.mafDir)
     if not os.path.isdir(mafDir):
-        print 'There is no directory containing MAF outputs at %s.' % (mafDir)
-        print 'Exiting.'
+        print('There is no directory containing MAF outputs at %s.' % (mafDir))
+        print('Exiting.')
         exit(-1)
 
     trackingDb = db.TrackingDb(database=args.trackingDb)
@@ -54,13 +55,13 @@ if __name__ == "__main__":
                         opsimDate = opsimDate.split('-')
                         opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
 
-    print 'Adding to tracking database at %s:' % (args.trackingDb)
-    print ' MafDir = %s' % (mafDir)
-    print ' MafComment = %s' % (args.mafComment)
-    print ' OpsimRun = %s' % (opsimRun)
-    print ' OpsimComment = %s' % (opsimComment)
-    print ' OpsimDate = %s' % (opsimDate)
-    print ' MafDate = %s' % (mafDate)
-    print ' DbFile = %s' % (dbFile)
+    print('Adding to tracking database at %s:' % (args.trackingDb))
+    print(' MafDir = %s' % (mafDir))
+    print(' MafComment = %s' % (args.mafComment))
+    print(' OpsimRun = %s' % (opsimRun))
+    print(' OpsimComment = %s' % (opsimComment))
+    print(' OpsimDate = %s' % (opsimDate))
+    print(' MafDate = %s' % (mafDate))
+    print(' DbFile = %s' % (dbFile))
 
     trackingDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir, opsimDate, mafDate, dbFile)

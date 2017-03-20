@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -14,7 +15,7 @@ class TestHourglassmetric(unittest.TestCase):
         names = ['expMJD', 'night', 'filter']
         types = [float, float, str]
         npts = 50
-        data = np.zeros(npts, dtype=zip(names, types))
+        data = np.zeros(npts, dtype=list(zip(names, types)))
         day0 = 59000
         data['expMJD'] = np.arange(0, 10, .2)[:npts] + day0
         data['night'] = np.floor(data['expMJD']-day0)

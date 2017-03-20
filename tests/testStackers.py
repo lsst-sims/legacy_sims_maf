@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import str
+from builtins import zip
 import numpy as np
 import matplotlib
 import warnings
@@ -39,8 +42,8 @@ class TestStackerClasses(unittest.TestCase):
         """
         Test the normalized airmass stacker.
         """
-        data = np.zeros(600, dtype=zip(
-            ['airmass', 'fieldDec'], [float, float]))
+        data = np.zeros(600, dtype=list(zip(
+            ['airmass', 'fieldDec'], [float, float])))
         data['airmass'] = np.random.rand(600)
         data['fieldDec'] = np.random.rand(600) * np.pi - np.pi / 2.
         stacker = stackers.NormAirmassStacker()
@@ -53,8 +56,8 @@ class TestStackerClasses(unittest.TestCase):
         """
         Test the parallax factor.
         """
-        data = np.zeros(600, dtype=zip(['fieldRA', 'fieldDec', 'expMJD'],
-                                       [float, float, float]))
+        data = np.zeros(600, dtype=list(zip(['fieldRA', 'fieldDec', 'expMJD'],
+                                       [float, float, float])))
         data['fieldRA'] = data['fieldRA'] + .1
         data['fieldDec'] = data['fieldDec'] - .1
         data['expMJD'] = np.arange(data.size) + 49000.
@@ -84,12 +87,12 @@ class TestStackerClasses(unittest.TestCase):
             dra_on_night = np.abs(np.diff(diffsra[match]))
             ddec_on_night = np.abs(np.diff(diffsdec[match]))
             if dra_on_night.max() > 0.0005:
-                print ni
+                print(ni)
                 m = np.where(dra_on_night > 0.0005)[0]
-                print diffsra[match][m]
-                print ra[match][m]
-                print dec[match][m]
-                print dra_on_night[m]
+                print(diffsra[match][m])
+                print(ra[match][m])
+                print(dec[match][m])
+                print(dra_on_night[m])
             self.assertAlmostEqual(dra_on_night.max(), 0)
             self.assertAlmostEqual(ddec_on_night.max(), 0)
 
@@ -98,8 +101,8 @@ class TestStackerClasses(unittest.TestCase):
         Test the random dither pattern.
         """
         maxDither = .5
-        data = np.zeros(600, dtype=zip(
-            ['fieldRA', 'fieldDec'], [float, float]))
+        data = np.zeros(600, dtype=list(zip(
+            ['fieldRA', 'fieldDec'], [float, float])))
         # Set seed so the test is stable
         np.random.seed(42)
         # Restrict dithers to area where wraparound is not a problem for
@@ -124,8 +127,8 @@ class TestStackerClasses(unittest.TestCase):
         ndata = 600
         # Set seed so the test is stable
         np.random.seed(42)
-        data = np.zeros(ndata, dtype=zip(
-            ['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int]))
+        data = np.zeros(ndata, dtype=list(zip(
+            ['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int])))
         data['fieldRA'] = np.random.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldDec'] = np.random.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
         data['fieldID'] = np.floor(np.random.rand(ndata) * ndata)
@@ -149,8 +152,8 @@ class TestStackerClasses(unittest.TestCase):
         ndata = 2000
         # Set seed so the test is stable
         np.random.seed(42)
-        data = np.zeros(ndata, dtype=zip(
-            ['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int]))
+        data = np.zeros(ndata, dtype=list(zip(
+            ['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int])))
         data['fieldRA'] = np.random.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldRA'] = np.zeros(ndata) + np.pi / 2.0
         data['fieldDec'] = np.random.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
@@ -176,8 +179,8 @@ class TestStackerClasses(unittest.TestCase):
         ndata = 2000
         # Set seed so the test is stable
         np.random.seed(42)
-        data = np.zeros(ndata, dtype=zip(
-            ['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int]))
+        data = np.zeros(ndata, dtype=list(zip(
+            ['fieldRA', 'fieldDec', 'fieldID', 'night'], [float, float, int, int])))
         data['fieldRA'] = np.random.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldDec'] = np.random.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
         data['fieldID'] = np.floor(np.random.rand(ndata) * ndata)
@@ -195,7 +198,7 @@ class TestStackerClasses(unittest.TestCase):
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
-        data = np.zeros(100, dtype=zip(['lst', 'fieldRA'], [float, float]))
+        data = np.zeros(100, dtype=list(zip(['lst', 'fieldRA'], [float, float])))
         data['lst'] = np.arange(100) / 99. * np.pi * 2
         stacker = stackers.HourAngleStacker()
         data = stacker.run(data)
@@ -203,16 +206,16 @@ class TestStackerClasses(unittest.TestCase):
         self.assertLess(np.max(data['HA']), 12.)
         self.assertGreater(np.min(data['HA']), -12.)
         # Check that HA is zero if lst == RA
-        data = np.zeros(1, dtype=zip(['lst', 'fieldRA'], [float, float]))
+        data = np.zeros(1, dtype=list(zip(['lst', 'fieldRA'], [float, float])))
         data = stacker.run(data)
         self.assertEqual(data['HA'], 0.)
-        data = np.zeros(1, dtype=zip(['lst', 'fieldRA'], [float, float]))
+        data = np.zeros(1, dtype=list(zip(['lst', 'fieldRA'], [float, float])))
         data['lst'] = 2.
         data['fieldRA'] = 2.
         data = stacker.run(data)
         self.assertEqual(data['HA'], 0.)
         # Check a value
-        data = np.zeros(1, dtype=zip(['lst', 'fieldRA'], [float, float]))
+        data = np.zeros(1, dtype=list(zip(['lst', 'fieldRA'], [float, float])))
         data['lst'] = 0.
         data['fieldRA'] = np.pi / 2.
         data = stacker.run(data)
@@ -220,8 +223,8 @@ class TestStackerClasses(unittest.TestCase):
 
     def testPAStacker(self):
         """ Test the parallacticAngleStacker"""
-        data = np.zeros(100, dtype=zip(
-            ['expMJD', 'fieldDec', 'fieldRA', 'lst'], [float] * 4))
+        data = np.zeros(100, dtype=list(zip(
+            ['expMJD', 'fieldDec', 'fieldRA', 'lst'], [float] * 4)))
         data['expMJD'] = np.arange(100) * .2 + 50000
         site = Site(name='LSST')
         data['lst'], last = calcLmstLast(data['expMJD'], site.longitude_rad)
@@ -243,7 +246,7 @@ class TestStackerClasses(unittest.TestCase):
 
     def testFilterColorStacker(self):
         """Test the filter color stacker."""
-        data = np.zeros(60, dtype=zip(['filter'], ['|S1']))
+        data = np.zeros(60, dtype=list(zip(['filter'], ['<U1'])))
         data['filter'][0:10] = 'u'
         data['filter'][10:20] = 'g'
         data['filter'][20:30] = 'r'
@@ -259,7 +262,7 @@ class TestStackerClasses(unittest.TestCase):
             assert len(w) > 1
             assert "already present in simData" in str(w[-1].message)
         # Check if use non-recognized filter raises exception.
-        data = np.zeros(600, dtype=zip(['filter'], ['|S1']))
+        data = np.zeros(600, dtype=list(zip(['filter'], ['<U1'])))
         data['filter'] = 'q'
         self.assertRaises(IndexError, stacker.run, data)
 
@@ -271,7 +274,7 @@ class TestStackerClasses(unittest.TestCase):
                               np.arange(-np.pi, np.pi, 0.1))
         ra = np.ravel(ra)
         dec = np.ravel(dec)
-        data = np.zeros(ra.size, dtype=zip(['ra', 'dec'], [float] * 2))
+        data = np.zeros(ra.size, dtype=list(zip(['ra', 'dec'], [float] * 2)))
         data['ra'] += ra
         data['dec'] += dec
         s = stackers.GalacticStacker(raCol='ra', decCol='dec')

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # A little script to time out the penalty for running chip gaps
 
+from __future__ import print_function
 import timeit
 
 
@@ -15,7 +16,7 @@ def runChips(useCamera=False):
     import healpy as hp
 
 
-    print 'Camera setting = ', useCamera
+    print('Camera setting = ', useCamera)
 
     database = 'enigma_1189_sqlite.db'
     sqlWhere = 'filter = "r" and night < 800 and fieldRA < %f and fieldDec > %f and fieldDec < 0' % (np.radians(15), np.radians(-15))
@@ -44,9 +45,9 @@ if __name__ == "__main__":
     t1 = timeit.timeit("runChips()", setup="from __main__ import runChips", number=1)
     t2 = timeit.timeit("runChips(useCamera=True)", setup="from __main__ import runChips", number=1)
 
-    print '--------'
-    print 'time without chips = %f'%t1
-    print 'time with chips = %f'%t2
+    print('--------')
+    print('time without chips = %f'%t1)
+    print('time with chips = %f'%t2)
 
 # Results:
 #--------

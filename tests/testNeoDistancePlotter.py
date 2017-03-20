@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -14,7 +15,7 @@ class TestNeoDistancePlotter(unittest.TestCase):
         types = [float]*5
         types.append('|S1')
         npts = 100
-        self.metricValues = np.zeros(npts, zip(names, types))
+        self.metricValues = np.zeros(npts, list(zip(names, types)))
         self.metricValues['MaxGeoDist'] = np.random.rand(npts)*2.
         self.metricValues['eclipLat'] = np.random.rand(npts)
         self.metricValues['NEOHelioX'] = np.random.rand(npts)*3-1.5

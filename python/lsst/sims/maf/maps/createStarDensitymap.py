@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy as np
 from lsst.sims.utils import ObservationMetaData
 import healpy as hp
@@ -63,7 +64,7 @@ if __name__ == '__main__':
         indxMin = data['icheck'].copy()
         overMaxMask = data['overMaxMask'].copy()
 
-    print ''
+    print('')
     # Look at a cirular area the same area as the healpix it's centered on.
     boundLength = hpsizeDeg/np.pi**0.5
 
@@ -118,5 +119,5 @@ if __name__ == '__main__':
 
     np.savez('starDensity_%s_%snside_%i.npz' % (filterName, starNames, nside), starDensity=starDensity,
              bins=bins, overMaxMask=overMaxMask)
-    print ''
-    print 'Completed!'
+    print('')
+    print('Completed!')

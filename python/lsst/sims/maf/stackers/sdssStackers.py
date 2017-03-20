@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 from .baseStacker import BaseStacker
 from .ditherStackers import wrapRA

@@ -1,3 +1,6 @@
+from builtins import zip
+from builtins import map
+from builtins import range
 # nd Slicer slices data on N columns in simData
 
 import warnings
@@ -57,7 +60,7 @@ class NDSlicer(BaseSlicer):
             else:
                 self.bins.append(np.sort(bl))
         # Count how many bins we have total (not counting last 'RHS' bin values, as in oneDSlicer).
-        self.nslice = (np.array(map(len, self.bins))-1).prod()
+        self.nslice = (np.array(list(map(len, self.bins)))-1).prod()
         # Set up slice metadata.
         self.slicePoints['sid'] = np.arange(self.nslice)
         # Including multi-D 'leftmost' bin values
@@ -97,7 +100,7 @@ class NDSlicer(BaseSlicer):
             simIdxsList = []
             # Translate islice into indexes in each bin dimension
             binIdxs = self.slicePoints['binIdxs'][islice]
-            for d, i in zip(range(self.nD), binIdxs):
+            for d, i in zip(list(range(self.nD)), binIdxs):
                 simIdxsList.append(set(self.simIdxs[d][self.lefts[d][i]:self.lefts[d][i+1]]))
             idxs = list(set.intersection(*simIdxsList))
             return {'idxs':idxs,

@@ -1,8 +1,13 @@
+from __future__ import print_function
+from builtins import zip
+from builtins import object
 import inspect
 import warnings
 import numpy as np
+from future.utils import with_metaclass
 
 __all__ = ['StackerRegistry', 'BaseStacker']
+
 
 class StackerRegistry(type):
     """
@@ -25,23 +30,24 @@ class StackerRegistry(type):
             raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(stackername))
         if stackername != 'BaseStacker':
             cls.registry[stackername] = cls
+
     def getClass(cls, stackername):
         return cls.registry[stackername]
+
     def help(cls, doc=False):
         for stackername in sorted(cls.registry):
             if not doc:
-                print stackername
+                print(stackername)
             if doc:
-                print '---- ', stackername, ' ----'
-                print cls.registry[stackername].__doc__
+                print('---- ', stackername, ' ----')
+                print(cls.registry[stackername].__doc__)
                 stacker = cls.registry[stackername]()
-                print ' Columns added to SimData: ', ','.join(stacker.colsAdded)
-                print ' Default columns required: ', ','.join(stacker.colsReq)
+                print(' Columns added to SimData: ', ','.join(stacker.colsAdded))
+                print(' Default columns required: ', ','.join(stacker.colsReq))
 
 
-class BaseStacker(object):
+class BaseStacker(with_metaclass(StackerRegistry, object)):
     """Base MAF Stacker: add columns generated at run-time to the simdata array."""
-    __metaclass__ = StackerRegistry
 
     def __init__(self):
         """
@@ -78,23 +84,17 @@ class BaseStacker(object):
         # We assume that they are equal, unless they have specific attributes which are different.
         stateNow = dir(self)
         for key in stateNow:
-            if not key.startswith('_') and key!='registry' and key!='run':
+            if not key.startswith('_') and key != 'registry' and key != 'run' and key != 'next':
                 if not hasattr(otherStacker, key):
                     return False
                 # If the attribute is from numpy, assume it's an array and test it
-                if type(getattr(self,key)).__module__ == np.__name__:
-                    if not np.array_equal(getattr(self,key), getattr(otherStacker, key)):
+                if type(getattr(self, key)).__module__ == np.__name__:
+                    if not np.array_equal(getattr(self, key), getattr(otherStacker, key)):
                         return False
                 else:
-                    # If the attribute is from numpy, assume it's an array and test it
-                    if type(getattr(self,key)).__module__ == np.__name__:
-                        if not np.array_equal(getattr(self,key), getattr(otherStacker, key)):
-                            return False
-                    else:
-                        if getattr(self, key) != getattr(otherStacker, key):
-                            return False
+                    if getattr(self, key) != getattr(otherStacker, key):
+                        return False
         return True
-
 
     def __ne__(self, otherStacker):
         """
@@ -118,7 +118,7 @@ class BaseStacker(object):
         for col, dtype in zip(self.colsAdded, self.colsAddedDtypes):
             if col in simData.dtype.names:
                 warnings.warn('Warning - column %s already present in simData, will be overwritten.'
-                              %(col))
+                              % (col))
             else:
                 newdtype += ([(col, dtype)])
         newData = np.empty(simData.shape, dtype=newdtype)
@@ -135,7 +135,7 @@ class BaseStacker(object):
         # Add new columns
         if len(simData) == 0:
             return simData
-        simData=self._addStackers(simData)
+        simData = self._addStackers(simData)
         # Run the method to calculate/add new data.
         return self._run(simData)
 
