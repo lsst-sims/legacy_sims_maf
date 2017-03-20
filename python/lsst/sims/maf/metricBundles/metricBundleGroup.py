@@ -318,7 +318,7 @@ class MetricBundleGroup(object):
         else:
             groupBy = 'observationStartMJD'
         self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
-                                        groupBy=groupBy)
+                                        groupBy=groupBy, tableName=self.dbTable)
 
         if self.verbose:
             print "Found %i visits" % (self.simData.size)

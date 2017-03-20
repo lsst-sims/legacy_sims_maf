@@ -45,7 +45,7 @@ class OpsimDatabase(Database):
                                  'Session': ['Session', 'sessionId'],
                                  'SlewActivities': ['SlewActivities', 'slewActivityId'],
                                  'SlewFinalState': ['SlewFinalState', 'slewStateId'],
-                                 'SlewHistory': ['SlewHistory', 'slewId'],
+                                 'SlewHistory': ['SlewHistory', 'slewCount'],
                                  'SlewInitialState': ['SlewInitialState', 'slewStateId'],
                                  'SlewMaxSpeeds': ['SlewMaxSpeeds', 'slewMaxSpeedId'],
                                  'TargetExposures': ['TargetExposures', 'exposureId'],

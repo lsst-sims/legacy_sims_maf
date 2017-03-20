@@ -1030,7 +1030,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         order += 1
 
     # Make some calls to other tables to get slew stats
-    colDict = {'domAltSpeed': 'Dome Alt Speed', 'domAzSpeed': 'Dome Az Speed', 'telAltSpeed': 'Tel Alt Speed',
+    colDict = {'domeAltSpeed': 'Dome Alt Speed', 'domeAzSpeed': 'Dome Az Speed',
+               'telAltSpeed': 'Tel Alt Speed',
                'telAzSpeed': 'Tel Az Speed', 'rotatorSpeed': 'Rotation Speed'}
     order = 0
     slicer = slicers.UniSlicer()
@@ -1065,8 +1066,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         order += 1
 
     # Use the slew stats
-    slewTypes = ['DomAlt', 'DomAz', 'TelAlt', 'TelAz', 'Rotator', 'Filter',
-                 'TelOpticsOL', 'Readout', 'Settle', 'TelOpticsCL']
+    slewTypes = ['domalt', 'domaz', 'domazsettle', 'filter', 'readout',
+                 'telalt', 'telaz', 'telopticsclosedloop', 'telopticsopenloop',
+                 'telrot', 'telsettle', 'exposures']
 
     order = 0
     sqlconstraint = ''
@@ -1074,6 +1076,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     slewActivitiesBL = []
 
     for slewType in slewTypes:
+
+        sqlconstraint = 'activityDelay>0 and activity="%s"' % slewType
         metadata = slewType
 
         metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
@@ -1275,6 +1279,9 @@ if __name__ == "__main__":
         = makeBundleList(args.dbFile, benchmark=args.benchmark)
     if not args.skipSlew:
         # Do the ones that need a different (slew) table
+        # XXX--not clear what to do with slewState now that it is in different tables?
+        # for bundleD, table in zip([slewStateBD, slewMaxSpeedsBD, slewActivitiesBD],
+        #                           ['SlewState', 'SlewMaxSpeeds', 'SlewActivities']):
         for bundleD, table in zip([slewMaxSpeedsBD, slewActivitiesBD],
                                   ['SlewMaxSpeeds', 'SlewActivities']):
             group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,

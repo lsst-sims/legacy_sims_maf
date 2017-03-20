@@ -5,6 +5,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['SlewContributionMetric', 'AveSlewFracMetric']
 
+
 class SlewContributionMetric(BaseMetric):
     def __init__(self, col='actDelay', activity=None, activeCol='activity',
                  inCritCol='inCriticalPath', **kwargs):
@@ -25,7 +26,7 @@ class SlewContributionMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         # Activities of this type, in critical path.
         goodInCrit = np.where((dataSlice[self.activeCol] == self.activity) &
-                               (dataSlice[self.inCritCol] == 'True'))[0]
+                              (dataSlice[self.inCritCol] == 'True'))[0]
         if len(goodInCrit) == 0:
             result = 0.0
         else:
@@ -37,9 +38,10 @@ class SlewContributionMetric(BaseMetric):
             result *= np.mean(dataSlice[self.col][goodInCrit])
         return result
 
+
 class AveSlewFracMetric(BaseMetric):
     def __init__(self, col='actDelay', activity=None, activeCol='activity',
-                 idCol='SlewHistory_slewID', **kwargs):
+                 idCol='SlewHistory_slewCount', **kwargs):
         """
         Return the average time multiplied by fraction of slews.
         """
