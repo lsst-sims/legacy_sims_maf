@@ -243,7 +243,7 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
             self.Hval = Hvals[Hidx]
             self._setLabels()
         else:
-            Hidx = np.where(Hvals == self.Hval)[0][0]
+            Hidx = np.where(Hvals == self.Hval)[0]
         summaryVal = np.empty(len(self.times), dtype=[('name', '|S20'), ('value', float)])
         summaryVal['value'] = completeness[:,Hidx]
         for i, time in enumerate(self.times):
