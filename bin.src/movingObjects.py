@@ -120,7 +120,7 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
         parentBundle.childBundles['Time'].metadata = parentBundle.metadata
         parentBundle.childBundles['Time'].setDisplayDict(dispDict)
         parentBundle.childBundles['Time'].setSummaryMetrics(summaryMetrics)
-        for nyr in mParams['nYears']:
+        for nyr in mParams['nyears']:
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].metadata = parentBundle.metadata + \
                                                                           ' yr %d' % nyr
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setSummaryMetrics(simpleSummaryMetrics)
@@ -1142,7 +1142,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     plt.close()
 
 
-    # Plot the cumulative completeness values @ each year for std discovery strategy, as a function of H.
+    # Plot the cumulative completeness values @ each year for 15 day discovery strategy, as a function of H.
     k = 'CumulativeCompleteness'
     strategy = '3 pairs in 15 nights'
     mdmatch = ['%s %s yr %d' % (metadata, strategy, nyr) for nyr in mParams['nyears']]
@@ -1455,8 +1455,6 @@ def readAll(allBundles, orbitFile, outDir):
         del allBundles[i[0]][i][1].childBundles[i[2]]
     for i in missingBundles:
         del allBundles[i[0]][i[1]]
-    k = 'DifferentialCompleteness'
-
     return allBundles
 
 

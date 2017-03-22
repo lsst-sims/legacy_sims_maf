@@ -185,7 +185,8 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
     times : numpy.ndarray like
         The bins to distribute the discovery times into. Same units as the discovery time (typically MJD).
     Hval : float, opt
-        The value of H to count completeness at (or cumulative completeness to). Default H=22.
+        The value of H to count completeness at (or cumulative completeness to).
+        Default None, in which case a value halfway through Hvals (the slicer H range) will be chosen.
     cumulative : bool, opt
         If True, calculate the cumulative completeness (completeness <= H).
         If False, calculate the differential completeness (completeness @ H).
@@ -194,27 +195,31 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
 
-    def __init__(self, times, Hval=22, cumulative=True, Hindex=0.3, **kwargs):
+    def __init__(self, times, Hval=None, cumulative=True, Hindex=0.3, **kwargs):
+        self.Hval = Hval
+        self.times = times
+        self.Hindex = Hindex
         if 'metricName' in kwargs:
             metricName = kwargs.pop('metricName')
             if metricName.startswith('Cumulative'):
                 self.cumulative = True
-                units = 'H <=%.1f' % (Hval)
+                self.units = 'H <=%.1f' % (self.Hval)
             else:
                 self.cumulative = False
-                units = 'H = %.1f' % (Hval)
+                self.units = 'H = %.1f' % (self.Hval)
         else:
             self.cumulative = cumulative
-            if self.cumulative:
-                metricName = 'CumulativeCompleteness@Time'
-                units = 'H <=%.1f' % (Hval)
-            else:
-                metricName = 'DifferentialCompleteness@Time'
-                units = 'H = %.1f' % (Hval)
-        super(MoCompletenessAtTimeMetric, self).__init__(metricName=metricName, units=units, **kwargs)
-        self.Hval = Hval
-        self.times = times
-        self.Hindex = Hindex
+            self._setLabels()
+        super(MoCompletenessAtTimeMetric, self).__init__(metricName=self.metricName, units=self.units,
+                                                         **kwargs)
+
+    def _setLabels(self):
+        if self.cumulative:
+            self.metricName = 'CumulativeCompleteness@Time'
+            self.units = 'H <=%.1f' % (self.Hval)
+        else:
+            self.metricName = 'DifferentialCompleteness@Time'
+            self.units = 'H = %.1f' % (self.Hval)
 
     def run(self, discoveryTimes, Hvals):
         if len(Hvals) != discoveryTimes.shape[1]:
@@ -232,8 +237,16 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         if self.cumulative:
             for i, t in enumerate(self.times):
                 completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
-        summaryVal = np.empty(len(completeness), dtype=[('name', np.str_, 20), ('value', float)])
-        summaryVal['value'] = completeness
+        # To save the summary statistic, we must pick out a given H value.
+        if self.Hval is None:
+            Hidx = len(Hvals) // 2
+            self.Hval = Hvals[Hidx]
+            self._setLabels()
+        else:
+            Hidx = np.where(Hvals == self.Hval)[0][0]
+        summaryVal = np.empty(len(self.times), dtype=[('name', np.str_, 20), ('value', float)])
+        summaryVal['value'] = completeness[:, Hidx]
         for i, time in enumerate(self.times):
             summaryVal['name'][i] = '%s @ %.2f' % (self.units, time)
         return summaryVal
+
