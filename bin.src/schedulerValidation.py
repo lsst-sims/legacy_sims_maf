@@ -1282,8 +1282,8 @@ if __name__ == "__main__":
         # XXX--not clear what to do with slewState now that it is in different tables?
         # for bundleD, table in zip([slewStateBD, slewMaxSpeedsBD, slewActivitiesBD],
         #                           ['SlewState', 'SlewMaxSpeeds', 'SlewActivities']):
-        for bundleD, table in zip([slewMaxSpeedsBD, slewActivitiesBD],
-                                  ['SlewMaxSpeeds', 'SlewActivities']):
+        for bundleD, table in zip([slewStateBD, slewMaxSpeedsBD, slewActivitiesBD],
+                                  ['SlewFinalState', 'SlewMaxSpeeds', 'SlewActivities']):
             group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
                                                     resultsDb=resultsDb, dbTable=table)
             if args.plotOnly:
