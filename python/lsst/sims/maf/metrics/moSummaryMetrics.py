@@ -201,25 +201,30 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         self.Hindex = Hindex
         if 'metricName' in kwargs:
             metricName = kwargs.pop('metricName')
-            if metricName.startswith('Cumulative'):
-                self.cumulative = True
-                self.units = 'H <=%.1f' % (self.Hval)
-            else:
+            if metricName.startswith('Differential'):
                 self.cumulative = False
-                self.units = 'H = %.1f' % (self.Hval)
+                self.metricName = metricName
+            else:
+                self.cumulative = True
+                self.metricName = metricName
         else:
             self.cumulative = cumulative
-            self._setLabels()
+            if self.cumulative:
+                self.metricName = 'CumulativeCompleteness@Time'
+            else:
+                self.metricName = 'DifferentialCompleteness@Time'
+        self._setLabels()
         super(MoCompletenessAtTimeMetric, self).__init__(metricName=self.metricName, units=self.units,
                                                          **kwargs)
 
     def _setLabels(self):
-        if self.cumulative:
-            self.metricName = 'CumulativeCompleteness@Time'
-            self.units = 'H <=%.1f' % (self.Hval)
+        if self.Hval is not None:
+            if self.cumulative:
+                self.units = 'H <=%.1f' % (self.Hval)
+            else:
+                self.units = 'H = %.1f' % (self.Hval)
         else:
-            self.metricName = 'DifferentialCompleteness@Time'
-            self.units = 'H = %.1f' % (self.Hval)
+            self.units = 'H'
 
     def run(self, discoveryTimes, Hvals):
         if len(Hvals) != discoveryTimes.shape[1]:
@@ -229,21 +234,21 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         timesinH = discoveryTimes.swapaxes(0, 1)
         completenessH = np.empty([len(Hvals), len(self.times)], float)
         for i, H in enumerate(Hvals):
-            n, b = np.histogram(timesinH[i], bins=self.times)
+            n, b = np.histogram(timesinH[i].compressed(), bins=self.times)
             completenessH[i][0] = 0
             completenessH[i][1:] = n.cumsum()
         completenessH = completenessH / float(nSsos)
         completeness = completenessH.swapaxes(0, 1)
         if self.cumulative:
             for i, t in enumerate(self.times):
-                completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
+                completeness[i] = integrateOverH(completeness[i], Hvals)
         # To save the summary statistic, we must pick out a given H value.
         if self.Hval is None:
             Hidx = len(Hvals) // 2
             self.Hval = Hvals[Hidx]
             self._setLabels()
         else:
-            Hidx = np.where(Hvals == self.Hval)[0]
+            Hidx = np.where(Hvals == self.Hval)[0][0]
         summaryVal = np.empty(len(self.times), dtype=[('name', '|S20'), ('value', float)])
         summaryVal['value'] = completeness[:,Hidx]
         for i, time in enumerate(self.times):
