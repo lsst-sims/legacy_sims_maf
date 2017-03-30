@@ -729,10 +729,9 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
     if k in allBundles:
         for md in allBundles[k]:
             for submd in allBundles[k][md].childBundles:
-                if submd.startswith('Time') or submd.startswith['N_Chances']:
+                if submd.startswith('Time') or submd.startswith('N_Chances'):
                     b = allBundles[k][md].childBundles[submd]
-                    compmd = ' '.join([md, submd.lstrip("Time")]).replace('_', ' ')
-                    compmd = ' '.join([md, submd.lstrip("N_Chances")]).replace('_', ' ')
+                    compmd = ' '.join([md, submd.lstrip("Time").lstrip("N_Chances")]).replace('_', ' ')
                     allBundles['DifferentialCompleteness'][compmd] = \
                         mmb.makeCompletenessBundle(b, summaryName='DifferentialCompleteness', Hmark=Hmark,
                                                    resultsDb=resultsDb)
