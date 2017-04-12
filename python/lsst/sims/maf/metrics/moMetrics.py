@@ -308,10 +308,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
     """
     def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, badval=0, **kwargs):
         super(Discovery_N_ChancesMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
-        if nightStart is None:
-            self.nightStart = 0
-        else:
-            self.nightStart = nightStart
+        self.nightStart = nightStart
         self.nightEnd = nightEnd
         self.snrLimit = parentDiscoveryMetric.snrLimit
         # Update the metric name to use the nightStart/nightEnd values, if an overriding name is not given.
@@ -330,6 +327,9 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
+        if self.nightStart is None and self.nightEnd is None:
+            return len(vis)
+        # Otherwise, we have to sort out what night the discovery chances happened on.
         visSort = np.argsort(ssoObs[self.expMJDCol][vis])
         nights = ssoObs[self.nightCol][vis][visSort]
         startNights = nights[metricValues['start']]
