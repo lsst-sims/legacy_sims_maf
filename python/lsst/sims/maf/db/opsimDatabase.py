@@ -539,6 +539,6 @@ class OpsimDatabase(Database):
                 propdict['Filters'][f]['keyorder'] = ['Filter', 'MaxSeeing', 'MinSky', 'MaxSky',
                                                       'NumVisits', 'GroupedVisits', 'Snaps']
             propdict['Filters']['keyorder'] = list(self.filterlist)
-        return configSummary, config
+        return configSummary, configDetails
 
 
