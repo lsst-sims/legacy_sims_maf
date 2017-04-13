@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os
 import argparse
 from tornado import ioloop
@@ -138,7 +139,7 @@ if __name__ == "__main__":
 
     # Check tracking DB is sqlite (and add as convenience if forgotten).
     trackingDb = args.trackingDb
-    print 'Using tracking database at %s' % (trackingDb)
+    print('Using tracking database at %s' % (trackingDb))
 
     global startRunId
     startRunId = -666
@@ -146,13 +147,13 @@ if __name__ == "__main__":
     if args.mafDir is not None:
         mafDir = os.path.realpath(args.mafDir)
         if not os.path.isdir(mafDir):
-            print 'There is no directory containing MAF outputs at %s.' % (mafDir)
-            print 'Just opening using tracking db at %s.' % (trackingDb)
+            print('There is no directory containing MAF outputs at %s.' % (mafDir))
+            print('Just opening using tracking db at %s.' % (trackingDb))
         # Open tracking database to add a run.
         trackDb = db.TrackingDb(database=trackingDb)
         # Set opsim comment and name from the config files from the run.
         opsimComment = ''
-        opsimRun = ''
+        opsimRun = 'NULL'
         opsimDate = ''
         mafDate = ''
         if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
@@ -174,17 +175,17 @@ if __name__ == "__main__":
                     except:
                         opsimDate = 'XXX'
         # Give some feedback to the user about what we're doing.
-        print 'Adding to tracking database at %s:' % (trackingDb)
-        print ' MafDir = %s' % (mafDir)
-        print ' MafComment = %s' % (args.mafComment)
-        print ' OpsimRun = %s' % (opsimRun)
-        print ' OpsimComment = %s' % (opsimComment)
-        print ' OpsimDate = %s' % (opsimDate)
-        print ' MafDate = %s' % (mafDate)
+        print('Adding to tracking database at %s:' % (trackingDb))
+        print(' MafDir = %s' % (mafDir))
+        print(' MafComment = %s' % (args.mafComment))
+        print(' OpsimRun = %s' % (opsimRun))
+        print(' OpsimComment = %s' % (opsimComment))
+        print(' OpsimDate = %s' % (opsimDate))
+        print(' MafDate = %s' % (mafDate))
         # Add the run.
         startRunId = trackDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir,
                                     opsimDate, mafDate, trackingDb)
-        print ' Used runID %d' % (startRunId)
+        print(' Used runID %d' % (startRunId))
         trackDb.close()
 
     # Open tracking database and start visualization.
@@ -209,7 +210,7 @@ if __name__ == "__main__":
     # Start up tornado app.
     application = make_app()
     application.listen(args.port)
-    print 'Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' % (args.port)
+    print('Tornado Starting: \nPoint your web browser to http://localhost:%d/ \nCtrl-C to stop' % (args.port))
     if not args.noBrowser:
         webbrowser.open_new_tab('http://localhost:%d' % (args.port))
     ioloop.IOLoop.instance().start()

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import warnings
 import numpy as np
 from .baseStacker import BaseStacker
@@ -27,7 +28,7 @@ def generate_sky_slopes():
         good = np.where((~np.isnan(mags[filterName])) & (sm.airmass < airmass_limit))
         pf = np.polyfit(sm.airmass[good], mags[filterName][good], 1)
         filter_slopes[filterName] = pf[0]
-    print filter_slopes
+    print(filter_slopes)
 
 class M5OptimalStacker(BaseStacker):
     """

@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import object
 import os
 import re
 from collections import OrderedDict
@@ -80,7 +82,7 @@ class MafRunResults(object):
             self.summaryStatOrder.append('TableFraction 1 == P')
             self.summaryStatOrder.append('TableFraction 1 < P')
 
-        self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum']
+        self.plotOrder = ['SkyMap', 'Histogram', 'PowerSpectrum', 'Combo']
 
     # Methods to deal with metricIds
 

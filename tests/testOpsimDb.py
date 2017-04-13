@@ -7,6 +7,7 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.utils.outputUtils as out
 import lsst.utils.tests
 from lsst.sims.utils.CodeUtilities import sims_clean_up
+from builtins import str
 
 
 class TestOpsimDb(unittest.TestCase):
@@ -45,7 +46,7 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbPropID(self):
         """Test queries for prop ID"""
         propids, propTags = self.oo.fetchPropInfo()
-        self.assertTrue(len(propids.keys()) > 0)
+        self.assertTrue(len(list(propids.keys())) > 0)
         self.assertTrue(len(propTags['WFD']) > 0)
         self.assertTrue(len(propTags['DD']) >= 0)
         for w in propTags['WFD']:

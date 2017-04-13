@@ -3,6 +3,7 @@ from .baseMetric import BaseMetric
 import lsst.sims.maf.utils as mafUtils
 import lsst.sims.utils as utils
 from scipy.optimize import curve_fit
+from builtins import str
 
 __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
            'ParallaxCoverageMetric', 'ParallaxDcrDegenMetric']
@@ -73,11 +74,13 @@ class ParallaxMetric(BaseMetric):
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice[self.filterCol])
+        if hasattr(filters[0], 'decode'):
+            filters = [str(f.decode('utf-8')) for f in filters]
         snr = np.zeros(len(dataslice), dtype='float')
         # compute SNR for all observations
         for filt in filters:
             good = np.where(dataslice[self.filterCol] == filt)
-            snr[good] = mafUtils.m52snr(self.mags[filt], dataslice[self.m5Col][good])
+            snr[good] = mafUtils.m52snr(self.mags[str(filt)], dataslice[self.m5Col][good])
         position_errors = np.sqrt(mafUtils.astrom_precision(dataslice[self.seeingCol],
                                                             snr)**2+self.atm_err**2)
         sigma = self._final_sigma(position_errors, dataslice['ra_pi_amp'], dataslice['dec_pi_amp'])
@@ -142,6 +145,7 @@ class ProperMotionMetric(BaseMetric):
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice['filter'])
+        filters = [str(f) for f in filters]
         precis = np.zeros(dataslice.size, dtype='float')
         for f in filters:
             observations = np.where(dataslice['filter'] == f)
@@ -258,11 +262,12 @@ class ParallaxCoverageMetric(BaseMetric):
             return self.badval
 
         filters = np.unique(dataSlice[self.filterCol])
+        filters = [str(f) for f in filters]
         snr = np.zeros(len(dataSlice), dtype='float')
         # compute SNR for all observations
         for filt in filters:
             inFilt = np.where(dataSlice[self.filterCol] == filt)
-            snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
+            snr[inFilt] = mafUtils.m52snr(self.mags[str(filt)], dataSlice[self.m5Col][inFilt])
 
         weights = self._computeWeights(dataSlice, snr)
         aveR = self._weightedR(dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp'], weights)

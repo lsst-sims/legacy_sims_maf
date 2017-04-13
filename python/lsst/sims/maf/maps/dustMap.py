@@ -19,7 +19,7 @@ class DustMap(BaseMap):
 
     def run(self, slicePoints):
         # If the slicer has nside, it's a healpix slicer so we can read the map directly
-        if 'nside' in slicePoints.keys():
+        if 'nside' in slicePoints:
             if slicePoints['nside'] != self.nside:
                 warnings.warn('Slicer value of nside (%i) different from map value (%i), using slicer value'%(slicePoints['nside'],self.nside ))
             slicePoints['ebv'] = EBVhp(slicePoints['nside'], pixels=slicePoints['sid'])

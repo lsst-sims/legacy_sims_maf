@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -17,7 +19,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
         randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
-    datavalues = np.array(zip(datavalues), dtype=[('testdata', 'float')])
+    datavalues = np.array(list(zip(datavalues)), dtype=[('testdata', 'float')])
     return datavalues
 
 
@@ -68,7 +70,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
     def testSetupSlicerNbinsZeros(self):
         """Test what happens if give slicer test data that is all single-value."""
         dv = np.zeros(100, float)
-        dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         nbins = 10
         self.testslicer = OneDSlicer(sliceColName='testdata', bins=nbins)
         with warnings.catch_warnings(record=True) as w:

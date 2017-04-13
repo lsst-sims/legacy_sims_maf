@@ -1,11 +1,17 @@
+from builtins import zip
+from builtins import object
 from .baseStacker import BaseStacker
 
 __all__ = ['ColInfo']
 
 class ColInfo(object):
+    """Class to hold the unit and source locations for columns.
+
+    The stacker classes which will generate stacker columns are tracked here, as well as
+    some default units for common opsim columns.
+
+    Inspect ColInfo.unitDict for more information."""
     def __init__(self):
-        """Set up the unit and source dictionaries.
-        """
         self.defaultDataSource = None
         self.defaultUnit = ''
         self.unitDict = {'fieldId': '#',
@@ -37,7 +43,7 @@ class ColInfo(object):
         # Go through the available stackers and add any units, and identify their
         #   source methods.
         self.sourceDict = {}
-        for stackerClass in BaseStacker.registry.itervalues():
+        for stackerClass in BaseStacker.registry.values():
             stacker = stackerClass()
             for col, units in zip(stacker.colsAdded, stacker.units):
                 self.sourceDict[col] = stackerClass
@@ -47,19 +53,38 @@ class ColInfo(object):
 
     def getUnits(self, colName):
         """Return the appropriate units for colName.
+
+        If no units have been defined for a given column, return the default units ('').
+
+        Parameters
+        ----------
+        colName : str
+            The name of the column
+
+        Returns
+        -------
+        str
         """
-        if colName in self.unitDict:
-            return self.unitDict[colName]
-        else:
+        if colName is None or colName not in self.unitDict:
             return self.defaultUnit
+        else:
+            return self.unitDict[colName]
 
     def getDataSource(self, colName):
-        """
-        Given a column name to be added to simdata, identify appropriate source.
+        """Identify the appropriate source for a given column.
 
         For values which are calculated via a stacker, the returned value is the stacker class.
         For values which do not have a recorded source or are known to be coming from the database, the result
-        is self.defaultDataSource.
+        is self.defaultDataSource (None), which will be assumed to be queryable from the database.
+
+        Parameters
+        ----------
+        colName : str
+            The name of the column.
+
+        Returns
+        -------
+        lsst.sims.maf.stacker or None
         """
         if colName in self.sourceDict:
             return self.sourceDict[colName]

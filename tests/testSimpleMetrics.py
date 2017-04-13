@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -10,7 +11,7 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def setUp(self):
         dv = np.arange(0, 10, .5)
-        self.dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        self.dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
 
     def testMaxMetric(self):
         """Test max metric."""
@@ -113,15 +114,15 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test mean angle metric."""
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
-        dv1 = np.array(zip(dv1), dtype=[('testdata', 'float')])
-        dv2 = np.array(zip(dv2), dtype=[('testdata', 'float')])
+        dv1 = np.array(list(zip(dv1)), dtype=[('testdata', 'float')])
+        dv2 = np.array(list(zip(dv2)), dtype=[('testdata', 'float')])
         testmetric = metrics.MeanAngleMetric('testdata')
         result1 = testmetric.run(dv1)
         result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, (result2+20)%360.)
         dv = np.random.rand(10000)*360.0
         dv = dv
-        dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
         result = result
         self.assertAlmostEqual(result, 180)
@@ -130,18 +131,18 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test full range angle metric."""
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
-        dv1 = np.array(zip(dv1), dtype=[('testdata', 'float')])
-        dv2 = np.array(zip(dv2), dtype=[('testdata', 'float')])
+        dv1 = np.array(list(zip(dv1)), dtype=[('testdata', 'float')])
+        dv2 = np.array(list(zip(dv2)), dtype=[('testdata', 'float')])
         testmetric = metrics.FullRangeAngleMetric('testdata')
         result1 = testmetric.run(dv1)
         result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, result2)
         dv = np.arange(0, 358, 5)
-        dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
         self.assertAlmostEqual(result, 355)
         dv = np.random.rand(10000)*360.0
-        dv = np.array(zip(dv), dtype=[('testdata', 'float')])
+        dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
         result = result
         self.assertGreater(result, 355)

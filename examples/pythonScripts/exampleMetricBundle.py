@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib.pyplot as plt
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.metrics as metrics
@@ -19,7 +20,7 @@ metric = metrics.RmsMetric(col='airmass')
 mb2 = metricBundles.MetricBundle(metric, slicer, stackerList=stackerList, sqlconstraint='filter="r" and night < 100')
 
 
-print mb.dbCols
+print(mb.dbCols)
 
 mbD = {0:mb, 1:mb2}
 

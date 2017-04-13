@@ -10,7 +10,7 @@ class TestBaseMetric(unittest.TestCase):
     def testReduceDict(self):
         """Test that reduce dictionary is created."""
         testmetric = metrics.BaseMetric('testcol')
-        self.assertEqual(testmetric.reduceFuncs.keys(), [])
+        self.assertEqual(list(testmetric.reduceFuncs.keys()), [])
 
     def testMetricName(self):
         """Test that metric name is set appropriately automatically and explicitly"""

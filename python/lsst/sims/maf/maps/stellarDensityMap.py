@@ -44,7 +44,7 @@ class StellarDensityMap(BaseMap):
         self._readMap()
 
         nsideMatch = False
-        if 'nside' in slicePoints.keys():
+        if 'nside' in slicePoints:
             if slicePoints['nside'] == self.starmapNside:
                 slicePoints['starLumFunc'] = self.starMap
                 nsideMatch = True

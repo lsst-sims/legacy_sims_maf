@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 import os
+=======
+from __future__ import print_function
+from builtins import str
+from builtins import zip
+import os, sys, re
+>>>>>>> master
 import numpy as np
 import warnings
 from .database import Database
@@ -207,6 +214,7 @@ class OpsimDatabase(Database):
                 propTags['WFD'].append(propID)
             if 'drill' in propName.lower():
                 propTags['DD'].append(propID)
+
         return propIDs, propTags
 
     def fetchRunLength(self, runLengthParam='survey/duration'):
@@ -223,7 +231,7 @@ class OpsimDatabase(Database):
         float
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve runLength; using default 10 years'
+            print('Cannot access Config table to retrieve runLength; using default 10 years')
             runLength = 10.0
         else:
             table = self.tables['Config']
@@ -237,7 +245,7 @@ class OpsimDatabase(Database):
         Returns the latitude, longitude, and height of the telescope used by the config file.
         """
         if 'Config' not in self.tables:
-            print 'Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.'
+            print('Cannot access Config table to retrieve site parameters; using sims.utils.Site instead.')
             site = Site(name='LSST')
             lat = site.latitude_rad
             lon = site.longitude_rad
@@ -286,8 +294,9 @@ class OpsimDatabase(Database):
         """Find opsim run name (machine name + sessionID) from Session table.
         """
         if 'Session' not in self.tables:
-            print 'Could not access Session table to find this information.'
+            print('Could not access Session table to find this information.')
             runName = 'OpsimV4'
+
         else:
             table = self.tables['Session']
             res = table.query_columns_Array(colnames=['sessionId', 'sessionHost'])
@@ -298,7 +307,7 @@ class OpsimDatabase(Database):
         """Find the total slew time.
         """
         if 'SlewActivities' not in self.tables:
-            print 'Could not access SlewActivities table to find this information.'
+            print('Could not access SlewActivities table to find this information.')
             nslew = -1
         else:
             table = self.tables['SlewActivities']
@@ -486,6 +495,7 @@ class OpsimDatabase(Database):
         # I've left these here (rather than adding to self_colNames), because I think schema changes will in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
         constraint = 'paramName="observatory/telescope/altitude_minpos"'
+
         results = table.query_columns_Array(colnames=['paramValue', ], constraint=constraint)
         configSummary['RunInfo']['MinAlt'] = results['paramValue'][0]
         constraint = 'paramName="observatory/telescope/altitude_maxpos"'

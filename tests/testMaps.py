@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import str
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -19,7 +21,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     ids = np.arange(size)
-    datavalues = np.array(zip(datavalues, datavalues, ids),
+    datavalues = np.array(list(zip(datavalues, datavalues, ids)),
                           dtype=[('fieldRA', 'float'),
                                  ('fieldDec', 'float'), ('fieldId', 'int')])
     return datavalues
@@ -28,7 +30,7 @@ def makeDataValues(size=100, min=0., max=1., random=True):
 def makeFieldData():
     names = ['fieldId', 'ra', 'dec']
     types = [int, float, float]
-    fieldData = np.zeros(100, dtype=zip(names, types))
+    fieldData = np.zeros(100, dtype=list(zip(names, types)))
     fieldData['fieldId'] = np.arange(100)
     fieldData['ra'] = np.random.rand(100)
     fieldData['dec'] = np.random.rand(100)
@@ -49,19 +51,19 @@ class TestMaps(unittest.TestCase):
             slicer1 = slicers.HealpixSlicer(latLonDeg=False)
             slicer1.setupSlicer(data)
             result1 = dustmap.run(slicer1.slicePoints)
-            assert('ebv' in result1.keys())
+            assert('ebv' in list(result1.keys()))
 
             fieldData = makeFieldData()
 
             slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = dustmap.run(slicer2.slicePoints)
-            assert('ebv' in result2.keys())
+            assert('ebv' in list(result2.keys()))
 
             # Check interpolation works
             dustmap = maps.DustMap(interp=True)
             result3 = dustmap.run(slicer2.slicePoints)
-            assert('ebv' in result3.keys())
+            assert('ebv' in list(result3.keys()))
 
             # Check warning gets raised
             dustmap = maps.DustMap(nside=4)
@@ -84,8 +86,8 @@ class TestMaps(unittest.TestCase):
                 slicer1 = slicers.HealpixSlicer(nside=nside, latLonDeg=False)
                 slicer1.setupSlicer(data)
                 result1 = starmap.run(slicer1.slicePoints)
-                assert('starMapBins' in result1.keys())
-                assert('starLumFunc' in result1.keys())
+                assert('starMapBins' in list(result1.keys()))
+                assert('starLumFunc' in list(result1.keys()))
                 assert(np.max(result1['starLumFunc'] > 0))
 
             fieldData = makeFieldData()
@@ -93,8 +95,8 @@ class TestMaps(unittest.TestCase):
             slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = starmap.run(slicer2.slicePoints)
-            assert('starMapBins' in result2.keys())
-            assert('starLumFunc' in result2.keys())
+            assert('starMapBins' in list(result2.keys()))
+            assert('starLumFunc' in list(result2.keys()))
             assert(np.max(result2['starLumFunc'] > 0))
 
         else:

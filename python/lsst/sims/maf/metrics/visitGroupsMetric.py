@@ -1,3 +1,4 @@
+from builtins import zip
 # Example of more complex metric
 # Takes multiple columns of data (although 'night' could be calculable from 'expmjd')
 # Returns variable length array of data

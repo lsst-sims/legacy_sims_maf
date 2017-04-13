@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -129,7 +130,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         Test the completeness metric.
         """
         # Generate some test data.
-        data = np.zeros(600, dtype=zip(['filter'], ['|S1']))
+        data = np.zeros(600, dtype=list(zip(['filter'], ['<U1'])))
         data['filter'][:100] = 'u'
         data['filter'][100:200] = 'g'
         data['filter'][200:300] = 'r'
@@ -140,6 +141,8 @@ class TestTechnicalMetrics(unittest.TestCase):
         # Test completeness metric when requesting all filters.
         metric = metrics.CompletenessMetric(u=100, g=100, r=100, i=100, z=100, y=100)
         completeness = metric.run(data, slicePoint)
+        print('xxx-metric.reduceu(completeness)=', metric.reduceu(completeness))
+        print('xxx-metric.reduceg(completeness)=', metric.reduceg(completeness))
         assert(metric.reduceu(completeness) == 1)
         assert(metric.reduceg(completeness) == 1)
         assert(metric.reducer(completeness) == 1)

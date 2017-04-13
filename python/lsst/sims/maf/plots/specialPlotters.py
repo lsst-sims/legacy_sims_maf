@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -56,7 +57,7 @@ class FOPlot(BasePlotter):
                  linewidth=plotDict['linewidth'], zorder=0)
         # This is breaking the rules and calculating the summary stats in two places.
         # Could just calculate summary stats and pass in labels.
-        rarr = np.array(zip(metricValue.compressed()),
+        rarr = np.array(list(zip(metricValue.compressed())),
                         dtype=[('fO', metricValue.dtype)])
         fOArea_value = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
                                       nside=slicer.nside).run(rarr)
@@ -152,8 +153,8 @@ class SummaryHistogram(BasePlotter):
             finalHist[i] = metric.run(mV[:, i])
         bins = plotDict['bins']
         if plotDict['histStyle']:
-            x = np.ravel(zip(bins[:-1], bins[1:]))
-            y = np.ravel(zip(finalHist, finalHist))
+            x = np.ravel(list(zip(bins[:-1], bins[1:])))
+            y = np.ravel(list(zip(finalHist, finalHist)))
         else:
             # Could use this to plot things like FFT
             x = bins[:-1]

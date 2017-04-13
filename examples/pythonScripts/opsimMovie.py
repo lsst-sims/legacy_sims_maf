@@ -1,5 +1,7 @@
-# python $SIMS_MAF_DIR/examples/pythonScripts/opsimMovie.py enigma_1189_sqlite.db
-#  --sqlConstraint 'night=130' --outDir Output
+from __future__ import print_function
+from builtins import zip
+from builtins import str
+# python $SIMS_MAF_DIR/examples/pythonScripts/opsimMovie.py enigma_1189_sqlite.db --sqlConstraint 'night=130' --outDir Output
 #
 # --ips = number of images to stitch together per second of view (default is 10).
 # --fps = frames per second for the output video .. default just matches ips. If specified as higher than ips,
@@ -78,7 +80,7 @@ def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60.,
                          'metricIsColor': True, 'figsize': figsize})
     dt, t = dtime(t)
     if verbose:
-        print 'Set up metrics %f s' %(dt)
+        print('Set up metrics %f s' %(dt))
     return metricList, plotDictList
 
 def setupMovieSlicer(simdata, bins, verbose=False):
@@ -87,7 +89,7 @@ def setupMovieSlicer(simdata, bins, verbose=False):
     movieslicer.setupSlicer(simdata)
     dt, t = dtime(t)
     if verbose:
-        print 'Set up movie slicers in %f s' %(dt)
+        print('Set up movie slicers in %f s' %(dt))
     return movieslicer
 
 def addHorizon(horizon_altitude=np.radians(20.), lat_telescope=Site(name='LSST').latitude_rad):
@@ -129,7 +131,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         t = time.time()
         slicenumber = sliceformat %(i)
         if verbose:
-            print slicenumber
+            print(slicenumber)
         # Set up metrics.
         if args.movieStepsize != 0:
             tstep = args.movieStepsize
@@ -155,7 +157,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         bundles = []
         sqlconstraint = ''
         for metric, plotDict in zip(metricList, plotDictList):
-            bundles.append(metricBundles.MetricBundle(metric, opslicer, sqlconstraint=sqlconstraint,
+            bundles.append(metricBundles.MetricBundle(metric, opslicer, constraint=sqlconstraint,
                                                       metadata=metadata, runName=opsimName,
                                                       plotDict=plotDict))
         # Remove (default) stackers from bundles, because we've already run them above on the original data.
@@ -223,7 +225,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
             plt.close('all')
             dt, t = dtime(t)
         if verbose:
-            print 'Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt)
+            print('Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt))
 
 
 def stitchMovie(metricList, args):
@@ -243,7 +245,7 @@ def stitchMovie(metricList, args):
         if args.movieLength != 0.0:
             #calculate images/second rate
             args.ips = n_images/args.movieLength
-            print "for a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips
+            print("for a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips)
         if args.fps == 0.0:
             warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
             if args.ips <= 30.0:
@@ -332,4 +334,4 @@ if __name__ == '__main__':
     metricList, plotDictList = setupMetrics(opsimName, metadata)
     stitchMovie(metricList, args)
     end_t, start_t = dtime(start_t)
-    print 'Total time to create movie: ', end_t
+    print('Total time to create movie: ', end_t)

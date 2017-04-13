@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from builtins import zip
+from builtins import str
+from builtins import range
 import os
 import argparse
 import copy
@@ -44,9 +48,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = utils.createSQLWhere('WFD', propTags)
-    print '#FYI: WFD "where" clause: %s' % (wfdWhere)
+    print('#FYI: WFD "where" clause: %s' % (wfdWhere))
     ddWhere = utils.createSQLWhere('DD', propTags)
-    print '#FYI: DD "where" clause: %s' % (ddWhere)
+    print('#FYI: DD "where" clause: %s' % (ddWhere))
 
     # Set up benchmark values, scaled to length of opsim run. These are applied to 'all' and 'WFD' plots.
     runLength = opsimdb.fetchRunLength()
@@ -69,7 +73,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     # Check that nvisits is not set to zero (for very short run length).
     for f in benchmarkVals['nvisits']:
         if benchmarkVals['nvisits'][f] == 0:
-            print 'Updating benchmark nvisits value in %s to be nonzero' % (f)
+            print('Updating benchmark nvisits value in %s to be nonzero' % (f))
             benchmarkVals['nvisits'][f] = 1
 
     # Generate approximate benchmark values for DD.
@@ -546,7 +550,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     # Hourglass metric.
     hourSlicer = slicers.HourglassSlicer()
     # Calculate Filter Hourglass plots per year (split to make labelling easier).
-    yearDates = range(0, int(round(365 * runLength)) + 365, 365)
+    yearDates = list(range(0, int(round(365 * runLength)) + 365, 365))
     for i in range(len(yearDates) - 1):
         sqlconstraint = 'night > %i and night <= %i' % (yearDates[i], yearDates[i + 1])
         metadata = 'Year %i-%i' % (i, i + 1)
@@ -846,7 +850,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     # Calculate some basic summary info about run, per filter, per proposal and for all proposals.
     propOrder = 0
-    props = propids.keys() + ['All Props'] + ['WFD']
+    props = list(propids.keys()) + ['All Props'] + ['WFD']
     slicer = slicers.UniSlicer()
     for i, propid in enumerate(props):
         propOrder += 500

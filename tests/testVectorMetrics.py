@@ -1,3 +1,4 @@
+from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -21,7 +22,7 @@ class Test2D(unittest.TestCase):
         self.n2 = 49
 
         # Picking RA and Dec values that will hit nside=16 healpixels
-        self.simData = np.zeros(self.n1+self.n2, dtype=zip(names, types))
+        self.simData = np.zeros(self.n1+self.n2, dtype=list(zip(names, types)))
         self.simData['night'][0:self.n1] = 1
         self.simData['fieldId'][0:self.n1] = 1
         self.simData['fieldRA'][0:self.n1] = 10.
@@ -34,10 +35,10 @@ class Test2D(unittest.TestCase):
         self.simData['fieldDec'][self.n1:] = -20.
         self.simData['fiveSigmaDepth'][self.n1:] = self.m5_2
 
-        self.fieldData = np.zeros(2, dtype=zip(['fieldId', 'ra', 'dec'], [int, float, float]))
-        self.fieldData['fieldId'] = [1, 2]
-        self.fieldData['ra'] = np.radians([10., 190.])
-        self.fieldData['dec'] = np.radians([0., -20.])
+        self.fieldData = np.zeros(2, dtype=list(zip(['fieldID', 'fieldRA', 'fieldDec'], [int, float, float])))
+        self.fieldData['fieldID'] = [1, 2]
+        self.fieldData['fieldRA'] = np.radians([10., 190.])
+        self.fieldData['fieldDec'] = np.radians([0., -20.])
 
         self.simData['observationStartMJD'] = self.simData['night']
 
@@ -132,10 +133,10 @@ class Test2D(unittest.TestCase):
                         (mb.metricValues.mask[:, 1] == False))[0]
 
         checkMetric = metrics.Coaddm5Metric()
-        tempSlice = np.zeros(self.n1, dtype=zip(['fiveSigmaDepth'], [float]))
+        tempSlice = np.zeros(self.n1, dtype=list(zip(['fiveSigmaDepth'], [float])))
         tempSlice['fiveSigmaDepth'] += self.m5_1
         val1 = checkMetric.run(tempSlice)
-        tempSlice = np.zeros(self.n2, dtype=zip(['fiveSigmaDepth'], [float]))
+        tempSlice = np.zeros(self.n2, dtype=list(zip(['fiveSigmaDepth'], [float])))
         tempSlice['fiveSigmaDepth'] += self.m5_2
         val2 = checkMetric.run(tempSlice)
 
@@ -156,10 +157,10 @@ class Test2D(unittest.TestCase):
         good = np.where(mb.metricValues.mask[:, -1] == False)[0]
 
         checkMetric = metrics.Coaddm5Metric()
-        tempSlice = np.zeros(self.n1, dtype=zip(['fiveSigmaDepth'], [float]))
+        tempSlice = np.zeros(self.n1, dtype=list(zip(['fiveSigmaDepth'], [float])))
         tempSlice['fiveSigmaDepth'] += self.m5_1
         val1 = checkMetric.run(tempSlice)
-        tempSlice = np.zeros(self.n2, dtype=zip(['fiveSigmaDepth'], [float]))
+        tempSlice = np.zeros(self.n2, dtype=list(zip(['fiveSigmaDepth'], [float])))
         tempSlice['fiveSigmaDepth'] += self.m5_2
         val2 = checkMetric.run(tempSlice)
 
@@ -170,7 +171,7 @@ class Test2D(unittest.TestCase):
     def testAccumulateUniformityMetric(self):
         names = ['night']
         types = ['float']
-        dataSlice = np.zeros(3652, dtype=zip(names, types))
+        dataSlice = np.zeros(3652, dtype=list(zip(names, types)))
 
         # Test that a uniform distribution is very close to zero
         dataSlice['night'] = np.arange(1, dataSlice.size+1)

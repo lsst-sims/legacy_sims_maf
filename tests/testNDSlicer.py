@@ -1,3 +1,6 @@
+from builtins import str
+from builtins import zip
+from builtins import range
 import matplotlib
 matplotlib.use("Agg")
 import warnings
@@ -24,7 +27,7 @@ def makeDataValues(size=100, min=0., max=1., nd=3, random=True):
             randorder = np.random.rand(size)
             randind = np.argsort(randorder)
             datavalues = datavalues[randind]
-        datavalues = np.array(zip(datavalues), dtype=[('testdata' + '%d' % (d), 'float')])
+        datavalues = np.array(list(zip(datavalues)), dtype=[('testdata' + '%d' % (d), 'float')])
         data.append(datavalues)
     data = rfn.merge_arrays(data, flatten=True, usemask=False)
     return data
@@ -224,7 +227,7 @@ class TestNDSlicerSlicing(unittest.TestCase):
                 dataslice = dv[idxs]
                 sum += len(idxs)
                 if len(dataslice) > 0:
-                    for i, dvname, b in zip(range(self.nd), self.dvlist, s['slicePoint']['binLeft']):
+                    for i, dvname, b in zip(list(range(self.nd)), self.dvlist, s['slicePoint']['binLeft']):
                         self.assertGreaterEqual((dataslice[dvname].min() - b), 0)
                     if i < self.testslicer.nslice-1:
                         self.assertLessEqual((dataslice[dvname].max() - b), binsize)

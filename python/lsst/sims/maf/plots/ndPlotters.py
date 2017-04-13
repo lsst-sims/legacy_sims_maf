@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import range
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
@@ -56,7 +58,7 @@ class TwoDSubsetData(BasePlotter):
         newshape.reverse()
         md = metricValues.reshape(newshape)
         # Sum over other dimensions. Note that masked values are not included in sum.
-        sumaxes = range(slicer.nD)
+        sumaxes = list(range(slicer.nD))
         sumaxes.remove(xaxis)
         sumaxes.remove(yaxis)
         sumaxes = tuple(sumaxes)
@@ -134,7 +136,7 @@ class OneDSubsetData(BasePlotter):
         newshape.reverse()
         md = metricValues.reshape(newshape)
         # Sum over other dimensions. Note that masked values are not included in sum.
-        sumaxes = range(slicer.nD)
+        sumaxes = list(range(slicer.nD))
         sumaxes.remove(axis)
         sumaxes = tuple(sumaxes)
         md = md.sum(sumaxes)
@@ -145,8 +147,8 @@ class OneDSubsetData(BasePlotter):
             plt.bar(leftedge, md, width, label=plotDict['label'],
                     linewidth=0, alpha=plotDict['alpha'], log=plotDict['logScale'])
         else:
-            x = np.ravel(zip(leftedge, leftedge + width))
-            y = np.ravel(zip(md, md))
+            x = np.ravel(list(zip(leftedge, leftedge + width)))
+            y = np.ravel(list(zip(md, md)))
             if plotDict['logScale']:
                 plt.semilogy(x, y, label=plotDict['label'])
             else:

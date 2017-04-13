@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Class for HealpixSlicer (healpixel-based spatial slicer).
 # User can select resolution using 'NSIDE'
 # Requires healpy
@@ -87,8 +88,8 @@ class HealpixSlicer(BaseSpatialSlicer):
         self.spatialExtent = [0, self.nslice-1]
         self.shape = self.nslice
         if self.verbose:
-            print 'Healpix slicer using NSIDE=%d, ' % (self.nside) + \
-                  'approximate resolution %f arcminutes' % (hp.nside2resol(self.nside, arcmin=True))
+            print('Healpix slicer using NSIDE=%d, ' % (self.nside) + \
+                  'approximate resolution %f arcminutes' % (hp.nside2resol(self.nside, arcmin=True)))
         # Set variables so slicer can be re-constructed
         self.slicer_init = {'nside': nside, 'lonCol': lonCol, 'latCol': latCol,
                             'radius': radius}

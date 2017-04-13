@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import range
 # The base class for all spatial slicers.
 # Slicers are 'data slicers' at heart; spatial slicers slice data by RA/Dec and
 #  return the relevant indices in the simData to the metric.
@@ -134,7 +136,7 @@ class BaseSpatialSlicer(BaseSlicer):
             # the same shape as the slicer, assume it is information per slicepoint.
             # Otherwise, pass the whole slicePoint[key] information. Useful for stellar LF maps
             # where we want to pass only the relevant LF and the bins that go with it.
-            for key in self.slicePoints.keys():
+            for key in self.slicePoints:
                 if len(np.shape(self.slicePoints[key])) == 0:
                     keyShape = 0
                 else:
@@ -155,8 +157,8 @@ class BaseSpatialSlicer(BaseSlicer):
     def _presliceFootprint(self, simData):
         """Loop over each pointing and find which sky points are observed """
         # Now to make a list of lists for looking up the relevant observations at each slicepoint
-        self.sliceLookup = [[] for dummy in xrange(self.nslice)]
-        self.chipNames = [[] for dummy in xrange(self.nslice)]
+        self.sliceLookup = [[] for dummy in range(self.nslice)]
+        self.chipNames = [[] for dummy in range(self.nslice)]
         # Make a kdtree for the _slicepoints_
         # Using scipy 0.16 or later
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
@@ -215,7 +217,7 @@ class BaseSpatialSlicer(BaseSlicer):
         if np.any(np.abs(simDataRa) > np.pi*2.0) or np.any(np.abs(simDataDec) > np.pi*2.0):
             raise ValueError('Expecting RA and Dec values to be in radians.')
         x, y, z = self._treexyz(simDataRa, simDataDec)
-        data = zip(x, y, z)
+        data = list(zip(x, y, z))
         if np.size(data) > 0:
             try:
                 self.opsimtree = kdtree(data, leafsize=leafsize, balanced_tree=False, compact_nodes=False)

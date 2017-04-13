@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 from .baseMetric import BaseMetric
 
@@ -115,7 +116,7 @@ class TransientMetric(BaseMetric):
         lcMags[rise] += self.riseSlope * time[rise] - self.riseSlope * self.peakTime
         decline = np.where(time > self.peakTime)
         lcMags[decline] += self.declineSlope * (time[decline] - self.peakTime)
-        for key in self.peaks.keys():
+        for key in self.peaks:
             fMatch = np.where(filters == key)
             lcMags[fMatch] += self.peaks[key]
         return lcMags
