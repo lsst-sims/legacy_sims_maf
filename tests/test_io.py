@@ -89,14 +89,14 @@ class TestSlicers(unittest.TestCase):
 
     def test_opsimFieldSlicer(self):
         slicer = slicers.OpsimFieldSlicer()
-        names = ['fieldRa', 'fieldDec', 'fieldId']
+        names = ['ra', 'dec', 'fieldId']
         dt = ['float', 'float', 'int']
         metricValues = np.random.rand(100)
         fieldData = np.zeros(100, dtype=list(zip(names, dt)))
-        fieldData['fieldRA'] = np.random.rand(100)
-        fieldData['fieldDec'] = np.random.rand(100)
-        fieldData['fieldID'] = np.arange(100)
-        names = ['data1', 'data2', 'fieldID']
+        fieldData['ra'] = np.random.rand(100)
+        fieldData['dec'] = np.random.rand(100)
+        fieldData['fieldId'] = np.arange(100)
+        names = ['data1', 'data2', 'fieldId']
         simData = np.zeros(100, dtype=list(zip(names, dt)))
         simData['data1'] = np.random.rand(100)
         simData['fieldId'] = np.arange(100)

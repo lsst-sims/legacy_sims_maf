@@ -223,7 +223,7 @@ class TestStackerClasses(unittest.TestCase):
         # Check a value
         data = np.zeros(1, dtype=list(zip(['observationStartLST', 'fieldRA'], [float, float])))
         data['observationStartLST'] = 0.
-        data['fieldRA'] = np.pi / 2.
+        data['fieldRA'] = np.degrees(np.pi / 2.)
         data = stacker.run(data)
         np.testing.assert_almost_equal(data['HA'], -6.)
 
