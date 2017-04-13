@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-import os
-=======
 from __future__ import print_function
 from builtins import str
 from builtins import zip
-import os, sys, re
->>>>>>> master
 import numpy as np
 import warnings
 from .database import Database
