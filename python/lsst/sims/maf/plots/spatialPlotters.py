@@ -372,12 +372,11 @@ class BaseHistogram(BasePlotter):
                     histRange = None
                 if np.where((plotValue > np.min(bins)) & (plotValue < np.max(bins)))[0].size < 1:
                     bins = 25
-                try:
-                    n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
-                                       cumulative=plotDict['cumulative'], range=histRange,
-                                       label=plotDict['label'], color=plotDict['color'])
-                except:
-                    import pdb ; pdb.set_trace()
+                if histRange is not None:
+                    histRange = np.sort(histRange)
+                n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
+                                   cumulative=plotDict['cumulative'], range=histRange,
+                                   label=plotDict['label'], color=plotDict['color'])
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
 
