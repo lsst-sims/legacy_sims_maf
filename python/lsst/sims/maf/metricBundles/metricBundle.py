@@ -91,7 +91,8 @@ class MetricBundle(object):
         else:
             self.mapsList = []
         # If the metric knows it needs a particular map, add it to the list.
-        mapNames = [map.__class__.__name for map in self.mapsList]
+        mapNames = [mapname.__class__.__name__ for mapname in self.mapsList]
+
         if hasattr(self.metric, 'maps'):
             for mapName in self.metric.maps:
                 if mapName not in mapNames:
