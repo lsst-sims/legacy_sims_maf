@@ -90,38 +90,18 @@ def setupMetrics(opsimName, metadata, tstart, tnow, plotlabel='', cumulative=Fal
         coaddMax = 26.5
     figsize = (8, 8)
     title = 'Simulation %s: %s' % (opsimName, metadata)
-<<<<<<< HEAD
+
     metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5Metric'))
     plotDictList.append({'colorMin':coaddMin, 'colorMax':coaddMax,
                          'label': plotlabel, 'title': title, 'figsize': figsize})
+
     metricList.append(metrics.CountMetric('observationStartMJD', metricName='N_Visits'))
-=======
-    metricList.append(metrics.Coaddm5Metric('fiveSigmaDepth', metricName='Coaddm5'))
-    plotDictList.append({'colorMin':coaddMin, 'colorMax':coaddMax,
-                         'label': plotlabel, 'title': title, 'figsize': figsize})
-    metricList.append(metrics.CountMetric('expMJD', metricName='N_Visits'))
->>>>>>> master
     plotDictList.append({'colorMin':nvisitsMin, 'colorMax':nvisitsMax,
                          'cbarFormat': '%d',
                           'label': plotlabel, 'title': title + 'NVisits', 'figsize': figsize})
-    # Uniformity wants survey length in years.
-<<<<<<< HEAD
-    surveyLength = (tnow - tstart) / 365.0
-    metricList.append(metrics.UniformityMetric('observationStartMJD', surveyLength=surveyLength))
-    plotDictList.append({'colorMin':0, 'colorMax':1, 'cbarFormat':'%.2f',
-                         'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
-    dt, t = dtime(t)
-    if verbose:
-        print 'Set up metrics %f s' %(dt)
-=======
-    #surveyLength = (tnow - tstart) / 365.0
-    #metricList.append(metrics.UniformityMetric('expMJD', surveyLength=surveyLength))
-    #plotDictList.append({'colorMin':0, 'colorMax':1, 'cbarFormat':'%.2f',
-    #                     'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
     dt, t = dtime(t)
     if verbose:
         print('Set up metrics %f s' % (dt))
->>>>>>> master
     return metricList, plotDictList
 
 def setupStackers(args, verbose=False):
@@ -201,10 +181,7 @@ def runSlices(opsimName, metadata, simdata, bins, args, verbose=False):
         hs = setupHealpixSlicer(args)
 
         bundles = []
-<<<<<<< HEAD
-        sqlconstraint = ''
-=======
->>>>>>> master
+
         for metric, plotDict in zip(metricList, plotDictList):
             bundles.append(mB.MetricBundle(metric, hs, sqlconstraint=args.sqlConstraint,
                                            metadata=metadata, runName=opsimName, plotDict=plotDict,
@@ -216,13 +193,8 @@ def runSlices(opsimName, metadata, simdata, bins, args, verbose=False):
         # Set up metricBundleGroup to handle metrics calculation + plotting
         bg = mB.MetricBundleGroup(bundledict, opsDb, outDir=args.outDir, resultsDb=None, saveEarly=False)
         # Calculate metric data values for simdatasubset (this also sets up indexing in the slicer)
-<<<<<<< HEAD
-        bg.setCurrent(sqlconstraint)
-        bg.runCurrent(constraint = sqlconstraint, simData=simdatasubset)
-=======
         bg.setCurrent(args.sqlConstraint)
         bg.runCurrent(constraint=args.sqlConstraint, simData=simdatasubset)
->>>>>>> master
         # Plot data for this slice of the movie, adding slicenumber as a suffix for output plots
         bg.plotAll(outfileSuffix=slicenumber, closefigs=True, dpi=72, thumbnail=False, figformat='png')
         # Write the data -- uncomment if you want to do this.
@@ -246,14 +218,10 @@ def stitchMovie(metricList, metadata, args):
         mName = metric.name.replace('  ', ' ').replace(' ', '_').replace('.', '_').replace(',', '')
         dbName = args.opsimDb.replace('_sqlite.db', '')
         dbName = dbName.replace('.db', '')
-<<<<<<< HEAD
-        outfileroots.append(dbName + '_' + mName + '_' + 'HEAL')
-=======
         if metadata != '':
             outfileroots.append('_'.join([dbName, mName, metadata, 'HEAL']))
         else:
             outfileroots.append('_'.join([dbName, mName, 'HEAL']))
->>>>>>> master
 
     for outfileroot in outfileroots:
         # Identify filenames.
@@ -342,12 +310,8 @@ if __name__ == '__main__':
         .replace('"', '').replace('/', '.')
 
     # Define metrics, stackers and slicer so that we can see what columns we need from database.
-<<<<<<< HEAD
-    metricList, plotDictList = setupMetrics(opsimName, metadata, 0, 0, plotlabel='', cumulative=args.cumulative)
-=======
     metricList, plotDictList = setupMetrics(opsimName, metadata, 0, 0, plotlabel='',
                                             cumulative=args.cumulative)
->>>>>>> master
     # Define any non-default stackers to be used.
     stackerList = setupStackers(args)
     # Define the slicer to be used at each step of the movie slicer.
@@ -357,11 +321,7 @@ if __name__ == '__main__':
         # Connect to database.
         opsDb = OpsimDatabase(os.path.join(args.dbDir, args.opsimDb))
         # Get data from database.
-<<<<<<< HEAD
         dbcols = ['observationStartMJD', 'fiveSigmaDepth', args.raCol, args.decCol]
-=======
-        dbcols = ['expMJD', 'fiveSigmaDepth', args.raCol, args.decCol]
->>>>>>> master
         simdata = utils.getSimData(opsDb, sqlconstraint, dbcols, stackers=stackerList)
         # Generate the bins for the movie slicer.
         start_date = simdata['observationStartMJD'].min()
