@@ -246,8 +246,8 @@ def stitchMovie(metricList, args):
             #calculate images/second rate
             args.ips = int(n_images/args.movieLength)
             print("for a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips)
-        if args.fps == 0.0:
-            warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
+        if args.fps == 0:
+            warnings.warn('(FPS of 0) Setting fps equal to ips, up to a value of 30fps.')
             if args.ips <= 30:
                 args.fps = args.ips
             else:
