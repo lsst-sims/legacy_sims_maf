@@ -10,7 +10,7 @@ from jinja2 import FileSystemLoader
 import webbrowser
 
 from lsst.sims.maf.viz import MafTracking
-import lsst.sims.maf.db as db
+from .addRun import addToDatabase
 
 class RunSelectHandler(web.RequestHandler):
     def get(self):
@@ -140,41 +140,8 @@ if __name__ == "__main__":
         if not os.path.isdir(mafDir):
             print('There is no directory containing MAF outputs at %s.' % (mafDir))
             print('Just opening using tracking db at %s.' % (trackingDb))
-        # Open tracking database to add a run.
-        trackDb = db.TrackingDb(database=trackingDb)
-        # Set opsim comment and name from the config files from the run.
-        opsimComment = ''
-        opsimRun = 'NULL'
-        opsimDate = ''
-        mafDate = ''
-        if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
-            file = open(os.path.join(mafDir, 'configSummary.txt'))
-            for line in file:
-                tmp = line.split()
-                if tmp[0].startswith('RunName'):
-                    opsimRun = ' '.join(tmp[1:])
-                if tmp[0].startswith('RunComment'):
-                    opsimComment = ' '.join(tmp[1:])
-                if tmp[0].startswith('MAFVersion'):
-                    mafDate = tmp[-1]
-                if tmp[0].startswith('OpsimVersion'):
-                    opsimDate = tmp[-2]
-                    # Let's go ahead and make the formats match
-                    opsimDate = opsimDate.split('-')
-                    opsimDate = opsimDate[1] + '/' + opsimDate[2] + '/' + opsimDate[0][2:]
-        # Give some feedback to the user about what we're doing.
-        print('Adding to tracking database at %s:' % (trackingDb))
-        print(' MafDir = %s' % (mafDir))
-        print(' MafComment = %s' % (args.mafComment))
-        print(' OpsimRun = %s' % (opsimRun))
-        print(' OpsimComment = %s' % (opsimComment))
-        print(' OpsimDate = %s' % (opsimDate))
-        print(' MafDate = %s' % (mafDate))
-        # Add the run.
-        startRunId = trackDb.addRun(opsimRun, opsimComment, args.mafComment, mafDir,
-                                    opsimDate, mafDate, trackingDb)
-        print(' Used runID %d' % (startRunId))
-        trackDb.close()
+        else:
+            addToDatabase(mafDir, trackingDb, mafComment=args.mafComment)
 
     # Open tracking database and start visualization.
     global runlist
