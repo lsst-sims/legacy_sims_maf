@@ -82,9 +82,9 @@ class TrackingDb(object):
     def close(self):
         self.session.close()
 
-    def addRun(self, opsimRun, opsimComment, mafComment, mafDir, opsimDate, mafDate, dbFile, override=False):
+    def addRun(self, opsimRun, opsimComment, mafComment, mafDir, opsimDate, mafDate, dbFile):
         """
-        Add a run to the tracking database.
+        Add or update a run to/in the tracking database.
         """
         if opsimRun is None:
             opsimRun = 'NULL'
@@ -98,19 +98,24 @@ class TrackingDb(object):
             mafDate = 'NULL'
         if dbFile is None:
             dbFile = 'NULL'
-        # Test if mafDir already exists in database (unless directed not to check via override).
-        if not override:
-            prevruns = self.session.query(RunRow).filter_by(mafDir=mafDir).all()
-            if len(prevruns) > 0:
-                runIds = []
-                for run in prevruns:
-                    runIds.append(run.mafRunId)
-                print('This maf directory %s is already present in tracking db with mafRunId(s) %s.' %(mafDir, runIds))
-                print('Not currently adding this run to tracking DB (use override=True to add anyway).')
-                return runIds[0]
-        # Run did not exist in database or we received override: add it.
-        runinfo = RunRow(opsimRun=opsimRun, opsimComment=opsimComment, mafComment=mafComment,
-                         mafDir=mafDir, opsimDate=opsimDate, mafDate=mafDate, dbFile=dbFile)
+        # Test if mafDir already exists in database.
+        prevrun = self.session.query(RunRow).filter_by(mafDir=mafDir).all()
+        if len(prevrun) > 0:
+            runIds = []
+            for run in prevrun:
+                runIds.append(run.mafRunId)
+            print('Updating information in tracking database - %s already present with runId %s.'
+                  % (mafDir, runIds))
+            for run in prevrun:
+                self.session.delete(run)
+            self.session.commit()
+            runinfo = RunRow(mafRunId=runIds[0], opsimRun=opsimRun, opsimComment=opsimComment,
+                             mafComment=mafComment,
+                             mafDir=mafDir, opsimDate=opsimDate, mafDate=mafDate, dbFile=dbFile)
+        else:
+            runinfo = RunRow(opsimRun=opsimRun, opsimComment=opsimComment,
+                             mafComment=mafComment,
+                             mafDir=mafDir, opsimDate=opsimDate, mafDate=mafDate, dbFile=dbFile)
         self.session.add(runinfo)
         self.session.commit()
         return runinfo.mafRunId
