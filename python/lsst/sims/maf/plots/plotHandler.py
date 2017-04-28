@@ -505,13 +505,32 @@ class PlotHandler(object):
             plotType = 'Combo' + plotType
         # Make plot.
         fignum = None
+        plotlims = {'x': [None, None], 'y': [None, None]}
         for mB, plotDict in zip(self.mBundles, self.plotDicts):
             if mB.metricValues is None:
                 # Skip this metricBundle.
-                warnings.warn('MetricBundle (fileRoot=%s) has no attribute metricValues' % (mB.fileRoot) +
-                              ' Either it has not been calculated or it has been deleted.')
+                msg = 'MetricBundle (%s) has no attribute "metricValues".' % (mB.fileRoot)
+                msg +=  ' Either the values have not been calculated or they have been deleted.'
+                warnings.warn(msg)
             else:
                 fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
+                # Do a little hack to make sure we don't cut off histograms, etc. below their peak.
+                plt.figure(fignum)
+                try:
+                    lims = {}
+                    lims['x'] = plt.xlim()
+                    lims['y'] = plt.ylim()
+                    for ax in ('x', 'y'):
+                        plotlims[ax][0] = min(plotlims[ax][0], lims[ax][0])
+                        plotlims[ax][1] = max(plotlims[ax][1], lims[ax][1])
+                except AttributeError:
+                    # If there isn't an x or y axis, we are going to skip this.
+                    pass
+            try:
+                plt.xlim(plotlims['x'])
+                plt.ylim(plotlims['y'])
+            except TypeError:
+                pass
         # Add a legend if more than one metricValue is being plotted or if legendloc is specified.
         legendloc = None
         if 'legendloc' in self.plotDicts[0]:

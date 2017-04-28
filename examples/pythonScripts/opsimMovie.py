@@ -212,14 +212,16 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
                 moon = Line2D([], [], color='k', linestyle='', marker='o', markersize=8, alpha=alpha,
                               label="\nMoon (Dark=Full)\n         (Light=New)")
                 zenith = Line2D([], [], color='k', linestyle='', marker='+', markersize=5, label="Zenith")
-                plt.legend(handles=[horizon, zenith, galaxy, ecliptic, moon], loc=[0.1, -0.35], ncol=3, frameon=False,
-                    title = 'Aitoff plot showing HA/Dec of simulated survey pointings', numpoints=1, fontsize='small')
+                plt.legend(handles=[horizon, zenith, galaxy, ecliptic, moon], loc=[0.1, -0.35], ncol=3,
+                           frameon=False, title = 'Aitoff plot showing HA/Dec of simulated survey pointings',
+                           numpoints=1, fontsize='small')
             # Save figure.
-            plt.savefig(os.path.join(args.outDir, mb.metric.name + '_' + slicenumber + '_SkyMap.png'), format='png', dpi=72)
+            plt.savefig(os.path.join(args.outDir, mb.metric.name + '_' + slicenumber + '_SkyMap.png'),
+                        format='png', dpi=72)
             plt.close('all')
             dt, t = dtime(t)
-        if verbose:
-            print('Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt))
+            if verbose:
+                print('Ran and plotted slice %s of movieslicer in %f s' %(slicenumber, dt))
 
 
 def stitchMovie(metricList, args):
@@ -238,14 +240,14 @@ def stitchMovie(metricList, args):
         # If a movieLength was specified... set args.ips/fps.
         if args.movieLength != 0.0:
             #calculate images/second rate
-            args.ips = n_images/args.movieLength
+            args.ips = int(n_images/args.movieLength)
             print("for a movie length of " + str(args.movieLength) + " IPS set to: ", args.ips)
-        if args.fps == 0.0:
-            warnings.warn('(FPS of 0.0) Setting fps equal to ips, up to a value of 30fps.')
-            if args.ips <= 30.0:
+        if args.fps == 0:
+            warnings.warn('(FPS of 0) Setting fps equal to ips, up to a value of 30fps.')
+            if args.ips <= 30:
                 args.fps = args.ips
             else:
-                args.fps = 30.0
+                args.fps = 30
         # Create the movie.
         movieslicer.makeMovie(outfileroot, sliceformat, plotType='SkyMap', figformat='png',
                                 outDir=args.outDir, ips=args.ips, fps=args.fps)
@@ -266,9 +268,9 @@ if __name__ == '__main__':
                         help="Add all previous observations into movie (as background).")
     parser.add_argument("--skipComp", action = 'store_true', default=False,
                         help="Just make movie from existing metric plot files.")
-    parser.add_argument("--ips", type=float, default = 10.0,
+    parser.add_argument("--ips", type=float, default = 10,
                         help="The number of images per second in the movie. Will skip accordingly if fps is lower.")
-    parser.add_argument("--fps", type=float, default = 0.0,
+    parser.add_argument("--fps", type=float, default = 0,
                         help="The frames per second of the movie.")
     parser.add_argument("--movieLength", type=float, default=0.0,
                         help="Enter the desired length of the movie in seconds. "
@@ -277,7 +279,7 @@ if __name__ == '__main__':
 
     start_t = time.time()
     #cleaning up movie parameters
-    if args.fps > 30.0:
+    if args.fps > 30:
         warnings.warn('FPS above 30 reduces performance and is undetectable to the human eye. Try lowering the fps.')
 
     # Check if output directory exists; create if appropriate.
