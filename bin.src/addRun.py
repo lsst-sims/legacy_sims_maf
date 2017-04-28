@@ -49,7 +49,6 @@ def addToDatabase(mafDir, trackingDbFile,
                 # MAF Date may be in a line with "MafDate" (new configs)
                 #  or at the end of "MAFVersion" (old configs).
                 if tmp[0].startswith('MAFDate') or tmp[0].startswith('MAFVersion'):
-                    print(tmp, tmp[-1])
                     if mafDate is None:
                         mafDate = tmp[-1]
                         # And convert formats to '-' (again, multiple versions of configs).
