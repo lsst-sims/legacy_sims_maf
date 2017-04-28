@@ -10,7 +10,7 @@ from jinja2 import FileSystemLoader
 import webbrowser
 
 from lsst.sims.maf.viz import MafTracking
-from addRun import addToDatabase
+from lsst.sims.maf.db import addRunToDatabase
 
 class RunSelectHandler(web.RequestHandler):
     def get(self):
@@ -141,7 +141,7 @@ if __name__ == "__main__":
             print('There is no directory containing MAF outputs at %s.' % (mafDir))
             print('Just opening using tracking db at %s.' % (trackingDb))
         else:
-            addToDatabase(mafDir, trackingDb, mafComment=args.mafComment)
+            addRunToDatabase(mafDir, trackingDb, mafComment=args.mafComment)
 
     # Open tracking database and start visualization.
     global runlist
