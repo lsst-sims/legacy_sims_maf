@@ -10,7 +10,7 @@ from jinja2 import FileSystemLoader
 import webbrowser
 
 from lsst.sims.maf.viz import MafTracking
-from .addRun import addToDatabase
+from addRun import addToDatabase
 
 
 class RunSelectHandler(web.RequestHandler):

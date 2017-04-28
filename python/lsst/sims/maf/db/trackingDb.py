@@ -19,22 +19,28 @@ class RunRow(Base):
     """
     Define contents and format of run list table.
 
-    (Table to list all available MAF results, along with their opsim run and some comment info.
+    Table to list all available MAF results, along with their opsim run and some comment info.
     """
     __tablename__ = "runs"
     # Define columns in metric list table.
     mafRunId = Column(Integer, primary_key=True)
+    opsimGroup = Column(String)
     opsimRun = Column(String)
     opsimComment = Column(String)
-    mafComment = Column(String)
-    mafDir = Column(String)
+    opsimVersion = Column(String)
     opsimDate = Column(String)
-    mafDate = Column(String)
     dbFile = Column(String)
+    mafComment = Column(String)
+    mafVersion = Column(String)
+    mafDate = Column(String)
+    mafDir = Column(String)
     def __repr__(self):
-        rstr = "<Run(mafRunId='%d', opsimRun='%s', opsimComment='%s', mafComment='%s', " % (self.mafRunId, self.opsimRun,
-                                                                                          self.opsimComment, self.mafComment)
-        rstr += "mafDir='%s', opsimDate='%s', mafDate='%s', dbFile='%s'>" %(self.mafDir, self.opsimDate, self.mafDate, self.dbFile)
+        rstr = "<Run(mafRunId='%d', opsimGroup='%s', opsimRun='%s', opsimComment='%s', " \
+               "opsimVersion='%s', opsimDate='%s', mafComment='%s', " \
+               "mafVersion='%s', mafDate='%s', mafDir='%s', dbFile='%s'>" \
+                % (self.mafRunId, self.opsimGroup, self.opsimRun, self.opsimComment,
+                   self.opsimVersion, self.opsimDate, self.mafComment, self.mafVersion, self.mafDate,
+                   self.mafDir, self.dbFile)
         return rstr
 
 
@@ -82,20 +88,56 @@ class TrackingDb(object):
     def close(self):
         self.session.close()
 
-    def addRun(self, opsimRun, opsimComment, mafComment, mafDir, opsimDate, mafDate, dbFile):
+    def addRun(self, opsimGroup=None, opsimRun=None, opsimComment=None, opsimVersion=None, opsimDate=None,
+               mafComment=None, mafVersion=None, mafDate=None, mafDir=None, dbFile=None):
+        """Add a run to the tracking database.
+        
+        Parameters
+        ----------
+        opsimGroup : str, opt
+            Set a name to group this run with (eg. "Tier 1, 2016").
+        opsimRun : str, opt
+            Set a name for the opsim run.
+        opsimComment : str, opt
+            Set a comment describing the opsim run.
+        opsimVersion : str, opt
+            Set the version of opsim.
+        opsimDate : str, opt
+            Set the date the opsim run was created.
+        mafComment : str, opt
+            Set a comment to describe the MAF analysis.
+        mafVersion : str, opt
+            Set the version of MAF used for analysis.
+        mafDate : str, opt
+            Set the date the MAF analysis was run.
+        mafDir : str, opt
+            The relative path to the MAF directory.
+        dbFile : str, opt
+            The relative path to the Opsim SQLite database file.
+
+        Returns
+        -------
+        int
+            The mafRunID stored in the database.
         """
-        Add or update a run to/in the tracking database.
-        """
+        if opsimGroup is None:
+            opsimGroup = 'NULL'
         if opsimRun is None:
             opsimRun = 'NULL'
         if opsimComment is None:
             opsimComment = 'NULL'
-        if mafComment is None:
-            mafComment = 'NULL'
+        if opsimVersion is None:
+            opsimVersion = 'NULL'
         if opsimDate is None:
             opsimDate = 'NULL'
+        if mafComment is None:
+            mafComment = 'NULL'
+        if mafVersion is None:
+            mafVersion = 'NULL'
         if mafDate is None:
             mafDate = 'NULL'
+        if mafDir is None:
+            mafDir = 'NULL'
         if dbFile is None:
             dbFile = 'NULL'
         # Test if mafDir already exists in database.
@@ -109,13 +151,15 @@ class TrackingDb(object):
             for run in prevrun:
                 self.session.delete(run)
             self.session.commit()
-            runinfo = RunRow(mafRunId=runIds[0], opsimRun=opsimRun, opsimComment=opsimComment,
-                             mafComment=mafComment,
-                             mafDir=mafDir, opsimDate=opsimDate, mafDate=mafDate, dbFile=dbFile)
+            runinfo = RunRow(mafRunId=runIds[0], opsimGroup=opsimGroup, opsimRun=opsimRun,
+                             opsimComment=opsimComment, opsimVersion=opsimVersion, opsimDate=opsimDate,
+                             mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
+                             mafDir=mafDir, dbFile=dbFile)
         else:
-            runinfo = RunRow(opsimRun=opsimRun, opsimComment=opsimComment,
-                             mafComment=mafComment,
-                             mafDir=mafDir, opsimDate=opsimDate, mafDate=mafDate, dbFile=dbFile)
+            runinfo = RunRow(opsimGroup=opsimGroup, opsimRun=opsimRun,
+                             opsimComment=opsimComment, opsimVersion=opsimVersion, opsimDate=opsimDate,
+                             mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
+                             mafDir=mafDir, dbFile=dbFile)
         self.session.add(runinfo)
         self.session.commit()
         return runinfo.mafRunId
