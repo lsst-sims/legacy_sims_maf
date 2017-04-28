@@ -1,4 +1,3 @@
-import os
 import time
 
 __all__ = ['getDateVersion']
@@ -16,7 +15,8 @@ def getDateVersion():
     import lsst.sims.maf
 
     version = lsst.sims.maf.version
-    today_date = time.strftime("%x")
+    #today_date = time.strftime("%x")
+    today_date = '-'.join([time.strftime(x) for x in ["%Y", "%m", "%d"]])
     versionInfo = {'__version__':version.__version__,
                    '__repo_version__':version.__repo_version__,
                    '__fingerprint__':version.__fingerprint__,
