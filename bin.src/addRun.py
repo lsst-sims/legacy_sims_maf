@@ -14,7 +14,7 @@ def addToDatabase(mafDir, trackingDbFile, opsimGroup=None,
     Parameters
     ----------
     mafDir : str
-        Relative path to the directory where the MAF results are located.
+        Path to the directory where the MAF results are located.
     trackingDb : str
         Full filename (+path) to the tracking database storing the MAF run information.
     opsimGroup: str, opt
@@ -28,7 +28,7 @@ def addToDatabase(mafDir, trackingDbFile, opsimGroup=None,
     dbFile : str, opt
         Relative path + name of the opsim database file. If not provided, no location will be recorded.
     """
-    mafDir = os.path.relpath(mafDir)
+    mafDir = os.path.abspath(mafDir)
     if not os.path.isdir(mafDir):
         raise ValueError('There is no directory containing MAF outputs at %s.' % (mafDir))
 
