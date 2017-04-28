@@ -12,7 +12,7 @@ from lsst.daf.persistence import DbAuth
 
 Base = declarative_base()
 
-__all__ = ['TrackingDb']
+__all__ = ['TrackingDb', 'addRunToDatabase']
 
 
 class RunRow(Base):
@@ -89,7 +89,7 @@ class TrackingDb(object):
         self.session.close()
 
     def addRun(self, opsimGroup=None, opsimRun=None, opsimComment=None, opsimVersion=None, opsimDate=None,
-               mafComment=None, mafVersion=None, mafDate=None, mafDir=None, dbFile=None):
+               mafComment=None, mafVersion=None, mafDate=None, mafDir=None, dbFile=None, mafRunId=None):
         """Add a run to the tracking database.
         
         Parameters
@@ -114,7 +114,10 @@ class TrackingDb(object):
             The relative path to the MAF directory.
         dbFile : str, opt
             The relative path to the Opsim SQLite database file.
-
+        mafRunId : int, opt
+            The MafRunID to assign to this record in the database (note this is a primary key!).
+            If this run (ie the mafDir) exists in the database already, this will be ignored.            
+            
         Returns
         -------
         int
@@ -156,10 +159,22 @@ class TrackingDb(object):
                              mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
                              mafDir=mafDir, dbFile=dbFile)
         else:
-            runinfo = RunRow(opsimGroup=opsimGroup, opsimRun=opsimRun,
-                             opsimComment=opsimComment, opsimVersion=opsimVersion, opsimDate=opsimDate,
-                             mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
-                             mafDir=mafDir, dbFile=dbFile)
+            if mafRunId is not None:
+                # Check if mafRunId exists already.
+                existing = self.session.query(RunRow).filter_by(mafRunId=mafRunId).all()
+                if len(existing) > 0:
+                    raise ValueError('MafRunId %d already exists in database, for %s. ' \
+                                     'Record must be deleted first.'
+                                     % (mafRunId, existing[0].mafDir))
+                runinfo = RunRow(mafRunId=mafRunId, opsimGroup=opsimGroup, opsimRun=opsimRun,
+                                 opsimComment=opsimComment, opsimVersion=opsimVersion, opsimDate=opsimDate,
+                                 mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
+                                 mafDir=mafDir, dbFile=dbFile)
+            else:
+                runinfo = RunRow(opsimGroup=opsimGroup, opsimRun=opsimRun,
+                                 opsimComment=opsimComment, opsimVersion=opsimVersion, opsimDate=opsimDate,
+                                 mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
+                                 mafDir=mafDir, dbFile=dbFile)
         self.session.add(runinfo)
         self.session.commit()
         return runinfo.mafRunId
@@ -177,3 +192,95 @@ class TrackingDb(object):
         print(' ', runinfo)
         self.session.delete(runinfo[0])
         self.session.commit()
+
+
+def addRunToDatabase(mafDir, trackingDbFile, opsimGroup=None,
+                    opsimRun=None, opsimComment=None,
+                    mafComment=None, dbFile=None):
+    """Adds information about a MAF analysis run to a MAF tracking database.
+
+    Parameters
+    ----------
+    mafDir : str
+        Path to the directory where the MAF results are located.
+    trackingDb : str or lsst.sims.maf.TrackingDb
+        Full filename (+path) to the tracking database storing the MAF run information or
+        a TrackingDb object.
+    opsimGroup: str, opt
+        Name to use to group this run with other opsim runs. Default None.
+    opsimRun : str, opt
+        Name of the opsim run. If not provided, will attempt to use runName from confSummary.txt.
+    opsimComment : str, opt
+        Comment about the opsim run. If not provided, will attempt to use runComment from confSummary.txt.
+    mafComment : str, opt
+        Comment about the MAF analysis. If not provided, no comment will be recorded.
+    dbFile : str, opt
+        Relative path + name of the opsim database file. If not provided, no location will be recorded.
+    """
+    mafDir = os.path.abspath(mafDir)
+    if not os.path.isdir(mafDir):
+        raise ValueError('There is no directory containing MAF outputs at %s.' % (mafDir))
+
+    trackingDb = db.TrackingDb(database=trackingDbFile)
+    autoOpsimRun = None
+    autoOpsimComment = None
+    opsimVersion = None
+    opsimDate = None
+    mafVersion = None
+    mafDate = None
+    if os.path.isfile(os.path.join(mafDir, 'configSummary.txt')):
+        file = open(os.path.join(mafDir, 'configSummary.txt'))
+        for line in file:
+            tmp = line.split()
+            if tmp[0].startswith('RunName'):
+                autoOpsimRun = ' '.join(tmp[1:])
+            if tmp[0].startswith('RunComment'):
+                autoOpsimComment = ' '.join(tmp[1:])
+            # MAF Date may be in a line with "MafDate" (new configs)
+            #  or at the end of "MAFVersion" (old configs).
+            if tmp[0].startswith('MAFDate'):
+                mafDate = tmp[-1]
+            if tmp[0].startswith('MAFVersion'):
+                mafVersion = tmp[1]
+                if len(tmp) > 2:
+                    mafDate = tmp[-1]
+            if tmp[0].startswith('OpsimDate'):
+                opsimDate = tmp[-2]
+            if tmp[0].startswith('OpsimVersion'):
+                opsimVersion = tmp[1]
+                if len(tmp) > 2:
+                    opsimDate = tmp[-2]
+    # And convert formats to '-' (again, multiple versions of configs).
+    if len(mafDate.split('/')) > 1:
+        t = mafDate.split('/')
+        if len(t[2]) == 2:
+            t[2] = '20' + t[2]
+        mafDate = '-'.join([t[2], t[1], t[0]])
+    if len(opsimDate.split('/')) > 1:
+        t = opsimDate.split('/')
+        if len(t[2]) == 2:
+            t[2] = '20' + t[2]
+        opsimDate = '-'.join([t[2], t[1], t[0]])
+
+    if opsimRun is None:
+        opsimRun = autoOpsimRun
+    if opsimComment is None:
+        opsimComment = autoOpsimComment
+
+    print('Adding to tracking database at %s:' % (trackingDbFile))
+    print(' MafDir = %s' % (mafDir))
+    print(' MafComment = %s' % (mafComment))
+    print(' OpsimGroup = %s' % (opsimGroup))
+    print(' OpsimRun = %s' % (opsimRun))
+    print(' OpsimComment = %s' % (opsimComment))
+    print(' OpsimVersion = %s' % (opsimVersion))
+    print(' OpsimDate = %s' % (opsimDate))
+    print(' MafVersion = %s' % (mafVersion))
+    print(' MafDate = %s' % (mafDate))
+    print(' Opsim dbFile = %s' % (dbFile))
+    runId = trackingDb.addRun(opsimGroup=opsimGroup, opsimRun=opsimRun, opsimComment=opsimComment,
+                              opsimVersion=opsimVersion, opsimDate=opsimDate,
+                              mafComment=mafComment, mafVersion=mafVersion, mafDate=mafDate,
+                              mafDir=mafDir, dbFile=dbFile)
+    print('Used MAF RunID %d' % (runId))
+    trackingDb.close()
