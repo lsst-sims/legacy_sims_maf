@@ -9,6 +9,29 @@ import lsst.sims.maf.utils as utils
 
 __all__ = ['PlotHandler', 'BasePlotter']
 
+
+def none_min(x):
+    """
+    check for min in an array and ignore None values
+    """
+    newx = [val for val in x if val is not None]
+    if len(newx) > 0:
+        return min(newx)
+    else:
+        return 0.
+
+
+def none_max(x):
+    """
+    check for min in an array and ignore None values
+    """
+    newx = [val for val in x if val is not None]
+    if len(newx) > 0:
+        return max(newx)
+    else:
+        return 0.
+
+
 class BasePlotter(object):
     """
     Serve as the base type for MAF plotters and example of API.
@@ -19,6 +42,7 @@ class BasePlotter(object):
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
+
 
 class PlotHandler(object):
 
@@ -521,8 +545,8 @@ class PlotHandler(object):
                     lims['x'] = plt.xlim()
                     lims['y'] = plt.ylim()
                     for ax in ('x', 'y'):
-                        plotlims[ax][0] = min(plotlims[ax][0], lims[ax][0])
-                        plotlims[ax][1] = max(plotlims[ax][1], lims[ax][1])
+                        plotlims[ax][0] = none_min([plotlims[ax][0], lims[ax][0]])
+                        plotlims[ax][1] = none_max([plotlims[ax][1], lims[ax][1]])
                 except AttributeError:
                     # If there isn't an x or y axis, we are going to skip this.
                     pass
