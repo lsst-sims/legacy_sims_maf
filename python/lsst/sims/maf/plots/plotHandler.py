@@ -11,25 +11,17 @@ __all__ = ['PlotHandler', 'BasePlotter']
 
 
 def none_min(x):
-    """
-    check for min in an array and ignore None values
-    """
-    newx = [val for val in x if val is not None]
-    if len(newx) > 0:
-        return min(newx)
+    if None in x:
+        return None
     else:
-        return 0.
+        return np.min(x)
 
 
 def none_max(x):
-    """
-    check for min in an array and ignore None values
-    """
-    newx = [val for val in x if val is not None]
-    if len(newx) > 0:
-        return max(newx)
+    if None in x:
+        return None
     else:
-        return 0.
+        return np.min(x)
 
 
 class BasePlotter(object):
