@@ -46,7 +46,7 @@ class TestSummaryMetrics(unittest.TestCase):
         result1 = metric.run(data, slicePoint)
         deginsph = 129600./np.pi
         np.testing.assert_almost_equal(result1*18000., deginsph)
-        data['blah'][:data.size/2] = 0
+        data['blah'][:data.size//2] = 0
         result2 = metric.run(data, slicePoint)
         np.testing.assert_almost_equal(result2*18000., deginsph/2.)
 
@@ -63,7 +63,7 @@ class TestSummaryMetrics(unittest.TestCase):
         slicePoint = {'sid': 0}
         result1 = metric.run(data, slicePoint)
         np.testing.assert_almost_equal(result1*825, 826)
-        data['blah'][:data.size/2] = 0
+        data['blah'][:data.size//2] = 0
         result2 = metric.run(data, slicePoint)
 
     def testNormalizeMetric(self):
