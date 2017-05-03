@@ -49,7 +49,7 @@ class TestCadenceMetrics(unittest.TestCase):
         Test the SN Cadence Metric.
         """
         names = ['observationStartMJD', 'filter', 'fiveSigmaDepth']
-        types = [float, '|S1', float]
+        types = [float, (np.str_, 1), float]
         data = np.zeros(700, dtype=list(zip(names, types)))
         data['observationStartMJD'] = np.arange(0., 100., 1/7.)  # So, 100 days are well sampled in 2 filters
         data['filter'] = 'r'

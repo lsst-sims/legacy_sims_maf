@@ -16,7 +16,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         Test the parallax metric.
         """
         names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
-        types = [float, float, float, float, float, '|S1']
+        types = [float, float, float, float, float, (np.str_, 1)]
         data = np.zeros(700, dtype=list(zip(names, types)))
         slicePoint = {'sid': 0}
         data['observationStartMJD'] = np.arange(700)+56762
@@ -56,7 +56,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         Test the ProperMotion metric.
         """
         names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
-        types = [float, float, float, float, float, '|S1']
+        types = [float, float, float, float, float, (np.str_, 1)]
         data = np.zeros(700, dtype=list(zip(names, types)))
         slicePoint = [0]
         stacker = stackers.ParallaxFactorStacker()
