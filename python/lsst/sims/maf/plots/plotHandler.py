@@ -9,6 +9,7 @@ import lsst.sims.maf.utils as utils
 
 __all__ = ['PlotHandler', 'BasePlotter']
 
+
 class BasePlotter(object):
     """
     Serve as the base type for MAF plotters and example of API.
@@ -19,6 +20,7 @@ class BasePlotter(object):
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
+
 
 class PlotHandler(object):
 
@@ -521,8 +523,14 @@ class PlotHandler(object):
                     lims['x'] = plt.xlim()
                     lims['y'] = plt.ylim()
                     for ax in ('x', 'y'):
-                        plotlims[ax][0] = min(plotlims[ax][0], lims[ax][0])
-                        plotlims[ax][1] = max(plotlims[ax][1], lims[ax][1])
+                        if plotlims[ax][0] is None:
+                            plotlims[ax][0] = lims[ax][0]
+                        else:
+                            plotlims[ax][0] = np.min(plotlims[ax][0], lims[ax][0])
+                        if plotlims[ax][1] is None:
+                            plotlims[ax][1] = lims[ax][1]
+                        else:
+                            plotlimx[ax][1] = np.max(plotlims[ax][1], lims[ax][1])
                 except AttributeError:
                     # If there isn't an x or y axis, we are going to skip this.
                     pass
@@ -530,6 +538,7 @@ class PlotHandler(object):
                 plt.xlim(plotlims['x'])
                 plt.ylim(plotlims['y'])
             except TypeError:
+                # Not an x/y type plot.
                 pass
         # Add a legend if more than one metricValue is being plotted or if legendloc is specified.
         legendloc = None
