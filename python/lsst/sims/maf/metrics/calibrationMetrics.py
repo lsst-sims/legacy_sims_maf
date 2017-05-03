@@ -163,7 +163,7 @@ class ProperMotionMetric(BaseMetric):
         if (self.normalize) & (good[0].size > 0):
             new_dates = dataslice['observationStartMJD'][good]*0
             nDates = new_dates.size
-            new_dates[nDates/2:] = self.baseline*365.25
+            new_dates[nDates//2:] = self.baseline*365.25
             result = (mafUtils.sigma_slope(new_dates, precis[good])*365.25*1e3)/result
         # Observations that are very close together can still fail
         if np.isnan(result):
