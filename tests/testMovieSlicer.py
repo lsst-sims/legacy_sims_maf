@@ -113,7 +113,7 @@ class TestMovieSlicerSetup(unittest.TestCase):
             self.assertEqual(s['slicePoint']['sid'], i)
             self.assertEqual(s['slicePoint']['binLeft'], b)
             self.assertTrue(s['slicePoint']['binRight'] <= bins[i+1])
-        for i in ([0, len(self.testslicer)/2, len(self.testslicer)-1]):
+        for i in ([0, len(self.testslicer)//2, len(self.testslicer)-1]):
             self.assertEqual(self.testslicer[i]['slicePoint']['sid'], i)
             self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], bins[i])
 
