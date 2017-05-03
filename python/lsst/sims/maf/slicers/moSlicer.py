@@ -6,7 +6,7 @@ import warnings
 from .baseSlicer import BaseSlicer
 from lsst.sims.maf.plots.moPlotters import MetricVsH, MetricVsOrbit
 
-from lsst.sims.movingObjects import Orbits
+from .orbits import Orbits
 
 __all__ = ['MoObjSlicer']
 
