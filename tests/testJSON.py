@@ -3,6 +3,8 @@ import numpy as np
 import numpy.ma as ma
 import unittest
 import json
+import matplotlib
+matplotlib.use("Agg")
 import lsst.sims.maf.slicers as slicers
 import lsst.utils.tests
 
