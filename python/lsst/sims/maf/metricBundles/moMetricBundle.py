@@ -445,25 +445,21 @@ class MoMetricBundleGroup(object):
         if self.verbose:
             print('Calculated and saved all metrics.')
 
-    def plotCurrent(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
-                    closefigs=True):
-        plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
-                                  savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
-        for b in self.currentBundleDict.values():
-            b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
-            for cb in b.childBundles.values():
-                cb.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
-            if closefigs:
-                plt.close('all')
-
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
                 closefigs=True):
         """
         Make a few generically desired plots. This needs more flexibility in the future.
         """
-        for constraint in self.constraints:
-            self._setCurrent(constraint)
-            self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
-                             thumbnail=thumbnail, closefigs=closefigs)
+        plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
+                                  savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+        for b in self.bundleDict.values():
+            try:
+                b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            except ValueError as ve:
+                message = 'Plotting failed for metricBundle %s.' % (b.fileRoot)
+                message += ' Error message: %s' % (ve.message)
+                warnings.warn(message)
+            if closefigs:
+                plt.close('all')
         if self.verbose:
-            print('Plotted all metrics.')
+            print('Plotting all metrics.')
