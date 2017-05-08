@@ -10,11 +10,9 @@ class NEODistStacker(BaseStacker):
     For each observation, find the max distance to a ~144 km NEO,
     also stack on the x,y position of the object.
     """
-
     def __init__(self,
                  stepsize=.001, maxDist=3., minDist=.3, H=22, elongCol='solarElong',
-                 filterCol='filter', sunAzCol='sunAz', azCol='azimuth', **kwargs):
-
+                 filterCol='filter', sunAzCol='sunAz', azCol='azimuth'):
         """
         stepsize:  The stepsize to use when solving (in AU)
         maxDist: How far out to try and measure (in AU)
