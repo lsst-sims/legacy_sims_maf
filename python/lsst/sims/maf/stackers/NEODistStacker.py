@@ -12,7 +12,7 @@ class NEODistStacker(BaseStacker):
 
     def __init__(self, m5Col='fiveSigmaDepth',
                  stepsize=.001, maxDist=3.,minDist=.3, H=22, elongCol='solarElong',
-                 filterCol='filter',sunAzCol='sunAz', azCol='azimuth', **kwargs):
+                 filterCol='filter',sunAzCol='sunAz', azCol='azimuth'):
 
         """
         stepsize:  The stepsize to use when solving (in AU)
