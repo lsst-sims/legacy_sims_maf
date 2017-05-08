@@ -4,6 +4,8 @@ matplotlib.use("Agg")
 
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.stackers as stackers
+import lsst.sims.maf.maps as maps
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.db as db
 import glob
@@ -26,12 +28,17 @@ class TestMetricBundle(unittest.TestCase):
         """
         Check that the metric bundle can generate the expected output
         """
-        slicer = slicers.HealpixSlicer(nside=8)
+        nside = 8
+        slicer = slicers.HealpixSlicer(nside=nside)
         metric = metrics.MeanMetric(col='airmass')
         sql = 'filter="r"'
+        stacker1 = stackers.RandomDitherFieldPerVisitStacker()
+        stacker2 = stackers.GalacticStacker()
+        map1 = maps.GalCoordsMap()
+        map2 = maps.StellarDensityMap()
 
-        metricB = metricBundles.MetricBundle(metric, slicer, sql)
-        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests')
+        metricB = metricBundles.MetricBundle(metric, slicer, sql, stackerList=[stacker1, stacker2])
+        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
 
         database = os.path.join(filepath, 'pontus_1150.db')
         opsdb = db.OpsimDatabase(database=database)
