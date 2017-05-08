@@ -16,11 +16,9 @@ __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
 
 
 class NormAirmassStacker(BaseStacker):
-    """
-    Calculate the normalized airmass for each opsim pointing.
+    """Calculate the normalized airmass for each opsim pointing.
     """
     def __init__(self, airmassCol='airmass', decCol='fieldDec', telescope_lat = -30.2446388):
-
         self.units = ['airmass/(minimum possible airmass)']
         self.colsAdded = ['normairmass']
         self.colsReq = [airmassCol, decCol]
@@ -40,8 +38,7 @@ class NormAirmassStacker(BaseStacker):
 
 
 class ZenithDistStacker(BaseStacker):
-    """
-    Calculate the zenith distance for each pointing.
+    """Calculate the zenith distance for each pointing.
     """
     def __init__(self, altCol = 'altitude'):
         self.altCol = altCol
@@ -57,8 +54,7 @@ class ZenithDistStacker(BaseStacker):
 
 
 class ParallaxFactorStacker(BaseStacker):
-    """
-    Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
+    """Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', dateCol='expMJD'):
         self.raCol = raCol
@@ -69,8 +65,7 @@ class ParallaxFactorStacker(BaseStacker):
         self.colsReq = [raCol, decCol, dateCol]
 
     def _gnomonic_project_toxy(self, RA1, Dec1, RAcen, Deccen):
-        """
-        Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccenp.
+        """Calculate x/y projection of RA1/Dec1 in system with center at RAcen, Deccenp.
         Input radians.
         """
         # also used in Global Telescope Network website
@@ -170,15 +165,14 @@ class DcrStacker(BaseStacker):
 
 
 class HourAngleStacker(BaseStacker):
+    """Add the Hour Angle for each observation.
     """
-    Add the Hour Angle for each observation.
-    """
-    def __init__(self, lstCol='lst', RaCol='fieldRA'):
+    def __init__(self, lstCol='lst', raCol='fieldRA'):
         self.units = ['Hours']
         self.colsAdded = ['HA']
-        self.colsReq = [lstCol, RaCol]
+        self.colsReq = [lstCol, raCol]
         self.lstCol = lstCol
-        self.RaCol = RaCol
+        self.raCol = raCol
 
     def _run(self, simData):
         """HA = LST - RA """
@@ -188,20 +182,19 @@ class HourAngleStacker(BaseStacker):
         if (np.min(simData[self.lstCol]) < 0) | (np.max(simData[self.lstCol]) > 2.*np.pi):
             warnings.warn('LST values are not between 0 and 2 pi')
         # Check that RA is reasonable
-        if (np.min(simData[self.RaCol]) < 0) | (np.max(simData[self.RaCol]) > 2.*np.pi):
+        if (np.min(simData[self.raCol]) < 0) | (np.max(simData[self.raCol]) > 2.*np.pi):
             warnings.warn('RA values are not between 0 and 2 pi')
-        ha = simData[self.lstCol] - simData[self.RaCol]
+        ha = simData[self.lstCol] - simData[self.raCol]
         # Wrap the results so HA between -pi and pi
-        ha = np.where(ha < -np.pi, ha+2.*np.pi, ha)
-        ha = np.where(ha > np.pi, ha-2.*np.pi, ha)
+        ha = np.where(ha < -np.pi, ha + 2. * np.pi, ha)
+        ha = np.where(ha > np.pi, ha - 2. * np.pi, ha)
         # Convert radians to hours
         simData['HA'] = ha*12/np.pi
         return simData
 
 
 class ParallacticAngleStacker(BaseStacker):
-    """
-    Add the parallactic angle (in radians) to each visit.
+    """Add the parallactic angle (in radians) to each visit.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', mjdCol='expMJD',
                  lstCol='lst', site='LSST'):
@@ -216,7 +209,7 @@ class ParallacticAngleStacker(BaseStacker):
         self.units = ['radians']
         self.colsAdded = ['PA', 'HA']
         self.colsReq = [self.raCol, self.decCol, self.mjdCol, self.lstCol]
-        self.haStacker = HourAngleStacker(lstCol=lstCol, RaCol=raCol)
+        self.haStacker = HourAngleStacker(lstCol=lstCol, raCol=raCol)
 
     def _run(self, simData):
         # Equation from:
@@ -231,16 +224,16 @@ class ParallacticAngleStacker(BaseStacker):
 
 
 class FilterColorStacker(BaseStacker):
+    """Translate filters ('u', 'g', 'r' ..) into RGB tuples.
     """
-    Translate filters ('u', 'g', 'r' ..) into RGB tuples.
-    """
-    def __init__(self, filterCol='filter', filterMap={'u': 1, 'g': 2, 'r': 3, 'i': 4, 'z': 5, 'y': 6}):
+    def __init__(self, filterCol='filter'):
         self.filter_rgb_map = {'u': (0, 0, 1),   # dark blue
                                'g': (0, 1, 1),  # cyan
                                'r': (0, 1, 0),    # green
                                'i': (1, 0.5, 0.3),  # orange
                                'z': (1, 0, 0),    # red
                                'y': (1, 0, 1)}  # magenta
+        self.filterMap_filters = [str(f) for f in self.filter_rgb_map]
         self.filterCol = filterCol
         # self.units used for plot labels
         self.units = ['rChan', 'gChan', 'bChan']
@@ -255,12 +248,8 @@ class FilterColorStacker(BaseStacker):
         filtersUsed = [str(f) for f in filtersUsed]
         if issubclass(type(filtersUsed[0]), bytes):
             filtersUsed = [str(f.decode('utf-8')) for f in filtersUsed]
-        filterMap_filters = list(self.filter_rgb_map.keys())
-        filterMap_filters = [str(f) for f in filterMap_filters]
-        print('XXX-filterMap_filters', filterMap_filters)
-        print('XXX-filtersUsed', filtersUsed)
         for f in filtersUsed:
-            if f not in filterMap_filters:
+            if f not in self.filterMap_filters:
                 raise IndexError('Filter %s not in filter_rgb_map' % (f))
             match = np.where(str(simData[self.filterCol]) == str(f))[0]
             simData['rRGB'][match] = self.filter_rgb_map[f][0]
@@ -270,8 +259,8 @@ class FilterColorStacker(BaseStacker):
 
 
 class SeasonStacker(BaseStacker):
-    """
-    Add an integer label to show which season a given visit is in.
+    """Add an integer label to show which season a given visit is in.
+    
     The season only depends on the RA of the object: we compute the MJD
     when each object is on the meridian at midnight, and subtract 6
     months to get the start date of each season.
