@@ -79,7 +79,7 @@ class MetricBundleGroup(object):
         The name of the table in the dbObj to query for data.
     """
     def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
-                 saveEarly=True, dbTable='SummaryAllProps'):
+                 saveEarly=True, dbTable=None):
         """Set up the MetricBundleGroup.
         """
         # Print occasional messages to screen.

@@ -38,4 +38,4 @@ class SimpleDatabase(Database):
             metricdata = table.query_columns_Array(chunk_size = self.chunksize,
                                                    constraint = sqlconstraint,
                                                    colnames = colnames)
-return metricdata
+        return metricdata

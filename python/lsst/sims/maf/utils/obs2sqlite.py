@@ -62,7 +62,7 @@ class mjd2night(object):
         return np.searchsorted(self.setting_sun_mjds, mjd)
 
 
-def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', slewtime_limit=5.):
+def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', slewtime_limit=5., radians=True):
     """
     Utility to take an array of observations and dump it to a sqlite file, filling in useful columns along the way.
 
@@ -103,6 +103,11 @@ def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', 
     # copy over the ones we have
     for col in in_cols:
         observations[col] = observations_in[col]
+
+    # convert output to be in degrees like expected
+    if radians:
+        observations['ra'] = np.degrees(observations['ra'])
+        observations['dec'] = np.degrees(observations['dec'])
 
     if 'exptime' not in in_cols:
         observations['exptime'] = 30.
