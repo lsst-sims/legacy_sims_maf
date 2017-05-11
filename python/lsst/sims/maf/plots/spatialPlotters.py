@@ -346,7 +346,7 @@ class BaseHistogram(BasePlotter):
                 elif (histRange[1] is None) and (histRange[0] is not None):
                     condition = (metricValue >= histRange[0])
                 else:
-                    condition = []
+                    condition = np.arange(metricValue.size)
                 plotValue = metricValue[condition]
             else:
                 plotValue = metricValue
