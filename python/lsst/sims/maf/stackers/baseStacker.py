@@ -64,24 +64,18 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
         # Optional: provide a list of units for the columns defined in colsAdded.
         self.units = [None]
 
+    def __hash__(self):
+        return None
+
     def __eq__(self, otherStacker):
         """
         Evaluate if two stackers are equivalent.
         """
-        # Are we comparing two classes before instantiation?
-        if (self.__class__.__name__ == 'StackerRegistry' and
-            otherStacker.__class__.__name__ == 'StackerRegistry'):
-            if self.__name__ == otherStacker.__name__:
-                return True
-            else:
-                return False
-        # otherwise, we are not and these are instantiated stacker objects.
         # If the class names are different, they are not 'the same'.
         if self.__class__.__name__ != otherStacker.__class__.__name__:
             return False
         # Otherwise, this is the same stacker class, but may be instantiated differently.
-        #  We have to delve a little further, and look at the kwargs for each stacker.
-        # We assume that they are equal, unless they have specific attributes which are different.
+        # We have to delve a little further, and compare the kwargs & attributes for each stacker.
         stateNow = dir(self)
         for key in stateNow:
             if not key.startswith('_') and key != 'registry' and key != 'run' and key != 'next':

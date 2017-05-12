@@ -1,9 +1,9 @@
 from lsst.sims.utils import _galacticFromEquatorial
 from lsst.sims.maf.maps import BaseMap
 
-__all__ = ['galCoordsMap']
+__all__ = ['GalCoordsMap']
 
-class galCoordsMap(BaseMap):
+class GalCoordsMap(BaseMap):
     def __init__(self):
         self.keynames = ['gall', 'galb']
 

@@ -117,28 +117,6 @@ class MetricBundleGroup(object):
         for bk in bundleDict:
             self.hasRun[bk] = False
 
-    def _getDictSubset(self, origdict, subsetkeys):
-        """Private utility to return a dictionary with a subset of an original dictionary,
-        identified by subsetkeys.
-        """
-        newdict = {key: origdict.get(key) for key in subsetkeys}
-        return newdict
-
-    def setCurrent(self, constraint):
-        """Utility to set the currentBundleDict (i.e. a set of metricBundles with the same SQL constraint).
-
-        Parameters
-        ----------
-        constraint : str
-            The subset of MetricBundles with metricBundle.constraint == constraint will be
-            included in a subset identified as the currentBundleDict.
-            These are the active metrics to be calculated and plotted, etc.
-        """
-        self.currentBundleDict = {}
-        for k, b in self.bundleDict.items():
-            if b.constraint == constraint:
-                self.currentBundleDict[k] = b
-
     def _checkCompatible(self, metricBundle1, metricBundle2):
         """Check if two MetricBundles are "compatible".
         Compatible indicates that the sql constraints, the slicers, and the maps are the same, and
@@ -199,6 +177,42 @@ class MetricBundleGroup(object):
                 compatibleLists.append([k, ])
         self.compatibleLists = compatibleLists
 
+    def getData(self, constraint):
+        """Query the data from the database.
+
+        The currently bundleDict should generally be set before calling getData (using setCurrent).
+
+        Parameters
+        ----------
+        constraint : str
+           The constraint for the currently active set of MetricBundles.
+        """
+        if self.verbose:
+            if constraint == '':
+                print("Querying database with no constraint.")
+            else:
+                print("Querying database with constraint %s" % (constraint))
+        # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
+        if self.dbTable != 'Summary':
+            distinctExpMJD = False
+            groupBy = None
+        else:
+            distinctExpMJD = True
+            groupBy = 'expMJD'
+        self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
+                                        tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
+                                        groupBy=groupBy)
+
+        if self.verbose:
+            print("Found %i visits" % (self.simData.size))
+
+        # Query for the fieldData if we need it for the opsimFieldSlicer.
+        needFields = [b.slicer.needsFields for b in self.currentBundleDict.values()]
+        if True in needFields:
+            self.fieldData = utils.getFieldData(self.dbObj, constraint)
+        else:
+            self.fieldData = None
+
     def runAll(self, clearMemory=False, plotNow=False, plotKwargs=None):
         """Runs all the metricBundles in the metricBundleGroup, over all constraints.
 
@@ -220,6 +234,21 @@ class MetricBundleGroup(object):
             self.setCurrent(constraint)
             self.runCurrent(constraint, clearMemory=clearMemory,
                             plotNow=plotNow, plotKwargs=plotKwargs)
+
+    def setCurrent(self, constraint):
+        """Utility to set the currentBundleDict (i.e. a set of metricBundles with the same SQL constraint).
+
+        Parameters
+        ----------
+        constraint : str
+            The subset of MetricBundles with metricBundle.constraint == constraint will be
+            included in a subset identified as the currentBundleDict.
+            These are the active metrics to be calculated and plotted, etc.
+        """
+        self.currentBundleDict = {}
+        for k, b in self.bundleDict.items():
+            if b.constraint == constraint:
+                self.currentBundleDict[k] = b
 
     def runCurrent(self, constraint, simData=None, clearMemory=False, plotNow=False, plotKwargs=None):
         """Run all the metricBundles which match this constraint in the metricBundleGroup.
@@ -299,42 +328,6 @@ class MetricBundleGroup(object):
             if self.verbose:
                 print('Deleted metricValues from memory.')
 
-    def getData(self, constraint):
-        """Query the data from the database.
-
-        The currently bundleDict should generally be set before calling getData (using setCurrent).
-
-        Parameters
-        ----------
-        constraint : str
-           The constraint for the currently active set of MetricBundles.
-        """
-        if self.verbose:
-            if constraint == '':
-                print("Querying database with no constraint.")
-            else:
-                print("Querying database with constraint %s" % (constraint))
-        # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        if self.dbTable != 'Summary':
-            distinctExpMJD = False
-            groupBy = None
-        else:
-            distinctExpMJD = True
-            groupBy = 'expMJD'
-        self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
-                                        tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
-                                        groupBy=groupBy)
-
-        if self.verbose:
-            print("Found %i visits" % (self.simData.size))
-
-        # Query for the fieldData if we need it for the opsimFieldSlicer.
-        needFields = [b.slicer.needsFields for b in self.currentBundleDict.values()]
-        if True in needFields:
-            self.fieldData = utils.getFieldData(self.dbObj, constraint)
-        else:
-            self.fieldData = None
-
     def _runCompatible(self, compatibleList):
         """Runs a set of 'compatible' metricbundles in the MetricBundleGroup dictionary,
         identified by 'compatibleList' keys.
@@ -351,18 +344,25 @@ class MetricBundleGroup(object):
             return
 
         # Grab a dictionary representation of this subset of the dictionary, for easier iteration.
-        bDict = self._getDictSubset(self.currentBundleDict, compatibleList)
+        bDict = {key: self.currentBundleDict.get(key) for key in compatibleList}
 
-        compatMaps = []
-        compatStackers = []
+        # Find the unique stackers and maps. These are already "compatible" (as id'd by compatibleList).
+        uniqStackers = []
+        allStackers = []
+        uniqMaps = []
+        allMaps = []
         for b in bDict.values():
-            compatMaps.extend(b.mapsList)
-            compatStackers.extend(b.stackerList)
-        compatStackers = list(set(compatStackers))
-        compatMaps = list(set(compatMaps))
+            allStackers += b.stackerList
+            allMaps += b.mapsList
+        for s in allStackers:
+            if s not in uniqStackers:
+                uniqStackers.append(s)
+        for m in allMaps:
+            if m not in uniqMaps:
+                uniqMaps.append(m)
 
         # Run stackers.
-        for stacker in compatStackers:
+        for stacker in uniqStackers:
             # Note that stackers will clobber previously existing rows with the same name.
             self.simData = stacker.run(self.simData)
 
@@ -371,9 +371,9 @@ class MetricBundleGroup(object):
         #  the same metadata such as the slicePoints, in case the same actual object wasn't used).
         slicer = list(bDict.values())[0].slicer
         if (slicer.slicerName == 'OpsimFieldSlicer'):
-            slicer.setupSlicer(self.simData, self.fieldData, maps=compatMaps)
+            slicer.setupSlicer(self.simData, self.fieldData, maps=uniqMaps)
         else:
-            slicer.setupSlicer(self.simData, maps=compatMaps)
+            slicer.setupSlicer(self.simData, maps=uniqMaps)
         # Copy the slicer (after setup) back into the individual metricBundles.
         if slicer.slicerName != 'HealpixSlicer' or slicer.slicerName != 'UniSlicer':
             for b in bDict.values():
