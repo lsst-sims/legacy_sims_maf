@@ -8,6 +8,7 @@ from scipy.interpolate import interp1d
 
 __all__ = ['CrowdingMetric', 'CrowdingMagUncertMetric']
 
+
 class CrowdingMetric(BaseMetric):
     """
     Calculate whether the coadded depth in r has exceeded the confusion limit
@@ -26,14 +27,14 @@ class CrowdingMetric(BaseMetric):
         float
         The magnitude of a star which has a photometric error of `crowding_error`
         """
-        cols=[seeingCol,fiveSigCol]
+        cols = [seeingCol, fiveSigCol]
         self.crowding_error = crowding_error
         self.seeingCol = seeingCol
         self.fiveSigCol = fiveSigCol
         self.lumAreaArcsec = 3600.0**2
 
-        super(CrowdingMetric, self).__init__(col=cols, maps=maps, units=units, metricName=metricName, **kwargs)
-
+        super(CrowdingMetric, self).__init__(col=cols, maps=maps, units=units,
+                                             metricName=metricName, **kwargs)
 
     def _compCrowdError(self, magVector, lumFunc, seeing, singleMag=None):
         """
@@ -77,7 +78,7 @@ class CrowdingMetric(BaseMetric):
         magVector = slicePoint['starMapBins'][1:]
         lumFunc = slicePoint['starLumFunc']
 
-        crowdError =self._compCrowdError(magVector, lumFunc, seeing=min(dataSlice[self.seeingCol]) )
+        crowdError = self._compCrowdError(magVector, lumFunc, seeing=min(dataSlice[self.seeingCol]))
 
         # Locate at which point crowding error is greater than user-defined limit
         aboveCrowd = np.where(crowdError >= self.crowding_error)[0]
@@ -85,8 +86,9 @@ class CrowdingMetric(BaseMetric):
         if np.size(aboveCrowd) == 0:
             return max(magVector)
         else:
-            crowdMag = magVector[max(aboveCrowd[0]-1,0)]
+            crowdMag = magVector[max(aboveCrowd[0]-1, 0)]
             return crowdMag
+
 
 class CrowdingMagUncertMetric(CrowdingMetric):
     """
@@ -107,7 +109,7 @@ class CrowdingMagUncertMetric(CrowdingMetric):
             The uncertainty in magnitudes caused by crowding for a star of rmag.
         """
         self.rmag = rmag
-        super(CrowdingMagUncertMetric, self).__init__(seeingCol=seeingCol,fiveSigCol=fiveSigCol,
+        super(CrowdingMagUncertMetric, self).__init__(seeingCol=seeingCol, fiveSigCol=fiveSigCol,
                                                       maps=maps, units=units, metricName=metricName,
                                                       **kwargs)
 

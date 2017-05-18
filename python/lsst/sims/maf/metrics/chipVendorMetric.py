@@ -3,23 +3,24 @@ from .baseMetric import BaseMetric
 
 __all__ = ['ChipVendorMetric']
 
+
 class ChipVendorMetric(BaseMetric):
     """
-    See what happens if we have chips from different vendors
+    Examine coverage with a mixed chip vendor focal plane.
     """
 
     def __init__(self, cols=None, **kwargs):
         if cols is None:
             cols = []
-        super(ChipVendorMetric,self).__init__(col=cols, metricDtype=float,
-                                              units='1,2,3:v1,v2,both', **kwargs)
+        super(ChipVendorMetric, self).__init__(col=cols, metricDtype=float,
+                                               units='1,2,3:v1,v2,both', **kwargs)
 
     def _chipNames2vendorID(self, chipName):
         """
         given a list of chipnames, convert to 1 or 2, representing
         different vendors
         """
-        vendors=[]
+        vendors = []
         for chip in chipName:
             # Parse the chipName string.
             if int(chip[2]) % 2 == 0:

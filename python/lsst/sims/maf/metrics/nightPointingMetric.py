@@ -9,7 +9,7 @@ __all__ = ['NightPointingMetric']
 
 class NightPointingMetric(BaseMetric):
     """
-    Gather relevant information for a night to plot.
+    Gather relevant information for a single night to plot.
     """
 
     def __init__(self, altCol='altitude', azCol='azimuth', filterCol='filter',

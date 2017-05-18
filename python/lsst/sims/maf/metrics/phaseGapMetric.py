@@ -3,6 +3,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['PhaseGapMetric']
 
+
 class PhaseGapMetric(BaseMetric):
     """
     Measure the maximum gap in phase coverage for observations of periodic variables.

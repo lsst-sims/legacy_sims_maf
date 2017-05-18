@@ -4,6 +4,7 @@ from lsst.sims.photUtils import Sed
 
 __all__ = ['ExgalM5']
 
+
 class ExgalM5(BaseMetric):
     """
     Calculate co-added five-sigma limiting depth after dust extinction.
@@ -11,7 +12,7 @@ class ExgalM5(BaseMetric):
     Uses photUtils
     """
     def __init__(self, m5Col='fiveSigmaDepth', units='mag', maps=['DustMap'],
-                 lsstFilter='r', wavelen_min=None , wavelen_max=None , wavelen_step=1., **kwargs ):
+                 lsstFilter='r', wavelen_min=None, wavelen_max=None, wavelen_step=1., **kwargs):
         """
         Args:
             m5Col (str): Column name that ('fiveSigmaDepth')
