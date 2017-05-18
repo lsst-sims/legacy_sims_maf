@@ -1,6 +1,11 @@
 lsst package
 ============
 
+.. automodule:: lsst
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -8,10 +13,3 @@ Subpackages
 
     lsst.sims
 
-Module contents
----------------
-
-.. automodule:: lsst
-    :members:
-    :undoc-members:
-    :show-inheritance:

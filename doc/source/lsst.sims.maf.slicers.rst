@@ -1,91 +1,112 @@
-lsst.sims.maf.slicers package
-=============================
+lsst\.sims\.maf\.slicers package
+================================
+
+.. automodule:: lsst.sims.maf.slicers
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-lsst.sims.maf.slicers.baseSlicer module
----------------------------------------
+lsst\.sims\.maf\.slicers\.baseSlicer module
+-------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.baseSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.baseSpatialSlicer module
-----------------------------------------------
+lsst\.sims\.maf\.slicers\.baseSpatialSlicer module
+--------------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.baseSpatialSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.healpixSDSSSlicer module
-----------------------------------------------
+lsst\.sims\.maf\.slicers\.healpixSDSSSlicer module
+--------------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.healpixSDSSSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.healpixSlicer module
-------------------------------------------
+lsst\.sims\.maf\.slicers\.healpixSlicer module
+----------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.healpixSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.hourglassSlicer module
---------------------------------------------
+lsst\.sims\.maf\.slicers\.hourglassSlicer module
+------------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.hourglassSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.movieSlicer module
-----------------------------------------
+lsst\.sims\.maf\.slicers\.moSlicer module
+-----------------------------------------
+
+.. automodule:: lsst.sims.maf.slicers.moSlicer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+lsst\.sims\.maf\.slicers\.movieSlicer module
+--------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.movieSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.nDSlicer module
--------------------------------------
+lsst\.sims\.maf\.slicers\.nDSlicer module
+-----------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.nDSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.oneDSlicer module
----------------------------------------
+lsst\.sims\.maf\.slicers\.oneDSlicer module
+-------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.oneDSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.opsimFieldSlicer module
----------------------------------------------
+lsst\.sims\.maf\.slicers\.opsimFieldSlicer module
+-------------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.opsimFieldSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.uniSlicer module
---------------------------------------
+lsst\.sims\.maf\.slicers\.orbits module
+---------------------------------------
+
+.. automodule:: lsst.sims.maf.slicers.orbits
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+lsst\.sims\.maf\.slicers\.uniSlicer module
+------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.uniSlicer
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.slicers.userPointsSlicer module
----------------------------------------------
+lsst\.sims\.maf\.slicers\.userPointsSlicer module
+-------------------------------------------------
 
 .. automodule:: lsst.sims.maf.slicers.userPointsSlicer
     :members:
@@ -93,10 +114,3 @@ lsst.sims.maf.slicers.userPointsSlicer module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: lsst.sims.maf.slicers
-    :members:
-    :undoc-members:
-    :show-inheritance:
