@@ -6,6 +6,9 @@ from .baseMetric import BaseMetric
 __all__ = ['SlewContributionMetric', 'AveSlewFracMetric']
 
 class SlewContributionMetric(BaseMetric):
+    """
+    
+    """
     def __init__(self, col='actDelay', activity=None, activeCol='activity',
                  inCritCol='inCriticalPath', **kwargs):
         """

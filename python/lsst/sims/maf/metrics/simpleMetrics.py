@@ -15,7 +15,7 @@ twopi = 2.0*np.pi
 
 class PassMetric(BaseMetric):
     """
-    Just pass the entire array through
+    Just pass the entire array.
     """
     def __init__(self, cols=None, **kwargs):
         if cols is None:
@@ -96,7 +96,7 @@ class CountMetric(BaseMetric):
         return len(dataSlice[self.colname])
 
 class CountRatioMetric(BaseMetric):
-    """Count the length of a simData column slice, then divide by 'normVal'. """
+    """Count the length of a simData column slice, then divide by a normalization value. """
     def __init__(self, col=None, normVal=1., metricName=None, **kwargs):
         self.normVal = float(normVal)
         if metricName is None:
@@ -119,8 +119,8 @@ class CountSubsetMetric(BaseMetric):
         return count
 
 class RobustRmsMetric(BaseMetric):
-    """Use the inter-quartile range of the data to estimate the RMS.  Robust since this calculation
-    does not include outliers in the distribution"""
+    """Use the inter-quartile range of the data to estimate the RMS.
+    Robust since this calculation does not include outliers in the distribution"""
     def run(self, dataSlice, slicePoint=None):
         iqr = np.percentile(dataSlice[self.colname],75)-np.percentile(dataSlice[self.colname],25)
         rms = iqr/1.349 #approximation
@@ -142,6 +142,8 @@ class BinaryMetric(BaseMetric):
             return self.badval
 
 class FracAboveMetric(BaseMetric):
+    """Find the fraction above a certain value.
+    """
     def __init__(self, col=None, cutoff=0.5, scale=1, metricName=None, **kwargs):
         # Col could just get passed in bundle with kwargs, but by explicitly pulling it out
         #  first, we support use cases where class instantiated without explicit 'col=').
@@ -157,6 +159,8 @@ class FracAboveMetric(BaseMetric):
         return fracAbove
 
 class FracBelowMetric(BaseMetric):
+    """Find the fraction below a certain value.
+    """
     def __init__(self, col=None, cutoff=0.5, scale=1, metricName=None, **kwargs):
         if metricName is None:
             metricName = 'FracBelow %.2f %s' %(cutoff, col)
@@ -170,6 +174,7 @@ class FracBelowMetric(BaseMetric):
         return fracBelow
 
 class PercentileMetric(BaseMetric):
+    """Find the value of a column at a given percentile. """
     def __init__(self, col=None, percentile=90, metricName=None, **kwargs):
         if metricName is None:
             metricName = '%.0fth%sile %s' %(percentile, '%', col)
@@ -181,8 +186,7 @@ class PercentileMetric(BaseMetric):
 
 class NoutliersNsigmaMetric(BaseMetric):
     """
-    Calculate the # of visits less than nSigma below the mean (nSigma<0) or
-    more than nSigma above the mean of 'col'.
+    Calculate the number of visits outside the given sigma threshold.
     """
     def __init__(self, col=None, nSigma=3., metricName=None, **kwargs):
         self.nSigma = nSigma

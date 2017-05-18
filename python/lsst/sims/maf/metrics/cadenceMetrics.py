@@ -7,7 +7,8 @@ __all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric',
 
 
 class SupernovaMetric(BaseMetric):
-    """Measure how many time series meet a given time and filter distribution requirement.
+    """
+    Measure how many time series meet a given time and filter distribution requirement.
 
     Parameters
     ----------
@@ -190,7 +191,8 @@ class SupernovaMetric(BaseMetric):
 
 
 class TemplateExistsMetric(BaseMetric):
-    """Calculate the fraction of images with a previous template image of desired quality.
+    """
+    Calculate the fraction of images with a previous template image of desired quality.
     """
     def __init__(self, seeingCol='FWHMgeom', expMJDCol='expMJD',
                  metricName='TemplateExistsMetric', **kwargs):
@@ -228,7 +230,8 @@ class TemplateExistsMetric(BaseMetric):
 
 
 class UniformityMetric(BaseMetric):
-    """Calculate how uniformly the observations are spaced in time.
+    """
+    Calculate how uniformly observations are spaced in time.
     Returns a value between -1 and 1.
     A value of zero means the observations are perfectly uniform.
 
@@ -274,7 +277,8 @@ class UniformityMetric(BaseMetric):
         return D_max
 
 class RapidRevisitMetric(BaseMetric):
-    """Calculate uniformity of time between consecutive visits on short timescales (for RAV1).
+    """
+    Calculate uniformity of time between consecutive visits on short timescales (for RAV1).
 
     Parameters
     ----------
@@ -301,7 +305,8 @@ class RapidRevisitMetric(BaseMetric):
             self.minNvisits = 2
 
     def run(self, dataSlice, slicePoint=None):
-        """Calculate the uniformity of visits within dTmin to dTmax.
+        """
+        Calculate the uniformity of visits within dTmin to dTmax.
 
         Uses a the same 'uniformity' calculation as the UniformityMetric, based on the KS-test.
         A value of 0 is perfectly uniform; a value of 1 is purely non-uniform.
@@ -334,8 +339,10 @@ class RapidRevisitMetric(BaseMetric):
         dmax = np.max(np.abs(uniform_dtimes - dtimes - dtimes[1]))
         return dmax
 
+
 class NRevisitsMetric(BaseMetric):
-    """Calculate the number of (consecutive) visits with time differences less than dT.
+    """
+    Calculate the number of (consecutive) visits with time differences less than dT.
 
     Parameters
     ----------
@@ -379,6 +386,7 @@ class NRevisitsMetric(BaseMetric):
         if self.normed:
             nFastRevisits = nFastRevisits / float(np.size(dataSlice[self.timeCol]))
         return nFastRevisits
+
 
 class IntraNightGapsMetric(BaseMetric):
     """

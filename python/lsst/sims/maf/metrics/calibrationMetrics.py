@@ -10,7 +10,8 @@ __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
 
 
 class ParallaxMetric(BaseMetric):
-    """Calculate the uncertainty in a parallax measures given a serries of observations.
+    """
+    Calculate the uncertainty in a parallax measures given a serries of observations.
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', units = 'mas',
@@ -92,7 +93,8 @@ class ParallaxMetric(BaseMetric):
 
 
 class ProperMotionMetric(BaseMetric):
-    """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
+    """
+    Calculate the uncertainty in the fitted proper motion assuming Gaussian errors.
     """
     def __init__(self, metricName='properMotion',
                  m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
@@ -173,7 +175,9 @@ class ProperMotionMetric(BaseMetric):
 
 class ParallaxCoverageMetric(BaseMetric):
     """
-    Check how well the parallax factor is distributed. Subtracts the weighted mean position of the
+    Check how well the parallax factor is distributed.
+
+    Subtracts the weighted mean position of the
     parallax offsets, then computes the weighted mean radius of the points.
     If points are well distributed, the mean radius will be near 1. If phase coverage is bad,
     radius will be close to zero.
@@ -280,7 +284,8 @@ class ParallaxCoverageMetric(BaseMetric):
 
 
 class ParallaxDcrDegenMetric(BaseMetric):
-    """Use the full parallax and DCR displacement vectors to find if they are degenerate.
+    """
+    Compute parallax and DCR displacement vectors to find if they are degenerate.
 
     Parameters
     ----------
@@ -394,7 +399,9 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 
 
 class RadiusObsMetric(BaseMetric):
-    """find the radius in the focal plane. """
+    """
+    Find the radius a point falls in the focal plane.
+    """
 
     def __init__(self, metricName='radiusObs', raCol='fieldRA', decCol='fieldDec',
                  units='radians', **kwargs):

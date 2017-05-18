@@ -8,8 +8,8 @@ __all__ = ['OptimalM5Metric']
 
 
 class OptimalM5Metric(BaseMetric):
-    """Compare the co-added depth of the survey to one where
-    all the observations were taken on the meridian.
+    """
+    Compare the co-added depth of the survey to one where all the observations were taken on the meridian.
 
     Parameters
     ----------
