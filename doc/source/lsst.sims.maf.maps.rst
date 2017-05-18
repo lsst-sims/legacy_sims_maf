@@ -1,59 +1,64 @@
-lsst.sims.maf.maps package
-==========================
+lsst\.sims\.maf\.maps package
+=============================
+
+.. automodule:: lsst.sims.maf.maps
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-lsst.sims.maf.maps.EBVhp module
--------------------------------
+lsst\.sims\.maf\.maps\.EBVhp module
+-----------------------------------
 
 .. automodule:: lsst.sims.maf.maps.EBVhp
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.maps.baseMap module
----------------------------------
+lsst\.sims\.maf\.maps\.baseMap module
+-------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.baseMap
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.maps.createHealDustMap module
--------------------------------------------
+lsst\.sims\.maf\.maps\.createHealDustMap module
+-----------------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.createHealDustMap
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.maps.createStarDensitymap module
-----------------------------------------------
+lsst\.sims\.maf\.maps\.createStarDensitymap module
+--------------------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.createStarDensitymap
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.maps.dustMap module
----------------------------------
+lsst\.sims\.maf\.maps\.dustMap module
+-------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.dustMap
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.maps.galCoordsMap module
---------------------------------------
+lsst\.sims\.maf\.maps\.galCoordsMap module
+------------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.galCoordsMap
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.maps.stellarDensityMap module
--------------------------------------------
+lsst\.sims\.maf\.maps\.stellarDensityMap module
+-----------------------------------------------
 
 .. automodule:: lsst.sims.maf.maps.stellarDensityMap
     :members:
@@ -61,10 +66,3 @@ lsst.sims.maf.maps.stellarDensityMap module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: lsst.sims.maf.maps
-    :members:
-    :undoc-members:
-    :show-inheritance:
