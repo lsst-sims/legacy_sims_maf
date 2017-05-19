@@ -5,8 +5,7 @@ __all__ = ['ChipVendorMetric']
 
 
 class ChipVendorMetric(BaseMetric):
-    """
-    Examine coverage with a mixed chip vendor focal plane.
+    """Examine coverage with a mixed chip vendor focal plane.
     """
 
     def __init__(self, cols=None, **kwargs):

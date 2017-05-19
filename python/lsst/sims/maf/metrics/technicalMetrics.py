@@ -10,8 +10,7 @@ __all__ = ['NChangesMetric',
 
 
 class NChangesMetric(BaseMetric):
-    """
-    Compute the number of times a column value changes.
+    """Compute the number of times a column value changes.
     (useful for filter changes in particular).
     """
     def __init__(self, col='filter', orderBy='expMJD', **kwargs):
@@ -26,8 +25,7 @@ class NChangesMetric(BaseMetric):
 
 
 class MinTimeBetweenStatesMetric(BaseMetric):
-    """
-    Compute the minimum time between changes of state in a column value.
+    """Compute the minimum time between changes of state in a column value.
     (useful for calculating fastest time between filter changes in particular).
     Returns delta time in minutes!
     """
@@ -59,8 +57,7 @@ class MinTimeBetweenStatesMetric(BaseMetric):
 
 
 class NStateChangesFasterThanMetric(BaseMetric):
-    """
-    Compute the number of changes of state that happen faster than 'cutoff'.
+    """Compute the number of changes of state that happen faster than 'cutoff'.
     (useful for calculating time between filter changes in particular).
     'cutoff' should be in minutes.
     """
@@ -91,8 +88,7 @@ class NStateChangesFasterThanMetric(BaseMetric):
 
 
 class MaxStateChangesWithinMetric(BaseMetric):
-    """
-    Compute the maximum number of changes of state that occur within a given timespan.
+    """Compute the maximum number of changes of state that occur within a given timespan.
     (useful for calculating time between filter changes in particular).
     'timespan' should be in minutes.
     """
@@ -133,8 +129,7 @@ class MaxStateChangesWithinMetric(BaseMetric):
 
 
 class TeffMetric(BaseMetric):
-    """
-    Effective time equivalent for a given set of visits.
+    """Effective exposure time for a given set of visits based on fiducial 5-sigma depth expectations.
     """
     def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', metricName='tEff',
                  fiducialDepth=None, teffBase=30.0, normed=False, **kwargs):
@@ -168,8 +163,7 @@ class TeffMetric(BaseMetric):
 
 
 class OpenShutterFractionMetric(BaseMetric):
-    """
-    Compute the fraction of time the shutter is open compared to the total time spent observing.
+    """Compute the fraction of time the shutter is open compared to the total time the dome is open.
     """
     def __init__(self, metricName='OpenShutterFraction',
                  slewTimeCol='slewTime', expTimeCol='visitExpTime', visitTimeCol='visitTime',
@@ -192,7 +186,8 @@ class OpenShutterFractionMetric(BaseMetric):
 
 
 class CompletenessMetric(BaseMetric):
-    """Compute the completeness and joint completeness """
+    """Compute the completeness and joint completeness of requested observations.
+    """
     def __init__(self, filterColName='filter', metricName='Completeness',
                  u=0, g=0, r=0, i=0, z=0, y=0, **kwargs):
         """
@@ -276,8 +271,7 @@ class CompletenessMetric(BaseMetric):
 
 
 class FilterColorsMetric(BaseMetric):
-    """
-    Calculate an RGBA value that accounts for the filters used up to time t0.
+    """Calculate an RGBA value that accounts for the filters used up to time t0.
     """
     def __init__(self, rRGB='rRGB', gRGB='gRGB', bRGB='bRGB',
                  timeCol='expMJD', t0=None, tStep=40./60./60./24.,

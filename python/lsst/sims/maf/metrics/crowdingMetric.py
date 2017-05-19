@@ -10,9 +10,9 @@ __all__ = ['CrowdingMetric', 'CrowdingMagUncertMetric']
 
 
 class CrowdingMetric(BaseMetric):
+    """Calculate whether the coadded depth in r has exceeded the confusion limit
     """
-    Calculate whether the coadded depth in r has exceeded the confusion limit
-    """
+
     def __init__(self, crowding_error=0.1, seeingCol='finSeeing',
                  fiveSigCol='fiveSigmaDepth', units='mag', maps=['StellarDensityMap'],
                  metricName='Crowding To Precision', **kwargs):
@@ -91,9 +91,9 @@ class CrowdingMetric(BaseMetric):
 
 
 class CrowdingMagUncertMetric(CrowdingMetric):
+    """Given a stellar magnitude, calculate the mean uncertainty on the magnitude from crowding.
     """
-    Given a stellar magnitude, calculate the mean uncertainty on the magnitude from crowding.
-    """
+
     def __init__(self, rmag=20., seeingCol='finSeeing',
                  fiveSigCol='fiveSigmaDepth', maps=['StellarDensityMap'], units='mag',
                  metricName='CrowdingMagUncert', **kwargs):

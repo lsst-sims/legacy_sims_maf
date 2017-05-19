@@ -10,9 +10,9 @@ __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
 
 
 class ParallaxMetric(BaseMetric):
+    """Calculate the uncertainty in a parallax measures given a serries of observations.
     """
-    Calculate the uncertainty in a parallax measures given a serries of observations.
-    """
+
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', units = 'mas',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
@@ -93,9 +93,9 @@ class ParallaxMetric(BaseMetric):
 
 
 class ProperMotionMetric(BaseMetric):
+    """ Calculate the uncertainty in the fitted proper motion assuming Gaussian errors.
     """
-    Calculate the uncertainty in the fitted proper motion assuming Gaussian errors.
-    """
+
     def __init__(self, metricName='properMotion',
                  m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
@@ -174,8 +174,7 @@ class ProperMotionMetric(BaseMetric):
 
 
 class ParallaxCoverageMetric(BaseMetric):
-    """
-    Check how well the parallax factor is distributed.
+    """Check how well the parallax factor is distributed.
 
     Subtracts the weighted mean position of the
     parallax offsets, then computes the weighted mean radius of the points.
@@ -191,6 +190,7 @@ class ParallaxCoverageMetric(BaseMetric):
 
     Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
     """
+
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', filterCol='filter', seeingCol='FWHMgeom',
                  rmag=20., SedTemplate='flat', badval=-666,
@@ -284,8 +284,7 @@ class ParallaxCoverageMetric(BaseMetric):
 
 
 class ParallaxDcrDegenMetric(BaseMetric):
-    """
-    Compute parallax and DCR displacement vectors to find if they are degenerate.
+    """Compute parallax and DCR displacement vectors to find if they are degenerate.
 
     Parameters
     ----------
@@ -316,6 +315,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
         are bad. Experience with fitting Monte Carlo simulations suggests the astrometric fits start
         becoming poor around a correlation of 0.7.
     """
+
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='FWHMgeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
                  filterCol='filter', tol = 0.05, **kwargs):
@@ -399,8 +399,7 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 
 
 class RadiusObsMetric(BaseMetric):
-    """
-    Find the radius a point falls in the focal plane.
+    """Find the radius a point falls in the focal plane.
     """
 
     def __init__(self, metricName='radiusObs', raCol='fieldRA', decCol='fieldDec',

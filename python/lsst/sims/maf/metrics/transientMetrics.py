@@ -4,9 +4,10 @@ from .baseMetric import BaseMetric
 
 __all__ = ['TransientMetric']
 
+
 class TransientMetric(BaseMetric):
-    """
-    Calculate what fraction of the transients would be detected. Best paired with a spatial slicer.
+    """Calculate what fraction of the transients would be detected.
+    Best paired with a spatial slicer.
     We are assuming simple light curves with no color evolution.
 
     Parameters

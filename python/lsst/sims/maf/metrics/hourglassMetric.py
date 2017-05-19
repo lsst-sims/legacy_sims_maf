@@ -11,9 +11,9 @@ def nearestVal(A, val):
 
 
 class HourglassMetric(BaseMetric):
+    """Plot the filters used as a function of time.
+    Must be used with the Hourglass Slicer.
     """
-    Plot the filters used as a function of time.
-    Must be used with the Hourglass Slicer."""
     def __init__(self, telescope='LSST', **kwargs):
 
         metricName = 'hourglass'

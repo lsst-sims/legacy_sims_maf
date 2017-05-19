@@ -9,8 +9,10 @@ from .baseMetric import BaseMetric
 
 __all__ = ['VisitGroupsMetric']
 
+
 class VisitGroupsMetric(BaseMetric):
-    """Count the number of visits per night within deltaTmin and deltaTmax."""
+    """Count the number of visits per night within deltaTmin and deltaTmax.
+    """
     def __init__(self, timesCol='expMJD', nightsCol='night', metricName='VisitGroups',
                  deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, minNVisits=2, window=30, minNNights=3,
                  **kwargs):

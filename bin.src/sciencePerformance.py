@@ -147,14 +147,18 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         m1 = metrics.CountMetric(col='expMJD', metricName='fO')
         plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkVals['Area'],
                     'Nvisit': benchmarkVals['nvisitsTotal'], 'xMin': 0, 'xMax': 1500}
-        summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
-                                         Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fOArea(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
-                                         Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fONv(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
-                                       Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
-                                       Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal'])]
+        summaryMetrics = [metrics.fOAreaMetric(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
+                                               Asky=benchmarkVals['Area'],
+                                               Nvisit=benchmarkVals['nvisitsTotal']),
+                          metrics.fOAreaMetric(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
+                                               Asky=benchmarkVals['Area'],
+                                               Nvisit=benchmarkVals['nvisitsTotal']),
+                          metrics.fONvMetric(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
+                                             Asky=benchmarkVals['Area'],
+                                             Nvisit=benchmarkVals['nvisitsTotal']),
+                          metrics.fONvMetric(nside=nside, norm=True, metricName='fONv: Area/benchmark',
+                                             Asky=benchmarkVals['Area'],
+                                             Nvisit=benchmarkVals['nvisitsTotal'])]
         caption = 'The FO metric evaluates the overall efficiency of observing. '
         caption += ('fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. '
                     % (benchmarkVals['Area'], benchmarkVals['nvisitsTotal']))

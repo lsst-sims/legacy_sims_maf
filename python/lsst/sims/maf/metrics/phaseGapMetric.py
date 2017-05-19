@@ -5,9 +5,9 @@ __all__ = ['PhaseGapMetric']
 
 
 class PhaseGapMetric(BaseMetric):
+    """Measure the maximum gap in phase coverage for observations of periodic variables.
     """
-    Measure the maximum gap in phase coverage for observations of periodic variables.
-    """
+
     def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3,
                  metricName='Phase Gap', **kwargs):
         """
@@ -56,26 +56,23 @@ class PhaseGapMetric(BaseMetric):
         return {'periods':periods, 'maxGaps':maxGap}
 
     def reduceMeanGap(self, metricVal):
+        """At each slicepoint, return the mean gap value.
         """
-        At each slicepoint, return the mean gap value.
-        """
+
         return np.mean(metricVal['maxGaps'])
 
     def reduceMedianGap(self, metricVal):
-        """
-        At each slicepoint, return the median gap value.
+        """At each slicepoint, return the median gap value.
         """
         return np.median(metricVal['maxGaps'])
 
     def reduceWorstPeriod(self, metricVal):
-        """
-        At each slicepoint, return the period with the largest phase gap.
+        """At each slicepoint, return the period with the largest phase gap.
         """
         worstP = metricVal['periods'][np.where(metricVal['maxGaps'] == metricVal['maxGaps'].max())]
         return worstP
 
     def reduceLargestGap(self, metricVal):
-        """
-        At each slicepoint, return the largest phase gap value.
+        """At each slicepoint, return the largest phase gap value.
         """
         return np.max(metricVal['maxGaps'])
