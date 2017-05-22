@@ -82,7 +82,7 @@ class HourglassMetric(BaseMetric):
         good = np.ravel(list(zip(left, right)))
 
         names = ['mjd', 'midnight', 'filter']
-        types = ['float', 'float', '|S1']
+        types = ['float', 'float', (np.str_ ,1)]
         perfilter = np.zeros((good.size), dtype=list(zip(names, types)))
         perfilter['mjd'] = dataSlice['observationStartMJD'][good]
         perfilter['filter'] = dataSlice['filter'][good]
