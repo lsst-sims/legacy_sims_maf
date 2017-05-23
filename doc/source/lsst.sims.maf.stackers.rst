@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.stackers package
 =================================
 
-.. automodule:: lsst.sims.maf.stackers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -82,3 +77,10 @@ lsst\.sims\.maf\.stackers\.sdssStackers module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.stackers
+    :members:
+    :undoc-members:
+    :show-inheritance:

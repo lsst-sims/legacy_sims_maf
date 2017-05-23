@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.metrics package
 ================================
 
-.. automodule:: lsst.sims.maf.metrics
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -202,3 +197,10 @@ lsst\.sims\.maf\.metrics\.visitGroupsMetric module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.metrics
+    :members:
+    :undoc-members:
+    :show-inheritance:
