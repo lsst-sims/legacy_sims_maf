@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+__all__ = ['MetricRegistry', 'BaseMetric']
+
 from builtins import zip
 from builtins import map
 from builtins import object
@@ -15,12 +18,9 @@ import inspect
 from lsst.sims.maf.stackers.getColInfo import ColInfo
 from future.utils import with_metaclass
 
-__all__ = ['MetricRegistry', 'BaseMetric']
-
 
 class MetricRegistry(type):
-    """
-    Meta class for metrics, to build a registry of metric classes.
+    """Meta class for metrics, to build a registry of metric classes.
     """
 
     def __init__(cls, name, bases, dict):
@@ -123,7 +123,6 @@ class BaseMetric(with_metaclass(MetricRegistry, object)):
     badval : float
         The value indicating "bad" values calculated by the metric.
     """
-    
     colRegistry = ColRegistry()
     colInfo = ColInfo()
 

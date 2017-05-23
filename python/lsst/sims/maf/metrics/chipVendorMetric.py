@@ -1,7 +1,7 @@
+__all__ = ['ChipVendorMetric']
+
 import numpy as np
 from .baseMetric import BaseMetric
-
-__all__ = ['ChipVendorMetric']
 
 
 class ChipVendorMetric(BaseMetric):

@@ -11,7 +11,8 @@ __all__ = ['NChangesMetric',
 
 class NChangesMetric(BaseMetric):
     """Compute the number of times a column value changes.
-    (useful for filter changes in particular).
+
+    Useful for filter changes in particular.
     """
     def __init__(self, col='filter', orderBy='expMJD', **kwargs):
         self.col = col
@@ -26,6 +27,7 @@ class NChangesMetric(BaseMetric):
 
 class MinTimeBetweenStatesMetric(BaseMetric):
     """Compute the minimum time between changes of state in a column value.
+
     (useful for calculating fastest time between filter changes in particular).
     Returns delta time in minutes!
     """
@@ -58,6 +60,7 @@ class MinTimeBetweenStatesMetric(BaseMetric):
 
 class NStateChangesFasterThanMetric(BaseMetric):
     """Compute the number of changes of state that happen faster than 'cutoff'.
+
     (useful for calculating time between filter changes in particular).
     'cutoff' should be in minutes.
     """
@@ -89,6 +92,7 @@ class NStateChangesFasterThanMetric(BaseMetric):
 
 class MaxStateChangesWithinMetric(BaseMetric):
     """Compute the maximum number of changes of state that occur within a given timespan.
+
     (useful for calculating time between filter changes in particular).
     'timespan' should be in minutes.
     """
@@ -147,7 +151,8 @@ class TeffMetric(BaseMetric):
         self.normed = normed
         super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName,
                                          units='seconds', **kwargs)
-        self.comment = 'Effective time of a series of observations, comparing the achieved m5 depth to a fiducial m5 value.'
+        self.comment = 'Effective time of a series of observations, ' \
+                       'comparing the achieved m5 depth to a fiducial m5 value.'
 
     def run(self, dataSlice, slicePoint=None):
         filters = np.unique(dataSlice[self.filterCol])
@@ -175,9 +180,8 @@ class OpenShutterFractionMetric(BaseMetric):
                                                         self.slewTimeCol],
                                                         metricName=metricName, units='OpenShutter/TotalTime',
                                                         **kwargs)
-        self.comment = 'Open shutter time (%s total) divided by total visit time (%s) + slewtime (%s).' %(self.expTimeCol,
-                                                                                                          self.visitTimeCol,
-                                                                                                          self.slewTimeCol)
+        self.comment = 'Open shutter time (%s total) divided by total visit time (%s) + slewtime (%s).' % \
+                       (self.expTimeCol, self.visitTimeCol, self.slewTimeCol)
 
     def run(self, dataSlice, slicePoint=None):
         result = (np.sum(dataSlice[self.expTimeCol]) /

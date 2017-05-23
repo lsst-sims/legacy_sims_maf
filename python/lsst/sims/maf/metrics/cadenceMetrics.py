@@ -1,9 +1,9 @@
-import numpy as np
-from .baseMetric import BaseMetric
-
 __all__ = ['SupernovaMetric', 'TemplateExistsMetric', 'UniformityMetric',
            'RapidRevisitMetric', 'NRevisitsMetric', 'IntraNightGapsMetric',
            'InterNightGapsMetric', 'AveGapMetric']
+
+import numpy as np
+from .baseMetric import BaseMetric
 
 
 class SupernovaMetric(BaseMetric):
@@ -53,7 +53,6 @@ class SupernovaMetric(BaseMetric):
     In the science book, the metric demands Nfilt observations above a SNR cut.
     Here, we demand Nfilt observations near the peak with a given singleDepthLimt.
     """
-
     def __init__(self, metricName='SupernovaMetric',
                  mjdCol='expMJD', filterCol='filter', m5Col='fiveSigmaDepth',
                  units='', redshift=0.,
@@ -142,7 +141,6 @@ class SupernovaMetric(BaseMetric):
                 visits = dataSlice[left[i]:right[i]]
                 t = time[left[i]:right[i]]
                 t = t - finetime[index] + self.Tmin
-
                 if np.size(np.where(t < self.Tless)[0]) > self.Nless:
                     if np.size(np.where(t > self.Tmore)[0]) > self.Nmore:
                         if np.size(t) > self.Nbetween:
@@ -152,9 +150,8 @@ class SupernovaMetric(BaseMetric):
                                 nearPeak = np.where((t > self.Tless) & (t < self.Tmore))
                                 ufilters = np.unique(visits[self.filterCol][nearPeak])
                                 for f in ufilters:
-                                    if np.max(visits[self.m5Col][nearPeak]
-                                              [np.where(visits[self.filterCol][nearPeak] == f)]) \
-                                              > self.singleDepthLimit:
+                                    match = np.where(visits[self.filterCol][nearPeak] == f)
+                                    if np.max(visits[self.m5Col][nearPeak][match]) > self.singleDepthLimit:
                                         filtersBrightEnough += 1
                                 if filtersBrightEnough >= self.Nfilt:
                                     if np.size(nearPeak) >= 2:
@@ -172,18 +169,21 @@ class SupernovaMetric(BaseMetric):
         return {'result': result, 'maxGap': maxGap, 'Nobs': Nobs}
 
     def reduceMedianMaxGap(self, data):
-        """The median maximum gap near the peak of the light curve """
+        """The median maximum gap near the peak of the light curve.
+        """
         result = np.median(data['maxGap'])
         if np.isnan(result):
             result = self.badval
         return result
 
     def reduceNsequences(self, data):
-        """The number of sequences that met the requirements """
+        """The number of sequences that met the requirements.
+        """
         return data['result']
 
     def reduceMedianNobs(self, data):
-        """Median number of observations covering the entire light curve """
+        """Median number of observations covering the entire light curve.
+        """
         result = np.median(data['Nobs'])
         if np.isnan(result):
             result = self.badval
@@ -193,7 +193,6 @@ class SupernovaMetric(BaseMetric):
 class TemplateExistsMetric(BaseMetric):
     """ Calculate the fraction of images with a previous template image of desired quality.
     """
-
     def __init__(self, seeingCol='FWHMgeom', expMJDCol='expMJD',
                  metricName='TemplateExistsMetric', **kwargs):
         cols = [seeingCol, expMJDCol]
@@ -231,6 +230,7 @@ class TemplateExistsMetric(BaseMetric):
 
 class UniformityMetric(BaseMetric):
     """Calculate how uniformly observations are spaced in time.
+
     Returns a value between -1 and 1.
     A value of zero means the observations are perfectly uniform.
 
@@ -306,8 +306,7 @@ class RapidRevisitMetric(BaseMetric):
             self.minNvisits = 2
 
     def run(self, dataSlice, slicePoint=None):
-        """
-        Calculate the uniformity of visits within dTmin to dTmax.
+        """Calculate the uniformity of visits within dTmin to dTmax.
 
         Uses a the same 'uniformity' calculation as the UniformityMetric, based on the KS-test.
         A value of 0 is perfectly uniform; a value of 1 is purely non-uniform.
@@ -456,6 +455,7 @@ class InterNightGapsMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         """Calculate the (reduceFunc) of the gap between consecutive nights of observations.
+
         Parameters
         ----------
         dataSlice : numpy.array
@@ -490,7 +490,6 @@ class AveGapMetric(BaseMetric):
        Function that can operate on array-like structures. Typically numpy function.
        Default np.median.
     """
-    
     def __init__(self, timeCol='expMJD', nightCol='night', reduceFunc=np.median,
                  metricName='AveGap', **kwargs):
         units = 'hours'

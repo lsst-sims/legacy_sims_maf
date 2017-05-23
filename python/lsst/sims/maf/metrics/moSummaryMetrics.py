@@ -236,7 +236,7 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         completeness = completenessH.swapaxes(0, 1)
         if self.cumulative:
             for i, t in enumerate(self.times):
-                completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
+                completeness[i] = integrateOverH(completeness[i], Hvals)
         summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
         summaryVal['value'] = completeness
         for i, time in enumerate(self.times):

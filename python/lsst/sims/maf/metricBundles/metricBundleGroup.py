@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+__all__ = ['makeBundlesDictFromList', 'MetricBundleGroup']
+
 from builtins import object
 import os
 import numpy as np
@@ -12,8 +15,6 @@ from lsst.sims.maf.plots import PlotHandler
 import lsst.sims.maf.maps as maps
 from .metricBundle import MetricBundle, createEmptyMetricBundle
 import warnings
-
-__all__ = ['makeBundlesDictFromList', 'MetricBundleGroup']
 
 
 def makeBundlesDictFromList(bundleList):
