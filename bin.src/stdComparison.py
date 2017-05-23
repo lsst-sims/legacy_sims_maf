@@ -135,7 +135,7 @@ if __name__ == '__main__':
             pandaprint(summary)
 
     # fO NV and Area
-    metricName = 'fO'
+    metricName = 'fONvMetric'
     metricMetadata = 'All Visits (non-dithered)'
     slicerName = None
     summaryName = 'fONv: Area (sqdeg)'
@@ -213,7 +213,7 @@ if __name__ == '__main__':
         pandaprint(summary)
 
     # fO Nv and A
-    metricName = 'fO'
+    metricName = 'fONvMetric'
     metricMetadata = 'WFD only (non-dithered)'
     slicerName = None
     summaryName = 'fONv: Area (sqdeg)'

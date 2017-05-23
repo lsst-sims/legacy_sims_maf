@@ -57,6 +57,8 @@ class AccumulateMetric(VectorMetric):
 
 
 class AccumulateCountMetric(AccumulateMetric):
+    """Calculate the number of visits over time.
+    """
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=self.binCol)
         toCount = np.ones(dataSlice.size, dtype=int)
