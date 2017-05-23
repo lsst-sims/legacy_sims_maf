@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.db package
 ===========================
 
-.. automodule:: lsst.sims.maf.db
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -58,3 +53,10 @@ lsst\.sims\.maf\.db\.trackingDb module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.db
+    :members:
+    :undoc-members:
+    :show-inheritance:

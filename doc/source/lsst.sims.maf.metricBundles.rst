@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.metricBundles package
 ======================================
 
-.. automodule:: lsst.sims.maf.metricBundles
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -34,3 +29,10 @@ lsst\.sims\.maf\.metricBundles\.moMetricBundle module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.metricBundles
+    :members:
+    :undoc-members:
+    :show-inheritance:

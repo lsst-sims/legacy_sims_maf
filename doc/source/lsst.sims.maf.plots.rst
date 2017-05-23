@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.plots package
 ==============================
 
-.. automodule:: lsst.sims.maf.plots
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -106,3 +101,10 @@ lsst\.sims\.maf\.plots\.twoDPlotters module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.plots
+    :members:
+    :undoc-members:
+    :show-inheritance:

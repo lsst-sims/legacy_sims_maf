@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.maps package
 =============================
 
-.. automodule:: lsst.sims.maf.maps
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -66,3 +61,10 @@ lsst\.sims\.maf\.maps\.stellarDensityMap module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.maps
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.slicers package
 ================================
 
-.. automodule:: lsst.sims.maf.slicers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -114,3 +109,10 @@ lsst\.sims\.maf\.slicers\.userPointsSlicer module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.slicers
+    :members:
+    :undoc-members:
+    :show-inheritance:

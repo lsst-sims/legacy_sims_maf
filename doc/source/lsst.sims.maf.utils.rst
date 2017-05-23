@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.utils package
 ==============================
 
-.. automodule:: lsst.sims.maf.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -50,3 +45,10 @@ lsst\.sims\.maf\.utils\.outputUtils module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:

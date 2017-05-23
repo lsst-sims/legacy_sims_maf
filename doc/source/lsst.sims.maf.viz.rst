@@ -1,11 +1,6 @@
 lsst\.sims\.maf\.viz package
 ============================
 
-.. automodule:: lsst.sims.maf.viz
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Submodules
 ----------
 
@@ -34,3 +29,10 @@ lsst\.sims\.maf\.viz\.mafTracking module
     :show-inheritance:
 
 
+Module contents
+---------------
+
+.. automodule:: lsst.sims.maf.viz
+    :members:
+    :undoc-members:
+    :show-inheritance:
