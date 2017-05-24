@@ -8,7 +8,8 @@ __all__ = ['SimpleDatabase']
 
 
 class SimpleDatabase(Database):
-    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, *args, **kwargs):
+    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, 
+                 defaultTable='observations', *args, **kwargs):
         if 'defaultdbTables' in kwargs:
             defaultdbTables = kwargs.get('defaultdbTables')
             # Remove this kwarg since we're sending it on explicitly
@@ -20,14 +21,15 @@ class SimpleDatabase(Database):
                                              dbTables=dbTables,
                                              defaultdbTables=defaultdbTables,
                                              *args, **kwargs)
+        self.defaultTable = defaultTable
 
     def fetchMetricData(self, colnames, sqlconstraint, groupBy=None,
-                        tableName='observations', **kwargs):
+                        tableName=None, **kwargs):
         """
         Fetch 'colnames' from 'tableName'.
         """
         if tableName is None:
-            tableName = 'observations'
+            tableName = self.defaultTable
 
         table = self.tables[tableName]
         if groupBy is not None:
