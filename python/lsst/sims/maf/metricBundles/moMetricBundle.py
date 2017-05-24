@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+__all__ = ['MoMetricBundle', 'MoMetricBundleGroup', 'createEmptyMoMetricBundle', 'makeCompletenessBundle']
+
 from builtins import object
 import os
 import numpy as np
@@ -14,8 +17,6 @@ from lsst.sims.maf.plots import MetricVsH
 
 from .metricBundle import MetricBundle
 
-__all__ = ['MoMetricBundle', 'MoMetricBundleGroup', 'createEmptyMoMetricBundle', 'makeCompletenessBundle']
-
 
 def createEmptyMoMetricBundle():
     """Create an empty metric bundle.
@@ -29,7 +30,8 @@ def createEmptyMoMetricBundle():
 
 
 def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=None, resultsDb=None):
-    """
+    """Make a (mock) metric bundle from completeness summary data.
+    
     Make a mock metric bundle from a bundle which had MoCompleteness or MoCumulativeCompleteness summary
     metrics run. This lets us use the plotHandler + plots.MetricVsH to generate plots.
 
@@ -91,8 +93,7 @@ class MoMetricBundle(MetricBundle):
                  displayDict=None,
                  childMetrics=None,
                  summaryMetrics=None):
-        """
-        Instantiate moving object metric bundle, save metric/slicer/constraint, etc.
+        """Instantiate moving object metric bundle, save metric/slicer/constraint, etc.
         """
         self.metric = metric
         self.slicer = slicer
@@ -186,10 +187,10 @@ class MoMetricBundle(MetricBundle):
         raise NotImplementedError
 
     def setChildBundles(self, childMetrics=None):
-        """
-        Identify any child metrics to be run on this (parent) bundle.
-        and create the new metric bundles that will hold the child values, linking to this bundle.
-        Remove the summaryMetrics from self afterwards.
+        """Set up to run child metrics on this (parent) bundle.
+        
+        Identifies and creates the new metric bundles that will hold the child values, 
+        linking to this bundle. Remove the summaryMetrics from self afterwards.
         """
         self.childBundles = {}
         if childMetrics is None:
@@ -207,8 +208,7 @@ class MoMetricBundle(MetricBundle):
             self.summaryMetrics = []
 
     def computeSummaryStats(self, resultsDb=None):
-        """
-        Compute summary statistics on metricValues, using summaryMetrics, for self and child bundles.
+        """Compute summary statistics on metricValues, using summaryMetrics, for self and child bundles.
         """
         if self.summaryValues is None:
             self.summaryValues = {}
@@ -228,7 +228,8 @@ class MoMetricBundle(MetricBundle):
         raise NotImplementedError
 
     def read(self, filename):
-        "Read metric data back into a metricBundle, as best as possible."
+        """Read metric data back into a metricBundle, as best as possible.
+        """
         if not os.path.isfile(filename):
             raise IOError('%s not found' % filename)
         self._resetMetricBundle()
@@ -266,6 +267,7 @@ class MoMetricBundleGroup(object):
 
     def _checkCompatible(self, metricBundle1, metricBundle2):
         """Check if two MetricBundles are "compatible".
+        
         Compatible indicates that the constraints, the slicers, and the maps are the same, and
         that the stackers do not interfere with each other
         (i.e. are not trying to set the same column in different ways).
@@ -337,7 +339,9 @@ class MoMetricBundleGroup(object):
 
     def runConstraint(self, constraint):
         """Calculate the metric values for all the metricBundles which match this constraint in the
-        metricBundleGroup. Also calculates child metrics and summary statistics, and writes all to disk.
+        metricBundleGroup. 
+        
+        Also calculates child metrics and summary statistics, and writes all to disk.
         (work is actually done in _runCompatible, so that only completely compatible sets of metricBundles
         run at the same time).
 
@@ -437,8 +441,7 @@ class MoMetricBundleGroup(object):
             b.write(outDir=self.outDir, resultsDb=self.resultsDb)
 
     def runAll(self):
-        """
-        Run all constraints and metrics for these moMetricBundles.
+        """Run all constraints and metrics for these moMetricBundles.
         """
         for constraint in self.constraints:
             self.runConstraint(constraint)
@@ -458,8 +461,7 @@ class MoMetricBundleGroup(object):
 
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
                 closefigs=True):
-        """
-        Make a few generically desired plots. This needs more flexibility in the future.
+        """Make a few generically desired plots. This needs more flexibility in the future.
         """
         for constraint in self.constraints:
             self._setCurrent(constraint)

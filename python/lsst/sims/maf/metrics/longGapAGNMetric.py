@@ -5,7 +5,7 @@ __all__ = ['LongGapAGNMetric']
 
 
 class LongGapAGNMetric(BaseMetric):
-    """max delta-t and average of the top-10 longest gaps.
+    """Compute the max delta-t and average of the top-10 longest observation gaps.
     """
 
     def __init__(self, metricName='longGapAGNMetric',

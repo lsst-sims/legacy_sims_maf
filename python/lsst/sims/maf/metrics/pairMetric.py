@@ -1,12 +1,11 @@
+__all__ = ['PairMetric']
+
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['PairMetric']
-
 
 class PairMetric(BaseMetric):
-    """
-    Count the number of pairs that could be used for Solar System object detection
+    """Count the number of pairs that could be used for Solar System object detection.
     """
     def __init__(self, mjdCol='expMJD', metricName='Pairs', match_min=20., match_max=40.,
                  binsize=5., **kwargs):
@@ -21,15 +20,15 @@ class PairMetric(BaseMetric):
             Binsize to use (minutes)
         """
         self.mjdCol = mjdCol
-        self.binsize = binsize/60./24.
-        self.match_min = match_min/60./24.
-        self.match_max = match_max/60./24.
+        self.binsize = binsize / 60. / 24.
+        self.match_min = match_min / 60. / 24.
+        self.match_max = match_max / 60. / 24.
         super(PairMetric, self).__init__(col=mjdCol, metricName=metricName,
                                          units='N Pairs', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         bins = np.arange(dataSlice[self.mjdCol].min(),
-                         dataSlice[self.mjdCol].max()+self.binsize, self.binsize)
+                         dataSlice[self.mjdCol].max() + self.binsize, self.binsize)
 
         hist, bin_edges = np.histogram(dataSlice[self.mjdCol], bins=bins)
         nbin_min = np.round(self.match_min / self.binsize)

@@ -4,17 +4,17 @@ from .baseMetric import BaseMetric
 
 # A collection of metrics which are primarily intended to be used as summary statistics.
 
-__all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
+__all__ = ['fOAreaMetric', 'fONvMetric', 'TableFractionMetric', 'IdentityMetric',
            'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric']
 
-class fOArea(BaseMetric):
-    """
-    Metric to calculate the FO Area.
+
+class fOAreaMetric(BaseMetric):
+    """ Metric to calculate the FO Area.
     """
     def __init__(self, col='metricdata', Asky=18000., Nvisit=825,
                  metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(fOArea, self).__init__(col=col, metricName=metricName, **kwargs)
+        super(fOAreaMetric, self).__init__(col=col, metricName=metricName, **kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
@@ -24,7 +24,7 @@ class fOArea(BaseMetric):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
         scale = hp.nside2pixarea(self.nside, degrees=True)
-        cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
+        cumulativeArea = np.arange(1, dataSlice.size+1)[::-1]*scale
         good = np.where(cumulativeArea >= self.Asky)[0]
         if good.size > 0:
             nv = np.max(dataSlice[name][good])
@@ -35,14 +35,13 @@ class fOArea(BaseMetric):
             return self.badval
 
 
-class fONv(BaseMetric):
-    """
-    Metric to calculate the FO_Nv.
+class fONvMetric(BaseMetric):
+    """ Metric to calculate the FO_Nv.
     """
     def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825,
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(fONv, self).__init__(col=col, metricName=metricName, **kwargs)
+        super(fONvMetric, self).__init__(col=col, metricName=metricName, **kwargs)
         self.Asky = Asky
         self.Nvisit = Nvisit
         self.nside = nside
@@ -52,7 +51,7 @@ class fONv(BaseMetric):
         dataSlice.sort()
         name = dataSlice.dtype.names[0]
         scale = hp.nside2pixarea(self.nside, degrees=True)
-        cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
+        cumulativeArea = np.arange(1, dataSlice.size+1)[::-1]*scale
         good = np.where(dataSlice[name] >= self.Nvisit)[0]
         if good.size > 0:
             area = np.max(cumulativeArea[good])
@@ -64,7 +63,7 @@ class fONv(BaseMetric):
 
 
 class TableFractionMetric(BaseMetric):
-    """
+    """Compute a table for the completeness of requested observations.
     Count the completeness (for many fields) and summarize how many fields have given completeness levels
     (within a series of bins). Works with completenessMetric only.
 
@@ -81,7 +80,7 @@ class TableFractionMetric(BaseMetric):
     12        1 < P
     Note the 1st and last elements do NOT obey the numpy histogram conventions.
     """
-    def __init__(self, col='metricdata',  nbins=10):
+    def __init__(self, col='metricdata', nbins=10):
         """
         colname = the column name in the metric data (i.e. 'metricdata' usually).
         nbins = number of bins between 0 and 1. Should divide evenly into 100.
@@ -93,7 +92,7 @@ class TableFractionMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate histogram of completeness values that fall between 0-1.
-        goodVals = np.where((dataSlice[self.colname] > 0) & (dataSlice[self.colname] < 1)  )
+        goodVals = np.where((dataSlice[self.colname] > 0) & (dataSlice[self.colname] < 1))
         bins = np.arange(self.nbins+1.)/self.nbins
         hist, b = np.histogram(dataSlice[self.colname][goodVals], bins=bins)
         # Fill in values for exact 0, exact 1 and >1.
@@ -105,7 +104,7 @@ class TableFractionMetric(BaseMetric):
         binNames = ['0 == P']
         binNames.append('0 < P < 0.1')
         for i in np.arange(1, self.nbins):
-            binNames.append('%.2g <= P < %.2g'%(b[i], b[i+1]) )
+            binNames.append('%.2g <= P < %.2g'%(b[i], b[i+1]))
         binNames.append('1 == P')
         binNames.append('1 < P')
         # Package the names and values up
@@ -116,8 +115,8 @@ class TableFractionMetric(BaseMetric):
 
 
 class IdentityMetric(BaseMetric):
-    """
-    Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics.
+    """ Return the input value itself.
+    This is primarily useful as a summary statistic for UniSlicer metrics.
     """
     def run(self, dataSlice, slicePoint=None):
         if len(dataSlice[self.colname]) == 1:
@@ -128,12 +127,13 @@ class IdentityMetric(BaseMetric):
 
 
 class NormalizeMetric(BaseMetric):
-    """
-    Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions.
+    """Return a metric values divided by 'normVal'.
+    Useful for turning summary statistics into fractions.
     """
     def __init__(self, col='metricdata', normVal=1, **kwargs):
         super(NormalizeMetric, self).__init__(col=col, **kwargs)
         self.normVal = float(normVal)
+
     def run(self, dataSlice, slicePoint=None):
         result = dataSlice[self.colname]/self.normVal
         if len(result) == 1:
@@ -141,13 +141,15 @@ class NormalizeMetric(BaseMetric):
         else:
             return result
 
+
 class ZeropointMetric(BaseMetric):
-    """
-    Return a metric values with the addition of 'zp'. Useful for altering the zeropoint for summary statistics.
+    """Return a metric values with the addition of zeropoint.
+    Useful for altering the zeropoint for summary statistics.
     """
     def __init__(self, col='metricdata', zp=0, **kwargs):
         super(ZeropointMetric, self).__init__(col=col, **kwargs)
         self.zp = zp
+
     def run(self, dataSlice, slicePoint=None):
         result = dataSlice[self.colname] + self.zp
         if len(result) == 1:
@@ -155,9 +157,9 @@ class ZeropointMetric(BaseMetric):
         else:
             return result
 
+
 class TotalPowerMetric(BaseMetric):
-    """
-    Calculate the total power in the angular power spectrum between lmin/lmax.
+    """Calculate the total power in the angular power spectrum between lmin/lmax.
     """
     def __init__(self, col='metricdata', lmin=100., lmax=300., removeDipole=True, **kwargs):
         self.lmin = lmin

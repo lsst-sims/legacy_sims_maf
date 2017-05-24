@@ -26,7 +26,8 @@ def makeMetricList(outfile):
             modname = inspect.getmodule(obj).__name__
             if modname.startswith('lsst.sims.maf.metrics'):
                 link = "lsst.sims.maf.metrics.html#%s.%s" % (modname, obj.__name__)
-                print("- `%s <%s>`_" % (name, link), file=f)
+                simpledoc = inspect.getdoc(obj).split('\n')[0]
+                print("- `%s <%s>`_ \n \t %s" % (name, link, simpledoc), file=f)
     print(" ", file=f)
 
     if mafContribPresent:
@@ -38,7 +39,8 @@ def makeMetricList(outfile):
                 modname = inspect.getmodule(obj).__name__
                 if modname.startswith('mafContrib') and name.endswith('Metric'):
                     link = 'http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/%s.py' % (modname.split('.')[-1])
-                    print("- `%s <%s>`_" % (name, link), file=f)
+                    simpledoc = inspect.getdoc(obj).split('\n')[0]
+                    print("- `%s <%s>`_ \n  \t %s" % (name, link, simpledoc), file=f)
         print(" ", file=f)
 
 

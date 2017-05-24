@@ -1,5 +1,5 @@
-lsst.sims.maf package
-=====================
+lsst\.sims\.maf package
+=======================
 
 Subpackages
 -----------
@@ -19,8 +19,8 @@ Subpackages
 Submodules
 ----------
 
-lsst.sims.maf.version module
-----------------------------
+lsst\.sims\.maf\.version module
+-------------------------------
 
 .. automodule:: lsst.sims.maf.version
     :members:
