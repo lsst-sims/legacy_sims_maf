@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from lsst.sims.skybrightness import stupidFast_RaDec2AltAz
+from lsst.sims.skybrightness import stupidFast_RaDec2AltAz, SkyModel
 import lsst.sims.skybrightness_pre as sb
 from lsst.sims.utils import raDec2Hpid, m5_flat_sed, Site
 import healpy as hp
@@ -62,7 +62,8 @@ class mjd2night(object):
         return np.searchsorted(self.setting_sun_mjds, mjd)
 
 
-def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', slewtime_limit=5., radians=True):
+def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', slewtime_limit=5., 
+               full_sky=False, radians=True):
     """
     Utility to take an array of observations and dump it to a sqlite file, filling in useful columns along the way.
 
@@ -142,23 +143,29 @@ def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', 
 
     # Sky Brightness
     if 'skybrightness' not in in_cols:
-        # Let's try using the pre-computed sky brighntesses
-        sm = sb.SkyModelPre(preload=False)
-        full = sm.returnMags(observations['mjd'][0])
-        nside = hp.npix2nside(full['r'].size)
-        imax = float(np.size(observations))
-        for i, obs in enumerate(observations):
-            indx = raDec2Hpid(nside, obs['ra'], obs['dec'])
-            observations['skybrightness'][i] = sm.returnMags(obs['mjd'], indx=[indx])[obs['filter']]
-            sunMoon = sm.returnSunMoon(obs['mjd'])
-            observations['sunAlt'][i] = sunMoon['sunAlt']
-            observations['moonAlt'][i] = sunMoon['moonAlt']
-            progress = i/imax*100
-            text = "\rprogress = %.2f%%"%progress
-            sys.stdout.write(text)
-            sys.stdout.flush()
-        observations['sunAlt'] = np.degrees(observations['sunAlt'])
-        observations['moonAlt'] = np.degrees(observations['moonAlt'])
+        if full_sky:
+            sm = SkyModel(mags=True)
+            for i, obs in enumerate(observations):
+                sm.setRaDecMjd(obs['ra'], obs['dec'], obs['mjd'], degrees=True)
+                observations['skybrightness'][i] = sm.returnMags()[obs['filter']]
+        else:
+            # Let's try using the pre-computed sky brighntesses
+            sm = sb.SkyModelPre(preload=False)
+            full = sm.returnMags(observations['mjd'][0])
+            nside = hp.npix2nside(full['r'].size)
+            imax = float(np.size(observations))
+            for i, obs in enumerate(observations):
+                indx = raDec2Hpid(nside, obs['ra'], obs['dec'])
+                observations['skybrightness'][i] = sm.returnMags(obs['mjd'], indx=[indx])[obs['filter']]
+                sunMoon = sm.returnSunMoon(obs['mjd'])
+                observations['sunAlt'][i] = sunMoon['sunAlt']
+                observations['moonAlt'][i] = sunMoon['moonAlt']
+                progress = i/imax*100
+                text = "\rprogress = %.2f%%"%progress
+                sys.stdout.write(text)
+                sys.stdout.flush()
+            observations['sunAlt'] = np.degrees(observations['sunAlt'])
+            observations['moonAlt'] = np.degrees(observations['moonAlt'])
 
 
     # 5-sigma depth
