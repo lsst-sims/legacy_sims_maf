@@ -11,6 +11,7 @@ doc/htmlDir
 tests/.tests
 ups/*.cfgc
 doc/build
+doc/html
 python/lsst/sims/maf/version.py
 *.pdf
 *.png
@@ -20,6 +21,5 @@ python/lsst/sims/maf/version.py
 *.npz
 *tmp.sqlite
 op*_sqlite.db
-*maf_config_asRan.py
 *~
 .idea/*
