@@ -1075,7 +1075,6 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                  'telrot', 'telsettle', 'exposures']
 
     order = 0
-    sqlconstraint = ''
     slicer = slicers.UniSlicer()
     slewActivitiesBL = []
 
@@ -1135,7 +1134,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         slewActivitiesBL.append(bundle)
 
         order += 1
-
+        """
         sqlconstraint = ''
         metadata = slewType
 
@@ -1153,7 +1152,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                                             displayDict=displayDict, runName=runName, metadata=metadata)
         slewActivitiesBL.append(bundle)
         order += 1
-
+        """
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
     order = 1
