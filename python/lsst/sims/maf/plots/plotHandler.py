@@ -526,11 +526,11 @@ class PlotHandler(object):
                         if plotlims[ax][0] is None:
                             plotlims[ax][0] = lims[ax][0]
                         else:
-                            plotlims[ax][0] = np.min(plotlims[ax][0], lims[ax][0])
+                            plotlims[ax][0] = min(plotlims[ax][0], lims[ax][0])
                         if plotlims[ax][1] is None:
                             plotlims[ax][1] = lims[ax][1]
                         else:
-                            plotlimx[ax][1] = np.max(plotlims[ax][1], lims[ax][1])
+                            plotlims[ax][1] = max(plotlims[ax][1], lims[ax][1])
                 except AttributeError:
                     # If there isn't an x or y axis, we are going to skip this.
                     pass
