@@ -48,22 +48,22 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     badval : float, optional
         Bad value flag, relevant for plotting. Default -666.
     """
-    def __init__(self, simDataFieldIDColName='fieldId',
+    def __init__(self, simDataFieldIdColName='fieldId',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec', latLonDeg=True,
                  fieldIdColName='fieldId', fieldRaColName='ra', fieldDecColName='dec',
                  verbose=True, badval=-666):
         super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
         self.fieldId = None
-        self.simDataFieldIDColName = simDataFieldIDColName
+        self.simDataFieldIdColName = simDataFieldIdColName
         self.fieldIdColName = fieldIdColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
         self.latLonDeg = latLonDeg
-        self.columnsNeeded = [simDataFieldIDColName, simDataFieldRaColName, simDataFieldDecColName]
+        self.columnsNeeded = [simDataFieldIdColName, simDataFieldRaColName, simDataFieldDecColName]
         while '' in self.columnsNeeded:
             self.columnsNeeded.remove('')
         self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
-        self.slicer_init = {'simDataFieldIDColName': simDataFieldIDColName,
+        self.slicer_init = {'simDataFieldIdColName': simDataFieldIdColName,
                             'simDataFieldRaColName': simDataFieldRaColName,
                             'simDataFieldDecColName': simDataFieldDecColName,
                             'fieldIdColName': fieldIdColName,
@@ -100,13 +100,13 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         self.nslice = len(self.slicePoints['sid'])
         self._runMaps(maps)
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
-        simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
+        self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
+        simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
 
-        self.spatialExtent = [simData[self.simDataFieldIDColName].min(),
-                              simData[self.simDataFieldIDColName].max()]
+        self.spatialExtent = [simData[self.simDataFieldIdColName].min(),
+                              simData[self.simDataFieldIdColName].max()]
         self.shape = self.nslice
 
         @wraps(self._sliceSimData)
