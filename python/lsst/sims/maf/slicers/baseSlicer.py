@@ -349,7 +349,62 @@ class BaseSlicer(with_metaclass(SlicerRegistry, object)):
             containing header information (runName, metadata, etc.).
         """
         import lsst.sims.maf.slicers as slicers
+        # We have many old metric files saved with py2 and these need a bit of extra care to reload.
+        # First determine if this is the case:
         restored = np.load(infilename)
+        py2_to_py3 = False
+        try:
+            restored['slicePoints']
+        except UnicodeError:
+            # Old metric data files saved by py2 stored the slicepoints with bytes.
+            restored = np.load(infilename, encoding='bytes')
+            py2_to_py3 = True
+        # Get metadata and other simData info.
+        header = restored['header'][()]
+        slicer_init = restored['slicer_init'][()]
+        slicerName = str(restored['slicerName'])
+        slicePoints = restored['slicePoints'][()]
+        if py2_to_py3:
+            h = {}
+            for k, v in header.items():
+                newkey = str(k, 'utf-8')
+                if isinstance(v, bytes):
+                    value = str(v, 'utf-8')
+                else:
+                    value = v
+                h[newkey] = value
+            header = h
+            si = {}
+            for k, v in slicer_init.items():
+                newkey = str(k, 'utf-8')
+                if isinstance(v, bytes):
+                    value = str(v, 'utf-8')
+                else:
+                    value = v
+                si[newkey] = value
+            slicer_init = si
+            sp = {}
+            for k, v in slicePoints.items():
+                newkey = str(k, 'utf-8')
+                sp[newkey] = v
+            slicePoints = sp
+            slicerName = str(restored['slicerName'], 'utf-8')
+        # Backwards compatibility issue - map 'spatialkey1/spatialkey2' to 'lonCol/latCol'.
+        if 'spatialkey1' in slicer_init:
+            slicer_init['lonCol'] = slicer_init['spatialkey1']
+            del (slicer_init['spatialkey1'])
+        if 'spatialkey2' in slicer_init:
+            slicer_init['latCol'] = slicer_init['spatialkey2']
+            del (slicer_init['spatialkey2'])
+        try:
+            slicer = getattr(slicers, slicerName)(**slicer_init)
+        except TypeError:
+            warnings.warn('Cannot use saved slicer init values; falling back to defaults')
+            slicer = getattr(slicers, slicerName)()
+        # Restore slicePoint metadata.
+        slicer.nslice = restored['slicerNSlice']
+        slicer.slicePoints = slicePoints
+        slicer.shape = restored['slicerShape']
         # Get metric data set
         if restored['mask'][()] is None:
             metricValues = ma.MaskedArray(data=restored['metricValues'])
@@ -357,20 +412,4 @@ class BaseSlicer(with_metaclass(SlicerRegistry, object)):
             metricValues = ma.MaskedArray(data=restored['metricValues'],
                                           mask=restored['mask'],
                                           fill_value=restored['fill'])
-        # Get Metadata & other simData info.
-        header = restored['header'][()]  # extra brackets restore dictionary to dictionary status.
-        # Get slicer instantiated.
-        slicer_init = restored['slicer_init'][()]
-        # Backwards compatibility issue - map 'spatialkey1/spatialkey2' to 'lonCol/latCol'.
-        if 'spatialkey1' in slicer_init:
-            slicer_init['lonCol'] = slicer_init['spatialkey1']
-            del(slicer_init['spatialkey1'])
-        if 'spatialkey2' in slicer_init:
-            slicer_init['latCol'] = slicer_init['spatialkey2']
-            del(slicer_init['spatialkey2'])
-        slicer = getattr(slicers, str(restored['slicerName']))(**slicer_init)
-        # Restore slicePoint metadata.
-        slicer.nslice = restored['slicerNSlice']
-        slicer.slicePoints = restored['slicePoints'][()]
-        slicer.shape = restored['slicerShape']
         return metricValues, slicer, header
