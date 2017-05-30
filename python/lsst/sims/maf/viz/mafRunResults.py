@@ -173,9 +173,9 @@ class MafRunResults(object):
 
     # Methods to deal with metrics in numpy recarray.
 
-    def sortMetrics(self, metrics, order=['displayGroup', 'displaySubgroup',
+    def sortMetrics(self, metrics, order=('displayGroup', 'displaySubgroup',
                                           'baseMetricNames', 'slicerName', 'displayOrder',
-                                          'metricMetadata']):
+                                          'metricMetadata')):
         """
         Sort the metrics by order specified by 'order'.
 
