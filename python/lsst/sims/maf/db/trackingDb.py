@@ -221,7 +221,7 @@ def addRunToDatabase(mafDir, trackingDbFile, opsimGroup=None,
     if not os.path.isdir(mafDir):
         raise ValueError('There is no directory containing MAF outputs at %s.' % (mafDir))
 
-    trackingDb = db.TrackingDb(database=trackingDbFile)
+    trackingDb = TrackingDb(database=trackingDbFile)
     autoOpsimRun = None
     autoOpsimComment = None
     opsimVersion = None
@@ -251,16 +251,18 @@ def addRunToDatabase(mafDir, trackingDbFile, opsimGroup=None,
                 if len(tmp) > 2:
                     opsimDate = tmp[-2]
     # And convert formats to '-' (again, multiple versions of configs).
-    if len(mafDate.split('/')) > 1:
-        t = mafDate.split('/')
-        if len(t[2]) == 2:
-            t[2] = '20' + t[2]
-        mafDate = '-'.join([t[2], t[1], t[0]])
-    if len(opsimDate.split('/')) > 1:
-        t = opsimDate.split('/')
-        if len(t[2]) == 2:
-            t[2] = '20' + t[2]
-        opsimDate = '-'.join([t[2], t[1], t[0]])
+    if mafDate is not None:
+        if len(mafDate.split('/')) > 1:
+            t = mafDate.split('/')
+            if len(t[2]) == 2:
+                t[2] = '20' + t[2]
+            mafDate = '-'.join([t[2], t[1], t[0]])
+    if opsimDate is not None:
+        if len(opsimDate.split('/')) > 1:
+            t = opsimDate.split('/')
+            if len(t[2]) == 2:
+                t[2] = '20' + t[2]
+            opsimDate = '-'.join([t[2], t[1], t[0]])
 
     if opsimRun is None:
         opsimRun = autoOpsimRun
