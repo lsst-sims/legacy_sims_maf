@@ -15,7 +15,7 @@ def opsimColMapDict():
     result = {'ra': 'fieldRA', 'dec': 'fieldDec', 'mjd': 'observationStartMJD',
               'exptime': 'visitExposureTime', 'visittime': 'visitTime', 'alt': 'altitude',
               'az': 'azimuth', 'filter': 'filter', 'fiveSigmaDepth': 'fiveSigmaDepth',
-              'night': 'night'}
+              'night': 'night', 'slewtime': 'slewTime', 'seeingGeom': 'seeingFwhmGeom'}
 
     return result
 
