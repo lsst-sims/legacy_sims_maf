@@ -121,6 +121,7 @@ class ProperMotionMetric(BaseMetric):
         super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units,
                                                  badval=badval, **kwargs)
         # set return type
+        self.mjdCol = mjdCol
         self.seeingCol = seeingCol
         self.m5Col = m5Col
         filters = ['u', 'g', 'r', 'i', 'z', 'y']
@@ -158,10 +159,10 @@ class ProperMotionMetric(BaseMetric):
                     dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
-        result = mafUtils.sigma_slope(dataslice['observationStartMJD'][good], precis[good])
+        result = mafUtils.sigma_slope(dataslice[self.mjdCol][good], precis[good])
         result = result*365.25*1e3  # Convert to mas/yr
         if (self.normalize) & (good[0].size > 0):
-            new_dates = dataslice['observationStartMJD'][good]*0
+            new_dates = dataslice[self.mjdCol][good]*0
             nDates = new_dates.size
             new_dates[nDates//2:] = self.baseline*365.25
             result = (mafUtils.sigma_slope(new_dates, precis[good])*365.25*1e3)/result

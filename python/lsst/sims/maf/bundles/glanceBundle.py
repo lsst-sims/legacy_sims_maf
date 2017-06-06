@@ -49,7 +49,7 @@ def glanceBundle(colmap_dict=None, nside=64):
     bundleList.append(bundle)
 
     # Total number of filter changes
-    metric = metrics.NChangesMetric(col=colmap_dict['filter'])
+    metric = metrics.NChangesMetric(col=colmap_dict['filter'], orderBy=colmap_dict['mjd'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -93,7 +93,8 @@ def glanceBundle(colmap_dict=None, nside=64):
     bundleList.append(bundle)
 
     # Number of filter changes per night
-    metric = metrics.NChangesMetric(col=colmap_dict['filter'], metricName='Filter Changes')
+    metric = metrics.NChangesMetric(col=colmap_dict['filter'], orderBy=colmap_dict['mjd'], 
+                                    metricName='Filter Changes')
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
@@ -115,7 +116,7 @@ def glanceBundle(colmap_dict=None, nside=64):
                                             summaryMetrics=standardStats, displayDict=displayDict)
         bundleList.append(bundle)
 
-    metric = metrics.Coaddm5Metric()
+    metric = metrics.Coaddm5Metric(m5Col=colmap_dict['fiveSigmaDepth'])
     for sql in sql_per_filt:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                             summaryMetrics=standardStats, displayDict=displayDict)
