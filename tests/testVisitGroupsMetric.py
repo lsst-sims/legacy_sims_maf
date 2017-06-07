@@ -8,6 +8,30 @@ import lsst.utils.tests
 
 class TestVisitGroupsMetric(unittest.TestCase):
 
+    def testPairFractionMetric(self):
+        metric = metrics.PairFractionMetric(timesCol='mjd')
+        times = np.arange(0, 200, 30) / 60. / 24.
+        data = np.core.records.fromarrays([times], names='mjd')
+        # These should all have pairs
+        result = metric.run(data)
+        self.assertEqual(result, 1.)
+
+        # These should have none
+        times = np.arange(0, 400, 100) / 60. / 24.
+        data = np.core.records.fromarrays([times], names='mjd')
+        result = metric.run(data)
+        self.assertEqual(result, 0.)
+
+        # If those are right, then this should be 50%
+        t1 = np.arange(0, 200, 30) / 60. / 24.
+        t2 = np.arange(0, 400, 100) / 60. / 24. + 1000
+
+        times = np.append(t1, t2)
+        data = np.core.records.fromarrays([times], names='mjd')
+        result = metric.run(data)
+        expected = np.size(t1)/float(np.size(t1)+np.size(t2))
+        self.assertEqual(result, expected)
+
     def testVisitGroups(self):
         """Test visit groups (solar system groups) metric."""
         # Set up some simple test data.

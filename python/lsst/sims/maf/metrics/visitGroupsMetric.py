@@ -12,6 +12,11 @@ __all__ = ['VisitGroupsMetric', 'PairFractionMetric']
 
 class PairFractionMetric(BaseMetric):
     """What fraction of observations are part of a pair.
+
+    Note, an observation can be a memeber of more than one "pair". For example,
+    t=[0, 5, 30], all observations would be considered part of a pair because they
+    all have an observation within the given window to pair with (the observation at t=30
+    pairs twice).
     """
     def __init__(self, timesCol='observationStartMJD', metricName='PairFraction',
                  minGap=15., maxGap=90., **kwargs):
@@ -20,7 +25,7 @@ class PairFractionMetric(BaseMetric):
         ----------
         minGap : float
             Minimum time to consider something part of a pair (minutes)
-        maxGap : float 
+        maxGap : float
             Maximum time to consider something part of a pair (minutes)
         """
         self.timesCol = timesCol
