@@ -60,6 +60,13 @@ def glanceBundle(colmap_dict=None, nside=64):
     bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
     bundleList.append(bundle)
 
+    # Total effective exposure time
+    metric = metrics.TeffMetric(m5Col=colmap_dict['fiveSigmaDepth'],
+                                filterCol=colmap_dict['filter'], normed=True)
+    for sql in sql_per_plus:
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
+
     # Number of observations, all and each filter
     metric = metrics.CountMetric(col=colmap_dict['mjd'], metricName='Number of Exposures')
     for sql in sql_per_plus:
