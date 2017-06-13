@@ -1,3 +1,6 @@
+__all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
+           'ParallaxCoverageMetric', 'ParallaxDcrDegenMetric']
+
 import numpy as np
 from .baseMetric import BaseMetric
 import lsst.sims.maf.utils as mafUtils
@@ -5,13 +8,11 @@ import lsst.sims.utils as utils
 from scipy.optimize import curve_fit
 from builtins import str
 
-__all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
-           'ParallaxCoverageMetric', 'ParallaxDcrDegenMetric']
-
 
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
     """
+
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', units = 'mas',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
@@ -51,18 +52,23 @@ class ParallaxMetric(BaseMetric):
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
-        self.comment = 'Estimated uncertainty in parallax measurement (assuming no proper motion or that proper motion '
-        self.comment += 'is well fit). Uses measurements in all bandpasses, and estimates astrometric error based on SNR '
+        self.comment = 'Estimated uncertainty in parallax measurement '
+        self.comment += '(assuming no proper motion or that proper motion '
+        self.comment += 'is well fit). Uses measurements in all bandpasses, '
+        self.comment += 'and estimates astrometric error based on SNR '
         self.comment += 'in each visit. '
         if SedTemplate == 'flat':
             self.comment += 'Assumes a flat SED. '
         if self.normalize:
-            self.comment += 'This normalized version of the metric displays the estimated uncertainty in the parallax measurement, '
-            self.comment += 'divided by the minimum parallax uncertainty possible (if all visits were six '
-            self.comment += 'months apart). Values closer to 1 indicate more optimal scheduling for parallax measurement.'
+            self.comment += 'This normalized version of the metric displays ' \
+                            'the estimated uncertainty in the parallax measurement, '
+            self.comment += 'divided by the minimum parallax uncertainty possible ' \
+                            '(if all visits were six months apart). '
+            self.comment += 'Values closer to 1 indicate more optimal scheduling for parallax measurement.'
 
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
         """Assume parallax in RA and DEC are fit independently, then combined.
+
         All inputs assumed to be arcsec """
         sigma_A = position_errors/ra_pi_amp
         sigma_B = position_errors/dec_pi_amp
@@ -92,15 +98,16 @@ class ParallaxMetric(BaseMetric):
 
 
 class ProperMotionMetric(BaseMetric):
-    """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
+    """Calculate the uncertainty in the fitted proper motion assuming Gaussian errors.
     """
+
     def __init__(self, metricName='properMotion',
                  m5Col='fiveSigmaDepth', mjdCol='expMJD', units='mas/yr',
                  filterCol='filter', seeingCol='FWHMgeom', rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
-        """ Instantiate metric.
+        """Instantiate metric.
 
         m5Col = column name for inidivual visit m5
         mjdCol = column name for exposure time dates
@@ -133,15 +140,18 @@ class ProperMotionMetric(BaseMetric):
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
-        self.comment = 'Estimated uncertainty of the proper motion fit (assuming no parallax or that parallax is well fit). '
-        self.comment += 'Uses visits in all bands, and generates approximate astrometric errors using the SNR in each visit. '
+        self.comment = 'Estimated uncertainty of the proper motion fit ' \
+                       '(assuming no parallax or that parallax is well fit). '
+        self.comment += 'Uses visits in all bands, and generates approximate ' \
+                        'astrometric errors using the SNR in each visit. '
         if SedTemplate == 'flat':
             self.comment += 'Assumes a flat SED. '
         if self.normalize:
-            self.comment += 'This normalized version of the metric represents the estimated uncertainty in the proper '
-            self.comment += 'motion divided by the minimum uncertainty possible (if all visits were '
-            self.comment += 'obtained on the first and last days of the survey). Values closer to 1 '
-            self.comment += 'indicate more optimal scheduling.'
+            self.comment += 'This normalized version of the metric represents ' \
+                            'the estimated uncertainty in the proper '
+            self.comment += 'motion divided by the minimum uncertainty possible ' \
+                            '(if all visits were obtained on the first and last days of the survey). '
+            self.comment += 'Values closer to 1 indicate more optimal scheduling.'
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice['filter'])
@@ -163,7 +173,7 @@ class ProperMotionMetric(BaseMetric):
         if (self.normalize) & (good[0].size > 0):
             new_dates = dataslice['expMJD'][good]*0
             nDates = new_dates.size
-            new_dates[nDates/2:] = self.baseline*365.25
+            new_dates[nDates//2:] = self.baseline*365.25
             result = (mafUtils.sigma_slope(new_dates, precis[good])*365.25*1e3)/result
         # Observations that are very close together can still fail
         if np.isnan(result):
@@ -172,8 +182,9 @@ class ProperMotionMetric(BaseMetric):
 
 
 class ParallaxCoverageMetric(BaseMetric):
-    """
-    Check how well the parallax factor is distributed. Subtracts the weighted mean position of the
+    """Check how well the parallax factor is distributed.
+
+    Subtracts the weighted mean position of the
     parallax offsets, then computes the weighted mean radius of the points.
     If points are well distributed, the mean radius will be near 1. If phase coverage is bad,
     radius will be close to zero.
@@ -187,13 +198,12 @@ class ParallaxCoverageMetric(BaseMetric):
 
     Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
     """
+
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
                  mjdCol='expMJD', filterCol='filter', seeingCol='FWHMgeom',
                  rmag=20., SedTemplate='flat', badval=-666,
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
         """
-        instantiate metric
-
         m5Col = column name for inidivual visit m5
         mjdCol = column name for exposure time dates
         filterCol = column name for filter
@@ -201,10 +211,10 @@ class ParallaxCoverageMetric(BaseMetric):
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
         sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
         atm_err = centroiding error due to atmosphere in arcsec
-        thetaRange = range of parallax offset angles to demand (in radians) default=0 means no range requirement
+        thetaRange = range of parallax offset angles to demand (in radians)
+                    default=0 means no range requirement
         snrLimit = only include points above the snrLimit (default 5) when computing thetaRange.
         """
-
         cols = ['ra_pi_amp', 'dec_pi_amp', m5Col, mjdCol, filterCol, seeingCol]
         units = 'ratio'
         super(ParallaxCoverageMetric, self).__init__(cols,
@@ -280,7 +290,7 @@ class ParallaxCoverageMetric(BaseMetric):
 
 
 class ParallaxDcrDegenMetric(BaseMetric):
-    """Use the full parallax and DCR displacement vectors to find if they are degenerate.
+    """Compute parallax and DCR displacement vectors to find if they are degenerate.
 
     Parameters
     ----------
@@ -311,6 +321,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
         are bad. Experience with fitting Monte Carlo simulations suggests the astrometric fits start
         becoming poor around a correlation of 0.7.
     """
+
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='FWHMgeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
                  filterCol='filter', tol = 0.05, **kwargs):
@@ -394,7 +405,8 @@ def calcDist_cosines(RA1, Dec1, RA2, Dec2):
 
 
 class RadiusObsMetric(BaseMetric):
-    """find the radius in the focal plane. """
+    """Find the radius a point falls in the focal plane.
+    """
 
     def __init__(self, metricName='radiusObs', raCol='fieldRA', decCol='fieldDec',
                  units='radians', **kwargs):

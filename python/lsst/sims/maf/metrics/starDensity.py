@@ -1,7 +1,8 @@
+__all__ = ['StarDensityMetric']
+
 from .baseMetric import BaseMetric
 from scipy.interpolate import interp1d
 
-__all__ = ['StarDensityMetric']
 
 class StarDensityMetric(BaseMetric):
     """Interpolate the stellar luminosity function to return the number of

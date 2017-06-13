@@ -11,7 +11,9 @@ def nearestVal(A, val):
 
 
 class HourglassMetric(BaseMetric):
-    """Plot the filters used as a function of time. Must be used with the Hourglass Slicer."""
+    """Plot the filters used as a function of time.
+    Must be used with the Hourglass Slicer.
+    """
     def __init__(self, telescope='LSST', **kwargs):
 
         metricName = 'hourglass'
@@ -51,7 +53,8 @@ class HourglassMetric(BaseMetric):
         moon = ephem.Moon()
         for h in horizons:
             obs = ephem.Observer()
-            obs.lat, obs.lon, obs.elevation = self.telescope.latitude_rad, self.telescope.longitude_rad, self.telescope.height
+            obs.lat, obs.lon, obs.elevation = self.telescope.latitude_rad, \
+                                              self.telescope.longitude_rad, self.telescope.height
             obs.horizon = h
             obsList.append(obs)
 
@@ -72,9 +75,11 @@ class HourglassMetric(BaseMetric):
                 pernight[key[j]+'_set'][i] = obs.previous_setting(S, start=pernight['midnight'][i]-doff,
                                                                   use_center=True) + doff
 
-        # Define the breakpoints as where either the filter changes OR there's more than a 2 minute gap in observing
+        # Define the breakpoints as where either the filter changes
+        # OR there's more than a 2 minute gap in observing
         good = np.where((dataSlice[self.filtercol] != np.roll(dataSlice[self.filtercol], 1)) |
-                        (np.abs(np.roll(dataSlice[self.mjdcol], 1)-dataSlice[self.mjdcol]) > 120./3600./24.))[0]
+                        (np.abs(np.roll(dataSlice[self.mjdcol], 1) -
+                                dataSlice[self.mjdcol]) > 120. / 3600. / 24.))[0]
         good = np.concatenate((good, [0], [len(dataSlice[self.filtercol])]))
         good = np.unique(good)
         left = good[:-1]

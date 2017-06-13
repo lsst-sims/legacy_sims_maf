@@ -1,5 +1,5 @@
-lsst.sims package
-=================
+lsst\.sims package
+==================
 
 Subpackages
 -----------

@@ -97,11 +97,6 @@ def setupMetrics(opsimName, metadata, tstart, tnow, plotlabel='', cumulative=Fal
     plotDictList.append({'colorMin':nvisitsMin, 'colorMax':nvisitsMax,
                          'cbarFormat': '%d',
                           'label': plotlabel, 'title': title + 'NVisits', 'figsize': figsize})
-    # Uniformity wants survey length in years.
-    #surveyLength = (tnow - tstart) / 365.0
-    #metricList.append(metrics.UniformityMetric('expMJD', surveyLength=surveyLength))
-    #plotDictList.append({'colorMin':0, 'colorMax':1, 'cbarFormat':'%.2f',
-    #                     'title': title + 'Uniformity', 'label': plotlabel, 'figsize': figsize})
     dt, t = dtime(t)
     if verbose:
         print('Set up metrics %f s' % (dt))

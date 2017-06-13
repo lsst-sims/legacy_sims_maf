@@ -35,7 +35,7 @@ class TestSummaryMetrics(unittest.TestCase):
         Test the fONv metric.
         """
         nside = 128
-        metric = metrics.fONv(col='ack', nside=nside, Nvisit=825, Asky=18000.)
+        metric = metrics.fONvMetric(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         npix = hp.nside2npix(nside)
         names = ['blah']
         types = [float]
@@ -46,14 +46,14 @@ class TestSummaryMetrics(unittest.TestCase):
         result1 = metric.run(data, slicePoint)
         deginsph = 129600./np.pi
         np.testing.assert_almost_equal(result1*18000., deginsph)
-        data['blah'][:data.size/2] = 0
+        data['blah'][:data.size//2] = 0
         result2 = metric.run(data, slicePoint)
         np.testing.assert_almost_equal(result2*18000., deginsph/2.)
 
     def testfOArea(self):
         """Test fOArea metric."""
         nside = 128
-        metric = metrics.fOArea(col='ack', nside=nside, Nvisit=825, Asky=18000.)
+        metric = metrics.fOAreaMetric(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         npix = hp.nside2npix(nside)
         names = ['blah']
         types = [float]
@@ -63,7 +63,7 @@ class TestSummaryMetrics(unittest.TestCase):
         slicePoint = {'sid': 0}
         result1 = metric.run(data, slicePoint)
         np.testing.assert_almost_equal(result1*825, 826)
-        data['blah'][:data.size/2] = 0
+        data['blah'][:data.size//2] = 0
         result2 = metric.run(data, slicePoint)
 
     def testNormalizeMetric(self):

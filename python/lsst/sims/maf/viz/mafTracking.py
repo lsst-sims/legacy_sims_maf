@@ -49,12 +49,15 @@ class MafTracking(object):
         """
         runInfo = OrderedDict()
         runInfo['OpsimRun'] = run['opsimRun']
+        runInfo['OpsimGroup'] = run['opsimGroup']
         runInfo['MafComment'] = run['mafComment']
         runInfo['OpsimComment'] = run['opsimComment']
         runInfo['SQLite File'] = [os.path.relpath(run['dbFile']), os.path.split(run['dbFile'])[1]]
-        runInfo['MafDir'] = run['mafDir']
         runInfo['ResultsDb'] = os.path.relpath(os.path.join(run['mafDir'], 'resultsDb_sqlite.db'))
+        runInfo['MafDir'] = run['mafDir']
+        runInfo['OpsimVersion'] = run['opsimVersion']
         runInfo['OpsimDate'] = run['opsimDate']
+        runInfo['MafVersion'] = run['mafVersion']
         runInfo['MafDate'] = run['mafDate']
         return runInfo
 

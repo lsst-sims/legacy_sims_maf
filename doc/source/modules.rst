@@ -1,5 +1,5 @@
-python
-======
+lsst.sims.maf
+=============
 
 .. toctree::
    :maxdepth: 4

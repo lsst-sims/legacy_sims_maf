@@ -1,27 +1,27 @@
-lsst.sims.maf.viz package
-=========================
+lsst\.sims\.maf\.viz package
+============================
 
 Submodules
 ----------
 
-lsst.sims.maf.viz.mafRunComparison module
------------------------------------------
+lsst\.sims\.maf\.viz\.mafRunComparison module
+---------------------------------------------
 
 .. automodule:: lsst.sims.maf.viz.mafRunComparison
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.viz.mafRunResults module
---------------------------------------
+lsst\.sims\.maf\.viz\.mafRunResults module
+------------------------------------------
 
 .. automodule:: lsst.sims.maf.viz.mafRunResults
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst.sims.maf.viz.mafTracking module
-------------------------------------
+lsst\.sims\.maf\.viz\.mafTracking module
+----------------------------------------
 
 .. automodule:: lsst.sims.maf.viz.mafTracking
     :members:
