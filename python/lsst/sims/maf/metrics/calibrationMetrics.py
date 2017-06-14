@@ -13,7 +13,7 @@ class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measures given a serries of observations.
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
-                 mjdCol='observationStartMJD', units = 'mas',
+                 units = 'mas',
                  filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False, **kwargs):
@@ -21,7 +21,6 @@ class ParallaxMetric(BaseMetric):
         """ Instantiate metric.
 
         m5Col = column name for inidivual visit m5
-        mjdCol = column name for exposure time dates
         filterCol = column name for filter
         seeingCol = column name for seeing/FWHMgeom
         rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
@@ -33,7 +32,7 @@ class ParallaxMetric(BaseMetric):
 
         return uncertainty in mas. Or normalized map as a fraction
         """
-        Cols = [m5Col, mjdCol, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
+        Cols = [m5Col, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
             units = 'ratio'
         super(ParallaxMetric, self).__init__(Cols, metricName=metricName, units=units,
@@ -121,6 +120,7 @@ class ProperMotionMetric(BaseMetric):
         super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units,
                                                  badval=badval, **kwargs)
         # set return type
+        self.mjdCol = mjdCol
         self.seeingCol = seeingCol
         self.m5Col = m5Col
         filters = ['u', 'g', 'r', 'i', 'z', 'y']
@@ -158,10 +158,10 @@ class ProperMotionMetric(BaseMetric):
                     dataslice[self.seeingCol][observations], snr)
                 precis[observations] = np.sqrt(precis[observations]**2 + self.atm_err**2)
         good = np.where(precis != self.badval)
-        result = mafUtils.sigma_slope(dataslice['observationStartMJD'][good], precis[good])
+        result = mafUtils.sigma_slope(dataslice[self.mjdCol][good], precis[good])
         result = result*365.25*1e3  # Convert to mas/yr
         if (self.normalize) & (good[0].size > 0):
-            new_dates = dataslice['observationStartMJD'][good]*0
+            new_dates = dataslice[self.mjdCol][good]*0
             nDates = new_dates.size
             new_dates[nDates//2:] = self.baseline*365.25
             result = (mafUtils.sigma_slope(new_dates, precis[good])*365.25*1e3)/result

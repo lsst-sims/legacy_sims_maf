@@ -5,8 +5,24 @@ import os
 import numpy as np
 from .outputUtils import printDict
 
-__all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere',
+__all__ = ['opsimColMapDict', 'connectOpsimDb', 'writeConfigs', 'createSQLWhere',
            'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
+
+
+def opsimColMapDict():
+    """Return a dict that maps column names.
+    For use with the pre-defined bundles. Makes it easy to swap in different surveys with
+    different schemas.
+
+    Currently only includes columns used by the glanceBundle. May need to expand to
+    include more columns in the future.
+    """
+    result = {'ra': 'fieldRA', 'dec': 'fieldDec', 'mjd': 'observationStartMJD',
+              'exptime': 'visitExposureTime', 'visittime': 'visitTime', 'alt': 'altitude',
+              'az': 'azimuth', 'filter': 'filter', 'fiveSigmaDepth': 'fiveSigmaDepth',
+              'night': 'night', 'slewtime': 'slewTime', 'seeingGeom': 'seeingFwhmGeom'}
+
+    return result
 
 
 def connectOpsimDb(database, summaryOnly=False, summaryTable='SummaryAllProps'):

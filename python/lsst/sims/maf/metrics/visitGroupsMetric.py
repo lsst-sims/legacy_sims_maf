@@ -7,7 +7,44 @@ from builtins import zip
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['VisitGroupsMetric']
+__all__ = ['VisitGroupsMetric', 'PairFractionMetric']
+
+
+class PairFractionMetric(BaseMetric):
+    """What fraction of observations are part of a pair.
+
+    Note, an observation can be a memeber of more than one "pair". For example,
+    t=[0, 5, 30], all observations would be considered part of a pair because they
+    all have an observation within the given window to pair with (the observation at t=30
+    pairs twice).
+    """
+    def __init__(self, timesCol='observationStartMJD', metricName='PairFraction',
+                 minGap=15., maxGap=90., **kwargs):
+        """
+        Parameters
+        ----------
+        minGap : float
+            Minimum time to consider something part of a pair (minutes)
+        maxGap : float
+            Maximum time to consider something part of a pair (minutes)
+        """
+        self.timesCol = timesCol
+        self.minGap = minGap/60./24.
+        self.maxGap = maxGap/60./24.
+        super(PairFractionMetric, self).__init__(col=[timesCol], metricName=metricName, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        size = np.size(dataSlice[self.timesCol])
+        i = np.tile(dataSlice[self.timesCol], (size, 1))
+        j = i.T
+        tdiff = np.abs(i-j)
+        part_pair = np.zeros(i.shape, dtype=int)
+        good = np.where((tdiff < self.maxGap) & (tdiff > self.minGap))
+        part_pair[good] = 1
+        part_pair = np.max(part_pair, axis=1)
+        result = np.sum(part_pair)/float(size)
+        return result
+
 
 class VisitGroupsMetric(BaseMetric):
     """Count the number of visits per night within deltaTmin and deltaTmax."""
