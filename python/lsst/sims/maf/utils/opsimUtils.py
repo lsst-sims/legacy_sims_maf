@@ -11,6 +11,11 @@ __all__ = ['opsimColMapDict', 'connectOpsimDb', 'writeConfigs', 'createSQLWhere'
 
 def opsimColMapDict():
     """Return a dict that maps column names.
+    For use with the pre-defined bundles. Makes it easy to swap in different surveys with
+    different schemas.
+
+    Currently only includes columns used by the glanceBundle. May need to expand to
+    include more columns in the future.
     """
     result = {'ra': 'fieldRA', 'dec': 'fieldDec', 'mjd': 'observationStartMJD',
               'exptime': 'visitExposureTime', 'visittime': 'visitTime', 'alt': 'altitude',
