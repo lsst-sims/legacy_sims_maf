@@ -338,6 +338,7 @@ class BaseHistogram(BasePlotter):
                                color=plotDict['color'])
         else:
             # There is data to plot, and we've already ensured histRange/bins are more than single value.
+            print('bins', bins, 'histRange', histRange, 'metricValues', metricValues.min(), metricValues.max())
             n, b, p = plt.hist(metricValue, bins=bins, range=histRange,
                                histtype='step', log=plotDict['logScale'],
                                cumulative=plotDict['cumulative'],
