@@ -322,7 +322,7 @@ class BaseHistogram(BasePlotter):
                 bins = np.arange(bins.min() - plotDict['binsize'] * 2.0,
                                  bins.max() + plotDict['binsize'] * 2.0, plotDict['binsize'])
         else:
-            bins = plotDict['bins']
+            bins = optimalBins(metricValue)
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # Check if any data falls within histRange, because otherwise histogram generation will fail.
@@ -338,7 +338,6 @@ class BaseHistogram(BasePlotter):
                                color=plotDict['color'])
         else:
             # There is data to plot, and we've already ensured histRange/bins are more than single value.
-            print('bins', bins, 'histRange', histRange, 'metricValues', metricValues.min(), metricValues.max())
             n, b, p = plt.hist(metricValue, bins=bins, range=histRange,
                                histtype='step', log=plotDict['logScale'],
                                cumulative=plotDict['cumulative'],
