@@ -325,7 +325,7 @@ class BaseHistogram(BasePlotter):
                 bins = np.arange(bins.min() - plotDict['binsize'] * 2.0,
                                  bins.max() + plotDict['binsize'] * 2.0, plotDict['binsize'])
         else:
-            bins = plotDict['bins']
+            bins = optimalBins(metricValue)
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # Check if any data falls within histRange, because otherwise histogram generation will fail.
