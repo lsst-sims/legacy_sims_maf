@@ -174,9 +174,7 @@ class HealpixPowerSpectrum(BasePlotter):
         if False not in metricValue.mask:
             return None
         if plotDict['removeDipole']:
-            warnings.warn('XXX-Not removing dipole, need healpy updated on python 3 first')
-            #cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
-            cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
+            cl = hp.anafast(hp.remove_dipole(metricValue.filled(slicer.badval)), lmax=plotDict['maxl'])
         else:
             cl = hp.anafast(metricValue.filled(slicer.badval), lmax=plotDict['maxl'])
         ell = np.arange(np.size(cl))
@@ -259,8 +257,10 @@ class BaseHistogram(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'ylabel': 'Count', 'label': None,
                                 'bins': None, 'binsize': None, 'cumulative': False,
-                                'scale': 1.0, 'xMin': None, 'xMax': None,
-                                'logScale': 'auto',
+                                'scale': 1.0,
+                                'xMin': None, 'xMax': None,
+                                'yMin': None, 'yMax': None,
+                                'logScale': False,
                                 'yaxisformat': '%.3f', 'linestyle': '-',
                                 'zp': None, 'normVal': None, 'percentileClip': None,
                                 'fontsize': None, 'labelsize': None, 'figsize': None}
@@ -284,125 +284,74 @@ class BaseHistogram(BasePlotter):
             if plotDict['percentileClip']:
                 plotDict['xMin'], plotDict['xMax'] = percentileClipping(metricValue,
                                                                         percentile=plotDict['percentileClip'])
-        # Determine range for histogram. Note that if xmin/max are None, this will just be [None, None].
+
+        # Set the histogram range values, to avoid None/Number comparisons.
         histRange = [plotDict['xMin'], plotDict['xMax']]
-        # Should we use log scale on y axis? (if 'auto')
-        if plotDict['logScale'] == 'auto':
-            plotDict['logScale'] = False
-            if np.min(histRange) > 0:
-                if (np.log10(np.max(histRange) - np.log10(np.min(histRange))) > 3):
-                    plotDict['logScale'] = True
-        # If binsize was specified, set up an array of bins for the histogram.
-        if plotDict['binsize'] is not None:
-            #  If generating cumulative histogram, want to use full range of data (but with given binsize).
+        if histRange[0] is None:
+            histRange[0] = metricValue.min()
+        if histRange[1] is None:
+            histRange[1] = metricValue.max()
+        # Need to have some range of values on the histogram, or it will fail.
+        if histRange[0] == histRange[1]:
+            warnings.warn('Histogram range was single-valued; expanding default range.')
+            histRange[1] = histRange[0] + 1.0
+        # Set up the bins for the histogram. User specified 'bins' overrides 'binsize'.
+        # Note that 'bins' could be a single number or an array, simply passed to plt.histogram.
+        if plotDict['bins'] is not None:
+            bins = plotDict['bins']
+        elif plotDict['binsize'] is not None:
+            #  If generating a cumulative histogram, want to use full range of data (but with given binsize).
             #    .. but if user set histRange to be wider than full range of data, then
             #       extend bins to cover this range, so we can make prettier plots.
-            if plotDict['cumulative'] is not False:
-                if histRange[0] is not None:
-                    bmin = np.min([metricValue.min(), histRange[0]])
+            if plotDict['cumulative']:
+                if plotDict['xMin'] is not None:
+                    # Potentially, expand the range for the cumulative histogram.
+                    bmin = np.min([metricValue.min(), plotDict['xMin']])
                 else:
                     bmin = metricValue.min()
-                if histRange[1] is not None:
-                    bmax = np.max([metricValue.max(), histRange[1]])
+                if plotDict['xMax'] is not None:
+                    bmax = np.max([metricValue.max(), plotDict['xMax']])
                 else:
                     bmax = metricValue.max()
                 bins = np.arange(bmin, bmax + plotDict['binsize'] / 2.0, plotDict['binsize'])
-                # Catch edge-case where there is only 1 bin value
-                if bins.size < 2:
-                    bins = np.arange(bmin, bmax + plotDict['binsize'], plotDict['binsize'])
-            #  Else try to set up bins using min/max values if specified, or full data range.
+            #  Otherwise, not cumulative so just use metric values, without potential expansion.
             else:
-                if histRange[0] is not None:
-                    bmin = histRange[0]
-                else:
-                    bmin = metricValue.min()
-                if histRange[1] is not None:
-                    bmax = histRange[1]
-                else:
-                    bmax = metricValue.max()
-                bins = np.arange(bmin, bmax + plotDict['binsize'], plotDict['binsize'])
-        # Otherwise, determine number of bins, if neither 'bins' or 'binsize' were specified.
+                bins = np.arange(histRange[0], histRange[1] + plotDict['binsize'] / 2.0, plotDict['binsize'])
+            # Catch edge-case where there is only 1 bin value
+            if bins.size < 2:
+                bins = np.arange(bins.min() - plotDict['binsize'] * 2.0,
+                                 bins.max() + plotDict['binsize'] * 2.0, plotDict['binsize'])
         else:
-            if plotDict['bins'] is None:
-                bins = optimalBins(metricValue)
-            else:
-                bins = plotDict['bins']
+            bins = optimalBins(metricValue)
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
-        if plotDict['cumulative']:
-            # If cumulative is set, generate histogram without using histRange (to use full range of data).
-            n, b, p = plt.hist(metricValue, bins=bins, histtype='step', log=plotDict['logScale'],
-                               cumulative=plotDict['cumulative'], label=plotDict['label'],
+        # Check if any data falls within histRange, because otherwise histogram generation will fail.
+        if isinstance(bins, np.ndarray):
+            condition = ((metricValue >= bins.min()) & (metricValue <= bins.max()))
+        else:
+            condition = ((metricValue >= histRange[0]) & (metricValue <= histRange[1]))
+        plotValue = metricValue[condition]
+        if len(plotValue) == 0:
+            # No data is within histRange/bins. So let's just make a simple histogram anyway.
+            n, b, p = plt.hist(metricValue, bins=50, histtype='step', cumulative=plotDict['cumulative'],
+                               log=plotDict['logScale'], label=plotDict['label'],
                                color=plotDict['color'])
         else:
-            # Plot non-cumulative histogram.
-            # First, test if data falls within histRange, because otherwise histogram generation will fail.
-            if None in histRange:
-                if (histRange[0] is None) and (histRange[1] is not None):
-                    condition = (metricValue <= histRange[1])
-                elif (histRange[1] is None) and (histRange[0] is not None):
-                    condition = (metricValue >= histRange[0])
-                else:
-                    condition = np.arange(metricValue.size)
-                plotValue = metricValue[condition]
-            else:
-                plotValue = metricValue
-            # If there is only one value to histogram, need to set histRange, otherwise histogram will fail.
-            rangePad = 20.
-            if (np.unique(plotValue).size == 1) & (None in histRange):
-                warnings.warn('Only one metric value, making a guess at a good histogram range.')
-                histRange = [plotValue.min() - rangePad, plotValue.max() + rangePad]
-                if (plotValue.min() >= 0) & (histRange[0] < 0):
-                    # Reset histogram range if it went below 0.
-                    histRange[0] = 0.
-                if 'binsize' in plotDict:
-                    bins = np.arange(histRange[0], histRange[1], plotDict['binsize'])
-                else:
-                    bins = np.arange(histRange[0], histRange[1], (histRange[1] - histRange[0]) / 50.)
-            # If there is no data within the histogram range, we will generate an empty plot.
-            # If there is data, make the histogram.
-            if plotValue.size > 0:
-                # Generate histogram.
-                if np.min(histRange) is None:
-                    histRange = None
-                if np.where((plotValue > np.min(histRange)) & (plotValue < np.max(histRange)))[0].size < 1:
-                    histRange = None
-                if np.where((plotValue > np.min(bins)) & (plotValue < np.max(bins)))[0].size < 1:
-                    bins = 25
-                try:
-                    n, b, p = plt.hist(plotValue, bins=bins, histtype='step', log=plotDict['logScale'],
-                                       cumulative=plotDict['cumulative'], range=histRange,
-                                       label=plotDict['label'], color=plotDict['color'])
-                except:
-                    import pdb ; pdb.set_trace()
+            # There is data to plot, and we've already ensured histRange/bins are more than single value.
+            n, b, p = plt.hist(metricValue, bins=bins, range=histRange,
+                               histtype='step', log=plotDict['logScale'],
+                               cumulative=plotDict['cumulative'],
+                               label=plotDict['label'], color=plotDict['color'])
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
-
         def mjrFormatter(y, pos):
             return plotDict['yaxisformat'] % (y * plotDict['scale'])
+
         ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
-        # Set y limits.
-        if 'yMin' in plotDict:
-            if plotDict['yMin'] is not None:
-                plt.ylim(ymin=plotDict['yMin'])
-        else:
-            # There is a bug in histype='step' that can screw up the ylim.
-            # Comes up when running allSlicer.Cfg.py
-            try:
-                if plt.axis()[2] == max(n):
-                    plt.ylim([n.min(), n.max()])
-            except UnboundLocalError:
-                # This happens if we were generating an empty plot (no histogram).
-                # But in which case, the above error was probably not relevant. So skip it.
-                pass
-        if 'yMax' in plotDict:
-            plt.ylim(ymax=plotDict['yMax'])
-        # Set x limits.
-        if plotDict['xMin'] is not None:
-            plt.xlim(xmin=plotDict['xMin'])
-        if plotDict['xMax'] is not None:
-            plt.xlim(xmax=plotDict['xMax'])
+        # Set optional x, y limits.
+        plt.ylim([plotDict['yMin'], plotDict['yMax']])
+        plt.xlim([plotDict['xMin'], plotDict['xMax']])
         # Set/Add various labels.
         plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         plt.ylabel(plotDict['ylabel'], fontsize=plotDict['fontsize'])
