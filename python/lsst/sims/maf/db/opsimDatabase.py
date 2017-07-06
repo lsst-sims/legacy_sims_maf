@@ -75,7 +75,7 @@ class OpsimDatabase(Database):
         which are used *within this class*.
         """
         self.mjdCol = 'observationStartMJD'
-        self.slewID = 'slewActivityId'
+        self.slewID = 'slewHistory_slewCount'
         self.delayCol = 'activityDelay'
         
         self.fieldIdCol = 'fieldId'
@@ -487,7 +487,7 @@ class OpsimDatabase(Database):
         # Pull out a few special values to put into summary.
         table = self.tables['Config']
         # This section has a number of configuration parameter names hard-coded.
-        # I've left these here (rather than adding to self_colNames), because I think schema changes will in the config
+        # I've left these here (rather than adding to self_colNames), bc I think schema changes in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
         constraint = 'paramName="observatory/telescope/altitude_minpos"'
 
@@ -545,5 +545,3 @@ class OpsimDatabase(Database):
                                                       'NumVisits', 'GroupedVisits', 'Snaps']
             propdict['Filters']['keyorder'] = list(self.filterlist)
         return configSummary, configDetails
-
-
