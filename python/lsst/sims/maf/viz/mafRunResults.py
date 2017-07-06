@@ -72,9 +72,10 @@ class MafRunResults(object):
         tableFractions = [x for x in list(np.unique(self.stats['summaryName']))
                           if x.startswith('TableFraction')]
         if len(tableFractions) > 0:
-            tableFractions.remove('TableFraction 0 == P')
-            tableFractions.remove('TableFraction 1 == P')
-            tableFractions.remove('TableFraction 1 < P')
+            for x in ('TableFraction 0 == P', 'TableFraction 1 == P',
+                      'TableFraction 1 < P'):
+                if x in tableFractions:
+                    tableFractions.remove(x)
             tableFractions = sorted(tableFractions)
             self.summaryStatOrder.append('TableFraction 0 == P')
             for tableFrac in tableFractions:

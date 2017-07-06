@@ -109,7 +109,7 @@ class TableFractionMetric(BaseMetric):
         binNames.append('1 == P')
         binNames.append('1 < P')
         # Package the names and values up
-        result = np.empty(hist.size, dtype=[('name', '|S20'), ('value', float)])
+        result = np.empty(hist.size, dtype=[('name', np.str_, 20), ('value', float)])
         result['name'] = binNames
         result['value'] = hist
         return result

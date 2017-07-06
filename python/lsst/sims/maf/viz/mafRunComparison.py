@@ -130,7 +130,7 @@ class MafRunComparison(object):
         for r in self.runlist:
             for name in summaryNames[r]:
                 unique_stats.add(name)
-        dtype = [('statName', '|S1024')]
+        dtype = [('statName', np.str_, 1024)]
         for r in self.runlist:
             dtype += [(r, float)]
         dtype = np.dtype(dtype)

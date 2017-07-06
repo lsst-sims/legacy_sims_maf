@@ -80,9 +80,9 @@ class MeanValueAtHMetric(BaseMoMetric):
         if (self.Hmark < Hvals.min()) or (self.Hmark > Hvals.max()):
             warnings.warn('Desired H value of metric outside range of provided H values.')
             return None
-        value = np.interpolate([self.Hmark], Hvals, np.mean(metricVals.swapaxes(0, 1)))
+        value = np.interp([self.Hmark], Hvals, np.mean(metricVals.swapaxes(0, 1)))
         # Combine Hmark and Value into a structured array to match resultsDB expectations.
-        summaryVal = np.empty(1, dtype=[('name', '|S20'), ('value', float)])
+        summaryVal = np.empty(1, dtype=[('name', np.str_, 20), ('value', float)])
         summaryVal['name'] = self.name
         summaryVal['value'] = value
         return summaryVal
@@ -162,12 +162,12 @@ class MoCompletenessMetric(BaseMoMetric):
             completeness = np.where(n_all==0, 0, completeness)
         if self.cumulative:
             completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
-            summaryVal = np.empty(len(completenessInt), dtype=[('name', '|S20'), ('value', float)])
+            summaryVal = np.empty(len(completenessInt), dtype=[('name', np.str_, S20), ('value', float)])
             summaryVal['value'] = completenessInt
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H <= %f' % (Hval)
         else:
-            summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
+            summaryVal = np.empty(len(completeness), dtype=[('name', np.str_, 20), ('value', float)])
             summaryVal['value'] = completeness
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H = %f' % (Hval)
@@ -232,7 +232,7 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         if self.cumulative:
             for i, t in enumerate(self.times):
                 completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
-        summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
+        summaryVal = np.empty(len(completeness), dtype=[('name', np.str_, 20), ('value', float)])
         summaryVal['value'] = completeness
         for i, time in enumerate(self.times):
             summaryVal['name'][i] = '%s @ %.2f' % (self.units, time)
