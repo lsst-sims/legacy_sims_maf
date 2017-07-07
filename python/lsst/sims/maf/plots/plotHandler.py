@@ -558,14 +558,18 @@ class PlotHandler(object):
         return fignum
 
     def saveFig(self, fignum, outfileRoot, plotType, metricName, slicerName,
-                runName, constraint, metadata, displayDict=None):
+                runName, constraint, metadata, displayDict=None, trimWhitespace=True):
         fig = plt.figure(fignum)
         plotFile = outfileRoot + '_' + plotType + '.' + self.figformat
-        fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
+        if trimWhitespace:
+            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi,
+                        bbox_inches='tight')
+        else:
+            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
         # Generate a png thumbnail.
         if self.thumbnail:
             thumbFile = 'thumb.' + outfileRoot + '_' + plotType + '.png'
-            plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72)
+            plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72, bbox_inches='tight')
         # Save information about the file to resultsDb.
         if self.resultsDb:
             if displayDict is None:
