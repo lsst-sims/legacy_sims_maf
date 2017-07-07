@@ -95,8 +95,12 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         idxs = np.argsort(fieldData[self.fieldIdColName])
         # Set needed values for slice metadata.
         self.slicePoints['sid'] = fieldData[self.fieldIdColName][idxs]
-        self.slicePoints['ra'] = np.radians(fieldData[self.fieldRaColName][idxs])
-        self.slicePoints['dec'] = np.radians(fieldData[self.fieldDecColName][idxs])
+        if self.latLonDeg:
+            self.slicePoints['ra'] = np.radians(fieldData[self.fieldRaColName][idxs])
+            self.slicePoints['dec'] = np.radians(fieldData[self.fieldDecColName][idxs])
+        else:
+            self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
+            self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
         self._runMaps(maps)
         # Set up data slicing.
