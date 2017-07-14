@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import unittest
 import lsst.sims.maf.metrics as metrics
 
@@ -195,6 +194,51 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.ssoObs['velocity'][0:2] = 1.5
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(metricValue, 1)
+
+
+class TestKnownObjectMetrics(unittest.TestCase):
+
+    def setUp(self):
+        self.t1 = 53371
+        self.t2 = 57023
+        times = np.arange(self.t1-365*2, self.t2+365*3, 2)
+        cols = ['MJD(UTC)', 'RA', 'Dec', 'magV', 'Elongation', 'appMagV']
+        dtype = []
+        for c in cols:
+            dtype.append((c, '<f8'))
+        ssoObs = np.recarray([len(times)], dtype=dtype)
+
+        ssoObs['MJD(UTC)'] = times
+        ssoObs['RA'] = np.arange(len(times))
+        ssoObs['Dec'] = np.arange(len(times))
+        ssoObs['magV'] = np.zeros(len(times), dtype='float') + 20.0
+        ssoObs['Elongation'] = np.zeros(len(times), dtype=float) + 180.0
+        self.Hval = 0.0
+        ssoObs['appMagV'] = ssoObs['magV'] + self.Hval
+        self.orb = None
+        self.ssoObs = ssoObs
+
+    def testKnownObjectsMetric(self):
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=20.5,
+                                                       tSwitch2=self.t2, eff2=1.0, vMagThresh2=20.5,
+                                                       eff3=1.0, vMagThresh3=22)
+        mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
+        self.assertEqual(mVal, self.ssoObs['MJD(UTC)'].min())
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=15.0,
+                                                       tSwitch2=self.t2, eff2=1.0, vMagThresh2=20.5,
+                                                       eff3=1.0, vMagThresh3=22)
+        mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
+        self.assertEqual(mVal, self.t1)
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=0.0, vMagThresh1=20.5,
+                                                       tSwitch2=self.t2, eff2=1.0, vMagThresh2=20.5,
+                                                       eff3=1.0, vMagThresh3=22)
+        mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
+        self.assertEqual(mVal, self.t1)
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=0.0, vMagThresh1=10,
+                                                       tSwitch2=self.t2, eff2=1.0, vMagThresh2=10.5,
+                                                       eff3=1.0, vMagThresh3=22)
+        mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
+        self.assertEqual(mVal, self.t2)
 
 
 if __name__ == "__main__":
