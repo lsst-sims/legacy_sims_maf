@@ -211,20 +211,34 @@ class ObsArcMetric(BaseMoMetric):
         return arc
 
 class DiscoveryMetric(BaseMoMetric):
-    """Identify the discovery opportunities for an object."""
+    """Identify the discovery opportunities for an SSobject.
+    
+    
+    Parameters
+    ----------
+    nObsPerNight : int, opt
+        Number of observations required within a single night. Default 2.
+    tMin : float, opt
+        Minimum time span between observations in a single night, in days.
+        Default 5 minutes (5/60/24). 
+    tMax : float, opt
+        Maximum time span between observations in a single night, in days.
+        Default 90 minutes.
+    nNightsPerWindow : int, opt
+        Number of nights required with observations, within the track window. Default 3.
+    tWindow : int, opt
+        Number of nights included in the track window. Default 15.
+    snrLimit : None or float, opt
+        SNR limit to use for observations. If snrLimit is None, (default), then it uses
+        the completeness calculation added to the 'vis' column (probabilistic visibility, 
+        based on 5-sigma limit). If snrLimit is not None, it uses this SNR value as a cutoff.
+    metricName : str, opt
+        The metric name to use; default will be to construct Discovery_nObsPerNightxnNightsPerWindowintWindow.
+    """
     def __init__(self, nObsPerNight=2,
                  tMin=5./60.0/24.0, tMax=90./60./24.0,
                  nNightsPerWindow=3, tWindow=15,
                  snrLimit=None, badval=None, **kwargs):
-        """
-        @ nObsPerNight = number of observations per night required for tracklet
-        @ tMin = min time start/finish for the tracklet (days)
-        @ tMax = max time start/finish for the tracklet (days)
-        @ nNightsPerWindow = number of nights with observations required for track
-        @ tWindow = max number of nights in track (days)
-        @ snrLimit .. if snrLimit is None then uses 'completeness' calculation in 'vis' column.
-                   .. if snrLimit is not None, then uses this SNR value as a cutoff.
-        """
         # Define anything needed by the child metrics first.
         self.snrLimit = snrLimit
         self.childMetrics = {'N_Chances': Discovery_N_ChancesMetric(self),
@@ -232,8 +246,14 @@ class DiscoveryMetric(BaseMoMetric):
                              'Time': Discovery_TimeMetric(self),
                              'RADec': Discovery_RADecMetric(self),
                              'EcLonLat': Discovery_EcLonLatMetric(self)}
+        if 'metricName' in kwargs:
+            metricName = kwargs.get('metricName')
+            del kwargs['metricName']
+        else:
+            metricName = 'Discovery_%.0fx%.0fin%.0f' % (nObsPerNight, nNightsPerWindow, tWindow)
         # Set up for inheriting from __init__.
-        super(DiscoveryMetric, self).__init__(childMetrics=self.childMetrics, badval=badval, **kwargs)
+        super(DiscoveryMetric, self).__init__(metricName=metricName, childMetrics=self.childMetrics,
+                                              badval=badval, **kwargs)
         # Define anything needed for this metric.
         self.nObsPerNight = nObsPerNight
         self.tMin = tMin
@@ -328,7 +348,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
         if len(vis) == 0:
             return self.badval
         if self.nightStart is None and self.nightEnd is None:
-            return len(vis)
+            return len(metricValues['start'])
         # Otherwise, we have to sort out what night the discovery chances happened on.
         visSort = np.argsort(ssoObs[self.expMJDCol][vis])
         nights = ssoObs[self.nightCol][vis][visSort]
@@ -799,44 +819,88 @@ class PeakVMagMetric(BaseMoMetric):
 
 
 class KnownObjectsMetric(BaseMoMetric):
-    """Identify objects which could be classified as 'previously known' based on their peak V magnitude,
-    returning the time at which each first reached that peak V magnitude.
+    """Identify SS objects which could be classified as 'previously known' based on their peak V magnitude.
+
+    Returns the time at which each first reached that peak V magnitude.
+    The default values are calibrated using the NEOs larger than 140m discovered in the last 20 years 
+    and assuming a 30% completeness in 2017.    
 
     Parameters
     -----------
     elongThresh : float, opt
-        The cutoff in solar elongation to consider an object 'visible'. Default 60 deg.
+        The cutoff in solar elongation to consider an object 'visible'. Default 100 deg.
     vMagThresh1 : float, opt
-        The magnitude threshhold for previously known objects. Default 20.0.
-        This is calibrated using NEOs discovered in the last 15 years and assuming a current 25% completeness.
+        The magnitude threshold for previously known objects. Default 20.0.
+    eff1 : float, opt
+        The likelihood of actually achieving each individual input observation.
+        If the input observations include one observation per day, an 'eff' value of 0.3 would
+        mean that (on average) only one third of these observations would be achieved. 
+        This is similar to the level for LSST, which can cover the visible sky every 3-4 days.
+        Default 1.0
+    tSwitch1 : float, opt
+        The (MJD) time to switch between vMagThresh1 + eff1 to vMagThresh2 + eff2.
+        Default 53371 (2005).
     vMagThresh2 : float, opt
         The magnitude threshhold for previously known objects. Default 22.0.
         This is based on assuming PS and other surveys will be efficient down to V=22.
-    tSwitch : float, opt
-        The time to switch between evaluating against vMagThresh1 to vMagThresh2. Default 57023 (start of 2015).
+    eff2 : float, opt
+        The efficiency of observations during the second period of time. Default 1.0.
+    tSwitch2 : float, opt
+        The (MJD) time to switch between vMagThresh2 + eff2 to vMagThresh3 + eff3.
+        Default 57023 (2015). 
+    vMagThresh3 : float, opt
+        The magnitude threshold during the third (last) period. Default 22.0, based on PS1 + Catalina.
+    eff3 : float, opt
+        The efficiency of observations during the third (last) period. Default 1.0.
     """
-    def __init__(self, elongThresh=60., vMagThresh1=20.0, vMagThresh2=22.0, tSwitch=57023,
+    def __init__(self, elongThresh=100., vMagThresh1=20.0, eff1=1.0, tSwitch1=53371,
+                 vMagThresh2=21.5, eff2=1.0, tSwitch2=57023,
+                 vMagThresh3=22.0, eff3=1.0,
                  elongCol='Elongation', expMJDCol='MJD(UTC)', **kwargs):
         super(KnownObjectsMetric, self).__init__(**kwargs)
         self.elongThresh = elongThresh
         self.elongCol = elongCol
         self.vMagThresh1 = vMagThresh1
+        self.eff1 = eff1
+        self.tSwitch1 = tSwitch1
         self.vMagThresh2 = vMagThresh2
-        self.tSwitch = tSwitch
+        self.eff2 = eff2
+        self.tSwitch2 = tSwitch2
+        self.vMagThresh3 = vMagThresh3
+        self.eff3 = eff3
         self.expMJDCol = expMJDCol
+        self.badval = int(tSwitch2) + 365*1000
+
+    def _pickObs(self, potentialObsTimes, eff):
+        # From a set of potential observations, apply an efficiency
+        # And return the minimum time (if any)
+        randPick = np.random.rand(len(potentialObsTimes))
+        picked = np.where(randPick <= eff)[0]
+        if len(picked) > 0:
+            discTime = potentialObsTimes[picked].min()
+        else:
+            discTime = None
+        return discTime
 
     def run(self, ssoObs, orb, Hval):
         visible = np.where(ssoObs[self.elongCol] >= self.elongThresh, 1, 0)
-        # Discovery before tSwitch?
-        earlyObs = np.where((ssoObs[self.expMJDCol] < self.tSwitch) & visible)[0]
-        overPeak = np.where(ssoObs[self.appMagVCol][earlyObs] <= self.vMagThresh1)[0]
+        discoveryTime = None
+        # Look for discovery in any of the three periods.
+        obs1 = np.where((ssoObs[self.expMJDCol] < self.tSwitch1) & visible)[0]
+        overPeak = np.where(ssoObs[self.appMagVCol][obs1] <= self.vMagThresh1)[0]
         if len(overPeak) > 0:
-            discoveryTime = ssoObs[self.expMJDCol][earlyObs][overPeak].min()
-        else:
-            lateObs = np.where((ssoObs[self.expMJDCol] >= self.tSwitch) & visible)[0]
-            overPeak = np.where(ssoObs[self.appMagVCol][lateObs] <= self.vMagThresh2)[0]
+            discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs1][overPeak], self.eff1)
+        if discoveryTime is None:
+            obs2 = np.where((ssoObs[self.expMJDCol] >= self.tSwitch1) &
+                            (ssoObs[self.expMJDCol] < self.tSwitch2) & visible)[0]
+            overPeak = np.where(ssoObs[self.appMagVCol][obs2] <= self.vMagThresh2)[0]
             if len(overPeak) > 0:
-                discoveryTime = ssoObs[self.expMJDCol][lateObs][overPeak].min()
-            else:
-                discoveryTime = self.badval
+                discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs2][overPeak], self.eff2)
+        if discoveryTime is None:
+            obs3 = np.where((ssoObs[self.expMJDCol] >= self.tSwitch2) & visible)[0]
+            overPeak = np.where(ssoObs[self.appMagVCol][obs3] <= self.vMagThresh3)[0]
+            if len(overPeak) > 0:
+                discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs3][overPeak], self.eff3)
+        if discoveryTime is None:
+            discoveryTime = self.badval
         return discoveryTime
