@@ -56,17 +56,17 @@ class FOPlot(BasePlotter):
         plt.plot(np.sort(metricValue.compressed()), cumulativeArea, 'k-',
                  linewidth=plotDict['linewidth'], zorder=0)
         # This is breaking the rules and calculating the summary stats in two places.
-        # Could just calculate summary stats and pass in labels.
+        # Should just calculate summary stats and pass in labels.
         rarr = np.array(list(zip(metricValue.compressed())),
                         dtype=[('fO', metricValue.dtype)])
-        fOArea_value = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
-                                      nside=slicer.nside).run(rarr)
-        fONv_value = metrics.fONv(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
-                                  nside=slicer.nside).run(rarr)
-        fOArea_value_n = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=True,
+        fOArea_value = metrics.fOAreaMetric(col='fO', Asky=plotDict['Asky'], norm=False,
+                                            nside=slicer.nside).run(rarr)
+        fONv_value = metrics.fONvMetric(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
                                         nside=slicer.nside).run(rarr)
-        fONv_value_n = metrics.fONv(col='fo', Nvisit=plotDict['Nvisits'], norm=True,
-                                    nside=slicer.nside).run(rarr)
+        fOArea_value_n = metrics.fOAreaMetric(col='fO', Asky=plotDict['Asky'], norm=True,
+                                              nside=slicer.nside).run(rarr)
+        fONv_value_n = metrics.fONvMetric(col='fo', Nvisit=plotDict['Nvisits'], norm=True,
+                                          nside=slicer.nside).run(rarr)
 
         plt.axvline(x=plotDict['Nvisits'], linewidth=plotDict['reflinewidth'], color='b')
         plt.axhline(y=plotDict['Asky'] / 1000., linewidth=plotDict['reflinewidth'], color='r')
