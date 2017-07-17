@@ -732,7 +732,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         plotDict = {}
         sqlconstraint = 'filter = "%s"' % (f)
         bundle = metricBundles.MetricBundle(metric, slicer,
-                                            sqlconstraint, displayDict=displayDict,
+                                            sqlconstraint, runName=runName,
+                                            displayDict=displayDict,
                                             stackerList=[stacker, stacker2],
                                             plotDict=plotDict,
                                             plotFuncs=[plotFunc])
@@ -749,7 +750,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                        'caption': 'Median solar elongation in degrees', 'order': order}
         metric = metrics.MedianMetric('solarElong')
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
+        bundle = metricBundles.MetricBundle(metric, slicer, sql,
+                                            runName=runName,
+                                            displayDict=displayDict,
                                             plotFuncs=plotFuncs)
         bundleList.append(bundle)
 
@@ -758,7 +761,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                        'caption': 'Minimum solar elongation in degrees', 'order': order}
         metric = metrics.MinMetric('solarElong')
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
+        bundle = metricBundles.MetricBundle(metric, slicer, sql,
+                                            runName=runName,
+                                            displayDict=displayDict,
                                             plotFuncs=plotFuncs)
         bundleList.append(bundle)
 

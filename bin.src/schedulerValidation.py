@@ -1137,6 +1137,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
 
         order += 1
 
+        """
         sqlconstraint = ''
         metadata = slewType
 
@@ -1154,6 +1155,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                             displayDict=displayDict, runName=runName, metadata=metadata)
         slewActivitiesBL.append(bundle)
         order += 1
+        """
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
@@ -1241,13 +1243,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
         displayDict = {'group': houranglegroup, 'order': filtorder[f],
                        'caption':
                        'Pointing History on the alt-az sky (zenith center) for filter %s' % f}
-        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, runName=runName,
+                                            plotDict=plotDict,
                                             plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
     displayDict = {'group': houranglegroup, 'subgroup': 'All Filters',
                    'caption':
                    'Pointing History on the alt-az sky (zenith center), all filters'}
-    bundle = metricBundles.MetricBundle(metric, slicer, '', plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, '', runName=runName, plotDict=plotDict,
                                         plotFuncs=[plotFunc], displayDict=displayDict)
     bundleList.append(bundle)
 
