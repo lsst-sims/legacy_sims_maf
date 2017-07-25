@@ -201,7 +201,8 @@ class TestKnownObjectMetrics(unittest.TestCase):
     def setUp(self):
         self.t1 = 53371
         self.t2 = 57023
-        times = np.arange(self.t1-365*2, self.t2+365*3, 2)
+        self.t3 = 59580
+        times = np.arange(self.t1-365*2, self.t3+365*3, 1)
         cols = ['MJD(UTC)', 'RA', 'Dec', 'magV', 'Elongation', 'appMagV']
         dtype = []
         for c in cols:
@@ -221,24 +222,40 @@ class TestKnownObjectMetrics(unittest.TestCase):
     def testKnownObjectsMetric(self):
         knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=20.5,
                                                        tSwitch2=self.t2, eff2=1.0, vMagThresh2=20.5,
-                                                       eff3=1.0, vMagThresh3=22)
+                                                       tSwitch3=self.t3, eff3=1.0, vMagThresh3=20.5,
+                                                       eff4=1.0, vMagThresh4=22)
         mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(mVal, self.ssoObs['MJD(UTC)'].min())
         knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=15.0,
                                                        tSwitch2=self.t2, eff2=1.0, vMagThresh2=20.5,
-                                                       eff3=1.0, vMagThresh3=22)
+                                                       tSwitch3=self.t3, eff3=1.0, vMagThresh3=20.5,
+                                                       eff4=1.0, vMagThresh4=22)
         mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(mVal, self.t1)
         knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=0.0, vMagThresh1=20.5,
                                                        tSwitch2=self.t2, eff2=1.0, vMagThresh2=20.5,
-                                                       eff3=1.0, vMagThresh3=22)
+                                                       tSwitch3=self.t3, eff3=1.0, vMagThresh3=20.5,
+                                                       eff4=1.0, vMagThresh4=22)
         mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(mVal, self.t1)
-        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=0.0, vMagThresh1=10,
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=10,
                                                        tSwitch2=self.t2, eff2=1.0, vMagThresh2=10.5,
-                                                       eff3=1.0, vMagThresh3=22)
+                                                       tSwitch3=self.t3, eff3=1.0, vMagThresh3=20.5,
+                                                       eff4=1.0, vMagThresh4=22)
         mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(mVal, self.t2)
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=10,
+                                                       tSwitch2=self.t2, eff2=1.0, vMagThresh2=10.5,
+                                                       tSwitch3=self.t3, eff3=1.0, vMagThresh3=10.5,
+                                                       eff4=1.0, vMagThresh4=22)
+        mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
+        self.assertEqual(mVal, self.t3)
+        knownObjectMetric = metrics.KnownObjectsMetric(tSwitch1=self.t1, eff1=1.0, vMagThresh1=10,
+                                                       tSwitch2=self.t2, eff2=1.0, vMagThresh2=10.5,
+                                                       tSwitch3=self.t3, eff3=1.0, vMagThresh3=10.5,
+                                                       eff4=1.0, vMagThresh4=10.5)
+        mVal = knownObjectMetric.run(self.ssoObs, self.orb, self.Hval)
+        self.assertEqual(mVal, knownObjectMetric.badval)
 
 
 if __name__ == "__main__":
