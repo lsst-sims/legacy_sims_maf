@@ -836,26 +836,35 @@ class KnownObjectsMetric(BaseMoMetric):
         If the input observations include one observation per day, an 'eff' value of 0.3 would
         mean that (on average) only one third of these observations would be achieved. 
         This is similar to the level for LSST, which can cover the visible sky every 3-4 days.
-        Default 1.0
+        Default 0.1
     tSwitch1 : float, opt
-        The (MJD) time to switch between vMagThresh1 + eff1 to vMagThresh2 + eff2.
+        The (MJD) time to switch between vMagThresh1 + eff1 to vMagThresh2 + eff2, e.g.
+        the end of the first period.
         Default 53371 (2005).
     vMagThresh2 : float, opt
         The magnitude threshhold for previously known objects. Default 22.0.
         This is based on assuming PS and other surveys will be efficient down to V=22.
     eff2 : float, opt
-        The efficiency of observations during the second period of time. Default 1.0.
+        The efficiency of observations during the second period of time. Default 0.1
     tSwitch2 : float, opt
         The (MJD) time to switch between vMagThresh2 + eff2 to vMagThresh3 + eff3.
         Default 57023 (2015). 
     vMagThresh3 : float, opt
-        The magnitude threshold during the third (last) period. Default 22.0, based on PS1 + Catalina.
+        The magnitude threshold during the third period. Default 22.0, based on PS1 + Catalina.
     eff3 : float, opt
-        The efficiency of observations during the third (last) period. Default 1.0.
+        The efficiency of observations during the third period. Default 0.1
+    tSwitch3 : float, opt
+        The (MJD) time to switch between vMagThresh3 + eff3 to vMagThresh4 + eff4.
+        Default 59580 (2022).
+    vMagThresh4 : float, opt
+        The magnitude threshhold during the fourth (last) period. Default 22.0, based on PS1 + Catalina.
+    eff4 : float, opt
+        The efficiency of observations during the fourth (last) period. Default 0.2 
     """
-    def __init__(self, elongThresh=100., vMagThresh1=20.0, eff1=1.0, tSwitch1=53371,
-                 vMagThresh2=21.5, eff2=1.0, tSwitch2=57023,
-                 vMagThresh3=22.0, eff3=1.0,
+    def __init__(self, elongThresh=100., vMagThresh1=20.0, eff1=0.1, tSwitch1=53371,
+                 vMagThresh2=21.5, eff2=0.1, tSwitch2=57023,
+                 vMagThresh3=22.0, eff3=0.1, tSwitch3=59580,
+                 vMagThresh4=22.0, eff4=0.2,
                  elongCol='Elongation', expMJDCol='MJD(UTC)', **kwargs):
         super(KnownObjectsMetric, self).__init__(**kwargs)
         self.elongThresh = elongThresh
@@ -868,8 +877,11 @@ class KnownObjectsMetric(BaseMoMetric):
         self.tSwitch2 = tSwitch2
         self.vMagThresh3 = vMagThresh3
         self.eff3 = eff3
+        self.tSwitch3 = tSwitch3
+        self.vMagThresh4 = vMagThresh4
+        self.eff4 = eff4
         self.expMJDCol = expMJDCol
-        self.badval = int(tSwitch2) + 365*1000
+        self.badval = int(tSwitch3) + 365*1000
 
     def _pickObs(self, potentialObsTimes, eff):
         # From a set of potential observations, apply an efficiency
@@ -886,21 +898,31 @@ class KnownObjectsMetric(BaseMoMetric):
         visible = np.where(ssoObs[self.elongCol] >= self.elongThresh, 1, 0)
         discoveryTime = None
         # Look for discovery in any of the three periods.
+        # First period.
         obs1 = np.where((ssoObs[self.expMJDCol] < self.tSwitch1) & visible)[0]
         overPeak = np.where(ssoObs[self.appMagVCol][obs1] <= self.vMagThresh1)[0]
         if len(overPeak) > 0:
             discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs1][overPeak], self.eff1)
+        # Second period.
         if discoveryTime is None:
             obs2 = np.where((ssoObs[self.expMJDCol] >= self.tSwitch1) &
                             (ssoObs[self.expMJDCol] < self.tSwitch2) & visible)[0]
             overPeak = np.where(ssoObs[self.appMagVCol][obs2] <= self.vMagThresh2)[0]
             if len(overPeak) > 0:
                 discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs2][overPeak], self.eff2)
+        # Third period.
         if discoveryTime is None:
-            obs3 = np.where((ssoObs[self.expMJDCol] >= self.tSwitch2) & visible)[0]
+            obs3 = np.where((ssoObs[self.expMJDCol] >= self.tSwitch2) &
+                            (ssoObs[self.expMJDCol] < self.tSwitch3) & visible)[0]
             overPeak = np.where(ssoObs[self.appMagVCol][obs3] <= self.vMagThresh3)[0]
             if len(overPeak) > 0:
                 discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs3][overPeak], self.eff3)
+        # Fourth period.
+        if discoveryTime is None:
+            obs4 = np.where((ssoObs[self.expMJDCol] >= self.tSwitch3) & visible)[0]
+            overPeak = np.where(ssoObs[self.appMagVCol][obs4] <= self.vMagThresh4)[0]
+            if len(overPeak) > 0:
+                discoveryTime = self._pickObs(ssoObs[self.expMJDCol][obs4][overPeak], self.eff4)
         if discoveryTime is None:
             discoveryTime = self.badval
         return discoveryTime
