@@ -12,7 +12,7 @@ class StellarDensityMap(BaseMap):
     Return the cumulative stellar luminosity function for each slicepoint. Units of stars per sq degree.
     Uses a healpix map of nside=64. Uses the nearest healpix point for other ra,dec values.
     """
-    def __init__(self, startype='allstars', filtername='r'):
+    def __init__(self, startype='allstars', filtername='r', nside=64):
         """
         Parameters
         ----------
@@ -24,9 +24,13 @@ class StellarDensityMap(BaseMap):
 
         filtername : str
             Filter to use. Options of u,g,r,i,z,y
+
+        nside : int
+            The nside to load. Default is 64, may add 128 in future.
         """
         self.mapDir = os.path.join(getPackageDir('sims_maps'),'StarMaps')
         self.filtername = filtername
+        self.nside = nside
         if startype == 'allstars':
             self.startype = ''
         else:
@@ -34,7 +38,7 @@ class StellarDensityMap(BaseMap):
 
 
     def _readMap(self):
-        filename = 'starDensity_%s_%snside_64.npz' % (self.filtername, self.startype)
+        filename = 'starDensity_%s_%snside_%i.npz' % (self.filtername, self.startype, self.nside)
         starMap = np.load(os.path.join(self.mapDir,filename))
         self.starMap = starMap['starDensity'].copy()
         self.starMapBins = starMap['bins'].copy()
