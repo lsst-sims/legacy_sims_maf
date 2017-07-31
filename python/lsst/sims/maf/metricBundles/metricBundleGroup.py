@@ -90,8 +90,7 @@ class MetricBundleGroup(object):
         self.outDir = outDir
         if not os.path.isdir(self.outDir):
             os.makedirs(self.outDir)
-        # Set the table we're going to be querying.
-        self.dbTable = dbTable
+
         # Do some type checking on the MetricBundle dictionary.
         if not isinstance(bundleDict, dict):
             raise ValueError('bundleDict should be a dictionary containing MetricBundle objects.')
@@ -102,10 +101,16 @@ class MetricBundleGroup(object):
         self.constraints = list(set([b.constraint for b in bundleDict.values()]))
         # Set the bundleDict (all bundles, with all constraints)
         self.bundleDict = bundleDict
+
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
             warnings.warn('Warning: dbObj should be an instantiated Database (or child) object.')
         self.dbObj = dbObj
+        # Set the table we're going to be querying.
+        self.dbTable = dbTable
+        if self.dbTable is None:
+            self.dbTable = self.dbObj.summaryTable
+
         # Check the resultsDb (optional).
         if resultsDb is not None:
             if not isinstance(resultsDb, db.ResultsDb):
@@ -261,8 +266,12 @@ class MetricBundleGroup(object):
                 warnings.warn('No data matching constraint %s' % constraint)
                 return
             except ValueError:
-                warnings.warn('One of the columns requested from the database was not available.' +
+                warnings.warn('One or more of the columns requested from the database was not available.' +
                               ' Skipping constraint %s' % constraint)
+                metricsSkipped = []
+                for b in self.currentBundleDict.values():
+                    metricsSkipped.append("%s : %s : %s" % (b.metric.name, b.metadata, b.slicer.slicerName))
+                warnings.warn(' This means skipping metrics %s' % metricsSkipped)
                 return
 
         # Find compatible subsets of the MetricBundle dictionary,
