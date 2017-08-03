@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Build a stellar density healpix map")
     parser.add_argument("--filtername", type=str, default='r', help="which filter: u, g, r, i, z, y")
     parser.add_argument("--stars", type=str, default='allstars', help="the stellar type to pull from CatSim")
-    parser.add_argument("--mag_min", type=flaot, default=15., help="How bright to go")
+    parser.add_argument("--mag_min", type=float, default=15., help="How bright to go")
 
     args = parser.parse_args()
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     mag_min = args.mag_min
 
     # Set up healpy map and ra, dec centers
-    nside = 64
+    nside = 128
 
     # Set the min to 15 by default since we saturate there. CatSim max is 28
     bins = np.arange(mag_min, 28.2, .2)
