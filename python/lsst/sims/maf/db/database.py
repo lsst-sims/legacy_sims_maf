@@ -1,10 +1,16 @@
 from __future__ import print_function
-from builtins import object
-import os, warnings
-from .Table import Table
-import inspect
-from sqlalchemy import text
 from future.utils import with_metaclass
+import os
+import inspect
+import numpy as np
+from sqlalchemy import func, text
+from sqlalchemy import Table
+from sqlalchemy.engine import reflection
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", UserWarning)
+    from lsst.sims.catalogs.db import DBObject
+
 
 __all__ = ['DatabaseRegistry', 'Database']
 
@@ -41,10 +47,10 @@ class DatabaseRegistry(type):
                 print(inspect.getdoc(cls.registry[databasename]))
 
 
-class Database(with_metaclass(DatabaseRegistry, object)):
+class Database(with_metaclass(DatabaseRegistry, DBObject)):
     """Base class for database access."""
 
-    def __init__(self, database, driver='sqlite', host=None, port=None, dbTables=None, defaultdbTables=None,
+    def __init__(self, database, driver='sqlite', host=None, port=None,
                  chunksize=1000000, longstrings=False, verbose=False):
         """
         Instantiate database object to handle queries of the database.
@@ -52,56 +58,45 @@ class Database(with_metaclass(DatabaseRegistry, object)):
         database = Name of database or sqlite filename
         driver =  Name of database dialect+driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
         host = Name of database host (optional)
-        port = String port number (optional)
-        dbTables = dictionary of names of tables in the code : [names of tables in the database, primary keys]
+        port = String port number (optional)        
         """
-        if longstrings:
-            typeOverRide = {'VARCHAR':(str, 1024), 'NVARCHAR':(str, 1024),
-                            'TEXT':(str, 1024), 'CLOB':(str, 1024),
-                            'STRING':(str, 1024)}
-        self.driver = driver
-        self.host = host
-        self.port = port
-        self.database = database
-        self.chunksize = chunksize
         # If it's a sqlite file, check that the filename exists.
-        #  This gives a more understandable error message than trying to connect to non-existent file later.
+        # This gives a more understandable error message than trying to connect to non-existent file later.
         if driver=='sqlite':
             if not os.path.isfile(database):
                 raise IOError('Sqlite database file "%s" not found.' %(database))
-        # Add default values to provided input dictionaries (if not present in input dictionaries)
-        if dbTables == None:
-            self.dbTables = defaultdbTables
-        else:
-            self.dbTables = dbTables
-            if defaultdbTables is not None:
-                # Add defaultdbTables into dbTables
-                defaultdbTables.update(self.dbTables)
-                self.dbTables = defaultdbTables
-        # Connect to database tables and store connections.
-        if self.dbTables is None:
-            self.tables = None
-        else:
-            self.tables = {}
-            for k in self.dbTables:
-                if len(self.dbTables[k]) != 2:
-                    raise Exception('Need table name plus primary key for each value in dbTables. Missing data for %s:%s'
-                                    %(k, self.dbTables[k]))
-                if longstrings:
-                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
-                                           database=self.database, driver=self.driver,
-                                           typeOverRide=typeOverRide,
-                                           host=self.host, port=self.port,
-                                           verbose=verbose)
-                else:
-                    self.tables[k] = Table(self.dbTables[k][0], self.dbTables[k][1],
-                                           database=self.database, driver=self.driver,
-                                           host=self.host, port=self.port,
-                                           verbose=verbose)
 
-    def fetchMetricData(self, colnames, sqlconstraint, **kwargs):
+        # Connect to database using DBObject init.
+        super(Database, self).__init__(database=database, driver=driver,
+                                       host=host, port=port, verbose=verbose, connection=None)
+
+        self.dbTypeMap = {'BIGINT': (int,), 'BOOLEAN': (bool,), 'FLOAT': (float,), 'INTEGER': (int,),
+                         'NUMERIC': (float,), 'SMALLINT': (int,), 'TINYINT': (int,), 'VARCHAR': (np.str, 256),
+                         'TEXT': (np.str, 256), 'CLOB': (np.str, 256), 'NVARCHAR': (np.str, 256),
+                         'NCLOB': (np.str, 256), 'NTEXT': (np.str, 256), 'CHAR': (np.str, 1), 'INT': (int,),
+                         'REAL': (float,), 'DOUBLE': (float,), 'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,),
+                         'DECIMAL': (float,)}
+        if longstrings:
+            typeOverRide = {'VARCHAR':(np.str, 1024), 'NVARCHAR':(np.str, 1024),
+                            'TEXT':(np.str, 1024), 'CLOB':(np.str, 1024),
+                            'STRING':(np.str, 1024)}
+            self.dbTypeMap.update(typeOverRide)
+
+        # Get a dict (keyed by the table names) of all the columns in each table.
+        self.tableNames = reflection.Inspector.from_engine(self.connection.engine).get_table_names()
+        self.tableNames += reflection.Inspector.from_engine(self.connection.engine).get_view_names()
+        self.columnNames = {}
+        for t in self.tableNames:
+            cols = reflection.Inspector.from_engine(self.connection.engine).get_columns(t)
+            self.columnNames[t] = [xxx['name'] for xxx in cols]
+        # Create all the sqlalchemy table objects. This lets us see the schema and query it with types.
+        self.tables = {}
+        for tablename in self.tableNames:
+            self.tables[tablename] = Table(tablename, self.connection.metadata, autoload=True)
+
+    def fetchMetricData(self, colnames, sqlconstraint, table=None, **kwargs):
         """
-        Get data from database that is destined to be used for metric evaluation.
+        Get data from table that is destined to be used for metric evaluation.
         """
         raise NotImplementedError('Implement in subclass')
 
@@ -114,13 +109,74 @@ class Database(with_metaclass(DatabaseRegistry, object)):
         configDetails = {}
         return configSummary, configDetails
 
-    def queryDatabase(self, tableName, sqlQuery):
+    def query_arbitrary(self, sqlQuery, dtype=None):
         """
-        Execute a general sql query (useful for arbitary joins or queries not in convenience functions).
-        At present, 'table' (name) must be specified and all columns returned by query must be part of 'table'.
-        Returns numpy recarray with results.
+        Simple wrapper around execute_arbitrary for backwards compatibility.
+    
+        Parameters
+        -----------
+        sqlQuery : str
+            SQL query. 
+        dtype: opt, numpy dtype.
+            Numpy recarray dtype. If None, then an attempt to determine the dtype will be made.
+            This attempt will fail if there are commas in the data you query. 
+
+        Returns
+        -------
+        numpy.recarray        
         """
-        t = self.tables[tableName]
-        results = t.connection.engine.execute(text(sqlQuery))
-        data = t._postprocess_results(results.fetchall())
-        return data
+        return self.execute_arbitrary(sqlQuery, dtype=dtype)
+
+    def query_columns(self, tablename, colnames=None, sqlconstraint=None,
+                            groupBy=None, aggregate=func.min, numLimit=None):
+        # Build the sqlalchemy query from a single table, with various columns/constraints/etc.
+        # Does NOT use a mapping between column names and database names - assumes the database names
+        # are what the user will specify.
+        if tablename not in self.tables:
+            raise ValueError('Tablename %s not in list of available tables (%s).'
+                             % (tablename, self.tables.keys()))
+        if colnames is None:
+            colnames = self.columnNames[tablename]
+        else:
+            for col in colnames:
+                if col not in self.columnNames[tablename]:
+                    raise ValueError("Requested column %s not available in table %s" % (col, tablename))
+            if groupBy is not None:
+                if groupBy not in self.columnNames[tablename]:
+                    raise ValueError("GroupBy column %s is not available in table %s" % (groupBy, tablename))
+
+        for col in colnames:
+            if col == colnames[0]:
+                if groupBy:
+                    query = self.connection.session.query(aggregate(col))
+                else:
+                    query = self.connection.session.query(col)
+            else:
+                if groupBy:
+                    query = query.add_column(aggregate(col))
+                else:
+                    query = query.add_column(col)
+
+        query = query.select_from(self.tables[tablename])
+
+        if sqlconstraint is not None:
+            query = query.filter(text(sqlconstraint))
+
+        if groupBy is not None:
+            query = query.group_by(self.table.c[groupByCol])
+
+        if numLimit is not None:
+            query = query.limit(numLimit)
+
+        # Execute query and get results.
+        results = self.connection.session.execute(query).fetchall()
+
+        # Translate results into numpy recarray.
+        dtype = []
+        for col in colnames:
+            dt = self.dbTypeMap[self.tables[tablename].c[col].type.__visit_name__]
+            dtype.append((col, ) + dt)
+
+        return(np.rec.fromrecords(results, dtype=dtype))
+
+
