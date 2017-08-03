@@ -7,6 +7,7 @@ from lsst.sims.maf.utils import radec2pix
 
 __all__ = ['StellarDensityMap']
 
+
 class StellarDensityMap(BaseMap):
     """
     Return the cumulative stellar luminosity function for each slicepoint. Units of stars per sq degree.
@@ -28,7 +29,7 @@ class StellarDensityMap(BaseMap):
         nside : int
             The nside to load. Default is 64, may add 128 in future.
         """
-        self.mapDir = os.path.join(getPackageDir('sims_maps'),'StarMaps')
+        self.mapDir = os.path.join(getPackageDir('sims_maps'), 'StarMaps')
         self.filtername = filtername
         self.nside = nside
         if startype == 'allstars':
@@ -36,13 +37,12 @@ class StellarDensityMap(BaseMap):
         else:
             self.startype = startype+'_'
 
-
     def _readMap(self):
         filename = 'starDensity_%s_%snside_%i.npz' % (self.filtername, self.startype, self.nside)
-        starMap = np.load(os.path.join(self.mapDir,filename))
+        starMap = np.load(os.path.join(self.mapDir, filename))
         self.starMap = starMap['starDensity'].copy()
         self.starMapBins = starMap['bins'].copy()
-        self.starmapNside = hp.npix2nside(np.size(self.starMap[:,0]))
+        self.starmapNside = hp.npix2nside(np.size(self.starMap[:, 0]))
 
     def run(self, slicePoints):
         self._readMap()
@@ -55,7 +55,7 @@ class StellarDensityMap(BaseMap):
         if not nsideMatch:
             # Compute the healpix for each slicepoint on the nside=64 grid
             indx = radec2pix(self.starmapNside, slicePoints['ra'], slicePoints['dec'])
-            slicePoints['starLumFunc'] = self.starMap[indx,:]
+            slicePoints['starLumFunc'] = self.starMap[indx, :]
 
         slicePoints['starMapBins'] = self.starMapBins
         return slicePoints
