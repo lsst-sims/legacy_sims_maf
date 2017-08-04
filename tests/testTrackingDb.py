@@ -38,9 +38,8 @@ class TestTrackingDb(unittest.TestCase):
                                     mafComment=self.mafComment, mafDir=self.mafDir,
                                     mafVersion=self.mafVersion, mafDate=self.mafDate,
                                     dbFile=self.dbFile)
-        tdb = db.Database(database=self.trackingDb,
-                          dbTables={'runs': ['runs', 'mafRunId']})
-        res = tdb.queryDatabase('runs', 'select * from runs')
+        tdb = db.Database(database=self.trackingDb)
+        res = tdb.query_arbitrary('select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
         # Try adding this run again. Should return previous trackId.
         trackId2 = trackingdb.addRun(mafDir=self.mafDir)
@@ -53,16 +52,16 @@ class TestTrackingDb(unittest.TestCase):
     def testDelRun(self):
         """Test removing a run from the tracking database."""
         trackingdb = db.TrackingDb(database=self.trackingDb)
-        tdb = db.Database(database=self.trackingDb,
-                          dbTables={'runs': ['runs', 'mafRunId']})
-        # Add a run.
+        tdb = db.Database(database=self.trackingDb)
+        # Add two runs.
         trackId = trackingdb.addRun(mafDir=self.mafDir)
-        res = tdb.queryDatabase('runs', 'select * from runs')
+        trackId2 = trackingdb.addRun(mafDir=self.mafDir+'test2')
+        res = tdb.query_arbitrary('select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
         # Test removal works.
         trackingdb.delRun(trackId)
-        res = tdb.queryDatabase('runs', 'select * from runs')
-        self.assertTrue(len(res) == 0)
+        res = tdb.query_arbitrary('select * from runs')
+        self.assertTrue(len(res) == 1)
         # Test cannot remove run which does not exist.
         self.assertRaises(Exception, trackingdb.delRun, trackId)
         trackingdb.close()

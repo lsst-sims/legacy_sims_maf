@@ -108,8 +108,8 @@ class MetricBundleGroup(object):
         self.dbObj = dbObj
         # Set the table we're going to be querying.
         self.dbTable = dbTable
-        if self.dbTable is None:
-            self.dbTable = self.dbObj.summaryTable
+        if self.dbTable is None and self.dbObj is not None:
+            self.dbTable = self.dbObj.defaultTable
 
         # Check the resultsDb (optional).
         if resultsDb is not None:
@@ -264,6 +264,10 @@ class MetricBundleGroup(object):
                 self.getData(constraint)
             except UserWarning:
                 warnings.warn('No data matching constraint %s' % constraint)
+                metricsSkipped = []
+                for b in self.currentBundleDict.values():
+                    metricsSkipped.append("%s : %s : %s" % (b.metric.name, b.metadata, b.slicer.slicerName))
+                warnings.warn(' This means skipping metrics %s' % metricsSkipped)
                 return
             except ValueError:
                 warnings.warn('One or more of the columns requested from the database was not available.' +
@@ -326,12 +330,8 @@ class MetricBundleGroup(object):
                 print("Querying database %s with constraint %s for columns %s" %
                       (self.dbTable, constraint, self.dbCols))
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        if self.dbTable != 'Summary':
-            groupBy = None
-        else:
-            groupBy = 'observationStartMJD'
         self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
-                                        groupBy=groupBy, tableName=self.dbTable)
+                                        groupBy='default', tableName=self.dbTable)
 
         if self.verbose:
             print("Found %i visits" % (self.simData.size))

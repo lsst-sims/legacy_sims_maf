@@ -41,7 +41,7 @@ class TestMetricBundle(unittest.TestCase):
         filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
 
         database = os.path.join(filepath, 'pontus_1150.db')
-        opsdb = db.OpsimDatabase(database=database)
+        opsdb = db.OpsimDatabaseV4(database=database)
         resultsDb = db.ResultsDb(outDir=self.outDir)
 
         bgroup = metricBundles.MetricBundleGroup({0: metricB}, opsdb, outDir=self.outDir, resultsDb=resultsDb)

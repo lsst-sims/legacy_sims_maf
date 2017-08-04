@@ -94,6 +94,9 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         for tablename in self.tableNames:
             self.tables[tablename] = Table(tablename, self.connection.metadata, autoload=True)
         self.defaultTable = defaultTable
+        # if there is is only one table and we haven't said otherwise, set defaultTable automatically.
+        if self.defaultTable is None and len(self.tableNames) == 1:
+            self.defaultTable = self.tableNames[0]
 
     def close(self):
         self.connection.session.close()
@@ -127,7 +130,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         if tableName is None:
             tableName = self.defaultTable
 
-        if tableName not in self.dbTables:
+        if tableName not in self.tableNames:
             raise ValueError('Table %s not recognized; not in list of database tables.' % (tableName))
 
         metricdata = self.query_columns(tableName, colnames=colnames, sqlconstraint=sqlconstraint,
@@ -183,7 +186,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
             if col == colnames[0]:
                 query = self.connection.session.query(col)
             else:
-                query = query.add_column(col)
+                query = query.add_columns(col)
 
         query = query.select_from(self.tables[tablename])
 
