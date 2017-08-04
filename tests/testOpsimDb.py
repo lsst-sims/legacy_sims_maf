@@ -20,7 +20,7 @@ class TestOpsimDb(unittest.TestCase):
     def setUp(self):
         self.database = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
                                      'pontus_1150.db')
-        self.oo = db.OpsimDatabase(database=self.database)
+        self.oo = db.OpsimDatabaseV4(database=self.database)
 
     def tearDown(self):
         del self.oo
@@ -30,17 +30,13 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbSetup(self):
         """Test opsim specific database class setup/instantiation."""
         # Test tables were connected to.
-        self.assertTrue(isinstance(self.oo.tables, dict))
-        self.assertEqual(self.oo.dbTables['SummaryAllProps'][0], 'SummaryAllProps')
-        # Test can override default table name/id keys if needed.
-        oo = db.OpsimDatabase(database=self.database,
-                              dbTables={'SummaryAllProps': ['ObsHistory', 'obsHistId']})
-        self.assertEqual(oo.dbTables['SummaryAllProps'][0], 'ObsHistory')
+        self.assertTrue('SummaryAllProps' in self.oo.tableNames)
+        self.assertEqual(self.oo.defaultTable, 'SummaryAllProps')
 
     def testOpsimDbMetricData(self):
         """Test queries for sim data. """
         data = self.oo.fetchMetricData(['seeingFwhmEff', ], 'filter="r" and seeingFwhmEff<1.0')
-        self.assertEqual(data.dtype.names, ('observationId', 'seeingFwhmEff'))
+        self.assertEqual(data.dtype.names, ('seeingFwhmEff',))
         self.assertTrue(data['seeingFwhmEff'].max() <= 1.0)
 
     def testOpsimDbPropID(self):
@@ -60,6 +56,7 @@ class TestOpsimDb(unittest.TestCase):
         dataAll = self.oo.fetchFieldsFromFieldTable()
         self.assertEqual(dataAll.dtype.names, ('fieldId', 'ra', 'dec'))
         # Fetch field data for all fields requested by a particular propid.
+        # Need to reinstate this capability.
 
     def testOpsimDbRunLength(self):
         """Test query for length of opsim run."""
@@ -84,7 +81,7 @@ class TestOpsimDb(unittest.TestCase):
             if propname != 'keyorder':
                 propidsSummary.append(configsummary['Proposals'][propname]['PropId'])
         self.assertEqual(set(propidsSummary), set(propids))
-        out.printDict(configsummary, 'Summary')
+        #out.printDict(configsummary, 'Summary')
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
