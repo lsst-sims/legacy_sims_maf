@@ -50,8 +50,8 @@ class DatabaseRegistry(type):
 class Database(with_metaclass(DatabaseRegistry, DBObject)):
     """Base class for database access."""
 
-    def __init__(self, database, driver='sqlite', host=None, port=None,
-                 chunksize=1000000, longstrings=False, verbose=False):
+    def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
+                 longstrings=False, verbose=False):
         """
         Instantiate database object to handle queries of the database.
 
@@ -71,18 +71,18 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
                                        host=host, port=port, verbose=verbose, connection=None)
 
         self.dbTypeMap = {'BIGINT': (int,), 'BOOLEAN': (bool,), 'FLOAT': (float,), 'INTEGER': (int,),
-                         'NUMERIC': (float,), 'SMALLINT': (int,), 'TINYINT': (int,), 'VARCHAR': (np.str, 256),
-                         'TEXT': (np.str, 256), 'CLOB': (np.str, 256), 'NVARCHAR': (np.str, 256),
-                         'NCLOB': (np.str, 256), 'NTEXT': (np.str, 256), 'CHAR': (np.str, 1), 'INT': (int,),
-                         'REAL': (float,), 'DOUBLE': (float,), 'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,),
-                         'DECIMAL': (float,)}
+                          'NUMERIC': (float,), 'SMALLINT': (int,), 'TINYINT': (int,),
+                          'VARCHAR': (np.str, 256), 'TEXT': (np.str, 256), 'CLOB': (np.str, 256),
+                          'NVARCHAR': (np.str, 256), 'NCLOB': (np.str, 256), 'NTEXT': (np.str, 256),
+                          'CHAR': (np.str, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
+                          'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,)}
         if longstrings:
             typeOverRide = {'VARCHAR':(np.str, 1024), 'NVARCHAR':(np.str, 1024),
                             'TEXT':(np.str, 1024), 'CLOB':(np.str, 1024),
                             'STRING':(np.str, 1024)}
             self.dbTypeMap.update(typeOverRide)
 
-        # Get a dict (keyed by the table names) of all the columns in each table.
+        # Get a dict (keyed by the table names) of all the columns in each table and view.
         self.tableNames = reflection.Inspector.from_engine(self.connection.engine).get_table_names()
         self.tableNames += reflection.Inspector.from_engine(self.connection.engine).get_view_names()
         self.columnNames = {}
@@ -93,12 +93,42 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         self.tables = {}
         for tablename in self.tableNames:
             self.tables[tablename] = Table(tablename, self.connection.metadata, autoload=True)
+        self.defaultTable = defaultTable
 
-    def fetchMetricData(self, colnames, sqlconstraint, table=None, **kwargs):
+    def fetchMetricData(self, colnames, sqlconstraint=None, groupBy=None, tableName=None):
         """
-        Get data from table that is destined to be used for metric evaluation.
+        Fetch 'colnames' from 'tableName'.
+        
+        This is basically a thin wrapper around query_columns, but uses the default table.
+        It's mostly still here for backward compatibility.
+
+        Parameters
+        ----------
+        colnames : list
+            The columns to fetch from the table.
+        sqlconstraint : str, opt
+            The sql constraint to apply to the data (minus "WHERE"). Default None.
+            Examples: to fetch data for the r band filter only, set sqlconstraint to 'filter = "r"'.
+        groupBy : str, opt
+            The column to group the returned data by.
+            Default (when using summaryTable) is the MJD, otherwise will be None.
+        tableName : str, opt
+            The table to query. The default (None) will use the summary table, set by self.defaultTable.
+
+        Returns
+        -------
+        np.recarray
+            A structured array containing the data queried from the database.
         """
-        raise NotImplementedError('Implement in subclass')
+        if tableName is None:
+            tableName = self.defaultTable
+
+        if tableName not in self.dbTables:
+            raise ValueError('Table %s not recognized; not in list of database tables.' % (tableName))
+
+        metricdata = self.query_columns(tableName, colnames=colnames, sqlconstraint=sqlconstraint,
+                                        groupBy=groupBy)
+        return metricdata
 
     def fetchConfig(self, *args, **kwargs):
         """
@@ -128,7 +158,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         return self.execute_arbitrary(sqlQuery, dtype=dtype)
 
     def query_columns(self, tablename, colnames=None, sqlconstraint=None,
-                            groupBy=None, aggregate=func.min, numLimit=None):
+                            groupBy=None, numLimit=None):
         # Build the sqlalchemy query from a single table, with various columns/constraints/etc.
         # Does NOT use a mapping between column names and database names - assumes the database names
         # are what the user will specify.
@@ -147,23 +177,18 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
 
         for col in colnames:
             if col == colnames[0]:
-                if groupBy:
-                    query = self.connection.session.query(aggregate(col))
-                else:
-                    query = self.connection.session.query(col)
+                query = self.connection.session.query(col)
             else:
-                if groupBy:
-                    query = query.add_column(aggregate(col))
-                else:
-                    query = query.add_column(col)
+                query = query.add_column(col)
 
         query = query.select_from(self.tables[tablename])
 
         if sqlconstraint is not None:
-            query = query.filter(text(sqlconstraint))
+            if len(sqlconstraint) > 0:
+                query = query.filter(text(sqlconstraint))
 
         if groupBy is not None:
-            query = query.group_by(self.table.c[groupByCol])
+            query = query.group_by(groupBy)
 
         if numLimit is not None:
             query = query.limit(numLimit)
@@ -177,6 +202,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
             dt = self.dbTypeMap[self.tables[tablename].c[col].type.__visit_name__]
             dtype.append((col, ) + dt)
 
-        return(np.rec.fromrecords(results, dtype=dtype))
+        data = np.rec.fromrecords(results, dtype=dtype)
+        return data
 
 
