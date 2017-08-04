@@ -95,6 +95,10 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
             self.tables[tablename] = Table(tablename, self.connection.metadata, autoload=True)
         self.defaultTable = defaultTable
 
+    def close(self):
+        self.connection.session.close()
+        self.connection.engine.dispose()
+
     def fetchMetricData(self, colnames, sqlconstraint=None, groupBy=None, tableName=None):
         """
         Fetch 'colnames' from 'tableName'.
