@@ -33,7 +33,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     noSaveBundleList = []
 
     # Connect to the databse
-    opsimdb = utils.connectOpsimDb(dbFile)
+    opsimdb = db.OpsimDatabaseV4(dbFile)
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
 
@@ -798,7 +798,7 @@ if __name__ == "__main__":
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
     # Connect to opsimdb.
-    opsdb = utils.connectOpsimDb(args.dbFile)
+    opsdb = db.OpsimDatabaseV4(args.dbFile)
 
     if args.runNoSave:
         group = metricBundles.MetricBundleGroup(noSaveBundleDict, opsdb, saveEarly=False,

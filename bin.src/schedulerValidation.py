@@ -31,7 +31,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     bundleList = []
 
     # Connect to the databse
-    opsimdb = utils.connectOpsimDb(dbFile)
+    opsimdb = db.OpsimDatabaseV4(dbFile)
     propCol = 'proposalId'
 
     if runName is None:
@@ -1276,7 +1276,7 @@ if __name__ == "__main__":
     args, extras = parser.parse_known_args()
 
     resultsDb = db.ResultsDb(outDir=args.outDir)
-    opsdb = utils.connectOpsimDb(args.dbFile)
+    opsdb = db.OpsimDatabaseV4(args.dbFile)
 
     (bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict) \
         = makeBundleList(args.dbFile, benchmark=args.benchmark)

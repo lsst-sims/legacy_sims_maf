@@ -54,11 +54,9 @@ class MetricRegistry(type):
     def help_metric(cls, metricname):
         print(metricname)
         print(inspect.getdoc(cls.registry[metricname]))
-        args, varargs, kwargs, defaults = inspect.getargspec(cls.registry[metricname].__init__)
-        args_with_defaults = args[-len(defaults):]
+        k = inspect.signature(cls.registry[metricname])
         print(' Metric __init__ keyword args and defaults: ')
-        for a, d in zip(args_with_defaults, defaults):
-            print('     ', a, d)
+        print(k)
 
 
 class ColRegistry(object):

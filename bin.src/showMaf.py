@@ -159,11 +159,11 @@ if __name__ == "__main__":
         startRunId = runlist.runs[0]['mafRunId']
     # Set up path to template and favicon paths, and load templates.
     mafDir = os.getenv('SIMS_MAF_DIR')
-    templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/viz/templates/')
+    templateDir = os.path.join(mafDir, 'python/lsst/sims/maf/web/templates/')
     global faviconPath
-    faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
+    faviconPath = os.path.join(mafDir, 'python/lsst/sims/maf/web/')
     global jsPath
-    jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/viz/')
+    jsPath = os.path.join(mafDir, 'python/lsst/sims/maf/web/')
     env = Environment(loader=FileSystemLoader(templateDir))
     # Add 'zip' to jinja templates.
     env.globals.update(zip=zip)
