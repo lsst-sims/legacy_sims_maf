@@ -5,55 +5,8 @@ import os
 import numpy as np
 from .outputUtils import printDict
 
-__all__ = ['opsimColMapDict', 'connectOpsimDb', 'writeConfigs', 'createSQLWhere',
-           'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
-
-
-def opsimColMapDict():
-    """Return a dict that maps column names.
-    For use with the pre-defined bundles. Makes it easy to swap in different surveys with
-    different schemas.
-
-    Currently only includes columns used by the glanceBundle. May need to expand to
-    include more columns in the future.
-    """
-    result = {'ra': 'fieldRA', 'dec': 'fieldDec', 'mjd': 'observationStartMJD',
-              'exptime': 'visitExposureTime', 'visittime': 'visitTime', 'alt': 'altitude',
-              'az': 'azimuth', 'filter': 'filter', 'fiveSigmaDepth': 'fiveSigmaDepth',
-              'night': 'night', 'slewtime': 'slewTime', 'seeingGeom': 'seeingFwhmGeom'}
-
-    return result
-
-
-def connectOpsimDb(database, summaryOnly=False, summaryTable='SummaryAllProps'):
-    """
-    Convenience function to handle connecting to database.
-
-    Parameters
-    ----------
-    database : str
-        The path to the OpSim sqlite database file.
-    summaryOnly : bool
-        Flag indicating that the opsim database only contains a summary table (or not - in which case,
-        a sqlite database file with all tables is expected).
-    summaryTable : str
-        The name of the summary table.
-
-    Returns
-    -------
-    OpsimDatabase
-    """
-    import lsst.sims.maf.db as db
-    if summaryOnly:
-        # Connect to just the summary table (might be sqlite created from flat dat output file).
-        opsimdb = db.OpsimDatabase(database=database,
-                                   dbTables={'SummaryAllProps': [summaryTable, 'obsHistID']},
-                                   defaultdbTables = None)
-    else:
-        # For a basic db connection to the sqlite db files.
-        opsimdb = db.OpsimDatabase(database=database)
-
-    return opsimdb
+__all__ = ['writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData',
+           'scaleBenchmarks', 'calcCoaddedDepth']
 
 
 def writeConfigs(opsimDb, outDir):
@@ -98,7 +51,6 @@ def createSQLWhere(tag, propTags):
     str
         The SQL constraint, such as '(propID = 365) or (propID = 366)'
     """
-    sqlWhere = ''
     if (tag not in propTags) or (len(propTags[tag]) == 0):
 
         print('No %s proposals found' % (tag))
