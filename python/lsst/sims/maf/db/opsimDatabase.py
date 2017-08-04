@@ -8,7 +8,18 @@ from .database import Database
 from lsst.sims.utils import Site
 from lsst.sims.maf.utils import getDateVersion
 
-__all__ = ['OpsimDatabase', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
+__all__ = ['testOpsimVersion', 'OpsimDatabase', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
+
+def testOpsimVersion(dbFileName):
+    opsdb = Database(dbFileName)
+    if 'SummaryAllProps' in opsdb.tableNames:
+        version = "V4"
+    elif 'Summary' in opsdb.tableNames:
+        version = "V3"
+    else:
+        version = "Unknown"
+    opsdb.close()
+    return version
 
 class OpsimDatabase(Database):
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
