@@ -28,6 +28,7 @@ class HealpixSkyMap(BasePlotter):
     Generate a sky map of healpix metric values using healpy's mollweide view.
     """
     def __init__(self):
+        super(HealpixSkyMap, self).__init__()
         # Set the plotType
         self.plotType = 'SkyMap'
         self.objectPlotter = False
@@ -157,8 +158,8 @@ class HealpixPowerSpectrum(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {'title': None, 'label': None,
                                 'maxl': None, 'removeDipole': True,
-                                'fontsize': None, 'labelsize': None,
-                                'logScale': True, 'linestyle': '-', 'figsize': None}
+                                'logScale': True, 'linestyle': '-',
+                                'fontsize': None, 'labelsize': None, 'figsize': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -236,7 +237,8 @@ class OpsimHistogram(BasePlotter):
                                 'ylabel': 'Number of Fields', 'yaxisformat': '%d',
                                 'bins': None, 'binsize': None, 'cumulative': False,
                                 'scale': 1.0, 'xMin': None, 'xMax': None,
-                                'logScale': False, 'linestyle': '-', 'figsize': None}
+                                'logScale': False, 'linestyle': '-',
+                                'fontsize': None, 'labelsize': None, ''figsize': None}
         self.baseHist = BaseHistogram()
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -554,16 +556,10 @@ class BaseSkyMap(BasePlotter):
             ax.set_axis_bgcolor(plotDict['bgcolor'])
         # Add label.
         if plotDict['label'] is not None:
-            if plotDict['fontsize'] is not None:
-                plt.figtext(0.75, 0.9, '%s' % plotDict['label'], fontsize=plotDict['fontsize'])
-            else:
-                plt.figtext(0.75, 0.9, '%s' % plotDict['label'])
+            plt.figtext(0.75, 0.9, '%s' % plotDict['label'], fontsize=plotDict['fontsize'])
         if plotDict['title'] is not None:
-            if plotDict['fontsize'] is not None:
-                plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center',
-                         transform=ax.transAxes, fontsize=plotDict['fontsize'])
-            else:
-                plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center', transform=ax.transAxes)
+            plt.text(0.5, 1.09, plotDict['title'], horizontalalignment='center',
+                    transform=ax.transAxes, fontsize=plotDict['fontsize'])
         return fig.number
 
 
