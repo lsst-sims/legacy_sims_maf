@@ -15,10 +15,14 @@ class BasePlotter(object):
     """
     def __init__(self):
         self.plotType = None
-        self.defaultPlotDict = None
+        # This should be included in every subsequent defaultPlotDict (assumed to be present).
+        self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
+                                'labelsize': None, 'fontsize': None, 'figsize': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
+
+
 
 class PlotHandler(object):
 
