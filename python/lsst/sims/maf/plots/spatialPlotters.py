@@ -238,7 +238,7 @@ class OpsimHistogram(BasePlotter):
                                 'bins': None, 'binsize': None, 'cumulative': False,
                                 'scale': 1.0, 'xMin': None, 'xMax': None,
                                 'logScale': False, 'linestyle': '-',
-                                'fontsize': None, 'labelsize': None, ''figsize': None}
+                                'fontsize': None, 'labelsize': None, 'figsize': None}
         self.baseHist = BaseHistogram()
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
