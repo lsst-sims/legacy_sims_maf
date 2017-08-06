@@ -58,7 +58,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         database = Name of database or sqlite filename
         driver =  Name of database dialect+driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
         host = Name of database host (optional)
-        port = String port number (optional)        
+        port = String port number (optional)
         """
         # If it's a sqlite file, check that the filename exists.
         # This gives a more understandable error message than trying to connect to non-existent file later.
@@ -75,7 +75,8 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
                           'VARCHAR': (np.str, 256), 'TEXT': (np.str, 256), 'CLOB': (np.str, 256),
                           'NVARCHAR': (np.str, 256), 'NCLOB': (np.str, 256), 'NTEXT': (np.str, 256),
                           'CHAR': (np.str, 1), 'INT': (int,), 'REAL': (float,), 'DOUBLE': (float,),
-                          'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,)}
+                          'STRING': (np.str, 256), 'DOUBLE_PRECISION': (float,), 'DECIMAL': (float,),
+                          'DATETIME': (np.str, 50)}
         if longstrings:
             typeOverRide = {'VARCHAR':(np.str, 1024), 'NVARCHAR':(np.str, 1024),
                             'TEXT':(np.str, 1024), 'CLOB':(np.str, 1024),

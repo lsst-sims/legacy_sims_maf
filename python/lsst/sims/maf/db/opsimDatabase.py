@@ -481,11 +481,11 @@ class OpsimDatabaseV4(OpsimDatabase):
         configSummary['Version']['MAFVersion'] = '%s' %(mafversion['__version__'])
         configSummary['Version']['MAFDate'] = '%s' %(mafdate)
         # Opsim date, version and runcomment info from session table
-        query = 'select %s, %s, %s from Session' % (self.versionCol, self.sessionDateCol,
-                                                    self.runCommentCol)
-        results = self.execute_arbitrary(query)
+        results = self.query_columns('Session',
+                                     [self.versionCol, self.sessionDateCol, self.runCommentCol])
         configSummary['Version']['OpsimVersion'] = '%s'  %(results[self.versionCol][0])
         configSummary['Version']['OpsimDate'] = '%s' %(results[self.sessionDateCol][0])
+        configSummary['Version']['OpsimDate'] = configSummary['Version']['OpsimDate'][0:10]
         configSummary['RunInfo'] = {}
         configSummary['RunInfo']['RunComment'] = results[self.runCommentCol][0]
         configSummary['RunInfo']['RunName'] = self.fetchOpsimRunName()
@@ -847,7 +847,7 @@ class OpsimDatabaseV3(OpsimDatabase):
         # Opsim date, version and runcomment info from session table
         results = self.query_columns('Session', colnames = [self.versionCol, self.sessionDateCol,
                                                             self.runCommentCol])
-        configSummary['Version']['OpsimVersion'] = '%s' % (results['version'][0])
+        configSummary['Version']['OpsimVersion'] = '%s' % (results[self.versionCol][0])
         configSummary['Version']['OpsimDate'] = '%s' % (results[self.sessionDateCol][0])
         configSummary['RunInfo'] = {}
         configSummary['RunInfo']['RunComment'] = results[self.runCommentCol]
