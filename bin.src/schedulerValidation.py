@@ -1060,9 +1060,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         slewMaxSpeedsBL.append(bundle)
 
         order += 1
-        metric = metrics.MaxPercentMetric(col=key, metricName='% of slews')
+        metric = metrics.AbsMaxPercentMetric(col=key, metricName='% of slews')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Speed', 'order': order,
-                       'caption': 'Percent of slews which are at maximum value of %s'
+                       'caption': 'Percent of slews which are at maximum value of %s (in absolute value).'
                        % (colDict[key])}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                             displayDict=displayDict, runName=runName, metadata=metadata)

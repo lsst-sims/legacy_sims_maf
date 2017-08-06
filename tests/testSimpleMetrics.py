@@ -11,7 +11,9 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def setUp(self):
         dv = np.arange(0, 10, .5)
+        dv2 = np.arange(-10, 10.25, .5)
         self.dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
+        self.dv2 = np.array(list(zip(dv2)), dtype=[('testdata', 'float')])
 
     def testMaxMetric(self):
         """Test max metric."""
@@ -32,6 +34,10 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test median metric."""
         testmetric = metrics.MedianMetric('testdata')
         self.assertEqual(testmetric.run(self.dv), np.median(self.dv['testdata']))
+
+    def testAbsMedianMetric(self):
+        testmetric = metrics.AbsMedianMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), np.abs(np.median(self.dv['testdata'])))
 
     def testFullRangeMetric(self):
         """Test full range metric."""
@@ -75,6 +81,16 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test countsubset metric."""
         testmetric = metrics.CountSubsetMetric('testdata', subset=0)
         self.assertEqual(testmetric.run(self.dv), 1)
+
+    def testMaxPercentMetric(self):
+        testmetric = metrics.MaxPercentMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), 1.0/len(self.dv)*100.0)
+        self.assertEqual(testmetric.run(self.dv2), 1.0/len(self.dv2)*100.0)
+
+    def testAbsMaxPercentMetric(self):
+        testmetric = metrics.AbsMaxPercentMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), 1./len(self.dv)*100.)
+        self.assertEqual(testmetric.run(self.dv2), 2./len(self.dv2)*100.)
 
     def testRobustRmsMetric(self):
         """Test Robust RMS metric."""
