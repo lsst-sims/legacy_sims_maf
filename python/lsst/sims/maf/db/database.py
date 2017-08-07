@@ -210,7 +210,9 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
             dt = self.dbTypeMap[self.tables[tablename].c[col].type.__visit_name__]
             dtype.append((col, ) + dt)
 
-        data = np.rec.fromrecords(results, dtype=dtype)
+        if len(results) == 0:
+            data = np.recarray((0,), dtype=dtype)
+        else:
+            data = np.rec.fromrecords(results, dtype=dtype)
+
         return data
-
-
