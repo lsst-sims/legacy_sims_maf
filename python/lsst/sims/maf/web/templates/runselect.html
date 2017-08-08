@@ -40,7 +40,7 @@ List of all Opsim Runs
   <tr>
   {% for key in runInfo %}
     {% if loop.index == 1 %}
-       <td><a href="metricSelect?runId={{run['mafRunId']}}">{{runInfo[key]|escape }} </a> </td>
+       <td><a href="allMetricResults?runId={{run['mafRunId']}}">{{runInfo[key]|escape }} </a> </td>
     {% elif key == 'SQLite File' %}
        <td><a href="{{runInfo[key][0]}}" download>{{runInfo[key][1]|escape}}</a> </td>
     {% elif key == 'ResultsDb' %}

@@ -26,8 +26,10 @@ class MafTracking(object):
             database = os.path.join(os.getcwd(), 'trackingDb_sqlite.db')
 
         # Read in the results database.
-        database = db.Database(database=database, longstrings=True)
-        self.runs = database.query_arbitrary('select * from runs')
+        tdb = db.Database(database=database, longstrings=True)
+        cols = ['mafRunId', 'opsimRun', 'opsimGroup', 'mafComment', 'opsimComment', 'dbFile',
+                'mafDir', 'opsimVersion', 'opsimDate', 'mafVersion', 'mafDate']
+        self.runs = tdb.query_columns('runs', colnames=cols)
         self.runs = self.sortRuns(self.runs)
         self.runsPage = {}
 
