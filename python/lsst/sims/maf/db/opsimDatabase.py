@@ -269,7 +269,7 @@ class OpsimDatabaseV4(OpsimDatabase):
                                                                      degreesToRadians=degreesToRadians)
         return f
 
-    def fetchFieldsFromFieldTable(self, propId=None, degreesToRadians=False):
+    def fetchFieldsFromFieldTable(self, propId=None, degreesToRadians=True):
         """
         Fetch field information (fieldID/RA/Dec) from the Field table.
 
