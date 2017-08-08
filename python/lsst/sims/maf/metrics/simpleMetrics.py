@@ -3,9 +3,9 @@ from .baseMetric import BaseMetric
 
 # A collection of commonly used simple metrics, operating on a single column and returning a float.
 
-__all__ = ['PassMetric', 'Coaddm5Metric', 'MaxMetric', 'MeanMetric', 'MedianMetric', 'AbsMedianMetric',
-           'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric', 'CountUniqueMetric',
-           'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
+__all__ = ['PassMetric', 'Coaddm5Metric', 'MaxMetric', 'AbsMaxMetric', 'MeanMetric', 'AbsMeanMetric',
+           'MedianMetric', 'AbsMedianMetric', 'MinMetric', 'FullRangeMetric', 'RmsMetric', 'SumMetric',
+           'CountUniqueMetric', 'CountMetric', 'CountRatioMetric', 'CountSubsetMetric', 'RobustRmsMetric',
            'MaxPercentMetric', 'AbsMaxPercentMetric', 'BinaryMetric', 'FracAboveMetric', 'FracBelowMetric',
            'PercentileMetric', 'NoutliersNsigmaMetric', 'UniqueRatioMetric',
            'MeanAngleMetric', 'RmsAngleMetric', 'FullRangeAngleMetric']
@@ -41,11 +41,23 @@ class MaxMetric(BaseMetric):
     def run(self, dataSlice, slicePoint=None):
         return np.max(dataSlice[self.colname])
 
+class AbsMaxMetric(BaseMetric):
+    """Calculate the max of the absolute value of a simData column slice.
+    """
+    def run(self, dataSlice, slicePoint=None):
+        return np.max(np.abs(dataSlice[self.colname]))
+
 class MeanMetric(BaseMetric):
     """Calculate the mean of a simData column slice.
     """
     def run(self, dataSlice, slicePoint=None):
         return np.mean(dataSlice[self.colname])
+
+class AbsMeanMetric(BaseMetric):
+    """Calculate the mean of the absolute value of a simData column slice.
+    """
+    def run(self, dataSlice, slicePoint=None):
+        return np.mean(np.abs(dataSlice[self.colname]))
 
 class MedianMetric(BaseMetric):
     """Calculate the median of a simData column slice.

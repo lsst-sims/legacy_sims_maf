@@ -1044,17 +1044,17 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     for key in colDict:
         metadata = colDict[key]
-        metric = metrics.MaxMetric(col=key, metricName='Max')
+        metric = metrics.AbsMaxMetric(col=key, metricName='Max (Abs)')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Speed', 'order': order,
-                       'caption': 'Maximum slew speed for %s.' % (colDict[key])}
+                       'caption': 'Maximum absolute value of slew speed for %s.' % (colDict[key])}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                             displayDict=displayDict, runName=runName, metadata=metadata)
         slewMaxSpeedsBL.append(bundle)
         order += 1
 
-        metric = metrics.MeanMetric(col=key, metricName='Mean')
+        metric = metrics.AbsMeanMetric(col=key, metricName='Mean (Abs)')
         displayDict = {'group': slewgroup, 'subgroup': 'Slew Speed', 'order': order,
-                       'caption': 'Mean slew speed for %s.' % (colDict[key])}
+                       'caption': 'Mean absolute value of slew speed for %s.' % (colDict[key])}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                             displayDict=displayDict, runName=runName, metadata=metadata)
         slewMaxSpeedsBL.append(bundle)
@@ -1072,7 +1072,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     # Use the slew stats
     slewTypes = ['domalt', 'domaz', 'domazsettle', 'filter', 'readout',
                  'telalt', 'telaz', 'telopticsclosedloop', 'telopticsopenloop',
-                 'telrot', 'telsettle', 'exposures']
+                 'telrot', 'telsettle'] #, 'exposures']
 
     order = 0
     slicer = slicers.UniSlicer()
@@ -1240,12 +1240,13 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                        'caption':
                        'Pointing History on the alt-az sky (zenith center) for filter %s' % f}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                            runName=runName,
                                             plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
     displayDict = {'group': houranglegroup, 'subgroup': 'All Filters',
                    'caption':
                    'Pointing History on the alt-az sky (zenith center), all filters'}
-    bundle = metricBundles.MetricBundle(metric, slicer, '', plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, '', plotDict=plotDict, runName=runName,
                                         plotFuncs=[plotFunc], displayDict=displayDict)
     bundleList.append(bundle)
 
