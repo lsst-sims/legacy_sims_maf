@@ -187,7 +187,7 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
 
     def setUp(self):
-        self.testslicer = OpsimFieldSlicer()
+        self.testslicer = OpsimFieldSlicer(latLonDeg=True)
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
