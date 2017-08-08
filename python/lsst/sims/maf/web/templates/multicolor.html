@@ -15,7 +15,8 @@
 
 <ul>
 {% for g in run.groups.keys() %}
-  {% set groupstart = True %}
+    <li>
+        <a href="#{{g}}">{{g|escape}}</a>
   {% for sg in run.groups[g] %}
    {% set subsetMetrics = run.metricsInSubgroup(g, sg) %}
    {% set skysetMetrics = run.metricsWithPlotType(plotType=skymapTypes, metrics=subsetMetrics) %}
@@ -25,18 +26,11 @@
    {% set displaygroup = skysetMetrics|length + combosetMetrics|length
   + hourglassMetrics|length + statNames|length %}
    {% if displaygroup > 0 %}
-      {% if groupstart == True %}
-        <li>
-        <a href="#{{g}}">{{g}}</a>
-        <div id='smallindent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
-        {% set groupstart = False %}
-      {% else %}
-        <div id='smallindent'><a href="#{{g}}_{{sg}}">{{sg}}</a></div>
-      {% endif %}
+        <div id='smallindent'><a href="#{{g}}_{{sg}}">{{sg|escape}}</a></div>
     {% endif %}
-  {% endfor %}
+    {% endfor %}
     </li>
-{% endfor %}
+    {% endfor %}
 </ul>
 {% endblock %}
 
@@ -88,26 +82,26 @@
           <tr class='blank'>
        {# put in the sky map plots #}
         {% for skymap in skymaps %}
-            {% set mapkey = skymap.keys()[0] %}
+            {% set mapkey = 'SkyMap' %}
             {% if skymap[mapkey]['plotFile']|length == 0 %}
             <td class='blank'>
             </td>
             {% else %}
-         {% set plotfile = skymap[mapkey]['plotFile'][0] %}
-         {% set thumbfile = skymap[mapkey]['thumbFile'][0] %}
-          <td class='blank' align='center'>
-          <a href="{{plotfile}}"> <img class="sm_thumbnail" src='{{thumbfile}}'></a>
-	  </td>
-	{% endif %}
-	{% if loop.index is divisibleby 3 %}
-	   </tr><tr>
-	{% endif %}
-       {% endfor  %}
-	</tr>
-	</table>
+              {% set plotfile = skymap[mapkey]['plotFile'][0] %}
+              {% set thumbfile = skymap[mapkey]['thumbFile'][0] %}
+              <td class='blank' align='center'>
+                  <a href="{{plotfile}}"> <img class="sm_thumbnail" src='{{thumbfile}}'></a>
+              </td>
+              {% endif %}
+              {% if loop.index is divisibleby 3 %}
+          </tr><tr>
+        {% endif %}
+        {% endfor  %}
+    </tr>
+    </table>
       </div>
-     {% endif %}
-   {% endfor %}
+    {% endif %}
+    {% endfor %}
 
    {% for m in combosetMetrics %}
      {% set comboplots = run.plotsForMetric(m) %}

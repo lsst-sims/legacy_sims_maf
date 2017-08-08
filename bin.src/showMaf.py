@@ -9,7 +9,7 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import webbrowser
 
-from lsst.sims.maf.viz import MafTracking
+from lsst.sims.maf.web import MafTracking
 from lsst.sims.maf.db import addRunToDatabase
 
 

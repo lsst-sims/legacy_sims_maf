@@ -8,19 +8,13 @@
 {% block moresidebar %}
 <ul>
 {% for group in run.groups.keys() %}
-  {% set groupstart = True %}
+    <li>
+    <a href="#{{group}}">{{group}}</a>
   {% for subgroup in run.groups[group] %}
     {% set metrics = run.metricsInSubgroup(group, subgroup) %}
     {% set statNames = run.allStatNames(metrics) %}
     {% if statNames|length > 0 %}
-      {% if groupstart == True %}
-        <li>
-        <a href="#{{group}}">{{group}}</a>
-        <div id='indent'><a href="#{{group}}_{{subgroup}}">{{subgroup}}</a></div>
-        {% set groupstart = False %}
-      {% else %}
-        <div id='indent'><a href="#{{group}}_{{subgroup}}">{{subgroup}}</a></div>
-      {% endif %}
+        <div id='smallindent'><a href="#{{group}}_{{subgroup}}">{{subgroup}}</a></div>
     {% endif %}
   {% endfor %}
     </li>
