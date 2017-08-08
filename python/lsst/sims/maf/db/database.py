@@ -48,18 +48,29 @@ class DatabaseRegistry(type):
 
 
 class Database(with_metaclass(DatabaseRegistry, DBObject)):
-    """Base class for database access."""
+    """Base class for database access. Implements some basic query functionality and demonstrates API.
+    
+    Parameters
+    ----------
+    database : str
+        Name of the database (or full path + filename for sqlite db).
+    driver : str, opt
+        Dialect+driver for sqlalchemy. Default 'sqlite'. (other examples, 'pymssql+mssql').
+    host : str, opt
+        Hostname for database. Default None (for sqlite).
+    port : int, opt
+        Port for database. Default None.
+    defaultTable : str, opt
+        Default table in the database to query for metric data.
+    longstrings : bool, opt
+        Flag to convert strings in database to long (1024) or short (256) characters in numpy recarray.
+        Default False (convert to 256 character strings).
+    verbose : bool, opt
+        Flag for additional output. Default False.
+    """
 
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
                  longstrings=False, verbose=False):
-        """
-        Instantiate database object to handle queries of the database.
-
-        database = Name of database or sqlite filename
-        driver =  Name of database dialect+driver for sqlalchemy (e.g. 'sqlite', 'pymssql+mssql')
-        host = Name of database host (optional)
-        port = String port number (optional)
-        """
         # If it's a sqlite file, check that the filename exists.
         # This gives a more understandable error message than trying to connect to non-existent file later.
         if driver=='sqlite':
@@ -104,8 +115,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         self.connection.engine.dispose()
 
     def fetchMetricData(self, colnames, sqlconstraint=None, groupBy=None, tableName=None):
-        """
-        Fetch 'colnames' from 'tableName'.
+        """Fetch 'colnames' from 'tableName'.
         
         This is basically a thin wrapper around query_columns, but uses the default table.
         It's mostly still here for backward compatibility.
@@ -139,8 +149,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         return metricdata
 
     def fetchConfig(self, *args, **kwargs):
-        """
-        Get config (metadata) info on source of data for metric calculation.
+        """Get config (metadata) info on source of data for metric calculation.
         """
         # Demo API (for interface with driver).
         configSummary = {}
@@ -148,8 +157,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         return configSummary, configDetails
 
     def query_arbitrary(self, sqlQuery, dtype=None):
-        """
-        Simple wrapper around execute_arbitrary for backwards compatibility.
+        """Simple wrapper around execute_arbitrary for backwards compatibility.
     
         Parameters
         -----------
@@ -166,10 +174,63 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         return self.execute_arbitrary(sqlQuery, dtype=dtype)
 
     def query_columns(self, tablename, colnames=None, sqlconstraint=None,
-                            groupBy=None, numLimit=None):
+                            groupBy=None, numLimit=None, chunksize=1000000):
+        """Query a table in the database and return data from colnames in recarray.
+        
+        Parameters
+        ----------
+        tablename : str 
+            Name of table to query.
+        colnames : list of str, opt
+            Columns from the table to query for. If None, all columns are selected.
+        sqlconstraint : str, opt
+            Constraint to apply to to the query.  Default None.
+        groupBy : str, opt
+            Name of column to group by. Default None.
+        numLimit : int, opt
+            Number of records to return. Default no limit.
+        chunksize : int, opt
+            Query database and convert to recarray in series of chunks of chunksize.
+
+        Returns
+        -------
+        numpy.recarray
+        """
         # Build the sqlalchemy query from a single table, with various columns/constraints/etc.
         # Does NOT use a mapping between column names and database names - assumes the database names
         # are what the user will specify.
+
+        # Build the query.
+        query = self._build_query(tablename, colnames=colnames, sqlconstraint=sqlconstraint,
+                                  groupBy=groupBy, numLimit=numLimit)
+
+        # Determine dtype for numpy recarray.
+        dtype = []
+        for col in colnames:
+            dt = self.dbTypeMap[self.tables[tablename].c[col].type.__visit_name__]
+            dtype.append((col,) + dt)
+
+        # Execute query on database.
+        exec_query = self.connection.session.execute(query)
+
+        if chunksize is None or chunksize==0:
+            # Fetch all results and convert to numpy recarray.
+            results = exec_query.fetchall()
+            data = self._convert_results(results, dtype)
+        else:
+            chunks = []
+            # Loop through results, converting in steps of chunksize.
+            results = exec_query.fetchmany(chunksize)
+            while len(results) > 0:
+                chunks.append(self._convert_results(results, dtype))
+                results = exec_query.fetchmany(chunksize)
+            if len(chunks) == 0:
+                data = np.recarray((0,), dtype=dtype)
+            else:
+                data = np.hstack(chunks)
+        return data
+
+    def _build_query(self, tablename, colnames, sqlconstraint=None, groupBy=None, numLimit=None):
         if tablename not in self.tables:
             raise ValueError('Tablename %s not in list of available tables (%s).'
                              % (tablename, self.tables.keys()))
@@ -182,37 +243,25 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
             if groupBy is not None:
                 if groupBy not in self.columnNames[tablename]:
                     raise ValueError("GroupBy column %s is not available in table %s" % (groupBy, tablename))
-
+        # Put together sqlalchemy query object.
         for col in colnames:
             if col == colnames[0]:
                 query = self.connection.session.query(col)
             else:
                 query = query.add_columns(col)
-
         query = query.select_from(self.tables[tablename])
-
         if sqlconstraint is not None:
             if len(sqlconstraint) > 0:
                 query = query.filter(text(sqlconstraint))
-
         if groupBy is not None:
             query = query.group_by(groupBy)
-
         if numLimit is not None:
             query = query.limit(numLimit)
+        return query
 
-        # Execute query and get results.
-        results = self.connection.session.execute(query).fetchall()
-
-        # Translate results into numpy recarray.
-        dtype = []
-        for col in colnames:
-            dt = self.dbTypeMap[self.tables[tablename].c[col].type.__visit_name__]
-            dtype.append((col, ) + dt)
-
+    def _convert_results(self, results, dtype):
         if len(results) == 0:
             data = np.recarray((0,), dtype=dtype)
         else:
             data = np.rec.fromrecords(results, dtype=dtype)
-
         return data
