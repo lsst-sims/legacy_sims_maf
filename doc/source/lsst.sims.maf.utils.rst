@@ -28,6 +28,14 @@ lsst\.sims\.maf\.utils\.mafUtils module
     :undoc-members:
     :show-inheritance:
 
+lsst\.sims\.maf\.utils\.obs2sqlite module
+-----------------------------------------
+
+.. automodule:: lsst.sims.maf.utils.obs2sqlite
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst\.sims\.maf\.utils\.opsimUtils module
 -----------------------------------------
 

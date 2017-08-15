@@ -1,29 +1,29 @@
-lsst\.sims\.maf\.viz package
+lsst\.sims\.maf\.web package
 ============================
 
 Submodules
 ----------
 
-lsst\.sims\.maf\.viz\.mafRunComparison module
+lsst\.sims\.maf\.web\.mafRunComparison module
 ---------------------------------------------
 
-.. automodule:: lsst.sims.maf.viz.mafRunComparison
+.. automodule:: lsst.sims.maf.web.mafRunComparison
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.viz\.mafRunResults module
+lsst\.sims\.maf\.web\.mafRunResults module
 ------------------------------------------
 
-.. automodule:: lsst.sims.maf.viz.mafRunResults
+.. automodule:: lsst.sims.maf.web.mafRunResults
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.viz\.mafTracking module
+lsst\.sims\.maf\.web\.mafTracking module
 ----------------------------------------
 
-.. automodule:: lsst.sims.maf.viz.mafTracking
+.. automodule:: lsst.sims.maf.web.mafTracking
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,7 +32,7 @@ lsst\.sims\.maf\.viz\.mafTracking module
 Module contents
 ---------------
 
-.. automodule:: lsst.sims.maf.viz
+.. automodule:: lsst.sims.maf.web
     :members:
     :undoc-members:
     :show-inheritance:
