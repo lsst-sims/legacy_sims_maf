@@ -245,7 +245,9 @@ def addRunToDatabase(mafDir, trackingDbFile, opsimGroup=None,
                 if len(tmp) > 2:
                     mafDate = tmp[-1]
             if tmp[0].startswith('OpsimDate'):
-                opsimDate = tmp[-2]
+                opsimDate = tmp[-1]
+                if len(tmp) > 2:
+                    opsimDate = tmp[-2]
             if tmp[0].startswith('OpsimVersion'):
                 opsimVersion = tmp[1]
                 if len(tmp) > 2:

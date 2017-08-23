@@ -1,11 +1,12 @@
-lsst.sims.maf package
-=====================
+lsst\.sims\.maf package
+=======================
 
 Subpackages
 -----------
 
 .. toctree::
 
+    lsst.sims.maf.bundles
     lsst.sims.maf.db
     lsst.sims.maf.maps
     lsst.sims.maf.metricBundles
@@ -14,13 +15,13 @@ Subpackages
     lsst.sims.maf.slicers
     lsst.sims.maf.stackers
     lsst.sims.maf.utils
-    lsst.sims.maf.viz
+    lsst.sims.maf.web
 
 Submodules
 ----------
 
-lsst.sims.maf.version module
-----------------------------
+lsst\.sims\.maf\.version module
+-------------------------------
 
 .. automodule:: lsst.sims.maf.version
     :members:
