@@ -281,7 +281,6 @@ class FilterColorStacker(BaseStacker):
                                'i': (1, 0.5, 0.3),  # orange
                                'z': (1, 0, 0),    # red
                                'y': (1, 0, 1)}  # magenta
-        self.filterMap_filters = [str(f) for f in self.filter_rgb_map]
         self.filterCol = filterCol
         # self.units used for plot labels
         self.units = ['rChan', 'gChan', 'bChan']
@@ -293,13 +292,10 @@ class FilterColorStacker(BaseStacker):
     def _run(self, simData):
         # Translate filter names into numbers.
         filtersUsed = np.unique(simData[self.filterCol])
-        filtersUsed = [str(f) for f in filtersUsed]
-        if issubclass(type(filtersUsed[0]), bytes):
-            filtersUsed = [str(f.decode('utf-8')) for f in filtersUsed]
         for f in filtersUsed:
-            if f not in self.filterMap_filters:
+            if f not in self.filter_rgb_map:
                 raise IndexError('Filter %s not in filter_rgb_map' % (f))
-            match = np.where(str(simData[self.filterCol]) == str(f))[0]
+            match = np.where(simData[self.filterCol] == f)[0]
             simData['rRGB'][match] = self.filter_rgb_map[f][0]
             simData['gRGB'][match] = self.filter_rgb_map[f][1]
             simData['bRGB'][match] = self.filter_rgb_map[f][2]

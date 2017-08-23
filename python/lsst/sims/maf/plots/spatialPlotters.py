@@ -117,7 +117,7 @@ class HealpixSkyMap(BasePlotter):
                 norm = None
             warnings.warn("Using norm was set to log, but color limits pass through 0. "
                           "Adjusting so plotting doesn't fail")
-            
+
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
                     min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
                     cmap=cmap, norm=norm, fig=fig.number)
