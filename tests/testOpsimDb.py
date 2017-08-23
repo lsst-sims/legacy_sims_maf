@@ -6,6 +6,7 @@ import numpy as np
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils.outputUtils as out
 import lsst.utils.tests
+from lsst.utils import getPackageDir
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 from builtins import str
 
@@ -18,7 +19,7 @@ class TestOpsimDb(unittest.TestCase):
         sims_clean_up()
 
     def setUp(self):
-        self.database = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
+        self.database = os.path.join(getPackageDir('sims_data'), 'OpSimData',
                                      'opsimblitz1_1133_sqlite.db')
         self.oo = db.OpsimDatabase(database=self.database)
 
