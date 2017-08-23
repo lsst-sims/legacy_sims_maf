@@ -168,6 +168,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
 class TestOpsimFieldSlicerWarning(unittest.TestCase):
 
     def setUp(self):
+        warnings.simplefilter('always')
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
