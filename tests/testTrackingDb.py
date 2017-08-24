@@ -1,7 +1,12 @@
 import os
 import unittest
+import tempfile
+import shutil
 import lsst.sims.maf.db as db
 import lsst.utils.tests
+
+
+ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 class TestTrackingDb(unittest.TestCase):
@@ -12,7 +17,9 @@ class TestTrackingDb(unittest.TestCase):
         self.opsimComment = 'opsimcomment'
         self.mafComment = 'mafcomment'
         self.mafDir = 'mafdir'
-        self.trackingDb = 'trackingDb_sqlite.db'
+        self.trackingDb = tempfile.mktemp(dir=ROOT,
+                                          prefix='trackingDb_sqlite',
+                                          suffix='.db')
         self.mafVersion = '1.0'
         self.mafDate = '2017-01-01'
         self.opsimVersion = '4.0'

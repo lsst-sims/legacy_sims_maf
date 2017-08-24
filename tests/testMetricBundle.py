@@ -12,6 +12,7 @@ import glob
 import os
 import shutil
 import lsst.utils.tests
+from lsst.utils import getPackageDir
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 
 
@@ -38,9 +39,8 @@ class TestMetricBundle(unittest.TestCase):
         map2 = maps.StellarDensityMap()
 
         metricB = metricBundles.MetricBundle(metric, slicer, sql, stackerList=[stacker1, stacker2])
-        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
 
-        database = os.path.join(filepath, 'opsimblitz1_1133_sqlite.db')
+        database = os.path.join(getPackageDir('sims_data'), 'OpSimData', 'opsimblitz1_1133_sqlite.db')
         opsdb = db.OpsimDatabase(database=database)
         resultsDb = db.ResultsDb(outDir=self.outDir)
 

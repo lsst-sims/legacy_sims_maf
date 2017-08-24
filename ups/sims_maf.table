@@ -18,6 +18,8 @@ setupRequired(sims_photUtils)
 # For unit conversions
 setupRequired(sims_coordUtils)
 # For the dustmaps and stellar density maps
+setupRequired(sims_data)
+# For unit testing
 setupRequired(sims_maps)
 # For camera footprint
 setupRequired(obs_lsstSim)

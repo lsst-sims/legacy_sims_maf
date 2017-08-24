@@ -7,14 +7,18 @@ import warnings
 import unittest
 import numpy as np
 import lsst.sims.maf.db as db
+import tempfile
 import shutil
 import lsst.utils.tests
+
+
+ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 class TestResultsDb(unittest.TestCase):
 
     def setUp(self):
-        self.outDir = 'Out'
+        self.outDir = tempfile.mkdtemp(dir=ROOT, prefix='TestResultsDb')
         self.metricName = 'Count ExpMJD'
         self.slicerName = 'OneDSlicer'
         self.runName = 'fakeopsim'
@@ -89,7 +93,7 @@ class TestResultsDb(unittest.TestCase):
 class TestUseResultsDb(unittest.TestCase):
 
     def setUp(self):
-        self.outDir = 'Out'
+        self.outDir = tempfile.mkdtemp(dir=ROOT, prefix='TestUseResultsDb')
         self.metricName = 'Count ExpMJD'
         self.slicerName = 'OneDSlicer'
         self.runName = 'fakeopsim'
