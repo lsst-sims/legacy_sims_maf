@@ -37,7 +37,8 @@ class HealpixSkyMap(BasePlotter):
                                 'logScale': False, 'cbarFormat': None, 'cmap': perceptual_rainbow,
                                 'percentileClip': None, 'colorMin': None, 'colorMax': None,
                                 'zp': None, 'normVal': None, 'labelsize': None, 'fontsize': None,
-                                'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0), 'figsize': None}
+                                'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0), 'figsize': None,
+                                'coord': 'C'}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -117,13 +118,12 @@ class HealpixSkyMap(BasePlotter):
                 norm = None
             warnings.warn("Using norm was set to log, but color limits pass through 0. "
                           "Adjusting so plotting doesn't fail")
-            
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
-                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
+                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro', coord=plotDict['coord'],
                     cmap=cmap, norm=norm, fig=fig.number)
         # This graticule call can fail with old versions of healpy and matplotlib 1.4.0.
         # Make sure the latest version of healpy in the stack is setup
-        hp.graticule(dpar=20, dmer=20, verbose=False)
+        hp.graticule(dpar=30, dmer=30, verbose=False)
         # Add colorbar (not using healpy default colorbar because we want more tickmarks).
         ax = plt.gca()
         im = ax.get_images()[0]
@@ -133,7 +133,7 @@ class HealpixSkyMap(BasePlotter):
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            cb = plt.colorbar(im, shrink=0.75, aspect=25, orientation='horizontal',
+            cb = plt.colorbar(im, shrink=0.75, aspect=25, pad=0.1, orientation='horizontal',
                               format=plotDict['cbarFormat'], extendrect=True)
             cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
             if plotDict['labelsize'] is not None:
