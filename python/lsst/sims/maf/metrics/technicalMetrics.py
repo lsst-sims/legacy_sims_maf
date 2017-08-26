@@ -291,7 +291,7 @@ class FilterColorsMetric(BaseMetric):
         self.timeCol = timeCol
         self.t0 = t0
         if self.t0 is None:
-            self.t0 = 52939
+            self.t0 = 59580
         self.tStep = tStep
         super(FilterColorsMetric, self).__init__(col=[rRGB, gRGB, bRGB, timeCol],
                                                  metricName=metricName, **kwargs)

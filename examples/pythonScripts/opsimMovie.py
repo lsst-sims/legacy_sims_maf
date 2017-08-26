@@ -263,8 +263,8 @@ if __name__ == '__main__':
     parser.add_argument("opsimDb", type=str, help="Opsim sqlite db file")
     parser.add_argument("--dbDir", type=str, default='.',
                         help="Directory containing opsim sqlite db file")
-    parser.add_argument("--sqlConstraint", type=str, default="filter='r'",
-                        help="SQL constraint, such as filter='r' or propID=182")
+    parser.add_argument("--sqlConstraint", type=str, default=None,
+                        help="SQL constraint, such as filter='r' or night=1500. Default None.")
     parser.add_argument("--movieStepsize", type=float, default=0, help="Step size (in days) for movie slicer. "
                         "Default sets 1 visit = 1 step.")
     parser.add_argument("--outDir", type=str, default='Output', help="Output directory.")
@@ -272,10 +272,11 @@ if __name__ == '__main__':
                         help="Add all previous observations into movie (as background).")
     parser.add_argument("--skipComp", action = 'store_true', default=False,
                         help="Just make movie from existing metric plot files.")
-    parser.add_argument("--ips", type=float, default = 10,
-                        help="The number of images per second in the movie. Will skip accordingly if fps is lower.")
-    parser.add_argument("--fps", type=float, default = 0,
-                        help="The frames per second of the movie.")
+    parser.add_argument("--ips", type=float, default = 30,
+                        help="The number of images per second in the movie. "
+                             "Will skip accordingly if fps is lower. Default 30.")
+    parser.add_argument("--fps", type=float, default = 30,
+                        help="The frames per second of the movie. Default 30.")
     parser.add_argument("--movieLength", type=float, default=0.0,
                         help="Enter the desired length of the movie in seconds. "
                         "If you do so, there is no need to enter images per second, it will be calculated.")
@@ -306,7 +307,7 @@ if __name__ == '__main__':
         verbose=False
         # Get db connection info, and connect to database.
         dbfile = os.path.join(args.dbDir, args.opsimDb)
-        oo = db.OpsimDatabase(dbfile)
+        oo = db.OpsimDatabaseV4(dbfile)
         sqlconstraint = args.sqlConstraint
         # Fetch the data from opsim.
         simdata, fields = getData(oo, sqlconstraint)

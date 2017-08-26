@@ -32,7 +32,7 @@ class ParallaxMetric(BaseMetric):
 
         return uncertainty in mas. Or normalized map as a fraction
         """
-        Cols = [m5Col, mjdCol, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
+        Cols = [m5Col, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
             units = 'ratio'
         super(ParallaxMetric, self).__init__(Cols, metricName=metricName, units=units,
