@@ -221,6 +221,8 @@ class MetricBundleGroup(object):
             included in a subset identified as the currentBundleDict.
             These are the active metrics to be calculated and plotted, etc.
         """
+        if constraint is None:
+            constraint = ''
         self.currentBundleDict = {}
         for k, b in self.bundleDict.items():
             if b.constraint == constraint:
