@@ -71,7 +71,7 @@ class M5OptimalStacker(BaseStacker):
 
         self.site = Site(site)
         self.units = ['mags']
-        self.colsAdded = ['m5Optimal', 'fiveSigmaDepth']
+        self.colsAdded = ['m5Optimal']
         self.colsReq = [airmassCol, decCol, skyBrightCol,
                         seeingCol, filterCol, moonAltCol, sunAltCol]
 

@@ -22,7 +22,7 @@ class FiveSigmaStacker(BaseStacker):
     def __init__(self, airmassCol='airmass', seeingCol='seeingFwhmEff', skybrightnessCol='skyBrightness',
                  filterCol='filter', exptimeCol='visitExposureTime'):
         self.units = ['mag']
-        self.colsAdded = ['fiveSigmaDepth']
+        self.colsAdded = ['m5_simsUtils']
         self.colsReq = [airmassCol, seeingCol, skybrightnessCol, filterCol, exptimeCol]
         self.airmassCol = airmassCol
         self.seeingCol = seeingCol
@@ -34,7 +34,7 @@ class FiveSigmaStacker(BaseStacker):
         filts = np.unique(simData[self.filterCol])
         for filtername in filts:
             infilt = np.where(simData[self.filterCol] == filtername)
-            simData['fiveSigmaDepth'][infilt] = m5_flat_sed(filtername,
+            simData['m5_simsUtils'][infilt] = m5_flat_sed(filtername,
                                                             simData[infilt][self.skybrightnessCol],
                                                             simData[infilt][self.seeingCol],
                                                             simData[infilt][self.exptimeCol],
