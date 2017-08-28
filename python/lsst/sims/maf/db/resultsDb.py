@@ -151,7 +151,7 @@ class ResultsDb(object):
         except DatabaseError:
             raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
         self.slen = 1024
-        self.stype = 'S%d' % (self.slen)
+        self.stype = (np.str_, self.slen)
 
     def close(self):
         """
