@@ -141,6 +141,10 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         if tableName is None:
             tableName = self.defaultTable
 
+        # For a basic Database object, there is no default column to group by. So reset to None.
+        if groupBy == 'default':
+            groupBy = None
+
         if tableName not in self.tableNames:
             raise ValueError('Table %s not recognized; not in list of database tables.' % (tableName))
 
