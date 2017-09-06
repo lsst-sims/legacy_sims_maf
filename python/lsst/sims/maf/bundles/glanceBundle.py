@@ -10,12 +10,12 @@ from .common import standardSummaryMetrics
 __all__ = ['glanceBundle']
 
 
-def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
+def glanceBundle(colmap=None, runName='opsim', nside=64):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed
 
     Parameters
     ----------
-    colmap_dict : dict, opt
+    colmap : dict, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     run_name : str, opt
         The name of the simulated survey. Default is "opsim".
@@ -27,13 +27,13 @@ def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     metricBundleDict
     """
 
-    if colmap_dict is None:
-        colmap_dict = ColMapDict('opsimV4')
+    if colmap is None:
+        colmap = ColMapDict('opsimV4')
 
     bundleList = []
 
     filternames = ['u', 'g', 'r', 'i', 'z', 'y']
-    sql_per_filt = ['%s="%s"' % (colmap_dict['filter'], filtername) for filtername in filternames]
+    sql_per_filt = ['%s="%s"' % (colmap['filter'], filtername) for filtername in filternames]
     sql_per_and_all_filters = [''] + sql_per_filt
 
     standardStats =  standardSummaryMetrics()
@@ -44,40 +44,40 @@ def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     sql = ''
     slicer = slicers.UniSlicer()
     # Length of Survey
-    metric = metrics.FullRangeMetric(col=colmap_dict['mjd'], metricName='Length of Survey (days)')
+    metric = metrics.FullRangeMetric(col=colmap['mjd'], metricName='Length of Survey (days)')
     bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
     bundleList.append(bundle)
 
     # Total number of filter changes
-    metric = metrics.NChangesMetric(col=colmap_dict['filter'], orderBy=colmap_dict['mjd'])
+    metric = metrics.NChangesMetric(col=colmap['filter'], orderBy=colmap['mjd'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
     bundleList.append(bundle)
 
     # Total open shutter fraction
-    metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap_dict['slewtime'],
-                                               expTimeCol=colmap_dict['exptime'],
-                                               visitTimeCol=colmap_dict['visittime'])
+    metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
+                                               expTimeCol=colmap['exptime'],
+                                               visitTimeCol=colmap['visittime'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
     bundleList.append(bundle)
 
     # Total effective exposure time
-    metric = metrics.TeffMetric(m5Col=colmap_dict['fiveSigmaDepth'],
-                                filterCol=colmap_dict['filter'], normed=True)
+    metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'],
+                                filterCol=colmap['filter'], normed=True)
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
         bundleList.append(bundle)
 
     # Number of observations, all and each filter
-    metric = metrics.CountMetric(col=colmap_dict['mjd'], metricName='Number of Exposures')
+    metric = metrics.CountMetric(col=colmap['mjd'], metricName='Number of Exposures')
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
         bundleList.append(bundle)
 
     # The alt/az plots of all the pointings
     slicer = slicers.HealpixSlicer(nside=nside, latCol='zenithDistance',
-                                   lonCol=colmap_dict['az'], useCache=False)
-    stacker = stackers.ZenithDistStacker(altCol=colmap_dict['alt'])
-    metric = metrics.CountMetric(colmap_dict['mjd'], metricName='Nvisits as function of Alt/Az')
+                                   lonCol=colmap['az'], useCache=False)
+    stacker = stackers.ZenithDistStacker(altCol=colmap['alt'])
+    metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=plotFuncs,
@@ -87,26 +87,26 @@ def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     # Things to check per night
     # Open Shutter per night
     displayDict = {'group': 'Pointing Efficency', 'order':2}
-    slicer = slicers.OneDSlicer(sliceColName=colmap_dict['night'], binsize=1)
-    metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap_dict['slewtime'],
-                                               expTimeCol=colmap_dict['exptime'],
-                                               visitTimeCol=colmap_dict['visittime'])
+    slicer = slicers.OneDSlicer(sliceColName=colmap['night'], binsize=1)
+    metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
+                                               expTimeCol=colmap['exptime'],
+                                               visitTimeCol=colmap['visittime'])
     sql = None
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
 
     # Number of filter changes per night
-    slicer = slicers.OneDSlicer(sliceColName=colmap_dict['night'], binsize=1)
-    metric = metrics.NChangesMetric(col=colmap_dict['filter'], orderBy=colmap_dict['mjd'],
+    slicer = slicers.OneDSlicer(sliceColName=colmap['night'], binsize=1)
+    metric = metrics.NChangesMetric(col=colmap['filter'], orderBy=colmap['mjd'],
                                     metricName='Filter Changes')
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
 
     # Slewtime distribution
-    slicer = slicers.OneDSlicer(sliceColName=colmap_dict['slewtime'], binsize=2)
-    metric = metrics.CountMetric(col=colmap_dict['slewtime'], metricName='Slew Time Histogram')
+    slicer = slicers.OneDSlicer(sliceColName=colmap['slewtime'], binsize=2)
+    metric = metrics.CountMetric(col=colmap['slewtime'], metricName='Slew Time Histogram')
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotDict={'logScale': True, 'ylabel': 'Count'},
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
@@ -114,14 +114,14 @@ def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     # A few basic maps
     # Number of observations, coadded depths
     displayDict = {'group': 'Basic Maps', 'order': 3}
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap_dict['dec'], lonCol=colmap_dict['ra'])
-    metric = metrics.CountMetric(col=colmap_dict['mjd'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'])
+    metric = metrics.CountMetric(col=colmap['mjd'])
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                             summaryMetrics=standardStats, displayDict=displayDict)
         bundleList.append(bundle)
 
-    metric = metrics.Coaddm5Metric(m5Col=colmap_dict['fiveSigmaDepth'])
+    metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'])
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                             summaryMetrics=standardStats, displayDict=displayDict)
@@ -132,25 +132,25 @@ def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     displayDict = {'group': 'Science', 'subgroup': 'Astrometry', 'order': 4}
 
     stackerList = []
-    stacker = stackers.ParallaxFactorStacker(raCol=colmap_dict['ra'],
-                                             decCol=colmap_dict['dec'],
-                                             dateCol=colmap_dict['mjd'])
+    stacker = stackers.ParallaxFactorStacker(raCol=colmap['ra'],
+                                             decCol=colmap['dec'],
+                                             dateCol=colmap['mjd'])
     stackerList.append(stacker)
 
     # Maybe parallax and proper motion, fraction of visits in a good pair for SS
     displayDict['caption'] = r'Parallax precision of an $r=20$ flat SED star'
-    metric = metrics.ParallaxMetric(m5Col=colmap_dict['fiveSigmaDepth'],
-                                    filterCol=colmap_dict['filter'],
-                                    seeingCol=colmap_dict['seeingGeom'])
+    metric = metrics.ParallaxMetric(m5Col=colmap['fiveSigmaDepth'],
+                                    filterCol=colmap['filter'],
+                                    seeingCol=colmap['seeingGeom'])
     sql = ''
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict, stackerList=stackerList)
     bundleList.append(bundle)
     displayDict['caption'] = r'Proper motion precision of an $r=20$ flat SED star'
-    metric = metrics.ProperMotionMetric(m5Col=colmap_dict['fiveSigmaDepth'],
-                                        mjdCol=colmap_dict['mjd'],
-                                        filterCol=colmap_dict['filter'],
-                                        seeingCol=colmap_dict['seeingGeom'])
+    metric = metrics.ProperMotionMetric(m5Col=colmap['fiveSigmaDepth'],
+                                        mjdCol=colmap['mjd'],
+                                        filterCol=colmap['filter'],
+                                        seeingCol=colmap['seeingGeom'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
@@ -159,13 +159,13 @@ def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
     sql = 'filter="g" or filter="r" or filter="i"'
-    metric = metrics.PairFractionMetric(timesCol=colmap_dict['mjd'])
+    metric = metrics.PairFractionMetric(timesCol=colmap['mjd'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
     for b in bundleList:
-        b.runName = run_name
+        b.runName = runName
 
     bd = metricBundles.makeBundlesDictFromList(bundleList)
     return bd
