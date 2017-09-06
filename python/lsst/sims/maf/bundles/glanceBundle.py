@@ -136,7 +136,6 @@ def glanceBundle(colmap_dict=None, nside=64):
     # Maybe parallax and proper motion, fraction of visits in a good pair for SS, and SN detection & LC sampling?
     displayDict['caption'] = r'Parallax precision of an $r=20$ flat SED star'
     metric = metrics.ParallaxMetric(m5Col=colmap_dict['fiveSigmaDepth'],
-                                    mjdCol=colmap_dict['mjd'],
                                     filterCol=colmap_dict['filter'],
                                     seeingCol=colmap_dict['seeingGeom'])
     sql = ''
