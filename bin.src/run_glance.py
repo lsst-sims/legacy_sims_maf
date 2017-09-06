@@ -36,9 +36,9 @@ def runGlance(conn, colmap,  outDir='Glance', runName='runname'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the survey at a glance bundle.")
     parser.add_argument("dbfile", type=str, help="Sqlite file of observations (full path).")
-    parser.add_argument("runName", type=str, default="opsim", help="Run name.")
-    parser.add_argument("outDir", type=str, default="Output", help="Output directory.")
+    parser.add_argument("--runName", type=str, default="opsim", help="Run name.")
+    parser.add_argument("--outDir", type=str, default="Output", help="Output directory.")
     args = parser.parse_args()
 
     conn, colmap = connectDb(args.dbfile)
-    runGlance(conn, colmap, runName=args.runName)
+    runGlance(conn, colmap, outDir=args.outDir, runName=args.runName)
