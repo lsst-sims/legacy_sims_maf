@@ -75,9 +75,11 @@ class MetricBundleGroup(object):
         If True, metric values will be saved immediately after they are first calculated (to prevent
         data loss) as well as after summary statistics are calculated.
         If False, metric values will only be saved after summary statistics are calculated.
+    dbTable : Optional[str]
+        The name of the table in the dbObj to query for data.
     """
     def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
-                 saveEarly=True, runName=None):
+                 saveEarly=True, dbTable=None, runName=None):
         """Set up the MetricBundleGroup.
         """
         # Print occasional messages to screen.
@@ -104,7 +106,11 @@ class MetricBundleGroup(object):
         if not isinstance(dbObj, db.Database):
             warnings.warn('Warning: dbObj should be an instantiated Database (or child) object.')
         self.dbObj = dbObj
-        
+        # Set the table we're going to be querying.
+        self.dbTable = dbTable
+        if self.dbTable is None and self.dbObj is not None:
+            self.dbTable = self.dbObj.defaultTable
+
         # Check the resultsDb (optional).
         if resultsDb is not None:
             if not isinstance(resultsDb, db.ResultsDb):
@@ -321,12 +327,13 @@ class MetricBundleGroup(object):
         if self.verbose:
             if constraint == '':
                 print("Querying database %s with no constraint for columns %s." %
-                      (self.dbObj.defaultTable, self.dbCols))
+                      (self.dbTable, self.dbCols))
             else:
                 print("Querying database %s with constraint %s for columns %s" %
-                      (self.dbObj.defaultTable, constraint, self.dbCols))
+                      (self.dbTable, constraint, self.dbCols))
         # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        self.simData = self.dbObj.fetchMetricData(self.dbCols, sqlconstraint=constraint)
+        self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
+                                        groupBy='default', tableName=self.dbTable)
 
         if self.verbose:
             print("Found %i visits" % (self.simData.size))
