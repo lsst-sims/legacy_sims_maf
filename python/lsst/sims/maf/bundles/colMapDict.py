@@ -39,6 +39,21 @@ def ColMapDict(dictName=None):
         colMap['seeingEff'] = 'FWHMeff'
         colMap['seeingGeom'] = 'FWHMgeom'
 
+    elif dictName == 'barebones':
+        colMap = {}
+        colMap['ra'] = 'ra'
+        colMap['dec'] = 'dec'
+        colMap['mjd'] = 'mjd'
+        colMap['exptime'] = 'exptime'
+        colMap['visittime'] = 'exptime'
+        colMap['alt'] = 'alt'
+        colMap['az'] = 'az'
+        colMap['filter'] = 'filter'
+        colMap['fiveSigmaDepth'] = 'fivesigmadepth'
+        colMap['night'] = 'night'
+        colMap['slewtime'] = 'slewtime'
+        colMap['seeingGeom'] = 'seeing'
+
     else:
         raise ValueError('No built in column dict with that name.')
 

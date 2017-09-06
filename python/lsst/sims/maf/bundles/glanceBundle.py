@@ -10,14 +10,18 @@ from .common import standardSummaryMetrics
 __all__ = ['glanceBundle']
 
 
-def glanceBundle(colmap_dict=None, nside=64):
+def glanceBundle(colmap_dict=None, run_name='opsim', nside=64):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed
 
     Parameters
     ----------
-    colmap_dict : dict
-        A dictionary with a mapping of column names.
-
+    colmap_dict : dict, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    run_name : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        The nside for the healpix slicers. Default 64.
+        
     Returns
     -------
     metricBundleDict
@@ -33,6 +37,7 @@ def glanceBundle(colmap_dict=None, nside=64):
     sql_per_and_all_filters = [''] + sql_per_filt
 
     standardStats =  standardSummaryMetrics()
+    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Super basic things
     displayDict = {'group': 'Basic Stats', 'order': 1}
@@ -74,8 +79,6 @@ def glanceBundle(colmap_dict=None, nside=64):
     stacker = stackers.ZenithDistStacker(altCol=colmap_dict['alt'])
     metric = metrics.CountMetric(colmap_dict['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
-
-    # per filter
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=plotFuncs,
                                             displayDict=displayDict, stackerList=[stacker])
@@ -94,6 +97,7 @@ def glanceBundle(colmap_dict=None, nside=64):
     bundleList.append(bundle)
 
     # Number of filter changes per night
+    slicer = slicers.OneDSlicer(sliceColName=colmap_dict['night'], binsize=1)
     metric = metrics.NChangesMetric(col=colmap_dict['filter'], orderBy=colmap_dict['mjd'],
                                     metricName='Filter Changes')
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
@@ -133,14 +137,13 @@ def glanceBundle(colmap_dict=None, nside=64):
                                              dateCol=colmap_dict['mjd'])
     stackerList.append(stacker)
 
-    # Maybe parallax and proper motion, fraction of visits in a good pair for SS, and SN detection & LC sampling?
+    # Maybe parallax and proper motion, fraction of visits in a good pair for SS
     displayDict['caption'] = r'Parallax precision of an $r=20$ flat SED star'
     metric = metrics.ParallaxMetric(m5Col=colmap_dict['fiveSigmaDepth'],
-                                    mjdCol=colmap_dict['mjd'],
                                     filterCol=colmap_dict['filter'],
                                     seeingCol=colmap_dict['seeingGeom'])
     sql = ''
-    bundle = metricBundles.MetricBundle(metric, slicer, sql,
+    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict, stackerList=stackerList)
     bundleList.append(bundle)
     displayDict['caption'] = r'Proper motion precision of an $r=20$ flat SED star'
@@ -148,7 +151,7 @@ def glanceBundle(colmap_dict=None, nside=64):
                                         mjdCol=colmap_dict['mjd'],
                                         filterCol=colmap_dict['filter'],
                                         seeingCol=colmap_dict['seeingGeom'])
-    bundle = metricBundles.MetricBundle(metric, slicer, sql,
+    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -157,10 +160,12 @@ def glanceBundle(colmap_dict=None, nside=64):
     displayDict['subgroup'] = 'Solar System'
     sql = 'filter="g" or filter="r" or filter="i"'
     metric = metrics.PairFractionMetric(timesCol=colmap_dict['mjd'])
-    bundle = metricBundles.MetricBundle(metric, slicer, sql,
+    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
+    for b in bundleList:
+        b.runName = run_name
 
     bd = metricBundles.makeBundlesDictFromList(bundleList)
     return bd
