@@ -4,30 +4,30 @@ from __future__ import print_function
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metricBundles as metricBundles
-from lsst.sims.maf.bundles import glanceBundle
-from lsst.sims.maf.bundles import ColMapDict
+from lsst.sims.maf.batches import glanceBatch
+from lsst.sims.maf.batches import ColMapDict
 import argparse
 
 def connectDb(dbfile):
     version = db.testOpsimVersion(dbfile)
     if version == "Unknown":
-        conn = db.Database(dbfile)
+        opsdb = db.Database(dbfile)
         colmap = ColMapDict('barebones')
     elif version == "V3":
-        conn = db.OpsimDatabaseV3(dbfile)
+        opsdb = db.OpsimDatabaseV3(dbfile)
         colmap = ColMapDict('OpsimV3')
     elif version == "V4":
-        conn = db.OpsimDatabaseV4(dbfile)
+        opsdb = db.OpsimDatabaseV4(dbfile)
         colmap = ColMapDict('OpsimV4')
-    return conn, colmap
+    return opsdb, colmap
 
 
-def runGlance(conn, colmap,  outDir='Glance', runName='runname'):
+def runGlance(opsdb, colmap,  outDir='Glance', runName='opsim'):
 
-    gb = glanceBundle(colmap=colmap, runName=runName)
+    gb = glanceBatch(colmap=colmap, runName=runName)
     resultsDb = db.ResultsDb(outDir=outDir)
 
-    group = metricBundles.MetricBundleGroup(gb, conn, outDir=outDir, resultsDb=resultsDb)
+    group = metricBundles.MetricBundleGroup(gb, opsdb, outDir=outDir, resultsDb=resultsDb)
 
     group.runAll()
     group.plotAll()
@@ -36,9 +36,23 @@ def runGlance(conn, colmap,  outDir='Glance', runName='runname'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the survey at a glance bundle.")
     parser.add_argument("dbfile", type=str, help="Sqlite file of observations (full path).")
-    parser.add_argument("--runName", type=str, default="opsim", help="Run name.")
-    parser.add_argument("--outDir", type=str, default="Output", help="Output directory.")
+    parser.add_argument("--runName", type=str, default=None, help="Run name."
+                                                                  "Default is based on dbfile name.")
+    parser.add_argument("--outDir", type=str, default=None, help="Output directory."
+                                                                 "Default is runName/glance.")
     args = parser.parse_args()
 
-    conn, colmap = connectDb(args.dbfile)
-    runGlance(conn, colmap, outDir=args.outDir, runName=args.runName)
+    opsdb, colmap = connectDb(args.dbfile)
+
+    if args.runName is None:
+        if runName is None:
+            runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+            runName = runName.replace('.db', '')
+
+
+    if args.outDir is None:
+        outDir = os.path.join(args.runName, "glance")
+    else:
+        outDir = args.outDir
+
+    runGlance(opsdb, colmap, outDir=outDir, runName=args.runName)

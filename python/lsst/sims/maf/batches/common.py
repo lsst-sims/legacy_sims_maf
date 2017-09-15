@@ -7,12 +7,12 @@ __all__ = ['sqlWheres', 'standardSummaryMetrics', 'extendedSummaryMetrics']
 
 def sqlWheres(dbobj):
     """Return the WFD and DD sql statements.
-    
+
     Parameters
     -----------
     dbobj : ~lsst.sims.maf.db.OpsimDatabase
         A MAF OpsimDatabase object.
-    
+
     Returns
     -------
     dict
@@ -41,8 +41,8 @@ def standardSummaryMetrics():
 
 
 def extendedSummaryMetrics():
-    """An extended set of summary metrics, to calculate all that is in the standard summary stats, plus 
-     25/75 percentiles."""
+    """An extended set of summary metrics, to calculate all that is in the standard summary stats,
+    plus 25/75 percentiles."""
 
     extendedStats = standardSummaryMetrics()
     extendedStats += [metrics.PercentileMetric(metricName='25th%ile', percentile=25),

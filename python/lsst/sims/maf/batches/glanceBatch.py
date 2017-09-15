@@ -7,11 +7,11 @@ import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
 from .common import standardSummaryMetrics
 
-__all__ = ['glanceBundle']
+__all__ = ['glanceBatch']
 
 
-def glanceBundle(colmap=None, runName='opsim', nside=64):
-    """Generate a handy set of metrics that give a quick overview of how well a survey performed
+def glanceBatch(colmap=None, runName='opsim', nside=64):
+    """Generate a handy set of metrics that give a quick overview of how well a survey performed.
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ def glanceBundle(colmap=None, runName='opsim', nside=64):
         The name of the simulated survey. Default is "opsim".
     nside : int, opt
         The nside for the healpix slicers. Default 64.
-        
+
     Returns
     -------
     metricBundleDict
