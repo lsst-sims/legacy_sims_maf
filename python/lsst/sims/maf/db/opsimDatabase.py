@@ -23,12 +23,13 @@ def testOpsimVersion(dbFileName):
 
 class OpsimDatabase(Database):
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
-                 longstrings=False, verbose=False):
+                 longstrings=False, verbose=False, mjdCol='expMJD'):
         super(OpsimDatabase, self).__init__(database=database, driver=driver, host=host, port=port,
                                             defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
         # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         self.defaultTable = defaultTable
+        self.mjdCol = mjdCol
         self._colNames()
 
     def _colNames(self):
