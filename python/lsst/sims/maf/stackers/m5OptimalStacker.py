@@ -83,6 +83,7 @@ class M5OptimalStacker(BaseStacker):
         self.moonAltCol = moonAltCol
         self.sunAltCol = sunAltCol
         self.m5_stacker = FiveSigmaStacker()
+        self.m5Col = self.m5_stacker.colsAdded[0]
         self.colsReq.extend(self.m5_stacker.colsReq)
         self.colsReq = list(set(self.colsReq))
 

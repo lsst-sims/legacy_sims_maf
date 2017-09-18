@@ -17,7 +17,10 @@ __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
 
 class FiveSigmaStacker(BaseStacker):
     """
-    Calculate the 5-sigma limiting depth for a point source in the given conditions
+    Calculate the 5-sigma limiting depth for a point source in the given conditions.
+
+    This is generally not needed, unless the m5 parameters have been updated
+    or m5 was not previously calculated.
     """
     def __init__(self, airmassCol='airmass', seeingCol='seeingFwhmEff', skybrightnessCol='skyBrightness',
                  filterCol='filter', exptimeCol='visitExposureTime'):
@@ -71,6 +74,7 @@ class NormAirmassStacker(BaseStacker):
 
 class ZenithDistStacker(BaseStacker):
     """Calculate the zenith distance for each pointing.
+    Zenith distance is in degrees if 'degrees' = True.
     """
     def __init__(self, altCol = 'altitude', degrees=True):
         self.altCol = altCol
@@ -82,10 +86,9 @@ class ZenithDistStacker(BaseStacker):
     def _run(self, simData):
         """Calculate new column for zenith distance."""
         if self.degrees:
-            zenithDist = np.pi-np.radians(simData[self.altCol])
+            simData['zenithDistance'] = np.degrees(np.pi - np.radians(simData[self.altCol]))
         else:
-            zenithDist = np.pi-simData[self.altCol]
-        simData['zenithDistance'] = np.degrees(zenithDist)
+            simData['zenithDistance'] = np.pi - simData[self.altCol]
         return simData
 
 

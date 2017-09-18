@@ -176,7 +176,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     metadata = 'All Visits' + slicermetadata
     sqlconstraint = ''
     dTmin = 40.0  # seconds
-    dTmax = 30.0  # minutes
+    dTmax = 30.0*60. # minutes
     minNvisit = 100
     pixArea = float(hp.nside2pixarea(nside, degrees=True))
     scale = pixArea * hp.nside2npix(nside)
@@ -185,7 +185,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     extraStats1.extend(commonSummary)
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity',
-                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
+                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 60.0 / 24.0,
                                     minNvisits=minNvisit)
 
     plotDict = {'xMin': 0, 'xMax': 1}
@@ -579,6 +579,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             bundleList.append(bundle)
 
 # SNe metrics from UK workshop.
+
+
     peaks = {'uPeak': 25.9, 'gPeak': 23.6, 'rPeak': 22.6, 'iPeak': 22.7, 'zPeak': 22.7, 'yPeak': 22.8}
     peakTime = 15.
     transDuration = peakTime + 30.  # Days
