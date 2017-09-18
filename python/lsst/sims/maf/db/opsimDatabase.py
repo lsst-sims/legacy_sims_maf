@@ -10,8 +10,8 @@ from lsst.sims.maf.utils import getDateVersion
 
 __all__ = ['testOpsimVersion', 'OpsimDatabase', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
 
-def testOpsimVersion(dbFileName):
-    opsdb = Database(dbFileName)
+def testOpsimVersion(database, driver='sqlite', host=None, port=None):
+    opsdb = Database(database, driver=driver, host=host, port=port)
     if 'SummaryAllProps' in opsdb.tableNames:
         version = "V4"
     elif 'Summary' in opsdb.tableNames:
@@ -21,15 +21,40 @@ def testOpsimVersion(dbFileName):
     opsdb.close()
     return version
 
-class OpsimDatabase(Database):
+def OpsimDatabase(database, driver='sqlite', host=None, port=None, defaultTable=None,
+                  longstrings=False, verbose=False):
+    """Convenience method to return an appropriate OpsimDatabaseV3/V4 version.
+
+    This is here for backwards compatibility, as 'opsdb = db.OpsimDatabase(dbFile)' will
+    work as naively expected. However note that OpsimDatabase itself is no longer a class, but
+    a simple method that will attempt to instantiate the correct type of OpsimDatabaseV3 or OpsimDatabaseV4.
+    """
+    version = testOpsimVersion(database)
+    if version == 'V4':
+        opsdb = OpsimDatabaseV4(database, driver=driver, host=host, port=port,
+                                defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+    elif version == 'V3':
+        opsdb =  OpsimDatabaseV3(database, driver=driver, host=host, port=port,
+                                 defaultTable=defeaultTable, longstrings=longstrings, verbose=verbose)
+    else:
+        warnings.warn('Could not identify opsim database version; just using Database class instead')
+        opsdb = Database(database, driver=driver, host=host, port=port,
+                         defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+    return opsdb
+
+
+class BaseOpsimDatabase(Database):
+    """Base opsim database class to gather common methods among different versions of the opsim schema.
+
+    Not intended to be used directly; use OpsimDatabaseV3 or OpsimDatabaseV4 instead."""
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
-                 longstrings=False, verbose=False, mjdCol='expMJD'):
-        super(OpsimDatabase, self).__init__(database=database, driver=driver, host=host, port=port,
-                                            defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+                 longstrings=False, verbose=False):
+        super(BaseOpsimDatabase, self).__init__(database=database, driver=driver, host=host, port=port,
+                                                defaultTable=defaultTable, longstrings=longstrings,
+                                                verbose=verbose)
         # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         self.defaultTable = defaultTable
-        self.mjdCol = mjdCol
         self._colNames()
 
     def _colNames(self):
@@ -156,13 +181,13 @@ class OpsimDatabase(Database):
 
     def fetchNVisits(self, propId=None):
         """Returns the total number of visits in the simulation or visits for a particular proposal.
-        
+
         Parameters
         ----------
         propId : int or list of ints
             The ID numbers of the proposal(s).
-            
-        Returns 
+
+        Returns
         -------
         int
         """
@@ -214,7 +239,7 @@ class OpsimDatabase(Database):
         return seeingcol
 
 
-class OpsimDatabaseV4(OpsimDatabase):
+class OpsimDatabaseV4(BaseOpsimDatabase):
     """
     Database to class to interact with v4 versions of the opsim outputs.
 
@@ -551,7 +576,7 @@ class OpsimDatabaseV4(OpsimDatabase):
         return configSummary, configDetails
 
 
-class OpsimDatabaseV3(OpsimDatabase):
+class OpsimDatabaseV3(BaseOpsimDatabase):
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable='Summary',
                  longstrings=False, verbose=False):
         """
