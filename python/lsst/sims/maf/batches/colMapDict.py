@@ -50,8 +50,6 @@ def ColMapDict(dictName=None):
                                     'TelOptics CL', 'TelOptics OL',
                                     'Filter', 'Readout']
 
-
-
     elif dictName == 'opsimv3':
         colMap = {}
         colMap['ra'] = 'fieldRA'
@@ -93,7 +91,6 @@ def ColMapDict(dictName=None):
                                     'Tel Alt', 'Tel Az', 'Tel Rot', 'Settle',
                                     'TelOptics CL', 'TelOptics OL',
                                     'Filter', 'Readout']
-
 
     elif dictName == 'barebones':
         colMap = {}

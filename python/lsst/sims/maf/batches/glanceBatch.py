@@ -1,4 +1,5 @@
 from __future__ import print_function
+import warnings
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
@@ -6,12 +7,15 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
 from .common import standardSummary
+from .slewBatch import slewBasics
 
 __all__ = ['glanceBatch']
 
 
-def glanceBatch(colmap=None, runName='opsim', nside=64):
+def glanceBatch(colmap=None, runName='opsim',
+                nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y')):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
+    This is a meta-set of other batches, to some extent.
 
     Parameters
     ----------
@@ -21,18 +25,23 @@ def glanceBatch(colmap=None, runName='opsim', nside=64):
         The name of the simulated survey. Default is "opsim".
     nside : int, opt
         The nside for the healpix slicers. Default 64.
+    filternames : list of str, opt
+        The list of individual filters to use when running metrics.
+        Default is ('u', 'g', 'r', 'i', 'z', 'y').
+        There is always an all-visits version of the metrics run as well.
 
     Returns
     -------
     metricBundleDict
     """
+    if isinstance(colmap, str):
+        raise ValueError('colmap must be a dictionary, not a string')
 
     if colmap is None:
         colmap = ColMapDict('opsimV4')
 
     bundleList = []
 
-    filternames = ['u', 'g', 'r', 'i', 'z', 'y']
     sql_per_filt = ['%s="%s"' % (colmap['filter'], filtername) for filtername in filternames]
     sql_per_and_all_filters = [''] + sql_per_filt
 
@@ -104,12 +113,6 @@ def glanceBatch(colmap=None, runName='opsim', nside=64):
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
 
-    # Slewtime distribution
-    slicer = slicers.OneDSlicer(sliceColName=colmap['slewtime'], binsize=2)
-    metric = metrics.CountMetric(col=colmap['slewtime'], metricName='Slew Time Histogram')
-    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotDict={'logScale': True, 'ylabel': 'Count'},
-                                        summaryMetrics=standardStats, displayDict=displayDict)
-    bundleList.append(bundle)
 
     # A few basic maps
     # Number of observations, coadded depths
@@ -165,8 +168,15 @@ def glanceBatch(colmap=None, runName='opsim', nside=64):
     bundleList.append(bundle)
 
     for b in bundleList:
-        b.runName = runName
+        b.setRunName(runName)
+
+    # Add basic slew stats.
+    try:
+        slewDict = slewBasics(colmap=colmap, runName=runName)
+    except KeyError as e:
+        warnings.warn('Could not add slew stats: missing required key %s from colmap' % (e))
 
     bd = metricBundles.makeBundlesDictFromList(bundleList)
+    bd.update(slewDict)
     return bd
 
