@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import lsst.sims.maf.metrics as metrics
 
-__all__ = ['sqlWheres', 'standardSummaryMetrics', 'extendedSummaryMetrics']
+__all__ = ['sqlWheres', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
 
 
 def sqlWheres(dbobj):
@@ -26,7 +26,7 @@ def sqlWheres(dbobj):
     print('# DD "where" clause: %s' % (sqlWhere['DD']))
     return sqlWhere
 
-def standardSummaryMetrics():
+def standardSummary():
     """A set of standard summary metrics, to calculate Mean, RMS, Median, #, Max/Min, and # 3-sigma outliers.
     """
     standardSummary = [metrics.MeanMetric(),
@@ -40,7 +40,7 @@ def standardSummaryMetrics():
     return standardSummary
 
 
-def extendedSummaryMetrics():
+def extendedSummary():
     """An extended set of summary metrics, to calculate all that is in the standard summary stats,
     plus 25/75 percentiles."""
 
@@ -49,3 +49,51 @@ def extendedSummaryMetrics():
                       metrics.PercentileMetric(metricName='75th%ile', percentile=75)]
     return extendedStats
 
+
+def standardMetrics(colname, strip_colname=False):
+    """A set of standard simple metrics for some quanitity. Typically would be applied with unislicer.
+
+    Parameters
+    ----------
+    colname : str
+        The column name to apply the metrics to.
+    strip_colname: bool, opt
+        Flag to strip colname from the metricName. (i.e. "Mean" instead of "Mean Airmass").
+
+    Returns
+    -------
+    List of configured metrics.
+    """
+    standardMetrics = [metrics.MeanMetric(colname),
+                       metrics.MedianMetric(colname),
+                       metrics.MinMetric(colname),
+                       metrics.MaxMetric(colname)]
+    if strip_colname:
+        for m in standardMetrics:
+            m.name = m.name.rstrip(' %s' % colname)
+    return standardMetrics
+
+def extendedMetrics(colname, strip_colname=False):
+    """An extended set of simple metrics for some quantity. Typically applied with unislicer.
+
+    Parameters
+    ----------
+    colname : str
+        The column name to apply the metrics to.
+    strip_colname: bool, opt
+        Flag to strip colname from the metricName. (i.e. "Mean" instead of "Mean Airmass").
+
+    Returns
+    -------
+    List of configured metrics.
+    """
+    extendedMetrics = standardMetrics(colname)
+    extendedMetrics += [metrics.RmsMetric(colname),
+                        metrics.NoutliersNsigmaMetric(metricName='N(+3Sigma)' + colname, nSigma=3),
+                        metrics.NoutliersNsigmaMetric(metricName='N(-3Sigma)' + colname, nSigma=-3),
+                        metrics.PercentileMetric(metricName='25th%ile' + colname, percentile=25),
+                        metrics.PercentileMetric(metricName='75th%ile' + colname, percentile=75)]
+    if strip_colname:
+        for m in extendedMetrics:
+            m.name = m.name.rstrip(' %s' % colname)
+    return extendedMetrics

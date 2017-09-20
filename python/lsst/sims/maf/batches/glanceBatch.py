@@ -5,7 +5,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
-from .common import standardSummaryMetrics
+from .common import standardSummary
 
 __all__ = ['glanceBatch']
 
@@ -36,7 +36,7 @@ def glanceBatch(colmap=None, runName='opsim', nside=64):
     sql_per_filt = ['%s="%s"' % (colmap['filter'], filtername) for filtername in filternames]
     sql_per_and_all_filters = [''] + sql_per_filt
 
-    standardStats =  standardSummaryMetrics()
+    standardStats =  standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Super basic things

@@ -102,13 +102,12 @@ class MetricBundle(object):
         # Add the summary stats, if applicable.
         self.setSummaryMetrics(summaryMetrics)
         # Set the provenance/metadata.
-        self.runName = runName
         self._buildMetadata(metadata)
-        # Build the output filename root if not provided.
+        # Set the run name and build the output filename base (fileRoot).
+        self.setRunName(runName)
+        # Reset fileRoot, if provided.
         if fileRoot is not None:
             self.fileRoot = fileRoot
-        else:
-            self._buildFileRoot()
         # Determine the columns needed from the database.
         self._findReqCols()
         # Set the plotting classes/functions.
@@ -340,6 +339,20 @@ class MetricBundle(object):
                                               self.runName, self.constraint,
                                               self.metadata, None)
             resultsDb.updateDisplay(metricId, self.displayDict)
+
+    def setRunName(self, runName, updateFileRoot=True):
+        """Set (or reset) the runName. FileRoot will be updated accordingly if desired.
+
+        Parameters
+        ----------
+        runName: str
+            Run Name, which will become part of the fileRoot.
+        fileRoot: bool, opt
+            Flag to update the fileRoot with the runName. Default True.
+        """
+        self.runName = runName
+        if updateFileRoot:
+            self._buildFileRoot()
 
     def write(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
         """Write metricValues (and associated metadata) to disk.
