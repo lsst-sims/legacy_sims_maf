@@ -36,14 +36,32 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
 
-    # Look for the fraction of visits in gri where there are pairs.
+    # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': -1}
     sql = 'filter="g" or filter="r" or filter="i"'
-    metadata='gri pairs'
-    metric = metrics.PairFractionMetric(timesCol=colmap['mjd'])
+    metadata='gri'
+    #dtMin = 20.0
+    dtMin = 0.0
+    dtMax = 40.0
+    metric = metrics.PairFractionMetric(timeCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
+                                        metricName='Fraction of visits in pairs (%.0f-%.0f min)' % (dtMin,
+                                                                                                    dtMax))
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
-    displayDict['caption'] = 'Fraction of gri observations that are in pairs.'
+    displayDict['caption'] = 'Fraction of %s visits that have a paired visit' \
+                             'between %.1f and %.1f minutes away. ' % (metadata, dtMin, dtMax)
+    displayDict['caption'] += 'If all visits were in pairs, this fraction would be 1.'
+    displayDict['order'] += 1
+    bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata, summaryMetrics=standardStats,
+                             plotFuncs=subsetPlots, displayDict=displayDict)
+    bundleList.append(bundle)
+
+    # Look at the fraction of visits which have another visit within dtMax.
+    metric = metrics.NRevisitsMetric(timeCol=colmap['mjd'], dT=dtMax, normed=True,
+                                     metricName='Fraction of visits with a revisit < %.0f min' % dtMax)
+    displayDict['caption'] = 'Fraction of %s visits that have another visit ' \
+                             'within %.1f min. ' % (metadata, dtMax)
+    displayDict['caption'] += 'If all visits were in pairs (only), this fraction would be 0.5.'
     displayDict['order'] += 1
     bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata, summaryMetrics=standardStats,
                              plotFuncs=subsetPlots, displayDict=displayDict)
@@ -56,13 +74,13 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     bins_metric = np.arange(binMin / 60.0 / 24.0, (binMax + binsize) / 60. / 24., binsize / 60. / 24.)
     bins_plot = bins_metric * 24.0 * 60.0
     sql = ''
-    metric = metrics.TgapsMetric(bins=bins_metric, metricName='dT visits')
+    metric = metrics.TgapsMetric(bins=bins_metric, metricName='DeltaT Histogram')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
-    metadata = 'DeltaT histogram'
-    displayDict['caption'] = 'Histogram of the time between consecutive revisits ' \
-                             '(between %.1f and %.1f minutes), over entire sky.' % (binMin, binMax)
+    metadata = 'All filters'
+    displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point on the sky,' \
+                             ' considering visits between %.1f and %.1f minutes' % (binMin, binMax)
     displayDict['order'] += 1
     plotFunc = plots.SummaryHistogram()
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
@@ -73,3 +91,23 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     for b in bundleList:
         b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList)
+
+
+def interNight(colmap=None, runName='opsim', nside=64):
+    """Generate a set of statistics about the gaps between nights of observations.
+
+     Parameters
+     ----------
+     colmap : dict, opt
+         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+     run_name : str, opt
+         The name of the simulated survey. Default is "opsim".
+     nside : int, opt
+         Nside for the healpix slicer. Default 64.
+
+     Returns
+     -------
+     metricBundleDict
+     """
+    pass
+

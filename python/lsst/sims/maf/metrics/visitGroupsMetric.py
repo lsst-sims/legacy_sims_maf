@@ -13,48 +13,48 @@ __all__ = ['VisitGroupsMetric', 'PairFractionMetric']
 class PairFractionMetric(BaseMetric):
     """What fraction of observations are part of a pair.
 
-    Note, an observation can be a memeber of more than one "pair". For example,
+    Note, an observation can be a member of more than one "pair". For example,
     t=[0, 5, 30], all observations would be considered part of a pair because they
     all have an observation within the given window to pair with (the observation at t=30
     pairs twice).
+
+    Parameters
+    ----------
+    minGap : float, opt
+        Minimum time to consider something part of a pair (minutes). Default 15.
+    maxGap : float, opt
+        Maximum time to consider something part of a pair (minutes). Default 90.
     """
-    def __init__(self, timesCol='observationStartMJD', metricName='PairFraction',
+    def __init__(self, timeCol='observationStartMJD', metricName='PairFraction',
                  minGap=15., maxGap=90., **kwargs):
-        """
-        Parameters
-        ----------
-        minGap : float
-            Minimum time to consider something part of a pair (minutes)
-        maxGap : float
-            Maximum time to consider something part of a pair (minutes)
-        """
-        self.timesCol = timesCol
+        self.timeCol = timeCol
         self.minGap = minGap/60./24.
         self.maxGap = maxGap/60./24.
-        super(PairFractionMetric, self).__init__(col=[timesCol], metricName=metricName, **kwargs)
+        units = ''
+        super(PairFractionMetric, self).__init__(col=[timeCol], metricName=metricName, units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        size = np.size(dataSlice[self.timesCol])
-        i = np.tile(dataSlice[self.timesCol], (size, 1))
+        nobs = np.size(dataSlice[self.timeCol])
+        i = np.tile(dataSlice[self.timeCol], (nobs, 1))
         j = i.T
         tdiff = np.abs(i-j)
         part_pair = np.zeros(i.shape, dtype=int)
         good = np.where((tdiff < self.maxGap) & (tdiff > self.minGap))
         part_pair[good] = 1
         part_pair = np.max(part_pair, axis=1)
-        result = np.sum(part_pair)/float(size)
+        result = np.sum(part_pair)/float(nobs)
         return result
 
 
 class VisitGroupsMetric(BaseMetric):
     """Count the number of visits per night within deltaTmin and deltaTmax."""
-    def __init__(self, timesCol='observationStartMJD', nightsCol='night', metricName='VisitGroups',
+    def __init__(self, timeCol='observationStartMJD', nightsCol='night', metricName='VisitGroups',
                  deltaTmin=15.0/60.0/24.0, deltaTmax=90.0/60.0/24.0, minNVisits=2, window=30, minNNights=3,
                  **kwargs):
         """
         Instantiate metric.
 
-        'timesCol' = column with the time of the visit (default expmjd),
+        'timeCol' = column with the time of the visit (default expmjd),
         'nightsCol' = column with the night of the visit (default night),
         'deltaTmin' = minimum time of window: units are days (default 15 min),
         'deltaTmax' = maximum time of window: units are days (default 90 min),
@@ -63,7 +63,7 @@ class VisitGroupsMetric(BaseMetric):
         'window' = the number of nights to consider within a window (for reduce methods),
         'minNNights' = the minimum required number of nights within window to make a full 'group'.
         """
-        self.times = timesCol
+        self.times = timeCol
         self.nights = nightsCol
         eps = 1e-10
         self.deltaTmin = float(deltaTmin) - eps
