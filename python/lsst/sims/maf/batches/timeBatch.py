@@ -1,5 +1,6 @@
 """Sets of metrics to look at time between visits/pairs, etc.
 """
+import numpy as np
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
