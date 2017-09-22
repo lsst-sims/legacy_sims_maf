@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metricBundles as mb

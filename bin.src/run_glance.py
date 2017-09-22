@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
 
-import lsst.sims.maf.db as db
-import lsst.sims.maf.metricBundles as metricBundles
-from lsst.sims.maf.batches import glanceBatch
-from lsst.sims.maf.batches import ColMapDict
+import os
 import argparse
+import lsst.sims.maf.db as db
+import lsst.sims.maf.metricBundles as mb
+import lsst.sims.maf.batches as batches
 
 
 def connectDb(dbfile):
