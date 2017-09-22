@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from __future__ import print_function
 
 import lsst.sims.maf.db as db
@@ -8,30 +7,38 @@ from lsst.sims.maf.batches import glanceBatch
 from lsst.sims.maf.batches import ColMapDict
 import argparse
 
+
 def connectDb(dbfile):
     version = db.testOpsimVersion(dbfile)
     if version == "Unknown":
         opsdb = db.Database(dbfile)
-        colmap = ColMapDict('barebones')
+        colmap = batches.ColMapDict('barebones')
     elif version == "V3":
         opsdb = db.OpsimDatabaseV3(dbfile)
-        colmap = ColMapDict('OpsimV3')
+        colmap = batches.ColMapDict('OpsimV3')
     elif version == "V4":
         opsdb = db.OpsimDatabaseV4(dbfile)
-        colmap = ColMapDict('OpsimV4')
+        colmap = batches.ColMapDict('OpsimV4')
     return opsdb, colmap
 
 
-def runGlance(opsdb, colmap,  outDir='Glance', runName='opsim'):
+def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
 
-    gb = glanceBatch(colmap=colmap, runName=runName)
+    bdict = batches.glanceBatch(colmap, runName)
     resultsDb = db.ResultsDb(outDir=outDir)
-
-    group = metricBundles.MetricBundleGroup(gb, opsdb, outDir=outDir, resultsDb=resultsDb)
-
+    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
     group.runAll()
     group.plotAll()
+    resultsDb.close()
 
+def replotBatch(opsdb, colmap, outDir='Test', runName='opsim'):
+
+    bdict = batches.intraNight(colmap, runName)
+    resultsDb = db.ResultsDb(outDir=outDir)
+    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
+    group.readAll()
+    group.plotAll()
+    resultsDb.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the survey at a glance bundle.")
@@ -40,19 +47,25 @@ if __name__ == '__main__':
                                                                   "Default is based on dbfile name.")
     parser.add_argument("--outDir", type=str, default=None, help="Output directory."
                                                                  "Default is runName/glance.")
+    parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
+                        default=False, help="Reload the metric values from disk and re-plot them.")
     args = parser.parse_args()
 
-    opsdb, colmap = connectDb(args.dbfile)
-
     if args.runName is None:
-        if runName is None:
-            runName = os.path.basename(dbFile).replace('_sqlite.db', '')
-            runName = runName.replace('.db', '')
-
+        runName = os.path.basename(args.dbFile).replace('_sqlite.db', '')
+        runName = runName.replace('.db', '')
+    else:
+        runName = args.runName
 
     if args.outDir is None:
-        outDir = os.path.join(args.runName, "glance")
+        outDir = os.path.join(runName, "glance")
     else:
         outDir = args.outDir
 
-    runGlance(opsdb, colmap, outDir=outDir, runName=args.runName)
+    opsdb, colmap = connectDb(args.dbfile)
+    if args.plotOnly:
+        replotBatch(opsdb, colmap, outDir=outDir, runName=runName)
+    else:
+        runBatch(opsdb, colmap, outDir=outDir, runName=runName)
+
+    opsdb.close()

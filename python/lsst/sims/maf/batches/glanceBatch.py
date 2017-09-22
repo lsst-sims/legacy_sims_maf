@@ -162,7 +162,7 @@ def glanceBatch(colmap=None, runName='opsim',
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
     sql = 'filter="g" or filter="r" or filter="i"'
-    metric = metrics.PairFractionMetric(timesCol=colmap['mjd'])
+    metric = metrics.PairFractionMetric(timeCol=colmap['mjd'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
