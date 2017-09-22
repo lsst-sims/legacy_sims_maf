@@ -55,6 +55,7 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     binsize = 5.
     bins_metric = np.arange(binMin / 60.0 / 24.0, (binMax + binsize) / 60. / 24., binsize / 60. / 24.)
     bins_plot = bins_metric * 24.0 * 60.0
+    sql = ''
     metric = metrics.TgapsMetric(bins=bins_metric, metricName='dT visits')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
@@ -64,7 +65,7 @@ def intraNight(colmap=None, runName='opsim', nside=64):
                              '(between %.1f and %.1f minutes), over entire sky.' % (binMin, binMax)
     displayDict['order'] += 1
     plotFunc = plots.SummaryHistogram()
-    bundle = mb.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                             displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
     bundleList.append(bundle)
 
