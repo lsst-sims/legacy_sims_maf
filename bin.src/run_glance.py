@@ -53,7 +53,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.runName is None:
-        runName = os.path.basename(args.dbFile).replace('_sqlite.db', '')
+        runName = os.path.basename(args.dbfile).replace('_sqlite.db', '')
         runName = runName.replace('.db', '')
     else:
         runName = args.runName
