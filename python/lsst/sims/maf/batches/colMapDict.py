@@ -21,7 +21,7 @@ def ColMapDict(dictName=None):
         colMap['fiveSigmaDepth'] = 'fiveSigmaDepth'
         colMap['night'] = 'night'
         colMap['slewtime'] = 'slewTime'
-        colMap['slewdist'] = 'slewDist'
+        colMap['slewdist'] = 'slewDistance'
         colMap['seeingEff'] = 'seeingFwhmEff'
         colMap['seeingGeom'] = 'seeingFwhmGeom'
         # slew speeds table
@@ -65,7 +65,7 @@ def ColMapDict(dictName=None):
         colMap['fiveSigmaDepth'] = 'fiveSigmaDepth'
         colMap['night'] = 'night'
         colMap['slewtime'] = 'slewTime'
-        colMap['slewdist'] = 'slewDistance'
+        colMap['slewdist'] = 'slewDist'
         colMap['seeingEff'] = 'FWHMeff'
         colMap['seeingGeom'] = 'FWHMgeom'
         # slew speeds table
