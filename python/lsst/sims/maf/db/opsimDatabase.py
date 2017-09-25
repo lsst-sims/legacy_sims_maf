@@ -486,6 +486,13 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
                         nvisits[idx] += int(exp) * events
         return propDict, nvisits
 
+    def _queryParam(self, constraint):
+        results = self.query_columns('Config', colnames=['paramValue'], sqlconstraint=constraint)
+        if len(results) > 0:
+            return results['paramValue'][0]
+        else:
+            return '--'
+
     def fetchConfig(self):
         """
         Fetch config data from configTable, match proposal IDs with proposal names and some field data,
@@ -520,20 +527,17 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
         # I've left these here (rather than adding to self_colNames), bc I think schema changes in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
         constraint = 'paramName="observatory/telescope/altitude_minpos"'
-
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['MinAlt'] = results['paramValue'][0]
+        configSummary['RunInfo']['MinAlt'] = self._queryParam(constraint)
         constraint = 'paramName="observatory/telescope/altitude_maxpos"'
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['MaxAlt'] = results['paramValue'][0]
+        configSummary['RunInfo']['MaxAlt'] = self._queryParam(constraint)
         constraint = 'paramName="observatory/camera/filter_change_time"'
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['TimeFilterChange'] = results['paramValue'][0]
+        configSummary['RunInfo']['TimeFilterChange'] = self._queryParam(constraint)
         constraint = 'paramName="observatory/camera/readout_time"'
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['TimeReadout'] = results['paramValue'][0]
+        configSummary['RunInfo']['TimeReadout'] = self._queryParam(constraint)
+        constraint = 'paramName="sched_driver/propboost_weight"'
+        configSummary['RunInfo']['PropBoostWeight'] = self._queryParam(constraint)
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinAlt', 'MaxAlt',
-                                                'TimeFilterChange', 'TimeReadout']
+                                                'TimeFilterChange', 'TimeReadout', 'PropBoostWeight']
 
         # Echo config table into configDetails.
         configDetails = {}
@@ -549,10 +553,34 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
                                               propData[self.propNameCol], propData[self.propTypeCol]):
             configSummary['Proposals'][propname] = {}
             propdict = configSummary['Proposals'][propname]
-            propdict['keyorder'] = [self.propIdCol, self.propNameCol, self.propTypeCol]
+            propdict['keyorder'] = ['PropId', 'PropName', 'PropType', 'Airmass bonus', 'Airmass max',
+                                    'HA bonus', 'HA max', 'Time weight', 'Restart Lost Sequences',
+                                    'Restart Complete Sequences', 'Filters']
             propdict['PropName'] = propname
             propdict['PropId'] = propid
             propdict['PropType'] = proptype
+            # Add some useful information on the proposal parameters.
+            constraint = 'paramName like "science/%s_props/values/%s/sky_constraints/max_airmass"'\
+                         % ("%", propname)
+            propdict['Airmass max'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/airmass_bonus"'\
+                         % ("%", propname)
+            propdict['Airmass bonus'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/hour_angle_max"'\
+                         % ("%", propname)
+            propdict['HA max'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/hour_angle_bonus"'\
+                         % ("%", propname)
+            propdict['HA bonus'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/time_weight"'\
+                         % ("%", propname)
+            propdict['Time weight'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/restart_lost_sequences"'\
+                         % ("%", propname)
+            propdict['Restart Lost Sequences'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/restart_complete_sequences"'\
+                         % ("%", propname)
+            propdict['Restart Complete Sequences'] = self._queryParam(constraint)
             # Find number of visits requested per filter for the proposal
             # along with min/max sky and airmass values.
             propdict['Filters'] = {}
@@ -565,11 +593,7 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
                 for dk, qk in zip(dictkeys, querykeys):
                     constraint = 'paramName like "science/%s_props/values/%s/filters/%s/%s"' \
                                  % ("%", propname, f, qk)
-                    results = self.query_columns('Config', ['paramValue'], sqlconstraint=constraint)
-                    if len(results) == 0:
-                        propdict['Filters'][f][dk] = '--'
-                    else:
-                        propdict['Filters'][f][dk] = results['paramValue'][0]
+                    propdict['Filters'][f][dk] = self._queryParam(constraint)
                 propdict['Filters'][f]['keyorder'] = ['Filter', 'MaxSeeing', 'MinSky', 'MaxSky',
                                                       'NumVisits', 'GroupedVisits', 'Snaps']
             propdict['Filters']['keyorder'] = list(self.filterlist)
