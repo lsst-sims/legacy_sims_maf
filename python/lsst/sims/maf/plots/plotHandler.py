@@ -7,7 +7,17 @@ import warnings
 import matplotlib.pyplot as plt
 import lsst.sims.maf.utils as utils
 
-__all__ = ['PlotHandler', 'BasePlotter']
+__all__ = ['applyZPNorm', 'PlotHandler', 'BasePlotter']
+
+def applyZPNorm(metricValue, plotDict):
+    if 'zp' in plotDict:
+        if plotDict['zp'] is not None:
+            metricValue = metricValue - plotDict['zp']
+    if 'normVal' in plotDict:
+        if plotDict['normVal'] is not None:
+            metricValue = metricValue / plotDict['normVal']
+    return metricValue
+
 
 class BasePlotter(object):
     """
@@ -21,7 +31,6 @@ class BasePlotter(object):
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
-
 
 
 class PlotHandler(object):

@@ -12,15 +12,53 @@ from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 
 from lsst.sims.maf.utils import optimalBins, percentileClipping
-from .plotHandler import BasePlotter
+from .plotHandler import BasePlotter, applyZPNorm
 
 from lsst.sims.utils import _equatorialFromGalactic
-import inspect
 from .perceptual_rainbow import makePRCmap
 perceptual_rainbow = makePRCmap()
 
-__all__ = ['HealpixSkyMap', 'HealpixPowerSpectrum', 'HealpixHistogram', 'OpsimHistogram',
-           'BaseHistogram', 'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
+__all__ = ['setColorLims', 'setColorMap', 'HealpixSkyMap', 'HealpixPowerSpectrum',
+           'HealpixHistogram', 'OpsimHistogram', 'BaseHistogram',
+           'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
+
+
+def setColorLims(metricValue, plotDict):
+    """Set up color bar limits."""
+    # Use plot dict if these values are set.
+    colorMin = plotDict['colorMin']
+    colorMax = plotDict['colorMax']
+    # If not, try to use percentile clipping.
+    if plotDict['percentileClip'] is not None:
+        pcMin, pcMax = utils.percentileClipping(metricValue.compressed(),
+                                                percentile=plotDict['percentileClip'])
+        if colorMin is None:
+            colorMin = pcMin
+        if colorMax is None:
+            colorMax = pcMax
+    # If not, just use the data limits.
+    if colorMin is None:
+        colorMin = metricValue.compressed().min()
+    if colorMax is None:
+        colorMax = metricValue.compressed().max()
+    # But make sure there is some range on the colorbar
+    if colorMin == colorMax:
+        colorMin = colorMin - 0.5
+        colorMax = colorMax + 0.5
+    return [colorMin, colorMax]
+
+
+def setColorMap(plotDict):
+    cmap = plotDict['cmap']
+    if cmap is None:
+        cmap = 'perceptual_rainbow'
+    if type(cmap) == str:
+        cmap = getattr(cm, cmap)
+    # Set background and masked pixel colors default healpy white and gray.
+    cmap.set_over(cmap(1.0))
+    cmap.set_under('w')
+    cmap.set_bad('gray')
+    return cmap
 
 
 class HealpixSkyMap(BasePlotter):
@@ -56,52 +94,21 @@ class HealpixSkyMap(BasePlotter):
         int
            Matplotlib figure number used to create the plot.
         """
-        # Check that the slicer is a HealpixSlicer, or subclass thereof
-        # Using the names rather than just comparing the classes themselves
-        # to avoid circular dependency between slicers and plots
-        classes = inspect.getmro(slicer.__class__)
-        cnames = [cls.__name__ for cls in classes]
-        if 'HealpixSlicer' not in cnames:
-            raise ValueError('HealpixSkyMap is for use with healpix slicers')
         # Override the default plotting parameters with user specified values.
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        # Update the metric data with zeropoint or normalization.
+        metricValue = applyZPNorm(metricValueIn, plotDict)
         # Generate a Mollweide full-sky plot.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
+        # Set up color bar limits.
+        clims = setColorLims(metricValue, plotDict)
+        cmap = setColorMap(plotDict)
+        # Set log scale?
         norm = None
         if plotDict['logScale']:
             norm = 'log'
-        cmap = plotDict['cmap']
-        if type(cmap) == str:
-            cmap = getattr(cm, cmap)
-        # Set background and masked pixel colors default healpy white and gray.
-        cmap.set_over(cmap(1.0))
-        cmap.set_under('w')
-        cmap.set_bad('gray')
-        metricValue = metricValueIn.copy()
-        if plotDict['zp'] is not None:
-            metricValue = metricValue - plotDict['zp']
-        if plotDict['normVal'] is not None:
-            metricValue = metricValue / plotDict['normVal']
-        # Set up color bar limits.
-        colorMin = plotDict['colorMin']
-        colorMax = plotDict['colorMax']
-        if plotDict['percentileClip'] is not None:
-            pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
-            if colorMin is None:
-                colorMin = pcMin
-            if colorMax is None:
-                colorMax = pcMax
-        if colorMin is None:
-            colorMin = metricValue.compressed().min()
-        if colorMax is None:
-            colorMax = metricValue.compressed().max()
-        # Make sure there is some range on the colorbar
-        if colorMin == colorMax:
-            colorMin = colorMin - 0.5
-            colorMax = colorMax + 0.5
-        clims = [colorMin, colorMax]
         # Avoid trying to log scale when zero is in the range.
         if (norm == 'log') & ((clims[0] <= 0 <= clims[1]) or (clims[0] >= 0 >= clims[1])):
             # Try something simple
@@ -271,12 +278,7 @@ class BaseHistogram(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        if plotDict['zp'] is not None:
-            metricValue = metricValueIn.compressed() - plotDict['zp']
-        elif plotDict['normVal'] is not None:
-            metricValue = metricValueIn.compressed() / plotDict['normVal']
-        else:
-            metricValue = metricValueIn.compressed()
+        metricValue = applyZPNorm(metricValueIn, plotDict)
         # Toss any NaNs or infs
         metricValue = metricValue[np.isfinite(metricValue)]
         # Determine percentile clipped X range, if set. (and xmin/max not set).
@@ -452,11 +454,7 @@ class BaseSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        metricValue = metricValueIn.copy()
-        if plotDict['zp'] is not None:
-            metricValue = metricValue - plotDict['zp']
-        if plotDict['normVal'] is not None:
-            metricValue = metricValue / plotDict['normVal']
+        metricValue = applyZPNorm(metricValueIn, plotDict)
 
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # other projections available include
@@ -469,39 +467,8 @@ class BaseSkyMap(BasePlotter):
         else:
             # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
             mask = ~metricValue.mask
-        # Determine color min/max values. metricValue.compressed = non-masked points.
-        if not plotDict['metricIsColor']:
-            colorMin = plotDict['colorMin']
-            colorMax = plotDict['colorMax']
-            if plotDict['percentileClip'] is not None:
-                pcMin, pcMax = percentileClipping(metricValue.compressed(),
-                                                  percentile=plotDict['percentileClip'])
-                if colorMin is None:
-                    colorMin = pcMin
-                if colorMax is None:
-                    colorMax = pcMax
-            if colorMin is None:
-                colorMin = metricValue.compressed().min()
-            if colorMax is None:
-                colorMax = metricValue.compressed().max()
-            if colorMin == colorMax:
-                colorMin = colorMin - 0.5
-                colorMax = colorMax + 0.5
-            # Determine whether or not to use auto-log scale.
-            if plotDict['logScale'] == 'auto':
-                if plotDict['colorMin'] > 0:
-                    if np.log10(colorMax) - np.log10(colorMin) > 3:
-                        plotDict['logScale'] = True
-                    else:
-                        plotDict['logScale'] = False
-                else:
-                    plotDict['logScale'] = False
-            if plotDict['logScale']:
-                # Move min/max values to things that can be marked on the colorbar.
-                colorMin = 10**(int(np.log10(colorMin)))
-                colorMax = 10**(int(np.log10(colorMax)))
-            clims = [colorMin, colorMax]
-        # Add ellipses at RA/Dec locations
+
+        # Add ellipses at RA/Dec locations - but don't add colors yet.
         lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi * 2) - np.pi
         ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][mask],
                                              plotDict['radius'], rasterized=True, ax=ax)
@@ -520,7 +487,21 @@ class BaseSkyMap(BasePlotter):
             if current:
                 ax.add_patch(current)
         else:
+            # Determine color min/max values. metricValue.compressed = non-masked points.
+            clims = setColorLims(metricValue, plotDict)
+            # Determine whether or not to use auto-log scale.
+            if plotDict['logScale'] == 'auto':
+                if clims[0] > 0:
+                    if np.log10(clims[1]) - np.log10(clims[0]) > 3:
+                        plotDict['logScale'] = True
+                    else:
+                        plotDict['logScale'] = False
+                else:
+                    plotDict['logScale'] = False
             if plotDict['logScale']:
+                # Move min/max values to things that can be marked on the colorbar.
+                clims[0] = 10 ** (int(np.log10(clims[0])))
+                clims[1] = 10 ** (int(np.log10(clims[1])))
                 norml = colors.LogNorm()
                 p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
                                     linewidth=0, edgecolor=None, norm=norml, rasterized=True)
@@ -584,48 +565,13 @@ class HealpixSDSSSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-
+        metricValue = applyZPNorm(metricValueIn, plotDict)
         norm = None
         if plotDict['logScale']:
             norm = 'log'
-        if plotDict['cmap'] is None:
-            cmap = cm.cubehelix
-        else:
-            cmap = plotDict['cmap']
-        if type(cmap) == str:
-            cmap = getattr(cm, cmap)
-        # Make colormap compatible with healpy
-        cmap = colors.LinearSegmentedColormap('cmap', cmap._segmentdata, cmap.N)
-        cmap.set_over(cmap(1.0))
-        cmap.set_under('w')
-        cmap.set_bad('gray')
-        metricValue = metricValueIn.copy()
-        if plotDict['zp'] is not None:
-            metricValue = metricValue - plotDict['zp']
-        if plotDict['normVal'] is not None:
-            metricValue = metricValue / plotDict['normVal']
+        clims = setColorLims(metricValue, plotDict)
+        cmap = setColorMap(plotDict)
 
-        if plotDict['percentileClip'] is not None:
-            pcMin, pcMax = percentileClipping(metricValue.compressed(),
-                                              percentile=plotDict['percentileClip'])
-            if plotDict['colorMin'] is None:
-                plotDict['colorMin'] = pcMin
-            if plotDict['colorMax'] is None:
-                plotDict['colorMax'] = pcMax
-        if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
-            clims = [plotDict['colorMin'], plotDict['colorMax']]
-        else:
-            clims = None
-
-        # Make sure there is some range on the colorbar
-        if clims is None:
-            if metricValue.compressed().size > 0:
-                clims = [metricValue.compressed().min(), metricValue.compressed().max()]
-            else:
-                clims = [-1, 1]
-            if clims[0] == clims[1]:
-                clims[0] = clims[0] - 1
-                clims[1] = clims[1] + 1
         racenters = np.arange(plotDict['raMin'], plotDict['raMax'], plotDict['raLen'])
         nframes = racenters.size
         for i, racenter in enumerate(racenters):
@@ -691,35 +637,8 @@ class LambertSkyMap(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
-        if plotDict['zp'] is not None:
-            metricValue = metricValueIn - plotDict['zp']
-        elif plotDict['normVal'] is not None:
-            metricValue = metricValueIn / plotDict['normVal']
-        else:
-            metricValue = metricValueIn
-
-        if plotDict['percentileClip'] is not None:
-            pcMin, pcMax = percentileClipping(metricValue.compressed(),
-                                              percentile=plotDict['percentileClip'])
-            if plotDict['colorMin'] is None:
-                plotDict['colorMin'] = pcMin
-            if plotDict['colorMax'] is None:
-                plotDict['colorMax'] = pcMax
-        if (plotDict['colorMin'] is not None) or (plotDict['colorMax'] is not None):
-            clims = [plotDict['colorMin'], plotDict['colorMax']]
-        else:
-            clims = None
-
-        # Make sure there is some range on the colorbar
-        if clims is None:
-            if metricValue.compressed().size > 0:
-                clims = [metricValue.compressed().min(), metricValue.compressed().max()]
-            else:
-                clims = [-1, 1]
-            if clims[0] == clims[1]:
-                clims[0] = clims[0] - 1
-                clims[1] = clims[1] + 1
-
+        metricValue = applyZPNorm(metricValueIn)
+        clims = setColorLims(metricValue, plotDict)
         # Calculate the levels to use for the contour
         if np.size(plotDict['levels']) > 1:
             levels = plotDict['levels']
