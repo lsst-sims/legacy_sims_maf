@@ -9,7 +9,7 @@ import lsst.utils.tests
 class TestVisitGroupsMetric(unittest.TestCase):
 
     def testPairFractionMetric(self):
-        metric = metrics.PairFractionMetric(timesCol='mjd')
+        metric = metrics.PairFractionMetric(timeCol='mjd')
         times = np.arange(0, 200, 30) / 60. / 24.
         data = np.core.records.fromarrays([times], names='mjd')
         # These should all have pairs
@@ -70,11 +70,11 @@ class TestVisitGroupsMetric(unittest.TestCase):
         expmjd = expmjd + night
         testdata = np.core.records.fromarrays([expmjd, night], names=['expmjd', 'night'])
         # Set up metric.
-        testmetric = metrics.VisitGroupsMetric(timesCol='expmjd', nightsCol='night',
+        testmetric = metrics.VisitGroupsMetric(timeCol='expmjd', nightsCol='night',
                                                deltaTmin=tmin, deltaTmax=tmax, minNVisits=2,
                                                window=5, minNNights=3)
         # and set up a copy, with a higher number of min visits per night
-        testmetric2 = metrics.VisitGroupsMetric(timesCol='expmjd', nightsCol='night', deltaTmin=tmin, deltaTmax=tmax,
+        testmetric2 = metrics.VisitGroupsMetric(timeCol='expmjd', nightsCol='night', deltaTmin=tmin, deltaTmax=tmax,
                                                 minNVisits=3, window=5, minNNights=3)
         # Run metric for expected results.
         metricval = testmetric.run(testdata)

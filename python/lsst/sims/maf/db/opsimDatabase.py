@@ -10,8 +10,8 @@ from lsst.sims.maf.utils import getDateVersion
 
 __all__ = ['testOpsimVersion', 'OpsimDatabase', 'OpsimDatabaseV4', 'OpsimDatabaseV3']
 
-def testOpsimVersion(dbFileName):
-    opsdb = Database(dbFileName)
+def testOpsimVersion(database, driver='sqlite', host=None, port=None):
+    opsdb = Database(database, driver=driver, host=host, port=port)
     if 'SummaryAllProps' in opsdb.tableNames:
         version = "V4"
     elif 'Summary' in opsdb.tableNames:
@@ -21,11 +21,37 @@ def testOpsimVersion(dbFileName):
     opsdb.close()
     return version
 
-class OpsimDatabase(Database):
+def OpsimDatabase(database, driver='sqlite', host=None, port=None, defaultTable=None,
+                  longstrings=False, verbose=False):
+    """Convenience method to return an appropriate OpsimDatabaseV3/V4 version.
+
+    This is here for backwards compatibility, as 'opsdb = db.OpsimDatabase(dbFile)' will
+    work as naively expected. However note that OpsimDatabase itself is no longer a class, but
+    a simple method that will attempt to instantiate the correct type of OpsimDatabaseV3 or OpsimDatabaseV4.
+    """
+    version = testOpsimVersion(database)
+    if version == 'V4':
+        opsdb = OpsimDatabaseV4(database, driver=driver, host=host, port=port,
+                                defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+    elif version == 'V3':
+        opsdb =  OpsimDatabaseV3(database, driver=driver, host=host, port=port,
+                                 defaultTable=defeaultTable, longstrings=longstrings, verbose=verbose)
+    else:
+        warnings.warn('Could not identify opsim database version; just using Database class instead')
+        opsdb = Database(database, driver=driver, host=host, port=port,
+                         defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+    return opsdb
+
+
+class BaseOpsimDatabase(Database):
+    """Base opsim database class to gather common methods among different versions of the opsim schema.
+
+    Not intended to be used directly; use OpsimDatabaseV3 or OpsimDatabaseV4 instead."""
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable=None,
                  longstrings=False, verbose=False):
-        super(OpsimDatabase, self).__init__(database=database, driver=driver, host=host, port=port,
-                                            defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+        super(BaseOpsimDatabase, self).__init__(database=database, driver=driver, host=host, port=port,
+                                                defaultTable=defaultTable, longstrings=longstrings,
+                                                verbose=verbose)
         # Save filterlist so that we get the filter info per proposal in this desired order.
         self.filterlist = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
         self.defaultTable = defaultTable
@@ -63,7 +89,7 @@ class OpsimDatabase(Database):
             groupBy = self.mjdCol
         if groupBy is 'default' and tableName!=self.defaultTable:
             groupBy = None
-        metricdata = super(OpsimDatabase, self).fetchMetricData(colnames=colnames,
+        metricdata = super(BaseOpsimDatabase, self).fetchMetricData(colnames=colnames,
                                                                 sqlconstraint=sqlconstraint,
                                                                 groupBy=groupBy, tableName=tableName)
         return metricdata
@@ -155,13 +181,13 @@ class OpsimDatabase(Database):
 
     def fetchNVisits(self, propId=None):
         """Returns the total number of visits in the simulation or visits for a particular proposal.
-        
+
         Parameters
         ----------
         propId : int or list of ints
             The ID numbers of the proposal(s).
-            
-        Returns 
+
+        Returns
         -------
         int
         """
@@ -213,7 +239,7 @@ class OpsimDatabase(Database):
         return seeingcol
 
 
-class OpsimDatabaseV4(OpsimDatabase):
+class OpsimDatabaseV4(BaseOpsimDatabase):
     """
     Database to class to interact with v4 versions of the opsim outputs.
 
@@ -460,6 +486,13 @@ class OpsimDatabaseV4(OpsimDatabase):
                         nvisits[idx] += int(exp) * events
         return propDict, nvisits
 
+    def _queryParam(self, constraint):
+        results = self.query_columns('Config', colnames=['paramValue'], sqlconstraint=constraint)
+        if len(results) > 0:
+            return results['paramValue'][0]
+        else:
+            return '--'
+
     def fetchConfig(self):
         """
         Fetch config data from configTable, match proposal IDs with proposal names and some field data,
@@ -494,20 +527,17 @@ class OpsimDatabaseV4(OpsimDatabase):
         # I've left these here (rather than adding to self_colNames), bc I think schema changes in the config
         # files will actually be easier to track here (at least until the opsim configs are cleaned up).
         constraint = 'paramName="observatory/telescope/altitude_minpos"'
-
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['MinAlt'] = results['paramValue'][0]
+        configSummary['RunInfo']['MinAlt'] = self._queryParam(constraint)
         constraint = 'paramName="observatory/telescope/altitude_maxpos"'
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['MaxAlt'] = results['paramValue'][0]
+        configSummary['RunInfo']['MaxAlt'] = self._queryParam(constraint)
         constraint = 'paramName="observatory/camera/filter_change_time"'
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['TimeFilterChange'] = results['paramValue'][0]
+        configSummary['RunInfo']['TimeFilterChange'] = self._queryParam(constraint)
         constraint = 'paramName="observatory/camera/readout_time"'
-        results = self.query_columns('Config', colnames=['paramValue', ], sqlconstraint=constraint)
-        configSummary['RunInfo']['TimeReadout'] = results['paramValue'][0]
+        configSummary['RunInfo']['TimeReadout'] = self._queryParam(constraint)
+        constraint = 'paramName="sched_driver/propboost_weight"'
+        configSummary['RunInfo']['PropBoostWeight'] = self._queryParam(constraint)
         configSummary['RunInfo']['keyorder'] = ['RunName', 'RunComment', 'MinAlt', 'MaxAlt',
-                                                'TimeFilterChange', 'TimeReadout']
+                                                'TimeFilterChange', 'TimeReadout', 'PropBoostWeight']
 
         # Echo config table into configDetails.
         configDetails = {}
@@ -523,10 +553,34 @@ class OpsimDatabaseV4(OpsimDatabase):
                                               propData[self.propNameCol], propData[self.propTypeCol]):
             configSummary['Proposals'][propname] = {}
             propdict = configSummary['Proposals'][propname]
-            propdict['keyorder'] = [self.propIdCol, self.propNameCol, self.propTypeCol]
+            propdict['keyorder'] = ['PropId', 'PropName', 'PropType', 'Airmass bonus', 'Airmass max',
+                                    'HA bonus', 'HA max', 'Time weight', 'Restart Lost Sequences',
+                                    'Restart Complete Sequences', 'Filters']
             propdict['PropName'] = propname
             propdict['PropId'] = propid
             propdict['PropType'] = proptype
+            # Add some useful information on the proposal parameters.
+            constraint = 'paramName like "science/%s_props/values/%s/sky_constraints/max_airmass"'\
+                         % ("%", propname)
+            propdict['Airmass max'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/airmass_bonus"'\
+                         % ("%", propname)
+            propdict['Airmass bonus'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/hour_angle_max"'\
+                         % ("%", propname)
+            propdict['HA max'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/hour_angle_bonus"'\
+                         % ("%", propname)
+            propdict['HA bonus'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/time_weight"'\
+                         % ("%", propname)
+            propdict['Time weight'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/restart_lost_sequences"'\
+                         % ("%", propname)
+            propdict['Restart Lost Sequences'] = self._queryParam(constraint)
+            constraint = 'paramName like "science/%s_props/values/%s/scheduling/restart_complete_sequences"'\
+                         % ("%", propname)
+            propdict['Restart Complete Sequences'] = self._queryParam(constraint)
             # Find number of visits requested per filter for the proposal
             # along with min/max sky and airmass values.
             propdict['Filters'] = {}
@@ -539,18 +593,14 @@ class OpsimDatabaseV4(OpsimDatabase):
                 for dk, qk in zip(dictkeys, querykeys):
                     constraint = 'paramName like "science/%s_props/values/%s/filters/%s/%s"' \
                                  % ("%", propname, f, qk)
-                    results = self.query_columns('Config', ['paramValue'], sqlconstraint=constraint)
-                    if len(results) == 0:
-                        propdict['Filters'][f][dk] = '--'
-                    else:
-                        propdict['Filters'][f][dk] = results['paramValue'][0]
+                    propdict['Filters'][f][dk] = self._queryParam(constraint)
                 propdict['Filters'][f]['keyorder'] = ['Filter', 'MaxSeeing', 'MinSky', 'MaxSky',
                                                       'NumVisits', 'GroupedVisits', 'Snaps']
             propdict['Filters']['keyorder'] = list(self.filterlist)
         return configSummary, configDetails
 
 
-class OpsimDatabaseV3(OpsimDatabase):
+class OpsimDatabaseV3(BaseOpsimDatabase):
     def __init__(self, database, driver='sqlite', host=None, port=None, defaultTable='Summary',
                  longstrings=False, verbose=False):
         """

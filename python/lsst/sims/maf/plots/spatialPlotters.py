@@ -75,7 +75,7 @@ class HealpixSkyMap(BasePlotter):
                                 'logScale': False, 'cbarFormat': None, 'cmap': perceptual_rainbow,
                                 'percentileClip': None, 'colorMin': None, 'colorMax': None,
                                 'zp': None, 'normVal': None, 'labelsize': None, 'fontsize': None,
-                                'cbar_edge': True, 'nTicks': 15, 'rot': (0, 0, 0), 'figsize': None,
+                                'cbar_edge': True, 'nTicks': 10, 'rot': (0, 0, 0), 'figsize': None,
                                 'coord': 'C'}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
@@ -132,7 +132,7 @@ class HealpixSkyMap(BasePlotter):
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.8, 0.8, '%s' % (plotDict['label']))
-        # supress silly colorbar warnings
+        # Make a color bar. Supress silly colorbar warnings.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             cb = plt.colorbar(im, shrink=0.75, aspect=25, pad=0.1, orientation='horizontal',

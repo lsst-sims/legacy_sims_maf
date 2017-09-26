@@ -79,7 +79,7 @@ class MetricBundleGroup(object):
         The name of the table in the dbObj to query for data.
     """
     def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
-                 saveEarly=True, dbTable=None, runName=None):
+                 saveEarly=True, dbTable=None):
         """Set up the MetricBundleGroup.
         """
         # Print occasional messages to screen.
@@ -116,13 +116,6 @@ class MetricBundleGroup(object):
             if not isinstance(resultsDb, db.ResultsDb):
                 raise ValueError('resultsDb should be an ResultsDb object')
         self.resultsDb = resultsDb
-
-        # set all the bundles to have a single runName
-        if runName is not None:
-            for bk in bundleDict:
-                if (bundleDict[bk].runName is not None) & (bundleDict[bk].runName != runName):
-                    warnings.warn('Changing runName %s to %s' % (bundleDict[bk].runName, runName))
-                bundleDict[bk].runName = runName
 
         # Dict to keep track of what's been run:
         self.hasRun = {}
