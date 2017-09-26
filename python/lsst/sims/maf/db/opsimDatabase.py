@@ -21,7 +21,7 @@ def testOpsimVersion(database, driver='sqlite', host=None, port=None):
     opsdb.close()
     return version
 
-def OpsimDatabase(database, driver='sqlite', host=None, port=None, defaultTable=None,
+def OpsimDatabase(database, driver='sqlite', host=None, port=None,
                   longstrings=False, verbose=False):
     """Convenience method to return an appropriate OpsimDatabaseV3/V4 version.
 
@@ -32,14 +32,14 @@ def OpsimDatabase(database, driver='sqlite', host=None, port=None, defaultTable=
     version = testOpsimVersion(database)
     if version == 'V4':
         opsdb = OpsimDatabaseV4(database, driver=driver, host=host, port=port,
-                                defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+                                longstrings=longstrings, verbose=verbose)
     elif version == 'V3':
         opsdb =  OpsimDatabaseV3(database, driver=driver, host=host, port=port,
-                                 defaultTable=defeaultTable, longstrings=longstrings, verbose=verbose)
+                                 longstrings=longstrings, verbose=verbose)
     else:
         warnings.warn('Could not identify opsim database version; just using Database class instead')
         opsdb = Database(database, driver=driver, host=host, port=port,
-                         defaultTable=defaultTable, longstrings=longstrings, verbose=verbose)
+                         longstrings=longstrings, verbose=verbose)
     return opsdb
 
 
