@@ -12,6 +12,7 @@ import argparse
 import matplotlib
 matplotlib.use('Agg')
 import lsst.sims.maf.db as db
+import lsst.sims.maf.utils as mafUtils
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.batches as batches
 
@@ -44,10 +45,10 @@ def connectDb(dbfile):
 
 def setSQL(opsdb):
     # Fetch the proposal ID values from the database
-    propids, proptags = opsimdb.fetchPropInfo()
+    propids, proptags = opsdb.fetchPropInfo()
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = utils.createSQLWhere('WFD', proptags)
-    ddWhere = utils.createSQLWhere('DD', proptags)
+    wfdWhere = mafUtils.createSQLWhere('WFD', proptags)
+    ddWhere = mafUtils.createSQLWhere('DD', proptags)
     sqltags = {'WFD': wfdWhere, 'DD': ddWhere}
     return (propids, proptags, sqltags)
 

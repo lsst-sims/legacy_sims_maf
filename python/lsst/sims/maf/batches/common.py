@@ -77,10 +77,11 @@ def extendedMetrics(colname, replace_colname=None):
     """
     extendedMetrics = standardMetrics(colname, replace_colname=None)
     extendedMetrics += [metrics.RmsMetric(colname),
-                        metrics.NoutliersNsigmaMetric(metricName='N(+3Sigma)' + colname, nSigma=3),
-                        metrics.NoutliersNsigmaMetric(metricName='N(-3Sigma)' + colname, nSigma=-3),
-                        metrics.PercentileMetric(metricName='25th%ile' + colname, percentile=25),
-                        metrics.PercentileMetric(metricName='75th%ile' + colname, percentile=75)]
+                        metrics.NoutliersNsigmaMetric(colname, metricName='N(+3Sigma) ' + colname, nSigma=3),
+                        metrics.NoutliersNsigmaMetric(colname, metricName='N(-3Sigma) ' + colname, nSigma=-3),
+                        metrics.PercentileMetric(colname, percentile=25),
+                        metrics.PercentileMetric(colname, percentile=75),
+                        metrics.CountMetric(colname)]
     if replace_colname is not None:
         for m in extendedMetrics:
             if len(replace_colname) > 0:
