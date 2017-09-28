@@ -48,7 +48,7 @@ def setSQL(opsdb):
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = utils.createSQLWhere('WFD', proptags)
     ddWhere = utils.createSQLWhere('DD', proptags)
-    sqltags = {'WFD': wfdWhere, 'DD', ddWhere}
+    sqltags = {'WFD': wfdWhere, 'DD': ddWhere}
     return (propids, proptags, sqltags)
 
 def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
