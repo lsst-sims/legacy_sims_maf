@@ -4,42 +4,16 @@ from __future__ import print_function
 
 import os
 import argparse
-import lsst.sims.maf.db as db
-import lsst.sims.maf.metricBundles as mb
+import matplotlib
+matplotlib.use('Agg')
 import lsst.sims.maf.batches as batches
+from .run_generic import *
 
+def setBatches(opsdb, colmap, runName):
+    bdict = {}
+    bdict.update(batches.glanceBatch(colmap, runName))
+    return bdict
 
-def connectDb(dbfile):
-    version = db.testOpsimVersion(dbfile)
-    if version == "Unknown":
-        opsdb = db.Database(dbfile)
-        colmap = batches.ColMapDict('barebones')
-    elif version == "V3":
-        opsdb = db.OpsimDatabaseV3(dbfile)
-        colmap = batches.ColMapDict('OpsimV3')
-    elif version == "V4":
-        opsdb = db.OpsimDatabaseV4(dbfile)
-        colmap = batches.ColMapDict('OpsimV4')
-    return opsdb, colmap
-
-
-def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
-
-    bdict = batches.glanceBatch(colmap, runName)
-    resultsDb = db.ResultsDb(outDir=outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
-    group.runAll()
-    group.plotAll()
-    resultsDb.close()
-
-def replotBatch(opsdb, colmap, outDir='Test', runName='opsim'):
-
-    bdict = batches.intraNight(colmap, runName)
-    resultsDb = db.ResultsDb(outDir=outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
-    group.readAll()
-    group.plotAll()
-    resultsDb.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the survey at a glance bundle.")
@@ -53,7 +27,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.runName is None:
-        runName = os.path.basename(args.dbfile).replace('_sqlite.db', '')
+        runName = os.path.basename(args.dbFile).replace('_sqlite.db', '')
         runName = runName.replace('.db', '')
     else:
         runName = args.runName
@@ -70,3 +44,4 @@ if __name__ == '__main__':
         runBatch(opsdb, colmap, outDir=outDir, runName=runName)
 
     opsdb.close()
+

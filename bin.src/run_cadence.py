@@ -1,42 +1,20 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import lsst.sims.maf.db as db
-import lsst.sims.maf.metricBundles as mb
-import lsst.sims.maf.batches as batches
+
+import os
 import argparse
+import matplotlib
+matplotlib.use('Agg')
+import lsst.sims.maf.batches as batches
+from .run_generic import *
 
-def connectDb(dbfile):
-    version = db.testOpsimVersion(dbfile)
-    if version == "Unknown":
-        opsdb = db.Database(dbfile)
-        colmap = batches.ColMapDict('barebones')
-    elif version == "V3":
-        opsdb = db.OpsimDatabaseV3(dbfile)
-        colmap = batches.ColMapDict('OpsimV3')
-    elif version == "V4":
-        opsdb = db.OpsimDatabaseV4(dbfile)
-        colmap = batches.ColMapDict('OpsimV4')
-    return opsdb, colmap
+def setBatches(opsdb, colmap, runName):
+    bdict = {}
+    bdict.update(batches.intraNight(colmap, runName))
+    return bdict
 
 
-def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
-
-    bdict = batches.intraNight(colmap, runName)
-    resultsDb = db.ResultsDb(outDir=outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
-    group.runAll()
-    group.plotAll()
-    resultsDb.close()
-
-def replotBatch(opsdb, colmap, outDir='Test', runName='opsim'):
-
-    bdict = batches.intraNight(colmap, runName)
-    resultsDb = db.ResultsDb(outDir=outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
-    group.readAll()
-    group.plotAll()
-    resultsDb.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the survey at a glance bundle.")
