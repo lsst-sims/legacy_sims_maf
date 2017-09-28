@@ -24,6 +24,8 @@ def ColMapDict(dictName=None):
         colMap['slewdist'] = 'slewDistance'
         colMap['seeingEff'] = 'seeingFwhmEff'
         colMap['seeingGeom'] = 'seeingFwhmGeom'
+        colMap['skyBrightness'] = 'skyBrightness'
+        colMap['moonDistance'] = 'moonDistance'
         # slew speeds table
         colMap['Dome Alt Speed'] = 'domeAltSpeed'
         colMap['Dome Az Speed'] = 'domeAzSpeed'
@@ -50,6 +52,8 @@ def ColMapDict(dictName=None):
                                     'Tel Alt', 'Tel Az', 'Tel Rot', 'Tel Settle',
                                     'TelOptics CL', 'TelOptics OL',
                                     'Filter', 'Readout']
+        colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong', 'rotSkyPos']
 
     elif dictName == 'opsimv3':
         colMap = {}
@@ -68,6 +72,8 @@ def ColMapDict(dictName=None):
         colMap['slewdist'] = 'slewDist'
         colMap['seeingEff'] = 'FWHMeff'
         colMap['seeingGeom'] = 'FWHMgeom'
+        colMap['skyBrightness'] = 'filtSkyBrightness'
+        colMap['moonDistance'] = 'dist2Moon'
         # slew speeds table
         colMap['Dome Alt Speed'] = 'domeAltSpeed'
         colMap['Dome Az Speed'] = 'domeAzSpeed'
@@ -93,6 +99,8 @@ def ColMapDict(dictName=None):
                                     'Tel Alt', 'Tel Az', 'Tel Rot', 'Settle',
                                     'TelOptics CL', 'TelOptics OL',
                                     'Filter', 'Readout']
+        colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong', 'rotSkyPos']
 
     elif dictName == 'barebones':
         colMap = {}
@@ -110,6 +118,9 @@ def ColMapDict(dictName=None):
         colMap['slewtime'] = 'slewtime'
         colMap['slewdist'] = None
         colMap['seeingGeom'] = 'seeing'
+        colMap['seeingEff'] = 'seeing'
+        colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
+                                  'fiveSigmaDepth', 'HA', 'rotSkyPos']
 
     else:
         raise ValueError('No built in column dict with that name.')
