@@ -637,7 +637,7 @@ class LambertSkyMap(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
 
-        metricValue = applyZPNorm(metricValueIn)
+        metricValue = applyZPNorm(metricValueIn, plotDict)
         clims = setColorLims(metricValue, plotDict)
         # Calculate the levels to use for the contour
         if np.size(plotDict['levels']) > 1:
