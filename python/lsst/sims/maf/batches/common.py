@@ -2,29 +2,8 @@ from __future__ import print_function
 
 import lsst.sims.maf.metrics as metrics
 
-__all__ = ['sqlWheres', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
+__all__ = ['standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
 
-
-def sqlWheres(dbobj):
-    """Return the WFD and DD sql statements.
-
-    Parameters
-    -----------
-    dbobj : ~lsst.sims.maf.db.OpsimDatabase
-        A MAF OpsimDatabase object.
-
-    Returns
-    -------
-    dict
-        Dictionary keyed "WFD" and "DD" with values of the sqlconstraints for WFD and DD proposals.
-    """
-    sqlWhere = {}
-    propids, proptags = dbobj.fetchPropInf()
-    sqlWhere['WFD'] = utils.createSQLWhere('WFD', proptags)
-    print('# WFD "where" clause: %s' % (sqlWhere['WFD']))
-    sqlWhere['DD'] = utils.createSQLWhere('DD', proptags)
-    print('# DD "where" clause: %s' % (sqlWhere['DD']))
-    return sqlWhere
 
 def standardSummary():
     """A set of standard summary metrics, to calculate Mean, RMS, Median, #, Max/Min, and # 3-sigma outliers.
@@ -50,15 +29,18 @@ def extendedSummary():
     return extendedStats
 
 
-def standardMetrics(colname, strip_colname=False):
+def standardMetrics(colname, replace_colname=None):
     """A set of standard simple metrics for some quanitity. Typically would be applied with unislicer.
 
     Parameters
     ----------
     colname : str
         The column name to apply the metrics to.
-    strip_colname: bool, opt
-        Flag to strip colname from the metricName. (i.e. "Mean" instead of "Mean Airmass").
+    replace_colname: str or None, opt
+        Value to replace colname with in the metricName.
+        i.e. if replace_colname='' then metric name is Mean, instead of Mean Airmass, or
+        if replace_colname='seeingGeom', then metric name is Mean seeingGeom instead of Mean seeingFwhmGeom.
+        Default is None, which does not alter the metric name.
 
     Returns
     -------
@@ -68,32 +50,41 @@ def standardMetrics(colname, strip_colname=False):
                        metrics.MedianMetric(colname),
                        metrics.MinMetric(colname),
                        metrics.MaxMetric(colname)]
-    if strip_colname:
-        for m in standardMetrics:
-            m.name = m.name.rstrip(' %s' % colname)
+    if replace_colname is not None:
+        for m in extendedMetrics:
+            if len(replace_colname) > 0:
+                m.name = m.name.replace('%s' % colname, '%s' % replace_colname)
+            else:
+                m.name = m.name.rstrip(' %s' % colname)
     return standardMetrics
 
-def extendedMetrics(colname, strip_colname=False):
+def extendedMetrics(colname, replace_colname=None):
     """An extended set of simple metrics for some quantity. Typically applied with unislicer.
 
     Parameters
     ----------
     colname : str
         The column name to apply the metrics to.
-    strip_colname: bool, opt
-        Flag to strip colname from the metricName. (i.e. "Mean" instead of "Mean Airmass").
+    replace_colname: str or None, opt
+        Value to replace colname with in the metricName.
+        i.e. if replace_colname='' then metric name is Mean, instead of Mean Airmass, or
+        if replace_colname='seeingGeom', then metric name is Mean seeingGeom instead of Mean seeingFwhmGeom.
+        Default is None, which does not alter the metric name.
 
     Returns
     -------
     List of configured metrics.
     """
-    extendedMetrics = standardMetrics(colname)
+    extendedMetrics = standardMetrics(colname, replace_colname=None)
     extendedMetrics += [metrics.RmsMetric(colname),
                         metrics.NoutliersNsigmaMetric(metricName='N(+3Sigma)' + colname, nSigma=3),
                         metrics.NoutliersNsigmaMetric(metricName='N(-3Sigma)' + colname, nSigma=-3),
                         metrics.PercentileMetric(metricName='25th%ile' + colname, percentile=25),
                         metrics.PercentileMetric(metricName='75th%ile' + colname, percentile=75)]
-    if strip_colname:
+    if replace_colname is not None:
         for m in extendedMetrics:
-            m.name = m.name.rstrip(' %s' % colname)
+            if len(replace_colname) > 0:
+                m.name = m.name.replace('%s' % colname, '%s' % replace_colname)
+            else:
+                m.name = m.name.rstrip(' %s' % colname)
     return extendedMetrics
