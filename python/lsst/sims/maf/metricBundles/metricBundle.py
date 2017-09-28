@@ -240,7 +240,7 @@ class MetricBundle(object):
         else:
             # Add identity metric to unislicer metric values (to get them into resultsDB).
             if self.slicer.slicerName == 'UniSlicer':
-                self.summaryMetrics = [metrics.IdentityMetric('metricdata')]
+                self.summaryMetrics = [metrics.IdentityMetric()]
             else:
                 self.summaryMetrics = []
 

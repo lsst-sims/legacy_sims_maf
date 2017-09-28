@@ -86,13 +86,14 @@ class ColRegistry(object):
             list of columns used in a metric.
         """
         for col in colArray:
-            self.colSet.add(col)
-            source = self.colInfo.getDataSource(col)
-            if source == self.colInfo.defaultDataSource:
-                self.dbSet.add(col)
-            else:
-                if col not in self.stackerDict:
-                    self.stackerDict[col] = source
+            if col is not None:
+                self.colSet.add(col)
+                source = self.colInfo.getDataSource(col)
+                if source == self.colInfo.defaultDataSource:
+                    self.dbSet.add(col)
+                else:
+                    if col not in self.stackerDict:
+                        self.stackerDict[col] = source
 
 
 class BaseMetric(with_metaclass(MetricRegistry, object)):
