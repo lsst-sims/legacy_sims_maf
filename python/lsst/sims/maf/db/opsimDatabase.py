@@ -292,14 +292,13 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
         """
         Fetch field information (fieldID/RA/Dec) from the Field table.
 
-        This selects all fields possible to observe with opsim.
-        ** Need to add capability to select only fields associated with a given proposal. **
+        This will select fields which were requested by a particular proposal or proposals,
+        even if they did not receive any observations.
 
         Parameters
         ----------
         propId : int or list of ints
             Proposal ID or list of proposal IDs to use to select fields.
-            Deprecated with v4 currently.
         degreesToRadians : bool, opt
             If True, convert degrees in Field table into radians.
 
@@ -309,14 +308,31 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
             Structured array containing the field data (fieldID, fieldRA, fieldDec).
         """
         if propId is not None:
-            warnings.warn('Cannot select field IDs associated only with proposals at present.'
-                          'Selecting all fields.')
-        fielddata = self.query_columns('Field', colnames=[self.fieldIdCol, 'ra', 'dec'],
-                                       groupBy = self.fieldIdCol)
+            query = 'select f.fieldId, f.ra, f.dec from Field as f'
+            query += ', ProposalField as p where (p.Field_fieldId = f.fieldId) '
+            if isinstance(propId, list) or isinstance(propId, np.ndarray):
+                query += ' and ('
+                for pID in propId:
+                    query += '(p.Proposal_propId = %d) or ' % (int(pID))
+                # Remove the trailing 'or' and add a closing parenthesis.
+                query = query[:-3]
+                query += ')'
+            else: # single proposal ID.
+                query += ' and (p.Proposal_propId = %d) ' %(int(propId))
+            query += ' group by f.%s' %(self.fieldIdCol)
+            fielddata = self.query_arbitrary(query, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                                   ['int', 'float', 'float'])))
+            if len(fielddata) == 0:
+                fielddata = np.zeros(0, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                  ['int', 'float', 'float'])))
+        else:
+            fielddata = self.query_columns('Field', colnames=[self.fieldIdCol, self.raCol, self.decCol],
+                                           groupBy = self.fieldIdCol)
         if degreesToRadians:
-            fielddata['ra'] = np.radians(fielddata['ra'])
-            fielddata['dec'] = np.radians(fielddata['dec'])
+            fielddata[self.raCol] = fielddata[self.raCol] * np.pi / 180.
+            fielddata[self.decCol] = fielddata[self.decCol] * np.pi / 180.
         return fielddata
+
 
     def fetchPropInfo(self):
         """
@@ -339,6 +355,34 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
             if 'drill' in propName.lower():
                 propTags['DD'].append(propID)
         return propIDs, propTags
+
+    def createSQLWhere(self, tag, propTags):
+        """
+        Create a SQL constraint to identify observations taken for a particular proposal,
+        using the information in the propTags dictionary.
+
+        Parameters
+        ----------
+        tag : str
+            The name of the proposal for which to create a SQLwhere clause (WFD or DD).
+        propTags : dict
+            A dictionary of {proposal name : [proposal ids]}
+            This can be created using OpsimDatabase.fetchPropInfo()
+
+        Returns
+        -------
+        str
+            The SQL constraint, such as '(propID = 365) or (propID = 366)'
+        """
+        if (tag not in propTags) or (len(propTags[tag]) == 0):
+            print('No %s proposals found' % (tag))
+            # Create a sqlWhere clause that will not return anything as a query result.
+            sqlWhere = 'proposalId like "NO PROP"'
+        elif len(propTags[tag]) == 1:
+            sqlWhere = "proposalId = %d" % (propTags[tag][0])
+        else:
+            sqlWhere = "(" + " or ".join(["proposalId = %d" % (propid) for propid in propTags[tag]]) + ")"
+        return sqlWhere
 
     def fetchRequestedNvisits(self, propId=None):
         """Find the requested number of visits for the simulation or proposal(s).
@@ -637,7 +681,7 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         self.runLengthParam = 'nRun'
         self.raDecInDeg = False
 
-    def fetchFieldsFromFieldTable(self, propID=None, degreesToRadians=True):
+    def fetchFieldsFromFieldTable(self, propId=None, degreesToRadians=True):
         """
         Fetch field information (fieldID/RA/Dec) from Field (+Proposal_Field) tables.
 
@@ -647,20 +691,20 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         # Note that you can't select any other sql constraints (such as filter).
         # This will select fields which were requested by a particular proposal or proposals,
         #   even if they didn't get any observations.
-        if propID is not None:
+        if propId is not None:
             query = 'select f.%s, f.%s, f.%s from %s as f' %(self.fieldIdCol, self.raCol, self.decCol,
                                                              'Field')
             query += ', %s as p where (p.Field_%s = f.%s) ' %('Proposal_Field',
                                                             self.fieldIdCol, self.fieldIdCol)
-            if hasattr(propID, '__iter__'): # list of propIDs
+            if isinstance(propId, list) or isinstance(propId, np.ndarray):
                 query += ' and ('
-                for pID in propID:
+                for pID in propId:
                     query += '(p.Proposal_%s = %d) or ' %(self.propIdCol, int(pID))
                 # Remove the trailing 'or' and add a closing parenthesis.
                 query = query[:-3]
                 query += ')'
             else: # single proposal ID.
-                query += ' and (p.Proposal_%s = %d) ' %(self.propIdCol, int(propID))
+                query += ' and (p.Proposal_%s = %d) ' %(self.propIdCol, int(propId))
             query += ' group by f.%s' %(self.fieldIdCol)
             fielddata = self.query_arbitrary(query, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
                                                                    ['int', 'float', 'float'])))
@@ -719,6 +763,36 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
                         else:
                             propTags[sciencetype] = [int(sc['nonPropID']),]
         return propIDs, propTags
+
+
+    def createSQLWhere(self, tag, propTags):
+        """
+        Create a SQL constraint to identify observations taken for a particular proposal,
+        using the information in the propTags dictionary.
+
+        Parameters
+        ----------
+        tag : str
+            The name of the proposal for which to create a SQLwhere clause (WFD or DD).
+        propTags : dict
+            A dictionary of {proposal name : [proposal ids]}
+            This can be created using OpsimDatabase.fetchPropInfo()
+
+        Returns
+        -------
+        str
+            The SQL constraint, such as '(propID = 365) or (propID = 366)'
+        """
+        if (tag not in propTags) or (len(propTags[tag]) == 0):
+            print('No %s proposals found' % (tag))
+            # Create a sqlWhere clause that will not return anything as a query result.
+            sqlWhere = 'propID like "NO PROP"'
+        elif len(propTags[tag]) == 1:
+            sqlWhere = "propID = %d" % (propTags[tag][0])
+        else:
+            sqlWhere = "(" + " or ".join(["propID = %d" % (propid) for propid in propTags[tag]]) + ")"
+        return sqlWhere
+
 
     def fetchRequestedNvisits(self, propId=None):
         """

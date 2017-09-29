@@ -5,7 +5,7 @@ import os
 import numpy as np
 from .outputUtils import printDict
 
-__all__ = ['writeConfigs', 'createSQLWhere', 'getFieldData', 'getSimData',
+__all__ = ['writeConfigs', 'getFieldData', 'getSimData',
            'scaleBenchmarks', 'calcCoaddedDepth']
 
 
@@ -31,36 +31,6 @@ def writeConfigs(opsimDb, outDir):
     f = open(outfile, 'w')
     printDict(configDetails, 'Details', f)
     f.close()
-
-
-def createSQLWhere(tag, propTags):
-    """
-    Create a SQL constraint to identify observations taken for a particular proposal,
-    using the information in the propTags dictionary.
-
-    Parameters
-    ----------
-    tag : str
-        The name of the proposal for which to create a SQLwhere clause (WFD or DD).
-    propTags : dict
-        A dictionary of {proposal name : [proposal ids]}
-        This can be created using OpsimDatabase.fetchPropInfo()
-
-    Returns
-    -------
-    str
-        The SQL constraint, such as '(propID = 365) or (propID = 366)'
-    """
-    if (tag not in propTags) or (len(propTags[tag]) == 0):
-
-        print('No %s proposals found' % (tag))
-        # Create a sqlWhere clause that will not return anything as a query result.
-        sqlWhere = 'proposalId like "NO PROP"'
-    elif len(propTags[tag]) == 1:
-        sqlWhere = "proposalId = %d" % (propTags[tag][0])
-    else:
-        sqlWhere = "(" + " or ".join(["proposalId = %d"%(propid) for propid in propTags[tag]]) + ")"
-    return sqlWhere
 
 
 def getFieldData(opsimDb, sqlconstraint):
@@ -119,6 +89,7 @@ def getFieldData(opsimDb, sqlconstraint):
     # And query the field Table.
     if 'Field' in opsimDb.tables:
         fieldData = opsimDb.fetchFieldsFromFieldTable(propids)
+    # Or give up and query the summary table.
     else:
         fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)
     return fieldData
