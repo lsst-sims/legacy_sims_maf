@@ -54,7 +54,7 @@ class TestOpsimDb(unittest.TestCase):
         """Test queries for field data."""
         # Fetch field data for all fields.
         dataAll = self.oo.fetchFieldsFromFieldTable()
-        self.assertEqual(dataAll.dtype.names, ('fieldId', 'ra', 'dec'))
+        self.assertEqual(dataAll.dtype.names, ('fieldId', 'fieldRA', 'fieldDec'))
         # Fetch field data for all fields requested by a particular propid.
         # Need to reinstate this capability.
 
@@ -82,6 +82,38 @@ class TestOpsimDb(unittest.TestCase):
                 propidsSummary.append(configsummary['Proposals'][propname]['PropId'])
         self.assertEqual(set(propidsSummary), set(propids))
         #out.printDict(configsummary, 'Summary')
+
+
+    def testCreateSqlWhere(self):
+        """
+        Test that the createSQLWhere method handles expected cases.
+        """
+        # propTags is a dictionary of lists returned by OpsimDatabase
+        propTags = {'WFD': [1, 2, 3], 'DD': [4], 'Rolling': [2]}
+        # If tag is in dictionary with one value, returned sql where clause
+        #  is simply 'propId = 4'
+        tag = 'DD'
+        sqlWhere = self.oo.createSQLWhere(tag, propTags)
+        self.assertEqual(sqlWhere, 'proposalId = 4')
+        # if multiple proposals with the same tag, all should be in list.
+        tag = 'WFD'
+        sqlWhere = self.oo.createSQLWhere(tag, propTags)
+        self.assertEqual(sqlWhere.split()[0], '(proposalId')
+        for id in propTags['WFD']:
+            self.assertTrue('%s' % (id) in sqlWhere)
+        # And the same id can be in multiple proposals.
+        tag = 'Rolling'
+        sqlWhere = self.oo.createSQLWhere(tag, propTags)
+        self.assertEqual(sqlWhere, 'proposalId = 2')
+        # And tags not in propTags are handled.
+        badprop = 'proposalId like "NO PROP"'
+        tag = 'nogo'
+        sqlWhere = self.oo.createSQLWhere(tag, propTags)
+        self.assertEqual(sqlWhere, badprop)
+        # And tags which identify no proposal ID are handled.
+        propTags['Rolling'] = []
+        sqlWhere = self.oo.createSQLWhere(tag, propTags)
+        self.assertEqual(sqlWhere, badprop)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

@@ -326,8 +326,12 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
                 fielddata = np.zeros(0, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
                                                   ['int', 'float', 'float'])))
         else:
-            fielddata = self.query_columns('Field', colnames=[self.fieldIdCol, self.raCol, self.decCol],
-                                           groupBy = self.fieldIdCol)
+            query = 'select fieldId, ra, dec from Field group by fieldId'
+            fielddata = self.query_arbitrary(query, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                                   ['int', 'float', 'float'])))
+            if len(fielddata) == 0:
+                fielddata = np.zeros(0, dtype=list(zip([self.fieldIdCol, self.raCol, self.decCol],
+                                                  ['int', 'float', 'float'])))
         if degreesToRadians:
             fielddata[self.raCol] = fielddata[self.raCol] * np.pi / 180.
             fielddata[self.decCol] = fielddata[self.decCol] * np.pi / 180.

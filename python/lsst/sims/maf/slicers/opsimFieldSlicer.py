@@ -50,7 +50,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     """
     def __init__(self, simDataFieldIdColName='fieldId',
                  simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec', latLonDeg=False,
-                 fieldIdColName='fieldId', fieldRaColName='ra', fieldDecColName='dec',
+                 fieldIdColName='fieldId', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  verbose=True, badval=-666):
         super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
         self.fieldId = None
