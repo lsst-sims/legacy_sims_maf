@@ -40,9 +40,8 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': -1}
     sql = 'filter="g" or filter="r" or filter="i"'
     metadata='gri'
-    #dtMin = 20.0
-    dtMin = 0.0
-    dtMax = 40.0
+    dtMin = 15.0
+    dtMax = 60.0
     metric = metrics.PairFractionMetric(timeCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
                                         metricName='Fraction of visits in pairs (%.0f-%.0f min)' % (dtMin,
                                                                                                     dtMax))
@@ -57,6 +56,7 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     bundleList.append(bundle)
 
     # Look at the fraction of visits which have another visit within dtMax.
+    dtMax = 50.0
     metric = metrics.NRevisitsMetric(timeCol=colmap['mjd'], dT=dtMax, normed=True,
                                      metricName='Fraction of visits with a revisit < %.0f min' % dtMax)
     displayDict['caption'] = 'Fraction of %s visits that have another visit ' \

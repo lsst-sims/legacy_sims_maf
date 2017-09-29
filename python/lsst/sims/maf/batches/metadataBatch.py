@@ -2,6 +2,7 @@
 """
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary, extendedMetrics
@@ -52,16 +53,17 @@ def metadataBasics(value, colmap=None, runName='opsim',
         colmap = ColMapDict('opsimV4')
     bundleList = []
 
-    if groupName is None:
-        groupName = value.capitalize()
-        subgroup = extraMetadata
-    else:
-        subgroup = value.capitalize()
-
-    displayDict = {'group': groupName, 'subgroup': subgroup}
-
     if valueName is None:
         valueName = value
+
+    if groupName is None:
+        groupName = valueName.capitalize()
+        subgroup = extraMetadata
+    else:
+        groupName = groupName.capitalize()
+        subgroup = valueName.capitalize()
+
+    displayDict = {'group': groupName, 'subgroup': subgroup}
 
     sqlconstraints = ['']
     metadata = ['All']
@@ -110,12 +112,14 @@ def metadataBasics(value, colmap=None, runName='opsim',
     mList.append(metrics.MaxMetric(value, metricName='Max %s' % (valueName)))
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
+    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
     displayDict['caption'] = None
     displayDict['order'] = -1
     for sql, meta in zip(sqlconstraints, metadata):
         for m in mList:
             displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, displayDict=displayDict,
+            bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, plotFuncs=subsetPlots,
+                                     displayDict=displayDict,
                                      summaryMetrics=standardSummary())
             bundleList.append(bundle)
 
@@ -158,7 +162,7 @@ def allMetadata(colmap=None, runName='opsim', sqlconstraint='', metadata='All pr
         else:
             value = valueName
         bdict.update(metadataBasics(value, colmap=colmap, runName=runName,
-                                    valueName=valueName, groupName=valueName,
+                                    valueName=valueName,
                                     extraSql=sqlconstraint, extraMetadata=metadata))
     return bdict
 
