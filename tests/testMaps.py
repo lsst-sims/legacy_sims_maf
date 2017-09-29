@@ -28,12 +28,12 @@ def makeDataValues(size=100, min=0., max=1., random=True):
 
 
 def makeFieldData():
-    names = ['fieldId', 'ra', 'dec']
+    names = ['fieldId', 'fieldRA', 'fieldDec']
     types = [int, float, float]
     fieldData = np.zeros(100, dtype=list(zip(names, types)))
     fieldData['fieldId'] = np.arange(100)
-    fieldData['ra'] = np.random.rand(100)
-    fieldData['dec'] = np.random.rand(100)
+    fieldData['fieldRA'] = np.random.rand(100)
+    fieldData['fieldDec'] = np.random.rand(100)
     return fieldData
 
 

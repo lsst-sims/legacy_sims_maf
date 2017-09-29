@@ -35,10 +35,10 @@ class Test2D(unittest.TestCase):
         self.simData['fieldDec'][self.n1:] = -20.
         self.simData['fiveSigmaDepth'][self.n1:] = self.m5_2
 
-        self.fieldData = np.zeros(2, dtype=list(zip(['fieldId', 'ra', 'dec'], [int, float, float])))
+        self.fieldData = np.zeros(2, dtype=list(zip(['fieldId', 'fieldRA', 'fieldDec'], [int, float, float])))
         self.fieldData['fieldId'] = [1, 2]
-        self.fieldData['ra'] = np.radians([10., 190.])
-        self.fieldData['dec'] = np.radians([0., -20.])
+        self.fieldData['fieldRA'] = np.radians([10., 190.])
+        self.fieldData['fieldDec'] = np.radians([0., -20.])
 
         self.simData['observationStartMJD'] = self.simData['night']
 
