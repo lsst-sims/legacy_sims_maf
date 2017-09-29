@@ -49,7 +49,7 @@ class DatabaseRegistry(type):
 
 class Database(with_metaclass(DatabaseRegistry, DBObject)):
     """Base class for database access. Implements some basic query functionality and demonstrates API.
-    
+
     Parameters
     ----------
     database : str
@@ -116,7 +116,7 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
 
     def fetchMetricData(self, colnames, sqlconstraint=None, groupBy=None, tableName=None):
         """Fetch 'colnames' from 'tableName'.
-        
+
         This is basically a thin wrapper around query_columns, but uses the default table.
         It's mostly still here for backward compatibility.
 
@@ -124,13 +124,13 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         ----------
         colnames : list
             The columns to fetch from the table.
-        sqlconstraint : str, opt
+        sqlconstraint : str or None, opt
             The sql constraint to apply to the data (minus "WHERE"). Default None.
             Examples: to fetch data for the r band filter only, set sqlconstraint to 'filter = "r"'.
-        groupBy : str, opt
+        groupBy : str or None, opt
             The column to group the returned data by.
             Default (when using summaryTable) is the MJD, otherwise will be None.
-        tableName : str, opt
+        tableName : str or None, opt
             The table to query. The default (None) will use the summary table, set by self.defaultTable.
 
         Returns
@@ -162,36 +162,36 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
 
     def query_arbitrary(self, sqlQuery, dtype=None):
         """Simple wrapper around execute_arbitrary for backwards compatibility.
-    
+
         Parameters
         -----------
         sqlQuery : str
-            SQL query. 
+            SQL query.
         dtype: opt, numpy dtype.
             Numpy recarray dtype. If None, then an attempt to determine the dtype will be made.
-            This attempt will fail if there are commas in the data you query. 
+            This attempt will fail if there are commas in the data you query.
 
         Returns
         -------
-        numpy.recarray        
+        numpy.recarray
         """
         return self.execute_arbitrary(sqlQuery, dtype=dtype)
 
     def query_columns(self, tablename, colnames=None, sqlconstraint=None,
                             groupBy=None, numLimit=None, chunksize=1000000):
         """Query a table in the database and return data from colnames in recarray.
-        
+
         Parameters
         ----------
-        tablename : str 
+        tablename : str
             Name of table to query.
-        colnames : list of str, opt
+        colnames : list of str or None, opt
             Columns from the table to query for. If None, all columns are selected.
-        sqlconstraint : str, opt
+        sqlconstraint : str or None, opt
             Constraint to apply to to the query.  Default None.
-        groupBy : str, opt
+        groupBy : str or None, opt
             Name of column to group by. Default None.
-        numLimit : int, opt
+        numLimit : int or None, opt
             Number of records to return. Default no limit.
         chunksize : int, opt
             Query database and convert to recarray in series of chunks of chunksize.
