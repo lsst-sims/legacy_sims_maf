@@ -1,8 +1,6 @@
 from builtins import str
 from builtins import object
 import os, warnings
-import numpy as np
-from collections import OrderedDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import url
