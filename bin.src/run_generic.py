@@ -43,14 +43,16 @@ def connectDb(dbfile):
         colmap = batches.ColMapDict('OpsimV4')
     return opsdb, colmap
 
+
 def setSQL(opsdb):
     # Fetch the proposal ID values from the database
     propids, proptags = opsdb.fetchPropInfo()
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = mafUtils.createSQLWhere('WFD', proptags)
-    ddWhere = mafUtils.createSQLWhere('DD', proptags)
+    wfdWhere = opsdb.createSQLWhere('WFD', proptags)
+    ddWhere = opsdb.createSQLWhere('DD', proptags)
     sqltags = {'WFD': wfdWhere, 'DD': ddWhere}
     return (propids, proptags, sqltags)
+
 
 def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
 
@@ -60,6 +62,7 @@ def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
     group.runAll()
     group.plotAll()
     resultsDb.close()
+
 
 def replotBatch(opsdb, colmap, outDir='Test', runName='opsim'):
 
