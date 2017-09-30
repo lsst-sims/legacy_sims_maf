@@ -48,9 +48,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     lat, lon, height = opsimdb.fetchLatLonHeight()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = utils.createSQLWhere('WFD', propTags)
+    wfdWhere = opsimdb.createSQLWhere('WFD', propTags)
     print('#FYI: WFD "where" clause: %s' % (wfdWhere))
-    ddWhere = utils.createSQLWhere('DD', propTags)
+    ddWhere = opsimdb.createSQLWhere('DD', propTags)
     print('#FYI: DD "where" clause: %s' % (ddWhere))
 
     # Set up benchmark values, scaled to length of opsim run. These are applied to 'all' and 'WFD' plots.
