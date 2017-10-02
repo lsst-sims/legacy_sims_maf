@@ -140,9 +140,9 @@ class BaseOpsimDatabase(Database):
             print('Cannot access Config table to retrieve runLength; using default 10 years')
             runLength = 10.0
         else:
-            runLength = self.query_columns('Config', colnames=['paramValue'],
-                                           sqlconstraint=" paramName = '%s'" % (self.runLengthParam))
-            runLength = float(runLength['paramValue'][0])  # Years
+            query = 'select paramValue from Config where paramName="%s"' % (self.runLengthParam)
+            runLength = self.query_arbitrary(query, dtype=[('paramValue', float)])
+            runLength = runLength['paramValue'][0]  # Years
         return runLength
 
     def fetchLatLonHeight(self):

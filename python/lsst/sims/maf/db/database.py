@@ -267,5 +267,6 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         if len(results) == 0:
             data = np.recarray((0,), dtype=dtype)
         else:
-            data = np.rec.fromrecords(results, dtype=dtype)
+            # Have to do the tuple(xx) for py2 string objects. With py3 is okay to just pass results.
+            data = np.rec.fromrecords([tuple(xx) for xx in results], dtype=dtype)
         return data
