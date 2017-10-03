@@ -1284,7 +1284,7 @@ if __name__ == "__main__":
     args, extras = parser.parse_known_args()
 
     resultsDb = db.ResultsDb(outDir=args.outDir)
-    opsdb = utils.connectOpsimDb(args.dbFile)
+    opsdb = db.OpsimDatabase(args.dbFile)
 
     (bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict) \
         = makeBundleList(args.dbFile, benchmark=args.benchmark, seeingCol=args.seeingCol)
