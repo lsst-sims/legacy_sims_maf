@@ -37,7 +37,7 @@ class TestResultsDb(unittest.TestCase):
 
     def testDbCreation(self):
         # Test default sqlite file created.
-        tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp(prefix='resDb')
         resultsdb = db.ResultsDb(outDir=tempdir)
         self.assertTrue(os.path.isfile(os.path.join(tempdir, 'resultsDb_sqlite.db')))
         resultsdb.close()
@@ -47,7 +47,7 @@ class TestResultsDb(unittest.TestCase):
         shutil.rmtree(tempdir)
 
     def testAddData(self):
-        tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp(prefix='resDb')
         resultsDb = db.ResultsDb(outDir=tempdir)
         # Add metric.
         metricId = resultsDb.updateMetric(self.metricName, self.slicerName,
@@ -98,7 +98,7 @@ class TestUseResultsDb(unittest.TestCase):
         self.summaryStatValue1 = 20
         self.summaryStatName2 = 'Median'
         self.summaryStatValue2 = 18
-        self.tempdir = tempfile.mkdtemp()
+        self.tempdir = tempfile.mkdtemp(prefix='resDb')
         self.resultsDb = db.ResultsDb(self.tempdir)
         self.metricId = self.resultsDb.updateMetric(self.metricName, self.slicerName,
                                                     self.runName, self.constraint,

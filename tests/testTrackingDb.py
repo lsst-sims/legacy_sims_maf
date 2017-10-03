@@ -21,7 +21,7 @@ class TestTrackingDb(unittest.TestCase):
 
     def test_testTrackingDbCreation(self):
         """Test tracking database creation."""
-        tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp(prefix='trackDb')
         trackingDbFile = os.path.join(tempdir, 'tracking.db')
         trackingdb = db.TrackingDb(database=trackingDbFile)
         self.assertTrue(os.path.isfile(trackingDbFile))
@@ -30,7 +30,7 @@ class TestTrackingDb(unittest.TestCase):
 
     def test_testAddRun(self):
         """Test adding a run to the tracking database."""
-        tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp(prefix='trackDb')
         trackingDbFile = os.path.join(tempdir, 'tracking.db')
         trackingdb = db.TrackingDb(database=trackingDbFile)
         trackId = trackingdb.addRun(opsimGroup=self.opsimGroup, opsimRun=self.opsimRun,
@@ -54,7 +54,7 @@ class TestTrackingDb(unittest.TestCase):
 
     def test_testDelRun(self):
         """Test removing a run from the tracking database."""
-        tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp(prefix='trackDb')
         trackingDbFile = os.path.join(tempdir, 'tracking.db')
         trackingdb = db.TrackingDb(database=trackingDbFile)
         tdb = db.Database(database=trackingDbFile)
