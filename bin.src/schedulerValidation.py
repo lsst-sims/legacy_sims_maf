@@ -22,21 +22,22 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
 
 
-def makeBundleList(dbFile, runName=None, benchmark='design'):
+def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'):
 
-    seeingCol = 'seeingFwhmEff'
-    benchmarkSeeing = 'FWHMeff'
+    # The 'seeing' argument is a bit of a hack to accomodate the switchover
+    # from old opsim (finSeeing) to new opsim (FWHMeff).
+    if seeingCol == 'FWHMeff':
+        benchmarkSeeing = 'FWHMeff'
+    else:
+        benchmarkSeeing = 'seeing'
 
     # List to hold everything we're going to make
     bundleList = []
 
     # Connect to the databse
-    opsimdb = db.OpsimDatabaseV4(dbFile)
-    propCol = 'proposalId'
-
+    opsimdb = utils.connectOpsimDb(dbFile)
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
-        runName = runName.replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
@@ -47,9 +48,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     lat, lon, height = opsimdb.fetchLatLonHeight()
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = opsimdb.createSQLWhere('WFD', propTags)
+    wfdWhere = utils.createSQLWhere('WFD', propTags)
     print('#FYI: WFD "where" clause: %s' % (wfdWhere))
-    ddWhere = opsimdb.createSQLWhere('DD', propTags)
+    ddWhere = utils.createSQLWhere('DD', propTags)
     print('#FYI: DD "where" clause: %s' % (ddWhere))
 
     # Set up benchmark values, scaled to length of opsim run. These are applied to 'all' and 'WFD' plots.
@@ -78,7 +79,11 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     # Generate approximate benchmark values for DD.
     if len(DDpropid) > 0:
+        benchmarkDDVals = {}
         benchmarkDDVals = utils.scaleBenchmarks(runLength, benchmark='design')
+        benchmarkDDVals['nvisits'] = opsimdb.fetchRequestedNvisits(propId=DDpropid)
+        # benchmarkDDVals['coaddedDepth'] = utils.calcCoaddedDepth(benchmarkDDVals['nvisits'],
+        #                                                         benchmarkDDVals['singleVisitDepth'])
         benchmarkDDVals['coaddedDepth'] = {'u': 28.5, 'g': 28.5, 'r': 28.5, 'i': 28.5, 'z': 28.0, 'y': 27.0}
 
     # Set values for min/max range of nvisits for All/WFD and DD plots. These are somewhat arbitrary.
@@ -131,7 +136,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     singlevisitdepthgroup = 'I: Single Visit Depth'
     houranglegroup = 'J: Hour Angle'
     rotatorgroup = 'K: Rotation Angles'
-    moonDistancegroup = 'L: Distance to Moon'
+    dist2moongroup = 'L: Distance to Moon'
     hourglassgroup = 'M: Hourglass'
     filtergroup = 'N: Filter Changes'
     slewgroup = 'O: Slew'
@@ -166,8 +171,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         for key in keys:
             mergedHistDict[str(propid) + key] = plots.PlotBundle(plotFunc=opsimHistPlot)
 
-    keys = ['fiveSigmaDepth', 'skyBrightness', 'Seeing', 'Airmass', 'normairmass',
-            'hourAngle', 'rotSkyPos', 'moonDistance']
+    keys = ['fiveSigmaDepth', 'filtSkyBrightness', 'Seeing', 'Airmass', 'normairmass',
+            'hourAngle', 'rotSkyPos', 'dist2Moon']
     for prop in ['All Props', 'WFD']:
         for key in keys:
             mergedHistDict[prop + key] = plots.PlotBundle(plotFunc=plots.OneDBinnedData())
@@ -212,10 +217,10 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             # Configure the metrics to run for this sql constraint (all proposals/wfd and filter combo).
 
             # Count the total number of visits.
-            metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+            metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
             plotDict = {'xlabel': 'Number of Visits', 'xMin': nvisitsMin,
                         'xMax': nvisitsMax, 'binsize': 5,
-                        'colorMax': nvisitsMax}
+                        'colorMin': nvisitsMin, 'colorMax': nvisitsMax}
             summaryStats = allStats
             displayDict = {'group': nvisitgroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': 'Number of visits in filter %s, %s.' % (f, propCaption)}
@@ -258,7 +263,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             # Only calculate the rest of these metrics for NON-DD proposals.
             if prop != 'DD':
                 # Count the number of visits as a ratio against a benchmark value, for 'all' and 'WFD'.
-                metric = metrics.CountRatioMetric(col='observationStartMJD', normVal=benchmarkVals['nvisits'][f],
+                metric = metrics.CountRatioMetric(col='expMJD', normVal=benchmarkVals['nvisits'][f],
                                                   metricName='NVisitsRatio')
                 plotDict = {'binsize': 0.05, 'cbarFormat': '%2.2f',
                             'colorMin': 0.5, 'colorMax': 1.5, 'xMin': 0.475, 'xMax': 1.525,
@@ -295,7 +300,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 mergedHistDict[prop + 'notDDskyMedianDepth'].addBundle(bundle, plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the median individual visit sky brightness (normalized to a benchmark).
-                metric = metrics.MedianMetric(col='skyBrightness')
+                metric = metrics.MedianMetric(col='filtSkyBrightness')
                 xMin = -2.
                 xMax = 2.
                 plotDict = {'zp': benchmarkVals['skybrightness'][f],
@@ -417,7 +422,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 bundleList.append(bundle)
                 # Calculate the RMS of the position angle
                 metric = metrics.RmsAngleMetric(col='rotSkyPos')
-                plotDict = {'xMin': 0, 'xMax': 180., 'colorMin': 0, 'colorMax': 180.}
+                plotDict = {'xMin': 0, 'xMax': np.pi, 'colorMin': 0, 'colorMax': np.pi}
                 caption = 'RMS of the position angle (angle between "up" in the camera and north '
                 caption += 'on the sky) in filter %s, %s.' % (f, propCaption)
                 displayDict = {'group': rotatorgroup, 'subgroup': subgroup, 'order': filtorder[f],
@@ -438,7 +443,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     metadata = 'All filters, WFD, cumulative'
     plotFunc = plots.OpsimHistogram()
     # Make the reverse cumulative histogram
-    metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     plotDict = {'xlabel': 'Number of Visits', 'binsize': 5, 'cumulative': -1,
                 'xMin': 500, 'xMax': 1500}
     displayDict = {'group': nvisitgroup, 'subgroup': 'WFD', 'order': 0,
@@ -449,7 +454,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     bundleList.append(bundle)
     # Regular Histogram
     slicer = slicers.OpsimFieldSlicer()
-    metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     metadata = 'All filters, WFD'
     plotDict = {'xlabel': 'Number of Visits', 'binsize': 5, 'cumulative': False,
                 'xMin': 500, 'xMax': 1500}
@@ -476,11 +481,11 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         for f in filters:
             # Count the number of visits.
             slicer = slicers.OpsimFieldSlicer()
-            sqlconstraint = 'filter = "%s" and %s = %s' % (f, propCol, propid)
+            sqlconstraint = 'filter = "%s" and propID = %s' % (f, propid)
             metadata = '%s band, %s' % (f, propids[propid])
-            metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits Per Proposal')
+            metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
             summaryStats = standardStats
-            plotDict = {'xlabel': 'Number of Visits', 'binsize': 5}
+            plotDict = {'xlabel': 'Number of Visits', 'plotMask': True, 'binsize': 5}
             displayDict = {'group': nvisitOpsimgroup, 'subgroup': '%s' % (propids[propid]),
                            'order': filtorder[f] + propOrder,
                            'caption': 'Number of visits per opsim field in %s filter, for %s.'
@@ -502,7 +507,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             slicer = slicers.OpsimFieldSlicer()
             sqlconstraint = 'filter = "%s" and %s' % (f, wfdWhere)
             metadata = '%s band, WFD' % (f)
-            metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits Per Proposal')
+            metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
             summaryStats = standardStats
             plotDict = {'xlabel': 'Number of Visits', 'binsize': 5}
             displayDict = {'group': nvisitOpsimgroup, 'subgroup': 'WFD',
@@ -590,16 +595,16 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             bundleList.append(bundle)
 
             # Histogram the individual visit sky brightness.
-            metric = metrics.CountMetric(col='skyBrightness', metricName='Sky Brightness Histogram')
+            metric = metrics.CountMetric(col='filtSkyBrightness', metricName='Sky Brightness Histogram')
             histMerge = {'legendloc': 'upper right',
                          'color': colors[f], 'label': '%s' % f}
             displayDict = {'group': skybrightgroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': 'Histogram of the sky brightness in %s band, %s.' % (f, propCaption)}
-            slicer = slicers.OneDSlicer(sliceColName='skyBrightness', binsize=0.1,
+            slicer = slicers.OneDSlicer(sliceColName='filtSkyBrightness', binsize=0.1,
                                         binMin=16, binMax=23)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
-            mergedHistDict[prop + 'skyBrightness'].addBundle(bundle, plotDict=histMerge)
+            mergedHistDict[prop + 'filtSkyBrightness'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
 
             # Histogram the individual visit seeing.
@@ -655,31 +660,31 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
             metric = metrics.CountMetric(col='rotSkyPos', metricName='Position Angle Histogram')
             histMerge = {'legendloc': 'upper right',
                          'color': colors[f], 'label': '%s' % f, 'xMin': 0.,
-                         'xMax': 360.}
-            caption = 'Histogram of the position angle (in degrees) in %s band, %s. ' % (f, propCaption)
+                         'xMax': float(np.pi * 2.)}
+            caption = 'Histogram of the position angle (in radians) in %s band, %s. ' % (f, propCaption)
             caption += 'The position angle is the angle between "up" in the image and North on the sky.'
             displayDict = {'group': rotatorgroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': caption}
-            slicer = slicers.OneDSlicer(sliceColName='rotSkyPos', binsize=5.)
+            slicer = slicers.OneDSlicer(sliceColName='rotSkyPos', binsize=0.05)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop + 'rotSkyPos'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
 
             # Histogram the individual visit distance to moon values.
-            metric = metrics.CountMetric(col='moonDistance', metricName='Distance to Moon Histogram')
+            metric = metrics.CountMetric(col='dist2Moon', metricName='Distance to Moon Histogram')
             histMerge = {'legendloc': 'upper right',
                          'color': colors[f], 'label': '%s' % f,
-                         'xMin': 15., 'xMax': 180.,
-                         'xlabel': 'Distance to Moon (degrees)'}
+                         'xMin': float(np.radians(15.)), 'xMax': float(np.radians(180.)),
+                         'xlabel': 'Distance to Moon (radians)'}
             caption = 'Histogram of the distance between the field and the moon (in radians) '
             caption += 'in %s band, %s' % (f, propCaption)
-            displayDict = {'group': moonDistancegroup, 'subgroup': subgroup, 'order': filtorder[f],
+            displayDict = {'group': dist2moongroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': caption}
-            slicer = slicers.OneDSlicer(sliceColName='moonDistance', binsize=5.)
+            slicer = slicers.OneDSlicer(sliceColName='dist2Moon', binsize=0.05)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
-            mergedHistDict[prop + 'moonDistance'].addBundle(bundle, plotDict=histMerge)
+            mergedHistDict[prop + 'dist2Moon'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
 
     # Slew histograms (time and distance).
@@ -693,11 +698,11 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
-    metric = metrics.CountMetric(col='slewDistance', metricName='Slew Distance Histogram')
+    metric = metrics.CountMetric(col='slewDist', metricName='Slew Distance Histogram')
     plotDict = {'logScale': True, 'ylabel': 'Count'}
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew distances for all visits.'}
-    slicer = slicers.OneDSlicer(sliceColName='slewDistance', binsize=3.)
+    slicer = slicers.OneDSlicer(sliceColName='slewDist', binsize=0.05)
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict)
     bundleList.append(bundle)
@@ -708,14 +713,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     sqlconstraint = ''
     summaryStats = allStats
 
-    metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     displayDict = {'group': summarygroup, 'subgroup': '3: Obs Per Night',
                    'caption': 'Number of visits per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                         displayDict=displayDict, runName=runName, metadata=metadata,
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
-    metric = metrics.UniqueRatioMetric(col='fieldId')
+    metric = metrics.UniqueRatioMetric(col='fieldID')
     displayDict = {'group': summarygroup, 'subgroup': '3: Obs Per Night',
                    'caption': 'Fraction of unique fields observed per night.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -873,12 +878,12 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                 metadata = '%s band, WFD' % (f)
             else:
                 subgroup = 'Per Prop'
-                sqlconstraint = sqlconstraint + ' proposalId=%d' % (propid)
+                sqlconstraint = sqlconstraint + ' propId=%d' % (propid)
                 metadata = '%s band, %s' % (f, propids[propid])
 
-            cols = [seeingCol, 'skyBrightness', 'airmass', 'fiveSigmaDepth', 'normairmass', 'moonDistance']
+            cols = [seeingCol, 'filtSkyBrightness', 'airmass', 'fiveSigmaDepth', 'normairmass', 'dist2Moon']
             groups = [seeinggroup, skybrightgroup, airmassgroup,
-                      singlevisitdepthgroup, airmassgroup, moonDistancegroup]
+                      singlevisitdepthgroup, airmassgroup, dist2moongroup]
             for col, group in zip(cols, groups):
                 metric = metrics.MedianMetric(col=col)
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
@@ -975,7 +980,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                                         displayDict=displayDict, runName=runName, metadata=metadata)
     bundleList.append(bundle)
     # Mean exposure time
-    metric = metrics.MeanMetric(col='visitExposureTime')
+    metric = metrics.MeanMetric(col='visitExpTime')
     displayDict = {'group': slewgroup, 'subgroup': 'Summary', 'order': 3,
                    'caption': 'Mean visit on-sky time, in seconds.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -990,16 +995,177 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
                                         displayDict=displayDict, runName=runName, metadata=metadata)
     bundleList.append(bundle)
 
+    # Stats for angle:
+    angles = ['telAlt', 'telAz', 'rotTelPos']
+
+    order = 0
+    slicer = slicers.UniSlicer()
+    sqlconstraint = ''
+    slewStateBL = []
+    for angle in angles:
+        metadata = angle
+
+        metric = metrics.MinMetric(col=angle, metricName='Min')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Angles', 'order': order,
+                       'caption': 'Minimum %s value, in radians.' % (angle)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewStateBL.append(bundle)
+
+        order += 1
+        metric = metrics.MaxMetric(col=angle, metricName='Max')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Angles', 'order': order,
+                       'caption': 'Maximum %s value, in radians.' % (angle)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewStateBL.append(bundle)
+
+        order += 1
+        metric = metrics.MeanMetric(col=angle, metricName='Mean')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Angles', 'order': order,
+                       'caption': 'Mean %s value, in radians.' % (angle)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewStateBL.append(bundle)
+
+        order += 1
+        metric = metrics.RmsMetric(col=angle, metricName='RMS')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Angles', 'order': order,
+                       'caption': 'Rms of %s value, in radians.' % (angle)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewStateBL.append(bundle)
+
+        order += 1
+
+    # Make some calls to other tables to get slew stats
+    colDict = {'domAltSpd': 'Dome Alt Speed', 'domAzSpd': 'Dome Az Speed', 'telAltSpd': 'Tel Alt Speed',
+               'telAzSpd': 'Tel Az Speed', 'rotSpd': 'Rotation Speed'}
+    order = 0
+    slicer = slicers.UniSlicer()
+    sqlconstraint = ''
+    slewMaxSpeedsBL = []
+
+    for key in colDict:
+        metadata = colDict[key]
+        metric = metrics.MaxMetric(col=key, metricName='Max')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Speed', 'order': order,
+                       'caption': 'Maximum slew speed for %s.' % (colDict[key])}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewMaxSpeedsBL.append(bundle)
+        order += 1
+
+        metric = metrics.MeanMetric(col=key, metricName='Mean')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Speed', 'order': order,
+                       'caption': 'Mean slew speed for %s.' % (colDict[key])}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewMaxSpeedsBL.append(bundle)
+
+        order += 1
+        metric = metrics.MaxPercentMetric(col=key, metricName='% of slews')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Speed', 'order': order,
+                       'caption': 'Percent of slews which are at maximum value of %s'
+                       % (colDict[key])}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewMaxSpeedsBL.append(bundle)
+        order += 1
+
+    # Use the slew stats
+    slewTypes = ['DomAlt', 'DomAz', 'TelAlt', 'TelAz', 'Rotator', 'Filter',
+                 'TelOpticsOL', 'Readout', 'Settle', 'TelOpticsCL']
+
+    order = 0
+    sqlconstraint = ''
+    slicer = slicers.UniSlicer()
+    slewActivitiesBL = []
+
+    for slewType in slewTypes:
+        metadata = slewType
+
+        metric = metrics.CountRatioMetric(col='actDelay', normVal=totalSlewN / 100.0,
+                                          metricName='ActivePerc')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
+                       'caption': 'Percent of total slews which include %s movement.'
+                       % (slewType)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+
+        order += 1
+        metric = metrics.MeanMetric(col='actDelay', metricName='ActiveAve')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
+                       'caption': 'Mean amount of time (in seconds) for %s movements.'
+                       % (slewType)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+
+        order += 1
+        metric = metrics.MaxMetric(col='actDelay', metricName='Max')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
+                       'caption': 'Max amount of time (in seconds) for %s movement.'
+                       % (slewType)}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+
+        order += 1
+
+        sqlconstraint = 'actDelay>0 and inCriticalPath="True" and activity="%s"' % slewType
+        metadata = slewType
+
+        metric = metrics.CountRatioMetric(col='actDelay', normVal=totalSlewN / 100.0,
+                                          metricName='ActivePerc in crit')
+        caption = 'Percent of total slew which include %s movement, and are in critical path.' % (slewType)
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
+                       'caption': caption}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+
+        order += 1
+        metric = metrics.MeanMetric(col='actDelay', metricName='ActiveAve in crit')
+        caption = 'Mean time (in seconds) for %s movements, when in critical path.' % (slewType)
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order,
+                       'caption': caption}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+
+        order += 1
+
+        """
+        sqlconstraint = ''
+        metadata = slewType
+
+        metric = metrics.AveSlewFracMetric(col='actDelay', activity=slewType, metricName='Total Ave')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+
+        order += 1
+        metric = metrics.SlewContributionMetric(col='actDelay', activity=slewType,
+                                                metricName='Contribution')
+        displayDict = {'group': slewgroup, 'subgroup': 'Slew Activity', 'order': order}
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
+                                            displayDict=displayDict, runName=runName, metadata=metadata)
+        slewActivitiesBL.append(bundle)
+        order += 1
+        """
 
     # Count the number of visits per proposal, for all proposals, as well as the ratio of number of visits
     #  for each proposal compared to total number of visits.
     order = 1
     slicer = slicers.UniSlicer()
     for propid in propids:
-        sqlconstraint = '%s = %s' % (propCol, propid)
+        sqlconstraint = 'propID = %s' % (propid)
         metadata = '%s' % (propids[propid])
 
-        metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+        metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
         summaryMetrics = [metrics.IdentityMetric(metricName='Count'),
                           metrics.NormalizeMetric(normVal=totalNVisits, metricName='Fraction of total')]
         displayDict = {'group': summarygroup, 'subgroup': '1: NVisits', 'order': order,
@@ -1015,7 +1181,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     # Count visits in WFD (as well as ratio of number of visits compared to total number of visits).
     sqlconstraint = '%s' % (wfdWhere)
     metadata = 'WFD'
-    metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                         summaryMetrics=summaryMetrics,
                                         displayDict=displayDict, runName=runName, metadata=metadata)
@@ -1026,7 +1192,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     slicer = slicers.UniSlicer()
     metadata = 'All Visits'
 
-    metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
+    metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     summaryMetrics = [metrics.IdentityMetric(metricName='Count')]
     displayDict = {'group': summarygroup, 'subgroup': '1: NVisits', 'order': 0}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -1069,7 +1235,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
 
     # Check the Alt-Az pointing history
     slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
-    metric = metrics.CountMetric('observationStartMJD', metricName='NVisits Alt/Az')
+    metric = metrics.CountMetric('expMJD', metricName='NVisits Alt/Az')
     plotDict = {'rot': (0, 90, 0)}
     plotFunc = plots.HealpixSkyMap()
     for f in filters:
@@ -1077,14 +1243,14 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
         displayDict = {'group': houranglegroup, 'order': filtorder[f],
                        'caption':
                        'Pointing History on the alt-az sky (zenith center) for filter %s' % f}
-        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
-                                            runName=runName,
+        bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, runName=runName,
+                                            plotDict=plotDict,
                                             plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
     displayDict = {'group': houranglegroup, 'subgroup': 'All Filters',
                    'caption':
                    'Pointing History on the alt-az sky (zenith center), all filters'}
-    bundle = metricBundles.MetricBundle(metric, slicer, '', plotDict=plotDict, runName=runName,
+    bundle = metricBundles.MetricBundle(metric, slicer, '', runName=runName, plotDict=plotDict,
                                         plotFuncs=[plotFunc], displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -1110,22 +1276,22 @@ if __name__ == "__main__":
 
     parser.add_argument('--skipSlew', dest='skipSlew', action='store_true',
                         default=False, help='Skip calculation of slew statistics')
+    parser.add_argument('--seeingCol', dest='seeingCol', default='FWHMeff',
+                        help='Name of the seeing column (FWHMeff or finSeeing). ' +
+                        'This is temporary to support changeover to v3.4 of the opsim outputs.')
 
     parser.set_defaults()
     args, extras = parser.parse_known_args()
 
     resultsDb = db.ResultsDb(outDir=args.outDir)
-    opsdb = db.OpsimDatabaseV4(args.dbFile)
+    opsdb = utils.connectOpsimDb(args.dbFile)
 
     (bundleDict, slewStateBD, slewMaxSpeedsBD, slewActivitiesBD, mergedHistDict) \
-        = makeBundleList(args.dbFile, benchmark=args.benchmark)
+        = makeBundleList(args.dbFile, benchmark=args.benchmark, seeingCol=args.seeingCol)
     if not args.skipSlew:
         # Do the ones that need a different (slew) table
-        # XXX--not clear what to do with slewState now that it is in different tables?
-        # for bundleD, table in zip([slewStateBD, slewMaxSpeedsBD, slewActivitiesBD],
-        #                           ['SlewState', 'SlewMaxSpeeds', 'SlewActivities']):
         for bundleD, table in zip([slewStateBD, slewMaxSpeedsBD, slewActivitiesBD],
-                                  ['SlewFinalState', 'SlewMaxSpeeds', 'SlewActivities']):
+                                  ['SlewState', 'SlewMaxSpeeds', 'SlewActivities']):
             group = metricBundles.MetricBundleGroup(bundleD, opsdb, outDir=args.outDir,
                                                     resultsDb=resultsDb, dbTable=table)
             if args.plotOnly:
