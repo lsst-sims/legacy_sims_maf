@@ -59,6 +59,7 @@ class BaseOpsimDatabase(Database):
 
     def _colNames(self):
         # Add version-specific column names in subclasses.
+        self.opsimVersion = 'unknown'
         pass
 
     def fetchMetricData(self, colnames, sqlconstraint=None, groupBy='default', tableName=None):
@@ -197,7 +198,7 @@ class BaseOpsimDatabase(Database):
             query = 'select count(distinct(%s)) from %s' %(self.mjdCol, self.defaultTable)
             if propId is not None:
                 query += ' where '
-                if hasattr(propId, '__iter__'):
+                if isinstance(propId, list) or isinstance(propId, np.ndarray):
                     for pID in propId:
                         query += 'propID=%d or ' %(int(pID))
                     query = query[:-3]
@@ -287,6 +288,7 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
         self.runCommentCol = 'runComment'
         self.runLengthParam = 'survey/duration'
         self.raDecInDeg = True
+        self.opsimVersion = 'V4'
 
     def fetchFieldsFromFieldTable(self, propId=None, degreesToRadians=True):
         """
@@ -684,6 +686,7 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         self.runCommentCol = 'runComment'
         self.runLengthParam = 'nRun'
         self.raDecInDeg = False
+        self.opsimVersion = 'V3'
 
     def fetchFieldsFromFieldTable(self, propId=None, degreesToRadians=True):
         """
