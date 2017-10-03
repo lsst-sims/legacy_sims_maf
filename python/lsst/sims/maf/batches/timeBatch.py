@@ -16,9 +16,9 @@ def intraNight(colmap=None, runName='opsim', nside=64):
 
     Parameters
     ----------
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
     nside : int, opt
         Nside for the healpix slicer. Default 64.
@@ -98,9 +98,9 @@ def interNight(colmap=None, runName='opsim', nside=64):
 
      Parameters
      ----------
-     colmap : dict, opt
+     colmap : dict or None opt
          A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-     run_name : str, opt
+     runName : str, opt
          The name of the simulated survey. Default is "opsim".
      nside : int, opt
          Nside for the healpix slicer. Default 64.

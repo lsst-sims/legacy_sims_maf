@@ -1,6 +1,26 @@
 __all__ = ['ColMapDict']
 
 
+def getColMap(opsdb):
+    """Get the colmap dictionary, if you already have a database object.
+
+    Parameters
+    ----------
+    opsdb : lsst.sims.maf.db.Database or lsst.sims.maf.db.OpsimDatabase
+
+    Returns
+    -------
+    dictionary
+    """
+    try:
+        version = opsdb.opsimversion
+        version = 'opsim' + version.lower()
+    except AttributeError:
+        version = 'barebones'
+    colmap = ColMapDict(version)
+    return colmap
+
+
 def ColMapDict(dictName=None):
 
     if dictName is None:

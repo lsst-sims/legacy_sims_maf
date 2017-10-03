@@ -15,9 +15,9 @@ def slewBasics(colmap=None, runName='opsim'):
 
     Parameters
     ----------
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
 
     Returns
@@ -86,9 +86,9 @@ def slewAngles(colmap=None, runName='opsim'):
 
     Parameters
     ----------
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
 
     Returns
@@ -133,10 +133,10 @@ def slewSpeeds(colmap=None, runName='opsim'):
 
     Parameters
     ----------
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
         Note that for these metrics, the column names are distinctly different in v3/v4.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
 
     Returns
@@ -191,9 +191,9 @@ def slewActivities(totalSlewN, colmap=None, runName='opsim'):
     totalSlewN : int
         The total number of slews in the simulated survey.
         Used to calculate % of slew activities for each component.
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
 
     Returns

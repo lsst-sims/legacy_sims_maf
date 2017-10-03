@@ -22,9 +22,9 @@ def metadataBasics(value, colmap=None, runName='opsim',
     ----------
     value : str
         The column name for the quantity to evaluate. (column name in the database or created by a stacker).
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
     valueName : str, opt
         The name of the value to be reported in the resultsDb and added to the metric.
@@ -66,7 +66,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
     displayDict = {'group': groupName, 'subgroup': subgroup}
 
     sqlconstraints = ['']
-    metadata = ['All']
+    metadata = ['all']
     if filterlist is not None:
         sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
         metadata += ['%s' % f for f in filterlist]
@@ -137,9 +137,9 @@ def allMetadata(colmap=None, runName='opsim', sqlconstraint='', metadata='All pr
 
     Parameters
     ----------
-    colmap : dict, opt
+    colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
-    run_name : str, opt
+    runName : str, opt
         The name of the simulated survey. Default is "opsim".
     sqlconstraint : str, opt
         Sql constraint (such as WFD only). Default is '' or no constraint.
