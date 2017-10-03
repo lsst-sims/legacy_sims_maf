@@ -35,7 +35,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList = []
 
     # Connect to the databse
-    opsimdb = utils.connectOpsimDb(dbFile)
+    opsimdb = db.OpsimDatabase(dbFile)
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
 

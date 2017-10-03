@@ -7,7 +7,7 @@ import argparse
 import matplotlib
 matplotlib.use('Agg')
 import lsst.sims.maf.batches as batches
-from .run_generic import *
+from run_generic import *
 
 def setBatches(opsdb, colmap, runName):
     bdict = {}
