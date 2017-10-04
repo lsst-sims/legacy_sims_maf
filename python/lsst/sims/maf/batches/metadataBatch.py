@@ -66,10 +66,10 @@ def metadataBasics(value, colmap=None, runName='opsim',
     displayDict = {'group': groupName, 'subgroup': subgroup}
 
     sqlconstraints = ['']
-    metadata = ['all']
+    metadata = ['all bands']
     if filterlist is not None:
         sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
-        metadata += ['%s' % f for f in filterlist]
+        metadata += ['%s band' % f for f in filterlist]
     if (extraSql is not None) and (len(extraSql) > 0):
         tmp = []
         for s in sqlconstraints:
@@ -79,9 +79,9 @@ def metadataBasics(value, colmap=None, runName='opsim',
                 tmp.append('%s and (%s)' % (s, extraSql))
         sqlconstraints = tmp
         if extraMetadata is None:
-            metadata = ['%s, %s' % (extraSql, m) for m in metadata]
+            metadata = ['%s %s' % (extraSql, m) for m in metadata]
     if extraMetadata is not None:
-        metadata = ['%s, %s' % (extraMetadata, m) for m in metadata]
+        metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
 
     # Summarize values over all and per filter (min/mean/median/max/percentiles/outliers/rms).
     slicer = slicers.UniSlicer()

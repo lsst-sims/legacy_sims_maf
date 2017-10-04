@@ -47,10 +47,10 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
 
     # Set up basic all and per filter sql constraints.
     sqlconstraints = ['']
-    metadata = ['all']
+    metadata = ['all bands']
     if filterlist is not None:
         sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
-    metadata += ['%s' % f for f in filterlist]
+    metadata += ['%s band' % f for f in filterlist]
 
     # Add additional sql constraint (such as wfdWhere) and metadata, if provided.
     if (extraSql is not None) and (len(extraSql) > 0):
@@ -61,8 +61,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
             else:
                 tmp.append('%s and (%s)' % (s, extraSql))
         sqlconstraints = tmp
-    if extraMetadata is None:
-        metadata = ['%s, %s' % (extraSql, m) for m in metadata]
+        if extraMetadata is None:
+            metadata = ['%s %s' % (extraSql, m) for m in metadata]
     if extraMetadata is not None:
         metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
     metadataCaption = extraMetadata
@@ -70,8 +70,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
         metadataCaption = 'all visits'
 
     # Generate Nvisit maps in all and per filters
-    displayDict = {'group': Nvisits, 'subgroup': subgroup}
-    metric = metrics.CountMetric(colMap['mjd'], metricName='NVisits')
+    displayDict = {'group': 'Nvisits', 'subgroup': subgroup}
+    metric = metrics.CountMetric(colmap['mjd'], metricName='NVisits')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     displayDict['order'] = -1
@@ -86,7 +86,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
 
     # Generate Coadded depth maps in all and per filters
     displayDict = {'group': 'Coadded m5', 'subgroup': subgroup}
-    metric = metrics.CoaddM5Metric(m5Col=colmap['fiveSigmaDepth'], metricName='CoaddM5')
+    metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'], metricName='CoaddM5')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     displayDict['order'] = -1
@@ -142,10 +142,10 @@ def tEffMetrics(colmap=None, runName='opsim',
 
     # Set up basic all and per filter sql constraints.
     sqlconstraints = ['']
-    metadata = ['all']
+    metadata = ['all banads']
     if filterlist is not None:
         sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
-    metadata += ['%s' % f for f in filterlist]
+    metadata += ['%s band' % f for f in filterlist]
 
     # Add additional sql constraint (such as wfdWhere) and metadata, if provided.
     if (extraSql is not None) and (len(extraSql) > 0):
@@ -156,8 +156,8 @@ def tEffMetrics(colmap=None, runName='opsim',
             else:
                 tmp.append('%s and (%s)' % (s, extraSql))
         sqlconstraints = tmp
-    if extraMetadata is None:
-        metadata = ['%s, %s' % (extraSql, m) for m in metadata]
+        if extraMetadata is None:
+            metadata = ['%s, %s' % (extraSql, m) for m in metadata]
     if extraMetadata is not None:
         metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
     metadataCaption = extraMetadata
@@ -197,7 +197,7 @@ def tEffMetrics(colmap=None, runName='opsim',
                                  'for %s visits.' % (meta.lstrip('%s ' % extraMetadata), metadataCaption)
         displayDict['order'] += 1
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=meta,
-                                 displayDict=displayDict, plots=subsetPlots,
+                                 displayDict=displayDict, plotFuncs=subsetPlots,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
 
@@ -321,7 +321,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1):
                                      sql=sql, metadata=metadata))
         displayDict['order'] += 1
         displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
-        bundle = mb.MetricBundle(metric, slicer, sql=sql, metadata=metadata,
+        bundle = mb.MetricBundle(metric, slicer, constraint=sql, metadata=metadata,
                                  summaryMetrics=summaryMetrics, displayDict=displayDict)
         bundleList.append(bundle)
 

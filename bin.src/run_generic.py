@@ -12,11 +12,12 @@ import argparse
 import matplotlib
 matplotlib.use('Agg')
 import lsst.sims.maf.db as db
+import lsst.sims.maf.utils as mafUtils
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.batches as batches
 
 """
-def setBatches(opsdb, colmap, runName):
+def setBatches(opsdb, colmap, args):
     propids, proptags, sqltags = setSQL(opsdb)
 
     bdict = {}
@@ -53,52 +54,51 @@ def setSQL(opsdb):
     return (propids, proptags, sqltags)
 
 
-def runBatch(opsdb, colmap,  outDir='Test', runName='opsim'):
-
-    bdict = setBatches(opsdb, colmap, runName)
-    resultsDb = db.ResultsDb(outDir=outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
+def run(bdict, opsdb, colmap, args):
+    resultsDb = db.ResultsDb(outDir=args.outDir)
+    group = mb.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
     group.runAll()
     group.plotAll()
     resultsDb.close()
+    mafUtils.writeConfigs(opsdb, args.outDir)
 
 
-def replotBatch(opsdb, colmap, outDir='Test', runName='opsim'):
-
-    bdict = setBatches(opsdb, colmap, runName)
-    resultsDb = db.ResultsDb(outDir=outDir)
-    group = mb.MetricBundleGroup(bdict, opsdb, outDir=outDir, resultsDb=resultsDb)
+def replot(bdict, opsdb, colmap, args):
+    resultsDb = db.ResultsDb(outDir=args.outDir)
+    group = mb.MetricBundleGroup(bdict, opsdb, outDir=args.outDir, resultsDb=resultsDb)
     group.readAll()
     group.plotAll()
     resultsDb.close()
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Run the survey at a glance bundle.")
+def parseArgs(subdir='out', parser=None):
+    if parser is None:
+        # Let the user set up their own argparse Parser, in case they need to add new args.
+        parser = argparse.ArgumentParser(description="Run or replot a set of metric bundles.")
+    # Things we always need.
     parser.add_argument("dbfile", type=str, help="Sqlite file of observations (full path).")
     parser.add_argument("--runName", type=str, default=None, help="Run name."
                                                                   "Default is based on dbfile name.")
     parser.add_argument("--outDir", type=str, default=None, help="Output directory."
-                                                                 "Default is runName/out.")
+                                                                 "Default is runName/%s." % (subdir))
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
                         default=False, help="Reload the metric values from disk and re-plot them.")
     args = parser.parse_args()
 
     if args.runName is None:
-        runName = os.path.basename(args.dbFile).replace('_sqlite.db', '')
-        runName = runName.replace('.db', '')
-    else:
-        runName = args.runName
-
+        args.runName = os.path.basename(args.dbfile).replace('_sqlite.db', '')
+        args.runName = args.runName.replace('.db', '')
     if args.outDir is None:
-        outDir = os.path.join(runName, "out")
-    else:
-        outDir = args.outDir
+        args.outDir = os.path.join(args.runName, subdir)
+    return args
 
+
+if __name__ == '__main__':
+    args = parseArgs()
     opsdb, colmap = connectDb(args.dbfile)
+    bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:
-        replotBatch(opsdb, colmap, outDir=outDir, runName=runName)
+        replot(bdict, opsdb, colmap, args)
     else:
-        runBatch(opsdb, colmap, outDir=outDir, runName=runName)
-
+        run(bdict, opsdb, colmap, args)
     opsdb.close()
