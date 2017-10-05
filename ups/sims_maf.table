@@ -11,6 +11,8 @@ setupRequired(palpy)
 setupRequired(healpy)
 # For basic sims utilities
 setupRequired(sims_utils)
+# For opsim database for unit test
+setupRequired(sims_data)
 # For access to the db classes
 setupRequired(sims_catalogs)
 # For magnitude and SNR calculations

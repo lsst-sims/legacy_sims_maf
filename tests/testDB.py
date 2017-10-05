@@ -6,7 +6,7 @@ import numpy as np
 import lsst.sims.maf.db as db
 import lsst.utils.tests
 from lsst.sims.utils.CodeUtilities import sims_clean_up
-
+from lsst.utils import getPackageDir
 
 class TestDb(unittest.TestCase):
 
@@ -15,8 +15,8 @@ class TestDb(unittest.TestCase):
         sims_clean_up()
 
     def setUp(self):
-        self.database = os.path.join(os.getenv('SIMS_MAF_DIR'),
-                                     'tests', 'pontus_1150.db')
+        self.database = os.path.join(getPackageDir('sims_data'),
+                                     'OpSimData', 'astro-lsst-01_2014.db')
         self.driver = 'sqlite'
 
     def tearDown(self):
@@ -32,6 +32,7 @@ class TestDb(unittest.TestCase):
                           'SlewActivities', 'TargetExposures', 'ObsHistory',
                           'SlewFinalState', 'TargetHistory', 'ObsProposalHistory',
                           'SlewHistory', 'TargetProposalHistory', 'Proposal',
+                          'ProposalField',
                           'SlewInitialState', 'UnscheduledDowntime']
         self.assertEqual(set(basedb.tableNames),
                          set(expectedTables))

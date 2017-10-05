@@ -6,6 +6,7 @@ import numpy as np
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils.outputUtils as out
 import lsst.utils.tests
+from lsst.utils import getPackageDir
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 from builtins import str
 
@@ -18,8 +19,8 @@ class TestOpsimDb(unittest.TestCase):
         sims_clean_up()
 
     def setUp(self):
-        self.database = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests',
-                                     'pontus_1150.db')
+        self.database = os.path.join(getPackageDir('sims_data'), 'OpSimData',
+                                     'astro-lsst-01_2014.db')
         self.oo = db.OpsimDatabaseV4(database=self.database)
 
     def tearDown(self):
@@ -61,13 +62,13 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbRunLength(self):
         """Test query for length of opsim run."""
         nrun = self.oo.fetchRunLength()
-        self.assertEqual(nrun, 1.)
+        self.assertEqual(nrun, 0.04)
 
     def testOpsimDbSimName(self):
         """Test query for opsim name."""
         simname = self.oo.fetchOpsimRunName()
         self.assertTrue(isinstance(simname, str))
-        self.assertEqual(simname, 'pontus_1150')
+        self.assertEqual(simname, 'astro-lsst-01_2014')
 
     def testOpsimDbConfig(self):
         """Test generation of config data. """
