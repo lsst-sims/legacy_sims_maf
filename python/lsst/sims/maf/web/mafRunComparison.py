@@ -5,6 +5,8 @@ import os
 import warnings
 import numpy as np
 from lsst.sims.maf.db import ResultsDb
+from lsst.sims.maf.db import OpsimDatabaseV4
+import pandas as pd
 
 __all__ = ['MafRunComparison']
 
@@ -144,3 +146,112 @@ class MafRunComparison(object):
                 except ValueError:
                     stats[i][j + 1] = np.nan
         return stats
+
+    def variedParameters(self, proposalName, parameterNames):
+        sqlconstraint = ''
+        for param in parameterNames:
+            if len(parameterNames) > 1 and parameterNames[-1] != param:
+                sqlconstraint += 'paramName like'+' "%'+proposalName+'%'+param+'%"'+ ' or '
+            else:
+                sqlconstraint += 'paramName like'+' "%'+proposalName+'%'+param+'%"'
+        print ('Querying Config parameters with the following query:')
+        print (sqlconstraint)
+
+        opsdb = {}
+        for r in self.runlist:
+            opsdb[r] = OpsimDatabaseV4(os.path.join(r, 'data', r + '.db'))
+        parameterValues = np.ndarray(shape=(len(self.runlist), len(parameterNames)))
+        for i, r in enumerate(self.runlist):
+            val = opsdb[r].query_columns('Config', colnames=['paramValue'],
+                                         sqlconstraint=sqlconstraint)
+
+            for c, v in enumerate(val):
+                parameterValues[i][c]= ((v[0]))
+
+        results_df = pd.DataFrame(parameterValues)
+        results_df.set_index(np.array(self.runlist),inplace=True)
+        results_df.columns = parameterNames
+
+        return results_df
+
+    def mkstandardMetricDict(self):
+        standardMetricDict = {'Total Visits': ['NVisits', 'All Visits', 'UniSlicer', 'Count'],
+                              'Total Eff Time': ['Total effective time of survey',
+                              'All Visits', 'UniSlicer', None],
+                              'Nights with Observations': ['Nights with observations',
+                              'All Visits', 'UniSlicer', '(days)'],
+                              'Median NVists Per Night':['NVisits', 'Per night',
+                              'OneDSlicer', 'Median'],
+                              'Median Open Shutter Fraction': ['OpenShutterFraction',
+                              'Per night', 'OneDSlicer', 'Median'],
+                              'Median Slew Time': ['Median slewTime', 'All Visits',
+                              'UniSlicer', None],
+                              'Mean Slew Time': ['Mean slewTime', 'All Visits',
+                              'UniSlicer', None],
+                              'Meidan Prop. Mo. 20':['Proper Motion 20',None,None,'Median'],
+                              'Meidan Prop. Mo. 24':['Proper Motion 24',None,None,'Median'],
+                              'Median Parallax 20':['Parallax 20',
+                                                    'All Visits (non-dithered)',
+                                                    'HealpixSlicer','Median'],
+                              'Median Parallax 24':['Parallax 24',
+                                                    'All Visits (non-dithered)',
+                                                    'HealpixSlicer',
+                                                    'Median'],
+                              'Median Parallax Coverage 20':['Parallax Coverage 20',
+                                                             'All Visits (non-dithered)',
+                                                             'HealpixSlicer','Median'],
+                              'Median Parallax Coverage 24':['Parallax Coverage 24',
+                                                             'All Visits (non-dithered)',
+                                                             'HealpixSlicer',
+                                                             'Median']}
+        #Seeing Metrics
+        for f in (['r', 'i']):
+            colName = 'Median seeingFwhmEff ' +f+' band'
+            metricName = 'Median seeingFwhmEff'
+            slicer = 'UniSlicer'
+            metadata = '%s band, WFD' % f
+            summary = None
+            standardMetricDict[colName] = [metricName,metadata,slicer,summary]
+        #CoaddM5 metrics
+        for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+            colName = 'Median CoaddM5 ' +f+' band'
+            metricName = 'CoaddM5'
+            slicer = 'OpsimFieldSlicer'
+            metadata = '%s band, WFD' % f
+            summary = 'Median'
+            standardMetricDict[colName] = [metricName,metadata,slicer,summary]
+        #HA Range metrics
+        for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+            colName = 'FullRange HA ' +f+' band'
+            metricName = 'FullRange HA'
+            slicer = 'OpsimFieldSlicer'
+            metadata = '%s band, WFD' % f
+            summary = 'Median'
+            standardMetricDict[colName] = [metricName,metadata,slicer,summary]
+
+        return standardMetricDict
+
+
+    def combineSummaryStats(self,proposalName,parameterNames,metricDict=None):
+
+        if metricDict == None:
+            metricDict = self.mkstandardMetricDict()
+        else:
+            metricDict = metricDict
+
+        parameterDataframe = self.variedParameters(proposalName,parameterNames)
+        metricVals = {}
+        metricDataframe = [None]*len(metricDict)
+        for k,m in enumerate(metricDict):
+            metricVals[m] = self.findSummaryStats(metricDict[m][0], metricMetadata=metricDict[m][1],
+                                                  slicerName=metricDict[m][2], summaryName=metricDict[m][3])
+            temp_df = pd.DataFrame(np.vstack(metricVals[m][0])[1:],index=None,dtype=float)
+            temp_df.set_index(np.array(self.runlist),inplace=True)
+            temp_df.columns = [m]
+            metricDataframe[k] = temp_df
+        final_df = pd.concat(metricDataframe, axis=1, join_axes=[metricDataframe[0].index])
+        final_df = final_df.sort_index(axis=1)
+        summaryStatsdf = pd.concat([parameterDataframe,final_df], axis=1,
+                                   join_axes=[parameterDataframe.index])
+        summaryStatsdf = summaryStatsdf.astype(float)
+        return summaryStatsdf,metricDict
