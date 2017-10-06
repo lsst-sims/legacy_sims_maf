@@ -51,7 +51,7 @@ def standardMetrics(colname, replace_colname=None):
                        metrics.MinMetric(colname),
                        metrics.MaxMetric(colname)]
     if replace_colname is not None:
-        for m in extendedMetrics:
+        for m in standardMetrics:
             if len(replace_colname) > 0:
                 m.name = m.name.replace('%s' % colname, '%s' % replace_colname)
             else:
