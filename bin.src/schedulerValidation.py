@@ -1312,3 +1312,4 @@ if __name__ == "__main__":
             warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
 
     utils.writeConfigs(opsdb, args.outDir)
+    opsdb.close()

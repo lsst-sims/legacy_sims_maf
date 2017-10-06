@@ -12,7 +12,7 @@ class NEODistStacker(BaseStacker):
     """
     def __init__(self,
                  stepsize=.001, maxDist=3., minDist=.3, H=22, elongCol='solarElong',
-                 filterCol='filter', sunAzCol='sunAz', azCol='azimuth'):
+                 filterCol='filter', sunAzCol='sunAz', azCol='azimuth', m5Col='fiveSigmaDepth'):
         """
         stepsize:  The stepsize to use when solving (in AU)
         maxDist: How far out to try and measure (in AU)
@@ -23,19 +23,16 @@ class NEODistStacker(BaseStacker):
         NEOHelioX: Heliocentric X (with Earth at x,y,z (0,1,0))
         NEOHelioY: Heliocentric Y (with Earth at (0,1,0))
         """
-        self.m5_stacker = FiveSigmaStacker()
-
         self.units = ['AU', 'AU', 'AU']
         # Also grab things needed for the HA stacker
-        self.colsReq = [elongCol, filterCol, sunAzCol, azCol]
-        self.colsReq.extend(self.m5_stacker.colsReq)
-        self.colsReq = list(set(self.colsReq))
-        self.colsAdded = ['MaxGeoDist', 'NEOHelioX', 'NEOHelioY', 'fiveSigmaDepth']
+        self.colsReq = [elongCol, filterCol, sunAzCol, azCol, m5Col]
+        self.colsAdded = ['MaxGeoDist', 'NEOHelioX', 'NEOHelioY']
 
         self.sunAzCol = sunAzCol
         self.elongCol = elongCol
         self.filterCol = filterCol
         self.azCol = azCol
+        self.m5Col = m5Col
 
         self.H = H
         # Magic numbers (Ivezic '15, private comm.)that convert an asteroid
@@ -51,13 +48,10 @@ class NEODistStacker(BaseStacker):
         self.a2 = 1.87
         self.b2 = 1.22
 
-    def run(self, simData):
-
-        simData = self._addStackers(simData)
-        simData = self.m5_stacker._run(simData)
+    def _run(self, simData):
 
         elongRad = np.radians(simData[self.elongCol])
-        v5 = np.zeros(simData.size, dtype=float) + simData['fiveSigmaDepth']
+        v5 = np.zeros(simData.size, dtype=float) + simData[self.m5Col]
         for filterName in self.limitingAdjust:
             fmatch = np.where(simData[self.filterCol] == filterName)
             v5[fmatch] += self.limitingAdjust[filterName]

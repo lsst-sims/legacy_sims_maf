@@ -71,10 +71,6 @@ class M5OptimalStacker(BaseStacker):
 
         self.site = Site(site)
         self.units = ['mags']
-        self.colsAdded = ['m5Optimal']
-        self.colsReq = [airmassCol, decCol, skyBrightCol,
-                        seeingCol, filterCol, moonAltCol, sunAltCol]
-
         self.airmassCol = airmassCol
         self.decCol = decCol
         self.skyBrightCol = skyBrightCol
@@ -84,8 +80,11 @@ class M5OptimalStacker(BaseStacker):
         self.sunAltCol = sunAltCol
         self.m5_stacker = FiveSigmaStacker()
         self.m5Col = self.m5_stacker.colsAdded[0]
+        self.colsReq = [airmassCol, decCol, skyBrightCol,
+                        seeingCol, filterCol, moonAltCol, sunAltCol]
         self.colsReq.extend(self.m5_stacker.colsReq)
         self.colsReq = list(set(self.colsReq))
+        self.colsAdded = ['m5Optimal']
 
     def _run(self, simData):
         simData = self.m5_stacker._run(simData)

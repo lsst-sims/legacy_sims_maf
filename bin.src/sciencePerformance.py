@@ -827,5 +827,6 @@ if __name__ == "__main__":
             warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
     # Get config info and write to disk.
     utils.writeConfigs(opsdb, args.outDir)
+    opsdb.close()
 
     print("Finished sciencePerformance metric calculations.")
