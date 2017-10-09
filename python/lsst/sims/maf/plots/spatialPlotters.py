@@ -77,7 +77,8 @@ class HealpixSkyMap(BasePlotter):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
         # Set up the default plotting parameters.
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'rot': (0, 0, 0), 'coord': 'C'})
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
@@ -100,6 +101,7 @@ class HealpixSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        print(plotDict)
         # Update the metric data with zeropoint or normalization.
         metricValue = applyZPNorm(metricValueIn, plotDict)
         # Generate a Mollweide full-sky plot.
@@ -161,7 +163,8 @@ class HealpixPowerSpectrum(BasePlotter):
     def __init__(self):
         self.plotType = 'PowerSpectrum'
         self.objectPlotter = False
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'maxl': None, 'removeDipole': True, 'linestyle': '-'})
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -210,7 +213,8 @@ class HealpixHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
         self.objectPlotter = False
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'ylabel': 'Area (1000s of square degrees)',
                                      'bins': None, 'binsize': None, 'cumulative': False,
                                      'scale': None, 'linestyle': '-'})
@@ -235,7 +239,8 @@ class OpsimHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
         self.objectPlotter = False
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'ylabel': 'Number of Fields', 'yaxisformat': '%d',
                                      'bins': None, 'binsize': None, 'cumulative': False,
                                      'scale': 1.0, 'linestyle': '-'})
@@ -258,9 +263,11 @@ class BaseHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
         self.objectPlotter = False
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'ylabel': 'Count', 'bins': None, 'binsize': None, 'cumulative': False,
                                      'scale': 1.0, 'yaxisformat': '%.3f', 'linestyle': '-'})
+
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
         Plot a histogram of metricValues (such as would come from a spatial slicer).
@@ -269,6 +276,7 @@ class BaseHistogram(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        print(plotDict)
         metricValue = applyZPNorm(metricValueIn, plotDict)
         # Toss any NaNs or infs
         metricValue = metricValue[np.isfinite(metricValue)]
@@ -360,9 +368,10 @@ class BaseSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
         self.objectPlotter = False  # unless 'metricIsColor' is true..
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'projection': 'aitoff', 'radius': np.radians(1.75), 'alpha': 1.0,
-                                     'plotMask': False, 'metricIsColor': False,
+                                     'plotMask': False, 'metricIsColor': False, 'cbar': True,
                                      'raCen': 0.0, 'mwZone': True, 'bgcolor': 'gray'})
 
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
@@ -527,7 +536,8 @@ class HealpixSDSSSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'cbarFormat': '%.2f',
                                      'raMin': -90, 'raMax': 90, 'raLen': 45,
                                      'decMin': -2., 'decMax': 2.})
@@ -607,7 +617,8 @@ class LambertSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
-        self.defaultPlotDict = baseDefaultPlotDict
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 20,
                                                  'lon_0': 0., 'resolution': 'l', 'celestial': False},
                                      'levels': 200, 'cbarFormat': '%i'})
