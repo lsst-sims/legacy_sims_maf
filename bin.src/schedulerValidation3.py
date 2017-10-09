@@ -1314,5 +1314,5 @@ if __name__ == "__main__":
             mergedHistDict[key].plot(outDir=args.outDir, resultsDb=resultsDb, closeFigs=True)
         else:
             warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
-
+    opsdb.close()
     utils.writeConfigs(opsdb, args.outDir)

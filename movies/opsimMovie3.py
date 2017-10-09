@@ -8,7 +8,7 @@ from builtins import str
 #         the additional frames will be copied to meet the fps requirement. If fps is lower than ips, images will be
 #         removed from the sequence to maintain fps. As a rule of thumb, fps>30 is undetectable to the human eye.
 # --movieLength = can specify the length of the output video (in seconds), then automatically calculate corresponding ips
-#         and fps based on the number of movie slices. 
+#         and fps based on the number of movie slices.
 # --skipComp = skip computing the metrics and generating plots, just use files from disk.
 #
 
@@ -47,7 +47,7 @@ def getData(opsDb, sqlconstraint):
     if len(simdata) == 0:
         raise Exception('No simdata found matching constraint %s' %(sqlconstraint))
     # Add stacker columns.
-    hourangleStacker = stackers.HourAngleStacker()
+    hourangleStacker = stackers.HourAngleStacker(lstCol='lst')
     simdata = hourangleStacker.run(simdata)
     filterStacker = stackers.FilterColorStacker()
     simdata = filterStacker.run(simdata)
@@ -74,7 +74,7 @@ def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60.,
             plotDictList.append({'colorMin':0, 'colorMax':colorMax, 'cbarFormat': '%d',
                                  'xlabel':'Number of Visits', 'title':'%s band' %(f),
                                  'label':plotlabel, 'metricIsColor':False, 'figsize': figsize})
-    metricList.append(metrics.FilterColorsMetric(t0=t0, tStep=tStep))
+    metricList.append(metrics.FilterColorsMetric(t0=t0, tStep=tStep, timeCol='expMJD'))
     plotDictList.append({'title':'Simulation %s: %s' %(opsimName, metadata), 'bgcolor':None,
                          'metricIsColor':True, 'figsize': figsize})
     dt, t = dtime(t)
@@ -150,7 +150,7 @@ def runSlices(opsimName, metadata, simdata, fields, bins, args, opsDb, verbose=F
         # Identify the subset of simdata in the movieslicer 'data slice'
         simdatasubset = simdata[ms['idxs']]
         # Set up opsim slicer on subset of simdata provided by movieslicer
-        opslicer = slicers.OpsimFieldSlicer()
+        opslicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
         # Set up metricBundles to combine metrics, plotdicts and slicer.
         bundles = []
         sqlconstraint = ''

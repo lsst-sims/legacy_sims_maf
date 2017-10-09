@@ -22,6 +22,13 @@ __all__ = ['setColorLims', 'setColorMap', 'HealpixSkyMap', 'HealpixPowerSpectrum
            'HealpixHistogram', 'OpsimHistogram', 'BaseHistogram',
            'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
 
+baseDefaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
+                       'logScale': False, 'percentileClip': None,  'normVal': None, 'zp': None,
+                       'cbarFormat': None, 'cmap': perceptual_rainbow, 'cbar_edge': True,  'nTicks': 10,
+                       'colorMin': None, 'colorMax': None,
+                       'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
+                       'labelsize':None, 'fontsize': None, 'figsize': None, 'subplot': 111}
+
 
 def setColorLims(metricValue, plotDict):
     """Set up color bar limits."""
@@ -30,8 +37,7 @@ def setColorLims(metricValue, plotDict):
     colorMax = plotDict['colorMax']
     # If not, try to use percentile clipping.
     if plotDict['percentileClip'] is not None:
-        pcMin, pcMax = utils.percentileClipping(metricValue.compressed(),
-                                                percentile=plotDict['percentileClip'])
+        pcMin, pcMax = percentileClipping(metricValue.compressed(), percentile=plotDict['percentileClip'])
         if colorMin is None:
             colorMin = pcMin
         if colorMax is None:
@@ -71,12 +77,9 @@ class HealpixSkyMap(BasePlotter):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
         # Set up the default plotting parameters.
-        self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                                'logScale': False, 'cbarFormat': None, 'cmap': perceptual_rainbow,
-                                'percentileClip': None, 'colorMin': None, 'colorMax': None,
-                                'zp': None, 'normVal': None, 'labelsize': None, 'fontsize': None,
-                                'cbar_edge': True, 'nTicks': 10, 'rot': (0, 0, 0), 'figsize': None,
-                                'coord': 'C'}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'rot': (0, 0, 0), 'coord': 'C'})
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -122,8 +125,9 @@ class HealpixSkyMap(BasePlotter):
                           "Adjusting so plotting doesn't fail")
 
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
-                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro', coord=plotDict['coord'],
-                    cmap=cmap, norm=norm, fig=fig.number)
+                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
+                    coord=plotDict['coord'], cmap=cmap, norm=norm,
+                    sub=plotDict['subplot'], fig=fig.number)
         # Add a graticule (grid) over the globe.
         hp.graticule(dpar=30, dmer=30, verbose=False)
         # Add colorbar (not using healpy default colorbar because we want more tickmarks).
@@ -158,10 +162,9 @@ class HealpixPowerSpectrum(BasePlotter):
     def __init__(self):
         self.plotType = 'PowerSpectrum'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title': None, 'label': None,
-                                'maxl': None, 'removeDipole': True,
-                                'logScale': True, 'linestyle': '-',
-                                'fontsize': None, 'labelsize': None, 'figsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'maxl': None, 'removeDipole': True, 'linestyle': '-'})
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         """
@@ -174,6 +177,7 @@ class HealpixPowerSpectrum(BasePlotter):
         plotDict.update(userPlotDict)
 
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
+        ax = fig.add_subplot(plotDict['subplot'])
         # If the mask is True everywhere (no data), just plot zeros
         if False not in metricValue.mask:
             return None
@@ -208,12 +212,11 @@ class HealpixHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title': None, 'xlabel': None,
-                                'ylabel': 'Area (1000s of square degrees)', 'label': None,
-                                'bins': None, 'binsize': None, 'cumulative': False,
-                                'scale': None, 'xMin': None, 'xMax': None,
-                                'logScale': False, 'linestyle': '-',
-                                'fontsize': None, 'labelsize': None, 'figsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'ylabel': 'Area (1000s of square degrees)',
+                                     'bins': None, 'binsize': None, 'cumulative': False,
+                                     'scale': None, 'linestyle': '-'})
         self.baseHist = BaseHistogram()
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -235,12 +238,11 @@ class OpsimHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                                'ylabel': 'Number of Fields', 'yaxisformat': '%d',
-                                'bins': None, 'binsize': None, 'cumulative': False,
-                                'scale': 1.0, 'xMin': None, 'xMax': None,
-                                'logScale': False, 'linestyle': '-',
-                                'fontsize': None, 'labelsize': None, 'figsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'ylabel': 'Number of Fields', 'yaxisformat': '%d',
+                                     'bins': None, 'binsize': None, 'cumulative': False,
+                                     'scale': 1.0, 'linestyle': '-'})
         self.baseHist = BaseHistogram()
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -260,15 +262,10 @@ class BaseHistogram(BasePlotter):
     def __init__(self):
         self.plotType = 'Histogram'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title': None, 'xlabel': None, 'ylabel': 'Count', 'label': None,
-                                'bins': None, 'binsize': None, 'cumulative': False,
-                                'scale': 1.0,
-                                'xMin': None, 'xMax': None,
-                                'yMin': None, 'yMax': None,
-                                'logScale': False,
-                                'yaxisformat': '%.3f', 'linestyle': '-',
-                                'zp': None, 'normVal': None, 'percentileClip': None,
-                                'fontsize': None, 'labelsize': None, 'figsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'ylabel': 'Count', 'bins': None, 'binsize': None, 'cumulative': False,
+                                     'scale': 1.0, 'yaxisformat': '%.3f', 'linestyle': '-'})
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -327,6 +324,7 @@ class BaseHistogram(BasePlotter):
             bins = optimalBins(metricValue)
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
+        ax = fig.add_subplot(plotDict['subplot'])
         # Check if any data falls within histRange, because otherwise histogram generation will fail.
         if isinstance(bins, np.ndarray):
             condition = ((metricValue >= bins.min()) & (metricValue <= bins.max()))
@@ -349,7 +347,6 @@ class BaseHistogram(BasePlotter):
         def mjrFormatter(y, pos):
             return plotDict['yaxisformat'] % (y * plotDict['scale'])
 
-        ax = plt.gca()
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set optional x, y limits.
         plt.ylim([plotDict['yMin'], plotDict['yMax']])
@@ -369,15 +366,11 @@ class BaseSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
         self.objectPlotter = False  # unless 'metricIsColor' is true..
-        self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                                'projection': 'aitoff', 'radius': np.radians(1.75),
-                                'logScale': 'auto', 'cbar': True, 'cbarFormat': None,
-                                'cmap': perceptual_rainbow, 'alpha': 1.0,
-                                'zp': None, 'normVal': None,
-                                'colorMin': None, 'colorMax': None, 'percentileClip': None,
-                                'cbar_edge': True, 'plotMask': False, 'metricIsColor': False,
-                                'raCen': 0.0, 'mwZone': True, 'bgcolor': 'gray',
-                                'labelsize': None, 'fontsize': None, 'figsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'projection': 'aitoff', 'radius': np.radians(1.75), 'alpha': 1.0,
+                                     'plotMask': False, 'metricIsColor': False, 'cbar': True,
+                                     'raCen': 0.0, 'mwZone': True, 'bgcolor': 'gray'})
 
     def _plot_tissot_ellipse(self, lon, lat, radius, ax=None, **kwargs):
         """Plot Tissot Ellipse/Tissot Indicatrix
@@ -459,7 +452,7 @@ class BaseSkyMap(BasePlotter):
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # other projections available include
         # ['aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear']
-        ax = fig.add_subplot(111, projection=plotDict['projection'])
+        ax = fig.add_subplot(plotDict['subplot'], projection=plotDict['projection'])
         # Set up valid datapoints and colormin/max values.
         if plotDict['plotMask']:
             # Plot all data points.
@@ -541,15 +534,13 @@ class HealpixSDSSSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
-        self.defaultPlotDict = {'title': None, 'xlabel': None, 'logScale': False,
-                                'cbarFormat': '%.2f', 'cmap': perceptual_rainbow,
-                                'percentileClip': None, 'colorMin': None,
-                                'colorMax': None, 'zp': None, 'normVal': None,
-                                'cbar_edge': True, 'label': None, 'raMin': -90,
-                                'raMax': 90, 'raLen': 45, 'decMin': -2., 'decMax': 2.,
-                                'labelsize': None, 'fontsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'cbarFormat': '%.2f',
+                                     'raMin': -90, 'raMax': 90, 'raLen': 45,
+                                     'decMin': -2., 'decMax': 2.})
 
-    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None, ):
+    def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
         """
         Plot the sky map of metricValue using healpy cartview plots in thin strips.
@@ -560,8 +551,6 @@ class HealpixSDSSSkyMap(BasePlotter):
         decMax: max dec value to plot
         metricValueIn: metric values
         """
-
-        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
@@ -571,9 +560,10 @@ class HealpixSDSSSkyMap(BasePlotter):
             norm = 'log'
         clims = setColorLims(metricValue, plotDict)
         cmap = setColorMap(plotDict)
-
         racenters = np.arange(plotDict['raMin'], plotDict['raMax'], plotDict['raLen'])
         nframes = racenters.size
+        fig = plt.figure(fignum)
+        # Do not specify or use plotDict['subplot'] because this is done in each call to hp.cartview.
         for i, racenter in enumerate(racenters):
             if i == 0:
                 useTitle = plotDict['title'] + ' /n' + '%i < RA < %i' % (racenter - plotDict['raLen'],
@@ -586,8 +576,7 @@ class HealpixSDSSSkyMap(BasePlotter):
                         latra=[plotDict['decMin'], plotDict['decMax']], sub=(nframes + 1, 1, i + 1), fig=fig)
             hp.graticule(dpar=20, dmer=20, verbose=False)
         # Add colorbar (not using healpy default colorbar because want more tickmarks).
-        fig = plt.gcf()
-        ax1 = fig.add_axes([0.1, .15, .8, .075])  # left, bottom, width, height
+        ax = fig.add_axes([0.1, .15, .8, .075])  # left, bottom, width, height
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.8, 0.9, '%s' % plotDict['label'])
@@ -597,13 +586,21 @@ class HealpixSDSSSkyMap(BasePlotter):
         # supress silly colorbar warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=cnorm,
-                                            orientation='horizontal', format=plotDict['cbarFormat'])
-            cb1.set_label(plotDict['xlabel'])
-            cb1.ax.tick_params(labelsize=plotDict['labelsize'])
+            cb = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=cnorm,
+                                           orientation='horizontal', format=plotDict['cbarFormat'])
+            cb.set_label(plotDict['xlabel'])
+            cb.ax.tick_params(labelsize=plotDict['labelsize'])
+            if norm == 'log':
+                tick_locator = ticker.LogLocator(numticks=plotDict['nTicks'])
+                cb.locator = tick_locator
+                cb.update_ticks()
+            if (plotDict['nTicks'] is not None) & (norm != 'log'):
+                tick_locator = ticker.MaxNLocator(nbins=plotDict['nTicks'])
+                cb.locator = tick_locator
+                cb.update_ticks()
         # If outputing to PDF, this fixes the colorbar white stripes
         if plotDict['cbar_edge']:
-            cb1.solids.set_edgecolor("face")
+            cb.solids.set_edgecolor("face")
         fig = plt.gcf()
         return fig.number
 
@@ -618,13 +615,11 @@ class LambertSkyMap(BasePlotter):
     def __init__(self):
         self.plotType = 'SkyMap'
         self.objectPlotter = False
-        self.defaultPlotDict = {'basemap': {'projection': 'nplaea', 'boundinglat': 20,
-                                            'lon_0': 0., 'resolution': 'l', 'celestial': False},
-                                'cbar': True, 'cmap': perceptual_rainbow, 'levels': 200,
-                                'cbarFormat': '%i', 'cbar_edge': True, 'zp': None,
-                                'normVal': None, 'percentileClip': None, 'colorMin': None,
-                                'colorMax': None, 'linewidths': 0,
-                                'fontsize': None, 'labelsize': None, 'figsize': None}
+        self.defaultPlotDict = {}
+        self.defaultPlotDict.update(baseDefaultPlotDict)
+        self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 20,
+                                                 'lon_0': 0., 'resolution': 'l', 'celestial': False},
+                                     'levels': 200, 'cbarFormat': '%i'})
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -647,7 +642,7 @@ class LambertSkyMap(BasePlotter):
             levels = np.arange(clims[0], clims[1] + step, step)
 
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
-        ax = fig.add_subplot(111)
+        ax = fig.add_subplot(plotDict['subplot'])
 
         # Hide this extra dependency down here for now
         # if using anaconda, to get basemap:

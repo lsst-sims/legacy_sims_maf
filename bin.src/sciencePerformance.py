@@ -176,7 +176,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     metadata = 'All Visits' + slicermetadata
     sqlconstraint = ''
     dTmin = 40.0  # seconds
-    dTmax = 30.0*60. # minutes
+    dTmax = 30.0*60. # seconds
     minNvisit = 100
     pixArea = float(hp.nside2pixarea(nside, degrees=True))
     scale = pixArea * hp.nside2npix(nside)
@@ -203,12 +203,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     bundleList.append(bundle)
     order += 1
 
+    dTmax = dTmax/60.0 # need time in minutes for Nrevisits metric
     m2 = metrics.NRevisitsMetric(dT=dTmax)
     plotDict = {'xMin': 0.1, 'xMax': 2000, 'logScale': True}
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     extraStats2.extend(commonSummary)
-    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % dTmax
+    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % (dTmax)
     caption += 'in any filter, all proposals. '
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more than '
     caption += '%d revisits within this time window.' % (cutoff2)
@@ -827,5 +828,6 @@ if __name__ == "__main__":
             warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
     # Get config info and write to disk.
     utils.writeConfigs(opsdb, args.outDir)
+    opsdb.close()
 
     print("Finished sciencePerformance metric calculations.")
