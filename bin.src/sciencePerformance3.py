@@ -180,7 +180,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     metadata = 'All Visits' + slicermetadata
     sqlconstraint = ''
     dTmin = 40.0  # seconds
-    dTmax = 30.0  # minutes
+    dTmax = 30.0*60.0 # seconds
     minNvisit = 100
     pixArea = float(hp.nside2pixarea(nside, degrees=True))
     scale = pixArea * hp.nside2npix(nside)
@@ -189,7 +189,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     extraStats1.extend(commonSummary)
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity',
-                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
+                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 60.0 / 24.0,
                                     minNvisits=minNvisit)
 
     plotDict = {'xMin': 0, 'xMax': 1}
@@ -212,7 +212,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     extraStats2.extend(commonSummary)
-    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % dTmax
+    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % (dTmax/60.0)
     caption += 'in any filter, all proposals. '
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more than '
     caption += '%d revisits within this time window.' % (cutoff2)
@@ -231,7 +231,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     extraStats3.extend(commonSummary)
     summaryStats = extraStats3
     caption = 'Fraction of total visits where consecutive visits have return times faster '
-    caption += 'than %.1f minutes, in any filter, all proposals. ' % (dTmax)
+    caption += 'than %.1f minutes, in any filter, all proposals. ' % (dTmax/60.0)
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more '
     caption += 'than %d revisits within this time window.' % (cutoff3)
     displayDict = {'group': reqgroup, 'subgroup': 'Rapid Revisit', 'displayOrder': order,
