@@ -47,16 +47,19 @@ def ColMapDict(dictName=None):
         colMap['skyBrightness'] = 'skyBrightness'
         colMap['moonDistance'] = 'moonDistance'
         # slew speeds table
+        colMap['slewSpeedsTable'] = 'SlewMaxSpeeds'
         colMap['Dome Alt Speed'] = 'domeAltSpeed'
         colMap['Dome Az Speed'] = 'domeAzSpeed'
         colMap['Tel Alt Speed'] = 'telAltSpeed'
         colMap['Tel Az Speed'] = 'telAzSpeed'
         colMap['Rotator Speed'] = 'rotatorSpeed'
         # slew states table
+        colMap['slewStatesTable'] = 'SlewFinalStates'
         colMap['Tel Alt'] = 'telAlt'
         colMap['Tel Az'] = 'telAz'
         colMap['Rot Tel Pos'] = 'rotTelPos'
         # slew activities list
+        colMap['slewActivitiesTable'] = 'SlewActivities'
         colMap['TelOptics CL'] = 'telopticsclosedloop'
         colMap['TelOptics OL'] = 'telopticsopenloop'
         colMap['Tel Alt'] = 'telalt'
@@ -95,16 +98,19 @@ def ColMapDict(dictName=None):
         colMap['skyBrightness'] = 'filtSkyBrightness'
         colMap['moonDistance'] = 'dist2Moon'
         # slew speeds table
+        colMap['slewSpeedsTable'] = 'SlewMaxSpeeds'
         colMap['Dome Alt Speed'] = 'domeAltSpeed'
         colMap['Dome Az Speed'] = 'domeAzSpeed'
         colMap['Tel Alt Speed'] = 'telAltSpeed'
         colMap['Tel Az Speed'] = 'telAzSpeed'
         colMap['Rotator Speed'] = 'rotatorSpeed'
         # slew states table
+        colMap['slewStatesTable'] = 'SlewStates'
         colMap['Tel Alt'] = 'telAlt'
         colMap['Tel Az'] = 'telAz'
         colMap['Rot Tel Pos'] = 'rotTelPos'
         # Slew activities list
+        colMap['slewActivitiesTable'] = 'SlewActivities'
         colMap['TelOptics CL'] = 'TelOpticsOL'
         colMap['TelOptics OL'] = 'telopticsopenloop'
         colMap['Tel Alt'] = 'TelAlt'

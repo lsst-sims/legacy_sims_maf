@@ -7,6 +7,7 @@ matplotlib.use('Agg')
 import lsst.sims.maf.batches as batches
 from run_generic import *
 
+
 def setBatches(opsdb, colmap, args):
     propids, proptags, sqltags = setSQL(opsdb)
     bdict = {}

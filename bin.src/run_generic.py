@@ -12,9 +12,10 @@ import argparse
 import matplotlib
 matplotlib.use('Agg')
 import lsst.sims.maf.db as db
-import lsst.sims.maf.utils as mafUtils
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.batches as batches
+import lsst.sims.maf.utils as mafUtils
+
 
 """
 def setBatches(opsdb, colmap, args):
@@ -29,6 +30,7 @@ def setBatches(opsdb, colmap, args):
     bdict.update(batches.allMetadata(colmap, runName, sqlconstraint=sqltags['WFD'], metadata='WFD'))
     return bdict
 """
+
 
 def connectDb(dbfile):
     version = db.testOpsimVersion(dbfile)

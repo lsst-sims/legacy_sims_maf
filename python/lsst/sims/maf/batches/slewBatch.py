@@ -1,5 +1,6 @@
 """Sets of slew metrics.
 """
+import warnings
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as mb
@@ -43,7 +44,7 @@ def slewBasics(colmap=None, runName='opsim'):
     bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
     bundleList.append(bundle)
     for metric in standardMetrics(colmap['slewtime']):
-        displayDict['caption'] =  '%s in seconds.' % (metric.name)
+        displayDict['caption'] = '%s in seconds.' % (metric.name)
         displayDict['order'] += 1
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
         bundleList.append(bundle)
@@ -78,9 +79,8 @@ def slewBasics(colmap=None, runName='opsim'):
     return mb.makeBundlesDictFromList(bundleList)
 
 
-
 def slewAngles(colmap=None, runName='opsim'):
-    """Generate a set of slew statistics focused on the angles of the various components (dome and telescope).
+    """Generate a set of slew statistics focused on the angles of each component (dome and telescope).
     These slew statistics must be run on the SlewFinalState or SlewInitialState table in opsimv4,
     and on the SlewState table in opsimv3.
 
@@ -113,7 +113,7 @@ def slewAngles(colmap=None, runName='opsim'):
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Angles', 'order': -1, 'caption': None}
     for angle in angles:
         metadata = angle
-        metriclist = standardMetrics(colmap[angle], strip_colname=True)
+        metriclist = standardMetrics(colmap[angle], replace_colname='')
         metriclist += [metrics.RmsMetric(colmap[angle], metricName='RMS')]
         for metric in metriclist:
             displayDict['caption'] = '%s %s' % (metric.name, angle)
@@ -128,7 +128,7 @@ def slewAngles(colmap=None, runName='opsim'):
 
 
 def slewSpeeds(colmap=None, runName='opsim'):
-    """Generate a set of slew statistics focused on the speeds of the various components (dome and telescope).
+    """Generate a set of slew statistics focused on the speeds of each component (dome and telescope).
     These slew statistics must be run on the SlewMaxSpeeds table in opsimv4 and opsimv3.
 
     Parameters
@@ -180,7 +180,7 @@ def slewSpeeds(colmap=None, runName='opsim'):
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def slewActivities(totalSlewN, colmap=None, runName='opsim'):
+def slewActivities(colmap=None, runName='opsim', totalSlewN=1):
     """Generate a set of slew statistics focused on finding the contributions to the overall slew time.
     These slew statistics must be run on the SlewActivities table in opsimv4 and opsimv3.
 
@@ -188,32 +188,40 @@ def slewActivities(totalSlewN, colmap=None, runName='opsim'):
 
     Parameters
     ----------
-    totalSlewN : int
-        The total number of slews in the simulated survey.
-        Used to calculate % of slew activities for each component.
     colmap : dict or None, opt
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
+    totalSlewN : int, opt
+        The total number of slews in the simulated survey.
+        Used to calculate % of slew activities for each component.
+        Default is 1.
 
     Returns
     -------
     metricBundleDict
     """
+    if totalSlewN == 1:
+        warnings.warn('TotalSlewN should be set (using 1). Percents from activities may be incorrect.')
+
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
 
     # All of these metrics run with a unislicer, on all the slew data.
     slicer = slicers.UniSlicer()
+    print(colmap.keys())
 
-    slewTypes = colMap['slewactivities']
+    if 'slewactivities' not in colmap:
+        raise ValueError("List of slewactivities not in colmap! Will not create slewActivities bundles.")
+
+    slewTypes = colmap['slewactivities']
 
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Activities', 'order': -1, 'caption': None}
 
     for slewType in slewTypes:
         metadata = slewType
-        tableValue = colMap[slewType]
+        tableValue = colmap[slewType]
 
         # Metrics for all activities of this type.
         sqlconstraint = 'activityDelay>0 and activity="%s"' % tableValue

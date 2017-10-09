@@ -9,6 +9,7 @@ from .common import standardSummary, extendedMetrics
 
 __all__ = ['metadataBasics', 'allMetadata']
 
+
 def metadataBasics(value, colmap=None, runName='opsim',
                    valueName=None, groupName=None, extraSql=None, extraMetadata=None,
                    nside=64, filterlist=('u', 'g', 'r', 'i', 'z', 'y')):
