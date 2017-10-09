@@ -101,7 +101,6 @@ class HealpixSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        print(plotDict)
         # Update the metric data with zeropoint or normalization.
         metricValue = applyZPNorm(metricValueIn, plotDict)
         # Generate a Mollweide full-sky plot.
@@ -276,7 +275,6 @@ class BaseHistogram(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        print(plotDict)
         metricValue = applyZPNorm(metricValueIn, plotDict)
         # Toss any NaNs or infs
         metricValue = metricValue[np.isfinite(metricValue)]
