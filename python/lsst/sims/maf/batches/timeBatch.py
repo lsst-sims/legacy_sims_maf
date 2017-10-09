@@ -35,11 +35,10 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
-
     # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': -1}
     sql = 'filter="g" or filter="r" or filter="i"'
-    metadata='gri'
+    metadata = 'gri'
     dtMin = 15.0
     dtMax = 60.0
     metric = metrics.PairFractionMetric(timeCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
@@ -79,12 +78,12 @@ def intraNight(colmap=None, runName='opsim', nside=64):
                                    latLonDeg=colmap['raDecDeg'])
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     metadata = 'All filters'
-    displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point on the sky,' \
-                             ' considering visits between %.1f and %.1f minutes' % (binMin, binMax)
+    displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point ' \
+                             'on the sky, considering visits between %.1f and %.1f minutes' % (binMin, binMax)
     displayDict['order'] += 1
     plotFunc = plots.SummaryHistogram()
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
-                            displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
+                             displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
     bundleList.append(bundle)
 
     # Set the runName for all bundles and return the bundleDict.

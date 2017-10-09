@@ -290,7 +290,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1):
     summaryMetrics = [metrics.IdentityMetric(metricName='Count'),
                       metrics.NormalizeMetric(normVal=totvisits, metricName='Fraction of total')]
     bundleList = []
-    displayDict = {'group': 'Visit Summary', 'subgroup': 'Proposal distribution', 'order':-1}
+    displayDict = {'group': 'Visit Summary', 'subgroup': 'Proposal distribution', 'order': -1}
 
     bdict = {}
     bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,

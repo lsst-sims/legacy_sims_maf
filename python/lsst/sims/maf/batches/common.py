@@ -23,7 +23,7 @@ def extendedSummary():
     """An extended set of summary metrics, to calculate all that is in the standard summary stats,
     plus 25/75 percentiles."""
 
-    extendedStats = standardSummaryMetrics()
+    extendedStats = standardSummary()
     extendedStats += [metrics.PercentileMetric(metricName='25th%ile', percentile=25),
                       metrics.PercentileMetric(metricName='75th%ile', percentile=75)]
     return extendedStats
@@ -57,6 +57,7 @@ def standardMetrics(colname, replace_colname=None):
             else:
                 m.name = m.name.rstrip(' %s' % colname)
     return standardMetrics
+
 
 def extendedMetrics(colname, replace_colname=None):
     """An extended set of simple metrics for some quantity. Typically applied with unislicer.

@@ -45,7 +45,7 @@ def glanceBatch(colmap=None, runName='opsim',
     sql_per_filt = ['%s="%s"' % (colmap['filter'], filtername) for filtername in filternames]
     sql_per_and_all_filters = [''] + sql_per_filt
 
-    standardStats =  standardSummary()
+    standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Super basic things
@@ -95,7 +95,7 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # Things to check per night
     # Open Shutter per night
-    displayDict = {'group': 'Pointing Efficency', 'order':2}
+    displayDict = {'group': 'Pointing Efficency', 'order': 2}
     slicer = slicers.OneDSlicer(sliceColName=colmap['night'], binsize=1)
     metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
                                                expTimeCol=colmap['exptime'],
@@ -112,7 +112,6 @@ def glanceBatch(colmap=None, runName='opsim',
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
-
 
     # A few basic maps
     # Number of observations, coadded depths

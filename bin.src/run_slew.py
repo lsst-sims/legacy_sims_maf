@@ -10,6 +10,7 @@ import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.utils as mafUtils
 from run_generic import parseArgs, connectDb
 
+
 def runSlew(opsdb, colmap, args):
     resultsDb = db.ResultsDb(outDir=args.outDir)
     bdict = batches.slewBasics(colmap, args.runName)
