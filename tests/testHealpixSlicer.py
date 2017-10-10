@@ -49,7 +49,7 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     rot = np.random.rand(len(dec))*2*np.pi
     data.append(np.array(rot, dtype=[('rotSkyPos', 'float')]))
     mjd = np.arange(len(dec))*.1
-    data.append(np.array(mjd, dtype=[('expMJD', 'float')]))
+    data.append(np.array(mjd, dtype=[('observationStartMJD', 'float')]))
     data = rfn.merge_arrays(data, flatten=True, usemask=False)
     return data
 
@@ -161,7 +161,7 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
         self.nside = 8
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        lonCol='ra', latCol='dec',
+                                        lonCol='ra', latCol='dec', latLonDeg=False,
                                         radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
@@ -199,7 +199,7 @@ class TestHealpixChipGap(unittest.TestCase):
         self.nside = 8
         self.radius = 2.041
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
-                                        lonCol='ra', latCol='dec',
+                                        lonCol='ra', latCol='dec', latLonDeg=False,
                                         radius=self.radius, useCamera=True,
                                         chipNames=['R:1,1 S:1,1'])
         nvalues = 1000
@@ -235,7 +235,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
     def setUp(self):
         self.nside = 16
         self.radius = 1.8
-        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False,
+        self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, latLonDeg=False,
                                         lonCol='ra', latCol='dec', radius=self.radius)
         nvalues = 10000
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,

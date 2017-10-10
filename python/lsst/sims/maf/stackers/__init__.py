@@ -8,3 +8,4 @@ from .NEODistStacker import *
 from .moStackers import *
 from .getColInfo import *
 from .m5OptimalStacker import *
+from .nFollowStacker import *

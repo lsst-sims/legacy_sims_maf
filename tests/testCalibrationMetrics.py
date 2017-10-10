@@ -15,11 +15,11 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax metric.
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
-        types = [float, float, float, float, float, '<U1']
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
+        types = [float, float, float, float, float, (np.str_, 1)]
         data = np.zeros(700, dtype=list(zip(names, types)))
         slicePoint = {'sid': 0}
-        data['expMJD'] = np.arange(700)+56762
+        data['observationStartMJD'] = np.arange(700)+56762
         data['finSeeing'] = 0.7
         data['filter'][0:100] = str('r')
         data['filter'][100:200] = str('u')
@@ -55,13 +55,13 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the ProperMotion metric.
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
-        types = [float, float, float, float, float, '<U1']
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec', 'filter']
+        types = [float, float, float, float, float, (np.str_, 1)]
         data = np.zeros(700, dtype=list(zip(names, types)))
         slicePoint = [0]
         stacker = stackers.ParallaxFactorStacker()
         normFlags = [False, True]
-        data['expMJD'] = np.arange(700)+56762
+        data['observationStartMJD'] = np.arange(700)+56762
         data['finSeeing'] = 0.7
         data['filter'][0:100] = str('r')
         data['filter'][100:200] = str('u')
@@ -100,7 +100,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax coverage
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
                  'filter', 'ra_pi_amp', 'dec_pi_amp']
         types = [float, float, float, float, float, '<U1', float, float]
         data = np.zeros(100, dtype=list(zip(names, types)))
@@ -140,7 +140,7 @@ class TestCalibrationMetrics(unittest.TestCase):
         """
         Test the parallax-DCR degeneracy metric
         """
-        names = ['expMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
+        names = ['observationStartMJD', 'finSeeing', 'fiveSigmaDepth', 'fieldRA', 'fieldDec',
                  'filter', 'ra_pi_amp', 'dec_pi_amp', 'ra_dcr_amp', 'dec_dcr_amp']
         types = [float, float, float, float, float, '<U1', float,
                  float, float, float]

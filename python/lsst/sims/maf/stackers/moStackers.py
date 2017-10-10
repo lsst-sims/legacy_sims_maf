@@ -1,9 +1,8 @@
-__all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
-
 import numpy as np
 from .baseStacker import BaseStacker
 import warnings
 
+__all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
 
 class BaseMoStacker(BaseStacker):
     """Base class for moving object stackers.
@@ -78,7 +77,8 @@ class MoMagStacker(BaseMoStacker):
 
 
 class EclStacker(BaseMoStacker):
-    """Add ecliptic latitude/longitude (ecLat/ecLon) to the slicer ssoObs (in degrees).
+    """
+    Add ecliptic latitude/longitude (ecLat/ecLon) to the slicer ssoObs (in degrees).
 
     Parameters
     -----------

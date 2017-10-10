@@ -8,6 +8,7 @@ import unittest
 import numpy as np
 import lsst.sims.maf.db as db
 import shutil
+import tempfile
 import lsst.utils.tests
 
 
@@ -35,21 +36,19 @@ class TestResultsDb(unittest.TestCase):
         self.displayDict = {'group': 'seeing', 'subgroup': 'all', 'order': 1, 'caption': 'lalalalal'}
 
     def testDbCreation(self):
-        # Test default sqlite file created (even if outDir doesn't exist)
-        resultsdb = db.ResultsDb(outDir=self.outDir)
-        self.assertTrue(os.path.isfile(os.path.join(self.outDir, 'resultsDb_sqlite.db')))
-        resultsdb.close()
-        # Test can pick custom name in directory that exists.
-        sqlitefilename = os.path.join(self.outDir, 'testDb_sqlite.db')
-        resultsdb = db.ResultsDb(database=sqlitefilename)
-        self.assertTrue(os.path.isfile(sqlitefilename))
+        # Test default sqlite file created.
+        tempdir = tempfile.mkdtemp(prefix='resDb')
+        resultsdb = db.ResultsDb(outDir=tempdir)
+        self.assertTrue(os.path.isfile(os.path.join(tempdir, 'resultsDb_sqlite.db')))
         resultsdb.close()
         # Test that get appropriate exception if directory doesn't exist.
         sqlitefilename = os.path.join(self.outDir + 'test', 'testDb_sqlite.db')
         self.assertRaises(ValueError, db.ResultsDb, database=sqlitefilename)
+        shutil.rmtree(tempdir)
 
     def testAddData(self):
-        resultsDb = db.ResultsDb(outDir=self.outDir)
+        tempdir = tempfile.mkdtemp(prefix='resDb')
+        resultsDb = db.ResultsDb(outDir=tempdir)
         # Add metric.
         metricId = resultsDb.updateMetric(self.metricName, self.slicerName,
                                           self.runName, self.constraint,
@@ -80,10 +79,7 @@ class TestResultsDb(unittest.TestCase):
             warnings.simplefilter("always")
             resultsDb.updateSummaryStat(metricId, 'testfail', teststat)
             self.assertTrue("not save" in str(w[-1].message))
-
-    def tearDown(self):
-        if os.path.isdir(self.outDir):
-            shutil.rmtree(self.outDir)
+        shutil.rmtree(tempdir)
 
 
 class TestUseResultsDb(unittest.TestCase):
@@ -102,7 +98,8 @@ class TestUseResultsDb(unittest.TestCase):
         self.summaryStatValue1 = 20
         self.summaryStatName2 = 'Median'
         self.summaryStatValue2 = 18
-        self.resultsDb = db.ResultsDb(outDir=self.outDir)
+        self.tempdir = tempfile.mkdtemp(prefix='resDb')
+        self.resultsDb = db.ResultsDb(self.tempdir)
         self.metricId = self.resultsDb.updateMetric(self.metricName, self.slicerName,
                                                     self.runName, self.constraint,
                                                     self.metadata, self.metricDataFile)
@@ -123,8 +120,7 @@ class TestUseResultsDb(unittest.TestCase):
 
     def tearDown(self):
         self.resultsDb.close()
-        if os.path.isdir(self.outDir):
-            shutil.rmtree(self.outDir)
+        shutil.rmtree(self.tempdir)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

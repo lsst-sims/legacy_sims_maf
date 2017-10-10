@@ -10,8 +10,10 @@ import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.db as db
 import glob
 import os
+import tempfile
 import shutil
 import lsst.utils.tests
+from lsst.utils import getPackageDir
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 
 
@@ -22,7 +24,7 @@ class TestMetricBundle(unittest.TestCase):
         sims_clean_up()
 
     def setUp(self):
-        self.outDir = 'TMB'
+        self.outDir = tempfile.mkdtemp(prefix='TMB')
 
     def testOut(self):
         """
@@ -38,16 +40,17 @@ class TestMetricBundle(unittest.TestCase):
         map2 = maps.StellarDensityMap()
 
         metricB = metricBundles.MetricBundle(metric, slicer, sql, stackerList=[stacker1, stacker2])
-        filepath = os.path.join(os.getenv('SIMS_MAF_DIR'), 'tests/')
+        database = os.path.join(getPackageDir('sims_data'), 'OpSimData', 'astro-lsst-01_2014.db')
 
-        database = os.path.join(filepath, 'opsimblitz1_1133_sqlite.db')
-        opsdb = db.OpsimDatabase(database=database)
+        opsdb = db.OpsimDatabaseV4(database=database)
         resultsDb = db.ResultsDb(outDir=self.outDir)
 
         bgroup = metricBundles.MetricBundleGroup({0: metricB}, opsdb, outDir=self.outDir, resultsDb=resultsDb)
         bgroup.runAll()
         bgroup.plotAll()
         bgroup.writeAll()
+
+        opsdb.close()
 
         outThumbs = glob.glob(os.path.join(self.outDir, 'thumb*'))
         outNpz = glob.glob(os.path.join(self.outDir, '*.npz'))

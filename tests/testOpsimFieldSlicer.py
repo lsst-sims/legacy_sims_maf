@@ -25,7 +25,7 @@ def makeFieldData():
                2061, 2062, 2063, 2064, 2065, 2066, 2067, 2068, 2069, 2070, 2071, 2072, 2073, 2074, 2075,
                2076, 2077, 2078, 2079, 2080, 2081, 2082, 2083, 2084, 2085, 2086, 2087, 2088, 2089, 2090,
                2091, 2092, 2093, 2094, 2095, 2096, 2097, 2098, 2099, 2100]
-    fieldRA = [1.4961071750760884, 4.009380232682723, 2.2738050744968632, 2.7527439701957053,
+    ra_rad = [1.4961071750760884, 4.009380232682723, 2.2738050744968632, 2.7527439701957053,
                6.043715459855715, 0.23946974745438585, 3.4768050063149119, 2.8063803008646744,
                4.0630173623005916, 2.2201678117208452, 4.7334418014345294, 1.5497433725869068,
                5.9900783302378473, 0.29310704352081429, 5.3196557553180082, 0.96352968501972802,
@@ -50,7 +50,7 @@ def makeFieldData():
                5.1333101127866563, 1.1498751943929302, 3.1415926535897931, 5.6548662438290274,
                0.62831906335055854, 4.3982294487094107, 1.884955858470176, 3.9300611754079662,
                2.3531241317716196, 4.8663995862232081, 1.4167858541145277]
-    fieldDec = [-0.25205231807872636, -0.25205228478831621, -0.25205228478831621, -0.25205228478831621,
+    dec_rad = [-0.25205231807872636, -0.25205228478831621, -0.25205228478831621, -0.25205228478831621,
                 -0.25205145255075168, -0.25205145255075168, -0.24630904473998308, -0.24630904473998308,
                 -0.24630894487049795, -0.24630894487049795, -0.24630801276519362, -0.24630801276519362,
                 -0.24630799611998855, -0.24630799611998855, -0.24630796283132372, -0.24630796283132372,
@@ -76,10 +76,10 @@ def makeFieldData():
                 -0.21479794015525952, -0.21479794015525952, -0.21479784028751969, -0.21479784028751969,
                 -0.21311147675042988, -0.21311147675042988, -0.2131105113547154, -0.2131105113547154]
     fieldId = np.array(fieldId, 'int')
-    fieldRA = np.array(fieldRA, 'float')
-    fieldDec = np.array(fieldDec, 'float')
-    fieldData = np.core.records.fromarrays([fieldId, fieldRA, fieldDec],
-                                           names=['fieldID', 'fieldRA', 'fieldDec'])
+    ra_rad = np.array(ra_rad, 'float')
+    dec_rad = np.array(dec_rad, 'float')
+    fieldData = np.core.records.fromarrays([fieldId, np.degrees(ra_rad), np.degrees(dec_rad)],
+                                           names=['fieldId', 'fieldRA', 'fieldDec'])
     return fieldData
 
 
@@ -92,12 +92,12 @@ def makeDataValues(fieldData, size=10000, min=0., max=1., random=True):
         randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
-    # Add valid fieldID values to match data values
+    # Add valid fieldId values to match data values
     fieldId = np.zeros(len(datavalues), 'int')
-    idxs = np.random.rand(size) * len(fieldData['fieldID'])
+    idxs = np.random.rand(size) * len(fieldData['fieldId'])
     for i, d in enumerate(datavalues):
         fieldId[i] = fieldData[int(idxs[i])][0]
-    simData = np.core.records.fromarrays([fieldId, datavalues], names=['fieldID', 'testdata'])
+    simData = np.core.records.fromarrays([fieldId, datavalues], names=['fieldId', 'testdata'])
     return simData
 
 
@@ -121,7 +121,7 @@ class TestOpsimFieldSlicerSetup(unittest.TestCase):
         """Test that generate expected number of bins for a given set of fields."""
         self.assertEqual(self.testslicer.nslice, None)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
-        self.assertEqual(self.testslicer.nslice, len(self.fieldData['fieldID']))
+        self.assertEqual(self.testslicer.nslice, len(self.fieldData['fieldId']))
 
 
 class TestOpsimFieldSlicerEqual(unittest.TestCase):
@@ -138,7 +138,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
 
     def testSlicerEquivalence(self):
         """Test that slicers are marked equal when appropriate, and unequal when appropriate."""
-        # Note that opsimfield slicers are considered 'equal' when all fieldID's, RA and Decs match.
+        # Note that opsimfield slicers are considered 'equal' when all fieldId's, RA and Decs match.
         testslicer2 = OpsimFieldSlicer()
         fieldData2 = np.copy(self.fieldData)
         testslicer2.setupSlicer(self.simData, fieldData2)
@@ -146,7 +146,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         self.assertTrue(self.testslicer == testslicer2)
         self.assertFalse(self.testslicer != testslicer2)
         # These slicers should not be equal.
-        fieldData2['fieldID'] = fieldData2['fieldID'] + 1
+        fieldData2['fieldId'] = fieldData2['fieldId'] + 1
         testslicer2.setupSlicer(self.simData, fieldData2)
         self.assertTrue(self.testslicer != testslicer2)
         self.assertFalse(self.testslicer == testslicer2)
@@ -164,7 +164,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
         self.assertTrue(ts1 != ts2)
         self.assertFalse(ts1 == ts2)
 
-
+@unittest.skip('Skipping because warning does not seem to trigger reliably on py2.')
 class TestOpsimFieldSlicerWarning(unittest.TestCase):
 
     def setUp(self):
@@ -187,7 +187,7 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
 class TestOpsimFieldSlicerIteration(unittest.TestCase):
 
     def setUp(self):
-        self.testslicer = OpsimFieldSlicer()
+        self.testslicer = OpsimFieldSlicer(latLonDeg=True)
         self.fieldData = makeFieldData()
         self.simData = makeDataValues(self.fieldData)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
@@ -198,8 +198,8 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
 
     def testIteration(self):
         """Test iteration goes through expected range and ra/dec are in expected range (radians)."""
-        for fid, ra, dec, s in zip(self.fieldData['fieldID'], self.fieldData['fieldRA'],
-                                   self.fieldData['fieldDec'], self.testslicer):
+        for fid, ra, dec, s in zip(self.fieldData['fieldId'], np.radians(self.fieldData['fieldRA']),
+                                   np.radians(self.fieldData['fieldDec']), self.testslicer):
             self.assertEqual(fid, s['slicePoint']['sid'])
             self.assertEqual(ra, s['slicePoint']['ra'])
             self.assertEqual(dec, s['slicePoint']['dec'])
@@ -216,13 +216,13 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
             np.testing.assert_array_equal(dict1['idxs'], dict2['idxs'])
             self.assertDictEqual(dict1['slicePoint'], dict2['slicePoint'])
         n = 0
-        self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldID'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldId'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], np.radians(self.fieldData['fieldRA'][n]))
+        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], np.radians(self.fieldData['fieldDec'][n]))
         n = len(self.testslicer) - 1
-        self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldID'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], self.fieldData['fieldRA'][n])
-        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], self.fieldData['fieldDec'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['sid'], self.fieldData['fieldId'][n])
+        self.assertEqual(self.testslicer[n]['slicePoint']['ra'], np.radians(self.fieldData['fieldRA'][n]))
+        self.assertEqual(self.testslicer[n]['slicePoint']['dec'], np.radians(self.fieldData['fieldDec'][n]))
 
 
 class TestOpsimFieldSlicerSlicing(unittest.TestCase):
@@ -238,13 +238,13 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
         self.testslicer = None
 
     def testSlicing(self):
-        """Test slicing returns (all) data points which match fieldID values."""
+        """Test slicing returns (all) data points which match fieldId values."""
         # Test that slicing fails before setupBinner
         self.assertRaises(NotImplementedError, self.testslicer._sliceSimData, 0)
         # Set up slicer.
         self.testslicer.setupSlicer(self.simData, self.fieldData)
         for s in self.testslicer:
-            didxs = np.where(self.simData['fieldID'] == s['slicePoint']['sid'])
+            didxs = np.where(self.simData['fieldId'] == s['slicePoint']['sid'])
             binidxs = s['idxs']
             self.assertEqual(len(binidxs), len(didxs[0]))
             if len(binidxs) > 0:

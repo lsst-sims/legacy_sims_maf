@@ -123,7 +123,7 @@ if __name__ == '__main__':
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
     # Connect to opsimdb.
-    opsdb = utils.connectOpsimDb(args.dbFile)
+    opsdb = db.OpsimDatabaseV3(args.dbFile)
 
     # Set up metricBundleGroup.
     group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir, resultsDb=resultsDb)

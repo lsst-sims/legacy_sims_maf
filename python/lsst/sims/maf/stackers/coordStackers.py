@@ -1,16 +1,15 @@
 import numpy as np
 import ephem
-from lsst.sims.utils import _galacticFromEquatorial
+from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast
 
 from .baseStacker import BaseStacker
 from .ditherStackers import wrapRA
 
-__all__ = ['GalacticStacker',
-           'EclipticStacker', 'mjd2djd']
+__all__ = ['mjd2djd', 'raDec2AltAz', 'GalacticStacker', 'EclipticStacker']
 
 def mjd2djd(mjd):
     """Convert MJD to the Dublin Julian date used by ephem.
-    
+
     Parameters
     ----------
     mjd : float or numpy.ndarray
@@ -24,9 +23,58 @@ def mjd2djd(mjd):
     djd = mjd-doff
     return djd
 
+def raDec2AltAz(ra, dec, lat, lon, mjd, altonly=False):
+    """Convert RA/Dec (and telescope site lat/lon) to alt/az.
+
+    This uses simple equations and ignores aberation, precession, nutation, etc.
+
+    Parameters
+    ----------
+    ra : array_like
+        RA, in radians.
+    dec : array_like
+        Dec, in radians. Must be same length as `ra`.
+    lat : float
+        Latitude of the observatory in radians.
+    lon : float
+        Longitude of the observatory in radians.
+    mjd : float
+        Modified Julian Date.
+    altonly : bool, opt
+        Calculate altitude only.
+
+    Returns
+    -------
+    alt : numpy.array
+        Altitude, same length as `ra` and `dec`. Radians.
+    az : numpy.array
+        Azimuth, same length as `ra` and `dec`. Radians.
+    """
+    lmst, last = calcLmstLast(mjd, lon)
+    lmst = lmst / 12. * np.pi  # convert to rad
+    ha = lmst - ra
+    sindec = np.sin(dec)
+    sinlat = np.sin(lat)
+    coslat = np.cos(lat)
+    sinalt = sindec * sinlat + np.cos(dec) * coslat * np.cos(ha)
+    # make sure sinalt is in the expected range.
+    sinalt = np.where(sinalt < -1, -1, sinalt)
+    sinalt = np.where(sinalt > 1, 1, sinalt)
+    alt = np.arcsin(sinalt)
+    if altonly:
+        az = None
+    else:
+        cosaz = (sindec-np.sin(alt)*sinlat)/(np.cos(alt)*coslat)
+        cosaz = np.where(cosaz < -1, -1, cosaz)
+        cosaz = np.where(cosaz > 1, 1, cosaz)
+        az = np.arccos(cosaz)
+        signflip = np.where(np.sin(ha) > 0)
+        az[signflip] = 2.*np.pi-az[signflip]
+    return alt, az
+
 
 class GalacticStacker(BaseStacker):
-    """Add the galactic coordinates of each RA/Dec pointing.
+    """Add the galactic coordinates of each RA/Dec pointing: gall, galb
 
     Parameters
     ----------
@@ -44,13 +92,15 @@ class GalacticStacker(BaseStacker):
 
     def _run(self, simData):
         # raCol and DecCol in radians, gall/b in radians.
-        simData['gall'], simData['galb'] = _galacticFromEquatorial(simData[self.raCol], simData[self.decCol])
+        simData['gall'], simData['galb'] = _galacticFromEquatorial(np.radians(simData[self.raCol]),
+                                                                   np.radians(simData[self.decCol]))
         return simData
 
+
 class EclipticStacker(BaseStacker):
-    """Add the ecliptic coordinates of each RA/Dec pointing.
+    """Add the ecliptic coordinates of each RA/Dec pointing: eclipLat, eclipLon
     Optionally subtract off the sun's ecliptic longitude and wrap.
-    
+
     Parameters
     ----------
     mjdCol : str, opt
@@ -62,7 +112,7 @@ class EclipticStacker(BaseStacker):
     subtractSunLon : bool, opt
         Flag to subtract the sun's ecliptic longitude. Default False.
     """
-    def __init__(self, mjdCol='expMJD', raCol='fieldRA',decCol='fieldDec',
+    def __init__(self, mjdCol='observationStartMJD', raCol='fieldRA',decCol='fieldDec',
                  subtractSunLon=False):
 
         self.colsReq = [mjdCol, raCol, decCol]
@@ -75,7 +125,8 @@ class EclipticStacker(BaseStacker):
 
     def _run(self, simData):
         for i in np.arange(simData.size):
-            coord = ephem.Equatorial(simData[self.raCol][i],simData[self.decCol][i], epoch=2000)
+            coord = ephem.Equatorial(np.radians(simData[self.raCol][i]),
+                                     np.radians(simData[self.decCol][i]), epoch=2000)
             ecl = ephem.Ecliptic(coord)
             simData['eclipLat'][i] = ecl.lat
             if self.subtractSunLon:

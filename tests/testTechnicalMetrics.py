@@ -16,13 +16,13 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['u', 'u', 'g', 'g', 'r'])
         visitTimes = np.arange(0, filters.size, 1)
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.NChangesMetric()
         result = metric.run(data)
         self.assertEqual(result, 2)
         filters = np.array(['u', 'g', 'u', 'g', 'r'])
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.NChangesMetric()
         result = metric.run(data)
         self.assertEqual(result, 4)
@@ -34,7 +34,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['u', 'g', 'g', 'r'])
         visitTimes = np.array([0, 5, 6, 7])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.MinTimeBetweenStatesMetric()
         result = metric.run(data)  # minutes
         self.assertEqual(result, 2*24.0*60.0)
@@ -49,7 +49,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['u', 'g', 'g', 'r'])
         visitTimes = np.array([0, 5, 6, 7])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.NStateChangesFasterThanMetric(cutoff=3*24*60)
         result = metric.run(data)  # minutes
         self.assertEqual(result, 1)
@@ -61,14 +61,14 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['u', 'g', 'r', 'u', 'g', 'r'])
         visitTimes = np.array([0, 1, 1, 4, 6, 7])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data)  # minutes
         self.assertEqual(result, 2)
         filters = np.array(['u', 'g', 'g', 'u', 'g', 'r', 'g', 'r'])
         visitTimes = np.array([0, 1, 1, 4, 4, 7, 8, 8])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data)  # minutes
         self.assertEqual(result, 3)
@@ -76,7 +76,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['u', 'g'])
         visitTimes = np.array([0, 1])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data)  # minutes
         self.assertEqual(result, 1)
@@ -84,7 +84,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         filters = np.array(['u', 'u'])
         visitTimes = np.array([0, 1])  # days
         data = np.core.records.fromarrays([visitTimes, filters],
-                                          names=['expMJD', 'filter'])
+                                          names=['observationStartMJD', 'filter'])
         metric = metrics.MaxStateChangesWithinMetric(timespan=1*24*60)
         result = metric.run(data)  # minutes
         self.assertEqual(result, 0)
@@ -120,7 +120,7 @@ class TestTechnicalMetrics(unittest.TestCase):
         visitTime = np.ones(nvisit, dtype='float')*(exptime+0.0)
         slewTime = np.ones(nvisit, dtype='float')*slewtime
         data = np.core.records.fromarrays([visitExpTime, visitTime, slewTime],
-                                          names=['visitExpTime', 'visitTime', 'slewTime'])
+                                          names=['visitExposureTime', 'visitTime', 'slewTime'])
         metric = metrics.OpenShutterFractionMetric()
         result = metric.run(data)
         self.assertEqual(result, .5)

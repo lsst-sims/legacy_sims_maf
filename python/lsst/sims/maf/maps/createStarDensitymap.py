@@ -16,7 +16,7 @@ import argparse
 if __name__ == '__main__':
 
     # Hide imports here so documentation builds
-    from lsst.sims.catalogs.db import CatalogDBObject
+    from lsst.sims.catalogs.generation.db import CatalogDBObject
     # Import the bits needed to get the catalog to work
     from lsst.sims.catUtils.baseCatalogModels import *
     from lsst.sims.catUtils.exampleCatalogDefinitions import *
@@ -25,7 +25,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Build a stellar density healpix map")
     parser.add_argument("--filtername", type=str, default='r', help="which filter: u, g, r, i, z, y")
     parser.add_argument("--stars", type=str, default='allstars', help="the stellar type to pull from CatSim")
-    parser.add_argument("--mag_min", type=flaot, default=15., help="How bright to go")
 
     args = parser.parse_args()
 
@@ -36,13 +35,12 @@ if __name__ == '__main__':
 
     filterName = args.filtername
     colName = filterName+'mag'
-    mag_min = args.mag_min
 
     # Set up healpy map and ra, dec centers
     nside = 64
 
-    # Set the min to 15 by default since we saturate there. CatSim max is 28
-    bins = np.arange(mag_min, 28.2, .2)
+    # Set the min to 15 since we saturate there. CatSim max is 28
+    bins = np.arange(15., 28.2, .2)
     starDensity = np.zeros((hp.nside2npix(nside), np.size(bins)-1), dtype=float)
     overMaxMask = np.zeros(hp.nside2npix(nside), dtype=bool)
     lat, ra = hp.pix2ang(nside, np.arange(0, hp.nside2npix(nside)))

@@ -1,15 +1,13 @@
-__all__ = ['TgapsMetric']
-
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['TgapsMetric']
 
 class TgapsMetric(BaseMetric):
-    """Histogram up all the time gaps.
-    """
+    """Histogram up all the time gaps """
 
-    def __init__(self, timesCol='expMJD', allGaps=False, bins=np.arange(0.5, 60.0, 0.5), units='days',
-                 **kwargs):
+    def __init__(self, timesCol='observationStartMJD', allGaps=False, bins=np.arange(0.5, 60.0, 0.5),
+                 units='days', **kwargs):
         """
         Metric to measure the gaps between observations.  By default, only gaps
         between neighboring visits are computed.  If allGaps is set to true, all gaps are
@@ -34,8 +32,8 @@ class TgapsMetric(BaseMetric):
         times = np.sort(dataSlice[self.timesCol])
         if self.allGaps:
             allDiffs = []
-            for i in np.arange(1, times.size, 1):
-                allDiffs.append((times - np.roll(times, i))[i:])
+            for i in np.arange(1,times.size,1):
+                allDiffs.append( (times-np.roll(times,i))[i:] )
             dts = np.concatenate(allDiffs)
         else:
             dts = np.diff(times)

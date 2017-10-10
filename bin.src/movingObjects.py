@@ -1528,5 +1528,12 @@ if __name__ == '__main__':
                 Hmark=args.hMark, resultsDb=resultsDb)
 
     if args.opsimDb is not None:
-        opsdb = db.OpsimDatabase(args.opsimDb)
-        utils.writeConfigs(opsdb, args.outDir)
+        vers = db.testOpsimVersion(args.opsimDb)
+        if (vers == "V3"):
+            opsdb = db.OpsimDatabaseV3(args.opsimDb)
+            utils.writeConfigs(opsdb, args.outDir)
+        elif (vers == "V4"):
+            opsdb = db.OpsimDatabaseV4(args.opsimDb)
+            utils.writeConfigs(opsdb, args.outDir)
+        else:
+            print('Could not determine opsim database type, skipping configs.')

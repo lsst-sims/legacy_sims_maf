@@ -13,7 +13,7 @@ __all__ = ['OpsimFieldSlicer']
 class OpsimFieldSlicer(BaseSpatialSlicer):
     """A spatial slicer that evaluates pointings based on matched IDs between the simData and fieldData.
 
-    Note that this slicer uses the fieldID of the simulated data fields to generate the spatial matches.
+    Note that this slicer uses the fieldId of the simulated data fields to generate the spatial matches.
     Thus, it is not suitable for use in evaluating dithering or high resolution metrics
     (use the HealpixSlicer instead for those use-cases).
 
@@ -25,47 +25,48 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     Parameters
     ----------
     simDataFieldIDColName : str, optional
-        Name of the column in simData for the fieldID
-        Default fieldID.
+        Name of the column in simData for the fieldId
+        Default fieldId.
     simDataFieldRaColName : str, optional
-        Name of the column in simData for the fieldRA.
+        Name of the column in simData for the RA.
         Default fieldRA.
     simDataFieldDecColName : str, optional
         Name of the column in simData for the fieldDec.
         Default fieldDec.
-    fieldIDColName : str, optional
-        Name of the column in the fieldData for the fieldID (to match with simData).
-        Default fieldID.
-    fieldRAColName : str, optional
-        Name of the column in the fieldData for the fieldRA (used for plotting).
-        Default fieldDec.
-    fieldDecColName : str, optional
-        Name of the column in the fieldData for the fieldDec (used for plotting).
+    fieldIdColName : str, optional
+        Name of the column in the fieldData for the fieldId (to match with simData).
+        Default fieldId.
+    fieldRaColName : str, optional
+        Name of the column in the fieldData for the RA (used for plotting).
         Default fieldRA.
+    fieldDecColName : str, optional
+        Name of the column in the fieldData for the Dec (used for plotting).
+        Default fieldDec.
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.
     badval : float, optional
         Bad value flag, relevant for plotting. Default -666.
     """
-    def __init__(self, simDataFieldIDColName='fieldID',
-                 simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec',
-                 fieldIDColName='fieldID', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
+    def __init__(self, simDataFieldIdColName='fieldId',
+                 simDataFieldRaColName='fieldRA', simDataFieldDecColName='fieldDec', latLonDeg=False,
+                 fieldIdColName='fieldId', fieldRaColName='fieldRA', fieldDecColName='fieldDec',
                  verbose=True, badval=-666):
         super(OpsimFieldSlicer, self).__init__(verbose=verbose, badval=badval)
-        self.fieldID = None
-        self.simDataFieldIDColName = simDataFieldIDColName
-        self.fieldIDColName = fieldIDColName
+        self.fieldId = None
+        self.simDataFieldIdColName = simDataFieldIdColName
+        self.fieldIdColName = fieldIdColName
         self.fieldRaColName = fieldRaColName
         self.fieldDecColName = fieldDecColName
-        self.columnsNeeded = [simDataFieldIDColName, simDataFieldRaColName, simDataFieldDecColName]
+        self.latLonDeg = latLonDeg
+        self.columnsNeeded = [simDataFieldIdColName, simDataFieldRaColName, simDataFieldDecColName]
         while '' in self.columnsNeeded:
             self.columnsNeeded.remove('')
-        self.fieldColumnsNeeded = [fieldIDColName, fieldRaColName, fieldDecColName]
-        self.slicer_init = {'simDataFieldIDColName': simDataFieldIDColName,
+        self.fieldColumnsNeeded = [fieldIdColName, fieldRaColName, fieldDecColName]
+        self.slicer_init = {'simDataFieldIdColName': simDataFieldIdColName,
                             'simDataFieldRaColName': simDataFieldRaColName,
                             'simDataFieldDecColName': simDataFieldDecColName,
-                            'fieldIDColName': fieldIDColName,
+                            'fieldIdColName': fieldIdColName,
                             'fieldRaColName': fieldRaColName,
                             'fieldDecColName': fieldDecColName, 'badval': badval}
         self.plotFuncs = [BaseSkyMap, OpsimHistogram]
@@ -81,6 +82,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
         fieldData : numpy.recarray
             Contains the field information (ID, Ra, Dec) about how to slice the simData.
             For example, only fields in the fieldData table will be matched against the simData.
+            RA and Dec should be in degrees.
         maps : list of lsst.sims.maf.maps objects, optional
             Maps to run and provide additional metadata at each slicePoint. Default None.
         """
@@ -90,21 +92,25 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
             warning_msg += 'Rerun metrics if this was intentional. '
             warnings.warn(warning_msg)
         # Set basic properties for tracking field information, in sorted order.
-        idxs = np.argsort(fieldData[self.fieldIDColName])
+        idxs = np.argsort(fieldData[self.fieldIdColName])
         # Set needed values for slice metadata.
-        self.slicePoints['sid'] = fieldData[self.fieldIDColName][idxs]
-        self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
-        self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
+        self.slicePoints['sid'] = fieldData[self.fieldIdColName][idxs]
+        if self.latLonDeg:
+            self.slicePoints['ra'] = np.radians(fieldData[self.fieldRaColName][idxs])
+            self.slicePoints['dec'] = np.radians(fieldData[self.fieldDecColName][idxs])
+        else:
+            self.slicePoints['ra'] = fieldData[self.fieldRaColName][idxs]
+            self.slicePoints['dec'] = fieldData[self.fieldDecColName][idxs]
         self.nslice = len(self.slicePoints['sid'])
         self._runMaps(maps)
         # Set up data slicing.
-        self.simIdxs = np.argsort(simData[self.simDataFieldIDColName])
-        simFieldsSorted = np.sort(simData[self.simDataFieldIDColName])
+        self.simIdxs = np.argsort(simData[self.simDataFieldIdColName])
+        simFieldsSorted = np.sort(simData[self.simDataFieldIdColName])
         self.left = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'left')
         self.right = np.searchsorted(simFieldsSorted, self.slicePoints['sid'], 'right')
 
-        self.spatialExtent = [simData[self.simDataFieldIDColName].min(),
-                              simData[self.simDataFieldIDColName].max()]
+        self.spatialExtent = [simData[self.simDataFieldIdColName].min(),
+                              simData[self.simDataFieldIdColName].max()]
         self.shape = self.nslice
 
         @wraps(self._sliceSimData)
@@ -133,7 +139,7 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
                             np.array_equal(self.slicePoints['sid'], otherSlicer.slicePoints['sid'])):
                         result = True
                 # If they have not been setup, check that they have same fields
-                elif ((otherSlicer.fieldIDColName == self.fieldIDColName) &
+                elif ((otherSlicer.fieldIdColName == self.fieldIdColName) &
                       (otherSlicer.fieldRaColName == self.fieldRaColName) &
                       (otherSlicer.fieldDecColName == self.fieldDecColName)):
                     result = True
