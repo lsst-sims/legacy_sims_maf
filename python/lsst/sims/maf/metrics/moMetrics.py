@@ -354,9 +354,12 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
         nights = ssoObs[self.nightCol][vis][visSort]
         startNights = nights[metricValues['start']]
         endNights = nights[metricValues['end']]
-        if self.nightEnd is None:
+        if self.nightEnd is None and self.nightStart is not None:
             valid = np.where(startNights >= self.nightStart)[0]
+        elif self.nightStart is None and self.nightEnd is not None:
+            valid = np.where(endNights <= self.nightEnd)[0]
         else:
+            # And we only end up here if both were not None.
             valid = np.where((startNights >= self.nightStart) & (endNights <= self.nightEnd))[0]
         return len(valid)
 
