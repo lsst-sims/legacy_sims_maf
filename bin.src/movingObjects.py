@@ -91,11 +91,11 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
     basicPlotDict = {'albedo': albedo, 'Hmark': Hmark, 'npReduce': npReduce}
 
     summaryMetrics = [metrics.MoCompletenessAtTimeMetric(times=mParams['times'], Hval=Hmark,
-                                                         cumulative=False),
+                                                         cumulative=False, Hindex=0.33),
                       metrics.MoCompletenessAtTimeMetric(times=mParams['times'], Hval=Hmark,
-                                                         cumulative=True)]
-    simpleSummaryMetrics = [metrics.MoCompletenessMetric(cumulative=False),
-                            metrics.MoCompletenessMetric(cumulative=True)]
+                                                         cumulative=True, Hindex=0.33)]
+    simpleSummaryMetrics = [metrics.MoCompletenessMetric(cumulative=False, Hindex=0.33),
+                            metrics.MoCompletenessMetric(cumulative=True, Hindex=0.33)]
 
     plotFuncs = [plots.MetricVsH()]
 

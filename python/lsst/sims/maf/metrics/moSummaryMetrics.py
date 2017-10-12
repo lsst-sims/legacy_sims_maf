@@ -7,7 +7,7 @@ __all__ = ['integrateOverH', 'ValueAtHMetric', 'MeanValueAtHMetric',
            'MoCompletenessMetric', 'MoCompletenessAtTimeMetric']
 
 
-def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
+def integrateOverH(Mvalues, Hvalues, Hindex = 0.33):
     """Function to calculate a metric value integrated over an Hrange, assuming a power-law distribution.
 
     Parameters
@@ -18,7 +18,7 @@ def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
         The H values corresponding to each Mvalue (must be the same length).
     Hindex : float, opt
         The power-law index expected for the H value distribution.
-        Default is 0.3  (dN/dH = 10^(Hindex * H) ).
+        Default is 0.33  (dN/dH = 10^(Hindex * H) ).
 
     Returns
     --------
@@ -111,7 +111,7 @@ class MoCompletenessMetric(BaseMoMetric):
     Hindex : float, opt
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
-    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.3, **kwargs):
+    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.33, **kwargs):
         if 'metricName' in kwargs:
             metricName = kwargs.pop('metricName')
             if metricName.startswith('Cumulative'):
@@ -195,7 +195,7 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
 
-    def __init__(self, times, Hval=None, cumulative=True, Hindex=0.3, **kwargs):
+    def __init__(self, times, Hval=None, cumulative=True, Hindex=0.33, **kwargs):
         self.Hval = Hval
         self.times = times
         self.Hindex = Hindex
