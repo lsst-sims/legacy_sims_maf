@@ -193,8 +193,8 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.assertEqual(metricValue, 0)
         self.ssoObs['velocity'][0:2] = 1.5
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
-        self.assertEqual(metricValue, 1)
-
+        self.assertEqual(metricValue, self.ssoObs['expMJD'][0])
+        self.ssoObs['velocity'][0:2] = np.random.rand(1)
 
 class TestKnownObjectMetrics(unittest.TestCase):
 
