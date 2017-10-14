@@ -211,16 +211,15 @@ class ObsArcMetric(BaseMoMetric):
         return arc
 
 class DiscoveryMetric(BaseMoMetric):
-    """Identify the discovery opportunities for an SSobject.
-    
-    
+    """Identify the discovery opportunities for an SS object.
+
     Parameters
     ----------
     nObsPerNight : int, opt
         Number of observations required within a single night. Default 2.
     tMin : float, opt
         Minimum time span between observations in a single night, in days.
-        Default 5 minutes (5/60/24). 
+        Default 5 minutes (5/60/24).
     tMax : float, opt
         Maximum time span between observations in a single night, in days.
         Default 90 minutes.
@@ -230,7 +229,7 @@ class DiscoveryMetric(BaseMoMetric):
         Number of nights included in the track window. Default 15.
     snrLimit : None or float, opt
         SNR limit to use for observations. If snrLimit is None, (default), then it uses
-        the completeness calculation added to the 'vis' column (probabilistic visibility, 
+        the completeness calculation added to the 'vis' column (probabilistic visibility,
         based on 5-sigma limit). If snrLimit is not None, it uses this SNR value as a cutoff.
     metricName : str, opt
         The metric name to use; default will be to construct Discovery_nObsPerNightxnNightsPerWindowintWindow.
@@ -693,18 +692,29 @@ class HighVelocityMetric(BaseMoMetric):
         return highVelocityObs.size
 
 class HighVelocityNightsMetric(BaseMoMetric):
-    """
-    Count the number of times an asteroid is observed with a velocity high enough to make it appear
-    trailed by a factor of (psfFactor)*PSF - i.e. velocity >= psfFactor * seeing / visitExpTime,
-    where we require nObsPerNight observations within a given night.
-    Counts the total number of nights with enough high-velocity observations.
+    """Determine the first time an asteroid is observed is observed with a velocity high enough to make
+    it appear trailed by a factor of psfFactor*PSF with nObsPerNight observations within a given night.
+
+    Parameters
+    ----------
+    psfFactor: float, opt
+        Object velocity (deg/day) must be >= 24 * psfFactor * seeingGeom (") / visitExpTime (s).
+        Default is 2 (i.e. object trailed over 2 psf's).
+    nObsPerNight: int, opt
+        Number of observations per night required. Default 2.
+    snrLimit: float or None
+        If snrLimit is set as a float, then requires object to be above snrLimit SNR in the image.
+        If snrLimit is None, this uses the probabilistic 'visibility' calculated by the vis stacker,
+        which means SNR ~ 5.   Default is None.
+    velocityCol: str, opt
+        Name of the velocity column in the obs file. Default 'velocity'. (note this is deg/day).
+
+    Returns
+    -------
+    float
+        The time of the first detection where the conditions are satisifed.
     """
     def __init__(self, psfFactor=2.0, nObsPerNight=2, snrLimit=None, velocityCol='velocity', **kwargs):
-        """
-        @ psfFactor = factor to multiply seeing/visitExpTime by
-        (velocity(deg/day) >= 24*psfFactor*seeing(")/visitExptime(s))
-        @ nObsPerNight = number of observations required per night
-        """
         super(HighVelocityNightsMetric, self).__init__(**kwargs)
         self.velocityCol = velocityCol
         self.snrLimit = snrLimit
@@ -735,7 +745,8 @@ class HighVelocityNightsMetric(BaseMoMetric):
         # Find the nights with at least nObsPerNight visits
         # (this is already looking at only high velocity observations).
         nWithXObs = n[np.where(obsPerNight >= self.nObsPerNight)]
-        return nWithXObs.size
+        firstNightObs = ssoObs[np.where(ssoObs[self.nightCol] == nWithXObs[0])]
+        return firstNightObs[self.expMJDCol][0]
 
 
 class LightcurveInversionMetric(BaseMoMetric):
@@ -825,8 +836,8 @@ class KnownObjectsMetric(BaseMoMetric):
     """Identify SS objects which could be classified as 'previously known' based on their peak V magnitude.
 
     Returns the time at which each first reached that peak V magnitude.
-    The default values are calibrated using the NEOs larger than 140m discovered in the last 20 years 
-    and assuming a 30% completeness in 2017.    
+    The default values are calibrated using the NEOs larger than 140m discovered in the last 20 years
+    and assuming a 30% completeness in 2017.
 
     Parameters
     -----------
@@ -851,7 +862,7 @@ class KnownObjectsMetric(BaseMoMetric):
         The efficiency of observations during the second period of time. Default 0.1
     tSwitch2 : float, opt
         The (MJD) time to switch between vMagThresh2 + eff2 to vMagThresh3 + eff3.
-        Default 57023 (2015). 
+        Default 57023 (2015).
     vMagThresh3 : float, opt
         The magnitude threshold during the third period. Default 22.0, based on PS1 + Catalina.
     eff3 : float, opt
@@ -862,7 +873,7 @@ class KnownObjectsMetric(BaseMoMetric):
     vMagThresh4 : float, opt
         The magnitude threshhold during the fourth (last) period. Default 22.0, based on PS1 + Catalina.
     eff4 : float, opt
-        The efficiency of observations during the fourth (last) period. Default 0.2 
+        The efficiency of observations during the fourth (last) period. Default 0.2
     """
     def __init__(self, elongThresh=100., vMagThresh1=20.0, eff1=0.1, tSwitch1=53371,
                  vMagThresh2=21.5, eff2=0.1, tSwitch2=57023,
