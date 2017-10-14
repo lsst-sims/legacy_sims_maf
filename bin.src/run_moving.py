@@ -724,8 +724,8 @@ if __name__ == '__main__':
 
         Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
         slicer = setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
-        bdict = batches.discoveryBatch(slicer, runName=args.runName, metadata=args.metadata,
-                                       albedo=args.albedo, Hmark=args.Hmark, times=times)
+        bdict = batches.discoveryBatch(slicer, runName=args.opsimRun, metadata=args.metadata,
+                                       albedo=args.albedo, Hmark=args.hMark, times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
 
     #plotMetrics(allBundles, args.outDir, args.metadata, args.opsimRun, mParams,
