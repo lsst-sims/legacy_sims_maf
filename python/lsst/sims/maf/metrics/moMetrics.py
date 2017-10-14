@@ -745,8 +745,11 @@ class HighVelocityNightsMetric(BaseMoMetric):
         # Find the nights with at least nObsPerNight visits
         # (this is already looking at only high velocity observations).
         nWithXObs = n[np.where(obsPerNight >= self.nObsPerNight)]
-        firstNightObs = ssoObs[np.where(ssoObs[self.nightCol] == nWithXObs[0])]
-        return firstNightObs[self.expMJDCol][0]
+        if len(nWithXObs) > 0:
+            found = ssoObs[np.where(ssoObs[self.nightCol] == nWithXObs[0])][self.expMJDCol][0]
+        else:
+            found = self.badval
+        return found
 
 
 class LightcurveInversionMetric(BaseMoMetric):
