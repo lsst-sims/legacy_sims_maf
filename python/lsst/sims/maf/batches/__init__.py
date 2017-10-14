@@ -5,4 +5,5 @@ from .timeBatch import *
 from .metadataBatch import *
 from .visitdepthBatch import *
 from .glanceBatch import *
+from .movingObjectsBatch import *
 #from .schedulerValidationBundle import *
