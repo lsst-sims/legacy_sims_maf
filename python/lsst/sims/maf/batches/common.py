@@ -2,7 +2,8 @@ from __future__ import print_function
 
 import lsst.sims.maf.metrics as metrics
 
-__all__ = ['standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
+__all__ = ['standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics',
+           'summaryCompletenessAtTime','summaryCompletenessOverH']
 
 
 def standardSummary():
@@ -90,3 +91,46 @@ def extendedMetrics(colname, replace_colname=None):
             else:
                 m.name = m.name.rstrip(' %s' % colname)
     return extendedMetrics
+
+def summaryCompletenessAtTime(times, Hval, Hindex=0.33):
+    """A simple list of summary metrics to be applied to the Discovery_Time or PreviouslyKnown metrics.
+    (can be used with any moving object metric which returns the time of discovery).
+
+    Parameters
+    ----------
+    times : np.ndarray or list
+        The times at which to evaluate the completeness @ Hval.
+    Hval : float
+        The H value at which to evaluate the completeness (cumulative and differential).
+    Hindex : float, opt
+        The index of the power law to integrate H over (for cumulative completeness).
+        Default is 0.33.
+
+    Returns
+    -------
+    List of moving object MoCompletenessAtTime metrics (cumulative and differential)
+    """
+    summaryMetrics = [metrics.MoCompletenessAtTimeMetric(times=times, Hval=Hval, Hindex=Hindex,
+                                                         cumulative=False),
+                      metrics.MoCompletenessAtTimeMetric(times=times, Hval=Hval, Hindex=Hindex,
+                                                         cumulative=True)]
+    return summaryMetrics
+
+def summaryCompletenessOverH(requiredChances=1, Hindex=0.33):
+    """A simple list of summary metrics to be applied to the Discovery_N_Chances metric.
+
+    Parameters
+    ----------
+    requiredChances : int, opt
+        Number of discovery opportunities required to consider an object 'discovered'.
+    Hindex : float, opt
+        The index of the power law to integrate H over (for cumulative completeness).
+        Default is 0.33.
+
+    Returns
+    -------
+    List of moving object MoCompleteness metrics (cumulative and differential)
+    """
+    summaryMetrics = [metrics.MoCompletenessMetric(requiredChances=requiredChances, cumulative=False, Hindex=0.33),
+                      metrics.MoCompletenessMetric(requiredChances=requiredChances, cumulative=True, Hindex=0.33)]
+    return summaryMetrics
