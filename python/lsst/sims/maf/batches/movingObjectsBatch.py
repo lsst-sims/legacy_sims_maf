@@ -344,6 +344,40 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     _configure_child_bundles(bundle)
     bundleList.append(bundle)
 
+    # 3 pairs in 15, trailing loss, SNR=4
+    md = metadata + ' 3 pairs in 15 nights trailing loss'
+    # Set up plot dict.
+    plotDict = {'title': '%s: %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    # Set basic metric.
+    metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
+                                     nNightsPerWindow=3, tWindow=15, snrLimit=4, **colkwargs)
+    childMetrics = _setup_child_metrics(metric)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                stackerList=[stackerTrail],
+                                runName=runName, metadata=md,
+                                childMetrics=childMetrics,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                displayDict=displayDict)
+    _configure_child_bundles(bundle)
+    bundleList.append(bundle)
+
+    # 3 pairs in 30, trailing loss, SNR=4
+    md = metadata + ' 3 pairs in 30 nights trailing loss'
+    plotDict = {'title': '%s: %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
+                                     nNightsPerWindow=3, tWindow=30, snrLimit=4, **colkwargs)
+    childMetrics = _setup_child_metrics(metric)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                stackerList=[stackerTrail],
+                                runName=runName, metadata=md,
+                                childMetrics=childMetrics,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                displayDict=displayDict)
+    _configure_child_bundles(bundle)
+    bundleList.append(bundle)
+
     # Play with weird strategies.
     # Single detection.
     md = metadata + ' Single detection'
