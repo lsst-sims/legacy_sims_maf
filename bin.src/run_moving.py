@@ -108,6 +108,7 @@ if __name__ == '__main__':
         slicer = batches.setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
         opsdb = db.OpsimDatabase(args.opsimDb)
         colmap = batches.getColMap(opsdb)
+        opsdb.close()
         bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
                                        albedo=args.albedo, Hmark=args.hMark, times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
@@ -118,3 +119,4 @@ if __name__ == '__main__':
     if args.opsimDb is not None:
         opsdb = db.OpsimDatabase(args.opsimDb)
         utils.writeConfigs(opsdb, args.outDir)
+        opsdb.close()
