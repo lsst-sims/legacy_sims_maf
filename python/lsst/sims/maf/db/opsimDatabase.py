@@ -1053,7 +1053,7 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
             result = self.query_columns('Config', colnames=['paramName',], sqlconstraint=constraint)
             propdict['NumUserRegions'] = result.size
             # Get the number of fields requested in the proposal (all filters).
-            propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
+            propdict['NumFields'] = self.fetchFieldsFromFieldTable(propId=propid).size
             # Find number of visits requested per filter for the proposal, with min/max sky & airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
             #   The order of these entries in the config array matters.
