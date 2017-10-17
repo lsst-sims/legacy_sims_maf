@@ -228,7 +228,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
 
     # Play with SNR.  SNR=4. Normal detection losses.
     # 3 pairs in 15
-    md = metadata + ' 3 pairs in 15 nights, SNR=4'
+    md = metadata + ' 3 pairs in 15 nights SNR=4'
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
@@ -244,7 +244,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     bundleList.append(bundle)
 
     # 3 pairs in 30, SNR=4
-    md = metadata + ' 3 pairs in 30 nights, SNR=4'
+    md = metadata + ' 3 pairs in 30 nights SNR=4'
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
@@ -261,7 +261,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
 
     # Play with SNR.  SNR=3
     # 3 pairs in 15, SNR=3
-    md = metadata + ' 3 pairs in 15 nights, SNR=3'
+    md = metadata + ' 3 pairs in 15 nights SNR=3'
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
@@ -277,7 +277,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     bundleList.append(bundle)
 
     # 3 pairs in 30, SNR=3
-    md = metadata + ' 3 pairs in 30 nights, SNR=3'
+    md = metadata + ' 3 pairs in 30 nights SNR=3'
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
@@ -294,7 +294,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
 
     # SNR = 0
     # 3 pairs in 15, SNR=0
-    md = metadata + ' 3 pairs in 15 nights, SNR=0'
+    md = metadata + ' 3 pairs in 15 nights SNR=0'
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
@@ -345,7 +345,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     bundleList.append(bundle)
 
     # 3 pairs in 15, trailing loss, SNR=4
-    md = metadata + ' 3 pairs in 15 nights trailing loss'
+    md = metadata + ' 3 pairs in 15 nights trailing loss SNR=4'
     # Set up plot dict.
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
@@ -363,7 +363,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     bundleList.append(bundle)
 
     # 3 pairs in 30, trailing loss, SNR=4
-    md = metadata + ' 3 pairs in 30 nights trailing loss'
+    md = metadata + ' 3 pairs in 30 nights trailing loss SNR=4'
     plotDict = {'title': '%s: %s' % (runName, md)}
     plotDict.update(basicPlotDict)
     metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90. / 60. / 24.,
