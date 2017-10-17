@@ -125,6 +125,26 @@ class TestTechnicalMetrics(unittest.TestCase):
         result = metric.run(data)
         self.assertEqual(result, .5)
 
+    def testBruteOSFMetric(self):
+        """
+        Test the open shutter fraction metric.
+        """
+        nvisit = 10
+        exptime = 30.
+        slewtime = 30.
+        visitExpTime = np.ones(nvisit, dtype='float')*exptime
+        visitTime = np.ones(nvisit, dtype='float')*(exptime+0.0)
+        slewTime = np.ones(nvisit, dtype='float')*slewtime
+        mjd = np.zeros(nvisit) + np.add.accumulate(visitExpTime) + np.add.accumulate(slewTime)
+        mjd = mjd/60./60./24.
+        data = np.core.records.fromarrays([visitExpTime, visitTime, slewTime, mjd],
+                                          names=['visitExposureTime', 'visitTime', 'slewTime',
+                                          'observationStartMJD'])
+        metric = metrics.BruteOSFMetric()
+        result = metric.run(data)
+        self.assertTrue(result > 0.5)
+        self.assertTrue(result < 0.6)
+
     def testCompletenessMetric(self):
         """
         Test the completeness metric.

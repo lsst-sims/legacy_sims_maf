@@ -348,7 +348,7 @@ class BruteOSFMetric(BaseMetric):
     so there's not much a scheduler could do to optimize keeping the shutter open after a closure.
     """
     def __init__(self, metricName='BruteOSFMetric',
-                 expTimeCol='expTime', mjdCol='observationStartMJD', maxgap=10.,
+                 expTimeCol='visitExposureTime', mjdCol='observationStartMJD', maxgap=10.,
                  fudge=0., **kwargs):
         """
         Parameters
