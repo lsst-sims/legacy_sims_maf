@@ -6,7 +6,7 @@ __all__ = ['NChangesMetric',
            'MinTimeBetweenStatesMetric', 'NStateChangesFasterThanMetric',
            'MaxStateChangesWithinMetric',
            'TeffMetric', 'OpenShutterFractionMetric',
-           'CompletenessMetric', 'FilterColorsMetric']
+           'CompletenessMetric', 'FilterColorsMetric', 'BruteOSFMetric']
 
 
 class NChangesMetric(BaseMetric):
@@ -339,3 +339,41 @@ class FilterColorsMetric(BaseMetric):
             alpha = np.max([alpha, alphamin])
             alpha = np.min([alphamax, alpha])
         return (r, g, b, alpha)
+
+
+class BruteOSFMetric(BaseMetric):
+    """Assume I can't trust the slewtime or visittime colums.
+    This computes the fraction of time the shutter is open, with no penalty for the first exposure
+    after a long gap (e.g., 1st exposure of the night). Presumably, the telescope will need to focus,
+    so there's not much a scheduler could do to optimize keeping the shutter open after a closure.
+    """
+    def __init__(self, metricName='BruteOSFMetric',
+                 expTimeCol='visitExposureTime', mjdCol='observationStartMJD', maxgap=10.,
+                 fudge=0., **kwargs):
+        """
+        Parameters
+        ----------
+        maxgap : float (10.)
+            The maximum gap between observations. Assume anything longer the dome has closed.
+        fudge : float (0.)
+            Fudge factor if a constant has to be added to the exposure time values (like in OpSim 3.61).
+        expTimeCol : str ('expTime')
+            The name of the exposure time column. Assumed to be in seconds.
+        mjdCol : str ('observationStartMJD')
+            The name of the start of the exposures. Assumed to be in units of days.
+        """
+        self.expTimeCol = expTimeCol
+        self.maxgap = maxgap/60./24.  # convert from min to days
+        self.mjdCol = mjdCol
+        self.fudge = fudge
+        super(BruteOSFMetric, self).__init__(col=[self.expTimeCol, mjdCol],
+                                             metricName=metricName, units='OpenShutter/TotalTime',
+                                             **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        times = np.sort(dataSlice[self.mjdCol])
+        diff = np.diff(times)
+        good = np.where(diff < self.maxgap)
+        openTime = np.sum(diff[good])*24.*3600.
+        result = np.sum(dataSlice[self.expTimeCol]+self.fudge) / float(openTime)
+        return result
