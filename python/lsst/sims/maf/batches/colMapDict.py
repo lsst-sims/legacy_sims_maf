@@ -13,7 +13,7 @@ def getColMap(opsdb):
     dictionary
     """
     try:
-        version = opsdb.opsimversion
+        version = opsdb.opsimVersion
         version = 'opsim' + version.lower()
     except AttributeError:
         version = 'barebones'
