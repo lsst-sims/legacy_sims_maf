@@ -697,7 +697,7 @@ if __name__ == '__main__':
         Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
         slicer = batches.setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
         opsdb = db.OpsimDatabase(args.opsimDb)
-        colmap = batches.ColMapDict(opsdb.opsimVersion)
+        colmap = batches.getColMap(opsdb)
         bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
                                        albedo=args.albedo, Hmark=args.hMark, times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
