@@ -114,6 +114,39 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     _configure_child_bundles(bundle)
     bundleList.append(bundle)
 
+    bundleList2 = []
+    md = metadata + ' 3 pairs in 15 nights SNR=5'
+    # Set up plot dict.
+    plotDict = {'title': '%s: %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90./60./24.,
+                                     nNightsPerWindow=3, tWindow=15, snrLimit=5, **colkwargs)
+    childMetrics = _setup_child_metrics(metric)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                stackerList=[stackerDet],
+                                runName=runName, metadata=md,
+                                childMetrics=childMetrics,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                displayDict=displayDict)
+    _configure_child_bundles(bundle)
+    bundleList2.append(bundle)
+
+    md = metadata + ' 3 pairs in 15 nights trailing loss SNR=5'
+    # Set up plot dict.
+    plotDict = {'title': '%s: %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0, tMax=90./60./24.,
+                                     nNightsPerWindow=3, tWindow=15, snrLimit=5, **colkwargs)
+    childMetrics = _setup_child_metrics(metric)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                stackerList=[stackerTrail],
+                                runName=runName, metadata=md,
+                                childMetrics=childMetrics,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                displayDict=displayDict)
+    _configure_child_bundles(bundle)
+    bundleList2.append(bundle)
+
     # 3 pairs in 12
     md = metadata + ' 3 pairs in 12 nights'
     plotDict = {'title': '%s: %s' % (runName, md)}
@@ -441,9 +474,9 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     bundleList.append(bundle)
 
     # Set the runName for all bundles and return the bundleDict.
-    for b in bundleList:
+    for b in bundleList2:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+    return mb.makeBundlesDictFromList(bundleList2)
 
 
 def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
