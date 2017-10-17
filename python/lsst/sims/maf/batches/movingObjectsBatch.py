@@ -114,7 +114,6 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     _configure_child_bundles(bundle)
     bundleList.append(bundle)
 
-    bundleList2 = []
     md = metadata + ' 3 pairs in 15 nights SNR=5'
     # Set up plot dict.
     plotDict = {'title': '%s: %s' % (runName, md)}
@@ -129,7 +128,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
                                 plotDict=plotDict, plotFuncs=plotFuncs,
                                 displayDict=displayDict)
     _configure_child_bundles(bundle)
-    bundleList2.append(bundle)
+    bundleList.append(bundle)
 
     md = metadata + ' 3 pairs in 15 nights trailing loss SNR=5'
     # Set up plot dict.
@@ -145,7 +144,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
                                 plotDict=plotDict, plotFuncs=plotFuncs,
                                 displayDict=displayDict)
     _configure_child_bundles(bundle)
-    bundleList2.append(bundle)
+    bundleList.append(bundle)
 
     # 3 pairs in 12
     md = metadata + ' 3 pairs in 12 nights'
@@ -474,9 +473,9 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', metadata='',
     bundleList.append(bundle)
 
     # Set the runName for all bundles and return the bundleDict.
-    for b in bundleList2:
+    for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList2)
+    return mb.makeBundlesDictFromList(bundleList)
 
 
 def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
