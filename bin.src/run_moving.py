@@ -16,35 +16,7 @@ import lsst.sims.maf.utils as utils
 import lsst.sims.maf.batches as batches
 
 # Assumes you have already created observation file,
-
 # This is currently incomplete compared to movingObjects.py! No plotting, no automatic completeness bundles.
-
-
-def setupSlicer(orbitFile, Hrange, obsFile=None):
-    """
-    Set up the slicer and read orbitFile and obsFile from disk.
-
-    Parameters
-    ----------
-    orbitFile : str
-        The file containing the orbit information.
-    Hrange : numpy.ndarray or None
-        The Hrange parameter to pass to slicer.readOrbits
-    obsFile : str, optional
-        The file containing the observations of each object, optional.
-        If not provided (default, None), then the slicer will not be able to 'slice', but can still plot.
-
-    Returns
-    -------
-    ~lsst.sims.maf.slicer.MoObjSlicer
-    """
-    # Read the orbit file and set the H values for the slicer.
-    slicer = slicers.MoObjSlicer()
-    slicer.readOrbits(orbitFile, Hrange=Hrange)
-    if obsFile is not None:
-        slicer.readObs(obsFile)
-    return slicer
-
 
 def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
     """
@@ -723,8 +695,10 @@ if __name__ == '__main__':
         resultsDb = db.ResultsDb(outDir=args.outDir)
 
         Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
-        slicer = setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
-        bdict = batches.discoveryBatch(slicer, runName=args.opsimRun, metadata=args.metadata,
+        slicer = batches.setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
+        opsdb = db.OpsimDatabase(args.opsimDb)
+        colmap = batches.ColMapDict(opsdb.opsimVersion)
+        bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
                                        albedo=args.albedo, Hmark=args.hMark, times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
 
