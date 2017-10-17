@@ -117,4 +117,4 @@ if __name__ == '__main__':
 
     if args.opsimDb is not None:
         opsdb = db.OpsimDatabase(args.opsimDb)
-        utils.writeConfigs(opsdb)
+        utils.writeConfigs(opsdb, args.outDir)
