@@ -64,7 +64,7 @@ if __name__ == '__main__':
                         " Optional: if not provided, config* files won't be created but analysis will run.")
     parser.add_argument("--hMin", type=float, default=5.0, help="Minimum H value. Default 5.")
     parser.add_argument("--hMax", type=float, default=27.0, help="Maximum H value. Default 27.")
-    parser.add_argument("--hStep", type=float, default=0.5, help="Stepsizes in H values.")
+    parser.add_argument("--hStep", type=float, default=0.2, help="Stepsizes in H values.")
     parser.add_argument("--metadata", type=str, default='',
                         help="Base string to add to all metric metadata. Typically the object type.")
     parser.add_argument("--albedo", type=float, default=None,
@@ -110,7 +110,16 @@ if __name__ == '__main__':
         colmap = batches.getColMap(opsdb)
         opsdb.close()
         bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
-                                       albedo=args.albedo, Hmark=args.hMark, times=times)
+                                       detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
+                                       times=times)
+        runMetrics(bdict, args.outDir, resultsDb, args.hMark)
+        bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
+                                       detectionLosses='trailing', albedo=args.albedo, Hmark=args.hMark,
+                                       times=times)
+        runMetrics(bdict, args.outDir, resultsDb, args.hMark)
+        bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
+                                       detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
+                                       times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
 
     #plotMetrics(allBundles, args.outDir, args.metadata, args.opsimRun, mParams,
