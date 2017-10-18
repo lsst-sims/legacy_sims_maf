@@ -249,6 +249,8 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
             self._setLabels()
         else:
             Hidx = np.where(np.abs(Hvals - self.Hval) == np.abs(Hvals - self.Hval).min())[0][0]
+            self.Hval = Hvals[Hidx]
+            self._setLabels()
         summaryVal = np.empty(len(self.times), dtype=[('name', np.str_, 20), ('value', float)])
         summaryVal['value'] = completeness[:,Hidx]
         for i, time in enumerate(self.times):
