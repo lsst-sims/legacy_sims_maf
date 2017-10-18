@@ -8,6 +8,7 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import summaryCompletenessAtTime, summaryCompletenessOverH
+import warnings
 
 __all__ = ['setupSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'characterizationBatch']
 
@@ -51,7 +52,7 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
 
     if detectionLosses not in ('detection', 'trailing'):
         raise ValueError('Please choose detection or trailing as options for detectionLosses.')
-    if detectionLosses == 'trailing'
+    if detectionLosses == 'trailing':
         magStacker = stackers.MoMagStacker(lossCol='dmagTrail')
         detectionLosses = 'detection loss'
     else:
@@ -154,7 +155,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
 
     if detectionLosses not in ('detection', 'trailing'):
         raise ValueError('Please choose detection or trailing as options for detectionLosses.')
-    if detectionLosses == 'trailing'
+    if detectionLosses == 'trailing':
         magStacker = stackers.MoMagStacker(lossCol='dmagTrail')
         detectionLosses = 'detection loss'
     else:
