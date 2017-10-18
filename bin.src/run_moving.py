@@ -109,13 +109,13 @@ if __name__ == '__main__':
         opsdb = db.OpsimDatabase(args.opsimDb)
         colmap = batches.getColMap(opsdb)
         opsdb.close()
-        bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
-                                       detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
-                                       times=times)
+        bdict = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                            metadata=args.metadata, detectionLosses='detection',
+                                            albedo=args.albedo, Hmark=args.hMark, times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
-        bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
-                                       detectionLosses='trailing', albedo=args.albedo, Hmark=args.hMark,
-                                       times=times)
+        bdict = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                            metadata=args.metadata, detectionLosses='trailing',
+                                            albedo=args.albedo, Hmark=args.hMark, times=times)
         runMetrics(bdict, args.outDir, resultsDb, args.hMark)
         bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
                                        detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
