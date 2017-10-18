@@ -265,7 +265,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
     childMetrics = _setup_child_metrics(metric)
     bundle = mb.MoMetricBundle(metric, slicer, constraint,
                                 stackerList=[magStacker],
-                                runName=runName metadata=md,
+                                runName=runName, metadata=md,
                                 childMetrics=childMetrics,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
                                 displayDict=displayDict)
