@@ -156,11 +156,13 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
     if detectionLosses not in ('detection', 'trailing'):
         raise ValueError('Please choose detection or trailing as options for detectionLosses.')
     if detectionLosses == 'trailing':
+        # These are the SNR-losses only.
         magStacker = stackers.MoMagStacker(lossCol='dmagTrail')
-        detectionLosses = ' detection loss'
-    else:
-        magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
         detectionLosses = ' trailing loss'
+    else:
+        # This is SNR losses, plus additional loss due to detecting with stellar PSF.
+        magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
+        detectionLosses = ' detection loss'
 
     if times is None:
         try:
