@@ -74,7 +74,8 @@ class NormAirmassStacker(BaseStacker):
 
 class ZenithDistStacker(BaseStacker):
     """Calculate the zenith distance for each pointing.
-    Zenith distance is in degrees if 'degrees' = True.
+    If 'degrees' is True, then assumes altCol is in degrees and returns degrees.
+    If 'degrees' is False, assumes altCol is in radians and returns radians.
     """
     def __init__(self, altCol = 'altitude', degrees=True):
         self.altCol = altCol
