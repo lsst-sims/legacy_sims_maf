@@ -17,19 +17,6 @@ import lsst.sims.maf.batches as batches
 import lsst.sims.maf.utils as mafUtils
 
 
-"""
-def setBatches(opsdb, colmap, args):
-    propids, proptags, sqltags = setSQL(opsdb)
-
-    bdict = {}
-    bdict.update(batches.glanceBatch(colmap, runName))
-    bdict.update(batches.intraNight(colmap, runName))
-    # All metadata, all proposals.
-    bdict.update(batches.allMetadata(colmap, runName, sqlconstraint='', metadata='All props'))
-    # WFD only.
-    bdict.update(batches.allMetadata(colmap, runName, sqlconstraint=sqltags['WFD'], metadata='WFD'))
-    return bdict
-"""
 
 
 def connectDb(dbfile):
@@ -46,12 +33,15 @@ def connectDb(dbfile):
     return opsdb, colmap
 
 
-def setSQL(opsdb):
+def setSQL(opsdb, sqlConstraint=None):
     # Fetch the proposal ID values from the database
     propids, proptags = opsdb.fetchPropInfo()
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = opsdb.createSQLWhere('WFD', proptags)
     ddWhere = opsdb.createSQLWhere('DD', proptags)
+    if sqlConstraint is not None:
+        wfdWhere = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
+        ddWhere = '(%s) and (%s)' % (sqlConstraint, ddWhere)
     sqltags = {'WFD': wfdWhere, 'DD': ddWhere}
     return (propids, proptags, sqltags)
 
@@ -85,6 +75,8 @@ def parseArgs(subdir='out', parser=None):
                                                                  "Default is runName/%s." % (subdir))
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
                         default=False, help="Reload the metric values from disk and re-plot them.")
+    parser.add_argument('--sqlConstraint', type=str, default=None,
+                        help="SQL constraint to apply to all metrics.")
     args = parser.parse_args()
 
     if args.runName is None:
