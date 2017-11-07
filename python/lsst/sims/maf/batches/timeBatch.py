@@ -11,7 +11,7 @@ from .common import standardSummary
 __all__ = ['intraNight']
 
 
-def intraNight(colmap=None, runName='opsim', nside=64):
+def intraNight(colmap=None, runName='opsim', nside=64, sqlConstraint=None):
     """Generate a set of statistics about the pair/triplet/etc. rate within a night.
 
     Parameters
@@ -22,6 +22,8 @@ def intraNight(colmap=None, runName='opsim', nside=64):
         The name of the simulated survey. Default is "opsim".
     nside : int, opt
         Nside for the healpix slicer. Default 64.
+    sqlConstraint : str or None, opt
+        Additional sql constraint to apply to all metrics.
 
     Returns
     -------
@@ -35,9 +37,14 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
+    if sqlConstraint is not None:
+        sqlC = '(%s) and ' % sqlConstraint
+    else:
+        sqlC = ''
+
     # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': -1}
-    sql = 'filter="g" or filter="r" or filter="i"'
+    sql = '%s (filter="g" or filter="r" or filter="i")' % sqlC
     metadata = 'gri'
     dtMin = 15.0
     dtMax = 60.0
@@ -72,8 +79,8 @@ def intraNight(colmap=None, runName='opsim', nside=64):
     binsize = 5.
     bins_metric = np.arange(binMin / 60.0 / 24.0, (binMax + binsize) / 60. / 24., binsize / 60. / 24.)
     bins_plot = bins_metric * 24.0 * 60.0
-    sql = ''
-    metric = metrics.TgapsMetric(bins=bins_metric, metricName='DeltaT Histogram')
+    sql = sqlConstraint
+    metric = metrics.TgapsMetric(bins=bins_metric, timesCol=colmap['mjd'], metricName='DeltaT Histogram')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}

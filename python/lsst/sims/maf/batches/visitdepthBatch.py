@@ -208,7 +208,7 @@ def tEffMetrics(colmap=None, runName='opsim',
 
 
 def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
-                    sql=None, metadata=None):
+                    sqlConstraint=None, metadata=None):
     """Count the number of visits per night through the survey.
 
     Parameters
@@ -219,10 +219,10 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
         The name of the simulated survey. Default is "opsim".
     binNights : int, opt
         Number of nights to count in each bin. Default = 1, count number of visits in each night.
-    sql : str, opt
+    sqlConstraint : str or None, opt
         Additional constraint to add to any sql constraints (e.g. 'propId=1' or 'fieldID=522').
         Default None, for no additional constraints.
-    metadata : str, opt
+    metadata : str or None, opt
         Additional metadata to add before any below (i.e. "WFD").  Default is None.
 
     Returns
@@ -231,7 +231,6 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
-    bundleList = []
 
     subgroup = metadata
     if subgroup is None:
@@ -239,19 +238,19 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
 
     metadataCaption = metadata
     if metadata is None:
-        if sql is not None:
-            metadataCaption = sql
+        if sqlConstraint is not None:
+            metadataCaption = sqlConstraint
         else:
             metadataCaption = 'all visits'
 
     bundleList = []
 
-    displayDict = {'group': 'Per Night', 'subgroup': 'Nvisits'}
+    displayDict = {'group': 'Per Night', 'subgroup': subgroup}
     displayDict['caption'] = 'Number of visits per night for %s.' % (metadataCaption)
     displayDict['order'] = 0
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits')
     slicer = slicers.OneDSlicer(sliceColName=colmap['mjd'], binsize=int(binNights))
-    bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
                              displayDict=displayDict, summaryMetrics=standardSummary())
     bundleList.append(bundle)
 
@@ -261,7 +260,7 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1):
+def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstraint=None):
     """Set up a group of all and per-proposal nvisits metrics.
 
     Parameters
@@ -273,6 +272,8 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1):
         The name of the simulated survey. Default is "opsim".
     binNights : int, opt
         Number of nights to count in each bin. Default = 1, count number of visits in each night.
+    sqlConstraint : str or None, opt
+        SQL constraint to add to all metrics.
 
     Returns
     -------
@@ -293,8 +294,9 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1):
     displayDict = {'group': 'Visit Summary', 'subgroup': 'Proposal distribution', 'order': -1}
 
     bdict = {}
+    # All proposals.
     bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                 sql=None, metadata='All visits'))
+                                 sqlConstraint=sqlConstraint, metadata='All visits'))
 
     # Look for any multi-proposal groups that we should include.
     for tag in proptags:
@@ -302,23 +304,27 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1):
             pids = proptags[tag]
             sql = '('
             for pid in pids[:-1]:
-                sql += 'proposalId=%d or ' % pid
-            sql += ' proposalId=%d)' % pids[-1]
+                sql += '%s=%d or ' % (colmap['proposalId'], pid)
+            sql += ' %s=%d)' % (colmap['proposalId'], pids[-1])
+            if sqlConstraint is not None:
+                sql = '(%s) and (%s)' % (sql, sqlConstraint)
             metadata = '%s' % (tag)
             bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                         sql=sql, metadata=metadata))
+                                         sqlConstraint=sql, metadata=metadata))
             displayDict['order'] += 1
             displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
-            bundle = mb.MetricBundle(metric, slicer, sql=sql, metadata=metadata,
+            bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
                                      summaryMetrics=summaryMetrics, displayDict=displayDict)
             bundleList.append(bundle)
 
     # And then just run each proposal separately.
     for propid in propids:
-        sql = 'proposalId=%d' % (propid)
+        sql = '%s=%d' % (colmap['proposalId'], propid)
+        if sqlConstraint is not None:
+            sql += ' and (%s)' % (sqlConstraint)
         metadata = '%s' % (propids[propid])
         bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                     sql=sql, metadata=metadata))
+                                     sqlConstraint=sql, metadata=metadata))
         displayDict['order'] += 1
         displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
         bundle = mb.MetricBundle(metric, slicer, constraint=sql, metadata=metadata,

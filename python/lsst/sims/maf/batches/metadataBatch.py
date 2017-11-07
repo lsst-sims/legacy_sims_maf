@@ -2,6 +2,7 @@
 """
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
@@ -18,6 +19,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
     Calculates extended standard metrics (with unislicer) on the quantity (all visits and per filter),
     makes histogram of the value (all visits and per filter),
 
+    TODO: handle stackers more automatically. Currently a hack for HA, but this is a general problem.
 
     Parameters
     ----------
@@ -84,6 +86,13 @@ def metadataBasics(value, colmap=None, runName='opsim',
     if extraMetadata is not None:
         metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
 
+    # Hack to make HA work, but really I need to account for any stackers/colmaps.
+    if value == 'HA':
+        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=colmap['ra'],
+                                                 deg=colmap['raDecDeg'])]
+    else:
+        stackerList = None
+
     # Summarize values over all and per filter (min/mean/median/max/percentiles/outliers/rms).
     slicer = slicers.UniSlicer()
     displayDict['caption'] = None
@@ -91,7 +100,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
         displayDict['order'] = -1
         for m in extendedMetrics(value, replace_colname=valueName):
             displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, displayDict=displayDict)
+            bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
+                                     metadata=meta, displayDict=displayDict)
             bundleList.append(bundle)
 
     # Histogram values over all and per filter.
@@ -103,7 +113,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
         displayDict['order'] += 1
         m = metrics.CountMetric(value, metricName='%s Histogram' % (valueName))
         slicer = slicers.OneDSlicer(sliceColName=value)
-        bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, displayDict=displayDict)
+        bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
+                                 metadata=meta, displayDict=displayDict)
         bundleList.append(bundle)
 
     # Make maps of min/median/max for all and per filter, per RA/Dec, with standard summary stats.
@@ -119,7 +130,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
     for sql, meta in zip(sqlconstraints, metadata):
         for m in mList:
             displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, plotFuncs=subsetPlots,
+            bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
+                                     metadata=meta, plotFuncs=subsetPlots,
                                      displayDict=displayDict,
                                      summaryMetrics=standardSummary())
             bundleList.append(bundle)
