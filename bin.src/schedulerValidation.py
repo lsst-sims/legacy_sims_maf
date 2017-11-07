@@ -689,7 +689,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew times for all visits.'}
     slicer = slicers.OneDSlicer(sliceColName='slewTime', binsize=5)
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict, runName=runName,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -698,7 +698,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew distances for all visits.'}
     slicer = slicers.OneDSlicer(sliceColName='slewDistance', binsize=3.)
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict, runName=runName,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 

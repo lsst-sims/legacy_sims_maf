@@ -35,9 +35,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList = []
 
     # Connect to the databse
-    opsimdb = db.OpsimDatabase(dbFile)
+    opsimdb = db.OpsimDatabaseV3(dbFile)
     if runName is None:
-        runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+        runName = os.path.basename(dbFile).replace('_sqlite.db', '').replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
@@ -694,7 +694,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew times for all visits.'}
     slicer = slicers.OneDSlicer(sliceColName='slewTime', binsize=5)
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict, runName=runName,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -703,7 +703,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew distances for all visits.'}
     slicer = slicers.OneDSlicer(sliceColName='slewDist', binsize=0.05)
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict, runName=runName,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 

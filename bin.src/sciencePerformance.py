@@ -35,7 +35,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # Connect to the databse
     opsimdb = db.OpsimDatabaseV4(dbFile)
     if runName is None:
-        runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+        runName = os.path.basename(dbFile).replace('_sqlite.db', '').replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
@@ -731,7 +731,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         plotDict = {}
         sqlconstraint = 'filter = "%s"' % (f)
         bundle = metricBundles.MetricBundle(metric, slicer,
-                                            sqlconstraint, displayDict=displayDict,
+                                            sqlconstraint, displayDict=displayDict, runName=runName,
                                             stackerList=[stacker, stacker2],
                                             plotDict=plotDict,
                                             plotFuncs=[plotFunc])
@@ -758,7 +758,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         metric = metrics.MinMetric('solarElong')
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
         bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
-                                            plotFuncs=plotFuncs)
+                                            runName=runName, plotFuncs=plotFuncs)
         bundleList.append(bundle)
 
     return (metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict,

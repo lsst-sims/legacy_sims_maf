@@ -33,9 +33,10 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     noSaveBundleList = []
 
     # Connect to the databse
-    opsimdb = utils.connectOpsimDb(dbFile)
+    # Connect to the databse
+    opsimdb = db.OpsimDatabaseV3(dbFile)
     if runName is None:
-        runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+        runName = os.path.basename(dbFile).replace('_sqlite.db', '').replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
