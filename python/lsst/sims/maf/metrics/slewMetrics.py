@@ -7,8 +7,6 @@ __all__ = ['SlewContributionMetric', 'AveSlewFracMetric']
 
 
 class SlewContributionMetric(BaseMetric):
-    """Average time a slew activity is in the critical path.
-    """
     def __init__(self, col='actDelay', activity=None, activeCol='activity',
                  inCritCol='inCriticalPath', **kwargs):
         """
@@ -22,7 +20,7 @@ class SlewContributionMetric(BaseMetric):
         self.activeCol = activeCol
         self.activity = activity
         super(SlewContributionMetric, self).__init__(col=col, **kwargs)
-        self.comment = 'Average time for %s activity (in seconds) when in the critical path, ' % (activity)
+        self.comment = 'Average time for %s activity (in seconds) when in the critical path, ' %(activity)
         self.comment += 'multiplied by the percent of total slews in the critical path.'
 
     def run(self, dataSlice, slicePoint=None):
@@ -42,10 +40,8 @@ class SlewContributionMetric(BaseMetric):
 
 
 class AveSlewFracMetric(BaseMetric):
-    """Average time for slew activity, multiplied by percent of total slews.
-    """
     def __init__(self, col='actDelay', activity=None, activeCol='activity',
-                 idCol='SlewHistory_slewID', **kwargs):
+                 idCol='SlewHistory_slewCount', **kwargs):
         """
         Return the average time multiplied by fraction of slews.
         """
@@ -56,8 +52,7 @@ class AveSlewFracMetric(BaseMetric):
         self.activeCol = activeCol
         self.activity = activity
         super(AveSlewFracMetric, self).__init__(col=col, **kwargs)
-        self.comment = 'Average time for %s activity (in seconds),' \
-                       ' multiplied by percent of total slews.' % (activity)
+        self.comment = 'Average time for %s activity (in seconds), multiplied by percent of total slews.' %(activity)
 
     def run(self, dataSlice, slicePoint=None):
         good = np.where(dataSlice[self.activeCol] == self.activity)[0]

@@ -53,17 +53,19 @@ class BaseSpatialSlicer(BaseSlicer):
         Default rotSkyPos.
     mjdColName : str, optional
         Name of the exposure time column. Only used if useCamera is True.
-        Default expMJD.
+        Default observationStartMJD.
     chipNames : array-like, optional
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
     def __init__(self, lonCol='fieldRA', latCol='fieldDec', verbose=True,
-                 badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD', chipNames='all'):
+                 badval=-666, leafsize=100, radius=1.75, latLonDeg=True,
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
+                 chipNames='all'):
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)
         self.lonCol = lonCol
         self.latCol = latCol
+        self.latLonDeg = latLonDeg
         self.rotSkyPosColName = rotSkyPosColName
         self.mjdColName = mjdColName
         self.columnsNeeded = [lonCol, latCol]
@@ -108,7 +110,11 @@ class BaseSpatialSlicer(BaseSlicer):
             self._setupLSSTCamera()
             self._presliceFootprint(simData)
         else:
-            self._buildTree(simData[self.lonCol], simData[self.latCol], self.leafsize)
+            if self.latLonDeg:
+                self._buildTree(np.radians(simData[self.lonCol]),
+                                np.radians(simData[self.latCol]), self.leafsize)
+            else:
+                self._buildTree(simData[self.lonCol], simData[self.latCol], self.leafsize)
 
         @wraps(self._sliceSimData)
         def _sliceSimData(islice):
@@ -158,8 +164,13 @@ class BaseSpatialSlicer(BaseSlicer):
         self._buildTree(self.slicePoints['ra'], self.slicePoints['dec'], leafsize=self.leafsize)
 
         # Loop over each unique pointing position
-        for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), simData[self.lonCol],
-                                                simData[self.latCol],
+        if self.latLonDeg:
+            lat = np.radians(simData[self.latCol])
+            lon = np.radians(simData[self.lonCol])
+        else:
+            lat = simData[self.latCol]
+            lon = simData[self.lonCol]
+        for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), lon, lat,
                                                 simData[self.rotSkyPosColName], simData[self.mjdColName]):
             dx, dy, dz = self._treexyz(ra, dec)
             # Find healpixels inside the FoV

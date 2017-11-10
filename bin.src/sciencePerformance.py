@@ -20,7 +20,7 @@ import lsst.sims.maf.utils as utils
 
 
 def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
-                   lonCol='fieldRA', latCol='fieldDec', seeingCol='FWHMgeom'):
+                   lonCol='fieldRA', latCol='fieldDec', seeingCol='seeingFwhmGeom'):
     """
     make a list of metricBundle objects to look at the scientific performance
     of an opsim run.
@@ -33,7 +33,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     noSaveBundleList = []
 
     # Connect to the databse
-    opsimdb = utils.connectOpsimDb(dbFile)
+    opsimdb = db.OpsimDatabaseV4(dbFile)
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '')
 
@@ -51,9 +51,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         slicermetadata = ' (%s)' % (commonname)
 
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = utils.createSQLWhere('WFD', propTags)
+    wfdWhere = opsimdb.createSQLWhere('WFD', propTags)
     print('#FYI: WFD "where" clause: %s' % (wfdWhere))
-    ddWhere = utils.createSQLWhere('DD', propTags)
+    ddWhere = opsimdb.createSQLWhere('DD', propTags)
     print('#FYI: DD "where" clause: %s' % (ddWhere))
 
     # Set up benchmark values, scaled to length of opsim run.
@@ -144,21 +144,17 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             metadata = 'WFD only' + slicermetadata
             sqlconstraint = '%s' % (wfdWhere)
         # Configure the count metric which is what is used for f0 slicer.
-        m1 = metrics.CountMetric(col='expMJD', metricName='fO')
+        m1 = metrics.CountMetric(col='observationStartMJD', metricName='fO')
         plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkVals['Area'],
                     'Nvisit': benchmarkVals['nvisitsTotal'], 'xMin': 0, 'xMax': 1500}
-        summaryMetrics = [metrics.fOAreaMetric(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
-                                               Asky=benchmarkVals['Area'],
-                                               Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fOAreaMetric(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
-                                               Asky=benchmarkVals['Area'],
-                                               Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fONvMetric(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
-                                             Asky=benchmarkVals['Area'],
-                                             Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fONvMetric(nside=nside, norm=True, metricName='fONv: Area/benchmark',
-                                             Asky=benchmarkVals['Area'],
-                                             Nvisit=benchmarkVals['nvisitsTotal'])]
+        summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
+                                         Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
+                          metrics.fOArea(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
+                                         Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
+                          metrics.fONv(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
+                                       Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal']),
+                          metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
+                                       Asky=benchmarkVals['Area'], Nvisit=benchmarkVals['nvisitsTotal'])]
         caption = 'The FO metric evaluates the overall efficiency of observing. '
         caption += ('fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. '
                     % (benchmarkVals['Area'], benchmarkVals['nvisitsTotal']))
@@ -180,7 +176,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     metadata = 'All Visits' + slicermetadata
     sqlconstraint = ''
     dTmin = 40.0  # seconds
-    dTmax = 30.0  # minutes
+    dTmax = 30.0*60. # seconds
     minNvisit = 100
     pixArea = float(hp.nside2pixarea(nside, degrees=True))
     scale = pixArea * hp.nside2npix(nside)
@@ -189,7 +185,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     extraStats1.extend(commonSummary)
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
     m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity',
-                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
+                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 60.0 / 24.0,
                                     minNvisits=minNvisit)
 
     plotDict = {'xMin': 0, 'xMax': 1}
@@ -207,12 +203,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     bundleList.append(bundle)
     order += 1
 
+    dTmax = dTmax/60.0 # need time in minutes for Nrevisits metric
     m2 = metrics.NRevisitsMetric(dT=dTmax)
-    plotDict = {'xMin': 0, 'xMax': 1000, 'logScale': True}
+    plotDict = {'xMin': 0.1, 'xMax': 2000, 'logScale': True}
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     extraStats2.extend(commonSummary)
-    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % dTmax
+    caption = 'Number of consecutive visits with return times faster than %.1f minutes, ' % (dTmax)
     caption += 'in any filter, all proposals. '
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more than '
     caption += '%d revisits within this time window.' % (cutoff2)
@@ -414,7 +411,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         sqlconstraint = 'filter = "%s"' % (f)
         metadata = '%s band' % (f) + slicermetadata
         # Number of visits.
-        metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
+        metric = metrics.CountMetric(col='observationStartMJD', metricName='NVisits')
         plotDict = {'xlabel': 'Number of visits',
                     'xMin': nvisitsRange['all'][f][0],
                     'xMax': nvisitsRange['all'][f][1],
@@ -583,6 +580,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             bundleList.append(bundle)
 
 # SNe metrics from UK workshop.
+
+
     peaks = {'uPeak': 25.9, 'gPeak': 23.6, 'rPeak': 22.6, 'iPeak': 22.7, 'zPeak': 22.7, 'yPeak': 22.8}
     peakTime = 15.
     transDuration = peakTime + 30.  # Days
@@ -629,7 +628,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         orderVal += 100
 
     # Full range of dates:
-    metric = metrics.FullRangeMetric(col='expMJD')
+    metric = metrics.FullRangeMetric(col='observationStartMJD')
     plotFuncs = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
     caption = 'Time span of survey.'
     sqlconstraint = ''
@@ -644,7 +643,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             displayDict = {'group': rangeGroup, 'subgroup': propids[propid], 'caption': caption,
                            'order': filtorder[f]}
             md = '%s, %s' % (f, propids[propid])
-            sql = 'filter="%s" and propID=%i' % (f, propid)
+            sql = 'filter="%s" and proposalId=%i' % (f, propid)
             bundle = metricBundles.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                                                 metadata=md, plotFuncs=plotFuncs,
                                                 displayDict=displayDict, runName=runName)
@@ -652,7 +651,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     # Alt az plots
     slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
-    metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
+    metric = metrics.CountMetric('observationStartMJD', metricName='Nvisits as function of Alt/Az')
     plotDict = {}
     plotFuncs = [plots.LambertSkyMap()]
     displayDict = {'group': altAzGroup, 'caption': 'Alt Az pointing distribution'}
@@ -662,7 +661,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                            'caption': 'Alt Az pointing distribution',
                            'order': filtorder[f]}
             md = '%s, %s' % (f, propids[propid])
-            sql = 'filter="%s" and propID=%i' % (f, propid)
+            sql = 'filter="%s" and proposalId=%i' % (f, propid)
             bundle = metricBundles.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                                                 plotFuncs=plotFuncs, metadata=md,
                                                 displayDict=displayDict, runName=runName)
@@ -732,8 +731,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         plotDict = {}
         sqlconstraint = 'filter = "%s"' % (f)
         bundle = metricBundles.MetricBundle(metric, slicer,
-                                            sqlconstraint, runName=runName,
-                                            displayDict=displayDict,
+                                            sqlconstraint, displayDict=displayDict,
                                             stackerList=[stacker, stacker2],
                                             plotDict=plotDict,
                                             plotFuncs=[plotFunc])
@@ -750,9 +748,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                        'caption': 'Median solar elongation in degrees', 'order': order}
         metric = metrics.MedianMetric('solarElong')
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-        bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            runName=runName,
-                                            displayDict=displayDict,
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
                                             plotFuncs=plotFuncs)
         bundleList.append(bundle)
 
@@ -761,9 +757,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                        'caption': 'Minimum solar elongation in degrees', 'order': order}
         metric = metrics.MinMetric('solarElong')
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-        bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            runName=runName,
-                                            displayDict=displayDict,
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
                                             plotFuncs=plotFuncs)
         bundleList.append(bundle)
 
@@ -784,9 +778,9 @@ if __name__ == "__main__":
     parser.add_argument("--latCol", type=str, default='fieldDec',
                         help="Column to use for Dec values (can be a stacker dither column)." +
                         " Default=fieldDec.")
-    parser.add_argument('--seeingCol', type=str, default='FWHMgeom',
+    parser.add_argument('--seeingCol', type=str, default='seeingFwhmGeom',
                         help="Column to use for seeing values in order to evaluate astrometric" +
-                        " uncertainties. Probably should be FWHMgeom or finSeeing.")
+                        " uncertainties. Probably should be seeingFwhmGeom, FWHMgeom, or finSeeing.")
     parser.add_argument('--benchmark', type=str, default='design',
                         help="Can be 'design' or 'requested'")
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
@@ -807,7 +801,7 @@ if __name__ == "__main__":
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
     # Connect to opsimdb.
-    opsdb = utils.connectOpsimDb(args.dbFile)
+    opsdb = db.OpsimDatabaseV4(args.dbFile)
 
     if args.runNoSave:
         group = metricBundles.MetricBundleGroup(noSaveBundleDict, opsdb, saveEarly=False,
@@ -834,5 +828,6 @@ if __name__ == "__main__":
             warnings.warn('Empty bundleList for %s, skipping merged histogram' % key)
     # Get config info and write to disk.
     utils.writeConfigs(opsdb, args.outDir)
+    opsdb.close()
 
     print("Finished sciencePerformance metric calculations.")

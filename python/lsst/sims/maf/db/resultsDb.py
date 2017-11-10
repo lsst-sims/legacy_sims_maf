@@ -1,8 +1,6 @@
 from builtins import str
 from builtins import object
 import os, warnings
-import numpy as np
-from collections import OrderedDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import url
@@ -115,7 +113,8 @@ class ResultsDb(object):
                 try:
                     os.makedirs(outDir)
                 except OSError as msg:
-                    raise OSError(msg, '\n  (If this was the database file (not outDir), remember to use kwarg "database")')
+                    raise OSError(msg, '\n  (If this was the database file (not outDir), '
+                                       'remember to use kwarg "database")')
             self.database = os.path.join(outDir, 'resultsDb_sqlite.db')
             self.driver = 'sqlite'
         else:
@@ -151,7 +150,6 @@ class ResultsDb(object):
         except DatabaseError:
             raise ValueError("Cannot create a %s database at %s. Check directory exists." %(self.driver, self.database))
         self.slen = 1024
-        self.stype = (np.str_, self.slen)
 
     def close(self):
         """
@@ -278,9 +276,14 @@ class ResultsDb(object):
         if isinstance(summaryValue, np.ndarray):
             if (('name' in summaryValue.dtype.names) and ('value' in summaryValue.dtype.names)):
                 for value in summaryValue:
+                    sSuffix = value['name']
+                    if isinstance(sSuffix, bytes):
+                        sSuffix = sSuffix.decode('utf-8')
+                    else:
+                        sSuffix = str(sSuffix)
                     summarystat = SummaryStatRow(metricId=metricId,
-                                                summaryName=summaryName + ' ' + str(value['name']),
-                                                summaryValue=value['value'])
+                                                 summaryName=summaryName + ' ' + sSuffix,
+                                                 summaryValue=value['value'])
                     self.session.add(summarystat)
                     self.session.commit()
             else:
@@ -345,9 +348,9 @@ class ResultsDb(object):
                 summarystats.append((m.metricId, m.metricName, m.slicerName, m.metricMetadata,
                                      s.summaryName, s.summaryValue))
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('slicerName', self.stype),
-                          ('metricMetadata', self.stype), ('summaryName', self.stype),
-                          ('summaryValue', float)])
+        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
+                          ('slicerName', np.str_, self.slen), ('metricMetadata', np.str_, self.slen),
+                          ('summaryName', np.str_, self.slen), ('summaryValue', float)])
         summarystats = np.array(summarystats, dtype)
         return summarystats
 
@@ -370,8 +373,10 @@ class ResultsDb(object):
                 plotFiles.append((m.metricId, m.metricName, m.metricMetadata,
                                   p.plotType, p.plotFile, thumbfile))
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('metricMetadata', self.stype),
-                          ('plotType', self.stype), ('plotFile', self.stype), ('thumbFile', self.stype)])
+        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
+                          ('metricMetadata', np.str_, self.slen),
+                          ('plotType', np.str_, self.slen), ('plotFile', np.str_, self.slen),
+                          ('thumbFile', np.str_, self.slen)])
         plotFiles = np.array(plotFiles, dtype)
         return plotFiles
 
@@ -413,10 +418,15 @@ class ResultsDb(object):
                         d.displayGroup, d.displaySubgroup, d.displayOrder, d.displayCaption)
                 metricInfo.append(mInfo)
         # Convert to numpy array.
-        dtype = np.dtype([('metricId', int), ('metricName', self.stype), ('baseMetricNames', self.stype),
-                          ('slicerName', self.stype), ('sqlConstraint', self.stype),
-                          ('metricMetadata', self.stype), ('metricDataFile', self.stype),
-                          ('displayGroup', self.stype), ('displaySubgroup', self.stype),
-                          ('displayOrder', float), ('displayCaption', 'S%d' %(self.slen*10))])
+        dtype = np.dtype([('metricId', int), ('metricName', np.str_, self.slen),
+                          ('baseMetricNames', np.str_, self.slen),
+                          ('slicerName', np.str_, self.slen),
+                          ('sqlConstraint', np.str_, self.slen),
+                          ('metricMetadata', np.str_, self.slen),
+                          ('metricDataFile', np.str_, self.slen),
+                          ('displayGroup', np.str_, self.slen),
+                          ('displaySubgroup', np.str_, self.slen),
+                          ('displayOrder', float),
+                          ('displayCaption',  np.str_, self.slen * 10)])
         metricInfo = np.array(metricInfo, dtype)
         return metricInfo

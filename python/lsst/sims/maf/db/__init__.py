@@ -1,4 +1,3 @@
-from .Table import *
 from .database import *
 from .opsimDatabase import *
 from .resultsDb import *

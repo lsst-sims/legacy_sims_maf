@@ -1,14 +1,12 @@
-__all__ = ['TransientMetric']
-
 from builtins import zip
 import numpy as np
 from .baseMetric import BaseMetric
 
+__all__ = ['TransientMetric']
 
 class TransientMetric(BaseMetric):
-    """Calculate what fraction of the transients would be detected.
-
-    Best paired with a spatial slicer.
+    """
+    Calculate what fraction of the transients would be detected. Best paired with a spatial slicer.
     We are assuming simple light curves with no color evolution.
 
     Parameters
@@ -70,7 +68,7 @@ class TransientMetric(BaseMetric):
         'partialLC', then the max number of possible transients is taken to be
         the integer floor
     """
-    def __init__(self, metricName='TransientDetectMetric', mjdCol='expMJD',
+    def __init__(self, metricName='TransientDetectMetric', mjdCol='observationStartMJD',
                  m5Col='fiveSigmaDepth', filterCol='filter',
                  transDuration=10., peakTime=5., riseSlope=0., declineSlope=0.,
                  surveyDuration=10., surveyStart=None, detectM5Plus=0.,
@@ -98,7 +96,8 @@ class TransientMetric(BaseMetric):
         self.countMethod = countMethod
 
     def lightCurve(self, time, filters):
-        """Calculate the magnitude of the object at each time, in each filter.
+        """
+        Calculate the magnitude of the object at each time, in each filter.
 
         Parameters
         ----------

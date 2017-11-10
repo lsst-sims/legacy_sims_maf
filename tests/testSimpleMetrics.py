@@ -11,7 +11,9 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def setUp(self):
         dv = np.arange(0, 10, .5)
+        dv2 = np.arange(-10, 10.25, .5)
         self.dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
+        self.dv2 = np.array(list(zip(dv2)), dtype=[('testdata', 'float')])
 
     def testMaxMetric(self):
         """Test max metric."""
@@ -32,6 +34,10 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test median metric."""
         testmetric = metrics.MedianMetric('testdata')
         self.assertEqual(testmetric.run(self.dv), np.median(self.dv['testdata']))
+
+    def testAbsMedianMetric(self):
+        testmetric = metrics.AbsMedianMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), np.abs(np.median(self.dv['testdata'])))
 
     def testFullRangeMetric(self):
         """Test full range metric."""
@@ -76,6 +82,16 @@ class TestSimpleMetrics(unittest.TestCase):
         testmetric = metrics.CountSubsetMetric('testdata', subset=0)
         self.assertEqual(testmetric.run(self.dv), 1)
 
+    def testMaxPercentMetric(self):
+        testmetric = metrics.MaxPercentMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), 1.0/len(self.dv)*100.0)
+        self.assertEqual(testmetric.run(self.dv2), 1.0/len(self.dv2)*100.0)
+
+    def testAbsMaxPercentMetric(self):
+        testmetric = metrics.AbsMaxPercentMetric('testdata')
+        self.assertEqual(testmetric.run(self.dv), 1./len(self.dv)*100.)
+        self.assertEqual(testmetric.run(self.dv2), 2./len(self.dv2)*100.)
+
     def testRobustRmsMetric(self):
         """Test Robust RMS metric."""
         testmetric = metrics.RobustRmsMetric('testdata')
@@ -114,27 +130,23 @@ class TestSimpleMetrics(unittest.TestCase):
         """Test mean angle metric."""
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
-        dv1 = np.radians(dv1)
-        dv2 = np.radians(dv2)
         dv1 = np.array(list(zip(dv1)), dtype=[('testdata', 'float')])
         dv2 = np.array(list(zip(dv2)), dtype=[('testdata', 'float')])
         testmetric = metrics.MeanAngleMetric('testdata')
-        result1 = np.degrees(testmetric.run(dv1))
-        result2 = np.degrees(testmetric.run(dv2))
+        result1 = testmetric.run(dv1)
+        result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, (result2+20)%360.)
         dv = np.random.rand(10000)*360.0
-        dv = np.radians(dv)
+        dv = dv
         dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
-        result = np.degrees(result)
+        result = result
         self.assertAlmostEqual(result, 180)
 
     def testFullRangeAngleMetric(self):
         """Test full range angle metric."""
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
-        dv1 = np.radians(dv1)
-        dv2 = np.radians(dv2)
         dv1 = np.array(list(zip(dv1)), dtype=[('testdata', 'float')])
         dv2 = np.array(list(zip(dv2)), dtype=[('testdata', 'float')])
         testmetric = metrics.FullRangeAngleMetric('testdata')
@@ -142,16 +154,13 @@ class TestSimpleMetrics(unittest.TestCase):
         result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, result2)
         dv = np.arange(0, 358, 5)
-        dv = np.radians(dv)
         dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
-        result = np.degrees(result)
         self.assertAlmostEqual(result, 355)
         dv = np.random.rand(10000)*360.0
-        dv = np.radians(dv)
         dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
-        result = np.degrees(result)
+        result = result
         self.assertGreater(result, 355)
 
 

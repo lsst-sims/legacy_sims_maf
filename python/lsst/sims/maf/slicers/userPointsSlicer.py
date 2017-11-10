@@ -39,18 +39,20 @@ class UserPointsSlicer(BaseSpatialSlicer):
         Default rotSkyPos.
     mjdColName : str, optional
         Name of the exposure time column. Only used if useCamera is True.
-        Default expMJD.
+        Default observationStartMJD.
     chipNames : array-like, optional
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
     def __init__(self, ra, dec, lonCol='fieldRA', latCol='fieldDec', verbose=True,
-                 badval=-666, leafsize=100, radius=1.75,
-                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='expMJD', chipNames='all'):
+                 badval=-666, leafsize=100, radius=1.75, latLonDeg=True,
+                 useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
+                 chipNames='all'):
         super(UserPointsSlicer, self).__init__(lonCol=lonCol, latCol=latCol, verbose=verbose,
                                                badval=badval, radius=radius, leafsize=leafsize,
                                                useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
-                                               mjdColName=mjdColName, chipNames=chipNames)
+                                               mjdColName=mjdColName, chipNames=chipNames,
+                                               latLonDeg=latLonDeg)
         # check that ra and dec are iterable, if not, they are probably naked numbers, wrap in list
         if not hasattr(ra, '__iter__'):
             ra = [ra]

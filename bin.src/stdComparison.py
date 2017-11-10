@@ -3,7 +3,7 @@ from __future__ import print_function
 from builtins import range
 import os
 import argparse
-from lsst.sims.maf.viz import MafRunComparison
+from lsst.sims.maf.web import MafRunComparison
 
 # Make the output of this file be 'nice' to read back into pandas.
 def pandaprint(stats):
@@ -213,7 +213,7 @@ if __name__ == '__main__':
         pandaprint(summary)
 
     # fO Nv and A
-    metricName = 'fONvMetric'
+    metricName = 'fO'
     metricMetadata = 'WFD only (non-dithered)'
     slicerName = None
     summaryName = 'fONv: Area (sqdeg)'

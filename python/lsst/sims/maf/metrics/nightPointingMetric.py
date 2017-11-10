@@ -8,15 +8,15 @@ __all__ = ['NightPointingMetric']
 
 
 class NightPointingMetric(BaseMetric):
-    """ Gather relevant information for a single night to plot.
+    """
+    Gather relevant information for a night to plot.
     """
 
     def __init__(self, altCol='altitude', azCol='azimuth', filterCol='filter',
                  mjdCol='expMJD', metricName='NightPointing', telescope='LSST', **kwargs):
 
         cols = [altCol, azCol, filterCol, mjdCol]
-        super(NightPointingMetric, self).__init__(col=cols, metricName=metricName,
-                                                  metricDtype='object', **kwargs)
+        super(NightPointingMetric, self).__init__(col=cols, metricName=metricName, metricDtype='object', **kwargs)
         self.telescope = Site(name=telescope)
         self.altCol = altCol
         self.azCol = azCol

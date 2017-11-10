@@ -91,8 +91,7 @@ class MetricBundle(object):
         else:
             self.mapsList = []
         # If the metric knows it needs a particular map, add it to the list.
-        mapNames = [mapname.__class__.__name__ for mapname in self.mapsList]
-
+        mapNames = [map.__class__.__name for map in self.mapsList]
         if hasattr(self.metric, 'maps'):
             for mapName in self.metric.maps:
                 if mapName not in mapNames:
@@ -103,13 +102,12 @@ class MetricBundle(object):
         # Add the summary stats, if applicable.
         self.setSummaryMetrics(summaryMetrics)
         # Set the provenance/metadata.
-        self.runName = runName
         self._buildMetadata(metadata)
-        # Build the output filename root if not provided.
+        # Set the run name and build the output filename base (fileRoot).
+        self.setRunName(runName)
+        # Reset fileRoot, if provided.
         if fileRoot is not None:
             self.fileRoot = fileRoot
-        else:
-            self._buildFileRoot()
         # Determine the columns needed from the database.
         self._findReqCols()
         # Set the plotting classes/functions.
@@ -242,7 +240,7 @@ class MetricBundle(object):
         else:
             # Add identity metric to unislicer metric values (to get them into resultsDB).
             if self.slicer.slicerName == 'UniSlicer':
-                self.summaryMetrics = [metrics.IdentityMetric('metricdata')]
+                self.summaryMetrics = [metrics.IdentityMetric()]
             else:
                 self.summaryMetrics = []
 
@@ -326,8 +324,11 @@ class MetricBundle(object):
         # If we still need to auto-generate a caption, do it.
         if self.displayDict['caption'] is None:
             if self.metric.comment is None:
-                caption = self.metric.name + ' calculated on a %s' % (self.slicer.slicerName)
-                caption += ' basis, using a subset of data selected via %s.' % (self.constraint)
+                caption = self.metric.name + ' calculated on a %s basis' % (self.slicer.slicerName)
+                if self.constraint!='' and self.constraint is not None:
+                    caption += ' using a subset of data selected via %s.' % (self.constraint)
+                else:
+                    caption += '.'
             else:
                 caption = self.metric.comment
             if 'zp' in self.plotDict:
@@ -341,6 +342,20 @@ class MetricBundle(object):
                                               self.runName, self.constraint,
                                               self.metadata, None)
             resultsDb.updateDisplay(metricId, self.displayDict)
+
+    def setRunName(self, runName, updateFileRoot=True):
+        """Set (or reset) the runName. FileRoot will be updated accordingly if desired.
+
+        Parameters
+        ----------
+        runName: str
+            Run Name, which will become part of the fileRoot.
+        fileRoot: bool, opt
+            Flag to update the fileRoot with the runName. Default True.
+        """
+        self.runName = runName
+        if updateFileRoot:
+            self._buildFileRoot()
 
     def write(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
         """Write metricValues (and associated metadata) to disk.

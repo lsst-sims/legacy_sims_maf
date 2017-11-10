@@ -34,19 +34,19 @@ def makeFieldData():
     """Set up sample field data."""
     # These are a subset of the fields from opsim.
     fieldId = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010]
-    fieldRA = [1.4961071750760884, 4.009380232682723, 2.2738050744968632,
+    ra_rad = [1.4961071750760884, 4.009380232682723, 2.2738050744968632,
                2.7527439701957053, 6.043715459855715,
                0.23946974745438585, 3.4768050063149119, 2.8063803008646744, 4.0630173623005916,
                2.2201678117208452]
-    fieldDec = [-0.25205231807872636, -0.25205228478831621, -0.25205228478831621,
+    dec_rad = [-0.25205231807872636, -0.25205228478831621, -0.25205228478831621,
                 -0.25205228478831621, -0.25205145255075168,
                 -0.25205145255075168, -0.24630904473998308, -0.24630904473998308,
                 -0.24630894487049795, -0.24630894487049795]
     fieldId = np.array(fieldId, 'int')
-    fieldRA = np.array(fieldRA, 'float')
-    fieldDec = np.array(fieldDec, 'float')
-    fieldData = np.core.records.fromarrays([fieldId, fieldRA, fieldDec],
-                                           names=['fieldID', 'fieldRA', 'fieldDec'])
+    ra_rad = np.array(ra_rad, 'float')
+    dec_rad = np.array(dec_rad, 'float')
+    fieldData = np.core.records.fromarrays([fieldId, ra_rad, dec_rad],
+                                           names=['fieldId', 'fieldRA', 'fieldDec'])
     return fieldData
 
 
@@ -59,12 +59,12 @@ def makeOpsimDataValues(fieldData, size=10000, min=0., max=1., random=True):
         randorder = np.random.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
-    # Add valid fieldID values to match data values
+    # Add valid fieldId values to match data values
     fieldId = np.zeros(len(datavalues), 'int')
-    idxs = np.random.rand(size) * len(fieldData['fieldID'])
+    idxs = np.random.rand(size) * len(fieldData['fieldId'])
     for i, d in enumerate(datavalues):
         fieldId[i] = fieldData[int(idxs[i])][0]
-    simData = np.core.records.fromarrays([fieldId, datavalues], names=['fieldID', 'testdata'])
+    simData = np.core.records.fromarrays([fieldId, datavalues], names=['fieldId', 'testdata'])
     return simData
 
 

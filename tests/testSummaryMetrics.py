@@ -35,7 +35,7 @@ class TestSummaryMetrics(unittest.TestCase):
         Test the fONv metric.
         """
         nside = 128
-        metric = metrics.fONvMetric(col='ack', nside=nside, Nvisit=825, Asky=18000.)
+        metric = metrics.fONv(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         npix = hp.nside2npix(nside)
         names = ['blah']
         types = [float]
@@ -53,7 +53,7 @@ class TestSummaryMetrics(unittest.TestCase):
     def testfOArea(self):
         """Test fOArea metric."""
         nside = 128
-        metric = metrics.fOAreaMetric(col='ack', nside=nside, Nvisit=825, Asky=18000.)
+        metric = metrics.fOArea(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         npix = hp.nside2npix(nside)
         names = ['blah']
         types = [float]

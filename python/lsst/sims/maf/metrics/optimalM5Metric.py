@@ -8,7 +8,8 @@ __all__ = ['OptimalM5Metric']
 
 
 class OptimalM5Metric(BaseMetric):
-    """Compare the co-added depth of the survey to one where all the observations were taken on the meridian.
+    """Compare the co-added depth of the survey to one where
+    all the observations were taken on the meridian.
 
     Parameters
     ----------
@@ -39,6 +40,7 @@ class OptimalM5Metric(BaseMetric):
     number of observations already taken. So if a 10-year survey
     returns 20%, it would need to run for 12 years to reach the same
     depth as a 10-year meridian survey.
+
     """
 
     def __init__(self, m5Col='fiveSigmaDepth', optM5Col='m5Optimal',
@@ -50,7 +52,7 @@ class OptimalM5Metric(BaseMetric):
             self.units = 'N visits behind'
         if magDiff:
                 self.units = 'mags'
-        super(OptimalM5Metric, self).__init__(col=[m5Col, optM5Col, filterCol],
+        super(OptimalM5Metric, self).__init__(col=[m5Col, optM5Col,filterCol],
                                               units=self.units, **kwargs)
         self.m5Col = m5Col
         self.optM5Col = optM5Col

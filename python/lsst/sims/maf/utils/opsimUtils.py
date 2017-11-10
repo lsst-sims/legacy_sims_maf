@@ -4,39 +4,10 @@ from __future__ import print_function
 import os
 import numpy as np
 from .outputUtils import printDict
-import warnings
 
-__all__ = ['connectOpsimDb', 'writeConfigs', 'createSQLWhere',
-           'getFieldData', 'getSimData', 'scaleBenchmarks', 'calcCoaddedDepth']
+__all__ = ['writeConfigs', 'getFieldData', 'getSimData',
+           'scaleBenchmarks', 'calcCoaddedDepth']
 
-def connectOpsimDb(database, summaryOnly=False, summaryTable='summary'):
-    """
-    Convenience function to handle connecting to database.
-
-    Parameters
-    ----------
-    database : str
-        The path to the OpSim sqlite database file.
-    summaryOnly : bool
-        Flag indicating that the opsim database only contains a summary table (or not - in which case,
-        a sqlite database file with all tables is expected).
-    summaryTable : str
-        The name of the summary table.
-
-    Returns
-    -------
-    OpsimDatabase
-    """
-    import lsst.sims.maf.db as db
-    if summaryOnly:
-        # Connect to just the summary table (might be sqlite created from flat dat output file).
-        opsimdb = db.OpsimDatabase(database=database,
-                                   dbTables={'Summary':[summaryTable, 'obsHistID']},
-                                   defaultdbTables = None)
-    else:
-        # For a basic db connection to the sqlite db files.
-        opsimdb = db.OpsimDatabase(database=database)
-    return opsimdb
 
 def writeConfigs(opsimDb, outDir):
     """
@@ -61,34 +32,6 @@ def writeConfigs(opsimDb, outDir):
     printDict(configDetails, 'Details', f)
     f.close()
 
-def createSQLWhere(tag, propTags):
-    """
-    Create a SQL constraint to identify observations taken for a particular proposal,
-    using the information in the propTags dictionary.
-
-    Parameters
-    ----------
-    tag : str
-        The name of the proposal for which to create a SQLwhere clause (WFD or DD).
-    propTags : dict
-        A dictionary of {proposal name : [proposal ids]}
-        This can be created using OpsimDatabase.fetchPropInfo()
-
-    Returns
-    -------
-    str
-        The SQL constraint, such as '(propID = 365) or (propID = 366)'
-    """
-    sqlWhere = ''
-    if (tag not in propTags) or (len(propTags[tag]) == 0):
-        print('No %s proposals found' %(tag))
-        # Create a sqlWhere clause that will not return anything as a query result.
-        sqlWhere = 'propID like "NO PROP"'
-    elif len(propTags[tag]) == 1:
-        sqlWhere = "propID = %d" %(propTags[tag][0])
-    else:
-        sqlWhere = "(" + " or ".join(["propID = %d"%(propid) for propid in propTags[tag]]) + ")"
-    return sqlWhere
 
 def getFieldData(opsimDb, sqlconstraint):
     """
@@ -111,7 +54,7 @@ def getFieldData(opsimDb, sqlconstraint):
         A numpy structured array containing the field information.
     """
     # Get all fields used for all proposals.
-    if 'propID' not in sqlconstraint:
+    if 'proposalId' not in sqlconstraint:
         propids, propTags = opsimDb.fetchPropInfo()
         propids = list(propids.keys())
     else:
@@ -120,14 +63,14 @@ def getFieldData(opsimDb, sqlconstraint):
         sqlconstraint = sqlconstraint.replace('=', ' = ').replace('(', '').replace(')', '')
         sqlconstraint = sqlconstraint.replace("'", '').replace('"', '')
         # Allow for choosing all but a particular proposal.
-        sqlconstraint = sqlconstraint.replace('! =' , ' !=')
+        sqlconstraint = sqlconstraint.replace('! =', ' !=')
         sqlconstraint = sqlconstraint.replace('  ', ' ')
         sqllist = sqlconstraint.split(' ')
         propids = []
         nonpropids = []
         i = 0
         while i < len(sqllist):
-            if sqllist[i].lower() == 'propid':
+            if sqllist[i].lower() == 'proposalid':
                 i += 1
                 if sqllist[i] == "=":
                     i += 1
@@ -137,7 +80,8 @@ def getFieldData(opsimDb, sqlconstraint):
                     nonpropids.append(int(sqllist[i]))
             i += 1
         if len(propids) == 0:
-            propids = list(self.propids.keys())
+            propids, propTags = opsimDb.fetchPropInfo()
+            propids = list(propids.keys())
         if len(nonpropids) > 0:
             for nonpropid in nonpropids:
                 if nonpropid in propids:
@@ -145,12 +89,13 @@ def getFieldData(opsimDb, sqlconstraint):
     # And query the field Table.
     if 'Field' in opsimDb.tables:
         fieldData = opsimDb.fetchFieldsFromFieldTable(propids)
+    # Or give up and query the summary table.
     else:
         fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)
     return fieldData
 
-def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary', distinctExpMJD=True,
-               groupBy='expMJD'):
+
+def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, groupBy='default', tableName=None):
     """
     Query an opsim database for the needed data columns and run any required stackers.
 
@@ -177,10 +122,9 @@ def getSimData(opsimDb, sqlconstraint, dbcols, stackers=None, tableName='Summary
         the SQLconstraint.
     """
     # Get data from database.
-    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint, tableName=tableName,
-                                      distinctExpMJD=distinctExpMJD, groupBy=groupBy)
+    simData = opsimDb.fetchMetricData(dbcols, sqlconstraint, groupBy=groupBy, tableName=tableName)
     if len(simData) == 0:
-        raise UserWarning('No data found matching sqlconstraint %s' %(sqlconstraint))
+        raise UserWarning('No data found matching sqlconstraint %s' % (sqlconstraint))
     # Now add the stacker columns.
     if stackers is not None:
         for s in stackers:
@@ -248,7 +192,8 @@ def scaleBenchmarks(runLength, benchmark='design'):
     elif benchmark == 'stretch':
         return stretch
     else:
-        raise ValueError("Benchmark value %s not understood: use 'design' or 'stretch'" %(benchmark))
+        raise ValueError("Benchmark value %s not understood: use 'design' or 'stretch'" % (benchmark))
+
 
 def calcCoaddedDepth(nvisits, singleVisitDepth):
     """

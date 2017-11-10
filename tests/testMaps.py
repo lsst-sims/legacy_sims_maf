@@ -23,15 +23,15 @@ def makeDataValues(size=100, min=0., max=1., random=True):
     ids = np.arange(size)
     datavalues = np.array(list(zip(datavalues, datavalues, ids)),
                           dtype=[('fieldRA', 'float'),
-                                 ('fieldDec', 'float'), ('fieldID', 'int')])
+                                 ('fieldDec', 'float'), ('fieldId', 'int')])
     return datavalues
 
 
 def makeFieldData():
-    names = ['fieldID', 'fieldRA', 'fieldDec']
+    names = ['fieldId', 'fieldRA', 'fieldDec']
     types = [int, float, float]
     fieldData = np.zeros(100, dtype=list(zip(names, types)))
-    fieldData['fieldID'] = np.arange(100)
+    fieldData['fieldId'] = np.arange(100)
     fieldData['fieldRA'] = np.random.rand(100)
     fieldData['fieldDec'] = np.random.rand(100)
     return fieldData
@@ -48,14 +48,14 @@ class TestMaps(unittest.TestCase):
             data = makeDataValues()
             dustmap = maps.DustMap()
 
-            slicer1 = slicers.HealpixSlicer()
+            slicer1 = slicers.HealpixSlicer(latLonDeg=False)
             slicer1.setupSlicer(data)
             result1 = dustmap.run(slicer1.slicePoints)
             assert('ebv' in list(result1.keys()))
 
             fieldData = makeFieldData()
 
-            slicer2 = slicers.OpsimFieldSlicer()
+            slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = dustmap.run(slicer2.slicePoints)
             assert('ebv' in list(result2.keys()))
@@ -83,7 +83,7 @@ class TestMaps(unittest.TestCase):
             nsides = [32, 64, 128]
             for nside in nsides:
                 starmap = maps.StellarDensityMap()
-                slicer1 = slicers.HealpixSlicer(nside=nside)
+                slicer1 = slicers.HealpixSlicer(nside=nside, latLonDeg=False)
                 slicer1.setupSlicer(data)
                 result1 = starmap.run(slicer1.slicePoints)
                 assert('starMapBins' in list(result1.keys()))
@@ -92,7 +92,7 @@ class TestMaps(unittest.TestCase):
 
             fieldData = makeFieldData()
 
-            slicer2 = slicers.OpsimFieldSlicer()
+            slicer2 = slicers.OpsimFieldSlicer(latLonDeg=False)
             slicer2.setupSlicer(data, fieldData)
             result2 = starmap.run(slicer2.slicePoints)
             assert('starMapBins' in list(result2.keys()))

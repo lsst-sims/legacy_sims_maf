@@ -5,11 +5,11 @@ __all__ = ['LongGapAGNMetric']
 
 
 class LongGapAGNMetric(BaseMetric):
-    """Compute the max delta-t and average of the top-10 longest observation gaps.
+    """max delta-t and average of the top-10 longest gaps.
     """
 
     def __init__(self, metricName='longGapAGNMetric',
-                 mjdcol='expMJD', units='days', xgaps=10, badval=-666,
+                 mjdcol='observationStartMJD', units='days', xgaps=10, badval=-666,
                  **kwargs):
         """ Instantiate metric.
         mjdcol = column name for exposure time dates

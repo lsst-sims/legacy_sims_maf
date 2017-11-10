@@ -1501,7 +1501,7 @@ if __name__ == '__main__':
     times = nyears * 365 + 59580
     bins = np.arange(5, 95, 10.)  # binsize to split period (360deg)
     windows = np.arange(1, 200, 15)  # binsize to split time (days)
-    mParams = {'nyears': nyears, 'times': times, ''bins': bins, 'windows': windows}
+    mParams = {'nyears': nyears, 'times': times, 'bins': bins, 'windows': windows}
 
     if args.plotOnly:
         # Set up resultsDb.
@@ -1531,5 +1531,12 @@ if __name__ == '__main__':
                 Hmark=args.hMark, resultsDb=resultsDb)
 
     if args.opsimDb is not None:
-        opsdb = db.OpsimDatabase(args.opsimDb)
-        utils.writeConfigs(opsdb, args.outDir)
+        vers = db.testOpsimVersion(args.opsimDb)
+        if (vers == "V3"):
+            opsdb = db.OpsimDatabaseV3(args.opsimDb)
+            utils.writeConfigs(opsdb, args.outDir)
+        elif (vers == "V4"):
+            opsdb = db.OpsimDatabaseV4(args.opsimDb)
+            utils.writeConfigs(opsdb, args.outDir)
+        else:
+            print('Could not determine opsim database type, skipping configs.')

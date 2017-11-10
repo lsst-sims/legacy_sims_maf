@@ -1,7 +1,4 @@
 from __future__ import print_function
-
-__all__ = ['makeBundlesDictFromList', 'MetricBundleGroup']
-
 from builtins import object
 import os
 import numpy as np
@@ -15,6 +12,8 @@ from lsst.sims.maf.plots import PlotHandler
 import lsst.sims.maf.maps as maps
 from .metricBundle import MetricBundle, createEmptyMetricBundle
 import warnings
+
+__all__ = ['makeBundlesDictFromList', 'MetricBundleGroup']
 
 
 def makeBundlesDictFromList(bundleList):
@@ -80,7 +79,7 @@ class MetricBundleGroup(object):
         The name of the table in the dbObj to query for data.
     """
     def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
-                 saveEarly=True, dbTable='Summary'):
+                 saveEarly=True, dbTable=None):
         """Set up the MetricBundleGroup.
         """
         # Print occasional messages to screen.
@@ -91,8 +90,7 @@ class MetricBundleGroup(object):
         self.outDir = outDir
         if not os.path.isdir(self.outDir):
             os.makedirs(self.outDir)
-        # Set the table we're going to be querying.
-        self.dbTable = dbTable
+
         # Do some type checking on the MetricBundle dictionary.
         if not isinstance(bundleDict, dict):
             raise ValueError('bundleDict should be a dictionary containing MetricBundle objects.')
@@ -103,10 +101,16 @@ class MetricBundleGroup(object):
         self.constraints = list(set([b.constraint for b in bundleDict.values()]))
         # Set the bundleDict (all bundles, with all constraints)
         self.bundleDict = bundleDict
+
         # Check the dbObj.
         if not isinstance(dbObj, db.Database):
             warnings.warn('Warning: dbObj should be an instantiated Database (or child) object.')
         self.dbObj = dbObj
+        # Set the table we're going to be querying.
+        self.dbTable = dbTable
+        if self.dbTable is None and self.dbObj is not None:
+            self.dbTable = self.dbObj.defaultTable
+
         # Check the resultsDb (optional).
         if resultsDb is not None:
             if not isinstance(resultsDb, db.ResultsDb):
@@ -178,42 +182,6 @@ class MetricBundleGroup(object):
                 compatibleLists.append([k, ])
         self.compatibleLists = compatibleLists
 
-    def getData(self, constraint):
-        """Query the data from the database.
-
-        The currently bundleDict should generally be set before calling getData (using setCurrent).
-
-        Parameters
-        ----------
-        constraint : str
-           The constraint for the currently active set of MetricBundles.
-        """
-        if self.verbose:
-            if constraint == '':
-                print("Querying database with no constraint.")
-            else:
-                print("Querying database with constraint %s" % (constraint))
-        # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
-        if self.dbTable != 'Summary':
-            distinctExpMJD = False
-            groupBy = None
-        else:
-            distinctExpMJD = True
-            groupBy = 'expMJD'
-        self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
-                                        tableName=self.dbTable, distinctExpMJD=distinctExpMJD,
-                                        groupBy=groupBy)
-
-        if self.verbose:
-            print("Found %i visits" % (self.simData.size))
-
-        # Query for the fieldData if we need it for the opsimFieldSlicer.
-        needFields = [b.slicer.needsFields for b in self.currentBundleDict.values()]
-        if True in needFields:
-            self.fieldData = utils.getFieldData(self.dbObj, constraint)
-        else:
-            self.fieldData = None
-
     def runAll(self, clearMemory=False, plotNow=False, plotKwargs=None):
         """Runs all the metricBundles in the metricBundleGroup, over all constraints.
 
@@ -246,6 +214,8 @@ class MetricBundleGroup(object):
             included in a subset identified as the currentBundleDict.
             These are the active metrics to be calculated and plotted, etc.
         """
+        if constraint is None:
+            constraint = ''
         self.currentBundleDict = {}
         for k, b in self.bundleDict.items():
             if b.constraint == constraint:
@@ -289,10 +259,18 @@ class MetricBundleGroup(object):
                 self.getData(constraint)
             except UserWarning:
                 warnings.warn('No data matching constraint %s' % constraint)
+                metricsSkipped = []
+                for b in self.currentBundleDict.values():
+                    metricsSkipped.append("%s : %s : %s" % (b.metric.name, b.metadata, b.slicer.slicerName))
+                warnings.warn(' This means skipping metrics %s' % metricsSkipped)
                 return
             except ValueError:
-                warnings.warn('One of the columns requested from the database was not available.' +
+                warnings.warn('One or more of the columns requested from the database was not available.' +
                               ' Skipping constraint %s' % constraint)
+                metricsSkipped = []
+                for b in self.currentBundleDict.values():
+                    metricsSkipped.append("%s : %s : %s" % (b.metric.name, b.metadata, b.slicer.slicerName))
+                warnings.warn(' This means skipping metrics %s' % metricsSkipped)
                 return
 
         # Find compatible subsets of the MetricBundle dictionary,
@@ -328,6 +306,37 @@ class MetricBundleGroup(object):
                 b.metricValues = None
             if self.verbose:
                 print('Deleted metricValues from memory.')
+
+    def getData(self, constraint):
+        """Query the data from the database.
+
+        The currently bundleDict should generally be set before calling getData (using setCurrent).
+
+        Parameters
+        ----------
+        constraint : str
+           The constraint for the currently active set of MetricBundles.
+        """
+        if self.verbose:
+            if constraint == '':
+                print("Querying database %s with no constraint for columns %s." %
+                      (self.dbTable, self.dbCols))
+            else:
+                print("Querying database %s with constraint %s for columns %s" %
+                      (self.dbTable, constraint, self.dbCols))
+        # Note that we do NOT run the stackers at this point (this must be done in each 'compatible' group).
+        self.simData = utils.getSimData(self.dbObj, constraint, self.dbCols,
+                                        groupBy='default', tableName=self.dbTable)
+
+        if self.verbose:
+            print("Found %i visits" % (self.simData.size))
+
+        # Query for the fieldData if we need it for the opsimFieldSlicer.
+        needFields = [b.slicer.needsFields for b in self.currentBundleDict.values()]
+        if True in needFields:
+            self.fieldData = utils.getFieldData(self.dbObj, constraint)
+        else:
+            self.fieldData = None
 
     def _runCompatible(self, compatibleList):
         """Runs a set of 'compatible' metricbundles in the MetricBundleGroup dictionary,
@@ -534,7 +543,6 @@ class MetricBundleGroup(object):
         """
         for constraint in self.constraints:
             if self.verbose:
-
                 print('Plotting figures with "%s" constraint now.' % (constraint))
 
             self.setCurrent(constraint)

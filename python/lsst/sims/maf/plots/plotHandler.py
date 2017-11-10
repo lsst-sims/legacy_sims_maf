@@ -7,7 +7,16 @@ import warnings
 import matplotlib.pyplot as plt
 import lsst.sims.maf.utils as utils
 
-__all__ = ['PlotHandler', 'BasePlotter']
+__all__ = ['applyZPNorm', 'PlotHandler', 'BasePlotter']
+
+def applyZPNorm(metricValue, plotDict):
+    if 'zp' in plotDict:
+        if plotDict['zp'] is not None:
+            metricValue = metricValue - plotDict['zp']
+    if 'normVal' in plotDict:
+        if plotDict['normVal'] is not None:
+            metricValue = metricValue / plotDict['normVal']
+    return metricValue
 
 
 class BasePlotter(object):
@@ -16,7 +25,9 @@ class BasePlotter(object):
     """
     def __init__(self):
         self.plotType = None
-        self.defaultPlotDict = None
+        # This should be included in every subsequent defaultPlotDict (assumed to be present).
+        self.defaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
+                                'labelsize': None, 'fontsize': None, 'figsize': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
         pass
@@ -538,7 +549,6 @@ class PlotHandler(object):
                 plt.xlim(plotlims['x'])
                 plt.ylim(plotlims['y'])
             except TypeError:
-                # Not an x/y type plot.
                 pass
         # Add a legend if more than one metricValue is being plotted or if legendloc is specified.
         legendloc = None
@@ -561,14 +571,18 @@ class PlotHandler(object):
         return fignum
 
     def saveFig(self, fignum, outfileRoot, plotType, metricName, slicerName,
-                runName, constraint, metadata, displayDict=None):
+                runName, constraint, metadata, displayDict=None, trimWhitespace=True):
         fig = plt.figure(fignum)
         plotFile = outfileRoot + '_' + plotType + '.' + self.figformat
-        fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
+        if trimWhitespace:
+            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi,
+                        bbox_inches='tight')
+        else:
+            fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi)
         # Generate a png thumbnail.
         if self.thumbnail:
             thumbFile = 'thumb.' + outfileRoot + '_' + plotType + '.png'
-            plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72)
+            plt.savefig(os.path.join(self.outDir, thumbFile), dpi=72, bbox_inches='tight')
         # Save information about the file to resultsDb.
         if self.resultsDb:
             if displayDict is None:

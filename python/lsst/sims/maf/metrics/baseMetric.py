@@ -1,7 +1,4 @@
 from __future__ import print_function
-
-__all__ = ['MetricRegistry', 'BaseMetric']
-
 from builtins import zip
 from builtins import map
 from builtins import object
@@ -18,11 +15,13 @@ import inspect
 from lsst.sims.maf.stackers.getColInfo import ColInfo
 from future.utils import with_metaclass
 
+__all__ = ['MetricRegistry', 'BaseMetric']
+
 
 class MetricRegistry(type):
-    """Meta class for metrics, to build a registry of metric classes.
     """
-
+    Meta class for metrics, to build a registry of metric classes.
+    """
     def __init__(cls, name, bases, dict):
         super(MetricRegistry, cls).__init__(name, bases, dict)
         if not hasattr(cls, 'registry'):
@@ -55,21 +54,19 @@ class MetricRegistry(type):
     def help_metric(cls, metricname):
         print(metricname)
         print(inspect.getdoc(cls.registry[metricname]))
-        args, varargs, kwargs, defaults = inspect.getargspec(cls.registry[metricname].__init__)
-        args_with_defaults = args[-len(defaults):]
+        k = inspect.signature(cls.registry[metricname])
         print(' Metric __init__ keyword args and defaults: ')
-        for a, d in zip(args_with_defaults, defaults):
-            print('     ', a, d)
+        print(k)
 
 
 class ColRegistry(object):
-    """ColRegistry tracks the columns needed for all metric objects (kept internally in a set).
+    """
+    ColRegistry tracks the columns needed for all metric objects (kept internally in a set).
 
     ColRegistry.colSet : a set of all unique columns required for metrics.
     ColRegistry.dbCols : the subset of these which come from the database.
     ColRegistry.stackerCols : the dictionary of [columns: stacker class].
     """
-
     colInfo = ColInfo()
 
     def __init__(self):
@@ -89,17 +86,19 @@ class ColRegistry(object):
             list of columns used in a metric.
         """
         for col in colArray:
-            self.colSet.add(col)
-            source = self.colInfo.getDataSource(col)
-            if source == self.colInfo.defaultDataSource:
-                self.dbSet.add(col)
-            else:
-                if col not in self.stackerDict:
-                    self.stackerDict[col] = source
+            if col is not None:
+                self.colSet.add(col)
+                source = self.colInfo.getDataSource(col)
+                if source == self.colInfo.defaultDataSource:
+                    self.dbSet.add(col)
+                else:
+                    if col not in self.stackerDict:
+                        self.stackerDict[col] = source
 
 
 class BaseMetric(with_metaclass(MetricRegistry, object)):
-    """Base class for the metrics.
+    """
+    Base class for the metrics.
     Sets up some basic functionality for the MAF framework: after __init__ every metric will
     record the columns (and stackers) it requires into the column registry, and the metricName,
     metricDtype, and units for the metric will be set.
@@ -185,7 +184,7 @@ class BaseMetric(with_metaclass(MetricRegistry, object)):
            metric values at each slicePoint.
         slicePoint : Dict
            Dictionary of slicePoint metadata passed to each metric.
-           E.g. the ra/dec of the healpix pixel or opsim fieldID.
+           E.g. the ra/dec of the healpix pixel or opsim fieldId.
 
         Returns
         -------

@@ -25,7 +25,6 @@ def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
     numpy.ndarray
        The integrated or cumulative metric values.
     """
-
     # Set expected H distribution.
     # dndh = differential size distribution (number in this bin)
     dndh = np.power(10., Hindex*(Hvalues-Hvalues.min()))
@@ -44,9 +43,8 @@ class ValueAtHMetric(BaseMoMetric):
     Hmark : float, opt
         The H value at which to look up the metric value. Default = 22.
     """
-
     def __init__(self, Hmark=22, **kwargs):
-        metricName = 'Value At H=%.1f' % (Hmark)
+        metricName = 'Value At H=%.1f' %(Hmark)
         super(ValueAtHMetric, self).__init__(metricName=metricName, **kwargs)
         self.Hmark = Hmark
 
@@ -72,9 +70,8 @@ class MeanValueAtHMetric(BaseMoMetric):
     Hmark : float, opt
         The H value at which to look up the metric value. Default = 22.
     """
-
     def __init__(self, Hmark=22, **kwargs):
-        metricName = 'Mean Value At H=%.1f' % (Hmark)
+        metricName = 'Mean Value At H=%.1f' %(Hmark)
         super(MeanValueAtHMetric, self).__init__(metricName=metricName, **kwargs)
         self.Hmark = Hmark
 
@@ -83,9 +80,9 @@ class MeanValueAtHMetric(BaseMoMetric):
         if (self.Hmark < Hvals.min()) or (self.Hmark > Hvals.max()):
             warnings.warn('Desired H value of metric outside range of provided H values.')
             return None
-        value = np.interpolate([self.Hmark], Hvals, np.mean(metricVals.swapaxes(0, 1)))
+        value = np.interp([self.Hmark], Hvals, np.mean(metricVals.swapaxes(0, 1)))
         # Combine Hmark and Value into a structured array to match resultsDB expectations.
-        summaryVal = np.empty(1, dtype=[('name', '|S20'), ('value', float)])
+        summaryVal = np.empty(1, dtype=[('name', np.str_, 20), ('value', float)])
         summaryVal['name'] = self.name
         summaryVal['value'] = value
         return summaryVal
@@ -114,15 +111,14 @@ class MoCompletenessMetric(BaseMoMetric):
     Hindex : float, opt
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
-
     def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.3, **kwargs):
         if 'metricName' in kwargs:
             metricName = kwargs.pop('metricName')
             if metricName.startswith('Cumulative'):
-                self.cumulative = True
+                self.cumulative=True
                 units = '<= H'
             else:
-                self.cumulative = False
+                self.cumulative=False
                 units = '@ H'
         else:
             self.cumulative = cumulative
@@ -163,20 +159,19 @@ class MoCompletenessMetric(BaseMoMetric):
             condition = np.where(discoveriesH[0] >= self.requiredChances)[0]
             n_found, b = np.histogram(discoveriesH[0][condition], bins)
             completeness = n_found.astype(float) / n_all.astype(float)
-            completeness = np.where(n_all == 0, 0, completeness)
+            completeness = np.where(n_all==0, 0, completeness)
         if self.cumulative:
             completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
-            summaryVal = np.empty(len(completenessInt), dtype=[('name', '|S20'), ('value', float)])
+            summaryVal = np.empty(len(completenessInt), dtype=[('name', np.str_, S20), ('value', float)])
             summaryVal['value'] = completenessInt
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H <= %f' % (Hval)
         else:
-            summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
+            summaryVal = np.empty(len(completeness), dtype=[('name', np.str_, 20), ('value', float)])
             summaryVal['value'] = completeness
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H = %f' % (Hval)
         return summaryVal
-
 
 class MoCompletenessAtTimeMetric(BaseMoMetric):
     """Calculate the completeness (relative to the entire population) <= a given H as a function of time,
@@ -236,8 +231,8 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         completeness = completenessH.swapaxes(0, 1)
         if self.cumulative:
             for i, t in enumerate(self.times):
-                completeness[i] = integrateOverH(completeness[i], Hvals)
-        summaryVal = np.empty(len(completeness), dtype=[('name', '|S20'), ('value', float)])
+                completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
+        summaryVal = np.empty(len(completeness), dtype=[('name', np.str_, 20), ('value', float)])
         summaryVal['value'] = completeness
         for i, time in enumerate(self.times):
             summaryVal['name'][i] = '%s @ %.2f' % (self.units, time)
