@@ -53,6 +53,7 @@ class DataHandler(web.RequestHandler):
         metricId = int(self.request.arguments['metricId'][0])
         if 'datatype' in self.request.arguments:
             datatype = self.request.arguments['datatype'][0].lower()
+            datatype = datatype.decode('utf-8')
         else:
             datatype = 'npz'
         run = runlist.getRun(runId)
