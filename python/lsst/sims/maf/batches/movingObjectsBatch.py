@@ -52,12 +52,12 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
 
     if detectionLosses not in ('detection', 'trailing'):
         raise ValueError('Please choose detection or trailing as options for detectionLosses.')
-    if detectionLosses == ' trailing':
+    if detectionLosses == 'trailing':
         magStacker = stackers.MoMagStacker(lossCol='dmagTrail')
-        detectionLosses = ' detection loss'
+        detectionLosses = ' trailing loss'
     else:
         magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
-        detectionLosses = ' trailing loss'
+        detectionLosses = ' detection loss'
 
     if times is None:
         try:
