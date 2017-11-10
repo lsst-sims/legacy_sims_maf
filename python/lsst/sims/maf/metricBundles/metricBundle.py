@@ -64,8 +64,8 @@ class MetricBundle(object):
                 warnings.warn('Future warning - "sqlconstraint" will be deprecated in favor of '
                               '"constraint" in a future release.')
                 self.constraint = sqlconstraint
-            else:
-                self.constraint = ''
+        if self.constraint is None:
+            self.constraint = ''
         # Set the stackerlist if applicable.
         if stackerList is not None:
             if isinstance(stackerList, stackers.BaseStacker):

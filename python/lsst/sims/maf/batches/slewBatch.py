@@ -10,7 +10,7 @@ from .common import standardMetrics
 __all__ = ['slewBasics', 'slewAngles', 'slewSpeeds', 'slewActivities']
 
 
-def slewBasics(colmap=None, runName='opsim'):
+def slewBasics(colmap=None, runName='opsim', sqlConstraint=None):
     """Generate a simple set of statistics about the slew times and distances.
     These slew statistics can be run on the summary or default tables.
 
@@ -20,6 +20,8 @@ def slewBasics(colmap=None, runName='opsim'):
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
+    sqlConstraint : str or None, opt
+        SQL constraint to add to metrics. (note this runs on summary table).
 
     Returns
     -------
@@ -32,7 +34,6 @@ def slewBasics(colmap=None, runName='opsim'):
     bundleList = []
 
     # Calculate basic stats on slew times. (mean/median/min/max + total).
-    sql = ''
     slicer = slicers.UniSlicer()
 
     metadata = 'All visits'
@@ -41,12 +42,12 @@ def slewBasics(colmap=None, runName='opsim'):
     metric = metrics.CountMetric(colmap['slewtime'], metricName='Slew Count')
     displayDict['caption'] = 'Total number of slews recorded in summary table.'
     displayDict['order'] += 1
-    bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
+    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata, displayDict=displayDict)
     bundleList.append(bundle)
     for metric in standardMetrics(colmap['slewtime']):
         displayDict['caption'] = '%s in seconds.' % (metric.name)
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
+        bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata, displayDict=displayDict)
         bundleList.append(bundle)
 
     # Slew Time histogram.
@@ -57,7 +58,7 @@ def slewBasics(colmap=None, runName='opsim'):
     plotDict = {'logScale': True, 'ylabel': 'Count'}
     displayDict['caption'] = 'Histogram of slew times (seconds) for all visits.'
     displayDict['order'] += 1
-    bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
                              plotDict=plotDict, displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -69,7 +70,7 @@ def slewBasics(colmap=None, runName='opsim'):
         plotDict = {'logScale': True, 'ylabel': 'Count'}
         displayDict['caption'] = 'Histogram of slew distances (angle) for all visits.'
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+        bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
                                  plotDict=plotDict, displayDict=displayDict)
         bundleList.append(bundle)
 
@@ -79,7 +80,7 @@ def slewBasics(colmap=None, runName='opsim'):
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def slewAngles(colmap=None, runName='opsim'):
+def slewAngles(colmap=None, runName='opsim', sqlConstraint=None):
     """Generate a set of slew statistics focused on the angles of each component (dome and telescope).
     These slew statistics must be run on the SlewFinalState or SlewInitialState table in opsimv4,
     and on the SlewState table in opsimv3.
@@ -90,6 +91,9 @@ def slewAngles(colmap=None, runName='opsim'):
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
+    sqlConstraint : str or None, opt
+        SQL constraint to apply to metrics. Note this runs on Slew*State table, so constraints
+        should generally be based on slew_slewCount.
 
     Returns
     -------

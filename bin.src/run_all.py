@@ -16,13 +16,13 @@ def setBatches(opsdb, colmap, args):
     propids, proptags, sqltags = setSQL(opsdb, sqlConstraint=args.sqlConstraint)
 
     bdict = {}
-    bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
+    #bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
     bdict.update(batches.intraNight(colmap, args.runName, sqlConstraint=args.sqlConstraint))
     # All metadata, all proposals.
-    bdict.update(batches.allMetadata(colmap, args.runName, sqlconstraint=args.sqlConstraint,
-    #                                 metadata='All props'))
+    bdict.update(batches.allMetadata(colmap, args.runName, sqlConstraint=args.sqlConstraint,
+                                     metadata='All props'))
     # WFD only.
-    bdict.update(batches.allMetadata(colmap, args.runName, sqlconstraint=sqltags['WFD'], metadata='WFD'))
+    bdict.update(batches.allMetadata(colmap, args.runName, sqlConstraint=sqltags['WFD'], metadata='WFD'))
     # number of observations per proposal and per night.
     bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName, sqlConstraint=args.sqlConstraint))
     # add nvisits / teff maps.

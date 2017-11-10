@@ -17,6 +17,7 @@ import matplotlib.cm as cm
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
@@ -213,7 +214,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 mag_zp = benchmarkDDVals['coaddedDepth'][f]
 
             # Make a new slicer for each metric since they can get setup with different fields later
-            slicer = slicers.OpsimFieldSlicer()
+            slicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
             # Configure the metrics to run for this sql constraint (all proposals/wfd and filter combo).
 
             # Count the total number of visits.
@@ -390,6 +391,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 mergedHistDict[prop + 'MaxAirmass'].addBundle(bundle, plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the mean of the hour angle.
+                hastacker = stackers.HourAngleStacker(lstCol='lst', raCol='fieldRA', deg=False)
                 metric = metrics.MeanMetric(col='HA')
                 plotDict = {'xMin': -6, 'xMax': 6, 'colorMin': -6, 'colorMax': 6}
                 displayDict = {'group': houranglegroup, 'subgroup': subgroup, 'order': filtorder[f],
@@ -397,7 +399,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                % (f, propCaption)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata,
+                                                    metadata=metadata, stackerList=[hastacker],
                                                     summaryMetrics=summaryStats)
                 histMerge = {'color': colors[f], 'label': '%s' % (f),
                              'xlabel': 'Mean Hour Angle (Hours)',
@@ -412,7 +414,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                % (f, propCaption)}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata,
+                                                    metadata=metadata, stackerList=[hastacker],
                                                     summaryMetrics=summaryStats)
                 histMerge = {'color': colors[f], 'label': '%s' % (f),
                              'xlabel': 'Full Hour Angle Range',
@@ -437,7 +439,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 mergedHistDict[prop + 'RMSrotSkyPos'].addBundle(bundle, plotDict=histMerge)
                 bundleList.append(bundle)
 
-    slicer = slicers.OpsimFieldSlicer()
+    slicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
     # Count the number of visits in all filters together, WFD only.
     sqlconstraint = wfdWhere
     metadata = 'All filters, WFD, cumulative'
@@ -453,7 +455,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         summaryMetrics=summaryStats, plotFuncs=[plotFunc])
     bundleList.append(bundle)
     # Regular Histogram
-    slicer = slicers.OpsimFieldSlicer()
+    slicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
     metric = metrics.CountMetric(col='expMJD', metricName='NVisits')
     metadata = 'All filters, WFD'
     plotDict = {'xlabel': 'Number of Visits', 'binsize': 5, 'cumulative': False,
@@ -480,7 +482,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     for propid in propids:
         for f in filters:
             # Count the number of visits.
-            slicer = slicers.OpsimFieldSlicer()
+            slicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
             sqlconstraint = 'filter = "%s" and propID = %s' % (f, propid)
             metadata = '%s band, %s' % (f, propids[propid])
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
@@ -504,7 +506,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     # above, but with different nvisits limits.
     if len(WFDpropid) > 1:
         for f in filters:
-            slicer = slicers.OpsimFieldSlicer()
+            slicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
             sqlconstraint = 'filter = "%s" and %s' % (f, wfdWhere)
             metadata = '%s band, WFD' % (f)
             metric = metrics.CountMetric(col='expMJD', metricName='NVisits Per Proposal')
@@ -534,7 +536,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
             sqlconstraint = '%s' % (wfdWhere)
             xlabel = '# visits (WFD) / (# WFD %s value)' % (benchmark)
         # Configure completeness metric.
-        slicer = slicers.OpsimFieldSlicer()
+        slicer = slicers.OpsimFieldSlicer(simDataFieldIdColName='fieldID', fieldIdColName='fieldID')
         metric = metrics.CompletenessMetric(u=benchmarkVals['nvisits']['u'],
                                             g=benchmarkVals['nvisits']['g'],
                                             r=benchmarkVals['nvisits']['r'],
@@ -559,7 +561,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     for i in range(len(yearDates) - 1):
         sqlconstraint = 'night > %i and night <= %i' % (yearDates[i], yearDates[i + 1])
         metadata = 'Year %i-%i' % (i, i + 1)
-        metric = metrics.HourglassMetric()
+        metric = metrics.HourglassMetric(mjdCol='expMJD', filterCol='filter', nightCol='night')
         displayDict = {'group': hourglassgroup, 'subgroup': 'Yearly', 'order': i}
         bundle = metricBundles.MetricBundle(metric, hourSlicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, runName=runName, metadata=metadata)
@@ -651,7 +653,8 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
             displayDict = {'group': houranglegroup, 'subgroup': subgroup, 'order': filtorder[f],
                            'caption': 'Histogram of the hour angle in %s band, %s' % (f, propCaption)}
             slicer = slicers.OneDSlicer(sliceColName='HA', binsize=0.1)
-            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+            bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, stackerList=[hastacker],
+                                                plotDict=plotDict,
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop + 'hourAngle'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
@@ -727,7 +730,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         displayDict=displayDict, runName=runName, metadata=metadata,
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
-    metric = metrics.OpenShutterFractionMetric()
+    metric = metrics.OpenShutterFractionMetric(slewTimeCol='slewTime', expTimeCol='visitExpTime', visitTimeCol='visitTime')
     caption = 'Open shutter fraction per night. This compares the on-sky image time against '
     caption += 'the on-sky time + slews/filter changes/readout, but does not include downtime '
     caption += 'due to weather.'
@@ -738,7 +741,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
-    metric = metrics.NChangesMetric(col='filter', metricName='Filter Changes')
+    metric = metrics.NChangesMetric(col='filter', orderBy='expMJD',  metricName='Filter Changes')
     plotDict = {'ylabel': 'Number of Filter Changes'}
     displayDict = {'group': filtergroup, 'subgroup': 'Per Night',
                    'caption': 'Number of filter changes per night.'}
@@ -747,7 +750,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
-    metric = metrics.MinTimeBetweenStatesMetric(changeCol='filter')
+    metric = metrics.MinTimeBetweenStatesMetric(changeCol='filter', timeCol='expMJD')
     plotDict = {'yMin': 0, 'yMax': 120}
     displayDict = {'group': filtergroup, 'subgroup': 'Per Night',
                    'caption': 'Minimum time between filter changes, in minutes.'}
@@ -757,7 +760,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     cutoff = 10
-    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=cutoff)
+    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=cutoff, timeCol='expMJD')
     plotDict = {}
     caption = 'Number of filter changes, where the time between filter changes is shorter '
     caption += 'than %.1f minutes, per night.' % (cutoff)
@@ -768,7 +771,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
-    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=20)
+    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=20, timeCol='expMJD')
     plotDict = {}
     caption = 'Number of filter changes, where the time between filter changes '
     caption += 'is shorter than 20 minutes, per night.'
@@ -779,7 +782,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
-    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=10)
+    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=10, timeCol='expMJD')
     plotDict = {}
     displayDict = {'group': filtergroup, 'subgroup': 'Per Night',
                    'caption': 'Max number of filter changes within a window of 10 minutes, per night.'}
@@ -788,7 +791,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                         summaryMetrics=summaryStats)
     bundleList.append(bundle)
 
-    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=20)
+    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=20, timeCol='expMJD')
     plotDict = {}
     displayDict = {'group': filtergroup, 'subgroup': 'Per Night',
                    'caption': 'Max number of filter changes within a window of 20 minutes, per night.'}
@@ -803,7 +806,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     metadata = 'All visits'
     order = 0
 
-    metric = metrics.NChangesMetric(col='filter', metricName='Total Filter Changes')
+    metric = metrics.NChangesMetric(col='filter', metricName='Total Filter Changes', orderBy='expMJD')
     displayDict = {'group': filtergroup, 'subgroup': 'Whole Survey', 'order': order,
                    'caption': 'Total filter changes over survey'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -811,7 +814,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     order += 1
-    metric = metrics.MinTimeBetweenStatesMetric(changeCol='filter')
+    metric = metrics.MinTimeBetweenStatesMetric(changeCol='filter', timeCol='expMJD')
     displayDict = {'group': filtergroup, 'subgroup': 'Whole Survey', 'order': order,
                    'caption': 'Minimum time between filter changes, in minutes.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -819,7 +822,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     order += 1
-    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=10)
+    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=10, timeCol='expMJD')
     displayDict = {'group': filtergroup, 'subgroup': 'Whole Survey', 'order': order,
                    'caption': 'Number of filter changes faster than 10 minutes over the entire survey.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -827,7 +830,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     order += 1
-    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=20)
+    metric = metrics.NStateChangesFasterThanMetric(changeCol='filter', cutoff=20, timeCol='expMJD')
     displayDict = {'group': filtergroup, 'subgroup': 'Whole Survey', 'order': order,
                    'caption': 'Number of filter changes faster than 20 minutes over the entire survey.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
@@ -835,7 +838,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     order += 1
-    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=10)
+    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=10, timeCol='expMJD')
     caption = 'Max number of filter changes within a window of 10 minutes over the entire survey.'
     displayDict = {'group': filtergroup, 'subgroup': 'Whole Survey', 'order': order,
                    'caption': caption}
@@ -844,7 +847,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     order += 1
-    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=20)
+    metric = metrics.MaxStateChangesWithinMetric(changeCol='filter', timespan=20, timeCol='expMJD')
     caption = 'Max number of filter changes within a window of 20 minutes over the entire survey.'
     displayDict = {'group': filtergroup, 'subgroup': 'Whole Survey', 'order': order,
                    'caption': caption}
@@ -1234,7 +1237,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     # Check the Alt-Az pointing history
-    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
+    zenithstacker = stackers.ZenithDistStacker(altCol='altitude', degrees=False)
+    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth',
+                                   latLonDeg=False, useCache=False)
     metric = metrics.CountMetric('expMJD', metricName='NVisits Alt/Az')
     plotDict = {'rot': (0, 90, 0)}
     plotFunc = plots.HealpixSkyMap()
@@ -1244,14 +1249,15 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                        'caption':
                        'Pointing History on the alt-az sky (zenith center) for filter %s' % f}
         bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, runName=runName,
-                                            plotDict=plotDict,
+                                            plotDict=plotDict, stackerList=[zenithstacker],
                                             plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
     displayDict = {'group': houranglegroup, 'subgroup': 'All Filters',
                    'caption':
                    'Pointing History on the alt-az sky (zenith center), all filters'}
     bundle = metricBundles.MetricBundle(metric, slicer, '', runName=runName, plotDict=plotDict,
-                                        plotFuncs=[plotFunc], displayDict=displayDict)
+                                        stackerList=[zenithstacker], plotFuncs=[plotFunc],
+                                        displayDict=displayDict)
     bundleList.append(bundle)
 
     return (metricBundles.makeBundlesDictFromList(bundleList),

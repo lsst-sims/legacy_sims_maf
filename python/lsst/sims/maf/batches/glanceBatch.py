@@ -51,7 +51,7 @@ def glanceBatch(colmap=None, runName='opsim',
         sqlC = '(%s) and' % sqlConstraint
 
     sql_per_filt = ['%s %s="%s"' % (sqlC, colmap['filter'], filtername) for filtername in filternames]
-    sql_per_and_all_filters = ['%s' % sqlConstraint] + sql_per_filt
+    sql_per_and_all_filters = [sqlConstraint] + sql_per_filt
 
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]

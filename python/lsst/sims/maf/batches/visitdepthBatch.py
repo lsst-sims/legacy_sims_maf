@@ -142,7 +142,7 @@ def tEffMetrics(colmap=None, runName='opsim',
 
     # Set up basic all and per filter sql constraints.
     sqlconstraints = ['']
-    metadata = ['all banads']
+    metadata = ['all bands']
     if filterlist is not None:
         sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
     metadata += ['%s band' % f for f in filterlist]
