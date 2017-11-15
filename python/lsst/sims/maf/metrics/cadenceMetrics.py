@@ -84,7 +84,8 @@ class UniformityMetric(BaseMetric):
         if dataSlice[self.observationStartMJDCol].size == 1:
             return 1
         # Scale dates to lie between 0 and 1, where 0 is the first observation date and 1 is surveyLength
-        dates = (dataSlice[self.observationStartMJDCol] - dataSlice[self.observationStartMJDCol].min()) / (self.surveyLength * 365.25)
+        dates = (dataSlice[self.observationStartMJDCol] - dataSlice[self.observationStartMJDCol].min()) / \
+                (self.surveyLength * 365.25)
         dates.sort()  # Just to be sure
         n_cum = np.arange(1, dates.size + 1) / float(dates.size)
         D_max = np.max(np.abs(n_cum - dates - dates[1]))

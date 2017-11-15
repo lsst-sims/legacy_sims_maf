@@ -230,7 +230,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     caption = 'Fraction of total visits where consecutive visits have return times faster '
     caption += 'than %.1f minutes, in any filter, all proposals. ' % (dTmax)
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more '
-    caption += 'than %d revisits within this time window.' % (cutoff3)
+    caption += 'than %.2f revisits within this time window.' % (cutoff3)
     displayDict = {'group': reqgroup, 'subgroup': 'Rapid Revisit', 'displayOrder': order,
                    'caption': caption}
     bundle = metricBundles.MetricBundle(m3, slicer, sqlconstraint, plotDict=plotDict,
