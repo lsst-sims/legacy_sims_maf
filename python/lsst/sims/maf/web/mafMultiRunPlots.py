@@ -8,16 +8,25 @@ import numpy as np
 
 def overplotOneDHistograms(outDirs, metricName, slicerAbrv, dataframe=None, runList=None,
                            labelList=None, metadata=None, opsim=False,
-                           logScale=False, normalize=False, zeroPoint=None):
+                           logScale=False, normalize=False, zeroPoint=None, colorList = None,
+                           newbins = None, summaryHist = False, xlabel = None, ylabel = None):
 
+    userPlotDict = {}
     plotFuncDict = {'ONED': plots.OneDBinnedData(),
                     'OPSI': plots.OpsimHistogram(),
                     'HEAL': plots.HealpixHistogram()}
     ylabelDict = {'ONED': 'Count',
                   'OPSI': 'Number of Fields',
                   'HEAL': 'Area (1000s of square degrees)'}
-    ylabel = ylabelDict[slicerAbrv]
-    overPlot = plotFuncDict[slicerAbrv]
+
+    if ylabel is None:
+        ylabel = ylabelDict[slicerAbrv]
+    else:
+        ylabel = ylabel
+    if summaryHist is False:
+        overPlot = plotFuncDict[slicerAbrv]
+    else:
+        overPlot = (plots.SummaryHistogram())
 
     if runList:
         runNames = runList
@@ -42,7 +51,7 @@ def overplotOneDHistograms(outDirs, metricName, slicerAbrv, dataframe=None, runL
         if slicerAbrv == 'ONED':
             maxYvalues[i] = bundles[run + '_' + str(i)].metricValues.compressed().max()
             bins = None
-        else:
+        elif (((slicerAbrv == 'OPSI') or (slicerAbrv == 'HEAL' )) & (summaryHist == False)):
             if 'binsize' in bundles[run + '_' + str(i)].plotDict.keys():
                 bmin = bundles[run + '_' + str(i)].metricValues.compressed().min()
                 bmax = bundles[run + '_' + str(i)].metricValues.compressed().max()
@@ -70,9 +79,15 @@ def overplotOneDHistograms(outDirs, metricName, slicerAbrv, dataframe=None, runL
                 xlabel_base = bundles[runPlot].metric.name
                 title = ''
                 # title_base = bundles[runPlot].displayDict['caption']
-            xlabel = xlabel_base + ' (' + metadata + ')'
+            if xlabel is None:
+                xlabel = xlabel_base + ' (' + metadata + ')'
+            else:
+                xlabel = xlabel
         else:
-            xlabel = bundles[runPlot].slicer.sliceColName
+            if xlabel is None:
+                xlabel = bundles[runPlot].slicer.sliceColName
+            else:
+                xlabel = xlabel
             title = bundles[runPlot].metric.name
 
         if normalize is False:
@@ -86,17 +101,27 @@ def overplotOneDHistograms(outDirs, metricName, slicerAbrv, dataframe=None, runL
                             (bundles[runPlot].metricValues.compressed().max()))
             yMax = 1.1
             ylabel = 'Normalized Count'
-        overPlot(metricValues, slicer=slicers[runPlot],
-                 userPlotDict={'color': cmap(k / len(runNames)),
-                               'label': label,
-                               'linewidth': 3,
-                               'ylabel': ylabel,
-                               'xlabel': xlabel,
-                               'title': title,
-                               'yMax': yMax,
-                               'logScale': logScale,
-                               'bins': bins},
-                 fignum=1)
+
+        if colorList is not None:
+            userPlotDict['color'] = colorList[k]
+        else:
+            userPlotDict['color'] = cmap(k / len(runNames))
+
+        if newbins is not None:
+            userPlotDict['bins'] = newbins
+        else:
+            userPlotDict['bins'] = bins
+
+
+        userPlotDict['label'] = label
+        userPlotDict['linewidth'] = 3
+        userPlotDict['ylabel'] = ylabel
+        userPlotDict['xlabel'] = xlabel
+        userPlotDict['title'] = title
+        userPlotDict['yMax'] = yMax
+        userPlotDict['logScale'] = logScale
+
+        overPlot(metricValues, slicer=slicers[runPlot], userPlotDict=userPlotDict,fignum=1)
 
     return overPlot
 
@@ -105,7 +130,10 @@ def subplotSkyMaps(outDirs, metricName, nrows, ncols, slicerAbrv,
                    dataframe=None, runList=None,
                    metadata=None, opsim=False, titleList=None,
                    labelList=None, figsize=None,
-                   colorbarRun=None, Lambert=False):
+                   colorbarRun=None, Lambert=False,
+                   colorMin=None, colorMax=None,
+                   xMin = None, xMax = None,
+                   zp = None, cmap = None):
     if runList:
         runNames = runList
     if dataframe is not None:
@@ -119,7 +147,22 @@ def subplotSkyMaps(outDirs, metricName, nrows, ncols, slicerAbrv,
         subPlots = plots.LambertSkyMap()
     bundles = {}
     userPlotDict = {}
+
     userPlotDict['figsize'] = figsize
+    userPlotDict['zp'] = zp
+
+    if cmap is not None:
+        userPlotDict['cmap'] = cmap
+
+    if colorMin is not None:
+        userPlotDict['colorMin'] = colorMin
+    if colorMax is not None:
+        userPlotDict['colorMax'] = colorMax
+
+    if xMin is not None:
+        userPlotDict['xMin'] = xMin
+    if xMax is not None:
+        userPlotDict['xMax'] = xMax
 
     if ((slicerAbrv == 'HEAL') & ('Alt_Az' in metricName) & (Lambert is False)):
         userPlotDict['rot'] = (0, 90, 0)
@@ -136,10 +179,11 @@ def subplotSkyMaps(outDirs, metricName, nrows, ncols, slicerAbrv,
             metricFile = run + '_' + metricName + metadatastr + '_' + slicerAbrv + '.npz'
         bundles[run + '_' + str(i)] = metricBundles.createEmptyMetricBundle()
         bundles[run + '_' + str(i)].read(run + outDirs[i] + metricFile)
+        if colorbarRun and run == colorbarRun:
+            userPlotDict['colorMin'] = bundles[colorbarRun + '_' + str(i)].metricValues.compressed().min()
+            userPlotDict['colorMax'] = bundles[colorbarRun + '_' + str(i)].metricValues.compressed().max()
     fig = plt.figure(1, figsize=userPlotDict['figsize'])
-    if colorbarRun:
-        userPlotDict['colorMin'] = bundles[run + '_' + str(i)].metricValues.compressed().min()
-        userPlotDict['colorMax'] = bundles[run + '_' + str(i)].metricValues.compressed().max()
+
     for k, runPlot in enumerate(runNames):
         runPlot = runPlot + '_' + str(k)
         userPlotDict['subplot'] = int(str(nrows) + str(ncols) + str(k + 1))

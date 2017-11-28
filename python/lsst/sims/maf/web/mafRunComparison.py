@@ -356,7 +356,8 @@ class MafRunComparison(object):
         norm_metric_value(run) = metric_value(run) - metric_value(baselineRun) / metric_value(baselineRun)
         """
         rundf = self.summaryStatsdf
-        nparameters = len(self.parameterDataframe)
+        nparameters = len(self.parameterDataframe.columns)
+        print (nparameters)
         num = rundf.iloc[:, nparameters:] - rundf.iloc[:, nparameters:].loc[baselineRun].values.squeeze()
         denom = rundf.iloc[:, nparameters:].loc[baselineRun].values.squeeze()
         noramlize = num / denom
