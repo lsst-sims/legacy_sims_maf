@@ -89,7 +89,9 @@ def metadataBasics(value, colmap=None, runName='opsim',
     # Hack to make HA work, but really I need to account for any stackers/colmaps.
     if value == 'HA':
         stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=colmap['ra'],
-                                                 deg=colmap['raDecDeg'])]
+                                                 degrees=colmap['raDecDeg'])]
+    elif value == 'normairmass':
+        stackerList = [stackers.NormAirmassStacker(degrees=colmap['raDecDeg'])]
     else:
         stackerList = None
 

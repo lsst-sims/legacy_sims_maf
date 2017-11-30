@@ -146,6 +146,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     totalNVisits = opsimdb.fetchNVisits()
     totalSlewN = opsimdb.fetchTotalSlewN()
 
+    hastacker = stackers.HourAngleStacker(lstCol='lst', raCol='fieldRA', degrees=False)
+    normairmassstacker = stackers.NormAirmassStacker(degrees=False)
+
     # Set up an object to hold all the bundles that will be merged together
     opsimHistPlot = plots.OpsimHistogram()
     mergedHistDict = {}
@@ -369,7 +372,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                'caption': caption}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata,
+                                                    metadata=metadata, stackerList=[normairmassstacker],
                                                     summaryMetrics=summaryStats)
                 histMerge = {'color': colors[f], 'label': '%s' % (f),
                              'xlabel': 'Median Normalized Airmass', 'binsize': .05,
@@ -391,7 +394,6 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 mergedHistDict[prop + 'MaxAirmass'].addBundle(bundle, plotDict=histMerge)
                 bundleList.append(bundle)
                 # Calculate the mean of the hour angle.
-                hastacker = stackers.HourAngleStacker(lstCol='lst', raCol='fieldRA', deg=False)
                 metric = metrics.MeanMetric(col='HA')
                 plotDict = {'xMin': -6, 'xMax': 6, 'colorMin': -6, 'colorMax': 6}
                 displayDict = {'group': houranglegroup, 'subgroup': subgroup, 'order': filtorder[f],
@@ -643,6 +645,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                            'caption': 'Histogram of the normalized airmass in %s band, %s' % (f, propCaption)}
             slicer = slicers.OneDSlicer(sliceColName='normairmass', binsize=0.01)
             bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+                                                stackerList=[normairmassstacker],
                                                 displayDict=displayDict, runName=runName, metadata=metadata)
             mergedHistDict[prop + 'normairmass'].addBundle(bundle, plotDict=histMerge)
             bundleList.append(bundle)
@@ -892,7 +895,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -900,7 +903,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -908,7 +911,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -917,7 +920,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -925,7 +928,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -933,7 +936,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -942,7 +945,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -951,7 +954,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                                'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1
@@ -959,7 +962,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
                 displayDict = {'group': group, 'subgroup': subgroup, 'order': order}
                 bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint,
                                                     displayDict=displayDict, runName=runName,
-                                                    metadata=metadata)
+                                                    metadata=metadata, stackerList=[normairmassstacker])
                 bundleList.append(bundle)
 
                 order += 1

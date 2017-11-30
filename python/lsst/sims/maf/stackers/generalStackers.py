@@ -216,19 +216,19 @@ class DcrStacker(BaseStacker):
 class HourAngleStacker(BaseStacker):
     """Add the Hour Angle for each observation.
     """
-    def __init__(self, lstCol='observationStartLST', raCol='fieldRA', deg=True):
+    def __init__(self, lstCol='observationStartLST', raCol='fieldRA', degrees=True):
         self.units = ['Hours']
         self.colsAdded = ['HA']
         self.colsReq = [lstCol, raCol]
         self.lstCol = lstCol
         self.raCol = raCol
-        self.deg = deg
+        self.degrees = degrees
 
     def _run(self, simData):
         """HA = LST - RA """
         if len(simData) == 0:
             return simData
-        if self.deg:
+        if self.degrees:
             ra = np.radians(simData[self.raCol])
             lst = np.radians(simData[self.lstCol])
         else:
