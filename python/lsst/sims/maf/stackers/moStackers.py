@@ -17,8 +17,9 @@ class BaseMoStacker(BaseStacker):
         # Add the columns.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            ssoObs = self._addStackers(ssoObs)
-        ssoObs = self._addStackers(ssoObs)
+            ssoObs, cols_present = self._addStackerCols(ssoObs)
+        # Here we don't really care about cols_present, because almost every time we will be readding
+        # columns anymore (for different H values).
         return self._run(ssoObs, Href, Hval)
 
 

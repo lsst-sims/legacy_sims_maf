@@ -99,7 +99,7 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
         else:
             return True
 
-    def _addStackers(self, simData):
+    def _addStackerCols(self, simData):
         """
         Add the new Stacker columns to the simData array.
         If columns already present in simData, just allows 'run' method to overwrite.
@@ -109,17 +109,26 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
             self.colsAddedDtypes = [float for col in self.colsAdded]
         # Create description of new recarray.
         newdtype = simData.dtype.descr
-        for col, dtype in zip(self.colsAdded, self.colsAddedDtypes):
+        cols_present = [False] * len(self.colsAdded)
+        for i, (col, dtype) in enumerate(zip(self.colsAdded, self.colsAddedDtypes)):
             if col in simData.dtype.names:
-                warnings.warn('Warning - column %s already present in simData, will be overwritten.'
-                              % (col))
+                if simData[col][0] is not None:
+                    cols_present[i] = True
+                    warnings.warn('Warning - column %s already present in simData, may be overwritten '
+                                  '(depending on stacker).'
+                                  % (col))
             else:
                 newdtype += ([(col, dtype)])
         newData = np.empty(simData.shape, dtype=newdtype)
         # Add references to old data.
         for col in simData.dtype.names:
             newData[col] = simData[col]
-        return newData
+        # Were all columns present and populated with something not None? If so, then consider 'all there'.
+        if sum(cols_present) == len(self.colsAdded):
+            cols_present = True
+        else:
+            cols_present = False
+        return newData, cols_present
 
     def run(self, simData):
         """
@@ -129,12 +138,20 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
         # Add new columns
         if len(simData) == 0:
             return simData
-        simData = self._addStackers(simData)
+        simData, cols_present = self._addStackerCols(simData)
         # Run the method to calculate/add new data.
-        return self._run(simData)
+        try:
+            return self._run(simData, cols_present)
+        except TypeError:
+            warnings.warn('Please update the stacker %s so that the _run method matches the current API. '
+                          'This will give you the option to skip re-running stackers if the columns are '
+                          'already present.'
+                          % (self.__class__.__name__ ))
+            return self._run(simData)
 
-    def _run(self, simData):
+    def _run(self, simData, cols_present=False):
         # By moving the calculation of these columns to a separate method, we add the possibility of using
-        #  stackers with pandas dataframes. The _addStackers method won't work with dataframes, but the
-        #  _run methods are quite likely to (depending on their details), as often they are just adding another column.
-        raise NotImplementedError('Not Implemented: the child stackers should implement their own _run methods')
+        #  stackers with pandas dataframes. The _addStackerCols method won't work with dataframes, but the
+        #  _run methods are quite likely to (depending on their details), as they are just populating columns.
+        raise NotImplementedError('Not Implemented: '
+                                  'the child stackers should implement their own _run methods')
