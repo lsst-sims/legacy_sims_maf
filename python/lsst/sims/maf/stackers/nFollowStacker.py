@@ -7,7 +7,8 @@ __all__ = ['findTelescopes', 'NFollowStacker']
 
 
 def findTelescopes(minSize=3.):
-    """Finds telescopes larger than minSize, from list of large telescopes based on http://astro.nineplanets.org/bigeyes.html.
+    """Finds telescopes larger than minSize, from list of large telescopes based on
+    http://astro.nineplanets.org/bigeyes.html.
 
     Returns
     -------
@@ -98,7 +99,6 @@ def findTelescopes(minSize=3.):
     return scopes
 
 
-
 class NFollowStacker(BaseStacker):
     """Add the number of telescopes ('nObservatories') that could follow up any visit
     at (any of the) times in timeStep, specifying the minimum telescope size (in meters) and airmass limit.
@@ -121,12 +121,11 @@ class NFollowStacker(BaseStacker):
         Flag whether RA/Dec are in degrees (True) or radians (False).
     """
     def __init__(self, minSize=3.0, airmassLimit=2.5, timeSteps=np.arange(0.5, 12., 3.0),
-                 expMJDCol='observationStartMJD',
-                 raCol='fieldRA', decCol='fieldDec', raDecDeg=True):
-        self.expMJDCol = expMJDCol
+                 mjdCol='observationStartMJD', raCol='fieldRA', decCol='fieldDec', degrees=True):
+        self.mjdCol = mjdCol
         self.raCol = raCol
         self.decCol = decCol
-        self.raDecDeg = raDecDeg
+        self.degrees = degrees
         self.colsAdded = ['nObservatories']
         self.colsAddedDtypes = [int]
         self.colsReq = [expMJDCol, raCol, decCol]
@@ -135,9 +134,10 @@ class NFollowStacker(BaseStacker):
         self.timeSteps = timeSteps
         self.telescopes = findTelescopes(minSize = minSize)
 
-    def _run(self, simData):
-        simData['nObservatories'] = np.zeros(len(simData[self.raCol]), int)
-        if self.raDecDeg:
+    def _run(self, simData, cols_present=False):
+        if cols_present:
+            return simData
+        if self.degrees:
             ra = np.radians(simData[self.raCol])
             dec = np.radians(simData[self.decCol])
         else:
@@ -149,7 +149,7 @@ class NFollowStacker(BaseStacker):
             obsLat = np.radians(obs['lat'])
             for step in self.timeSteps:
                 alt, az = raDec2AltAz(ra, dec, obsLon, obsLat,
-                                      simData[self.expMJDCol] + step / 24.0,
+                                      simData[self.mjdCol] + step / 24.0,
                                       altonly=True)
                 airmass = 1. / (np.cos(np.pi / 2. - alt))
                 followed = np.where((airmass <= self.airmassLimit) & (airmass >= 1.))
