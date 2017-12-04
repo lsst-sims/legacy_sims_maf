@@ -134,6 +134,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     for key in keys:
         mergedHistDict[key] = plots.PlotBundle(plotFunc=mergeFunc)
 
+    # Set up stackers.
+    zstacker = stackers.ZenithDistStacker(altCol='altitude', degrees=False)
+    hastacker = stackers.HourAngleStacker(lstCol='lst', degrees=False)
+    parallaxFactorStacker = stackers.ParallaxFactorStacker(dateCol='expMJD', degrees=False)
+    dcrStacker = stackers.DcrStacker(lstCol='lst', mjdCol='expMJD', degrees=False)
+    parallacticAngleStacker = stackers.ParallacticAngleStacker(mjdCol='expMJD', lstCol='lst', degrees=False)
+
     ##
     # Calculate the fO metrics for all proposals and WFD only.
     order = 0
