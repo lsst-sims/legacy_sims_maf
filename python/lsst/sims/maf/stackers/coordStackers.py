@@ -126,6 +126,7 @@ class EclipticStacker(BaseStacker):
         self.colsReq = [mjdCol, raCol, decCol]
         self.subtractSunLon = subtractSunLon
         self.colsAdded = ['eclipLat', 'eclipLon']
+        self.degrees = degrees
         if self.degrees:
             self.units = ['degrees', 'degrees']
         else:
@@ -133,7 +134,6 @@ class EclipticStacker(BaseStacker):
         self.mjdCol = mjdCol
         self.raCol = raCol
         self.decCol = decCol
-        self.degrees = degrees
 
     def _run(self, simData, cols_present=False):
         if cols_present:

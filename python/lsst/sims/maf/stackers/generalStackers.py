@@ -207,7 +207,7 @@ class DcrStacker(BaseStacker):
         self.colsReq = [filterCol, raCol, decCol, altCol, lstCol]
         self.units = ['arcsec', 'arcsec']
         self.degrees = degrees
-        self.zstacker = ZenithDistStacker(altCol = altCol, degrees=self.degrees)
+        self.zstacker = ZenithDistStacker(altCol=altCol, degrees=self.degrees)
         self.pastacker = ParallacticAngleStacker(raCol=raCol, decCol=decCol, mjdCol=mjdCol,
                                                  degrees=self.degrees,
                                                  lstCol=lstCol, site=site)
@@ -220,8 +220,14 @@ class DcrStacker(BaseStacker):
         # Call _run method because already added these columns due to 'colsAdded' line.
         simData = self.zstacker._run(simData, cols_present=False)
         simData = self.pastacker._run(simData, cols_present=False)
-        dcr_in_ra = np.tan(simData[self.zdCol])*np.sin(simData[self.paCol])
-        dcr_in_dec = np.tan(simData[self.zdCol])*np.cos(simData[self.paCol])
+        if self.degrees:
+            zenithTan = np.tan(np.radians(simData[self.zdCol]))
+            parallacticAngle = np.radians(simData[self.paCol])
+        else:
+            zenithTan = np.tan(simData[self.zdCol])
+            parallacticAngle = simData[self.paCol]
+        dcr_in_ra = zenithTan * np.sin(parallacticAngle)
+        dcr_in_dec = zenithTan * np.cos(parallacticAngle)
         for filtername in np.unique(simData[self.filterCol]):
             fmatch = np.where(simData[self.filterCol] == filtername)
             dcr_in_ra[fmatch] = self.dcr_magnitudes[filtername] * dcr_in_ra[fmatch]
@@ -357,11 +363,11 @@ class SeasonStacker(BaseStacker):
         # Names of columns we want to add.
         self.colsAdded = ['year', 'season']
         # Names of columns we need from database.
-        self.colsReq = [observationStartMJDCol, RACol]
+        self.colsReq = [mjdCol, RACol]
         # List of units for our new columns.
         self.units = ['', '']
         # And save the column names.
-        self.mjdCol = observationStartMJDCol
+        self.mjdCol = mjdCol
         self.RACol = RACol
         self.degrees = degrees
 

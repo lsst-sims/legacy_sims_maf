@@ -111,7 +111,7 @@ class NFollowStacker(BaseStacker):
         The maximum airmass allowable at the follow-up observatory. Default 2.5.
     timeSteps: np.array or list of floats, opt
         The timesteps to check for followup opportunities, in hours. Default is np.arange(0.5, 12., 3.0).
-    expMJDCol: str, opt
+    mjdCol: str, opt
         The exposure MJD column name. Default 'observationStartMJD'.
     raCol: str, opt
         The RA column name. Default 'fieldRA'.
@@ -128,7 +128,7 @@ class NFollowStacker(BaseStacker):
         self.degrees = degrees
         self.colsAdded = ['nObservatories']
         self.colsAddedDtypes = [int]
-        self.colsReq = [expMJDCol, raCol, decCol]
+        self.colsReq = [self.mjdCol, self.raCol, self.decCol]
         self.units = ['#']
         self.airmassLimit = airmassLimit
         self.timeSteps = timeSteps
