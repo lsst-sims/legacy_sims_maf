@@ -54,7 +54,7 @@ class UniformityMetric(BaseMetric):
     surveyLength : float, optional
         The overall duration of the survey. Default 10.
     """
-    def __init__(self, observationStartMJDCol='observationStartMJD', units='',
+    def __init__(self, mjdCol='observationStartMJD', units='',
                  surveyLength=10., **kwargs):
         """surveyLength = time span of survey (years) """
         self.observationStartMJDCol = observationStartMJDCol
@@ -108,7 +108,7 @@ class RapidRevisitMetric(BaseMetric):
     """
     def __init__(self, timeCol='observationStartMJD', minNvisits=100,
                  dTmin=40.0 / 60.0 / 60.0 / 24.0, dTmax=30.0 / 60.0 / 24.0,
-                 metricName='RapidRevisit', **kwargs):
+                 metricName='RapidRevisitUniformity', **kwargs):
         self.timeCol = timeCol
         self.minNvisits = minNvisits
         self.dTmin = dTmin

@@ -73,7 +73,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, sqlConstraint=None):
                              plotFuncs=subsetPlots, displayDict=displayDict)
     bundleList.append(bundle)
 
-    # Histogram of the time between quick revisits.
+    # Histogram of the time between revisits within two hours.
     binMin = 0
     binMax = 120.
     binsize = 5.

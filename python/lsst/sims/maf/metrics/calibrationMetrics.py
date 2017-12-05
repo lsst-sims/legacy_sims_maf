@@ -10,7 +10,7 @@ __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
 
 
 class ParallaxMetric(BaseMetric):
-    """Calculate the uncertainty in a parallax measures given a serries of observations.
+    """Calculate the uncertainty in a parallax measurement given a series of observations.
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
                  units = 'mas',
@@ -227,6 +227,11 @@ class ParallaxCoverageMetric(BaseMetric):
         else:
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
+        caption = "Parallax factor coverage for an r=%.2f star (0 is bad, 0.5-1 is good). "  % (rmag)
+        caption += "One expects the parallax factor coverage to vary because stars on the ecliptic "
+        caption += "can be observed when they have no parallax offset while stars at the pole are always "
+        caption += "offset by the full parallax offset."""
+        self.comment = caption
 
     def _thetaCheck(self, ra_pi_amp, dec_pi_amp, snr):
         good = np.where(snr >= self.snrLimit)
@@ -344,7 +349,6 @@ class ParallaxDcrDegenMetric(BaseMetric):
         return result
 
     def run(self, dataSlice, slicePoint=None):
-
         snr = np.zeros(len(dataSlice), dtype='float')
         # compute SNR for all observations
         for filt in self.filters:
@@ -355,7 +359,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
                                                             snr)**2+self.atm_err**2)
 
         # Construct the vectors
-        xdata = np.empty((2, dataSlice.size*2), dtype=float)
+        xdata = np.empty((2, dataSlice.size * 2), dtype=float)
         xdata[0, :] = np.concatenate((dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']))
         xdata[1, :] = np.concatenate((dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']))
         ydata = np.sum(xdata, axis=0)
