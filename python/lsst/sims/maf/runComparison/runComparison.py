@@ -435,6 +435,8 @@ class RunComparison(object):
                     nrows = layout[1]
                 pdcit['subplot'] = str(nrows) + str(ncols) + str(i + 1)
                 pdcit['title'] = runlist[i]
+                # For the subplots we do not need the label
+                pdcit['label'] = ''
                 if 'suptitle' not in userPlotDict:
                     pdcit['suptitle'] = ph._buildTitle()
         else:
