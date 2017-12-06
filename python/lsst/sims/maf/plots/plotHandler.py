@@ -569,6 +569,9 @@ class PlotHandler(object):
         if legendloc is not None:
             plt.figure(fignum)
             plt.legend(loc=legendloc, fancybox=True, fontsize='smaller')
+        # Add the super title if provided.
+        if 'suptitle' in self.plotDicts[0]:
+            plt.suptitle(self.plotDicts[0]['suptitle'])
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
             if displayDict is None:

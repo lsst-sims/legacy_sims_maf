@@ -5,6 +5,71 @@ import os
 import argparse
 from lsst.sims.maf.web import MafRunComparison
 
+
+def mkstandardMetricDict(self):
+    """
+    Create a standard dictionary containing all of the metric information
+    needed to query the results database of each opsim run.
+
+    """
+    standardMetricDict = {'Total Visits': ['NVisits', 'All Visits', 'UniSlicer', 'Count'],
+                          'Total Eff Time': ['Total effective time of survey',
+                                             'All Visits', 'UniSlicer', None],
+                          'Nights with Observations': ['Nights with observations',
+                                                       'All Visits', 'UniSlicer', '(days)'],
+                          'Median NVists Per Night': ['NVisits', 'Per night',
+                                                      'OneDSlicer', 'Median'],
+                          'Median Open Shutter Fraction': ['OpenShutterFraction',
+                                                           'Per night', 'OneDSlicer', 'Median'],
+                          'Median Slew Time': ['Median slewTime', 'All Visits',
+                                               'UniSlicer', None],
+                          'Mean Slew Time': ['Mean slewTime', 'All Visits',
+                                             'UniSlicer', None],
+                          'Meidan Prop. Mo. 20': ['Proper Motion 20', None, None, 'Median'],
+                          'Meidan Prop. Mo. 24': ['Proper Motion 24', None, None, 'Median'],
+                          'Median Parallax 20': ['Parallax 20',
+                                                 'All Visits (non-dithered)',
+                                                 'HealpixSlicer', 'Median'],
+                          'Median Parallax 24': ['Parallax 24',
+                                                 'All Visits (non-dithered)',
+                                                 'HealpixSlicer',
+                                                 'Median'],
+                          'Median Parallax Coverage 20': ['Parallax Coverage 20',
+                                                          'All Visits (non-dithered)',
+                                                          'HealpixSlicer', 'Median'],
+                          'Median Parallax Coverage 24': ['Parallax Coverage 24',
+                                                          'All Visits (non-dithered)',
+                                                          'HealpixSlicer',
+                                                          'Median']}
+    # Seeing Metrics
+    for f in (['r', 'i']):
+        colName = 'Median seeingFwhmEff ' + f + ' band'
+        metricName = 'Median seeingFwhmEff'
+        slicer = 'UniSlicer'
+        metadata = '%s band, WFD' % f
+        summary = None
+        standardMetricDict[colName] = [metricName, metadata, slicer, summary]
+    # CoaddM5 metrics
+    for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+        colName = 'Median CoaddM5 ' + f + ' band'
+        metricName = 'CoaddM5'
+        slicer = 'OpsimFieldSlicer'
+        metadata = '%s band, WFD' % f
+        summary = 'Median'
+        standardMetricDict[colName] = [metricName, metadata, slicer, summary]
+    # HA Range metrics
+    for f in ('u', 'g', 'r', 'i', 'z', 'y'):
+        colName = 'FullRange HA ' + f + ' band'
+        metricName = 'FullRange HA'
+        slicer = 'OpsimFieldSlicer'
+        metadata = '%s band, WFD' % f
+        summary = 'Median'
+        standardMetricDict[colName] = [metricName, metadata, slicer, summary]
+
+    return standardMetricDict
+
+
+
 # Make the output of this file be 'nice' to read back into pandas.
 def pandaprint(stats):
     for i in range(len(stats)):

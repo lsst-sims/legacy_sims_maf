@@ -4,11 +4,11 @@ from builtins import object
 import os
 import warnings
 import numpy as np
+import pandas as pd
 from lsst.sims.maf.db import ResultsDb
 from lsst.sims.maf.db import OpsimDatabase
-import pandas as pd
-import re
-import matplotlib.pyplot as plt
+import lsst.sims.maf.metricBundles as mb
+import lsst.sims.maf.plots as plots
 
 __all__ = ['RunComparison']
 
@@ -142,7 +142,7 @@ class RunComparison(object):
                 if len(val) > 1.0:
                     warnings.warn(sql + ' returned more than one value.' +
                                   ' Add additional information such as the proposal name' +
-                                  '\n' + 'Example: ' + '%WideFastDeep%ahour_angle_bonus%')
+                                  '\n' + 'Example: ' + '%WideFastDeep%hour_angle_bonus%')
                     parameterValues[r][pName] = -666
                 else:
                     parameterValues[r][pName] = val['paramValue'][0]
@@ -157,83 +157,6 @@ class RunComparison(object):
             self.parameters = pd.concat(tempDFList)
         else:
             self.parameters = self.parameters.join(tempDFList)
-
-    def mkstandardMetricDict(self):
-        """
-        Create a standard dictionary containing all of the metric information
-        needed to query the results database of each opsim run.
-
-        """
-        standardMetricDict = {'Total Visits': ['NVisits', 'All Visits', 'UniSlicer', 'Count'],
-                              'Total Eff Time': ['Total effective time of survey',
-                                                 'All Visits', 'UniSlicer', None],
-                              'Nights with Observations': ['Nights with observations',
-                                                           'All Visits', 'UniSlicer', '(days)'],
-                              'Median NVists Per Night': ['NVisits', 'Per night',
-                                                          'OneDSlicer', 'Median'],
-                              'Median Open Shutter Fraction': ['OpenShutterFraction',
-                                                               'Per night', 'OneDSlicer', 'Median'],
-                              'Median Slew Time': ['Median slewTime', 'All Visits',
-                                                   'UniSlicer', None],
-                              'Mean Slew Time': ['Mean slewTime', 'All Visits',
-                                                 'UniSlicer', None],
-                              'Meidan Prop. Mo. 20': ['Proper Motion 20', None, None, 'Median'],
-                              'Meidan Prop. Mo. 24': ['Proper Motion 24', None, None, 'Median'],
-                              'Median Parallax 20': ['Parallax 20',
-                                                     'All Visits (non-dithered)',
-                                                     'HealpixSlicer', 'Median'],
-                              'Median Parallax 24': ['Parallax 24',
-                                                     'All Visits (non-dithered)',
-                                                     'HealpixSlicer',
-                                                     'Median'],
-                              'Median Parallax Coverage 20': ['Parallax Coverage 20',
-                                                              'All Visits (non-dithered)',
-                                                              'HealpixSlicer', 'Median'],
-                              'Median Parallax Coverage 24': ['Parallax Coverage 24',
-                                                              'All Visits (non-dithered)',
-                                                              'HealpixSlicer',
-                                                              'Median']}
-        # Seeing Metrics
-        for f in (['r', 'i']):
-            colName = 'Median seeingFwhmEff ' + f + ' band'
-            metricName = 'Median seeingFwhmEff'
-            slicer = 'UniSlicer'
-            metadata = '%s band, WFD' % f
-            summary = None
-            standardMetricDict[colName] = [metricName, metadata, slicer, summary]
-        # CoaddM5 metrics
-        for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-            colName = 'Median CoaddM5 ' + f + ' band'
-            metricName = 'CoaddM5'
-            slicer = 'OpsimFieldSlicer'
-            metadata = '%s band, WFD' % f
-            summary = 'Median'
-            standardMetricDict[colName] = [metricName, metadata, slicer, summary]
-        # HA Range metrics
-        for f in ('u', 'g', 'r', 'i', 'z', 'y'):
-            colName = 'FullRange HA ' + f + ' band'
-            metricName = 'FullRange HA'
-            slicer = 'OpsimFieldSlicer'
-            metadata = '%s band, WFD' % f
-            summary = 'Median'
-            standardMetricDict[colName] = [metricName, metadata, slicer, summary]
-
-        return standardMetricDict
-
-    def _buildSummaryName(self, metricName, metricMetadata, slicerName, summaryStatName):
-        if metricMetadata is None:
-            metricMetadata = ''
-        if slicerName is None:
-            slicerName = ''
-        sName = summaryStatName
-        if sName == 'Identity' or sName == 'Id' or sName == 'Count' or sName is None:
-            sName = ''
-        slName = slicerName
-        if slName == 'UniSlicer':
-            slName = ''
-        name =  ' '.join([sName, metricName, metricMetadata, slName]).rstrip(' ').lstrip(' ')
-        name.replace(',', '')
-        return name
 
     def buildMetricDict(self, subdir):
         """Build a metric dictionary based on a subdirectory (i.e. a subset of metrics).
@@ -262,6 +185,21 @@ class RunComparison(object):
                     name = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
                     mDict[name] = [metricName, metricMetadata, slicerName, None]
         return mDict
+
+    def _buildSummaryName(self, metricName, metricMetadata, slicerName, summaryStatName):
+        if metricMetadata is None:
+            metricMetadata = ''
+        if slicerName is None:
+            slicerName = ''
+        sName = summaryStatName
+        if sName == 'Identity' or sName == 'Id' or sName == 'Count' or sName is None:
+            sName = ''
+        slName = slicerName
+        if slName == 'UniSlicer':
+            slName = ''
+        name = ' '.join([sName, metricName, metricMetadata, slName]).rstrip(' ').lstrip(' ')
+        name.replace(',', '')
+        return name
 
     def _findSummaryStats(self, metricName, metricMetadata=None, slicerName=None, summaryName=None,
                           colName=None):
@@ -438,45 +376,84 @@ class RunComparison(object):
                         filepaths[r] = os.path.join(r, s, filename[0])
         return filepaths
 
-    def normalizedCompPlot(self, output=None, totalVisits=True):
-        """
-        Plot the normalized metric values as a function of opsim run.
+    def plotSummaryStats(self):
+        # We'll fix this asap
+        pass
 
-        output: str, opt
-            Name of figure to save to disk. If this is left as None the figure
-            is not saved.
-        totalVisits: bool
-            If True the total number of visits is included in the metrics plotted.
-            When comparing runs a very different lengths it is recommended to
-            set this flag to False.
-        """
-        ylabel = '(run - ' + self.baselineRun + ')/' + self.baselineRun
-        dataframe = self.noramlizeStatsdf
-        magcols = [col for col in dataframe.columns if 'M5' in col]
-        HAcols = [col for col in dataframe.columns if 'HA' in col]
-        propMocols = [col for col in dataframe.columns if 'Prop. Mo.' in col]
-        seeingcols = [col for col in dataframe.columns if 'seeing' in col]
-        parallaxCols = [col for col in dataframe.columns if 'Parallax' in col]
-        if totalVisits is True:
-            othercols = ['Mean Slew Time', 'Median Slew Time', 'Median NVists Per Night',
-                         'Median Open Shutter Fraction', 'Nights with Observations',
-                         'Total Eff Time', 'Total Visits']
+    # Plot actual metric values (skymaps or histograms or power spectra) (values not stored in class).
+    def readMetricData(self, metricName, metricMetadata, slicerName):
+        # Get the names of the individual files for all runs.
+        # Dictionary, keyed by run name.
+        filenames = self.getFileNames(metricName, metricMetadata, slicerName)
+        mname = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
+        bundleDict = {}
+        for r in filenames:
+            bundleDict[r] = mb.createEmptyMetricBundle()
+            bundleDict[r].read(filenames[r])
+        return bundleDict, mname
+
+    def plotMetricData(self, bundleDict, plotFunc, mname=None, runlist=None, userPlotDict=None,
+                       layout=None, outDir=None, savefigs=False):
+        if runlist is None:
+            runlist = self.runlist
+
+        ph = plots.PlotHandler(outDir=outDir, savefigs=savefigs)
+        bundleList = []
+        for r in runlist:
+            bundleList.append(bundleDict[r])
+        ph.setMetricBundles(bundleList)
+
+        plotDicts = [{}] * len(runlist)
+        # Depending on plotFunc, overplot or make many subplots.
+        if plotFunc.plotType == 'SkyMap':
+            # Note that we can only handle 9 subplots currently due
+            # to how subplot identification (with string) is handled.
+            if len(runlist) > 9:
+                raise ValueError('Please try again with < 9 subplots for skymap.')
+            # Many subplots.
+            if 'colorMin' not in userPlotDict:
+                colorMin = 100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].metricValues.compressed().min()
+                    colorMin = min(tmp, colorMin)
+                userPlotDict['colorMin'] = colorMin
+            if 'colorMax' not in userPlotDict:
+                colorMax = -100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].metricValues.compressed().max()
+                    colorMax = max(tmp, colorMax)
+                userPlotDict['colorMax'] = colorMax
+            for i, pd in enumerate(plotDicts):
+                # Add user provided dictionary.
+                pd.update(userPlotDict)
+                # Set subplot information.
+                if layout is None:
+                    ncols = int(np.ceil(np.sqrt(len(runlist))))
+                    nrows = int(np.ceil(len(runlist) / float(ncols)))
+                else:
+                    ncols = layout[0]
+                    nrows = layout[1]
+                pd['subplot'] = str(nrows) + str(ncols) + str(i + 1)
+                pd['title'] = runlist[i]
+                if 'suptitle' not in userPlotDict:
+                    pd['suptitle'] = ph._buildTitle()
         else:
-            othercols = ['Mean Slew Time', 'Median Slew Time',
-                         'Median NVists Per Night',
-                         'Median Open Shutter Fraction']
-        colsets = [othercols, magcols, HAcols, propMocols, parallaxCols, seeingcols]
-        fig, axs = plt.subplots(len(colsets), 1, figsize=(8, 33))
-        fig.subplots_adjust(hspace=.4)
-        axs = axs.ravel()
-        for i, c in enumerate(colsets):
-            x = np.arange(len(dataframe))
-            for metric in dataframe[c].columns:
-                axs[i].plot(x, dataframe[metric], marker='.', ms=10, label=metric)
-            axs[i].grid(True)
-            axs[i].set_ylabel(ylabel)
-            lgd = axs[i].legend(loc=(1.02, 0.2), ncol=1)
-            plt.setp(axs[i].xaxis.get_majorticklabels(), rotation=90)
-            plt.setp(axs[i], xticks=x, xticklabels=[x.strip('') for x in dataframe.index.values])
-        if output:
-            plt.savefig(output, bbox_extra_artists=(lgd,), bbox_inches='tight')
+            # Put everything on one plot.
+            if 'xMin' not in userPlotDict:
+                xMin = 100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].metricValues.compressed().min()
+                    xMin = min(tmp, xMin)
+                userPlotDict['xMin'] = xMin
+            if 'xMax' not in userPlotDict:
+                xMax = -100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].metricValues.compressed().max()
+                    xMax = max(tmp, xMax)
+                userPlotDict['xMax'] = xMax
+            for i, pd in enumerate(plotDicts):
+                pd.update(userPlotDict)
+                pd['subplot'] = '111'
+                # Legend and title will automatically be ok, I think.
+        ph.plot(plotFunc, plotDicts=plotDicts)
+
