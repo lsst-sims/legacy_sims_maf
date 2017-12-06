@@ -5,7 +5,7 @@ import os
 import warnings
 import numpy as np
 from lsst.sims.maf.db import ResultsDb
-from lsst.sims.maf.db import OpsimDatabaseV4
+from lsst.sims.maf.db import OpsimDatabase
 import pandas as pd
 import re
 import matplotlib.pyplot as plt
@@ -121,8 +121,9 @@ class RunComparison(object):
         for p in paramNameLike:
             name = p.rstrip('%').lstrip('%').replace('%', ' ')
             parameterNames.append(name)
-            sql = 'paramName like "%s"' % (paramNameLike)
+            sql = 'paramName like "%s"' % (p)
             sqlconstraints.append(sql)
+
         # Connect to original databases and grab configuration parameters.
         opsdb = {}
         for r in self.runlist:
@@ -150,7 +151,7 @@ class RunComparison(object):
                           '\n' + 'found value: ' + str(parameterValues[r][pName]))
         tempDFList = []
         for r in self.runlist:
-            tempDF.append(pd.DataFrame(parameterValues[r], index=[r]))
+            tempDFList.append(pd.DataFrame(parameterValues[r], index=[r]))
         # Concatenate dataframes for each run.
         if self.parameters is None:
             self.parameters = pd.concat(tempDFList)
@@ -231,7 +232,7 @@ class RunComparison(object):
         if slName == 'UniSlicer':
             slName = ''
         name =  ' '.join([sName, metricName, metricMetadata, slName]).rstrip(' ').lstrip(' ')
-        name.replace(';', '')
+        name.replace(',', '')
         return name
 
     def buildMetricDict(self, subdir):
@@ -251,14 +252,14 @@ class RunComparison(object):
         """
         mDict = {}
         for r in self.runlist:
-            if subdir in r:
-                mIds = self.runresults[r][s].getAllMetricIds()
+            if subdir in os.path.join(r, subdir):
+                mIds = self.runresults[r][subdir].getAllMetricIds()
                 for mId in mIds:
-                    info = self.runresults[r][s].getMetricDisplayInfo(mId)
+                    info = self.runresults[r][subdir].getMetricDisplayInfo(mId)
                     metricName = info['metricName'][0]
                     metricMetadata = info['metricMetadata'][0]
                     slicerName = info['slicerName'][0]
-                    name = self._buildMetricName(metricName, metricMetadata, slicerName, None)
+                    name = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
                     mDict[name] = [metricName, metricMetadata, slicerName, None]
         return mDict
 
@@ -292,6 +293,7 @@ class RunComparison(object):
         summaryNames = {}
         for r in self.runlist:
             summaryValues[r] = {}
+            summaryNames[r] = {}
             # Check if this metric/metadata/slicer/summary stat name combo is in
             # this resultsDb .. or potentially in another subdirectory's resultsDb.
             for s in self.runresults[r]:
@@ -305,11 +307,14 @@ class RunComparison(object):
                     if len(stats['summaryName']) == 1 and colName is not None:
                         name = colName
                         summaryValues[r][name] = stats['summaryValue'][0]
+                        summaryNames[r][name] = stats['summaryName'][0]
                     else:
                         for i in range(len(stats['summaryName'])):
+
                             name = self._buildSummaryName(metricName, metricMetadata, slicerName,
-                                                        stats['summaryName'][i])
+                                                          stats['summaryName'][i])
                             summaryValues[r][name] = stats['summaryValue'][i]
+                            summaryNames[r][name] = stats['summaryName'][i]
             if len(summaryValues[r]) == 0:
                 warnings.warn("Warning: Found no metric results for %s %s %s %s in run %s"
                               % (metricName, metricMetadata, slicerName, summaryName, r))
@@ -329,7 +334,7 @@ class RunComparison(object):
         # Create data frames for each run (because pandas).
         tempDFList = []
         for r in self.runlist:
-            tempDF.append(pd.DataFrame(summaryValues[r], index=[r]))
+            tempDFList.append(pd.DataFrame(summaryValues[r], index=[r]))
         # Concatenate dataframes for each run.
         stats = pd.concat(tempDFList)
         return stats
@@ -359,7 +364,7 @@ class RunComparison(object):
         """
         for mName, metric in metricDict.items():
             tempDF = self._findSummaryStats(metricName=metric[0], metricMetadata=metric[1],
-                                            slicerName=metric[2], summaryName=metric[3].
+                                            slicerName=metric[2], summaryName=metric[3],
                                             colName=mName)
             if self.summaryStats is None:
                 self.summaryStats = tempDF
@@ -418,20 +423,20 @@ class RunComparison(object):
         """
         filepaths = {}
         for r in self.runlist:
-            for s in r:
+            for s in self.runresults[r]:
                 mId = self.runresults[r][s].getMetricId(metricName=metricName,
                                                         metricMetadata=metricMetadata,
                                                         slicerName=slicerName)
                 if len(mId) > 0 :
                     if len(mId) > 1:
-                        warnings.warn('Found more than one metric data file matching ',
-                                      'metricName %s metricMetadata %s and slicerName %s '
+                        warnings.warn("Found more than one metric data file matching ",
+                                      "metricName %s metricMetadata %s and slicerName %s"
                                       % (metricName, metricMetadata, slicerName),
                                       ' Skipping this combination.')
                     else:
-                        filename = self.runresults[r][s].getMetricDataFiles(mId=mId)
-                        filepaths[r] = os.path.join(r, s, filename)
-        return filepath
+                        filename = self.runresults[r][s].getMetricDataFiles(metricId=mId)
+                        filepaths[r] = os.path.join(r, s, filename[0])
+        return filepaths
 
     def normalizedCompPlot(self, output=None, totalVisits=True):
         """

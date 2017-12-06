@@ -86,7 +86,7 @@ class PlotHandler(object):
         self._combineConstraints()
         self.setPlotDicts(reset=True)
 
-    def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False):
+    def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False, checkDicts = True):
         """
         Set or update (or 'reset') the plotDict for the (possibly joint) plots.
 
@@ -141,7 +141,10 @@ class PlotHandler(object):
             self.plotDicts[i] = tmpPlotDict
 
         # Check that the plotDicts do not conflict.
-        self._checkPlotDicts()
+        if checkDicts is True:
+            self._checkPlotDicts()
+
+        self.checkDicts = checkDicts
 
     def _combineMetricNames(self):
         """
@@ -493,7 +496,7 @@ class PlotHandler(object):
             for pd in self.plotDicts:
                 pd[key] = None
 
-    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None):
+    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None, checkDicts = True):
         """
         Create plot for mBundles, using plotFunc.
 
@@ -510,7 +513,7 @@ class PlotHandler(object):
                         return
 
         # Update x/y labels using plotType.
-        self.setPlotDicts(plotDicts=plotDicts, plotFunc=plotFunc, reset=False)
+        self.setPlotDicts(plotDicts=plotDicts, plotFunc=plotFunc, reset=False, checkDicts= checkDicts)
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
