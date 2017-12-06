@@ -86,7 +86,7 @@ class PlotHandler(object):
         self._combineConstraints()
         self.setPlotDicts(reset=True)
 
-    def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False, checkDicts = True):
+    def setPlotDicts(self, plotDicts=None, plotFunc=None, reset=False):
         """
         Set or update (or 'reset') the plotDict for the (possibly joint) plots.
 
@@ -141,10 +141,7 @@ class PlotHandler(object):
             self.plotDicts[i] = tmpPlotDict
 
         # Check that the plotDicts do not conflict.
-        if checkDicts is True:
-            self._checkPlotDicts()
-
-        self.checkDicts = checkDicts
+        self._checkPlotDicts()
 
     def _combineMetricNames(self):
         """
@@ -460,9 +457,8 @@ class PlotHandler(object):
 
     def _checkPlotDicts(self):
         """
-        Check to make sure there are no conflicts in the plotDicts that are being used
+        Check to make sure there are no conflicts in the plotDicts that are being used in the same subplot.
         """
-
         # Check that the length is OK
         if len(self.plotDicts) != len(self.mBundles):
             raise ValueError('plotDicts (%i) must be same length as mBundles (%i)'
@@ -471,32 +467,40 @@ class PlotHandler(object):
         # These are the keys that need to match (or be None)
         keys2Check = ['xlim', 'ylim', 'legendloc', 'colorMin', 'colorMax', 'title']
 
-        reset_keys = []
-        for key in keys2Check:
-            values = [pd[key] for pd in self.plotDicts if key in pd]
-            if len(np.unique(values)) > 1:
-                # We will reset some of the keys to the default, but for some we should do better.
-                if key.endswith('Max'):
-                    for pd in self.plotDicts:
-                        pd[key] = np.max(values)
-                elif key.endswith('Min'):
-                    for pd in self.plotDicts:
-                        pd[key] = np.min(values)
-                elif key == 'title':
-                    title = self._buildTitle()
-                    for pd in self.plotDicts:
-                        pd['title'] = title
-                else:
-                    warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
-                                  ' Will reset to default value. (found values %s)' % values)
-                    reset_keys.append(key)
+        # Identify how many subplots there are. If there are more than one, just don't change anything.
+        # This assumes that if there are more than one, the plotDicts are actually all compatible.
+        subplots = set()
+        for pd in self.plotDicts:
+            if 'subplot' in pd:
+                subplots.add(pd['subplot'])
 
-        # Reset the most of the keys to defaults; this can generally be done safely.
-        for key in reset_keys:
-            for pd in self.plotDicts:
-                pd[key] = None
+        # Now check subplots are consistent.
+        if len(subplots) <= 1:
+            reset_keys = []
+            for key in keys2Check:
+                values = [pd[key] for pd in self.plotDicts if key in pd]
+                if len(np.unique(values)) > 1:
+                    # We will reset some of the keys to the default, but for some we should do better.
+                    if key.endswith('Max'):
+                        for pd in self.plotDicts:
+                            pd[key] = np.max(values)
+                    elif key.endswith('Min'):
+                        for pd in self.plotDicts:
+                            pd[key] = np.min(values)
+                    elif key == 'title':
+                        title = self._buildTitle()
+                        for pd in self.plotDicts:
+                            pd['title'] = title
+                    else:
+                        warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
+                                      ' Will reset to default value. (found values %s)' % values)
+                        reset_keys.append(key)
+            # Reset the most of the keys to defaults; this can generally be done safely.
+            for key in reset_keys:
+                for pd in self.plotDicts:
+                    pd[key] = None
 
-    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None, checkDicts = True):
+    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
 
@@ -513,7 +517,7 @@ class PlotHandler(object):
                         return
 
         # Update x/y labels using plotType.
-        self.setPlotDicts(plotDicts=plotDicts, plotFunc=plotFunc, reset=False, checkDicts= checkDicts)
+        self.setPlotDicts(plotDicts=plotDicts, plotFunc=plotFunc, reset=False)
         # Set outfile name.
         outfile = self._buildFileRoot(outfileSuffix)
         plotType = plotFunc.plotType
