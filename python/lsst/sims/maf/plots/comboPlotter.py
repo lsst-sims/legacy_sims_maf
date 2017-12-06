@@ -69,11 +69,16 @@ class comboPlotter(object):
 
 
 
-    def multiPlot(self, plotFunc, plotDicts = None):
+    def multiPlot(self, plotFunc = None, plotDicts = None):
         ph = PlotHandler(savefig=False)
         ph.setMetricBundles(self.bundleList)
         ph.setPlotDicts(plotDicts, reset = True)
-        fignum = ph.plot(plotFunc=plotFunc)
+
+        if plotFunc is None:
+            for func in self.bundleList[0].plotFuncs:
+                fignum = ph.plot(plotFunc=func)
+        else:
+            fignum = ph.plot(plotFunc=plotFunc)
 
         self.ph = ph
 
