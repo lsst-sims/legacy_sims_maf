@@ -393,17 +393,17 @@ class RunComparison(object):
         return bundleDict, mname
 
     def plotMetricData(self, bundleDict, plotFunc, mname=None, runlist=None, userPlotDict=None,
-                       layout=None, outDir=None, savefigs=False):
+                       layout=None, outDir=None, savefig=False):
         if runlist is None:
             runlist = self.runlist
 
-        ph = plots.PlotHandler(outDir=outDir, savefigs=savefigs)
+        ph = plots.PlotHandler(outDir=outDir, savefig=savefig)
         bundleList = []
         for r in runlist:
             bundleList.append(bundleDict[r])
         ph.setMetricBundles(bundleList)
 
-        plotDicts = [{}] * len(runlist)
+        plotDicts = [{} for r in runlist]
         # Depending on plotFunc, overplot or make many subplots.
         if plotFunc.plotType == 'SkyMap':
             # Note that we can only handle 9 subplots currently due
@@ -423,9 +423,9 @@ class RunComparison(object):
                     tmp = bundleDict[b].metricValues.compressed().max()
                     colorMax = max(tmp, colorMax)
                 userPlotDict['colorMax'] = colorMax
-            for i, pd in enumerate(plotDicts):
+            for i, pdcit in enumerate(plotDicts):
                 # Add user provided dictionary.
-                pd.update(userPlotDict)
+                pdcit.update(userPlotDict)
                 # Set subplot information.
                 if layout is None:
                     ncols = int(np.ceil(np.sqrt(len(runlist))))
@@ -433,10 +433,10 @@ class RunComparison(object):
                 else:
                     ncols = layout[0]
                     nrows = layout[1]
-                pd['subplot'] = str(nrows) + str(ncols) + str(i + 1)
-                pd['title'] = runlist[i]
+                pdcit['subplot'] = str(nrows) + str(ncols) + str(i + 1)
+                pdcit['title'] = runlist[i]
                 if 'suptitle' not in userPlotDict:
-                    pd['suptitle'] = ph._buildTitle()
+                    pdcit['suptitle'] = ph._buildTitle()
         else:
             # Put everything on one plot.
             if 'xMin' not in userPlotDict:
@@ -451,9 +451,8 @@ class RunComparison(object):
                     tmp = bundleDict[b].metricValues.compressed().max()
                     xMax = max(tmp, xMax)
                 userPlotDict['xMax'] = xMax
-            for i, pd in enumerate(plotDicts):
-                pd.update(userPlotDict)
-                pd['subplot'] = '111'
+            for i, pdcit in enumerate(plotDicts):
+                pdcit.update(userPlotDict)
+                pdcit['subplot'] = '111'
                 # Legend and title will automatically be ok, I think.
         ph.plot(plotFunc, plotDicts=plotDicts)
-
