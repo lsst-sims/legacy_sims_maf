@@ -195,6 +195,7 @@ class DcrStacker(BaseStacker):
                  dcr_magnitudes=None):
 
         if dcr_magnitudes is None:
+            # DCR amplitudes are in arcseconds.
             self.dcr_magnitudes = {'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}
         else:
             self.dcr_magnitudes = dcr_magnitudes
