@@ -147,7 +147,7 @@ def astrometryBatch(colmap=None, runName='opsim',
     # Parallax problems can be caused by HA and DCR degeneracies. Check their correlation.
     for rmag in (20.0, 24.0):
         metric = metrics.ParallaxDcrDegenMetric(metricName='Parallax-DCR degeneracy @ %.1f' % (rmag),
-                                                rmag=rmag, seeingCol=colmap['seeingGeom'],
+                                                rmag=rmag, seeingCol=colmap['seeingEff'],
                                                 filterCol=colmap['filter'], m5Col=colmap['fiveSigmaDepth'])
         caption = 'Correlation between parallax offset magnitude and hour angle for a r=%.1f star.' % (rmag)
         caption += ' (0 is good, near -1 or 1 is bad).'

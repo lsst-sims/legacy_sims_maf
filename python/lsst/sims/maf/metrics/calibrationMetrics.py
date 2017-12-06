@@ -318,7 +318,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
     """
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='seeingFwhmGeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
-                 filterCol='filter', tol = 0.05, **kwargs):
+                 filterCol='filter', tol=0.05, **kwargs):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
@@ -349,16 +349,27 @@ class ParallaxDcrDegenMetric(BaseMetric):
         return result
 
     def run(self, dataSlice, slicePoint=None):
-        snr = np.zeros(len(dataSlice), dtype='float')
+        # The idea here is that we calculate position errors (in RA and Dec) for all observations.
+        # Then we generate arrays of the parallax offsets (delta RA parallax = ra_pi_amp, etc)
+        #  and the DCR offsets (delta RA DCR = ra_dcr_amp, etc), and just add them together into one
+        #  RA  (and Dec) offset. Then, we try to fit for how we combined these offsets, but while
+        #  considering the astrometric noise. If we can figure out that we just added them together
+        # (i.e. the curve_fit result is [a=1, b=1] for the function _positions above)
+        # then we should be able to disentangle the parallax and DCR offsets when fitting 'for real'.
         # compute SNR for all observations
+        snr = np.zeros(len(dataSlice), dtype='float')
         for filt in self.filters:
             inFilt = np.where(dataSlice[self.filterCol] == filt)
             snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
         # Compute the centroiding uncertainties
-        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol],
-                                                            snr)**2+self.atm_err**2)
-
-        # Construct the vectors
+        # Temporary fix for FWHMeff to FWHMgeom calculation.
+        if self.seeingCol.endswith('Eff'):
+            seeing = dataSlice[self.seeingCol] * 0.822 + 0.052
+        else:
+            seeing = dataSlice[self.seeingCol]
+        position_errors = np.sqrt(mafUtils.astrom_precision(seeing, snr)**2 +
+                                  self.atm_err**2)
+        # Construct the vectors of RA/Dec offsets. xdata is the "input data". ydata is the "output".
         xdata = np.empty((2, dataSlice.size * 2), dtype=float)
         xdata[0, :] = np.concatenate((dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']))
         xdata[1, :] = np.concatenate((dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']))
