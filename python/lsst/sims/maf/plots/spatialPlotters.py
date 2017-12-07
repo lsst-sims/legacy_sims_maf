@@ -123,11 +123,14 @@ class HealpixSkyMap(BasePlotter):
                 norm = None
             warnings.warn("Using norm was set to log, but color limits pass through 0. "
                           "Adjusting so plotting doesn't fail")
-
+        if plotDict['coord'] == 'C':
+            notext = True
+        else:
+            notext = False
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
                     min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
                     coord=plotDict['coord'], cmap=cmap, norm=norm,
-                    sub=plotDict['subplot'], fig=fig.number)
+                    sub=plotDict['subplot'], fig=fig.number, notext=notext)
         # Add a graticule (grid) over the globe.
         hp.graticule(dpar=30, dmer=30, verbose=False)
         # Add colorbar (not using healpy default colorbar because we want more tickmarks).
