@@ -158,8 +158,8 @@ class RunComparison(object):
         else:
             self.parameters = self.parameters.join(tempDFList)
 
-    def findMetricLike(self, metricNameLike=None, metricMetadataLike=None,
-                       slicerNameLike=None):
+    def buildMetricDict(self, metricNameLike=None, metricMetadataLike=None,
+                       slicerNameLike=None, subdir=None):
         """Return a metric dictionary based on finding all metrics which match 'like' the various parameters.
 
         Parameters
@@ -170,54 +170,41 @@ class RunComparison(object):
             Metric Metadata like this.
         slicerNameLike: str, opt
             Slicer name like this.
+        subdir: str, opt
+            Find metrics from this subdir only.
+            If other parameters are not specified, this returns all metrics within this subdir.
 
         Returns
         -------
         Dict
-            Key = self-created metric 'name', value = [metricName, metricMetadata, slicerName, None]
+            Key = self-created metric 'name', value = Dict{metricName, metricMetadata, slicerName}
         """
+        if metricNameLike is None and metricMetadataLike is None and slicerNameLike is None:
+            getAll = True
+        else:
+            getAll = False
         mDict = {}
         for r in self.runresults:
-            for subdir in self.runresults[r]:
-                mIds = self.runresults[r][subdir].getMetricIdLike(metricNameLike=metricNameLike,
-                                                                  metricMetadataLike=metricMetadataLike,
-                                                                  slicerNameLike=slicerNameLike)
+            if subdir is not None:
+                subdirs = [subdir]
+            else:
+                subdirs = list(self.runresults[r].keys())
+            for subdir in subdirs:
+                if getAll:
+                    mIds = self.runresults[r][subdir].getAllMetricIds()
+                else:
+                    mIds = self.runresults[r][subdir].getMetricIdLike(metricNameLike=metricNameLike,
+                                                                      metricMetadataLike=metricMetadataLike,
+                                                                      slicerNameLike=slicerNameLike)
                 for mId in mIds:
                     info = self.runresults[r][subdir].getMetricDisplayInfo(mId)
                     metricName = info['metricName'][0]
                     metricMetadata = info['metricMetadata'][0]
                     slicerName = info['slicerName'][0]
                     name = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
-                    mDict[name] = [metricName, metricMetadata, slicerName, None]
-        return mDict
-
-
-    def buildMetricDict(self, subdir):
-        """Build a metric dictionary based on a subdirectory (i.e. a subset of metrics).
-
-        Pulls all summary stats from the results DB in a given subdirectory, for all runs.
-
-        Parameters
-        ----------
-        subdir: str
-           Name of a subdirectory to search for resultsDb
-
-        Returns
-        -------
-        Dict
-           Key = self-created metric 'name', value = [metricName, metricMetadata, slicerName, None]
-        """
-        mDict = {}
-        for r in self.runresults:
-            if subdir in os.path.join(r, subdir):
-                mIds = self.runresults[r][subdir].getAllMetricIds()
-                for mId in mIds:
-                    info = self.runresults[r][subdir].getMetricDisplayInfo(mId)
-                    metricName = info['metricName'][0]
-                    metricMetadata = info['metricMetadata'][0]
-                    slicerName = info['slicerName'][0]
-                    name = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
-                    mDict[name] = [metricName, metricMetadata, slicerName, None]
+                    mDict[name] = {'metricName': metricName,
+                                   'metricMetadata': metricMetadata,
+                                   'slicerName': slicerName}
         return mDict
 
     def _buildSummaryName(self, metricName, metricMetadata, slicerName, summaryStatName):
@@ -335,8 +322,12 @@ class RunComparison(object):
             <run_124>    <metricValue1>  <metricValue2>
         """
         for mName, metric in metricDict.items():
-            tempDF = self._findSummaryStats(metricName=metric[0], metricMetadata=metric[1],
-                                            slicerName=metric[2], summaryName=metric[3],
+            if 'summaryName' not in metric:
+                metric['summaryName'] = None
+            tempDF = self._findSummaryStats(metricName=metric['metricName'],
+                                            metricMetadata=metric['metricMetadata'],
+                                            slicerName=metric['slicerName'],
+                                            summaryName=metric['summaryName'],
                                             colName=mName)
             if self.summaryStats is None:
                 self.summaryStats = tempDF
