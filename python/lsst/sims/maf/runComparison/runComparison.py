@@ -158,6 +158,40 @@ class RunComparison(object):
         else:
             self.parameters = self.parameters.join(tempDFList)
 
+    def findMetricLike(self, metricNameLike=None, metricMetadataLike=None,
+                       slicerNameLike=None):
+        """Return a metric dictionary based on finding all metrics which match 'like' the various parameters.
+
+        Parameters
+        ----------
+        metricNameLike: str, opt
+            Metric name like this -- i.e. will look for metrics which match metricName like "value".
+        metricMetadataLike: str, opt
+            Metric Metadata like this.
+        slicerNameLike: str, opt
+            Slicer name like this.
+
+        Returns
+        -------
+        Dict
+            Key = self-created metric 'name', value = [metricName, metricMetadata, slicerName, None]
+        """
+        mDict = {}
+        for r in self.runresults:
+            for subdir in self.runresults[r]:
+                mIds = self.runresults[r][subdir].getMetricIdLike(metricNameLike=metricNameLike,
+                                                                  metricMetadataLike=metricMetadataLike,
+                                                                  slicerNameLike=slicerNameLike)
+                for mId in mIds:
+                    info = self.runresults[r][subdir].getMetricDisplayInfo(mId)
+                    metricName = info['metricName'][0]
+                    metricMetadata = info['metricMetadata'][0]
+                    slicerName = info['slicerName'][0]
+                    name = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
+                    mDict[name] = [metricName, metricMetadata, slicerName, None]
+        return mDict
+
+
     def buildMetricDict(self, subdir):
         """Build a metric dictionary based on a subdirectory (i.e. a subset of metrics).
 
@@ -174,7 +208,7 @@ class RunComparison(object):
            Key = self-created metric 'name', value = [metricName, metricMetadata, slicerName, None]
         """
         mDict = {}
-        for r in self.runlist:
+        for r in self.runresults:
             if subdir in os.path.join(r, subdir):
                 mIds = self.runresults[r][subdir].getAllMetricIds()
                 for mId in mIds:
@@ -309,7 +343,7 @@ class RunComparison(object):
             else:
                 self.summaryStats = self.summaryStats.join(tempDF)
 
-    def normalizeRun(self, baselineRun):
+    def normalizeStats(self, baselineRun):
         """
         Normalize the summary metric values in the dataframe
         resulting from combineSummaryStats based on the values of a single
@@ -367,10 +401,10 @@ class RunComparison(object):
                                                         slicerName=slicerName)
                 if len(mId) > 0 :
                     if len(mId) > 1:
-                        warnings.warn("Found more than one metric data file matching ",
+                        warnings.warn("Found more than one metric data file matching " +
                                       "metricName %s metricMetadata %s and slicerName %s"
-                                      % (metricName, metricMetadata, slicerName),
-                                      ' Skipping this combination.')
+                                      % (metricName, metricMetadata, slicerName) +
+                                      " Skipping this combination.")
                     else:
                         filename = self.runresults[r][s].getMetricDataFiles(metricId=mId)
                         filepaths[r] = os.path.join(r, s, filename[0])
@@ -392,10 +426,12 @@ class RunComparison(object):
             bundleDict[r].read(filenames[r])
         return bundleDict, mname
 
-    def plotMetricData(self, bundleDict, plotFunc, mname=None, runlist=None, userPlotDict=None,
+    def plotMetricData(self, bundleDict, plotFunc, runlist=None, userPlotDict=None,
                        layout=None, outDir=None, savefig=False):
         if runlist is None:
             runlist = self.runlist
+        if userPlotDict is None:
+            userPlotDict = {}
 
         ph = plots.PlotHandler(outDir=outDir, savefig=savefig)
         bundleList = []
@@ -423,9 +459,9 @@ class RunComparison(object):
                     tmp = bundleDict[b].metricValues.compressed().max()
                     colorMax = max(tmp, colorMax)
                 userPlotDict['colorMax'] = colorMax
-            for i, pdcit in enumerate(plotDicts):
+            for i, pdict in enumerate(plotDicts):
                 # Add user provided dictionary.
-                pdcit.update(userPlotDict)
+                pdict.update(userPlotDict)
                 # Set subplot information.
                 if layout is None:
                     ncols = int(np.ceil(np.sqrt(len(runlist))))
@@ -433,12 +469,12 @@ class RunComparison(object):
                 else:
                     ncols = layout[0]
                     nrows = layout[1]
-                pdcit['subplot'] = str(nrows) + str(ncols) + str(i + 1)
-                pdcit['title'] = runlist[i]
+                pdict['subplot'] = int(str(nrows) + str(ncols) + str(i + 1))
+                pdict['title'] = runlist[i]
                 # For the subplots we do not need the label
-                pdcit['label'] = ''
+                pdict['label'] = ''
                 if 'suptitle' not in userPlotDict:
-                    pdcit['suptitle'] = ph._buildTitle()
+                    pdict['suptitle'] = ph._buildTitle()
         else:
             # Put everything on one plot.
             if 'xMin' not in userPlotDict:
@@ -453,8 +489,10 @@ class RunComparison(object):
                     tmp = bundleDict[b].metricValues.compressed().max()
                     xMax = max(tmp, xMax)
                 userPlotDict['xMax'] = xMax
-            for i, pdcit in enumerate(plotDicts):
-                pdcit.update(userPlotDict)
-                pdcit['subplot'] = '111'
+            for i, pdict in enumerate(plotDicts):
+                pdict.update(userPlotDict)
+                pdict['subplot'] = '111'
                 # Legend and title will automatically be ok, I think.
+        if self.verbose:
+            print(plotDicts)
         ph.plot(plotFunc, plotDicts=plotDicts)
