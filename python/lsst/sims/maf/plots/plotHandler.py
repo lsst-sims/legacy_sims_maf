@@ -572,8 +572,6 @@ class PlotHandler(object):
         # Add the super title if provided.
         if 'suptitle' in self.plotDicts[0]:
             plt.suptitle(self.plotDicts[0]['suptitle'])
-        # Set up tight layout.
-        plt.tight_layout()
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
             if displayDict is None:
