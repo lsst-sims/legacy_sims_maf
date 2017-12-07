@@ -318,6 +318,24 @@ class ResultsDb(object):
             metricId.append(m.metricId)
         return metricId
 
+    def getMetricIdLike(self, metricNameLike=None, slicerNameLike=None,
+                        metricMetadataLike=None, simDataName=None):
+        metricId = []
+        query = self.session.query(MetricRow.metricId, MetricRow.metricName, MetricRow.slicerName,
+                                   MetricRow.metricMetadata,
+                                   MetricRow.simDataName)
+        if metricNameLike is not None:
+            query = query.filter(MetricRow.metricName.like('%' + str(metricNameLike) + '%'))
+        if slicerNameLike is not None:
+            query = query.filter(MetricRow.slicerName.like('%' + str(slicerNameLike) + '%'))
+        if metricMetadataLike is not None:
+            query = query.filter(MetricRow.metricMetadataLike.like('%' + str(metricMetadataLike) + '%'))
+        if simDataName is not None:
+            query = query.filter(MetricRow.simDataName == simDataName)
+        for m in query:
+            metricId.append(m.metricId)
+        return metricId
+
     def getAllMetricIds(self):
         """
         Return a list of all metricIds.
