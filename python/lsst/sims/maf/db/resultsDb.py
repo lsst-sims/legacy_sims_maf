@@ -329,7 +329,7 @@ class ResultsDb(object):
         if slicerNameLike is not None:
             query = query.filter(MetricRow.slicerName.like('%' + str(slicerNameLike) + '%'))
         if metricMetadataLike is not None:
-            query = query.filter(MetricRow.metricMetadataLike.like('%' + str(metricMetadataLike) + '%'))
+            query = query.filter(MetricRow.metricMetadata.like('%' + str(metricMetadataLike) + '%'))
         if simDataName is not None:
             query = query.filter(MetricRow.simDataName == simDataName)
         for m in query:
