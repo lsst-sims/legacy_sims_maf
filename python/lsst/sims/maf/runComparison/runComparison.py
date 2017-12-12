@@ -466,7 +466,7 @@ class RunComparison(object):
                 pdict['label'] = ''
                 if 'suptitle' not in userPlotDict:
                     pdict['suptitle'] = ph._buildTitle()
-        else:
+        elif plotFunc.plotType == 'Histogram':
             # Put everything on one plot.
             if 'xMin' not in userPlotDict:
                 xMin = 100000000
@@ -478,6 +478,36 @@ class RunComparison(object):
                 xMax = -100000000
                 for b in bundleDict:
                     tmp = bundleDict[b].metricValues.compressed().max()
+                    xMax = max(tmp, xMax)
+                userPlotDict['xMax'] = xMax
+            for i, pdict in enumerate(plotDicts):
+                pdict.update(userPlotDict)
+                pdict['subplot'] = '111'
+                # Legend and title will automatically be ok, I think.
+        elif plotFunc.plotType == 'BinnedData':
+            # Put everything on one plot.
+            if 'yMin' not in userPlotDict:
+                yMin = 100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].metricValues.compressed().min()
+                    yMin = min(tmp, yMin)
+                userPlotDict['yMin'] = yMin
+            if 'yMax' not in userPlotDict:
+                yMax = -100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].metricValues.compressed().max()
+                    yMax = max(tmp, yMax)
+                userPlotDict['yMax'] = yMax
+            if 'xMin' not in userPlotDict:
+                xMin = 100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].slicer.slicePoints['bins'].min()
+                    xMin = min(tmp, xMin)
+                userPlotDict['xMin'] = xMin
+            if 'xMax' not in userPlotDict:
+                xMax = -100000000
+                for b in bundleDict:
+                    tmp = bundleDict[b].slicer.slicePoints['bins'].max()
                     xMax = max(tmp, xMax)
                 userPlotDict['xMax'] = xMax
             for i, pdict in enumerate(plotDicts):
