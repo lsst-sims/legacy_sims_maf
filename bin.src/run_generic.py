@@ -76,7 +76,9 @@ def parseArgs(subdir='out', parser=None):
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
                         default=False, help="Reload the metric values from disk and re-plot them.")
     parser.add_argument('--sqlConstraint', type=str, default=None,
-                        help="SQL constraint to apply to all metrics.")
+                        help="SQL constraint to apply to all metrics. "
+                             " e.g.: 'night <= 365' or 'propId = 5' "
+                             " (**may not work with slew batches)")
     args = parser.parse_args()
 
     if args.runName is None:

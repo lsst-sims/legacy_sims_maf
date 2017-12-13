@@ -32,8 +32,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # List to hold metrics that shouldn't be saved
     noSaveBundleList = []
 
-    # Connect to the databse
-    # Connect to the databse
+    # Connect to the database
     opsimdb = db.OpsimDatabaseV3(dbFile)
     if runName is None:
         runName = os.path.basename(dbFile).replace('_sqlite.db', '').replace('.db', '')
@@ -806,6 +805,10 @@ if __name__ == "__main__":
     args, extras = parser.parse_known_args()
 
     # Build metric bundles.
+
+    print('WARNING! This script has not been completely updated to work properly for v3 - in particular,'
+          ' the astrometry metrics have problems with conversions in the stackers. Please run "run_srd.py"'
+          ' instead to get the fO/astrometry metrics.')
 
     (bundleDict, mergedHistDict, noSaveBundleDict) = makeBundleList(args.dbFile, nside=args.nside,
                                                                     lonCol=args.lonCol, latCol=args.latCol,

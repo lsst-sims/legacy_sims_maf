@@ -86,7 +86,8 @@ def intraNight(colmap=None, runName='opsim', nside=64, sqlConstraint=None):
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     metadata = 'All filters'
     displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point ' \
-                             'on the sky, considering visits between %.1f and %.1f minutes' % (binMin, binMax)
+                             'on the sky, considering visits between %.1f and %.1f minutes' % (binMin,
+                                                                                               binMax)
     displayDict['order'] += 1
     plotFunc = plots.SummaryHistogram()
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,

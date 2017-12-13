@@ -19,7 +19,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
     Calculates extended standard metrics (with unislicer) on the quantity (all visits and per filter),
     makes histogram of the value (all visits and per filter),
 
-    TODO: handle stackers more automatically. Currently a hack for HA, but this is a general problem.
+    TODO: handle stackers which need configuration (degrees, in particular) more automatically.
+    Currently have a hack for HA & normairmass.
 
     Parameters
     ----------
@@ -146,7 +147,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
 
 def allMetadata(colmap=None, runName='opsim', sqlConstraint='', metadata='All props'):
     """Generate a large set of metrics about the metadata of each visit -
-    distributions of airmass, normalized airmass, seeing, sky brightness, singlevisit depth,
+    distributions of airmass, normalized airmass, seeing, sky brightness, single visit depth,
     hour angle, distance to the moon, and solar elongation.
     The exact metadata which is analyzed is set by the colmap['metadataList'] value.
 

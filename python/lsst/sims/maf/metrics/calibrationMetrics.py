@@ -182,29 +182,49 @@ class ParallaxCoverageMetric(BaseMetric):
     At the poles, uniform sampling would result in a metric value of ~1.
     Conceptually, it is helpful to remember that the parallax motion of a star at the pole is
     a (nearly circular) ellipse while the motion of a star on the ecliptic is a straight line. Thus, any
-    pair of observations seperated by 6 months will give the full parallax range for a star on the pole
-    but only observations on very spefic dates will give the full range for a star on the ecliptic.
+    pair of observations separated by 6 months will give the full parallax range for a star on the pole
+    but only observations on very specific dates will give the full range for a star on the ecliptic.
 
-    Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
+    Optionally also demand that there are observations above the snrLimit kwarg spanning thetaRange radians.
+
+    Parameters
+    ----------
+    m5Col: str, opt
+        Column name for individual visit m5. Default fiveSigmaDepth.
+    mjdCol: str, opt
+        Column name for exposure time dates. Default observationStartMJD.
+    filterCol: str, opt
+        Column name for filter. Default filter.
+    seeingCol: str, opt
+        Column name for seeing (assumed FWHM). Default seeingFwhmGeom.
+    rmag: float, opt
+        Magnitude of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword.
+        Default 20.0
+    sedTemplate: str, opt
+        Template to use (can be 'flat' or 'O','B','A','F','G','K','M'). Default 'flat'.
+    atm_err: float, opt
+        Centroiding error due to atmosphere in arcsec. Default 0.01 (arcseconds).
+    thetaRange: float, opt
+        Range of parallax offset angles to demand (in radians). Default=0 (means no range requirement).
+    snrLimit: float, opt
+        Only include points above the snrLimit when computing thetaRange. Default 5.
+
+    Returns
+    --------
+    metricValue: float
+        Returns a weighted mean of the length of the parallax factor vectors.
+        Values near 1 imply that the points are well distributed.
+        Values near 0 imply that the parallax phase coverage is bad.
+        Near the ecliptic, uniform sampling results in metric values of about 0.5.
+
+    Notes
+    -----
+    Uses the ParallaxFactor stacker to calculate ra_pi_amp and dec_pi_amp.
     """
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
                  mjdCol='observationStartMJD', filterCol='filter', seeingCol='seeingFwhmGeom',
                  rmag=20., SedTemplate='flat', badval=-666,
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
-        """
-        instantiate metric
-
-        m5Col = column name for inidivual visit m5
-        mjdCol = column name for exposure time dates
-        filterCol = column name for filter
-        seeingCol = column name for seeing (assumed FWHM)
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
-        atm_err = centroiding error due to atmosphere in arcsec
-        thetaRange = range of parallax offset angles to demand (in radians) default=0 means no range requirement
-        snrLimit = only include points above the snrLimit (default 5) when computing thetaRange.
-        """
-
         cols = ['ra_pi_amp', 'dec_pi_amp', m5Col, mjdCol, filterCol, seeingCol]
         units = 'ratio'
         super(ParallaxCoverageMetric, self).__init__(cols,
@@ -262,7 +282,6 @@ class ParallaxCoverageMetric(BaseMetric):
         return aveRad
 
     def run(self, dataSlice, slicePoint=None):
-
         if np.size(dataSlice) < 2:
             return self.badval
 
@@ -311,7 +330,7 @@ class ParallaxDcrDegenMetric(BaseMetric):
     Returns
     -------
     metricValue : float
-        returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
+        Returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
         The RA and Dec offsets are fit simultaneously. Values close to zero are good, values close to +/- 1
         are bad. Experience with fitting Monte Carlo simulations suggests the astrometric fits start
         becoming poor around a correlation of 0.7.

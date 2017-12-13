@@ -15,7 +15,7 @@ def setBatches(opsdb, colmap, args):
 
 
 if __name__ == '__main__':
-    args = parseArgs('glance')
+    args = parseArgs(subdir='glance')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:
