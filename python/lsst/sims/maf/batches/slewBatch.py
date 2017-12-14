@@ -51,7 +51,6 @@ def slewBasics(colmap=None, runName='opsim', sqlConstraint=None):
         bundleList.append(bundle)
 
     # Slew Time histogram.
-    sql = ''
     slicer = slicers.OneDSlicer(sliceColName=colmap['slewtime'], binsize=2)
     metric = metrics.CountMetric(col=colmap['slewtime'], metricName='Slew Time Histogram')
     metadata = 'All visits'
@@ -64,7 +63,6 @@ def slewBasics(colmap=None, runName='opsim', sqlConstraint=None):
 
     # Slew distance histogram, if available.
     if colmap['slewdist'] is not None:
-        sql = ''
         slicer = slicers.OneDSlicer(sliceColName=colmap['slewdist'])
         metric = metrics.CountMetric(col=colmap['slewdist'], metricName='Slew Distance Histogram')
         plotDict = {'logScale': True, 'ylabel': 'Count'}
@@ -105,8 +103,6 @@ def slewAngles(colmap=None, runName='opsim', sqlConstraint=None):
 
     # All of these metrics are run with a unislicer.
     slicer = slicers.UniSlicer()
-    # And on all of the slew state data.
-    sqlconstraint = ''
 
     # For each angle, we will compute mean/median/min/max and rms.
     # Note that these angles can range over more than 360 degrees, because of cable wrap.
@@ -122,7 +118,7 @@ def slewAngles(colmap=None, runName='opsim', sqlConstraint=None):
         for metric in metriclist:
             displayDict['caption'] = '%s %s' % (metric.name, angle)
             displayDict['order'] += 1
-            bundle = mb.MetricBundle(metric, slicer, sqlconstraint,
+            bundle = mb.MetricBundle(metric, slicer, sqlConstraint,
                                      displayDict=displayDict, metadata=metadata)
             bundleList.append(bundle)
 
@@ -131,7 +127,7 @@ def slewAngles(colmap=None, runName='opsim', sqlConstraint=None):
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def slewSpeeds(colmap=None, runName='opsim'):
+def slewSpeeds(colmap=None, runName='opsim', sqlConstraint=None):
     """Generate a set of slew statistics focused on the speeds of each component (dome and telescope).
     These slew statistics must be run on the SlewMaxSpeeds table in opsimv4 and opsimv3.
 
@@ -142,6 +138,9 @@ def slewSpeeds(colmap=None, runName='opsim'):
         Note that for these metrics, the column names are distinctly different in v3/v4.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
+    sqlConstraint : str or None, opt
+        SQL constraint to apply to metrics. Note this runs on Slew*State table, so constraints
+        should generally be based on slew_slewCount.
 
     Returns
     -------
@@ -153,7 +152,6 @@ def slewSpeeds(colmap=None, runName='opsim'):
 
     # All of these metrics run with a unislicer, on all the slew data.
     slicer = slicers.UniSlicer()
-    sqlconstraint = ''
 
     speeds = ['Dome Alt Speed', 'Dome Az Speed', 'Tel Alt Speed', 'Tel Az Speed', 'Rotator Speed']
 
@@ -163,19 +161,19 @@ def slewSpeeds(colmap=None, runName='opsim'):
         metric = metrics.AbsMaxMetric(col=colmap[speed], metricName='Max (Abs)')
         displayDict['caption'] = 'Maximum absolute value of %s.' % speed
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sqlConstraint, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
         metric = metrics.AbsMeanMetric(col=colmap[speed], metricName='Mean (Abs)')
         displayDict['caption'] = 'Mean absolute value of %s.' % speed
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sqlConstraint, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
         metric = metrics.AbsMaxPercentMetric(col=colmap[speed], metricName='% @ Max')
         displayDict['caption'] = 'Percent of slews at the maximum %s (absolute value).' % speed
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sqlConstraint, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
     for b in bundleList:
@@ -184,7 +182,7 @@ def slewSpeeds(colmap=None, runName='opsim'):
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def slewActivities(colmap=None, runName='opsim', totalSlewN=1):
+def slewActivities(colmap=None, runName='opsim', totalSlewN=1, sqlConstraint=None):
     """Generate a set of slew statistics focused on finding the contributions to the overall slew time.
     These slew statistics must be run on the SlewActivities table in opsimv4 and opsimv3.
 
@@ -200,6 +198,10 @@ def slewActivities(colmap=None, runName='opsim', totalSlewN=1):
         The total number of slews in the simulated survey.
         Used to calculate % of slew activities for each component.
         Default is 1.
+    sqlConstraint : str or None, opt
+        SQL constraint to apply to metrics. Note this runs on Slew*State table, so constraints
+        should generally be based on slew_slewCount.
+
 
     Returns
     -------
@@ -228,7 +230,9 @@ def slewActivities(colmap=None, runName='opsim', totalSlewN=1):
         tableValue = colmap[slewType]
 
         # Metrics for all activities of this type.
-        sqlconstraint = 'activityDelay>0 and activity="%s"' % tableValue
+        sql = 'activityDelay>0 and activity="%s"' % tableValue
+        if sqlConstraint is not None:
+            sqlconstraint = '(%s) and (%s)' % (sql, sqlConstraint)
 
         metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
                                           metricName='ActivePerc')
@@ -250,7 +254,9 @@ def slewActivities(colmap=None, runName='opsim', totalSlewN=1):
         bundleList.append(bundle)
 
         # Metrics for activities of this type which are in the critical path.
-        sqlconstraint = 'activityDelay>0 and inCriticalPath="True" and activity="%s"' % tableValue
+        sql = 'activityDelay>0 and inCriticalPath="True" and activity="%s"' % tableValue
+        if sqlConstraint is not None:
+            sqlconstraint = '(%s) and (%s)' % (sql, sqlConstraint)
 
         metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
                                           metricName='ActivePerc in crit')

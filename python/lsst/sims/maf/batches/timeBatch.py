@@ -48,7 +48,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, sqlConstraint=None):
     metadata = 'gri'
     dtMin = 15.0
     dtMax = 60.0
-    metric = metrics.PairFractionMetric(timeCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
+    metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
                                         metricName='Fraction of visits in pairs (%.0f-%.0f min)' % (dtMin,
                                                                                                     dtMax))
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
@@ -63,7 +63,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, sqlConstraint=None):
 
     # Look at the fraction of visits which have another visit within dtMax.
     dtMax = 50.0
-    metric = metrics.NRevisitsMetric(timeCol=colmap['mjd'], dT=dtMax, normed=True,
+    metric = metrics.NRevisitsMetric(mjdCol=colmap['mjd'], dT=dtMax, normed=True,
                                      metricName='Fraction of visits with a revisit < %.0f min' % dtMax)
     displayDict['caption'] = 'Fraction of %s visits that have another visit ' \
                              'within %.1f min. ' % (metadata, dtMax)

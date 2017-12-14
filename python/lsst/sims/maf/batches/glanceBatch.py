@@ -145,6 +145,7 @@ def glanceBatch(colmap=None, runName='opsim',
     stackerList = []
     stacker = stackers.ParallaxFactorStacker(raCol=colmap['ra'],
                                              decCol=colmap['dec'],
+                                             degrees=colmap['raDecDeg'],
                                              dateCol=colmap['mjd'])
     stackerList.append(stacker)
 
@@ -170,7 +171,7 @@ def glanceBatch(colmap=None, runName='opsim',
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
     sql = '%s (filter="g" or filter="r" or filter="i")' % sqlC
-    metric = metrics.PairFractionMetric(timeCol=colmap['mjd'])
+    metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
