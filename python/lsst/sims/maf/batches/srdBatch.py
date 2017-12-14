@@ -11,6 +11,7 @@ from .common import standardSummary
 
 __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
+
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
             benchmarkArea=18000, benchmarkNvisits=825):
     # Allow user to add dithering.
@@ -240,7 +241,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     caption += 'Summary statistic "Area" indicates the area on the sky which has a '
     caption += 'deviation from uniformity of < %.2f.' % (cutoff1)
     displayDict['caption'] = caption
-    bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict,  plotFuncs=subsetPlots,
+    bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)
     displayDict['order'] += 1
