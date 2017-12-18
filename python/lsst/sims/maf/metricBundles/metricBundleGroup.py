@@ -520,7 +520,7 @@ class MetricBundleGroup(object):
                 closefigs=True):
         """Generate all the plots for all the metricBundles in bundleDict.
 
-        Generating all ploots, for all MetricBundles, at this point, assumes that
+        Generating all plots, for all MetricBundles, at this point, assumes that
         clearMemory was False.
 
         Parameters

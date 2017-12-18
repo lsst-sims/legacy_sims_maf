@@ -230,7 +230,7 @@ class HealpixHistogram(BasePlotter):
         plotDict.update(userPlotDict)
         if plotDict['scale'] is None:
             plotDict['scale'] = (hp.nside2pixarea(slicer.nside, degrees=True) / 1000.0)
-        fignum = self.baseHist(metricValue, slicer, plotDict, fignum=fignum)
+        fignum = self.baseHist(metricValue[~metricValue.mask], slicer, plotDict, fignum=fignum)
         return fignum
 
 
@@ -254,7 +254,7 @@ class OpsimHistogram(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        fignum = self.baseHist(metricValue, slicer, plotDict, fignum=fignum)
+        fignum = self.baseHist(metricValue[~metricValue.mask], slicer, plotDict, fignum=fignum)
         return fignum
 
 
