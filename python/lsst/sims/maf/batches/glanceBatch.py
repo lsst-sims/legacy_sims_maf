@@ -13,7 +13,8 @@ __all__ = ['glanceBatch']
 
 
 def glanceBatch(colmap=None, runName='opsim',
-                nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y')):
+                nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y'),
+                nyears=10):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
     This is a meta-set of other batches, to some extent.
 
@@ -29,6 +30,8 @@ def glanceBatch(colmap=None, runName='opsim',
         The list of individual filters to use when running metrics.
         Default is ('u', 'g', 'r', 'i', 'z', 'y').
         There is always an all-visits version of the metrics run as well.
+    nyears : int (10)
+        How many years to attempt to make hourglass plots for
 
     Returns
     -------
@@ -78,8 +81,10 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # Number of observations, all and each filter
     metric = metrics.CountMetric(col=colmap['mjd'], metricName='Number of Exposures')
+    plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
-        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
+                                            plotDict=plotDict)
         bundleList.append(bundle)
 
     # The alt/az plots of all the pointings
@@ -165,6 +170,16 @@ def glanceBatch(colmap=None, runName='opsim',
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
+
+    years = list(range(nyears+1))
+    displayDict = {'group': 'Hourglass'}
+    for year in years[1:]:
+        sql = 'night > %i and night <= %i' % (365.25*(year-1), 365.25*year)
+        slicer = slicers.HourglassSlicer()
+        metric = metrics.HourglassMetric(nightcol=colmap['night'], mjdcol=colmap['mjd'])
+        metadata = 'Year %i-%i' % (year-1, year)
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
+        bundleList.append(bundle)
 
     for b in bundleList:
         b.setRunName(runName)
