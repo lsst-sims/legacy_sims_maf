@@ -81,10 +81,8 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # Number of observations, all and each filter
     metric = metrics.CountMetric(col=colmap['mjd'], metricName='Number of Exposures')
-    plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
-        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
-                                            plotDict=plotDict)
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
         bundleList.append(bundle)
 
     # The alt/az plots of all the pointings
@@ -123,9 +121,12 @@ def glanceBatch(colmap=None, runName='opsim',
     displayDict = {'group': 'Basic Maps', 'order': 3}
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'])
     metric = metrics.CountMetric(col=colmap['mjd'])
+    plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            summaryMetrics=standardStats, displayDict=displayDict)
+                                            summaryMetrics=standardStats,
+                                            displayDict=displayDict,
+                                            plotDict=plotDict)
         bundleList.append(bundle)
 
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'])
