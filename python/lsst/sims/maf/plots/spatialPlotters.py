@@ -51,7 +51,7 @@ def setColorLims(metricValue, plotDict):
     if colorMin == colorMax:
         colorMin = colorMin - 0.5
         colorMax = colorMax + 0.5
-    return [colorMin, colorMax]
+    return np.sort([colorMin, colorMax])
 
 
 def setColorMap(plotDict):
