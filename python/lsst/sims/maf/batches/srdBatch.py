@@ -227,7 +227,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     minNvisit = 100
     pixArea = float(hp.nside2pixarea(nside, degrees=True))
     scale = pixArea * hp.nside2npix(nside)
-    m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity', timeCol=colmap['mjd'],
+    m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity', mjdCol=colmap['mjd'],
                                     dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
                                     minNvisits=minNvisit)
 
@@ -248,7 +248,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
 
     # Calculate the actual number of quick revisits.
     dTmax = dTmax   # time in minutes
-    m2 = metrics.NRevisitsMetric(dT=dTmax, timeCol=colmap['mjd'], normed=False)
+    m2 = metrics.NRevisitsMetric(dT=dTmax, mjdCol=colmap['mjd'], normed=False)
     plotDict = {'xMin': 0.1, 'xMax': 2000, 'logScale': True}
     cutoff2 = 800
     summaryStats = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
