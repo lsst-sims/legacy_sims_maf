@@ -14,6 +14,23 @@ matplotlib.use("Agg")
 
 class TestStackerClasses(unittest.TestCase):
 
+    def testAddCols(self):
+        """Test that we can add columns as expected.
+        """
+        data = np.zeros(90, dtype=list(zip(['alt'], [float])))
+        data['alt'] = np.arange(0, 90)
+        stacker = stackers.ZenithDistStacker(altCol='alt', degrees=True)
+        newcol = stacker.colsAdded[0]
+        # First - are the columns added if they are not there.
+        data, cols_present = stacker._addStackerCols(data)
+        self.assertEqual(cols_present, False)
+        self.assertTrue(newcol in data.dtype.names)
+        # Next - if they are present, is that information passed back?
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            data, cols_present = stacker._addStackerCols(data)
+            self.assertEqual(cols_present, True)
+
     def testEQ(self):
         """
         Test that stackers can be compared
@@ -47,7 +64,7 @@ class TestStackerClasses(unittest.TestCase):
         data['airmass'] = np.random.rand(600)
         data['fieldDec'] = np.random.rand(600) * np.pi - np.pi / 2.
         data['fieldDec'] = np.degrees(data['fieldDec'])
-        stacker = stackers.NormAirmassStacker()
+        stacker = stackers.NormAirmassStacker(degrees=True)
         data = stacker.run(data)
         for i in np.arange(data.size):
             self.assertLessEqual(data['normairmass'][i], data['airmass'][i])
@@ -63,7 +80,7 @@ class TestStackerClasses(unittest.TestCase):
         data['fieldRA'] = data['fieldRA'] + .1
         data['fieldDec'] = data['fieldDec'] - .1
         data['observationStartMJD'] = np.arange(data.size) + 49000.
-        stacker = stackers.ParallaxFactorStacker()
+        stacker = stackers.ParallaxFactorStacker(degrees=True)
         data = stacker.run(data)
         self.assertLess(max(np.abs(data['ra_pi_amp'])), 1.1)
         self.assertLess(max(np.abs(data['dec_pi_amp'])), 1.1)
@@ -203,10 +220,9 @@ class TestStackerClasses(unittest.TestCase):
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
-
         data = np.zeros(100, dtype=list(zip(['observationStartLST', 'fieldRA'], [float, float])))
         data['observationStartLST'] = np.arange(100) / 99. * np.pi * 2
-        stacker = stackers.HourAngleStacker()
+        stacker = stackers.HourAngleStacker(degrees=True)
         data = stacker.run(data)
         # Check that data is always wrapped
         self.assertLess(np.max(data['HA']), 12.)
@@ -216,8 +232,8 @@ class TestStackerClasses(unittest.TestCase):
         data = stacker.run(data)
         self.assertEqual(data['HA'], 0.)
         data = np.zeros(1, dtype=list(zip(['observationStartLST', 'fieldRA'], [float, float])))
-        data['observationStartLST'] = 2.
-        data['fieldRA'] = 2.
+        data['observationStartLST'] = 20.
+        data['fieldRA'] = 20.
         data = stacker.run(data)
         self.assertEqual(data['HA'], 0.)
         # Check a value
@@ -235,11 +251,11 @@ class TestStackerClasses(unittest.TestCase):
         site = Site(name='LSST')
         data['observationStartLST'], last = calcLmstLast(data['observationStartMJD'], site.longitude_rad)
         data['observationStartLST'] = data['observationStartLST']*180./12.
-        stacker = stackers.ParallacticAngleStacker()
+        stacker = stackers.ParallacticAngleStacker(degrees=True)
         data = stacker.run(data)
         # Check values are in good range
-        assert(data['PA'].max() <= np.pi)
-        assert(data['PA'].min() >= -np.pi)
+        assert(data['PA'].max() <= 180)
+        assert(data['PA'].min() >= -180)
 
         # Check compared to the util
         check_pa = []
@@ -250,7 +266,8 @@ class TestStackerClasses(unittest.TestCase):
                                             ObservationMetaData(mjd=mjd, site=site))
 
             check_pa.append(pa)
-        np.testing.assert_array_almost_equal(data['PA'], check_pa, decimal=2)
+        check_pa = np.degrees(check_pa)
+        np.testing.assert_array_almost_equal(data['PA'], check_pa, decimal=0)
 
     def testFilterColorStacker(self):
         """Test the filter color stacker."""

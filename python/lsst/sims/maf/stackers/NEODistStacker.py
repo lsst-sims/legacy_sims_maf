@@ -22,6 +22,8 @@ class NEODistStacker(BaseStacker):
         MaxGeoDist:  Geocentric distance to the NEO
         NEOHelioX: Heliocentric X (with Earth at x,y,z (0,1,0))
         NEOHelioY: Heliocentric Y (with Earth at (0,1,0))
+
+        Note that both opsim v3 and v4 report solarElongation in degrees.
         """
         self.units = ['AU', 'AU', 'AU']
         # Also grab things needed for the HA stacker
@@ -48,14 +50,15 @@ class NEODistStacker(BaseStacker):
         self.a2 = 1.87
         self.b2 = 1.22
 
-    def _run(self, simData):
-
+    def _run(self, simData, cols_present=False):
+        if cols_present:
+            # This is a pretty rare stacker. Assume we need to rerun
+            pass
         elongRad = np.radians(simData[self.elongCol])
         v5 = np.zeros(simData.size, dtype=float) + simData[self.m5Col]
         for filterName in self.limitingAdjust:
             fmatch = np.where(simData[self.filterCol] == filterName)
             v5[fmatch] += self.limitingAdjust[filterName]
-
         for i, elong in enumerate(elongRad):
             # Law of cosines:
             # Heliocentric Radius of the object
@@ -89,8 +92,13 @@ class NEODistStacker(BaseStacker):
         simData['NEOHelioY'][outer] = simData['MaxGeoDist'][outer]*np.cos(np.pi-elongRad[outer]) + 1.
 
         # Flip the X coord if sun az is negative?
-        flip = np.where(((simData[self.sunAzCol] > 180.) & (simData[self.azCol] > 180.)) |
-                        ((simData[self.sunAzCol] < 180.) & (simData[self.azCol] > 180.)))
+        if simData[self.azCol].min() < - np.pi/2.0:
+            halfval = 180.
+        else:
+            halfval = np.pi
+        flip = np.where(((simData[self.sunAzCol] > halfval) & (simData[self.azCol] > halfval)) |
+                        ((simData[self.sunAzCol] < halfval) & (simData[self.azCol] > halfval)))
+
         simData['NEOHelioX'][flip] *= -1.
 
         return simData

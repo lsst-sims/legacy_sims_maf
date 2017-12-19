@@ -579,7 +579,7 @@ class MetricBundleGroup(object):
                 b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
             except ValueError as ve:
                 message = 'Plotting failed for metricBundle %s.' % (b.fileRoot)
-                message += ' Error message: %s' % (ve.message)
+                message += ' Error message: %s' % (ve)
                 warnings.warn(message)
             if closefigs:
                 plt.close('all')

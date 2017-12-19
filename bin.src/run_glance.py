@@ -10,12 +10,12 @@ from run_generic import *
 
 def setBatches(opsdb, colmap, args):
     bdict = {}
-    bdict.update(batches.glanceBatch(colmap, args.runName))
+    bdict.update(batches.glanceBatch(colmap, args.runName, sqlConstraint=args.sqlConstraint))
     return bdict
 
 
 if __name__ == '__main__':
-    args = parseArgs('glance')
+    args = parseArgs(subdir='glance')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:

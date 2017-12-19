@@ -51,7 +51,7 @@ def getFieldData(opsimDb, sqlconstraint):
     Returns
     -------
     numpy.ndarray
-        A numpy structured array containing the field information.
+        A numpy structured array containing the field information.  This data will ALWAYS be in radians.
     """
     # Get all fields used for all proposals.
     if 'proposalId' not in sqlconstraint:
@@ -88,7 +88,8 @@ def getFieldData(opsimDb, sqlconstraint):
                     propids.remove(nonpropid)
     # And query the field Table.
     if 'Field' in opsimDb.tables:
-        fieldData = opsimDb.fetchFieldsFromFieldTable(propids)
+        # The field table is always in degrees.
+        fieldData = opsimDb.fetchFieldsFromFieldTable(propids, degreesToRadians=True)
     # Or give up and query the summary table.
     else:
         fieldData = opsimDb.fetchFieldsFromSummaryTable(sqlconstraint)

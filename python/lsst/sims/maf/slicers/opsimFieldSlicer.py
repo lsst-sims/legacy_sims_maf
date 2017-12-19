@@ -33,6 +33,10 @@ class OpsimFieldSlicer(BaseSpatialSlicer):
     simDataFieldDecColName : str, optional
         Name of the column in simData for the fieldDec.
         Default fieldDec.
+    latLongDeg : bool, optional
+        Whether the RA/Dec values in *fieldData* are in degrees.
+        If using a standard metricBundleGroup to run the metric, FieldData is fetched
+        by utils.getFieldData, which always returns radians (so the default here is False).
     fieldIdColName : str, optional
         Name of the column in the fieldData for the fieldId (to match with simData).
         Default fieldId.

@@ -52,7 +52,7 @@ def replotSlew(opsdb, colmap, args):
 
 
 if __name__ == '__main__':
-    args = parseArgs('slew')
+    args = parseArgs(subdir='slew')
     opsdb, colmap = connectDb(args.dbfile)
     if args.plotOnly:
         replotSlew(opsdb, colmap, args)

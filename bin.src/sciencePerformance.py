@@ -35,7 +35,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # Connect to the databse
     opsimdb = db.OpsimDatabaseV4(dbFile)
     if runName is None:
-        runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+        runName = os.path.basename(dbFile).replace('_sqlite.db', '').replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
@@ -230,7 +230,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     caption = 'Fraction of total visits where consecutive visits have return times faster '
     caption += 'than %.1f minutes, in any filter, all proposals. ' % (dTmax)
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more '
-    caption += 'than %d revisits within this time window.' % (cutoff3)
+    caption += 'than %.2f revisits within this time window.' % (cutoff3)
     displayDict = {'group': reqgroup, 'subgroup': 'Rapid Revisit', 'displayOrder': order,
                    'caption': caption}
     bundle = metricBundles.MetricBundle(m3, slicer, sqlconstraint, plotDict=plotDict,
@@ -731,7 +731,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         plotDict = {}
         sqlconstraint = 'filter = "%s"' % (f)
         bundle = metricBundles.MetricBundle(metric, slicer,
-                                            sqlconstraint, displayDict=displayDict,
+                                            sqlconstraint, displayDict=displayDict, runName=runName,
                                             stackerList=[stacker, stacker2],
                                             plotDict=plotDict,
                                             plotFuncs=[plotFunc])
@@ -758,7 +758,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         metric = metrics.MinMetric('solarElong')
         slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
         bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict,
-                                            plotFuncs=plotFuncs)
+                                            runName=runName, plotFuncs=plotFuncs)
         bundleList.append(bundle)
 
     return (metricBundles.makeBundlesDictFromList(bundleList), mergedHistDict,

@@ -362,6 +362,51 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
                 propTags['DD'].append(propID)
         return propIDs, propTags
 
+    def createSlewConstraint(self, startTime=None, endTime=None):
+        """Create a SQL constraint for the slew tables (slew activities, slew speeds, slew states)
+        to select slews between startTime and endTime (MJD).
+
+        Parameters
+        ----------
+        startTime : float or None, opt
+            Time of first slew. Default (None) means no constraint on time of first slew.
+        endTime : float or None, opt
+            Time of last slew. Default (None) means no constraint on time of last slew.
+
+        Returns
+        -------
+        str
+            The SQL constraint, like 'slewHistory_slewID  between XXX and XXXX'
+        """
+        query = 'select min(observationStartMJD), max(observationStartMJD) from obsHistory'
+        res = self.query_arbitrary(query, dtype=[('mjdMin', 'int'), ('mjdMax', 'int')])
+        # If asking for constraints that are out of bounds of the survey, return None.
+        if startTime is None or (startTime < res['mjdMin'][0]):
+            startTime = res['mjdMin'][0]
+        if endTime is None or (endTime > res['mjdMax'][0]):
+            endTime = res['mjdMax'][0]
+        # Check if times were out of bounds.
+        if startTime > res['mjdMax'][0] or endTime < res['mjdMin'][0]:
+            warnings.warn('Times requested do not overlap survey operations (%f to %f)'
+                          % (res['mjdMin'][0], res['mjdMax'][0]))
+            return None
+        # Find the slew ID matching the start Time.
+        query = 'select min(observationId) from obsHistory where observationStartMJD >= %s' % (startTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        query = 'select slewCount from slewHistory where ObsHistory_observationId = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        minSlewCount = res['slewCount'][0]
+        # Find the slew ID matching the end Time.
+        query = 'select max(observationId) from obsHistory where observationStartMJD <= %s' % (endTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        # Find the observation id corresponding to this slew time.
+        query = 'select slewCount from slewHistory where ObsHistory_observationId = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        maxSlewCount = res['slewCount'][0]
+        return 'SlewHistory_slewCount between %d and %d' % (minSlewCount, maxSlewCount)
+
     def createSQLWhere(self, tag, propTags):
         """
         Create a SQL constraint to identify observations taken for a particular proposal,
@@ -771,10 +816,53 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
                             propTags[sciencetype] = [int(sc['nonPropID']),]
         return propIDs, propTags
 
+    def createSlewConstraint(self, startTime=None, endTime=None):
+        """Create a SQL constraint for the slew tables (slew activities, slew speeds, slew states)
+        to select slews between startTime and endTime (MJD).
+
+        Parameters
+        ----------
+        startTime : float or None, opt
+            Time of first slew. Default (None) means no constraint on time of first slew.
+        endTime : float or None, opt
+            Time of last slew. Default (None) means no constraint on time of last slew.
+
+        Returns
+        -------
+        str
+            The SQL constraint, like 'slewHistory_slewID > XXX and slewHistory_slewID < XXXX'
+        """
+        query = 'select min(expMJD), max(expMJD) from obsHistory'
+        res = self.query_arbitrary(query, dtype=[('mjdMin', 'int'), ('mjdMax', 'int')])
+        # If asking for constraints that are out of bounds of the survey, return None.
+        if startTime is None or (startTime < res['mjdMin'][0]):
+            startTime = res['mjdMin'][0]
+        if endTime is None or (endTime > res['mjdMax'][0]):
+            endTime = res['mjdMax'][0]
+        # Check if times were out of bounds.
+        if startTime > res['mjdMax'][0] or endTime < res['mjdMin'][0]:
+            warnings.warn('Times requested do not overlap survey operations (%f to %f)'
+                          % (res['mjdMin'][0], res['mjdMax'][0]))
+            return None
+        # Find the slew ID matching the start Time.
+        query = 'select min(obsHistID) from obsHistory where expMJD >= %s' % (startTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        query = 'select slewID from slewHistory where ObsHistory_obsHistID = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        minSlewCount = res['slewCount'][0]
+        # Find the slew ID matching the end Time.
+        query = 'select max(obsHistID) from obsHistory where expMJD <= %s' % (endTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        # Find the observation id corresponding to this slew time.
+        query = 'select slewID from slewHistory where ObsHistory_obsHistID = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        maxSlewCount = res['slewCount'][0]
+        return 'SlewHistory_slewID between %d and %d' % (minSlewCount, maxSlewCount)
 
     def createSQLWhere(self, tag, propTags):
-        """
-        Create a SQL constraint to identify observations taken for a particular proposal,
+        """Create a SQL constraint to identify observations taken for a particular proposal,
         using the information in the propTags dictionary.
 
         Parameters
@@ -799,7 +887,6 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         else:
             sqlWhere = "(" + " or ".join(["propID = %d" % (propid) for propid in propTags[tag]]) + ")"
         return sqlWhere
-
 
     def fetchRequestedNvisits(self, propId=None):
         """
@@ -1053,7 +1140,7 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
             result = self.query_columns('Config', colnames=['paramName',], sqlconstraint=constraint)
             propdict['NumUserRegions'] = result.size
             # Get the number of fields requested in the proposal (all filters).
-            propdict['NumFields'] = self.fetchFieldsFromFieldTable(propID=propid).size
+            propdict['NumFields'] = self.fetchFieldsFromFieldTable(propId=propid).size
             # Find number of visits requested per filter for the proposal, with min/max sky & airmass values.
             # Note that config table has multiple entries for Filter/Filter_Visits/etc. with the same name.
             #   The order of these entries in the config array matters.

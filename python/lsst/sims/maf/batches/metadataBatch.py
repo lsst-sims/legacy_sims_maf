@@ -2,6 +2,7 @@
 """
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
@@ -18,6 +19,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
     Calculates extended standard metrics (with unislicer) on the quantity (all visits and per filter),
     makes histogram of the value (all visits and per filter),
 
+    TODO: handle stackers which need configuration (degrees, in particular) more automatically.
+    Currently have a hack for HA & normairmass.
 
     Parameters
     ----------
@@ -84,6 +87,15 @@ def metadataBasics(value, colmap=None, runName='opsim',
     if extraMetadata is not None:
         metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
 
+    # Hack to make HA work, but really I need to account for any stackers/colmaps.
+    if value == 'HA':
+        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=colmap['ra'],
+                                                 degrees=colmap['raDecDeg'])]
+    elif value == 'normairmass':
+        stackerList = [stackers.NormAirmassStacker(degrees=colmap['raDecDeg'])]
+    else:
+        stackerList = None
+
     # Summarize values over all and per filter (min/mean/median/max/percentiles/outliers/rms).
     slicer = slicers.UniSlicer()
     displayDict['caption'] = None
@@ -91,7 +103,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
         displayDict['order'] = -1
         for m in extendedMetrics(value, replace_colname=valueName):
             displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, displayDict=displayDict)
+            bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
+                                     metadata=meta, displayDict=displayDict)
             bundleList.append(bundle)
 
     # Histogram values over all and per filter.
@@ -103,7 +116,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
         displayDict['order'] += 1
         m = metrics.CountMetric(value, metricName='%s Histogram' % (valueName))
         slicer = slicers.OneDSlicer(sliceColName=value)
-        bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, displayDict=displayDict)
+        bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
+                                 metadata=meta, displayDict=displayDict)
         bundleList.append(bundle)
 
     # Make maps of min/median/max for all and per filter, per RA/Dec, with standard summary stats.
@@ -119,7 +133,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
     for sql, meta in zip(sqlconstraints, metadata):
         for m in mList:
             displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, metadata=meta, plotFuncs=subsetPlots,
+            bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
+                                     metadata=meta, plotFuncs=subsetPlots,
                                      displayDict=displayDict,
                                      summaryMetrics=standardSummary())
             bundleList.append(bundle)
@@ -130,9 +145,9 @@ def metadataBasics(value, colmap=None, runName='opsim',
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def allMetadata(colmap=None, runName='opsim', sqlconstraint='', metadata='All props'):
+def allMetadata(colmap=None, runName='opsim', sqlConstraint='', metadata='All props'):
     """Generate a large set of metrics about the metadata of each visit -
-    distributions of airmass, normalized airmass, seeing, sky brightness, singlevisit depth,
+    distributions of airmass, normalized airmass, seeing, sky brightness, single visit depth,
     hour angle, distance to the moon, and solar elongation.
     The exact metadata which is analyzed is set by the colmap['metadataList'] value.
 
@@ -142,7 +157,7 @@ def allMetadata(colmap=None, runName='opsim', sqlconstraint='', metadata='All pr
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
-    sqlconstraint : str, opt
+    sqlConstraint : str, opt
         Sql constraint (such as WFD only). Default is '' or no constraint.
     metadata : str, opt
         Metadata to identify the sql constraint (such as WFD). Default is 'All props'.
@@ -164,7 +179,7 @@ def allMetadata(colmap=None, runName='opsim', sqlconstraint='', metadata='All pr
             value = valueName
         bdict.update(metadataBasics(value, colmap=colmap, runName=runName,
                                     valueName=valueName,
-                                    extraSql=sqlconstraint, extraMetadata=metadata))
+                                    extraSql=sqlConstraint, extraMetadata=metadata))
     return bdict
 
 

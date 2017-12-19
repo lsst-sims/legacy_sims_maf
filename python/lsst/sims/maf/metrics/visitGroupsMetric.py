@@ -25,17 +25,17 @@ class PairFractionMetric(BaseMetric):
     maxGap : float, opt
         Maximum time to consider something part of a pair (minutes). Default 90.
     """
-    def __init__(self, timeCol='observationStartMJD', metricName='PairFraction',
+    def __init__(self, mjdCol='observationStartMJD', metricName='PairFraction',
                  minGap=15., maxGap=90., **kwargs):
-        self.timeCol = timeCol
+        self.mjdCol = mjdCol
         self.minGap = minGap/60./24.
         self.maxGap = maxGap/60./24.
         units = ''
-        super(PairFractionMetric, self).__init__(col=[timeCol], metricName=metricName, units=units, **kwargs)
+        super(PairFractionMetric, self).__init__(col=[mjdCol], metricName=metricName, units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        nobs = np.size(dataSlice[self.timeCol])
-        i = np.tile(dataSlice[self.timeCol], (nobs, 1))
+        nobs = np.size(dataSlice[self.mjdCol])
+        i = np.tile(dataSlice[self.mjdCol], (nobs, 1))
         j = i.T
         tdiff = np.abs(i-j)
         part_pair = np.zeros(i.shape, dtype=int)
