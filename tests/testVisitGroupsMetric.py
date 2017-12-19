@@ -9,7 +9,7 @@ import lsst.utils.tests
 class TestVisitGroupsMetric(unittest.TestCase):
 
     def testPairFractionMetric(self):
-        metric = metrics.PairFractionMetric(timeCol='mjd')
+        metric = metrics.PairFractionMetric(mjdCol='mjd')
         times = np.arange(0, 200, 30) / 60. / 24.
         data = np.core.records.fromarrays([times], names='mjd')
         # These should all have pairs
