@@ -14,7 +14,7 @@ __all__ = ['glanceBatch']
 
 def glanceBatch(colmap=None, runName='opsim',
                 nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y'),
-                nyears=10, pairnside=32):
+                nyears=10, pairnside=32, sqlConstraint=None):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
     This is a meta-set of other batches, to some extent.
 
@@ -34,6 +34,8 @@ def glanceBatch(colmap=None, runName='opsim',
         How many years to attempt to make hourglass plots for
     pairnside : int (32)
         nside to use for the pair fraction metric (it's slow, so nice to use lower resolution)
+    sqlConstraint : str or None, opt
+        Additional SQL constraint to apply to all metrics.
 
     Returns
     -------
@@ -47,15 +49,20 @@ def glanceBatch(colmap=None, runName='opsim',
 
     bundleList = []
 
-    sql_per_filt = ['%s="%s"' % (colmap['filter'], filtername) for filtername in filternames]
-    sql_per_and_all_filters = [''] + sql_per_filt
+    if sqlConstraint is None:
+        sqlC = ''
+    else:
+        sqlC = '(%s) and' % sqlConstraint
+
+    sql_per_filt = ['%s %s="%s"' % (sqlC, colmap['filter'], filtername) for filtername in filternames]
+    sql_per_and_all_filters = [sqlConstraint] + sql_per_filt
 
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Super basic things
     displayDict = {'group': 'Basic Stats', 'order': 1}
-    sql = ''
+    sql = sqlConstraint
     slicer = slicers.UniSlicer()
     # Length of Survey
     metric = metrics.FullRangeMetric(col=colmap['mjd'], metricName='Length of Survey (days)')
@@ -89,8 +96,8 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # The alt/az plots of all the pointings
     slicer = slicers.HealpixSlicer(nside=nside, latCol='zenithDistance',
-                                   lonCol=colmap['az'], useCache=False)
-    stacker = stackers.ZenithDistStacker(altCol=colmap['alt'])
+                                   lonCol=colmap['az'], latLonDeg=colmap['raDecDeg'], useCache=False)
+    stacker = stackers.ZenithDistStacker(altCol=colmap['alt'], degrees=colmap['raDecDeg'])
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
     for sql in sql_per_and_all_filters:
@@ -105,7 +112,7 @@ def glanceBatch(colmap=None, runName='opsim',
     metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
                                                expTimeCol=colmap['exptime'],
                                                visitTimeCol=colmap['visittime'])
-    sql = None
+    sql = sqlConstraint
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
@@ -121,7 +128,8 @@ def glanceBatch(colmap=None, runName='opsim',
     # A few basic maps
     # Number of observations, coadded depths
     displayDict = {'group': 'Basic Maps', 'order': 3}
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                                   latLonDeg=colmap['raDecDeg'])
     metric = metrics.CountMetric(col=colmap['mjd'])
     plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
@@ -145,6 +153,7 @@ def glanceBatch(colmap=None, runName='opsim',
     stackerList = []
     stacker = stackers.ParallaxFactorStacker(raCol=colmap['ra'],
                                              decCol=colmap['dec'],
+                                             degrees=colmap['raDecDeg'],
                                              dateCol=colmap['mjd'])
     stackerList.append(stacker)
 
@@ -153,7 +162,7 @@ def glanceBatch(colmap=None, runName='opsim',
     metric = metrics.ParallaxMetric(m5Col=colmap['fiveSigmaDepth'],
                                     filterCol=colmap['filter'],
                                     seeingCol=colmap['seeingGeom'])
-    sql = ''
+    sql = sqlConstraint
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict, stackerList=stackerList,
                                         plotDict=plotDict)
@@ -170,7 +179,8 @@ def glanceBatch(colmap=None, runName='opsim',
     # Solar system stuff
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
-    sql = 'filter="g" or filter="r" or filter="i"'
+
+    sql = '%s (filter="g" or filter="r" or filter="i")' % sqlC
     pairSlicer = slicers.HealpixSlicer(nside=pairnside, latCol=colmap['dec'], lonCol=colmap['ra'])
     metric = metrics.PairFractionMetric(timeCol=colmap['mjd'])
     bundle = metricBundles.MetricBundle(metric, pairSlicer, sql, plotFuncs=subsetPlots,
@@ -182,7 +192,7 @@ def glanceBatch(colmap=None, runName='opsim',
     for year in years[1:]:
         sql = 'night > %i and night <= %i' % (365.25*(year-1), 365.25*year)
         slicer = slicers.HourglassSlicer()
-        metric = metrics.HourglassMetric(nightcol=colmap['night'], mjdcol=colmap['mjd'])
+        metric = metrics.HourglassMetric(nightCol=colmap['night'], mjdCol=colmap['mjd'])
         metadata = 'Year %i-%i' % (year-1, year)
         bundle = metricBundles.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
         bundleList.append(bundle)

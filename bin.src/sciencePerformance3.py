@@ -32,10 +32,10 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # List to hold metrics that shouldn't be saved
     noSaveBundleList = []
 
-    # Connect to the databse
-    opsimdb = utils.connectOpsimDb(dbFile)
+    # Connect to the database
+    opsimdb = db.OpsimDatabaseV3(dbFile)
     if runName is None:
-        runName = os.path.basename(dbFile).replace('_sqlite.db', '')
+        runName = os.path.basename(dbFile).replace('_sqlite.db', '').replace('.db', '')
 
     # Fetch the proposal ID values from the database
     propids, propTags = opsimdb.fetchPropInfo()
@@ -132,6 +132,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     for key in keys:
         mergedHistDict[key] = plots.PlotBundle(plotFunc=mergeFunc)
+
+    # Set up stackers.
+    zstacker = stackers.ZenithDistStacker(altCol='altitude', degrees=False)
+    hastacker = stackers.HourAngleStacker(lstCol='lst', degrees=False)
+    parallaxFactorStacker = stackers.ParallaxFactorStacker(dateCol='expMJD', degrees=False)
+    dcrStacker = stackers.DcrStacker(lstCol='lst', mjdCol='expMJD', degrees=False)
+    parallacticAngleStacker = stackers.ParallacticAngleStacker(mjdCol='expMJD', lstCol='lst', degrees=False)
 
     ##
     # Calculate the fO metrics for all proposals and WFD only.
@@ -233,7 +240,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     caption = 'Fraction of total visits where consecutive visits have return times faster '
     caption += 'than %.1f minutes, in any filter, all proposals. ' % (dTmax/60.0)
     caption += 'Summary statistic "Area" below indicates the area on the sky which has more '
-    caption += 'than %d revisits within this time window.' % (cutoff3)
+    caption += 'than %.2f revisits within this time window.' % (cutoff3)
     displayDict = {'group': reqgroup, 'subgroup': 'Rapid Revisit', 'displayOrder': order,
                    'caption': caption}
     bundle = metricBundles.MetricBundle(m3, slicer, sqlconstraint, plotDict=plotDict,
@@ -798,6 +805,10 @@ if __name__ == "__main__":
     args, extras = parser.parse_known_args()
 
     # Build metric bundles.
+
+    print('WARNING! This script has not been completely updated to work properly for v3 - in particular,'
+          ' the astrometry metrics have problems with conversions in the stackers. Please run "run_srd.py"'
+          ' instead to get the fO/astrometry metrics.')
 
     (bundleDict, mergedHistDict, noSaveBundleDict) = makeBundleList(args.dbFile, nside=args.nside,
                                                                     lonCol=args.lonCol, latCol=args.latCol,

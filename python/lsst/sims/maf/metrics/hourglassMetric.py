@@ -12,33 +12,30 @@ def nearestVal(A, val):
 
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time. Must be used with the Hourglass Slicer."""
-    def __init__(self, telescope='LSST', filtercol='filter', mjdcol='observationStartMJD',
-                 nightcol="night",**kwargs):
 
-        metricName = 'hourglass'
-        self.filtercol = filtercol
-        self.mjdcol = mjdcol
-        self.nightcol = nightcol
-        cols = [filtercol, mjdcol, nightcol]
-        super(HourglassMetric, self).__init__(col=cols, metricName=metricName, metricDtype='object', **kwargs)
-        self.nightcol = nightcol
-        self.mjdcol = mjdcol
-        self.filtercol = filtercol
+    def __init__(self, telescope='LSST', mjdCol='observationStartMJD', filterCol='filter',
+                 nightCol='night', **kwargs):
+        self.mjdCol = mjdCol
+        self.filterCol = filterCol
+        self.nightCol = nightCol
+        cols = [self.mjdCol, self.filterCol, self.nightCol]
+        super(HourglassMetric, self).__init__(col=cols, metricDtype='object', **kwargs)
         self.telescope = Site(name=telescope)
 
     def run(self, dataSlice, slicePoint=None):
 
         import ephem
-        dataSlice.sort(order=self.mjdcol)
-        unights, uindx = np.unique(dataSlice[self.nightcol], return_index=True)
+        dataSlice.sort(order=self.mjdCol)
+        unights, uindx = np.unique(dataSlice[self.nightCol], return_index=True)
 
         names = ['mjd', 'midnight', 'moonPer', 'twi6_rise', 'twi6_set', 'twi12_rise',
                  'twi12_set', 'twi18_rise', 'twi18_set']
         types = ['float']*len(names)
         pernight = np.zeros(len(unights), dtype=list(zip(names, types)))
-        pernight['mjd'] = dataSlice[self.mjdcol][uindx]
 
-        left = np.searchsorted(dataSlice[self.nightcol], unights)
+        pernight['mjd'] = dataSlice[self.mjdCol][uindx]
+
+        left = np.searchsorted(dataSlice[self.nightCol], unights)
 
         lsstObs = ephem.Observer()
         lsstObs.lat = self.telescope.latitude_rad
@@ -56,7 +53,7 @@ class HourglassMetric(BaseMetric):
             obs.horizon = h
             obsList.append(obs)
 
-        # Oh for fuck's sake...pyephem uses 1899 as it's zero-day, and MJD has Nov 17 1858 as zero-day.
+        # Convert ...pyephem uses 1899 as it's zero-day, and MJD has Nov 17 1858 as zero-day.
         doff = ephem.Date(0)-ephem.Date('1858/11/17')
 
         for i, mjd in enumerate(pernight['mjd']):
@@ -74,9 +71,9 @@ class HourglassMetric(BaseMetric):
                                                                   use_center=True) + doff
 
         # Define the breakpoints as where either the filter changes OR there's more than a 2 minute gap in observing
-        good = np.where((dataSlice[self.filtercol] != np.roll(dataSlice[self.filtercol], 1)) |
-                        (np.abs(np.roll(dataSlice[self.mjdcol], 1)-dataSlice[self.mjdcol]) > 120./3600./24.))[0]
-        good = np.concatenate((good, [0], [len(dataSlice[self.filtercol])]))
+        good = np.where((dataSlice[self.filterCol] != np.roll(dataSlice[self.filterCol], 1)) |
+                        (np.abs(np.roll(dataSlice[self.mjdCol], 1)-dataSlice[self.mjdCol]) > 120./3600./24.))[0]
+        good = np.concatenate((good, [0], [len(dataSlice[self.filterCol])]))
         good = np.unique(good)
         left = good[:-1]
         right = good[1:]-1
@@ -85,8 +82,8 @@ class HourglassMetric(BaseMetric):
         names = ['mjd', 'midnight', 'filter']
         types = ['float', 'float', (np.str_ ,1)]
         perfilter = np.zeros((good.size), dtype=list(zip(names, types)))
-        perfilter['mjd'] = dataSlice[self.mjdcol][good]
-        perfilter['filter'] = dataSlice[self.filtercol][good]
+        perfilter['mjd'] = dataSlice[self.mjdCol][good]
+        perfilter['filter'] = dataSlice[self.filterCol][good]
         for i, mjd in enumerate(perfilter['mjd']):
             mjd = mjd - doff
             perfilter['midnight'][i] = nearestVal([lsstObs.previous_antitransit(S, start=mjd),

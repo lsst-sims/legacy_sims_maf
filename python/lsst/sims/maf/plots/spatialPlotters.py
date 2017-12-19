@@ -276,6 +276,7 @@ class BaseHistogram(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
         metricValue = applyZPNorm(metricValueIn, plotDict)
+        metricValue = metricValue.compressed()
         # Toss any NaNs or infs
         metricValue = metricValue[np.isfinite(metricValue)]
         # Determine percentile clipped X range, if set. (and xmin/max not set).
@@ -283,7 +284,6 @@ class BaseHistogram(BasePlotter):
             if plotDict['percentileClip']:
                 plotDict['xMin'], plotDict['xMax'] = percentileClipping(metricValue,
                                                                         percentile=plotDict['percentileClip'])
-
         # Set the histogram range values, to avoid None/Number comparisons.
         histRange = [plotDict['xMin'], plotDict['xMax']]
         if histRange[0] is None:
@@ -459,15 +459,15 @@ class BaseSkyMap(BasePlotter):
             mask = np.ones(len(metricValue), dtype='bool')
         else:
             # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
-            mask = ~metricValue.mask
+            good = ~metricValue.mask
 
         # Add ellipses at RA/Dec locations - but don't add colors yet.
-        lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi * 2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][mask],
+        lon = -(slicer.slicePoints['ra'][good] - plotDict['raCen'] - np.pi) % (np.pi * 2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][good],
                                              plotDict['radius'], rasterized=True, ax=ax)
         if plotDict['metricIsColor']:
             current = None
-            for ellipse, mVal in zip(ellipses, metricValue.data[mask]):
+            for ellipse, mVal in zip(ellipses, metricValue.data[good]):
                 if mVal[3] > 1:
                     ellipse.set_alpha(1.0)
                     ellipse.set_facecolor((mVal[0], mVal[1], mVal[2]))
@@ -501,7 +501,7 @@ class BaseSkyMap(BasePlotter):
             else:
                 p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
                                     linewidth=0, edgecolor=None, rasterized=True)
-            p.set_array(metricValue.data[mask])
+            p.set_array(metricValue.data[good])
             p.set_clim(clims)
             ax.add_collection(p)
             # Add color bar (with optional setting of limits)
@@ -655,7 +655,7 @@ class LambertSkyMap(BasePlotter):
         except ModuleNotFoundError:
             raise('To use this plotting function, please install Basemap into your python distribution')
         m = Basemap(**plotDict['basemap'])
-        good = np.where(metricValue != slicer.badval)
+        good = ~metricValue.mask
         # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
         # http: //stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib\
         # -filled-contour-plot-to-pdf-or-eps
