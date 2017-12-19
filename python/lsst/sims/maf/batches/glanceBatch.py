@@ -182,7 +182,7 @@ def glanceBatch(colmap=None, runName='opsim',
 
     sql = '%s (filter="g" or filter="r" or filter="i")' % sqlC
     pairSlicer = slicers.HealpixSlicer(nside=pairnside, latCol=colmap['dec'], lonCol=colmap['ra'])
-    metric = metrics.PairFractionMetric(timeCol=colmap['mjd'])
+    metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'])
     bundle = metricBundles.MetricBundle(metric, pairSlicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
