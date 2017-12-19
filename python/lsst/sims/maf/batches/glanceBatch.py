@@ -14,7 +14,7 @@ __all__ = ['glanceBatch']
 
 def glanceBatch(colmap=None, runName='opsim',
                 nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y'),
-                nyears=10):
+                nyears=10, pairnside=32):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
     This is a meta-set of other batches, to some extent.
 
@@ -32,6 +32,8 @@ def glanceBatch(colmap=None, runName='opsim',
         There is always an all-visits version of the metrics run as well.
     nyears : int (10)
         How many years to attempt to make hourglass plots for
+    pairnside : int (32)
+        nside to use for the pair fraction metric (it's slow, so nice to use lower resolution)
 
     Returns
     -------
@@ -137,6 +139,7 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # Checking a few basic science things
     # Maybe check astrometry, observation pairs, SN
+    plotDict = {'percentileClip': 95.}
     displayDict = {'group': 'Science', 'subgroup': 'Astrometry', 'order': 4}
 
     stackerList = []
@@ -152,7 +155,8 @@ def glanceBatch(colmap=None, runName='opsim',
                                     seeingCol=colmap['seeingGeom'])
     sql = ''
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict, stackerList=stackerList)
+                                        displayDict=displayDict, stackerList=stackerList,
+                                        plotDict=plotDict)
     bundleList.append(bundle)
     displayDict['caption'] = r'Proper motion precision of an $r=20$ flat SED star'
     metric = metrics.ProperMotionMetric(m5Col=colmap['fiveSigmaDepth'],
@@ -160,15 +164,16 @@ def glanceBatch(colmap=None, runName='opsim',
                                         filterCol=colmap['filter'],
                                         seeingCol=colmap['seeingGeom'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict)
+                                        displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
 
     # Solar system stuff
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
     sql = 'filter="g" or filter="r" or filter="i"'
+    pairSlicer = slicers.HealpixSlicer(nside=pairnside, latCol=colmap['dec'], lonCol=colmap['ra'])
     metric = metrics.PairFractionMetric(timeCol=colmap['mjd'])
-    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
+    bundle = metricBundles.MetricBundle(metric, pairSlicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
