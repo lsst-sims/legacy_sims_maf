@@ -441,14 +441,20 @@ class RunComparison(object):
             if 'colorMin' not in userPlotDict:
                 colorMin = 100000000
                 for b in bundleDict:
-                    tmp = bundleDict[b].metricValues.compressed().min()
-                    colorMin = min(tmp, colorMin)
+                    if 'zp' not in bundleDict[b].plotDict:
+                        tmp = bundleDict[b].metricValues.compressed().min()
+                        colorMin = min(tmp, colorMin)
+                    else:
+                        colorMin = bundleDict[b].plotDict['colorMin']
                 userPlotDict['colorMin'] = colorMin
             if 'colorMax' not in userPlotDict:
                 colorMax = -100000000
                 for b in bundleDict:
-                    tmp = bundleDict[b].metricValues.compressed().max()
-                    colorMax = max(tmp, colorMax)
+                    if 'zp' not in bundleDict[b].plotDict:
+                        tmp = bundleDict[b].metricValues.compressed().max()
+                        colorMax = max(tmp, colorMax)
+                    else:
+                        colorMax = bundleDict[b].plotDict['colorMax']
                 userPlotDict['colorMax'] = colorMax
             for i, pdict in enumerate(plotDicts):
                 # Add user provided dictionary.
