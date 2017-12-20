@@ -477,14 +477,20 @@ class RunComparison(object):
             if 'xMin' not in userPlotDict:
                 xMin = 100000000
                 for b in bundleDict:
-                    tmp = bundleDict[b].metricValues.compressed().min()
-                    xMin = min(tmp, xMin)
+                    if 'zp' not in bundleDict[b].plotDict:
+                        tmp = bundleDict[b].metricValues.compressed().min()
+                        xMin = min(tmp, xMin)
+                    else:
+                        xMin = bundleDict[b].plotDict['xMin']
                 userPlotDict['xMin'] = xMin
             if 'xMax' not in userPlotDict:
                 xMax = -100000000
                 for b in bundleDict:
-                    tmp = bundleDict[b].metricValues.compressed().max()
-                    xMax = max(tmp, xMax)
+                    if 'zp' not in bundleDict[b].plotDict:
+                        tmp = bundleDict[b].metricValues.compressed().max()
+                        xMax = max(tmp, xMax)
+                    else:
+                        xMax = bundleDict[b].plotDict['xMax']
                 userPlotDict['xMax'] = xMax
             for i, pdict in enumerate(plotDicts):
                 pdict.update(userPlotDict)
