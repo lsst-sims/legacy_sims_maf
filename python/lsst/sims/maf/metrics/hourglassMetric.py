@@ -12,6 +12,7 @@ def nearestVal(A, val):
 
 class HourglassMetric(BaseMetric):
     """Plot the filters used as a function of time. Must be used with the Hourglass Slicer."""
+
     def __init__(self, telescope='LSST', mjdCol='observationStartMJD', filterCol='filter',
                  nightCol='night', **kwargs):
         self.mjdCol = mjdCol
@@ -31,6 +32,7 @@ class HourglassMetric(BaseMetric):
                  'twi12_set', 'twi18_rise', 'twi18_set']
         types = ['float']*len(names)
         pernight = np.zeros(len(unights), dtype=list(zip(names, types)))
+
         pernight['mjd'] = dataSlice[self.mjdCol][uindx]
 
         left = np.searchsorted(dataSlice[self.nightCol], unights)

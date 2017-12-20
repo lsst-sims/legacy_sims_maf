@@ -14,7 +14,7 @@ __all__ = ['glanceBatch']
 
 def glanceBatch(colmap=None, runName='opsim',
                 nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y'),
-                sqlConstraint=None):
+                nyears=10, pairnside=32, sqlConstraint=None):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
     This is a meta-set of other batches, to some extent.
 
@@ -30,6 +30,10 @@ def glanceBatch(colmap=None, runName='opsim',
         The list of individual filters to use when running metrics.
         Default is ('u', 'g', 'r', 'i', 'z', 'y').
         There is always an all-visits version of the metrics run as well.
+    nyears : int (10)
+        How many years to attempt to make hourglass plots for
+    pairnside : int (32)
+        nside to use for the pair fraction metric (it's slow, so nice to use lower resolution)
     sqlConstraint : str or None, opt
         Additional SQL constraint to apply to all metrics.
 
@@ -127,9 +131,12 @@ def glanceBatch(colmap=None, runName='opsim',
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     metric = metrics.CountMetric(col=colmap['mjd'])
+    plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            summaryMetrics=standardStats, displayDict=displayDict)
+                                            summaryMetrics=standardStats,
+                                            displayDict=displayDict,
+                                            plotDict=plotDict)
         bundleList.append(bundle)
 
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'])
@@ -140,6 +147,7 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # Checking a few basic science things
     # Maybe check astrometry, observation pairs, SN
+    plotDict = {'percentileClip': 95.}
     displayDict = {'group': 'Science', 'subgroup': 'Astrometry', 'order': 4}
 
     stackerList = []
@@ -156,7 +164,8 @@ def glanceBatch(colmap=None, runName='opsim',
                                     seeingCol=colmap['seeingGeom'])
     sql = sqlConstraint
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict, stackerList=stackerList)
+                                        displayDict=displayDict, stackerList=stackerList,
+                                        plotDict=plotDict)
     bundleList.append(bundle)
     displayDict['caption'] = r'Proper motion precision of an $r=20$ flat SED star'
     metric = metrics.ProperMotionMetric(m5Col=colmap['fiveSigmaDepth'],
@@ -164,17 +173,30 @@ def glanceBatch(colmap=None, runName='opsim',
                                         filterCol=colmap['filter'],
                                         seeingCol=colmap['seeingGeom'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict)
+                                        displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
 
     # Solar system stuff
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
+
     sql = '%s (filter="g" or filter="r" or filter="i")' % sqlC
+    pairSlicer = slicers.HealpixSlicer(nside=pairnside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                                       latLonDeg=colmap['raDecDeg'])
     metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'])
-    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
+    bundle = metricBundles.MetricBundle(metric, pairSlicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
+
+    years = list(range(nyears+1))
+    displayDict = {'group': 'Hourglass'}
+    for year in years[1:]:
+        sql = 'night > %i and night <= %i' % (365.25*(year-1), 365.25*year)
+        slicer = slicers.HourglassSlicer()
+        metric = metrics.HourglassMetric(nightCol=colmap['night'], mjdCol=colmap['mjd'])
+        metadata = 'Year %i-%i' % (year-1, year)
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
+        bundleList.append(bundle)
 
     for b in bundleList:
         b.setRunName(runName)
