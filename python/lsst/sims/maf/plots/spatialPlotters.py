@@ -655,18 +655,20 @@ class LambertSkyMap(BasePlotter):
         except ModuleNotFoundError:
             raise('To use this plotting function, please install Basemap into your python distribution')
         m = Basemap(**plotDict['basemap'])
-        good = np.where(metricValue != slicer.badval)
         # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
         # http: //stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib\
         # -filled-contour-plot-to-pdf-or-eps
-        # tmpContour = m.contour(np.degrees(slicer.slicePoints['ra'][good]),
-        #                        np.degrees(slicer.slicePoints['dec'][good]),
-        #                        metricValue[good], levels, tri=True,
+        # tmpContour = m.contour(np.degrees(slicer.slicePoints['ra']),
+        #                        np.degrees(slicer.slicePoints['dec']),
+        #                        metricValue, levels, tri=True,
         #                        cmap=plotDict['cmap'], ax=ax, latlon=True,
         #                        lw=1)
-        CS = m.contourf(np.degrees(slicer.slicePoints['ra'][good]),
-                        np.degrees(slicer.slicePoints['dec'][good]),
-                        metricValue[good], levels, tri=True,
+
+        # Note, this assumes the metricValue.fill for masked values is outside the levels range.
+        # i.e., I think if you go crazy and set a badVal of 5, these plots will be wrong.
+        CS = m.contourf(np.degrees(slicer.slicePoints['ra']),
+                        np.degrees(slicer.slicePoints['dec']),
+                        metricValue, levels, tri=True,
                         cmap=plotDict['cmap'], ax=ax, latlon=True)
 
         # Try to fix the ugly pdf contour problem
