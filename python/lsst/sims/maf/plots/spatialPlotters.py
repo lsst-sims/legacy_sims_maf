@@ -660,15 +660,14 @@ class LambertSkyMap(BasePlotter):
         # -filled-contour-plot-to-pdf-or-eps
         # tmpContour = m.contour(np.degrees(slicer.slicePoints['ra']),
         #                        np.degrees(slicer.slicePoints['dec']),
-        #                        metricValue, levels, tri=True,
+        #                        metricValue.filled(np.min(clims)-1), levels, tri=True,
         #                        cmap=plotDict['cmap'], ax=ax, latlon=True,
         #                        lw=1)
 
-        # Note, this assumes the metricValue.fill for masked values is outside the levels range.
-        # i.e., I think if you go crazy and set a badVal of 5, these plots will be wrong.
+        # Set masked values to be below the lowest contour level.
         CS = m.contourf(np.degrees(slicer.slicePoints['ra']),
                         np.degrees(slicer.slicePoints['dec']),
-                        metricValue, levels, tri=True,
+                        metricValue.filled(np.min(clims)-1), levels, tri=True,
                         cmap=plotDict['cmap'], ax=ax, latlon=True)
 
         # Try to fix the ugly pdf contour problem
