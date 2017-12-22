@@ -154,7 +154,7 @@ class BaseOpsimDatabase(Database):
             site = Site(name='LSST')
             lat = site.latitude_rad
             lon = site.longitude_rad
-            height = site.elev
+            height = site.height
         else:
             lat = self.query_columns('Config', colnames=['paramValue'],
                                      sqlconstraint="paramName like '%latitude%'")
