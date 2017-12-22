@@ -417,8 +417,18 @@ class RunComparison(object):
             bundleDict[r].read(filenames[r])
         return bundleDict, mname
 
+    def _parameterTitles(self, run, paramCols=None):
+        tempDict = self.parameters.loc[run].to_dict()
+        tempTitle = run
+        if paramCols is None:
+            paramCols = self.parameters.columns
+        for col in paramCols:
+            tempTitle = tempTitle  + '\n' + col + ' ' + str(tempDict[col])
+        return tempTitle
+
+
     def plotMetricData(self, bundleDict, plotFunc, runlist=None, userPlotDict=None,
-                       layout=None, outDir=None, savefig=False):
+                       layout=None, outDir=None, paramTitles=False, paramCols=None, savefig=False):
         if runlist is None:
             runlist = self.runlist
         if userPlotDict is None:
@@ -467,7 +477,10 @@ class RunComparison(object):
                     ncols = layout[0]
                     nrows = layout[1]
                 pdict['subplot'] = int(str(nrows) + str(ncols) + str(i + 1))
-                pdict['title'] = runlist[i]
+                if paramTitles is False:
+                    pdict['title'] = runlist[i]
+                else:
+                    pdict['title'] = self._parameterTitles(runlist[i], paramCols=paramCols)
                 # For the subplots we do not need the label
                 pdict['label'] = ''
                 if 'suptitle' not in userPlotDict:
