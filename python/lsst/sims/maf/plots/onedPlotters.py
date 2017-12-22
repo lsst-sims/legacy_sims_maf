@@ -15,7 +15,7 @@ class OneDBinnedData(BasePlotter):
                                 'filled': False, 'alpha': 0.5, 'linestyle': '-', 'linewidth': 1,
                                 'logScale': False, 'percentileClip': None,
                                 'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
-                                'fontsize': None, 'figsize': None}
+                                'fontsize': None, 'figsize': None, 'grid': False}
 
     def __call__(self, metricValues, slicer, userPlotDict, fignum=None):
         """
@@ -62,6 +62,8 @@ class OneDBinnedData(BasePlotter):
                 plotDict['yMin'] = yMin
             if plotDict['yMax'] is None:
                 plotDict['yMax'] = yMax
+
+        plt.grid(plotDict['grid'], alpha=0.3)
 
         if plotDict['yMin'] is None and metricValues.filled().min() == 0:
             plotDict['yMin'] = 0
