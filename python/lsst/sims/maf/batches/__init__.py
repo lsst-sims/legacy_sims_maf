@@ -6,3 +6,4 @@ from .timeBatch import *
 from .metadataBatch import *
 from .visitdepthBatch import *
 from .glanceBatch import *
+from .filterchangeBatch import *
