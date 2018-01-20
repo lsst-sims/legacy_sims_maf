@@ -33,19 +33,25 @@ class RunComparison(object):
         A list of runs to compare.
     rundirs : list
         A list of directories (relative to baseDir) where the runs in runlist reside.
-        Optional - if not provided, assumes directories are simply the names of runlist.
+        Optional - if not provided, assumes directories are simply the names in runlist.
+        Must have same length as runlist (note that runlist can contain duplicate entries).
     """
-    def __init__(self, baseDir, runlist, rundirs=None, verbose=False):
+    def __init__(self, baseDir, runlist, rundirs=None,
+                 defaultResultsDb='resultsDb_sqlite.db', verbose=False):
         self.baseDir = baseDir
         self.runlist = runlist
         self.verbose = verbose
+        self.defaultResultsDb = defaultResultsDb
         if rundirs is not None:
+            if len(rundirs) != len(runlist):
+                raise ValueError('runlist and rundirs must be the same length')
             self.rundirs = rundirs
         else:
             self.rundirs = runlist
         self._connect_to_results()
         # Class attributes to store the stats data:
         self.parameters = None        # Config parameters varied in each run
+        self.headerStats = None       # Save information on the summary stat values
         self.summaryStats = None      # summary stats
         self.normalizedStats = None   # normalized (to baselineRun) version of the summary stats
         self.baselineRun = None       # name of the baseline run
@@ -60,21 +66,28 @@ class RunComparison(object):
         # Open access to all results database files in any subdirectories under 'runs'.
         self.runresults = {}
         for r, rdir in zip(self.runlist, self.rundirs):
-            self.runresults[r] = {}
-            if not os.path.isdir(os.path.join(self.baseDir, r)):
-                warnings.warn('Warning: could not find a directory containing analysis results at %s'
-                              % (os.path.join(self.baseDir, r)))
+            checkdir = os.path.join(self.baseDir, rdir)
+            if not os.path.isdir(checkdir):
+                warnings.warn('Warning: could not find a directory at %s' % checkdir)
             else:
-                sublist = os.listdir(os.path.join(self.baseDir, r))
+                # Add a dictionary to runresults to store resultsDB connections.
+                if r not in self.runresults:
+                    self.runresults[r] = {}
+                # Check for a resultsDB in the current checkdir
+                if os.path.isfile(os.path.join(checkdir, self.defaultResultsDb)):
+                    s = os.path.split(rdir)[-1]
+                    self.runresults[r][s] = ResultsDb(outDir=checkdir)
+                # And look for resultsDb files in subdirectories.
+                sublist = os.listdir(checkdir)
                 for s in sublist:
-                    if os.path.isfile(os.path.join(self.baseDir, r, s, 'resultsDb_sqlite.db')):
-                        self.runresults[r][s] = ResultsDb(outDir=os.path.join(self.baseDir, r, s))
+                    if os.path.isfile(os.path.join(checkdir, s, 'resultsDb_sqlite.db')):
+                        self.runresults[r][s] = ResultsDb(outDir=os.path.join(checkdir, s))
         # Remove any runs from runlist which we could not find results databases for.
         for r in self.runlist:
             if len(self.runresults[r]) == 0:
                 warnings.warn('Warning: could not find any results databases for run %s'
                               % (os.path.join(self.baseDir, r)))
-                self.runlist.remove(r)
+        self.runlist = list(self.runresults.keys())
 
     def close(self):
         """
@@ -184,7 +197,7 @@ class RunComparison(object):
         else:
             getAll = False
         mDict = {}
-        for r in self.runresults:
+        for r in self.runlist:
             if subdir is not None:
                 subdirs = [subdir]
             else:
@@ -255,21 +268,20 @@ class RunComparison(object):
             summaryNames[r] = {}
             # Check if this metric/metadata/slicer/summary stat name combo is in
             # this resultsDb .. or potentially in another subdirectory's resultsDb.
-            for s in self.runresults[r]:
-                mId = self.runresults[r][s].getMetricId(metricName=metricName,
-                                                        metricMetadata=metricMetadata,
-                                                        slicerName=slicerName)
+            for subdir in self.runresults[r]:
+                mId = self.runresults[r][subdir].getMetricId(metricName=metricName,
+                                                             metricMetadata=metricMetadata,
+                                                             slicerName=slicerName)
                 # Note that we may have more than one matching summary metric value per run.
                 if len(mId) > 0:
                     # And we may have more than one summary metric value per resultsDb
-                    stats = self.runresults[r][s].getSummaryStats(mId, summaryName=summaryName)
+                    stats = self.runresults[r][subdir].getSummaryStats(mId, summaryName=summaryName)
                     if len(stats['summaryName']) == 1 and colName is not None:
                         name = colName
                         summaryValues[r][name] = stats['summaryValue'][0]
                         summaryNames[r][name] = stats['summaryName'][0]
                     else:
                         for i in range(len(stats['summaryName'])):
-
                             name = self._buildSummaryName(metricName, metricMetadata, slicerName,
                                                           stats['summaryName'][i])
                             summaryValues[r][name] = stats['summaryValue'][i]
@@ -290,13 +302,20 @@ class RunComparison(object):
                     summaryValues[r][s]
                 except KeyError:
                     summaryValues[r][s] = np.nan
-        # Create data frames for each run (because pandas).
+        # Create data frames for each run. This is the simplest way to handle it in pandas.
+        summaryBase = {}
+        basemetricname = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
+        for s in unique_stats:
+            summaryBase[s] = basemetricname
+        tempDFHeader = [pd.DataFrame(summaryBase, index=['BaseName'])]
+        tempDFHeader.append(pd.DataFrame(summaryNames[r], index=['SummaryType']))
+        header = pd.concat(tempDFHeader)
         tempDFList = []
         for r in self.runlist:
             tempDFList.append(pd.DataFrame(summaryValues[r], index=[r]))
         # Concatenate dataframes for each run.
         stats = pd.concat(tempDFList)
-        return stats
+        return header, stats
 
     def addSummaryStats(self, metricDict):
         """
@@ -324,15 +343,17 @@ class RunComparison(object):
         for mName, metric in metricDict.items():
             if 'summaryName' not in metric:
                 metric['summaryName'] = None
-            tempDF = self._findSummaryStats(metricName=metric['metricName'],
-                                            metricMetadata=metric['metricMetadata'],
-                                            slicerName=metric['slicerName'],
-                                            summaryName=metric['summaryName'],
-                                            colName=mName)
+                tempHeader, tempStats = self._findSummaryStats(metricName=metric['metricName'],
+                                                               metricMetadata=metric['metricMetadata'],
+                                                               slicerName=metric['slicerName'],
+                                                               summaryName=metric['summaryName'],
+                                                               colName=mName)
             if self.summaryStats is None:
-                self.summaryStats = tempDF
+                self.summaryStats = tempStats
+                self.headerStats = tempHeader
             else:
-                self.summaryStats = self.summaryStats.join(tempDF)
+                self.summaryStats = self.summaryStats.join(tempStats, lsuffix='_x')
+                self.headerStats = self.headerStats.join(tempHeader, lsuffix='_x')
 
     def normalizeStats(self, baselineRun):
         """
@@ -366,6 +387,61 @@ class RunComparison(object):
         self.normalizedStats = self.normalizedStats - self.summaryStats.loc[baselineRun]
         self.normalizedStats /= self.summaryStats.loc[baselineRun]
         self.baselineRun = baselineRun
+
+    def sortCols(self, baseName=True, summaryType=True):
+        """Return the columns (in order) to display a sorted version of the stats dataframe.
+
+        Parameters
+        ----------
+        baseName : bool, opt
+            Sort by the baseName. Default True.
+            If True, this takes priority in the sorted results.
+        summaryType : bool, opt
+            Sort by the summary stat name (summaryType). Default True.
+
+        Returns
+        -------
+        list
+        """
+        sortby = []
+        if baseName:
+            sortby.append('BaseName')
+        if summaryType:
+            sortby.append('SummaryType')
+        o = self.headerStats.sort_values(by=sortby, axis=1)
+        return o.columns
+
+    def filterCols(self, summaryType):
+        """Return a dataframe containing only stats which match summaryType.
+
+        Parameters
+        ----------
+        summaryType : str
+            The type of summary stat to match. (i.e. Max, Mean)
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        o = self.headerStats.loc['SummaryType'] == summaryType
+        return self.summaryStats.loc[:, o]
+
+    def findChanges(self, threshold=0.05):
+        """Return a dataframe containing only values which changed by threshhold.
+
+        Parameters
+        ----------
+        threshold : float, opt
+            Identify values which change by more than threshold (%) in the normalized values.
+            Default 5% (0.05).
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        o = abs(self.normalizedStats) > 0.05
+        o = o.any(axis=0)
+        return self.summaryStats.loc[:, o]
 
     def getFileNames(self, metricName, metricMetadata=None, slicerName=None):
         """For each of the runs in runlist, get the paths to the datafiles for a given metric.
