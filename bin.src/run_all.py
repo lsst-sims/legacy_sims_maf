@@ -37,6 +37,10 @@ def setBatches(opsdb, colmap, args):
     bdict.update(batches.tEffMetrics(colmap, args.runName,
                                      extraSql=sqltags['WFD'], extraMetadata='WFD'))
     bdict.update(batches.slewBasics(colmap, args.runName))
+    
+    # Whole survey filter changes
+    bdict.update(batches.nfilterChanges(colmap, args.runName))
+
     return bdict
 
 
