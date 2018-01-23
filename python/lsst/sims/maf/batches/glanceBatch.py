@@ -8,6 +8,7 @@ import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
 from .common import standardSummary
 from .slewBatch import slewBasics
+from .hourglassBatch import hourglassBatch
 
 __all__ = ['glanceBatch']
 
@@ -188,18 +189,11 @@ def glanceBatch(colmap=None, runName='opsim',
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
-    years = list(range(nyears+1))
-    displayDict = {'group': 'Hourglass'}
-    for year in years[1:]:
-        sql = 'night > %i and night <= %i' % (365.25*(year-1), 365.25*year)
-        slicer = slicers.HourglassSlicer()
-        metric = metrics.HourglassMetric(nightCol=colmap['night'], mjdCol=colmap['mjd'])
-        metadata = 'Year %i-%i' % (year-1, year)
-        bundle = metricBundles.MetricBundle(metric, slicer, sql, metadata=metadata, displayDict=displayDict)
-        bundleList.append(bundle)
-
     for b in bundleList:
         b.setRunName(runName)
+
+    # Add hourglass plots.
+    hrDict = hourglassBatch(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
 
     # Add basic slew stats.
     try:
@@ -209,5 +203,6 @@ def glanceBatch(colmap=None, runName='opsim',
 
     bd = metricBundles.makeBundlesDictFromList(bundleList)
     bd.update(slewDict)
+    bd.update(hrDict)
     return bd
 
