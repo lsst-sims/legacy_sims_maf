@@ -347,6 +347,9 @@ class BaseHistogram(BasePlotter):
                                histtype='step', log=plotDict['logScale'],
                                cumulative=plotDict['cumulative'],
                                label=plotDict['label'], color=plotDict['color'])
+        hist_ylims = plt.ylim()
+        if n.max() > hist_ylims[1]:
+            plt.ylim(ymax = n.max())
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y, pos):
