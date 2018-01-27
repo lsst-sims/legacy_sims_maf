@@ -1,4 +1,5 @@
 from builtins import zip
+import numbers
 import numpy as np
 import warnings
 import healpy as hp
@@ -350,9 +351,13 @@ class BaseHistogram(BasePlotter):
         hist_ylims = plt.ylim()
         if n.max() > hist_ylims[1]:
             plt.ylim(ymax = n.max())
+        if n.min() < hist_ylims[0] and not plotDict['logScale']:
+            plt.ylim(ymin = n.min())
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y, pos):
+            if not isinstance(plotDict['scale'], numbers.Number):
+                raise ValueError('plotDict["scale"] must be a number to scale the y axis.')
             return plotDict['yaxisformat'] % (y * plotDict['scale'])
 
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
