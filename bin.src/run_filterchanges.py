@@ -14,11 +14,9 @@ def setBatches(opsdb, colmap, args):
     propids, proptags, sqltags = setSQL(opsdb, sqlConstraint=args.sqlConstraint)
 
     # Per Night filter changes
-    # bdict.update(batches.nfilterChanges(colmap, args.runName, binNights=1))
     bdict.update(batches.filtersPerNightBatch(colmap, args.runName))
 
     # Whole survey filter changes
-    # bdict.update(batches.nfilterChanges(colmap, args.runName))
     bdict.update(batches.filtersWholeSurveyBatch(colmap, args.runName))
 
     return bdict
