@@ -5,7 +5,41 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict, getColMap
 from .common import standardSummary
 
-__all__ = ['nfilterChanges']
+__all__ = ['filtersPerNightBatch','filtersWholeSurveyBatch']
+
+def setupSlicer(binNights=None):
+    if binNights is None:
+        # Setup slicer, summaryStats, and captions for metrics over the entire survey.
+        metadata = ['Whole survey']
+        subgroup = 'Whole Survey'
+        slicer = slicers.UniSlicer()
+        summaryStats = None
+        captionDict = {'NChanges': 'Total filter changes over survey',
+                       'MinTime': 'Minimum time between filter changes, in minutes.',
+                       'NFaster10':'Number of filter changes faster than 10 minutes over the entire survey.',
+                       'NFaster20':'Number of filter changes faster than 10 minutes over the entire survey.',
+                       'Maxin10':'Max number of filter changes within a window of 10 minutes over the entire survey.',
+                       'Maxin20':'Max number of filter changes within a window of 20 minutes over the entire survey.'}
+        metricName='Total Filter Changes'
+
+    else:
+        # Setup slicer, summaryStats, and captions for metrics on a per night basis.
+        if binNights == 1:
+            metadata = ['Per Night']
+        else:
+            metedata = ['Per %.1f Nights' % (binNights)]
+        subgroup = 'Per Night'
+        slicer = slicers.OneDSlicer(sliceColName='night', binsize=binNights)
+        summaryStats = standardSummary()
+        captionDict = {'NChanges': 'Number of filter changes per night.',
+                       'MinTime': 'Minimum time between filter changes, in minutes, per night',
+                       'NFaster10':'Number of filter changes faster than 10 minutes, per night.',
+                       'NFaster20':'Number of filter changes faster than 20 minutes, per night.',
+                       'Maxin10': 'Max number of filter changes within a window of 10 minutes, per night.',
+                       'Maxin20':'Max number of filter changes within a window of 10 minutes, per night.'}
+        metricName='Filter Changes'
+
+    return metadata,subgroup,slicer,summaryStats,captionDict,metricName
 
 def nfilterChanges(colmap=None, runName='opsim', binNights=None, extraSql=None, extraMetadata=None):
 
@@ -38,15 +72,8 @@ def nfilterChanges(colmap=None, runName='opsim', binNights=None, extraSql=None, 
     # Set up basic all and per filter sql constraints.
     sqlconstraints = ['']
 
-    if binNights is not None:
-        if binNights == 1:
-            metadata = ['Per Night']
-        else:
-            metedata = ['Per %.1f Nights' % (binNights)]
-        subgroup = 'Per Night'
-    else:
-        metadata = ['Whole survey']
-        subgroup = 'Whole Survey'
+    metadata, subgroup, slicer, summaryStats, captionDict, metricName = setupSlicer(binNights)
+    displayDict = {'group': 'Filter Changes', 'subgroup': subgroup}
 
     # Add additional sql constraint (such as wfdWhere) and metadata, if provided.
     if (extraSql is not None) and (len(extraSql) > 0):
@@ -65,32 +92,6 @@ def nfilterChanges(colmap=None, runName='opsim', binNights=None, extraSql=None, 
     if metadataCaption is None:
         metadataCaption = 'all visits'
 
-    group = 'Filter Changes'
-    if binNights is None:
-        # Setup slicer, summaryStats, and captions for metrics over the entire survey.
-        slicer = slicers.UniSlicer()
-        summaryStats = None
-        captionDict = {'NChanges': 'Total filter changes over survey',
-                       'MinTime': 'Minimum time between filter changes, in minutes.',
-                       'NFaster10':'Number of filter changes faster than 10 minutes over the entire survey.',
-                       'NFaster20':'Number of filter changes faster than 10 minutes over the entire survey.',
-                       'Maxin10':'Max number of filter changes within a window of 10 minutes over the entire survey.',
-                       'Maxin20':'Max number of filter changes within a window of 20 minutes over the entire survey.'}
-        metricName='Total Filter Changes'
-
-    else:
-        # Setup slicer, summaryStats, and cpations for metrics on a per night basis.
-        slicer = slicers.OneDSlicer(sliceColName='night', binsize=binNights)
-        summaryStats = standardSummary()
-        captionDict = {'NChanges': 'Number of filter changes per night.',
-                       'MinTime': 'Minimum time between filter changes, in minutes, per night',
-                       'NFaster10':'Number of filter changes faster than 10 minutes, per night.',
-                       'NFaster20':'Number of filter changes faster than 20 minutes, per night.',
-                       'Maxin10': 'Max number of filter changes within a window of 10 minutes, per night.',
-                       'Maxin20':'Max number of filter changes within a window of 10 minutes, per night.'}
-        metricName='Filter Changes'
-
-    displayDict = {'group': 'Filter Changes', 'subgroup': subgroup}
     for sql, meta in zip(sqlconstraints, metadata):
 
         # Number of filter changes
@@ -150,3 +151,11 @@ def nfilterChanges(colmap=None, runName='opsim', binNights=None, extraSql=None, 
     for b in bundleList:
         b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList)
+
+def filtersPerNightBatch(colmap=None, runName='opsim',extraSql=None, extraMetadata=None):
+    return nfilterChanges(colmap=colmap, binNights=1.0, runName=runName,
+                          extraSql=extraSql, extraMetadata=extraMetadata)
+
+def filtersWholeSurveyBatch(colmap=None, runName='opsim',extraSql=None, extraMetadata=None):
+    return nfilterChanges(colmap=colmap, binNights=None, runName=runName,
+                          extraSql=extraSql, extraMetadata=extraMetadata)
