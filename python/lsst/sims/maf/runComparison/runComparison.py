@@ -304,10 +304,19 @@ class RunComparison(object):
                     summaryValues[r][s] = np.nan
         # Create data frames for each run. This is the simplest way to handle it in pandas.
         summaryBase = {}
+        mName = {}
+        mData = {}
+        sName = {}
         basemetricname = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
         for s in unique_stats:
             summaryBase[s] = basemetricname
+            mName[s] = metricName
+            mData[s] = metricMetadata
+            sName[s] = slicerName
         tempDFHeader = [pd.DataFrame(summaryBase, index=['BaseName'])]
+        tempDFHeader.append(pd.DataFrame(mName, index=['MetricName']))
+        tempDFHeader.append(pd.DataFrame(mData, index=['Metadata']))
+        tempDFHeader.append(pd.DataFrame(sName, index=['Slicer']))
         tempDFHeader.append(pd.DataFrame(summaryNames[r], index=['SummaryType']))
         header = pd.concat(tempDFHeader)
         tempDFList = []
