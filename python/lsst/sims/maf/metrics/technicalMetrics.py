@@ -39,9 +39,9 @@ class MinTimeBetweenStatesMetric(BaseMetric):
         self.changeCol = changeCol
         self.timeCol = timeCol
         if metricName is None:
-            metricName = 'Minimum time between %s changes minutes' % (changeCol)
+            metricName = 'Minimum time between %s changes (minutes)' % (changeCol)
         super(MinTimeBetweenStatesMetric, self).__init__(col=[changeCol, timeCol], metricName=metricName,
-                                                         units='minutes', **kwargs)
+                                                         units='', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
