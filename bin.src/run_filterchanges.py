@@ -11,13 +11,10 @@ from run_generic import *
 def setBatches(opsdb, colmap, args):
     bdict = {}
 
-    propids, proptags, sqltags = setSQL(opsdb, sqlConstraint=args.sqlConstraint)
-
     # Per Night filter changes
-    bdict.update(batches.filtersPerNightBatch(colmap, args.runName))
-
+    bdict.update(batches.filtersPerNightBatch(colmap, args.runName, nights=1))
     # Whole survey filter changes
-    bdict.update(batches.filtersWholeSurveyBatch(colmap, args.runName))
+    bdict.update(batches.filtersAllNightsBatch(colmap, args.runName))
 
     return bdict
 
