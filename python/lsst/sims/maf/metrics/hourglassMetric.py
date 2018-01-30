@@ -49,7 +49,8 @@ class HourglassMetric(BaseMetric):
         moon = ephem.Moon()
         for h in horizons:
             obs = ephem.Observer()
-            obs.lat, obs.lon, obs.elevation = self.telescope.latitude_rad, self.telescope.longitude_rad, self.telescope.height
+            obs.lat, obs.lon, obs.elevation = self.telescope.latitude_rad, self.telescope.longitude_rad, \
+                                              self.telescope.height
             obs.horizon = h
             obsList.append(obs)
 
@@ -70,9 +71,11 @@ class HourglassMetric(BaseMetric):
                 pernight[key[j]+'_set'][i] = obs.previous_setting(S, start=pernight['midnight'][i]-doff,
                                                                   use_center=True) + doff
 
-        # Define the breakpoints as where either the filter changes OR there's more than a 2 minute gap in observing
+        # Define the breakpoints as where either the filter changes OR
+        # there's more than a 2 minute gap in observing
         good = np.where((dataSlice[self.filterCol] != np.roll(dataSlice[self.filterCol], 1)) |
-                        (np.abs(np.roll(dataSlice[self.mjdCol], 1)-dataSlice[self.mjdCol]) > 120./3600./24.))[0]
+                        (np.abs(np.roll(dataSlice[self.mjdCol], 1) -
+                                dataSlice[self.mjdCol]) > 120./3600./24.))[0]
         good = np.concatenate((good, [0], [len(dataSlice[self.filterCol])]))
         good = np.unique(good)
         left = good[:-1]
