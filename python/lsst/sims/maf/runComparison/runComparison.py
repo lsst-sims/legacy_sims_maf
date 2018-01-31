@@ -624,3 +624,126 @@ class RunComparison(object):
         if self.verbose:
             print(plotDicts)
         ph.plot(plotFunc, plotDicts=plotDicts)
+
+    def generateDiffHtml(self, normalized = False, html_out = None, show_page = False):
+        """
+        Use `bokeh` to convert a summaryStats dataframe to interactive html
+        table.
+
+        Parameters
+        ----------
+        normalized : bool, opt
+            If True generate html table with normalizedStats
+        html_out : str, opt
+            Name of the html that will be output and saved. If no string
+            is provided then the html table will not be saved.
+        show_page : bool, opt
+            If True the html page generate by this function will automatically open
+            in your browser
+        """
+
+        try:
+            from bokeh.models import CustomJS
+            from bokeh.io import output_file, output_notebook
+            from bokeh.layouts import widgetbox, layout, row, column
+            from bokeh.models import ColumnDataSource
+            from bokeh.models.widgets import DataTable, DateFormatter, TableColumn, NumberFormatter, Select
+            from bokeh.plotting import Figure, output_file, show
+            output_notebook()
+        except ImportError:
+            raise ImportError('bokeh not found, try pip install bokeh')
+
+        if html_out is not None:
+            output_file(html_out, title = html_out.strip('.html'))
+
+        if normalized is False:
+            dataframe = self.headerStats.T.merge(self.summaryStats.T,
+                                                        left_index=True, right_index=True)
+        else:
+            dataframe = self.headerStats.T.merge(self.normalizedStats.T,
+                                                        left_index=True, right_index=True)
+
+        dataframe.reset_index(level=0, inplace=True)
+        dataframe.columns.values[0]='FullName'
+
+        columns = []
+
+
+        for col in dataframe.columns:
+
+            if col not in ['FullName', 'BaseName','MetricName', 'Metadata', 'slicer', 'SummaryType']:
+                columns.append(TableColumn(field=col, title=col, formatter=NumberFormatter(format="0.0000")))
+            else:
+                columns.append(TableColumn(field=col, title=col))
+        source = ColumnDataSource(dataframe)
+        original_source = ColumnDataSource(dataframe)
+        data_table = DataTable(source=source, columns=columns, width=1900, height=900)
+
+        js_code = """
+        var data = source.data;
+        var original_data = original_source.data;
+        var FullName= FullName_select_obj.value;
+        var BaseName = BaseName_select_obj.value;
+        var SummaryType = SummaryType_select_obj.value;
+        var MetricName = MetricName_select_obj.value;
+        var Metadata = Metadata_select_obj.value;
+         for (var key in original_data) {
+             data[key] = [];
+             for (var i = 0; i < original_data['FullName'].length; ++i) {
+                 if ((FullName === "ALL" || original_data['FullName'][i] === FullName) &&
+                     (BaseName === "ALL" || original_data['BaseName'][i] === BaseName) &&
+                     (Metadata === "ALL" || original_data['Metadata'][i] === Metadata) &&
+                     (MetricName === "ALL" || original_data['MetricName'][i] === MetricName) &&
+                     (SummaryType === "ALL" || original_data['SummaryType'][i] === SummaryType)) {
+                     data[key].push(original_data[key][i]);
+                 }
+             }
+         }
+        source.change.emit();
+        target_obj.change.emit();
+        """
+
+        FullName_list = ['ALL'] + dataframe['FullName'].unique().tolist()
+        FullName_select = Select(title="FullName:", value=FullName_list[0], options=FullName_list)
+
+        BaseName_list = ['ALL'] + dataframe['BaseName'].unique().tolist()
+        BaseName_select = Select(title="BaseName:",
+                                 value=BaseName_list[0],
+                                 options=BaseName_list)
+
+        SummaryType_list = ['ALL'] + dataframe['SummaryType'].unique().tolist()
+        SummaryType_select = Select(title="SummaryType:",
+                                    value=SummaryType_list[0],
+                                    options=SummaryType_list)
+
+        MetricName_list = ['ALL'] + dataframe['MetricName'].unique().tolist()
+        MetricName_select = Select(title="MetricName:",
+                                    value=MetricName_list[0],
+                                    options=MetricName_list)
+
+        Metadata_list = ['ALL'] + dataframe['Metadata'].unique().tolist()
+        Metadata_select = Select(title="Metadata:",
+                                    value=Metadata_list[0],
+                                    options=Metadata_list)
+
+
+        generic_callback = CustomJS(args=dict(source=source,
+                                              original_source=original_source,
+                                              FullName_select_obj=FullName_select,
+                                              BaseName_select_obj=BaseName_select,
+                                              SummaryType_select_obj=SummaryType_select,
+                                              MetricName_select_obj=MetricName_select,
+                                              Metadata_select_obj=Metadata_select,
+                                              target_obj=data_table),
+                                    code=js_code)
+
+        FullName_select.callback = generic_callback
+        BaseName_select.callback = generic_callback
+        SummaryType_select.callback = generic_callback
+        MetricName_select.callback = generic_callback
+        Metadata_select.callback = generic_callback
+
+        dropdownMenus = column([SummaryType_select, MetricName_select,
+                                Metadata_select, FullName_select, BaseName_select])
+        page_layout = layout([dropdownMenus,data_table])
+        show(page_layout)
