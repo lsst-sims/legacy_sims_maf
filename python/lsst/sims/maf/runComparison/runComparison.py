@@ -313,12 +313,9 @@ class RunComparison(object):
             mName[s] = metricName
             mData[s] = metricMetadata
             sName[s] = slicerName
-        tempDFHeader = [pd.DataFrame(summaryBase, index=['BaseName'])]
-        tempDFHeader.append(pd.DataFrame(mName, index=['MetricName']))
-        tempDFHeader.append(pd.DataFrame(mData, index=['Metadata']))
-        tempDFHeader.append(pd.DataFrame(sName, index=['Slicer']))
-        tempDFHeader.append(pd.DataFrame(summaryNames[r], index=['SummaryType']))
-        header = pd.concat(tempDFHeader)
+        r = self.runlist[0]
+        header = pd.DataFrame([summaryBase, mName, mData, sName, summaryNames[r]],
+                              index=['BaseName', 'MetricName', 'Metadata', 'slicer', 'SummaryType'])
         tempDFList = []
         for r in self.runlist:
             tempDFList.append(pd.DataFrame(summaryValues[r], index=[r]))
