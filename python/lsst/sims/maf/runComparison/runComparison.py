@@ -643,6 +643,15 @@ class RunComparison(object):
         """
 
         try:
+            import bokeh
+            BOKEH_HERE = True
+        except ImportError:
+            BOKEH_HERE = False
+            raise ImportError('This method requires bokeh to be installed.'+ '\n'
+                              'Run: pip install bokeh'+'\n' +
+                              'Then restart your jupyter notebook kernel.')
+
+        if BOKEH_HERE is True:
             from bokeh.models import CustomJS
             from bokeh.io import output_file, output_notebook
             from bokeh.layouts import widgetbox, layout, row, column
@@ -650,8 +659,6 @@ class RunComparison(object):
             from bokeh.models.widgets import DataTable, DateFormatter, TableColumn, NumberFormatter, Select
             from bokeh.plotting import Figure, output_file, show
             output_notebook()
-        except ImportError:
-            raise ImportError('bokeh not found, try pip install bokeh')
 
         if html_out is not None:
             output_file(html_out, title = html_out.strip('.html'))
