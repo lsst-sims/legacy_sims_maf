@@ -22,8 +22,14 @@ class StringCountMetric(BaseMetric):
 
     def __init__(self, metricName='stringCountMetric',
                  col='filter', percent=False, **kwargs):
-        """ Instantiate metric.
-        mjdcol = column name for exposure time dates
+        """
+        Parameters
+        ----------
+
+        col: str ('filter')
+            Column name that has strings to look at
+        percent : bool (False)
+            Normalize and return results as percents ranther than raw count
         """
         if percent:
             units = 'percent'
