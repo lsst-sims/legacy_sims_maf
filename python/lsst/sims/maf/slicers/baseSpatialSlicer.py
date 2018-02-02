@@ -34,6 +34,9 @@ class BaseSpatialSlicer(BaseSlicer):
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
         Default fieldDec
+    latLonDeg : boolean, optional
+        Flag indicating whether lat and lon values from input data are in degrees (True) or radians (False).
+        Default True.
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.
@@ -58,8 +61,8 @@ class BaseSpatialSlicer(BaseSlicer):
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
-    def __init__(self, lonCol='fieldRA', latCol='fieldDec', verbose=True,
-                 badval=-666, leafsize=100, radius=1.75, latLonDeg=True,
+    def __init__(self, lonCol='fieldRA', latCol='fieldDec', latLonDeg=True,
+                 verbose=True, badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
                  chipNames='all'):
         super(BaseSpatialSlicer, self).__init__(verbose=verbose, badval=badval)

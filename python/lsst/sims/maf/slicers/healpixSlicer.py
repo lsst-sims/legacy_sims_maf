@@ -30,8 +30,10 @@ class HealpixSlicer(BaseSpatialSlicer):
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
         Default fieldDec
-    latLonDeg : bool (True)
-        Assume the input latitude and longitudes are in degrees
+    latLonDeg : boolean, optional
+        Flag indicating whether the lat and lon values in the input data are in
+        degrees (True) or radians (False).
+        Default True.
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.

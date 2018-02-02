@@ -11,7 +11,7 @@ class UserPointsSlicer(BaseSpatialSlicer):
     Parameters
     ----------
     ra : list or numpy.ndarray
-        User-selected RA points, in degrees. Stored (and used) internally in radians.
+        User-selected RA points, in degrees. Stored internally in radians.
     dec : list or numpy.ndarray
         User-selected Dec points, in degrees. Stored internally in radians.
     lonCol : str, optional
@@ -20,6 +20,9 @@ class UserPointsSlicer(BaseSpatialSlicer):
     latCol : str, optional
         Name of the latitude (Dec equivalent) column to use from the input data.
         Default fieldDec
+    latLonDeg : bool, optional
+        Flag indicating whether the lon and lat values will be in degrees (True) or radians (False).
+        Default True (appropriate for opsim v4).
     verbose : boolean, optional
         Flag to indicate whether or not to write additional information to stdout during runtime.
         Default True.
@@ -44,15 +47,15 @@ class UserPointsSlicer(BaseSpatialSlicer):
         List of chips to accept, if useCamera is True. This lets users turn 'on' only a subset of chips.
         Default 'all' - this uses all chips in the camera.
     """
-    def __init__(self, ra, dec, lonCol='fieldRA', latCol='fieldDec', verbose=True,
-                 badval=-666, leafsize=100, radius=1.75, latLonDeg=True,
+    def __init__(self, ra, dec, lonCol='fieldRA', latCol='fieldDec', latLonDeg=True, verbose=True,
+                 badval=-666, leafsize=100, radius=1.75,
                  useCamera=False, rotSkyPosColName='rotSkyPos', mjdColName='observationStartMJD',
                  chipNames='all'):
-        super(UserPointsSlicer, self).__init__(lonCol=lonCol, latCol=latCol, verbose=verbose,
+        super(UserPointsSlicer, self).__init__(lonCol=lonCol, latCol=latCol, latLonDeg=latLonDeg,
+                                               verbose=verbose,
                                                badval=badval, radius=radius, leafsize=leafsize,
                                                useCamera=useCamera, rotSkyPosColName=rotSkyPosColName,
-                                               mjdColName=mjdColName, chipNames=chipNames,
-                                               latLonDeg=latLonDeg)
+                                               mjdColName=mjdColName, chipNames=chipNames)
         # check that ra and dec are iterable, if not, they are probably naked numbers, wrap in list
         if not hasattr(ra, '__iter__'):
             ra = [ra]
