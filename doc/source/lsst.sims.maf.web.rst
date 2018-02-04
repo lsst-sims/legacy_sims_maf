@@ -4,14 +4,6 @@ lsst\.sims\.maf\.web package
 Submodules
 ----------
 
-lsst\.sims\.maf\.web\.mafRunComparison module
----------------------------------------------
-
-.. automodule:: lsst.sims.maf.web.mafRunComparison
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 lsst\.sims\.maf\.web\.mafRunResults module
 ------------------------------------------
 

@@ -68,6 +68,14 @@ lsst\.sims\.maf\.stackers\.moStackers module
     :undoc-members:
     :show-inheritance:
 
+lsst\.sims\.maf\.stackers\.nFollowStacker module
+------------------------------------------------
+
+.. automodule:: lsst.sims.maf.stackers.nFollowStacker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst\.sims\.maf\.stackers\.sdssStackers module
 ----------------------------------------------
 

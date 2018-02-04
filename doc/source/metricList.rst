@@ -34,6 +34,8 @@ Core LSST MAF metrics
  	 Base class for the moving object metrics.
 - `BinaryMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.BinaryMetric>`_ 
  	 Return 1 if there is data. 
+- `BruteOSFMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.technicalMetrics.BruteOSFMetric>`_ 
+ 	 Assume I can't trust the slewtime or visittime colums.
 - `ChipVendorMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.chipVendorMetric.ChipVendorMetric>`_ 
  	 See what happens if we have chips from different vendors
 - `Coaddm5Metric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.Coaddm5Metric>`_ 
@@ -141,7 +143,7 @@ Core LSST MAF metrics
 - `NObsNoSinglesMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.moMetrics.NObsNoSinglesMetric>`_ 
  	 Count the number of observations for an object, but don't
 - `NRevisitsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.NRevisitsMetric>`_ 
- 	 Calculate the number of (consecutive) visits with time differences less than dT.
+ 	 Calculate the number of consecutive visits with time differences less than dT.
 - `NStateChangesFasterThanMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.technicalMetrics.NStateChangesFasterThanMetric>`_ 
  	 Compute the number of changes of state that happen faster than 'cutoff'.
 - `NightPointingMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.nightPointingMetric.NightPointingMetric>`_ 
@@ -165,7 +167,7 @@ Core LSST MAF metrics
 - `ParallaxDcrDegenMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.calibrationMetrics.ParallaxDcrDegenMetric>`_ 
  	 Use the full parallax and DCR displacement vectors to find if they are degenerate.
 - `ParallaxMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.calibrationMetrics.ParallaxMetric>`_ 
- 	 Calculate the uncertainty in a parallax measures given a serries of observations.
+ 	 Calculate the uncertainty in a parallax measurement given a series of observations.
 - `PassMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.PassMetric>`_ 
  	 Just pass the entire array through
 - `PeakVMagMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.moMetrics.PeakVMagMetric>`_ 
@@ -192,8 +194,6 @@ Core LSST MAF metrics
  	 Interpolate the stellar luminosity function to return the number of
 - `SumMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.SumMetric>`_ 
  	 Calculate the sum of a simData column slice.
-- `SupernovaMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.SupernovaMetric>`_ 
- 	 Measure how many time series meet a given time and filter distribution requirement.
 - `TableFractionMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.TableFractionMetric>`_ 
  	 Count the completeness (for many fields) and summarize how many fields have given completeness levels
 - `TeffMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.technicalMetrics.TeffMetric>`_ 
@@ -201,7 +201,7 @@ Core LSST MAF metrics
 - `TemplateExistsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.TemplateExistsMetric>`_ 
  	 Calculate the fraction of images with a previous template image of desired quality.
 - `TgapsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.tgaps.TgapsMetric>`_ 
- 	 Histogram up all the time gaps 
+ 	 Histogram all the time gaps.
 - `TotalPowerMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.TotalPowerMetric>`_ 
  	 Calculate the total power in the angular power spectrum between lmin/lmax.
 - `TransientMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.transientMetrics.TransientMetric>`_ 
@@ -220,48 +220,4 @@ Core LSST MAF metrics
  	 Metric to calculate the FO Area.
 - `fONv <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.fONv>`_ 
  	 Metric to calculate the FO_Nv.
- 
-Contributed mafContrib metrics
-==============================
- 
-- `AngularSpreadMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/angularSpread.py>`_ 
-  	 Compute the angular spread statistic which measures uniformity of a distribution angles accounting for 2pi periodicity.
-- `CampaignLengthMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/campaignLengthMetric.py>`_ 
-  	 The campaign length, in seasons. 
-- `GRBTransientMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/GRBTransientMetric.py>`_ 
-  	 Detections for on-axis GRB afterglows decaying as 
-- `GalaxyCountsMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/lssMetrics.py>`_ 
-  	 Estimate the number of galaxies expected at a particular coadded depth.
-- `MeanNightSeparationMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/meanNightSeparationMetric.py>`_ 
-  	 The mean separation between nights within a season, and then the mean over the campaign. 
-- `NumObsMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/numObsMetric.py>`_ 
-  	 Calculate the number of observations per data slice.
-- `PeriodDeviationMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/varMetrics.py>`_ 
-  	 Measure the percentage deviation of recovered periods for pure sine wave variability (in magnitude).
-- `PeriodicMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/PeriodicMetric.py>`_ 
-  	 From a set of observation times, uses code provided by Robert Siverd (LCOGT) to calculate the spectral window function.
-- `PeriodicStarMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/periodicStarMetric.py>`_ 
-  	 At each slicePoint, run a Monte Carlo simulation to see how well a periodic source can be fit.
-- `RelRmsMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Relative scatter metric (RMS over median).
-- `SEDSNMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Computes the S/Ns for a given SED.
-- `SNMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Calculate the signal to noise metric in a given filter for an object of a given magnitude.
-- `SeasonLengthMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/seasonLengthMetric.py>`_ 
-  	 The mean season length, in months.
-- `StarCountMassMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/StarCountMassMetric.py>`_ 
-  	 Find the number of stars in a given field in the mass range fainter than magnitude 16 and bright enough to have noise less than 0.03 in a given band. M1 and M2 are the upper and lower limits of the mass range. 'band' is the band to be observed.
-- `StarCountMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/StarCountMetric.py>`_ 
-  	 Find the number of stars in a given field between D1 and D2 in parsecs.
-- `TdcMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/tdcMetric.py>`_ 
-  	 Combine campaign length, season length, and mean night speartion into a single metric.
-- `ThreshSEDSNMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Computes the metric whether the S/N is bigger than the threshold in all the bands for a given SED
-- `TransientAsciiMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/transientAsciiMetric.py>`_ 
-  	 Based on the transientMetric, but uses an ascii input file and provides option to write out lightcurve.
-- `TripletBandMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/TripletMetric.py>`_ 
-  	 Find the number of 'triplets' of three images taken in the same band, based on user-selected minimum and maximum intervals (in hours),
-- `TripletMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/TripletMetric.py>`_ 
-  	 Find the number of 'triplets' of three images taken in any band, based on user-selected minimum and maximum intervals (in hours),
  
