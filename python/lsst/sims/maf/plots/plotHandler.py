@@ -465,7 +465,7 @@ class PlotHandler(object):
                              % (len(self.plotDicts), len(self.mBundles)))
 
         # These are the keys that need to match (or be None)
-        keys2Check = ['xlim', 'ylim', 'legendloc', 'colorMin', 'colorMax', 'title']
+        keys2Check = ['xlim', 'ylim', 'colorMin', 'colorMax', 'title']
 
         # Identify how many subplots there are. If there are more than one, just don't change anything.
         # This assumes that if there are more than one, the plotDicts are actually all compatible.
@@ -534,29 +534,6 @@ class PlotHandler(object):
                 warnings.warn(msg)
             else:
                 fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
-                # Do a little hack to make sure we don't cut off histograms, etc. below their peak.
-                plt.figure(fignum)
-                try:
-                    lims = {}
-                    lims['x'] = plt.xlim()
-                    lims['y'] = plt.ylim()
-                    for ax in ('x', 'y'):
-                        if plotlims[ax][0] is None:
-                            plotlims[ax][0] = lims[ax][0]
-                        else:
-                            plotlims[ax][0] = min(plotlims[ax][0], lims[ax][0])
-                        if plotlims[ax][1] is None:
-                            plotlims[ax][1] = lims[ax][1]
-                        else:
-                            plotlims[ax][1] = max(plotlims[ax][1], lims[ax][1])
-                except AttributeError:
-                    # If there isn't an x or y axis, we are going to skip this.
-                    pass
-            try:
-                plt.xlim(plotlims['x'])
-                plt.ylim(plotlims['y'])
-            except TypeError:
-                pass
         # Add a legend if more than one metricValue is being plotted or if legendloc is specified.
         legendloc = None
         if 'legendloc' in self.plotDicts[0]:

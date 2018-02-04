@@ -1,4 +1,5 @@
 from builtins import zip
+import numbers
 import numpy as np
 import warnings
 import healpy as hp
@@ -287,7 +288,8 @@ class BaseHistogram(BasePlotter):
             if plotDict['percentileClip']:
                 plotDict['xMin'], plotDict['xMax'] = percentileClipping(metricValue,
                                                                         percentile=plotDict['percentileClip'])
-        # Set the histogram range values, to avoid None/Number comparisons.
+        # Set the histogram range values, to avoid cases of trying to histogram single-valued data.
+        # First we try to use the range specified by a user, if there is one. Then use the data if not.
         histRange = [plotDict['xMin'], plotDict['xMax']]
         if histRange[0] is None:
             histRange[0] = metricValue.min()
@@ -324,6 +326,7 @@ class BaseHistogram(BasePlotter):
                 bins = np.arange(bins.min() - plotDict['binsize'] * 2.0,
                                  bins.max() + plotDict['binsize'] * 2.0, plotDict['binsize'])
         else:
+            # If user did not specify bins or binsize, then we try to figure out a good number of bins.
             bins = optimalBins(metricValue)
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
@@ -345,15 +348,28 @@ class BaseHistogram(BasePlotter):
                                histtype='step', log=plotDict['logScale'],
                                cumulative=plotDict['cumulative'],
                                label=plotDict['label'], color=plotDict['color'])
+        hist_ylims = plt.ylim()
+        if n.max() > hist_ylims[1]:
+            plt.ylim(ymax = n.max())
+        if n.min() < hist_ylims[0] and not plotDict['logScale']:
+            plt.ylim(ymin = n.min())
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
         def mjrFormatter(y, pos):
+            if not isinstance(plotDict['scale'], numbers.Number):
+                raise ValueError('plotDict["scale"] must be a number to scale the y axis.')
             return plotDict['yaxisformat'] % (y * plotDict['scale'])
 
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set optional x, y limits.
-        plt.ylim([plotDict['yMin'], plotDict['yMax']])
-        plt.xlim([plotDict['xMin'], plotDict['xMax']])
+        if 'xMin' in plotDict:
+            plt.xlim(xmin=plotDict['xMin'])
+        if 'xMax' in plotDict:
+            plt.xlim(xmax=plotDict['xMax'])
+        if 'yMin' in plotDict:
+            plt.ylim(ymin=plotDict['yMin'])
+        if 'yMax' in plotDict:
+            plt.ylim(ymax=plotDict['yMax'])
         # Set/Add various labels.
         plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         plt.ylabel(plotDict['ylabel'], fontsize=plotDict['fontsize'])
