@@ -7,3 +7,4 @@ from .metadataBatch import *
 from .visitdepthBatch import *
 from .hourglassBatch import *
 from .glanceBatch import *
+from .filterchangeBatch import *
