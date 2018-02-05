@@ -144,7 +144,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     filterorder = {'u': 1, 'g': 2, 'r': 3, 'i': 4, 'z': 5, 'y': 6, 'all': 0}
 
     displayDict = {'group': 'InterNight', 'subgroup': 'Night gaps', 'caption': None, 'order': 0}
-    bins = np.arange(0, 20.5, 1)
+    bins = np.arange(1, 20.5, 1)
     metric = metrics.NightgapsMetric(bins=bins, nightCol=colmap['night'], metricName='DeltaNight Histogram')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
@@ -194,10 +194,9 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
             md = 'all bands'
         if metadata is not None:
             md += metadata
-        sql = sqlConstraint + 'filter = "%s"' % f
         displayDict['caption'] = 'Maximum gap between nights with observations, %s.' % md
         displayDict['order'] = filterorder[f] - 10
-        plotDict = {'color': colors[f], 'percentileClip': 95.}
+        plotDict = {'color': colors[f], 'percentileClip': 95., 'binsize': 5}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict, summaryMetrics=standardStats)
         bundleList.append(bundle)
