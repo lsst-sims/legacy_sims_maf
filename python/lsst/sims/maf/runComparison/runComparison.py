@@ -625,7 +625,7 @@ class RunComparison(object):
             print(plotDicts)
         ph.plot(plotFunc, plotDicts=plotDicts)
 
-    def generateDiffHtml(self, normalized = False, html_out = None, show_page = False):
+    def generateDiffHtml(self, normalized = False, html_out = None, show_page = False, combined = False):
         """
         Use `bokeh` to convert a summaryStats dataframe to interactive html
         table.
@@ -664,11 +664,20 @@ class RunComparison(object):
             output_file(html_out, title = html_out.strip('.html'))
 
         if normalized is False:
+            # HTML table based on summary stat values
             dataframe = self.headerStats.T.merge(self.summaryStats.T,
                                                         left_index=True, right_index=True)
         else:
+            # HTML table based on normalized summary stats
             dataframe = self.headerStats.T.merge(self.normalizedStats.T,
                                                         left_index=True, right_index=True)
+
+        if combined is True:
+            # HTML combine stat values and normalized values into single table.
+            combo = self.summaryStats.T.merge(self.normalizedStats.T, left_index=True, right_index=True,
+                                              suffixes=('','_norm')).drop([self.baselineRun+'_norm'],axis=1)
+
+            dataframe = self.headerStats.T.merge(combo, left_index=True, right_index=True)
 
         dataframe.reset_index(level=0, inplace=True)
         dataframe.columns.values[0]='FullName'
