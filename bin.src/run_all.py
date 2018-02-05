@@ -17,8 +17,8 @@ def setBatches(opsdb, colmap, args):
 
     bdict = {}
     #bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
-    bdict.update(batches.intraNight(colmap, args.runName, sqlConstraint=args.sqlConstraint))
-    bdict.update(batches.interNight(colmap, args.runName, sqlConstraint=args.sqlConstraint))
+    bdict.update(batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint))
+    bdict.update(batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint))
     # All metadata, all proposals.
     bdict.update(batches.allMetadata(colmap, args.runName, sqlConstraint=args.sqlConstraint,
                                      metadata='All props'))
