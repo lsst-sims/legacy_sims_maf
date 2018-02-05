@@ -165,8 +165,14 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
-        md = '%s band %s' % (f, metadata)
-        sql = sqlConstraint + 'filter = "%s"' % f
+        if f is not 'all':
+            sql = sqlConstraint + 'filter = "%s"' % f
+            md = '%s band' % f
+        else:
+            sql = sqlConstraint
+            md = 'all bands'
+        if metadata is not None:
+            md += metadata
         displayDict['caption'] = 'Median gap between nights with observations, %s.' % md
         displayDict['order'] = filterorder[f]
         plotDict = {'color': colors[f]}
@@ -180,7 +186,12 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
-        md = '%s band' % f
+        if f is not 'all':
+            sql = sqlConstraint + 'filter = "%s"' % f
+            md = '%s band' % f
+        else:
+            sql = sqlConstraint
+            md = 'all bands'
         if metadata is not None:
             md += metadata
         sql = sqlConstraint + 'filter = "%s"' % f
