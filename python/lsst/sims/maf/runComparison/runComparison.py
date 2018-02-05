@@ -718,6 +718,7 @@ class RunComparison(object):
                                  value=BaseName_list[0],
                                  options=BaseName_list)
 
+        dataframe['SummaryType'].fillna('None', inplace = True)
         SummaryType_list = ['ALL'] + dataframe['SummaryType'].unique().tolist()
         SummaryType_select = Select(title="SummaryType:",
                                     value=SummaryType_list[0],
