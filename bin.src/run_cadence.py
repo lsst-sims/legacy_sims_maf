@@ -10,7 +10,8 @@ from run_generic import *
 
 def setBatches(opsdb, colmap, args):
     bdict = {}
-    bdict.update(batches.intraNight(colmap, args.runName))
+    bdict.update(batches.intraNight(colmap, args.runName, sqlConstraint=args.sqlConstraint))
+    bdict.update(batches.interNight(colmap, args.runName, sqlConstraint=args.sqlConstraint))
     return bdict
 
 
