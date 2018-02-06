@@ -296,10 +296,13 @@ class RunComparison(object):
             for name in summaryNames[r]:
                 unique_stats.add(name)
         # Make sure every runName (key) in summaryValues dictionary has a value for each stat.
+        # And build summaryname properly
+        suNames = {}
         for s in unique_stats:
             for r in self.runlist:
                 try:
                     summaryValues[r][s]
+                    suNames[s] = summaryNames[r][s]
                 except KeyError:
                     summaryValues[r][s] = np.nan
         # Create data frames for each run. This is the simplest way to handle it in pandas.
@@ -313,9 +316,9 @@ class RunComparison(object):
             mName[s] = metricName
             mData[s] = metricMetadata
             sName[s] = slicerName
-        r = self.runlist[0]
-        header = pd.DataFrame([summaryBase, mName, mData, sName, summaryNames[r]],
-                              index=['BaseName', 'MetricName', 'Metadata', 'slicer', 'SummaryType'])
+        header = pd.DataFrame([summaryBase, mName, mData, sName, suNames],
+                              index=['BaseName', 'MetricName', 'MetricMetadata',
+                                     'SlicerName', 'SummaryName'])
         tempDFList = []
         for r in self.runlist:
             tempDFList.append(pd.DataFrame(summaryValues[r], index=[r]))
@@ -687,7 +690,7 @@ class RunComparison(object):
 
         for col in dataframe.columns:
 
-            if col not in ['FullName', 'BaseName','MetricName', 'Metadata', 'slicer', 'SummaryType']:
+            if col not in ['FullName', 'BaseName','MetricName', 'MetricMetadata', 'SlicerName', 'SummaryName']:
                 columns.append(TableColumn(field=col, title=col, formatter=NumberFormatter(format="0.0000")))
             else:
                 columns.append(TableColumn(field=col, title=col))
@@ -700,17 +703,17 @@ class RunComparison(object):
         var original_data = original_source.data;
         var FullName= FullName_select_obj.value;
         var BaseName = BaseName_select_obj.value;
-        var SummaryType = SummaryType_select_obj.value;
+        var SummaryName = SummaryName_select_obj.value;
         var MetricName = MetricName_select_obj.value;
-        var Metadata = Metadata_select_obj.value;
+        var MetricMetadata = MetricMetadata_select_obj.value;
          for (var key in original_data) {
              data[key] = [];
              for (var i = 0; i < original_data['FullName'].length; ++i) {
                  if ((FullName === "ALL" || original_data['FullName'][i] === FullName) &&
                      (BaseName === "ALL" || original_data['BaseName'][i] === BaseName) &&
-                     (Metadata === "ALL" || original_data['Metadata'][i] === Metadata) &&
+                     (Metadata === "ALL" || original_data['MetricMetadata'][i] === MetricMetadata) &&
                      (MetricName === "ALL" || original_data['MetricName'][i] === MetricName) &&
-                     (SummaryType === "ALL" || original_data['SummaryType'][i] === SummaryType)) {
+                     (SummaryType === "ALL" || original_data['SummaryName'][i] === SummaryName)) {
                      data[key].push(original_data[key][i]);
                  }
              }
@@ -727,19 +730,19 @@ class RunComparison(object):
                                  value=BaseName_list[0],
                                  options=BaseName_list)
 
-        dataframe['SummaryType'].fillna('None', inplace = True)
-        SummaryType_list = ['ALL'] + dataframe['SummaryType'].unique().tolist()
-        SummaryType_select = Select(title="SummaryType:",
-                                    value=SummaryType_list[0],
-                                    options=SummaryType_list)
+        dataframe['SummaryName'].fillna('None', inplace = True)
+        SummaryName_list = ['ALL'] + dataframe['SummaryName'].unique().tolist()
+        SummaryName_select = Select(title="SummaryName:",
+                                    value=SummaryName_list[0],
+                                    options=SummaryName_list)
 
         MetricName_list = ['ALL'] + dataframe['MetricName'].unique().tolist()
         MetricName_select = Select(title="MetricName:",
                                     value=MetricName_list[0],
                                     options=MetricName_list)
 
-        Metadata_list = ['ALL'] + dataframe['Metadata'].unique().tolist()
-        Metadata_select = Select(title="Metadata:",
+        MetricMetadata_list = ['ALL'] + dataframe['Metadata'].unique().tolist()
+        MetricMetadata_select = Select(title="Metadata:",
                                     value=Metadata_list[0],
                                     options=Metadata_list)
 
@@ -748,19 +751,19 @@ class RunComparison(object):
                                               original_source=original_source,
                                               FullName_select_obj=FullName_select,
                                               BaseName_select_obj=BaseName_select,
-                                              SummaryType_select_obj=SummaryType_select,
+                                              SummaryName_select_obj=SummaryName_select,
                                               MetricName_select_obj=MetricName_select,
-                                              Metadata_select_obj=Metadata_select,
+                                              MetricMetadata_select_obj=Metadata_select,
                                               target_obj=data_table),
                                     code=js_code)
 
         FullName_select.callback = generic_callback
         BaseName_select.callback = generic_callback
-        SummaryType_select.callback = generic_callback
+        SummaryName_select.callback = generic_callback
         MetricName_select.callback = generic_callback
-        Metadata_select.callback = generic_callback
+        MetricMetadata_select.callback = generic_callback
 
-        dropdownMenus = column([SummaryType_select, MetricName_select,
-                                Metadata_select, FullName_select, BaseName_select])
+        dropdownMenus = column([SummaryName_select, MetricName_select,
+                                MetricMetadata_select, FullName_select, BaseName_select])
         page_layout = layout([dropdownMenus,data_table])
         show(page_layout)
