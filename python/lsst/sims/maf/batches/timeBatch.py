@@ -36,12 +36,11 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         colmap = ColMapDict('opsimV4')
 
     metadata = extraMetadata
+    if extraSql is None:
+        extraSql = ''
     if extraSql is not None and len(extraSql) > 0:
-        sqlConstraint = '(%s) and ' % extraSql
         if metadata is None:
             metadata = extraSql
-    else:
-        sqlConstraint = ''
 
     bundleList = []
     standardStats = standardSummary()
@@ -49,7 +48,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
 
     # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': 0}
-    sql = '%s (filter="g" or filter="r" or filter="i")' % sqlConstraint
+    sql = '(%s) and (filter="g" or filter="r" or filter="i")' % extraSql
     md = 'gri'
     if metadata is not None:
         md += metadata
@@ -68,7 +67,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                              plotFuncs=subsetPlots, displayDict=displayDict)
     bundleList.append(bundle)
 
-    # Look at the fraction of visits which have another visit within dtMax.
+    # Look at the fraction of visits which have another visit within dtMax, gri.
     dtMax = 50.0
     metric = metrics.NRevisitsMetric(mjdCol=colmap['mjd'], dT=dtMax, normed=True,
                                      metricName='Fraction of visits with a revisit < %.0f min' % dtMax)
@@ -80,7 +79,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                              plotFuncs=subsetPlots, displayDict=displayDict)
     bundleList.append(bundle)
 
-    # Histogram of the time between revisits within two hours.
+    # Histogram of the time between revisits (all filters) within two hours.
     binMin = 0
     binMax = 120.
     binsize = 5.
@@ -95,7 +94,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                                                                                binMax)
     displayDict['order'] += 1
     plotFunc = plots.SummaryHistogram()
-    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, plotDict=plotDict,
+    bundle = mb.MetricBundle(metric, slicer, extraSql, plotDict=plotDict,
                              displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
     bundleList.append(bundle)
 
@@ -132,12 +131,11 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     bundleList = []
 
     metadata = extraMetadata
+    if extraSql is None:
+        extraSql = ''
     if extraSql is not None and len(extraSql) > 0:
-        sqlConstraint = '(%s) and ' % extraSql
         if metadata is None:
             metadata = extraSql
-    else:
-        sqlConstraint = ''
 
     filterlist = ('u', 'g', 'r', 'i', 'z', 'y', 'all')
     colors = {'u': 'cyan', 'g': 'g', 'r': 'y', 'i': 'r', 'z': 'm', 'y': 'b', 'all': 'k'}
@@ -153,7 +151,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                              'given point on the sky, considering separations between %d and %d.' \
                              % (bins.min(), bins.max())
     plotFunc = plots.SummaryHistogram()
-    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, plotDict=plotDict,
+    bundle = mb.MetricBundle(metric, slicer, extraSql, plotDict=plotDict,
                              displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
     bundleList.append(bundle)
 
@@ -166,10 +164,10 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
         if f is not 'all':
-            sql = sqlConstraint + 'filter = "%s"' % f
+            sql = '(%s) and filter = "%s"' % (extraSql, f)
             md = '%s band' % f
         else:
-            sql = sqlConstraint
+            sql = extraSql
             md = 'all bands'
         if metadata is not None:
             md += metadata
@@ -187,10 +185,10 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
         if f is not 'all':
-            sql = sqlConstraint + 'filter = "%s"' % f
+            sql = '(%s) and filter = "%s"' % (extraSql, f)
             md = '%s band' % f
         else:
-            sql = sqlConstraint
+            sql = extraSql
             md = 'all bands'
         if metadata is not None:
             md += metadata
