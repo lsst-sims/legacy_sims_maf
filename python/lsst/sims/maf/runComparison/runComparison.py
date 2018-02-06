@@ -711,9 +711,9 @@ class RunComparison(object):
              for (var i = 0; i < original_data['FullName'].length; ++i) {
                  if ((FullName === "ALL" || original_data['FullName'][i] === FullName) &&
                      (BaseName === "ALL" || original_data['BaseName'][i] === BaseName) &&
-                     (Metadata === "ALL" || original_data['MetricMetadata'][i] === MetricMetadata) &&
+                     (MetricMetadata === "ALL" || original_data['MetricMetadata'][i] === MetricMetadata) &&
                      (MetricName === "ALL" || original_data['MetricName'][i] === MetricName) &&
-                     (SummaryType === "ALL" || original_data['SummaryName'][i] === SummaryName)) {
+                     (SummaryName === "ALL" || original_data['SummaryName'][i] === SummaryName)) {
                      data[key].push(original_data[key][i]);
                  }
              }
@@ -741,10 +741,10 @@ class RunComparison(object):
                                     value=MetricName_list[0],
                                     options=MetricName_list)
 
-        MetricMetadata_list = ['ALL'] + dataframe['Metadata'].unique().tolist()
-        MetricMetadata_select = Select(title="Metadata:",
-                                    value=Metadata_list[0],
-                                    options=Metadata_list)
+        MetricMetadata_list = ['ALL'] + dataframe['MetricMetadata'].unique().tolist()
+        MetricMetadata_select = Select(title="MetricMetadata:",
+                                    value=MetricMetadata_list[0],
+                                    options=MetricMetadata_list)
 
 
         generic_callback = CustomJS(args=dict(source=source,
@@ -753,7 +753,7 @@ class RunComparison(object):
                                               BaseName_select_obj=BaseName_select,
                                               SummaryName_select_obj=SummaryName_select,
                                               MetricName_select_obj=MetricName_select,
-                                              MetricMetadata_select_obj=Metadata_select,
+                                              MetricMetadata_select_obj=MetricMetadata_select,
                                               target_obj=data_table),
                                     code=js_code)
 
