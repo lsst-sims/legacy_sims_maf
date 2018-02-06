@@ -6,7 +6,7 @@ __all__ = ['StringCountMetric']
 
 
 class keylookerupper(object):
-    """My god this is convoluted
+    """Helper object to unpack dictionary values as reduceFunction results.
     """
     def __init__(self, key='blank', name=None):
         self.key = key
@@ -17,7 +17,10 @@ class keylookerupper(object):
 
 
 class StringCountMetric(BaseMetric):
-    """Count up the number of times each string appears in a column
+    """Count up the number of times each string appears in a column.
+
+    Dynamically builds reduce functions for each unique string value, so summary sats can be
+    named the same as strings in the simData array without knowing the values of those trings ahead of time.
     """
 
     def __init__(self, metricName='stringCountMetric',
