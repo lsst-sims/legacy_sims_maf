@@ -189,6 +189,19 @@ def glanceBatch(colmap=None, runName='opsim',
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
+    # stats from the note column
+    if 'note' in colmap.keys():
+        displayDict = {'group': 'Basic Stats', 'subgroup': 'Percent stats'}
+        metric = metrics.StringCountMetric(col=colmap['note'], percent=True, metricName='Percents')
+        sql = ''
+        slicer = slicers.UniSlicer()
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
+        displayDict['subgroup'] = 'Count Stats'
+        metric = metrics.StringCountMetric(col=colmap['note'], metricName='Counts')
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
+
     for b in bundleList:
         b.setRunName(runName)
 
