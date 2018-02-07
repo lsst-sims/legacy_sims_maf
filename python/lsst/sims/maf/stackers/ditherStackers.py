@@ -967,13 +967,17 @@ class RandomRotDitherPerFilterChangeStacker(BaseStacker):
         Abs(maximum) rotational dither, in degrees. The dithers then will be
         between -maxDither to maxDither.
         Default: 90 degrees.
+    maxRotAngle : float, optional
+        Maximum rotator angle possible for the camera. Default 90 degrees.
+    minRotAngle : float, optional
+        Minimum rotator angle possible for the camera. Default -90 degrees.
     randomSeed: int, optional
         If set, then used as the random seed for the numpy random number
         generation for the dither offsets.
         Default: None.
     """
     def __init__(self, rotTelCol= 'rotTelPos', filterCol= 'filter', degrees=True,
-                 maxDither= 90., randomSeed=None):
+                 maxDither= 90., maxRotAngle=90, minRotAngle=-90, randomSeed=None):
         """
         @ MaxDither in degrees.
         """
@@ -982,6 +986,8 @@ class RandomRotDitherPerFilterChangeStacker(BaseStacker):
         self.filterCol = filterCol
         self.degrees = degrees
         self.maxDither = maxDither
+        self.maxRotAngle = maxRotAngle
+        self.minRotAngle = minRotAngle
         self.randomSeed = randomSeed
         # self.units used for plot labels
         if self.degrees:
@@ -1024,8 +1030,8 @@ class RandomRotDitherPerFilterChangeStacker(BaseStacker):
 
         # BUT the camera rotator cannot go further than +/- 90 degrees.
         # Without a better alternative, let's just cut off any values which exceed this range.
-        maxRotTelPos = 90.0
-        minRotTelPos = -90.0
+        maxRotTelPos = self.maxRotAngle
+        minRotTelPos = self.minRotAngle
         if not self.degrees:
             maxRotTelPos = np.radians(maxRotTelPos)
             minRotTelPos = np.radians(minRotTelPos)
