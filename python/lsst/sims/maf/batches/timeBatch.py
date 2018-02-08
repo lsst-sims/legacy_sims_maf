@@ -159,7 +159,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Median inter-night gap (each and all filters)
-    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap')
+    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap', reduceFunc=np.median)
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
