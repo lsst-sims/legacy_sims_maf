@@ -722,26 +722,36 @@ class RunComparison(object):
         target_obj.change.emit();
         """
 
-        FullName_list = ['ALL'] + dataframe['FullName'].unique().tolist()
+        FullName_list = dataframe['FullName'].unique().tolist()
+        FullName_list.sort()
+        FullName_list.insert(0,'ALL')
         FullName_select = Select(title="FullName:", value=FullName_list[0], options=FullName_list)
 
-        BaseName_list = ['ALL'] + dataframe['BaseName'].unique().tolist()
+        BaseName_list = dataframe['BaseName'].unique().tolist()
+        BaseName_list.sort()
+        BaseName_list.insert(0,'ALL')
         BaseName_select = Select(title="BaseName:",
                                  value=BaseName_list[0],
                                  options=BaseName_list)
 
         dataframe['SummaryName'].fillna('None', inplace = True)
-        SummaryName_list = ['ALL'] + dataframe['SummaryName'].unique().tolist()
+        SummaryName_list = dataframe['SummaryName'].unique().tolist()
+        SummaryName_list.sort()
+        SummaryName_list.insert(0,'ALL')
         SummaryName_select = Select(title="SummaryName:",
                                     value=SummaryName_list[0],
                                     options=SummaryName_list)
 
-        MetricName_list = ['ALL'] + dataframe['MetricName'].unique().tolist()
+        MetricName_list = dataframe['MetricName'].unique().tolist()
+        MetricName_list.sort()
+        MetricName_list.insert(0,'ALL')
         MetricName_select = Select(title="MetricName:",
                                     value=MetricName_list[0],
                                     options=MetricName_list)
 
-        MetricMetadata_list = ['ALL'] + dataframe['MetricMetadata'].unique().tolist()
+        MetricMetadata_list = dataframe['MetricMetadata'].unique().tolist()
+        MetricMetadata_list.sort()
+        MetricMetadata_list.insert(0,'ALL')
         MetricMetadata_select = Select(title="MetricMetadata:",
                                     value=MetricMetadata_list[0],
                                     options=MetricMetadata_list)
