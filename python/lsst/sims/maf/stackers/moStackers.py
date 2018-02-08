@@ -4,6 +4,7 @@ import warnings
 
 __all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
 
+
 class BaseMoStacker(BaseStacker):
     """Base class for moving object stackers.
 

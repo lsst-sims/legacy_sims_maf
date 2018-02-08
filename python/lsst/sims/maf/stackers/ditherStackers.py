@@ -268,8 +268,8 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId', nightCol='night',
-                 maxDither=1.75, inHex=True, randomSeed=None):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
+                 nightCol='night', maxDither=1.75, inHex=True, randomSeed=None):
         """
         @ MaxDither in degrees
         """
@@ -449,7 +449,7 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
         self.inHex = inHex
         # self.units used for plot labels
         if self.degrees:
-            self.units =  ['deg', 'deg']
+            self.units = ['deg', 'deg']
         else:
             self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the names of the new columns.
@@ -547,8 +547,8 @@ class SpiralDitherFieldPerNightStacker(SpiralDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId', nightCol='night',
-                 numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
+                 nightCol='night', numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
         """
@@ -629,8 +629,8 @@ class SpiralDitherPerNightStacker(SpiralDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId', nightCol='night',
-                 numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
+                 nightCol='night', numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
         """
