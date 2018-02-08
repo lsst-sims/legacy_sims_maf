@@ -643,6 +643,14 @@ class RunComparison(object):
         show_page : bool, opt
             If True the html page generate by this function will automatically open
             in your browser
+        combined : bool, opt
+            If True the html produce will have columns for the original
+            summaryStats values, as well as their normalized values. The baselineRun
+            used to calculate the normalized values will be dropped from the table.
+        fullStats : bool, opt
+            If False the final html table will not include summaryStats that
+            contain '3Sigma','Rms','Min','Max','RobustRms', or '%ile' in their
+            names.
         """
 
         try:
@@ -676,7 +684,9 @@ class RunComparison(object):
                                                         left_index=True, right_index=True)
 
         if combined is True:
-            # HTML combine stat values and normalized values into single table.
+            # HTML table of combined stat values and normalized values into single table.
+            # The baseline run is removed from the final table.
+            # The normalized values are given a suffix of '_norm'
             combo = self.summaryStats.T.merge(self.normalizedStats.T, left_index=True, right_index=True,
                                               suffixes=('','_norm')).drop([self.baselineRun+'_norm'],axis=1)
 
