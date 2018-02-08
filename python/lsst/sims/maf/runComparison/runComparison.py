@@ -397,7 +397,7 @@ class RunComparison(object):
         self.normalizedStats /= self.summaryStats.loc[baselineRun]
         self.baselineRun = baselineRun
 
-    def sortCols(self, baseName=True, summaryType=True):
+    def sortCols(self, baseName=True, summaryName=True):
         """Return the columns (in order) to display a sorted version of the stats dataframe.
 
         Parameters
@@ -405,8 +405,8 @@ class RunComparison(object):
         baseName : bool, opt
             Sort by the baseName. Default True.
             If True, this takes priority in the sorted results.
-        summaryType : bool, opt
-            Sort by the summary stat name (summaryType). Default True.
+        summaryName : bool, opt
+            Sort by the summary stat name (summaryName). Default True.
 
         Returns
         -------
@@ -415,24 +415,24 @@ class RunComparison(object):
         sortby = []
         if baseName:
             sortby.append('BaseName')
-        if summaryType:
-            sortby.append('SummaryType')
+        if summaryName:
+            sortby.append('SummaryName')
         o = self.headerStats.sort_values(by=sortby, axis=1)
         return o.columns
 
-    def filterCols(self, summaryType):
-        """Return a dataframe containing only stats which match summaryType.
+    def filterCols(self, summaryName):
+        """Return a dataframe containing only stats which match summaryName.
 
         Parameters
         ----------
-        summaryType : str
+        summaryName : str
             The type of summary stat to match. (i.e. Max, Mean)
 
         Returns
         -------
         pd.DataFrame
         """
-        o = self.headerStats.loc['SummaryType'] == summaryType
+        o = self.headerStats.loc['SummaryName'] == summaryName
         return self.summaryStats.loc[:, o]
 
     def findChanges(self, threshold=0.05):
