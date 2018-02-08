@@ -808,15 +808,14 @@ class HexDitherFieldPerNightStacker(HexDitherFieldPerVisitStacker):
         Default True.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True,
-                 fieldIdCol='fieldIdCol', nightCol='night',
+                 fieldIdCol='fieldId', nightCol='night',
                  maxDither=1.75, inHex=True):
         """
         @ MaxDither in degrees
         """
-        super(HexDitherFieldPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                            maxDither=maxDither, inHex=inHex)
+        super(HexDitherFieldPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
+                                                            degrees=degrees, maxDither=maxDither, inHex=inHex)
         self.nightCol = nightCol
-        self.fieldIdCol = fieldIdCol
         # Values required for framework operation: this specifies the names of the new columns.
         self.colsAdded = ['hexDitherFieldPerNightRa', 'hexDitherFieldPerNightDec']
         # Values required for framework operation: this specifies the data columns required from the database.
@@ -931,12 +930,38 @@ class HexDitherPerNightStacker(HexDitherFieldPerVisitStacker):
 
 class DefaultDitherStacker(HexDitherPerNightStacker):
     """
-    Make a default dither pattern to stack on ditheredRA and ditheredDec
+    Make a default dither pattern to stack on ditheredRA and ditheredDec.
+    The default pattern is HexDitherPerNightStacker.
+
+    Parameters
+    ----------
+    raCol : str, optional
+        The name of the RA column in the data.
+        Default 'fieldRA'.
+    decCol : str, optional
+        The name of the Dec column in the data.
+        Default 'fieldDec'.
+    degrees : bool, optional
+        Flag whether RA/Dec should be treated as (and kept as) degrees.
+    fieldIdCol : str, optional
+        The name of the fieldId column in the data.
+        Used to identify fields which should be identified as the 'same'.
+        Default 'fieldId'.
+    nightCol : str, optional
+        The name of the night column in the data.
+        Default 'night'.
+    maxDither : float, optional
+        The radius of the maximum dither offset, in degrees.
+        Default 1.75 degrees.
+    inHex : bool, optional
+        If True, offsets are constrained to lie within a hexagon inscribed within the maxDither circle.
+        If False, offsets can lie anywhere out to the edges of the maxDither circle.
+        Default True.
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
                  nightCol='night', maxDither=1.75, inHex=True):
         super(DefaultDitherStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                   fieldIdCol=fieldIdCol,
+                                                   fieldIdCol=fieldIdCol, nightCol=nightCol,
                                                    maxDither=maxDither, inHex=inHex)
         self.addedRA = 'ditheredRA'
         self.addedDec = 'ditheredDec'
