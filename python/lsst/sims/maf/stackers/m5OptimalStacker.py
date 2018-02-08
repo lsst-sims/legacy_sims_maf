@@ -17,9 +17,9 @@ def generate_sky_slopes():
     mjd = 57000
     nside = 32
     airmass_limit = 2.0
-    dec, ra = hp.pix2ang(nside,np.arange(hp.nside2npix(nside)))
+    dec, ra = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     dec = np.pi/2 - dec
-    sm.setRaDecMjd(ra,dec,mjd)
+    sm.setRaDecMjd(ra, dec, mjd)
     mags = sm.returnMags()
     filters = mags.dtype.names
     filter_slopes = {}
@@ -28,6 +28,7 @@ def generate_sky_slopes():
         pf = np.polyfit(sm.airmass[good], mags[filterName][good], 1)
         filter_slopes[filterName] = pf[0]
     print(filter_slopes)
+
 
 class M5OptimalStacker(BaseStacker):
     """
@@ -100,13 +101,12 @@ class M5OptimalStacker(BaseStacker):
         for filterName in np.unique(simData[self.filterCol]):
             deltaSky = skySlopes[filterName]*(simData[self.airmassCol] - min_airmass_possible)
             deltaSky[np.where((simData[self.moonAltCol] > 0) |
-                              (simData[self.sunAltCol] >  np.radians(-18.)))] = 0
+                              (simData[self.sunAltCol] > np.radians(-18.)))] = 0
             # Using Approximation that FWHM~X^0.6. So seeing term in m5 of: 0.25 * log (7.0/FWHMeff )
             # Goes to 0.15 log(FWHM_min / FWHM_eff) in the difference
-            m5Optimal = simData[self.m5Col] - \
-                        0.5*deltaSky - \
-                        0.15*np.log10(min_airmass_possible / simData[self.airmassCol]) - \
-                        kAtm[filterName]*(min_airmass_possible - simData[self.airmassCol])
+            m5Optimal = (simData[self.m5Col] - 0.5*deltaSky -
+                         0.15*np.log10(min_airmass_possible / simData[self.airmassCol]) -
+                         kAtm[filterName]*(min_airmass_possible - simData[self.airmassCol]))
             good = np.where(simData[self.filterCol] == filterName)
             simData['m5Optimal'][good] = m5Optimal[good]
         return simData

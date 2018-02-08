@@ -7,6 +7,7 @@ from .ditherStackers import wrapRA
 
 __all__ = ['mjd2djd', 'raDec2AltAz', 'GalacticStacker', 'EclipticStacker']
 
+
 def mjd2djd(mjd):
     """Convert MJD to the Dublin Julian date used by ephem.
 
@@ -22,6 +23,7 @@ def mjd2djd(mjd):
     doff = ephem.Date(0)-ephem.Date('1858/11/17')
     djd = mjd-doff
     return djd
+
 
 def raDec2AltAz(ra, dec, lat, lon, mjd, altonly=False):
     """Convert RA/Dec (and telescope site lat/lon) to alt/az.
@@ -85,7 +87,7 @@ class GalacticStacker(BaseStacker):
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True):
         self.colsReq = [raCol, decCol]
-        self.colsAdded = ['gall','galb']
+        self.colsAdded = ['gall', 'galb']
         self.units = ['radians', 'radians']
         self.raCol = raCol
         self.decCol = decCol
@@ -120,7 +122,7 @@ class EclipticStacker(BaseStacker):
     subtractSunLon : bool, opt
         Flag to subtract the sun's ecliptic longitude. Default False.
     """
-    def __init__(self, mjdCol='observationStartMJD', raCol='fieldRA',decCol='fieldDec', degrees=True,
+    def __init__(self, mjdCol='observationStartMJD', raCol='fieldRA', decCol='fieldDec', degrees=True,
                  subtractSunLon=False):
 
         self.colsReq = [mjdCol, raCol, decCol]

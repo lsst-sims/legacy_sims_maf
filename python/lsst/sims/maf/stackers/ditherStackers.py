@@ -9,7 +9,8 @@ __all__ = ['wrapRADec', 'wrapRA', 'inHexagon', 'polygonCoords',
            'SpiralDitherFieldPerVisitStacker', 'SpiralDitherFieldPerNightStacker',
            'SpiralDitherPerNightStacker',
            'HexDitherFieldPerVisitStacker', 'HexDitherFieldPerNightStacker',
-           'HexDitherPerNightStacker', 'DefaultDitherStacker']
+           'HexDitherPerNightStacker', 'DefaultDitherStacker',
+           'RandomRotDitherPerFilterChangeStacker']
 
 # Stacker naming scheme:
 # [Pattern]Dither[Field]Per[Timescale].
@@ -267,8 +268,8 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId', nightCol='night',
-                 maxDither=1.75, inHex=True, randomSeed=None):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
+                 nightCol='night', maxDither=1.75, inHex=True, randomSeed=None):
         """
         @ MaxDither in degrees
         """
@@ -448,7 +449,7 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
         self.inHex = inHex
         # self.units used for plot labels
         if self.degrees:
-            self.units =  ['deg', 'deg']
+            self.units = ['deg', 'deg']
         else:
             self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the names of the new columns.
@@ -546,8 +547,8 @@ class SpiralDitherFieldPerNightStacker(SpiralDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId', nightCol='night',
-                 numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
+                 nightCol='night', numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
         """
@@ -628,8 +629,8 @@ class SpiralDitherPerNightStacker(SpiralDitherFieldPerVisitStacker):
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
     """
-    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId', nightCol='night',
-                 numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, fieldIdCol='fieldId',
+                 nightCol='night', numPoints=60, maxDither=1.75, nCoils=5, inHex=True):
         """
         @ MaxDither in degrees
         """
@@ -969,3 +970,96 @@ class DefaultDitherStacker(HexDitherPerNightStacker):
         self.colsAdded = [self.addedRA, self.addedDec]
 
 
+class RandomRotDitherPerFilterChangeStacker(BaseStacker):
+    """
+    Randomly dither the physical angle of the telescope rotator wrt the mount,
+    after every filter change.
+
+    Parameters
+    ----------
+    rotTelCol : str, optional
+        The name of the column in the data specifying the physical angle
+        of the telescope rotator wrt. the mount.
+        Default: 'rotTelPos'.
+    filterCol : str, optional
+        The name of the filter column in the data.
+        Default: 'filter'.
+    degrees : boolean, optional
+        True if angles in the database are in degrees (default).
+        If True, returned dithered values are in degrees also.
+        If False, angles assumed to be in radians and returned in radians.
+    maxDither : float, optional
+        Abs(maximum) rotational dither, in degrees. The dithers then will be
+        between -maxDither to maxDither.
+        Default: 90 degrees.
+    maxRotAngle : float, optional
+        Maximum rotator angle possible for the camera. Default 90 degrees.
+    minRotAngle : float, optional
+        Minimum rotator angle possible for the camera. Default -90 degrees.
+    randomSeed: int, optional
+        If set, then used as the random seed for the numpy random number
+        generation for the dither offsets.
+        Default: None.
+    """
+    def __init__(self, rotTelCol= 'rotTelPos', filterCol= 'filter', degrees=True,
+                 maxDither= 90., maxRotAngle=90, minRotAngle=-90, randomSeed=None):
+        """
+        @ MaxDither in degrees.
+        """
+        # Instantiate the RandomDither object and set internal variables.
+        self.rotTelCol = rotTelCol
+        self.filterCol = filterCol
+        self.degrees = degrees
+        self.maxDither = maxDither
+        self.maxRotAngle = maxRotAngle
+        self.minRotAngle = minRotAngle
+        self.randomSeed = randomSeed
+        # self.units used for plot labels
+        if self.degrees:
+            self.units = ['deg']
+        else:
+            self.units = ['rad']
+        # Values required for framework operation: this specifies the names of the new columns.
+        self.colsAdded = ['randomDitherPerFilterChangeRotTelPos']
+        # Values required for framework operation: this specifies the data columns required from the database.
+        self.colsReq = [self.rotTelCol, self.filterCol]
+
+    def _run(self, simData, cols_present=False):
+        # Just go ahead and return if the columns were already in place.
+        if cols_present:
+            return simData
+        # Generate random numbers for dither, using defined seed value if desired.
+        if self.randomSeed is not None:
+            np.random.seed(self.randomSeed)
+
+        # Identify points where the filter changes.
+        changeIdxs = np.where(simData[self.filterCol][1:] != simData[self.filterCol][:-1])[0]
+
+        if len(changeIdxs) == 0:
+            rotOffset = 0
+
+        else:
+            # Calculate random offsets between +/- self.maxDither  -- in degrees.
+            randomOffsets = np.random.rand(len(changeIdxs)) * 2.0 * self.maxDither - self.maxDither
+
+            rotOffset = np.zeros(len(simData), float)
+            for i, (c, cn) in enumerate(zip(changeIdxs, changeIdxs[1:])):
+                rotOffset[c+1:cn+1] = randomOffsets[i]
+            rotOffset[changeIdxs[-1]+1:] = randomOffsets[-1]
+
+        # Add the random offsets to the RotTelPos values and convert to radians if required.
+        if not self.degrees:
+            rotOffset = np.radians(rotOffset)
+        rotDither = 'randomDitherPerFilterChangeRotTelPos'
+        simData[rotDither] = simData[self.rotTelCol] + rotOffset
+
+        # BUT the camera rotator cannot go further than +/- 90 degrees.
+        # Without a better alternative, let's just cut off any values which exceed this range.
+        maxRotTelPos = self.maxRotAngle
+        minRotTelPos = self.minRotAngle
+        if not self.degrees:
+            maxRotTelPos = np.radians(maxRotTelPos)
+            minRotTelPos = np.radians(minRotTelPos)
+        simData[rotDither] = np.where(simData[rotDither] > maxRotTelPos, maxRotTelPos, simData[rotDither])
+        simData[rotDither] = np.where(simData[rotDither] < minRotTelPos, minRotTelPos, simData[rotDither])
+        return simData

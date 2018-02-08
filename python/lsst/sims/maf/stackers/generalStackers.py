@@ -3,7 +3,6 @@ import numpy as np
 import palpy
 from lsst.sims.utils import Site, m5_flat_sed
 from .baseStacker import BaseStacker
-from builtins import str
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
@@ -41,10 +40,10 @@ class FiveSigmaStacker(BaseStacker):
         for filtername in filts:
             infilt = np.where(simData[self.filterCol] == filtername)
             simData['m5_simsUtils'][infilt] = m5_flat_sed(filtername,
-                                                            simData[infilt][self.skybrightnessCol],
-                                                            simData[infilt][self.seeingCol],
-                                                            simData[infilt][self.exptimeCol],
-                                                            simData[infilt][self.airmassCol])
+                                                          simData[infilt][self.skybrightnessCol],
+                                                          simData[infilt][self.seeingCol],
+                                                          simData[infilt][self.exptimeCol],
+                                                          simData[infilt][self.airmassCol])
         return simData
 
 

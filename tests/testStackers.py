@@ -7,7 +7,8 @@ import warnings
 import unittest
 import lsst.utils.tests
 import lsst.sims.maf.stackers as stackers
-from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast, Site, _altAzPaFromRaDec, ObservationMetaData
+from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast, Site, _altAzPaFromRaDec, \
+    ObservationMetaData
 
 matplotlib.use("Agg")
 
@@ -217,6 +218,32 @@ class TestStackerClasses(unittest.TestCase):
         # Check that dithers on the same night are the same.
         self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'],
                               data['fieldDec'], data['night'])
+
+    def testRandomRotDitherPerFilterChangeStacker(self):
+        """
+        Test the rotational dither stacker.
+        """
+        maxDither = 90
+        filt = np.array(['r', 'r', 'r', 'g', 'g', 'g', 'r', 'r'])
+        rotTelPos = np.array([0, 0, 1, 0, .5, 1, 0, 180], float)
+        odata = np.zeros(len(filt), dtype=list(zip(['filter', 'rotTelPos'], [(np.str_, 1), float])))
+        odata['filter'] = filt
+        odata['rotTelPos'] = rotTelPos
+        stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither, degrees=True)
+        data = stacker.run(odata)
+        randomDithers = data['randomDitherPerFilterChangeRotTelPos']
+        rotOffsets = rotTelPos - randomDithers
+        self.assertEqual(rotOffsets[0], 0)
+        offsetChanges = np.where(rotOffsets[1:] != rotOffsets[:-1])[0]
+        filtChanges = np.where(filt[1:] != filt[:-1])[0]
+        # Don't count last offset change because this was just value to force min/max limit.
+        self.assertTrue(np.all(offsetChanges[:-1] == filtChanges))
+        self.assertTrue(np.all(randomDithers <= 90.0))
+        stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither,
+                                                                 degrees=True, maxRotAngle = 30)
+        data = stacker.run(odata)
+        randomDithers = data['randomDitherPerFilterChangeRotTelPos']
+        self.assertTrue(randomDithers.max(), 30.0)
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""

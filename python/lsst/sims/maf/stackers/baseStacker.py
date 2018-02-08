@@ -27,7 +27,8 @@ class StackerRegistry(type):
                 modname = modname + '.'
         stackername = modname + name
         if stackername in cls.registry:
-            raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)' %(stackername))
+            raise Exception('Redefining stacker %s! (there are >1 stackers with the same name)'
+                            % (stackername))
         if stackername != 'BaseStacker':
             cls.registry[stackername] = cls
 
@@ -146,7 +147,7 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
             warnings.warn('Please update the stacker %s so that the _run method matches the current API. '
                           'This will give you the option to skip re-running stackers if the columns are '
                           'already present.'
-                          % (self.__class__.__name__ ))
+                          % (self.__class__.__name__))
             return self._run(simData)
 
     def _run(self, simData, cols_present=False):
