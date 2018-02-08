@@ -87,8 +87,8 @@ def percentileClipping(data, percentile=95.):
     float, float
         The minimum and maximum values of the clipped data.
     """
-    upper_percentile = (100 - percentile) / 2.0
-    lower_percentile = 100 - upper_percentile
+    lower_percentile = (100 - percentile) / 2.0
+    upper_percentile = 100 - lower_percentile
     min_value = np.percentile(data, lower_percentile)
     max_value = np.percentile(data, upper_percentile)
     return  min_value, max_value

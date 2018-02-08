@@ -107,6 +107,39 @@ class TestCadenceMetrics(unittest.TestCase):
         Ngaps = np.math.factorial(data.size-1)
         assert(np.sum(result3) == Ngaps)
 
+    def testNightGapMetric(self):
+        names = ['night']
+        types = [float]
+        data = np.zeros(100, dtype=list(zip(names, types)))
+        # All 1-day gaps
+        data['night'] = np.arange(100)
+
+        metric = metrics.NightgapsMetric(bins=np.arange(1, 100, 1))
+        result1 = metric.run(data)
+        # By default, should all be in first bin
+        assert(result1[0] == data.size-1)
+        assert(np.sum(result1) == data.size-1)
+        data['night'] = np.arange(0, 200, 2)
+        result2 = metric.run(data)
+        assert(result2[1] == data.size-1)
+        assert(np.sum(result2) == data.size-1)
+
+        data = np.zeros(4, dtype=list(zip(names, types)))
+        data['night'] = [10, 20, 30, 40]
+        metric = metrics.NightgapsMetric(allGaps=True, bins=np.arange(1, 100, 10))
+        result3 = metric.run(data)
+        assert(result3[1] == 2)
+        Ngaps = np.math.factorial(data.size-1)
+        assert(np.sum(result3) == Ngaps)
+
+        data = np.zeros(6, dtype=list(zip(names, types)))
+        data['night'] = [1, 1, 2, 3, 3, 5]
+        metric = metrics.NightgapsMetric(bins=np.arange(0, 5, 1))
+        result4 = metric.run(data)
+        assert(result4[0] == 0)
+        assert(result4[1] == 2)
+        assert(result4[2] == 1)
+
     def testRapidRevisitMetric(self):
         data = np.zeros(100, dtype=list(zip(['observationStartMJD'], [float])))
         # Uniformly distribute time _differences_ between 0 and 100
