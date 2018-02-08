@@ -628,7 +628,8 @@ class RunComparison(object):
             print(plotDicts)
         ph.plot(plotFunc, plotDicts=plotDicts)
 
-    def generateDiffHtml(self, normalized = False, html_out = None, show_page = False, combined = False):
+    def generateDiffHtml(self, normalized = False, html_out = None, show_page = False,
+                         combined = False, fullStats = False):
         """
         Use `bokeh` to convert a summaryStats dataframe to interactive html
         table.
@@ -695,15 +696,27 @@ class RunComparison(object):
         dataframe.reset_index(level=0, inplace=True)
         dataframe.columns.values[0]='FullName'
 
+        if fullStats is False:
+            # For a more manageable table do no include the summaryStats that
+            # have names included in the avoid_summarys list.
+            avoid_summarys = ['3Sigma','Rms','Min','Max','RobustRms','%ile']
+            summary_pattern = '|'.join(avoid_summarys)
+
+            dataframe = dataframe[((dataframe['SummaryName'].str.contains(summary_pattern))==False) &
+                                ((dataframe['MetricName'].str.contains(summary_pattern))==False)]
+
         columns = []
 
 
         for col in dataframe.columns:
 
-            if col not in ['FullName', 'BaseName','MetricName', 'MetricMetadata', 'SlicerName', 'SummaryName']:
-                columns.append(TableColumn(field=col, title=col, formatter=NumberFormatter(format="0.0000")))
+            if col not in ['FullName', 'BaseName','MetricName',
+                           'MetricMetadata', 'SlicerName', 'SummaryName']:
+                columns.append(TableColumn(field=col, title=col,
+                                           formatter=NumberFormatter(format="0.0000")))
             else:
                 columns.append(TableColumn(field=col, title=col))
+
         source = ColumnDataSource(dataframe)
         original_source = ColumnDataSource(dataframe)
         data_table = DataTable(source=source, columns=columns, width=1900, height=900)
