@@ -11,30 +11,43 @@ __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
 
 class ParallaxMetric(BaseMetric):
     """Calculate the uncertainty in a parallax measurement given a series of observations.
+
+    Uses columns ra_pi_amp and dec_pi_amp, calculated by the ParallaxFactorStacker.
+
+    Parameters
+    ----------
+    metricName : str, opt
+        Default 'parallax'.
+    m5Col : str, opt
+        The default column name for m5 information in the input data. Default fiveSigmaDepth.
+    filterCol : str, opt
+        The column name for the filter information. Default filter.
+    seeingCol : str, opt
+        The column name for the seeing information. Since the astrometry errors are based on the physical
+        size of the PSF, this should be the FWHM of the physical psf. Default seeingFwhmGeom.
+    rmag : float, opt
+        The r magnitude of the fiducial star in r band. Other filters are sclaed using sedTemplate keyword.
+        Default 20.0
+    SedTemplate : str, opt
+        The template to use. This can be 'flat' or 'O','B','A','F','G','K','M'. Default flat.
+    atm_err : float, opt
+        The expected centroiding error due to the atmosphere, in arcseconds. Default 0.01.
+    normalize : boolean, opt
+        Compare the astrometric uncertainty to the uncertainty that would result if half the observations
+        were taken at the start and half at the end. A perfect survey will have a value close to 1, while
+        a poorly scheduled survey will be close to 0. Default False.
+    badval : float, opt
+        The value to return when the metric value cannot be calculated. Default -666.
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
-                 units = 'mas',
                  filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False, **kwargs):
-
-        """ Instantiate metric.
-
-        m5Col = column name for inidivual visit m5
-        filterCol = column name for filter
-        seeingCol = column name for seeing/FWHMgeom
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        SedTemplate = string of 'flat' or 'O','B','A','F','G','K','M'.
-        atm_err = centroiding error due to atmosphere in arcsec
-        normalize = Compare to a survey that has all observations with maximum parallax factor.
-        An optimally scheduled survey would be expected to have a normalized value close to unity,
-        and zero for a survey where the parallax can not be measured.
-
-        return uncertainty in mas. Or normalized map as a fraction
-        """
         Cols = [m5Col, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
             units = 'ratio'
+        else:
+            units = 'mas'
         super(ParallaxMetric, self).__init__(Cols, metricName=metricName, units=units,
                                              badval=badval, **kwargs)
         # set return type
@@ -96,32 +109,50 @@ class ParallaxMetric(BaseMetric):
 
 
 class ProperMotionMetric(BaseMetric):
-    """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
+    """Calculate the uncertainty in the returned proper motion.
+
+    This metric assumes gaussian errors in the astrometry measurements.
+
+    Parameters
+    ----------
+    metricName : str, opt
+        Default 'properMotion'.
+    m5Col : str, opt
+        The default column name for m5 information in the input data. Default fiveSigmaDepth.
+    mjdCol : str, opt
+        The column name for the exposure time. Default observationStartMJD.
+    filterCol : str, opt
+        The column name for the filter information. Default filter.
+    seeingCol : str, opt
+        The column name for the seeing information. Since the astrometry errors are based on the physical
+        size of the PSF, this should be the FWHM of the physical psf. Default seeingFwhmGeom.
+    rmag : float, opt
+        The r magnitude of the fiducial star in r band. Other filters are sclaed using sedTemplate keyword.
+        Default 20.0
+    SedTemplate : str, opt
+        The template to use. This can be 'flat' or 'O','B','A','F','G','K','M'. Default flat.
+    atm_err : float, opt
+        The expected centroiding error due to the atmosphere, in arcseconds. Default 0.01.
+    normalize : boolean, opt
+        Compare the astrometric uncertainty to the uncertainty that would result if half the observations
+        were taken at the start and half at the end. A perfect survey will have a value close to 1, while
+        a poorly scheduled survey will be close to 0. Default False.
+    baseline : float, opt
+        The length of the survey used for the normalization, in years. Default 10.
+    badval : float, opt
+        The value to return when the metric value cannot be calculated. Default -666.
     """
     def __init__(self, metricName='properMotion',
-                 m5Col='fiveSigmaDepth', mjdCol='observationStartMJD', units='mas/yr',
+                 m5Col='fiveSigmaDepth', mjdCol='observationStartMJD',
                  filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
-        """ Instantiate metric.
-
-        m5Col = column name for inidivual visit m5
-        mjdCol = column name for exposure time dates
-        filterCol = column name for filter
-        seeingCol = column name for seeing (assumed FWHM)
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
-        atm_err = centroiding error due to atmosphere in arcsec
-        normalize = Compare to the uncertainty that would result if half
-        the observations were taken at the start of the survey and half
-        at the end.  A 'perfect' survey will have a value close to unity,
-        while a poorly scheduled survey will be close to zero.
-        baseline = The length of the survey used for the normalization (years)
-        """
         cols = [m5Col, mjdCol, filterCol, seeingCol]
         if normalize:
             units = 'ratio'
+        else:
+            units = 'mas/yr'
         super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units,
                                                  badval=badval, **kwargs)
         # set return type
@@ -232,7 +263,7 @@ class ParallaxCoverageMetric(BaseMetric):
     """
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
                  mjdCol='observationStartMJD', filterCol='filter', seeingCol='seeingFwhmGeom',
-                 rmag=20., SedTemplate='flat', badval=-666,
+                 rmag=20., SedTemplate='flat',
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
         cols = ['ra_pi_amp', 'dec_pi_amp', m5Col, mjdCol, filterCol, seeingCol]
         units = 'ratio'
@@ -317,13 +348,13 @@ class ParallaxDcrDegenMetric(BaseMetric):
 
     Parameters
     ----------
-    metricName : str
+    metricName : str, opt
         Default 'ParallaxDcrDegenMetric'.
-    seeingCol : str
+    seeingCol : str, opt
         Default 'FWHMgeom'
-    m5Col : str
+    m5Col : str, opt
         Default 'fiveSigmaDepth'
-    fitlerCol : str
+    filterCol : str
         Default 'filter'
     atm_err : float
         Minimum error in photometry centroids introduced by the atmosphere (arcseconds). Default 0.01.
@@ -390,12 +421,9 @@ class ParallaxDcrDegenMetric(BaseMetric):
             inFilt = np.where(dataSlice[self.filterCol] == filt)
             snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
         # Compute the centroiding uncertainties
-        # Temporary fix for FWHMeff to FWHMgeom calculation.
-        if self.seeingCol.endswith('Eff'):
-            seeing = dataSlice[self.seeingCol] * 0.822 + 0.052
-        else:
-            seeing = dataSlice[self.seeingCol]
-        position_errors = np.sqrt(mafUtils.astrom_precision(seeing, snr)**2 +
+        # Note that these centroiding uncertainties depend on the physical size of the PSF, thus
+        # we are using seeingFwhmGeom for these metrics, not seeingFwhmEff.
+        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol], snr)**2 +
                                   self.atm_err**2)
         # Construct the vectors of RA/Dec offsets. xdata is the "input data". ydata is the "output".
         xdata = np.empty((2, dataSlice.size * 2), dtype=float)
