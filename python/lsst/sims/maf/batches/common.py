@@ -2,7 +2,45 @@ from __future__ import print_function
 
 import lsst.sims.maf.metrics as metrics
 
-__all__ = ['standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
+__all__ = ['filterList', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
+
+
+def filterList(all=True, extraSql=None):
+    """Return a list of filters, plot colors and orders.
+
+    Parameters
+    ----------
+    all : boolean, opt
+        Include 'all' in the list of filters and as part of the colors/orders dictionaries.
+        Default True.
+
+    Returns
+    -------
+    list, dict, dict
+        List of filter names, dictionary of colors (for plots), dictionary of orders (for display)
+    """
+    if all:
+        filterlist = ('all', 'u', 'g', 'r', 'i', 'z', 'y')
+    else:
+        filterlist = ('u', 'g', 'r', 'i', 'z', 'y')
+    colors = {'u': 'cyan', 'g': 'g', 'r': 'orange', 'i': 'r', 'z': 'm', 'y': 'b'}
+    orders = {'u': 1, 'g': 2, 'r': 3, 'i': 4, 'z': 5, 'y': 6}
+    if all:
+        colors['all'] = 'k'
+        orders['all'] = 0
+    sqls = {}
+    for f in filterlist:
+        if f == 'all':
+            sqls[f] = ''
+        else:
+            sqls[f] = 'filter = "%s"' % f
+    if extraSql is not None and len(extraSql) > 0:
+        for s in sqls:
+            if s == 'all':
+                sqls[s] = extraSql
+            else:
+                sqls[s] = '(%s) and (%s)' % (extraSql, sqls[s])
+    return filterlist, colors, orders, sqls
 
 
 def standardSummary():
