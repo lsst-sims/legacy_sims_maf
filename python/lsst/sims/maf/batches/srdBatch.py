@@ -109,12 +109,17 @@ def astrometryBatch(colmap=None, runName='opsim',
                    'order': 0, 'caption': None}
     # Expected error on parallax at 10 AU.
     for rmag in (20.0, 24.0):
+        if rmag == 20.0:
+            plotmax = 2.0
+        if rmag == 24.0:
+            plotmax = 15.0
+        plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ParallaxMetric(metricName='Parallax @ %.1f' % (rmag), rmag=rmag,
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
                                  stackerList=[parallaxStacker],
-                                 displayDict=displayDict,
+                                 displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -163,18 +168,24 @@ def astrometryBatch(colmap=None, runName='opsim',
     displayDict = {'group': 'Proper Motion', 'subgroup': subgroup, 'order': 0, 'caption': None}
     # Proper motion errors.
     for rmag in (20.0, 24.0):
-        metric = metrics.ProperMotionMetric(metricName='Proper Motion %.1f' % rmag,
+        if rmag == 20.0:
+            plotmax = 1.0
+        if rmag == 24.0:
+            plotmax = 5.0
+        plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
+        metric = metrics.ProperMotionMetric(metricName='Proper Motion @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 displayDict=displayDict, summaryMetrics=standardSummary(),
+                                 displayDict=displayDict, plotDict=plotDict,
+                                 summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Normalized proper motion.
     for rmag in (20.0, 24.0):
-        metric = metrics.ProperMotionMetric(metricName='Normalized Proper Motion %.1f' % rmag,
+        metric = metrics.ProperMotionMetric(metricName='Normalized Proper Motion @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=True)
