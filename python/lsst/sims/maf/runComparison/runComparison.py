@@ -10,6 +10,20 @@ from lsst.sims.maf.db import OpsimDatabase
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.plots as plots
 
+_BOKEH_HERE = True
+try:
+   from bokeh.models import CustomJS, ColumnDataSource
+   from bokeh.io import output_file, output_notebook
+   from bokeh.layouts import widgetbox, layout, row, column
+   from bokeh.models.widgets import DataTable, DateFormatter, TableColumn, NumberFormatter, Select
+   from bokeh.plotting import Figure, output_file, show
+   output_notebook()
+except ImportError:
+   _BOKEH_HERE = False
+   warnings.warn('\n'+'The generateDiffHtml method requires bokeh to be installed'+'\n'+
+                 'but it is not needed to use the other methods in this class.'+'\n'+
+                 'Run: pip install bokeh then restart your jupyter notebook kernel.')
+
 __all__ = ['RunComparison']
 
 
@@ -654,23 +668,10 @@ class RunComparison(object):
             names.
         """
 
-        try:
-            import bokeh
-            BOKEH_HERE = True
-        except ImportError:
-            BOKEH_HERE = False
+        if not _BOKEH_HERE:
             raise ImportError('This method requires bokeh to be installed.'+ '\n'
                               'Run: pip install bokeh'+'\n' +
                               'Then restart your jupyter notebook kernel.')
-
-        if BOKEH_HERE is True:
-            from bokeh.models import CustomJS
-            from bokeh.io import output_file, output_notebook
-            from bokeh.layouts import widgetbox, layout, row, column
-            from bokeh.models import ColumnDataSource
-            from bokeh.models.widgets import DataTable, DateFormatter, TableColumn, NumberFormatter, Select
-            from bokeh.plotting import Figure, output_file, show
-            output_notebook()
 
         if html_out is not None:
             output_file(html_out, title = html_out.strip('.html'))
