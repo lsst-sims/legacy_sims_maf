@@ -14,7 +14,7 @@ def setBatches(opsdb, colmap, args):
     # Per Night filter changes
     bdict.update(batches.filtersPerNightBatch(colmap, args.runName, nights=1))
     # Whole survey filter changes
-    bdict.update(batches.filtersAllNightsBatch(colmap, args.runName))
+    bdict.update(batches.filtersWholeSurveyBatch(colmap, args.runName))
 
     return bdict
 

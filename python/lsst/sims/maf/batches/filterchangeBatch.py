@@ -4,7 +4,7 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary
 
-__all__ = ['filtersPerNightBatch','filtersAllNightsBatch']
+__all__ = ['filtersPerNightBatch','filtersWholeSurveyBatch']
 
 
 def setupMetrics(colmap, wholesurvey=False):
@@ -62,7 +62,7 @@ def filtersPerNightBatch(colmap=None, runName='opsim', nights=1, extraSql=None, 
 
     # Set up sql and metadata, if passed any additional information.
     sql = ''
-    metadata = 'Per '
+    metadata = 'Per'
     if nights == 1:
         metadata += ' Night'
     else:
@@ -96,7 +96,7 @@ def filtersPerNightBatch(colmap=None, runName='opsim', nights=1, extraSql=None, 
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def filtersAllNightsBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
+def filtersWholeSurveyBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
     """Generate a set of metrics measuring the number and rate of filter changes over the entire survey.
 
     Parameters

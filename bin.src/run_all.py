@@ -39,7 +39,8 @@ def setBatches(opsdb, colmap, args):
                                      extraSql=sqltags['WFD'], extraMetadata='WFD'))
     bdict.update(batches.slewBasics(colmap, args.runName))
 
-    # Whole survey filter changes
+    # Per night and whole survey filter changes
+    bdict.update(batches.filtersPerNightBatch(colmap, args.runName, nights=1))
     bdict.update(batches.filtersWholeSurveyBatch(colmap, args.runName))
 
     return bdict
