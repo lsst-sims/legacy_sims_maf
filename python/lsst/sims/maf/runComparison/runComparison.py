@@ -10,6 +10,20 @@ from lsst.sims.maf.db import OpsimDatabase
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.plots as plots
 
+_BOKEH_HERE = True
+try:
+   from bokeh.models import CustomJS, ColumnDataSource
+   from bokeh.io import output_file, output_notebook
+   from bokeh.layouts import widgetbox, layout, row, column
+   from bokeh.models.widgets import DataTable, DateFormatter, TableColumn, NumberFormatter, Select
+   from bokeh.plotting import Figure, output_file, show
+   output_notebook()
+except ImportError:
+   _BOKEH_HERE = False
+   warnings.warn('\n'+'The generateDiffHtml method requires bokeh to be installed'+'\n'+
+                 'but it is not needed to use the other methods in this class.'+'\n'+
+                 'Run: pip install bokeh then restart your jupyter notebook kernel.')
+
 __all__ = ['RunComparison']
 
 
@@ -33,19 +47,25 @@ class RunComparison(object):
         A list of runs to compare.
     rundirs : list
         A list of directories (relative to baseDir) where the runs in runlist reside.
-        Optional - if not provided, assumes directories are simply the names of runlist.
+        Optional - if not provided, assumes directories are simply the names in runlist.
+        Must have same length as runlist (note that runlist can contain duplicate entries).
     """
-    def __init__(self, baseDir, runlist, rundirs=None, verbose=False):
+    def __init__(self, baseDir, runlist, rundirs=None,
+                 defaultResultsDb='resultsDb_sqlite.db', verbose=False):
         self.baseDir = baseDir
         self.runlist = runlist
         self.verbose = verbose
+        self.defaultResultsDb = defaultResultsDb
         if rundirs is not None:
+            if len(rundirs) != len(runlist):
+                raise ValueError('runlist and rundirs must be the same length')
             self.rundirs = rundirs
         else:
             self.rundirs = runlist
         self._connect_to_results()
         # Class attributes to store the stats data:
         self.parameters = None        # Config parameters varied in each run
+        self.headerStats = None       # Save information on the summary stat values
         self.summaryStats = None      # summary stats
         self.normalizedStats = None   # normalized (to baselineRun) version of the summary stats
         self.baselineRun = None       # name of the baseline run
@@ -60,21 +80,28 @@ class RunComparison(object):
         # Open access to all results database files in any subdirectories under 'runs'.
         self.runresults = {}
         for r, rdir in zip(self.runlist, self.rundirs):
-            self.runresults[r] = {}
-            if not os.path.isdir(os.path.join(self.baseDir, r)):
-                warnings.warn('Warning: could not find a directory containing analysis results at %s'
-                              % (os.path.join(self.baseDir, r)))
+            checkdir = os.path.join(self.baseDir, rdir)
+            if not os.path.isdir(checkdir):
+                warnings.warn('Warning: could not find a directory at %s' % checkdir)
             else:
-                sublist = os.listdir(os.path.join(self.baseDir, r))
+                # Add a dictionary to runresults to store resultsDB connections.
+                if r not in self.runresults:
+                    self.runresults[r] = {}
+                # Check for a resultsDB in the current checkdir
+                if os.path.isfile(os.path.join(checkdir, self.defaultResultsDb)):
+                    s = os.path.split(rdir)[-1]
+                    self.runresults[r][s] = ResultsDb(outDir=checkdir)
+                # And look for resultsDb files in subdirectories.
+                sublist = os.listdir(checkdir)
                 for s in sublist:
-                    if os.path.isfile(os.path.join(self.baseDir, r, s, 'resultsDb_sqlite.db')):
-                        self.runresults[r][s] = ResultsDb(outDir=os.path.join(self.baseDir, r, s))
+                    if os.path.isfile(os.path.join(checkdir, s, 'resultsDb_sqlite.db')):
+                        self.runresults[r][s] = ResultsDb(outDir=os.path.join(checkdir, s))
         # Remove any runs from runlist which we could not find results databases for.
         for r in self.runlist:
             if len(self.runresults[r]) == 0:
                 warnings.warn('Warning: could not find any results databases for run %s'
                               % (os.path.join(self.baseDir, r)))
-                self.runlist.remove(r)
+        self.runlist = list(self.runresults.keys())
 
     def close(self):
         """
@@ -184,7 +211,7 @@ class RunComparison(object):
         else:
             getAll = False
         mDict = {}
-        for r in self.runresults:
+        for r in self.runlist:
             if subdir is not None:
                 subdirs = [subdir]
             else:
@@ -255,21 +282,20 @@ class RunComparison(object):
             summaryNames[r] = {}
             # Check if this metric/metadata/slicer/summary stat name combo is in
             # this resultsDb .. or potentially in another subdirectory's resultsDb.
-            for s in self.runresults[r]:
-                mId = self.runresults[r][s].getMetricId(metricName=metricName,
-                                                        metricMetadata=metricMetadata,
-                                                        slicerName=slicerName)
+            for subdir in self.runresults[r]:
+                mId = self.runresults[r][subdir].getMetricId(metricName=metricName,
+                                                             metricMetadata=metricMetadata,
+                                                             slicerName=slicerName)
                 # Note that we may have more than one matching summary metric value per run.
                 if len(mId) > 0:
                     # And we may have more than one summary metric value per resultsDb
-                    stats = self.runresults[r][s].getSummaryStats(mId, summaryName=summaryName)
+                    stats = self.runresults[r][subdir].getSummaryStats(mId, summaryName=summaryName)
                     if len(stats['summaryName']) == 1 and colName is not None:
                         name = colName
                         summaryValues[r][name] = stats['summaryValue'][0]
                         summaryNames[r][name] = stats['summaryName'][0]
                     else:
                         for i in range(len(stats['summaryName'])):
-
                             name = self._buildSummaryName(metricName, metricMetadata, slicerName,
                                                           stats['summaryName'][i])
                             summaryValues[r][name] = stats['summaryValue'][i]
@@ -284,19 +310,35 @@ class RunComparison(object):
             for name in summaryNames[r]:
                 unique_stats.add(name)
         # Make sure every runName (key) in summaryValues dictionary has a value for each stat.
+        # And build summaryname properly
+        suNames = {}
         for s in unique_stats:
             for r in self.runlist:
                 try:
                     summaryValues[r][s]
+                    suNames[s] = summaryNames[r][s]
                 except KeyError:
                     summaryValues[r][s] = np.nan
-        # Create data frames for each run (because pandas).
+        # Create data frames for each run. This is the simplest way to handle it in pandas.
+        summaryBase = {}
+        mName = {}
+        mData = {}
+        sName = {}
+        basemetricname = self._buildSummaryName(metricName, metricMetadata, slicerName, None)
+        for s in unique_stats:
+            summaryBase[s] = basemetricname
+            mName[s] = metricName
+            mData[s] = metricMetadata
+            sName[s] = slicerName
+        header = pd.DataFrame([summaryBase, mName, mData, sName, suNames],
+                              index=['BaseName', 'MetricName', 'MetricMetadata',
+                                     'SlicerName', 'SummaryName'])
         tempDFList = []
         for r in self.runlist:
             tempDFList.append(pd.DataFrame(summaryValues[r], index=[r]))
         # Concatenate dataframes for each run.
         stats = pd.concat(tempDFList)
-        return stats
+        return header, stats
 
     def addSummaryStats(self, metricDict):
         """
@@ -324,15 +366,17 @@ class RunComparison(object):
         for mName, metric in metricDict.items():
             if 'summaryName' not in metric:
                 metric['summaryName'] = None
-            tempDF = self._findSummaryStats(metricName=metric['metricName'],
-                                            metricMetadata=metric['metricMetadata'],
-                                            slicerName=metric['slicerName'],
-                                            summaryName=metric['summaryName'],
-                                            colName=mName)
+                tempHeader, tempStats = self._findSummaryStats(metricName=metric['metricName'],
+                                                               metricMetadata=metric['metricMetadata'],
+                                                               slicerName=metric['slicerName'],
+                                                               summaryName=metric['summaryName'],
+                                                               colName=mName)
             if self.summaryStats is None:
-                self.summaryStats = tempDF
+                self.summaryStats = tempStats
+                self.headerStats = tempHeader
             else:
-                self.summaryStats = self.summaryStats.join(tempDF)
+                self.summaryStats = self.summaryStats.join(tempStats, lsuffix='_x')
+                self.headerStats = self.headerStats.join(tempHeader, lsuffix='_x')
 
     def normalizeStats(self, baselineRun):
         """
@@ -366,6 +410,61 @@ class RunComparison(object):
         self.normalizedStats = self.normalizedStats - self.summaryStats.loc[baselineRun]
         self.normalizedStats /= self.summaryStats.loc[baselineRun]
         self.baselineRun = baselineRun
+
+    def sortCols(self, baseName=True, summaryName=True):
+        """Return the columns (in order) to display a sorted version of the stats dataframe.
+
+        Parameters
+        ----------
+        baseName : bool, opt
+            Sort by the baseName. Default True.
+            If True, this takes priority in the sorted results.
+        summaryName : bool, opt
+            Sort by the summary stat name (summaryName). Default True.
+
+        Returns
+        -------
+        list
+        """
+        sortby = []
+        if baseName:
+            sortby.append('BaseName')
+        if summaryName:
+            sortby.append('SummaryName')
+        o = self.headerStats.sort_values(by=sortby, axis=1)
+        return o.columns
+
+    def filterCols(self, summaryName):
+        """Return a dataframe containing only stats which match summaryName.
+
+        Parameters
+        ----------
+        summaryName : str
+            The type of summary stat to match. (i.e. Max, Mean)
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        o = self.headerStats.loc['SummaryName'] == summaryName
+        return self.summaryStats.loc[:, o]
+
+    def findChanges(self, threshold=0.05):
+        """Return a dataframe containing only values which changed by threshhold.
+
+        Parameters
+        ----------
+        threshold : float, opt
+            Identify values which change by more than threshold (%) in the normalized values.
+            Default 5% (0.05).
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        o = abs(self.normalizedStats) > 0.05
+        o = o.any(axis=0)
+        return self.summaryStats.loc[:, o]
 
     def getFileNames(self, metricName, metricMetadata=None, slicerName=None):
         """For each of the runs in runlist, get the paths to the datafiles for a given metric.
@@ -542,3 +641,163 @@ class RunComparison(object):
         if self.verbose:
             print(plotDicts)
         ph.plot(plotFunc, plotDicts=plotDicts)
+
+    def generateDiffHtml(self, normalized = False, html_out = None, show_page = False,
+                         combined = False, fullStats = False):
+        """
+        Use `bokeh` to convert a summaryStats dataframe to interactive html
+        table.
+
+        Parameters
+        ----------
+        normalized : bool, opt
+            If True generate html table with normalizedStats
+        html_out : str, opt
+            Name of the html that will be output and saved. If no string
+            is provided then the html table will not be saved.
+        show_page : bool, opt
+            If True the html page generate by this function will automatically open
+            in your browser
+        combined : bool, opt
+            If True the html produce will have columns for the original
+            summaryStats values, as well as their normalized values. The baselineRun
+            used to calculate the normalized values will be dropped from the table.
+        fullStats : bool, opt
+            If False the final html table will not include summaryStats that
+            contain '3Sigma','Rms','Min','Max','RobustRms', or '%ile' in their
+            names.
+        """
+
+        if not _BOKEH_HERE:
+            raise ImportError('This method requires bokeh to be installed.'+ '\n'
+                              'Run: pip install bokeh'+'\n' +
+                              'Then restart your jupyter notebook kernel.')
+
+        if html_out is not None:
+            output_file(html_out, title = html_out.strip('.html'))
+
+        if normalized is False:
+            # HTML table based on summary stat values
+            dataframe = self.headerStats.T.merge(self.summaryStats.T,
+                                                        left_index=True, right_index=True)
+        else:
+            # HTML table based on normalized summary stats
+            dataframe = self.headerStats.T.merge(self.normalizedStats.T,
+                                                        left_index=True, right_index=True)
+
+        if combined is True:
+            # HTML table of combined stat values and normalized values into single table.
+            # The baseline run is removed from the final table.
+            # The normalized values are given a suffix of '_norm'
+            combo = self.summaryStats.T.merge(self.normalizedStats.T, left_index=True, right_index=True,
+                                              suffixes=('','_norm')).drop([self.baselineRun+'_norm'],axis=1)
+
+            dataframe = self.headerStats.T.merge(combo, left_index=True, right_index=True)
+
+        dataframe.reset_index(level=0, inplace=True)
+        dataframe.columns.values[0]='FullName'
+
+        if fullStats is False:
+            # For a more manageable table do no include the summaryStats that
+            # have names included in the avoid_summarys list.
+            avoid_summarys = ['3Sigma','Rms','Min','Max','RobustRms','%ile']
+            summary_pattern = '|'.join(avoid_summarys)
+
+            dataframe = dataframe[((dataframe['SummaryName'].str.contains(summary_pattern))==False) &
+                                ((dataframe['MetricName'].str.contains(summary_pattern))==False)]
+
+        columns = []
+
+
+        for col in dataframe.columns:
+
+            if col not in ['FullName', 'BaseName','MetricName',
+                           'MetricMetadata', 'SlicerName', 'SummaryName']:
+                columns.append(TableColumn(field=col, title=col,
+                                           formatter=NumberFormatter(format="0.0000")))
+            else:
+                columns.append(TableColumn(field=col, title=col))
+
+        source = ColumnDataSource(dataframe)
+        original_source = ColumnDataSource(dataframe)
+        data_table = DataTable(source=source, columns=columns, width=1900, height=900)
+
+        js_code = """
+        var data = source.data;
+        var original_data = original_source.data;
+        var FullName= FullName_select_obj.value;
+        var BaseName = BaseName_select_obj.value;
+        var SummaryName = SummaryName_select_obj.value;
+        var MetricName = MetricName_select_obj.value;
+        var MetricMetadata = MetricMetadata_select_obj.value;
+         for (var key in original_data) {
+             data[key] = [];
+             for (var i = 0; i < original_data['FullName'].length; ++i) {
+                 if ((FullName === "ALL" || original_data['FullName'][i] === FullName) &&
+                     (BaseName === "ALL" || original_data['BaseName'][i] === BaseName) &&
+                     (MetricMetadata === "ALL" || original_data['MetricMetadata'][i] === MetricMetadata) &&
+                     (MetricName === "ALL" || original_data['MetricName'][i] === MetricName) &&
+                     (SummaryName === "ALL" || original_data['SummaryName'][i] === SummaryName)) {
+                     data[key].push(original_data[key][i]);
+                 }
+             }
+         }
+        source.change.emit();
+        target_obj.change.emit();
+        """
+
+        FullName_list = dataframe['FullName'].unique().tolist()
+        FullName_list.sort()
+        FullName_list.insert(0,'ALL')
+        FullName_select = Select(title="FullName:", value=FullName_list[0], options=FullName_list)
+
+        BaseName_list = dataframe['BaseName'].unique().tolist()
+        BaseName_list.sort()
+        BaseName_list.insert(0,'ALL')
+        BaseName_select = Select(title="BaseName:",
+                                 value=BaseName_list[0],
+                                 options=BaseName_list)
+
+        dataframe['SummaryName'].fillna('None', inplace = True)
+        SummaryName_list = dataframe['SummaryName'].unique().tolist()
+        SummaryName_list.sort()
+        SummaryName_list.insert(0,'ALL')
+        SummaryName_select = Select(title="SummaryName:",
+                                    value=SummaryName_list[0],
+                                    options=SummaryName_list)
+
+        MetricName_list = dataframe['MetricName'].unique().tolist()
+        MetricName_list.sort()
+        MetricName_list.insert(0,'ALL')
+        MetricName_select = Select(title="MetricName:",
+                                    value=MetricName_list[0],
+                                    options=MetricName_list)
+
+        MetricMetadata_list = dataframe['MetricMetadata'].unique().tolist()
+        MetricMetadata_list.sort()
+        MetricMetadata_list.insert(0,'ALL')
+        MetricMetadata_select = Select(title="MetricMetadata:",
+                                    value=MetricMetadata_list[0],
+                                    options=MetricMetadata_list)
+
+
+        generic_callback = CustomJS(args=dict(source=source,
+                                              original_source=original_source,
+                                              FullName_select_obj=FullName_select,
+                                              BaseName_select_obj=BaseName_select,
+                                              SummaryName_select_obj=SummaryName_select,
+                                              MetricName_select_obj=MetricName_select,
+                                              MetricMetadata_select_obj=MetricMetadata_select,
+                                              target_obj=data_table),
+                                    code=js_code)
+
+        FullName_select.callback = generic_callback
+        BaseName_select.callback = generic_callback
+        SummaryName_select.callback = generic_callback
+        MetricName_select.callback = generic_callback
+        MetricMetadata_select.callback = generic_callback
+
+        dropdownMenus = column([SummaryName_select, MetricName_select,
+                                MetricMetadata_select, FullName_select, BaseName_select])
+        page_layout = layout([dropdownMenus,data_table])
+        show(page_layout)
