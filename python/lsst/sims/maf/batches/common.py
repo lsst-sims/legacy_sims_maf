@@ -5,7 +5,7 @@ import lsst.sims.maf.metrics as metrics
 __all__ = ['filterList', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
 
 
-def filterList(all=True, extraSql=None):
+def filterList(all=True, extraSql=None, extraMetadata=None):
     """Return a list of filters, plot colors and orders.
 
     Parameters
@@ -13,6 +13,12 @@ def filterList(all=True, extraSql=None):
     all : boolean, opt
         Include 'all' in the list of filters and as part of the colors/orders dictionaries.
         Default True.
+    extraSql : str, opt
+        Additional sql constraint to add to sqlconstraints returned per filter.
+        Default None.
+    extraMetadata : str, opt
+        Substitute metadata to add to metadata strings composed per band.
+        Default None.
 
     Returns
     -------
@@ -29,18 +35,28 @@ def filterList(all=True, extraSql=None):
         colors['all'] = 'k'
         orders['all'] = 0
     sqls = {}
+    metadata = {}
+    if extraMetadata is None:
+        if extraSql is None or len(extraSql) == 0:
+            md = ''
+        else:
+            md = '%s '  % extraSql
+    else:
+        md = '%s ' % extraMetadata
     for f in filterlist:
         if f == 'all':
             sqls[f] = ''
+            metadata[f] = md + 'all bands'
         else:
             sqls[f] = 'filter = "%s"' % f
+            metadata[f] = md + '%s band' % f
     if extraSql is not None and len(extraSql) > 0:
         for s in sqls:
             if s == 'all':
                 sqls[s] = extraSql
             else:
                 sqls[s] = '(%s) and (%s)' % (extraSql, sqls[s])
-    return filterlist, colors, orders, sqls
+    return filterlist, colors, orders, sqls, metadata
 
 
 def standardSummary():
