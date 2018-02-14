@@ -296,7 +296,7 @@ class InterNightGapsMetric(BaseMetric):
 
 class AveGapMetric(BaseMetric):
     """
-    Calculate the gap between consecutive observations, in hours.
+    Calculate the gap between any consecutive observations, in hours, regardless of night boundaries.
 
     Parameters
     ----------
