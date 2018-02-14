@@ -7,6 +7,7 @@ import warnings
 import unittest
 import lsst.utils.tests
 import lsst.sims.maf.stackers as stackers
+from lsst.sims.maf.utils import getOpSimField
 from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast, Site, _altAzPaFromRaDec, \
     ObservationMetaData
 
@@ -344,6 +345,52 @@ class TestStackerClasses(unittest.TestCase):
         assert(q2.size > 0)
         assert(q3.size > 0)
         assert(q4.size > 0)
+
+    def testOpSimFieldStacker(self):
+        """
+        Test the OpSimFieldStacker
+        """
+        s = stackers.OpSimFieldStacker(raCol='ra', decCol='dec', degrees=False)
+
+        # First sanity check. Make sure the center of the fields returns the right field id
+        opsim_fields = getOpSimField()
+
+        data = np.array(list(zip(opsim_fields['RA'],
+                                 opsim_fields['dec'])),
+                        dtype=list(zip(['ra', 'dec'], [float, float])))
+        new_data = s.run(data)
+
+        np.testing.assert_array_equal(opsim_fields['field_id'], new_data['fieldID'])
+
+        # Cherry picked a set of coordinates that should belong to a certain list of fields. These coordinates
+        # are not exactly at the center of fields, but close enough that they should be classified as belonging to
+        # them.
+        ra_inside_2548 = (10. + 1. / 60 + 6.59 / 60. / 60.) * np.pi / 12.  # 10:01:06.59
+        dec_inside_2548 = np.radians(-1. * (2. + 8. / 60. + 27.6 / 60. / 60.))  # -02:08:27.6
+
+        ra_inside_8 = (8. + 49. / 60 + 19.83 / 60. / 60.) * np.pi / 12.  # 08:49:19.83
+        dec_inside_8 = np.radians(-1. * (85. + 19. / 60. + 04.7 / 60. / 60.))  # -85:19:04.7
+
+        ra_inside_1253 = (9. + 16. / 60 + 13.67 / 60. / 60.) * np.pi / 12.  # 09:16:13.67
+        dec_inside_1253 = np.radians(-1. * (30. + 23. / 60. + 41.4 / 60. / 60.))  # -30:23:41.4
+
+        data = np.zeros(3, dtype=list(zip(['ra', 'dec'], [float, float])))
+        field_id = np.array([2548, 8, 1253], dtype=int)
+        data['ra'] = np.array([ra_inside_2548, ra_inside_8, ra_inside_1253])
+        data['dec'] = np.array([dec_inside_2548, dec_inside_8, dec_inside_1253])
+
+        new_data = s.run(data)
+
+        np.testing.assert_array_equal(field_id, new_data['fieldID'])
+
+        # Now let's generate a set of random coordinates and make sure they are all assigned a fieldID.
+        data = np.array(list(zip(np.random.rand(600) * 2. * np.pi,
+                                 np.random.rand(600) * np.pi - np.pi / 2.)),
+                        dtype=list(zip(['ra', 'dec'], [float, float])))
+
+        new_data = s.run(data)
+
+        self.assertTrue(np.all(new_data['fieldID'] > 0))
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

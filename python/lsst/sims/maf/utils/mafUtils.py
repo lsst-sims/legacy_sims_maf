@@ -1,11 +1,14 @@
 import importlib
 import os
 import numpy as np
+from scipy.spatial import cKDTree as kdtree
+from lsst.sims.survey.fields import FieldsDatabase
 import healpy as hp
 import warnings
 
 __all__ = ['optimalBins', 'percentileClipping',
-           'gnomonic_project_toxy', 'radec2pix']
+           'gnomonic_project_toxy', 'radec2pix',
+           'getOpSimField', 'treexyz', 'rad_length']
 
 
 def optimalBins(datain, binmin=None, binmax=None, nbinMax=200, nbinMin=1):
@@ -140,3 +143,95 @@ def radec2pix(nside, ra, dec):
     lat = np.pi/2. - dec
     hpid = hp.ang2pix(nside, lat, ra )
     return hpid
+
+
+def getOpSimField(sqlconstraint="select * from Field"):
+    """
+    Get list of OpSim fields.
+
+    Parameters:
+    -----------
+    sqlconstraint : string
+        Sql constraints for the field selection. Default is, get all fields.
+
+    Returns:
+    --------
+    numpy.ndarray
+        A numpy structured array with columns for fields matching the sqlconstraint.
+    """
+
+    db = FieldsDatabase()
+    res = db.get_field_set(sqlconstraint)
+    names = ['field_id', 'fov_rad', 'RA', 'dec', 'gl', 'gb', 'el', 'eb']
+    types = [int, float, float, float, float, float, float, float]
+    fields = np.zeros(len(res), dtype=list(zip(names, types)))
+
+    for i, row in enumerate(res):
+        fields['field_id'][i] = row[0]
+        fields['fov_rad'][i] = np.radians(row[1])
+        fields['RA'][i] = np.radians(row[2])
+        fields['dec'][i] = np.radians(row[3])
+        fields['gl'][i] = row[4]
+        fields['gb'][i] = row[5]
+        fields['el'][i] = row[6]
+        fields['eb'][i] = row[7]
+
+    return fields
+
+
+def opsimfields_kd_tree(leafsize=100):
+    """
+    Generate a KD-tree of OpSim fields locations
+
+    Parameters
+    ----------
+    leafsize : int (100)
+        Leafsize of the kdtree
+
+    Returns
+    -------
+    tree : scipy kdtree
+    """
+
+    fields = getOpSimField()
+    x, y, z = treexyz(fields['RA'], fields['dec'])
+    tree = kdtree(list(zip(x, y, z)), leafsize=leafsize, balanced_tree=False, compact_nodes=False)
+    return tree
+
+
+def treexyz(ra, dec):
+    """
+    Utility to convert RA,dec postions in x,y,z space, useful for constructing KD-trees.
+
+    Parameters
+    ----------
+    ra : float or array
+        RA in radians
+    dec : float or array
+        Dec in radians
+
+    Returns
+    -------
+    x,y,z : floats or arrays
+        The position of the given points on the unit sphere.
+    """
+    # Note ra/dec can be arrays.
+    x = np.cos(dec) * np.cos(ra)
+    y = np.cos(dec) * np.sin(ra)
+    z = np.sin(dec)
+    return x, y, z
+
+
+def rad_length(radius=1.75):
+    """
+    Convert an angular radius into a physical radius for a kdtree search.
+
+    Parameters
+    ----------
+    radius : float
+        Radius in degrees.
+    """
+    x0, y0, z0 = (1, 0, 0)
+    x1, y1, z1 = treexyz(np.radians(radius), 0)
+    result = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
+    return result
