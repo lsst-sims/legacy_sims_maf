@@ -220,7 +220,7 @@ def tEffMetrics(colmap=None, runName='opsim',
 
 
 def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
-                    sqlConstraint=None, metadata=None):
+                    sqlConstraint=None, metadata=None, subgroup=None):
     """Count the number of visits per night through the survey.
 
     Parameters
@@ -236,6 +236,8 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
         Default None, for no additional constraints.
     metadata : str or None, opt
         Additional metadata to add before any below (i.e. "WFD").  Default is None.
+    subgroup : str or None, opt
+        Use this for the 'subgroup' in the displayDict, instead of metadata. Default is None.
 
     Returns
     -------
@@ -244,9 +246,11 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     if colmap is None:
         colmap = ColMapDict('opsimV4')
 
-    subgroup = metadata
+    subgroup = subgroup
     if subgroup is None:
-        subgroup = 'All visits'
+        subgroup = metadata
+        if subgroup is None:
+            subgroup = 'All visits'
 
     metadataCaption = metadata
     if metadata is None:
@@ -308,7 +312,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstrai
     bdict = {}
     # All proposals.
     bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                 sqlConstraint=sqlConstraint, metadata='All props'))
+                                 sqlConstraint=sqlConstraint, metadata='All props', subgroup='All proposals'))
     displayDict['caption'] = 'Total number of visits for all proposals'
     if sqlConstraint is not None and len(sqlConstraint) > 0:
         displayDict['caption'] += ' with constraint %s.' % sqlConstraint
@@ -328,7 +332,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstrai
                 sql = '(%s) and (%s)' % (sql, sqlConstraint)
             metadata = '%s' % (tag)
             bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                         sqlConstraint=sql, metadata=metadata))
+                                         sqlConstraint=sql, metadata=metadata, subgroup=tag))
             displayDict['order'] += 1
             displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
             bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
@@ -342,7 +346,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstrai
             sql += ' and (%s)' % (sqlConstraint)
         metadata = '%s' % (propids[propid])
         bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                     sqlConstraint=sql, metadata=metadata))
+                                     sqlConstraint=sql, metadata=metadata, subgroup='Per proposal'))
         displayDict['order'] += 1
         displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
         bundle = mb.MetricBundle(metric, slicer, constraint=sql, metadata=metadata,
