@@ -6,7 +6,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary, extendedMetrics
+from .common import standardSummary, extendedMetrics, filterList
 
 __all__ = ['metadataBasics', 'allMetadata']
 
@@ -34,9 +34,9 @@ def metadataBasics(value, colmap=None, runName='opsim',
         The name of the value to be reported in the resultsDb and added to the metric.
         This is intended to help standardize metric comparison between sim versions.
         value = name as it is in the database (seeingFwhmGeom, etc).
-        valueName = name to be recorded ('seeingGeom', etc.).  Default is None, which is set to match value.
+        valueName = name to be recorded ('seeingGeom', etc.).  Default is None, which will match 'value'.
     groupName : str, opt
-        The group name for this quantity in the displayDict. Default is the same as 'value', capitalized.
+        The group name for this quantity in the displayDict. Default is the same as 'valueName', capitalized.
     extraSql : str, opt
         Additional constraint to add to any sql constraints (e.g. 'propId=1' or 'fieldID=522').
         Default None, for no additional constraints.
@@ -67,25 +67,15 @@ def metadataBasics(value, colmap=None, runName='opsim',
         groupName = groupName.capitalize()
         subgroup = valueName.capitalize()
 
+    if subgroup is None:
+        subgroup = 'All visits'
+
     displayDict = {'group': groupName, 'subgroup': subgroup}
 
-    sqlconstraints = ['']
-    metadata = ['all bands']
-    if filterlist is not None:
-        sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
-        metadata += ['%s band' % f for f in filterlist]
-    if (extraSql is not None) and (len(extraSql) > 0):
-        tmp = []
-        for s in sqlconstraints:
-            if len(s) == 0:
-                tmp.append(extraSql)
-            else:
-                tmp.append('%s and (%s)' % (s, extraSql))
-        sqlconstraints = tmp
-        if extraMetadata is None:
-            metadata = ['%s %s' % (extraSql, m) for m in metadata]
-    if extraMetadata is not None:
-        metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
+    # Set up basic all and per filter sql constraints.
+    filterlist, colors, orders, sqls, metadata = filterList(all=True,
+                                                            extraSql=extraSql,
+                                                            extraMetadata=extraMetadata)
 
     # Hack to make HA work, but really I need to account for any stackers/colmaps.
     if value == 'HA':
@@ -98,26 +88,24 @@ def metadataBasics(value, colmap=None, runName='opsim',
 
     # Summarize values over all and per filter (min/mean/median/max/percentiles/outliers/rms).
     slicer = slicers.UniSlicer()
-    displayDict['caption'] = None
-    for sql, meta in zip(sqlconstraints, metadata):
-        displayDict['order'] = -1
+    for f in filterlist:
         for m in extendedMetrics(value, replace_colname=valueName):
-            displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
-                                     metadata=meta, displayDict=displayDict)
-            bundleList.append(bundle)
+            displayDict['caption'] = '%s for %s.' % (m.name, metadata[f])
+            displayDict['order'] = orders[f]
+            bundle = mb.MetricBundle(m, slicer, sqls[f], stackerList=stackerList,
+                                     metadata=metadata[f], displayDict=displayDict)
 
     # Histogram values over all and per filter.
-    for sql, meta in zip(sqlconstraints, metadata):
+    for f in filterlist:
         displayDict['caption'] = 'Histogram of %s' % (value)
         if valueName != value:
             displayDict['caption'] += ' (%s)' % (valueName)
-        displayDict['caption'] += ' for %s visits.' % (meta)
-        displayDict['order'] += 1
+        displayDict['caption'] += ' for %s.' % (metadata[f])
+        displayDict['order'] = orders[f]
         m = metrics.CountMetric(value, metricName='%s Histogram' % (valueName))
         slicer = slicers.OneDSlicer(sliceColName=value)
-        bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
-                                 metadata=meta, displayDict=displayDict)
+        bundle = mb.MetricBundle(m, slicer, sqls[f], stackerList=stackerList,
+                                 metadata=metadata[f], displayDict=displayDict)
         bundleList.append(bundle)
 
     # Make maps of min/median/max for all and per filter, per RA/Dec, with standard summary stats.
@@ -128,13 +116,15 @@ def metadataBasics(value, colmap=None, runName='opsim',
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
-    displayDict['caption'] = None
-    displayDict['order'] = -1
-    for sql, meta in zip(sqlconstraints, metadata):
+    for f in filterlist:
         for m in mList:
-            displayDict['order'] += 1
-            bundle = mb.MetricBundle(m, slicer, sql, stackerList=stackerList,
-                                     metadata=meta, plotFuncs=subsetPlots,
+            displayDict['caption'] = 'Map of %s' % m.name
+            if valueName != value:
+                displayDict['caption'] += ' (%s)' % value
+            displayDict['caption'] += ' for %s.' % metadata[f]
+            displayDict['order'] = orders[f]
+            bundle = mb.MetricBundle(m, slicer, sqls[f], stackerList=stackerList,
+                                     metadata=metadata[f], plotFuncs=subsetPlots,
                                      displayDict=displayDict,
                                      summaryMetrics=standardSummary())
             bundleList.append(bundle)

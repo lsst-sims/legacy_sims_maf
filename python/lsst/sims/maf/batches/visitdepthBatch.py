@@ -152,6 +152,8 @@ def tEffMetrics(colmap=None, runName='opsim',
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
                                                             extraMetadata=extraMetadata)
+    if metadata['all'] == None:
+        metadata['all'] = 'All visits'
 
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
