@@ -145,7 +145,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def allMetadata(colmap=None, runName='opsim', sqlConstraint='', metadata='All props'):
+def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
     """Generate a large set of metrics about the metadata of each visit -
     distributions of airmass, normalized airmass, seeing, sky brightness, single visit depth,
     hour angle, distance to the moon, and solar elongation.
@@ -157,10 +157,10 @@ def allMetadata(colmap=None, runName='opsim', sqlConstraint='', metadata='All pr
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
-    sqlConstraint : str, opt
-        Sql constraint (such as WFD only). Default is '' or no constraint.
-    metadata : str, opt
-        Metadata to identify the sql constraint (such as WFD). Default is 'All props'.
+    extraSql : str, opt
+        Sql constraint (such as WFD only). Default is None.
+    extraMetadata : str, opt
+        Metadata to identify the sql constraint (such as WFD). Default is None.
 
     Returns
     -------
@@ -179,7 +179,7 @@ def allMetadata(colmap=None, runName='opsim', sqlConstraint='', metadata='All pr
             value = valueName
         bdict.update(metadataBasics(value, colmap=colmap, runName=runName,
                                     valueName=valueName,
-                                    extraSql=sqlConstraint, extraMetadata=metadata))
+                                    extraSql=extraSql, extraMetadata=extraMetadata))
     return bdict
 
 
