@@ -15,9 +15,9 @@ def setBatches(opsdb, colmap, args):
     # add nvisits / teff maps.
     propids, proptags, sqltags = setSQL(opsdb)
     # All props
-    bdict.update(batches.nvisitsM5Maps(colmap, args.runName))
+    bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears))
     # WFD only
-    bdict.update(batches.nvisitsM5Maps(colmap, args.runName,
+    bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears,
                                        extraSql=sqltags['WFD'], extraMetadata='WFD'))
     # All props.
     bdict.update(batches.tEffMetrics(colmap, args.runName))
