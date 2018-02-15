@@ -243,7 +243,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
                                     minNvisits=minNvisit)
 
     plotDict = {'xMin': 0, 'xMax': 1}
-    cutoff1 = 0.30
+    cutoff1 = 0.20
     summaryStats = [metrics.FracBelowMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
     summaryStats.extend(standardSummary())
     caption = 'Deviation from uniformity for short revisit timescales, between %s and %s seconds, ' % (
