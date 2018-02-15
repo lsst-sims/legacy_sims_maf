@@ -11,6 +11,7 @@ import numpy as np
 from functools import wraps
 from scipy.spatial import cKDTree as kdtree
 from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
+from lsst.sims.maf.utils import _treexyz, _rad_length, _buildTree
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
@@ -130,8 +131,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.sliceLookup[islice]
                 slicePoint['chipNames'] = self.chipNames[islice]
             else:
-                sx, sy, sz = self._treexyz(self.slicePoints['ra'][islice],
-                                           self.slicePoints['dec'][islice])
+                sx, sy, sz = _treexyz(self.slicePoints['ra'][islice],
+                                      self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
@@ -175,7 +176,7 @@ class BaseSpatialSlicer(BaseSlicer):
             lon = simData[self.lonCol]
         for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), lon, lat,
                                                 simData[self.rotSkyPosColName], simData[self.mjdColName]):
-            dx, dy, dz = self._treexyz(ra, dec)
+            dx, dy, dz = _treexyz(ra, dec)
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
@@ -204,35 +205,15 @@ class BaseSpatialSlicer(BaseSlicer):
         if self.verbose:
             "Created lookup table after checking for chip gaps."
 
-    def _treexyz(self, ra, dec):
-        """Calculate x/y/z values for ra/dec points, ra/dec in radians."""
-        # Note ra/dec can be arrays.
-        x = np.cos(dec) * np.cos(ra)
-        y = np.cos(dec) * np.sin(ra)
-        z = np.sin(dec)
-        return x, y, z
-
     def _buildTree(self, simDataRa, simDataDec, leafsize=100):
-        """Build KD tree on simDataRA/Dec and set radius (via setRad) for matching.
+        """Build KD tree on simDataRA/Dec using utility function from mafUtils.
 
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node."""
-        if np.any(np.abs(simDataRa) > np.pi*2.0) or np.any(np.abs(simDataDec) > np.pi*2.0):
-            raise ValueError('Expecting RA and Dec values to be in radians.')
-        x, y, z = self._treexyz(simDataRa, simDataDec)
-        data = list(zip(x, y, z))
-        if np.size(data) > 0:
-            try:
-                self.opsimtree = kdtree(data, leafsize=leafsize, balanced_tree=False, compact_nodes=False)
-            except TypeError:
-                self.opsimtree = kdtree(data, leafsize=leafsize)
-        else:
-            raise ValueError('SimDataRA and Dec should have length greater than 0.')
+        self.opsimtree = _buildTree(simDataRa=simDataRa,
+                                    simDataDec=simDataDec,
+                                    leafsize=leafsize)
 
     def _setRad(self, radius=1.75):
-        """Set radius (in degrees) for kdtree search.
-
-        kdtree queries will return pointings within rad."""
-        x0, y0, z0 = (1, 0, 0)
-        x1, y1, z1 = self._treexyz(np.radians(radius), 0)
-        self.rad = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
+        """Set radius (in degrees) for kdtree search using utility function from mafUtils."""
+        self.rad = _rad_length(radius)

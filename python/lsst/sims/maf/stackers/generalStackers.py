@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial import cKDTree as kdtree
 import palpy
 from lsst.sims.utils import Site, m5_flat_sed
-from lsst.sims.maf.utils import getOpSimField, treexyz, rad_length
+from lsst.sims.maf.utils import getOpSimField, _treexyz, _rad_length, _buildTree
 from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
@@ -401,7 +401,7 @@ class SeasonStacker(BaseStacker):
 
 
 class OpSimFieldStacker(BaseStacker):
-    """Add the OpSim fieldID for each RA/Dec pointing.
+    """Add the fieldId of the closest OpSim field for each RA/Dec pointing.
 
     Parameters
     ----------
@@ -413,31 +413,30 @@ class OpSimFieldStacker(BaseStacker):
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True):
         self.colsReq = [raCol, decCol]
-        self.colsAdded = ['fieldID']
-        self.units = ['radians', 'radians']
+        self.colsAdded = ['fieldId']
+        self.units = ['#']
         self.raCol = raCol
         self.decCol = decCol
         self.degrees = degrees
-        fields = getOpSimField()
+        fields = getOpSimField()  # Returned RA/Dec coordinates in radians
         asort = np.argsort(fields['field_id'])
-        x, y, z = treexyz(fields['RA'][asort], fields['dec'][asort])
-        self.tree = kdtree(list(zip(x, y, z)), leafsize=100, balanced_tree=False, compact_nodes=False)
+        self.tree = _buildTree(simDataRa=fields['RA'][asort],
+                               simDataDec=fields['dec'][asort])
 
     def _run(self, simData, cols_present=False):
-        # raCol and DecCol in radians, gall/b in radians.
         if cols_present:
             # Column already present in data; assume it is correct and does not need recalculating.
             return simData
 
         if self.degrees:
-            coord_x, coord_y, coord_z = treexyz(np.radians(simData[self.raCol]),
-                                                np.radians(simData[self.decCol]))
-            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), rad_length())
+            coord_x, coord_y, coord_z = _treexyz(np.radians(simData[self.raCol]),
+                                                 np.radians(simData[self.decCol]))
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), _rad_length())
 
         else:
-            coord_x, coord_y, coord_z = treexyz(simData[self.raCol],
-                                                simData[self.decCol])
-            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), rad_length())
+            coord_x, coord_y, coord_z = _treexyz(simData[self.raCol],
+                                                 simData[self.decCol])
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), _rad_length())
 
-        simData['fieldID'] = np.array([ids[0] for ids in field_ids]) + 1
+        simData['fieldId'] = np.array([ids[0] for ids in field_ids]) + 1
         return simData

@@ -360,7 +360,7 @@ class TestStackerClasses(unittest.TestCase):
                         dtype=list(zip(['ra', 'dec'], [float, float])))
         new_data = s.run(data)
 
-        np.testing.assert_array_equal(opsim_fields['field_id'], new_data['fieldID'])
+        np.testing.assert_array_equal(opsim_fields['field_id'], new_data['fieldId'])
 
         # Cherry picked a set of coordinates that should belong to a certain list of fields. These coordinates
         # are not exactly at the center of fields, but close enough that they should be classified as belonging to
@@ -381,7 +381,7 @@ class TestStackerClasses(unittest.TestCase):
 
         new_data = s.run(data)
 
-        np.testing.assert_array_equal(field_id, new_data['fieldID'])
+        np.testing.assert_array_equal(field_id, new_data['fieldId'])
 
         # Now let's generate a set of random coordinates and make sure they are all assigned a fieldID.
         data = np.array(list(zip(np.random.rand(600) * 2. * np.pi,
@@ -390,7 +390,7 @@ class TestStackerClasses(unittest.TestCase):
 
         new_data = s.run(data)
 
-        self.assertTrue(np.all(new_data['fieldID'] > 0))
+        self.assertTrue(np.all(new_data['fieldId'] > 0))
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

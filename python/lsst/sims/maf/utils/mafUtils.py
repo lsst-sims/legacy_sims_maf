@@ -8,7 +8,7 @@ import warnings
 
 __all__ = ['optimalBins', 'percentileClipping',
            'gnomonic_project_toxy', 'radec2pix',
-           'getOpSimField', 'treexyz', 'rad_length']
+           'getOpSimField', '_treexyz', '_rad_length', '_buildTree']
 
 
 def optimalBins(datain, binmin=None, binmax=None, nbinMax=200, nbinMin=1):
@@ -194,12 +194,12 @@ def opsimfields_kd_tree(leafsize=100):
     """
 
     fields = getOpSimField()
-    x, y, z = treexyz(fields['RA'], fields['dec'])
+    x, y, z = _treexyz(fields['RA'], fields['dec'])
     tree = kdtree(list(zip(x, y, z)), leafsize=leafsize, balanced_tree=False, compact_nodes=False)
     return tree
 
 
-def treexyz(ra, dec):
+def _treexyz(ra, dec):
     """
     Utility to convert RA,dec postions in x,y,z space, useful for constructing KD-trees.
 
@@ -222,7 +222,7 @@ def treexyz(ra, dec):
     return x, y, z
 
 
-def rad_length(radius=1.75):
+def _rad_length(radius=1.75):
     """
     Convert an angular radius into a physical radius for a kdtree search.
 
@@ -232,6 +232,26 @@ def rad_length(radius=1.75):
         Radius in degrees.
     """
     x0, y0, z0 = (1, 0, 0)
-    x1, y1, z1 = treexyz(np.radians(radius), 0)
+    x1, y1, z1 = _treexyz(np.radians(radius), 0)
     result = np.sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
     return result
+
+
+def _buildTree(simDataRa, simDataDec, leafsize=100):
+    """Build KD tree on simDataRA/Dec and set radius (via setRad) for matching.
+
+    simDataRA, simDataDec = RA and Dec values (in radians).
+    leafsize = the number of Ra/Dec pointings in each leaf node."""
+    if np.any(np.abs(simDataRa) > np.pi * 2.0) or np.any(np.abs(simDataDec) > np.pi * 2.0):
+        raise ValueError('Expecting RA and Dec values to be in radians.')
+    x, y, z = _treexyz(simDataRa, simDataDec)
+    data = list(zip(x, y, z))
+    if np.size(data) > 0:
+        try:
+            opsimtree = kdtree(data, leafsize=leafsize, balanced_tree=False, compact_nodes=False)
+        except TypeError:
+            opsimtree = kdtree(data, leafsize=leafsize)
+    else:
+        raise ValueError('SimDataRA and Dec should have length greater than 0.')
+
+    return opsimtree
