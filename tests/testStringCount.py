@@ -12,7 +12,7 @@ class TestStringCount(unittest.TestCase):
     def testsc(self):
         metric = metrics.StringCountMetric()
         data = np.array(['a', 'a', 'b', 'c', '', '', ''])
-        dt = np.dtype([('filter', '|1U')])
+        dt = np.dtype([('filter', np.str_, 1)])
         data.dtype = dt
         result = metric.run(data)
         # Check that the metricValue is correct
