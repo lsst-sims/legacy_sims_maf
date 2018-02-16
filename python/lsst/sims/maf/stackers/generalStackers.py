@@ -2,8 +2,8 @@ import warnings
 import numpy as np
 from scipy.spatial import cKDTree as kdtree
 import palpy
-from lsst.sims.utils import Site, m5_flat_sed
-from lsst.sims.maf.utils import getOpSimField, _treexyz, _rad_length, _buildTree
+from lsst.sims.utils import Site, m5_flat_sed, _treexyz, _rad_length, _buildTree
+from lsst.sims.survey.fields import FieldsDatabase
 from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
@@ -418,10 +418,11 @@ class OpSimFieldStacker(BaseStacker):
         self.raCol = raCol
         self.decCol = decCol
         self.degrees = degrees
-        fields = getOpSimField()  # Returned RA/Dec coordinates in radians
-        asort = np.argsort(fields['field_id'])
-        self.tree = _buildTree(simDataRa=fields['RA'][asort],
-                               simDataDec=fields['dec'][asort])
+        fields_db = FieldsDatabase()
+        fields = fields_db.get_id_ra_dec_arrays("select * from Field")  # Returned RA/Dec coordinates in degrees
+        asort = np.argsort(fields['fieldId'])
+        self.tree = _buildTree(np.radians(fields['ra'][asort]),
+                               np.radians(fields['dec'][asort]))
 
     def _run(self, simData, cols_present=False):
         if cols_present:

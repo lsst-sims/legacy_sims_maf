@@ -7,9 +7,9 @@ import warnings
 import unittest
 import lsst.utils.tests
 import lsst.sims.maf.stackers as stackers
-from lsst.sims.maf.utils import getOpSimField
 from lsst.sims.utils import _galacticFromEquatorial, calcLmstLast, Site, _altAzPaFromRaDec, \
     ObservationMetaData
+from lsst.sims.survey.fields import FieldsDatabase
 
 matplotlib.use("Agg")
 
@@ -353,14 +353,17 @@ class TestStackerClasses(unittest.TestCase):
         s = stackers.OpSimFieldStacker(raCol='ra', decCol='dec', degrees=False)
 
         # First sanity check. Make sure the center of the fields returns the right field id
-        opsim_fields = getOpSimField()
+        opsim_fields_db = FieldsDatabase()
 
-        data = np.array(list(zip(opsim_fields['RA'],
-                                 opsim_fields['dec'])),
+        # Returned RA/Dec coordinates in degrees
+        opsim_fields = opsim_fields_db.get_id_ra_dec_arrays("select * from Field")
+
+        data = np.array(list(zip(np.radians(opsim_fields['ra']),
+                                 np.radians(opsim_fields['dec']))),
                         dtype=list(zip(['ra', 'dec'], [float, float])))
         new_data = s.run(data)
 
-        np.testing.assert_array_equal(opsim_fields['field_id'], new_data['fieldId'])
+        np.testing.assert_array_equal(opsim_fields['fieldId'], new_data['fieldId'])
 
         # Cherry picked a set of coordinates that should belong to a certain list of fields. These coordinates
         # are not exactly at the center of fields, but close enough that they should be classified as belonging to

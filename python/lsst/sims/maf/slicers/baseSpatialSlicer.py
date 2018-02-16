@@ -11,12 +11,11 @@ import numpy as np
 from functools import wraps
 from scipy.spatial import cKDTree as kdtree
 from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
-from lsst.sims.maf.utils import _treexyz, _rad_length, _buildTree
 
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.coordUtils import _chipNameFromRaDec
-from lsst.sims.utils import ObservationMetaData
+from lsst.sims.utils import ObservationMetaData, _treexyz, _rad_length, _buildTree
 
 from .baseSlicer import BaseSlicer
 
@@ -210,9 +209,9 @@ class BaseSpatialSlicer(BaseSlicer):
 
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node."""
-        self.opsimtree = _buildTree(simDataRa=simDataRa,
-                                    simDataDec=simDataDec,
-                                    leafsize=leafsize)
+        self.opsimtree = _buildTree(simDataRa,
+                                    simDataDec,
+                                    leafsize)
 
     def _setRad(self, radius=1.75):
         """Set radius (in degrees) for kdtree search using utility function from mafUtils."""
