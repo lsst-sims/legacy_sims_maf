@@ -356,14 +356,14 @@ class TestStackerClasses(unittest.TestCase):
         opsim_fields_db = FieldsDatabase()
 
         # Returned RA/Dec coordinates in degrees
-        opsim_fields = opsim_fields_db.get_id_ra_dec_arrays("select * from Field")
+        field_id, ra, dec = opsim_fields_db.get_id_ra_dec_arrays("select * from Field;")
 
-        data = np.array(list(zip(np.radians(opsim_fields['ra']),
-                                 np.radians(opsim_fields['dec']))),
+        data = np.array(list(zip(np.radians(ra),
+                                 np.radians(dec))),
                         dtype=list(zip(['ra', 'dec'], [float, float])))
         new_data = s.run(data)
 
-        np.testing.assert_array_equal(opsim_fields['fieldId'], new_data['fieldId'])
+        np.testing.assert_array_equal(field_id, new_data['fieldId'])
 
         # Cherry picked a set of coordinates that should belong to a certain list of fields. These coordinates
         # are not exactly at the center of fields, but close enough that they should be classified as belonging to

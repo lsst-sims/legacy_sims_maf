@@ -419,7 +419,7 @@ class OpSimFieldStacker(BaseStacker):
         self.decCol = decCol
         self.degrees = degrees
         fields_db = FieldsDatabase()
-        fieldid, ra, dec = fields_db.get_id_ra_dec_arrays("select * from Field")  # Returned RA/Dec coordinates in degrees
+        fieldid, ra, dec = fields_db.get_id_ra_dec_arrays("select * from Field;")  # Returned RA/Dec coordinates in degrees
         asort = np.argsort(fieldid)
         self.tree = _buildTree(np.radians(ra[asort]),
                                np.radians(dec[asort]))
