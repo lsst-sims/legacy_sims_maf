@@ -216,61 +216,75 @@ def slewActivities(colmap=None, runName='opsim', totalSlewN=1, sqlConstraint=Non
 
     # All of these metrics run with a unislicer, on all the slew data.
     slicer = slicers.UniSlicer()
-    print(colmap.keys())
 
     if 'slewactivities' not in colmap:
         raise ValueError("List of slewactivities not in colmap! Will not create slewActivities bundles.")
 
-    slewTypes = colmap['slewactivities']
+    slewTypeDict = colmap['slewactivities']
 
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Activities', 'order': -1, 'caption': None}
 
-    for slewType in slewTypes:
+    for slewType in slewTypeDict:
         metadata = slewType
-        tableValue = colmap[slewType]
+        if sqlConstraint is not None:
+            metadata += sqlConstraint
+        tableValue = slewTypeDict[slewType]
 
         # Metrics for all activities of this type.
         sql = 'activityDelay>0 and activity="%s"' % tableValue
         if sqlConstraint is not None:
-            sqlconstraint = '(%s) and (%s)' % (sql, sqlConstraint)
+            sql = '(%s) and (%s)' % (sql, sqlConstraint)
 
+        # Percent of slews which include this activity.
         metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
                                           metricName='ActivePerc')
         displayDict['caption'] = 'Percent of total slews which include %s movement.' % slewType
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sql, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
-        metric = metrics.MeanMetric(col='activityDelay', metricName='ActiveAve')
+        # Mean time for this activity, in all slews.
+        metric = metrics.MeanMetric(col='activityDelay', metricName='Ave T(s)')
         displayDict['caption'] = 'Mean amount of time (in seconds) for %s movements.' % (slewType)
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sql, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
-        metric = metrics.MaxMetric(col='activityDelay', metricName='Max')
+        # Maximum time for this activity, in all slews.
+        metric = metrics.MaxMetric(col='activityDelay', metricName='Max T(s)')
         displayDict['caption'] = 'Max amount of time (in seconds) for %s movement.' % (slewType)
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sql, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
         # Metrics for activities of this type which are in the critical path.
         sql = 'activityDelay>0 and inCriticalPath="True" and activity="%s"' % tableValue
         if sqlConstraint is not None:
-            sqlconstraint = '(%s) and (%s)' % (sql, sqlConstraint)
+            sql = '(%s) and (%s)' % (sql, sqlConstraint)
 
+        # Percent of slews which include this activity in the critical path.
         metric = metrics.CountRatioMetric(col='activityDelay', normVal=totalSlewN / 100.0,
                                           metricName='ActivePerc in crit')
         displayDict['caption'] = 'Percent of total slew which include %s movement, ' \
                                  'and are in critical path.' % (slewType)
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sql, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
-        metric = metrics.MeanMetric(col='activityDelay', metricName='ActiveAve in crit')
+        # Mean time for slews which include this activity, in the critical path.
+        metric = metrics.MeanMetric(col='activityDelay', metricName='Ave T(s) in crit')
         displayDict['caption'] = 'Mean time (in seconds) for %s movements, ' \
                                  'when in critical path.' % (slewType)
         displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, displayDict=displayDict, metadata=metadata)
+        bundle = mb.MetricBundle(metric, slicer, sql, displayDict=displayDict, metadata=metadata)
+        bundleList.append(bundle)
+
+        # Total time that this activity was in the critical path.
+        metric = metrics.SumMetric(col='activityDelay', metricName='Total T(s) in crit')
+        displayDict['caption'] = 'Total time (in seconds) for %s movements, ' \
+                                 'when in critical path.' % (slewType)
+        displayDict['order'] += 1
+        bundle = mb.MetricBundle(metric, slicer, sql, displayDict=displayDict, metadata=metadata)
         bundleList.append(bundle)
 
     for b in bundleList:
