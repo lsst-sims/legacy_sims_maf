@@ -14,7 +14,7 @@ __all__ = ['nvisitsM5Maps', 'tEffMetrics', 'nvisitsPerNight', 'nvisitsPerProp']
 
 def nvisitsM5Maps(colmap=None, runName='opsim',
                   extraSql=None, extraMetadata=None,
-                  nside=64, runLength=10):
+                  nside=64, runLength=10.):
     """Generate number of visits and Coadded depth per RA/Dec point in all and per filters.
 
     Parameters
@@ -164,8 +164,8 @@ def tEffMetrics(colmap=None, runName='opsim',
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                 normed=False, metricName='Total Teff')
     slicer = slicers.UniSlicer()
-    bundle = mb.MetricBundle(metric, slicer, constraint=extraSql, displayDict=displayDict,
-                             metadata=extraMetadata)
+    bundle = mb.MetricBundle(metric, slicer, constraint=sqls['all'], displayDict=displayDict,
+                             metadata=metadata['all'])
     bundleList.append(bundle)
 
     displayDict['caption'] = 'Normalized total effective time of the survey (see Teff metric).'
@@ -173,8 +173,8 @@ def tEffMetrics(colmap=None, runName='opsim',
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                 normed=True, metricName='Normalized Teff')
     slicer = slicers.UniSlicer()
-    bundle = mb.MetricBundle(metric, slicer, constraint=extraSql, displayDict=displayDict,
-                             metadata=extraMetadata)
+    bundle = mb.MetricBundle(metric, slicer, constraint=sqls['all'], displayDict=displayDict,
+                             metadata=metadata['all'])
     bundleList.append(bundle)
 
     # Generate Teff maps in all and per filters
@@ -292,9 +292,11 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
     bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
                                  extraSql=extraSql, extraMetadata='All props', subgroup='All proposals'))
     displayDict['caption'] = 'Total number of visits for all proposals'
+    metadata= 'All props'
     if extraSql is not None and len(extraSql) > 0:
         displayDict['caption'] += ' with constraint %s.' % extraSql
-    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata='All props',
+        metadata += ' %s' % extraSql
+    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadata,
                              displayDict=displayDict, summaryMetrics=summaryMetrics)
     bundleList.append(bundle)
 
@@ -306,9 +308,10 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
             for pid in pids[:-1]:
                 sql += '%s=%d or ' % (colmap['proposalId'], pid)
             sql += ' %s=%d)' % (colmap['proposalId'], pids[-1])
+            metadata = '%s' % tag
             if extraSql is not None:
                 sql = '(%s) and (%s)' % (sql, extraSql)
-            metadata = '%s' % (tag)
+                metadata += ' %s' % (extraSql)
             bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
                                          extraSql=sql, extraMetadata=metadata, subgroup=tag))
             displayDict['order'] += 1
@@ -320,9 +323,10 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
     # And then just run each proposal separately.
     for propid in propids:
         sql = '%s=%d' % (colmap['proposalId'], propid)
+        metadata = '%s' % (propids[propid])
         if extraSql is not None:
             sql += ' and (%s)' % (extraSql)
-        metadata = '%s' % (propids[propid])
+            metadata += ' %s' % extraSql
         bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
                                      extraSql=sql, extraMetadata=metadata, subgroup='Per proposal'))
         displayDict['order'] += 1

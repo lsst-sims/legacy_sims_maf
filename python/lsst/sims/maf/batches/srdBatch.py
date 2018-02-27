@@ -13,10 +13,19 @@ __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
-            benchmarkArea=18000, benchmarkNvisits=825):
-    # Allow user to add dithering.
+            benchmarkArea=18000, benchmarkNvisits=825,
+            raCol=None, decCol=None, degrees=None, stackerList=None):
+
     if colmap is None:
         colmap = ColMapDict('opsimV4')
+
+    if raCol is None:
+        raCol = colmap['ra']
+    if decCol is None:
+        decCol = colmap['dec']
+    if degrees is None:
+        degrees = colmap['raDecDeg']
+
     bundleList = []
 
     sql = ''
@@ -31,10 +40,6 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
         metadata = extraMetadata
 
     subgroup = metadata
-
-    raCol = colmap['ra']
-    decCol = colmap['dec']
-    degrees = colmap['raDecDeg']
 
     # Set up fO metric.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
