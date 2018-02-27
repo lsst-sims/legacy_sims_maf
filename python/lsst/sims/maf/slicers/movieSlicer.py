@@ -155,6 +155,8 @@ class MovieSlicer(BaseSlicer):
         if not os.path.isdir(outDir):
             raise Exception('Cannot find output directory %s with movie input files.' %(outDir))
         #make video
+        # ffmpeg -r 30 -i [image names - FilterColors_SkyMap_%03d.png] -r 30
+        #    -pix_fmt yuv420p -crf 18 -preset slower outfile
         callList = ['ffmpeg', '-r', str(ips), '-i',
                     os.path.join(outDir,'%s_%s_%s.%s'%(outfileroot, sliceformat, plotType, figformat)),
                     '-r', str(fps), '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'slower',
