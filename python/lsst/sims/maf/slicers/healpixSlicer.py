@@ -19,6 +19,20 @@ class HealpixSlicer(BaseSpatialSlicer):
     """
     A spatial slicer that evaluates pointings on a healpix-based grid.
 
+    Note that a healpix slicer is intended to evaluate the sky on a spatial grid.
+    Usually this grid will be something like RA as the lonCol and Dec as the latCol.
+    However, it could also be altitude and azimuth, in which case altitude as latCol,
+    and azimuth as lonCol.
+    An additional alternative is to use HA/Dec, with lonCol=HA, latCol=Dec.
+
+    When plotting with RA/Dec, the default HealpixSkyMap can be used, corresponding to
+    {'rot': (0, 0, 0), 'flip': 'astro'}.
+    When plotting with alt/az, either the LambertSkyMap can be used (if Basemap is installed)
+    or the HealpixSkyMap can be used with a modified plotDict,
+    {'rot': (90, 90, 90), 'flip': 'geo'}.
+    When plotting with HA/Dec, only the HealpixSkyMap can be used, with a modified plotDict of
+    {'rot': (0, -30, 0), 'flip': 'geo'}.
+
     Parameters
     ----------
     nside : int, optional

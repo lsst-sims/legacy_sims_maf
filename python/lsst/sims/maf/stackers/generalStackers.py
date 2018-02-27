@@ -98,7 +98,7 @@ class ZenithDistStacker(BaseStacker):
             # Column already present in data; assume it is correct and does not need recalculating.
             return simData
         if self.degrees:
-            simData['zenithDistance'] = 90.0 - self.altCol
+            simData['zenithDistance'] = 90.0 - simData[self.altCol]
         else:
             simData['zenithDistance'] = np.pi/2.0 - simData[self.altCol]
         return simData
