@@ -430,7 +430,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     ##
     # Depth metrics.
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
     for f in filters:
         propCaption = '%s band, all proposals %s' % (f, slicermetadata)
         sqlconstraint = 'filter = "%s"' % (f)
