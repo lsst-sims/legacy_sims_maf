@@ -45,7 +45,8 @@ def setBatches(opsdb, colmap, args):
                                          extraMetadata=metadata[tag]))
 
     # number of observations per proposal and per night.
-    bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName, extraSql=args.sqlConstraint))
+    bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName,
+                                        extraSql=args.sqlConstraint))
 
     # Nvisits + coadd depths maps, Teff maps.
     for tag in ['All', 'WFD']:
