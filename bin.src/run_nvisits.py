@@ -13,7 +13,7 @@ def setBatches(opsdb, colmap, args):
     # number of observations per propsosal and per night.
     bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName, extraSql=args.sqlConstraint))
     # add nvisits / teff maps.
-    propids, proptags, sqls, metadata = setSQL(opsdb)
+    propids, proptags, sqls, metadata = setSQL(opsdb, args.sqlConstraint)
 
     for tag in ['All', 'WFD']:
         bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears,
