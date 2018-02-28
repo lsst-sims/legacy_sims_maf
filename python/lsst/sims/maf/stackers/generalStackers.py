@@ -52,7 +52,7 @@ class NormAirmassStacker(BaseStacker):
     """
     def __init__(self, airmassCol='airmass', decCol='fieldDec',
                  degrees=True, telescope_lat = -30.2446388):
-        self.units = ['airmass/(minimum possible airmass)']
+        self.units = ['X / Xmin']
         self.colsAdded = ['normairmass']
         self.colsReq = [airmassCol, decCol]
         self.airmassCol = airmassCol
@@ -84,10 +84,13 @@ class ZenithDistStacker(BaseStacker):
     """
     def __init__(self, altCol='altitude', degrees=True):
         self.altCol = altCol
-        self.units = ['degrees']
+        self.degrees = degrees
+        if self.degrees:
+            self.units = ['degrees']
+        else:
+            self.unit = ['radians']
         self.colsAdded = ['zenithDistance']
         self.colsReq = [self.altCol]
-        self.degrees = degrees
 
     def _run(self, simData, cols_present=False):
         """Calculate new column for zenith distance."""
@@ -95,9 +98,9 @@ class ZenithDistStacker(BaseStacker):
             # Column already present in data; assume it is correct and does not need recalculating.
             return simData
         if self.degrees:
-            simData['zenithDistance'] = np.degrees(np.pi - np.radians(simData[self.altCol]))
+            simData['zenithDistance'] = 90.0 - simData[self.altCol]
         else:
-            simData['zenithDistance'] = np.pi - simData[self.altCol]
+            simData['zenithDistance'] = np.pi/2.0 - simData[self.altCol]
         return simData
 
 

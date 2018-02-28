@@ -96,9 +96,8 @@ def glanceBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
 
     # The alt/az plots of all the pointings
-    slicer = slicers.HealpixSlicer(nside=nside, latCol='zenithDistance',
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['alt'],
                                    lonCol=colmap['az'], latLonDeg=colmap['raDecDeg'], useCache=False)
-    stacker = stackers.ZenithDistStacker(altCol=colmap['alt'], degrees=colmap['raDecDeg'])
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
     for sql in sql_per_and_all_filters:

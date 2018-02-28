@@ -1240,11 +1240,10 @@ def makeBundleList(dbFile, runName=None, benchmark='design', seeingCol='FWHMeff'
     bundleList.append(bundle)
 
     # Check the Alt-Az pointing history
-    zenithstacker = stackers.ZenithDistStacker(altCol='altitude', degrees=False)
-    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth',
+    slicer = slicers.HealpixSlicer(nside=64, latCol='altitude', lonCol='azimuth',
                                    latLonDeg=False, useCache=False)
     metric = metrics.CountMetric('expMJD', metricName='NVisits Alt/Az')
-    plotDict = {'rot': (0, 90, 0)}
+    plotDict = {'rot': (90, 90, 90), 'flip': 'geo'}
     plotFunc = plots.HealpixSkyMap()
     for f in filters:
         sqlconstraint = 'filter = "%s"' % (f)

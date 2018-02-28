@@ -80,7 +80,9 @@ class HealpixSkyMap(BasePlotter):
         # Set up the default plotting parameters.
         self.defaultPlotDict = {}
         self.defaultPlotDict.update(baseDefaultPlotDict)
-        self.defaultPlotDict.update({'rot': (0, 0, 0), 'coord': 'C'})
+        self.defaultPlotDict.update({'rot': (0, 0, 0), 'flip': 'astro', 'coord': 'C'})
+        # Note: for alt/az sky maps using the healpix plotter, you can use
+        # {'rot': (90, 90, 90), 'flip': 'geo'}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -129,7 +131,7 @@ class HealpixSkyMap(BasePlotter):
         else:
             notext = False
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
-                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
+                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip=plotDict['flip'],
                     coord=plotDict['coord'], cmap=cmap, norm=norm,
                     sub=plotDict['subplot'], fig=fig.number, notext=notext)
         # Add a graticule (grid) over the globe.
@@ -628,7 +630,7 @@ class LambertSkyMap(BasePlotter):
     """
     Use basemap and contour to make a Lambertian projection.
     Note that the plotDict can include a 'basemap' key with a dictionary of
-    kwargs to use with the call to Basemap.
+    arbitrary kwargs to use with the call to Basemap.
     """
 
     def __init__(self):
@@ -636,9 +638,10 @@ class LambertSkyMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {}
         self.defaultPlotDict.update(baseDefaultPlotDict)
-        self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 20,
-                                                 'lon_0': 0., 'resolution': 'l', 'celestial': False},
+        self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 1, 'lon_0': 180,
+                                                 'resolution': None, 'celestial': False, 'round': False},
                                      'levels': 200, 'cbarFormat': '%i'})
+
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -663,7 +666,6 @@ class LambertSkyMap(BasePlotter):
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         ax = fig.add_subplot(plotDict['subplot'])
 
-        # Hide this extra dependency down here for now
         # if using anaconda, to get basemap:
         # conda install basemap
         # Note, this should be possible without basemap, but there are
@@ -673,6 +675,7 @@ class LambertSkyMap(BasePlotter):
             from mpl_toolkits.basemap import Basemap
         except ModuleNotFoundError:
             raise('To use this plotting function, please install Basemap into your python distribution')
+
         m = Basemap(**plotDict['basemap'])
         # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
         # http: //stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib\

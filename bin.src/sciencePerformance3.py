@@ -139,7 +139,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     parallaxFactorStacker = stackers.ParallaxFactorStacker(dateCol='expMJD', degrees=False)
     dcrStacker = stackers.DcrStacker(lstCol='lst', mjdCol='expMJD', degrees=False)
     parallacticAngleStacker = stackers.ParallacticAngleStacker(mjdCol='expMJD', lstCol='lst', degrees=False)
-
+    stackerList = [zstacker, hastacker, parallaxFactorStacker, dcrStacker, parallacticAngleStacker]
     ##
     # Calculate the fO metrics for all proposals and WFD only.
     order = 0
@@ -154,16 +154,16 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         m1 = metrics.CountMetric(col='expMJD', metricName='fO')
         plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkVals['Area'],
                     'Nvisit': benchmarkVals['nvisitsTotal'], 'xMin': 0, 'xMax': 1500}
-        summaryMetrics = [metrics.fOAreaMetric(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
+        summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
                                                Asky=benchmarkVals['Area'],
                                                Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fOAreaMetric(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
+                          metrics.fOArea(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
                                                Asky=benchmarkVals['Area'],
                                                Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fONvMetric(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
+                          metrics.fONv(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
                                              Asky=benchmarkVals['Area'],
                                              Nvisit=benchmarkVals['nvisitsTotal']),
-                          metrics.fONvMetric(nside=nside, norm=True, metricName='fONv: Area/benchmark',
+                          metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
                                              Asky=benchmarkVals['Area'],
                                              Nvisit=benchmarkVals['nvisitsTotal'])]
         caption = 'The FO metric evaluates the overall efficiency of observing. '
@@ -173,7 +173,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                     % (benchmarkVals['Area'], benchmarkVals['nvisitsTotal']))
         displayDict = {'group': reqgroup, 'subgroup': 'F0', 'displayOrder': order, 'caption': caption}
         order += 1
-        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
 
         bundle = metricBundles.MetricBundle(m1, slicer, sqlconstraint, plotDict=plotDict,
                                             displayDict=displayDict, summaryMetrics=summaryMetrics,
@@ -194,8 +194,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     cutoff1 = 0.15
     extraStats1 = [metrics.FracBelowMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
     extraStats1.extend(commonSummary)
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity',
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
+    m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity', mjdCol='expMJD',
                                     dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 60.0 / 24.0,
                                     minNvisits=minNvisit)
 
@@ -214,7 +214,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     bundleList.append(bundle)
     order += 1
 
-    m2 = metrics.NRevisitsMetric(dT=dTmax)
+    m2 = metrics.NRevisitsMetric(dT=dTmax, mjdCol='expMJD')
     plotDict = {'xMin': 0, 'xMax': 1000, 'logScale': True}
     cutoff2 = 800
     extraStats2 = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
@@ -231,7 +231,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    m3 = metrics.NRevisitsMetric(dT=dTmax, normed=True)
+    m3 = metrics.NRevisitsMetric(dT=dTmax, mjdCol='expMJD', normed=True)
     plotDict = {'xMin': 0, 'xMax': 1, 'cbarFormat': '%.1f'}
     cutoff3 = 0.6
     extraStats3 = [metrics.FracAboveMetric(cutoff=cutoff3, scale=scale, metricName='Area (sq deg)')]
@@ -255,13 +255,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     binsize = 3.
     bins_metric = np.arange(binMin / 60.0 / 24.0, (binMax + binsize) / 60. / 24., binsize / 60. / 24.)
     bins_plot = bins_metric * 24.0 * 60.0
-    m1 = metrics.TgapsMetric(bins=bins_metric, metricName='dT visits')
+    m1 = metrics.TgapsMetric(bins=bins_metric, timesCol='expMJD', metricName='dT visits')
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     caption = ('Histogram of the time between consecutive revisits (<%.1f minutes), over entire sky.'
                % (binMax))
     displayDict = {'group': reqgroup, 'subgroup': 'Rapid Revisit', 'order': order,
                    'caption': caption}
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
     plotFunc = plots.SummaryHistogram()
     bundle = metricBundles.MetricBundle(m1, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, runName=runName,
@@ -271,7 +271,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     ##
     # Trigonometric parallax and proper motion @ r=20 and r=24
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
     sqlconstraint = ''
     order = 0
     metric = metrics.ParallaxMetric(metricName='Parallax 20', rmag=20, seeingCol=seeingCol)
@@ -281,6 +281,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': 'Parallax precision at r=20. (without refraction).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
@@ -290,6 +291,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': 'Parallax precision at r=24. (without refraction).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
@@ -301,10 +303,12 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'Normalized parallax (normalized to optimum observation cadence, 1=optimal).'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 20', rmag=20, seeingCol=seeingCol)
+    metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 20', rmag=20, seeingCol=seeingCol,
+                                            mjdCol='expMJD')
     plotDict = {}
     caption = "Parallax factor coverage for an r=20 star (0 is bad, 0.5-1 is good). "
     caption += "One expects the parallax factor coverage to vary because stars on the ecliptic "
@@ -314,10 +318,12 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 24', rmag=24, seeingCol=seeingCol)
+    metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage 24', rmag=24,
+                                            seeingCol=seeingCol, mjdCol='expMJD')
     plotDict = {}
     caption = "Parallax factor coverage for an r=24 star (0 is bad, 0.5-1 is good). "
     caption += "One expects the parallax factor coverage to vary because stars on the ecliptic "
@@ -327,6 +333,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
@@ -339,6 +346,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
@@ -351,11 +359,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
 
-    metric = metrics.ProperMotionMetric(metricName='Proper Motion 20', rmag=20, seeingCol=seeingCol)
+    metric = metrics.ProperMotionMetric(metricName='Proper Motion 20', mjdCol='expMJD',
+                                         rmag=20, seeingCol=seeingCol)
 
     summaryStats = allStats
     plotDict = {'xMin': 0, 'xMax': 3}
@@ -363,20 +373,24 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': 'Proper Motion precision at r=20.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric = metrics.ProperMotionMetric(rmag=24, metricName='Proper Motion 24', seeingCol=seeingCol)
+    metric = metrics.ProperMotionMetric(rmag=24, mjdCol='expMJD',
+                                        metricName='Proper Motion 24', seeingCol=seeingCol)
     summaryStats = allStats
     plotDict = {'xMin': 0, 'xMax': 10}
     displayDict = {'group': reqgroup, 'subgroup': 'Proper Motion', 'order': order,
                    'caption': 'Proper Motion precision at r=24.'}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
-    metric = metrics.ProperMotionMetric(rmag=24, normalize=True, metricName='Proper Motion Normed',
+    metric = metrics.ProperMotionMetric(rmag=24, normalize=True, mjdCol='expMJD',
+                                         metricName='Proper Motion Normed',
                                         seeingCol=seeingCol)
     plotDict = {'xMin': 0.2, 'xMax': 0.7}
     caption = 'Normalized proper motion at r=24. '
@@ -385,6 +399,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                    'caption': caption}
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
                                         displayDict=displayDict, summaryMetrics=summaryStats,
+                                        stackerList=stackerList,
                                         runName=runName, metadata=metadata)
     bundleList.append(bundle)
     order += 1
@@ -393,11 +408,11 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     # Calculate the time uniformity in each filter, for each year.
     order = 0
 
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
     plotFuncs = [plots.TwoDMap()]
     step = 0.5
     bins = np.arange(0, 365.25 * 10 + 40, 40) - step
-    metric = metrics.AccumulateUniformityMetric(bins=bins)
+    metric = metrics.AccumulateUniformityMetric(bins=bins, expMJDCol='expMJD')
     plotDict = {'xlabel': 'Night (days)', 'xextent': [bins.min(
     ) + step, bins.max() + step], 'cbarTitle': 'Uniformity'}
     for f in filters:
@@ -415,7 +430,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     ##
     # Depth metrics.
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
     for f in filters:
         propCaption = '%s band, all proposals %s' % (f, slicermetadata)
         sqlconstraint = 'filter = "%s"' % (f)
@@ -484,7 +499,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     transDuration = peakTime + 30.  # Days
     metric = metrics.TransientMetric(riseSlope=-2. / peakTime, declineSlope=1.4 / 30.0,
                                      transDuration=transDuration, peakTime=peakTime,
-                                     surveyDuration=runLength,
+                                     surveyDuration=runLength, mjdCol='expMJD',
                                      metricName='SNDetection', **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are detected in any filter'
     displayDict = {'group': transgroup, 'subgroup': 'Detected', 'caption': caption}
@@ -497,7 +512,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     metric = metrics.TransientMetric(riseSlope=-2. / peakTime, declineSlope=1.4 / 30.0,
                                      transDuration=transDuration, peakTime=peakTime,
-                                     surveyDuration=runLength,
+                                     surveyDuration=runLength, mjdCol='expMJD',
                                      nPrePeak=1, metricName='SNAlert', **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are detected pre-peak in any filter'
     displayDict = {'group': transgroup, 'subgroup': 'Detected on the rise', 'caption': caption}
@@ -508,7 +523,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     metric = metrics.TransientMetric(riseSlope=-2. / peakTime, declineSlope=1.4 / 30.,
                                      transDuration=transDuration, peakTime=peakTime,
-                                     surveyDuration=runLength, metricName='SNLots',
+                                     surveyDuration=runLength, mjdCol='expMJD', metricName='SNLots',
                                      nFilters=3, nPrePeak=3, nPerLC=2, **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are observed 6 times, 3 pre-peak, '
     caption += '3 post-peak, with observations in 3 filters'
@@ -595,7 +610,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     transDuration = peakTime + 30.  # Days
     metric = metrics.TransientMetric(riseSlope=-2. / peakTime, declineSlope=1.4 / 30.0,
                                      transDuration=transDuration, peakTime=peakTime,
-                                     surveyDuration=runLength,
+                                     surveyDuration=runLength, mjdCol='expMJD',
                                      metricName='SNDetection', **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are detected at any point in their light curve in any filter'
     displayDict = {'group': sngroup, 'subgroup': 'Detected', 'caption': caption}
@@ -607,7 +622,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     metric = metrics.TransientMetric(riseSlope=-2. / peakTime, declineSlope=1.4 / 30.0,
                                      transDuration=transDuration, peakTime=peakTime,
-                                     surveyDuration=runLength,
+                                     surveyDuration=runLength, mjdCol='expMJD',
                                      nPrePeak=1, metricName='SNAlert', **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are detected pre-peak in any filter'
     displayDict = {'group': sngroup, 'subgroup': 'Detected on the rise', 'caption': caption}
@@ -618,7 +633,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
 
     metric = metrics.TransientMetric(riseSlope=-2. / peakTime, declineSlope=1.4 / 30.,
                                      transDuration=transDuration, peakTime=peakTime,
-                                     surveyDuration=runLength, metricName='SNLots',
+                                     surveyDuration=runLength, mjdCol='expMJD', metricName='SNLots',
                                      nFilters=3, nPrePeak=3, nPerLC=2, **peaks)
     caption = 'Fraction of z=0.5 type Ia SN that are observed 6 times, 3 pre-peak, '
     caption += '3 post-peak, with observations in 3 filters'
@@ -658,7 +673,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             bundleList.append(bundle)
 
     # Alt az plots
-    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
+    slicer = slicers.HealpixSlicer(nside=64, latCol='altitude', lonCol='azimuth', latLonDeg=False, useCache=False)
     metric = metrics.CountMetric('expMJD', metricName='Nvisits as function of Alt/Az')
     plotDict = {}
     plotFuncs = [plots.LambertSkyMap()]
@@ -685,8 +700,8 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
     bundleList.append(bundle)
 
     # Median inter-night gap (each and all filters)
-    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap')
+    slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
+    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap', mjdCol='expMJD')
     sqls = ['filter = "%s"' % f for f in filters]
     orders = [filtorder[f] for f in filters]
     orders.append(0)
@@ -698,8 +713,9 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         bundleList.append(bundle)
 
     # Max inter-night gap in r and all bands
-    dslicer = slicers.HealpixSlicer(nside=nside, lonCol='ditheredRA', latCol='ditheredDec')
-    metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', reduceFunc=np.max)
+    dslicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
+    metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', mjdCol='expMJD',
+                                           reduceFunc=np.max)
 
     plotDict = {'percentileClip': 95.}
     for sql, order in zip(sqls, orders):
@@ -720,12 +736,13 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             displayDict = {'group': phaseGroup,
                            'subgroup': 'period=%.2f days, filter=%s' % (period, sql),
                            'caption': 'Maximum phase gaps'}
-            metric = metrics.PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period,
+            metric = metrics.PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period, col='expMJD',
                                             metricName='PhaseGap, %.1f' % period)
             bundle = metricBundles.MetricBundle(metric, slicer, sqls[sql],
                                                 displayDict=displayDict, runName=runName)
             bundleList.append(bundle)
 
+    """
     # NEO XY plots
     slicer = slicers.UniSlicer()
     metric = metrics.PassMetric(metricName='NEODistances')
@@ -745,7 +762,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
                                             plotDict=plotDict,
                                             plotFuncs=[plotFunc])
         noSaveBundleList.append(bundle)
-
+    """
     # Solar elongation
     sqls = ['filter = "%s"' % f for f in filters]
     orders = [filtorder[f] for f in filters]
@@ -756,7 +773,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         displayDict = {'group': NEOGroup, 'subgroup': 'Solar Elongation',
                        'caption': 'Median solar elongation in degrees', 'order': order}
         metric = metrics.MedianMetric('solarElong')
-        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                             runName=runName,
                                             displayDict=displayDict,
@@ -767,7 +784,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
         displayDict = {'group': NEOGroup, 'subgroup': 'Solar Elongation',
                        'caption': 'Minimum solar elongation in degrees', 'order': order}
         metric = metrics.MinMetric('solarElong')
-        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
+        slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                             runName=runName,
                                             displayDict=displayDict,
@@ -806,10 +823,6 @@ if __name__ == "__main__":
 
     # Build metric bundles.
 
-    print('WARNING! This script has not been completely updated to work properly for v3 - in particular,'
-          ' the astrometry metrics have problems with conversions in the stackers. Please run "run_srd.py"'
-          ' instead to get the fO/astrometry metrics.')
-
     (bundleDict, mergedHistDict, noSaveBundleDict) = makeBundleList(args.dbFile, nside=args.nside,
                                                                     lonCol=args.lonCol, latCol=args.latCol,
                                                                     benchmark=args.benchmark,
@@ -818,7 +831,7 @@ if __name__ == "__main__":
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
     # Connect to opsimdb.
-    opsdb = utils.connectOpsimDb(args.dbFile)
+    opsdb = db.OpsimDatabase(args.dbFile)
 
     if args.runNoSave:
         group = metricBundles.MetricBundleGroup(noSaveBundleDict, opsdb, saveEarly=False,

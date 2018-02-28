@@ -650,7 +650,7 @@ def makeBundleList(dbFile, runName=None, nside=64, benchmark='design',
             bundleList.append(bundle)
 
     # Alt az plots
-    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
+    slicer = slicers.HealpixSlicer(nside=64, latCol='altitude', lonCol='azimuth', useCache=False)
     metric = metrics.CountMetric('observationStartMJD', metricName='Nvisits as function of Alt/Az')
     plotDict = {}
     plotFuncs = [plots.LambertSkyMap()]
