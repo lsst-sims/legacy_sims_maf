@@ -63,7 +63,7 @@ def setupMetrics(opsimName, metadata, plotlabel='', t0=0, tStep=40./24./60./60.,
     colorMax = int(nvisitsMax/4)
     metricList = []
     plotDictList = []
-    figsize = (8, 8)
+    figsize = (8, 6)
     if not onlyFilterColors:
         metricList.append(metrics.CountMetric('expMJD', metricName='Nvisits'))
         plotDictList.append({'colorMin':0, 'colorMax':nvisitsMax,
