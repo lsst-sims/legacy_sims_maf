@@ -113,11 +113,9 @@ def astrometryBatch(colmap=None, runName='opsim',
     displayDict = {'group': 'Parallax', 'subgroup': subgroup,
                    'order': 0, 'caption': None}
     # Expected error on parallax at 10 AU.
-    for rmag in (20.0, 24.0):
-        if rmag == 20.0:
-            plotmax = 2.0
-        if rmag == 24.0:
-            plotmax = 15.0
+    rmags = (20.0, 24.0)
+    plotmaxVals = (2.0, 15.0)
+    for rmag, plotmax in zip(rmags, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ParallaxMetric(metricName='Parallax @ %.1f' % (rmag), rmag=rmag,
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
@@ -132,7 +130,7 @@ def astrometryBatch(colmap=None, runName='opsim',
 
     # Parallax normalized to 'best possible' if all visits separated by 6 months.
     # This separates the effect of cadence from depth.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ParallaxMetric(metricName='Normalized Parallax @ %.1f' % (rmag), rmag=rmag,
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=True)
@@ -144,7 +142,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Parallax factor coverage.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage @ %.1f' % (rmag),
                                                 rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                                 mjdCol=colmap['mjd'], filterCol=colmap['filter'],
@@ -156,7 +154,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Parallax problems can be caused by HA and DCR degeneracies. Check their correlation.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ParallaxDcrDegenMetric(metricName='Parallax-DCR degeneracy @ %.1f' % (rmag),
                                                 rmag=rmag, seeingCol=colmap['seeingEff'],
                                                 filterCol=colmap['filter'], m5Col=colmap['fiveSigmaDepth'])
@@ -172,11 +170,8 @@ def astrometryBatch(colmap=None, runName='opsim',
     # Proper Motion metrics.
     displayDict = {'group': 'Proper Motion', 'subgroup': subgroup, 'order': 0, 'caption': None}
     # Proper motion errors.
-    for rmag in (20.0, 24.0):
-        if rmag == 20.0:
-            plotmax = 1.0
-        if rmag == 24.0:
-            plotmax = 5.0
+    plotmaxVals = (1.0, 5.0)
+    for rmag, plotmax in zip(rmags, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ProperMotionMetric(metricName='Proper Motion @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
@@ -189,7 +184,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Normalized proper motion.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ProperMotionMetric(metricName='Normalized Proper Motion @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
