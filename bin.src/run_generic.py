@@ -42,8 +42,18 @@ def setSQL(opsdb, sqlConstraint=None):
     if sqlConstraint is not None:
         wfdWhere = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
         ddWhere = '(%s) and (%s)' % (sqlConstraint, ddWhere)
-    sqltags = {'WFD': wfdWhere, 'DD': ddWhere}
-    return (propids, proptags, sqltags)
+    sqltags = {'WFD': wfdWhere, 'DD': ddWhere, 'All': sqlConstraint}
+    metadata = {'WFD': 'WFD', 'DD': 'DD', 'All': ''}
+    if sqlConstraint is not None and len(sqlConstraint) > 0:
+        md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
+        md = md.replace('"','').replace('  ', ' ')
+        for t in metadata:
+            metadata[t] += ' %s' % md
+    # Reset metadata to None if there was nothing there. (helpful for batches).
+    for t in metadata:
+        if len(metadata[t]) == 0:
+            metadata[t] = None
+    return (propids, proptags, sqltags, metadata)
 
 
 def run(bdict, opsdb, colmap, args):
@@ -79,6 +89,7 @@ def parseArgs(subdir='out', parser=None):
                         help="SQL constraint to apply to all metrics. "
                              " e.g.: 'night <= 365' or 'propId = 5' "
                              " (**may not work with slew batches)")
+    parser.add_argument("--nyears", type=int, default=10, help="Number of years in the run (default 10).")
     args = parser.parse_args()
 
     if args.runName is None:

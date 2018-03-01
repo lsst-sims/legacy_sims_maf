@@ -152,10 +152,21 @@ class TeffMetric(BaseMetric):
                 raise ValueError('fiducialDepth should be None or dictionary')
         self.teffBase = teffBase
         self.normed = normed
+        if self.normed:
+            units = ''
+        else:
+            units = 'seconds'
         super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName,
-                                         units='seconds', **kwargs)
-        self.comment = 'Effective time of a series of observations, ' \
-                       'comparing the achieved m5 depth to a fiducial m5 value.'
+                                         units=units, **kwargs)
+        if self.normed:
+            self.comment = 'Normalized effective time'
+        else:
+            self.comment = 'Effect time'
+        self.comment += ' of a series of observations, evaluating the equivalent amount of time'
+        self.comment += ' each observation would require if taken at a fiducial limiting magnitude.'
+        self.comment += ' Fiducial depths are : %s' % self.depth
+        if self.normed:
+            self.comment += ' Normalized by the total amount of time actual on-sky.'
 
     def run(self, dataSlice, slicePoint=None):
         filters = np.unique(dataSlice[self.filterCol])

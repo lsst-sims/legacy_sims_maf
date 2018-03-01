@@ -17,10 +17,7 @@ def setBatches(opsdb, colmap, args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Run or replot a set of metric bundles.")
-    parser.add_argument("--nyears", type=int, default=10, help="Number of years to create Hourglass plots.")
-
-    args = parseArgs('hourglass', parser=parser)
+    args = parseArgs(subdir='hourglass')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:

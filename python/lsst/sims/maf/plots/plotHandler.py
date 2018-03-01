@@ -375,7 +375,8 @@ class PlotHandler(object):
                         for v in vals:
                             if len(v) == 1:
                                 # Guess that this is the filter value
-                                color = self.filtercolors[v]
+                                if v in self.filtercolors:
+                                    color = self.filtercolors[v]
             colors.append(color)
         # If we happened to end up with the same color throughout
         #  (say, the metrics were all in the same filter)

@@ -13,10 +13,19 @@ __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
-            benchmarkArea=18000, benchmarkNvisits=825):
-    # Allow user to add dithering.
+            benchmarkArea=18000, benchmarkNvisits=825,
+            raCol=None, decCol=None, degrees=None, stackerList=None):
+
     if colmap is None:
         colmap = ColMapDict('opsimV4')
+
+    if raCol is None:
+        raCol = colmap['ra']
+    if decCol is None:
+        decCol = colmap['dec']
+    if degrees is None:
+        degrees = colmap['raDecDeg']
+
     bundleList = []
 
     sql = ''
@@ -31,10 +40,6 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
         metadata = extraMetadata
 
     subgroup = metadata
-
-    raCol = colmap['ra']
-    decCol = colmap['dec']
-    degrees = colmap['raDecDeg']
 
     # Set up fO metric.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
@@ -108,13 +113,16 @@ def astrometryBatch(colmap=None, runName='opsim',
     displayDict = {'group': 'Parallax', 'subgroup': subgroup,
                    'order': 0, 'caption': None}
     # Expected error on parallax at 10 AU.
-    for rmag in (20.0, 24.0):
+    rmags = (20.0, 24.0)
+    plotmaxVals = (2.0, 15.0)
+    for rmag, plotmax in zip(rmags, plotmaxVals):
+        plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
         metric = metrics.ParallaxMetric(metricName='Parallax @ %.1f' % (rmag), rmag=rmag,
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
                                  stackerList=[parallaxStacker],
-                                 displayDict=displayDict,
+                                 displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -122,7 +130,7 @@ def astrometryBatch(colmap=None, runName='opsim',
 
     # Parallax normalized to 'best possible' if all visits separated by 6 months.
     # This separates the effect of cadence from depth.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ParallaxMetric(metricName='Normalized Parallax @ %.1f' % (rmag), rmag=rmag,
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=True)
@@ -134,7 +142,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Parallax factor coverage.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ParallaxCoverageMetric(metricName='Parallax Coverage @ %.1f' % (rmag),
                                                 rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                                 mjdCol=colmap['mjd'], filterCol=colmap['filter'],
@@ -146,7 +154,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Parallax problems can be caused by HA and DCR degeneracies. Check their correlation.
-    for rmag in (20.0, 24.0):
+    for rmag in rmags:
         metric = metrics.ParallaxDcrDegenMetric(metricName='Parallax-DCR degeneracy @ %.1f' % (rmag),
                                                 rmag=rmag, seeingCol=colmap['seeingEff'],
                                                 filterCol=colmap['filter'], m5Col=colmap['fiveSigmaDepth'])
@@ -162,19 +170,22 @@ def astrometryBatch(colmap=None, runName='opsim',
     # Proper Motion metrics.
     displayDict = {'group': 'Proper Motion', 'subgroup': subgroup, 'order': 0, 'caption': None}
     # Proper motion errors.
-    for rmag in (20.0, 24.0):
-        metric = metrics.ProperMotionMetric(metricName='Proper Motion %.1f' % rmag,
+    plotmaxVals = (1.0, 5.0)
+    for rmag, plotmax in zip(rmags, plotmaxVals):
+        plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
+        metric = metrics.ProperMotionMetric(metricName='Proper Motion @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 displayDict=displayDict, summaryMetrics=standardSummary(),
+                                 displayDict=displayDict, plotDict=plotDict,
+                                 summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
         displayDict['order'] += 1
     # Normalized proper motion.
-    for rmag in (20.0, 24.0):
-        metric = metrics.ProperMotionMetric(metricName='Normalized Proper Motion %.1f' % rmag,
+    for rmag in rmags:
+        metric = metrics.ProperMotionMetric(metricName='Normalized Proper Motion @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=True)
@@ -232,7 +243,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
                                     minNvisits=minNvisit)
 
     plotDict = {'xMin': 0, 'xMax': 1}
-    cutoff1 = 0.30
+    cutoff1 = 0.20
     summaryStats = [metrics.FracBelowMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
     summaryStats.extend(standardSummary())
     caption = 'Deviation from uniformity for short revisit timescales, between %s and %s seconds, ' % (

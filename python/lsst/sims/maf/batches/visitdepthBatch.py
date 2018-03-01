@@ -1,18 +1,20 @@
 """Sets of metrics to look at general sky coverage - nvisits/coadded depth/Teff.
 """
+import numpy as np
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
+import lsst.sims.maf.utils as mafUtils
 from .colMapDict import ColMapDict, getColMap
-from .common import standardSummary
+from .common import standardSummary, filterList
 
 __all__ = ['nvisitsM5Maps', 'tEffMetrics', 'nvisitsPerNight', 'nvisitsPerProp']
 
 
 def nvisitsM5Maps(colmap=None, runName='opsim',
                   extraSql=None, extraMetadata=None,
-                  nside=64, filterlist=('u', 'g', 'r', 'i', 'z', 'y')):
+                  nside=64, runLength=10.):
     """Generate number of visits and Coadded depth per RA/Dec point in all and per filters.
 
     Parameters
@@ -29,9 +31,9 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
-    filterlist : list of str, opt
-        List of the filternames to use for "per filter" evaluation. Default ('u', 'g', 'r', 'i', 'z', 'y').
-        If None is passed, the per-filter evaluations will be skipped.
+    runLength : float, opt
+        Length of the simulated survey, for scaling values for the plot limits.
+        Default 10.
 
     Returns
     -------
@@ -46,56 +48,66 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
         subgroup = 'All visits'
 
     # Set up basic all and per filter sql constraints.
-    sqlconstraints = ['']
-    metadata = ['all bands']
-    if filterlist is not None:
-        sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
-    metadata += ['%s band' % f for f in filterlist]
-
-    # Add additional sql constraint (such as wfdWhere) and metadata, if provided.
-    if (extraSql is not None) and (len(extraSql) > 0):
-        tmp = []
-        for s in sqlconstraints:
-            if len(s) == 0:
-                tmp.append(extraSql)
-            else:
-                tmp.append('%s and (%s)' % (s, extraSql))
-        sqlconstraints = tmp
-        if extraMetadata is None:
-            metadata = ['%s %s' % (extraSql, m) for m in metadata]
-    if extraMetadata is not None:
-        metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
-    metadataCaption = extraMetadata
-    if metadataCaption is None:
-        metadataCaption = 'all visits'
+    filterlist, colors, orders, sqls, metadata = filterList(all=True,
+                                                            extraSql=extraSql,
+                                                            extraMetadata=extraMetadata)
+    # Set up some values to make nicer looking plots.
+    benchmarkVals = mafUtils.scaleBenchmarks(runLength, benchmark='design')
+    # Check that nvisits is not set to zero (for very short run length).
+    for f in benchmarkVals['nvisits']:
+        if benchmarkVals['nvisits'][f] == 0:
+            print('Updating benchmark nvisits value in %s to be nonzero' % (f))
+            benchmarkVals['nvisits'][f] = 1
+    benchmarkVals['coaddedDepth'] = mafUtils.calcCoaddedDepth(benchmarkVals['nvisits'],
+                                                              benchmarkVals['singleVisitDepth'])
+    # Scale the nvisit ranges for the runLength.
+    nvisitsRange = {'u': [20, 80], 'g': [50, 150], 'r': [100, 250],
+                    'i': [100, 250], 'z': [100, 300], 'y': [100, 300], 'all': [700, 1200]}
+    scale = runLength / 10.0
+    for f in nvisitsRange:
+        for i in [0, 1]:
+            nvisitsRange[f][i] = int(np.floor(nvisitsRange[f][i] * scale))
 
     # Generate Nvisit maps in all and per filters
     displayDict = {'group': 'Nvisits', 'subgroup': subgroup}
-    metric = metrics.CountMetric(colmap['mjd'], metricName='NVisits')
+    metric = metrics.CountMetric(colmap['mjd'], metricName='NVisits', units='')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
-    displayDict['order'] = -1
-    for sql, meta in zip(sqlconstraints, metadata):
-        displayDict['caption'] = 'Number of visits per healpix in %s band(s), ' \
-                                 'for %s visits.' % (meta.lstrip('%s ' % extraMetadata), metadataCaption)
-        displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=meta,
-                                 displayDict=displayDict,
+    for f in filterlist:
+        sql = sqls[f]
+        displayDict['caption'] = 'Number of visits per healpix in %s.' % metadata[f]
+        displayDict['order'] = orders[f]
+        binsize = 2
+        if f == 'all':
+            binsize = 5
+        plotDict = {'xMin': nvisitsRange[f][0], 'xMax': nvisitsRange[f][1],
+                    'colorMin': nvisitsRange[f][0], 'colorMax': nvisitsRange[f][1],
+                    'binsize': binsize}
+        bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
+                                 displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
 
-    # Generate Coadded depth maps in all and per filters
+    # Generate Coadded depth maps per filter
     displayDict = {'group': 'Coadded m5', 'subgroup': subgroup}
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'], metricName='CoaddM5')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
-    displayDict['order'] = -1
-    for sql, meta in zip(sqlconstraints, metadata):
-        displayDict['caption'] = 'Number of visits per healpix in %s band(s), ' \
-                                 'for %s visits.' % (meta.lstrip('%s ' % extraMetadata), metadataCaption)
-        displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=meta,
-                                 displayDict=displayDict,
+    for f in filterlist:
+        # Skip "all" for coadded depth.
+        if f == 'all':
+            continue
+        mag_zp = benchmarkVals['coaddedDepth'][f]
+        sql = sqls[f]
+        displayDict['caption'] = 'Coadded depth per healpix, with %s benchmark value subtracted (%.1f) ' \
+                                 'in %s.' % (f, mag_zp, metadata[f])
+        displayDict['caption'] += ' More positive numbers indicate fainter limiting magnitudes.'
+        displayDict['order'] = orders[f]
+        plotDict = {'zp': mag_zp, 'xMin': -0.6, 'xMax': 0.6,
+                    'xlabel': 'coadded m5 - %.1f' % mag_zp,
+                    'colorMin': -0.6, 'colorMax': 0.6}
+        bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
+                                 displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
 
@@ -106,8 +118,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
 
 
 def tEffMetrics(colmap=None, runName='opsim',
-                extraSql=None, extraMetadata=None,
-                nside=64, filterlist=('u', 'g', 'r', 'i', 'z', 'y')):
+                extraSql=None, extraMetadata=None, nside=64):
     """Generate a series of Teff metrics. Teff total, per night, and sky maps (all and per filter).
 
     Parameters
@@ -124,9 +135,6 @@ def tEffMetrics(colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
-    filterlist : list of str, opt
-        List of the filternames to use for "per filter" evaluation. Default ('u', 'g', 'r', 'i', 'z', 'y').
-        If None is passed, the per-filter evaluations will be skipped.
 
     Returns
     -------
@@ -141,28 +149,11 @@ def tEffMetrics(colmap=None, runName='opsim',
         subgroup = 'All visits'
 
     # Set up basic all and per filter sql constraints.
-    sqlconstraints = ['']
-    metadata = ['all bands']
-    if filterlist is not None:
-        sqlconstraints += ['%s = "%s"' % (colmap['filter'], f) for f in filterlist]
-    metadata += ['%s band' % f for f in filterlist]
-
-    # Add additional sql constraint (such as wfdWhere) and metadata, if provided.
-    if (extraSql is not None) and (len(extraSql) > 0):
-        tmp = []
-        for s in sqlconstraints:
-            if len(s) == 0:
-                tmp.append(extraSql)
-            else:
-                tmp.append('%s and (%s)' % (s, extraSql))
-        sqlconstraints = tmp
-        if extraMetadata is None:
-            metadata = ['%s, %s' % (extraSql, m) for m in metadata]
-    if extraMetadata is not None:
-        metadata = ['%s %s' % (extraMetadata, m) for m in metadata]
-    metadataCaption = extraMetadata
-    if metadataCaption is None:
-        metadataCaption = 'all visits'
+    filterlist, colors, orders, sqls, metadata = filterList(all=True,
+                                                            extraSql=extraSql,
+                                                            extraMetadata=extraMetadata)
+    if metadata['all'] == None:
+        metadata['all'] = 'All visits'
 
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
@@ -173,8 +164,8 @@ def tEffMetrics(colmap=None, runName='opsim',
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                 normed=False, metricName='Total Teff')
     slicer = slicers.UniSlicer()
-    bundle = mb.MetricBundle(metric, slicer, constraint=None, displayDict=displayDict,
-                             metadata=extraMetadata)
+    bundle = mb.MetricBundle(metric, slicer, constraint=sqls['all'], displayDict=displayDict,
+                             metadata=metadata['all'])
     bundleList.append(bundle)
 
     displayDict['caption'] = 'Normalized total effective time of the survey (see Teff metric).'
@@ -182,8 +173,8 @@ def tEffMetrics(colmap=None, runName='opsim',
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                 normed=True, metricName='Normalized Teff')
     slicer = slicers.UniSlicer()
-    bundle = mb.MetricBundle(metric, slicer, constraint=None, displayDict=displayDict,
-                             metadata=extraMetadata)
+    bundle = mb.MetricBundle(metric, slicer, constraint=sqls['all'], displayDict=displayDict,
+                             metadata=metadata['all'])
     bundleList.append(bundle)
 
     # Generate Teff maps in all and per filters
@@ -191,13 +182,12 @@ def tEffMetrics(colmap=None, runName='opsim',
                                 normed=True, metricName='Normalized Teff')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
-    displayDict['order'] = -1
-    for sql, meta in zip(sqlconstraints, metadata):
-        displayDict['caption'] = 'Normalized effective time of the survey in %s band(s) ' \
-                                 'for %s visits.' % (meta.lstrip('%s ' % extraMetadata), metadataCaption)
-        displayDict['order'] += 1
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=meta,
-                                 displayDict=displayDict, plotFuncs=subsetPlots,
+    for f in filterlist:
+        displayDict['caption'] = 'Normalized effective time of the survey, for %s' % metadata[f]
+        displayDict['order'] = orders[f]
+        plotDict = {'color': colors[f]}
+        bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
+                                 displayDict=displayDict, plotFuncs=subsetPlots, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
 
@@ -208,7 +198,7 @@ def tEffMetrics(colmap=None, runName='opsim',
 
 
 def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
-                    sqlConstraint=None, metadata=None):
+                    extraSql=None, extraMetadata=None, subgroup=None):
     """Count the number of visits per night through the survey.
 
     Parameters
@@ -219,11 +209,13 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
         The name of the simulated survey. Default is "opsim".
     binNights : int, opt
         Number of nights to count in each bin. Default = 1, count number of visits in each night.
-    sqlConstraint : str or None, opt
+    extraSql : str or None, opt
         Additional constraint to add to any sql constraints (e.g. 'propId=1' or 'fieldID=522').
         Default None, for no additional constraints.
-    metadata : str or None, opt
+    extraMetadata : str or None, opt
         Additional metadata to add before any below (i.e. "WFD").  Default is None.
+    subgroup : str or None, opt
+        Use this for the 'subgroup' in the displayDict, instead of metadata. Default is None.
 
     Returns
     -------
@@ -232,14 +224,16 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     if colmap is None:
         colmap = ColMapDict('opsimV4')
 
-    subgroup = metadata
+    subgroup = subgroup
     if subgroup is None:
-        subgroup = 'All visits'
+        subgroup = extraMetadata
+        if subgroup is None:
+            subgroup = 'All visits'
 
-    metadataCaption = metadata
-    if metadata is None:
-        if sqlConstraint is not None:
-            metadataCaption = sqlConstraint
+    metadataCaption = extraMetadata
+    if extraMetadata is None:
+        if extraSql is not None:
+            metadataCaption = extraSql
         else:
             metadataCaption = 'all visits'
 
@@ -250,7 +244,7 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     displayDict['order'] = 0
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits')
     slicer = slicers.OneDSlicer(sliceColName=colmap['mjd'], binsize=int(binNights))
-    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
+    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadataCaption,
                              displayDict=displayDict, summaryMetrics=standardSummary())
     bundleList.append(bundle)
 
@@ -260,7 +254,7 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstraint=None):
+def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=None):
     """Set up a group of all and per-proposal nvisits metrics.
 
     Parameters
@@ -296,7 +290,15 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstrai
     bdict = {}
     # All proposals.
     bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                 sqlConstraint=sqlConstraint, metadata='All visits'))
+                                 extraSql=extraSql, extraMetadata='All props', subgroup='All proposals'))
+    displayDict['caption'] = 'Total number of visits for all proposals'
+    metadata= 'All props'
+    if extraSql is not None and len(extraSql) > 0:
+        displayDict['caption'] += ' with constraint %s.' % extraSql
+        metadata += ' %s' % extraSql
+    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadata,
+                             displayDict=displayDict, summaryMetrics=summaryMetrics)
+    bundleList.append(bundle)
 
     # Look for any multi-proposal groups that we should include.
     for tag in proptags:
@@ -306,11 +308,12 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstrai
             for pid in pids[:-1]:
                 sql += '%s=%d or ' % (colmap['proposalId'], pid)
             sql += ' %s=%d)' % (colmap['proposalId'], pids[-1])
-            if sqlConstraint is not None:
-                sql = '(%s) and (%s)' % (sql, sqlConstraint)
-            metadata = '%s' % (tag)
+            metadata = '%s' % tag
+            if extraSql is not None:
+                sql = '(%s) and (%s)' % (sql, extraSql)
+                metadata += ' %s' % (extraSql)
             bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                         sqlConstraint=sql, metadata=metadata))
+                                         extraSql=sql, extraMetadata=metadata, subgroup=tag))
             displayDict['order'] += 1
             displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
             bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
@@ -320,11 +323,12 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, sqlConstrai
     # And then just run each proposal separately.
     for propid in propids:
         sql = '%s=%d' % (colmap['proposalId'], propid)
-        if sqlConstraint is not None:
-            sql += ' and (%s)' % (sqlConstraint)
         metadata = '%s' % (propids[propid])
+        if extraSql is not None:
+            sql += ' and (%s)' % (extraSql)
+            metadata += ' %s' % extraSql
         bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                     sqlConstraint=sql, metadata=metadata))
+                                     extraSql=sql, extraMetadata=metadata, subgroup='Per proposal'))
         displayDict['order'] += 1
         displayDict['caption'] = 'Number of visits and fraction of total visits, for %s.' % metadata
         bundle = mb.MetricBundle(metric, slicer, constraint=sql, metadata=metadata,

@@ -10,26 +10,22 @@ from run_generic import *
 
 def setBatches(opsdb, colmap, args):
     bdict = {}
-    # number of observations per propsosal and per night.
-    bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName))
+    # number of observations per proposal and per night.
+    bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName, extraSql=args.sqlConstraint))
     # add nvisits / teff maps.
-    propids, proptags, sqltags = setSQL(opsdb)
-    # All props
-    bdict.update(batches.nvisitsM5Maps(colmap, args.runName))
-    # WFD only
-    bdict.update(batches.nvisitsM5Maps(colmap, args.runName,
-                                       extraSql=sqltags['WFD'], extraMetadata='WFD'))
-    # All props.
-    bdict.update(batches.tEffMetrics(colmap, args.runName))
-    # WFD only.
-    bdict.update(batches.tEffMetrics(colmap, args.runName,
-                                     extraSql=sqltags['WFD'], extraMetadata='WFD'))
-    return bdict
+    propids, proptags, sqls, metadata = setSQL(opsdb, args.sqlConstraint)
+
+    for tag in ['All', 'WFD']:
+        bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears,
+                                           extraSql=sqls[tag], extraMetadata=metadata[tag]))
+        bdict.update(batches.tEffMetrics(colmap, args.runName, extraSql=sqls[tag],
+                                         extraMetadata=metadata[tag]))
+
     return bdict
 
 
 if __name__ == '__main__':
-    args = parseArgs('nvisits')
+    args = parseArgs(subdir='nvisits')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:

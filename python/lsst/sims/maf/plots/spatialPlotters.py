@@ -541,7 +541,7 @@ class BaseSkyMap(BasePlotter):
         ax.grid(True, zorder=1)
         ax.xaxis.set_ticklabels([])
         if plotDict['bgcolor'] is not None:
-            ax.set_axis_bgcolor(plotDict['bgcolor'])
+            ax.set_facecolor(plotDict['bgcolor'])
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.75, 0.9, '%s' % plotDict['label'], fontsize=plotDict['fontsize'])

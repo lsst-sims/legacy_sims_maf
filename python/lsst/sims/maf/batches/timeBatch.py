@@ -6,7 +6,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary
+from .common import standardSummary, filterList
 
 __all__ = ['intraNight', 'interNight']
 
@@ -36,8 +36,6 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         colmap = ColMapDict('opsimV4')
 
     metadata = extraMetadata
-    if extraSql is None:
-        extraSql = ''
     if extraSql is not None and len(extraSql) > 0:
         if metadata is None:
             metadata = extraSql
@@ -48,7 +46,10 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
 
     # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': 0}
-    sql = '(%s) and (filter="g" or filter="r" or filter="i")' % extraSql
+    if extraSql is not None and len(extraSql) > 0:
+        sql = '(%s) and (filter="g" or filter="r" or filter="i")' % extraSql
+    else:
+        sql = 'filter="g" or filter="r" or filter="i"'
     md = 'gri'
     if metadata is not None:
         md += metadata
@@ -77,6 +78,19 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     displayDict['order'] += 1
     bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, summaryMetrics=standardStats,
                              plotFuncs=subsetPlots, displayDict=displayDict)
+    bundleList.append(bundle)
+
+    # Intranight gap map, all filters. Returns value in hours.
+    metric = metrics.IntraNightGapsMetric(metricName='Median Intra-Night Gap', mjdCol=colmap['mjd'],
+                                          reduceFunc=np.median)
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                                   latLonDeg=colmap['raDecDeg'])
+    displayDict['caption'] = 'Median gap between consecutive visits within a night, all bands.'
+    displayDict['order'] += 1
+    plotDict = {'percentileClip': 95}
+    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadata, displayDict=displayDict,
+                             plotFuncs=subsetPlots, plotDict=plotDict,
+                             summaryMetrics=standardStats)
     bundleList.append(bundle)
 
     # Histogram of the time between revisits (all filters) within two hours.
@@ -130,16 +144,10 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
 
     bundleList = []
 
-    metadata = extraMetadata
-    if extraSql is None:
-        extraSql = ''
-    if extraSql is not None and len(extraSql) > 0:
-        if metadata is None:
-            metadata = extraSql
-
-    filterlist = ('u', 'g', 'r', 'i', 'z', 'y', 'all')
-    colors = {'u': 'cyan', 'g': 'g', 'r': 'y', 'i': 'r', 'z': 'm', 'y': 'b', 'all': 'k'}
-    filterorder = {'u': 1, 'g': 2, 'r': 3, 'i': 4, 'z': 5, 'y': 6, 'all': 0}
+    # Set up basic all and per filter sql constraints.
+    filterlist, colors, orders, sqls, metadata = filterList(all=True,
+                                                            extraSql=extraSql,
+                                                            extraMetadata=extraMetadata)
 
     displayDict = {'group': 'InterNight', 'subgroup': 'Night gaps', 'caption': None, 'order': 0}
     bins = np.arange(1, 20.5, 1)
@@ -151,51 +159,38 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                              'given point on the sky, considering separations between %d and %d.' \
                              % (bins.min(), bins.max())
     plotFunc = plots.SummaryHistogram()
-    bundle = mb.MetricBundle(metric, slicer, extraSql, plotDict=plotDict,
-                             displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
+    bundle = mb.MetricBundle(metric, slicer, sqls['all'], plotDict=plotDict,
+                             displayDict=displayDict, metadata=metadata['all'], plotFuncs=[plotFunc])
     bundleList.append(bundle)
 
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Median inter-night gap (each and all filters)
-    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap', reduceFunc=np.median)
+    metric = metrics.InterNightGapsMetric(metricName='Median Inter-Night Gap', mjdCol=colmap['mjd'],
+                                          reduceFunc=np.median)
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
-        if f is not 'all':
-            sql = '(%s) and filter = "%s"' % (extraSql, f)
-            md = '%s band' % f
-        else:
-            sql = extraSql
-            md = 'all bands'
-        if metadata is not None:
-            md += metadata
-        displayDict['caption'] = 'Median gap between nights with observations, %s.' % md
-        displayDict['order'] = filterorder[f]
+        displayDict['caption'] = 'Median gap between nights with observations, %s.' % metadata[f]
+        displayDict['order'] = orders[f]
         plotDict = {'color': colors[f]}
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, displayDict=displayDict,
+        bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
+                                 displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
                                  summaryMetrics=standardStats)
         bundleList.append(bundle)
 
     # Maximum inter-night gap (in each and all filters).
-    metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', reduceFunc=np.max)
+    metric = metrics.InterNightGapsMetric(metricName='Max Inter-Night Gap', mjdCol=colmap['mjd'],
+                                          reduceFunc=np.max)
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     for f in filterlist:
-        if f is not 'all':
-            sql = '(%s) and filter = "%s"' % (extraSql, f)
-            md = '%s band' % f
-        else:
-            sql = extraSql
-            md = 'all bands'
-        if metadata is not None:
-            md += metadata
-        displayDict['caption'] = 'Maximum gap between nights with observations, %s.' % md
-        displayDict['order'] = filterorder[f] - 10
+        displayDict['caption'] = 'Maximum gap between nights with observations, %s.' % metadata[f]
+        displayDict['order'] = orders[f]
         plotDict = {'color': colors[f], 'percentileClip': 95., 'binsize': 5}
-        bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, displayDict=displayDict,
+        bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f], displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict, summaryMetrics=standardStats)
         bundleList.append(bundle)
 
