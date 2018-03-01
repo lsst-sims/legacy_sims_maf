@@ -12,8 +12,7 @@ __all__ = ['metadataBasics', 'allMetadata']
 
 
 def metadataBasics(value, colmap=None, runName='opsim',
-                   valueName=None, groupName=None, extraSql=None, extraMetadata=None,
-                   nside=64, filterlist=('u', 'g', 'r', 'i', 'z', 'y')):
+                   valueName=None, groupName=None, extraSql=None, extraMetadata=None, nside=64):
     """Calculate basic metrics on visit metadata 'value' (e.g. airmass, normalized airmass, seeing..).
 
     Calculates extended standard metrics (with unislicer) on the quantity (all visits and per filter),
@@ -45,9 +44,6 @@ def metadataBasics(value, colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
-    filterlist : list of str, opt
-        List of the filternames to use for "per filter" evaluation. Default ('u', 'g', 'r', 'i', 'z', 'y').
-        If None is passed, the per-filter evaluations will be skipped.
 
     Returns
     -------
@@ -94,6 +90,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
             displayDict['order'] = orders[f]
             bundle = mb.MetricBundle(m, slicer, sqls[f], stackerList=stackerList,
                                      metadata=metadata[f], displayDict=displayDict)
+            bundleList.append(bundle)
 
     # Histogram values over all and per filter.
     for f in filterlist:

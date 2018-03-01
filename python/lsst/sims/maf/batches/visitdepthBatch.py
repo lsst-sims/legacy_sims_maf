@@ -58,8 +58,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
         if benchmarkVals['nvisits'][f] == 0:
             print('Updating benchmark nvisits value in %s to be nonzero' % (f))
             benchmarkVals['nvisits'][f] = 1
-    benchmarkVals['coaddedDepth'] = mafUtils.calcCoaddedDepth(
-        benchmarkVals['nvisits'], benchmarkVals['singleVisitDepth'])
+    benchmarkVals['coaddedDepth'] = mafUtils.calcCoaddedDepth(benchmarkVals['nvisits'],
+                                                              benchmarkVals['singleVisitDepth'])
     # Scale the nvisit ranges for the runLength.
     nvisitsRange = {'u': [20, 80], 'g': [50, 150], 'r': [100, 250],
                     'i': [100, 250], 'z': [100, 300], 'y': [100, 300], 'all': [700, 1200]}

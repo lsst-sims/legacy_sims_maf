@@ -84,7 +84,7 @@ def extendedSummary():
 
 
 def standardMetrics(colname, replace_colname=None):
-    """A set of standard simple metrics for some quanitity. Typically would be applied with unislicer.
+    """A set of standard simple metrics for some quantity. Typically would be applied with unislicer.
 
     Parameters
     ----------
