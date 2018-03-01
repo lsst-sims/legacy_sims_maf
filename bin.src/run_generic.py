@@ -48,7 +48,7 @@ def setSQL(opsdb, sqlConstraint=None):
         md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
         md = md.replace('"','').replace('  ', ' ')
         for t in metadata:
-            metadata[t] += md
+            metadata[t] += ' %s' % md
     # Reset metadata to None if there was nothing there. (helpful for batches).
     for t in metadata:
         if len(metadata[t]) == 0:

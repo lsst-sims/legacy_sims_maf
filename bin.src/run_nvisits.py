@@ -10,7 +10,7 @@ from run_generic import *
 
 def setBatches(opsdb, colmap, args):
     bdict = {}
-    # number of observations per propsosal and per night.
+    # number of observations per proposal and per night.
     bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName, extraSql=args.sqlConstraint))
     # add nvisits / teff maps.
     propids, proptags, sqls, metadata = setSQL(opsdb, args.sqlConstraint)
@@ -25,7 +25,7 @@ def setBatches(opsdb, colmap, args):
 
 
 if __name__ == '__main__':
-    args = parseArgs('nvisits')
+    args = parseArgs(subdir='nvisits')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:
