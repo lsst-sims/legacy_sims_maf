@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 from scipy.spatial import cKDTree as kdtree
 import palpy
-from lsst.sims.utils import Site, m5_flat_sed, _treexyz, _rad_length, _buildTree
+from lsst.sims.utils import Site, m5_flat_sed, xyz_from_ra_dec, xyz_angular_radius, _buildTree, _xyz_from_ra_dec
 from lsst.sims.survey.fields import FieldsDatabase
 from .baseStacker import BaseStacker
 
@@ -419,7 +419,8 @@ class OpSimFieldStacker(BaseStacker):
         self.decCol = decCol
         self.degrees = degrees
         fields_db = FieldsDatabase()
-        fieldid, ra, dec = fields_db.get_id_ra_dec_arrays("select * from Field;")  # Returned RA/Dec coordinates in degrees
+        # Returned RA/Dec coordinates in degrees
+        fieldid, ra, dec = fields_db.get_id_ra_dec_arrays("select * from Field;")
         asort = np.argsort(fieldid)
         self.tree = _buildTree(np.radians(ra[asort]),
                                np.radians(dec[asort]))
@@ -430,14 +431,16 @@ class OpSimFieldStacker(BaseStacker):
             return simData
 
         if self.degrees:
-            coord_x, coord_y, coord_z = _treexyz(np.radians(simData[self.raCol]),
-                                                 np.radians(simData[self.decCol]))
-            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), _rad_length())
+            # use public method (degrees)
+            coord_x, coord_y, coord_z = xyz_from_ra_dec(simData[self.raCol],
+                                                        simData[self.decCol])
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
 
         else:
-            coord_x, coord_y, coord_z = _treexyz(simData[self.raCol],
-                                                 simData[self.decCol])
-            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), _rad_length())
+            # use private method (radians)
+            coord_x, coord_y, coord_z = _xyz_from_ra_dec(simData[self.raCol],
+                                                         simData[self.decCol])
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
 
         simData['fieldId'] = np.array([ids[0] for ids in field_ids]) + 1
         return simData

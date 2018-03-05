@@ -15,7 +15,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.coordUtils import _chipNameFromRaDec
-from lsst.sims.utils import ObservationMetaData, _treexyz, _rad_length, _buildTree
+from lsst.sims.utils import ObservationMetaData, _xyz_from_ra_dec, xyz_angular_radius, _buildTree
 
 from .baseSlicer import BaseSlicer
 
@@ -130,8 +130,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.sliceLookup[islice]
                 slicePoint['chipNames'] = self.chipNames[islice]
             else:
-                sx, sy, sz = _treexyz(self.slicePoints['ra'][islice],
-                                      self.slicePoints['dec'][islice])
+                sx, sy, sz = _xyz_from_ra_dec(self.slicePoints['ra'][islice],
+                                              self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
@@ -175,7 +175,7 @@ class BaseSpatialSlicer(BaseSlicer):
             lon = simData[self.lonCol]
         for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), lon, lat,
                                                 simData[self.rotSkyPosColName], simData[self.mjdColName]):
-            dx, dy, dz = _treexyz(ra, dec)
+            dx, dy, dz = _xyz_from_ra_dec(ra, dec)
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
@@ -215,4 +215,4 @@ class BaseSpatialSlicer(BaseSlicer):
 
     def _setRad(self, radius=1.75):
         """Set radius (in degrees) for kdtree search using utility function from mafUtils."""
-        self.rad = _rad_length(radius)
+        self.rad = xyz_angular_radius(radius)
