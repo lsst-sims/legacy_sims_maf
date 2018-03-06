@@ -15,7 +15,7 @@ from lsst.sims.maf.plots.spatialPlotters import BaseHistogram, BaseSkyMap
 # For the footprint generation and conversion between galactic/equatorial coordinates.
 from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.coordUtils import _chipNameFromRaDec
-from lsst.sims.utils import ObservationMetaData, _xyz_from_ra_dec, xyz_angular_radius, _buildTree
+import lsst.sims.utils as simsUtils
 
 from .baseSlicer import BaseSlicer
 
@@ -130,8 +130,8 @@ class BaseSpatialSlicer(BaseSlicer):
                 indices = self.sliceLookup[islice]
                 slicePoint['chipNames'] = self.chipNames[islice]
             else:
-                sx, sy, sz = _xyz_from_ra_dec(self.slicePoints['ra'][islice],
-                                              self.slicePoints['dec'][islice])
+                sx, sy, sz = simsUtils._xyz_from_ra_dec(self.slicePoints['ra'][islice],
+                                                        self.slicePoints['dec'][islice])
                 # Query against tree.
                 indices = self.opsimtree.query_ball_point((sx, sy, sz), self.rad)
 
@@ -175,14 +175,14 @@ class BaseSpatialSlicer(BaseSlicer):
             lon = simData[self.lonCol]
         for ind, ra, dec, rotSkyPos, mjd in zip(np.arange(simData.size), lon, lat,
                                                 simData[self.rotSkyPosColName], simData[self.mjdColName]):
-            dx, dy, dz = _xyz_from_ra_dec(ra, dec)
+            dx, dy, dz = simsUtils._xyz_from_ra_dec(ra, dec)
             # Find healpixels inside the FoV
             hpIndices = np.array(self.opsimtree.query_ball_point((dx, dy, dz), self.rad))
             if hpIndices.size > 0:
-                obs_metadata = ObservationMetaData(pointingRA=np.degrees(ra),
-                                                   pointingDec=np.degrees(dec),
-                                                   rotSkyPos=np.degrees(rotSkyPos),
-                                                   mjd=mjd)
+                obs_metadata = simsUtils.ObservationMetaData(pointingRA=np.degrees(ra),
+                                                             pointingDec=np.degrees(dec),
+                                                             rotSkyPos=np.degrees(rotSkyPos),
+                                                             mjd=mjd)
 
                 chipNames = _chipNameFromRaDec(self.slicePoints['ra'][hpIndices],
                                                self.slicePoints['dec'][hpIndices],
@@ -209,10 +209,10 @@ class BaseSpatialSlicer(BaseSlicer):
 
         simDataRA, simDataDec = RA and Dec values (in radians).
         leafsize = the number of Ra/Dec pointings in each leaf node."""
-        self.opsimtree = _buildTree(simDataRa,
-                                    simDataDec,
-                                    leafsize)
+        self.opsimtree = simsUtils._buildTree(simDataRa,
+                                              simDataDec,
+                                              leafsize)
 
     def _setRad(self, radius=1.75):
         """Set radius (in degrees) for kdtree search using utility function from mafUtils."""
-        self.rad = xyz_angular_radius(radius)
+        self.rad = simsUtils.xyz_angular_radius(radius)
