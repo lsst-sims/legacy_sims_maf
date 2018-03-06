@@ -1,12 +1,14 @@
 import warnings
 import numpy as np
+from scipy.spatial import cKDTree as kdtree
 import palpy
-from lsst.sims.utils import Site, m5_flat_sed
+from lsst.sims.utils import Site, m5_flat_sed, xyz_from_ra_dec, xyz_angular_radius, _buildTree, _xyz_from_ra_dec
+from lsst.sims.survey.fields import FieldsDatabase
 from .baseStacker import BaseStacker
 
 __all__ = ['NormAirmassStacker', 'ParallaxFactorStacker', 'HourAngleStacker',
            'FilterColorStacker', 'ZenithDistStacker', 'ParallacticAngleStacker',
-           'SeasonStacker', 'DcrStacker', 'FiveSigmaStacker']
+           'SeasonStacker', 'DcrStacker', 'FiveSigmaStacker', 'OpSimFieldStacker']
 
 # Original stackers by Peter Yoachim (yoachim@uw.edu)
 # Filter color stacker by Lynne Jones (lynnej@uw.edu)
@@ -400,3 +402,48 @@ class SeasonStacker(BaseStacker):
         simData['season'] = season
         return simData
 
+
+class OpSimFieldStacker(BaseStacker):
+    """Add the fieldId of the closest OpSim field for each RA/Dec pointing.
+
+    Parameters
+    ----------
+    raCol : str, opt
+        Name of the RA column. Default fieldRA.
+    decCol : str, opt
+        Name of the Dec column. Default fieldDec.
+
+    """
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True):
+        self.colsReq = [raCol, decCol]
+        self.colsAdded = ['fieldId']
+        self.units = ['#']
+        self.raCol = raCol
+        self.decCol = decCol
+        self.degrees = degrees
+        fields_db = FieldsDatabase()
+        # Returned RA/Dec coordinates in degrees
+        fieldid, ra, dec = fields_db.get_id_ra_dec_arrays("select * from Field;")
+        asort = np.argsort(fieldid)
+        self.tree = _buildTree(np.radians(ra[asort]),
+                               np.radians(dec[asort]))
+
+    def _run(self, simData, cols_present=False):
+        if cols_present:
+            # Column already present in data; assume it is correct and does not need recalculating.
+            return simData
+
+        if self.degrees:
+            # use public method (degrees)
+            coord_x, coord_y, coord_z = xyz_from_ra_dec(simData[self.raCol],
+                                                        simData[self.decCol])
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
+
+        else:
+            # use private method (radians)
+            coord_x, coord_y, coord_z = _xyz_from_ra_dec(simData[self.raCol],
+                                                         simData[self.decCol])
+            field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
+
+        simData['fieldId'] = np.array([ids[0] for ids in field_ids]) + 1
+        return simData
