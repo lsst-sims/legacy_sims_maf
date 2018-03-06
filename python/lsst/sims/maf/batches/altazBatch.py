@@ -107,7 +107,6 @@ def altazLambBatch(colmap=None, runName='opsim', extraSql=None,
 
     bundleList = []
 
-    plotDict = {}
     plotFunc = plots.LambertSkyMap()
 
     for f in filterlist:
@@ -118,7 +117,7 @@ def altazLambBatch(colmap=None, runName='opsim', extraSql=None,
         displayDict = {'group': 'Alt/Az', 'order': orders[f], 'subgroup': subgroup,
                        'caption':
                        'Alt/Az pointing distribution for filter %s' % f}
-        bundle = mb.MetricBundle(metric, slicer, sqls[f], plotDict=plotDict,
+        bundle = mb.MetricBundle(metric, slicer, sqls[f],
                                  runName=runName, metadata = metadata[f],
                                  plotFuncs=[plotFunc], displayDict=displayDict)
         bundleList.append(bundle)
