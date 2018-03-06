@@ -24,7 +24,7 @@ def setBatches(opsdb, colmap, args):
     """
     for tag in ['All', 'WFD']:
         sql = sqls[tag]
-        md = metadata[tag]    
+        md = metadata[tag]
         fO = batches.fOBatch(colmap=colmap, runName=args.runName,
                              extraSql=sql, extraMetadata=md)
         bdict.update(fO)
@@ -34,7 +34,7 @@ def setBatches(opsdb, colmap, args):
         rapidrevisit = batches.rapidRevisitBatch(colmap=colmap, runName=args.runName,
                                                  extraSql=sql, extraMetadata=md)
         bdict.update(rapidrevisit)
-    bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))    
+    bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
     bdict.update(batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint))
     bdict.update(batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint))
     """
@@ -54,6 +54,9 @@ def setBatches(opsdb, colmap, args):
                                            extraSql=sqls[tag], extraMetadata=metadata[tag]))
         bdict.update(batches.tEffMetrics(colmap, args.runName, extraSql=sqls[tag],
                                          extraMetadata=metadata[tag]))
+
+    # NVisits alt/az LambertSkyMap (all filters, per filter)
+    bdict.update(batches.altazLambBatch(colmap, args.runName, extraSql=args.sqlConstraint))
 
     # Slew metrics.
     bdict.update(batches.slewBasics(colmap, args.runName, sqlConstraint=args.sqlConstraint))
