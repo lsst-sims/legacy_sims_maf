@@ -60,7 +60,7 @@ def altazHealBatch(colmap=None, runName='opsim', extraSql=None,
             subgroup = 'All Observations'
         else:
             subgroup = 'Per filter'
-        displayDict = {'group': 'Hour Angle', 'order': orders[f], 'subgroup': subgroup,
+        displayDict = {'group': 'Alt/Az', 'order': orders[f], 'subgroup': subgroup,
                        'caption':
                        'Pointing History on the alt-az sky (zenith center) for filter %s' % f}
         bundle = mb.MetricBundle(metric, slicer, sqls[f], plotDict=plotDict,
@@ -115,9 +115,9 @@ def altazLambBatch(colmap=None, runName='opsim', extraSql=None,
             subgroup = 'All Observations'
         else:
             subgroup = 'Per filter'
-        displayDict = {'group': 'Alt Az', 'order': orders[f], 'subgroup': subgroup,
+        displayDict = {'group': 'Alt/Az', 'order': orders[f], 'subgroup': subgroup,
                        'caption':
-                       'Alt Az pointing distribution for filter %s' % f}
+                       'Alt/Az pointing distribution for filter %s' % f}
         bundle = mb.MetricBundle(metric, slicer, sqls[f], plotDict=plotDict,
                                  runName=runName, metadata = metadata[f],
                                  plotFuncs=[plotFunc], displayDict=displayDict)
