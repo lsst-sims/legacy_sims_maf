@@ -18,8 +18,8 @@ def basicSetup(metricName, colmap=None, nside=64):
 
     return colmap, slicer, metric
 
-def altazHealBatch(colmap=None, runName='opsim', groupName=None,
-                   extraSql=None, extraMetadata=None, metricName='NVisits Alt/Az'):
+def altazHealBatch(colmap=None, runName='opsim', extraSql=None,
+                   extraMetadata=None, metricName='NVisits Alt/Az'):
 
     """Generate a set of metrics measuring the number visits as a function of alt/az
     plotted on a HealpixSkyMap.
@@ -30,8 +30,6 @@ def altazHealBatch(colmap=None, runName='opsim', groupName=None,
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
-    groupName : str, opt
-        The group name for this quantity in the displayDict. Default is the same as 'valueName', capitalized.
     extraSql : str, opt
         Additional constraint to add to any sql constraints (e.g. 'propId=1' or 'fieldID=522').
         Default None, for no additional constraints.
@@ -75,8 +73,8 @@ def altazHealBatch(colmap=None, runName='opsim', groupName=None,
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def altazLambBatch(colmap=None, runName='opsim', groupName=None,
-                   extraSql=None, extraMetadata=None, metricName='Nvisits as function of Alt/Az'):
+def altazLambBatch(colmap=None, runName='opsim', extraSql=None,
+                   extraMetadata=None, metricName='Nvisits as function of Alt/Az'):
 
     """Generate a set of metrics measuring the number visits as a function of alt/az
     plotted on a LambertSkyMap.
@@ -87,8 +85,6 @@ def altazLambBatch(colmap=None, runName='opsim', groupName=None,
         A dictionary with a mapping of column names. Default will use OpsimV4 column names.
     runName : str, opt
         The name of the simulated survey. Default is "opsim".
-    groupName : str, opt
-        The group name for this quantity in the displayDict. Default is the same as 'valueName', capitalized.
     extraSql : str, opt
         Additional constraint to add to any sql constraints (e.g. 'propId=1' or 'fieldID=522').
         Default None, for no additional constraints.
