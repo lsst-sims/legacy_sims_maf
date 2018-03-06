@@ -55,9 +55,6 @@ def setBatches(opsdb, colmap, args):
         bdict.update(batches.tEffMetrics(colmap, args.runName, extraSql=sqls[tag],
                                          extraMetadata=metadata[tag]))
 
-    # NVisits alt/az HealpixSkyMap (all filters, per filter)
-    bdict.update(batches.altazHealBatch(colmap, args.runName, extraSql=args.sqlConstraint))
-
     # NVisits alt/az LambertSkyMap (all filters, per filter)
     bdict.update(batches.altazLambBatch(colmap, args.runName, extraSql=args.sqlConstraint))
 

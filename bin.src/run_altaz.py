@@ -11,9 +11,6 @@ from run_generic import *
 def setBatches(opsdb, colmap, args):
     bdict = {}
 
-    # NVisits alt/az HealpixSkyMap (all filters, per filter)
-    bdict.update(batches.altazHealBatch(colmap, args.runName, extraSql=args.sqlConstraint))
-
     # NVisits alt/az LambertSkyMap (all filters, per filter)
     bdict.update(batches.altazLambBatch(colmap, args.runName, extraSql=args.sqlConstraint))
 
