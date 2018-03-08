@@ -52,7 +52,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         sql = 'filter="g" or filter="r" or filter="i"'
     md = 'gri'
     if metadata is not None:
-        md += metadata
+        md += ' ' + metadata
     dtMin = 15.0
     dtMax = 60.0
     metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'], minGap=dtMin, maxGap=dtMax,
@@ -61,7 +61,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
     displayDict['caption'] = 'Fraction of %s visits that have a paired visit' \
-                             'between %.1f and %.1f minutes away. ' % (metadata, dtMin, dtMax)
+                             'between %.1f and %.1f minutes away. ' % (md, dtMin, dtMax)
     displayDict['caption'] += 'If all visits were in pairs, this fraction would be 1.'
     displayDict['order'] += 1
     bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, summaryMetrics=standardStats,
@@ -73,7 +73,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     metric = metrics.NRevisitsMetric(mjdCol=colmap['mjd'], dT=dtMax, normed=True,
                                      metricName='Fraction of visits with a revisit < %.0f min' % dtMax)
     displayDict['caption'] = 'Fraction of %s visits that have another visit ' \
-                             'within %.1f min. ' % (metadata, dtMax)
+                             'within %.1f min. ' % (md, dtMax)
     displayDict['caption'] += 'If all visits were in pairs (only), this fraction would be 0.5.'
     displayDict['order'] += 1
     bundle = mb.MetricBundle(metric, slicer, sql, metadata=md, summaryMetrics=standardStats,
@@ -85,7 +85,11 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                           reduceFunc=np.median)
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
-    displayDict['caption'] = 'Median gap between consecutive visits within a night, all bands.'
+    displayDict['caption'] = 'Median gap between consecutive visits within a night, all bands'
+    if metadata is None or len(metadata) == 0:
+        displayDict['caption'] += ', all proposals.'
+    else:
+        displayDict['caption'] += ', %s.' % metadata
     displayDict['order'] += 1
     plotDict = {'percentileClip': 95}
     bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadata, displayDict=displayDict,
@@ -104,8 +108,12 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                    latLonDeg=colmap['raDecDeg'])
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point ' \
-                             'on the sky, considering visits between %.1f and %.1f minutes' % (binMin,
-                                                                                               binMax)
+                             'on the sky, considering visits between %.1f and %.1f minutes,' % (binMin,
+                                                                                                binMax)
+    if metadata is None or len(metadata) == 0:
+        displayDict['caption'] += ', all proposals.'
+    else:
+        displayDict['caption'] += ', %s.' % metadata
     displayDict['order'] += 1
     plotFunc = plots.SummaryHistogram()
     bundle = mb.MetricBundle(metric, slicer, extraSql, plotDict=plotDict,
@@ -115,7 +123,8 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+    plotBundles = None
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
 
 
 def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None):
@@ -156,8 +165,12 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                    latLonDeg=colmap['raDecDeg'])
     plotDict = {'bins': bins, 'xlabel': 'dT (nights)'}
     displayDict['caption'] = 'Histogram of the number of nights between consecutive visits to a ' \
-                             'given point on the sky, considering separations between %d and %d.' \
+                             'given point on the sky, considering separations between %d and %d,' \
                              % (bins.min(), bins.max())
+    if metadata['all'] is None or len(metadata['all']) == 0:
+        displayDict['caption'] += ', all proposals.'
+    else:
+        displayDict['caption'] += ', %s.' % metadata['all']
     plotFunc = plots.SummaryHistogram()
     bundle = mb.MetricBundle(metric, slicer, sqls['all'], plotDict=plotDict,
                              displayDict=displayDict, metadata=metadata['all'], plotFuncs=[plotFunc])
@@ -197,4 +210,5 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+    plotBundles = None
+    return mb.makeBundlesDictFromList(bundleList), plotBundles

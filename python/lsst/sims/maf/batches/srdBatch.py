@@ -117,7 +117,7 @@ def astrometryBatch(colmap=None, runName='opsim',
     plotmaxVals = (2.0, 15.0)
     for rmag, plotmax in zip(rmags, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
-        metric = metrics.ParallaxMetric(metricName='Parallax @ %.1f' % (rmag), rmag=rmag,
+        metric = metrics.ParallaxMetric(metricName='Parallax Error @ %.1f' % (rmag), rmag=rmag,
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
@@ -173,7 +173,7 @@ def astrometryBatch(colmap=None, runName='opsim',
     plotmaxVals = (1.0, 5.0)
     for rmag, plotmax in zip(rmags, plotmaxVals):
         plotDict = {'xMin': 0, 'xMax': plotmax, 'colorMin': 0, 'colorMax': plotmax}
-        metric = metrics.ProperMotionMetric(metricName='Proper Motion @ %.1f' % rmag,
+        metric = metrics.ProperMotionMetric(metricName='Proper Motion Error @ %.1f' % rmag,
                                             rmag=rmag, m5Col=colmap['fiveSigmaDepth'],
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=False)
