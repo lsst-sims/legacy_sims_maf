@@ -10,4 +10,4 @@ from .glanceBatch import *
 from .filterchangeBatch import *
 from .openshutterBatch import *
 from .skycoverage import *
-
+from .altazBatch import *

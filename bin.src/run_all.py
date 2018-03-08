@@ -24,7 +24,7 @@ def setBatches(opsdb, colmap, args):
     """
     for tag in ['All', 'WFD']:
         sql = sqls[tag]
-        md = metadata[tag]    
+        md = metadata[tag]
         fO = batches.fOBatch(colmap=colmap, runName=args.runName,
                              extraSql=sql, extraMetadata=md)
         bdict.update(fO)
@@ -34,12 +34,11 @@ def setBatches(opsdb, colmap, args):
         rapidrevisit = batches.rapidRevisitBatch(colmap=colmap, runName=args.runName,
                                                  extraSql=sql, extraMetadata=md)
         bdict.update(rapidrevisit)
-    bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))    
+    bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
     bdict.update(batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint))
     bdict.update(batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint))
     """
 
-    """
     # Run all metadata metrics, All and just WFD.
     for tag in ['All', 'WFD']:
         bdict.update(batches.allMetadata(colmap, args.runName, extraSql=sqls[tag],
@@ -56,13 +55,15 @@ def setBatches(opsdb, colmap, args):
     bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName,
                                         extraSql=args.sqlConstraint))
 
+    # NVisits alt/az LambertSkyMap (all filters, per filter)
+    bdict.update(batches.altazLambert(colmap, args.runName, extraSql=args.sqlConstraint))
 
     # Slew metrics.
     bdict.update(batches.slewBasics(colmap, args.runName, sqlConstraint=args.sqlConstraint))
-    """
+
     # Open shutter metrics.
     bdict.update(batches.openshutterFractions(colmap, args.runName, extraSql=args.sqlConstraint))
-    """
+
     # Per night and whole survey filter changes.
     bdict.update(batches.filtersPerNight(colmap, args.runName, nights=1, extraSql=args.sqlConstraint))
     bdict.update(batches.filtersWholeSurvey(colmap, args.runName, extraSql=args.sqlConstraint))
@@ -70,7 +71,7 @@ def setBatches(opsdb, colmap, args):
     # Hourglass plots.
     bdict.update(batches.hourglassPlots(colmap, args.runName,
                                         nyears=args.nyears, extraSql=args.sqlConstraint))
-    """
+
     return bdict
 
 
