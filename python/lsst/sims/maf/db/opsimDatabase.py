@@ -347,20 +347,22 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
         Returns dictionary of propID / propname, and dictionary of propTag / propID.
         If not using a full database, will return dict of propIDs with empty propnames + empty propTag dict.
         """
-        propIDs = {}
+        propIds = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
-        propTags = {'WFD': [], 'DD': []}
+        propTags = {'WFD': [], 'DD': [], 'NES': []}
 
         propData = self.query_columns('Proposal', colnames=[self.propIdCol, self.propNameCol],
                                       sqlconstraint=None)
-        for propID, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
+        for propId, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
             # Fix these in the future, to use the proper tags that will be added to output database.
-            propIDs[propID] = propName
+            propIds[propId] = propName
             if 'widefastdeep' in propName.lower():
-                propTags['WFD'].append(propID)
-            if 'drill' in propName.lower():
-                propTags['DD'].append(propID)
-        return propIDs, propTags
+                propTags['WFD'].append(propId)
+            if 'drilling' in propName.lower():
+                propTags['DD'].append(propId)
+            if 'northeclipticspur' in propName.lower():
+                propTags['NES'].append(propId)
+        return propIds, propTags
 
     def createSlewConstraint(self, startTime=None, endTime=None):
         """Create a SQL constraint for the slew tables (slew activities, slew speeds, slew states)
@@ -780,7 +782,7 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         """
         propIDs = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
-        propTags = {'WFD':[], 'DD':[]}
+        propTags = {'WFD':[], 'DD':[], 'NES': []}
         # If do not have full database available:
         if 'Proposal' not in self.tables:
             propData = self.query_columns(self.defaultTable, colnames=[self.propIdCol])
@@ -804,6 +806,8 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
                         propTags['WFD'].append(propid)
                     if 'deep' in propname.lower():
                         propTags['DD'].append(propid)
+                    if 'northecliptic' in propname.lower():
+                        propTags['NES'].append(propid)
             else:
                 # Newer opsim output with 'ScienceType' fields in conf files.
                 for sc in sciencetypes:
@@ -814,6 +818,10 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
                             propTags[sciencetype].append(int(sc['nonPropID']))
                         else:
                             propTags[sciencetype] = [int(sc['nonPropID']),]
+                # But even these runs don't tag NES
+                for propid, propname in propIDs.items():
+                    if 'northecliptic' in propname.lower():
+                        propTags['NES'].append(propid)
         return propIDs, propTags
 
     def createSlewConstraint(self, startTime=None, endTime=None):
