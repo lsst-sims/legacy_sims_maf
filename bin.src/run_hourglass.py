@@ -11,7 +11,7 @@ from run_generic import *
 
 def setBatches(opsdb, colmap, args):
     bdict = {}
-    bdict.update(batches.hourglassBatch(colmap, args.runName,
+    bdict.update(batches.hourglassPlots(colmap, args.runName,
                                         nyears=args.nyears, extraSql=args.sqlConstraint))
     return bdict
 

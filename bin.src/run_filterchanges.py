@@ -12,9 +12,9 @@ def setBatches(opsdb, colmap, args):
     bdict = {}
 
     # Per Night filter changes
-    bdict.update(batches.filtersPerNightBatch(colmap, args.runName, nights=1, extraSql=args.sqlConstraint))
+    bdict.update(batches.filtersPerNight(colmap, args.runName, nights=1, extraSql=args.sqlConstraint))
     # Whole survey filter changes
-    bdict.update(batches.filtersWholeSurveyBatch(colmap, args.runName, extraSql=args.sqlConstraint))
+    bdict.update(batches.filtersWholeSurvey(colmap, args.runName, extraSql=args.sqlConstraint))
 
     return bdict
 
