@@ -10,3 +10,4 @@ from .opsimFieldSlicer import *
 from .healpixSDSSSlicer import *
 from .userPointsSlicer import *
 from .moSlicer import *
+from .healpixComCamSlicer import *

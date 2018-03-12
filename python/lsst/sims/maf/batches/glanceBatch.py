@@ -15,7 +15,7 @@ __all__ = ['glanceBatch']
 
 def glanceBatch(colmap=None, runName='opsim',
                 nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y'),
-                nyears=10, pairnside=32, sqlConstraint=None):
+                nyears=10, pairnside=32, sqlConstraint=None, slicer_camera='LSST'):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
     This is a meta-set of other batches, to some extent.
 
@@ -37,6 +37,8 @@ def glanceBatch(colmap=None, runName='opsim',
         nside to use for the pair fraction metric (it's slow, so nice to use lower resolution)
     sqlConstraint : str or None, opt
         Additional SQL constraint to apply to all metrics.
+    slicer_camera : str ('LSST')
+        Sets which spatial slicer to use. options are 'LSST' and 'ComCam'
 
     Returns
     -------
@@ -54,6 +56,11 @@ def glanceBatch(colmap=None, runName='opsim',
         sqlC = ''
     else:
         sqlC = '(%s) and' % sqlConstraint
+
+    if slicer_camera == 'LSST':
+        spatial_slicer = slicers.HealpixSlicer
+    elif slicer_camera == 'ComCam':
+        spatial_slicer = slicers.HealpixComCamSlicer
 
     sql_per_filt = ['%s %s="%s"' % (sqlC, colmap['filter'], filtername) for filtername in filternames]
     sql_per_and_all_filters = [sqlConstraint] + sql_per_filt
@@ -96,13 +103,13 @@ def glanceBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
 
     # The alt/az plots of all the pointings
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['alt'],
-                                   lonCol=colmap['az'], latLonDeg=colmap['raDecDeg'], useCache=False)
+    slicer = spatial_slicer(nside=nside, latCol=colmap['alt'],
+                            lonCol=colmap['az'], latLonDeg=colmap['raDecDeg'], useCache=False)
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=plotFuncs,
-                                            displayDict=displayDict, stackerList=[stacker])
+                                            displayDict=displayDict)
         bundleList.append(bundle)
 
     # Things to check per night
@@ -128,8 +135,8 @@ def glanceBatch(colmap=None, runName='opsim',
     # A few basic maps
     # Number of observations, coadded depths
     displayDict = {'group': 'Basic Maps', 'order': 3}
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = spatial_slicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                            latLonDeg=colmap['raDecDeg'])
     metric = metrics.CountMetric(col=colmap['mjd'])
     plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
