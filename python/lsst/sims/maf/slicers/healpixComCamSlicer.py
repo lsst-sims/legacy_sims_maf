@@ -12,8 +12,8 @@ __all__ = ['HealpixComCamSlicer']
 
 
 # The names of the chips in the central raft, aka, ComCam
-center_raft_chips = ['R:2,2 S:0,0', 'R:2,2 S:0,1', 'R:2,2 S:0,2'
-                     'R:2,2 S:1,0', 'R:2,2 S:1,1', 'R:2,2 S:1,2'
+center_raft_chips = ['R:2,2 S:0,0', 'R:2,2 S:0,1', 'R:2,2 S:0,2',
+                     'R:2,2 S:1,0', 'R:2,2 S:1,1', 'R:2,2 S:1,2',
                      'R:2,2 S:2,0', 'R:2,2 S:2,1', 'R:2,2 S:2,2']
 
 
