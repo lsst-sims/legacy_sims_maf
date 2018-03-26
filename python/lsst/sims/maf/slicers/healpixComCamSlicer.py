@@ -21,7 +21,7 @@ class HealpixComCamSlicer(HealpixSlicer):
     """Slicer that uses the ComCam footprint to decide if observations overlap a healpixel center
     """
 
-    def __init__(self, nside=128, lonCol ='fieldRA',
+    def __init__(self, nside=128, lonCol='fieldRA',
                  latCol='fieldDec', latLonDeg=True, verbose=True, badval=hp.UNSEEN,
                  useCache=True, leafsize=100,
                  useCamera=False, rotSkyPosColName='rotSkyPos',
