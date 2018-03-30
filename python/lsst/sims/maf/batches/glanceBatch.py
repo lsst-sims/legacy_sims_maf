@@ -61,6 +61,8 @@ def glanceBatch(colmap=None, runName='opsim',
         spatial_slicer = slicers.HealpixSlicer
     elif slicer_camera == 'ComCam':
         spatial_slicer = slicers.HealpixComCamSlicer
+    else:
+        raise ValueError('Camera must be LSST or Comcam')
 
     sql_per_filt = ['%s %s="%s"' % (sqlC, colmap['filter'], filtername) for filtername in filternames]
     sql_per_and_all_filters = [sqlConstraint] + sql_per_filt
@@ -211,17 +213,17 @@ def glanceBatch(colmap=None, runName='opsim',
     for b in bundleList:
         b.setRunName(runName)
 
+    bd = metricBundles.makeBundlesDictFromList(bundleList)
+
     # Add hourglass plots.
     hrDict = hourglassBatch(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
-
+    bd.update(hrDict)
     # Add basic slew stats.
     try:
         slewDict = slewBasics(colmap=colmap, runName=runName)
+        bd.update(slewDict)
     except KeyError as e:
         warnings.warn('Could not add slew stats: missing required key %s from colmap' % (e))
 
-    bd = metricBundles.makeBundlesDictFromList(bundleList)
-    bd.update(slewDict)
-    bd.update(hrDict)
     return bd
 
