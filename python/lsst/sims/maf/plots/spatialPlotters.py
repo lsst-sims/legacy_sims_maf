@@ -176,7 +176,7 @@ class HealpixPowerSpectrum(BasePlotter):
         """
         Generate and plot the power spectrum of metricValue (calculated on a healpix grid).
         """
-        if slicer.slicerName != 'HealpixSlicer':
+        if 'Healpix' not in slicer.slicerName:
             raise ValueError('HealpixPowerSpectrum for use with healpix metricBundles.')
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
@@ -229,7 +229,7 @@ class HealpixHistogram(BasePlotter):
         """
         Histogram metricValue for all healpix points.
         """
-        if slicer.slicerName != 'HealpixSlicer':
+        if 'Healpix' not in slicer.slicerName:
             raise ValueError('HealpixHistogram is for use with healpix slicer.')
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
