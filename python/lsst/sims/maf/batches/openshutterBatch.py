@@ -32,15 +32,31 @@ def openshutterFractions(colmap=None, runName='opsim', extraSql=None, extraMetad
 
     subgroup = 'All visits'
     if extraMetadata is not None:
-        subgroup = extraMetadata
+        subgroup = extraMetadata + ' ' + subgroup.lower()
+    elif extraSql is not None and extraMetadata is None:
+        subgroup = subgroup + ' ' + extraSql
 
     # Open Shutter fraction over whole survey.
     displayDict = {'group': group, 'subgroup': subgroup, 'order': 0}
-    displayDict['caption'] = 'Total open shutter fraction over whole survey. ' \
-                             'Does not include downtime due to weather.'
+    displayDict['caption'] = 'Total open shutter fraction over %s. ' % subgroup.lower()
+    displayDict['caption'] += 'Does not include downtime due to weather.'
     metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
                                                expTimeCol=colmap['exptime'],
                                                visitTimeCol=colmap['visittime'])
+    slicer = slicers.UniSlicer()
+    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=subgroup,
+                             displayDict=displayDict)
+    bundleList.append(bundle)
+    # Count the number of nights on-sky in the survey.
+    displayDict['caption'] = 'Number of nights on the sky during the survey, %s.' % subgroup.lower()
+    metric = metrics.CountUniqueMetric(colmap['night'])
+    slicer = slicers.UniSlicer()
+    bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=subgroup,
+                             displayDict=displayDict)
+    bundleList.append(bundle)
+    # Count the number of nights total in the survey (start to finish of observations).
+    displayDict['caption'] = 'Number of nights from start to finish of survey, %s.' % subgroup.lower()
+    metric = metrics.FullRangeMetric(colmap['night'])
     slicer = slicers.UniSlicer()
     bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=subgroup,
                              displayDict=displayDict)
@@ -50,8 +66,10 @@ def openshutterFractions(colmap=None, runName='opsim', extraSql=None, extraMetad
     subgroup = 'Per night'
     if extraMetadata is not None:
         subgroup = extraMetadata + ' ' + subgroup.lower()
+    elif extraSql is not None and extraMetadata is None:
+        subgroup = subgroup + ' ' + extraSql
     displayDict = {'group': group, 'subgroup': subgroup, 'order': 0}
-    displayDict['caption'] = 'Open shutter fraction per night.'
+    displayDict['caption'] = 'Open shutter fraction %s.' % (subgroup.lower())
     displayDict['caption'] += ' This compares on-sky image time against on-sky time + slews + filter ' \
                               'changes + readout, but does not include downtime due to weather.'
     metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
