@@ -60,11 +60,37 @@ def slewBasics(colmap=None, runName='opsim', sqlConstraint=None):
     bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
                              plotDict=plotDict, displayDict=displayDict)
     bundleList.append(bundle)
+    # Zoom in on slew time histogram near 0.
+    slicer = slicers.OneDSlicer(sliceColName=colmap['slewtime'], binsize=0.2, binMin=0, binMax=20)
+    metric = metrics.CountMetric(col=colmap['slewtime'], metricName='Zoom Slew Time Histogram')
+    metadata = 'All visits'
+    plotDict = {'logScale': True, 'ylabel': 'Count'}
+    displayDict['caption'] = 'Histogram of slew times (seconds) for all visits (zoom).'
+    displayDict['order'] += 1
+    bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
+                             plotDict=plotDict, displayDict=displayDict)
+    bundleList.append(bundle)
 
     # Slew distance histogram, if available.
     if colmap['slewdist'] is not None:
-        slicer = slicers.OneDSlicer(sliceColName=colmap['slewdist'])
+        binsize = 2.0
+        if not colmap['raDecDeg']:
+            binsize = np.radians(binsize)
+        slicer = slicers.OneDSlicer(sliceColName=colmap['slewdist'], binsize=binsize)
         metric = metrics.CountMetric(col=colmap['slewdist'], metricName='Slew Distance Histogram')
+        plotDict = {'logScale': True, 'ylabel': 'Count'}
+        displayDict['caption'] = 'Histogram of slew distances (angle) for all visits.'
+        displayDict['order'] += 1
+        bundle = mb.MetricBundle(metric, slicer, sqlConstraint, metadata=metadata,
+                                 plotDict=plotDict, displayDict=displayDict)
+        bundleList.append(bundle)
+        # Zoom on slew distance histogram.
+        binMax = 20.0
+        if not colmap['raDecDeg']:
+            binMax = np.radians(binMax)
+        slicer = slicers.OneDSlicer(sliceColName=colmap['slewdist'], binsize=binsize/10.,
+                                    binMin=0, binMax=binMax)
+        metric = metrics.CountMetric(col=colmap['slewdist'], metricName='Zoom Slew Distance Histogram')
         plotDict = {'logScale': True, 'ylabel': 'Count'}
         displayDict['caption'] = 'Histogram of slew distances (angle) for all visits.'
         displayDict['order'] += 1
