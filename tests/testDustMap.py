@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from lsst.sims.photUtils import EBV
+from lsst.sims.catUtils.dust import EBV
 import lsst.utils.tests
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 
