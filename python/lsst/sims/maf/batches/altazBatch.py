@@ -5,7 +5,7 @@ import lsst.sims.maf.plots as plots
 from .colMapDict import ColMapDict
 from .common import filterList
 
-__all__ = ['altazHealix','altazLambert']
+__all__ = ['altazHealpix','altazLambert']
 
 def basicSetup(metricName, colmap=None, nside=64):
 
