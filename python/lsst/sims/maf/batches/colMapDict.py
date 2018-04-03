@@ -77,7 +77,8 @@ def ColMapDict(dictName=None):
                                     'Readout': 'readout',
                                     'Filter': 'filter' }
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong', 'rotSkyPos']
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
+        colMap['metadataAngleList'] = ['rotSkyPos']
 
     elif dictName == 'opsimv3':
         colMap = {}
@@ -127,7 +128,8 @@ def ColMapDict(dictName=None):
                                     'Readout': 'Readout',
                                     'Filter': 'Filter' }
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong', 'rotSkyPos']
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
+        colMap['metadataAngleList'] = ['rotSkyPos']
 
     elif dictName == 'barebones':
         colMap = {}
@@ -147,7 +149,8 @@ def ColMapDict(dictName=None):
         colMap['seeingGeom'] = 'seeing'
         colMap['seeingEff'] = 'seeing'
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'rotSkyPos']
+                                  'fiveSigmaDepth', 'HA']
+        colMap['metadataAngleList'] = ['rotSkyPos']
 
     else:
         raise ValueError('No built in column dict with that name.')
