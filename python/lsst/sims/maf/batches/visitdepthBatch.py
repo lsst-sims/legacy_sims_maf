@@ -82,14 +82,14 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
             binsize = 5
         plotDict = {'xMin': nvisitsRange[f][0], 'xMax': nvisitsRange[f][1],
                     'colorMin': nvisitsRange[f][0], 'colorMax': nvisitsRange[f][1],
-                    'binsize': binsize}
+                    'binsize': binsize, 'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
 
     # Generate Coadded depth maps per filter
-    displayDict = {'group': 'Coadded m5 Maps', 'subgroup': subgroup}
+    displayDict = {'group': 'Coadded M5 Maps', 'subgroup': subgroup}
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'], metricName='CoaddM5')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
@@ -105,7 +105,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
         displayDict['order'] = orders[f]
         plotDict = {'zp': mag_zp, 'xMin': -0.6, 'xMax': 0.6,
                     'xlabel': 'coadded m5 - %.1f' % mag_zp,
-                    'colorMin': -0.6, 'colorMax': 0.6}
+                    'colorMin': -0.6, 'colorMax': 0.6, 'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
@@ -244,7 +244,7 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
     displayDict['caption'] = 'Number of visits per night for %s.' % (metadataCaption)
     displayDict['order'] = 0
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits')
-    slicer = slicers.OneDSlicer(sliceColName=colmap['mjd'], binsize=int(binNights))
+    slicer = slicers.OneDSlicer(sliceColName=colmap['night'], binsize=binNights)
     bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadataCaption,
                              displayDict=displayDict, summaryMetrics=standardSummary())
     bundleList.append(bundle)
@@ -305,7 +305,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
 
     # Look for any multi-proposal groups that we should include.
     for tag in proptags:
-        if len(proptags[tag]) > 1:
+        if len(proptags[tag]) > 1 or tag in ('WFD', 'DD'):
             pids = proptags[tag]
             sql = '('
             for pid in pids[:-1]:
