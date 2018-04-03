@@ -21,6 +21,8 @@ setupRequired(sims_photUtils)
 setupRequired(sims_coordUtils)
 # For the dustmaps and stellar density maps
 setupRequired(sims_maps)
+# sims_catUtils contains the code to actually access the dust maps
+setupRequired(sims_catUtils)
 # For opsim fields
 setupRequired(sims_survey_fields)
 # For camera footprint
