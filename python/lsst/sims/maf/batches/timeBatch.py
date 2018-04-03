@@ -97,6 +97,24 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                              summaryMetrics=standardStats)
     bundleList.append(bundle)
 
+    # Histogram the number of visits per night.
+    countbins = np.arange(0, 10, 1)
+    metric = metrics.NVisitsPerNightMetric(nightCol=colmap['night'], bins=countbins,
+                                           metricName="NVisitsPerNight")
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                                   latLonDeg=colmap['raDecDeg'])
+    plotDict = {'bins': countbins, 'xlabel': 'Number of visits each night'}
+    displayDict['caption'] = 'Histogram of the number of visits in each night, per point on the sky'
+    if metadata is None or len(metadata) == 0:
+        displayDict['caption'] += ', all proposals.'
+    else:
+        displayDict['caption'] += ', %s.' % metadata
+    displayDict['order'] = 0
+    plotFunc = plots.SummaryHistogram()
+    bundle = mb.MetricBundle(metric, slicer, extraSql, plotDict=plotDict,
+                             displayDict=displayDict, metadata=metadata, plotFuncs=[plotFunc])
+    bundleList.append(bundle)
+
     # Histogram of the time between revisits (all filters) within two hours.
     binMin = 0
     binMax = 120.
