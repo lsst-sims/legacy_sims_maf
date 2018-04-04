@@ -106,7 +106,7 @@ class SummaryHistogram(BasePlotter):
         self.objectPlotter = True
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'ylabel': 'Count', 'label': None,
                                 'cumulative': False, 'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
-                                'color': 'b', 'linestyle': '-', 'histStyle': True,
+                                'color': 'b', 'linestyle': '-', 'histStyle': True, 'grid': True,
                                 'metricReduce': metrics.SumMetric(), 'bins': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -153,7 +153,11 @@ class SummaryHistogram(BasePlotter):
             finalHist[i] = metric.run(mV[:, i])
         bins = plotDict['bins']
         if plotDict['histStyle']:
-            x = np.ravel(list(zip(bins[:-1], bins[1:])))
+            width = np.diff(bins)
+            leftedge = bins[:-1] - width/2.0
+            rightedge = bins[:-1] + width/2.0
+            #x = np.ravel(list(zip(bins[:-1], bins[1:])))
+            x = np.ravel(list(zip(leftedge, rightedge)))
             y = np.ravel(list(zip(finalHist, finalHist)))
         else:
             # Could use this to plot things like FFT
@@ -166,4 +170,19 @@ class SummaryHistogram(BasePlotter):
         plt.xlabel(plotDict['xlabel'])
         plt.ylabel(plotDict['ylabel'])
         plt.title(plotDict['title'])
+        plt.grid(plotDict['grid'], alpha=0.3)
+        # Set y and x limits, if provided.
+        if plotDict['xMin'] is not None:
+            plt.xlim(xmin=plotDict['xMin'])
+        elif bins[0] == 0:
+            plt.xlim(xmin=0)
+        if plotDict['xMax'] is not None:
+            plt.xlim(xmax=plotDict['xMax'])
+        if plotDict['yMin'] is not None:
+            plt.ylim(ymin=plotDict['yMin'])
+        elif finalHist.min() == 0:
+            plotDict['yMin'] = 0
+        if plotDict['yMax'] is not None:
+            plt.ylim(ymax=plotDict['yMax'])
+
         return fig.number
