@@ -8,7 +8,7 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary, extendedMetrics, standardAngleMetrics, filterList
 
-__all__ = ['metadataBasics', 'metadataBasicsAngle', 'allMetadata']
+__all__ = ['metadataBasics', 'metadataBasicsAngle', 'allMetadata', 'metadataMaps']
 
 
 def metadataBasics(value, colmap=None, runName='opsim',
@@ -284,4 +284,99 @@ def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None)
     return bdict
 
 
+def metadataMaps(value, colmap=None, runName='opsim',
+                 valueName=None, groupName=None, extraSql=None, extraMetadata=None, nside=64):
+    """Calculate 25/50/75 percentile values on maps across sky for a single metadata value.
 
+    TODO: handle stackers which need configuration (degrees, in particular) more automatically.
+    Currently have a hack for HA & normairmass.
+
+    Parameters
+    ----------
+    value : str
+        The column name for the quantity to evaluate. (column name in the database or created by a stacker).
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    valueName : str, opt
+        The name of the value to be reported in the resultsDb and added to the metric.
+        This is intended to help standardize metric comparison between sim versions.
+        value = name as it is in the database (seeingFwhmGeom, etc).
+        valueName = name to be recorded ('seeingGeom', etc.).  Default is None, which will match 'value'.
+    groupName : str, opt
+        The group name for this quantity in the displayDict. Default is the same as 'valueName', capitalized.
+    extraSql : str, opt
+        Additional constraint to add to any sql constraints (e.g. 'propId=1' or 'fieldID=522').
+        Default None, for no additional constraints.
+    extraMetadata : str, opt
+        Additional metadata to add before any below (i.e. "WFD").  Default is None.
+    nside : int, opt
+        Nside value for healpix slicer. Default 64.
+        If "None" is passed, the healpixslicer-based metrics will be skipped.
+
+    Returns
+    -------
+    metricBundleDict
+    """
+    if colmap is None:
+        colmap = ColMapDict('opsimV4')
+    bundleList = []
+
+    if valueName is None:
+        valueName = value
+
+    if groupName is None:
+        groupName = valueName.capitalize()
+        subgroup = extraMetadata
+    else:
+        groupName = groupName.capitalize()
+        subgroup = valueName.capitalize()
+
+    if subgroup is None:
+        subgroup = 'All visits'
+
+    displayDict = {'group': groupName, 'subgroup': subgroup}
+
+    # Set up basic all and per filter sql constraints.
+    filterlist, colors, orders, sqls, metadata = filterList(all=True,
+                                                            extraSql=extraSql,
+                                                            extraMetadata=extraMetadata)
+
+    # Hack to make HA work, but really I need to account for any stackers/colmaps.
+    if value == 'HA':
+        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=colmap['ra'],
+                                                 degrees=colmap['raDecDeg'])]
+    elif value == 'normairmass':
+        stackerList = [stackers.NormAirmassStacker(degrees=colmap['raDecDeg'])]
+    else:
+        stackerList = None
+
+    # Make maps of 25/median/75 for all and per filter, per RA/Dec, with standard summary stats.
+    mList = []
+    mList.append(metrics.PercentileMetric(value, percentile=25,
+                                          metricName='25thPercentile %s' % (valueName)))
+    mList.append(metrics.MedianMetric(value, metricName='Median %s' % (valueName)))
+    mList.append(metrics.PercentileMetric(value, percentile=75,
+                                          metricName='75thPercentile %s' % (valueName)))
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                                   latLonDeg=colmap['raDecDeg'])
+    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+    for f in filterlist:
+        for m in mList:
+            displayDict['caption'] = 'Map of %s' % m.name
+            if valueName != value:
+                displayDict['caption'] += ' (%s)' % value
+            displayDict['caption'] += ' for %s.' % metadata[f]
+            displayDict['order'] = orders[f]
+            bundle = mb.MetricBundle(m, slicer, sqls[f], stackerList=stackerList,
+                                     metadata=metadata[f], plotFuncs=subsetPlots,
+                                     displayDict=displayDict,
+                                     summaryMetrics=standardSummary())
+            bundleList.append(bundle)
+
+    # Set the runName for all bundles and return the bundleDict.
+    for b in bundleList:
+        b.setRunName(runName)
+    plotBundles = []
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
