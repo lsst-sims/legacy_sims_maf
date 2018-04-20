@@ -28,7 +28,7 @@ def meanRADec(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
     bundleList = []
     plotBundles = []
 
-    group = 'Open Shutter Fraction'
+    group = 'RA Dec coverage'
 
     subgroup = 'All visits'
     if extraMetadata is not None:
