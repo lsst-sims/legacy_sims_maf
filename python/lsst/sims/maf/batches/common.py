@@ -2,7 +2,8 @@ from __future__ import print_function
 
 import lsst.sims.maf.metrics as metrics
 
-__all__ = ['filterList', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics']
+__all__ = ['filterList', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics',
+           'standardAngleMetrics']
 
 
 def filterList(all=True, extraSql=None, extraMetadata=None):
@@ -144,3 +145,34 @@ def extendedMetrics(colname, replace_colname=None):
             else:
                 m.name = m.name.rstrip(' %s' % colname)
     return extendedMetrics
+
+
+def standardAngleMetrics(colname, replace_colname=None):
+    """A set of standard simple metrics for some quantity which is a wrap-around angle.
+
+    Parameters
+    ----------
+    colname : str
+        The column name to apply the metrics to.
+    replace_colname: str or None, opt
+        Value to replace colname with in the metricName.
+        i.e. if replace_colname='' then metric name is Mean, instead of Mean Airmass, or
+        if replace_colname='seeingGeom', then metric name is Mean seeingGeom instead of Mean seeingFwhmGeom.
+        Default is None, which does not alter the metric name.
+
+    Returns
+    -------
+    List of configured metrics.
+    """
+    standardAngleMetrics = [metrics.MeanAngleMetric(colname),
+                            metrics.RmsAngleMetric(colname),
+                            metrics.FullRangeAngleMetric(colname),
+                            metrics.MinMetric(colname),
+                            metrics.MaxMetric(colname)]
+    if replace_colname is not None:
+        for m in standardAngleMetrics:
+            if len(replace_colname) > 0:
+                m.name = m.name.replace('%s' % colname, '%s' % replace_colname)
+            else:
+                m.name = m.name.rstrip(' %s' % colname)
+    return standardAngleMetrics

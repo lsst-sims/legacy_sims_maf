@@ -8,7 +8,7 @@ import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
 from .common import standardSummary
 from .slewBatch import slewBasics
-from .hourglassBatch import hourglassBatch
+from .hourglassBatch import hourglassPlots
 
 __all__ = ['glanceBatch']
 

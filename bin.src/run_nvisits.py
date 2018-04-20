@@ -12,7 +12,8 @@ def setBatches(opsdb, colmap, args):
     bdict = {}
     # number of observations per proposal and per night.
     bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName, extraSql=args.sqlConstraint))
-    # add nvisits / teff maps.
+
+    # add nvisits / m5 / teff maps.
     propids, proptags, sqls, metadata = setSQL(opsdb, args.sqlConstraint)
 
     for tag in ['All', 'WFD']:
