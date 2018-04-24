@@ -416,7 +416,7 @@ class OpSimFieldStacker(BaseStacker):
     """
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True):
         self.colsReq = [raCol, decCol]
-        self.colsAdded = ['fieldId']
+        self.colsAdded = ['opsimFieldId']
         self.units = ['#']
         self.raCol = raCol
         self.decCol = decCol
@@ -445,5 +445,5 @@ class OpSimFieldStacker(BaseStacker):
                                                          simData[self.decCol])
             field_ids = self.tree.query_ball_point(list(zip(coord_x, coord_y, coord_z)), xyz_angular_radius())
 
-        simData['fieldId'] = np.array([ids[0] for ids in field_ids]) + 1
+        simData['opsimFieldId'] = np.array([ids[0] for ids in field_ids]) + 1
         return simData
