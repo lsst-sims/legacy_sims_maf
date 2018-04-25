@@ -62,6 +62,7 @@ class M5OptimalStacker(BaseStacker):
         Adds a column to that is approximately what the five-sigma depth would have
         been if the observation had been taken on the meridian.
     """
+    colsAdded = ['m5Optimal']
 
     def __init__(self, airmassCol='airmass', decCol='dec_rad',
                  skyBrightCol='filtSkyBrightness', seeingCol='FWHMeff',
@@ -84,10 +85,10 @@ class M5OptimalStacker(BaseStacker):
                         seeingCol, filterCol, moonAltCol, sunAltCol]
         self.colsReq.extend(self.m5_stacker.colsReq)
         self.colsReq = list(set(self.colsReq))
-        self.colsAdded = ['m5Optimal']
 
-    def _run(self, simData):
-        simData = self.m5_stacker._run(simData)
+    def _run(self, simData, cols_present=False):
+        simData, m5col_present = self.m5_stacker._addStackerCols(simData)
+        simData = self.m5_stacker._run(simData, m5col_present)
         # kAtm values from lsst.sims.operations gen_output.py
         kAtm = {'u': 0.50, 'g': 0.21, 'r': 0.13, 'i': 0.10,
                 'z': 0.07, 'y': 0.18}

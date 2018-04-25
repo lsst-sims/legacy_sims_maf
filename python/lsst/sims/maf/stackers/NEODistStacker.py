@@ -10,6 +10,8 @@ class NEODistStacker(BaseStacker):
     For each observation, find the max distance to a ~144 km NEO,
     also stack on the x,y position of the object.
     """
+    colsAdded = ['MaxGeoDist', 'NEOHelioX', 'NEOHelioY']
+
     def __init__(self,
                  stepsize=.001, maxDist=3., minDist=.3, H=22, elongCol='solarElong',
                  filterCol='filter', sunAzCol='sunAz', azCol='azimuth', m5Col='fiveSigmaDepth'):
@@ -28,7 +30,6 @@ class NEODistStacker(BaseStacker):
         self.units = ['AU', 'AU', 'AU']
         # Also grab things needed for the HA stacker
         self.colsReq = [elongCol, filterCol, sunAzCol, azCol, m5Col]
-        self.colsAdded = ['MaxGeoDist', 'NEOHelioX', 'NEOHelioY']
 
         self.sunAzCol = sunAzCol
         self.elongCol = elongCol

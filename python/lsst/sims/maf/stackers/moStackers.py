@@ -54,6 +54,8 @@ class MoMagStacker(BaseMoStacker):
         The probabilistic prediction of visibility is based on Fermi-Dirac completeness formula (see SDSS,
         eqn 24, Stripe82 analysis: http://iopscience.iop.org/0004-637X/794/2/120/pdf/apj_794_2_120.pdf).
     """
+    colsAdded = ['appMagV', 'appMag', 'SNR', 'vis']
+
     def __init__(self, vMagCol='magV', colorCol='dmagColor', magFilterCol='magFilter',
                  lossCol='dmagDetect', m5Col='fiveSigmaDepth', gamma=0.038, sigma=0.12):
         self.vMagCol = vMagCol
@@ -64,7 +66,6 @@ class MoMagStacker(BaseMoStacker):
         self.gamma = gamma
         self.sigma = sigma
         self.colsReq = [self.magFilterCol, self.m5Col, self.lossCol]
-        self.colsAdded = ['appMagV', 'appMag', 'SNR', 'vis']
         self.units = ['mag', 'mag', 'SNR', '']
 
     def _run(self, ssoObs, Href, Hval):
@@ -91,12 +92,13 @@ class EclStacker(BaseMoStacker):
     inDeg : bool, opt
         Flag indicating whether RA/Dec are in degrees. Default True.
     """
+    colsAdded = ['ecLat', 'ecLon']
+
     def __init__(self, raCol='ra', decCol='dec', inDeg=True):
         self.raCol = raCol
         self.decCol = decCol
         self.inDeg = inDeg
         self.colsReq = [self.raCol, self.decCol]
-        self.colsAdded = ['ecLat', 'ecLon']
         self.units = ['deg', 'deg']
         self.ecnode = 0.0
         self.ecinc = np.radians(23.439291)

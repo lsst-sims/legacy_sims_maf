@@ -120,13 +120,14 @@ class NFollowStacker(BaseStacker):
     raDecDeg: bool, opt
         Flag whether RA/Dec are in degrees (True) or radians (False).
     """
+    colsAdded = ['nObservatories']
+
     def __init__(self, minSize=3.0, airmassLimit=2.5, timeSteps=np.arange(0.5, 12., 3.0),
                  mjdCol='observationStartMJD', raCol='fieldRA', decCol='fieldDec', degrees=True):
         self.mjdCol = mjdCol
         self.raCol = raCol
         self.decCol = decCol
         self.degrees = degrees
-        self.colsAdded = ['nObservatories']
         self.colsAddedDtypes = [int]
         self.colsReq = [self.mjdCol, self.raCol, self.decCol]
         self.units = ['#']

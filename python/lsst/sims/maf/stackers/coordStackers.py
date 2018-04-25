@@ -85,13 +85,17 @@ class GalacticStacker(BaseStacker):
     decCol : str, opt
         Name of the Dec column. Default fieldDec.
     """
+    colsAdded = ['gall', 'galb']
+
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True):
         self.colsReq = [raCol, decCol]
-        self.colsAdded = ['gall', 'galb']
-        self.units = ['radians', 'radians']
         self.raCol = raCol
         self.decCol = decCol
         self.degrees = degrees
+        if self.degrees:
+            self.units = ['degrees', 'degrees']
+        else:
+            self.units = ['radians', 'radians']
 
     def _run(self, simData, cols_present=False):
         # raCol and DecCol in radians, gall/b in radians.
@@ -122,12 +126,13 @@ class EclipticStacker(BaseStacker):
     subtractSunLon : bool, opt
         Flag to subtract the sun's ecliptic longitude. Default False.
     """
+    colsAdded = ['eclipLat', 'eclipLon']
+
     def __init__(self, mjdCol='observationStartMJD', raCol='fieldRA', decCol='fieldDec', degrees=True,
                  subtractSunLon=False):
 
         self.colsReq = [mjdCol, raCol, decCol]
         self.subtractSunLon = subtractSunLon
-        self.colsAdded = ['eclipLat', 'eclipLon']
         self.degrees = degrees
         if self.degrees:
             self.units = ['degrees', 'degrees']

@@ -23,10 +23,11 @@ class FiveSigmaStacker(BaseStacker):
     This is generally not needed, unless the m5 parameters have been updated
     or m5 was not previously calculated.
     """
+    colsAdded = ['m5_simsUtils']
+
     def __init__(self, airmassCol='airmass', seeingCol='seeingFwhmEff', skybrightnessCol='skyBrightness',
                  filterCol='filter', exptimeCol='visitExposureTime'):
         self.units = ['mag']
-        self.colsAdded = ['m5_simsUtils']
         self.colsReq = [airmassCol, seeingCol, skybrightnessCol, filterCol, exptimeCol]
         self.airmassCol = airmassCol
         self.seeingCol = seeingCol
@@ -52,10 +53,11 @@ class FiveSigmaStacker(BaseStacker):
 class NormAirmassStacker(BaseStacker):
     """Calculate the normalized airmass for each opsim pointing.
     """
+    colsAdded = ['normairmass']
+
     def __init__(self, airmassCol='airmass', decCol='fieldDec',
                  degrees=True, telescope_lat = -30.2446388):
         self.units = ['X / Xmin']
-        self.colsAdded = ['normairmass']
         self.colsReq = [airmassCol, decCol]
         self.airmassCol = airmassCol
         self.decCol = decCol
@@ -84,6 +86,8 @@ class ZenithDistStacker(BaseStacker):
     If 'degrees' is True, then assumes altCol is in degrees and returns degrees.
     If 'degrees' is False, assumes altCol is in radians and returns radians.
     """
+    colsAdded = ['zenithDistance']
+
     def __init__(self, altCol='altitude', degrees=True):
         self.altCol = altCol
         self.degrees = degrees
@@ -91,7 +95,6 @@ class ZenithDistStacker(BaseStacker):
             self.units = ['degrees']
         else:
             self.unit = ['radians']
-        self.colsAdded = ['zenithDistance']
         self.colsReq = [self.altCol]
 
     def _run(self, simData, cols_present=False):
@@ -109,12 +112,13 @@ class ZenithDistStacker(BaseStacker):
 class ParallaxFactorStacker(BaseStacker):
     """Calculate the parallax factors for each opsim pointing.  Output parallax factor in arcseconds.
     """
+    colsAdded = ['ra_pi_amp', 'dec_pi_amp']
+
     def __init__(self, raCol='fieldRA', decCol='fieldDec', dateCol='observationStartMJD', degrees=True):
         self.raCol = raCol
         self.decCol = decCol
         self.dateCol = dateCol
         self.units = ['arcsec', 'arcsec']
-        self.colsAdded = ['ra_pi_amp', 'dec_pi_amp']
         self.colsReq = [raCol, decCol, dateCol]
         self.degrees = degrees
 
@@ -173,11 +177,11 @@ class DcrStacker(BaseStacker):
     altCol : str
         Name of the column with altitude info. Default 'altitude'.
     raCol : str
-        Name of the column with RA. Default 'ra_rad'.
+        Name of the column with RA. Default 'fieldRA'.
     decCol : str
-        Name of the column with Dec. Default 'dec_rad'.
+        Name of the column with Dec. Default 'fieldDec'.
     lstCol : str
-        Name of the column with local sidereal time. Default 'lst'.
+        Name of the column with local sidereal time. Default 'observationStartLST'.
     site : str or lsst.sims.utils.Site
         Name of the observory or a lsst.sims.utils.Site object. Default 'LSST'.
     mjdCol : str
@@ -192,12 +196,13 @@ class DcrStacker(BaseStacker):
         Returns array with additional columns 'ra_dcr_amp' and 'dec_dcr_amp' with the DCR offsets
         for each observation.  Also runs ZenithDistStacker and ParallacticAngleStacker.
     """
+    colsAdded = ['ra_dcr_amp', 'dec_dcr_amp']  # zenithDist, HA, PA
 
     def __init__(self, filterCol='filter', altCol='altitude', degrees=True,
                  raCol='fieldRA', decCol='fieldDec', lstCol='observationStartLST',
                  site='LSST', mjdCol='observationStartMJD',
                  dcr_magnitudes=None):
-
+        self.units = ['arcsec', 'arcsec']
         if dcr_magnitudes is None:
             # DCR amplitudes are in arcseconds.
             self.dcr_magnitudes = {'u': 0.07, 'g': 0.07, 'r': 0.050, 'i': 0.045, 'z': 0.042, 'y': 0.04}
@@ -208,14 +213,16 @@ class DcrStacker(BaseStacker):
         self.filterCol = filterCol
         self.raCol = raCol
         self.decCol = decCol
-        self.colsAdded = ['ra_dcr_amp', 'dec_dcr_amp', 'zenithDistance', 'PA', 'HA']
-        self.colsReq = [filterCol, raCol, decCol, altCol, lstCol]
-        self.units = ['arcsec', 'arcsec']
         self.degrees = degrees
+        self.colsReq = [filterCol, raCol, decCol, altCol, lstCol]
+        #  'zenithDist', 'PA', 'HA' are additional columns required, coming from other stackers which must
+        #  also be configured -- so we handle this explicitly here.
         self.zstacker = ZenithDistStacker(altCol=altCol, degrees=self.degrees)
         self.pastacker = ParallacticAngleStacker(raCol=raCol, decCol=decCol, mjdCol=mjdCol,
                                                  degrees=self.degrees,
                                                  lstCol=lstCol, site=site)
+        # Note that RA/Dec could be coming from a dither stacker!
+
 
     def _run(self, simData, cols_present=False):
         if cols_present:
@@ -223,8 +230,8 @@ class DcrStacker(BaseStacker):
             return simData
         # Need to make sure the Zenith stacker gets run first
         # Call _run method because already added these columns due to 'colsAdded' line.
-        simData = self.zstacker._run(simData, cols_present=False)
-        simData = self.pastacker._run(simData, cols_present=False)
+        simData = self.zstacker.run(simData)
+        simData = self.pastacker.run(simData)
         if self.degrees:
             zenithTan = np.tan(np.radians(simData[self.zdCol]))
             parallacticAngle = np.radians(simData[self.paCol])
@@ -246,9 +253,10 @@ class HourAngleStacker(BaseStacker):
     """Add the Hour Angle for each observation.
     Always in HOURS.
     """
+    colsAdded = ['HA']
+
     def __init__(self, lstCol='observationStartLST', raCol='fieldRA', degrees=True):
         self.units = ['Hours']
-        self.colsAdded = ['HA']
         self.colsReq = [lstCol, raCol]
         self.lstCol = lstCol
         self.raCol = raCol
@@ -286,6 +294,8 @@ class ParallacticAngleStacker(BaseStacker):
     """Add the parallactic angle to each visit.
     If 'degrees' is True, this will be in degrees (as are all other angles). If False, then in radians.
     """
+    colsAdded = ['PA']
+
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True, mjdCol='observationStartMJD',
                  lstCol='observationStartLST', site='LSST'):
 
@@ -296,7 +306,6 @@ class ParallacticAngleStacker(BaseStacker):
         self.mjdCol = mjdCol
         self.site = Site(name=site)
         self.units = ['radians']
-        self.colsAdded = ['PA', 'HA']
         self.colsReq = [self.raCol, self.decCol, self.mjdCol, self.lstCol]
         self.haStacker = HourAngleStacker(lstCol=lstCol, raCol=raCol, degrees=self.degrees)
 
@@ -308,7 +317,8 @@ class ParallacticAngleStacker(BaseStacker):
         if cols_present:
             # Column already present in data; assume it is correct and does not need recalculating.
             return simData
-        simData = self.haStacker._run(simData)
+        # Using the run method (not _run) means that if HA is present, it will not be recalculated.
+        simData = self.haStacker.run(simData)
         if self.degrees:
             dec = np.radians(simData[self.decCol])
         else:
@@ -324,6 +334,8 @@ class ParallacticAngleStacker(BaseStacker):
 class FilterColorStacker(BaseStacker):
     """Translate filters ('u', 'g', 'r' ..) into RGB tuples.
     """
+    colsAdded = ['rRGB', 'gRGB', 'bRGB']
+
     def __init__(self, filterCol='filter'):
         self.filter_rgb_map = {'u': (0, 0, 1),   # dark blue
                                'g': (0, 1, 1),  # cyan
@@ -334,8 +346,6 @@ class FilterColorStacker(BaseStacker):
         self.filterCol = filterCol
         # self.units used for plot labels
         self.units = ['rChan', 'gChan', 'bChan']
-        # Values required for framework operation: this specifies the names of the new columns.
-        self.colsAdded = ['rRGB', 'gRGB', 'bRGB']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.filterCol]
 
@@ -364,13 +374,13 @@ class SeasonStacker(BaseStacker):
     The season index range is 0-10.
     Must wrap 0th and 10th to get a total of 10 seasons.
     """
+    colsAdded = ['year', 'season']
+
     def __init__(self, mjdCol='observationStartMJD', RACol='fieldRA', degrees=True):
-        # Names of columns we want to add.
-        self.colsAdded = ['year', 'season']
         # Names of columns we need from database.
         self.colsReq = [mjdCol, RACol]
         # List of units for our new columns.
-        self.units = ['', '']
+        self.units = ['yr', '']
         # And save the column names.
         self.mjdCol = mjdCol
         self.RACol = RACol
@@ -414,9 +424,10 @@ class OpSimFieldStacker(BaseStacker):
         Name of the Dec column. Default fieldDec.
 
     """
+    colsAdded = ['opsimFieldId']
+
     def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True):
         self.colsReq = [raCol, decCol]
-        self.colsAdded = ['opsimFieldId']
         self.units = ['#']
         self.raCol = raCol
         self.decCol = decCol
