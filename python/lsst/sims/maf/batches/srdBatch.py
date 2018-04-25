@@ -7,24 +7,19 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary
+from .common import standardSummary, radecCols
 
 __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
             benchmarkArea=18000, benchmarkNvisits=825,
-            raCol=None, decCol=None, degrees=None, stackerList=None):
+            raCol=None, decCol=None):
 
     if colmap is None:
         colmap = ColMapDict('opsimV4')
 
-    if raCol is None:
-        raCol = colmap['ra']
-    if decCol is None:
-        decCol = colmap['dec']
-    if degrees is None:
-        degrees = colmap['raDecDeg']
+    raCol, decCol, degrees, coordStackers = radecCols(raCol, decCol, colmap)
 
     bundleList = []
 
@@ -65,6 +60,7 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
                 % (benchmarkArea, benchmarkNvisits))
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
+                             stackerList = coordStackers,
                              displayDict=displayDict, summaryMetrics=summaryMetrics,
                              plotFuncs=[plots.FOPlot()], metadata=metadata)
     bundleList.append(bundle)
@@ -76,7 +72,7 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 
 def astrometryBatch(colmap=None, runName='opsim',
                     extraSql=None, extraMetadata=None,
-                    nside=64):
+                    nside=64, raCol=None, decCol=None):
     # Allow user to add dithering.
     if colmap is None:
         colmap = ColMapDict('opsimV4')
@@ -95,9 +91,7 @@ def astrometryBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
-    raCol = colmap['ra']
-    decCol = colmap['dec']
-    degrees = colmap['raDecDeg']
+    raCol, decCol, degrees, coordStackers = radecCols(raCol, decCol, colmap)
 
     rmags_para = [22.4, 24.0]
     rmags_pm = [20.5, 24.0]
@@ -123,7 +117,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[parallaxStacker],
+                                 stackerList=[parallaxStacker] + coordStackers,
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
@@ -137,7 +131,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=True)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[parallaxStacker],
+                                 stackerList=[parallaxStacker] + coordStackers,
                                  displayDict=displayDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
@@ -150,7 +144,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                                 mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                                 seeingCol=colmap['seeingGeom'])
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[parallaxStacker],
+                                 stackerList=[parallaxStacker] + coordStackers,
                                  displayDict=displayDict, summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -163,7 +157,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         caption = 'Correlation between parallax offset magnitude and hour angle for a r=%.1f star.' % (rmag)
         caption += ' (0 is good, near -1 or 1 is bad).'
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[dcrStacker, parallaxStacker],
+                                 stackerList=[dcrStacker, parallaxStacker] + coordStackers,
                                  displayDict=displayDict, summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -180,6 +174,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                                 stackerList=coordStackers,
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
@@ -192,6 +187,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=True)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                                 stackerList=coordStackers,
                                  displayDict=displayDict, summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -223,9 +219,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
-    raCol = colmap['ra']
-    decCol = colmap['dec']
-    degrees = colmap['raDecDeg']
+    raCol, decCol, degrees, coordStackers = radecCols(raCol, decCol, colmap)
 
     # Set up parallax metrics.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
@@ -255,6 +249,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     caption += 'deviation from uniformity of < %.2f.' % (cutoff1)
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
+                             stackerList=coordStackers,
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)
     displayDict['order'] += 1
@@ -272,6 +267,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     caption += '%d revisits within this time window.' % (cutoff2)
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m2, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
+                             stackerList=coordStackers,
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)
     displayDict['order'] += 1

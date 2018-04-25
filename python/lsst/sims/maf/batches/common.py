@@ -1,9 +1,10 @@
 from __future__ import print_function
 
 import lsst.sims.maf.metrics as metrics
+import lsst.sims.maf.stackers as stackers
 
-__all__ = ['filterList', 'standardSummary', 'extendedSummary', 'standardMetrics', 'extendedMetrics',
-           'standardAngleMetrics']
+__all__ = ['filterList', 'radecCols', 'standardSummary', 'extendedSummary',
+           'standardMetrics', 'extendedMetrics', 'standardAngleMetrics']
 
 
 def filterList(all=True, extraSql=None, extraMetadata=None):
@@ -58,6 +59,18 @@ def filterList(all=True, extraSql=None, extraMetadata=None):
             else:
                 sqls[s] = '(%s) and (%s)' % (extraSql, sqls[s])
     return filterlist, colors, orders, sqls, metadata
+
+
+def radecCols(raCol, decCol, colmap, **kwargs):
+    if raCol is None:
+        raCol = colmap['ra']
+    if decCol is None:
+        decCol = colmap['dec']
+    degrees = colmap['raDecDeg']
+    # Set up stackers, if needed.
+    # kwargs will have to be used if fieldId (for example) needs to be defined differently than default.
+    stackerList = stackers.setupDitherStackers(raCol, decCol, degrees, **kwargs)
+    return raCol, decCol, degrees, stackerList
 
 
 def standardSummary():
