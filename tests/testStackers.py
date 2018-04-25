@@ -118,6 +118,23 @@ class TestStackerClasses(unittest.TestCase):
             self.assertAlmostEqual(dra_on_night.max(), 0)
             self.assertAlmostEqual(ddec_on_night.max(), 0)
 
+    def testSetupDitherStackers(self):
+        # Test that we get no stacker when using default columns.
+        raCol = 'fieldRA'
+        decCol = 'fieldDec'
+        degrees = True
+        stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees)
+        self.assertEqual(len(stackerlist), 0)
+        # Test that we get one (and the right one) when using particular columns.
+        raCol = 'hexDitherFieldPerNightRa'
+        decCol = 'hexDitherFieldPerNightDec'
+        stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees)
+        self.assertEqual(len(stackerlist), 1)
+        self.assertEqual(stackerlist[0], stackers.HexDitherFieldPerNightStacker())
+        # Test that kwargs are passed along.
+        stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees, maxDither=0.5)
+        self.assertEqual(stackerlist[0].maxDither, np.radians(0.5))
+
     def testRandomDither(self):
         """
         Test the random dither pattern.

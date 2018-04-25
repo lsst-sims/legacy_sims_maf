@@ -25,9 +25,12 @@ __all__ = ['setupDitherStackers', 'wrapRADec', 'wrapRA', 'inHexagon', 'polygonCo
 
 def setupDitherStackers(raCol, decCol, degrees, **kwargs):
     b = BaseStacker()
-    stackerList = b.sourceDict[raCol](degrees=degrees, **kwargs)
-    if b.sourceDict[raCol] != b.sourceDict[decCol]:
-        stackerList.append(b.sourceDict[decCol](degrees=degrees, **kwargs))
+    stackerList = []
+    if raCol in b.sourceDict:
+        stackerList.append(b.sourceDict[raCol](degrees=degrees, **kwargs))
+    if decCol in b.sourceDict:
+        if b.sourceDict[raCol] != b.sourceDict[decCol]:
+            stackerList.append(b.sourceDict[decCol](degrees=degrees, **kwargs))
     return stackerList
 
 
