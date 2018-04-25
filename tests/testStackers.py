@@ -79,7 +79,7 @@ class TestStackerClasses(unittest.TestCase):
         """
 
         data = np.zeros(600, dtype=list(zip(['fieldRA', 'fieldDec', 'observationStartMJD'],
-                                       [float, float, float])))
+                                            [float, float, float])))
         data['fieldRA'] = data['fieldRA'] + .1
         data['fieldDec'] = data['fieldDec'] - .1
         data['observationStartMJD'] = np.arange(data.size) + 49000.
@@ -148,11 +148,10 @@ class TestStackerClasses(unittest.TestCase):
         # comparisons.
         data['fieldRA'] = np.degrees(rng.random_sample(600) * (np.pi) + np.pi / 2.0)
         data['fieldDec'] = np.degrees(rng.random_sample(600) * np.pi / 2.0 - np.pi / 4.0)
-        stacker = stackers.RandomDitherFieldPerVisitStacker(
-            maxDither=maxDither)
+        stacker = stackers.RandomDitherFieldPerVisitStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['randomDitherFieldPerVisitRa']
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (data['fieldRA'] - data['randomDitherFieldPerVisitRa']) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['randomDitherFieldPerVisitDec']
         # Check dithers within expected range.
         self._tDitherRange(diffsra, diffsdec, data[
@@ -175,8 +174,8 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(rng.rand(ndata) * 10).astype('int')
         stacker = stackers.RandomDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (np.radians(data['fieldRA']) - np.radians(data['randomDitherPerNightRa'])
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (np.radians(data['fieldRA']) - np.radians(data['randomDitherPerNightRa'])) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = np.radians(data['fieldDec']) - np.radians(data['randomDitherPerNightDec'])
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
@@ -203,8 +202,8 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(rng.rand(ndata) * 20).astype('int')
         stacker = stackers.SpiralDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa']
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa']) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['spiralDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
@@ -229,8 +228,8 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(rng.rand(ndata) * 217).astype('int')
         stacker = stackers.HexDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['hexDitherPerNightRa']
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (data['fieldRA'] - data['hexDitherPerNightRa']) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['hexDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
@@ -386,9 +385,9 @@ class TestStackerClasses(unittest.TestCase):
 
         np.testing.assert_array_equal(field_id, new_data['opsimFieldId'])
 
-        # Cherry picked a set of coordinates that should belong to a certain list of fields. These coordinates
-        # are not exactly at the center of fields, but close enough that they should be classified as belonging to
-        # them.
+        # Cherry picked a set of coordinates that should belong to a certain list of fields.
+        # These coordinates are not exactly at the center of fields, but close enough that
+        # they should be classified as belonging to them.
         ra_inside_2548 = (10. + 1. / 60 + 6.59 / 60. / 60.) * np.pi / 12.  # 10:01:06.59
         dec_inside_2548 = np.radians(-1. * (2. + 8. / 60. + 27.6 / 60. / 60.))  # -02:08:27.6
 
