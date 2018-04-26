@@ -1,8 +1,8 @@
 import warnings
 import numpy as np
-from scipy.spatial import cKDTree as kdtree
 import palpy
-from lsst.sims.utils import Site, m5_flat_sed, xyz_from_ra_dec, xyz_angular_radius, _buildTree, _xyz_from_ra_dec
+from lsst.sims.utils import Site, m5_flat_sed, xyz_from_ra_dec, xyz_angular_radius, \
+    _buildTree, _xyz_from_ra_dec
 from lsst.sims.survey.fields import FieldsDatabase
 from .baseStacker import BaseStacker
 
@@ -38,7 +38,7 @@ class FiveSigmaStacker(BaseStacker):
     def _run(self, simData, cols_present=False):
         if cols_present:
             # Column already present in data; assume it needs updating and recalculate.
-            pass
+            return simData
         filts = np.unique(simData[self.filterCol])
         for filtername in filts:
             infilt = np.where(simData[self.filterCol] == filtername)
@@ -170,6 +170,10 @@ class ParallaxFactorStacker(BaseStacker):
 class DcrStacker(BaseStacker):
     """Calculate the RA,Dec offset expected for an object due to differential chromatic refraction.
 
+    For DCR calculation, we also need zenithDistance, HA, and PA -- but these will be explicitly
+    handled within this stacker so that setup is consistent and they run in order. If those values
+    have already been calculated elsewhere, they will not be overwritten.
+
     Parameters
     ----------
     filterCol : str
@@ -222,6 +226,7 @@ class DcrStacker(BaseStacker):
                                                  degrees=self.degrees,
                                                  lstCol=lstCol, site=site)
         # Note that RA/Dec could be coming from a dither stacker!
+        # But we will assume that coord stackers will be handled separately.
 
 
     def _run(self, simData, cols_present=False):

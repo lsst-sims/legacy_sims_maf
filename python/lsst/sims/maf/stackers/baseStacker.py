@@ -138,7 +138,7 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
             cols_present = False
         return newData, cols_present
 
-    def run(self, simData):
+    def run(self, simData, override=False):
         """
         Example: Generate the new stacker columns, given the simdata columns from the database.
         Returns the new simdata structured array that includes the new stacker columns.
@@ -147,6 +147,9 @@ class BaseStacker(with_metaclass(StackerRegistry, object)):
         if len(simData) == 0:
             return simData
         simData, cols_present = self._addStackerCols(simData)
+        # If override is set, it means go ahead and recalculate stacker values.
+        if override:
+            cols_present = False
         # Run the method to calculate/add new data.
         try:
             return self._run(simData, cols_present)
