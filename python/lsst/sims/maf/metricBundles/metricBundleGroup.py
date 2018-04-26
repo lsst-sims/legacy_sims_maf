@@ -376,7 +376,7 @@ class MetricBundleGroup(object):
         # proper hierarchy and DAG so that stackers run in the order they need to. This will catch 90%).
         ditherStackers = []
         for s in uniqStackers:
-            if 'Dither' in s.__class__.__name__:
+            if isinstance(s, stackers.BaseDitherStacker):
                 ditherStackers.append(s)
         for stacker in ditherStackers:
             self.simData = stacker.run(self.simData, override=True)

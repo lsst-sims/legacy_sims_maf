@@ -4,6 +4,7 @@ import numpy as np
 from .baseStacker import BaseStacker
 
 __all__ = ['setupDitherStackers', 'wrapRADec', 'wrapRA', 'inHexagon', 'polygonCoords',
+           'BaseDitherStacker',
            'RandomDitherFieldPerVisitStacker', 'RandomDitherFieldPerNightStacker',
            'RandomDitherPerNightStacker',
            'SpiralDitherFieldPerVisitStacker', 'SpiralDitherFieldPerNightStacker',
@@ -142,7 +143,51 @@ def polygonCoords(nside, radius, rotationAngle):
     return list(zip(xCoords, yCoords))
 
 
-class RandomDitherFieldPerVisitStacker(BaseStacker):
+class BaseDitherStacker(BaseStacker):
+    """Base class for dither stackers.
+
+    The base class just adds an easy way to define a stacker as one of the 'dither' types of stackers.
+    These run first, before any other stackers.
+
+    Parameters
+    ----------
+    raCol : str, optional
+        The name of the RA column in the data.
+        Default 'fieldRA'.
+    decCol : str, optional
+        The name of the Dec column in the data.
+        Default 'fieldDec'.
+    degrees : bool, optional
+        Flag whether RA/Dec should be treated as (and kept as) degrees.
+    maxDither : float, optional
+        The radius of the maximum dither offset, in degrees.
+        Default 1.75 degrees.
+    inHex : bool, optional
+        If True, offsets are constrained to lie within a hexagon inscribed within the maxDither circle.
+        If False, offsets can lie anywhere out to the edges of the maxDither circle.
+        Default True.
+    """
+    colsAdded = []
+
+    def __init__(self, raCol='fieldRA', decCol='fieldDec', degrees=True,
+                 maxDither=1.75, inHex=True):
+        # Instantiate the RandomDither object and set internal variables.
+        self.raCol = raCol
+        self.decCol = decCol
+        self.degrees = degrees
+        # Convert maxDither to radians for internal use.
+        self.maxDither = np.radians(maxDither)
+        self.inHex = inHex
+        # self.units used for plot labels
+        if self.degrees:
+            self.units = ['deg', 'deg']
+        else:
+            self.units = ['rad', 'rad']
+        # Values required for framework operation: this specifies the data columns required from the database.
+        self.colsReq = [self.raCol, self.decCol]
+
+
+class RandomDitherFieldPerVisitStacker(BaseDitherStacker):
     """
     Randomly dither the RA and Dec pointings up to maxDither degrees from center,
     with a different offset for each field, for each visit.
@@ -176,21 +221,8 @@ class RandomDitherFieldPerVisitStacker(BaseStacker):
         """
         @ MaxDither in degrees
         """
-        # Instantiate the RandomDither object and set internal variables.
-        self.raCol = raCol
-        self.decCol = decCol
-        self.degrees = degrees
-        # Convert maxDither to radians for internal use.
-        self.maxDither = np.radians(maxDither)
-        self.inHex = inHex
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees, maxDither=maxDither, inHex=inHex)
         self.randomSeed = randomSeed
-        # self.units used for plot labels
-        if self.degrees:
-            self.units = ['deg', 'deg']
-        else:
-            self.units = ['rad', 'rad']
-        # Values required for framework operation: this specifies the data columns required from the database.
-        self.colsReq = [self.raCol, self.decCol]
 
     def _generateRandomOffsets(self, noffsets):
         xOut = np.array([], float)
@@ -288,9 +320,8 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
         @ MaxDither in degrees
         """
         # Instantiate the RandomDither object and set internal variables.
-        super(RandomDitherFieldPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                               maxDither=maxDither, inHex=inHex,
-                                                               randomSeed=randomSeed)
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees,
+                         maxDither=maxDither, inHex=inHex, randomSeed=randomSeed)
         self.nightCol = nightCol
         self.fieldIdCol = fieldIdCol
         # Values required for framework operation: this specifies the data columns required from the database.
@@ -376,9 +407,8 @@ class RandomDitherPerNightStacker(RandomDitherFieldPerVisitStacker):
         @ MaxDither in degrees
         """
         # Instantiate the RandomDither object and set internal variables.
-        super(RandomDitherPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                          maxDither=maxDither, inHex=inHex,
-                                                          randomSeed=randomSeed)
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees,
+                         maxDither=maxDither, inHex=inHex, randomSeed=randomSeed)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol, self.nightCol]
@@ -413,7 +443,7 @@ class RandomDitherPerNightStacker(RandomDitherFieldPerVisitStacker):
         return simData
 
 
-class SpiralDitherFieldPerVisitStacker(BaseStacker):
+class SpiralDitherFieldPerVisitStacker(BaseDitherStacker):
     """
     Offset along an equidistant spiral with numPoints, out to a maximum radius of maxDither.
     Each visit to a field receives a new, sequential offset.
@@ -454,20 +484,11 @@ class SpiralDitherFieldPerVisitStacker(BaseStacker):
         """
         @ MaxDither in degrees
         """
-        self.raCol = raCol
-        self.decCol = decCol
-        self.degrees = degrees
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees, maxDither=maxDither, inHex=inHex)
         self.fieldIdCol = fieldIdCol
         # Convert maxDither from degrees (internal units for ra/dec are radians)
         self.numPoints = numPoints
         self.nCoils = nCoils
-        self.maxDither = np.radians(maxDither)
-        self.inHex = inHex
-        # self.units used for plot labels
-        if self.degrees:
-            self.units = ['deg', 'deg']
-        else:
-            self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol, self.fieldIdCol]
 
@@ -569,10 +590,8 @@ class SpiralDitherFieldPerNightStacker(SpiralDitherFieldPerVisitStacker):
         """
         @ MaxDither in degrees
         """
-        super(SpiralDitherFieldPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                               fieldIdCol=fieldIdCol,
-                                                               numPoints=numPoints, maxDither=maxDither,
-                                                               nCoils=nCoils, inHex=inHex)
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees, fieldIdCol=fieldIdCol,
+                         numPoints=numPoints, maxDither=maxDither, nCoils=nCoils, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq.append(self.nightCol)
@@ -652,10 +671,8 @@ class SpiralDitherPerNightStacker(SpiralDitherFieldPerVisitStacker):
         """
         @ MaxDither in degrees
         """
-        super(SpiralDitherPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                          fieldIdCol=fieldIdCol,
-                                                          numPoints=numPoints, maxDither=maxDither,
-                                                          nCoils=nCoils, inHex=inHex)
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees, fieldIdCol=fieldIdCol,
+                         numPoints=numPoints, maxDither=maxDither, nCoils=nCoils, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq.append(self.nightCol)
@@ -686,7 +703,7 @@ class SpiralDitherPerNightStacker(SpiralDitherFieldPerVisitStacker):
         return simData
 
 
-class HexDitherFieldPerVisitStacker(BaseStacker):
+class HexDitherFieldPerVisitStacker(BaseDitherStacker):
     """
     Use offsets from the hexagonal grid of 'hexdither', but visit each vertex sequentially.
     Sequential offset for each visit.
@@ -721,17 +738,8 @@ class HexDitherFieldPerVisitStacker(BaseStacker):
         """
         @ MaxDither in degrees
         """
-        self.raCol = raCol
-        self.decCol = decCol
-        self.degrees = degrees
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees, maxDither=maxDither, inHex=inHex)
         self.fieldIdCol = fieldIdCol
-        self.maxDither = np.radians(maxDither)
-        self.inHex = inHex
-        # self.units used for plot labels
-        if self.degrees:
-            self.units = ['deg', 'deg']
-        else:
-            self.units = ['rad', 'rad']
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq = [self.raCol, self.decCol, self.fieldIdCol]
 
@@ -834,8 +842,8 @@ class HexDitherFieldPerNightStacker(HexDitherFieldPerVisitStacker):
         """
         @ MaxDither in degrees
         """
-        super(HexDitherFieldPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
-                                                            degrees=degrees, maxDither=maxDither, inHex=inHex)
+        super().__init__(raCol=raCol, decCol=decCol, fieldIdCol=fieldIdCol,
+                         degrees=degrees, maxDither=maxDither, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq.append(self.nightCol)
@@ -910,9 +918,8 @@ class HexDitherPerNightStacker(HexDitherFieldPerVisitStacker):
         """
         @ MaxDither in degrees
         """
-        super(HexDitherPerNightStacker, self).__init__(raCol=raCol, decCol=decCol, degrees=degrees,
-                                                       fieldIdCol=fieldIdCol,
-                                                       maxDither=maxDither, inHex=inHex)
+        super().__init__(raCol=raCol, decCol=decCol, degrees=degrees,
+                         fieldIdCol=fieldIdCol, maxDither=maxDither, inHex=inHex)
         self.nightCol = nightCol
         # Values required for framework operation: this specifies the data columns required from the database.
         self.colsReq.append(self.nightCol)
@@ -948,7 +955,7 @@ class HexDitherPerNightStacker(HexDitherFieldPerVisitStacker):
         return simData
 
 
-class RandomRotDitherPerFilterChangeStacker(BaseStacker):
+class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
     """
     Randomly dither the physical angle of the telescope rotator wrt the mount,
     after every filter change.

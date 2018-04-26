@@ -135,6 +135,13 @@ class TestStackerClasses(unittest.TestCase):
         stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees, maxDither=0.5)
         self.assertEqual(stackerlist[0].maxDither, np.radians(0.5))
 
+    def testBaseDitherStacker(self):
+        # Test that the base dither stacker matches the type of a stacker.
+        s = stackers.HexDitherFieldPerNightStacker()
+        self.assertTrue(isinstance(s, stackers.BaseDitherStacker))
+        s = stackers.ParallaxFactorStacker()
+        self.assertFalse(isinstance(s, stackers.BaseDitherStacker))
+
     def testRandomDither(self):
         """
         Test the random dither pattern.
