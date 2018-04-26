@@ -75,9 +75,12 @@ class MetricBundle(object):
             else:
                 self.stackerList = []
                 for s in stackerList:
-                    if not isinstance(s, stackers.BaseStacker):
-                        raise ValueError('stackerList must only contain lsst.sims.maf.stackers objs')
-                    self.stackerList.append(s)
+                    if s is None:
+                        pass
+                    else:
+                        if not isinstance(s, stackers.BaseStacker):
+                            raise ValueError('stackerList must only contain lsst.sims.maf.stackers objs')
+                        self.stackerList.append(s)
         else:
             self.stackerList = []
         # Set the 'maps' to apply to the slicer, if applicable.

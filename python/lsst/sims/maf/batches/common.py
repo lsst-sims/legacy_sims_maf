@@ -67,6 +67,7 @@ def radecCols(ditherStacker, colmap, kwargs=None):
     if ditherStacker is None:
         raCol = colmap['ra']
         decCol = colmap['dec']
+        stacker = None
     else:
         if isinstance(ditherStacker, stackers.BaseStacker):
             stacker = ditherStacker
@@ -79,8 +80,8 @@ def radecCols(ditherStacker, colmap, kwargs=None):
                 if a in colmap:
                     kwargs[a] = colmap[a.replace('Col', '')]
             stacker = s(degrees=degrees, **kwargs)
-            raCol = s.colsAdded[0]
-            decCol = s.colsAdded[1]
+        raCol = stacker.colsAdded[0]
+        decCol = stacker.colsAdded[1]
     return raCol, decCol, degrees, stacker
 
 

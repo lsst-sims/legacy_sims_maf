@@ -13,12 +13,10 @@ __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
-            benchmarkArea=18000, benchmarkNvisits=825, ditherStacker=None):
+            benchmarkArea=18000, benchmarkNvisits=825, ditherStacker=None, ditherkwargs=None):
 
     if colmap is None:
         colmap = ColMapDict('opsimV4')
-
-    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap)
 
     bundleList = []
 
@@ -34,6 +32,14 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
         metadata = extraMetadata
 
     subgroup = metadata
+
+    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap, ditherkwargs)
+    # Don't want dither info in subgroup (too long), but do want it in bundle name.
+    if ditherStacker is not None:
+        metadata += ' ' + ditherStacker.__class__.__name__.replace('Stacker', '')
+        if ditherkwargs is not None:
+            for k, v in ditherkwargs.items():
+                metadata += ' ' + '%s:%s' % (k, v)
 
     # Set up fO metric.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
@@ -77,6 +83,8 @@ def astrometryBatch(colmap=None, runName='opsim',
         colmap = ColMapDict('opsimV4')
     bundleList = []
 
+    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap)
+
     sql = ''
     metadata = 'All visits'
     # Add additional sql constraint (such as wfdWhere) and metadata, if provided.
@@ -90,12 +98,15 @@ def astrometryBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
-    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap)
+    # Don't want dither info in subgroup (too long), but do want it in bundle name.
+    if ditherStacker is not None:
+        metadata += ' ' + ditherStacker.__class__.__name__.replace('Stacker', '')
+
 
     rmags_para = [22.4, 24.0]
     rmags_pm = [20.5, 24.0]
 
-    # Set up stackers.
+    # Set up parallax/dcr stackers.
     parallaxStacker = stackers.ParallaxFactorStacker(raCol=raCol, decCol=decCol,
                                                      dateCol=colmap['mjd'], degrees=degrees)
     dcrStacker = stackers.DcrStacker(filterCol=colmap['filter'], altCol=colmap['alt'], degrees=degrees,
@@ -219,6 +230,9 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     subgroup = metadata
 
     raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap)
+    # Don't want dither info in subgroup (too long), but do want it in bundle name.
+    if ditherStacker is not None:
+        metadata += ' ' + ditherStacker.__class__.__name__.replace('Stacker', '')
 
     # Set up parallax metrics.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
