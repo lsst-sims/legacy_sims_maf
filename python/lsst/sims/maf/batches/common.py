@@ -1,4 +1,5 @@
 from __future__ import print_function
+import inspect
 
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
@@ -61,16 +62,26 @@ def filterList(all=True, extraSql=None, extraMetadata=None):
     return filterlist, colors, orders, sqls, metadata
 
 
-def radecCols(raCol, decCol, colmap, **kwargs):
-    if raCol is None:
-        raCol = colmap['ra']
-    if decCol is None:
-        decCol = colmap['dec']
+def radecCols(ditherStacker, colmap, kwargs=None):
     degrees = colmap['raDecDeg']
-    # Set up stackers, if needed.
-    # kwargs will have to be used if fieldId (for example) needs to be defined differently than default.
-    stackerList = stackers.setupDitherStackers(raCol, decCol, degrees, **kwargs)
-    return raCol, decCol, degrees, stackerList
+    if ditherStacker is None:
+        raCol = colmap['ra']
+        decCol = colmap['dec']
+    else:
+        if isinstance(ditherStacker, stackers.BaseStacker):
+            stacker = ditherStacker
+        else:
+            s = stackers.BaseStacker().registry[ditherStacker]
+            args = [f for f in inspect.getfullargspec(s).args if f.endswith('Col')]
+            if kwargs is None:
+                kwargs = {}
+            for a in args:
+                if a in colmap:
+                    kwargs[a] = colmap[a.replace('Col', '')]
+            stacker = s(degrees=degrees, **kwargs)
+            raCol = s.colsAdded[0]
+            decCol = s.colsAdded[1]
+    return raCol, decCol, degrees, stacker
 
 
 def standardSummary():

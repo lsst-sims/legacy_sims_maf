@@ -33,7 +33,7 @@ def connectDb(dbfile):
     return opsdb, colmap
 
 
-def setSQL(opsdb, sqlConstraint=None):
+def setSQL(opsdb, sqlConstraint=None, extraMeta=None):
     # Fetch the proposal ID values from the database
     propids, proptags = opsdb.fetchPropInfo()
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
@@ -51,6 +51,9 @@ def setSQL(opsdb, sqlConstraint=None):
         md = md.replace('"','').replace('  ', ' ')
         for t in metadata:
             metadata[t] += ' %s' % md
+    if extraMeta is not None and len(extraMeta) > 0:
+        for t in metadata:
+            metadata[t] += ' %s' % extraMeta
     # Reset metadata to None if there was nothing there. (helpful for batches).
     for t in metadata:
         if len(metadata[t]) == 0:
@@ -92,6 +95,8 @@ def parseArgs(subdir='out', parser=None):
                              " e.g.: 'night <= 365' or 'propId = 5' "
                              " (**may not work with slew batches)")
     parser.add_argument("--nyears", type=int, default=10, help="Number of years in the run (default 10).")
+    parser.add_argument("--ditherStacker", type=str, default=None, help="Name of dither stacker to use"
+                                                                        "for RA/Dec.")
     args = parser.parse_args()
 
     if args.runName is None:

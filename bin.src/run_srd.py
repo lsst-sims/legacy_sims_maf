@@ -13,19 +13,26 @@ from run_generic import *
 
 
 def setBatches(opsdb, colmap, args):
-    propids, proptags, sqls, metadata = setSQL(opsdb, sqlConstraint=args.sqlConstraint)
+    if args.ditherStacker is not None:
+        ditherMeta = args.ditherStacker.replace('Stacker', '')
+    propids, proptags, sqls, metadata = setSQL(opsdb, sqlConstraint=args.sqlConstraint,
+                                               extraMeta=ditherMeta)
 
     bdict = {}
     for tag in ['All', 'WFD']:
         fO = batches.fOBatch(colmap=colmap, runName=args.runName,
-                             extraSql=sqls[tag], extraMetadata=metadata[tag])
+                             extraSql=sqls[tag], extraMetadata=metadata[tag],
+                             ditherStacker=args.ditherStacker)
         bdict.update(fO)
         astrometry = batches.astrometryBatch(colmap=colmap, runName=args.runName,
-                                             extraSql=sqls[tag], extraMetadata=metadata[tag])
+                                             extraSql=sqls[tag], extraMetadata=metadata[tag],
+                                             ditherStacker=args.ditherStacker)
         bdict.update(astrometry)
         rapidrevisit = batches.rapidRevisitBatch(colmap=colmap, runName=args.runName,
-                                                 extraSql=sqls[tag], extraMetadata=metadata[tag])
+                                                 extraSql=sqls[tag], extraMetadata=metadata[tag],
+                                                 ditherStacker=args.ditherStacker)
         bdict.update(rapidrevisit)
+
 
     return bdict
 
