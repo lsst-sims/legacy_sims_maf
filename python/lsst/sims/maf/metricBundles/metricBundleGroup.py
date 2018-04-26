@@ -372,9 +372,18 @@ class MetricBundleGroup(object):
                 uniqMaps.append(m)
 
         # Run stackers.
+        # Run dither stackers first. (this is a bit of a hack -- we should probably figure out
+        # proper hierarchy and DAG so that stackers run in the order they need to. This will catch 90%).
+        ditherStackers = []
+        for s in uniqStackers:
+            if 'Dither' in s.__class__.__name__:
+                ditherStackers.append(s)
+        for stacker in ditherStackers:
+            self.simData = stacker.run(self.simData, override=True)
+            uniqStackers.remove(stacker)
         for stacker in uniqStackers:
             # Note that stackers will clobber previously existing rows with the same name.
-            self.simData = stacker.run(self.simData)
+            self.simData = stacker.run(self.simData, override=True)
 
         # Pull out one of the slicers to use as our 'slicer'.
         # This will be forced back into all of the metricBundles at the end (so that they track
