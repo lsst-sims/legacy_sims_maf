@@ -15,6 +15,8 @@ from run_generic import *
 def setBatches(opsdb, colmap, args):
     if args.ditherStacker is not None:
         ditherMeta = args.ditherStacker.replace('Stacker', '')
+    else:
+        ditherMeta = None
     propids, proptags, sqls, metadata = setSQL(opsdb, sqlConstraint=args.sqlConstraint,
                                                extraMeta=ditherMeta)
 
