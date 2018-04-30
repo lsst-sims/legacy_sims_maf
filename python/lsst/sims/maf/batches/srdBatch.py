@@ -7,7 +7,7 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary, radecCols
+from .common import standardSummary, radecCols, combineMetadata
 
 __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
@@ -33,13 +33,9 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 
     subgroup = metadata
 
-    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap, ditherkwargs)
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
     # Don't want dither info in subgroup (too long), but do want it in bundle name.
-    if ditherStacker is not None:
-        metadata += ' ' + ditherStacker.__class__.__name__.replace('Stacker', '')
-        if ditherkwargs is not None:
-            for k, v in ditherkwargs.items():
-                metadata += ' ' + '%s:%s' % (k, v)
+    metadata = combineMetadata(metadata, ditherMeta)
 
     # Set up fO metric.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
@@ -77,13 +73,11 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 
 def astrometryBatch(colmap=None, runName='opsim',
                     extraSql=None, extraMetadata=None,
-                    nside=64, ditherStacker=None):
+                    nside=64, ditherStacker=None, ditherkwargs=None):
     # Allow user to add dithering.
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
-
-    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap)
 
     sql = ''
     metadata = 'All visits'
@@ -98,10 +92,9 @@ def astrometryBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
     # Don't want dither info in subgroup (too long), but do want it in bundle name.
-    if ditherStacker is not None:
-        metadata += ' ' + ditherStacker.__class__.__name__.replace('Stacker', '')
-
+    metadata = combineMetadata(metadata, ditherMeta)
 
     rmags_para = [22.4, 24.0]
     rmags_pm = [20.5, 24.0]
@@ -210,7 +203,8 @@ def astrometryBatch(colmap=None, runName='opsim',
 
 
 def rapidRevisitBatch(colmap=None, runName='opsim',
-                      extraSql=None, extraMetadata=None, nside=64, ditherStacker=None):
+                      extraSql=None, extraMetadata=None, nside=64,
+                      ditherStacker=None, ditherkwargs=None):
     # Allow user to add dithering.
     if colmap is None:
         colmap = ColMapDict('opsimV4')
@@ -229,10 +223,9 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
-    raCol, decCol, degrees, ditherStacker = radecCols(ditherStacker, colmap)
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
     # Don't want dither info in subgroup (too long), but do want it in bundle name.
-    if ditherStacker is not None:
-        metadata += ' ' + ditherStacker.__class__.__name__.replace('Stacker', '')
+    metadata = combineMetadata(metadata, ditherMeta)
 
     # Set up parallax metrics.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)

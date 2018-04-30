@@ -4,9 +4,19 @@ import inspect
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
 
-__all__ = ['filterList', 'radecCols', 'standardSummary', 'extendedSummary',
+__all__ = ['combineMetadata', 'filterList', 'radecCols', 'standardSummary', 'extendedSummary',
            'standardMetrics', 'extendedMetrics', 'standardAngleMetrics']
 
+def combineMetadata(meta1, meta2):
+    if meta1 is not None and meta2 is not None:
+        meta = meta1 + ' ' + meta2
+    elif meta1 is not None:
+        meta = meta1
+    elif meta2 is not None:
+        meta = meta2
+    else:
+        meta = None
+    return meta
 
 def filterList(all=True, extraSql=None, extraMetadata=None):
     """Return a list of filters, plot colors and orders.
@@ -62,27 +72,37 @@ def filterList(all=True, extraSql=None, extraMetadata=None):
     return filterlist, colors, orders, sqls, metadata
 
 
-def radecCols(ditherStacker, colmap, kwargs=None):
+def radecCols(ditherStacker, colmap, ditherkwargs=None):
     degrees = colmap['raDecDeg']
     if ditherStacker is None:
         raCol = colmap['ra']
         decCol = colmap['dec']
         stacker = None
+        ditherMeta = None
     else:
-        if isinstance(ditherStacker, stackers.BaseStacker):
+        if isinstance(ditherStacker, stackers.BaseDitherStacker):
             stacker = ditherStacker
         else:
             s = stackers.BaseStacker().registry[ditherStacker]
             args = [f for f in inspect.getfullargspec(s).args if f.endswith('Col')]
-            if kwargs is None:
-                kwargs = {}
+            # Set up default dither kwargs.
+            kwargs = {}
             for a in args:
-                if a in colmap:
-                    kwargs[a] = colmap[a.replace('Col', '')]
+                colmapCol = a.replace('Col', '')
+                if colmapCol in colmap:
+                    kwargs[a] = colmap[colmapCol]
+            # Update with passed values, if any.
+            if ditherkwargs is not None:
+                kwargs.update(ditherkwargs)
             stacker = s(degrees=degrees, **kwargs)
         raCol = stacker.colsAdded[0]
         decCol = stacker.colsAdded[1]
-    return raCol, decCol, degrees, stacker
+        # Send back some metadata information.
+        ditherMeta = stacker.__class__.__name__.replace('Stacker', '')
+        if ditherkwargs is not None:
+            for k, v in ditherkwargs.items():
+                ditherMeta += ' ' + '%s:%s' % (k, v)
+    return raCol, decCol, degrees, stacker, ditherMeta
 
 
 def standardSummary():
