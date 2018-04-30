@@ -292,6 +292,7 @@ class BaseHistogram(BasePlotter):
                                                                         percentile=plotDict['percentileClip'])
         # Set the histogram range values, to avoid cases of trying to histogram single-valued data.
         # First we try to use the range specified by a user, if there is one. Then use the data if not.
+        # all of this only works if plotDict is not cumulative.
         histRange = [plotDict['xMin'], plotDict['xMax']]
         if histRange[0] is None:
             histRange[0] = metricValue.min()
