@@ -10,6 +10,7 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 from lsst.sims.maf.plots import PlotHandler
 import lsst.sims.maf.maps as maps
+from lsst.sims.maf.stackers import BaseDitherStacker
 from .metricBundle import MetricBundle, createEmptyMetricBundle
 import warnings
 
@@ -376,7 +377,7 @@ class MetricBundleGroup(object):
         # proper hierarchy and DAG so that stackers run in the order they need to. This will catch 90%).
         ditherStackers = []
         for s in uniqStackers:
-            if isinstance(s, stackers.BaseDitherStacker):
+            if isinstance(s, BaseDitherStacker):
                 ditherStackers.append(s)
         for stacker in ditherStackers:
             self.simData = stacker.run(self.simData, override=True)
