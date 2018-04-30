@@ -1,4 +1,4 @@
-__all__ = ['ColMapDict']
+__all__ = ['getColMap', 'ColMapDict']
 
 
 def getColMap(opsdb):
