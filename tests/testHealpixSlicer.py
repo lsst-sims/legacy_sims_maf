@@ -222,10 +222,10 @@ class TestHealpixChipGap(unittest.TestCase):
             distances = calcDist_vincenty(ra, dec, self.dv['ra'], self.dv['dec'])
             didxs = np.where(distances <= np.radians(self.radius))
             sidxs = s['idxs']
-            self.assertTrue(len(sidxs) <= len(didxs[0]))
+            self.assertLessEqual(len(sidxs), len(didxs[0]))
             if len(sidxs) > 0:
                 for indx in sidxs:
-                    self.assertTrue(self.dv['testdata'][indx] in self.dv['testdata'][didxs])
+                    self.assertIn(self.dv['testdata'][indx], self.dv['testdata'][didxs])
 
 
 class TestHealpixSlicerPlotting(unittest.TestCase):
