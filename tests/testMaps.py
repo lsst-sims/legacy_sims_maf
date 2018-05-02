@@ -72,7 +72,7 @@ class TestMaps(unittest.TestCase):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 dustmap.run(slicer1.slicePoints)
-                self.assertTrue("nside" in str(w[-1].message))
+                self.assertIn("nside", str(w[-1].message))
         else:
             warnings.warn('Did not find dustmaps, not running testMaps.py')
 
