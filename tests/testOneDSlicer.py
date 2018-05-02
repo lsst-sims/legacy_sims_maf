@@ -77,7 +77,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             self.testslicer.setupSlicer(dv)
-            self.assertTrue("creasing binMax" in str(w[-1].message))
+            self.assertIn("creasing binMax", str(w[-1].message))
         self.assertEqual(self.testslicer.nslice, nbins)
 
     def testSetupSlicerEquivalent(self):
@@ -124,7 +124,7 @@ class TestOneDSlicerSetup(unittest.TestCase):
             self.testslicer = OneDSlicer(sliceColName='testdata', bins=200, binsize=binsize)
             self.testslicer.setupSlicer(dv)
             # Verify some things
-            self.assertTrue("binsize" in str(w[-1].message))
+            self.assertIn("binsize", str(w[-1].message))
 
     def testSetupSlicerFreedman(self):
         """Test that setting up the slicer using bins=None works."""
@@ -230,6 +230,8 @@ class TestOneDSlicerEqual(unittest.TestCase):
 
 class TestOneDSlicerSlicing(unittest.TestCase):
 
+    longMessage = True
+
     def setUp(self):
         self.testslicer = OneDSlicer(sliceColName='testdata')
 
@@ -254,10 +256,10 @@ class TestOneDSlicerSlicing(unittest.TestCase):
                 dataslice = dv['testdata'][idxs]
                 sum += len(idxs)
                 if len(dataslice) > 0:
-                    self.assertTrue(len(dataslice), nvalues/float(nbins))
+                    self.assertEqual(len(dataslice), nvalues/float(nbins))
                 else:
-                    self.assertTrue(len(dataslice) > 0,
-                                    'Data in test case expected to always be > 0 len after slicing')
+                    self.assertGreater(len(dataslice), 0,
+                                       msg='Data in test case expected to always be > 0 len after slicing')
             self.assertTrue(sum, nvalues)
 
 
