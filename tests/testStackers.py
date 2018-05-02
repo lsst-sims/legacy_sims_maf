@@ -26,7 +26,7 @@ class TestStackerClasses(unittest.TestCase):
         # First - are the columns added if they are not there.
         data, cols_present = stacker._addStackerCols(data)
         self.assertEqual(cols_present, False)
-        self.assertTrue(newcol in data.dtype.names)
+        self.assertIn(newcol, data.dtype.names)
         # Next - if they are present, is that information passed back?
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
