@@ -97,10 +97,8 @@ class TestNDSlicerSetup(unittest.TestCase):
             warnings.simplefilter("always")
             testslicer.setupSlicer(dv)
             self.assertIn('creasing binMax', str(w[-1].message))
-        expectednbins = 1
-        for d in range(self.nd):
-            expectednbins *= (nbins + d)
-        self.assertTrue(testslicer.nslice, expectednbins)
+        expectednbins = nbins ** self.nd
+        self.assertEqual(testslicer.nslice, expectednbins)
 
     def testSetupSlicerEquivalent(self):
         """Test setting up slicer using defined bins and nbins is equal where expected."""
