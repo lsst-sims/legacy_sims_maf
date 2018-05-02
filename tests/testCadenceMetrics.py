@@ -184,8 +184,9 @@ class TestCadenceMetrics(unittest.TestCase):
         # Let's see how much dmax/result can vary
         resmin = 1
         resmax = 0
+        rng = np.random.RandomState(88123100)
         for i in range(10000):
-            dtimes = np.random.rand(100)
+            dtimes = rng.rand(100)
             data['observationStartMJD'] = dtimes.cumsum()
             metric = metrics.RapidRevisitMetric(dTmin=0.1, dTmax=0.8, minNvisits=50)
             result = metric.run(data)
