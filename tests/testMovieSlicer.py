@@ -72,7 +72,7 @@ class TestMovieSlicerSetup(unittest.TestCase):
                                           cumulative=False, forceNoFfmpeg=True)
             self.testslicer.setupSlicer(dv)
             # Verify some things
-            self.assertTrue("binsize" in str(w[-1].message))
+            self.assertIn("binsize", str(w[-1].message))
 
     def testSetupSlicerNbinsZeros(self):
         """Test what happens if give slicer test data that is all single-value."""
@@ -83,7 +83,7 @@ class TestMovieSlicerSetup(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             self.testslicer.setupSlicer(dv)
-            self.assertTrue("creasing binMax" in str(w[-1].message))
+            self.assertIn("creasing binMax", str(w[-1].message))
         self.assertEqual(self.testslicer.nslice, nbins)
 
     def testSetupSlicerLimits(self):
@@ -113,7 +113,7 @@ class TestMovieSlicerSetup(unittest.TestCase):
         for i, (s, b) in enumerate(zip(self.testslicer, bins)):
             self.assertEqual(s['slicePoint']['sid'], i)
             self.assertEqual(s['slicePoint']['binLeft'], b)
-            self.assertTrue(s['slicePoint']['binRight'] <= bins[i+1])
+            self.assertLessEqual(s['slicePoint']['binRight'], bins[i+1])
         for i in ([0, len(self.testslicer)//2, len(self.testslicer)-1]):
             self.assertEqual(self.testslicer[i]['slicePoint']['sid'], i)
             self.assertEqual(self.testslicer[i]['slicePoint']['binLeft'], bins[i])
@@ -176,7 +176,7 @@ class TestMovieSlicerSetup(unittest.TestCase):
             for i, s in enumerate(self.testslicer):
                 idxs = s['idxs']
                 dataslice = dv['times'][idxs]
-                self.assertTrue(len(dataslice) > 0)
+                self.assertGreater(len(dataslice), 0)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
