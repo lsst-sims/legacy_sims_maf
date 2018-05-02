@@ -240,8 +240,8 @@ class TestStackerClasses(unittest.TestCase):
         offsetChanges = np.where(rotOffsets[1:] != rotOffsets[:-1])[0]
         filtChanges = np.where(filt[1:] != filt[:-1])[0]
         # Don't count last offset change because this was just value to force min/max limit.
-        self.assertTrue(np.all(offsetChanges[:-1] == filtChanges))
-        self.assertTrue(np.all(randomDithers <= 90.0))
+        np.testing.assert_array_equal(offsetChanges[:-1], filtChanges)
+        self.assertLessEqual(randomDithers.max(), 90.0)
         stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither,
                                                                  degrees=True, maxRotAngle = 30,
                                                                  randomSeed=19231)
