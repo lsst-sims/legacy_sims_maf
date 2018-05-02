@@ -11,7 +11,7 @@ import lsst.utils.tests
 
 
 def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
-                   decmin=-np.pi, decmax=np.pi, random=True):
+                   decmin=-np.pi, decmax=np.pi, random=1172):
     """Generate a simple array of numbers, evenly arranged between min/max,
     in 1 dimensions (optionally sorted), together with RA/Dec values
     for each data value."""
@@ -20,33 +20,31 @@ def makeDataValues(size=100, minval=0., maxval=1., ramin=0, ramax=2*np.pi,
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(maxval) - float(minval)) / (datavalues.max() - datavalues.min())
     datavalues += minval
-    if random:
-        randorder = np.random.rand(size)
-        randind = np.argsort(randorder)
-        datavalues = datavalues[randind]
+    rng = np.random.RandomState(random)
+    randorder = rng.rand(size)
+    randind = np.argsort(randorder)
+    datavalues = datavalues[randind]
     datavalues = np.array(list(zip(datavalues)), dtype=[('testdata', 'float')])
     data.append(datavalues)
     # Generate RA/Dec values equally spaces on sphere between ramin/max, decmin/max.
     ra = np.arange(0, size, dtype='float')
     ra *= (float(ramax) - float(ramin)) / (ra.max() - ra.min())
-    if random:
-        randorder = np.random.rand(size)
-        randind = np.argsort(randorder)
-        ra = ra[randind]
+    randorder = rng.rand(size)
+    randind = np.argsort(randorder)
+    ra = ra[randind]
     ra = np.array(list(zip(ra)), dtype=[('ra', 'float')])
     data.append(ra)
     v = np.arange(0, size, dtype='float')
     v *= ((np.cos(decmax+np.pi) + 1.)/2.0 - (np.cos(decmin+np.pi)+1.)/2.0) / (v.max() - v.min())
     v += (np.cos(decmin+np.pi)+1.)/2.0
     dec = np.arccos(2*v-1) - np.pi
-    if random:
-        randorder = np.random.rand(size)
-        randind = np.argsort(randorder)
-        dec = dec[randind]
+    randorder = rng.rand(size)
+    randind = np.argsort(randorder)
+    dec = dec[randind]
     dec = np.array(list(zip(dec)), dtype=[('dec', 'float')])
     data.append(dec)
     # Add in rotation angle
-    rot = np.random.rand(len(dec))*2*np.pi
+    rot = rng.rand(len(dec))*2*np.pi
     data.append(np.array(rot, dtype=[('rotSkyPos', 'float')]))
     mjd = np.arange(len(dec))*.1
     data.append(np.array(mjd, dtype=[('observationStartMJD', 'float')]))
@@ -98,7 +96,7 @@ class TestHealpixSlicerEqual(unittest.TestCase):
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                  ramin=0, ramax=2*np.pi,
                                  decmin=-np.pi, decmax=0,
-                                 random=True)
+                                 random=22)
         self.testslicer.setupSlicer(self.dv)
 
     def tearDown(self):
@@ -126,7 +124,7 @@ class TestHealpixSlicerIteration(unittest.TestCase):
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                  ramin=0, ramax=2*np.pi,
                                  decmin=-np.pi, decmax=0,
-                                 random=True)
+                                 random=33)
         self.testslicer.setupSlicer(self.dv)
 
     def tearDown(self):
@@ -167,7 +165,7 @@ class TestHealpixSlicerSlicing(unittest.TestCase):
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                  ramin=0, ramax=2*np.pi,
                                  decmin=-np.pi, decmax=0,
-                                 random=True)
+                                 random=44)
 
     def tearDown(self):
         del self.testslicer
@@ -206,7 +204,7 @@ class TestHealpixChipGap(unittest.TestCase):
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                  ramin=0, ramax=2*np.pi,
                                  decmin=-np.pi, decmax=0,
-                                 random=True)
+                                 random=55)
 
     def tearDown(self):
         del self.testslicer
@@ -233,6 +231,7 @@ class TestHealpixChipGap(unittest.TestCase):
 class TestHealpixSlicerPlotting(unittest.TestCase):
 
     def setUp(self):
+        rng = np.random.RandomState(713244122)
         self.nside = 16
         self.radius = 1.8
         self.testslicer = HealpixSlicer(nside=self.nside, verbose=False, latLonDeg=False,
@@ -241,7 +240,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
         self.dv = makeDataValues(size=nvalues, minval=0., maxval=1.,
                                  ramin=0, ramax=2*np.pi,
                                  decmin=-np.pi, decmax=0,
-                                 random=True)
+                                 random=66)
         self.testslicer.setupSlicer(self.dv)
         self.metricdata = ma.MaskedArray(data=np.zeros(len(self.testslicer), dtype='float'),
                                          mask=np.zeros(len(self.testslicer), 'bool'),
@@ -252,7 +251,7 @@ class TestHealpixSlicerPlotting(unittest.TestCase):
                 self.metricdata.data[i] = np.mean(self.dv['testdata'][idxs])
             else:
                 self.metricdata.mask[i] = True
-        self.metricdata2 = ma.MaskedArray(data=np.random.rand(len(self.testslicer)),
+        self.metricdata2 = ma.MaskedArray(data=rng.rand(len(self.testslicer)),
                                           mask=np.zeros(len(self.testslicer), 'bool'),
                                           fill_value=self.testslicer.badval)
 
