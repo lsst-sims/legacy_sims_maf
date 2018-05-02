@@ -93,8 +93,8 @@ class TestStackerClasses(unittest.TestCase):
         self.assertGreater(min(np.abs(data['dec_pi_amp'])), 0.)
 
     def _tDitherRange(self, diffsra, diffsdec, ra, dec, maxDither):
-        self.assertTrue(np.all(np.abs(diffsra) <= maxDither))
-        self.assertTrue(np.all(np.abs(diffsdec) <= maxDither))
+        self.assertLessEqual(np.abs(diffsra).max(), maxDither)
+        self.assertLessEqual(np.abs(diffsdec).max(), maxDither)
         offsets = np.sqrt(diffsra**2 + diffsdec**2)
         self.assertLessEqual(offsets.max(), maxDither)
         self.assertGreater(diffsra.max(), 0)
