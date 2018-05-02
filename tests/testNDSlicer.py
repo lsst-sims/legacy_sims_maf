@@ -96,7 +96,7 @@ class TestNDSlicerSetup(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             testslicer.setupSlicer(dv)
-            self.assertTrue('creasing binMax' in str(w[-1].message))
+            self.assertIn('creasing binMax', str(w[-1].message))
         expectednbins = 1
         for d in range(self.nd):
             expectednbins *= (nbins + d)
@@ -234,7 +234,7 @@ class TestNDSlicerSlicing(unittest.TestCase):
                         self.assertLessEqual((dataslice[dvname].max() - b), binsize)
                     else:
                         self.assertAlmostEqual((dataslice[dvname].max() - b), binsize)
-                    self.assertTrue(len(dataslice), nvalues/float(nbins))
+                    self.assertEqual(len(dataslice), nvalues/float(nbins))
             # and check that every data value was assigned somewhere.
             self.assertEqual(sum, nvalues)
 
