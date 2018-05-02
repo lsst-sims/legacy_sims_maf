@@ -247,7 +247,7 @@ class TestStackerClasses(unittest.TestCase):
                                                                  randomSeed=19231)
         data = stacker.run(odata)
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
-        self.assertTrue(randomDithers.max(), 30.0)
+        self.assertEqual(randomDithers.max(), 30.0)
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
