@@ -230,7 +230,8 @@ class TestStackerClasses(unittest.TestCase):
         odata = np.zeros(len(filt), dtype=list(zip(['filter', 'rotTelPos'], [(np.str_, 1), float])))
         odata['filter'] = filt
         odata['rotTelPos'] = rotTelPos
-        stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither, degrees=True)
+        stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither, degrees=True,
+                                                                 randomSeed=99)
         data = stacker.run(odata)
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
         rotOffsets = rotTelPos - randomDithers
@@ -241,7 +242,8 @@ class TestStackerClasses(unittest.TestCase):
         self.assertTrue(np.all(offsetChanges[:-1] == filtChanges))
         self.assertTrue(np.all(randomDithers <= 90.0))
         stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither,
-                                                                 degrees=True, maxRotAngle = 30)
+                                                                 degrees=True, maxRotAngle = 30,
+                                                                 randomSeed=19231)
         data = stacker.run(odata)
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
         self.assertTrue(randomDithers.max(), 30.0)
