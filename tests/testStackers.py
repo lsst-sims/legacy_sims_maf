@@ -397,7 +397,7 @@ class TestStackerClasses(unittest.TestCase):
 
         new_data = s.run(data)
 
-        self.assertTrue(np.all(new_data['fieldId'] > 0))
+        self.assertGreater(new_data['fieldId'].max(), 0)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
