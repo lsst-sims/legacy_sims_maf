@@ -72,13 +72,13 @@ class TestResultsDb(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             resultsDb.updateSummaryStat(metricId, 'testfail', teststat)
-            self.assertTrue("not save" in str(w[-1].message))
+            self.assertIn("not save", str(w[-1].message))
         # Test get warning when try to add a string (non-conforming) summary stat.
         teststat = 'teststring'
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             resultsDb.updateSummaryStat(metricId, 'testfail', teststat)
-            self.assertTrue("not save" in str(w[-1].message))
+            self.assertIn("not save", str(w[-1].message))
         shutil.rmtree(tempdir)
 
 

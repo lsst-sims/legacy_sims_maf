@@ -82,6 +82,7 @@ class TestMoMetrics1(unittest.TestCase):
 class TestDiscoveryMetrics(unittest.TestCase):
 
     def setUp(self):
+        rng = np.random.RandomState(61331)
         # Set up some ssoObs data to test the metrics on.
         # Note that ssoObs is a numpy recarray.
         # The expected set of columns in ssoObs is:
@@ -124,7 +125,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         ssoObs['SNR'] = np.zeros(len(times), dtype='float') + 5.0
         ssoObs['vis'] = np.zeros(len(times), dtype='float') + 1
         ssoObs['vis'][0:5] = 0
-        ssoObs['velocity'] = np.random.rand(len(times))
+        ssoObs['velocity'] = rng.rand(len(times))
         ssoObs['FWHMgeom'] = np.ones(len(times), 'float')
         ssoObs['visitExpTime'] = np.ones(len(times), 'float') * 24.0
         self.ssoObs = ssoObs
@@ -177,6 +178,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
 
 
     def testHighVelocityMetric(self):
+        rng = np.random.RandomState(8123)
         velMetric = metrics.HighVelocityMetric(psfFactor=1.0, snrLimit=5)
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(metricValue, 0)
@@ -186,7 +188,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         velMetric = metrics.HighVelocityMetric(psfFactor=2.0, snrLimit=5)
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(metricValue, 0)
-        self.ssoObs['velocity'][0:2] = np.random.rand(1)
+        self.ssoObs['velocity'][0:2] = rng.rand(1)
 
     def testHighVelocityNightsMetric(self):
         velMetric = metrics.HighVelocityNightsMetric(psfFactor=1.0, nObsPerNight=1, snrLimit=5)

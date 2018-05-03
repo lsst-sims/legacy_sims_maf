@@ -7,6 +7,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binners as binners
 import lsst.sims.maf.binMetrics as binMetrics
 
+rng = np.random.RandomState(800233)
 
 oo = db.OpsimDatabase('sqlite:///opsimblitz1_1131_sqlite.db')
 
@@ -20,7 +21,7 @@ hexbinner = binners.HealpixBinner(nside=nside, spatialkey1='hexdithra', spatialk
 hexbinner.setupBinner(simdata)
 
 # Generate random values over the entire sky
-randomallskymetricval = ma.MaskedArray(data = np.random.rand(len(binner)),
+randomallskymetricval = ma.MaskedArray(data = rng.rand(len(binner)),
                                        mask = np.zeros(len(binner), bool), 
                                        fill_value= binner.badval)
 
@@ -40,10 +41,10 @@ hexgm.setBinner(hexbinner)
 hexgm.setMetrics([metric])
 hexgm.runBins(simdata, 'test')
 
-randomnodithermetricval = ma.MaskedArray(data = np.random.rand(len(binner)),
+randomnodithermetricval = ma.MaskedArray(data = rng.rand(len(binner)),
                                          mask = gm.metricValues[gm.metricNames[0]].mask,
                                          fill_value = binner.badval)
-randomhexdithermetricval = ma.MaskedArray(data = np.random.rand(len(binner)),
+randomhexdithermetricval = ma.MaskedArray(data = rng.rand(len(binner)),
                                           mask = hexgm.metricValues[hexgm.metricNames[0]].mask,
                                           fill_value = hexbinner.badval)
 

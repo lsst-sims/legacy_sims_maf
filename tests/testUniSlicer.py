@@ -9,13 +9,14 @@ from lsst.sims.maf.slicers.oneDSlicer import OneDSlicer
 import lsst.utils.tests
 
 
-def makeDataValues(size=100, min=0., max=1., random=True):
+def makeDataValues(size=100, min=0., max=1., random=-1):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
-    if random:
-        randorder = np.random.rand(size)
+    if random > 0:
+        rng = np.random.RandomState(random)
+        randorder = rng.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     datavalues = np.array(list(zip(datavalues)), dtype=[('testdata', 'float')])
@@ -44,7 +45,7 @@ class TestUniSlicerSetupAndSlice(unittest.TestCase):
         dvmin = 0
         dvmax = 1
         nvalues = 1000
-        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=672)
         self.testslicer.setupSlicer(dv)
         # test slicing
         self.assertEqual(len(self.testslicer.indices), len(dv['testdata']))
@@ -65,7 +66,7 @@ class TestUniSlicerIteration(unittest.TestCase):
         dvmin = 0
         dvmax = 1
         nvalues = 1000
-        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=432)
         self.testslicer.setupSlicer(dv)
         for i, b in enumerate(self.testslicer):
             pass
@@ -76,7 +77,7 @@ class TestUniSlicerIteration(unittest.TestCase):
         dvmin = 0
         dvmax = 1
         nvalues = 1000
-        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=1192)
         self.testslicer.setupSlicer(dv)
         self.assertEqual(self.testslicer[0]['slicePoint']['sid'], 0)
 
@@ -88,7 +89,7 @@ class TestUniSlicerEqual(unittest.TestCase):
         dvmin = 0
         dvmax = 1
         nvalues = 1000
-        dv = makeDataValues(nvalues, dvmin, dvmax, random=True)
+        dv = makeDataValues(nvalues, dvmin, dvmax, random=3482)
         self.testslicer.setupSlicer(dv)
 
     def tearDown(self):
@@ -102,7 +103,7 @@ class TestUniSlicerEqual(unittest.TestCase):
         #  not necessarily the same!).
         # These should be the same, even though data is not the same.
         testslicer2 = UniSlicer()
-        dv2 = makeDataValues(100, 0, 1, random=True)
+        dv2 = makeDataValues(100, 0, 1, random=43298)
         testslicer2.setupSlicer(dv2)
         self.assertEqual(self.testslicer, testslicer2)
         # these will not be the same, as different slicer type.

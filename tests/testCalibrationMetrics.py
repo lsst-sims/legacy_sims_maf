@@ -167,12 +167,12 @@ class TestCalibrationMetrics(unittest.TestCase):
         np.testing.assert_almost_equal(val, 0., decimal=2)
 
         # Generate a random distribution that should have little or no correlation
-        np.random.seed(42)
+        rng = np.random.RandomState(42)
 
-        data['ra_pi_amp'] = np.random.rand(100)*2-1.
-        data['dec_pi_amp'] = np.random.rand(100)*2-1.
-        data['ra_dcr_amp'] = np.random.rand(100)*2-1.
-        data['dec_dcr_amp'] = np.random.rand(100)*2-1.
+        data['ra_pi_amp'] = rng.rand(100)*2-1.
+        data['dec_pi_amp'] = rng.rand(100)*2-1.
+        data['ra_dcr_amp'] = rng.rand(100)*2-1.
+        data['dec_dcr_amp'] = rng.rand(100)*2-1.
 
         val = metric.run(data)
         assert(np.abs(val) < 0.2)

@@ -16,9 +16,10 @@ class TestSlicers(unittest.TestCase):
         self.baseslicer = slicers.BaseSlicer()
 
     def test_healpixSlicer_obj(self):
+        rng = np.random.RandomState(8121)
         nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
-        metricValues = np.random.rand(hp.nside2npix(nside)).astype('object')
+        metricValues = rng.rand(hp.nside2npix(nside)).astype('object')
         metricValues = ma.MaskedArray(data=metricValues,
                                       mask=np.where(metricValues < .1, True, False),
                                       fill_value=slicer.badval)
@@ -34,9 +35,10 @@ class TestSlicers(unittest.TestCase):
                 assert(getattr(slicer, att) == getattr(slicerBack, att))
 
     def test_healpixSlicer_floats(self):
+        rng = np.random.RandomState(71231)
         nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
-        metricValues = np.random.rand(hp.nside2npix(nside))
+        metricValues = rng.rand(hp.nside2npix(nside))
         with lsst.utils.tests.getTempFilePath('.npz') as filename:
             slicer.writeData(filename, metricValues, metadata='testdata')
             metricValuesBack, slicerBack, header = self.baseslicer.readData(filename)
@@ -47,9 +49,10 @@ class TestSlicers(unittest.TestCase):
                 assert(getattr(slicer, att) == getattr(slicerBack, att))
 
     def test_healpixSlicer_masked(self):
+        rng = np.random.RandomState(712551)
         nside = 32
         slicer = slicers.HealpixSlicer(nside=nside)
-        metricValues = np.random.rand(hp.nside2npix(nside))
+        metricValues = rng.rand(hp.nside2npix(nside))
         metricValues = ma.MaskedArray(data=metricValues,
                                       mask=np.where(metricValues < .1, True, False),
                                       fill_value=slicer.badval)
@@ -63,9 +66,10 @@ class TestSlicers(unittest.TestCase):
                 assert(getattr(slicer, att) == getattr(slicerBack, att))
 
     def test_oneDSlicer(self):
+        rng = np.random.RandomState(71111)
         slicer = slicers.OneDSlicer(sliceColName='testdata')
         dataValues = np.zeros(10000, dtype=[('testdata', 'float')])
-        dataValues['testdata'] = np.random.rand(10000)
+        dataValues['testdata'] = rng.rand(10000)
         slicer.setupSlicer(dataValues)
         with lsst.utils.tests.getTempFilePath('.npz') as filename:
             slicer.writeData(filename, dataValues[:100])
@@ -80,17 +84,18 @@ class TestSlicers(unittest.TestCase):
                     assert(getattr(slicer, att) == getattr(slicerBack, att))
 
     def test_opsimFieldSlicer(self):
+        rng = np.random.RandomState(7442)
         slicer = slicers.OpsimFieldSlicer()
         names = ['fieldRA', 'fieldDec', 'fieldId']
         dt = ['float', 'float', 'int']
-        metricValues = np.random.rand(100)
+        metricValues = rng.rand(100)
         fieldData = np.zeros(100, dtype=list(zip(names, dt)))
-        fieldData['fieldRA'] = np.random.rand(100)
-        fieldData['fieldDec'] = np.random.rand(100)
+        fieldData['fieldRA'] = rng.rand(100)
+        fieldData['fieldDec'] = rng.rand(100)
         fieldData['fieldId'] = np.arange(100)
         names = ['data1', 'data2', 'fieldId']
         simData = np.zeros(100, dtype=list(zip(names, dt)))
-        simData['data1'] = np.random.rand(100)
+        simData['data1'] = rng.rand(100)
         simData['fieldId'] = np.arange(100)
         slicer.setupSlicer(simData, fieldData)
         with lsst.utils.tests.getTempFilePath('.npz') as filename:
@@ -108,9 +113,10 @@ class TestSlicers(unittest.TestCase):
                     assert(getattr(slicer, att) == getattr(slicerBack, att))
 
     def test_unislicer(self):
+        rng = np.random.RandomState(34229)
         slicer = slicers.UniSlicer()
         data = np.zeros(1, dtype=[('testdata', 'float')])
-        data[:] = np.random.rand(1)
+        data[:] = rng.rand(1)
         slicer.setupSlicer(data)
         with lsst.utils.tests.getTempFilePath('.npz') as filename:
             metricValue = np.array([25.])
@@ -124,11 +130,12 @@ class TestSlicers(unittest.TestCase):
 
     def test_complex(self):
         # Test case where there is a complex metric
+        rng = np.random.RandomState(5442)
         nside = 8
         slicer = slicers.HealpixSlicer(nside=nside)
         data = np.zeros(slicer.nslice, dtype='object')
         for i, ack in enumerate(data):
-            n_el = np.random.rand(1)*4  # up to 4 elements
+            n_el = rng.rand(1)*4  # up to 4 elements
             data[i] = np.arange(n_el)
         with lsst.utils.tests.getTempFilePath('.npz') as filename:
             slicer.writeData(filename, data)
@@ -139,10 +146,11 @@ class TestSlicers(unittest.TestCase):
                 np.testing.assert_almost_equal(dataBack[i], data[i])
 
     def test_nDSlicer(self):
+        rng = np.random.RandomState(621)
         colnames = ['test1', 'test2', 'test3']
         data = []
         for c in colnames:
-            data.append(np.random.rand(1000))
+            data.append(rng.rand(1000))
         dv = np.core.records.fromarrays(data, names=colnames)
         slicer = slicers.NDSlicer(colnames, binsList=10)
         slicer.setupSlicer(dv)

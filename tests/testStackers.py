@@ -26,7 +26,7 @@ class TestStackerClasses(unittest.TestCase):
         # First - are the columns added if they are not there.
         data, cols_present = stacker._addStackerCols(data)
         self.assertEqual(cols_present, False)
-        self.assertTrue(newcol in data.dtype.names)
+        self.assertIn(newcol, data.dtype.names)
         # Next - if they are present, is that information passed back?
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
@@ -61,10 +61,11 @@ class TestStackerClasses(unittest.TestCase):
         """
         Test the normalized airmass stacker.
         """
+        rng = np.random.RandomState(232)
         data = np.zeros(600, dtype=list(zip(
             ['airmass', 'fieldDec'], [float, float])))
-        data['airmass'] = np.random.rand(600)
-        data['fieldDec'] = np.random.rand(600) * np.pi - np.pi / 2.
+        data['airmass'] = rng.random_sample(600)
+        data['fieldDec'] = rng.random_sample(600) * np.pi - np.pi / 2.
         data['fieldDec'] = np.degrees(data['fieldDec'])
         stacker = stackers.NormAirmassStacker(degrees=True)
         data = stacker.run(data)
@@ -92,8 +93,8 @@ class TestStackerClasses(unittest.TestCase):
         self.assertGreater(min(np.abs(data['dec_pi_amp'])), 0.)
 
     def _tDitherRange(self, diffsra, diffsdec, ra, dec, maxDither):
-        self.assertTrue(np.all(np.abs(diffsra) <= maxDither))
-        self.assertTrue(np.all(np.abs(diffsdec) <= maxDither))
+        self.assertLessEqual(np.abs(diffsra).max(), maxDither)
+        self.assertLessEqual(np.abs(diffsdec).max(), maxDither)
         offsets = np.sqrt(diffsra**2 + diffsdec**2)
         self.assertLessEqual(offsets.max(), maxDither)
         self.assertGreater(diffsra.max(), 0)
@@ -125,11 +126,11 @@ class TestStackerClasses(unittest.TestCase):
         data = np.zeros(600, dtype=list(zip(
             ['fieldRA', 'fieldDec'], [float, float])))
         # Set seed so the test is stable
-        np.random.seed(42)
+        rng = np.random.RandomState(42)
         # Restrict dithers to area where wraparound is not a problem for
         # comparisons.
-        data['fieldRA'] = np.degrees(np.random.rand(600) * (np.pi) + np.pi / 2.0)
-        data['fieldDec'] = np.degrees(np.random.rand(600) * np.pi / 2.0 - np.pi / 4.0)
+        data['fieldRA'] = np.degrees(rng.random_sample(600) * (np.pi) + np.pi / 2.0)
+        data['fieldDec'] = np.degrees(rng.random_sample(600) * np.pi / 2.0 - np.pi / 4.0)
         stacker = stackers.RandomDitherFieldPerVisitStacker(
             maxDither=maxDither)
         data = stacker.run(data)
@@ -147,14 +148,14 @@ class TestStackerClasses(unittest.TestCase):
         maxDither = 0.5
         ndata = 600
         # Set seed so the test is stable
-        np.random.seed(42)
+        rng = np.random.RandomState(42)
 
         data = np.zeros(ndata, dtype=list(zip(
             ['fieldRA', 'fieldDec', 'fieldId', 'night'], [float, float, int, int])))
-        data['fieldRA'] = np.random.rand(ndata) * (np.pi) + np.pi / 2.0
-        data['fieldDec'] = np.random.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
-        data['fieldId'] = np.floor(np.random.rand(ndata) * ndata)
-        data['night'] = np.floor(np.random.rand(ndata) * 10).astype('int')
+        data['fieldRA'] = rng.rand(ndata) * (np.pi) + np.pi / 2.0
+        data['fieldDec'] = rng.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
+        data['fieldId'] = np.floor(rng.rand(ndata) * ndata)
+        data['night'] = np.floor(rng.rand(ndata) * 10).astype('int')
         stacker = stackers.RandomDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
         diffsra = (np.radians(data['fieldRA']) - np.radians(data['randomDitherPerNightRa'])
@@ -173,16 +174,16 @@ class TestStackerClasses(unittest.TestCase):
         maxDither = 0.5
         ndata = 2000
         # Set seed so the test is stable
-        np.random.seed(42)
+        rng = np.random.RandomState(42)
 
         data = np.zeros(ndata, dtype=list(zip(
             ['fieldRA', 'fieldDec', 'fieldId', 'night'], [float, float, int, int])))
-        data['fieldRA'] = np.random.rand(ndata) * (np.pi) + np.pi / 2.0
+        data['fieldRA'] = rng.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldRA'] = np.zeros(ndata) + np.pi / 2.0
-        data['fieldDec'] = np.random.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
+        data['fieldDec'] = rng.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
         data['fieldDec'] = np.zeros(ndata)
-        data['fieldId'] = np.floor(np.random.rand(ndata) * ndata)
-        data['night'] = np.floor(np.random.rand(ndata) * 20).astype('int')
+        data['fieldId'] = np.floor(rng.rand(ndata) * ndata)
+        data['night'] = np.floor(rng.rand(ndata) * 20).astype('int')
         stacker = stackers.SpiralDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
         diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa']
@@ -201,14 +202,14 @@ class TestStackerClasses(unittest.TestCase):
         maxDither = 0.5
         ndata = 2000
         # Set seed so the test is stable
-        np.random.seed(42)
+        rng = np.random.RandomState(42)
 
         data = np.zeros(ndata, dtype=list(zip(
             ['fieldRA', 'fieldDec', 'fieldId', 'night'], [float, float, int, int])))
-        data['fieldRA'] = np.random.rand(ndata) * (np.pi) + np.pi / 2.0
-        data['fieldDec'] = np.random.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
-        data['fieldId'] = np.floor(np.random.rand(ndata) * ndata)
-        data['night'] = np.floor(np.random.rand(ndata) * 217).astype('int')
+        data['fieldRA'] = rng.rand(ndata) * (np.pi) + np.pi / 2.0
+        data['fieldDec'] = rng.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
+        data['fieldId'] = np.floor(rng.rand(ndata) * ndata)
+        data['night'] = np.floor(rng.rand(ndata) * 217).astype('int')
         stacker = stackers.HexDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
         diffsra = (data['fieldRA'] - data['hexDitherPerNightRa']
@@ -230,7 +231,8 @@ class TestStackerClasses(unittest.TestCase):
         odata = np.zeros(len(filt), dtype=list(zip(['filter', 'rotTelPos'], [(np.str_, 1), float])))
         odata['filter'] = filt
         odata['rotTelPos'] = rotTelPos
-        stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither, degrees=True)
+        stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither, degrees=True,
+                                                                 randomSeed=99)
         data = stacker.run(odata)
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
         rotOffsets = rotTelPos - randomDithers
@@ -238,13 +240,14 @@ class TestStackerClasses(unittest.TestCase):
         offsetChanges = np.where(rotOffsets[1:] != rotOffsets[:-1])[0]
         filtChanges = np.where(filt[1:] != filt[:-1])[0]
         # Don't count last offset change because this was just value to force min/max limit.
-        self.assertTrue(np.all(offsetChanges[:-1] == filtChanges))
-        self.assertTrue(np.all(randomDithers <= 90.0))
+        np.testing.assert_array_equal(offsetChanges[:-1], filtChanges)
+        self.assertLessEqual(randomDithers.max(), 90.0)
         stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither,
-                                                                 degrees=True, maxRotAngle = 30)
+                                                                 degrees=True, maxRotAngle = 30,
+                                                                 randomSeed=19231)
         data = stacker.run(odata)
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
-        self.assertTrue(randomDithers.max(), 30.0)
+        self.assertEqual(randomDithers.max(), 30.0)
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
@@ -350,6 +353,7 @@ class TestStackerClasses(unittest.TestCase):
         """
         Test the OpSimFieldStacker
         """
+        rng = np.random.RandomState(812351)
         s = stackers.OpSimFieldStacker(raCol='ra', decCol='dec', degrees=False)
 
         # First sanity check. Make sure the center of the fields returns the right field id
@@ -387,13 +391,13 @@ class TestStackerClasses(unittest.TestCase):
         np.testing.assert_array_equal(field_id, new_data['fieldId'])
 
         # Now let's generate a set of random coordinates and make sure they are all assigned a fieldID.
-        data = np.array(list(zip(np.random.rand(600) * 2. * np.pi,
-                                 np.random.rand(600) * np.pi - np.pi / 2.)),
+        data = np.array(list(zip(rng.rand(600) * 2. * np.pi,
+                                 rng.rand(600) * np.pi - np.pi / 2.)),
                         dtype=list(zip(['ra', 'dec'], [float, float])))
 
         new_data = s.run(data)
 
-        self.assertTrue(np.all(new_data['fieldId'] > 0))
+        self.assertGreater(new_data['fieldId'].max(), 0)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

@@ -11,7 +11,7 @@ class TestCommon(unittest.TestCase):
         self.assertEqual(len(colors), 6)
         self.assertEqual(sqls['u'], 'filter = "u"')
         filterlist, colors, orders, sqls, metadata = batches.common.filterList(all=True, extraSql=None)
-        self.assertTrue('all' in filterlist)
+        self.assertIn('all', filterlist)
         self.assertEqual(sqls['all'], '')
         filterlist, colors, orders, sqls, metadata = batches.common.filterList(all=True, extraSql='night=3')
         self.assertEqual(sqls['all'], 'night=3')

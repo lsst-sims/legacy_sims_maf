@@ -153,13 +153,13 @@ class TestCadenceMetrics(unittest.TestCase):
         # All nights have one visit.
         expected_result = np.zeros(len(bins) - 1, dtype=int)
         expected_result[1] = len(data)
-        self.assertTrue(np.all(result == expected_result))
+        np.testing.assert_array_equal(result, expected_result)
 
         data['night'] = np.floor(np.arange(0, 100) / 2)
         result = metric.run(data)
         expected_result = np.zeros(len(bins) - 1, dtype=int)
         expected_result[2] = len(data) / 2
-        self.assertTrue(np.all(result == expected_result))
+        np.testing.assert_array_equal(result, expected_result)
 
     def testRapidRevisitMetric(self):
         data = np.zeros(100, dtype=list(zip(['observationStartMJD'], [float])))
@@ -170,22 +170,23 @@ class TestCadenceMetrics(unittest.TestCase):
         metric = metrics.RapidRevisitMetric(dTmin=5, dTmax=55, minNvisits=50)
         result = metric.run(data)
         # This should be uniform.
-        self.assertTrue(result < 0.1)
-        self.assertTrue(result >= 0)
+        self.assertLess(result, 0.1)
+        self.assertGreaterEqual(result, 0)
         # Set up non-uniform distribution of time differences
         dtimes = np.zeros(100) + 5
         data['observationStartMJD'] = dtimes.cumsum()
         result = metric.run(data)
-        self.assertTrue(result >= 0.5)
+        self.assertGreaterEqual(result, 0.5)
         dtimes = np.zeros(100) + 15
         data['observationStartMJD'] = dtimes.cumsum()
         result = metric.run(data)
-        self.assertTrue(result >= 0.5)
+        self.assertGreaterEqual(result, 0.5)
         # Let's see how much dmax/result can vary
         resmin = 1
         resmax = 0
+        rng = np.random.RandomState(88123100)
         for i in range(10000):
-            dtimes = np.random.rand(100)
+            dtimes = rng.rand(100)
             data['observationStartMJD'] = dtimes.cumsum()
             metric = metrics.RapidRevisitMetric(dTmin=0.1, dTmax=0.8, minNvisits=50)
             result = metric.run(data)
