@@ -358,10 +358,10 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     cutoff1 = 0.9
     summaryStats = [metrics.FracAboveMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
     summaryStats.extend(standardSummary())
-    caption = 'Area that receives the required number of visits (%d) between %.3f and %.1f minutes, ' \
+    caption = 'Area that receives at least %d visits between %.3f and %.1f minutes, ' \
               % (nOne, dTmin, dTmax)
-    caption += 'with at least %d of those visits falling between %.1f and %.1f minutes. ' \
-               % (nTwo, dTpairs, dTmax)
+    caption += 'with at least %d of those visits falling between %.3f and %.1f minutes. ' \
+               % (nTwo, dTmin, dTpairs)
     caption += 'Summary statistic "Area" indicates the area on the sky which meets this requirement.'
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
