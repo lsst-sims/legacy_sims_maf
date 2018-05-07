@@ -155,7 +155,7 @@ class RapidRevisitUniformityMetric(BaseMetric):
 
 
 class RapidRevisitMetric(BaseMetric):
-    def __init__(self, mjdCol='observationStartMJD',
+    def __init__(self, mjdCol='observationStartMJD', metricName='RapidRevisit',
                  dTmin=40.0 / 60.0 / 60.0 / 24.0, dTpairs = 20.0 / 60.0 / 24.0,
                  dTmax = 30.0 / 60.0 / 24.0, minN1 = 28, minN2 = 82, **kwargs):
         self.mjdCol = mjdCol
@@ -164,7 +164,7 @@ class RapidRevisitMetric(BaseMetric):
         self.dTmax = dTmax
         self.minN1 = minN1
         self.minN2 = minN2
-        super().__init__(col=self.mjdCol, **kwargs)
+        super().__init__(col=self.mjdCol, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         dtimes = np.diff(np.sort(dataSlice[self.mjdCol]))
