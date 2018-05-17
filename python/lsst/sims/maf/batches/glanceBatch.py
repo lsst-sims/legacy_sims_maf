@@ -216,7 +216,7 @@ def glanceBatch(colmap=None, runName='opsim',
     bd = metricBundles.makeBundlesDictFromList(bundleList)
 
     # Add hourglass plots.
-    hrDict = hourglassBatch(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
+    hrDict = hourglassPlots(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
     bd.update(hrDict)
     # Add basic slew stats.
     try:
