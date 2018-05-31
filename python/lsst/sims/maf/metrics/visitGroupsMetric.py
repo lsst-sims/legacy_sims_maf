@@ -35,14 +35,27 @@ class PairFractionMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         nobs = np.size(dataSlice[self.mjdCol])
-        i = np.tile(dataSlice[self.mjdCol], (nobs, 1))
-        j = i.T
-        tdiff = np.abs(i-j)
-        part_pair = np.zeros(i.shape, dtype=int)
-        good = np.where((tdiff < self.maxGap) & (tdiff > self.minGap))
-        part_pair[good] = 1
-        part_pair = np.max(part_pair, axis=1)
-        result = np.sum(part_pair)/float(nobs)
+        times = np.sort(dataSlice[self.mjdCol])
+
+        # Check which ones have a forard match
+        t_plus = times + self.maxGap
+        t_minus = times + self.minGap
+        ind1 = np.searchsorted(times, t_plus)
+        ind2 = np.searchsorted(times, t_minus)
+        # If ind1 and ind2 are the same, there is no pairable image for that exposure
+        diff1 = ind1 - ind2
+
+        # Check which have a back match
+        t_plus = times - self.maxGap
+        t_minus = times - self.minGap
+        ind1 = np.searchsorted(times, t_plus)
+        ind2 = np.searchsorted(times, t_minus)
+
+        diff2 = ind1 - ind2
+
+        # The exposure has a pair ahead or behind
+        is_paired = np.where((diff1 != 0) | (diff2 != 0))[0]
+        result = np.size(is_paired)/float(nobs)
         return result
 
 
