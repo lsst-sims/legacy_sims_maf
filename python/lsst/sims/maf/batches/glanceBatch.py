@@ -8,7 +8,7 @@ import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
 from .common import standardSummary
 from .slewBatch import slewBasics
-from .hourglassBatch import hourglassBatch
+from .hourglassBatch import hourglassPlots
 
 __all__ = ['glanceBatch']
 
@@ -216,7 +216,7 @@ def glanceBatch(colmap=None, runName='opsim',
     bd = metricBundles.makeBundlesDictFromList(bundleList)
 
     # Add hourglass plots.
-    hrDict = hourglassBatch(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
+    hrDict = hourglassPlots(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
     bd.update(hrDict)
     # Add basic slew stats.
     try:

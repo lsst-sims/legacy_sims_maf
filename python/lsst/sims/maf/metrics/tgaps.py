@@ -1,30 +1,35 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['TgapsMetric', 'NightgapsMetric']
+__all__ = ['TgapsMetric', 'NightgapsMetric', 'NVisitsPerNightMetric']
+
 
 class TgapsMetric(BaseMetric):
-    """Histogram all the time gaps.
+    """Histogram the times of the gaps between observations.
 
 
     Measure the gaps between observations.  By default, only gaps
     between neighboring visits are computed.  If allGaps is set to true, all gaps are
     computed (i.e., if there are observations at 10, 20, 30 and 40 the default will
-    return [10,10,10] while allGaps returns [10,10,10,20,20,30])
+    return a histogram of [10,10,10] while allGaps returns a histogram of [10,10,10,20,20,30])
 
-    The gaps are binned into a histogram with properties set by the bins array.
-
+    Parameters
+    ----------
     timesCol : str, opt
-        The column name for the exposure times.  Assumed to be in days.
+        The column name for the exposure times.  Values assumed to be in days.
+        Default observationStartMJD.
     allGaps : bool, opt
-        Should all observation gaps be computed (True), or
-        only gaps between consecutive observations (False, default)
+        Histogram the gaps between all observations (True) or just successive observations (False)?
+        Default is False. If all gaps are used, this metric can become significantly slower.
+    bins : np.ndarray, opt
+        The bins to use for the histogram of time gaps (in days, or same units as timesCol).
+        Default values are bins from 0 to 2 hours, in 5 minute intervals.
 
-    Returns a histogram at each data point; these histograms can be combined and plotted using the
+    Returns a histogram at each slice point; these histograms can be combined and plotted using the
     'SummaryHistogram plotter'.
      """
 
-    def __init__(self, timesCol='observationStartMJD', allGaps=False, bins=np.arange(0.5, 60.0, 0.5),
+    def __init__(self, timesCol='observationStartMJD', allGaps=False, bins=np.arange(0, 120.0, 5.0)/60./24.,
                  units='days', **kwargs):
         # Pass the same bins to the plotter.
         self.bins = bins
@@ -46,24 +51,29 @@ class TgapsMetric(BaseMetric):
         result, bins = np.histogram(dts, self.bins)
         return result
 
+
 class NightgapsMetric(BaseMetric):
-    """Histogram all the night gaps. Similar to TgapsMetric, but based on 'night', not time.
+    """Histogram the number of nights between observations.
 
 
     Measure the gaps between observations.  By default, only gaps
     between neighboring visits are computed.  If allGaps is set to true, all gaps are
     computed (i.e., if there are observations at 10, 20, 30 and 40 the default will
-    return [10,10,10] while allGaps returns [10,10,10,20,20,30])
+    histogram [10,10,10] while allGaps histograms [10,10,10,20,20,30])
 
-    The gaps are binned into a histogram with properties set by the bins array.
-
+    Parameters
+    ----------
     nightCol : str, opt
         The column name for the night of each observation.
+        Default 'night'.
     allGaps : bool, opt
-        Should all observation gaps be computed (True), or
-        only gaps between consecutive observations (False, default)
+        Histogram the gaps between all observations (True) or just successive observations (False)?
+        Default is False. If all gaps are used, this metric can become significantly slower.
+    bins : np.ndarray, opt
+        The bins to use for the histogram of time gaps (in days, or same units as timesCol).
+        Default values are bins from 0 to 10 days, in 1 day intervals.
 
-    Returns a histogram at each data point; these histograms can be combined and plotted using the
+    Returns a histogram at each slice point; these histograms can be combined and plotted using the
     'SummaryHistogram plotter'.
      """
 
@@ -92,16 +102,31 @@ class NightgapsMetric(BaseMetric):
 
 
 class NVisitsPerNightMetric(BaseMetric):
-    """Histogram the number of visits to a field per night.
+    """Histogram the number of visits in each night.
 
+    Splits the visits by night, then histograms how many visits occur in each night.
+
+    Parameters
+    ----------
+    nightCol : str, opt
+        The column name for the night of each observation.
+        Default 'night'.
+    bins : np.ndarray, opt
+        The bins to use for the histogram of time gaps (in days, or same units as timesCol).
+        Default values are bins from 0 to 5 visits, in steps of 1.
+
+    Returns a histogram at each slice point; these histograms can be combined and plotted using the
+    'SummaryHistogram plotter'.
      """
 
     def __init__(self, nightCol='night', bins=np.arange(0, 10, 1), units='#', **kwargs):
         # Pass the same bins to the plotter.
         self.bins = bins
         self.nightCol = nightCol
-        super(NVisitsPerNight, self).__init__(col=[self.nightCol], metricDtype='object',
-                                              units=units, **kwargs)
+        super(NVisitsPerNightMetric, self).__init__(col=[self.nightCol], metricDtype='object',
+                                                    units=units, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        pass
+        n, counts = np.unique(dataSlice[self.nightCol], return_counts=True)
+        result, bins = np.histogram(counts, self.bins)
+        return result

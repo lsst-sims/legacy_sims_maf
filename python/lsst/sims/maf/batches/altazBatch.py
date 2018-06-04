@@ -3,9 +3,9 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.plots as plots
 from .colMapDict import ColMapDict
-from .common import standardSummary, extendedMetrics, filterList
+from .common import filterList
 
-__all__ = ['altazHealBatch','altazLambBatch']
+__all__ = ['altazHealpix','altazLambert']
 
 def basicSetup(metricName, colmap=None, nside=64):
 
@@ -18,7 +18,7 @@ def basicSetup(metricName, colmap=None, nside=64):
 
     return colmap, slicer, metric
 
-def altazHealBatch(colmap=None, runName='opsim', extraSql=None,
+def altazHealpix(colmap=None, runName='opsim', extraSql=None,
                    extraMetadata=None, metricName='NVisits Alt/Az'):
 
     """Generate a set of metrics measuring the number visits as a function of alt/az
@@ -73,7 +73,7 @@ def altazHealBatch(colmap=None, runName='opsim', extraSql=None,
     return mb.makeBundlesDictFromList(bundleList)
 
 
-def altazLambBatch(colmap=None, runName='opsim', extraSql=None,
+def altazLambert(colmap=None, runName='opsim', extraSql=None,
                    extraMetadata=None, metricName='Nvisits as function of Alt/Az'):
 
     """Generate a set of metrics measuring the number visits as a function of alt/az

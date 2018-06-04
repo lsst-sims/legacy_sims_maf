@@ -128,6 +128,7 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def testMeanAngleMetric(self):
         """Test mean angle metric."""
+        rng = np.random.RandomState(6573)
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
         dv1 = np.array(list(zip(dv1)), dtype=[('testdata', 'float')])
@@ -136,7 +137,7 @@ class TestSimpleMetrics(unittest.TestCase):
         result1 = testmetric.run(dv1)
         result2 = testmetric.run(dv2)
         self.assertAlmostEqual(result1, (result2+20)%360.)
-        dv = np.random.rand(10000)*360.0
+        dv = rng.rand(10000)*360.0
         dv = dv
         dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
@@ -145,6 +146,7 @@ class TestSimpleMetrics(unittest.TestCase):
 
     def testFullRangeAngleMetric(self):
         """Test full range angle metric."""
+        rng = np.random.RandomState(5422)
         dv1 = np.arange(0, 32, 2.5)
         dv2 = (dv1 - 20.0) % 360.
         dv1 = np.array(list(zip(dv1)), dtype=[('testdata', 'float')])
@@ -157,7 +159,7 @@ class TestSimpleMetrics(unittest.TestCase):
         dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
         self.assertAlmostEqual(result, 355)
-        dv = np.random.rand(10000)*360.0
+        dv = rng.rand(10000)*360.0
         dv = np.array(list(zip(dv)), dtype=[('testdata', 'float')])
         result = testmetric.run(dv)
         result = result

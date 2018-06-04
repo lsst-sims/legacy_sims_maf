@@ -83,18 +83,21 @@ def makeFieldData():
     return fieldData
 
 
-def makeDataValues(fieldData, size=10000, min=0., max=1., random=True):
+def makeDataValues(fieldData, size=10000, min=0., max=1., random=None):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
-    if random:
-        randorder = np.random.rand(size)
-        randind = np.argsort(randorder)
-        datavalues = datavalues[randind]
+    if random is None:
+        raise RuntimeError("Must pass in random number seed as kwarg 'random'")
+
+    rng = np.random.RandomState(random)
+    randorder = rng.rand(size)
+    randind = np.argsort(randorder)
+    datavalues = datavalues[randind]
     # Add valid fieldId values to match data values
     fieldId = np.zeros(len(datavalues), 'int')
-    idxs = np.random.rand(size) * len(fieldData['fieldId'])
+    idxs = rng.rand(size) * len(fieldData['fieldId'])
     for i, d in enumerate(datavalues):
         fieldId[i] = fieldData[int(idxs[i])][0]
     simData = np.core.records.fromarrays([fieldId, datavalues], names=['fieldId', 'testdata'])
@@ -106,7 +109,7 @@ class TestOpsimFieldSlicerSetup(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)
+        self.simData = makeDataValues(self.fieldData, random=88)
 
     def tearDown(self):
         del self.testslicer
@@ -129,7 +132,7 @@ class TestOpsimFieldSlicerEqual(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)
+        self.simData = makeDataValues(self.fieldData, random=56)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
 
     def tearDown(self):
@@ -170,7 +173,7 @@ class TestOpsimFieldSlicerWarning(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)
+        self.simData = makeDataValues(self.fieldData, random=4532)
 
     def tearDown(self):
         del self.testslicer
@@ -189,7 +192,7 @@ class TestOpsimFieldSlicerIteration(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer(latLonDeg=True)
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)
+        self.simData = makeDataValues(self.fieldData, random=776221)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
 
     def tearDown(self):
@@ -231,7 +234,7 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
     def setUp(self):
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)
+        self.simData = makeDataValues(self.fieldData, random=98)
 
     def tearDown(self):
         del self.testslicer
@@ -256,9 +259,10 @@ class TestOpsimFieldSlicerSlicing(unittest.TestCase):
 class TestOpsimFieldSlicerPlotting(unittest.TestCase):
 
     def setUp(self):
+        rng = np.random.RandomState(65332)
         self.testslicer = OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeDataValues(self.fieldData)
+        self.simData = makeDataValues(self.fieldData, random=462)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
 
         self.metricdata = ma.MaskedArray(data=np.zeros(len(self.testslicer), dtype='float'),
@@ -270,7 +274,7 @@ class TestOpsimFieldSlicerPlotting(unittest.TestCase):
                 self.metricdata.data[i] = np.mean(self.simData['testdata'][idxs])
             else:
                 self.metricdata.mask[i] = True
-        self.metricdata2 = ma.MaskedArray(data=np.random.rand(len(self.testslicer)),
+        self.metricdata2 = ma.MaskedArray(data=rng.rand(len(self.testslicer)),
                                           mask=np.zeros(len(self.testslicer), 'bool'),
                                           fill_value=self.testslicer.badval)
 

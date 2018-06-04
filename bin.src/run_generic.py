@@ -39,11 +39,13 @@ def setSQL(opsdb, sqlConstraint=None):
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = opsdb.createSQLWhere('WFD', proptags)
     ddWhere = opsdb.createSQLWhere('DD', proptags)
+    nesWhere = opsdb.createSQLWhere('NES', proptags)
     if sqlConstraint is not None:
         wfdWhere = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
         ddWhere = '(%s) and (%s)' % (sqlConstraint, ddWhere)
-    sqltags = {'WFD': wfdWhere, 'DD': ddWhere, 'All': sqlConstraint}
-    metadata = {'WFD': 'WFD', 'DD': 'DD', 'All': ''}
+        nesWhere = '(%s) and (%s)' % (sqlConstraint, nesWhere)
+    sqltags = {'WFD': wfdWhere, 'DD': ddWhere, 'NES': nesWhere, 'All': sqlConstraint}
+    metadata = {'WFD': 'WFD', 'DD': 'DD', 'NES': 'NES', 'All': ''}
     if sqlConstraint is not None and len(sqlConstraint) > 0:
         md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
         md = md.replace('"','').replace('  ', ' ')

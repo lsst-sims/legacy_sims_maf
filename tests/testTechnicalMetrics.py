@@ -142,8 +142,8 @@ class TestTechnicalMetrics(unittest.TestCase):
                                           'observationStartMJD'])
         metric = metrics.BruteOSFMetric()
         result = metric.run(data)
-        self.assertTrue(result > 0.5)
-        self.assertTrue(result < 0.6)
+        self.assertGreater(result, 0.5)
+        self.assertLess(result, 0.6)
 
     def testCompletenessMetric(self):
         """

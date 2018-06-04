@@ -66,7 +66,7 @@ class TestTrackingDb(unittest.TestCase):
         # Test removal works.
         trackingdb.delRun(trackId)
         res = tdb.query_arbitrary('select * from runs')
-        self.assertTrue(len(res) == 1)
+        self.assertEqual(len(res), 1)
         # Test cannot remove run which does not exist.
         self.assertRaises(Exception, trackingdb.delRun, trackId)
         trackingdb.close()

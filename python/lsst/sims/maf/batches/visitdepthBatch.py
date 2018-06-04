@@ -69,7 +69,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
             nvisitsRange[f][i] = int(np.floor(nvisitsRange[f][i] * scale))
 
     # Generate Nvisit maps in all and per filters
-    displayDict = {'group': 'Nvisits', 'subgroup': subgroup}
+    displayDict = {'group': 'Nvisits Maps', 'subgroup': subgroup}
     metric = metrics.CountMetric(colmap['mjd'], metricName='NVisits', units='')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
@@ -82,14 +82,14 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
             binsize = 5
         plotDict = {'xMin': nvisitsRange[f][0], 'xMax': nvisitsRange[f][1],
                     'colorMin': nvisitsRange[f][0], 'colorMax': nvisitsRange[f][1],
-                    'binsize': binsize}
+                    'binsize': binsize, 'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
 
     # Generate Coadded depth maps per filter
-    displayDict = {'group': 'Coadded m5', 'subgroup': subgroup}
+    displayDict = {'group': 'Coadded M5 Maps', 'subgroup': subgroup}
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'], metricName='CoaddM5')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                                    latLonDeg=colmap['raDecDeg'])
@@ -105,7 +105,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
         displayDict['order'] = orders[f]
         plotDict = {'zp': mag_zp, 'xMin': -0.6, 'xMax': 0.6,
                     'xlabel': 'coadded m5 - %.1f' % mag_zp,
-                    'colorMin': -0.6, 'colorMax': 0.6}
+                    'colorMin': -0.6, 'colorMax': 0.6, 'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
@@ -158,7 +158,7 @@ def tEffMetrics(colmap=None, runName='opsim',
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Total Teff and normalized Teff.
-    displayDict = {'group': 'T_eff', 'subgroup': subgroup}
+    displayDict = {'group': 'T_eff Summary', 'subgroup': subgroup}
     displayDict['caption'] = 'Total effective time of the survey (see Teff metric).'
     displayDict['order'] = 0
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
@@ -178,6 +178,7 @@ def tEffMetrics(colmap=None, runName='opsim',
     bundleList.append(bundle)
 
     # Generate Teff maps in all and per filters
+    displayDict = {'group': 'T_eff Maps', 'subgroup': subgroup}
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                 normed=True, metricName='Normalized Teff')
     slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
@@ -239,11 +240,11 @@ def nvisitsPerNight(colmap=None, runName='opsim', binNights=1,
 
     bundleList = []
 
-    displayDict = {'group': 'Per Night', 'subgroup': subgroup}
+    displayDict = {'group': 'Nvisits Per Night', 'subgroup': subgroup}
     displayDict['caption'] = 'Number of visits per night for %s.' % (metadataCaption)
     displayDict['order'] = 0
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits')
-    slicer = slicers.OneDSlicer(sliceColName=colmap['mjd'], binsize=int(binNights))
+    slicer = slicers.OneDSlicer(sliceColName=colmap['night'], binsize=binNights)
     bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadataCaption,
                              displayDict=displayDict, summaryMetrics=standardSummary())
     bundleList.append(bundle)
@@ -278,31 +279,33 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
 
     propids, proptags = opsdb.fetchPropInfo()
 
-    # Calculate the total number of visits per proposal, and their fraction compared to total.
-    totvisits = opsdb.fetchNVisits()
-    metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits')
-    slicer = slicers.UniSlicer()
-    summaryMetrics = [metrics.IdentityMetric(metricName='Count'),
-                      metrics.NormalizeMetric(normVal=totvisits, metricName='Fraction of total')]
-    bundleList = []
-    displayDict = {'group': 'Visit Summary', 'subgroup': 'Proposal distribution', 'order': -1}
-
     bdict = {}
-    # All proposals.
-    bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
-                                 extraSql=extraSql, extraMetadata='All props', subgroup='All proposals'))
-    displayDict['caption'] = 'Total number of visits for all proposals'
+    bundleList = []
+
+    totvisits = opsdb.fetchNVisits()
+
     metadata= 'All props'
     if extraSql is not None and len(extraSql) > 0:
         displayDict['caption'] += ' with constraint %s.' % extraSql
         metadata += ' %s' % extraSql
+
+    # Nvisits per night, all proposals.
+    bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
+                                 extraSql=extraSql, extraMetadata=metadata, subgroup='All proposals'))
+    # Nvisits total, all proposals.
+    metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits')
+    slicer = slicers.UniSlicer()
+    summaryMetrics = [metrics.IdentityMetric(metricName='Count'),
+                      metrics.NormalizeMetric(normVal=totvisits, metricName='Fraction of total')]
+    displayDict = {'group': 'Nvisit Summary', 'subgroup': 'Proposal distribution', 'order': -1}
+    displayDict['caption'] = 'Total number of visits for all proposals'
     bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadata,
                              displayDict=displayDict, summaryMetrics=summaryMetrics)
     bundleList.append(bundle)
 
     # Look for any multi-proposal groups that we should include.
     for tag in proptags:
-        if len(proptags[tag]) > 1:
+        if len(proptags[tag]) > 1 or tag in ('WFD', 'DD'):
             pids = proptags[tag]
             sql = '('
             for pid in pids[:-1]:
@@ -320,7 +323,7 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
                                      summaryMetrics=summaryMetrics, displayDict=displayDict)
             bundleList.append(bundle)
 
-    # And then just run each proposal separately.
+    # And each proposal separately.
     for propid in propids:
         sql = '%s=%d' % (colmap['proposalId'], propid)
         metadata = '%s' % (propids[propid])
