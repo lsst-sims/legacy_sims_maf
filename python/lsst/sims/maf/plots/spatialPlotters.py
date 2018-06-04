@@ -24,11 +24,11 @@ __all__ = ['setColorLims', 'setColorMap', 'HealpixSkyMap', 'HealpixPowerSpectrum
            'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
 
 baseDefaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                       'logScale': False, 'percentileClip': None,  'normVal': None, 'zp': None,
-                       'cbarFormat': None, 'cmap': perceptual_rainbow, 'cbar_edge': True,  'nTicks': 10,
+                       'logScale': False, 'percentileClip': None, 'normVal': None, 'zp': None,
+                       'cbarFormat': None, 'cmap': perceptual_rainbow, 'cbar_edge': True, 'nTicks': 10,
                        'colorMin': None, 'colorMax': None,
                        'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
-                       'labelsize':None, 'fontsize': None, 'figsize': None, 'subplot': 111}
+                       'labelsize': None, 'fontsize': None, 'figsize': None, 'subplot': 111}
 
 
 def setColorLims(metricValue, plotDict):
@@ -357,6 +357,7 @@ class BaseHistogram(BasePlotter):
             plt.ylim(ymin = n.min())
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
+
         def mjrFormatter(y, pos):
             if not isinstance(plotDict['scale'], numbers.Number):
                 raise ValueError('plotDict["scale"] must be a number to scale the y axis.')
@@ -640,8 +641,7 @@ class LambertSkyMap(BasePlotter):
         self.defaultPlotDict.update(baseDefaultPlotDict)
         self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 1, 'lon_0': 180,
                                                  'resolution': None, 'celestial': False, 'round': False},
-                                     'levels': 200, 'cbarFormat': '%i'})
-
+                                     'levels': 200, 'cbarFormat': '%i', 'norm': None})
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -689,8 +689,8 @@ class LambertSkyMap(BasePlotter):
         # Set masked values to be below the lowest contour level.
         CS = m.contourf(np.degrees(slicer.slicePoints['ra']),
                         np.degrees(slicer.slicePoints['dec']),
-                        metricValue.filled(np.min(clims)-1), levels, tri=True,
-                        cmap=plotDict['cmap'], ax=ax, latlon=True)
+                        metricValue.filled(np.min(clims)-0.9), levels, tri=True,
+                        cmap=plotDict['cmap'], ax=ax, latlon=True, norm=plotDict['norm'])
 
         # Try to fix the ugly pdf contour problem
         for c in CS.collections:
