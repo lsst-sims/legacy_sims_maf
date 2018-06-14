@@ -7,14 +7,33 @@ from .baseMetric import BaseMetric
 __all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
            'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric']
 
+
 class fONv(BaseMetric):
     """
     Metrics based on a specified area, but returning NVISITS related to area:
     given Asky, what is the minimum and median number of visits obtained over that much area?
     (choose the portion of the sky with the highest number of visits first).
+
+    Parameters
+    ----------
+    col : str or list of strs, opt
+        Name of the column in the numpy recarray passed to the summary metric.
+    Asky : float, opt
+        Area of the sky to base the evaluation of number of visits over.
+        Default 18,0000 sq deg.
+    nside : int, opt
+        Nside parameter from healpix slicer, used to set the physical relationship between on-sky area
+        and number of healpixels. Default 128.
+    Nvisit : int, opt
+        Number of visits to use as the benchmark value, if choosing to return a normalized Nvisit value.
+    norm : boolean, opt
+        Normalize the returned "nvisit" (min / median) values by Nvisit, if true.
+        Default False.
+    metricName : str, opt
+        Name of the summary metric. Default fONv.
     """
-    def __init__(self, col='metricdata', Asky=18000., Nvisit=825,
-                 metricName='fOArea', nside=128, norm=True, **kwargs):
+    def __init__(self, col='metricdata', Asky=18000., nside=128, Nvisit=825,
+                 norm=False, metricName='fONv',  **kwargs):
         """Asky = square degrees """
         super().__init__(col=col, metricName=metricName, **kwargs)
         self.Nvisit = Nvisit
@@ -31,45 +50,63 @@ class fONv(BaseMetric):
         name = dataSlice.dtype.names[0]
         nvis_sorted = np.sort(dataSlice[name])
         # Find the Asky's worth of healpixels with the largest # of visits.
-        nvis_Asky = nvis_sorted[:self.npix_Asky]
+        nvis_Asky = nvis_sorted[-self.npix_Asky:]
         result = np.empty(2, dtype=[('name', np.str_, 20), ('value', float)])
         result['name'][0] = "MedianNvis"
         result['value'][0] = np.median(nvis_Asky)
         result['name'][1] = "MinNvis"
         result['value'][1] = np.min(nvis_Asky)
         if self.norm:
-            result['value'] /= self.Nvisit
+            result['value'] /= float(self.Nvisit)
         return result
+
 
 class fOArea(BaseMetric):
     """
     Metrics based on a specified number of visits, but returning AREA related to Nvisits:
     given Nvisit, what amount of sky is covered with at least that many visits?
+
+    Parameters
+    ----------
+    col : str or list of strs, opt
+        Name of the column in the numpy recarray passed to the summary metric.
+    Nvisit : int, opt
+        Number of visits to use as the minimum required -- metric calculated area that has this many visits.
+        Default 825.
+    Asky : float, opt
+        Area to use as the benchmark value, if choosing to returned a normalized Area value.
+        Default 18,0000 sq deg.
+    nside : int, opt
+        Nside parameter from healpix slicer, used to set the physical relationship between on-sky area
+        and number of healpixels. Default 128.
+    norm : boolean, opt
+        Normalize the returned "area" (area with minimum Nvisit visits) value by Asky, if true.
+        Default False.
+    metricName : str, opt
+        Name of the summary metric. Default fOArea.
     """
-    def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825,
-                 nside=128, norm=True, **kwargs):
+    def __init__(self, col='metricdata', Nvisit=825, Asky = 18000.0, nside=128,
+                  norm=False, metricName='fOArea',  **kwargs):
         """Asky = square degrees """
         super().__init__(col=col, metricName=metricName, **kwargs)
         self.Nvisit = Nvisit
         self.nside = nside
-        # Determine how many healpixels are included in Asky sq deg.
         self.Asky = Asky
         self.scale = hp.nside2pixarea(self.nside, degrees=True)
         self.norm = norm
-
 
     def run(self, dataSlice, slicePoint=None):
         name = dataSlice.dtype.names[0]
         nvis_sorted = np.sort(dataSlice[name])
         # Identify the healpixels with more than Nvisits.
-        nvis_min = nvis_sorted[np.where(nvis_sorted >= self.Nvisits)]
+        nvis_min = nvis_sorted[np.where(nvis_sorted >= self.Nvisit)]
         if len(nvis_min) == 0:
-            return self.badval
+            result = self.badval
         else:
             result = nvis_min.size * self.scale
             if self.norm:
                 result /= float(self.Asky)
-            return result
+        return result
 
 
 class TableFractionMetric(BaseMetric):
