@@ -14,7 +14,29 @@ __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
             benchmarkArea=18000, benchmarkNvisits=825, ditherStacker=None, ditherkwargs=None):
+    """Metrics for calculating fO.
 
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+
+    Returns
+    -------
+    metricBundleDict
+    """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
 
@@ -46,19 +68,19 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
     metric = metrics.CountMetric(col=colmap['mjd'], metricName='fO')
     plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkArea,
                 'Nvisit': benchmarkNvisits, 'xMin': 0, 'xMax': 1500}
-    summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
+    summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea',
                                      Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fOArea(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
+                      metrics.fOArea(nside=nside, norm=True, metricName='fOArea/benchmark',
                                      Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fONv(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
+                      metrics.fONv(nside=nside, norm=False, metricName='fONv',
                                    Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
+                      metrics.fONv(nside=nside, norm=True, metricName='fONv/benchmark',
                                    Asky=benchmarkArea, Nvisit=benchmarkNvisits)]
     caption = 'The FO metric evaluates the overall efficiency of observing. '
-    caption += ('fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. '
-                % (benchmarkArea, benchmarkNvisits))
-    caption += ('fONv: Area = this many square degrees out of %.1f receive at least %d visits.'
-                % (benchmarkArea, benchmarkNvisits))
+    caption += ('foNv: out of %.2f sq degrees, the area receives at least X and a median of Y visits '
+                '(out of %d, if compared to benchmark). ' % (benchmarkArea, benchmarkNvisits))
+    caption += ('fOArea: this many sq deg (out of %.2f sq deg if compared '
+                'to benchmark) receives at least %d visits. ' % (benchmarkArea, benchmarkNvisits))
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                              stackerList = [ditherStacker],
@@ -74,7 +96,29 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 def astrometryBatch(colmap=None, runName='opsim',
                     extraSql=None, extraMetadata=None,
                     nside=64, ditherStacker=None, ditherkwargs=None):
-    # Allow user to add dithering.
+    """Metrics for evaluating proper motion and parallax.
+
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+
+    Returns
+    -------
+    metricBundleDict
+    """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
@@ -205,7 +249,29 @@ def astrometryBatch(colmap=None, runName='opsim',
 def rapidRevisitBatch(colmap=None, runName='opsim',
                       extraSql=None, extraMetadata=None, nside=64,
                       ditherStacker=None, ditherkwargs=None):
-    # Allow user to add dithering.
+    """Metrics for evaluating proper motion and parallax.
+
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+
+    Returns
+    -------
+    metricBundleDict
+    """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []

@@ -7,60 +7,69 @@ from .baseMetric import BaseMetric
 __all__ = ['fOArea', 'fONv', 'TableFractionMetric', 'IdentityMetric',
            'NormalizeMetric', 'ZeropointMetric', 'TotalPowerMetric']
 
-class fOArea(BaseMetric):
+class fONv(BaseMetric):
     """
-    Metric to calculate the FO Area.
+    Metrics based on a specified area, but returning NVISITS related to area:
+    given Asky, what is the minimum and median number of visits obtained over that much area?
+    (choose the portion of the sky with the highest number of visits first).
     """
     def __init__(self, col='metricdata', Asky=18000., Nvisit=825,
                  metricName='fOArea', nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(fOArea, self).__init__(col=col, metricName=metricName, **kwargs)
-        self.Asky = Asky
+        super().__init__(col=col, metricName=metricName, **kwargs)
         self.Nvisit = Nvisit
         self.nside = nside
+        # Determine how many healpixels are included in Asky sq deg.
+        self.Asky = Asky
+        self.scale = hp.nside2pixarea(self.nside, degrees=True)
+        self.npix_Asky = np.int(np.ceil(self.Asky / self.scale))
         self.norm = norm
 
     def run(self, dataSlice, slicePoint=None):
-        dataSlice.sort()
-        name = dataSlice.dtype.names[0]
-        scale = hp.nside2pixarea(self.nside, degrees=True)
-        cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
-        good = np.where(cumulativeArea >= self.Asky)[0]
-        if good.size > 0:
-            nv = np.max(dataSlice[name][good])
-            if self.norm:
-                nv = nv/float(self.Nvisit)
-            return nv
-        else:
+        if len(dataSlice) < self.npix_Asky:
             return self.badval
+        name = dataSlice.dtype.names[0]
+        nvis_sorted = np.sort(dataSlice[name])
+        # Find the Asky's worth of healpixels with the largest # of visits.
+        nvis_Asky = nvis_sorted[:self.npix_Asky]
+        result = np.empty(2, dtype=[('name', np.str_, 20), ('value', float)])
+        result['name'][0] = "MedianNvis"
+        result['value'][0] = np.median(nvis_Asky)
+        result['name'][1] = "MinNvis"
+        result['value'][1] = np.min(nvis_Asky)
+        if self.norm:
+            result['value'] /= self.Nvisit
+        return result
 
-
-class fONv(BaseMetric):
+class fOArea(BaseMetric):
     """
-    Metric to calculate the FO_Nv.
+    Metrics based on a specified number of visits, but returning AREA related to Nvisits:
+    given Nvisit, what amount of sky is covered with at least that many visits?
     """
     def __init__(self, col='metricdata', Asky=18000., metricName='fONv', Nvisit=825,
                  nside=128, norm=True, **kwargs):
         """Asky = square degrees """
-        super(fONv, self).__init__(col=col, metricName=metricName, **kwargs)
-        self.Asky = Asky
+        super().__init__(col=col, metricName=metricName, **kwargs)
         self.Nvisit = Nvisit
         self.nside = nside
+        # Determine how many healpixels are included in Asky sq deg.
+        self.Asky = Asky
+        self.scale = hp.nside2pixarea(self.nside, degrees=True)
         self.norm = norm
 
+
     def run(self, dataSlice, slicePoint=None):
-        dataSlice.sort()
         name = dataSlice.dtype.names[0]
-        scale = hp.nside2pixarea(self.nside, degrees=True)
-        cumulativeArea = np.arange(1,dataSlice.size+1)[::-1]*scale
-        good = np.where(dataSlice[name] >= self.Nvisit)[0]
-        if good.size > 0:
-            area = np.max(cumulativeArea[good])
-            if self.norm:
-                area = area/float(self.Asky)
-            return area
-        else:
+        nvis_sorted = np.sort(dataSlice[name])
+        # Identify the healpixels with more than Nvisits.
+        nvis_min = nvis_sorted[np.where(nvis_sorted >= self.Nvisits)]
+        if len(nvis_min) == 0:
             return self.badval
+        else:
+            result = nvis_min.size * self.scale
+            if self.norm:
+                result /= float(self.Asky)
+            return result
 
 
 class TableFractionMetric(BaseMetric):
