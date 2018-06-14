@@ -95,8 +95,9 @@ def parseArgs(subdir='out', parser=None):
                              " e.g.: 'night <= 365' or 'propId = 5' "
                              " (**may not work with slew batches)")
     parser.add_argument("--nyears", type=int, default=10, help="Number of years in the run (default 10).")
-    parser.add_argument("--ditherStacker", type=str, default=None, help="Name of dither stacker to use"
-                                                                        "for RA/Dec.")
+    parser.add_argument("--ditherStacker", type=str, default=None,
+                        help="Name of dither stacker to use for RA/Dec, e.g. 'RandomDitherPerNightStacker'."
+                        " Note that this currently is only applied to the run_srd script. ")
     args = parser.parse_args()
 
     if args.runName is None:
