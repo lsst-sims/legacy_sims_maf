@@ -79,7 +79,7 @@ class TestStackerClasses(unittest.TestCase):
         """
 
         data = np.zeros(600, dtype=list(zip(['fieldRA', 'fieldDec', 'observationStartMJD'],
-                                       [float, float, float])))
+                                            [float, float, float])))
         data['fieldRA'] = data['fieldRA'] + .1
         data['fieldDec'] = data['fieldDec'] - .1
         data['observationStartMJD'] = np.arange(data.size) + 49000.
@@ -118,6 +118,30 @@ class TestStackerClasses(unittest.TestCase):
             self.assertAlmostEqual(dra_on_night.max(), 0)
             self.assertAlmostEqual(ddec_on_night.max(), 0)
 
+    def testSetupDitherStackers(self):
+        # Test that we get no stacker when using default columns.
+        raCol = 'fieldRA'
+        decCol = 'fieldDec'
+        degrees = True
+        stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees)
+        self.assertEqual(len(stackerlist), 0)
+        # Test that we get one (and the right one) when using particular columns.
+        raCol = 'hexDitherFieldPerNightRa'
+        decCol = 'hexDitherFieldPerNightDec'
+        stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees)
+        self.assertEqual(len(stackerlist), 1)
+        self.assertEqual(stackerlist[0], stackers.HexDitherFieldPerNightStacker())
+        # Test that kwargs are passed along.
+        stackerlist = stackers.setupDitherStackers(raCol, decCol, degrees, maxDither=0.5)
+        self.assertEqual(stackerlist[0].maxDither, np.radians(0.5))
+
+    def testBaseDitherStacker(self):
+        # Test that the base dither stacker matches the type of a stacker.
+        s = stackers.HexDitherFieldPerNightStacker()
+        self.assertTrue(isinstance(s, stackers.BaseDitherStacker))
+        s = stackers.ParallaxFactorStacker()
+        self.assertFalse(isinstance(s, stackers.BaseDitherStacker))
+
     def testRandomDither(self):
         """
         Test the random dither pattern.
@@ -131,11 +155,10 @@ class TestStackerClasses(unittest.TestCase):
         # comparisons.
         data['fieldRA'] = np.degrees(rng.random_sample(600) * (np.pi) + np.pi / 2.0)
         data['fieldDec'] = np.degrees(rng.random_sample(600) * np.pi / 2.0 - np.pi / 4.0)
-        stacker = stackers.RandomDitherFieldPerVisitStacker(
-            maxDither=maxDither)
+        stacker = stackers.RandomDitherFieldPerVisitStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['randomDitherFieldPerVisitRa']
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (data['fieldRA'] - data['randomDitherFieldPerVisitRa']) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['randomDitherFieldPerVisitDec']
         # Check dithers within expected range.
         self._tDitherRange(diffsra, diffsdec, data[
@@ -158,8 +181,8 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(rng.rand(ndata) * 10).astype('int')
         stacker = stackers.RandomDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (np.radians(data['fieldRA']) - np.radians(data['randomDitherPerNightRa'])
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (np.radians(data['fieldRA']) - np.radians(data['randomDitherPerNightRa'])) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = np.radians(data['fieldDec']) - np.radians(data['randomDitherPerNightDec'])
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
@@ -186,8 +209,8 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(rng.rand(ndata) * 20).astype('int')
         stacker = stackers.SpiralDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa']
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa']) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['spiralDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
@@ -212,8 +235,8 @@ class TestStackerClasses(unittest.TestCase):
         data['night'] = np.floor(rng.rand(ndata) * 217).astype('int')
         stacker = stackers.HexDitherPerNightStacker(maxDither=maxDither)
         data = stacker.run(data)
-        diffsra = (data['fieldRA'] - data['hexDitherPerNightRa']
-                   ) * np.cos(np.radians(data['fieldDec']))
+        diffsra = (data['fieldRA'] - data['hexDitherPerNightRa']) \
+                  * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['hexDitherPerNightDec']
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
@@ -367,11 +390,11 @@ class TestStackerClasses(unittest.TestCase):
                         dtype=list(zip(['ra', 'dec'], [float, float])))
         new_data = s.run(data)
 
-        np.testing.assert_array_equal(field_id, new_data['fieldId'])
+        np.testing.assert_array_equal(field_id, new_data['opsimFieldId'])
 
-        # Cherry picked a set of coordinates that should belong to a certain list of fields. These coordinates
-        # are not exactly at the center of fields, but close enough that they should be classified as belonging to
-        # them.
+        # Cherry picked a set of coordinates that should belong to a certain list of fields.
+        # These coordinates are not exactly at the center of fields, but close enough that
+        # they should be classified as belonging to them.
         ra_inside_2548 = (10. + 1. / 60 + 6.59 / 60. / 60.) * np.pi / 12.  # 10:01:06.59
         dec_inside_2548 = np.radians(-1. * (2. + 8. / 60. + 27.6 / 60. / 60.))  # -02:08:27.6
 
@@ -388,7 +411,7 @@ class TestStackerClasses(unittest.TestCase):
 
         new_data = s.run(data)
 
-        np.testing.assert_array_equal(field_id, new_data['fieldId'])
+        np.testing.assert_array_equal(field_id, new_data['opsimFieldId'])
 
         # Now let's generate a set of random coordinates and make sure they are all assigned a fieldID.
         data = np.array(list(zip(rng.rand(600) * 2. * np.pi,
@@ -397,7 +420,7 @@ class TestStackerClasses(unittest.TestCase):
 
         new_data = s.run(data)
 
-        self.assertGreater(new_data['fieldId'].max(), 0)
+        self.assertGreater(new_data['opsimFieldId'].max(), 0)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):

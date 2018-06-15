@@ -26,13 +26,15 @@ def setBatches(opsdb, colmap, args):
         sql = sqls[tag]
         md = metadata[tag]
         fO = batches.fOBatch(colmap=colmap, runName=args.runName,
-                             extraSql=sql, extraMetadata=md)
+                             extraSql=sql, extraMetadata=md, ditherStacker=args.ditherStacker)
         bdict.update(fO)
         astrometry = batches.astrometryBatch(colmap=colmap, runName=args.runName,
-                                             extraSql=sql, extraMetadata=md)
+                                             extraSql=sql, extraMetadata=md,
+                                             ditherStacker=args.ditherStacker)
         bdict.update(astrometry)
         rapidrevisit = batches.rapidRevisitBatch(colmap=colmap, runName=args.runName,
-                                                 extraSql=sql, extraMetadata=md)
+                                                 extraSql=sql, extraMetadata=md,
+                                                 ditherStacker=args.ditherStacker)
         bdict.update(rapidrevisit)
     bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
     bdict.update(batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint))
@@ -42,14 +44,17 @@ def setBatches(opsdb, colmap, args):
     # Run all metadata metrics, All and just WFD.
     for tag in ['All', 'WFD']:
         bdict.update(batches.allMetadata(colmap, args.runName, extraSql=sqls[tag],
-                                         extraMetadata=metadata[tag]))
+                                         extraMetadata=metadata[tag],
+                                         ditherStacker=args.ditherStacker))
 
     # Nvisits + m5 maps + Teff maps, All and just WFD.
     for tag in ['All', 'WFD']:
         bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears,
-                                           extraSql=sqls[tag], extraMetadata=metadata[tag]))
+                                           extraSql=sqls[tag], extraMetadata=metadata[tag],
+                                           ditherStacker=args.ditherStacker))
         bdict.update(batches.tEffMetrics(colmap, args.runName, extraSql=sqls[tag],
-                                         extraMetadata=metadata[tag]))
+                                         extraMetadata=metadata[tag],
+                                         ditherStacker=args.ditherStacker))
 
     # Nvisits per proposal and per night.
     bdict.update(batches.nvisitsPerProp(opsdb, colmap, args.runName,

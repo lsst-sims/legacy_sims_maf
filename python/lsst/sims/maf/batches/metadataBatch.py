@@ -6,13 +6,16 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary, extendedMetrics, standardAngleMetrics, filterList
+from .common import standardSummary, extendedMetrics, standardAngleMetrics, \
+    filterList, radecCols, combineMetadata
 
 __all__ = ['metadataBasics', 'metadataBasicsAngle', 'allMetadata', 'metadataMaps']
 
 
 def metadataBasics(value, colmap=None, runName='opsim',
-                   valueName=None, groupName=None, extraSql=None, extraMetadata=None, nside=64):
+                   valueName=None, groupName=None, extraSql=None,
+                   extraMetadata=None, nside=64,
+                   ditherStacker=None, ditherkwargs=None):
     """Calculate basic metrics on visit metadata 'value' (e.g. airmass, normalized airmass, seeing..).
 
     Calculates extended standard metrics (with unislicer) on the quantity (all visits and per filter),
@@ -44,6 +47,10 @@ def metadataBasics(value, colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
 
     Returns
     -------
@@ -68,19 +75,26 @@ def metadataBasics(value, colmap=None, runName='opsim',
 
     displayDict = {'group': groupName, 'subgroup': subgroup}
 
-    # Set up basic all and per filter sql constraints.
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    extraMetadata = combineMetadata(extraMetadata, ditherMeta)
+     # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
                                                             extraMetadata=extraMetadata)
 
     # Hack to make HA work, but really I need to account for any stackers/colmaps.
     if value == 'HA':
-        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=colmap['ra'],
-                                                 degrees=colmap['raDecDeg'])]
+        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=raCol,
+                                                 degrees=degrees)]
     elif value == 'normairmass':
-        stackerList = [stackers.NormAirmassStacker(degrees=colmap['raDecDeg'])]
+        stackerList = [stackers.NormAirmassStacker(degrees=degrees)]
     else:
         stackerList = None
+    if ditherStacker is not None:
+        if stackerList is None:
+            stackerList = [ditherStacker]
+        else:
+            stackerList.append(ditherStacker)
 
     # Summarize values over all and per filter (min/mean/median/max/percentiles/outliers/rms).
     slicer = slicers.UniSlicer()
@@ -110,8 +124,8 @@ def metadataBasics(value, colmap=None, runName='opsim',
     mList.append(metrics.MinMetric(value, metricName='Min %s' % (valueName)))
     mList.append(metrics.MedianMetric(value, metricName='Median %s' % (valueName)))
     mList.append(metrics.MaxMetric(value, metricName='Max %s' % (valueName)))
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol,
+                                   latLonDeg=degrees)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
     for f in filterlist:
         for m in mList:
@@ -133,14 +147,14 @@ def metadataBasics(value, colmap=None, runName='opsim',
 
 
 def metadataBasicsAngle(value, colmap=None, runName='opsim',
-                        valueName=None, groupName=None, extraSql=None, extraMetadata=None, nside=64):
+                        valueName=None, groupName=None, extraSql=None,
+                        extraMetadata=None, nside=64,
+                        ditherStacker=None, ditherkwargs=None):
     """Calculate basic metrics on visit metadata 'value', where value is a wrap-around angle.
 
     Calculates extended standard metrics (with unislicer) on the quantity (all visits and per filter),
     makes histogram of the value (all visits and per filter),
 
-    TODO: handle stackers which need configuration (degrees, in particular) more automatically.
-    Currently have a hack for HA & normairmass.
 
     Parameters
     ----------
@@ -165,6 +179,10 @@ def metadataBasicsAngle(value, colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
 
     Returns
     -------
@@ -189,11 +207,14 @@ def metadataBasicsAngle(value, colmap=None, runName='opsim',
 
     displayDict = {'group': groupName, 'subgroup': subgroup}
 
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    extraMetadata = combineMetadata(extraMetadata, ditherMeta)
     # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
                                                             extraMetadata=extraMetadata)
 
+    stackerList = [ditherStacker]
 
     # Summarize values over all and per filter.
     slicer = slicers.UniSlicer()
@@ -223,8 +244,8 @@ def metadataBasicsAngle(value, colmap=None, runName='opsim',
     mList.append(metrics.MeanAngleMetric(value, metricName='AngleMean %s' % (valueName)))
     mList.append(metrics.FullRangeAngleMetric(value, metricName='AngleRange %s' % (valueName)))
     mList.append(metrics.RmsAngleMetric(value, metricName='AngleRms %s' % (valueName)))
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol,
+                                   latLonDeg=degrees)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
     for f in filterlist:
         for m in mList:
@@ -246,7 +267,8 @@ def metadataBasicsAngle(value, colmap=None, runName='opsim',
 
 
 
-def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
+def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None,
+                ditherStacker=None, ditherkwargs=None):
     """Generate a large set of metrics about the metadata of each visit -
     distributions of airmass, normalized airmass, seeing, sky brightness, single visit depth,
     hour angle, distance to the moon, and solar elongation.
@@ -280,12 +302,24 @@ def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None)
             value = valueName
         bdict.update(metadataBasics(value, colmap=colmap, runName=runName,
                                     valueName=valueName,
-                                    extraSql=extraSql, extraMetadata=extraMetadata))
+                                    extraSql=extraSql, extraMetadata=extraMetadata,
+                                    ditherStacker=ditherStacker, ditherkwargs=ditherkwargs))
+    for valueName in colmap['metadataAngleList']:
+        if valueName in colmap:
+            value = colmap[valueName]
+        else:
+            value = valueName
+        bdict.update(metadataBasicsAngle(value, colmap=colmap, runName=runName,
+                                    valueName=valueName,
+                                    extraSql=extraSql, extraMetadata=extraMetadata,
+                                    ditherStacker=ditherStacker, ditherkwargs=ditherkwargs))
     return bdict
 
 
 def metadataMaps(value, colmap=None, runName='opsim',
-                 valueName=None, groupName=None, extraSql=None, extraMetadata=None, nside=64):
+                 valueName=None, groupName=None, extraSql=None,
+                 extraMetadata=None, nside=64,
+                 ditherStacker=None, ditherkwargs=None):
     """Calculate 25/50/75 percentile values on maps across sky for a single metadata value.
 
     TODO: handle stackers which need configuration (degrees, in particular) more automatically.
@@ -314,6 +348,10 @@ def metadataMaps(value, colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
 
     Returns
     -------
@@ -338,6 +376,8 @@ def metadataMaps(value, colmap=None, runName='opsim',
 
     displayDict = {'group': groupName, 'subgroup': subgroup}
 
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    extraMetadata = combineMetadata(extraMetadata, ditherMeta)
     # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
@@ -345,12 +385,17 @@ def metadataMaps(value, colmap=None, runName='opsim',
 
     # Hack to make HA work, but really I need to account for any stackers/colmaps.
     if value == 'HA':
-        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=colmap['ra'],
-                                                 degrees=colmap['raDecDeg'])]
+        stackerList = [stackers.HourAngleStacker(lstCol=colmap['lst'], raCol=raCol,
+                                                 degrees=degrees)]
     elif value == 'normairmass':
-        stackerList = [stackers.NormAirmassStacker(degrees=colmap['raDecDeg'])]
+        stackerList = [stackers.NormAirmassStacker(degrees=degrees)]
     else:
         stackerList = None
+    if ditherStacker is not None:
+        if stackerList is None:
+            stackerList = [ditherStacker]
+        else:
+            stackerList.append(ditherStacker)
 
     # Make maps of 25/median/75 for all and per filter, per RA/Dec, with standard summary stats.
     mList = []
@@ -359,8 +404,8 @@ def metadataMaps(value, colmap=None, runName='opsim',
     mList.append(metrics.MedianMetric(value, metricName='Median %s' % (valueName)))
     mList.append(metrics.PercentileMetric(value, percentile=75,
                                           metricName='75thPercentile %s' % (valueName)))
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol,
+                                   latLonDeg=degrees)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
     for f in filterlist:
         for m in mList:

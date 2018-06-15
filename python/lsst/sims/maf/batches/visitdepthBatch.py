@@ -7,14 +7,15 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 import lsst.sims.maf.utils as mafUtils
 from .colMapDict import ColMapDict, getColMap
-from .common import standardSummary, filterList
+from .common import standardSummary, filterList, radecCols, combineMetadata
 
 __all__ = ['nvisitsM5Maps', 'tEffMetrics', 'nvisitsPerNight', 'nvisitsPerProp']
 
 
 def nvisitsM5Maps(colmap=None, runName='opsim',
                   extraSql=None, extraMetadata=None,
-                  nside=64, runLength=10.):
+                  nside=64, runLength=10.,
+                  ditherStacker=None, ditherkwargs=None):
     """Generate number of visits and Coadded depth per RA/Dec point in all and per filters.
 
     Parameters
@@ -34,6 +35,10 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
     runLength : float, opt
         Length of the simulated survey, for scaling values for the plot limits.
         Default 10.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
 
     Returns
     -------
@@ -47,6 +52,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
     if subgroup is None:
         subgroup = 'All visits'
 
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    extraMetadata = combineMetadata(extraMetadata, ditherMeta)
     # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
@@ -71,8 +78,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
     # Generate Nvisit maps in all and per filters
     displayDict = {'group': 'Nvisits Maps', 'subgroup': subgroup}
     metric = metrics.CountMetric(colmap['mjd'], metricName='NVisits', units='')
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol,
+                                   latLonDeg=degrees)
     for f in filterlist:
         sql = sqls[f]
         displayDict['caption'] = 'Number of visits per healpix in %s.' % metadata[f]
@@ -84,6 +91,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
                     'colorMin': nvisitsRange[f][0], 'colorMax': nvisitsRange[f][1],
                     'binsize': binsize, 'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
+                                 stackerList=ditherStacker,
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
@@ -91,8 +99,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
     # Generate Coadded depth maps per filter
     displayDict = {'group': 'Coadded M5 Maps', 'subgroup': subgroup}
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'], metricName='CoaddM5')
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol,
+                                   latLonDeg=degrees)
     for f in filterlist:
         # Skip "all" for coadded depth.
         if f == 'all':
@@ -107,6 +115,7 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
                     'xlabel': 'coadded m5 - %.1f' % mag_zp,
                     'colorMin': -0.6, 'colorMax': 0.6, 'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata[f],
+                                 stackerList=ditherStacker,
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
@@ -118,7 +127,8 @@ def nvisitsM5Maps(colmap=None, runName='opsim',
 
 
 def tEffMetrics(colmap=None, runName='opsim',
-                extraSql=None, extraMetadata=None, nside=64):
+                extraSql=None, extraMetadata=None, nside=64,
+                ditherStacker=None, ditherkwargs=None):
     """Generate a series of Teff metrics. Teff total, per night, and sky maps (all and per filter).
 
     Parameters
@@ -135,6 +145,10 @@ def tEffMetrics(colmap=None, runName='opsim',
     nside : int, opt
         Nside value for healpix slicer. Default 64.
         If "None" is passed, the healpixslicer-based metrics will be skipped.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
 
     Returns
     -------
@@ -148,6 +162,7 @@ def tEffMetrics(colmap=None, runName='opsim',
     if subgroup is None:
         subgroup = 'All visits'
 
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
     # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
@@ -179,15 +194,20 @@ def tEffMetrics(colmap=None, runName='opsim',
 
     # Generate Teff maps in all and per filters
     displayDict = {'group': 'T_eff Maps', 'subgroup': subgroup}
+    if ditherMeta is not None:
+        for m in metadata:
+            metadata[m] = combineMetadata(metadata[m], ditherMeta)
+
     metric = metrics.TeffMetric(m5Col=colmap['fiveSigmaDepth'], filterCol=colmap['filter'],
                                 normed=True, metricName='Normalized Teff')
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
-                                   latLonDeg=colmap['raDecDeg'])
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol,
+                                   latLonDeg=degrees)
     for f in filterlist:
         displayDict['caption'] = 'Normalized effective time of the survey, for %s' % metadata[f]
         displayDict['order'] = orders[f]
         plotDict = {'color': colors[f]}
         bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
+                                 stackerList=ditherStacker,
                                  displayDict=displayDict, plotFuncs=subsetPlots, plotDict=plotDict,
                                  summaryMetrics=standardSummary())
         bundleList.append(bundle)
@@ -284,11 +304,9 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
 
     totvisits = opsdb.fetchNVisits()
 
-    metadata= 'All props'
+    metadata = 'All props'
     if extraSql is not None and len(extraSql) > 0:
-        displayDict['caption'] += ' with constraint %s.' % extraSql
         metadata += ' %s' % extraSql
-
     # Nvisits per night, all proposals.
     bdict.update(nvisitsPerNight(colmap=colmap, runName=runName, binNights=binNights,
                                  extraSql=extraSql, extraMetadata=metadata, subgroup='All proposals'))
@@ -298,7 +316,9 @@ def nvisitsPerProp(opsdb, colmap=None, runName='opsim', binNights=1, extraSql=No
     summaryMetrics = [metrics.IdentityMetric(metricName='Count'),
                       metrics.NormalizeMetric(normVal=totvisits, metricName='Fraction of total')]
     displayDict = {'group': 'Nvisit Summary', 'subgroup': 'Proposal distribution', 'order': -1}
-    displayDict['caption'] = 'Total number of visits for all proposals'
+    displayDict['caption'] = 'Total number of visits for all proposals.'
+    if extraSql is not None and len(extraSql) > 0:
+        displayDict['caption'] += ' (with constraint %s.)' % extraSql
     bundle = mb.MetricBundle(metric, slicer, extraSql, metadata=metadata,
                              displayDict=displayDict, summaryMetrics=summaryMetrics)
     bundleList.append(bundle)

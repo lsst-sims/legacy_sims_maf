@@ -1,4 +1,4 @@
-__all__ = ['ColMapDict']
+__all__ = ['getColMap', 'ColMapDict']
 
 
 def getColMap(opsdb):
@@ -47,6 +47,7 @@ def ColMapDict(dictName=None):
         colMap['seeingGeom'] = 'seeingFwhmGeom'
         colMap['skyBrightness'] = 'skyBrightness'
         colMap['moonDistance'] = 'moonDistance'
+        colMap['fieldId'] = 'fieldId'
         colMap['proposalId'] = 'proposalId'
         # slew speeds table
         colMap['slewSpeedsTable'] = 'SlewMaxSpeeds'
@@ -100,6 +101,7 @@ def ColMapDict(dictName=None):
         colMap['seeingGeom'] = 'FWHMgeom'
         colMap['skyBrightness'] = 'filtSkyBrightness'
         colMap['moonDistance'] = 'dist2Moon'
+        colMap['fieldId'] = 'fieldID'
         colMap['proposalId'] = 'propID'
         # slew speeds table
         colMap['slewSpeedsTable'] = 'SlewMaxSpeeds'

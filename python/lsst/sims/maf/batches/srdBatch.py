@@ -7,24 +7,38 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary
+from .common import standardSummary, radecCols, combineMetadata
 
 __all__ = ['fOBatch', 'astrometryBatch', 'rapidRevisitBatch']
 
 
 def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nside=64,
-            benchmarkArea=18000, benchmarkNvisits=825,
-            raCol=None, decCol=None, degrees=None, stackerList=None):
+            benchmarkArea=18000, benchmarkNvisits=825, ditherStacker=None, ditherkwargs=None):
+    """Metrics for calculating fO.
 
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+
+    Returns
+    -------
+    metricBundleDict
+    """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
-
-    if raCol is None:
-        raCol = colmap['ra']
-    if decCol is None:
-        decCol = colmap['dec']
-    if degrees is None:
-        degrees = colmap['raDecDeg']
 
     bundleList = []
 
@@ -41,6 +55,10 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 
     subgroup = metadata
 
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    # Don't want dither info in subgroup (too long), but do want it in bundle name.
+    metadata = combineMetadata(metadata, ditherMeta)
+
     # Set up fO metric.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
 
@@ -50,21 +68,22 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
     metric = metrics.CountMetric(col=colmap['mjd'], metricName='fO')
     plotDict = {'xlabel': 'Number of Visits', 'Asky': benchmarkArea,
                 'Nvisit': benchmarkNvisits, 'xMin': 0, 'xMax': 1500}
-    summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea: Nvisits (#)',
+    summaryMetrics = [metrics.fOArea(nside=nside, norm=False, metricName='fOArea',
                                      Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fOArea(nside=nside, norm=True, metricName='fOArea: Nvisits/benchmark',
+                      metrics.fOArea(nside=nside, norm=True, metricName='fOArea/benchmark',
                                      Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fONv(nside=nside, norm=False, metricName='fONv: Area (sqdeg)',
+                      metrics.fONv(nside=nside, norm=False, metricName='fONv',
                                    Asky=benchmarkArea, Nvisit=benchmarkNvisits),
-                      metrics.fONv(nside=nside, norm=True, metricName='fONv: Area/benchmark',
+                      metrics.fONv(nside=nside, norm=True, metricName='fONv/benchmark',
                                    Asky=benchmarkArea, Nvisit=benchmarkNvisits)]
     caption = 'The FO metric evaluates the overall efficiency of observing. '
-    caption += ('fOArea: Nvisits = %.1f sq degrees receive at least this many visits out of %d. '
-                % (benchmarkArea, benchmarkNvisits))
-    caption += ('fONv: Area = this many square degrees out of %.1f receive at least %d visits.'
-                % (benchmarkArea, benchmarkNvisits))
+    caption += ('foNv: out of %.2f sq degrees, the area receives at least X and a median of Y visits '
+                '(out of %d, if compared to benchmark). ' % (benchmarkArea, benchmarkNvisits))
+    caption += ('fOArea: this many sq deg (out of %.2f sq deg if compared '
+                'to benchmark) receives at least %d visits. ' % (benchmarkArea, benchmarkNvisits))
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
+                             stackerList = [ditherStacker],
                              displayDict=displayDict, summaryMetrics=summaryMetrics,
                              plotFuncs=[plots.FOPlot()], metadata=metadata)
     bundleList.append(bundle)
@@ -76,8 +95,30 @@ def fOBatch(colmap=None, runName='opsim', extraSql=None, extraMetadata=None, nsi
 
 def astrometryBatch(colmap=None, runName='opsim',
                     extraSql=None, extraMetadata=None,
-                    nside=64):
-    # Allow user to add dithering.
+                    nside=64, ditherStacker=None, ditherkwargs=None):
+    """Metrics for evaluating proper motion and parallax.
+
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+
+    Returns
+    -------
+    metricBundleDict
+    """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
@@ -95,14 +136,14 @@ def astrometryBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
-    raCol = colmap['ra']
-    decCol = colmap['dec']
-    degrees = colmap['raDecDeg']
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    # Don't want dither info in subgroup (too long), but do want it in bundle name.
+    metadata = combineMetadata(metadata, ditherMeta)
 
     rmags_para = [22.4, 24.0]
     rmags_pm = [20.5, 24.0]
 
-    # Set up stackers.
+    # Set up parallax/dcr stackers.
     parallaxStacker = stackers.ParallaxFactorStacker(raCol=raCol, decCol=decCol,
                                                      dateCol=colmap['mjd'], degrees=degrees)
     dcrStacker = stackers.DcrStacker(filterCol=colmap['filter'], altCol=colmap['alt'], degrees=degrees,
@@ -123,7 +164,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[parallaxStacker],
+                                 stackerList=[parallaxStacker, ditherStacker],
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
@@ -137,7 +178,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                         seeingCol=colmap['seeingGeom'], filterCol=colmap['filter'],
                                         m5Col=colmap['fiveSigmaDepth'], normalize=True)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[parallaxStacker],
+                                 stackerList=[parallaxStacker, ditherStacker],
                                  displayDict=displayDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
@@ -150,7 +191,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                                 mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                                 seeingCol=colmap['seeingGeom'])
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[parallaxStacker],
+                                 stackerList=[parallaxStacker, ditherStacker],
                                  displayDict=displayDict, summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -163,7 +204,7 @@ def astrometryBatch(colmap=None, runName='opsim',
         caption = 'Correlation between parallax offset magnitude and hour angle for a r=%.1f star.' % (rmag)
         caption += ' (0 is good, near -1 or 1 is bad).'
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                 stackerList=[dcrStacker, parallaxStacker],
+                                 stackerList=[dcrStacker, parallaxStacker, ditherStacker],
                                  displayDict=displayDict, summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -180,6 +221,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=False)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                                 stackerList=[ditherStacker],
                                  displayDict=displayDict, plotDict=plotDict,
                                  summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
@@ -192,6 +234,7 @@ def astrometryBatch(colmap=None, runName='opsim',
                                             mjdCol=colmap['mjd'], filterCol=colmap['filter'],
                                             seeingCol=colmap['seeingGeom'], normalize=True)
         bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                                 stackerList=[ditherStacker],
                                  displayDict=displayDict, summaryMetrics=standardSummary(),
                                  plotFuncs=subsetPlots)
         bundleList.append(bundle)
@@ -204,8 +247,31 @@ def astrometryBatch(colmap=None, runName='opsim',
 
 
 def rapidRevisitBatch(colmap=None, runName='opsim',
-                      extraSql=None, extraMetadata=None, nside=64):
-    # Allow user to add dithering.
+                      extraSql=None, extraMetadata=None, nside=64,
+                      ditherStacker=None, ditherkwargs=None):
+    """Metrics for evaluating proper motion and parallax.
+
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+
+    Returns
+    -------
+    metricBundleDict
+    """
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
@@ -223,9 +289,9 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
 
     subgroup = metadata
 
-    raCol = colmap['ra']
-    decCol = colmap['dec']
-    degrees = colmap['raDecDeg']
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    # Don't want dither info in subgroup (too long), but do want it in bundle name.
+    metadata = combineMetadata(metadata, ditherMeta)
 
     # Set up parallax metrics.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
@@ -255,6 +321,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     caption += 'deviation from uniformity of < %.2f.' % (cutoff1)
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
+                             stackerList=[ditherStacker],
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)
     displayDict['order'] += 1
@@ -272,6 +339,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     caption += '%d revisits within this time window.' % (cutoff2)
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m2, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
+                             stackerList=[ditherStacker],
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)
     displayDict['order'] += 1

@@ -18,9 +18,11 @@ def setBatches(opsdb, colmap, args):
 
     for tag in ['All', 'WFD']:
         bdict.update(batches.nvisitsM5Maps(colmap, args.runName, runLength=args.nyears,
-                                           extraSql=sqls[tag], extraMetadata=metadata[tag]))
+                                           extraSql=sqls[tag], extraMetadata=metadata[tag],
+                                           ditherStacker=args.ditherStacker))
         bdict.update(batches.tEffMetrics(colmap, args.runName, extraSql=sqls[tag],
-                                         extraMetadata=metadata[tag]))
+                                         extraMetadata=metadata[tag],
+                                         ditherStacker=args.ditherStacker))
 
     return bdict
 

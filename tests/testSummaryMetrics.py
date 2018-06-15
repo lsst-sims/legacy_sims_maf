@@ -35,36 +35,50 @@ class TestSummaryMetrics(unittest.TestCase):
         Test the fONv metric.
         """
         nside = 128
-        metric = metrics.fONv(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         npix = hp.nside2npix(nside)
-        names = ['blah']
-        types = [float]
+        names = ['metricdata']
+        types = [int]
         data = np.zeros(npix, dtype=list(zip(names, types)))
-        # Set all the pixels to have 826 counts
-        data['blah'] = data['blah']+826
+        data['metricdata'] += 826
+        metric = metrics.fONv(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         slicePoint = {'sid': 0}
-        result1 = metric.run(data, slicePoint)
-        deginsph = 129600./np.pi
-        np.testing.assert_almost_equal(result1*18000., deginsph)
-        data['blah'][:data.size//2] = 0
-        result2 = metric.run(data, slicePoint)
-        np.testing.assert_almost_equal(result2*18000., deginsph/2.)
+        result = metric.run(data, slicePoint)
+        # result is recarray with 'min' and 'median' number of visits
+        # over the Asky area.
+        # All pixels had 826 visits, so that is min and median here.
+        min_nvis = result['value'][np.where(result['name'] == 'MinNvis')]
+        median_nvis = result['value'][np.where(result['name'] == 'MedianNvis')]
+        self.assertEqual(min_nvis, 826)
+        self.assertEqual(median_nvis, 826)
+        # Now update so that 10k of sky is 826, rest 0.
+        deginsph = 41253
+        npix_nk = np.int(npix * (13000. / deginsph))
+        npix_18k = np.int(npix * (18000. / deginsph))
+        data['metricdata'] = 0
+        data['metricdata'][:npix_nk] = 826
+        result = metric.run(data, slicePoint)
+        min_nvis = result['value'][np.where(result['name'] == 'MinNvis')]
+        median_nvis = result['value'][np.where(result['name'] == 'MedianNvis')]
+        self.assertEqual(min_nvis, 0)
+        self.assertEqual(median_nvis, 826)
 
     def testfOArea(self):
         """Test fOArea metric."""
         nside = 128
-        metric = metrics.fOArea(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         npix = hp.nside2npix(nside)
-        names = ['blah']
-        types = [float]
+        names = ['metricdata']
+        types = [int]
         data = np.zeros(npix, dtype=list(zip(names, types)))
-        # Set all the pixels to have 826 counts
-        data['blah'] = data['blah']+826
+        data['metricdata'] += 826
+        metric = metrics.fOArea(col='ack', nside=nside, Nvisit=825, Asky=18000.)
         slicePoint = {'sid': 0}
-        result1 = metric.run(data, slicePoint)
-        np.testing.assert_almost_equal(result1*825, 826)
-        data['blah'][:data.size//2] = 0
-        result2 = metric.run(data, slicePoint)
+        result = metric.run(data, slicePoint)
+        # fOArea returns the area with at least Nvisits.
+        deginsph = 129600. / np.pi
+        np.testing.assert_almost_equal(result, deginsph)
+        data['metricdata'][:data.size // 2] = 0
+        result = metric.run(data, slicePoint)
+        np.testing.assert_almost_equal(result, deginsph / 2.)
 
     def testNormalizeMetric(self):
         """Test normalize metric."""

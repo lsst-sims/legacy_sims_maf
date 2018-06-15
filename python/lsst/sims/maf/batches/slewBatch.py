@@ -5,7 +5,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardMetrics
+from .common import standardMetrics, combineMetadata
 
 __all__ = ['slewBasics', 'slewAngles', 'slewSpeeds', 'slewActivities']
 
@@ -37,6 +37,8 @@ def slewBasics(colmap=None, runName='opsim', sqlConstraint=None):
     slicer = slicers.UniSlicer()
 
     metadata = 'All visits'
+    if sqlConstraint is not None and len(sqlConstraint) > 0:
+        metadata = '%s' % (sqlConstraint)
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Basics', 'order': -1, 'caption': None}
     # Add total number of slews.
     metric = metrics.CountMetric(colmap['slewtime'], metricName='Slew Count')
@@ -138,7 +140,7 @@ def slewAngles(colmap=None, runName='opsim', sqlConstraint=None):
 
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Angles', 'order': -1, 'caption': None}
     for angle in angles:
-        metadata = angle
+        metadata = combineMetadata(angle, sqlConstraint)
         metriclist = standardMetrics(colmap[angle], replace_colname='')
         metriclist += [metrics.RmsMetric(colmap[angle], metricName='RMS')]
         for metric in metriclist:
@@ -183,7 +185,7 @@ def slewSpeeds(colmap=None, runName='opsim', sqlConstraint=None):
 
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Speeds', 'order': -1, 'caption': None}
     for speed in speeds:
-        metadata = speed
+        metadata = combineMetadata(speed, sqlConstraint)
         metric = metrics.AbsMaxMetric(col=colmap[speed], metricName='Max (Abs)')
         displayDict['caption'] = 'Maximum absolute value of %s.' % speed
         displayDict['order'] += 1
@@ -251,9 +253,7 @@ def slewActivities(colmap=None, runName='opsim', totalSlewN=1, sqlConstraint=Non
     displayDict = {'group': 'Slew', 'subgroup': 'Slew Activities', 'order': -1, 'caption': None}
 
     for slewType in slewTypeDict:
-        metadata = slewType
-        if sqlConstraint is not None:
-            metadata += sqlConstraint
+        metadata = combineMetadata(slewType, sqlConstraint)
         tableValue = slewTypeDict[slewType]
 
         # Metrics for all activities of this type.
