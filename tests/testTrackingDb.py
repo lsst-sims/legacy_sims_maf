@@ -5,6 +5,7 @@ import lsst.utils.tests
 import tempfile
 import shutil
 
+
 class TestTrackingDb(unittest.TestCase):
 
     def setUp(self):
@@ -58,9 +59,7 @@ class TestTrackingDb(unittest.TestCase):
         trackingDbFile = os.path.join(tempdir, 'tracking.db')
         trackingdb = db.TrackingDb(database=trackingDbFile)
         tdb = db.Database(database=trackingDbFile)
-        # Add two runs.
         trackId = trackingdb.addRun(mafDir=self.mafDir)
-        trackId2 = trackingdb.addRun(mafDir=self.mafDir+'test2')
         res = tdb.query_arbitrary('select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
         # Test removal works.

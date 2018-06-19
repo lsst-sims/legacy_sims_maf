@@ -8,6 +8,7 @@ from .colMapDict import ColMapDict
 
 __all__ = ['meanRADec', 'eastWestBias']
 
+
 def meanRADec(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
     """Plot the range of RA/Dec as a function of night.
 
@@ -59,7 +60,6 @@ def meanRADec(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):
     for b in bundleList:
         b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList), plotBundles
-
 
 
 def eastWestBias(colmap=None, runName='opsim', extraSql=None, extraMetadata=None):

@@ -1,6 +1,5 @@
 from __future__ import print_function
 from builtins import zip
-from builtins import range
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -71,7 +70,7 @@ class TestCadenceMetrics(unittest.TestCase):
         slicePoint = {'sid': 0}
         result2 = metric.run(data, slicePoint)
         # All on last day should also be 1
-        self.assertEqual(result1, 1)
+        self.assertEqual(result2, 1)
         # Make a perfectly uniform dist
         data['observationStartMJD'] = np.arange(0., 365.25*10, 365.25*10/100)
         result3 = metric.run(data, slicePoint)

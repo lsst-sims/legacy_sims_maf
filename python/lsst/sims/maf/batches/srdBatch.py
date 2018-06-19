@@ -344,7 +344,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     displayDict['order'] += 1
 
     # Calculate whether a healpix gets enough rapid revisits in the right windows.
-    dTmin = 40.0/60.0 # (minutes) 40s minumum for rapid revisit range
+    dTmin = 40.0/60.0  # (minutes) 40s minumum for rapid revisit range
     dTpairs = 20.0  # minutes (time when pairs should start kicking in)
     dTmax = 30.0  # 30 minute maximum for rapid revisit range
     nOne = 82  # Number of revisits between 40s-30m required

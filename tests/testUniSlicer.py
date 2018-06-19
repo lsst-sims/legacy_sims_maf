@@ -2,7 +2,6 @@ from builtins import zip
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
-import matplotlib.pyplot as plt
 import unittest
 from lsst.sims.maf.slicers.uniSlicer import UniSlicer
 from lsst.sims.maf.slicers.oneDSlicer import OneDSlicer

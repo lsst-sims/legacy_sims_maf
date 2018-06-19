@@ -4,7 +4,7 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary
 
-__all__ = ['filtersPerNight','filtersWholeSurvey']
+__all__ = ['filtersPerNight', 'filtersWholeSurvey']
 
 
 def setupMetrics(colmap, wholesurvey=False):
@@ -84,7 +84,6 @@ def filtersPerNight(colmap=None, runName='opsim', nights=1, extraSql=None, extra
         metacaption += ', %s only' % extraMetadata
     metacaption += '.'
 
-
     displayDict = {'group': 'Filter Changes', 'subgroup': metadata}
     summaryStats = standardSummary()
 
@@ -138,7 +137,6 @@ def filtersWholeSurvey(colmap=None, runName='opsim', extraSql=None, extraMetadat
         metadata += ' %s' % extraMetadata
         metacaption += ', %s only' % (extraMetadata)
     metacaption += '.'
-
 
     displayDict = {'group': 'Filter Changes', 'subgroup': metadata}
 

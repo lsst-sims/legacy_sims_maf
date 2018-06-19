@@ -16,7 +16,7 @@ def makeDataValues(size=100, min=0., max=1., random=-1):
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
-    if random>0:
+    if random > 0:
         rng = np.random.RandomState(random)
         randorder = rng.rand(size)
         randind = np.argsort(randorder)

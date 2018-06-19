@@ -173,8 +173,8 @@ class TestStackerClasses(unittest.TestCase):
         # Set seed so the test is stable
         rng = np.random.RandomState(42)
 
-        data = np.zeros(ndata, dtype=list(zip(
-            ['fieldRA', 'fieldDec', 'fieldId', 'night'], [float, float, int, int])))
+        data = np.zeros(ndata, dtype=list(zip(['fieldRA', 'fieldDec', 'fieldId', 'night'],
+                                              [float, float, int, int])))
         data['fieldRA'] = rng.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldDec'] = rng.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
         data['fieldId'] = np.floor(rng.rand(ndata) * ndata)
@@ -199,8 +199,8 @@ class TestStackerClasses(unittest.TestCase):
         # Set seed so the test is stable
         rng = np.random.RandomState(42)
 
-        data = np.zeros(ndata, dtype=list(zip(
-            ['fieldRA', 'fieldDec', 'fieldId', 'night'], [float, float, int, int])))
+        data = np.zeros(ndata, dtype=list(zip(['fieldRA', 'fieldDec', 'fieldId', 'night'],
+                                              [float, float, int, int])))
         data['fieldRA'] = rng.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldRA'] = np.zeros(ndata) + np.pi / 2.0
         data['fieldDec'] = rng.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
@@ -227,8 +227,8 @@ class TestStackerClasses(unittest.TestCase):
         # Set seed so the test is stable
         rng = np.random.RandomState(42)
 
-        data = np.zeros(ndata, dtype=list(zip(
-            ['fieldRA', 'fieldDec', 'fieldId', 'night'], [float, float, int, int])))
+        data = np.zeros(ndata, dtype=list(zip(['fieldRA', 'fieldDec', 'fieldId', 'night'],
+                                              [float, float, int, int])))
         data['fieldRA'] = rng.rand(ndata) * (np.pi) + np.pi / 2.0
         data['fieldDec'] = rng.rand(ndata) * np.pi / 2.0 - np.pi / 4.0
         data['fieldId'] = np.floor(rng.rand(ndata) * ndata)

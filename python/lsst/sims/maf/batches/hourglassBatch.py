@@ -2,13 +2,11 @@
 """
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.stackers as stackers
-import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import standardSummary
 
 __all__ = ['hourglassPlots']
+
 
 def hourglassPlots(colmap=None, runName='opsim', nyears=10, extraSql=None, extraMetadata=None):
     """Run the hourglass metric, for each individual year.

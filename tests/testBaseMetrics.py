@@ -38,7 +38,7 @@ class TestBaseMetric(unittest.TestCase):
         # Test with additional (different) metric
         cols = 'twocolumn'
         testmetric2 = metrics.MeanMetric(cols)
-        self.assertEqual(testmetric.colRegistry.colSet, colset)
+        self.assertEqual(testmetric2.colRegistry.colSet, colset)
 
     def testMetricDtype(self):
         """Test that base metric data value type set appropriately"""

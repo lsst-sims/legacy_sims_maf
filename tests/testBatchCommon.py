@@ -37,6 +37,7 @@ class TestCommon(unittest.TestCase):
                                                                                extraMetadata='night 3')
         self.assertEqual(metadata['u'], 'night 3 u band')
 
+
 class TestMemory(lsst.utils.tests.MemoryTestCase):
     pass
 

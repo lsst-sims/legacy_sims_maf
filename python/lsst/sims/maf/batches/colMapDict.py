@@ -76,7 +76,7 @@ def ColMapDict(dictName=None):
                                     'TelOptics CL': 'telopticsclosedloop',
                                     'TelOptics OL': 'telopticsopenloop',
                                     'Readout': 'readout',
-                                    'Filter': 'filter' }
+                                    'Filter': 'filter'}
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
                                   'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
         colMap['metadataAngleList'] = ['rotSkyPos']
@@ -128,7 +128,7 @@ def ColMapDict(dictName=None):
                                     'TelOptics CL': 'TelOpticsCL',
                                     'TelOptics OL': 'TelOpticsOL',
                                     'Readout': 'Readout',
-                                    'Filter': 'Filter' }
+                                    'Filter': 'Filter'}
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
                                   'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
         colMap['metadataAngleList'] = ['rotSkyPos']
