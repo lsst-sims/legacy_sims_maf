@@ -5,7 +5,8 @@ import lsst.sims.maf.plots as plots
 from .colMapDict import ColMapDict
 from .common import filterList
 
-__all__ = ['altazHealpix','altazLambert']
+__all__ = ['altazHealpix', 'altazLambert']
+
 
 def basicSetup(metricName, colmap=None, nside=64):
 
@@ -18,8 +19,9 @@ def basicSetup(metricName, colmap=None, nside=64):
 
     return colmap, slicer, metric
 
+
 def altazHealpix(colmap=None, runName='opsim', extraSql=None,
-                   extraMetadata=None, metricName='NVisits Alt/Az'):
+                 extraMetadata=None, metricName='NVisits Alt/Az'):
 
     """Generate a set of metrics measuring the number visits as a function of alt/az
     plotted on a HealpixSkyMap.
@@ -74,7 +76,7 @@ def altazHealpix(colmap=None, runName='opsim', extraSql=None,
 
 
 def altazLambert(colmap=None, runName='opsim', extraSql=None,
-                   extraMetadata=None, metricName='Nvisits as function of Alt/Az'):
+                 extraMetadata=None, metricName='Nvisits as function of Alt/Az'):
 
     """Generate a set of metrics measuring the number visits as a function of alt/az
     plotted on a LambertSkyMap.

@@ -2,9 +2,7 @@ import matplotlib
 matplotlib.use("Agg")
 import os
 import unittest
-import numpy as np
 import lsst.sims.maf.db as db
-import lsst.sims.maf.utils.outputUtils as out
 import lsst.utils.tests
 from lsst.utils import getPackageDir
 from lsst.sims.utils.CodeUtilities import sims_clean_up
@@ -82,8 +80,6 @@ class TestOpsimDb(unittest.TestCase):
             if propname != 'keyorder':
                 propidsSummary.append(configsummary['Proposals'][propname]['PropId'])
         self.assertEqual(set(propidsSummary), set(propids))
-        #out.printDict(configsummary, 'Summary')
-
 
     def testCreateSqlWhere(self):
         """
@@ -92,7 +88,7 @@ class TestOpsimDb(unittest.TestCase):
         # propTags is a dictionary of lists returned by OpsimDatabase
         propTags = {'WFD': [1, 2, 3], 'DD': [4], 'Rolling': [2]}
         # If tag is in dictionary with one value, returned sql where clause
-        #  is simply 'propId = 4'
+        # is simply 'propId = 4'
         tag = 'DD'
         sqlWhere = self.oo.createSQLWhere(tag, propTags)
         self.assertEqual(sqlWhere, 'proposalId = 4')

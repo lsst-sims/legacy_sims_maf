@@ -50,10 +50,9 @@ class TestSummaryMetrics(unittest.TestCase):
         median_nvis = result['value'][np.where(result['name'] == 'MedianNvis')]
         self.assertEqual(min_nvis, 826)
         self.assertEqual(median_nvis, 826)
-        # Now update so that 10k of sky is 826, rest 0.
+        # Now update so that 13k of sky is 826, rest 0.
         deginsph = 41253
         npix_nk = np.int(npix * (13000. / deginsph))
-        npix_18k = np.int(npix * (18000. / deginsph))
         data['metricdata'] = 0
         data['metricdata'][:npix_nk] = 826
         result = metric.run(data, slicePoint)

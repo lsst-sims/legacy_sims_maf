@@ -306,16 +306,15 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     minNvisit = 100
     pixArea = float(hp.nside2pixarea(nside, degrees=True))
     scale = pixArea * hp.nside2npix(nside)
-    m1 = metrics.RapidRevisitMetric(metricName='RapidRevisitUniformity', mjdCol=colmap['mjd'],
-                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
-                                    minNvisits=minNvisit)
-
+    m1 = metrics.RapidRevisitUniformityMetric(metricName='RapidRevisitUniformity', mjdCol=colmap['mjd'],
+                                              dTmin=dTmin / 60.0 / 60.0 / 24.0, dTmax=dTmax / 60.0 / 24.0,
+                                              minNvisits=minNvisit)
     plotDict = {'xMin': 0, 'xMax': 1}
     cutoff1 = 0.20
     summaryStats = [metrics.FracBelowMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
     summaryStats.extend(standardSummary())
-    caption = 'Deviation from uniformity for short revisit timescales, between %s and %s seconds, ' % (
-        dTmin, dTmax)
+    caption = 'Deviation from uniformity for short revisit timescales, between %s seconds and %s minutes, ' \
+              % (dTmin, dTmax)
     caption += 'for pointings with at least %d visits in this time range. ' % (minNvisit)
     caption += 'Summary statistic "Area" indicates the area on the sky which has a '
     caption += 'deviation from uniformity of < %.2f.' % (cutoff1)
@@ -328,8 +327,8 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
 
     # Calculate the actual number of quick revisits.
     dTmax = dTmax   # time in minutes
-    m2 = metrics.NRevisitsMetric(dT=dTmax, mjdCol=colmap['mjd'], normed=False)
-    plotDict = {'xMin': 0.1, 'xMax': 2000, 'logScale': True}
+    m2 = metrics.NRevisitsMetric(dT=dTmax, mjdCol=colmap['mjd'], normed=False, metricName='RapidRevisitN')
+    plotDict = {'xMin': 600, 'xMax': 1500, 'logScale': False}
     cutoff2 = 800
     summaryStats = [metrics.FracAboveMetric(cutoff=cutoff2, scale=scale, metricName='Area (sq deg)')]
     summaryStats.extend(standardSummary())
@@ -339,6 +338,33 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     caption += '%d revisits within this time window.' % (cutoff2)
     displayDict['caption'] = caption
     bundle = mb.MetricBundle(m2, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
+                             stackerList=[ditherStacker],
+                             metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
+    bundleList.append(bundle)
+    displayDict['order'] += 1
+
+    # Calculate whether a healpix gets enough rapid revisits in the right windows.
+    dTmin = 40.0/60.0  # (minutes) 40s minumum for rapid revisit range
+    dTpairs = 20.0  # minutes (time when pairs should start kicking in)
+    dTmax = 30.0  # 30 minute maximum for rapid revisit range
+    nOne = 82  # Number of revisits between 40s-30m required
+    nTwo = 28  # Number of revisits between 40s - tPairs required.
+    pixArea = float(hp.nside2pixarea(nside, degrees=True))
+    scale = pixArea * hp.nside2npix(nside)
+    m1 = metrics.RapidRevisitMetric(metricName='RapidRevisits', mjdCol=colmap['mjd'],
+                                    dTmin=dTmin / 60.0 / 60.0 / 24.0, dTpairs = dTpairs / 60.0 / 24.0,
+                                    dTmax=dTmax / 60.0 / 24.0, minN1=nOne, minN2=nTwo)
+    plotDict = {'xMin': 0, 'xMax': 1, 'colorMin': 0, 'colorMax': 1, 'logScale': False}
+    cutoff1 = 0.9
+    summaryStats = [metrics.FracAboveMetric(cutoff=cutoff1, scale=scale, metricName='Area (sq deg)')]
+    summaryStats.extend(standardSummary())
+    caption = 'Area that receives at least %d visits between %.3f and %.1f minutes, ' \
+              % (nOne, dTmin, dTmax)
+    caption += 'with at least %d of those visits falling between %.3f and %.1f minutes. ' \
+               % (nTwo, dTmin, dTpairs)
+    caption += 'Summary statistic "Area" indicates the area on the sky which meets this requirement.'
+    displayDict['caption'] = caption
+    bundle = mb.MetricBundle(m1, slicer, sql, plotDict=plotDict, plotFuncs=subsetPlots,
                              stackerList=[ditherStacker],
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)

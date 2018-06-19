@@ -35,7 +35,8 @@ class Test2D(unittest.TestCase):
         self.simData['fieldDec'][self.n1:] = -20.
         self.simData['fiveSigmaDepth'][self.n1:] = self.m5_2
 
-        self.fieldData = np.zeros(2, dtype=list(zip(['fieldId', 'fieldRA', 'fieldDec'], [int, float, float])))
+        self.fieldData = np.zeros(2, dtype=list(zip(['fieldId', 'fieldRA', 'fieldDec'],
+                                                    [int, float, float])))
         self.fieldData['fieldId'] = [1, 2]
         self.fieldData['fieldRA'] = np.radians([10., 190.])
         self.fieldData['fieldDec'] = np.radians([0., -20.])
@@ -72,7 +73,6 @@ class Test2D(unittest.TestCase):
         expected = np.array([[self.n1, self.n1],
                              [-666., self.n2]])
         assert(np.array_equal(mb.metricValues.data[good, :], expected))
-
 
     def testHistogramMetric(self):
         metric = metrics.HistogramMetric(bins=[0.5, 1.5, 2.5])

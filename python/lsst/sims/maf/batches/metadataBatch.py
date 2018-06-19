@@ -77,7 +77,7 @@ def metadataBasics(value, colmap=None, runName='opsim',
 
     raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
     extraMetadata = combineMetadata(extraMetadata, ditherMeta)
-     # Set up basic all and per filter sql constraints.
+    # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
                                                             extraMetadata=extraMetadata)
@@ -266,7 +266,6 @@ def metadataBasicsAngle(value, colmap=None, runName='opsim',
     return mb.makeBundlesDictFromList(bundleList)
 
 
-
 def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None,
                 ditherStacker=None, ditherkwargs=None):
     """Generate a large set of metrics about the metadata of each visit -
@@ -310,9 +309,9 @@ def allMetadata(colmap=None, runName='opsim', extraSql=None, extraMetadata=None,
         else:
             value = valueName
         bdict.update(metadataBasicsAngle(value, colmap=colmap, runName=runName,
-                                    valueName=valueName,
-                                    extraSql=extraSql, extraMetadata=extraMetadata,
-                                    ditherStacker=ditherStacker, ditherkwargs=ditherkwargs))
+                                         valueName=valueName,
+                                         extraSql=extraSql, extraMetadata=extraMetadata,
+                                         ditherStacker=ditherStacker, ditherkwargs=ditherkwargs))
     return bdict
 
 

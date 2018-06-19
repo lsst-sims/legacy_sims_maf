@@ -1,6 +1,5 @@
 from __future__ import print_function
 from builtins import zip
-from builtins import range
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -71,7 +70,7 @@ class TestCadenceMetrics(unittest.TestCase):
         slicePoint = {'sid': 0}
         result2 = metric.run(data, slicePoint)
         # All on last day should also be 1
-        self.assertEqual(result1, 1)
+        self.assertEqual(result2, 1)
         # Make a perfectly uniform dist
         data['observationStartMJD'] = np.arange(0., 365.25*10, 365.25*10/100)
         result3 = metric.run(data, slicePoint)
@@ -161,13 +160,13 @@ class TestCadenceMetrics(unittest.TestCase):
         expected_result[2] = len(data) / 2
         np.testing.assert_array_equal(result, expected_result)
 
-    def testRapidRevisitMetric(self):
+    def testRapidRevisitUniformityMetric(self):
         data = np.zeros(100, dtype=list(zip(['observationStartMJD'], [float])))
         # Uniformly distribute time _differences_ between 0 and 100
         dtimes = np.arange(100)
         data['observationStartMJD'] = dtimes.cumsum()
         # Set up "rapid revisit" metric to look for visits between 5 and 25
-        metric = metrics.RapidRevisitMetric(dTmin=5, dTmax=55, minNvisits=50)
+        metric = metrics.RapidRevisitUniformityMetric(dTmin=5, dTmax=55, minNvisits=50)
         result = metric.run(data)
         # This should be uniform.
         self.assertLess(result, 0.1)
@@ -181,6 +180,7 @@ class TestCadenceMetrics(unittest.TestCase):
         data['observationStartMJD'] = dtimes.cumsum()
         result = metric.run(data)
         self.assertGreaterEqual(result, 0.5)
+        """
         # Let's see how much dmax/result can vary
         resmin = 1
         resmax = 0
@@ -188,11 +188,31 @@ class TestCadenceMetrics(unittest.TestCase):
         for i in range(10000):
             dtimes = rng.rand(100)
             data['observationStartMJD'] = dtimes.cumsum()
-            metric = metrics.RapidRevisitMetric(dTmin=0.1, dTmax=0.8, minNvisits=50)
+            metric = metrics.RapidRevisitUniformityMetric(dTmin=0.1, dTmax=0.8, minNvisits=50)
             result = metric.run(data)
             resmin = np.min([resmin, result])
             resmax = np.max([resmax, result])
-        print("RapidRevisit .. range", resmin, resmax)
+        print("RapidRevisitUniformity .. range", resmin, resmax)
+        """
+
+    def testRapidRevisitMetric(self):
+        data = np.zeros(100, dtype=list(zip(['observationStartMJD'], [float])))
+        dtimes = np.arange(100)/24./60.
+        data['observationStartMJD'] = dtimes.cumsum()
+        # Set metric parameters to the actual N1/N2 values for these dtimes.
+        metric = metrics.RapidRevisitMetric(dTmin=40./60./60./24., dTpairs=20./60./24.,
+                                            dTmax=30./60./24., minN1=19, minN2=29)
+        result = metric.run(data)
+        self.assertEqual(result, 1)
+        # Set metric parameters to > N1/N2 values, to see it return 0.
+        metric = metrics.RapidRevisitMetric(dTmin=40.0/60.0/60.0/24., dTpairs=20./60./24.,
+                                            dTmax=30./60./24., minN1=30, minN2=50)
+        result = metric.run(data)
+        self.assertEqual(result, 0)
+        # Test with single value data.
+        data = np.zeros(1, dtype=list(zip(['observationStartMJD'], [float])))
+        result = metric.run(data)
+        self.assertEqual(result, 0)
 
     def testNRevisitsMetric(self):
         data = np.zeros(100, dtype=list(zip(['observationStartMJD'], [float])))

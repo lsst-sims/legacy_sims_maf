@@ -2,7 +2,7 @@ import numpy as np
 from .baseMetric import BaseMetric
 
 __all__ = ['TemplateExistsMetric', 'UniformityMetric',
-           'RapidRevisitMetric', 'NRevisitsMetric', 'IntraNightGapsMetric',
+           'RapidRevisitUniformityMetric', 'RapidRevisitMetric','NRevisitsMetric', 'IntraNightGapsMetric',
            'InterNightGapsMetric', 'AveGapMetric']
 
 
@@ -92,7 +92,7 @@ class UniformityMetric(BaseMetric):
         return D_max
 
 
-class RapidRevisitMetric(BaseMetric):
+class RapidRevisitUniformityMetric(BaseMetric):
     """Calculate uniformity of time between consecutive visits on short timescales (for RAV1).
 
     Parameters
@@ -114,7 +114,7 @@ class RapidRevisitMetric(BaseMetric):
         self.minNvisits = minNvisits
         self.dTmin = dTmin
         self.dTmax = dTmax
-        super(RapidRevisitMetric, self).__init__(col=self.mjdCol, metricName=metricName, **kwargs)
+        super().__init__(col=self.mjdCol, metricName=metricName, **kwargs)
         # Update minNvisits, as 0 visits will crash algorithm and 1 is nonuniform by definition.
         if self.minNvisits <= 1:
             self.minNvisits = 2
@@ -152,6 +152,29 @@ class RapidRevisitMetric(BaseMetric):
         # Look at the differences between our times and the uniform times.
         dmax = np.max(np.abs(uniform_dtimes - dtimes - dtimes[1]))
         return dmax
+
+
+class RapidRevisitMetric(BaseMetric):
+    def __init__(self, mjdCol='observationStartMJD', metricName='RapidRevisit',
+                 dTmin=40.0 / 60.0 / 60.0 / 24.0, dTpairs = 20.0 / 60.0 / 24.0,
+                 dTmax = 30.0 / 60.0 / 24.0, minN1 = 28, minN2 = 82, **kwargs):
+        self.mjdCol = mjdCol
+        self.dTmin = dTmin
+        self.dTpairs = dTpairs
+        self.dTmax = dTmax
+        self.minN1 = minN1
+        self.minN2 = minN2
+        super().__init__(col=self.mjdCol, metricName=metricName, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        dtimes = np.diff(np.sort(dataSlice[self.mjdCol]))
+        N1 = len(np.where((dtimes >= self.dTmin) & (dtimes <= self.dTpairs))[0])
+        N2 = len(np.where((dtimes >= self.dTmin) & (dtimes <= self.dTmax))[0])
+        if (N1 >= self.minN1) and (N2 >= self.minN2):
+            val = 1
+        else:
+            val = 0
+        return val
 
 
 class NRevisitsMetric(BaseMetric):

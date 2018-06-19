@@ -1,5 +1,4 @@
 from builtins import zip
-import os
 import numpy as np
 import numpy.ma as ma
 import matplotlib
@@ -8,6 +7,7 @@ import healpy as hp
 import unittest
 import lsst.sims.maf.slicers as slicers
 import lsst.utils.tests
+
 
 class TestSlicers(unittest.TestCase):
 

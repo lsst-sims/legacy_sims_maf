@@ -516,8 +516,8 @@ class BaseSkyMap(BasePlotter):
                     plotDict['logScale'] = False
             if plotDict['logScale']:
                 # Move min/max values to things that can be marked on the colorbar.
-                clims[0] = 10 ** (int(np.log10(clims[0])))
-                clims[1] = 10 ** (int(np.log10(clims[1])))
+                #clims[0] = 10 ** (int(np.log10(clims[0])))
+                #clims[1] = 10 ** (int(np.log10(clims[1])))
                 norml = colors.LogNorm()
                 p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
                                     linewidth=0, edgecolor=None, norm=norml, rasterized=True)
@@ -536,6 +536,9 @@ class BaseSkyMap(BasePlotter):
                     cb.solids.set_edgecolor("face")
                 cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
                 cb.ax.tick_params(labelsize=plotDict['labelsize'])
+                tick_locator = ticker.MaxNLocator(nbins=plotDict['nTicks'])
+                cb.locator = tick_locator
+                cb.update_ticks()
         # Add ecliptic
         self._plot_ecliptic(plotDict['raCen'], ax=ax)
         if plotDict['mwZone']:

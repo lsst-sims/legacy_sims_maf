@@ -2,7 +2,6 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
-import lsst.sims.maf.utils as utils
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.binners as binners
 import lsst.sims.maf.binMetrics as binMetrics
@@ -22,11 +21,11 @@ hexbinner.setupBinner(simdata)
 
 # Generate random values over the entire sky
 randomallskymetricval = ma.MaskedArray(data = rng.rand(len(binner)),
-                                       mask = np.zeros(len(binner), bool), 
+                                       mask = np.zeros(len(binner), bool),
                                        fill_value= binner.badval)
 
 onesallskymetricval = ma.MaskedArray(data = np.ones(len(binner), float),
-                                     mask = np.zeros(len(binner), bool), 
+                                     mask = np.zeros(len(binner), bool),
                                      fill_value= binner.badval)
 
 # Generate random values over area with LSST observations
@@ -67,17 +66,21 @@ binner.plotSkyMap(onesnodithermetricval, title='Hex dither')
 fignum = binner.plotPowerSpectrum(randomallskymetricval, label='All Sky')
 fignum = binner.plotPowerSpectrum(randomnodithermetricval, label='No Dither', fignum=fignum)
 fignum = binner.plotPowerSpectrum(randomhexdithermetricval, label='Hex Dither', fignum=fignum)
-fignum = binner.plotPowerSpectrum(randomnodithermetricval, label='No Dither, w/Dipole', fignum=fignum, removeDipole=False)
-fignum = binner.plotPowerSpectrum(randomhexdithermetricval, label='Hex Dither, w/Dipole', fignum=fignum, removeDipole=False, 
+fignum = binner.plotPowerSpectrum(randomnodithermetricval, label='No Dither, w/Dipole',
+                                  fignum=fignum, removeDipole=False)
+fignum = binner.plotPowerSpectrum(randomhexdithermetricval, label='Hex Dither, w/Dipole',
+                                  fignum=fignum, removeDipole=False,
                                   addLegend=True, legendloc = 'lower right',
-                                  title='Random Metric, Healpix grid nside=%d' %(nside))
+                                  title='Random Metric, Healpix grid nside=%d' % (nside))
 
 fignum = binner.plotPowerSpectrum(onesallskymetricval, label='All Sky')
 fignum = binner.plotPowerSpectrum(onesnodithermetricval, label='No Dither', fignum=fignum)
 fignum = binner.plotPowerSpectrum(oneshexdithermetricval, label='Hex Dither', fignum=fignum)
-fignum = binner.plotPowerSpectrum(onesnodithermetricval, label='No Dither, w/Dipole', fignum=fignum, removeDipole=False)
-fignum = binner.plotPowerSpectrum(oneshexdithermetricval, label='Hex Dither, w/Dipole', fignum=fignum, removeDipole=False, 
+fignum = binner.plotPowerSpectrum(onesnodithermetricval, label='No Dither, w/Dipole',
+                                  fignum=fignum, removeDipole=False)
+fignum = binner.plotPowerSpectrum(oneshexdithermetricval, label='Hex Dither, w/Dipole',
+                                  fignum=fignum, removeDipole=False,
                                   addLegend=True, legendloc='lower right',
-                                  title='Ones (constant) Metric, Healpix grid nside=%d' %(nside))
+                                  title='Ones (constant) Metric, Healpix grid nside=%d' % (nside))
 
 plt.show()

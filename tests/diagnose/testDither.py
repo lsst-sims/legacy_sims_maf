@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils

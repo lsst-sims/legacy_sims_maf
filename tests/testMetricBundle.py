@@ -39,7 +39,9 @@ class TestMetricBundle(unittest.TestCase):
         map1 = maps.GalCoordsMap()
         map2 = maps.StellarDensityMap()
 
-        metricB = metricBundles.MetricBundle(metric, slicer, sql, stackerList=[stacker1, stacker2])
+        metricB = metricBundles.MetricBundle(metric, slicer, sql,
+                                             stackerList=[stacker1, stacker2],
+                                             mapsList=[map1, map2])
         database = os.path.join(getPackageDir('sims_data'), 'OpSimData', 'astro-lsst-01_2014.db')
 
         opsdb = db.OpsimDatabaseV4(database=database)

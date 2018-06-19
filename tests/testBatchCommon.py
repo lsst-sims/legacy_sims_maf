@@ -1,9 +1,25 @@
 import unittest
 import lsst.utils.tests
 import lsst.sims.maf.batches as batches
+from lsst.sims.maf.db import OpsimDatabaseV4
+
+
+class TestDb(OpsimDatabaseV4):
+    def __init__(self):
+        # Override init so we don't connect to anything.
+        self._colNames()
 
 
 class TestCommon(unittest.TestCase):
+
+    def testColMap(self):
+        colmap = batches.ColMapDict('opsimv4')
+        self.assertEqual(colmap['raDecDeg'], True)
+        self.assertEqual(colmap['ra'], 'fieldRA')
+        opsdb = TestDb()
+        colmap = batches.getColMap(opsdb)
+        self.assertEqual(colmap['raDecDeg'], True)
+        self.assertEqual(colmap['ra'], 'fieldRA')
 
     def testFilterList(self):
         filterlist, colors, orders, sqls, metadata = batches.common.filterList(all=False, extraSql=None)
@@ -20,6 +36,7 @@ class TestCommon(unittest.TestCase):
         filterlist, colors, orders, sqls, metadata = batches.common.filterList(all=True, extraSql='night=3',
                                                                                extraMetadata='night 3')
         self.assertEqual(metadata['u'], 'night 3 u band')
+
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
     pass

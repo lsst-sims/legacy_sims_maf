@@ -7,6 +7,7 @@ import lsst.sims.maf.stackers as stackers
 __all__ = ['combineMetadata', 'filterList', 'radecCols', 'standardSummary', 'extendedSummary',
            'standardMetrics', 'extendedMetrics', 'standardAngleMetrics']
 
+
 def combineMetadata(meta1, meta2):
     if meta1 is not None and meta2 is not None:
         meta = meta1 + ' ' + meta2
@@ -17,6 +18,7 @@ def combineMetadata(meta1, meta2):
     else:
         meta = None
     return meta
+
 
 def filterList(all=True, extraSql=None, extraMetadata=None):
     """Return a list of filters, plot colors and orders.
@@ -53,7 +55,7 @@ def filterList(all=True, extraSql=None, extraMetadata=None):
         if extraSql is None or len(extraSql) == 0:
             md = ''
         else:
-            md = '%s '  % extraSql
+            md = '%s ' % extraSql
     else:
         md = '%s ' % extraMetadata
     for f in filterlist:

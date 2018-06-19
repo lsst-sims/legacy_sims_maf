@@ -31,6 +31,7 @@ class TestNeoDistancePlotter(unittest.TestCase):
         # Need to wrap in a list because it will usually go through the
         # UniSlicer, and will thus be an array inside a 1-element masked array
         fig = plotter([self.metricValues], None, {})
+        self.assertNotEqual(fig, None)
 
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
