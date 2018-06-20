@@ -4,7 +4,7 @@ import lsst.sims.maf.batches as batches
 from lsst.sims.maf.db import OpsimDatabaseV4
 
 
-class TestDb(OpsimDatabaseV4):
+class OpsTestDb(OpsimDatabaseV4):
     def __init__(self):
         # Override init so we don't connect to anything.
         self._colNames()
@@ -16,7 +16,7 @@ class TestCommon(unittest.TestCase):
         colmap = batches.ColMapDict('opsimv4')
         self.assertEqual(colmap['raDecDeg'], True)
         self.assertEqual(colmap['ra'], 'fieldRA')
-        opsdb = TestDb()
+        opsdb = OpsTestDb()
         colmap = batches.getColMap(opsdb)
         self.assertEqual(colmap['raDecDeg'], True)
         self.assertEqual(colmap['ra'], 'fieldRA')

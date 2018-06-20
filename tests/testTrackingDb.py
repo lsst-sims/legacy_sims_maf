@@ -60,12 +60,15 @@ class TestTrackingDb(unittest.TestCase):
         trackingdb = db.TrackingDb(database=trackingDbFile)
         tdb = db.Database(database=trackingDbFile)
         trackId = trackingdb.addRun(mafDir=self.mafDir)
+        trackId2 = trackingdb.addRun(mafDir=self.mafDir + 'test2')
         res = tdb.query_arbitrary('select * from runs')
         self.assertEqual(res['mafRunId'][0], trackId)
         # Test removal works.
         trackingdb.delRun(trackId)
         res = tdb.query_arbitrary('select * from runs')
+        # The run returned here is trackId2
         self.assertEqual(len(res), 1)
+        self.assertEqual(res[0][0], trackId2)
         # Test cannot remove run which does not exist.
         self.assertRaises(Exception, trackingdb.delRun, trackId)
         trackingdb.close()
