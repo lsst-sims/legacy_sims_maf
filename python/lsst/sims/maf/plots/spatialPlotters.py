@@ -691,10 +691,15 @@ class LambertSkyMap(BasePlotter):
         #                        lw=1)
 
         # Set masked values to be below the lowest contour level.
+        if plotDict['norm'] == 'log':
+            z_val = metricValue.filled(np.min(clims)-0.9)
+            norm = colors.LogNorm(vmin=z_val.min(), vmax=z_val.max())
+        else:
+            norm = plotDict['norm']
         CS = m.contourf(np.degrees(slicer.slicePoints['ra']),
                         np.degrees(slicer.slicePoints['dec']),
                         metricValue.filled(np.min(clims)-0.9), levels, tri=True,
-                        cmap=plotDict['cmap'], ax=ax, latlon=True, norm=plotDict['norm'])
+                        cmap=plotDict['cmap'], ax=ax, latlon=True, norm=norm)
 
         # Try to fix the ugly pdf contour problem
         for c in CS.collections:

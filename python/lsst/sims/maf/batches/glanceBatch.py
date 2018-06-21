@@ -109,9 +109,11 @@ def glanceBatch(colmap=None, runName='opsim',
                             lonCol=colmap['az'], latLonDeg=colmap['raDecDeg'], useCache=False)
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
+
+    plotDict = {'norm': 'log'}
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=plotFuncs,
-                                            displayDict=displayDict)
+                                            displayDict=displayDict, plotDict=plotDict)
         bundleList.append(bundle)
 
     # Things to check per night
