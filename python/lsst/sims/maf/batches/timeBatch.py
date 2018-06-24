@@ -8,7 +8,7 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary, filterList, combineMetadata, radecCols
 
-__all__ = ['intraNight', 'interNight']
+__all__ = ['intraNight', 'interNight' ]
 
 
 def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,

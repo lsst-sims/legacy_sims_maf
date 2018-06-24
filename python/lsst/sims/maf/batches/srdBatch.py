@@ -293,13 +293,13 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
     # Don't want dither info in subgroup (too long), but do want it in bundle name.
     metadata = combineMetadata(metadata, ditherMeta)
 
-    # Set up parallax metrics.
     slicer = slicers.HealpixSlicer(nside=nside, lonCol=raCol, latCol=decCol, latLonDeg=degrees)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     displayDict = {'group': 'Rapid Revisits', 'subgroup': subgroup,
                    'order': 0, 'caption': None}
 
+    """
     # Calculate the uniformity (KS test) of the quick revisits.
     dTmin = 40.0  # seconds
     dTmax = 30.0  # minutes
@@ -342,6 +342,7 @@ def rapidRevisitBatch(colmap=None, runName='opsim',
                              metadata=metadata, displayDict=displayDict, summaryMetrics=summaryStats)
     bundleList.append(bundle)
     displayDict['order'] += 1
+    """
 
     # Calculate whether a healpix gets enough rapid revisits in the right windows.
     dTmin = 40.0/60.0  # (minutes) 40s minumum for rapid revisit range

@@ -163,6 +163,8 @@ def tEffMetrics(colmap=None, runName='opsim',
         subgroup = 'All visits'
 
     raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    extraMetadata = combineMetadata(extraMetadata, ditherMeta)
+
     # Set up basic all and per filter sql constraints.
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
