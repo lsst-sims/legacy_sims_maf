@@ -17,29 +17,44 @@ def setBatches(opsdb, colmap, args):
     propids, proptags, sqls, metadata = setSQL(opsdb, sqlConstraint=args.sqlConstraint)
     # Set up appropriate metadata - need to combine args.sqlConstraint
 
-
+    # Some of these metrics are reproduced in other scripts - srd and cadence
     bdict = {}
+    plotbundles = []
 
-    # These metrics are reproduced in other scripts - srd and cadence
-    """
     for tag in ['All', 'WFD']:
-        sql = sqls[tag]
-        md = metadata[tag]
         fO = batches.fOBatch(colmap=colmap, runName=args.runName,
-                             extraSql=sql, extraMetadata=md, ditherStacker=args.ditherStacker)
+                             extraSql=sqls[tag], extraMetadata=metadata[tag],
+                             ditherStacker=args.ditherStacker)
         bdict.update(fO)
         astrometry = batches.astrometryBatch(colmap=colmap, runName=args.runName,
-                                             extraSql=sql, extraMetadata=md,
+                                             extraSql=sqls[tag], extraMetadata=metadata[tag],
                                              ditherStacker=args.ditherStacker)
         bdict.update(astrometry)
         rapidrevisit = batches.rapidRevisitBatch(colmap=colmap, runName=args.runName,
-                                                 extraSql=sql, extraMetadata=md,
+                                                 extraSql=sqls[tag], extraMetadata=metadata[tag],
                                                  ditherStacker=args.ditherStacker)
         bdict.update(rapidrevisit)
-    bdict.update(batches.glanceBatch(colmap=colmap, runName=args.runName, sqlConstraint=args.sqlConstraint))
-    bdict.update(batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint))
-    bdict.update(batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint))
-    """
+
+    # Intranight (pairs/time)
+    intranight_all, plots = batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint,
+                                               ditherStacker=args.ditherStacker)
+    bdict.update(intranight_all)
+    plotbundles.append(plots)
+    sql = '(%s) or (%s)' % (sqls['WFD'], sqls['NES'])
+    md = 'WFD+' + metadata['NES']
+    intranight_wfdnes, plots = batches.intraNight(colmap, args.runName, extraSql=sql,
+                                                  extraMetadata=md, ditherStacker=args.ditherStacker)
+    bdict.update(intranight_wfdnes)
+    plotbundles.append(plots)
+    internight_all, plots = batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint,
+                                               ditherStacker=args.ditherStacker)
+    bdict.update(internight_all)
+    plotbundles.append(plots)
+    internight_wfd, plots = batches.interNight(colmap, args.runName, extraSql=sqls['WFD'],
+                                               extraMetadata=metadata['WFD'],
+                                               ditherStacker=args.ditherStacker)
+    bdict.update(internight_wfd)
+    plotbundles.append(plots)
 
     # Run all metadata metrics, All and just WFD.
     for tag in ['All', 'WFD']:
