@@ -178,16 +178,16 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     bundleList = []
 
     # Set up basic all and per filter sql constraints.
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    metadata = combineMetadata(extraMetadata, ditherMeta)
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
-                                                            extraMetadata=extraMetadata)
-
-    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
-    metadata = combineMetadata(metadata, ditherMeta)
+                                                            extraMetadata=metadata)
 
     slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
     displayDict = {'group': 'InterNight', 'subgroup': 'Night gaps', 'caption': None, 'order': 0}
+
     # Histogram of the number of nights between visits.
     bins = np.arange(1, 20.5, 1)
     metric = metrics.NightgapsMetric(bins=bins, nightCol=colmap['night'], metricName='DeltaNight Histogram')
