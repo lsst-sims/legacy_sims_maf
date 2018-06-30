@@ -66,7 +66,7 @@ class FOPlot(BasePlotter):
 
         plt.axvline(x=plotDict['Nvisits'], linewidth=plotDict['reflinewidth'], color='b')
         plt.axhline(y=plotDict['Asky'] / 1000., linewidth=plotDict['reflinewidth'], color='r')
-        if np.max(fONv) != -666:
+        if np.max(fONv['value']) != -666:
             Nvis_median = fONv['value'][np.where(fONv['name'] == 'MedianNvis')]
             plt.axhline(y=Nvis_median / 1000., linewidth=plotDict['reflinewidth'], color='b',
                         alpha=.5, label=r'f$_0$ Median Nvisits=%.3g' % Nvis_median)
