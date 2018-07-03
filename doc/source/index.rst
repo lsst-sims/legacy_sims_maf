@@ -11,8 +11,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   metricList.rst
+   overview.rst
    metricsRun.rst
+   metricList.rst
    modules.rst
 
 
