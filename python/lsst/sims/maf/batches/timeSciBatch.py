@@ -28,7 +28,7 @@ def phaseGap(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadat
         Additional metadata to apply to all results.
     ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
         Optional dither stacker to use to define ra/dec columns.
-    ditherkwargs: dict, opt
+    ditherkwargs: dict or None, opt
         Optional dictionary of kwargs for the dither stacker.
 
     Returns
