@@ -70,7 +70,7 @@ def phaseGap(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadat
     for sql, md, f in zip(sqls, metadatas, filterNames):
         for period in periods:
             displayDict = {'group': 'PhaseGap',
-                           'subgroup': 'Filter %s: Period %.2f days' % (f, period)
+                           'subgroup': 'Filter %s: Period %.2f days' % (f, period),
                            'caption': 'Maximum phase gap, given a period of %.2f days.' % period}
             metric = metrics.PhaseGapMetric(nPeriods=1, periodMin=period, periodMax=period, nVisitsMin=5,
                                             metricName='PhaseGap %.1f day' % period)

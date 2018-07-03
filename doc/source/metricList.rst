@@ -25,7 +25,7 @@ Core LSST MAF metrics
 - `ActivityOverTimeMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.moMetrics.ActivityOverTimeMetric>`_ 
  	 Count the time periods where we would have a chance to detect activity on
 - `AveGapMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.AveGapMetric>`_ 
- 	 Calculate the gap between consecutive observations, in hours.
+ 	 Calculate the gap between any consecutive observations, in hours, regardless of night boundaries.
 - `AveSlewFracMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.slewMetrics.AveSlewFracMetric>`_ 
  	 Base class for the metrics.
 - `BaseMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.baseMetric.BaseMetric>`_ 
@@ -146,8 +146,12 @@ Core LSST MAF metrics
  	 Calculate the number of consecutive visits with time differences less than dT.
 - `NStateChangesFasterThanMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.technicalMetrics.NStateChangesFasterThanMetric>`_ 
  	 Compute the number of changes of state that happen faster than 'cutoff'.
+- `NVisitsPerNightMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.tgaps.NVisitsPerNightMetric>`_ 
+ 	 Histogram the number of visits in each night.
 - `NightPointingMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.nightPointingMetric.NightPointingMetric>`_ 
  	 Gather relevant information for a night to plot.
+- `NightgapsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.tgaps.NightgapsMetric>`_ 
+ 	 Histogram the number of nights between observations.
 - `NormalizeMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.NormalizeMetric>`_ 
  	 Return a metric values divided by 'normVal'. Useful for turning summary statistics into fractions.
 - `NoutliersNsigmaMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.NoutliersNsigmaMetric>`_ 
@@ -177,10 +181,12 @@ Core LSST MAF metrics
 - `PhaseGapMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.phaseGapMetric.PhaseGapMetric>`_ 
  	 Measure the maximum gap in phase coverage for observations of periodic variables.
 - `ProperMotionMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.calibrationMetrics.ProperMotionMetric>`_ 
- 	 Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
+ 	 Calculate the uncertainty in the returned proper motion.
 - `RadiusObsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.calibrationMetrics.RadiusObsMetric>`_ 
  	 find the radius in the focal plane. returns things in degrees.
 - `RapidRevisitMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.RapidRevisitMetric>`_ 
+ 	 Base class for the metrics.
+- `RapidRevisitUniformityMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.RapidRevisitUniformityMetric>`_ 
  	 Calculate uniformity of time between consecutive visits on short timescales (for RAV1).
 - `RmsAngleMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.RmsAngleMetric>`_ 
  	 Calculate the standard deviation of an angular (degrees) simData column slice.
@@ -192,6 +198,8 @@ Core LSST MAF metrics
  	 Base class for the metrics.
 - `StarDensityMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.starDensity.StarDensityMetric>`_ 
  	 Interpolate the stellar luminosity function to return the number of
+- `StringCountMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.stringCountMetric.StringCountMetric>`_ 
+ 	 Count up the number of times each string appears in a column.
 - `SumMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.SumMetric>`_ 
  	 Calculate the sum of a simData column slice.
 - `TableFractionMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.TableFractionMetric>`_ 
@@ -201,7 +209,7 @@ Core LSST MAF metrics
 - `TemplateExistsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.TemplateExistsMetric>`_ 
  	 Calculate the fraction of images with a previous template image of desired quality.
 - `TgapsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.tgaps.TgapsMetric>`_ 
- 	 Histogram all the time gaps.
+ 	 Histogram the times of the gaps between observations.
 - `TotalPowerMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.TotalPowerMetric>`_ 
  	 Calculate the total power in the angular power spectrum between lmin/lmax.
 - `TransientMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.transientMetrics.TransientMetric>`_ 
@@ -217,7 +225,7 @@ Core LSST MAF metrics
 - `ZeropointMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.ZeropointMetric>`_ 
  	 Return a metric values with the addition of 'zp'. Useful for altering the zeropoint for summary statistics.
 - `fOArea <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.fOArea>`_ 
- 	 Metric to calculate the FO Area.
+ 	 Metrics based on a specified number of visits, but returning AREA related to Nvisits:
 - `fONv <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.fONv>`_ 
- 	 Metric to calculate the FO_Nv.
+ 	 Metrics based on a specified area, but returning NVISITS related to area:
  
