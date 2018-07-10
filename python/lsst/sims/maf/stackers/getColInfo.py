@@ -4,6 +4,7 @@ from .baseStacker import BaseStacker
 
 __all__ = ['ColInfo']
 
+
 class ColInfo(object):
     """Class to hold the unit and source locations for columns.
 
@@ -16,8 +17,8 @@ class ColInfo(object):
         self.defaultUnit = ''
         self.unitDict = {'fieldId': '#',
                          'filter': 'filter',
-                         'seqnNum' : '#',
-                         'expMJD' : 'MJD',
+                         'seqnNum': '#',
+                         'expMJD': 'MJD',
                          'observationStartMJD': 'MJD',
                          'observationStartLST': 'deg',
                          'visitExposureTime': 's',
@@ -27,8 +28,8 @@ class ColInfo(object):
                          'rotTelPos': 'deg',
                          'rawSeeing': 'arcsec',
                          'finSeeing': 'arcsec',
-                         'FWHMeff' : 'arcsec',
-                         'FWHMgeom' : 'arcsec',
+                         'FWHMeff': 'arcsec',
+                         'FWHMgeom': 'arcsec',
                          'seeingFwhmEff': 'arcsec',
                          'seeingFwhmGeom': 'arcsec',
                          'seeingFwhm500': 'arcsec',
@@ -41,7 +42,7 @@ class ColInfo(object):
                          'dist2Moon': 'rad',
                          'filtSkyBrightness': 'mag/sq arcsec',
                          'skyBrightness': 'mag/sq arcsec',
-                         'fiveSigmaDepth':'mag',
+                         'fiveSigmaDepth': 'mag',
                          'solarElong': 'degrees'}
         # Go through the available stackers and add any units, and identify their
         #   source methods.

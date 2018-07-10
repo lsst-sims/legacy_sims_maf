@@ -27,8 +27,8 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='ditheredDec', lonCol='dith
     bundleList = []
     plotFuncs_lam = [plots.LambertSkyMap()]
 
-    reg_slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol)
-    altaz_slicer = slicers.HealpixSlicer(nside=nside, latCol='zenithDistance',
+    reg_slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
+    altaz_slicer = slicers.HealpixSlicer(nside=nside, latCol='altitude', latLonDeg=False,
                                          lonCol='azimuth', useCache=False)
 
     unislicer = slicers.UniSlicer()

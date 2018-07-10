@@ -10,31 +10,44 @@ __all__ = ['ParallaxMetric', 'ProperMotionMetric', 'RadiusObsMetric',
 
 
 class ParallaxMetric(BaseMetric):
-    """Calculate the uncertainty in a parallax measures given a serries of observations.
+    """Calculate the uncertainty in a parallax measurement given a series of observations.
+
+    Uses columns ra_pi_amp and dec_pi_amp, calculated by the ParallaxFactorStacker.
+
+    Parameters
+    ----------
+    metricName : str, opt
+        Default 'parallax'.
+    m5Col : str, opt
+        The default column name for m5 information in the input data. Default fiveSigmaDepth.
+    filterCol : str, opt
+        The column name for the filter information. Default filter.
+    seeingCol : str, opt
+        The column name for the seeing information. Since the astrometry errors are based on the physical
+        size of the PSF, this should be the FWHM of the physical psf. Default seeingFwhmGeom.
+    rmag : float, opt
+        The r magnitude of the fiducial star in r band. Other filters are sclaed using sedTemplate keyword.
+        Default 20.0
+    SedTemplate : str, opt
+        The template to use. This can be 'flat' or 'O','B','A','F','G','K','M'. Default flat.
+    atm_err : float, opt
+        The expected centroiding error due to the atmosphere, in arcseconds. Default 0.01.
+    normalize : boolean, opt
+        Compare the astrometric uncertainty to the uncertainty that would result if half the observations
+        were taken at the start and half at the end. A perfect survey will have a value close to 1, while
+        a poorly scheduled survey will be close to 0. Default False.
+    badval : float, opt
+        The value to return when the metric value cannot be calculated. Default -666.
     """
     def __init__(self, metricName='parallax', m5Col='fiveSigmaDepth',
-                 units = 'mas',
                  filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval=-666,
                  atm_err=0.01, normalize=False, **kwargs):
-
-        """ Instantiate metric.
-
-        m5Col = column name for inidivual visit m5
-        filterCol = column name for filter
-        seeingCol = column name for seeing/FWHMgeom
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        SedTemplate = string of 'flat' or 'O','B','A','F','G','K','M'.
-        atm_err = centroiding error due to atmosphere in arcsec
-        normalize = Compare to a survey that has all observations with maximum parallax factor.
-        An optimally scheduled survey would be expected to have a normalized value close to unity,
-        and zero for a survey where the parallax can not be measured.
-
-        return uncertainty in mas. Or normalized map as a fraction
-        """
         Cols = [m5Col, filterCol, seeingCol, 'ra_pi_amp', 'dec_pi_amp']
         if normalize:
             units = 'ratio'
+        else:
+            units = 'mas'
         super(ParallaxMetric, self).__init__(Cols, metricName=metricName, units=units,
                                              badval=badval, **kwargs)
         # set return type
@@ -50,15 +63,20 @@ class ParallaxMetric(BaseMetric):
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
         self.normalize = normalize
-        self.comment = 'Estimated uncertainty in parallax measurement (assuming no proper motion or that proper motion '
-        self.comment += 'is well fit). Uses measurements in all bandpasses, and estimates astrometric error based on SNR '
+        self.comment = 'Estimated uncertainty in parallax measurement ' \
+                       '(assuming no proper motion or that proper motion '
+        self.comment += 'is well fit). Uses measurements in all bandpasses, ' \
+                        'and estimates astrometric error based on SNR '
         self.comment += 'in each visit. '
         if SedTemplate == 'flat':
             self.comment += 'Assumes a flat SED. '
         if self.normalize:
-            self.comment += 'This normalized version of the metric displays the estimated uncertainty in the parallax measurement, '
-            self.comment += 'divided by the minimum parallax uncertainty possible (if all visits were six '
-            self.comment += 'months apart). Values closer to 1 indicate more optimal scheduling for parallax measurement.'
+            self.comment += 'This normalized version of the metric displays the ' \
+                            'estimated uncertainty in the parallax measurement, '
+            self.comment += 'divided by the minimum parallax uncertainty possible ' \
+                            '(if all visits were six '
+            self.comment += 'months apart). Values closer to 1 indicate more optimal ' \
+                            'scheduling for parallax measurement.'
 
     def _final_sigma(self, position_errors, ra_pi_amp, dec_pi_amp):
         """Assume parallax in RA and DEC are fit independently, then combined.
@@ -91,32 +109,50 @@ class ParallaxMetric(BaseMetric):
 
 
 class ProperMotionMetric(BaseMetric):
-    """Calculate the uncertainty in the returned proper motion.  Assuming Gaussian errors.
+    """Calculate the uncertainty in the returned proper motion.
+
+    This metric assumes gaussian errors in the astrometry measurements.
+
+    Parameters
+    ----------
+    metricName : str, opt
+        Default 'properMotion'.
+    m5Col : str, opt
+        The default column name for m5 information in the input data. Default fiveSigmaDepth.
+    mjdCol : str, opt
+        The column name for the exposure time. Default observationStartMJD.
+    filterCol : str, opt
+        The column name for the filter information. Default filter.
+    seeingCol : str, opt
+        The column name for the seeing information. Since the astrometry errors are based on the physical
+        size of the PSF, this should be the FWHM of the physical psf. Default seeingFwhmGeom.
+    rmag : float, opt
+        The r magnitude of the fiducial star in r band. Other filters are sclaed using sedTemplate keyword.
+        Default 20.0
+    SedTemplate : str, opt
+        The template to use. This can be 'flat' or 'O','B','A','F','G','K','M'. Default flat.
+    atm_err : float, opt
+        The expected centroiding error due to the atmosphere, in arcseconds. Default 0.01.
+    normalize : boolean, opt
+        Compare the astrometric uncertainty to the uncertainty that would result if half the observations
+        were taken at the start and half at the end. A perfect survey will have a value close to 1, while
+        a poorly scheduled survey will be close to 0. Default False.
+    baseline : float, opt
+        The length of the survey used for the normalization, in years. Default 10.
+    badval : float, opt
+        The value to return when the metric value cannot be calculated. Default -666.
     """
     def __init__(self, metricName='properMotion',
-                 m5Col='fiveSigmaDepth', mjdCol='observationStartMJD', units='mas/yr',
+                 m5Col='fiveSigmaDepth', mjdCol='observationStartMJD',
                  filterCol='filter', seeingCol='seeingFwhmGeom', rmag=20.,
                  SedTemplate='flat', badval= -666,
                  atm_err=0.01, normalize=False,
                  baseline=10., **kwargs):
-        """ Instantiate metric.
-
-        m5Col = column name for inidivual visit m5
-        mjdCol = column name for exposure time dates
-        filterCol = column name for filter
-        seeingCol = column name for seeing (assumed FWHM)
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
-        atm_err = centroiding error due to atmosphere in arcsec
-        normalize = Compare to the uncertainty that would result if half
-        the observations were taken at the start of the survey and half
-        at the end.  A 'perfect' survey will have a value close to unity,
-        while a poorly scheduled survey will be close to zero.
-        baseline = The length of the survey used for the normalization (years)
-        """
         cols = [m5Col, mjdCol, filterCol, seeingCol]
         if normalize:
             units = 'ratio'
+        else:
+            units = 'mas/yr'
         super(ProperMotionMetric, self).__init__(col=cols, metricName=metricName, units=units,
                                                  badval=badval, **kwargs)
         # set return type
@@ -133,15 +169,19 @@ class ProperMotionMetric(BaseMetric):
         self.atm_err = atm_err
         self.normalize = normalize
         self.baseline = baseline
-        self.comment = 'Estimated uncertainty of the proper motion fit (assuming no parallax or that parallax is well fit). '
-        self.comment += 'Uses visits in all bands, and generates approximate astrometric errors using the SNR in each visit. '
+        self.comment = 'Estimated uncertainty of the proper motion fit ' \
+                       '(assuming no parallax or that parallax is well fit). '
+        self.comment += 'Uses visits in all bands, and generates approximate ' \
+                        'astrometric errors using the SNR in each visit. '
         if SedTemplate == 'flat':
             self.comment += 'Assumes a flat SED. '
         if self.normalize:
-            self.comment += 'This normalized version of the metric represents the estimated uncertainty in the proper '
-            self.comment += 'motion divided by the minimum uncertainty possible (if all visits were '
-            self.comment += 'obtained on the first and last days of the survey). Values closer to 1 '
-            self.comment += 'indicate more optimal scheduling.'
+            self.comment += 'This normalized version of the metric represents ' \
+                            'the estimated uncertainty in the proper '
+            self.comment += 'motion divided by the minimum uncertainty possible ' \
+                            '(if all visits were '
+            self.comment += 'obtained on the first and last days of the survey). '
+            self.comment += 'Values closer to 1 indicate more optimal scheduling.'
 
     def run(self, dataslice, slicePoint=None):
         filters = np.unique(dataslice['filter'])
@@ -182,29 +222,49 @@ class ParallaxCoverageMetric(BaseMetric):
     At the poles, uniform sampling would result in a metric value of ~1.
     Conceptually, it is helpful to remember that the parallax motion of a star at the pole is
     a (nearly circular) ellipse while the motion of a star on the ecliptic is a straight line. Thus, any
-    pair of observations seperated by 6 months will give the full parallax range for a star on the pole
-    but only observations on very spefic dates will give the full range for a star on the ecliptic.
+    pair of observations separated by 6 months will give the full parallax range for a star on the pole
+    but only observations on very specific dates will give the full range for a star on the ecliptic.
 
-    Optionally also demand that there are obsevations above the snrLimit kwarg spanning thetaRange radians.
+    Optionally also demand that there are observations above the snrLimit kwarg spanning thetaRange radians.
+
+    Parameters
+    ----------
+    m5Col: str, opt
+        Column name for individual visit m5. Default fiveSigmaDepth.
+    mjdCol: str, opt
+        Column name for exposure time dates. Default observationStartMJD.
+    filterCol: str, opt
+        Column name for filter. Default filter.
+    seeingCol: str, opt
+        Column name for seeing (assumed FWHM). Default seeingFwhmGeom.
+    rmag: float, opt
+        Magnitude of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword.
+        Default 20.0
+    sedTemplate: str, opt
+        Template to use (can be 'flat' or 'O','B','A','F','G','K','M'). Default 'flat'.
+    atm_err: float, opt
+        Centroiding error due to atmosphere in arcsec. Default 0.01 (arcseconds).
+    thetaRange: float, opt
+        Range of parallax offset angles to demand (in radians). Default=0 (means no range requirement).
+    snrLimit: float, opt
+        Only include points above the snrLimit when computing thetaRange. Default 5.
+
+    Returns
+    --------
+    metricValue: float
+        Returns a weighted mean of the length of the parallax factor vectors.
+        Values near 1 imply that the points are well distributed.
+        Values near 0 imply that the parallax phase coverage is bad.
+        Near the ecliptic, uniform sampling results in metric values of about 0.5.
+
+    Notes
+    -----
+    Uses the ParallaxFactor stacker to calculate ra_pi_amp and dec_pi_amp.
     """
     def __init__(self, metricName='ParallaxCoverageMetric', m5Col='fiveSigmaDepth',
                  mjdCol='observationStartMJD', filterCol='filter', seeingCol='seeingFwhmGeom',
-                 rmag=20., SedTemplate='flat', badval=-666,
+                 rmag=20., SedTemplate='flat',
                  atm_err=0.01, thetaRange=0., snrLimit=5, **kwargs):
-        """
-        instantiate metric
-
-        m5Col = column name for inidivual visit m5
-        mjdCol = column name for exposure time dates
-        filterCol = column name for filter
-        seeingCol = column name for seeing (assumed FWHM)
-        rmag = mag of fiducial star in r filter.  Other filters are scaled using sedTemplate keyword
-        sedTemplate = template to use (can be 'flat' or 'O','B','A','F','G','K','M')
-        atm_err = centroiding error due to atmosphere in arcsec
-        thetaRange = range of parallax offset angles to demand (in radians) default=0 means no range requirement
-        snrLimit = only include points above the snrLimit (default 5) when computing thetaRange.
-        """
-
         cols = ['ra_pi_amp', 'dec_pi_amp', m5Col, mjdCol, filterCol, seeingCol]
         units = 'ratio'
         super(ParallaxCoverageMetric, self).__init__(cols,
@@ -227,6 +287,11 @@ class ParallaxCoverageMetric(BaseMetric):
         else:
             self.mags = utils.stellarMags(SedTemplate, rmag=rmag)
         self.atm_err = atm_err
+        caption = "Parallax factor coverage for an r=%.2f star (0 is bad, 0.5-1 is good). " % (rmag)
+        caption += "One expects the parallax factor coverage to vary because stars on the ecliptic "
+        caption += "can be observed when they have no parallax offset while stars at the pole are always "
+        caption += "offset by the full parallax offset."""
+        self.comment = caption
 
     def _thetaCheck(self, ra_pi_amp, dec_pi_amp, snr):
         good = np.where(snr >= self.snrLimit)
@@ -257,7 +322,6 @@ class ParallaxCoverageMetric(BaseMetric):
         return aveRad
 
     def run(self, dataSlice, slicePoint=None):
-
         if np.size(dataSlice) < 2:
             return self.badval
 
@@ -284,13 +348,13 @@ class ParallaxDcrDegenMetric(BaseMetric):
 
     Parameters
     ----------
-    metricName : str
+    metricName : str, opt
         Default 'ParallaxDcrDegenMetric'.
-    seeingCol : str
+    seeingCol : str, opt
         Default 'FWHMgeom'
-    m5Col : str
+    m5Col : str, opt
         Default 'fiveSigmaDepth'
-    fitlerCol : str
+    filterCol : str
         Default 'filter'
     atm_err : float
         Minimum error in photometry centroids introduced by the atmosphere (arcseconds). Default 0.01.
@@ -306,14 +370,14 @@ class ParallaxDcrDegenMetric(BaseMetric):
     Returns
     -------
     metricValue : float
-        returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
+        Returns the correlation coefficient between the best-fit parallax amplitude and DCR amplitude.
         The RA and Dec offsets are fit simultaneously. Values close to zero are good, values close to +/- 1
         are bad. Experience with fitting Monte Carlo simulations suggests the astrometric fits start
         becoming poor around a correlation of 0.7.
     """
     def __init__(self, metricName='ParallaxDcrDegenMetric', seeingCol='seeingFwhmGeom',
                  m5Col='fiveSigmaDepth', atm_err=0.01, rmag=20., SedTemplate='flat',
-                 filterCol='filter', tol = 0.05, **kwargs):
+                 filterCol='filter', tol=0.05, **kwargs):
         self.m5Col = m5Col
         self.seeingCol = seeingCol
         self.filterCol = filterCol
@@ -344,18 +408,25 @@ class ParallaxDcrDegenMetric(BaseMetric):
         return result
 
     def run(self, dataSlice, slicePoint=None):
-
-        snr = np.zeros(len(dataSlice), dtype='float')
+        # The idea here is that we calculate position errors (in RA and Dec) for all observations.
+        # Then we generate arrays of the parallax offsets (delta RA parallax = ra_pi_amp, etc)
+        #  and the DCR offsets (delta RA DCR = ra_dcr_amp, etc), and just add them together into one
+        #  RA  (and Dec) offset. Then, we try to fit for how we combined these offsets, but while
+        #  considering the astrometric noise. If we can figure out that we just added them together
+        # (i.e. the curve_fit result is [a=1, b=1] for the function _positions above)
+        # then we should be able to disentangle the parallax and DCR offsets when fitting 'for real'.
         # compute SNR for all observations
+        snr = np.zeros(len(dataSlice), dtype='float')
         for filt in self.filters:
             inFilt = np.where(dataSlice[self.filterCol] == filt)
             snr[inFilt] = mafUtils.m52snr(self.mags[filt], dataSlice[self.m5Col][inFilt])
         # Compute the centroiding uncertainties
-        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol],
-                                                            snr)**2+self.atm_err**2)
-
-        # Construct the vectors
-        xdata = np.empty((2, dataSlice.size*2), dtype=float)
+        # Note that these centroiding uncertainties depend on the physical size of the PSF, thus
+        # we are using seeingFwhmGeom for these metrics, not seeingFwhmEff.
+        position_errors = np.sqrt(mafUtils.astrom_precision(dataSlice[self.seeingCol], snr)**2 +
+                                  self.atm_err**2)
+        # Construct the vectors of RA/Dec offsets. xdata is the "input data". ydata is the "output".
+        xdata = np.empty((2, dataSlice.size * 2), dtype=float)
         xdata[0, :] = np.concatenate((dataSlice['ra_pi_amp'], dataSlice['dec_pi_amp']))
         xdata[1, :] = np.concatenate((dataSlice['ra_dcr_amp'], dataSlice['dec_dcr_amp']))
         ydata = np.sum(xdata, axis=0)

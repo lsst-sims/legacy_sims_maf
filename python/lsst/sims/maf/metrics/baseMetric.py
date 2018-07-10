@@ -1,5 +1,4 @@
 from __future__ import print_function
-from builtins import zip
 from builtins import map
 from builtins import object
 # Base class for metrics - defines methods which must be implemented.

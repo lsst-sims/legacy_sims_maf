@@ -154,7 +154,7 @@ class BaseOpsimDatabase(Database):
             site = Site(name='LSST')
             lat = site.latitude_rad
             lon = site.longitude_rad
-            height = site.elev
+            height = site.height
         else:
             lat = self.query_columns('Config', colnames=['paramValue'],
                                      sqlconstraint="paramName like '%latitude%'")
@@ -347,20 +347,67 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
         Returns dictionary of propID / propname, and dictionary of propTag / propID.
         If not using a full database, will return dict of propIDs with empty propnames + empty propTag dict.
         """
-        propIDs = {}
+        propIds = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
-        propTags = {'WFD': [], 'DD': []}
+        propTags = {'WFD': [], 'DD': [], 'NES': []}
 
         propData = self.query_columns('Proposal', colnames=[self.propIdCol, self.propNameCol],
                                       sqlconstraint=None)
-        for propID, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
+        for propId, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
             # Fix these in the future, to use the proper tags that will be added to output database.
-            propIDs[propID] = propName
+            propIds[propId] = propName
             if 'widefastdeep' in propName.lower():
-                propTags['WFD'].append(propID)
-            if 'drill' in propName.lower():
-                propTags['DD'].append(propID)
-        return propIDs, propTags
+                propTags['WFD'].append(propId)
+            if 'drilling' in propName.lower():
+                propTags['DD'].append(propId)
+            if 'northeclipticspur' in propName.lower():
+                propTags['NES'].append(propId)
+        return propIds, propTags
+
+    def createSlewConstraint(self, startTime=None, endTime=None):
+        """Create a SQL constraint for the slew tables (slew activities, slew speeds, slew states)
+        to select slews between startTime and endTime (MJD).
+
+        Parameters
+        ----------
+        startTime : float or None, opt
+            Time of first slew. Default (None) means no constraint on time of first slew.
+        endTime : float or None, opt
+            Time of last slew. Default (None) means no constraint on time of last slew.
+
+        Returns
+        -------
+        str
+            The SQL constraint, like 'slewHistory_slewID  between XXX and XXXX'
+        """
+        query = 'select min(observationStartMJD), max(observationStartMJD) from obsHistory'
+        res = self.query_arbitrary(query, dtype=[('mjdMin', 'int'), ('mjdMax', 'int')])
+        # If asking for constraints that are out of bounds of the survey, return None.
+        if startTime is None or (startTime < res['mjdMin'][0]):
+            startTime = res['mjdMin'][0]
+        if endTime is None or (endTime > res['mjdMax'][0]):
+            endTime = res['mjdMax'][0]
+        # Check if times were out of bounds.
+        if startTime > res['mjdMax'][0] or endTime < res['mjdMin'][0]:
+            warnings.warn('Times requested do not overlap survey operations (%f to %f)'
+                          % (res['mjdMin'][0], res['mjdMax'][0]))
+            return None
+        # Find the slew ID matching the start Time.
+        query = 'select min(observationId) from obsHistory where observationStartMJD >= %s' % (startTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        query = 'select slewCount from slewHistory where ObsHistory_observationId = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        minSlewCount = res['slewCount'][0]
+        # Find the slew ID matching the end Time.
+        query = 'select max(observationId) from obsHistory where observationStartMJD <= %s' % (endTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        # Find the observation id corresponding to this slew time.
+        query = 'select slewCount from slewHistory where ObsHistory_observationId = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        maxSlewCount = res['slewCount'][0]
+        return 'SlewHistory_slewCount between %d and %d' % (minSlewCount, maxSlewCount)
 
     def createSQLWhere(self, tag, propTags):
         """
@@ -735,7 +782,7 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         """
         propIDs = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
-        propTags = {'WFD':[], 'DD':[]}
+        propTags = {'WFD':[], 'DD':[], 'NES': []}
         # If do not have full database available:
         if 'Proposal' not in self.tables:
             propData = self.query_columns(self.defaultTable, colnames=[self.propIdCol])
@@ -759,6 +806,8 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
                         propTags['WFD'].append(propid)
                     if 'deep' in propname.lower():
                         propTags['DD'].append(propid)
+                    if 'northecliptic' in propname.lower():
+                        propTags['NES'].append(propid)
             else:
                 # Newer opsim output with 'ScienceType' fields in conf files.
                 for sc in sciencetypes:
@@ -769,12 +818,59 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
                             propTags[sciencetype].append(int(sc['nonPropID']))
                         else:
                             propTags[sciencetype] = [int(sc['nonPropID']),]
+                # But even these runs don't tag NES
+                for propid, propname in propIDs.items():
+                    if 'northecliptic' in propname.lower():
+                        propTags['NES'].append(propid)
         return propIDs, propTags
 
+    def createSlewConstraint(self, startTime=None, endTime=None):
+        """Create a SQL constraint for the slew tables (slew activities, slew speeds, slew states)
+        to select slews between startTime and endTime (MJD).
+
+        Parameters
+        ----------
+        startTime : float or None, opt
+            Time of first slew. Default (None) means no constraint on time of first slew.
+        endTime : float or None, opt
+            Time of last slew. Default (None) means no constraint on time of last slew.
+
+        Returns
+        -------
+        str
+            The SQL constraint, like 'slewHistory_slewID > XXX and slewHistory_slewID < XXXX'
+        """
+        query = 'select min(expMJD), max(expMJD) from obsHistory'
+        res = self.query_arbitrary(query, dtype=[('mjdMin', 'int'), ('mjdMax', 'int')])
+        # If asking for constraints that are out of bounds of the survey, return None.
+        if startTime is None or (startTime < res['mjdMin'][0]):
+            startTime = res['mjdMin'][0]
+        if endTime is None or (endTime > res['mjdMax'][0]):
+            endTime = res['mjdMax'][0]
+        # Check if times were out of bounds.
+        if startTime > res['mjdMax'][0] or endTime < res['mjdMin'][0]:
+            warnings.warn('Times requested do not overlap survey operations (%f to %f)'
+                          % (res['mjdMin'][0], res['mjdMax'][0]))
+            return None
+        # Find the slew ID matching the start Time.
+        query = 'select min(obsHistID) from obsHistory where expMJD >= %s' % (startTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        query = 'select slewID from slewHistory where ObsHistory_obsHistID = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        minSlewCount = res['slewCount'][0]
+        # Find the slew ID matching the end Time.
+        query = 'select max(obsHistID) from obsHistory where expMJD <= %s' % (endTime)
+        res = self.query_arbitrary(query, dtype=[('observationId', 'int')])
+        obsHistId = res['observationId'][0]
+        # Find the observation id corresponding to this slew time.
+        query = 'select slewID from slewHistory where ObsHistory_obsHistID = %d' % (obsHistId)
+        res = self.query_arbitrary(query, dtype=[('slewCount', 'int')])
+        maxSlewCount = res['slewCount'][0]
+        return 'SlewHistory_slewID between %d and %d' % (minSlewCount, maxSlewCount)
 
     def createSQLWhere(self, tag, propTags):
-        """
-        Create a SQL constraint to identify observations taken for a particular proposal,
+        """Create a SQL constraint to identify observations taken for a particular proposal,
         using the information in the propTags dictionary.
 
         Parameters
@@ -799,7 +895,6 @@ class OpsimDatabaseV3(BaseOpsimDatabase):
         else:
             sqlWhere = "(" + " or ".join(["propID = %d" % (propid) for propid in propTags[tag]]) + ")"
         return sqlWhere
-
 
     def fetchRequestedNvisits(self, propId=None):
         """

@@ -2,11 +2,11 @@ import matplotlib
 matplotlib.use("Agg")
 import os
 import unittest
-import numpy as np
 import lsst.sims.maf.db as db
 import lsst.utils.tests
 from lsst.sims.utils.CodeUtilities import sims_clean_up
 from lsst.utils import getPackageDir
+
 
 class TestDb(unittest.TestCase):
 
@@ -48,6 +48,7 @@ class TestDb(unittest.TestCase):
     def testSqliteFileNotExists(self):
         """Test that db gives useful error message if db file doesn't exist."""
         self.assertRaises(IOError, db.Database, 'thisdatabasedoesntexist_sqlite.db')
+
 
 class TestMemory(lsst.utils.tests.MemoryTestCase):
     pass

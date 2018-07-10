@@ -2,9 +2,7 @@ import matplotlib
 matplotlib.use("Agg")
 import os
 import unittest
-import numpy as np
 import lsst.sims.maf.db as db
-import lsst.sims.maf.utils.outputUtils as out
 import lsst.utils.tests
 from lsst.utils import getPackageDir
 from lsst.sims.utils.CodeUtilities import sims_clean_up
@@ -31,25 +29,25 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbSetup(self):
         """Test opsim specific database class setup/instantiation."""
         # Test tables were connected to.
-        self.assertTrue('SummaryAllProps' in self.oo.tableNames)
+        self.assertIn('SummaryAllProps', self.oo.tableNames)
         self.assertEqual(self.oo.defaultTable, 'SummaryAllProps')
 
     def testOpsimDbMetricData(self):
         """Test queries for sim data. """
         data = self.oo.fetchMetricData(['seeingFwhmEff', ], 'filter="r" and seeingFwhmEff<1.0')
         self.assertEqual(data.dtype.names, ('seeingFwhmEff',))
-        self.assertTrue(data['seeingFwhmEff'].max() <= 1.0)
+        self.assertLessEqual(data['seeingFwhmEff'].max(), 1.0)
 
     def testOpsimDbPropID(self):
         """Test queries for prop ID"""
         propids, propTags = self.oo.fetchPropInfo()
-        self.assertTrue(len(list(propids.keys())) > 0)
-        self.assertTrue(len(propTags['WFD']) > 0)
-        self.assertTrue(len(propTags['DD']) >= 0)
+        self.assertGreater(len(list(propids.keys())), 0)
+        self.assertGreater(len(propTags['WFD']), 0)
+        self.assertGreaterEqual(len(propTags['DD']), 0)
         for w in propTags['WFD']:
-            self.assertTrue(w in propids)
+            self.assertIn(w, propids)
         for d in propTags['DD']:
-            self.assertTrue(d in propids)
+            self.assertIn(d, propids)
 
     def testOpsimDbFields(self):
         """Test queries for field data."""
@@ -67,14 +65,14 @@ class TestOpsimDb(unittest.TestCase):
     def testOpsimDbSimName(self):
         """Test query for opsim name."""
         simname = self.oo.fetchOpsimRunName()
-        self.assertTrue(isinstance(simname, str))
+        self.assertIsInstance(simname, str)
         self.assertEqual(simname, 'astro-lsst-01_2014')
 
     def testOpsimDbConfig(self):
         """Test generation of config data. """
         configsummary, configdetails = self.oo.fetchConfig()
-        self.assertTrue(isinstance(configsummary, dict))
-        self.assertTrue(isinstance(configdetails, dict))
+        self.assertIsInstance(configsummary, dict)
+        self.assertIsInstance(configdetails, dict)
         #  self.assertEqual(set(configsummary.keys()), set(['Version', 'RunInfo', 'Proposals', 'keyorder']))
         propids, proptags = self.oo.fetchPropInfo()
         propidsSummary = []
@@ -82,8 +80,6 @@ class TestOpsimDb(unittest.TestCase):
             if propname != 'keyorder':
                 propidsSummary.append(configsummary['Proposals'][propname]['PropId'])
         self.assertEqual(set(propidsSummary), set(propids))
-        #out.printDict(configsummary, 'Summary')
-
 
     def testCreateSqlWhere(self):
         """
@@ -92,7 +88,7 @@ class TestOpsimDb(unittest.TestCase):
         # propTags is a dictionary of lists returned by OpsimDatabase
         propTags = {'WFD': [1, 2, 3], 'DD': [4], 'Rolling': [2]}
         # If tag is in dictionary with one value, returned sql where clause
-        #  is simply 'propId = 4'
+        # is simply 'propId = 4'
         tag = 'DD'
         sqlWhere = self.oo.createSQLWhere(tag, propTags)
         self.assertEqual(sqlWhere, 'proposalId = 4')
@@ -100,8 +96,8 @@ class TestOpsimDb(unittest.TestCase):
         tag = 'WFD'
         sqlWhere = self.oo.createSQLWhere(tag, propTags)
         self.assertEqual(sqlWhere.split()[0], '(proposalId')
-        for id in propTags['WFD']:
-            self.assertTrue('%s' % (id) in sqlWhere)
+        for id_val in propTags['WFD']:
+            self.assertIn('%s' % (id_val), sqlWhere)
         # And the same id can be in multiple proposals.
         tag = 'Rolling'
         sqlWhere = self.oo.createSQLWhere(tag, propTags)

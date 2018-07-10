@@ -9,12 +9,12 @@ class TestMoMetrics1(unittest.TestCase):
         # Set up some ssoObs data to test the metrics on.
         # Note that ssoObs is a numpy recarray.
         # The expected set of columns in ssoObs is:
-        cols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
-                'visitExpTime', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong',
-                'delta', 'ra', 'dec', 'magV', 'time', 'dradt', 'ddecdt', 'phase', 'solarelon',
-                'velocity', 'magFilter', 'dmagColor', 'dmagTrail', 'dmagDetect']
+        # cols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
+        #        'visitExpTime', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong',
+        #        'delta', 'ra', 'dec', 'magV', 'time', 'dradt', 'ddecdt', 'phase', 'solarelon',
+        #        'velocity', 'magFilter', 'dmagColor', 'dmagTrail', 'dmagDetect']
         # And stackers will often add
-        addCols = ['appMag', 'magLimit', 'snr', 'vis']
+        # addCols = ['appMag', 'magLimit', 'snr', 'vis']
 
         # Test metrics using ssoObs for a particular object.
         times = np.array([0.1, 0.2, 0.3,
@@ -24,8 +24,8 @@ class TestMoMetrics1(unittest.TestCase):
                           10.1, 10.2, 10.3,
                           13.1, 13.5], dtype='float')
         ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'),
-                                                ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'), ('magLimit', '<f8'),
-                                                ('SNR', '<f8'), ('vis', '<f8')]))
+                                                   ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'),
+                                                   ('magLimit', '<f8'), ('SNR', '<f8'), ('vis', '<f8')]))
 
         ssoObs['time'] = times
         ssoObs['expMJD'] = times
@@ -78,27 +78,18 @@ class TestMoMetrics1(unittest.TestCase):
         del self.orb
         del self.Hval
 
+
 class TestDiscoveryMetrics(unittest.TestCase):
 
     def setUp(self):
-        # Set up some ssoObs data to test the metrics on.
-        # Note that ssoObs is a numpy recarray.
-        # The expected set of columns in ssoObs is:
-        cols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
-                'visitExpTime', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong',
-                'delta', 'ra', 'dec', 'magV', 'time', 'dradt', 'ddecdt', 'phase', 'solarelon',
-                'velocity', 'magFilter', 'dmagColor', 'dmagTrail', 'dmagDetect']
-        # And stackers will often add
-        addCols = ['appMag', 'magLimit', 'snr', 'vis']
-
+        rng = np.random.RandomState(61331)
         # Test metrics using ssoObs for a particular object.
         times = np.array([0.1, 0.2, 0.9,
                           1.1, 1.3,
                           5.1,
                           7.1, 7.2, 7.5,
                           10.1, 10.2,
-                          13.1, 13.5],
-                          dtype='float')
+                          13.1, 13.5], dtype='float')
         ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'),
                                                    ('ecLon', '<f8'), ('ecLat', '<f8'), ('solarElong', '<f8'),
                                                    ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'),
@@ -123,7 +114,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         ssoObs['SNR'] = np.zeros(len(times), dtype='float') + 5.0
         ssoObs['vis'] = np.zeros(len(times), dtype='float') + 1
         ssoObs['vis'][0:5] = 0
-        ssoObs['velocity'] = np.random.rand(len(times))
+        ssoObs['velocity'] = rng.rand(len(times))
         ssoObs['FWHMgeom'] = np.ones(len(times), 'float')
         ssoObs['visitExpTime'] = np.ones(len(times), 'float') * 24.0
         self.ssoObs = ssoObs
@@ -133,7 +124,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
 
     def testDiscoveryMetric(self):
         discMetric = metrics.DiscoveryMetric(nObsPerNight=2, tMin=0.0, tMax=0.3,
-                                nNightsPerWindow=3, tWindow=9, snrLimit=5)
+                                             nNightsPerWindow=3, tWindow=9, snrLimit=5)
         metricValue = discMetric.run(self.ssoObs, self.orb, self.Hval)
         child = metrics.Discovery_N_ObsMetric(discMetric, i=0)
         nobs = child.run(self.ssoObs, self.orb, self.Hval, metricValue)
@@ -160,7 +151,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.assertEqual(lat, 25)
 
         discMetric2 = metrics.DiscoveryChancesMetric(nObsPerNight=2, tNight=0.3,
-                                             nNightsPerWindow=3, tWindow=9, snrLimit=5)
+                                                     nNightsPerWindow=3, tWindow=9, snrLimit=5)
         metricValue2 = discMetric2.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(metricValue2, 2)
 
@@ -174,8 +165,8 @@ class TestDiscoveryMetrics(unittest.TestCase):
         magic = discMetric3.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(magic, 6)
 
-
     def testHighVelocityMetric(self):
+        rng = np.random.RandomState(8123)
         velMetric = metrics.HighVelocityMetric(psfFactor=1.0, snrLimit=5)
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(metricValue, 0)
@@ -185,7 +176,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         velMetric = metrics.HighVelocityMetric(psfFactor=2.0, snrLimit=5)
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(metricValue, 0)
-        self.ssoObs['velocity'][0:2] = np.random.rand(1)
+        self.ssoObs['velocity'][0:2] = rng.rand(1)
 
     def testHighVelocityNightsMetric(self):
         velMetric = metrics.HighVelocityNightsMetric(psfFactor=1.0, nObsPerNight=1, snrLimit=5)

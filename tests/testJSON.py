@@ -9,21 +9,23 @@ import lsst.sims.maf.slicers as slicers
 import lsst.utils.tests
 
 
-def makeDataValues(size=100, min=0., max=1., random=True):
+def makeDataValues(size=100, min=0., max=1., random=-1):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
-    if random:
-        randorder = np.random.rand(size)
+    if random > 0:
+        rng = np.random.RandomState(random)
+        randorder = rng.rand(size)
         randind = np.argsort(randorder)
         datavalues = datavalues[randind]
     datavalues = np.array(list(zip(datavalues)), dtype=[('testdata', 'float')])
     return datavalues
 
 
-def makeMetricData(slicer, dtype='float'):
-    metricValues = np.random.rand(len(slicer)).astype(dtype)
+def makeMetricData(slicer, dtype='float', seed=8800):
+    rng = np.random.RandomState(seed)
+    metricValues = rng.rand(len(slicer)).astype(dtype)
     metricValues = ma.MaskedArray(data=metricValues,
                                   mask=np.zeros(len(slicer), 'bool'),
                                   fill_value=slicer.badval)
@@ -50,18 +52,18 @@ def makeFieldData():
     return fieldData
 
 
-def makeOpsimDataValues(fieldData, size=10000, min=0., max=1., random=True):
+def makeOpsimDataValues(fieldData, size=10000, min=0., max=1., random=88):
     """Generate a simple array of numbers, evenly arranged between min/max, but (optional) random order."""
     datavalues = np.arange(0, size, dtype='float')
     datavalues *= (float(max) - float(min)) / (datavalues.max() - datavalues.min())
     datavalues += min
-    if random:
-        randorder = np.random.rand(size)
-        randind = np.argsort(randorder)
-        datavalues = datavalues[randind]
+    rng = np.random.RandomState(random)
+    randorder = rng.rand(size)
+    randind = np.argsort(randorder)
+    datavalues = datavalues[randind]
     # Add valid fieldId values to match data values
     fieldId = np.zeros(len(datavalues), 'int')
-    idxs = np.random.rand(size) * len(fieldData['fieldId'])
+    idxs = rng.rand(size) * len(fieldData['fieldId'])
     for i, d in enumerate(datavalues):
         fieldId[i] = fieldData[int(idxs[i])][0]
     simData = np.core.records.fromarrays([fieldId, datavalues], names=['fieldId', 'testdata'])
@@ -78,7 +80,7 @@ class TestJSONoutUniSlicer(unittest.TestCase):
 
     @unittest.skip("13 March 2017--Skipping to clear python 3 update. Probably string unicode issues.")
     def test(self):
-        metricVal = makeMetricData(self.testslicer, 'float')
+        metricVal = makeMetricData(self.testslicer, 'float', seed=88102231)
         io = self.testslicer.outputJSON(metricVal, metricName='testMetric',
                                         simDataName='testSim', metadata='testmeta')
         jsn = json.loads(io.getvalue())
@@ -96,7 +98,7 @@ class TestJSONoutOneDSlicer2(unittest.TestCase):
 
     def setUp(self):
         # Set up a slicer and some metric data for that slicer.
-        dv = makeDataValues(1000)
+        dv = makeDataValues(1000, random=40082)
         self.testslicer = slicers.OneDSlicer(sliceColName='testdata')
         self.testslicer.setupSlicer(dv)
 
@@ -105,7 +107,7 @@ class TestJSONoutOneDSlicer2(unittest.TestCase):
 
     @unittest.skip("13 March 2017--Skipping to clear python 3 update. Probably string unicode issues.")
     def test(self):
-        metricVal = makeMetricData(self.testslicer, 'float')
+        metricVal = makeMetricData(self.testslicer, 'float', seed=18)
         io = self.testslicer.outputJSON(metricVal)
         jsn = json.loads(io.getvalue())
         jsn_header = jsn[0]
@@ -129,7 +131,7 @@ class TestJSONoutHealpixSlicer(unittest.TestCase):
 
     @unittest.skip("13 March 2017--Skipping to clear python 3 update. Probably string unicode issues.")
     def test(self):
-        metricVal = makeMetricData(self.testslicer, 'float')
+        metricVal = makeMetricData(self.testslicer, 'float', seed=452)
         io = self.testslicer.outputJSON(metricVal)
         jsn = json.loads(io.getvalue())
         jsn_header = jsn[0]
@@ -150,7 +152,7 @@ class TestJSONoutOpsimFieldSlicer(unittest.TestCase):
         # Set up a slicer and some metric data for that slicer.
         self.testslicer = slicers.OpsimFieldSlicer()
         self.fieldData = makeFieldData()
-        self.simData = makeOpsimDataValues(self.fieldData)
+        self.simData = makeOpsimDataValues(self.fieldData, random=7162)
         self.testslicer.setupSlicer(self.simData, self.fieldData)
 
     def tearDown(self):
@@ -158,7 +160,7 @@ class TestJSONoutOpsimFieldSlicer(unittest.TestCase):
 
     @unittest.skip("13 March 2017--Skipping to clear python 3 update. Probably string unicode issues.")
     def test(self):
-        metricVal = makeMetricData(self.testslicer, 'float')
+        metricVal = makeMetricData(self.testslicer, 'float', seed=334)
         io = self.testslicer.outputJSON(metricVal)
         jsn = json.loads(io.getvalue())
         jsn_header = jsn[0]

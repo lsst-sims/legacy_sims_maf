@@ -10,6 +10,7 @@ import lsst.sims.maf.db as db
 import lsst.sims.maf.utils as utils
 from lsst.sims.maf.plots import PlotHandler
 import lsst.sims.maf.maps as maps
+from lsst.sims.maf.stackers import BaseDitherStacker
 from .metricBundle import MetricBundle, createEmptyMetricBundle
 import warnings
 
@@ -372,9 +373,18 @@ class MetricBundleGroup(object):
                 uniqMaps.append(m)
 
         # Run stackers.
+        # Run dither stackers first. (this is a bit of a hack -- we should probably figure out
+        # proper hierarchy and DAG so that stackers run in the order they need to. This will catch 90%).
+        ditherStackers = []
+        for s in uniqStackers:
+            if isinstance(s, BaseDitherStacker):
+                ditherStackers.append(s)
+        for stacker in ditherStackers:
+            self.simData = stacker.run(self.simData, override=True)
+            uniqStackers.remove(stacker)
         for stacker in uniqStackers:
             # Note that stackers will clobber previously existing rows with the same name.
-            self.simData = stacker.run(self.simData)
+            self.simData = stacker.run(self.simData, override=True)
 
         # Pull out one of the slicers to use as our 'slicer'.
         # This will be forced back into all of the metricBundles at the end (so that they track
@@ -614,64 +624,72 @@ class MetricBundleGroup(object):
         Reads all the files associated with all metricbundles in self.bundleDict.
         """
         reduceBundleDict = {}
-        for b in self.bundleDict.values():
-            filename = os.path.join(self.outDir, b.fileRoot + '.npz')
+        removeBundles = []
+        for b in self.bundleDict:
+            bundle = self.bundleDict[b]
+            filename = os.path.join(self.outDir, bundle.fileRoot + '.npz')
             try:
                 # Create a temporary metricBundle to read the data into.
                 #  (we don't use b directly, as this overrides plotDict/etc).
                 tmpBundle = createEmptyMetricBundle()
                 tmpBundle.read(filename)
-                # Copy the tmpBundle metricValues into b.
-                b.metricValues = tmpBundle.metricValues
+                # Copy the tmpBundle metricValues into bundle.
+                bundle.metricValues = tmpBundle.metricValues
                 # And copy the slicer into b, to get slicePoints.
-                b.slicer = tmpBundle.slicer
-            except:
+                bundle.slicer = tmpBundle.slicer
+                if self.verbose:
+                    print('Read %s from disk.' % (bundle.fileRoot))
+            except IOError:
                 warnings.warn('Warning: file %s not found, bundle not restored.' % filename)
+                removeBundles.append(b)
 
-                # Look to see if this is a complex metric, with associated 'reduce' functions,
-                # and read those in too.
-                if len(b.metric.reduceFuncs) > 0:
-                    origMetricName = b.metric.name
-                    for reduceFunc in b.metric.reduceFuncs.values():
-                        reduceName = origMetricName + '_' + reduceFunc.__name__.replace('reduce', '')
-                        # Borrow the fileRoot in b (we'll reset it appropriately afterwards).
-                        b.metric.name = reduceName
-                        b._buildFileRoot()
-                        filename = os.path.join(self.outDir, b.fileRoot + '.npz')
-                        tmpBundle = createEmptyMetricBundle()
-                        try:
-                            tmpBundle.read(filename)
-                            # This won't necessarily recreate the plotDict and displayDict exactly
-                            # as they would have been made if you calculated the reduce metric from scratch.
-                            # Perhaps update these metric reduce dictionaries after reading them in?
-                            newmetricBundle = MetricBundle(metric=b.metric, slicer=b.slicer,
-                                                           constraint=b.constraint,
-                                                           stackerList=b.stackerList, runName=b.runName,
-                                                           metadata=b.metadata,
-                                                           plotDict=b.plotDict, displayDict=b.displayDict,
-                                                           summaryMetrics=b.summaryMetrics,
-                                                           mapsList=b.mapsList,
-                                                           fileRoot=b.fileRoot, plotFuncs=b.plotFuncs)
-                            newmetricBundle.metric.name = reduceName
-                            newmetricBundle.metricValues = ma.copy(tmpBundle.metricValues)
-                            del tmpBundle
-
-                            # Add the new metricBundle to our metricBundleGroup dictionary.
-                            name = newmetricBundle.metric.name
-                            if name in self.bundleDict:
-                                name = newmetricBundle.fileRoot
-                            reduceBundleDict[name] = newmetricBundle
-                        except:
-                            warnings.warn('Warning: file %s not found, bundle not restored ("reduce" metric).'
-                                          % filename)
+            # Look to see if this is a complex metric, with associated 'reduce' functions,
+            # and read those in too.
+            if len(bundle.metric.reduceFuncs) > 0:
+                origMetricName = bundle.metric.name
+                for reduceFunc in bundle.metric.reduceFuncs.values():
+                    reduceName = origMetricName + '_' + reduceFunc.__name__.replace('reduce', '')
+                    # Borrow the fileRoot in b (we'll reset it appropriately afterwards).
+                    bundle.metric.name = reduceName
+                    bundle._buildFileRoot()
+                    filename = os.path.join(self.outDir, bundle.fileRoot + '.npz')
+                    tmpBundle = createEmptyMetricBundle()
+                    try:
+                        tmpBundle.read(filename)
+                        # This won't necessarily recreate the plotDict and displayDict exactly
+                        # as they would have been made if you calculated the reduce metric from scratch.
+                        # Perhaps update these metric reduce dictionaries after reading them in?
+                        newmetricBundle = MetricBundle(metric=bundle.metric, slicer=bundle.slicer,
+                                                       constraint=bundle.constraint,
+                                                       stackerList=bundle.stackerList, runName=bundle.runName,
+                                                       metadata=bundle.metadata,
+                                                       plotDict=bundle.plotDict,
+                                                       displayDict=bundle.displayDict,
+                                                       summaryMetrics=bundle.summaryMetrics,
+                                                       mapsList=bundle.mapsList,
+                                                       fileRoot=bundle.fileRoot, plotFuncs=bundle.plotFuncs)
+                        newmetricBundle.metric.name = reduceName
+                        newmetricBundle.metricValues = ma.copy(tmpBundle.metricValues)
+                        # Add the new metricBundle to our metricBundleGroup dictionary.
+                        name = newmetricBundle.metric.name
+                        if name in self.bundleDict:
+                            name = newmetricBundle.fileRoot
+                        reduceBundleDict[name] = newmetricBundle
+                        if self.verbose:
+                            print('Read %s from disk.' % (newmetricBundle.fileRoot))
+                    except IOError:
+                        warnings.warn('Warning: file %s not found, bundle not restored ("reduce" metric).'
+                                      % filename)
 
                     # Remove summaryMetrics from top level metricbundle.
-                    b.summaryMetrics = []
+                    bundle.summaryMetrics = []
                     # Update parent MetricBundle name.
-                    b.metric.name = origMetricName
-                    b._buildFileRoot()
+                    bundle.metric.name = origMetricName
+                    bundle._buildFileRoot()
 
-            if self.verbose:
-                print('Read %s from disk.' % (b.fileRoot))
         # Add the reduce bundles into the bundleDict.
         self.bundleDict.update(reduceBundleDict)
+        # And remove the bundles which were not found on disk, so we don't try to make (blank) plots.
+        for b in removeBundles:
+            del self.bundleDict[b]
+

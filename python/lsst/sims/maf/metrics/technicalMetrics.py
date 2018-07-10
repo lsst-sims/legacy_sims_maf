@@ -6,7 +6,7 @@ __all__ = ['NChangesMetric',
            'MinTimeBetweenStatesMetric', 'NStateChangesFasterThanMetric',
            'MaxStateChangesWithinMetric',
            'TeffMetric', 'OpenShutterFractionMetric',
-           'CompletenessMetric', 'FilterColorsMetric']
+           'CompletenessMetric', 'FilterColorsMetric', 'BruteOSFMetric']
 
 
 class NChangesMetric(BaseMetric):
@@ -39,9 +39,9 @@ class MinTimeBetweenStatesMetric(BaseMetric):
         self.changeCol = changeCol
         self.timeCol = timeCol
         if metricName is None:
-            metricName = 'Minimum time between %s changes minutes' % (changeCol)
+            metricName = 'Minimum time between %s changes (minutes)' % (changeCol)
         super(MinTimeBetweenStatesMetric, self).__init__(col=[changeCol, timeCol], metricName=metricName,
-                                                         units='minutes', **kwargs)
+                                                         units='', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Sort on time, to be sure we've got filter (or other col) changes in the right order.
@@ -64,7 +64,8 @@ class NStateChangesFasterThanMetric(BaseMetric):
     (useful for calculating time between filter changes in particular).
     'cutoff' should be in minutes.
     """
-    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, cutoff=20, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, cutoff=20,
+                 **kwargs):
         """
         col = column tracking changes in
         timeCol = column keeping the time of each visit
@@ -96,7 +97,8 @@ class MaxStateChangesWithinMetric(BaseMetric):
     (useful for calculating time between filter changes in particular).
     'timespan' should be in minutes.
     """
-    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, timespan=20, **kwargs):
+    def __init__(self, changeCol='filter', timeCol='observationStartMJD', metricName=None, timespan=20,
+                 **kwargs):
         """
         col = column tracking changes in
         timeCol = column keeping the time of each visit
@@ -150,9 +152,21 @@ class TeffMetric(BaseMetric):
                 raise ValueError('fiducialDepth should be None or dictionary')
         self.teffBase = teffBase
         self.normed = normed
+        if self.normed:
+            units = ''
+        else:
+            units = 'seconds'
         super(TeffMetric, self).__init__(col=[m5Col, filterCol], metricName=metricName,
-                                         units='seconds', **kwargs)
-        self.comment = 'Effective time of a series of observations, comparing the achieved m5 depth to a fiducial m5 value.'
+                                         units=units, **kwargs)
+        if self.normed:
+            self.comment = 'Normalized effective time'
+        else:
+            self.comment = 'Effect time'
+        self.comment += ' of a series of observations, evaluating the equivalent amount of time'
+        self.comment += ' each observation would require if taken at a fiducial limiting magnitude.'
+        self.comment += ' Fiducial depths are : %s' % self.depth
+        if self.normed:
+            self.comment += ' Normalized by the total amount of time actual on-sky.'
 
     def run(self, dataSlice, slicePoint=None):
         filters = np.unique(dataSlice[self.filterCol])
@@ -181,9 +195,8 @@ class OpenShutterFractionMetric(BaseMetric):
                                                         self.slewTimeCol],
                                                         metricName=metricName, units='OpenShutter/TotalTime',
                                                         **kwargs)
-        self.comment = 'Open shutter time (%s total) divided by total visit time (%s) + slewtime (%s).' %(self.expTimeCol,
-                                                                                                          self.visitTimeCol,
-                                                                                                          self.slewTimeCol)
+        self.comment = 'Open shutter time (%s total) divided by total visit time ' \
+                       '(%s) + slewtime (%s).' %(self.expTimeCol, self.visitTimeCol, self.slewTimeCol)
 
     def run(self, dataSlice, slicePoint=None):
         result = (np.sum(dataSlice[self.expTimeCol]) /
@@ -339,3 +352,41 @@ class FilterColorsMetric(BaseMetric):
             alpha = np.max([alpha, alphamin])
             alpha = np.min([alphamax, alpha])
         return (r, g, b, alpha)
+
+
+class BruteOSFMetric(BaseMetric):
+    """Assume I can't trust the slewtime or visittime colums.
+    This computes the fraction of time the shutter is open, with no penalty for the first exposure
+    after a long gap (e.g., 1st exposure of the night). Presumably, the telescope will need to focus,
+    so there's not much a scheduler could do to optimize keeping the shutter open after a closure.
+    """
+    def __init__(self, metricName='BruteOSFMetric',
+                 expTimeCol='visitExposureTime', mjdCol='observationStartMJD', maxgap=10.,
+                 fudge=0., **kwargs):
+        """
+        Parameters
+        ----------
+        maxgap : float (10.)
+            The maximum gap between observations. Assume anything longer the dome has closed.
+        fudge : float (0.)
+            Fudge factor if a constant has to be added to the exposure time values (like in OpSim 3.61).
+        expTimeCol : str ('expTime')
+            The name of the exposure time column. Assumed to be in seconds.
+        mjdCol : str ('observationStartMJD')
+            The name of the start of the exposures. Assumed to be in units of days.
+        """
+        self.expTimeCol = expTimeCol
+        self.maxgap = maxgap/60./24.  # convert from min to days
+        self.mjdCol = mjdCol
+        self.fudge = fudge
+        super(BruteOSFMetric, self).__init__(col=[self.expTimeCol, mjdCol],
+                                             metricName=metricName, units='OpenShutter/TotalTime',
+                                             **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        times = np.sort(dataSlice[self.mjdCol])
+        diff = np.diff(times)
+        good = np.where(diff < self.maxgap)
+        openTime = np.sum(diff[good])*24.*3600.
+        result = np.sum(dataSlice[self.expTimeCol]+self.fudge) / float(openTime)
+        return result

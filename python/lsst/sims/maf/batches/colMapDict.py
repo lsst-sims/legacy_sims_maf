@@ -37,6 +37,7 @@ def ColMapDict(dictName=None):
         colMap['visittime'] = 'visitTime'
         colMap['alt'] = 'altitude'
         colMap['az'] = 'azimuth'
+        colMap['lst'] = 'observationStartLST'
         colMap['filter'] = 'filter'
         colMap['fiveSigmaDepth'] = 'fiveSigmaDepth'
         colMap['night'] = 'night'
@@ -46,37 +47,39 @@ def ColMapDict(dictName=None):
         colMap['seeingGeom'] = 'seeingFwhmGeom'
         colMap['skyBrightness'] = 'skyBrightness'
         colMap['moonDistance'] = 'moonDistance'
+        colMap['fieldId'] = 'fieldId'
+        colMap['proposalId'] = 'proposalId'
         # slew speeds table
         colMap['slewSpeedsTable'] = 'SlewMaxSpeeds'
+        # slew states table
+        colMap['slewStatesTable'] = 'SlewFinalState'
+        # slew activities list
+        colMap['slewActivitiesTable'] = 'SlewActivities'
+        # Slew columns
         colMap['Dome Alt Speed'] = 'domeAltSpeed'
         colMap['Dome Az Speed'] = 'domeAzSpeed'
         colMap['Tel Alt Speed'] = 'telAltSpeed'
         colMap['Tel Az Speed'] = 'telAzSpeed'
         colMap['Rotator Speed'] = 'rotatorSpeed'
-        # slew states table
-        colMap['slewStatesTable'] = 'SlewFinalStates'
         colMap['Tel Alt'] = 'telAlt'
         colMap['Tel Az'] = 'telAz'
         colMap['Rot Tel Pos'] = 'rotTelPos'
-        # slew activities list
-        colMap['slewActivitiesTable'] = 'SlewActivities'
-        colMap['TelOptics CL'] = 'telopticsclosedloop'
-        colMap['TelOptics OL'] = 'telopticsopenloop'
-        colMap['Tel Alt'] = 'telalt'
-        colMap['Tel Az'] = 'telaz'
-        colMap['Tel Settle'] = 'telsettle'
-        colMap['Readout'] = 'readout'
-        colMap['Dome Alt'] = 'domalt'
-        colMap['Dome Az'] = 'domaz'
-        colMap['Dome Settle'] = 'domazsettle'
-        colMap['Tel Rot'] = 'telrot'
-        colMap['Filter'] = 'filter'
-        colMap['slewactivities'] = ['Dome Alt', 'Dome Az', 'Dome Settle',
-                                    'Tel Alt', 'Tel Az', 'Tel Rot', 'Tel Settle',
-                                    'TelOptics CL', 'TelOptics OL',
-                                    'Filter', 'Readout']
+        colMap['Dome Alt'] = 'domeAlt'
+        colMap['Dome Az'] = 'domeAz'
+        colMap['slewactivities'] = {'Dome Alt': 'domalt',
+                                    'Dome Az': 'domaz',
+                                    'Dome Settle': 'domazsettle',
+                                    'Tel Alt': 'telalt',
+                                    'Tel Az': 'telaz',
+                                    'Tel Rot': 'telrot',
+                                    'Tel Settle': 'telsettle',
+                                    'TelOptics CL': 'telopticsclosedloop',
+                                    'TelOptics OL': 'telopticsopenloop',
+                                    'Readout': 'readout',
+                                    'Filter': 'filter'}
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong', 'rotSkyPos']
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
+        colMap['metadataAngleList'] = ['rotSkyPos']
 
     elif dictName == 'opsimv3':
         colMap = {}
@@ -88,6 +91,7 @@ def ColMapDict(dictName=None):
         colMap['visittime'] = 'visitTime'
         colMap['alt'] = 'altitude'
         colMap['az'] = 'azimuth'
+        colMap['lst'] = 'lst'
         colMap['filter'] = 'filter'
         colMap['fiveSigmaDepth'] = 'fiveSigmaDepth'
         colMap['night'] = 'night'
@@ -97,36 +101,37 @@ def ColMapDict(dictName=None):
         colMap['seeingGeom'] = 'FWHMgeom'
         colMap['skyBrightness'] = 'filtSkyBrightness'
         colMap['moonDistance'] = 'dist2Moon'
+        colMap['fieldId'] = 'fieldID'
+        colMap['proposalId'] = 'propID'
         # slew speeds table
         colMap['slewSpeedsTable'] = 'SlewMaxSpeeds'
+        # slew states table
+        colMap['slewStatesTable'] = 'SlewStates'
+        # Slew activities list
+        colMap['slewActivitiesTable'] = 'SlewActivities'
         colMap['Dome Alt Speed'] = 'domeAltSpeed'
         colMap['Dome Az Speed'] = 'domeAzSpeed'
         colMap['Tel Alt Speed'] = 'telAltSpeed'
         colMap['Tel Az Speed'] = 'telAzSpeed'
         colMap['Rotator Speed'] = 'rotatorSpeed'
-        # slew states table
-        colMap['slewStatesTable'] = 'SlewStates'
         colMap['Tel Alt'] = 'telAlt'
         colMap['Tel Az'] = 'telAz'
         colMap['Rot Tel Pos'] = 'rotTelPos'
-        # Slew activities list
-        colMap['slewActivitiesTable'] = 'SlewActivities'
-        colMap['TelOptics CL'] = 'TelOpticsOL'
-        colMap['TelOptics OL'] = 'telopticsopenloop'
-        colMap['Tel Alt'] = 'TelAlt'
-        colMap['Tel Az'] = 'TelAz'
-        colMap['Readout'] = 'Readout'
-        colMap['Dome Alt'] = 'DomAlt'
-        colMap['Dome Az'] = 'DomAz'
-        colMap['Settle'] = 'Settle'
-        colMap['Tel Rot'] = 'Rotator'
-        colMap['Filter'] = 'Filter'
-        colMap['slewactivities'] = ['Dome Alt', 'Dome Az',
-                                    'Tel Alt', 'Tel Az', 'Tel Rot', 'Settle',
-                                    'TelOptics CL', 'TelOptics OL',
-                                    'Filter', 'Readout']
+        colMap['Dome Alt'] = 'domAlt'
+        colMap['Dome Az'] = 'domAz'
+        colMap['slewactivities'] = {'Dome Alt': 'DomAlt',
+                                    'Dome Az': 'DomAz',
+                                    'Tel Alt': 'TelAlt',
+                                    'Tel Az': 'TelAz',
+                                    'Tel Rot': 'Rotator',
+                                    'Settle': 'Settle',
+                                    'TelOptics CL': 'TelOpticsCL',
+                                    'TelOptics OL': 'TelOpticsOL',
+                                    'Readout': 'Readout',
+                                    'Filter': 'Filter'}
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong', 'rotSkyPos']
+                                  'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
+        colMap['metadataAngleList'] = ['rotSkyPos']
 
     elif dictName == 'barebones':
         colMap = {}
@@ -146,7 +151,8 @@ def ColMapDict(dictName=None):
         colMap['seeingGeom'] = 'seeing'
         colMap['seeingEff'] = 'seeing'
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
-                                  'fiveSigmaDepth', 'HA', 'rotSkyPos']
+                                  'fiveSigmaDepth', 'HA']
+        colMap['metadataAngleList'] = ['rotSkyPos']
 
     else:
         raise ValueError('No built in column dict with that name.')

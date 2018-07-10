@@ -375,7 +375,8 @@ class PlotHandler(object):
                         for v in vals:
                             if len(v) == 1:
                                 # Guess that this is the filter value
-                                color = self.filtercolors[v]
+                                if v in self.filtercolors:
+                                    color = self.filtercolors[v]
             colors.append(color)
         # If we happened to end up with the same color throughout
         #  (say, the metrics were all in the same filter)
@@ -457,41 +458,48 @@ class PlotHandler(object):
 
     def _checkPlotDicts(self):
         """
-        Check to make sure there are no conflicts in the plotDicts that are being used
+        Check to make sure there are no conflicts in the plotDicts that are being used in the same subplot.
         """
-
         # Check that the length is OK
         if len(self.plotDicts) != len(self.mBundles):
             raise ValueError('plotDicts (%i) must be same length as mBundles (%i)'
                              % (len(self.plotDicts), len(self.mBundles)))
 
         # These are the keys that need to match (or be None)
-        keys2Check = ['xlim', 'ylim', 'legendloc', 'colorMin', 'colorMax', 'title']
+        keys2Check = ['xlim', 'ylim', 'colorMin', 'colorMax', 'title']
 
-        reset_keys = []
-        for key in keys2Check:
-            values = [pd[key] for pd in self.plotDicts if key in pd]
-            if len(np.unique(values)) > 1:
-                # We will reset some of the keys to the default, but for some we should do better.
-                if key.endswith('Max'):
-                    for pd in self.plotDicts:
-                        pd[key] = np.max(values)
-                elif key.endswith('Min'):
-                    for pd in self.plotDicts:
-                        pd[key] = np.min(values)
-                elif key == 'title':
-                    title = self._buildTitle()
-                    for pd in self.plotDicts:
-                        pd['title'] = title
-                else:
-                    warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
-                                  ' Will reset to default value. (found values %s)' % values)
-                    reset_keys.append(key)
+        # Identify how many subplots there are. If there are more than one, just don't change anything.
+        # This assumes that if there are more than one, the plotDicts are actually all compatible.
+        subplots = set()
+        for pd in self.plotDicts:
+            if 'subplot' in pd:
+                subplots.add(pd['subplot'])
 
-        # Reset the most of the keys to defaults; this can generally be done safely.
-        for key in reset_keys:
-            for pd in self.plotDicts:
-                pd[key] = None
+        # Now check subplots are consistent.
+        if len(subplots) <= 1:
+            reset_keys = []
+            for key in keys2Check:
+                values = [pd[key] for pd in self.plotDicts if key in pd]
+                if len(np.unique(values)) > 1:
+                    # We will reset some of the keys to the default, but for some we should do better.
+                    if key.endswith('Max'):
+                        for pd in self.plotDicts:
+                            pd[key] = np.max(values)
+                    elif key.endswith('Min'):
+                        for pd in self.plotDicts:
+                            pd[key] = np.min(values)
+                    elif key == 'title':
+                        title = self._buildTitle()
+                        for pd in self.plotDicts:
+                            pd['title'] = title
+                    else:
+                        warnings.warn('Found more than one value to be set for "%s" in the plotDicts.' % (key) +
+                                      ' Will reset to default value. (found values %s)' % values)
+                        reset_keys.append(key)
+            # Reset the most of the keys to defaults; this can generally be done safely.
+            for key in reset_keys:
+                for pd in self.plotDicts:
+                    pd[key] = None
 
     def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None):
         """
@@ -527,29 +535,6 @@ class PlotHandler(object):
                 warnings.warn(msg)
             else:
                 fignum = plotFunc(mB.metricValues, mB.slicer, plotDict, fignum=fignum)
-                # Do a little hack to make sure we don't cut off histograms, etc. below their peak.
-                plt.figure(fignum)
-                try:
-                    lims = {}
-                    lims['x'] = plt.xlim()
-                    lims['y'] = plt.ylim()
-                    for ax in ('x', 'y'):
-                        if plotlims[ax][0] is None:
-                            plotlims[ax][0] = lims[ax][0]
-                        else:
-                            plotlims[ax][0] = min(plotlims[ax][0], lims[ax][0])
-                        if plotlims[ax][1] is None:
-                            plotlims[ax][1] = lims[ax][1]
-                        else:
-                            plotlims[ax][1] = max(plotlims[ax][1], lims[ax][1])
-                except AttributeError:
-                    # If there isn't an x or y axis, we are going to skip this.
-                    pass
-            try:
-                plt.xlim(plotlims['x'])
-                plt.ylim(plotlims['y'])
-            except TypeError:
-                pass
         # Add a legend if more than one metricValue is being plotted or if legendloc is specified.
         legendloc = None
         if 'legendloc' in self.plotDicts[0]:
@@ -562,6 +547,9 @@ class PlotHandler(object):
         if legendloc is not None:
             plt.figure(fignum)
             plt.legend(loc=legendloc, fancybox=True, fontsize='smaller')
+        # Add the super title if provided.
+        if 'suptitle' in self.plotDicts[0]:
+            plt.suptitle(self.plotDicts[0]['suptitle'])
         # Save to disk and file info to resultsDb if desired.
         if self.savefig:
             if displayDict is None:

@@ -17,19 +17,6 @@ import lsst.sims.maf.batches as batches
 import lsst.sims.maf.utils as mafUtils
 
 
-"""
-def setBatches(opsdb, colmap, args):
-    propids, proptags, sqltags = setSQL(opsdb)
-
-    bdict = {}
-    bdict.update(batches.glanceBatch(colmap, runName))
-    bdict.update(batches.intraNight(colmap, runName))
-    # All metadata, all proposals.
-    bdict.update(batches.allMetadata(colmap, runName, sqlconstraint='', metadata='All props'))
-    # WFD only.
-    bdict.update(batches.allMetadata(colmap, runName, sqlconstraint=sqltags['WFD'], metadata='WFD'))
-    return bdict
-"""
 
 
 def connectDb(dbfile):
@@ -46,14 +33,32 @@ def connectDb(dbfile):
     return opsdb, colmap
 
 
-def setSQL(opsdb):
+def setSQL(opsdb, sqlConstraint=None, extraMeta=None):
     # Fetch the proposal ID values from the database
     propids, proptags = opsdb.fetchPropInfo()
     # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
     wfdWhere = opsdb.createSQLWhere('WFD', proptags)
     ddWhere = opsdb.createSQLWhere('DD', proptags)
-    sqltags = {'WFD': wfdWhere, 'DD': ddWhere}
-    return (propids, proptags, sqltags)
+    nesWhere = opsdb.createSQLWhere('NES', proptags)
+    if sqlConstraint is not None:
+        wfdWhere = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
+        ddWhere = '(%s) and (%s)' % (sqlConstraint, ddWhere)
+        nesWhere = '(%s) and (%s)' % (sqlConstraint, nesWhere)
+    sqltags = {'WFD': wfdWhere, 'DD': ddWhere, 'NES': nesWhere, 'All': sqlConstraint}
+    metadata = {'WFD': 'WFD', 'DD': 'DD', 'NES': 'NES', 'All': ''}
+    if sqlConstraint is not None and len(sqlConstraint) > 0:
+        md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
+        md = md.replace('"','').replace('  ', ' ')
+        for t in metadata:
+            metadata[t] += ' %s' % md
+    if extraMeta is not None and len(extraMeta) > 0:
+        for t in metadata:
+            metadata[t] += ' %s' % extraMeta
+    # Reset metadata to None if there was nothing there. (helpful for batches).
+    for t in metadata:
+        if len(metadata[t]) == 0:
+            metadata[t] = None
+    return (propids, proptags, sqltags, metadata)
 
 
 def run(bdict, opsdb, colmap, args):
@@ -85,6 +90,14 @@ def parseArgs(subdir='out', parser=None):
                                                                  "Default is runName/%s." % (subdir))
     parser.add_argument('--plotOnly', dest='plotOnly', action='store_true',
                         default=False, help="Reload the metric values from disk and re-plot them.")
+    parser.add_argument('--sqlConstraint', type=str, default=None,
+                        help="SQL constraint to apply to all metrics. "
+                             " e.g.: 'night <= 365' or 'propId = 5' "
+                             " (**may not work with slew batches)")
+    parser.add_argument("--nyears", type=int, default=10, help="Number of years in the run (default 10).")
+    parser.add_argument("--ditherStacker", type=str, default=None,
+                        help="Name of dither stacker to use for RA/Dec, e.g. 'RandomDitherPerNightStacker'."
+                        " Note that this currently is only applied to the run_srd script. ")
     args = parser.parse_args()
 
     if args.runName is None:

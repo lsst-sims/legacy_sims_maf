@@ -59,22 +59,19 @@ class FOPlot(BasePlotter):
         # Could just calculate summary stats and pass in labels.
         rarr = np.array(list(zip(metricValue.compressed())),
                         dtype=[('fO', metricValue.dtype)])
-        fOArea_value = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
-                                      nside=slicer.nside).run(rarr)
-        fONv_value = metrics.fONv(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
-                                  nside=slicer.nside).run(rarr)
-        fOArea_value_n = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=True,
-                                        nside=slicer.nside).run(rarr)
-        fONv_value_n = metrics.fONv(col='fo', Nvisit=plotDict['Nvisits'], norm=True,
-                                    nside=slicer.nside).run(rarr)
+        fOArea = metrics.fOArea(col='fO', Asky=plotDict['Asky'], norm=False,
+                                nside=slicer.nside).run(rarr)
+        fONv = metrics.fONv(col='fO', Nvisit=plotDict['Nvisits'], norm=False,
+                            nside=slicer.nside).run(rarr)
 
         plt.axvline(x=plotDict['Nvisits'], linewidth=plotDict['reflinewidth'], color='b')
         plt.axhline(y=plotDict['Asky'] / 1000., linewidth=plotDict['reflinewidth'], color='r')
 
-        plt.axhline(y=fONv_value / 1000., linewidth=plotDict['reflinewidth'], color='b',
-                    alpha=.5, label=r'f$_0$ Nvisits=%.3g' % fONv_value_n)
-        plt.axvline(x=fOArea_value, linewidth=plotDict['reflinewidth'], color='r',
-                    alpha=.5, label='f$_0$ Area=%.3g' % fOArea_value_n)
+        Nvis_median = fONv['value'][np.where(fONv['name'] == 'MedianNvis')]
+        plt.axhline(y=Nvis_median / 1000., linewidth=plotDict['reflinewidth'], color='b',
+                    alpha=.5, label=r'f$_0$ Median Nvisits=%.3g' % Nvis_median)
+        plt.axvline(x=fOArea, linewidth=plotDict['reflinewidth'], color='r',
+                    alpha=.5, label='f$_0$ Area=%.3g' % fOArea)
         plt.legend(loc='lower left', fontsize='small', numpoints=1)
 
         plt.xlabel(plotDict['xlabel'])
@@ -106,7 +103,7 @@ class SummaryHistogram(BasePlotter):
         self.objectPlotter = True
         self.defaultPlotDict = {'title': None, 'xlabel': None, 'ylabel': 'Count', 'label': None,
                                 'cumulative': False, 'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
-                                'color': 'b', 'linestyle': '-', 'histStyle': True,
+                                'color': 'b', 'linestyle': '-', 'histStyle': True, 'grid': True,
                                 'metricReduce': metrics.SumMetric(), 'bins': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -153,7 +150,11 @@ class SummaryHistogram(BasePlotter):
             finalHist[i] = metric.run(mV[:, i])
         bins = plotDict['bins']
         if plotDict['histStyle']:
-            x = np.ravel(list(zip(bins[:-1], bins[1:])))
+            width = np.diff(bins)
+            leftedge = bins[:-1] - width/2.0
+            rightedge = bins[:-1] + width/2.0
+            #x = np.ravel(list(zip(bins[:-1], bins[1:])))
+            x = np.ravel(list(zip(leftedge, rightedge)))
             y = np.ravel(list(zip(finalHist, finalHist)))
         else:
             # Could use this to plot things like FFT
@@ -166,4 +167,19 @@ class SummaryHistogram(BasePlotter):
         plt.xlabel(plotDict['xlabel'])
         plt.ylabel(plotDict['ylabel'])
         plt.title(plotDict['title'])
+        plt.grid(plotDict['grid'], alpha=0.3)
+        # Set y and x limits, if provided.
+        if plotDict['xMin'] is not None:
+            plt.xlim(xmin=plotDict['xMin'])
+        elif bins[0] == 0:
+            plt.xlim(xmin=0)
+        if plotDict['xMax'] is not None:
+            plt.xlim(xmax=plotDict['xMax'])
+        if plotDict['yMin'] is not None:
+            plt.ylim(ymin=plotDict['yMin'])
+        elif finalHist.min() == 0:
+            plotDict['yMin'] = 0
+        if plotDict['yMax'] is not None:
+            plt.ylim(ymax=plotDict['yMax'])
+
         return fig.number

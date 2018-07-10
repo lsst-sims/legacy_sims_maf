@@ -1,4 +1,5 @@
 from builtins import zip
+import numbers
 import numpy as np
 import warnings
 import healpy as hp
@@ -23,11 +24,11 @@ __all__ = ['setColorLims', 'setColorMap', 'HealpixSkyMap', 'HealpixPowerSpectrum
            'BaseSkyMap', 'HealpixSDSSSkyMap', 'LambertSkyMap']
 
 baseDefaultPlotDict = {'title': None, 'xlabel': None, 'label': None,
-                       'logScale': False, 'percentileClip': None,  'normVal': None, 'zp': None,
-                       'cbarFormat': None, 'cmap': perceptual_rainbow, 'cbar_edge': True,  'nTicks': 10,
+                       'logScale': False, 'percentileClip': None, 'normVal': None, 'zp': None,
+                       'cbarFormat': None, 'cmap': perceptual_rainbow, 'cbar_edge': True, 'nTicks': 10,
                        'colorMin': None, 'colorMax': None,
                        'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
-                       'labelsize':None, 'fontsize': None, 'figsize': None, 'subplot': 111}
+                       'labelsize': None, 'fontsize': None, 'figsize': None, 'subplot': 111}
 
 
 def setColorLims(metricValue, plotDict):
@@ -51,7 +52,7 @@ def setColorLims(metricValue, plotDict):
     if colorMin == colorMax:
         colorMin = colorMin - 0.5
         colorMax = colorMax + 0.5
-    return [colorMin, colorMax]
+    return np.sort([colorMin, colorMax])
 
 
 def setColorMap(plotDict):
@@ -79,7 +80,9 @@ class HealpixSkyMap(BasePlotter):
         # Set up the default plotting parameters.
         self.defaultPlotDict = {}
         self.defaultPlotDict.update(baseDefaultPlotDict)
-        self.defaultPlotDict.update({'rot': (0, 0, 0), 'coord': 'C'})
+        self.defaultPlotDict.update({'rot': (0, 0, 0), 'flip': 'astro', 'coord': 'C'})
+        # Note: for alt/az sky maps using the healpix plotter, you can use
+        # {'rot': (90, 90, 90), 'flip': 'geo'}
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -123,11 +126,14 @@ class HealpixSkyMap(BasePlotter):
                 norm = None
             warnings.warn("Using norm was set to log, but color limits pass through 0. "
                           "Adjusting so plotting doesn't fail")
-
+        if plotDict['coord'] == 'C':
+            notext = True
+        else:
+            notext = False
         hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
-                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip='astro',
+                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip=plotDict['flip'],
                     coord=plotDict['coord'], cmap=cmap, norm=norm,
-                    sub=plotDict['subplot'], fig=fig.number)
+                    sub=plotDict['subplot'], fig=fig.number, notext=notext)
         # Add a graticule (grid) over the globe.
         hp.graticule(dpar=30, dmer=30, verbose=False)
         # Add colorbar (not using healpy default colorbar because we want more tickmarks).
@@ -170,7 +176,7 @@ class HealpixPowerSpectrum(BasePlotter):
         """
         Generate and plot the power spectrum of metricValue (calculated on a healpix grid).
         """
-        if slicer.slicerName != 'HealpixSlicer':
+        if 'Healpix' not in slicer.slicerName:
             raise ValueError('HealpixPowerSpectrum for use with healpix metricBundles.')
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
@@ -223,7 +229,7 @@ class HealpixHistogram(BasePlotter):
         """
         Histogram metricValue for all healpix points.
         """
-        if slicer.slicerName != 'HealpixSlicer':
+        if 'Healpix' not in slicer.slicerName:
             raise ValueError('HealpixHistogram is for use with healpix slicer.')
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
@@ -276,6 +282,7 @@ class BaseHistogram(BasePlotter):
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
         metricValue = applyZPNorm(metricValueIn, plotDict)
+        metricValue = metricValue.compressed()
         # Toss any NaNs or infs
         metricValue = metricValue[np.isfinite(metricValue)]
         # Determine percentile clipped X range, if set. (and xmin/max not set).
@@ -283,8 +290,9 @@ class BaseHistogram(BasePlotter):
             if plotDict['percentileClip']:
                 plotDict['xMin'], plotDict['xMax'] = percentileClipping(metricValue,
                                                                         percentile=plotDict['percentileClip'])
-
-        # Set the histogram range values, to avoid None/Number comparisons.
+        # Set the histogram range values, to avoid cases of trying to histogram single-valued data.
+        # First we try to use the range specified by a user, if there is one. Then use the data if not.
+        # all of this only works if plotDict is not cumulative.
         histRange = [plotDict['xMin'], plotDict['xMax']]
         if histRange[0] is None:
             histRange[0] = metricValue.min()
@@ -321,6 +329,7 @@ class BaseHistogram(BasePlotter):
                 bins = np.arange(bins.min() - plotDict['binsize'] * 2.0,
                                  bins.max() + plotDict['binsize'] * 2.0, plotDict['binsize'])
         else:
+            # If user did not specify bins or binsize, then we try to figure out a good number of bins.
             bins = optimalBins(metricValue)
         # Generate plots.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
@@ -342,15 +351,29 @@ class BaseHistogram(BasePlotter):
                                histtype='step', log=plotDict['logScale'],
                                cumulative=plotDict['cumulative'],
                                label=plotDict['label'], color=plotDict['color'])
+        hist_ylims = plt.ylim()
+        if n.max() > hist_ylims[1]:
+            plt.ylim(ymax = n.max())
+        if n.min() < hist_ylims[0] and not plotDict['logScale']:
+            plt.ylim(ymin = n.min())
         # Fill in axes labels and limits.
         # Option to use 'scale' to turn y axis into area or other value.
+
         def mjrFormatter(y, pos):
+            if not isinstance(plotDict['scale'], numbers.Number):
+                raise ValueError('plotDict["scale"] must be a number to scale the y axis.')
             return plotDict['yaxisformat'] % (y * plotDict['scale'])
 
         ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
         # Set optional x, y limits.
-        plt.ylim([plotDict['yMin'], plotDict['yMax']])
-        plt.xlim([plotDict['xMin'], plotDict['xMax']])
+        if 'xMin' in plotDict:
+            plt.xlim(xmin=plotDict['xMin'])
+        if 'xMax' in plotDict:
+            plt.xlim(xmax=plotDict['xMax'])
+        if 'yMin' in plotDict:
+            plt.ylim(ymin=plotDict['yMin'])
+        if 'yMax' in plotDict:
+            plt.ylim(ymax=plotDict['yMax'])
         # Set/Add various labels.
         plt.xlabel(plotDict['xlabel'], fontsize=plotDict['fontsize'])
         plt.ylabel(plotDict['ylabel'], fontsize=plotDict['fontsize'])
@@ -459,15 +482,15 @@ class BaseSkyMap(BasePlotter):
             mask = np.ones(len(metricValue), dtype='bool')
         else:
             # Only plot points which are not masked. Flip numpy ma mask where 'False' == 'good'.
-            mask = ~metricValue.mask
+            good = ~metricValue.mask
 
         # Add ellipses at RA/Dec locations - but don't add colors yet.
-        lon = -(slicer.slicePoints['ra'][mask] - plotDict['raCen'] - np.pi) % (np.pi * 2) - np.pi
-        ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][mask],
+        lon = -(slicer.slicePoints['ra'][good] - plotDict['raCen'] - np.pi) % (np.pi * 2) - np.pi
+        ellipses = self._plot_tissot_ellipse(lon, slicer.slicePoints['dec'][good],
                                              plotDict['radius'], rasterized=True, ax=ax)
         if plotDict['metricIsColor']:
             current = None
-            for ellipse, mVal in zip(ellipses, metricValue.data[mask]):
+            for ellipse, mVal in zip(ellipses, metricValue.data[good]):
                 if mVal[3] > 1:
                     ellipse.set_alpha(1.0)
                     ellipse.set_facecolor((mVal[0], mVal[1], mVal[2]))
@@ -493,15 +516,15 @@ class BaseSkyMap(BasePlotter):
                     plotDict['logScale'] = False
             if plotDict['logScale']:
                 # Move min/max values to things that can be marked on the colorbar.
-                clims[0] = 10 ** (int(np.log10(clims[0])))
-                clims[1] = 10 ** (int(np.log10(clims[1])))
+                #clims[0] = 10 ** (int(np.log10(clims[0])))
+                #clims[1] = 10 ** (int(np.log10(clims[1])))
                 norml = colors.LogNorm()
                 p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
                                     linewidth=0, edgecolor=None, norm=norml, rasterized=True)
             else:
                 p = PatchCollection(ellipses, cmap=plotDict['cmap'], alpha=plotDict['alpha'],
                                     linewidth=0, edgecolor=None, rasterized=True)
-            p.set_array(metricValue.data[mask])
+            p.set_array(metricValue.data[good])
             p.set_clim(clims)
             ax.add_collection(p)
             # Add color bar (with optional setting of limits)
@@ -513,6 +536,9 @@ class BaseSkyMap(BasePlotter):
                     cb.solids.set_edgecolor("face")
                 cb.set_label(plotDict['xlabel'], fontsize=plotDict['fontsize'])
                 cb.ax.tick_params(labelsize=plotDict['labelsize'])
+                tick_locator = ticker.MaxNLocator(nbins=plotDict['nTicks'])
+                cb.locator = tick_locator
+                cb.update_ticks()
         # Add ecliptic
         self._plot_ecliptic(plotDict['raCen'], ax=ax)
         if plotDict['mwZone']:
@@ -520,7 +546,7 @@ class BaseSkyMap(BasePlotter):
         ax.grid(True, zorder=1)
         ax.xaxis.set_ticklabels([])
         if plotDict['bgcolor'] is not None:
-            ax.set_axis_bgcolor(plotDict['bgcolor'])
+            ax.set_facecolor(plotDict['bgcolor'])
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.75, 0.9, '%s' % plotDict['label'], fontsize=plotDict['fontsize'])
@@ -609,7 +635,7 @@ class LambertSkyMap(BasePlotter):
     """
     Use basemap and contour to make a Lambertian projection.
     Note that the plotDict can include a 'basemap' key with a dictionary of
-    kwargs to use with the call to Basemap.
+    arbitrary kwargs to use with the call to Basemap.
     """
 
     def __init__(self):
@@ -617,9 +643,9 @@ class LambertSkyMap(BasePlotter):
         self.objectPlotter = False
         self.defaultPlotDict = {}
         self.defaultPlotDict.update(baseDefaultPlotDict)
-        self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 20,
-                                                 'lon_0': 0., 'resolution': 'l', 'celestial': False},
-                                     'levels': 200, 'cbarFormat': '%i'})
+        self.defaultPlotDict.update({'basemap': {'projection': 'nplaea', 'boundinglat': 1, 'lon_0': 180,
+                                                 'resolution': None, 'celestial': False, 'round': False},
+                                     'levels': 200, 'cbarFormat': '%i', 'norm': None})
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
 
@@ -644,7 +670,6 @@ class LambertSkyMap(BasePlotter):
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         ax = fig.add_subplot(plotDict['subplot'])
 
-        # Hide this extra dependency down here for now
         # if using anaconda, to get basemap:
         # conda install basemap
         # Note, this should be possible without basemap, but there are
@@ -654,20 +679,22 @@ class LambertSkyMap(BasePlotter):
             from mpl_toolkits.basemap import Basemap
         except ModuleNotFoundError:
             raise('To use this plotting function, please install Basemap into your python distribution')
+
         m = Basemap(**plotDict['basemap'])
-        good = np.where(metricValue != slicer.badval)
         # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
         # http: //stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib\
         # -filled-contour-plot-to-pdf-or-eps
-        # tmpContour = m.contour(np.degrees(slicer.slicePoints['ra'][good]),
-        #                        np.degrees(slicer.slicePoints['dec'][good]),
-        #                        metricValue[good], levels, tri=True,
+        # tmpContour = m.contour(np.degrees(slicer.slicePoints['ra']),
+        #                        np.degrees(slicer.slicePoints['dec']),
+        #                        metricValue.filled(np.min(clims)-1), levels, tri=True,
         #                        cmap=plotDict['cmap'], ax=ax, latlon=True,
         #                        lw=1)
-        CS = m.contourf(np.degrees(slicer.slicePoints['ra'][good]),
-                        np.degrees(slicer.slicePoints['dec'][good]),
-                        metricValue[good], levels, tri=True,
-                        cmap=plotDict['cmap'], ax=ax, latlon=True)
+
+        # Set masked values to be below the lowest contour level.
+        CS = m.contourf(np.degrees(slicer.slicePoints['ra']),
+                        np.degrees(slicer.slicePoints['dec']),
+                        metricValue.filled(np.min(clims)-0.9), levels, tri=True,
+                        cmap=plotDict['cmap'], ax=ax, latlon=True, norm=plotDict['norm'])
 
         # Try to fix the ugly pdf contour problem
         for c in CS.collections:

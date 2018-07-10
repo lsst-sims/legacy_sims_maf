@@ -689,7 +689,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew times for all visits.'}
     slicer = slicers.OneDSlicer(sliceColName='slewTime', binsize=5)
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict, runName=runName,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -698,7 +698,7 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     displayDict = {'group': slewgroup, 'subgroup': 'Slew Histograms',
                    'caption': 'Histogram of slew distances for all visits.'}
     slicer = slicers.OneDSlicer(sliceColName='slewDistance', binsize=3.)
-    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict,
+    bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint, plotDict=plotDict, runName=runName,
                                         displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -1230,9 +1230,9 @@ def makeBundleList(dbFile, runName=None, benchmark='design'):
     bundleList.append(bundle)
 
     # Check the Alt-Az pointing history
-    slicer = slicers.HealpixSlicer(nside=64, latCol='zenithDistance', lonCol='azimuth', useCache=False)
+    slicer = slicers.HealpixSlicer(nside=64, latCol='altitude', lonCol='azimuth', latLonDeg=True, useCache=False)
     metric = metrics.CountMetric('observationStartMJD', metricName='NVisits Alt/Az')
-    plotDict = {'rot': (0, 90, 0)}
+    plotDict = {'rot': (90, 90, 90), 'flip': 'geo'}
     plotFunc = plots.HealpixSkyMap()
     for f in filters:
         sqlconstraint = 'filter = "%s"' % (f)

@@ -43,6 +43,8 @@ class MetricBundle(object):
     as well as additional metadata such as the opsim run name, and relevant stackers and maps
     to apply when calculating the metric values.
     """
+    colInfo = ColInfo()
+
     def __init__(self, metric, slicer, constraint=None, sqlconstraint=None,
                  stackerList=None, runName='opsim', metadata=None,
                  plotDict=None, displayDict=None,
@@ -64,8 +66,8 @@ class MetricBundle(object):
                 warnings.warn('Future warning - "sqlconstraint" will be deprecated in favor of '
                               '"constraint" in a future release.')
                 self.constraint = sqlconstraint
-            else:
-                self.constraint = ''
+        if self.constraint is None:
+            self.constraint = ''
         # Set the stackerlist if applicable.
         if stackerList is not None:
             if isinstance(stackerList, stackers.BaseStacker):
@@ -73,9 +75,12 @@ class MetricBundle(object):
             else:
                 self.stackerList = []
                 for s in stackerList:
-                    if not isinstance(s, stackers.BaseStacker):
-                        raise ValueError('stackerList must only contain lsst.sims.maf.stackers objs')
-                    self.stackerList.append(s)
+                    if s is None:
+                        pass
+                    else:
+                        if not isinstance(s, stackers.BaseStacker):
+                            raise ValueError('stackerList must only contain lsst.sims.maf.stackers objs')
+                        self.stackerList.append(s)
         else:
             self.stackerList = []
         # Set the 'maps' to apply to the slicer, if applicable.
@@ -91,7 +96,7 @@ class MetricBundle(object):
         else:
             self.mapsList = []
         # If the metric knows it needs a particular map, add it to the list.
-        mapNames = [map.__class__.__name for map in self.mapsList]
+        mapNames = [mapName.__class__.__name__ for mapName in self.mapsList]
         if hasattr(self.metric, 'maps'):
             for mapName in self.metric.maps:
                 if mapName not in mapNames:
@@ -185,40 +190,49 @@ class MetricBundle(object):
         (default stackers have to be instantiated to determine what additional columns
         are needed from database).
         """
-        # Find the columns required  by the metrics and slicers (including if they come from stackers).
-        colInfo = ColInfo()
-        dbcolnames = set()
-        defaultstackers = set()
-        # Look for the source for the columns for the slicer.
-        for col in self.slicer.columnsNeeded:
-            colsource = colInfo.getDataSource(col)
-            if colsource != colInfo.defaultDataSource:
-                defaultstackers.add(colsource)
-            else:
-                dbcolnames.add(col)
-        # Look for the source of columns for this metric (only).
-        # We can't use the colRegistry here because we want the columns for this metric only.
-        for col in self.metric.colNameArr:
-            colsource = colInfo.getDataSource(col)
-            if colsource != colInfo.defaultDataSource:
-                defaultstackers.add(colsource)
-            else:
-                dbcolnames.add(col)
-        # Remove explicity instantiated stackers from defaultstacker set.
+        # Find all the columns needed by metric and slicer.
+        knownCols = self.slicer.columnsNeeded + list(self.metric.colNameArr)
+        # For the stackers already set up, find their required columns.
         for s in self.stackerList:
-            if s.__class__ in defaultstackers:
-                defaultstackers.remove(s.__class__)
-        # Instantiate and add the remaining default stackers.
-        for s in defaultstackers:
-            self.stackerList.append(s())
-        # Add the columns needed by all stackers to the list to grab from the database.
+            knownCols += s.colsReq
+        knownCols = set(knownCols)
+        # Track sources of all of these columns.
+        self.dbCols = set()
+        newstackers = set()
+        for col in knownCols:
+            if self.colInfo.getDataSource(col) == self.colInfo.defaultDataSource:
+                self.dbCols.add(col)
+            else:
+                # New default stackers could come from metric/slicer or stackers.
+                newstackers.add(self.colInfo.getDataSource(col))
+        # Remove already-specified stackers from default list.
         for s in self.stackerList:
-            for col in s.colsReq:
-                dbcolnames.add(col)
+            if s.__class__ in newstackers:
+                newstackers.remove(s.__class__)
+        # Loop and check if stackers are introducing new columns or stackers.
+        while len(newstackers) > 0:
+            # Check for the sources of the columns in any of the new stackers.
+            newCols = []
+            for s in newstackers:
+                newstacker = s()
+                newCols += newstacker.colsReq
+                self.stackerList.append(newstacker)
+            newCols = set(newCols)
+            newstackers = set()
+            for col in newCols:
+                if self.colInfo.getDataSource(col) == self.colInfo.defaultDataSource:
+                    self.dbCols.add(col)
+                else:
+                    newstackers.add(self.colInfo.getDataSource(col))
+            for s in self.stackerList:
+                if s.__class__ in newstackers:
+                    newstackers.remove(s.__class__)
+        # A Bit of cleanup.
         # Remove 'metricdata' from dbcols if it ended here by default.
-        if 'metricdata' in dbcolnames:
-            dbcolnames.remove('metricdata')
-        self.dbCols = dbcolnames
+        if 'metricdata' in self.dbCols:
+            self.dbCols.remove('metricdata')
+        if 'None' in self.dbCols:
+            self.dbCols.remove('None')
 
     def setSummaryMetrics(self, summaryMetrics):
         """Set (or reset) the summary metrics for the metricbundle.

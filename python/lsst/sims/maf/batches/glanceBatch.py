@@ -8,12 +8,14 @@ import lsst.sims.maf.metricBundles as metricBundles
 from .colMapDict import ColMapDict
 from .common import standardSummary
 from .slewBatch import slewBasics
+from .hourglassBatch import hourglassPlots
 
 __all__ = ['glanceBatch']
 
 
 def glanceBatch(colmap=None, runName='opsim',
-                nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y')):
+                nside=64, filternames=('u', 'g', 'r', 'i', 'z', 'y'),
+                nyears=10, pairnside=32, sqlConstraint=None, slicer_camera='LSST'):
     """Generate a handy set of metrics that give a quick overview of how well a survey performed.
     This is a meta-set of other batches, to some extent.
 
@@ -29,6 +31,14 @@ def glanceBatch(colmap=None, runName='opsim',
         The list of individual filters to use when running metrics.
         Default is ('u', 'g', 'r', 'i', 'z', 'y').
         There is always an all-visits version of the metrics run as well.
+    nyears : int (10)
+        How many years to attempt to make hourglass plots for
+    pairnside : int (32)
+        nside to use for the pair fraction metric (it's slow, so nice to use lower resolution)
+    sqlConstraint : str or None, opt
+        Additional SQL constraint to apply to all metrics.
+    slicer_camera : str ('LSST')
+        Sets which spatial slicer to use. options are 'LSST' and 'ComCam'
 
     Returns
     -------
@@ -42,15 +52,27 @@ def glanceBatch(colmap=None, runName='opsim',
 
     bundleList = []
 
-    sql_per_filt = ['%s="%s"' % (colmap['filter'], filtername) for filtername in filternames]
-    sql_per_and_all_filters = [''] + sql_per_filt
+    if sqlConstraint is None:
+        sqlC = ''
+    else:
+        sqlC = '(%s) and' % sqlConstraint
+
+    if slicer_camera == 'LSST':
+        spatial_slicer = slicers.HealpixSlicer
+    elif slicer_camera == 'ComCam':
+        spatial_slicer = slicers.HealpixComCamSlicer
+    else:
+        raise ValueError('Camera must be LSST or Comcam')
+
+    sql_per_filt = ['%s %s="%s"' % (sqlC, colmap['filter'], filtername) for filtername in filternames]
+    sql_per_and_all_filters = [sqlConstraint] + sql_per_filt
 
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
     # Super basic things
     displayDict = {'group': 'Basic Stats', 'order': 1}
-    sql = ''
+    sql = sqlConstraint
     slicer = slicers.UniSlicer()
     # Length of Survey
     metric = metrics.FullRangeMetric(col=colmap['mjd'], metricName='Length of Survey (days)')
@@ -83,14 +105,13 @@ def glanceBatch(colmap=None, runName='opsim',
         bundleList.append(bundle)
 
     # The alt/az plots of all the pointings
-    slicer = slicers.HealpixSlicer(nside=nside, latCol='zenithDistance',
-                                   lonCol=colmap['az'], useCache=False)
-    stacker = stackers.ZenithDistStacker(altCol=colmap['alt'])
+    slicer = spatial_slicer(nside=nside, latCol=colmap['alt'],
+                            lonCol=colmap['az'], latLonDeg=colmap['raDecDeg'], useCache=False)
     metric = metrics.CountMetric(colmap['mjd'], metricName='Nvisits as function of Alt/Az')
     plotFuncs = [plots.LambertSkyMap()]
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=plotFuncs,
-                                            displayDict=displayDict, stackerList=[stacker])
+                                            displayDict=displayDict)
         bundleList.append(bundle)
 
     # Things to check per night
@@ -100,7 +121,7 @@ def glanceBatch(colmap=None, runName='opsim',
     metric = metrics.OpenShutterFractionMetric(slewTimeCol=colmap['slewtime'],
                                                expTimeCol=colmap['exptime'],
                                                visitTimeCol=colmap['visittime'])
-    sql = None
+    sql = sqlConstraint
     bundle = metricBundles.MetricBundle(metric, slicer, sql,
                                         summaryMetrics=standardStats, displayDict=displayDict)
     bundleList.append(bundle)
@@ -116,11 +137,15 @@ def glanceBatch(colmap=None, runName='opsim',
     # A few basic maps
     # Number of observations, coadded depths
     displayDict = {'group': 'Basic Maps', 'order': 3}
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'])
+    slicer = spatial_slicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                            latLonDeg=colmap['raDecDeg'])
     metric = metrics.CountMetric(col=colmap['mjd'])
+    plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            summaryMetrics=standardStats, displayDict=displayDict)
+                                            summaryMetrics=standardStats,
+                                            displayDict=displayDict,
+                                            plotDict=plotDict)
         bundleList.append(bundle)
 
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'])
@@ -131,11 +156,13 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # Checking a few basic science things
     # Maybe check astrometry, observation pairs, SN
+    plotDict = {'percentileClip': 95.}
     displayDict = {'group': 'Science', 'subgroup': 'Astrometry', 'order': 4}
 
     stackerList = []
     stacker = stackers.ParallaxFactorStacker(raCol=colmap['ra'],
                                              decCol=colmap['dec'],
+                                             degrees=colmap['raDecDeg'],
                                              dateCol=colmap['mjd'])
     stackerList.append(stacker)
 
@@ -144,9 +171,10 @@ def glanceBatch(colmap=None, runName='opsim',
     metric = metrics.ParallaxMetric(m5Col=colmap['fiveSigmaDepth'],
                                     filterCol=colmap['filter'],
                                     seeingCol=colmap['seeingGeom'])
-    sql = ''
+    sql = sqlConstraint
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict, stackerList=stackerList)
+                                        displayDict=displayDict, stackerList=stackerList,
+                                        plotDict=plotDict)
     bundleList.append(bundle)
     displayDict['caption'] = r'Proper motion precision of an $r=20$ flat SED star'
     metric = metrics.ProperMotionMetric(m5Col=colmap['fiveSigmaDepth'],
@@ -154,28 +182,48 @@ def glanceBatch(colmap=None, runName='opsim',
                                         filterCol=colmap['filter'],
                                         seeingCol=colmap['seeingGeom'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict)
+                                        displayDict=displayDict, plotDict=plotDict)
     bundleList.append(bundle)
 
     # Solar system stuff
     displayDict['caption'] = 'Fraction of observations that are in pairs'
     displayDict['subgroup'] = 'Solar System'
-    sql = 'filter="g" or filter="r" or filter="i"'
-    metric = metrics.PairFractionMetric(timeCol=colmap['mjd'])
-    bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
+
+    sql = '%s (filter="g" or filter="r" or filter="i")' % sqlC
+    pairSlicer = slicers.HealpixSlicer(nside=pairnside, latCol=colmap['dec'], lonCol=colmap['ra'],
+                                       latLonDeg=colmap['raDecDeg'])
+    metric = metrics.PairFractionMetric(mjdCol=colmap['mjd'])
+    bundle = metricBundles.MetricBundle(metric, pairSlicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict)
     bundleList.append(bundle)
+
+    # stats from the note column
+    if 'note' in colmap.keys():
+        displayDict = {'group': 'Basic Stats', 'subgroup': 'Percent stats'}
+        metric = metrics.StringCountMetric(col=colmap['note'], percent=True, metricName='Percents')
+        sql = ''
+        slicer = slicers.UniSlicer()
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
+        displayDict['subgroup'] = 'Count Stats'
+        metric = metrics.StringCountMetric(col=colmap['note'], metricName='Counts')
+        bundle = metricBundles.MetricBundle(metric, slicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
 
     for b in bundleList:
         b.setRunName(runName)
 
+    bd = metricBundles.makeBundlesDictFromList(bundleList)
+
+    # Add hourglass plots.
+    hrDict = hourglassPlots(colmap=colmap, runName=runName, nyears=nyears, extraSql=sqlConstraint)
+    bd.update(hrDict)
     # Add basic slew stats.
     try:
         slewDict = slewBasics(colmap=colmap, runName=runName)
+        bd.update(slewDict)
     except KeyError as e:
         warnings.warn('Could not add slew stats: missing required key %s from colmap' % (e))
 
-    bd = metricBundles.makeBundlesDictFromList(bundleList)
-    bd.update(slewDict)
     return bd
 
