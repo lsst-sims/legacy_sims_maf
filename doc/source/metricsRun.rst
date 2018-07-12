@@ -2,7 +2,7 @@
 Metrics in run_all.py script
 ============================
 The `run_all.py` script included in MAF runs a very large number of useful
-metrics covering metedata about observing history, survey performance, and
+metrics covering metadata about observing history, survey performance, and
 those from the LSST SRD. Here we will list and summarize the metics included
 in this script.
 
