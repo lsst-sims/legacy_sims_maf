@@ -22,10 +22,10 @@ class BaseMoMetric(BaseMetric):
     def __init__(self, cols=None, metricName=None, units='#', badval=0,
                  comment=None, childMetrics=None,
                  appMagCol='appMag', appMagVCol='appMagV', m5Col='fiveSigmaDepth',
-                 nightCol='night', expMJDCol='expMJD',
+                 nightCol='night', expMJDCol='observationStartMJD',
                  snrCol='SNR',  visCol='vis',
-                 raCol='ra', decCol='dec', seeingCol='FWHMgeom',
-                 expTimeCol='visitExpTime', filterCol='filter'):
+                 raCol='ra', decCol='dec', seeingCol='seeingFwhmGeom',
+                 expTimeCol='visitExposureTime', filterCol='filter'):
         # Set metric name.
         self.name = metricName
         if self.name is None:
