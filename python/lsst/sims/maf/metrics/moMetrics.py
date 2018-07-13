@@ -10,14 +10,15 @@ __all__ = ['BaseMoMetric', 'NObsMetric', 'NObsNoSinglesMetric',
            'Discovery_TimeMetric', 'Discovery_RADecMetric', 'Discovery_EcLonLatMetric',
            'Discovery_VelocityMetric',
            'ActivityOverTimeMetric', 'ActivityOverPeriodMetric',
-           'DiscoveryChancesMetric', 'MagicDiscoveryMetric',
+           'MagicDiscoveryMetric',
            'HighVelocityMetric', 'HighVelocityNightsMetric',
            'LightcurveInversionMetric', 'ColorDeterminationMetric',
            'PeakVMagMetric', 'KnownObjectsMetric']
 
 
 class BaseMoMetric(BaseMetric):
-    """Base class for the moving object metrics."""
+    """Base class for the moving object metrics.
+    Intended to be used with the Moving Object Slicer."""
 
     def __init__(self, cols=None, metricName=None, units='#', badval=0,
                  comment=None, childMetrics=None,
@@ -130,7 +131,7 @@ class BaseChildMetric(BaseMoMetric):
 
 class NObsMetric(BaseMoMetric):
     """
-    Count the total number of observations where an object was 'visible'.
+    Count the total number of observations where an SSobject was 'visible'.
     """
     def __init__(self, snrLimit=None, **kwargs):
         """
@@ -151,8 +152,8 @@ class NObsMetric(BaseMoMetric):
 
 class NObsNoSinglesMetric(BaseMoMetric):
     """
-    Count the number of observations for an object, but don't
-    include any observations where it was a single observation on a night.
+    Count the number of observations for an SSobject, without singles.
+    Don't include any observations where it was a single observation on a night.
     """
     def __init__(self, snrLimit=None, **kwargs):
         super(NObsNoSinglesMetric, self).__init__(**kwargs)
@@ -173,7 +174,7 @@ class NObsNoSinglesMetric(BaseMoMetric):
 
 
 class NNightsMetric(BaseMoMetric):
-    """Count the number of distinct nights an object is observed.
+    """Count the number of distinct nights an SSobject is observed.
     """
     def __init__(self, snrLimit=None, **kwargs):
         """
@@ -194,7 +195,7 @@ class NNightsMetric(BaseMoMetric):
         return nights
 
 class ObsArcMetric(BaseMoMetric):
-    """Calculate the difference between the first and last observation of an object.
+    """Calculate the difference between the first and last observation of an SSobject.
     """
     def __init__(self, snrLimit=None, **kwargs):
         super(ObsArcMetric, self).__init__(**kwargs)
@@ -211,7 +212,7 @@ class ObsArcMetric(BaseMoMetric):
         return arc
 
 class DiscoveryMetric(BaseMoMetric):
-    """Identify the discovery opportunities for an SS object.
+    """Identify the discovery opportunities for an SSobject.
 
     Parameters
     ----------
@@ -322,8 +323,10 @@ class DiscoveryMetric(BaseMoMetric):
 
 
 class Discovery_N_ChancesMetric(BaseChildMetric):
-    """Child metric to be used with DiscoveryMetric.
-    Calculates total number of discovery opportunities in a window between nightStart / nightEnd.
+    """Calculate total number of discovery opportunities for an SSobject.
+
+    Calculates total number of discovery opportunities between nightStart / nightEnd.
+    Child metric to be used with the Discovery Metric.
     """
     def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, badval=0, **kwargs):
         super(Discovery_N_ChancesMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -364,7 +367,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
 
 
 class Discovery_N_ObsMetric(BaseChildMetric):
-    """Calculates the number of observations in the i-th discovery track.
+    """Calculates the number of observations in the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=0, **kwargs):
         super(Discovery_N_ObsMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -381,7 +384,7 @@ class Discovery_N_ObsMetric(BaseChildMetric):
 
 
 class Discovery_TimeMetric(BaseChildMetric):
-    """Returns the time of the i-th discovery opportunity.
+    """Returns the time of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, tStart=None, badval=-999, **kwargs):
         super(Discovery_TimeMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -408,7 +411,7 @@ class Discovery_TimeMetric(BaseChildMetric):
 
 
 class Discovery_RADecMetric(BaseChildMetric):
-    """Returns the RA/Dec of the i-th discovery opportunity.
+    """Returns the RA/Dec of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=None, **kwargs):
         super(Discovery_RADecMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -432,7 +435,7 @@ class Discovery_RADecMetric(BaseChildMetric):
         return (ra[startIdx], dec[startIdx])
 
 class Discovery_EcLonLatMetric(BaseChildMetric):
-    """Returns the ecliptic lon/lat and solar elongation (in degrees) of the i-th discovery opportunity.
+    """Returns the ecliptic lon/lat and solar elong of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=None, **kwargs):
         super(Discovery_EcLonLatMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -457,7 +460,7 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
         return (ecLon[startIdx], ecLat[startIdx], solarElong[startIdx])
 
 class Discovery_VelocityMetric(BaseChildMetric):
-    """Returns the sky velocity of the i-th discovery opportunity.
+    """Returns the sky velocity of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=-999, **kwargs):
         super(Discovery_VelocityMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -479,8 +482,9 @@ class Discovery_VelocityMetric(BaseChildMetric):
         return velocity[startIdx]
 
 class ActivityOverTimeMetric(BaseMoMetric):
-    """
-    Count the time periods where we would have a chance to detect activity on
+    """Count fraction of survey we could identify activity for an SSobject.
+
+    Counts the time periods where we would have a chance to detect activity on
     a moving object.
     Splits observations into time periods set by 'window', then looks for observations within each window,
     and reports what fraction of the total windows receive 'nObs' visits.
@@ -511,7 +515,8 @@ class ActivityOverTimeMetric(BaseMoMetric):
 
 
 class ActivityOverPeriodMetric(BaseMoMetric):
-    """
+    """Count fraction of object period we could identify activity for an SSobject.
+
     Count the fraction of the orbit (when split into nBins) that receive
     observations, in order to have a chance to detect activity.
     """
@@ -549,91 +554,8 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         return activityWindows / float(self.nBins)
 
 
-class DiscoveryChancesMetric(BaseMoMetric):
-    """Count the number of discovery opportunities for an object.
-
-    Superseded by the DiscoveryMetric + NChances child metric.
-    """
-    def __init__(self, nObsPerNight=2, tNight=90./60./24.,
-                 nNightsPerWindow=3, tWindow=15, snrLimit=None,
-                 **kwargs):
-        """
-        @ nObsPerNight = number of observations per night required for tracklet
-        @ tNight = max time start/finish for the tracklet (days)
-        @ nNightsPerWindow = number of nights with observations required for track
-        @ tWindow = max number of nights in track (days)
-        @ snrLimit .. if snrLimit is None then uses 'completeness' calculation,
-                   .. if snrLimit is not None, then uses this value as a cutoff.
-        """
-        super(DiscoveryChancesMetric, self).__init__(**kwargs)
-        self.snrLimit = snrLimit
-        self.nObsPerNight = nObsPerNight
-        self.tNight = tNight
-        self.nNightsPerWindow = nNightsPerWindow
-        self.tWindow = tWindow
-        self.gamma = 0.038
-        self.sigma = 0.12
-        self.badval = 0
-
-    def run(self, ssoObs, orb, Hval):
-        """SsoObs = Dataframe, orb=Dataframe, Hval=single number."""
-        # Calculate visibility for this orbit at this H.
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
-        if len(vis) == 0:
-            return self.badval
-        else:
-            # Now to identify where observations meet the timing requirements.
-            #  Identify visits where the 'night' changes.
-            visSort = np.argsort(ssoObs[self.expMJDCol][vis])
-            nights = ssoObs[self.nightCol][vis][visSort]
-            #print 'all nights', nights
-            n = np.unique(nights)
-            # Identify all the indexes where the night changes (swap from one night to next)
-            nIdx = np.searchsorted(nights, n)
-            # Count the number of observations per night (except last night)
-            obsPerNight = (nIdx - np.roll(nIdx, 1))[1:]
-            # Add the number of observations on the last night.
-            obsLastNight = np.array([len(nights) - nIdx[-1]])
-            obsPerNight = np.concatenate((obsPerNight, obsLastNight))
-            # Find the nights with at least nObsPerNight visits.
-            nWithXObs = n[np.where(obsPerNight >= self.nObsPerNight)]
-            nIdxMany = np.searchsorted(nights, nWithXObs)
-            nIdxManyEnd = np.searchsorted(nights, nWithXObs, side='right') - 1
-            # Check that nObsPerNight observations are within tNight
-            timesStart = ssoObs[self.expMJDCol][vis][visSort][nIdxMany]
-            timesEnd = ssoObs[self.expMJDCol][vis][visSort][nIdxManyEnd]
-            # Identify the nights with 'clearly good' observations.
-            good = np.where(timesEnd - timesStart <= self.tNight, 1, 0)
-            # Identify the nights where we need more investigation
-            # (a subset of the visits may be within the interval).
-            check = np.where((good==0) & (nIdxManyEnd + 1 - nIdxMany > self.nObsPerNight) &
-                             (timesEnd - timesStart > self.tNight))[0]
-            for i, j, c in zip(visSort[nIdxMany][check], visSort[nIdxManyEnd][check], check):
-                t = ssoObs[self.expMJDCol][vis][visSort][i:j+1]
-                dtimes = (np.roll(t, 1- self.nObsPerNight) - t)[:-1]
-                if np.any(dtimes <= self.tNight):
-                    good[c] = 1
-            # 'good' provides mask for observations which could count as 'good to make tracklets'
-            #    against ssoObs[visSort][nIdxMany]
-            # Now identify tracklets which can make tracks.
-            goodIdx = visSort[nIdxMany][good == 1]
-            #print 'good tracklet nights', ssoObs[self.nightCol][goodIdx]
-            # Now (with indexes of start of 'good' nights with nObsPerNight within tNight),
-            # look at the intervals between 'good' nights (for tracks)
-            if len(goodIdx) < self.nNightsPerWindow:
-                discoveryChances = self.badval
-            else:
-                dnights = (np.roll(ssoObs[self.nightCol][vis][goodIdx], 1-self.nNightsPerWindow) -
-                           ssoObs[self.nightCol][vis][goodIdx])
-                discoveryChances = len(np.where((dnights >= 0) & (dnights <= self.tWindow))[0])
-        return discoveryChances
-
-
 class MagicDiscoveryMetric(BaseMoMetric):
-    """Count the number of discovery opportunities with very good software.
+    """Count the number of discovery opportunities with very good software for an SSobject.
     """
     def __init__(self, nObs=6, tWindow=60, snrLimit=None, **kwargs):
         """
@@ -663,7 +585,8 @@ class MagicDiscoveryMetric(BaseMoMetric):
         return nDisc
 
 class HighVelocityMetric(BaseMoMetric):
-    """
+    """Count number of times an SSobject appears trailed.
+
     Count the number of times an asteroid is observed with a velocity high enough to make it appear
     trailed by a factor of (psfFactor)*PSF - i.e. velocity >= psfFactor * seeing / visitExpTime.
     Simply counts the total number of observations with high velocity.
@@ -692,7 +615,9 @@ class HighVelocityMetric(BaseMoMetric):
         return highVelocityObs.size
 
 class HighVelocityNightsMetric(BaseMoMetric):
-    """Determine the first time an asteroid is observed is observed with a velocity high enough to make
+    """Count the number of discovery opportunities (via trailing) for an SSobject.
+
+    Determine the first time an asteroid is observed is observed with a velocity high enough to make
     it appear trailed by a factor of psfFactor*PSF with nObsPerNight observations within a given night.
 
     Parameters
@@ -753,7 +678,7 @@ class HighVelocityNightsMetric(BaseMoMetric):
 
 
 class LightcurveInversionMetric(BaseMoMetric):
-    """Identify objects which would have observations suitable to do lightcurve inversion.
+    """Identify SSobjects which would have observations suitable to do lightcurve inversion.
 
     This is roughly defined as objects which have more than nObs observations with SNR greater than snrLimit,
     within nDays.
@@ -788,7 +713,7 @@ class LightcurveInversionMetric(BaseMoMetric):
 
 
 class ColorDeterminationMetric(BaseMoMetric):
-    """Identify objects which could have observations suitable to determine colors.
+    """Identify SSobjects which could have observations suitable to determine colors.
 
     This is roughly defined as objects which have more than nPairs pairs of observations
     with SNR greater than snrLimit, in bands bandOne and bandTwo, within nHours.
@@ -825,7 +750,7 @@ class ColorDeterminationMetric(BaseMoMetric):
 
 
 class PeakVMagMetric(BaseMoMetric):
-    """Pull out the peak V magnitude of all observations of the object.
+    """Pull out the peak V magnitude of all observations of the SSobject.
     """
     def __init__(self, **kwargs):
         super(PeakVMagMetric, self).__init__(**kwargs)
@@ -836,8 +761,9 @@ class PeakVMagMetric(BaseMoMetric):
 
 
 class KnownObjectsMetric(BaseMoMetric):
-    """Identify SS objects which could be classified as 'previously known' based on their peak V magnitude.
+    """Identify SSobjects which could be classified as 'previously known' based on their peak V magnitude.
 
+    Default parameters tuned to match NEO survey capabilities.
     Returns the time at which each first reached that peak V magnitude.
     The default values are calibrated using the NEOs larger than 140m discovered in the last 20 years
     and assuming a 30% completeness in 2017.

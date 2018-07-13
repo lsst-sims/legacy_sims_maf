@@ -6,7 +6,7 @@ __all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
 
 
 class BaseMoStacker(BaseStacker):
-    """Base class for moving object stackers.
+    """Base class for moving object (SSobject)  stackers. Relevant for MoSlicer ssObs (pd.dataframe).
 
     Provided to add moving-object specific API for 'run' method of moving object stackers."""
     def run(self, ssoObs, Href, Hval=None):
@@ -25,7 +25,7 @@ class BaseMoStacker(BaseStacker):
 
 
 class MoMagStacker(BaseMoStacker):
-    """Add columns relevant to moving object apparent magnitudes and visibility to the slicer ssoObs
+    """Add columns relevant to SSobject apparent magnitudes and visibility to the slicer ssoObs
     dataframe, given a particular Href and current Hval.
 
     Specifically, this stacker adds magLimit, appMag, SNR, and vis.

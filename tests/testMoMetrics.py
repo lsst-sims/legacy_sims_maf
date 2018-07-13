@@ -150,11 +150,6 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.assertEqual(lon, 10)
         self.assertEqual(lat, 25)
 
-        discMetric2 = metrics.DiscoveryChancesMetric(nObsPerNight=2, tNight=0.3,
-                                                     nNightsPerWindow=3, tWindow=9, snrLimit=5)
-        metricValue2 = discMetric2.run(self.ssoObs, self.orb, self.Hval)
-        self.assertEqual(metricValue2, 2)
-
         discMetric3 = metrics.MagicDiscoveryMetric(nObs=5, tWindow=2, snrLimit=5)
         magic = discMetric3.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(magic, 1)
