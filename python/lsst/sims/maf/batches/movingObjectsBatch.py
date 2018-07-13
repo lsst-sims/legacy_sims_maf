@@ -10,10 +10,10 @@ from .colMapDict import ColMapDict
 from .common import summaryCompletenessAtTime, summaryCompletenessOverH
 import warnings
 
-__all__ = ['setupSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'characterizationBatch']
+__all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'characterizationBatch']
 
 
-def setupSlicer(orbitFile, Hrange, obsFile=None):
+def setupMoSlicer(orbitFile, Hrange, obsFile=None):
     """
     Set up the slicer and read orbitFile and obsFile from disk.
 
