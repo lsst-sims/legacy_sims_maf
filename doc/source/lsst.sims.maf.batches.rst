@@ -60,6 +60,14 @@ lsst.sims.maf.batches.metadataBatch module
     :undoc-members:
     :show-inheritance:
 
+lsst.sims.maf.batches.movingObjectsBatch module
+-----------------------------------------------
+
+.. automodule:: lsst.sims.maf.batches.movingObjectsBatch
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 lsst.sims.maf.batches.openshutterBatch module
 ---------------------------------------------
 

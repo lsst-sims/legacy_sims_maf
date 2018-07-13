@@ -14,6 +14,7 @@ Contents:
    overview.rst
    metricsRun.rst
    metricList.rst
+   stackerList.rst
    modules.rst
 
 

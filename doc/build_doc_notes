@@ -1,3 +1,8 @@
+(setup sims_maf & sims_maf_contrib)
+cd doc
+python metricList.py
+python stackerList.py
+
 sphinx-apidoc -o source -f -H "lsst.sims.maf" ../python/
 sphinx-build -b html source ./html
-(and be sure to cd doc; python metricList.py while sims_maf_contrib is set up, first).
+
