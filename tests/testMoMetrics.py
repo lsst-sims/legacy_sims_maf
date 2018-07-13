@@ -9,8 +9,8 @@ class TestMoMetrics1(unittest.TestCase):
         # Set up some ssoObs data to test the metrics on.
         # Note that ssoObs is a numpy recarray.
         # The expected set of columns in ssoObs is:
-        # cols = ['expMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
-        #        'visitExpTime', 'FWHMgeom', 'fiveSigmaDepth', 'solarElong',
+        # cols = ['observationStartMJD', 'night', 'fieldRA', 'fieldDec', 'rotSkyPos', 'filter',
+        #        'visitExposureTime', 'seeingFwhmGeom', 'fiveSigmaDepth', 'solarElong',
         #        'delta', 'ra', 'dec', 'magV', 'time', 'dradt', 'ddecdt', 'phase', 'solarelon',
         #        'velocity', 'magFilter', 'dmagColor', 'dmagTrail', 'dmagDetect']
         # And stackers will often add
@@ -24,11 +24,11 @@ class TestMoMetrics1(unittest.TestCase):
                           10.1, 10.2, 10.3,
                           13.1, 13.5], dtype='float')
         ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'),
-                                                   ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'),
+                                                   ('appMag', '<f8'), ('observationStartMJD', '<f8'), ('night', '<f8'),
                                                    ('magLimit', '<f8'), ('SNR', '<f8'), ('vis', '<f8')]))
 
         ssoObs['time'] = times
-        ssoObs['expMJD'] = times
+        ssoObs['observationStartMJD'] = times
         ssoObs['night'] = np.floor(times)
         ssoObs['ra'] = np.arange(len(times))
         ssoObs['dec'] = np.arange(len(times))
@@ -68,10 +68,10 @@ class TestMoMetrics1(unittest.TestCase):
     def testArcMetric(self):
         arcMetric = metrics.ObsArcMetric(snrLimit=5)
         arc = arcMetric.run(self.ssoObs, self.orb, self.Hval)
-        self.assertEqual(arc, self.ssoObs['expMJD'][-1] - self.ssoObs['expMJD'][0])
+        self.assertEqual(arc, self.ssoObs['observationStartMJD'][-1] - self.ssoObs['observationStartMJD'][0])
         arcMetric = metrics.ObsArcMetric(snrLimit=None)
         arc = arcMetric.run(self.ssoObs, self.orb, self.Hval)
-        self.assertEqual(arc, self.ssoObs['expMJD'][-1] - self.ssoObs['expMJD'][5])
+        self.assertEqual(arc, self.ssoObs['observationStartMJD'][-1] - self.ssoObs['observationStartMJD'][5])
 
     def tearDown(self):
         del self.ssoObs
@@ -92,14 +92,14 @@ class TestDiscoveryMetrics(unittest.TestCase):
                           13.1, 13.5], dtype='float')
         ssoObs = np.recarray([len(times)], dtype=([('time', '<f8'), ('ra', '<f8'), ('dec', '<f8'),
                                                    ('ecLon', '<f8'), ('ecLat', '<f8'), ('solarElong', '<f8'),
-                                                   ('appMag', '<f8'), ('expMJD', '<f8'), ('night', '<f8'),
+                                                   ('appMag', '<f8'), ('observationStartMJD', '<f8'), ('night', '<f8'),
                                                    ('magLimit', '<f8'), ('velocity', '<f8'),
                                                    ('SNR', '<f8'), ('vis', '<f8'), ('magFilter', '<f8'),
-                                                   ('fiveSigmaDepth', '<f8'), ('FWHMgeom', '<f8'),
-                                                   ('visitExpTime', '<f8'), ('dmagDetect', '<f8')]))
+                                                   ('fiveSigmaDepth', '<f8'), ('seeingFwhmGeom', '<f8'),
+                                                   ('visitExposureTime', '<f8'), ('dmagDetect', '<f8')]))
 
         ssoObs['time'] = times
-        ssoObs['expMJD'] = times
+        ssoObs['observationStartMJD'] = times
         ssoObs['night'] = np.floor(times)
         ssoObs['ra'] = np.arange(len(times))
         ssoObs['dec'] = np.arange(len(times)) + 5
@@ -115,8 +115,8 @@ class TestDiscoveryMetrics(unittest.TestCase):
         ssoObs['vis'] = np.zeros(len(times), dtype='float') + 1
         ssoObs['vis'][0:5] = 0
         ssoObs['velocity'] = rng.rand(len(times))
-        ssoObs['FWHMgeom'] = np.ones(len(times), 'float')
-        ssoObs['visitExpTime'] = np.ones(len(times), 'float') * 24.0
+        ssoObs['seeingFwhmGeom'] = np.ones(len(times), 'float')
+        ssoObs['visitExposureTime'] = np.ones(len(times), 'float') * 24.0
         self.ssoObs = ssoObs
         self.orb = np.recarray([len(times)], dtype=([('H', '<f8')]))
         self.orb['H'] = np.zeros(len(times), dtype='float') + 8
@@ -137,10 +137,10 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.assertEqual(nchances, 2)
         child = metrics.Discovery_TimeMetric(discMetric, i=0)
         time = child.run(self.ssoObs, self.orb, self.Hval, metricValue)
-        self.assertEqual(time, self.ssoObs['expMJD'][0])
+        self.assertEqual(time, self.ssoObs['observationStartMJD'][0])
         child = metrics.Discovery_TimeMetric(discMetric, i=1)
         time = child.run(self.ssoObs, self.orb, self.Hval, metricValue)
-        self.assertEqual(time, self.ssoObs['expMJD'][3])
+        self.assertEqual(time, self.ssoObs['observationStartMJD'][3])
         child = metrics.Discovery_RADecMetric(discMetric, i=0)
         ra, dec = child.run(self.ssoObs, self.orb, self.Hval, metricValue)
         self.assertEqual(ra, 0)
@@ -184,7 +184,7 @@ class TestDiscoveryMetrics(unittest.TestCase):
         self.assertEqual(metricValue, 0)
         self.ssoObs['velocity'][0:2] = 1.5
         metricValue = velMetric.run(self.ssoObs, self.orb, self.Hval)
-        self.assertEqual(metricValue, self.ssoObs['expMJD'][0])
+        self.assertEqual(metricValue, self.ssoObs['observationStartMJD'][0])
         self.ssoObs['velocity'][0:2] = np.random.rand(1)
 
 class TestKnownObjectMetrics(unittest.TestCase):
