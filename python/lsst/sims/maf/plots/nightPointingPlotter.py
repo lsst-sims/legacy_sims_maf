@@ -8,10 +8,13 @@ __all__ = ['NightPointingPlotter']
 
 class NightPointingPlotter(BasePlotter):
 
-    def __init__(self):
+    def __init__(self, mjdCol='mjd', altCol='alt', azCol='az'):
 
         # Just call it Hourglass so it gets treated the same way
         self.plotType = 'Hourglass'
+        self.mjdCol = mjdCol
+        self.altCol = altCol
+        self.azCol = azCol
         self.objectPlotter = True
         self.defaultPlotDict = {'title': None, 'xlabel': 'MJD',
                                 'ylabels': ['Alt', 'Az']}
@@ -26,11 +29,11 @@ class NightPointingPlotter(BasePlotter):
         u_filters = np.unique(mv['dataSlice']['filter'])
         for filt in u_filters:
             good = np.where(mv['dataSlice']['filter'] == filt)
-            ax1.plot(mv['dataSlice']['expMJD'][good],
-                     np.degrees(mv['dataSlice']['altitude'][good]),
+            ax1.plot(mv['dataSlice'][self.mjdCol][good],
+                     mv['dataSlice'][self.altCol][good],
                      'o', color=self.filter2color[filt], markersize=5, alpha=.5)
-            ax2.plot(mv['dataSlice']['expMJD'][good],
-                     np.degrees(mv['dataSlice']['azimuth'][good]),
+            ax2.plot(mv['dataSlice'][self.mjdCol][good],
+                     mv['dataSlice'][self.azCol][good],
                      'o', color=self.filter2color[filt], markersize=5, alpha=.5)
 
         good = np.where(np.degrees(mv['moon_alts']) > -10.)
