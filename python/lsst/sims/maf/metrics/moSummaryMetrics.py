@@ -7,7 +7,7 @@ __all__ = ['integrateOverH', 'ValueAtHMetric', 'MeanValueAtHMetric',
            'MoCompletenessMetric', 'MoCompletenessAtTimeMetric']
 
 
-def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
+def integrateOverH(Mvalues, Hvalues, Hindex = 0.33):
     """Function to calculate a metric value integrated over an Hrange, assuming a power-law distribution.
 
     Parameters
@@ -18,7 +18,7 @@ def integrateOverH(Mvalues, Hvalues, Hindex = 0.3):
         The H values corresponding to each Mvalue (must be the same length).
     Hindex : float, opt
         The power-law index expected for the H value distribution.
-        Default is 0.3  (dN/dH = 10^(Hindex * H) ).
+        Default is 0.33  (dN/dH = 10^(Hindex * H) ).
 
     Returns
     --------
@@ -111,7 +111,7 @@ class MoCompletenessMetric(BaseMoMetric):
     Hindex : float, opt
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
-    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.3, **kwargs):
+    def __init__(self, requiredChances=1, nbins=20, minHrange=1.0, cumulative=True, Hindex=0.33, **kwargs):
         if 'metricName' in kwargs:
             metricName = kwargs.pop('metricName')
             if metricName.startswith('Cumulative'):
@@ -162,7 +162,7 @@ class MoCompletenessMetric(BaseMoMetric):
             completeness = np.where(n_all==0, 0, completeness)
         if self.cumulative:
             completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
-            summaryVal = np.empty(len(completenessInt), dtype=[('name', np.str_, S20), ('value', float)])
+            summaryVal = np.empty(len(completenessInt), dtype=[('name', np.str_, 20), ('value', float)])
             summaryVal['value'] = completenessInt
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H <= %f' % (Hval)
@@ -185,7 +185,8 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
     times : numpy.ndarray like
         The bins to distribute the discovery times into. Same units as the discovery time (typically MJD).
     Hval : float, opt
-        The value of H to count completeness at (or cumulative completeness to). Default H=22.
+        The value of H to count completeness at (or cumulative completeness to).
+        Default None, in which case a value halfway through Hvals (the slicer H range) will be chosen.
     cumulative : bool, opt
         If True, calculate the cumulative completeness (completeness <= H).
         If False, calculate the differential completeness (completeness @ H).
@@ -194,27 +195,36 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         Use Hindex as the power law to integrate over H, if cumulative is True. Default 0.3.
     """
 
-    def __init__(self, times, Hval=22, cumulative=True, Hindex=0.3, **kwargs):
-        if 'metricName' in kwargs:
-            metricName = kwargs.pop('metricName')
-            if metricName.startswith('Cumulative'):
-                self.cumulative = True
-                units = 'H <=%.1f' % (Hval)
-            else:
-                self.cumulative = False
-                units = 'H = %.1f' % (Hval)
-        else:
-            self.cumulative = cumulative
-            if self.cumulative:
-                metricName = 'CumulativeCompleteness@Time'
-                units = 'H <=%.1f' % (Hval)
-            else:
-                metricName = 'DifferentialCompleteness@Time'
-                units = 'H = %.1f' % (Hval)
-        super(MoCompletenessAtTimeMetric, self).__init__(metricName=metricName, units=units, **kwargs)
+    def __init__(self, times, Hval=None, cumulative=True, Hindex=0.33, **kwargs):
         self.Hval = Hval
         self.times = times
         self.Hindex = Hindex
+        if 'metricName' in kwargs:
+            metricName = kwargs.pop('metricName')
+            if metricName.startswith('Differential'):
+                self.cumulative = False
+                self.metricName = metricName
+            else:
+                self.cumulative = True
+                self.metricName = metricName
+        else:
+            self.cumulative = cumulative
+            if self.cumulative:
+                self.metricName = 'CumulativeCompleteness@Time'
+            else:
+                self.metricName = 'DifferentialCompleteness@Time'
+        self._setLabels()
+        super(MoCompletenessAtTimeMetric, self).__init__(metricName=self.metricName, units=self.units,
+                                                         **kwargs)
+
+    def _setLabels(self):
+        if self.Hval is not None:
+            if self.cumulative:
+                self.units = 'H <=%.1f' % (self.Hval)
+            else:
+                self.units = 'H = %.1f' % (self.Hval)
+        else:
+            self.units = 'H'
 
     def run(self, discoveryTimes, Hvals):
         if len(Hvals) != discoveryTimes.shape[1]:
@@ -224,16 +234,25 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         timesinH = discoveryTimes.swapaxes(0, 1)
         completenessH = np.empty([len(Hvals), len(self.times)], float)
         for i, H in enumerate(Hvals):
-            n, b = np.histogram(timesinH[i], bins=self.times)
+            n, b = np.histogram(timesinH[i].compressed(), bins=self.times)
             completenessH[i][0] = 0
             completenessH[i][1:] = n.cumsum()
         completenessH = completenessH / float(nSsos)
         completeness = completenessH.swapaxes(0, 1)
         if self.cumulative:
             for i, t in enumerate(self.times):
-                completeness[i] = metrics.integrateOverH(completeness[i], Hvals)
-        summaryVal = np.empty(len(completeness), dtype=[('name', np.str_, 20), ('value', float)])
-        summaryVal['value'] = completeness
+                completeness[i] = integrateOverH(completeness[i], Hvals)
+        # To save the summary statistic, we must pick out a given H value.
+        if self.Hval is None:
+            Hidx = len(Hvals) // 2
+            self.Hval = Hvals[Hidx]
+            self._setLabels()
+        else:
+            Hidx = np.where(np.abs(Hvals - self.Hval) == np.abs(Hvals - self.Hval).min())[0][0]
+            self.Hval = Hvals[Hidx]
+            self._setLabels()
+        summaryVal = np.empty(len(self.times), dtype=[('name', np.str_, 20), ('value', float)])
+        summaryVal['value'] = completeness[:,Hidx]
         for i, time in enumerate(self.times):
             summaryVal['name'][i] = '%s @ %.2f' % (self.units, time)
         return summaryVal
