@@ -45,16 +45,21 @@ class fONv(BaseMetric):
         self.norm = norm
 
     def run(self, dataSlice, slicePoint=None):
+        result = np.empty(2, dtype=[('name', np.str_, 20), ('value', float)])
+        result['name'][0] = "MedianNvis"
+        result['name'][1] = "MinNvis"
+        # If there is not even as much data as needed to cover Asky:
         if len(dataSlice) < self.npix_Asky:
-            return self.badval
+            # Return the same type of metric value, to make it easier downstream.
+            result['value'][0] = self.badval
+            result['value'][1] = self.badval
+            return result
+        # Otherwise, calculate median and mean Nvis:
         name = dataSlice.dtype.names[0]
         nvis_sorted = np.sort(dataSlice[name])
         # Find the Asky's worth of healpixels with the largest # of visits.
         nvis_Asky = nvis_sorted[-self.npix_Asky:]
-        result = np.empty(2, dtype=[('name', np.str_, 20), ('value', float)])
-        result['name'][0] = "MedianNvis"
         result['value'][0] = np.median(nvis_Asky)
-        result['name'][1] = "MinNvis"
         result['value'][1] = np.min(nvis_Asky)
         if self.norm:
             result['value'] /= float(self.Nvisit)

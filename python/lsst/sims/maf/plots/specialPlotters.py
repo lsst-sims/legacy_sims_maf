@@ -19,7 +19,7 @@ class FOPlot(BasePlotter):
         self.defaultPlotDict = {'title': None, 'xlabel': 'Number of visits',
                                 'ylabel': 'Area (1000s of square degrees)',
                                 'scale': None, 'Asky': 18000., 'Nvisits': 825,
-                                'xMin': None, 'xMax': None, 'yMin': None, 'yMax': None,
+                                'xMin': 0, 'xMax': None, 'yMin': 0, 'yMax': None,
                                 'linewidth': 2, 'reflinewidth': 2}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
@@ -66,22 +66,13 @@ class FOPlot(BasePlotter):
 
         plt.axvline(x=plotDict['Nvisits'], linewidth=plotDict['reflinewidth'], color='b')
         plt.axhline(y=plotDict['Asky'] / 1000., linewidth=plotDict['reflinewidth'], color='r')
-        # Check if things passed
-        calc_passed = True
-        if isinstance(fONv, int):
-            calc_passed = False
-        elif np.max(fONv['value']) == -666:
-            calc_passed = False
-        if isinstance(fOArea, int):
-            calc_passed = False
-        elif np.max(fOArea) != -666:
-            calc_passed = False
-        if calc_passed:
-            Nvis_median = fONv['value'][np.where(fONv['name'] == 'MedianNvis')]
-            plt.axhline(y=Nvis_median / 1000., linewidth=plotDict['reflinewidth'], color='b',
-                        alpha=.5, label=r'f$_0$ Median Nvisits=%.3g' % Nvis_median)
-            plt.axvline(x=fOArea, linewidth=plotDict['reflinewidth'], color='r',
-                        alpha=.5, label='f$_0$ Area=%.3g' % fOArea)
+        # Add lines for Nvis_median and fOArea: note if these are -666 (badval),
+        # the default xMin/yMin values will just leave them off the edges of the plot.
+        Nvis_median = fONv['value'][np.where(fONv['name'] == 'MedianNvis')]
+        plt.axhline(y=Nvis_median / 1000., linewidth=plotDict['reflinewidth'], color='b',
+                    alpha=.5, label=r'f$_0$ Median Nvisits=%.3g' % Nvis_median)
+        plt.axvline(x=fOArea, linewidth=plotDict['reflinewidth'], color='r',
+                    alpha=.5, label='f$_0$ Area=%.3g' % fOArea)
         plt.legend(loc='lower left', fontsize='small', numpoints=1)
 
         plt.xlabel(plotDict['xlabel'])
