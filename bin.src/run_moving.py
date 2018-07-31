@@ -42,10 +42,12 @@ def runMetrics(bdict, outDir, resultsDb=None, Hmark=None):
     """
     print("Calculating metric values.")
     bg = mmb.MoMetricBundleGroup(bdict, outDir=outDir, resultsDb=resultsDb)
-    # Just calculate here, we'll create the (mostly custom) plots later.
+    # Calculate basic metrics.
     bg.runAll()
-
-
+    # Generate completeness bundles.
+    completeness = batches.addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb)
+    bdict.update(completeness)
+    return bdict
 
 
 
@@ -90,6 +92,7 @@ if __name__ == '__main__':
     times += args.startTime
     bins = np.arange(5, 95, 10.)  # binsize to split period (360deg)
     windows = np.arange(1, 200, 15)  # binsize to split time (days)
+    npReduce = np.mean
 
     if args.plotOnly:
         # Set up resultsDb.
@@ -105,22 +108,36 @@ if __name__ == '__main__':
         resultsDb = db.ResultsDb(outDir=args.outDir)
 
         Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
-        slicer = batches.setupSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
-        opsdb = db.OpsimDatabase(args.opsimDb)
-        colmap = batches.getColMap(opsdb)
-        opsdb.close()
-        bdict = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
-                                            metadata=args.metadata, detectionLosses='detection',
-                                            albedo=args.albedo, Hmark=args.hMark, times=times)
-        runMetrics(bdict, args.outDir, resultsDb, args.hMark)
-        bdict = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
-                                            metadata=args.metadata, detectionLosses='trailing',
-                                            albedo=args.albedo, Hmark=args.hMark, times=times)
-        runMetrics(bdict, args.outDir, resultsDb, args.hMark)
-        bdict = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
-                                       detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
-                                       times=times)
-        runMetrics(bdict, args.outDir, resultsDb, args.hMark)
+        slicer = batches.setupMoSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
+        if args.opsimDb is not None:
+            opsdb = db.OpsimDatabase(args.opsimDb)
+            colmap = batches.getColMap(opsdb)
+            opsdb.close()
+        else:
+            # Use the default (currently, v4).
+            colmap = batches.ColMapDict()
+        # Run discovery metrics using 'trailing' losses
+        bdictT, pbundleT = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                                     metadata=args.metadata, detectionLosses='trailing',
+                                                     albedo=args.albedo, Hmark=args.hMark, times=times)
+        bdictT = runMetrics(bdictT, args.outDir, resultsDb, args.hMark)
+        # Run all discovery metrics using 'detection' losses
+        bdictD, pbundleD = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                                     metadata=args.metadata, detectionLosses='detection',
+                                                     albedo=args.albedo, Hmark=args.hMark, times=times)
+        bdict, pbundle = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
+                                                detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
+                                                times=times)
+        bdictD.update(bdict)
+        pbundleD.append(pbundle)
+        bdictD = runMetrics(bdictD, args.outDir, resultsDb, args.hMark)
+        # Run all characterization metrics
+        bdictC, pbundle = batches.characterizationBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                                        metadata=args.metadata, albedo=args.albedo,
+                                                        Hmark=args.hMark, constraint=None,
+                                                        npReduce=npReduce, windows=windows, bins=bins)
+        bdictC = runMetrics(bdictC, args.outDir, resultsDb, args.hMark)
+
 
     #plotMetrics(allBundles, args.outDir, args.metadata, args.opsimRun, mParams,
     #            Hmark=args.hMark, resultsDb=resultsDb)

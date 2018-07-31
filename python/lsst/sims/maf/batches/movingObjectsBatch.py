@@ -10,7 +10,8 @@ from .colMapDict import ColMapDict
 from .common import summaryCompletenessAtTime, summaryCompletenessOverH
 import warnings
 
-__all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'characterizationBatch']
+__all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'addMoCompletenessBundles',
+           'characterizationBatch']
 
 
 def setupMoSlicer(orbitFile, Hrange, obsFile=None):
@@ -44,6 +45,7 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
+    plotBundles = []
 
     basicPlotDict = {'albedo': albedo, 'Hmark': Hmark, 'npReduce': npReduce,
                      'nxbins': 200, 'nybins': 200}
@@ -81,7 +83,7 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
     summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
 
     # Set up a dictionary to pass to each metric for the column names.
-    colkwargs = {'expMJDCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
+    colkwargs = {'mjdCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
                  'expTimeCol': colmap['exptime'], 'm5Col': colmap['fiveSigmaDepth'],
                  'nightCol': colmap['night'], 'filterCol': colmap['filter']}
 
@@ -139,7 +141,7 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
 
 
 def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detection', metadata='',
@@ -147,6 +149,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
+    plotBundles = []
 
     basicPlotDict = {'albedo': albedo, 'Hmark': Hmark, 'npReduce': npReduce,
                      'nxbins': 200, 'nybins': 200}
@@ -186,7 +189,7 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
     summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
 
     # Set up a dictionary to pass to each metric for the column names.
-    colkwargs = {'expMJDCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
+    colkwargs = {'mjdCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
                  'expTimeCol': colmap['exptime'], 'm5Col': colmap['fiveSigmaDepth'],
                  'nightCol': colmap['night'], 'filterCol': colmap['filter']}
 
@@ -470,7 +473,66 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
+
+def addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb):
+    """
+    Generate completeness bundles from all N_Chances child metrics of the (discovery) bundles in bdict,
+    and write completeness at Hmark to resultsDb, save bundle to disk.
+
+    Parameters
+    ----------
+    bdict : dict of metricBundles
+        Dict containing ~lsst.sims.maf.MoMetricBundles,
+        including bundles we're expecting to contain completeness.
+    Hmark : float
+        Hmark value to add to completeness plotting dict.
+    outDir : str
+        Output directory to save completeness bundles to disk.
+    resultsDb : ~lsst.sims.maf.db.ResultsDb
+        Results database to save information about completeness bundle.
+
+    Returns
+    -------
+    dict of metricBundles
+        Now the resulting metricBundles also includes new nested dicts with keys "DifferentialCompleteness"
+        and "CumulativeCompleteness", which contain bundles of completeness metrics at each year.
+    """
+    # Add completeness bundles and write completeness at Hmark to resultsDb.
+    completeness = {}
+    group = 'Discovery'
+    subgroup = 'Completeness @ H=%.1f' % (Hmark)
+
+    def _compbundles(b, bundle, Hmark, resultsDb):
+        comp = {}
+        newkey = b + ' differential completeness'
+        comp[newkey] = mb.makeCompletenessBundle(bundle, summaryName='DifferentialCompleteness',
+                                                 Hmark=Hmark, resultsDb=resultsDb)
+        newkey = b + ' cumulative completeness'
+        comp[newkey] = mb.makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness',
+                                                 Hmark=Hmark, resultsDb=resultsDb)
+        return comp
+
+    # Generate the completeness bundles for the various discovery metrics.
+    for b, bundle in bdict.items():
+        if isinstance(bundle.metric, metrics.DiscoveryMetric):
+            childkeys = ['Time', 'N_Chances']
+            for k in bundle.childBundles:
+                if k in childkeys:
+                    childbundle = bundle.childBundles[k]
+                    completeness.update(_compbundles(b, childbundle, Hmark, resultsDb))
+        if isinstance(bundle.metric, metrics.HighVelocityNightsMetric):
+            completeness.update(_compbundles(b, bundle, Hmark, resultsDb))
+        if isinstance(bundle.metric, metrics.MagicDiscoveryMetric):
+            completeness.update(_compbundles(b, bundle, Hmark, resultsDb))
+
+    # Write the completeness bundles to disk, so we can re-read them later.
+    # (also set the display dict properties, for the resultsDb output).
+    for b, bundle in completeness.items():
+        bundle.setDisplayDict({'group': group, 'subgroup': subgroup})
+        bundle.write(outDir=outDir, resultsDb=resultsDb)
+
+    return completeness
 
 
 def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
@@ -480,9 +542,10 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
+    plotBundles = []
 
     # Set up a dictionary to pass to each metric for the column names.
-    colkwargs = {'expMJDCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
+    colkwargs = {'mjdCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
                  'expTimeCol': colmap['exptime'], 'm5Col': colmap['fiveSigmaDepth'],
                  'nightCol': colmap['night'], 'filterCol': colmap['filter']}
 
@@ -632,4 +695,4 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
