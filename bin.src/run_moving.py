@@ -94,6 +94,7 @@ if __name__ == '__main__':
     windows = np.arange(1, 200, 15)  # binsize to split time (days)
     npReduce = np.mean
 
+
     if args.plotOnly:
         # Set up resultsDb.
         pass
@@ -108,7 +109,10 @@ if __name__ == '__main__':
         resultsDb = db.ResultsDb(outDir=args.outDir)
 
         Hrange = np.arange(args.hMin, args.hMax + args.hStep, args.hStep)
-        slicer = batches.setupMoSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
+        if args.hMark is None:
+            hIdx = int(len(Hrange)/2)
+            args.hMark = Hrange[hIdx]
+
         if args.opsimDb is not None:
             opsdb = db.OpsimDatabase(args.opsimDb)
             colmap = batches.getColMap(opsdb)
@@ -116,6 +120,8 @@ if __name__ == '__main__':
         else:
             # Use the default (currently, v4).
             colmap = batches.ColMapDict()
+
+        slicer = batches.setupMoSlicer(args.orbitFile, Hrange, obsFile=args.obsFile)
         # Run discovery metrics using 'trailing' losses
         bdictT, pbundleT = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
                                                      metadata=args.metadata, detectionLosses='trailing',
