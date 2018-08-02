@@ -1064,7 +1064,7 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
                 i = 0
                 potential_offset = randomOffsets[i]
                 new_rotTel = simData[self.rotTelCol][c+1:cn+1] + potential_offset
-                goodToGo = (new_rotTel > self.minRotAngle).all() and (new_rotTel < self.maxRotAngle).all()
+                goodToGo = (new_rotTel >= self.minRotAngle).all() and (new_rotTel <= self.maxRotAngle).all()
 
                 if not goodToGo:
                     i_start = i
@@ -1072,7 +1072,7 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
                         i += 1
                         potential_offset = randomOffsets[i]
                         new_rotTel = simData[self.rotTelCol][c+1:cn+1] + potential_offset
-                        goodToGo = (new_rotTel > self.minRotAngle).all() and (new_rotTel < self.maxRotAngle).all()
+                        goodToGo = (new_rotTel >= self.minRotAngle).all() and (new_rotTel <= self.maxRotAngle).all()
 
                 if not goodToGo:  # i.e. no good offset was found after 2500 tries
                     n_problematic_ones += 1
@@ -1098,14 +1098,14 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
             i = 0
             potential_offset = randomOffsets[i]
             new_rotTel = simData[self.rotTelCol][changeIdxs[-1]+1:] + potential_offset
-            goodToGo = (new_rotTel > self.minRotAngle).all() and (new_rotTel < self.maxRotAngle).all()
+            goodToGo = (new_rotTel >= self.minRotAngle).all() and (new_rotTel <= self.maxRotAngle).all()
             if not goodToGo:
                 i_start = i
                 while ((not goodToGo) and (i-i_start)<2500): # break if find a good offset or cant (afetr 2500 tries)
                     i += 1
                     potential_offset = randomOffsets[i]
                     new_rotTel = simData[self.rotTelCol][changeIdxs[-1]+1:] + potential_offset
-                    goodToGo = (new_rotTel > self.minRotAngle).all() and (new_rotTel < self.maxRotAngle).all()
+                    goodToGo = (new_rotTel >= self.minRotAngle).all() and (new_rotTel <= self.maxRotAngle).all()
 
             if not goodToGo:  # i.e. no good offset was found after 2500 tries
                 n_problematic_ones += 1
