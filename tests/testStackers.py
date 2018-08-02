@@ -250,27 +250,49 @@ class TestStackerClasses(unittest.TestCase):
         """
         maxDither = 90
         filt = np.array(['r', 'r', 'r', 'g', 'g', 'g', 'r', 'r'])
-        rotTelPos = np.array([0, 0, 1, 0, .5, 1, 0, 180], float)
+        # first test to ensure that the right exception is thrown when input data conflicts
+        # with the desired rotator range
+        rotTelPos = np.array([0, 0, 1, 0, .5, 1, 0, 180], float)  # 180 is beyond maxRotAngle=90
         odata = np.zeros(len(filt), dtype=list(zip(['filter', 'rotTelPos'], [(np.str_, 1), float])))
         odata['filter'] = filt
         odata['rotTelPos'] = rotTelPos
         stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither, degrees=True,
                                                                  randomSeed=99)
-        data = stacker.run(odata)
+        self.assertRaises(ValueError, stacker.run, odata) # input data is beyond allowed rotator range
+
+        # now test to ensure that dithers are assigned after every filter change and that the
+        # rotator range is respected
+        rotTelPos = np.array([0, 0, 1, 0, .5, 1, 0, 30], float)  # update the problematic entry
+        odata['rotTelPos'] = rotTelPos
+        data = stacker.run(odata) # run the stacker
+
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
         rotOffsets = rotTelPos - randomDithers
-        self.assertEqual(rotOffsets[0], 0)
+        self.assertEqual(rotOffsets[0], 0) # no dither w/o a filter change
+
         offsetChanges = np.where(rotOffsets[1:] != rotOffsets[:-1])[0]
         filtChanges = np.where(filt[1:] != filt[:-1])[0]
-        # Don't count last offset change because this was just value to force min/max limit.
-        np.testing.assert_array_equal(offsetChanges[:-1], filtChanges)
-        self.assertLessEqual(randomDithers.max(), 90.0)
+        np.testing.assert_array_equal(offsetChanges, filtChanges)  # dither after every filter change
+        self.assertLessEqual(randomDithers.max(), 90.0)  # test the max dithered value
+
+        # now test to ensure that user-defined maxRotAngle value works
         stacker = stackers.RandomRotDitherPerFilterChangeStacker(maxDither=maxDither,
-                                                                 degrees=True, maxRotAngle = 30,
+                                                                 degrees=True, maxRotAngle=30,
                                                                  randomSeed=19231)
         data = stacker.run(odata)
         randomDithers = data['randomDitherPerFilterChangeRotTelPos']
-        self.assertEqual(randomDithers.max(), 30.0)
+        self.assertLessEqual(randomDithers.max(), 30.0)  # new max
+
+        # finally test that if the visits in between filter changes span the rotator range,
+        # no dither should be assigned.
+        rotTelPos = np.array([0, 0, 1, 30, .5, -90, 0, 30.], float)  # 180 beyond maxRotAngle=90
+        odata['rotTelPos'] = rotTelPos
+        data = stacker.run(odata) # run the stacker
+        randomDithers = data['randomDitherPerFilterChangeRotTelPos']
+        rotOffsets = rotTelPos - randomDithers
+        offsetChanges = np.where(rotOffsets[1:] != rotOffsets[:-1])[0]
+        filtChanges = np.where(filt[1:] != filt[:-1])[0]
+        np.testing.assert_array_equal(offsetChanges[-1], filtChanges[-1])
 
     def testHAStacker(self):
         """Test the Hour Angle stacker"""
