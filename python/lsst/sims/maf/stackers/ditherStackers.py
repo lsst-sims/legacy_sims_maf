@@ -1036,6 +1036,11 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
             self.maxRotAngle = np.radians(self.maxRotAngle)
             self.minRotAngle = np.radians(self.minRotAngle)
 
+        if len(np.where(simData[self.rotTelCol]>self.maxRotAngle)[0])>0:
+             raise ValueError('Input data does not respect the maxRotAngle constraint.')
+        if len(np.where(simData[self.rotTelCol]<self.minRotAngle)[0])>0:
+             raise ValueError('Input data does not respect the maxRotAngle constraint.')
+
         # Identify points where the filter changes.
         changeIdxs = np.where(simData[self.filterCol][1:] != simData[self.filterCol][:-1])[0]
 
@@ -1152,6 +1157,10 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
                     plt.legend()
                     plt.title('dithered rotTel >= max = %s'%self.maxRotAngle)
                     plt.show()
-            raise ValueError('Rotational offsets are not working properly.')
+
+            message = 'Rotational offsets are not working properly:\n'
+            message += 'dithered rotTelPos: %s\n'%(simData[rotDither])
+            message += 'minRotAngle: %s ; maxRotAngle: %s'%(self.minRotAngle, self.maxRotAngle)
+            raise ValueError(message)
         else:
             return simData
