@@ -228,26 +228,6 @@ class MoMetricBundle(MetricBundle):
     def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
         raise NotImplementedError
 
-    def read(self, filename):
-        "Read metric data back into a metricBundle, as best as possible."
-        if not os.path.isfile(filename):
-            raise IOError('%s not found' % filename)
-        self._resetMetricBundle()
-        # Must read the data using a moving object slicer.
-        slicer = MoObjSlicer()
-        self.metricValues, self.slicer = slicer.readData(filename)
-        # It's difficult to reinstantiate the metric object, as we don't
-        # know what it is necessarily -- the metricName can be changed.
-        self.metric = BaseMoMetric()
-        # But, for plot label building, we do need to try to recreate the
-        #  metric name and units. We can't really do that yet - need more infrastructure.
-        self.metric.name = ''
-        self.constraint = None
-        self.metadata = None
-        path, head = os.path.split(filename)
-        self.fileRoot = head.replace('.h5', '')
-        self.setPlotFuncs([MetricVsH()])
-
 
 class MoMetricBundleGroup(object):
     def __init__(self, bundleDict, outDir='.', resultsDb=None, verbose=True):

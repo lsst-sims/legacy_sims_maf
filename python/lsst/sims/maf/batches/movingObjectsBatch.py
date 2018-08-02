@@ -33,10 +33,8 @@ def setupMoSlicer(orbitFile, Hrange, obsFile=None):
     ~lsst.sims.maf.slicer.MoObjSlicer
     """
     # Read the orbit file and set the H values for the slicer.
-    slicer = slicers.MoObjSlicer()
-    slicer.readOrbits(orbitFile, Hrange=Hrange)
-    if obsFile is not None:
-        slicer.readObs(obsFile)
+    slicer = slicers.MoObjSlicer(Hrange=Hrange)
+    slicer.setupSlicer(orbitFile=orbitFile, obsFile=obsFile)
     return slicer
 
 
