@@ -1112,7 +1112,7 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
                 if self.debug:
                     # plot the distribution to see whats up
                     plt.clf()
-                    plt.plot(simData[self.rotTelCol][c+1:cn+1], 'o')
+                    plt.plot(simData[self.rotTelCol][changeIdxs[-1]+1:], 'o')
                     plt.xlabel('Nvisit')
                     plt.ylabel('rotTelPos')
                     title = 'rotTelPos for visits where no good offset is found after 2500 tries\n'
