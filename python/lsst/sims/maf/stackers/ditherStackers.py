@@ -2,6 +2,7 @@ from builtins import zip
 from builtins import range
 import numpy as np
 from .baseStacker import BaseStacker
+import warnings
 
 __all__ = ['setupDitherStackers', 'wrapRADec', 'wrapRA', 'inHexagon', 'polygonCoords',
            'BaseDitherStacker',
@@ -1052,10 +1053,13 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
             self.minRotAngle = np.radians(self.minRotAngle)
 
         if len(np.where(simData[self.rotTelCol]>self.maxRotAngle)[0])>0:
-             raise ValueError('Input data does not respect the maxRotAngle constraint.')
+            warnings.warn('Input data does not respect the specified maxRotAngle constraint: \
+                            Setting maxRotAngle to max value in the input data: %s'%max(simData[self.rotTelCol]))
+            self.maxRotAngle = max(simData[self.rotTelCol])
         if len(np.where(simData[self.rotTelCol]<self.minRotAngle)[0])>0:
-             raise ValueError('Input data does not respect the maxRotAngle constraint.')
-
+            warnings.warn('Input data does not respect the specified minRotAngle constraint: \
+                            Setting minRotAngle to min value in the input data: %s'%min(simData[self.rotTelCol]))
+            self.minRotAngle = min(simData[self.rotTelCol])
         # Identify points where the filter changes.
         changeIdxs = np.where(simData[self.filterCol][1:] != simData[self.filterCol][:-1])[0]
 
