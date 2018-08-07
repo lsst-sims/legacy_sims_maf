@@ -30,7 +30,7 @@ class MafTracking(object):
         cols = ['mafRunId', 'opsimRun', 'opsimGroup', 'mafComment', 'opsimComment', 'dbFile',
                 'mafDir', 'opsimVersion', 'opsimDate', 'mafVersion', 'mafDate']
         self.runs = tdb.query_columns('runs', colnames=cols)
-        self.runs = self.sortRuns(self.runs)
+        self.runs = self.sortRuns(self.runs, order=['mafRunId', 'opsimRun', 'mafComment'])
         self.runsPage = {}
 
     def runInfo(self, run):
