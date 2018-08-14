@@ -46,15 +46,22 @@ def setBatches(opsdb, colmap, args):
                                                   extraMetadata=md, ditherStacker=args.ditherStacker)
     bdict.update(intranight_wfdnes)
     plotbundles.append(plots)
-    internight_all, plots = batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint,
+
+    # Internight (nights between visits)
+    for tag in ['All', 'WFD']:
+        internight, plots = batches.interNight(colmap, args.runName, extraSql=sqls[tag],
+                                               extraMetadata=metadata[tag],
                                                ditherStacker=args.ditherStacker)
-    bdict.update(internight_all)
-    plotbundles.append(plots)
-    internight_wfd, plots = batches.interNight(colmap, args.runName, extraSql=sqls['WFD'],
-                                               extraMetadata=metadata['WFD'],
-                                               ditherStacker=args.ditherStacker)
-    bdict.update(internight_wfd)
-    plotbundles.append(plots)
+        bdict.update(internight)
+        plotbundles.append(plots)
+
+    # Intraseason (length of season)
+    for tag in ['All', 'WFD']:
+        season, plots = batches.seasons(colmap=colmap, runName=args.runName,
+                                        extraSql=sqls[tag], extraMetadata=metadata[tag],
+                                        ditherStacker=args.ditherStacker)
+        bdict.update(season)
+        plotbundles.append(plots)
 
     # Run all metadata metrics, All and just WFD.
     for tag in ['All', 'WFD']:
@@ -97,7 +104,7 @@ def setBatches(opsdb, colmap, args):
 
 
 if __name__ == '__main__':
-    args = parseArgs(subdir='all')
+    args = parseArgs(subdir='all_combine')
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
     if args.plotOnly:
