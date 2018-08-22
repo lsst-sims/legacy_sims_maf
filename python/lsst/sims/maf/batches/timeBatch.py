@@ -3,6 +3,7 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
@@ -274,6 +275,11 @@ def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata
                                                             extraSql=extraSql,
                                                             extraMetadata=metadata)
 
+    seasonStacker = stackers.SeasonStacker(mjdCol=colmap['mjd'], RACol=raCol,
+                                           degrees=degrees)
+    stackerList = [seasonStacker]
+    if ditherStacker is not None:
+        stackerList.append(ditherStacker)
     slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
     displayDict = {'group': 'IntraSeason', 'subgroup': 'Season length', 'caption': None, 'order': 0}
@@ -312,7 +318,7 @@ def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata
             minS = 30
         plotDict = {'color': colors[f], 'colorMin': minS, 'colorMax': maxS, 'xMin': minS, 'xMax': maxS}
         bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
-                                 displayDict=displayDict,
+                                 stackerList=stackerList, displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
                                  summaryMetrics=standardStats)
         bundleList.append(bundle)
