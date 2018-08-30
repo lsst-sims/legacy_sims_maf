@@ -187,8 +187,8 @@ class TestStackerClasses(unittest.TestCase):
         self._tDitherRange(diffsra, diffsdec, data[
                            'fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
-        self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'], data[
-                              'fieldDec'], data['night'])
+        self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'],
+                              data['fieldDec'], data['night'])
 
     def testSpiralDitherPerNight(self):
         """
