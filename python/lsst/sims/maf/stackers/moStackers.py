@@ -74,7 +74,13 @@ class MoMagStacker(BaseMoStacker):
         xval = np.power(10, 0.5 * (ssoObs['appMag'] - ssoObs[self.m5Col]))
         ssoObs['SNR'] = 1.0 / np.sqrt((0.04 - self.gamma) * xval + self.gamma * xval * xval)
         completeness = 1.0 / (1 + np.exp((ssoObs['appMag'] - ssoObs[self.m5Col])/self.sigma))
-        probability = np.random.random_sample(len(ssoObs['appMag']))
+        if not hasattr(self, '_rng'):
+            if self.randomSeed is not None:
+                self._rng = np.random.RandomState(self.randomSeed)
+            else:
+                self._rng = np.random.RandomState(734421)
+
+        probability = self._rng.random_sample(len(ssoObs['appMag']))
         ssoObs['vis'] = np.where(probability <= completeness, 1, 0)
         return ssoObs
 
