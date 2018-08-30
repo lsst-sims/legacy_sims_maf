@@ -167,9 +167,13 @@ class Orbits(object):
         else:
             raise ValueError('Need either a or q (plus e) in orbit data frame.')
         sedvals = np.empty(len(orbits), dtype=str)
-        if randomSeed is not None:
-            np.random.seed(randomSeed)
-        chance = np.random.random(len(orbits))
+        if not hasattr(self, '_rng'):
+            if randomSeed is not None:
+                self._rng = np.random.RandomState(randomSeed)
+            else:
+                self._rng = np.random.RandomState(334558)
+
+        chance = self._rng.random(len(orbits))
         prob_c = 0.5 * a - 1.0
         # if chance <= prob_c:
         sedvals = np.where(chance <= prob_c, 'C.dat', 'S.dat')
