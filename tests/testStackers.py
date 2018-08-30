@@ -161,8 +161,8 @@ class TestStackerClasses(unittest.TestCase):
                   * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['randomDitherFieldPerVisitDec']
         # Check dithers within expected range.
-        self._tDitherRange(diffsra, diffsdec, data[
-                           'fieldRA'], data['fieldDec'], maxDither)
+        self._tDitherRange(diffsra, diffsdec,
+                           data['fieldRA'], data['fieldDec'], maxDither)
 
     def testRandomDitherPerNight(self):
         """
@@ -184,8 +184,8 @@ class TestStackerClasses(unittest.TestCase):
         diffsra = (np.radians(data['fieldRA']) - np.radians(data['randomDitherPerNightRa'])) \
                   * np.cos(np.radians(data['fieldDec']))
         diffsdec = np.radians(data['fieldDec']) - np.radians(data['randomDitherPerNightDec'])
-        self._tDitherRange(diffsra, diffsdec, data[
-                           'fieldRA'], data['fieldDec'], maxDither)
+        self._tDitherRange(diffsra, diffsdec,
+                           data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
         self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'],
                               data['fieldDec'], data['night'])
@@ -212,8 +212,8 @@ class TestStackerClasses(unittest.TestCase):
         diffsra = (data['fieldRA'] - data['spiralDitherPerNightRa']) \
                   * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['spiralDitherPerNightDec']
-        self._tDitherRange(diffsra, diffsdec, data[
-                           'fieldRA'], data['fieldDec'], maxDither)
+        self._tDitherRange(diffsra, diffsdec,
+                           data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
         self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'], data[
                               'fieldDec'], data['night'])
@@ -238,8 +238,8 @@ class TestStackerClasses(unittest.TestCase):
         diffsra = (data['fieldRA'] - data['hexDitherPerNightRa']) \
                   * np.cos(np.radians(data['fieldDec']))
         diffsdec = data['fieldDec'] - data['hexDitherPerNightDec']
-        self._tDitherRange(diffsra, diffsdec, data[
-                           'fieldRA'], data['fieldDec'], maxDither)
+        self._tDitherRange(diffsra, diffsdec,
+                           data['fieldRA'], data['fieldDec'], maxDither)
         # Check that dithers on the same night are the same.
         self._tDitherPerNight(diffsra, diffsdec, data['fieldRA'],
                               data['fieldDec'], data['night'])
