@@ -230,8 +230,8 @@ class RandomDitherFieldPerVisitStacker(BaseDitherStacker):
         maxTries = 100
         tries = 0
         while (len(xOut) < noffsets) and (tries < maxTries):
-            dithersRad = np.sqrt(np.random.rand(noffsets * 2)) * self.maxDither
-            dithersTheta = np.random.rand(noffsets * 2) * np.pi * 2.0
+            dithersRad = np.sqrt(self._rng.rand(noffsets * 2)) * self.maxDither
+            dithersTheta = self._rng.rand(noffsets * 2) * np.pi * 2.0
             xOff = dithersRad * np.cos(dithersTheta)
             yOff = dithersRad * np.sin(dithersTheta)
             if self.inHex:
@@ -253,8 +253,12 @@ class RandomDitherFieldPerVisitStacker(BaseDitherStacker):
             # Column already present in data; assume it is correct and does not need recalculating.
             return simData
         # Generate random numbers for dither, using defined seed value if desired.
-        if self.randomSeed is not None:
-            np.random.seed(self.randomSeed)
+        if not hasattr(self, '_rng'):
+            if self.randomSeed is not None:
+                self._rng = np.random.RandomState(self.randomSeed)
+            else:
+                self._rng = np.random.RandomState(2178813)
+
         # Generate the random dither values.
         noffsets = len(simData[self.raCol])
         self._generateRandomOffsets(noffsets)
@@ -331,8 +335,12 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
         if cols_present:
             return simData
         # Generate random numbers for dither, using defined seed value if desired.
-        if self.randomSeed is not None:
-            np.random.seed(self.randomSeed)
+        if not hasattr(self, '_rng'):
+            if self.randomSeed is not None:
+                self._rng = np.random.RandomState(self.randomSeed)
+            else:
+                self._rng = np.random.RandomState(872453)
+
         # Generate the random dither values, one per night per field.
         fields = np.unique(simData[self.fieldIdCol])
         nights = np.unique(simData[self.nightCol])
@@ -417,8 +425,12 @@ class RandomDitherPerNightStacker(RandomDitherFieldPerVisitStacker):
         if cols_present:
             return simData
         # Generate random numbers for dither, using defined seed value if desired.
-        if self.randomSeed is not None:
-            np.random.seed(self.randomSeed)
+        if not hasattr(self, '_rng'):
+            if self.randomSeed is not None:
+                self._rng = np.random.RandomState(self.randomSeed)
+            else:
+                self._rng = np.random.RandomState(66334)
+
         # Generate the random dither values, one per night.
         nights = np.unique(simData[self.nightCol])
         self._generateRandomOffsets(len(nights))
@@ -1015,8 +1027,11 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
         if cols_present:
             return simData
         # Generate random numbers for dither, using defined seed value if desired.
-        if self.randomSeed is not None:
-            np.random.seed(self.randomSeed)
+        if not hasattr(self, '_rng'):
+            if self.randomSeed is not None:
+                self._rng = np.random.RandomState(self.randomSeed)
+            else:
+                self._rng = np.random.RandomState(544320)
 
         # Identify points where the filter changes.
         changeIdxs = np.where(simData[self.filterCol][1:] != simData[self.filterCol][:-1])[0]
@@ -1026,7 +1041,7 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
 
         else:
             # Calculate random offsets between +/- self.maxDither  -- in degrees.
-            randomOffsets = np.random.rand(len(changeIdxs)) * 2.0 * self.maxDither - self.maxDither
+            randomOffsets = self._rng.rand(len(changeIdxs)) * 2.0 * self.maxDither - self.maxDither
 
             rotOffset = np.zeros(len(simData), float)
             for i, (c, cn) in enumerate(zip(changeIdxs, changeIdxs[1:])):
