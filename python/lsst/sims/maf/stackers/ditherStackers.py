@@ -993,9 +993,9 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
         between -maxDither to maxDither.
         Default: 90 degrees.
     maxRotAngle : float, optional
-        Maximum rotator angle possible for the camera. Default 90 degrees.
+        Maximum rotator angle possible for the camera (degrees). Default 90 degrees.
     minRotAngle : float, optional
-        Minimum rotator angle possible for the camera. Default -90 degrees.
+        Minimum rotator angle possible for the camera (degrees). Default -90 degrees.
     randomSeed: int, optional
         If set, then used as the random seed for the numpy random number
         generation for the dither offsets.
@@ -1011,9 +1011,6 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
     def __init__(self, rotTelCol= 'rotTelPos', filterCol= 'filter', degrees=True,
                  maxDither=90., maxRotAngle=90, minRotAngle=-90, randomSeed=None,
                  debug=False):
-        """
-        @ MaxDither in degrees.
-        """
         # Instantiate the RandomDither object and set internal variables.
         self.rotTelCol = rotTelCol
         self.filterCol = filterCol
@@ -1027,9 +1024,13 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
             self.units = ['deg']
         else:
             self.units = ['rad']
+            # Convert user-specified values into radians as well.
+            self.maxDither = np.radians(self.maxDither)
+            self.maxRotAngle = np.radians(self.maxRotAngle)
+            self.minRotAngle = np.radians(self.minRotAngle)
         self.debug = debug
 
-        # Values required for framework operation: this specifies the data columns required from the database.
+        # Values required for framework operation: specify the data columns required from the database.
         self.colsReq = [self.rotTelCol, self.filterCol]
 
     def _run(self, simData, cols_present=False):
@@ -1040,28 +1041,24 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
             return simData
 
         # Generate random numbers for dither, using defined seed value if desired.
+        # Note that we must define the random state for np.random, to ensure consistency in the build system.
         if not hasattr(self, '_rng'):
             if self.randomSeed is not None:
                 self._rng = np.random.RandomState(self.randomSeed)
             else:
                 self._rng = np.random.RandomState(544320)
 
-        # See whether units need to be fixed on maxDither, min/maxRotAngle
-        if not self.degrees:
-            self.maxDither = np.radians(self.maxDither)
-            self.maxRotAngle = np.radians(self.maxRotAngle)
-            self.minRotAngle = np.radians(self.minRotAngle)
-
-        if len(np.where(simData[self.rotTelCol]>self.maxRotAngle)[0])>0:
+        if len(np.where(simData[self.rotTelCol]>self.maxRotAngle)[0]) > 0:
             warnings.warn('Input data does not respect the specified maxRotAngle constraint: '
                           '(Re)Setting maxRotAngle to max value in the input data: %s'
                           % max(simData[self.rotTelCol]))
             self.maxRotAngle = max(simData[self.rotTelCol])
-        if len(np.where(simData[self.rotTelCol]<self.minRotAngle)[0])>0:
+        if len(np.where(simData[self.rotTelCol]<self.minRotAngle)[0]) > 0:
             warnings.warn('Input data does not respect the specified minRotAngle constraint: '
                           '(Re)Setting minRotAngle to min value in the input data: %s'
                           % min(simData[self.rotTelCol]))
             self.minRotAngle = min(simData[self.rotTelCol])
+
         # Identify points where the filter changes.
         changeIdxs = np.where(simData[self.filterCol][1:] != simData[self.filterCol][:-1])[0]
 
@@ -1069,98 +1066,66 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
         rotDither = self.colsAdded[0]
 
         if len(changeIdxs) == 0:
-            # nothing to do here (no filter changes) so just return the original values
+            # There are no filter changes, so nothing to dither. Just use original values.
             simData[rotDither] = simData[self.rotTelCol]
-            return simData
         else:
-            # Assign a rotOffset to each observation. The offset will be a new offset following
-            # a filter change, optimized to ensure that all the visits that receive that offset
-            # retain the dithered rotTelPos value within self.maxRotAngle, self.minRotAngle
+            # For each filter change, generate a series of random values for the offsets,
+            # between +/- self.maxDither. These are potential values for the rotational offset.
+            # The offset actually used will be  confined to ensure that rotTelPos for all visits in
+            # that set of observations (between filter changes) fall within
+            # the specified min/maxRotAngle -- without truncating the rotTelPos values.
 
-            # Calculate random values between +/- self.maxDither
-            # Find 2x as many needed or 2500, whichever is bigger, random points as needed
-            # (2500 is an arbitrary number for the number of offsets that are considered
-            # before the search for a good offset is stopped)
-            randomOffsets = self._rng.rand(max(len(changeIdxs), 2500) * 2) * 2.0 * self.maxDither\
-                            - self.maxDither
+            # Generate more offsets than needed - either 2x filter changes or 2500, whichever is bigger.
+            # 2500 is an arbitrary number.
+            maxNum = max(len(changeIdxs) * 2, 2500)
 
             rotOffset = np.zeros(len(simData), float)
-            n_problematic_ones = 0  # track the sets of visits that are intentionally not assigned dithers
+            # Some sets of visits will not be assigned dithers: it was too hard to find an offset.
+            n_problematic_ones = 0
 
-            # loop over ind-with-filter-change, next-such-index
+            # Loop over the filter change indexes (current filter change, next filter change) to identify
+            # sets of visits that should have the same offset.
             for (c, cn) in zip(changeIdxs, changeIdxs[1:]):
+                randomOffsets = self._rng.rand(maxNum + 1) * 2.0 * self.maxDither - self.maxDither
                 i = 0
                 potential_offset = randomOffsets[i]
+                # Calculate new rotTelPos values, if we used this offset.
                 new_rotTel = simData[self.rotTelCol][c+1:cn+1] + potential_offset
+                # Does it work? Do all values fall within minRotAngle / maxRotAngle?
                 goodToGo = (new_rotTel >= self.minRotAngle).all() and (new_rotTel <= self.maxRotAngle).all()
+                while ((not goodToGo) and (i < maxNum)):
+                    # break if find a good offset or hit maxNum tries.
+                    i += 1
+                    potential_offset = randomOffsets[i]
+                    new_rotTel = simData[self.rotTelCol][c+1:cn+1] + potential_offset
+                    goodToGo = (new_rotTel >= self.minRotAngle).all() and \
+                               (new_rotTel <= self.maxRotAngle).all()
 
-                if not goodToGo:
-                    i_start = i
-                    while ((not goodToGo) and (i-i_start)<2500):
-                        # break if find a good offset or hit 2500 tries.
-                        i += 1
-                        potential_offset = randomOffsets[i]
-                        new_rotTel = simData[self.rotTelCol][c+1:cn+1] + potential_offset
-                        goodToGo = (new_rotTel >= self.minRotAngle).all() and \
-                                   (new_rotTel <= self.maxRotAngle).all()
-
-                if not goodToGo:  # i.e. no good offset was found after 2500 tries
+                if not goodToGo:  # i.e. no good offset was found after maxNum tries
                     n_problematic_ones += 1
-                    if self.debug:
-                        # plot the distribution to see whats up
-                        plt.clf()
-                        plt.plot(simData[self.rotTelCol][c+1:cn+1], 'o')
-                        plt.xlabel('Nvisit')
-                        plt.ylabel('rotTelPos')
-                        title = 'rotTelPos for visits where no good offset is found after 2500 tries\n'
-                        title += 'Unique filters for the range of visits: %s' \
-                                 % (np.unique(simData[self.filterCol][c+1:cn+1]),)
-                        plt.title(title)
-                        plt.show()
-                        print('Something is weird for these visits so no dither offset is applied.\n\n')
                     rotOffset[c+1:cn+1] = 0. # no dither
                 else:
                     rotOffset[c+1:cn+1] = randomOffsets[i]  # assign the chosen offset
-                    randomOffsets = np.delete(randomOffsets, i)
-                    if len(randomOffsets)<2500:
-                        if self.debug:
-                            print('Redoing the randoms: left with only %s randoms'%len(randomOffsets))
-                        randomOffsets = self._rng.rand(max(len(changeIdxs), 2500) * 2) \
-                                        * 2.0 * self.maxDither - self.maxDither
-            # last entry
+
+            # Handle the last set of observations (after the last filter change to the end of the survey).
+            randomOffsets = self._rng.rand(maxNum + 1) * 2.0 * self.maxDither - self.maxDither
             i = 0
             potential_offset = randomOffsets[i]
             new_rotTel = simData[self.rotTelCol][changeIdxs[-1]+1:] + potential_offset
             goodToGo = (new_rotTel >= self.minRotAngle).all() and (new_rotTel <= self.maxRotAngle).all()
-            if not goodToGo:
-                i_start = i
-                while ((not goodToGo) and (i-i_start)<2500):
-                    # break if find a good offset or cant (afetr 2500 tries)
-                    i += 1
-                    potential_offset = randomOffsets[i]
-                    new_rotTel = simData[self.rotTelCol][changeIdxs[-1]+1:] + potential_offset
-                    goodToGo = (new_rotTel >= self.minRotAngle).all() and \
-                               (new_rotTel <= self.maxRotAngle).all()
+            while ((not goodToGo) and (i < maxNum)):
+                # break if find a good offset or cant (after maxNum tries)
+                i += 1
+                potential_offset = randomOffsets[i]
+                new_rotTel = simData[self.rotTelCol][changeIdxs[-1]+1:] + potential_offset
+                goodToGo = (new_rotTel >= self.minRotAngle).all() and \
+                           (new_rotTel <= self.maxRotAngle).all()
 
-            if not goodToGo:  # i.e. no good offset was found after 2500 tries
+            if not goodToGo:  # i.e. no good offset was found after maxNum tries
                 n_problematic_ones += 1
-                if self.debug:
-                    # plot the distribution to see whats up
-                    plt.clf()
-                    plt.plot(simData[self.rotTelCol][changeIdxs[-1]+1:], 'o')
-                    plt.xlabel('Nvisit')
-                    plt.ylabel('rotTelPos')
-                    title = 'rotTelPos for visits where no good offset is found after 2500 tries\n'
-                    title += 'Unique filters for the range of visits: %s' \
-                             % (np.unique(simData[self.filterCol][c+1:cn+1]),)
-                    plt.title(title)
-                    plt.show()
-                    print('Something is weird for these visits so no dither offset is applied.\n\n')
                 rotOffset[c+1:cn+1] = 0.
             else:
                 rotOffset[changeIdxs[-1]+1:] = potential_offset
-
-            if self.debug: print('n_problematic_ones: %s\n'%n_problematic_ones)
 
         # Assign the dithers
         simData[rotDither] = simData[self.rotTelCol] + rotOffset
@@ -1169,30 +1134,9 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
         goodToGo = (simData[rotDither] >= self.minRotAngle).all() and \
                    (simData[rotDither] <= self.maxRotAngle).all()
         if not goodToGo:
-            if self.debug:
-                ind = np.where(simData[rotDither] <= self.minRotAngle)[0]
-                if len(ind) > 0:
-                    # plot the distribution to see whats up
-                    plt.clf()
-                    plt.hist(simData[self.rotTelCol][ind], histtype='step', label='rotTelPos')
-                    plt.hist(simData[rotDither][ind], histtype='step', label='dithered rotTelPos')
-                    plt.legend()
-                    plt.title('dithered rotTel <= min = %s'%self.minRotAngle)
-                    plt.show()
-
-                ind = np.where(simData[rotDither] >= self.maxRotAngle)[0]
-                if len(ind) > 0:
-                    # plot the distribution to see whats up
-                    plt.clf()
-                    plt.hist(simData[self.rotTelCol][ind], histtype='step', label='rotTelPos')
-                    plt.hist(simData[rotDither][ind], histtype='step', label='dithered rotTelPos')
-                    plt.legend()
-                    plt.title('dithered rotTel >= max = %s'%self.maxRotAngle)
-                    plt.show()
-
             message = 'Rotational offsets are not working properly:\n'
-            message += 'dithered rotTelPos: %s\n'%(simData[rotDither])
-            message += 'minRotAngle: %s ; maxRotAngle: %s'%(self.minRotAngle, self.maxRotAngle)
+            message += ' dithered rotTelPos: %s\n' % (simData[rotDither])
+            message += ' minRotAngle: %s ; maxRotAngle: %s' % (self.minRotAngle, self.maxRotAngle)
             raise ValueError(message)
         else:
             return simData
