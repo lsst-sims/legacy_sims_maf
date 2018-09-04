@@ -32,7 +32,7 @@ def setBatches(opsdb, colmap, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run or replot metrics on the seasons.")
-    args = parseArgs(subdir='all', parser=parser)
+    args = parseArgs(subdir='season', parser=parser)
 
     opsdb, colmap = connectDb(args.dbfile)
     bdict = setBatches(opsdb, colmap, args)
