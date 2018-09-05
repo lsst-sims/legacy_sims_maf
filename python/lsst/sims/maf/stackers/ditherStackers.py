@@ -209,7 +209,7 @@ class RandomDitherFieldPerVisitStacker(BaseDitherStacker):
         If True, offsets are constrained to lie within a hexagon inscribed within the maxDither circle.
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
-    randomSeed : int, optional
+    randomSeed : int or None, optional
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
@@ -311,7 +311,7 @@ class RandomDitherFieldPerNightStacker(RandomDitherFieldPerVisitStacker):
         If True, offsets are constrained to lie within a hexagon inscribed within the maxDither circle.
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
-    randomSeed : int, optional
+    randomSeed : int or None, optional
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
@@ -402,7 +402,7 @@ class RandomDitherPerNightStacker(RandomDitherFieldPerVisitStacker):
         If True, offsets are constrained to lie within a hexagon inscribed within the maxDither circle.
         If False, offsets can lie anywhere out to the edges of the maxDither circle.
         Default True.
-    randomSeed : int, optional
+    randomSeed : int or None, optional
         If set, then used as the random seed for the numpy random number generation for the dither offsets.
         Default None.
     """
@@ -993,7 +993,7 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
         Maximum rotator angle possible for the camera. Default 90 degrees.
     minRotAngle : float, optional
         Minimum rotator angle possible for the camera. Default -90 degrees.
-    randomSeed: int, optional
+    randomSeed: int or None, optional
         If set, then used as the random seed for the numpy random number
         generation for the dither offsets.
         Default: None.
