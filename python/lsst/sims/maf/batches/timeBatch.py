@@ -129,7 +129,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     metric = metrics.TgapsMetric(bins=bins_metric, timesCol=colmap['mjd'], metricName='DeltaT Histogram')
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point ' \
-                             'on the sky, considering visits between %.1f and %.1f minutes,' % (binMin,
+                             'on the sky, considering visits between %.1f and %.1f minutes' % (binMin,
                                                                                                 binMax)
     if metadata is None or len(metadata) == 0:
         displayDict['caption'] += ', all proposals.'
@@ -194,7 +194,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     metric = metrics.NightgapsMetric(bins=bins, nightCol=colmap['night'], metricName='DeltaNight Histogram')
     plotDict = {'bins': bins, 'xlabel': 'dT (nights)'}
     displayDict['caption'] = 'Histogram of the number of nights between consecutive visits to a ' \
-                             'given point on the sky, considering separations between %d and %d,' \
+                             'given point on the sky, considering separations between %d and %d' \
                              % (bins.min(), bins.max())
     if metadata['all'] is None or len(metadata['all']) == 0:
         displayDict['caption'] += ', all proposals.'
@@ -290,7 +290,7 @@ def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata
     metric = metrics.NightgapsMetric(bins=bins, nightCol=colmap['night'], metricName='DeltaNight Histogram')
     plotDict = {'bins': bins, 'xlabel': 'dT (nights)'}
     displayDict['caption'] = 'Histogram of the number of nights between consecutive visits to a ' \
-                             'given point on the sky, considering separations between %d and %d,' \
+                             'given point on the sky, considering separations between %d and %d' \
                              % (bins.min(), bins.max())
     if metadata['all'] is None or len(metadata['all']) == 0:
         displayDict['caption'] += ', all proposals.'
