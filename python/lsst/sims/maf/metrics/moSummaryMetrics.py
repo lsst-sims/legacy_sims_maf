@@ -162,7 +162,7 @@ class MoCompletenessMetric(BaseMoMetric):
             completeness = np.where(n_all==0, 0, completeness)
         if self.cumulative:
             completenessInt = integrateOverH(completeness, Hvals, self.Hindex)
-            summaryVal = np.empty(len(completenessInt), dtype=[('name', np.str_, S20), ('value', float)])
+            summaryVal = np.empty(len(completenessInt), dtype=[('name', np.str_, 20), ('value', float)])
             summaryVal['value'] = completenessInt
             for i, Hval in enumerate(Hvals):
                 summaryVal['name'][i] = 'H <= %f' % (Hval)
