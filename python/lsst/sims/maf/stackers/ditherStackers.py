@@ -993,7 +993,7 @@ class RandomRotDitherPerFilterChangeStacker(BaseDitherStacker):
         Maximum rotator angle possible for the camera. Default 90 degrees.
     minRotAngle : float, optional
         Minimum rotator angle possible for the camera. Default -90 degrees.
-    randomSeed: int or None, optional
+    randomSeed: int, optional
         If set, then used as the random seed for the numpy random number
         generation for the dither offsets.
         Default: None.
