@@ -11,3 +11,4 @@ from .filterchangeBatch import *
 from .openshutterBatch import *
 from .skycoverage import *
 from .altazBatch import *
+from .movingObjectsBatch import *

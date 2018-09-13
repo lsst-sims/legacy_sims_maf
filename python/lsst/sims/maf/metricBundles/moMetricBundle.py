@@ -1,6 +1,7 @@
 from __future__ import print_function
 from builtins import object
 import os
+import warnings
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -227,26 +228,6 @@ class MoMetricBundle(MetricBundle):
     def reduceMetric(self, reduceFunc, reducePlotDict=None, reduceDisplayDict=None):
         raise NotImplementedError
 
-    def read(self, filename):
-        "Read metric data back into a metricBundle, as best as possible."
-        if not os.path.isfile(filename):
-            raise IOError('%s not found' % filename)
-        self._resetMetricBundle()
-        # Must read the data using a moving object slicer.
-        slicer = MoObjSlicer()
-        self.metricValues, self.slicer = slicer.readData(filename)
-        # It's difficult to reinstantiate the metric object, as we don't
-        # know what it is necessarily -- the metricName can be changed.
-        self.metric = BaseMoMetric()
-        # But, for plot label building, we do need to try to recreate the
-        #  metric name and units. We can't really do that yet - need more infrastructure.
-        self.metric.name = ''
-        self.constraint = None
-        self.metadata = None
-        path, head = os.path.split(filename)
-        self.fileRoot = head.replace('.h5', '')
-        self.setPlotFuncs([MetricVsH()])
-
 
 class MoMetricBundleGroup(object):
     def __init__(self, bundleDict, outDir='.', resultsDb=None, verbose=True):
@@ -376,17 +357,27 @@ class MoMetricBundleGroup(object):
         """
         if self.verbose:
             print('Running metrics %s' % compatibleList)
-        # Make a list of all the maps and stackers to be run for this set.
-        compatMaps = []
-        compatStackers = []
-        for k in compatibleList:
-            b = self.bundleDict[k]
-            compatMaps.extend(b.mapsList)
-            compatStackers.extend(b.stackerList)
-        compatStackers = list(set(compatStackers))
-        compatMaps = list(set(compatMaps))
-        if len(compatMaps) > 0:
+
+        bDict = self.bundleDict  #  {key: self.bundleDict.get(key) for key in compatibleList}
+
+        # Find the unique stackers and maps. These are already "compatible" (as id'd by compatibleList).
+        uniqStackers = []
+        allStackers = []
+        uniqMaps = []
+        allMaps = []
+        for b in bDict.values():
+            allStackers += b.stackerList
+            allMaps += b.mapsList
+        for s in allStackers:
+            if s not in uniqStackers:
+                uniqStackers.append(s)
+        for m in allMaps:
+            if m not in uniqMaps:
+                uniqMaps.append(m)
+
+        if len(uniqMaps) > 0:
             print("Got some maps .. that was unexpected at the moment. Can't use them here yet.")
+
         # Set up all of the metric values, including for the child bundles.
         for k in compatibleList:
             b = self.bundleDict[k]
@@ -398,8 +389,10 @@ class MoMetricBundleGroup(object):
             ssoObs = slicePoint['obs']
             for j, Hval in enumerate(slicePoint['Hvals']):
                 # Run stackers to add extra columns (that depend on Hval)
-                for s in compatStackers:
-                    ssoObs = s.run(ssoObs, slicePoint['orbit']['H'], Hval)
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    for s in uniqStackers:
+                        ssoObs = s.run(ssoObs, slicePoint['orbit']['H'], Hval)
                 # Run all the parent metrics.
                 for k in compatibleList:
                     b = self.bundleDict[k]
@@ -445,25 +438,21 @@ class MoMetricBundleGroup(object):
         if self.verbose:
             print('Calculated and saved all metrics.')
 
-    def plotCurrent(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
-                    closefigs=True):
-        plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
-                                  savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
-        for b in self.currentBundleDict.values():
-            b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
-            for cb in b.childBundles.values():
-                cb.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
-            if closefigs:
-                plt.close('all')
-
     def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
                 closefigs=True):
         """
         Make a few generically desired plots. This needs more flexibility in the future.
         """
-        for constraint in self.constraints:
-            self._setCurrent(constraint)
-            self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
-                             thumbnail=thumbnail, closefigs=closefigs)
+        plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
+                                  savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+        for b in self.bundleDict.values():
+            try:
+                b.plot(plotHandler=plotHandler, outfileSuffix=outfileSuffix, savefig=savefig)
+            except ValueError as ve:
+                message = 'Plotting failed for metricBundle %s.' % (b.fileRoot)
+                message += ' Error message: %s' % (ve.message)
+                warnings.warn(message)
+            if closefigs:
+                plt.close('all')
         if self.verbose:
-            print('Plotted all metrics.')
+            print('Plotting all metrics.')

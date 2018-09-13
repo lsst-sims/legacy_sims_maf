@@ -15,20 +15,23 @@ def setBatches(opsdb, colmap, args):
     bdict = {}
     plotbundles = []
     # Intranight (pairs/time)
-    intranight_all, plots = batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint)
+    intranight_all, plots = batches.intraNight(colmap, args.runName, extraSql=args.sqlConstraint,
+                                               ditherStacker=args.ditherStacker)
     bdict.update(intranight_all)
     plotbundles.append(plots)
     sql = '(%s) or (%s)' % (sqls['WFD'], sqls['NES'])
     md = 'WFD+' + metadata['NES']
     intranight_wfdnes, plots = batches.intraNight(colmap, args.runName, extraSql=sql,
-                                                  extraMetadata=md)
+                                                  extraMetadata=md, ditherStacker=args.ditherStacker)
     bdict.update(intranight_wfdnes)
     plotbundles.append(plots)
-    internight_all, plots = batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint)
+    internight_all, plots = batches.interNight(colmap, args.runName, extraSql=args.sqlConstraint,
+                                               ditherStacker=args.ditherStacker)
     bdict.update(internight_all)
     plotbundles.append(plots)
     internight_wfd, plots = batches.interNight(colmap, args.runName, extraSql=sqls['WFD'],
-                                               extraMetadata=metadata['WFD'])
+                                               extraMetadata=metadata['WFD'],
+                                               ditherStacker=args.ditherStacker)
     bdict.update(internight_wfd)
     plotbundles.append(plots)
     return bdict, plots

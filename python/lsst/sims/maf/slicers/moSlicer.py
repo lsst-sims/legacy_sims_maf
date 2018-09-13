@@ -15,49 +15,86 @@ class MoObjSlicer(BaseSlicer):
     """ Slice moving object _observations_, per object and optionally clone/per H value.
 
     Iteration over the MoObjSlicer will go as:
-    - iterate over each orbit;
-    - if Hrange is not None, for each orbit, iterate over Hrange.
+    * iterate over each orbit;
+    * if Hrange is not None, for each orbit, iterate over Hrange.
+
+    Parameters
+    ----------
+    Hrange : numpy.ndarray or None
+        The H values to clone the orbital parameters over. If Hrange is None, will not clone orbits.
     """
-    def __init__(self, verbose=True, badval=0):
+    def __init__(self, Hrange=None, verbose=True, badval=0):
         super(MoObjSlicer, self).__init__(verbose=verbose, badval=badval)
+        self.Hrange = Hrange
+        self.slicer_init = {'Hrange': Hrange, 'badval': badval}
         # Set default plotFuncs.
         self.plotFuncs = [MetricVsH(),
                           MetricVsOrbit(xaxis='q', yaxis='e'),
                           MetricVsOrbit(xaxis='q', yaxis='inc')]
 
-    def readOrbits(self, orbitFile, Hrange, delim=None, skiprows=None):
+    def setupSlicer(self, orbitFile, delim=None, skiprows=None, obsFile=None):
+        """Set up the slicer and read orbitFile and obsFile from disk.
+
+        Sets self.orbits (with orbit parameters), self.allObs, and self.obs
+        self.orbitFile and self.obsFile
+
+        Parameters
+        ----------
+        orbitFile : str
+            The file containing the orbit information.
+            This is necessary, in order to be able to generate plots.
+        obsFile : str, optional
+            The file containing the observations of each object, optional.
+            If not provided (default, None), then the slicer will not be able to 'slice', but can still plot.
+        """
+        self.readOrbits(orbitFile, delim=delim, skiprows=skiprows)
+        if obsFile is not None:
+            self.readObs(obsFile)
+        else:
+            self.obsFile = None
+            self.allObs = None
+            self.obs = None
+        # Add these filenames to the slicer init values, to preserve in output files.
+        self.slicer_init['orbitFile'] = self.orbitFile
+        self.slicer_init['obsFile'] = self.obsFile
+
+    def readOrbits(self, orbitFile, delim=None, skiprows=None):
         # Use sims_movingObjects to read orbit files.
         orb = Orbits()
         orb.readOrbits(orbitFile, delim=delim, skiprows=skiprows)
+        self.orbitFile = orbitFile
         self.orbits = orb.orbits
         # Then go on as previously. Need to refactor this into 'setupSlicer' style.
         self.nSso = len(self.orbits)
         self.slicePoints = {}
         self.slicePoints['orbits'] = self.orbits
-        # See if we're cloning orbits.
-        self.Hrange = Hrange
         # And set the slicer shape/size.
         if self.Hrange is not None:
-            self.shape = [self.nSso, len(Hrange)]
-            self.slicePoints['H'] = Hrange
+            self.shape = [self.nSso, len(self.Hrange)]
+            self.slicePoints['H'] = self.Hrange
         else:
             self.shape = [self.nSso, 1]
             self.slicePoints['H'] = self.orbits['H']
         # Set the rest of the slicePoint information once
         self.nslice = self.shape[0] * self.shape[1]
 
-    def readObs(self, obsfile):
-        """
-        Read observations created by moObs.
+    def readObs(self, obsFile):
+        """Read observations of the solar system objects (such as created by sims_movingObjects).
+
+        Parameters
+        ----------
+        obsFile: str
+            The file containing the observation information.
         """
         # For now, just read all the observations (should be able to chunk this though).
-        self.obsfile = obsfile
-        self.allObs = pd.read_table(obsfile, delim_whitespace=True)
+        self.allObs = pd.read_table(obsFile, delim_whitespace=True)
+        self.obsFile = obsFile
         # We may have to rename the first column from '#objId' to 'objId'.
         if self.allObs.columns.values[0].startswith('#'):
             newcols = self.allObs.columns.values
             newcols[0] = newcols[0].replace('#', '')
             self.allObs.columns = newcols
+        # Backwards compatibility ..
         if 'magFilter' not in self.allObs.columns.values:
             self.allObs['magFilter'] = self.allObs['magV'] + self.allObs['dmagColor']
         if 'velocity' not in self.allObs.columns.values:
@@ -80,10 +117,15 @@ class MoObjSlicer(BaseSlicer):
             self.obs = self.allObs.query(pandasConstraint)
 
     def _sliceObs(self, idx):
-        """
-        Return the observations of ssoId.
+        """Return the observations of a given ssoId.
+
         For now this works for any ssoId; in the future, this might only work as ssoId is
-         progressively iterated through the series of ssoIds (so we can 'chunk' the reading).
+        progressively iterated through the series of ssoIds (so we can 'chunk' the reading).
+
+        Parameters
+        ----------
+        idx : integer
+            The integer index of the particular SSO in the orbits dataframe.
         """
         # Find the matching orbit.
         orb = self.orbits.iloc[idx]
@@ -129,34 +171,8 @@ class MoObjSlicer(BaseSlicer):
         """
         result = False
         if isinstance(otherSlicer, MoObjSlicer):
-            if otherSlicer.obsfile == self.obsfile:
-                if np.all(otherSlicer.slicePoints['H'] == self.slicePoints['H']):
-                    result = True
+            if otherSlicer.orbitFile == self.orbitFile:
+                if otherSlicer.obsFile == self.obsFile:
+                    if np.all(otherSlicer.slicePoints['H'] == self.slicePoints['H']):
+                        result = True
         return result
-
-    def writeData(self, outfilename, metricValues, metricName='',
-                  simDataName='', constraint=None, metadata='',
-                  plotDict=None, displayDict=None):
-        """
-        Cheap and dirty write to disk.
-        Need to expand to include writing summary statistics to disk and info about slicer.
-        """
-        df = pd.DataFrame(metricValues, columns=self.Hrange, index=None)
-        df.to_hdf(outfilename.replace('.npz', '.h5'), 'df_with_missing')
-
-    def readData(self, infilename):
-        "Cheap and dirty read."
-        slicer = MoObjSlicer()
-        df = pd.read_hdf(infilename, 'df_with_missing')
-        slicer.Hrange = df.columns.values
-        slicer.slicePoints['H'] = slicer.Hrange
-        slicer.shape = [len(df.values), len(slicer.Hrange)]
-        slicer.orbits = None
-        metricValues = ma.MaskedArray(data=df.values,
-                                      mask=np.zeros(slicer.shape, 'bool'),
-                                      fill_value=slicer.badval)
-        try:
-            metricValues.mask = np.where(np.isnan(df.values), 1, 0)
-        except TypeError:
-            warnings.warn('Could not mask metricValues, as they are complex type.')
-        return metricValues, slicer

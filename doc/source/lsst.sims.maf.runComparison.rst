@@ -1,19 +1,19 @@
-lsst\.sims\.maf\.runComparison package
-======================================
+lsst.sims.maf.runComparison package
+===================================
 
 Submodules
 ----------
 
-lsst\.sims\.maf\.runComparison\.runComparison module
-----------------------------------------------------
+lsst.sims.maf.runComparison.runComparison module
+------------------------------------------------
 
 .. automodule:: lsst.sims.maf.runComparison.runComparison
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.runComparison\.summaryStatPlotters module
-----------------------------------------------------------
+lsst.sims.maf.runComparison.summaryStatPlotters module
+------------------------------------------------------
 
 .. automodule:: lsst.sims.maf.runComparison.summaryStatPlotters
     :members:

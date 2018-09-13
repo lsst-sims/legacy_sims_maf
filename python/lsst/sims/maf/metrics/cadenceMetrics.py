@@ -3,7 +3,7 @@ from .baseMetric import BaseMetric
 
 __all__ = ['TemplateExistsMetric', 'UniformityMetric',
            'RapidRevisitUniformityMetric', 'RapidRevisitMetric','NRevisitsMetric', 'IntraNightGapsMetric',
-           'InterNightGapsMetric', 'AveGapMetric']
+           'InterNightGapsMetric', 'VisitGapMetric', 'SeasonLengthMetric']
 
 
 class TemplateExistsMetric(BaseMetric):
@@ -273,7 +273,7 @@ class IntraNightGapsMetric(BaseMetric):
 
 class InterNightGapsMetric(BaseMetric):
     """
-    Calculate the gap between consecutive observations between nights, in days.
+    Calculate the gap between consecutive observations in different nights, in days.
 
     Parameters
     ----------
@@ -317,7 +317,7 @@ class InterNightGapsMetric(BaseMetric):
         return result
 
 
-class AveGapMetric(BaseMetric):
+class VisitGapMetric(BaseMetric):
     """
     Calculate the gap between any consecutive observations, in hours, regardless of night boundaries.
 
@@ -328,13 +328,13 @@ class AveGapMetric(BaseMetric):
        Default np.median.
     """
     def __init__(self, mjdCol='observationStartMJD', nightCol='night', reduceFunc=np.median,
-                 metricName='AveGap', **kwargs):
+                 metricName='VisitGap', **kwargs):
         units = 'hours'
         self.mjdCol = mjdCol
         self.nightCol = nightCol
         self.reduceFunc = reduceFunc
-        super(AveGapMetric, self).__init__(col=[self.mjdCol, self.nightCol],
-                                           units=units, metricName=metricName, **kwargs)
+        super().__init__(col=[self.mjdCol, self.nightCol],
+                         units=units, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """Calculate the (reduceFunc) of the gap between consecutive observations.
@@ -357,4 +357,52 @@ class AveGapMetric(BaseMetric):
         dataSlice.sort(order=self.mjdCol)
         diff = np.diff(dataSlice[self.mjdCol])
         result = self.reduceFunc(diff) * 24.
+        return result
+
+class SeasonLengthMetric(BaseMetric):
+    """
+    Calculate the length of LSST seasons, in days.
+
+    Parameters
+    ----------
+    reduceFunc : function, optional
+       Function that can operate on array-like structures. Typically numpy function.
+       This reduces the season length in each season from 10 separate values to a single value.
+       Default np.median.
+    """
+    def __init__(self, mjdCol='observationStartMJD', seasonCol='season', reduceFunc=np.median,
+                 metricName='SeasonLength', **kwargs):
+        units = 'days'
+        self.mjdCol = mjdCol
+        self.seasonCol = seasonCol
+        self.reduceFunc = reduceFunc
+        super().__init__(col=[self.mjdCol, self.seasonCol],
+                         units=units, metricName=metricName, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        """Calculate the (reduceFunc) of the length of each season.
+
+        Parameters
+        ----------
+        dataSlice : numpy.array
+            Numpy structured array containing the data related to the visits provided by the slicer.
+        slicePoint : dict, optional
+            Dictionary containing information about the slicepoint currently active in the slicer.
+
+        Returns
+        -------
+        float
+           The (reduceFunc) of the length of each season, in days.
+        """
+        dataSlice.sort(order=self.seasonCol)
+        lenData = len(dataSlice)
+        seasons = np.unique(dataSlice[self.seasonCol])
+        # Find the first and last observation of each season.
+        firstOfSeason= np.searchsorted(dataSlice[self.seasonCol], seasons)
+        lastOfSeason = np.searchsorted(dataSlice[self.seasonCol], seasons, side='right') - 1
+        # Seasons may not match up around 0/360 boundary I suspect. This is a bit of a hack.
+        #firstOfSeason = np.where(firstOfSeason == lenData, lenData - 1, firstOfSeason)
+        #lastOfSeason = np.where(lastOfSeason == lenData, lenData - 1, lastOfSeason)
+        length = dataSlice[self.mjdCol][lastOfSeason] - dataSlice[self.mjdCol][firstOfSeason]
+        result = self.reduceFunc(length)
         return result

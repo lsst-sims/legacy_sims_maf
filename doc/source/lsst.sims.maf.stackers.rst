@@ -1,83 +1,83 @@
-lsst\.sims\.maf\.stackers package
-=================================
+lsst.sims.maf.stackers package
+==============================
 
 Submodules
 ----------
 
-lsst\.sims\.maf\.stackers\.NEODistStacker module
-------------------------------------------------
+lsst.sims.maf.stackers.NEODistStacker module
+--------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.NEODistStacker
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.baseStacker module
----------------------------------------------
+lsst.sims.maf.stackers.baseStacker module
+-----------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.baseStacker
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.coordStackers module
------------------------------------------------
+lsst.sims.maf.stackers.coordStackers module
+-------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.coordStackers
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.ditherStackers module
-------------------------------------------------
+lsst.sims.maf.stackers.ditherStackers module
+--------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.ditherStackers
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.generalStackers module
--------------------------------------------------
+lsst.sims.maf.stackers.generalStackers module
+---------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.generalStackers
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.getColInfo module
---------------------------------------------
+lsst.sims.maf.stackers.getColInfo module
+----------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.getColInfo
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.m5OptimalStacker module
---------------------------------------------------
+lsst.sims.maf.stackers.m5OptimalStacker module
+----------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.m5OptimalStacker
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.moStackers module
---------------------------------------------
+lsst.sims.maf.stackers.moStackers module
+----------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.moStackers
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.nFollowStacker module
-------------------------------------------------
+lsst.sims.maf.stackers.nFollowStacker module
+--------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.nFollowStacker
     :members:
     :undoc-members:
     :show-inheritance:
 
-lsst\.sims\.maf\.stackers\.sdssStackers module
-----------------------------------------------
+lsst.sims.maf.stackers.sdssStackers module
+------------------------------------------
 
 .. automodule:: lsst.sims.maf.stackers.sdssStackers
     :members:

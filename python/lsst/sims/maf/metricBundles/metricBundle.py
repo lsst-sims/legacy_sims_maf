@@ -443,24 +443,24 @@ class MetricBundle(object):
         self.metric = metrics.BaseMetric()
         # But, for plot label building, we do need to try to recreate the
         #  metric name and units.
-        self.metric.name = header['metricName']
-        if 'plotDict' in header:
-            if 'units' in header['plotDict']:
-                self.metric.units = header['plotDict']['units']
-        else:
-            self.metric.units = ''
-        self.runName = header['simDataName']
-        try:
-            self.constraint = header['constraint']
-        except KeyError:
-            self.constraint = header['sqlconstraint']
-        self.metadata = header['metadata']
+        self.metric.units = ''
+        if header is not None:
+            self.metric.name = header['metricName']
+            if 'plotDict' in header:
+                if 'units' in header['plotDict']:
+                    self.metric.units = header['plotDict']['units']
+            self.runName = header['simDataName']
+            try:
+                self.constraint = header['constraint']
+            except KeyError:
+                self.constraint = header['sqlconstraint']
+            self.metadata = header['metadata']
+            if 'plotDict' in header:
+                self.setPlotDict(header['plotDict'])
+            if 'displayDict' in header:
+                self.setDisplayDict(header['displayDict'])
         if self.metadata is None:
             self._buildMetadata()
-        if 'plotDict' in header:
-            self.setPlotDict(header['plotDict'])
-        if 'displayDict' in header:
-            self.setDisplayDict(header['displayDict'])
         path, head = os.path.split(filename)
         self.fileRoot = head.replace('.npz', '')
         self.setPlotFuncs(None)

@@ -152,7 +152,7 @@ class MetricVsOrbit(BasePlotter):
             Hwidth = 1.0
         if len(Hvals) == slicer.shape[1]:
             if plotDict['Hval'] is None:
-                Hidx = len(Hvals) / 2
+                Hidx = int(len(Hvals) / 2)
                 Hval = Hvals[Hidx]
             else:
                 Hval = plotDict['Hval']
@@ -240,7 +240,7 @@ class MetricVsOrbitPoints(BasePlotter):
             Hwidth = 1.0
         if plotDict['Hval'] is None:
             if len(Hvals) == slicer.shape[1]:
-                Hidx = len(Hvals) / 2
+                Hidx = int(len(Hvals) / 2)
                 Hval = Hvals[Hidx]
             else:
                 Hval = np.median(Hvals)

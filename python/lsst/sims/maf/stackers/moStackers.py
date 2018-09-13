@@ -6,7 +6,7 @@ __all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
 
 
 class BaseMoStacker(BaseStacker):
-    """Base class for moving object stackers.
+    """Base class for moving object (SSobject)  stackers. Relevant for MoSlicer ssObs (pd.dataframe).
 
     Provided to add moving-object specific API for 'run' method of moving object stackers."""
     def run(self, ssoObs, Href, Hval=None):
@@ -25,7 +25,7 @@ class BaseMoStacker(BaseStacker):
 
 
 class MoMagStacker(BaseMoStacker):
-    """Add columns relevant to moving object apparent magnitudes and visibility to the slicer ssoObs
+    """Add columns relevant to SSobject apparent magnitudes and visibility to the slicer ssoObs
     dataframe, given a particular Href and current Hval.
 
     Specifically, this stacker adds magLimit, appMag, SNR, and vis.
@@ -53,11 +53,16 @@ class MoMagStacker(BaseMoStacker):
         Default 0.12.
         The probabilistic prediction of visibility is based on Fermi-Dirac completeness formula (see SDSS,
         eqn 24, Stripe82 analysis: http://iopscience.iop.org/0004-637X/794/2/120/pdf/apj_794_2_120.pdf).
+    randomSeed: int or None, optional
+        If set, then used as the random seed for the numpy random number
+        generation for the dither offsets.
+        Default: None.
     """
     colsAdded = ['appMagV', 'appMag', 'SNR', 'vis']
 
     def __init__(self, vMagCol='magV', colorCol='dmagColor', magFilterCol='magFilter',
-                 lossCol='dmagDetect', m5Col='fiveSigmaDepth', gamma=0.038, sigma=0.12):
+                 lossCol='dmagDetect', m5Col='fiveSigmaDepth', gamma=0.038, sigma=0.12,
+                 randomSeed=None):
         self.vMagCol = vMagCol
         self.colorCol = colorCol
         self.magFilterCol = magFilterCol
@@ -65,6 +70,7 @@ class MoMagStacker(BaseMoStacker):
         self.lossCol = lossCol
         self.gamma = gamma
         self.sigma = sigma
+        self.randomSeed = randomSeed
         self.colsReq = [self.magFilterCol, self.m5Col, self.lossCol]
         self.units = ['mag', 'mag', 'SNR', '']
 

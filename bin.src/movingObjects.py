@@ -91,11 +91,11 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
     basicPlotDict = {'albedo': albedo, 'Hmark': Hmark, 'npReduce': npReduce}
 
     summaryMetrics = [metrics.MoCompletenessAtTimeMetric(times=mParams['times'], Hval=Hmark,
-                                                         cumulative=False),
+                                                         cumulative=False, Hindex=0.33),
                       metrics.MoCompletenessAtTimeMetric(times=mParams['times'], Hval=Hmark,
-                                                         cumulative=True)]
-    simpleSummaryMetrics = [metrics.MoCompletenessMetric(cumulative=False),
-                            metrics.MoCompletenessMetric(cumulative=True)]
+                                                         cumulative=True, Hindex=0.33)]
+    simpleSummaryMetrics = [metrics.MoCompletenessMetric(cumulative=False, Hindex=0.33),
+                            metrics.MoCompletenessMetric(cumulative=True, Hindex=0.33)]
 
     plotFuncs = [plots.MetricVsH()]
 
@@ -120,7 +120,7 @@ def setupMetrics(slicer, runName, metadata, mParams, albedo=None, Hmark=None):
         parentBundle.childBundles['Time'].metadata = parentBundle.metadata
         parentBundle.childBundles['Time'].setDisplayDict(dispDict)
         parentBundle.childBundles['Time'].setSummaryMetrics(summaryMetrics)
-        for nyr in mParams['nYears']:
+        for nyr in mParams['nyears']:
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].metadata = parentBundle.metadata + \
                                                                           ' yr %d' % nyr
             parentBundle.childBundles['N_Chances_yr_%d' % nyr].setSummaryMetrics(simpleSummaryMetrics)
@@ -729,10 +729,9 @@ def addAllCompletenessBundles(allBundles, Hmark, outDir, resultsDb):
     if k in allBundles:
         for md in allBundles[k]:
             for submd in allBundles[k][md].childBundles:
-                if submd.startswith('Time') or submd.startswith['N_Chances']:
+                if submd.startswith('Time') or submd.startswith('N_Chances'):
                     b = allBundles[k][md].childBundles[submd]
-                    compmd = ' '.join([md, submd.lstrip("Time")]).replace('_', ' ')
-                    compmd = ' '.join([md, submd.lstrip("N_Chances")]).replace('_', ' ')
+                    compmd = ' '.join([md, submd.lstrip("Time").lstrip("N_Chances")]).replace('_', ' ')
                     allBundles['DifferentialCompleteness'][compmd] = \
                         mmb.makeCompletenessBundle(b, summaryName='DifferentialCompleteness', Hmark=Hmark,
                                                    resultsDb=resultsDb)
@@ -1142,7 +1141,7 @@ def plotMetrics(allBundles, outDir, metadata, runName, mParams, Hmark=None, resu
     plt.close()
 
 
-    # Plot the cumulative completeness values @ each year for std discovery strategy, as a function of H.
+    # Plot the cumulative completeness values @ each year for 15 day discovery strategy, as a function of H.
     k = 'CumulativeCompleteness'
     strategy = '3 pairs in 15 nights'
     mdmatch = ['%s %s yr %d' % (metadata, strategy, nyr) for nyr in mParams['nyears']]
@@ -1455,8 +1454,6 @@ def readAll(allBundles, orbitFile, outDir):
         del allBundles[i[0]][i][1].childBundles[i[2]]
     for i in missingBundles:
         del allBundles[i[0]][i[1]]
-    k = 'DifferentialCompleteness'
-
     return allBundles
 
 

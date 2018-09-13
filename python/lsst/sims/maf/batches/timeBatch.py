@@ -3,12 +3,13 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
+import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary, filterList, combineMetadata, radecCols
 
-__all__ = ['intraNight', 'interNight']
+__all__ = ['intraNight', 'interNight', 'seasons']
 
 
 def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
@@ -128,7 +129,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     metric = metrics.TgapsMetric(bins=bins_metric, timesCol=colmap['mjd'], metricName='DeltaT Histogram')
     plotDict = {'bins': bins_plot, 'xlabel': 'dT (minutes)'}
     displayDict['caption'] = 'Histogram of the time between consecutive visits to a given point ' \
-                             'on the sky, considering visits between %.1f and %.1f minutes,' % (binMin,
+                             'on the sky, considering visits between %.1f and %.1f minutes' % (binMin,
                                                                                                 binMax)
     if metadata is None or len(metadata) == 0:
         displayDict['caption'] += ', all proposals.'
@@ -178,22 +179,22 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     bundleList = []
 
     # Set up basic all and per filter sql constraints.
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    metadata = combineMetadata(extraMetadata, ditherMeta)
     filterlist, colors, orders, sqls, metadata = filterList(all=True,
                                                             extraSql=extraSql,
-                                                            extraMetadata=extraMetadata)
-
-    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
-    metadata = combineMetadata(metadata, ditherMeta)
+                                                            extraMetadata=metadata)
 
     slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
     displayDict = {'group': 'InterNight', 'subgroup': 'Night gaps', 'caption': None, 'order': 0}
+
     # Histogram of the number of nights between visits.
     bins = np.arange(1, 20.5, 1)
     metric = metrics.NightgapsMetric(bins=bins, nightCol=colmap['night'], metricName='DeltaNight Histogram')
     plotDict = {'bins': bins, 'xlabel': 'dT (nights)'}
     displayDict['caption'] = 'Histogram of the number of nights between consecutive visits to a ' \
-                             'given point on the sky, considering separations between %d and %d,' \
+                             'given point on the sky, considering separations between %d and %d' \
                              % (bins.min(), bins.max())
     if metadata['all'] is None or len(metadata['all']) == 0:
         displayDict['caption'] += ', all proposals.'
@@ -230,6 +231,99 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f], displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict, summaryMetrics=standardStats)
         bundleList.append(bundle)
+
+    # Set the runName for all bundles and return the bundleDict.
+    for b in bundleList:
+        b.setRunName(runName)
+    plotBundles = None
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
+
+def seasons(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
+            ditherStacker=None, ditherkwargs=None):
+    """Generate a set of statistics about the length and number of seasons.
+
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to use for all outputs.
+    ditherStacker: str or lsst.sims.maf.stackers.BaseDitherStacker
+        Optional dither stacker to use to define ra/dec columns.
+    ditherkwargs: dict, opt
+        Optional dictionary of kwargs for the dither stacker.
+    Returns
+    -------
+    metricBundleDict
+    """
+
+    if colmap is None:
+        colmap = ColMapDict('opsimV4')
+
+    bundleList = []
+
+    # Set up basic all and per filter sql constraints.
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(ditherStacker, colmap, ditherkwargs)
+    metadata = combineMetadata(extraMetadata, ditherMeta)
+    filterlist, colors, orders, sqls, metadata = filterList(all=True,
+                                                            extraSql=extraSql,
+                                                            extraMetadata=metadata)
+
+    seasonStacker = stackers.SeasonStacker(mjdCol=colmap['mjd'], RACol=raCol,
+                                           degrees=degrees)
+    stackerList = [seasonStacker]
+    if ditherStacker is not None:
+        stackerList.append(ditherStacker)
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
+
+    displayDict = {'group': 'IntraSeason', 'subgroup': 'Season length', 'caption': None, 'order': 0}
+
+    # Histogram of the length of seasons.
+    """
+    bins = np.arange(1, 20.5, 1)
+    metric = metrics.NightgapsMetric(bins=bins, nightCol=colmap['night'], metricName='DeltaNight Histogram')
+    plotDict = {'bins': bins, 'xlabel': 'dT (nights)'}
+    displayDict['caption'] = 'Histogram of the number of nights between consecutive visits to a ' \
+                             'given point on the sky, considering separations between %d and %d' \
+                             % (bins.min(), bins.max())
+    if metadata['all'] is None or len(metadata['all']) == 0:
+        displayDict['caption'] += ', all proposals.'
+    else:
+        displayDict['caption'] += ', %s.' % metadata['all']
+    plotFunc = plots.SummaryHistogram()
+    bundle = mb.MetricBundle(metric, slicer, sqls['all'], plotDict=plotDict,
+                             displayDict=displayDict, metadata=metadata['all'], plotFuncs=[plotFunc])
+    bundleList.append(bundle)
+    """
+
+    standardStats = standardSummary()
+    subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+
+    # Median inter-night gap (each and all filters)
+    metric = metrics.SeasonLengthMetric(metricName='Median Season Length', mjdCol=colmap['mjd'],
+                                        seasonCol='season', reduceFunc=np.median)
+    for f in filterlist:
+        displayDict['caption'] = 'Median season length, %s.' % metadata[f]
+        displayDict['order'] = orders[f]
+        maxS = 250
+        if f == 'all':
+            minS = 90
+        else:
+            minS = 30
+        plotDict = {'color': colors[f], 'colorMin': minS, 'colorMax': maxS, 'xMin': minS, 'xMax': maxS}
+        bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
+                                 stackerList=stackerList, displayDict=displayDict,
+                                 plotFuncs=subsetPlots, plotDict=plotDict,
+                                 summaryMetrics=standardStats)
+        bundleList.append(bundle)
+
+    # Number of seasons?
 
     # Set the runName for all bundles and return the bundleDict.
     for b in bundleList:
