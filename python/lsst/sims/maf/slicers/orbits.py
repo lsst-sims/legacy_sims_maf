@@ -183,7 +183,7 @@ class Orbits(object):
             else:
                 self._rng = np.random.RandomState(334558)
 
-        chance = self._rng.random(len(orbits))
+        chance = self._rng.random_sample(len(orbits))
         prob_c = 0.5 * a - 1.0
         # if chance <= prob_c:
         sedvals = np.where(chance <= prob_c, 'C.dat', 'S.dat')
