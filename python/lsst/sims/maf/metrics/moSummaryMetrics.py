@@ -70,22 +70,20 @@ class MeanValueAtHMetric(BaseMoMetric):
     Hmark : float, opt
         The H value at which to look up the metric value. Default = 22.
     """
-    def __init__(self, Hmark=22, **kwargs):
-        metricName = 'Mean Value At H=%.1f' %(Hmark)
+    def __init__(self, Hmark=22, reduceFunc=np.mean, metricName=None, **kwargs):
+        if metricName is None:
+            metricName = 'Mean Value At H=%.1f' %(Hmark)
         super(MeanValueAtHMetric, self).__init__(metricName=metricName, **kwargs)
         self.Hmark = Hmark
+        self.reduceFunc = reduceFunc
 
     def run(self, metricVals, Hvals):
         # Check if desired H value is within range of H values.
         if (self.Hmark < Hvals.min()) or (self.Hmark > Hvals.max()):
             warnings.warn('Desired H value of metric outside range of provided H values.')
             return None
-        value = np.interp([self.Hmark], Hvals, np.mean(metricVals.swapaxes(0, 1)))
-        # Combine Hmark and Value into a structured array to match resultsDB expectations.
-        summaryVal = np.empty(1, dtype=[('name', np.str_, 20), ('value', float)])
-        summaryVal['name'] = self.name
-        summaryVal['value'] = value
-        return summaryVal
+        value = np.interp(self.Hmark, Hvals, self.reduceFunc(metricVals.swapaxes(0, 1), axis=1))
+        return value
 
 
 class MoCompletenessMetric(BaseMoMetric):
