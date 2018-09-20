@@ -521,7 +521,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
     observations, in order to have a chance to detect activity.
     """
     def __init__(self, binsize, snrLimit=5,
-                 qCol='q', eCol='e', tPeriCol='tPeri', metricName=None, **kwargs):
+                 qCol='q', eCol='e', aCol='a', tPeriCol='tPeri', metricName=None, **kwargs):
         """
         @ binsize : size of orbit slice, in degrees.
         """
@@ -530,6 +530,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         super(ActivityOverPeriodMetric, self).__init__(metricName=metricName, **kwargs)
         self.qCol = qCol
         self.eCol = eCol
+        self.aCol = aCol
         self.tPeriCol = tPeriCol
         self.snrLimit = snrLimit
         self.binsize = np.radians(binsize)
@@ -540,7 +541,13 @@ class ActivityOverPeriodMetric(BaseMoMetric):
     def run(self, ssoObs, orb, Hval):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
-        a = orb[self.qCol] / (1 - orb[self.eCol])
+        ### FIX IT
+        try:
+            a = orb[self.qCol] / (1 - orb[self.eCol])
+        except KeyError:
+            raise(KeyError, "The expected columns - %s or (%s and %s) - were not present in the orbit."
+                            " (expected for metric ActivityOverPeriodMetric)." % (self.aCol,
+                                                                                  self.qCol, self.eCol))
         period = np.power(a, 3./2.) * 365.25
         anomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol]) / period) % (2 * np.pi)
         if self.snrLimit is not None:
