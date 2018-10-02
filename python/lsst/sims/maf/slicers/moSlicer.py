@@ -87,16 +87,13 @@ class MoObjSlicer(BaseSlicer):
             The file containing the observation information.
         """
         # For now, just read all the observations (should be able to chunk this though).
-        self.allObs = pd.read_table(obsFile, delim_whitespace=True)
+        self.allObs = pd.read_table(obsFile, delim_whitespace=True, comment='#')
         self.obsFile = obsFile
         # We may have to rename the first column from '#objId' to 'objId'.
         if self.allObs.columns.values[0].startswith('#'):
             newcols = self.allObs.columns.values
             newcols[0] = newcols[0].replace('#', '')
             self.allObs.columns = newcols
-        # Backwards compatibility ..
-        if 'magFilter' not in self.allObs.columns.values:
-            self.allObs['magFilter'] = self.allObs['magV'] + self.allObs['dmagColor']
         if 'velocity' not in self.allObs.columns.values:
             self.allObs['velocity'] = np.sqrt(self.allObs['dradt']**2 + self.allObs['ddecdt']**2)
         if 'visitExpTime' not in self.allObs.columns.values:
