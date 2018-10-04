@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from lsst.sims.skybrightness import stupidFast_RaDec2AltAz, SkyModel
+from lsst.sims.skybrightness import SkyModel
 import lsst.sims.skybrightness_pre as sb
-from lsst.sims.utils import raDec2Hpid, m5_flat_sed, Site
+from lsst.sims.utils import raDec2Hpid, m5_flat_sed, Site, _approx_RaDec2AltAz
 import healpy as hp
 import sqlite3
 import ephem
@@ -62,7 +62,7 @@ class mjd2night(object):
         return np.searchsorted(self.setting_sun_mjds, mjd)
 
 
-def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', slewtime_limit=5., 
+def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', slewtime_limit=5.,
                full_sky=False, radians=True):
     """
     Utility to take an array of observations and dump it to a sqlite file, filling in useful columns along the way.
@@ -123,8 +123,8 @@ def obs2sqlite(observations_in, location='LSST', outfile='observations.sqlite', 
 
     # Let's just use the stupid-fast to get alt-az
     if 'alt' not in in_cols:
-        alt, az = stupidFast_RaDec2AltAz(np.radians(observations['ra']), np.radians(observations['dec']),
-                                         telescope.latitude_rad, telescope.longitude_rad, observations['mjd'])
+        alt, az = _approx_RaDec2AltAz(np.radians(observations['ra']), np.radians(observations['dec']),
+                                      telescope.latitude_rad, telescope.longitude_rad, observations['mjd'])
         observations['alt'] = np.degrees(alt)
         observations['az'] = np.degrees(az)
 
