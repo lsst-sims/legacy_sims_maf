@@ -38,8 +38,6 @@ class MoMagStacker(BaseMoStacker):
 
     Parameters
     ----------
-    magFilterCol : str, opt
-        Name of the column describing the magnitude of the object, in the visit filter. Default magFilter.
     m5Col : str, opt
         Name of the column describing the 5 sigma depth of each visit. Default fiveSigmaDepth.
     lossCol : str, opt
@@ -60,23 +58,24 @@ class MoMagStacker(BaseMoStacker):
     """
     colsAdded = ['appMagV', 'appMag', 'SNR', 'vis']
 
-    def __init__(self, vMagCol='magV', colorCol='dmagColor', magFilterCol='magFilter',
+    def __init__(self, vMagCol='magV', colorCol='dmagColor',
                  lossCol='dmagDetect', m5Col='fiveSigmaDepth', gamma=0.038, sigma=0.12,
                  randomSeed=None):
         self.vMagCol = vMagCol
         self.colorCol = colorCol
-        self.magFilterCol = magFilterCol
         self.m5Col = m5Col
         self.lossCol = lossCol
         self.gamma = gamma
         self.sigma = sigma
         self.randomSeed = randomSeed
-        self.colsReq = [self.magFilterCol, self.m5Col, self.lossCol]
+        self.colsReq = [self.m5Col, self.vMagCol, self.colorCol, self.lossCol]
         self.units = ['mag', 'mag', 'SNR', '']
 
     def _run(self, ssoObs, Href, Hval):
-        ssoObs['appMagV'] = ssoObs[self.vMagCol] + Hval - Href + ssoObs[self.lossCol]
-        ssoObs['appMag'] = ssoObs[self.magFilterCol] + Hval - Href + ssoObs[self.lossCol]
+        # Hval = current H value (useful if cloning over H range), Href = reference H value from orbit.
+        # Without cloning, Href = Hval.
+        ssoObs['appMagV'] = ssoObs[self.vMagCol] + ssoObs[self.lossCol] + Hval - Href
+        ssoObs['appMag'] = ssoObs[self.vMagCol] + ssoObs[self.colorCol] + ssoObs[self.lossCol] + Hval - Href
         xval = np.power(10, 0.5 * (ssoObs['appMag'] - ssoObs[self.m5Col]))
         ssoObs['SNR'] = 1.0 / np.sqrt((0.04 - self.gamma) * xval + self.gamma * xval * xval)
         completeness = 1.0 / (1 + np.exp((ssoObs['appMag'] - ssoObs[self.m5Col])/self.sigma))
