@@ -475,8 +475,8 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
 
 def addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb):
     """
-    Generate completeness bundles from all N_Chances child metrics of the (discovery) bundles in bdict,
-    and write completeness at Hmark to resultsDb, save bundle to disk.
+    Generate completeness bundles from all N_Chances and Time child metrics of the (discovery) bundles in
+    bdict, and write completeness at Hmark to resultsDb, save bundle to disk.
 
     Parameters
     ----------
