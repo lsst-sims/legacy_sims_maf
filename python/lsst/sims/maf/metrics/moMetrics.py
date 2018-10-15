@@ -526,7 +526,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         @ binsize : size of orbit slice, in degrees.
         """
         if metricName is None:
-            metricName = 'Chance of detecting activity in %.1f of the orbit' %(window)
+            metricName = 'Chance of detecting activity covering %.1f of the orbit' %(binsize)
         super(ActivityOverPeriodMetric, self).__init__(metricName=metricName, **kwargs)
         self.qCol = qCol
         self.eCol = eCol
@@ -534,22 +534,22 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         self.tPeriCol = tPeriCol
         self.snrLimit = snrLimit
         self.binsize = np.radians(binsize)
-        self.anomalyBins = np.arange(0, 2 * np.pi + self.binsize / 2.0, self.binsize)
-        self.nBins = len(self.anomalyBins)
+        self.anomalyBins = np.arange(0, 2 * np.pi, self.binsize)
+        self.anomalyBins = np.concatenate([self.anomalyBins, np.array([2 * np.pi])])
+        self.nBins = len(self.anomalyBins) - 1
         self.units = '%.1f deg' %(np.degrees(self.binsize))
 
     def run(self, ssoObs, orb, Hval):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
-        ### FIX IT
         try:
+            # We'll let this fail quietly for now, if the orbit is a different format.
             a = orb[self.qCol] / (1 - orb[self.eCol])
-        except KeyError:
-            raise(KeyError, "The expected columns - %s or (%s and %s) - were not present in the orbit."
-                            " (expected for metric ActivityOverPeriodMetric)." % (self.aCol,
-                                                                                  self.qCol, self.eCol))
+            tPeri = orb[self.tPeriCol]
+        except ValueError:
+            return self.badval
         period = np.power(a, 3./2.) * 365.25
-        anomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol]) / period) % (2 * np.pi)
+        anomaly = ((ssoObs[self.mjdCol] - tPeri) / period) % (2 * np.pi)
         if self.snrLimit is not None:
             vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
         else:
@@ -784,7 +784,7 @@ class KnownObjectsMetric(BaseMoMetric):
     eff1 : float, opt
         The likelihood of actually achieving each individual input observation.
         If the input observations include one observation per day, an 'eff' value of 0.3 would
-        mean that (on average) only one third of these observations would be achieved. 
+        mean that (on average) only one third of these observations would be achieved.
         This is similar to the level for LSST, which can cover the visible sky every 3-4 days.
         Default 0.1
     tSwitch1 : float, opt
