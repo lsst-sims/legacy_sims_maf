@@ -24,8 +24,6 @@ Core LSST MAF metrics
  	 Count fraction of object period we could identify activity for an SSobject.
 - `ActivityOverTimeMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.moMetrics.ActivityOverTimeMetric>`_ 
  	 Count fraction of survey we could identify activity for an SSobject.
-- `AveGapMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.AveGapMetric>`_ 
- 	 Calculate the gap between any consecutive observations, in hours, regardless of night boundaries.
 - `AveSlewFracMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.slewMetrics.AveSlewFracMetric>`_ 
  	 Base class for the metrics.
 - `BaseMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.baseMetric.BaseMetric>`_ 
@@ -97,7 +95,7 @@ Core LSST MAF metrics
 - `IdentityMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.IdentityMetric>`_ 
  	 Return the metric value itself .. this is primarily useful as a summary statistic for UniSlicer metrics.
 - `InterNightGapsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.InterNightGapsMetric>`_ 
- 	 Calculate the gap between consecutive observations between nights, in days.
+ 	 Calculate the gap between consecutive observations in different nights, in days.
 - `IntraNightGapsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.IntraNightGapsMetric>`_ 
  	 Calculate the gap between consecutive observations within a night, in hours.
 - `KnownObjectsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.moMetrics.KnownObjectsMetric>`_ 
@@ -192,6 +190,8 @@ Core LSST MAF metrics
  	 Calculate the standard deviation of a simData column slice.
 - `RobustRmsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.simpleMetrics.RobustRmsMetric>`_ 
  	 Use the inter-quartile range of the data to estimate the RMS.  
+- `SeasonLengthMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.SeasonLengthMetric>`_ 
+ 	 Calculate the length of LSST seasons, in days.
 - `SlewContributionMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.slewMetrics.SlewContributionMetric>`_ 
  	 Base class for the metrics.
 - `StarDensityMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.starDensity.StarDensityMetric>`_ 
@@ -218,6 +218,8 @@ Core LSST MAF metrics
  	 Return the number of unique values divided by the total number of values.
 - `ValueAtHMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.moSummaryMetrics.ValueAtHMetric>`_ 
  	 Return the metric value at a given H value.
+- `VisitGapMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.cadenceMetrics.VisitGapMetric>`_ 
+ 	 Calculate the gap between any consecutive observations, in hours, regardless of night boundaries.
 - `VisitGroupsMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.visitGroupsMetric.VisitGroupsMetric>`_ 
  	 Count the number of visits per night within deltaTmin and deltaTmax.
 - `ZeropointMetric <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.ZeropointMetric>`_ 
@@ -226,48 +228,4 @@ Core LSST MAF metrics
  	 Metrics based on a specified number of visits, but returning AREA related to Nvisits:
 - `fONv <lsst.sims.maf.metrics.html#lsst.sims.maf.metrics.summaryMetrics.fONv>`_ 
  	 Metrics based on a specified area, but returning NVISITS related to area:
- 
-Contributed mafContrib metrics
-==============================
- 
-- `AngularSpreadMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/angularSpread.py>`_ 
-  	 Compute the angular spread statistic which measures uniformity of a distribution angles accounting for 2pi periodicity.
-- `CampaignLengthMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/campaignLengthMetric.py>`_ 
-  	 The campaign length, in seasons. 
-- `GRBTransientMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/GRBTransientMetric.py>`_ 
-  	 Detections for on-axis GRB afterglows decaying as 
-- `GalaxyCountsMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/lssMetrics.py>`_ 
-  	 Estimate the number of galaxies expected at a particular coadded depth.
-- `MeanNightSeparationMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/meanNightSeparationMetric.py>`_ 
-  	 The mean separation between nights within a season, and then the mean over the campaign. 
-- `NumObsMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/numObsMetric.py>`_ 
-  	 Calculate the number of observations per data slice.
-- `PeriodDeviationMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/varMetrics.py>`_ 
-  	 Measure the percentage deviation of recovered periods for pure sine wave variability (in magnitude).
-- `PeriodicMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/PeriodicMetric.py>`_ 
-  	 From a set of observation times, uses code provided by Robert Siverd (LCOGT) to calculate the spectral window function.
-- `PeriodicStarMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/periodicStarMetric.py>`_ 
-  	 At each slicePoint, run a Monte Carlo simulation to see how well a periodic source can be fit.
-- `RelRmsMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Relative scatter metric (RMS over median).
-- `SEDSNMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Computes the S/Ns for a given SED.
-- `SNMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Calculate the signal to noise metric in a given filter for an object of a given magnitude.
-- `SeasonLengthMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/seasonLengthMetric.py>`_ 
-  	 The mean season length, in months.
-- `StarCountMassMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/StarCountMassMetric.py>`_ 
-  	 Find the number of stars in a given field in the mass range fainter than magnitude 16 and bright enough to have noise less than 0.03 in a given band. M1 and M2 are the upper and lower limits of the mass range. 'band' is the band to be observed.
-- `StarCountMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/StarCountMetric.py>`_ 
-  	 Find the number of stars in a given field between D1 and D2 in parsecs.
-- `TdcMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/tdcMetric.py>`_ 
-  	 Combine campaign length, season length, and mean night speartion into a single metric.
-- `ThreshSEDSNMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/photPrecMetrics.py>`_ 
-  	 Computes the metric whether the S/N is bigger than the threshold in all the bands for a given SED
-- `TransientAsciiMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/transientAsciiMetric.py>`_ 
-  	 Based on the transientMetric, but uses an ascii input file and provides option to write out lightcurve.
-- `TripletBandMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/TripletMetric.py>`_ 
-  	 Find the number of 'triplets' of three images taken in the same band, based on user-selected minimum and maximum intervals (in hours),
-- `TripletMetric <http://github.com/lsst-nonproject/sims_maf_contrib/tree/master/mafContrib/TripletMetric.py>`_ 
-  	 Find the number of 'triplets' of three images taken in any band, based on user-selected minimum and maximum intervals (in hours),
  

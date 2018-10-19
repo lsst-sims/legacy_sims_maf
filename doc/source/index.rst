@@ -12,7 +12,8 @@ Contents:
    :maxdepth: 2
 
    overview.rst
-   metricsRun.rst
+   metricsRunAll.rst
+   metricsRunMoving.rst
    metricList.rst
    stackerList.rst
    modules.rst

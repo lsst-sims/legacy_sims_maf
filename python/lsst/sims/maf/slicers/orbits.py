@@ -6,8 +6,12 @@ __all__ = ['Orbits']
 
 
 class Orbits(object):
-    """Orbits reads and stores orbit parameters for moving objects.
-    Duplicate (for import/dependency management reasons) of lsst.sims.movingObjects.Orbits.
+    """Orbits reads, checks for required values, and stores orbit parameters for moving objects.
+
+    Instantiate the class and then use readOrbits or setOrbits to set the orbit values.
+
+    self.orbits stores the orbital parameters, as a pandas dataframe.
+    self.dataCols defines the columns required, although objId, H, g, and sed_filename are optional.
     """
     def __init__(self):
         self.orbits = None
@@ -114,13 +118,14 @@ class Orbits(object):
 
         # Check that the orbit epoch is within a 'reasonable' range, to detect possible column mismatches.
         general_epoch = orbits['epoch'].head(1).values[0]
-        expect_min_epoch = 16000.
-        expect_max_epoch = 80000.
+        # Look for epochs between 1800 and 2200 - this is primarily to check if people used MJD (and not JD).
+        expect_min_epoch = -21503.
+        expect_max_epoch = 124594.
         if general_epoch < expect_min_epoch or general_epoch > expect_max_epoch:
             raise ValueError("The epoch detected for this orbit is odd - %f. "
-                             "Expecting a value between %.1f and %.1f" % (general_epoch,
-                                                                          expect_min_epoch,
-                                                                          expect_max_epoch))
+                             "Expecting a value between %.1f and %.1f (MJD!)" % (general_epoch,
+                                                                                 expect_min_epoch,
+                                                                                 expect_max_epoch))
 
         # If these columns are not available in the input data, auto-generate them.
         if 'objId' not in orbits:
@@ -177,11 +182,11 @@ class Orbits(object):
         else:
             raise ValueError('Need either a or q (plus e) in orbit data frame.')
 
-        if not hasattr(self, '_rng'):
+        if not hasattr(self, "_rng"):
             if randomSeed is not None:
                 self._rng = np.random.RandomState(randomSeed)
             else:
-                self._rng = np.random.RandomState(334558)
+                self._rng = np.random.RandomState(42)
 
         chance = self._rng.random_sample(len(orbits))
         prob_c = 0.5 * a - 1.0
@@ -195,6 +200,10 @@ class Orbits(object):
 
         After reading and standardizing the column names, calls selfs.setOrbits to validate the
         orbital parameters. Expects angles in orbital element formats to be in degrees.
+
+        Note that readOrbits uses pandas.read_table to read the data file with the orbital parameters.
+        Thus, it should have column headers specifying the column names _unless_ skiprows == -1,
+        in which case it is assumed to be a standard DES COMETARY format file, with no header line.
 
         Parameters
         ----------
@@ -234,11 +243,15 @@ class Orbits(object):
             file.close()
 
             if skiprows == -1:
-                # No header; assume it's a typical DES file.
-                names = ('objId', 'FORMAT', 'q', 'e', 'i', 'node', 'argperi', 't_p',
-                         'H',  'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
+                # No header; assume it's a typical DES file - but is format KEP or COM?
+                names_COM = ('objId', 'FORMAT', 'q', 'e', 'i', 'node', 'argperi', 't_p',
+                             'H',  'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
+                names_KEP = ('objId', 'FORMAT', 'a', 'e', 'i', 'node', 'argperi', 'meanAnomaly',
+                             'H', 'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
                 orbits = pd.read_table(orbitfile, delim_whitespace=True, skiprows=0,
-                                       names=names)
+                                       names=names_COM)
+                if orbits['FORMAT'][0] == 'KEP':
+                    orbits.columns = names_KEP
 
             else:
                 # There is a header, but we also need to check if there is a comment key at the start
@@ -304,3 +317,19 @@ class Orbits(object):
         orbits.columns = ssoCols
         # Validate and assign orbits to self.
         self.setOrbits(orbits)
+
+    def updateOrbits(self, neworb):
+        """Update existing orbits with new values, leaving OrbitIds, H, g, and sed_filenames in place.
+
+        Example use: transform orbital parameters (using PyOrbEphemerides) and then replace original values.
+        Example use: propagate orbital parameters (using PyOrbEphemerides) and then replace original values.
+
+        Parameters
+        ----------
+        neworb: pandas.DataFrame
+        """
+        col_orig = ['objId', 'otype', 'model', 'H', 'g', 'sed_filename']
+        new_order = ['objId', 'otype'] + [n for n in neworb.columns] + ['H', 'g', 'model', 'sed_filename']
+        updated_orbits = neworb.join(self.orbits[col_orig])[new_order]
+        self.setOrbits(updated_orbits)
+

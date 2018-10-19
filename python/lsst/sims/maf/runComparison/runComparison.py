@@ -359,7 +359,7 @@ class RunComparison(object):
             parameters given in paramName like and a column for each of the
             dictionary keys in the metricDict. The resulting dataframe is
             indexed the name of the opsim runs.
-              index      metric1         metric2
+            index      metric1         metric2
             <run_123>    <metricValue1>  <metricValue2>
             <run_124>    <metricValue1>  <metricValue2>
         """

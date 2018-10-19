@@ -1,11 +1,9 @@
-============================
+================================================
 Metrics in run_all.py script
-============================
+================================================
 The `run_all.py` script included in MAF runs a very large number of useful
 metrics covering metadata about observing history, survey performance, and
-those from the LSST SRD. Here we will list and summarize the metics included
-in this script.
-
+those from the LSST SRD. These metrics are listed below.
 
 
 `SRD metrics <lsst.sims.maf.batches.html#module-lsst.sims.maf.batches.srdBatch>`_
