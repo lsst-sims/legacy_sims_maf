@@ -224,13 +224,14 @@ class MetricVsOrbitPoints(BasePlotter):
                                 'label': None, 'cmap': cm.viridis,
                                 'xaxis': xaxis, 'yaxis': yaxis,
                                 'Hval': None, 'Hwidth': None,
-                                'foregroundPoints': True, 'backgroundPoints': False}
+                                'foregroundPoints': True, 'backgroundPoints': False,
+                                'figsize': None}
 
     def __call__(self, metricValue, slicer, userPlotDict, fignum=None):
-        fig = plt.figure(fignum)
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
+        fig = plt.figure(fignum, figsize=plotDict['figsize'])
         xvals = slicer.slicePoints['orbits'][plotDict['xaxis']]
         yvals = slicer.slicePoints['orbits'][plotDict['yaxis']]
         # Identify the relevant metricValues for the Hvalue we want to plot.
@@ -238,12 +239,20 @@ class MetricVsOrbitPoints(BasePlotter):
         Hwidth = plotDict['Hwidth']
         if Hwidth is None:
             Hwidth = 1.0
-        if plotDict['Hval'] is None:
-            if len(Hvals) == slicer.shape[1]:
+        if len(Hvals) == slicer.shape[1]:
+            if plotDict['Hval'] is None:
                 Hidx = int(len(Hvals) / 2)
                 Hval = Hvals[Hidx]
             else:
+                Hval = plotDict['Hval']
+                Hidx = np.where(np.abs(Hvals - Hval) == np.abs(Hvals - Hval).min())[0]
+                Hidx = Hidx[0]
+        else:
+            if plotDict['Hval'] is None:
                 Hval = np.median(Hvals)
+                Hidx = np.where(np.abs(Hvals - Hval) <= Hwidth/2.0)[0]
+            else:
+                Hval = plotDict['Hvals']
                 Hidx = np.where(np.abs(Hvals - Hval) <= Hwidth/2.0)[0]
         if len(Hvals) == slicer.shape[1]:
             mVals = np.swapaxes(metricValue, 1, 0)[Hidx]
@@ -264,7 +273,11 @@ class MetricVsOrbitPoints(BasePlotter):
         if plotDict['foregroundPoints']:
             plt.scatter(xvals, yvals, c=mVals, vmin=vMin, vmax=vMax,
                         cmap=plotDict['cmap'], s=15, alpha=0.8, zorder=0)
-            cb = plt.colorbar()
+            cbar = plt.colorbar()
+            label = plotDict['label']
+            if label is None:
+                label = ''
+        cbar.set_label(label + ' @ H=%.1f' %(Hval))
         plt.title(plotDict['title'])
         plt.xlabel(plotDict['xlabel'])
         plt.ylabel(plotDict['ylabel'])
