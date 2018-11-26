@@ -73,6 +73,49 @@ class TestMoMetrics1(unittest.TestCase):
         arc = arcMetric.run(self.ssoObs, self.orb, self.Hval)
         self.assertEqual(arc, self.ssoObs['observationStartMJD'][-1] - self.ssoObs['observationStartMJD'][5])
 
+    def testActivityOverPeriodMetric(self):
+        # cometary orbit format ok
+        orb = np.recarray(1, dtype=([('objId', (str, 20)), ('q', float), ('e', float),
+                                     ('inc', float), ('Omega', float), ('argPeri', float),
+                                     ('tPeri', float), ('epoch', float), ('H', float), ('g', float)]))
+
+        orb['objId'] = 'NESC00001HYj'
+        orb['q'] = 1.00052
+        orb['e'] = 0.028514
+        orb['inc'] = 0.502477
+        orb['Omega'] = 50.989131
+        orb['argPeri'] = 55.091685
+        orb['tPeri'] = 61046.627194
+        orb['epoch'] = 60973.799216
+        orb['H'] = 35.526041
+        orb['g'] = 0.15
+        activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=360, snrLimit=5)
+        activity = activityPeriodMetric.run(self.ssoObs, orb, self.Hval)
+        self.assertEqual(activity, 1.0)
+        activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=720, snrLimit=5)
+        activity = activityPeriodMetric.run(self.ssoObs, orb, self.Hval)
+        self.assertEqual(activity, 1.0)
+        activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=10, snrLimit=5)
+        activity = activityPeriodMetric.run(self.ssoObs, orb, self.Hval)
+        self.assertLess(activity, 0.03)
+        # different type of orbit - currently should fail quietly
+        orb = np.recarray(1, dtype=([('objId', (str, 20)), ('a', float), ('e', float),
+                                     ('inc', float), ('Omega', float), ('argPeri', float),
+                                     ('meanAnomaly', float), ('epoch', float), ('H', float), ('g', float)]))
+        orb['objId'] = 'NESC00001HYj'
+        orb['a'] = 1.029886
+        orb['e'] = 0.028514
+        orb['inc'] = 0.502477
+        orb['Omega'] = 50.989131
+        orb['argPeri'] = 55.091685
+        orb['meanAnomaly'] = 291.321814
+        orb['epoch'] = 60973.799216
+        orb['H'] = 35.526041
+        orb['g'] = 0.15
+        activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=360, snrLimit=5)
+        activity = activityPeriodMetric.run(self.ssoObs, orb, self.Hval)
+        self.assertEqual(activity, activityPeriodMetric.badval)
+
     def tearDown(self):
         del self.ssoObs
         del self.orb
