@@ -80,6 +80,7 @@ def ColMapDict(dictName=None):
         colMap['metadataList'] = ['airmass', 'normairmass', 'seeingEff', 'skyBrightness',
                                   'fiveSigmaDepth', 'HA', 'moonDistance', 'solarElong']
         colMap['metadataAngleList'] = ['rotSkyPos']
+        colMap['note'] = 'note'
 
     elif dictName == 'opsimv3':
         colMap = {}
