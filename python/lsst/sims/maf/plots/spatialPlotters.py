@@ -706,8 +706,8 @@ class LambertSkyMap(BasePlotter):
             c.set_edgecolor("face")
 
         para = np.arange(0, 89, 20)
-        m.drawparallels(para, labels=para)
-        m.drawmeridians(np.arange(-180, 181, 60))
+        m.drawparallels(para, labels=[False, True, True, False])
+        m.drawmeridians(np.arange(-180, 181, 60), labels=[True, False, False, False])
         cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])
         if plotDict['labelsize'] is not None:
