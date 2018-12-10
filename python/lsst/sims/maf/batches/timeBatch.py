@@ -9,7 +9,75 @@ import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 from .common import standardSummary, filterList, combineMetadata, radecCols
 
-__all__ = ['intraNight', 'interNight', 'seasons']
+__all__ = ['pixelTime',  'intraNight', 'interNight', 'seasons']
+
+def pixelTime(colmap=None, runName='opsim', nside=64, extraSql=None,
+              extraMetadata=None):
+    """Generate a set of statistics about the pair/triplet/etc. rate within a night.
+
+    Parameters
+    ----------
+    colmap : dict or None, opt
+        A dictionary with a mapping of column names. Default will use OpsimV4 column names.
+    runName : str, opt
+        The name of the simulated survey. Default is "opsim".
+    nside : int, opt
+        Nside for the healpix slicer. Default 64.
+    extraSql : str or None, opt
+        Additional sql constraint to apply to all metrics.
+    extraMetadata : str or None, opt
+        Additional metadata to apply to all results.
+
+    Returns
+    -------
+    metricBundleDict
+    """
+    if colmap is None:
+        colmap = ColMapDict('opsimV4')
+
+    metadata = extraMetadata
+    if extraSql is not None and len(extraSql) > 0:
+        if metadata is None:
+            metadata = extraSql
+    raCol, decCol, degrees, ditherStacker, ditherMeta = radecCols(None, colmap, None)
+    metadata = combineMetadata(metadata, ditherMeta)
+    filterlist, colors, orders, sqls, metadata = filterList(all=True, extraSql=extraSql,
+                                                            extraMetadata=metadata)
+
+    bundleList = []
+
+    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
+    plotFuncs = [plots.TwoDMap()]
+    offset = 0.5
+    step = 40
+    bins = np.arange(0, 365.25 * 10 + step/2., step) - offset
+    metric = metrics.HistogramMetric(col=colmap['mjd'], bins=bins, binCol=colmap['night'],
+                                     statistic='count')
+    plotDict = {'xlabel': 'Night (days)', 'colorMin': 0,
+                'xextent': [bins.min() + step, bins.max() + step],
+                'cbarTitle': 'Count'}
+    displayDict = {'group': 'HealpixUniformity', 'subgroup': 'Visits'}
+    for f in filterlist:
+        if f == 'all':
+            plotDict['colorMax'] = 30
+        else:
+            plotDict['colorMax'] = 5
+        sql = sqls[f]
+        md = metadata[f]
+        displayDict['order'] = orders[f]
+        caption = 'Number of visits per %d intervals, in %s band.' % (step, f)
+        caption += ' Northern Healpixels are at the top of the image.'
+        displayDict['caption'] = caption
+        bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
+                                 displayDict=displayDict, runName=runName,
+                                 metadata=md, plotFuncs=plotFuncs)
+        bundleList.append(bundle)
+
+    # Set the runName for all bundles and return the bundleDict.
+    for b in bundleList:
+        b.setRunName(runName)
+    plotBundles = None
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
 
 
 def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,

@@ -4,21 +4,35 @@ import inspect
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.stackers as stackers
 
-__all__ = ['combineMetadata', 'filterList', 'radecCols', 'standardSummary', 'extendedSummary',
+__all__ = ['combineMetadata', 'combineSql', 'filterList', 'radecCols', 'standardSummary', 'extendedSummary',
            'standardMetrics', 'extendedMetrics', 'standardAngleMetrics',
            'summaryCompletenessAtTime', 'summaryCompletenessOverH']
 
 
 def combineMetadata(meta1, meta2):
+    metadata = None
     if meta1 is not None and meta2 is not None:
-        meta = meta1 + ' ' + meta2
+        metadata = meta1 + ' ' + meta2
     elif meta1 is not None:
-        meta = meta1
+        metadata = meta1
     elif meta2 is not None:
-        meta = meta2
-    else:
-        meta = None
-    return meta
+        metadata = meta2
+    return metadata
+
+
+def combineSql(sql1, sql2):
+     sqlconstraint = None
+     if len(sql1) == 0:
+         sql1 = None
+     if len(sql2) == 0:
+         sql2 = None
+     if sql1 is not None and sql2 is not None:
+         sqlconstraint = "(%s) and (%s)" % (sql1, sql2)
+     elif sql1 is not None:
+         sqlconstraint = sql1
+     elif sql2 is not None:
+         sqlconstraint = sql2
+     return sqlconstraint
 
 
 def filterList(all=True, extraSql=None, extraMetadata=None):
