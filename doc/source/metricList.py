@@ -5,6 +5,7 @@ try:
     import mafContrib
     mafContribPresent = True
 except ImportError:
+    print('sims_maf_contrib cannot be imported; skipping contrib metrics')
     mafContribPresent = False
 
 __all__ = ['makeMetricList']

@@ -8,12 +8,13 @@ __all__ = ['HistogramMetric','AccumulateMetric', 'AccumulateCountMetric',
 
 class VectorMetric(BaseMetric):
     """
-    Base for metrics that return a vector
+    Base for metrics that return a vector.
     """
     def __init__(self, bins=None, binCol='night', col='night', units=None, metricDtype=float, **kwargs):
-        super(VectorMetric,self).__init__(col=[col,binCol],units=units,metricDtype=metricDtype,**kwargs)
+        super().__init__(col=[col,binCol], units=units, metricDtype=metricDtype, **kwargs)
         self.bins = bins
         self.binCol = binCol
+        # Note that the shape (setting it != 1) lets the metric bundle store a 2-d array.
         self.shape = np.size(bins)-1
 
 class HistogramMetric(VectorMetric):
@@ -24,16 +25,17 @@ class HistogramMetric(VectorMetric):
                  metricDtype=float, **kwargs):
         self.statistic = statistic
         self.col=col
-        super(HistogramMetric,self).__init__(col=col, bins=bins, binCol=binCol, units=units,
-                                              metricDtype=metricDtype,**kwargs)
+        super().__init__(col=col, bins=bins, binCol=binCol, units=units,
+                         metricDtype=metricDtype,**kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=self.binCol)
-        result, binEdges,binNumber = stats.binned_statistic(dataSlice[self.binCol],
-                                                            dataSlice[self.col],
-                                                            bins=self.bins,
-                                                            statistic=self.statistic)
+        result, binEdges, binNumber = stats.binned_statistic(dataSlice[self.binCol],
+                                                             dataSlice[self.col],
+                                                             bins=self.bins,
+                                                             statistic=self.statistic)
         return result
+
 
 class AccumulateMetric(VectorMetric):
     """
@@ -42,7 +44,7 @@ class AccumulateMetric(VectorMetric):
     def __init__(self, col='night', bins=None, binCol='night', function=np.add,
                  metricDtype=float, **kwargs):
         self.function = function
-        super(AccumulateMetric,self).__init__(col=col,binCol=binCol, bins=bins,
+        super(AccumulateMetric,self).__init__(col=col, binCol=binCol, bins=bins,
                                               metricDtype=metricDtype,**kwargs)
         self.col=col
 
@@ -56,6 +58,7 @@ class AccumulateMetric(VectorMetric):
         result[np.where(indices == 0)] = self.badval
         return result
 
+
 class AccumulateCountMetric(AccumulateMetric):
     def run(self, dataSlice, slicePoint=None):
         dataSlice.sort(order=self.binCol)
@@ -66,6 +69,7 @@ class AccumulateCountMetric(AccumulateMetric):
         result = result[indices]
         result[np.where(indices == 0)] = self.badval
         return result
+
 
 class HistogramM5Metric(HistogramMetric):
     """
@@ -90,6 +94,7 @@ class HistogramM5Metric(HistogramMetric):
         result = 1.25*np.log10(result)
         result[noFlux] = self.badval
         return result
+
 
 class AccumulateM5Metric(AccumulateMetric):
     def __init__(self, bins=None, binCol='night', m5Col='fiveSigmaDepth',

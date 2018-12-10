@@ -95,8 +95,8 @@ class SummaryHistogram(BasePlotter):
     Special plotter to summarize metrics which return a set of values at each slicepoint,
     such as if a histogram was calculated at each slicepoint
     (e.g. with the lsst.sims.maf.metrics.TgapsMetric).
-    Effectively marginalizes the calculated values over the sky, and plots the a summarized
-    version (reduced to a single according to the plotDict['metricReduce'] metric).
+    Effectively, this combines the calculated values over the sky, and plots the a summarized
+    version (reduced to a single array according to the plotDict['metricReduce'] metric).
     """
 
     def __init__(self):

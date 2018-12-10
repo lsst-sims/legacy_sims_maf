@@ -3,6 +3,8 @@ from .baseMetric import BaseMetric
 
 __all__ = ['TgapsMetric', 'NightgapsMetric', 'NVisitsPerNightMetric']
 
+# The metrics here all return a numpy array, containing histograms of the values at each slicepoint.
+# They could be reworked to inherit from VectorMetric (and probably should be at some point).
 
 class TgapsMetric(BaseMetric):
     """Histogram the times of the gaps between observations.
@@ -34,7 +36,8 @@ class TgapsMetric(BaseMetric):
         # Pass the same bins to the plotter.
         self.bins = bins
         self.timesCol = timesCol
-        super(TgapsMetric, self).__init__(col=[self.timesCol], metricDtype='object', units=units, **kwargs)
+        super().__init__(col=[self.timesCol], metricDtype='float', units=units, **kwargs)
+        self.shape = np.size(bins) - 1
         self.allGaps = allGaps
 
     def run(self, dataSlice, slicePoint=None):
@@ -82,8 +85,9 @@ class NightgapsMetric(BaseMetric):
         # Pass the same bins to the plotter.
         self.bins = bins
         self.nightCol = nightCol
-        super(NightgapsMetric, self).__init__(col=[self.nightCol], metricDtype='object',
+        super(NightgapsMetric, self).__init__(col=[self.nightCol], metricDtype='float',
                                               units=units, **kwargs)
+        self.shape = np.size(bins) - 1
         self.allGaps = allGaps
 
     def run(self, dataSlice, slicePoint=None):
@@ -123,8 +127,9 @@ class NVisitsPerNightMetric(BaseMetric):
         # Pass the same bins to the plotter.
         self.bins = bins
         self.nightCol = nightCol
-        super(NVisitsPerNightMetric, self).__init__(col=[self.nightCol], metricDtype='object',
+        super(NVisitsPerNightMetric, self).__init__(col=[self.nightCol], metricDtype='float',
                                                     units=units, **kwargs)
+        self.shape = np.size(bins) - 1
 
     def run(self, dataSlice, slicePoint=None):
         n, counts = np.unique(dataSlice[self.nightCol], return_counts=True)

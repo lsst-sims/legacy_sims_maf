@@ -226,7 +226,8 @@ class NRevisitsMetric(BaseMetric):
 
 class IntraNightGapsMetric(BaseMetric):
     """
-    Calculate the gap between consecutive observations within a night, in hours.
+    Calculate the gaps between consecutive observations within a night, in hours,
+    then return a SINGLE value at each slicePoint, calaculated via 'reduceFunc'.
 
     Parameters
     ----------
@@ -273,7 +274,8 @@ class IntraNightGapsMetric(BaseMetric):
 
 class InterNightGapsMetric(BaseMetric):
     """
-    Calculate the gap between consecutive observations in different nights, in days.
+    Calculate the gaps between consecutive observations in different nights, in days,
+    then return a SINGLE value at each slicePoint, calculated via 'reduceFunc'.
 
     Parameters
     ----------
@@ -292,6 +294,7 @@ class InterNightGapsMetric(BaseMetric):
 
     def run(self, dataSlice, slicePoint=None):
         """Calculate the (reduceFunc) of the gap between consecutive nights of observations.
+
         Parameters
         ----------
         dataSlice : numpy.array
@@ -319,7 +322,8 @@ class InterNightGapsMetric(BaseMetric):
 
 class VisitGapMetric(BaseMetric):
     """
-    Calculate the gap between any consecutive observations, in hours, regardless of night boundaries.
+    Calculate the gaps between any consecutive observations, in hours, regardless of night boundaries,
+    then return a SINGLE value at each slicePoint, calculated via 'reduceFunc'.
 
     Parameters
     ----------
@@ -359,9 +363,11 @@ class VisitGapMetric(BaseMetric):
         result = self.reduceFunc(diff) * 24.
         return result
 
+
 class SeasonLengthMetric(BaseMetric):
     """
-    Calculate the length of LSST seasons, in days.
+    Calculate the lengths of LSST seasons, in days, then return a SINGLE value for each slicePoint,
+    calculated via 'reduceFunc'.
 
     Parameters
     ----------
@@ -394,15 +400,15 @@ class SeasonLengthMetric(BaseMetric):
         float
            The (reduceFunc) of the length of each season, in days.
         """
-        dataSlice.sort(order=self.seasonCol)
-        lenData = len(dataSlice)
+        dataSlice.sort(order=self.mjdCol)
         seasons = np.unique(dataSlice[self.seasonCol])
         # Find the first and last observation of each season.
         firstOfSeason= np.searchsorted(dataSlice[self.seasonCol], seasons)
         lastOfSeason = np.searchsorted(dataSlice[self.seasonCol], seasons, side='right') - 1
         # Seasons may not match up around 0/360 boundary I suspect. This is a bit of a hack.
-        #firstOfSeason = np.where(firstOfSeason == lenData, lenData - 1, firstOfSeason)
-        #lastOfSeason = np.where(lastOfSeason == lenData, lenData - 1, lastOfSeason)
+        # lenData = len(dataSlice)
+        # firstOfSeason = np.where(firstOfSeason == lenData, lenData - 1, firstOfSeason)
+        # lastOfSeason = np.where(lastOfSeason == lenData, lenData - 1, lastOfSeason)
         length = dataSlice[self.mjdCol][lastOfSeason] - dataSlice[self.mjdCol][firstOfSeason]
         result = self.reduceFunc(length)
         return result
