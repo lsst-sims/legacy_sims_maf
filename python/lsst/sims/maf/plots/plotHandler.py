@@ -36,12 +36,13 @@ class BasePlotter(object):
 class PlotHandler(object):
 
     def __init__(self, outDir='.', resultsDb=None, savefig=True,
-                 figformat='pdf', dpi=600, thumbnail=True):
+                 figformat='pdf', dpi=600, thumbnail=True, trimWhitespace=True):
         self.outDir = outDir
         self.resultsDb = resultsDb
         self.savefig = savefig
         self.figformat = figformat
         self.dpi = dpi
+        self.trimWhitespace = trimWhitespace
         self.thumbnail = thumbnail
         self.filtercolors = {'u': 'cyan', 'g': 'g', 'r': 'y',
                              'i': 'r', 'z': 'm', 'y': 'k', ' ': None}
@@ -559,10 +560,10 @@ class PlotHandler(object):
         return fignum
 
     def saveFig(self, fignum, outfileRoot, plotType, metricName, slicerName,
-                runName, constraint, metadata, displayDict=None, trimWhitespace=True):
+                runName, constraint, metadata, displayDict=None):
         fig = plt.figure(fignum)
         plotFile = outfileRoot + '_' + plotType + '.' + self.figformat
-        if trimWhitespace:
+        if self.trimWhitespace:
             fig.savefig(os.path.join(self.outDir, plotFile), figformat=self.figformat, dpi=self.dpi,
                         bbox_inches='tight')
         else:
