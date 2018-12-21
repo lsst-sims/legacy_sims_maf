@@ -14,11 +14,14 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
 
 
-def makeBundleList(dbFile, night=1, nside=64, latCol='ditheredDec', lonCol='ditheredRA'):
+def makeBundleList(dbFile, night=1, nside=64, latCol='fieldDec', lonCol='fieldRA'):
     """
     Make a bundleList of things to run
     """
 
+    mjdCol = 'observationStartMJD'
+    altCol = 'altitude'
+    azCol = 'azimuth'
     # Construct sql queries for each filter and all filters
     filters = ['u', 'g', 'r', 'i', 'z', 'y']
     sqls = ['night=%i and filter="%s"' % (night, f)for f in filters]
@@ -27,29 +30,29 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='ditheredDec', lonCol='dith
     bundleList = []
     plotFuncs_lam = [plots.LambertSkyMap()]
 
-    reg_slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=False)
-    altaz_slicer = slicers.HealpixSlicer(nside=nside, latCol='altitude', latLonDeg=False,
-                                         lonCol='azimuth', useCache=False)
+    reg_slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=True)
+    altaz_slicer = slicers.HealpixSlicer(nside=nside, latCol=altCol, latLonDeg=True,
+                                         lonCol=azCol, useCache=False)
 
     unislicer = slicers.UniSlicer()
     for sql in sqls:
 
         # Number of exposures
-        metric = metrics.CountMetric('expMJD', metricName='N visits')
+        metric = metrics.CountMetric(mjdCol, metricName='N visits')
         bundle = metricBundles.MetricBundle(metric, reg_slicer, sql)
         bundleList.append(bundle)
-        metric = metrics.CountMetric('expMJD', metricName='N visits alt az')
+        metric = metrics.CountMetric(mjdCol, metricName='N visits alt az')
         bundle = metricBundles.MetricBundle(metric, altaz_slicer, sql, plotFuncs=plotFuncs_lam)
         bundleList.append(bundle)
 
-        metric = metrics.MeanMetric('expMJD', metricName='Mean Visit Time')
+        metric = metrics.MeanMetric(mjdCol, metricName='Mean Visit Time')
         bundle = metricBundles.MetricBundle(metric, reg_slicer, sql)
         bundleList.append(bundle)
-        metric = metrics.MeanMetric('expMJD', metricName='Mean Visit Time alt az')
+        metric = metrics.MeanMetric(mjdCol, metricName='Mean Visit Time alt az')
         bundle = metricBundles.MetricBundle(metric, altaz_slicer, sql, plotFuncs=plotFuncs_lam)
         bundleList.append(bundle)
 
-        metric = metrics.CountMetric('expMJD', metricName='N_visits')
+        metric = metrics.CountMetric(mjdCol, metricName='N_visits')
         bundle = metricBundles.MetricBundle(metric, unislicer, sql)
         bundleList.append(bundle)
 
@@ -61,7 +64,7 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='ditheredDec', lonCol='dith
     bundle = metricBundles.MetricBundle(metric, unislicer, 'night=%i' % night)
     bundleList.append(bundle)
 
-    metric = metrics.OpenShutterFractionMetric()
+    metric = metrics.BruteOSFMetric()
     bundle = metricBundles.MetricBundle(metric, unislicer, 'night=%i' % night)
     bundleList.append(bundle)
 
@@ -78,18 +81,18 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='ditheredDec', lonCol='dith
     bundleList.append(bundle)
 
     # Make plots of the solar system pairs that were taken in the night
-    metric = metrics.PairMetric()
+    metric = metrics.PairMetric(mjdCol=mjdCol)
     sql = 'night=%i and (filter ="r" or filter="g" or filter="i")' % night
     bundle = metricBundles.MetricBundle(metric, reg_slicer, sql)
     bundleList.append(bundle)
 
-    metric = metrics.PairMetric(metricName='z Pairs')
+    metric = metrics.PairMetric(mjdCol=mjdCol, metricName='z Pairs')
     sql = 'night=%i and filter="z"' % night
     bundle = metricBundles.MetricBundle(metric, reg_slicer, sql)
     bundleList.append(bundle)
 
     # Plot up each visit
-    metric = metrics.NightPointingMetric()
+    metric = metrics.NightPointingMetric(mjdCol=mjdCol)
     slicer = slicers.UniSlicer()
     sql = sql = 'night=%i' % night
     plotFuncs = [plots.NightPointingPlotter()]
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     # Set up / connect to resultsDb.
     resultsDb = db.ResultsDb(outDir=args.outDir)
     # Connect to opsimdb.
-    opsdb = db.OpsimDatabaseV3(args.dbFile)
+    opsdb = db.OpsimDatabase(args.dbFile)
 
     # Set up metricBundleGroup.
     group = metricBundles.MetricBundleGroup(bundleDict, opsdb, outDir=args.outDir, resultsDb=resultsDb)

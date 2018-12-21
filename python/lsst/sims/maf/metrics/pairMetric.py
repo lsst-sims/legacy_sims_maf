@@ -8,7 +8,7 @@ class PairMetric(BaseMetric):
     """
     Count the number of pairs that could be used for Solar System object detection
     """
-    def __init__(self, mjdCol='expMJD', metricName='Pairs', match_min=20., match_max=40.,
+    def __init__(self, mjdCol='observationStartMJD', metricName='Pairs', match_min=20., match_max=40.,
                  binsize=5., **kwargs):
         """
         Parameters

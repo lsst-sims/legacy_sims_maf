@@ -13,7 +13,7 @@ class NightPointingMetric(BaseMetric):
     """
 
     def __init__(self, altCol='altitude', azCol='azimuth', filterCol='filter',
-                 mjdCol='expMJD', metricName='NightPointing', telescope='LSST', **kwargs):
+                 mjdCol='observationStartMJD', metricName='NightPointing', telescope='LSST', **kwargs):
 
         cols = [altCol, azCol, filterCol, mjdCol]
         super(NightPointingMetric, self).__init__(col=cols, metricName=metricName, metricDtype='object', **kwargs)
