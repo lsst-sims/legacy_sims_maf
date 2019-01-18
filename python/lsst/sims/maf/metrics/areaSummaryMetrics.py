@@ -29,6 +29,8 @@ class AreaSummaryMetric(BaseMetric):
         self.area = area
         self.decreasing = decreasing
         self.reduce_func = reduce_func
+        self.maskVal = np.nan  # Include so all values get passed
+        self.col = col
         if reduce_func is None:
             if decreasing:
                 self.reduce_func = np.min
@@ -41,10 +43,12 @@ class AreaSummaryMetric(BaseMetric):
         # find out what nside we have
         nside = hp.npix2nside(dataSlice.size)
         pix_area = hp.nside2pixarea(nside, degrees=True)
-        n_pix_needed = np.ceil(self.area/pix_area)
+        n_pix_needed = int(np.ceil(self.area/pix_area))
 
-        order = np.argsort(dataSlice[self.col])
+        # Only use the finite data
+        data = dataSlice[self.col][np.isfinite(dataSlice[self.col])]
+        order = np.argsort(data)
         if self.decreasing:
             order = order[::-1]
-        result = self.reduce_func(dataSlice[self.col][order][0:n_pix_needed])
+        result = self.reduce_func(data[order][0:n_pix_needed])
         return result
