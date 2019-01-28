@@ -139,7 +139,7 @@ def glanceBatch(colmap=None, runName='opsim',
     # A few basic maps
     # Number of observations, coadded depths
     extended_stats = standardStats.copy()
-    extended_stats.append(metrics.AreaSummaryMetric(decreasing=True))
+    extended_stats.append(metrics.AreaSummaryMetric(decreasing=True, metricName='top18k'))
     extended_stats.append(metrics.PercentileMetric(col='metricdata', percentile=10))
     displayDict = {'group': 'Basic Maps', 'order': 3}
     slicer = spatial_slicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
@@ -171,7 +171,7 @@ def glanceBatch(colmap=None, runName='opsim',
                                              dateCol=colmap['mjd'])
     stackerList.append(stacker)
 
-    astrom_stats = [metrics.AreaSummaryMetric(decreasing=False),
+    astrom_stats = [metrics.AreaSummaryMetric(decreasing=False, metricName='best18k'),
                     metrics.PercentileMetric(col='metricdata', percentile=90)]
     # Maybe parallax and proper motion, fraction of visits in a good pair for SS
     displayDict['caption'] = r'Parallax precision of an $r=20$ flat SED star'
