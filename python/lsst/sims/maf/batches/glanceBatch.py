@@ -138,6 +138,9 @@ def glanceBatch(colmap=None, runName='opsim',
 
     # A few basic maps
     # Number of observations, coadded depths
+    extended_stats = standardStats.copy()
+    extended_stats.append(metrics.AreaSummaryMetric(decreasing=True, metricName='top18k'))
+    extended_stats.append(metrics.PercentileMetric(col='metricdata', percentile=10))
     displayDict = {'group': 'Basic Maps', 'order': 3}
     slicer = spatial_slicer(nside=nside, latCol=colmap['dec'], lonCol=colmap['ra'],
                             latLonDeg=colmap['raDecDeg'])
@@ -145,7 +148,7 @@ def glanceBatch(colmap=None, runName='opsim',
     plotDict = {'percentileClip': 95.}
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            summaryMetrics=standardStats,
+                                            summaryMetrics=extended_stats,
                                             displayDict=displayDict,
                                             plotDict=plotDict)
         bundleList.append(bundle)
@@ -153,7 +156,7 @@ def glanceBatch(colmap=None, runName='opsim',
     metric = metrics.Coaddm5Metric(m5Col=colmap['fiveSigmaDepth'])
     for sql in sql_per_and_all_filters:
         bundle = metricBundles.MetricBundle(metric, slicer, sql,
-                                            summaryMetrics=standardStats, displayDict=displayDict)
+                                            summaryMetrics=extended_stats, displayDict=displayDict)
         bundleList.append(bundle)
 
     # Checking a few basic science things
@@ -168,6 +171,8 @@ def glanceBatch(colmap=None, runName='opsim',
                                              dateCol=colmap['mjd'])
     stackerList.append(stacker)
 
+    astrom_stats = [metrics.AreaSummaryMetric(decreasing=False, metricName='best18k'),
+                    metrics.PercentileMetric(col='metricdata', percentile=90)]
     # Maybe parallax and proper motion, fraction of visits in a good pair for SS
     displayDict['caption'] = r'Parallax precision of an $r=20$ flat SED star'
     metric = metrics.ParallaxMetric(m5Col=colmap['fiveSigmaDepth'],
@@ -176,7 +181,8 @@ def glanceBatch(colmap=None, runName='opsim',
     sql = sqlConstraint
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
                                         displayDict=displayDict, stackerList=stackerList,
-                                        plotDict=plotDict)
+                                        plotDict=plotDict,
+                                        summaryMetrics=astrom_stats)
     bundleList.append(bundle)
     displayDict['caption'] = r'Proper motion precision of an $r=20$ flat SED star'
     metric = metrics.ProperMotionMetric(m5Col=colmap['fiveSigmaDepth'],
@@ -184,7 +190,8 @@ def glanceBatch(colmap=None, runName='opsim',
                                         filterCol=colmap['filter'],
                                         seeingCol=colmap['seeingGeom'])
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=subsetPlots,
-                                        displayDict=displayDict, plotDict=plotDict)
+                                        displayDict=displayDict, plotDict=plotDict,
+                                        summaryMetrics=astrom_stats)
     bundleList.append(bundle)
 
     # Solar system stuff

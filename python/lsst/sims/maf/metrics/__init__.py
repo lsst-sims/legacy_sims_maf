@@ -23,3 +23,4 @@ from .moSummaryMetrics import *
 from .pairMetric import *
 from .nightPointingMetric import *
 from .stringCountMetric import *
+from .areaSummaryMetrics import *
