@@ -2,7 +2,7 @@ import numpy as np
 from .baseStacker import BaseStacker
 import warnings
 
-__all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
+__all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker', 'CometMagStacker']
 
 
 class BaseMoStacker(BaseStacker):
@@ -130,3 +130,43 @@ class EclStacker(BaseMoStacker):
         ssoObs['ecLon'] = np.degrees(np.arctan2(yp, xp))
         ssoObs['ecLon'] = ssoObs['ecLon'] % 360
         return ssoObs
+
+
+class CometMagStacker(BaseMoStacker):
+    """Add apparent magnitude using a cometary magnitude model.
+    
+    m = M + 5 log10(Δ) + (5 + K) log10(rh)
+    
+    Based on MoMagStacker and NEODistStacker.
+    
+    Parameters
+    ----------
+    k : float
+        Activity / intrinsic brightness dependence on heliocentric distance: 
+        rh**k.
+
+    rhCol : str
+        Name of the heliocentric distance column.  Default: 'helio_dist'.
+
+    deltaCol : str
+        Name of the geocentric distance column.  Default: 'geo_dist'.
+    
+    """
+
+    def __init__(self, k=2, rhCol='helio_dist', deltaCol='geo_dist'):
+        self.colsAdded = ['cometV']  # added columns
+        self.units = ['mag']  # new column units
+        self.k = k
+        self.rhCol = rhCol
+        self.deltaCol = deltaCol
+        self.colsReq = [self.rhCol, self.deltaCol]
+
+    def _run(self, ssObs, Href, Hval):
+        rh = ssObs[self.rhCol]
+        delta = ssObs[self.deltaCol]
+
+        # only using Href since we are creating magnitudes from scratch
+        m_v = Href + 5 * np.log10(delta) + (5 + 2.5 * self.k) * np.log10(rh)
+
+        ssObs['cometV'] = m_v
+        return ssObs
