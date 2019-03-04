@@ -11,7 +11,7 @@ from run_generic import *
 def setBatches(opsdb, colmap, args):
     bdict = {}
     bdict.update(batches.glanceBatch(colmap, args.runName, sqlConstraint=args.sqlConstraint))
-    bdict.update(batches.fOBatch(colmap, args.runName))
+    bdict.update(batches.fOBatch(colmap, args.runName, extraSql=args.sqlConstraint))
     return bdict
 
 
