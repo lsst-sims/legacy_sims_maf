@@ -64,8 +64,8 @@ class M5OptimalStacker(BaseStacker):
     """
     colsAdded = ['m5Optimal']
 
-    def __init__(self, airmassCol='airmass', decCol='dec_rad',
-                 skyBrightCol='filtSkyBrightness', seeingCol='FWHMeff',
+    def __init__(self, airmassCol='airmass', decCol='fieldDec',
+                 skyBrightCol='skyBrightness', seeingCol='seeingFwhmEff',
                  filterCol='filter',
                  moonAltCol='moonAlt', sunAltCol='sunAlt',
                  site='LSST'):
@@ -97,7 +97,7 @@ class M5OptimalStacker(BaseStacker):
         skySlopes = {'g': -0.52611780327408397, 'i': -0.67898669252082422,
                      'r': -0.61378749766766827, 'u': -0.27840980367303503,
                      'y': -0.69635091524779691, 'z': -0.69652846002009128}
-        min_z_possible = np.abs(simData[self.decCol] - self.site.latitude_rad)
+        min_z_possible = np.abs(np.radians(simData[self.decCol]) - self.site.latitude_rad)
         min_airmass_possible = 1./np.cos(min_z_possible)
         for filterName in np.unique(simData[self.filterCol]):
             deltaSky = skySlopes[filterName]*(simData[self.airmassCol] - min_airmass_possible)
