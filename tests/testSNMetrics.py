@@ -58,7 +58,7 @@ class TestSNmetrics(unittest.TestCase):
 
         # And the result should be...
         result_ref = 0.3743514
-        print('ici', result)
+
         assert(np.abs(result-result_ref) < 1.e-5)
 
     def testSNSNRMetric(self):
@@ -91,7 +91,7 @@ class TestSNmetrics(unittest.TestCase):
         day0 = np.min(dayobs)
         npts = len(dayobs)
         data = np.zeros(npts, dtype=list(zip(names, types)))
-        print('hohoh', type(data))
+
         data['observationStartMJD'] = dayobs
         data['night'] = np.floor(data['observationStartMJD']-day0)
         data['fiveSigmaDepth'] = m5_ref[band]
@@ -99,9 +99,7 @@ class TestSNmetrics(unittest.TestCase):
         data['numExposures'] = 2
         data['visitTime'] = 2.*15.
         data['season'] = season
-        print('before', type(data))
         data['filter'] = band
-        print('befe', type(data), data['filter'])
 
         # Run the metric with these fake data
         slicePoint = [0]
@@ -112,7 +110,7 @@ class TestSNmetrics(unittest.TestCase):
 
         # And the result should be...
         result_ref = 0.5234375
-        print(result)
+
         assert(np.abs(result-result_ref) < 1.e-5)
 
 
