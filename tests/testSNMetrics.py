@@ -104,7 +104,8 @@ class TestSNmetrics(unittest.TestCase):
         # Run the metric with these fake data
         slicePoint = [0]
         metric = SNSNRMetric(
-            lim_sn=lim_sn, coadd=coadd, names_ref=names_ref, season=season, z=z)
+            lim_sn=lim_sn, coadd=coadd, names_ref=names_ref, season=season, z=z,
+            config_fake='Fake_cadence.yaml')
 
         result = metric.run(data, slicePoint)
 
