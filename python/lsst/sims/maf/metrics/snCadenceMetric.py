@@ -1,6 +1,5 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
-from lsst.sims.maf.stackers.snStacker import CoaddStacker
 
 __all__ = ['SNcadenceMetric']
 
@@ -60,7 +59,6 @@ class SNcadenceMetric(metrics.BaseMetric):
             return None
         dataSlice.sort(order=self.mjdCol)
 
-        time = dataSlice[self.mjdCol]-dataSlice[self.mjdCol].min()
         r = []
         fieldRA = np.mean(dataSlice[self.RaCol])
         fieldDec = np.mean(dataSlice[self.DecCol])

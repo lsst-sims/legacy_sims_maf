@@ -4,7 +4,6 @@ import numpy.lib.recfunctions as rf
 import yaml
 from scipy import interpolate
 import lsst.sims.maf.metrics as metrics
-from lsst.sims.maf.stackers.snStacker import CoaddStacker
 from lsst.sims.maf.utils.snUtils import Generate_Fake_Observations
 
 
@@ -80,7 +79,7 @@ class SNSNRMetric(metrics.BaseMetric):
 
         self.display = False
 
-    def run(self, dataSlice,  slicePoint=None):
+    def run(self, dataSlice, slicePoint=None):
         """
         run the metric
 
@@ -181,7 +180,6 @@ class SNSNRMetric(metrics.BaseMetric):
 
         # for these DayMax, estimate the phases of LC points corresponding to the current dataSlice MJDs
 
-        diff_time = dates[:, np.newaxis]-mjds
         time_for_lc = -T0_lc[:, None]+mjds
         phase = time_for_lc/(1.+self.z)  # phases of LC points
         # flag: select LC points only in between min_rf_phase and max_phase
@@ -190,7 +188,6 @@ class SNSNRMetric(metrics.BaseMetric):
 
         # tile m5, MJDs, and seasons to estimate all fluxes and SNR at once
         m5_vals = np.tile(dataSlice[self.m5Col], (len(time_for_lc), 1))
-        mjd_vals = np.tile(dataSlice[self.mjdCol], (len(time_for_lc), 1))
         season_vals = np.tile(dataSlice[self.seasonCol], (len(time_for_lc), 1))
 
         # estimate fluxes and snr in SNR function
@@ -198,7 +195,6 @@ class SNSNRMetric(metrics.BaseMetric):
             time_for_lc, m5_vals, flag, season_vals, T0_lc)
 
         # now save the results in a record array
-        snr_nomask = np.ma.copy(snr)
         _, idx = np.unique(snr['season'], return_inverse=True)
         infos = self.info_season[idx]
         vars_info = ['cadence', 'season_length', 'MJD_min']
@@ -556,9 +552,9 @@ class SNSNRMetric(metrics.BaseMetric):
         -----
         record array with the following fields:
           fieldRA (float)
-          fieldDec (float) 
-          season (float) 
-         band (str) 
+          fieldDec (float)
+          season (float)
+         band (str)
          frac_obs_name_ref (float)
         """
 
