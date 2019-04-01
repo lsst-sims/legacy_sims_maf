@@ -9,3 +9,4 @@ from .moStackers import *
 from .getColInfo import *
 from .m5OptimalStacker import *
 from .nFollowStacker import *
+from .snStacker import *
