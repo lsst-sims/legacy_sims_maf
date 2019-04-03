@@ -12,3 +12,4 @@ from .openshutterBatch import *
 from .skycoverage import *
 from .altazBatch import *
 from .movingObjectsBatch import *
+from .scienceRadarBatch import *
