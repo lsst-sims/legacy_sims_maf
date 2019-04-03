@@ -12,12 +12,15 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.utils as utils
+from lsst.sims.maf.batches import ColMapDict
 
-
-def makeBundleList(dbFile, night=1, nside=64, latCol='fieldDec', lonCol='fieldRA'):
+def makeBundleList(dbFile, night=1, nside=64, latCol='fieldDec', lonCol='fieldRA', notes=True, colmap=None):
     """
     Make a bundleList of things to run
     """
+
+    if colmap is None:
+        colmap = ColMapDict('opsimV4')
 
     mjdCol = 'observationStartMJD'
     altCol = 'altitude'
@@ -29,6 +32,17 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='fieldDec', lonCol='fieldRA
 
     bundleList = []
     plotFuncs_lam = [plots.LambertSkyMap()]
+
+    # Hourglass
+    hourslicer = slicers.HourglassSlicer()
+    displayDict = {'group': 'Hourglass'}
+    md = ''
+    sql = 'night=%i' % night
+    metric = metrics.HourglassMetric(nightCol=colmap['night'], mjdCol=colmap['mjd'],
+                                     metricName='Hourglass')
+    bundle = metricBundles.MetricBundle(metric, hourslicer, constraint=sql, metadata=md,
+                                        displayDict=displayDict)
+    bundleList.append(bundle)
 
     reg_slicer = slicers.HealpixSlicer(nside=nside, lonCol=lonCol, latCol=latCol, latLonDeg=True)
     altaz_slicer = slicers.HealpixSlicer(nside=nside, latCol=altCol, latLonDeg=True,
@@ -94,10 +108,21 @@ def makeBundleList(dbFile, night=1, nside=64, latCol='fieldDec', lonCol='fieldRA
     # Plot up each visit
     metric = metrics.NightPointingMetric(mjdCol=mjdCol)
     slicer = slicers.UniSlicer()
-    sql = sql = 'night=%i' % night
+    sql = 'night=%i' % night
     plotFuncs = [plots.NightPointingPlotter()]
     bundle = metricBundles.MetricBundle(metric, slicer, sql, plotFuncs=plotFuncs)
     bundleList.append(bundle)
+
+    # stats from the note column
+    if notes:
+        displayDict = {'group': 'Basic Stats', 'subgroup': 'Percent stats'}
+        metric = metrics.StringCountMetric(col='note', percent=True, metricName='Percents')
+        bundle = metricBundles.MetricBundle(metric, unislicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
+        displayDict['subgroup'] = 'Count Stats'
+        metric = metrics.StringCountMetric(col='note', metricName='Counts')
+        bundle = metricBundles.MetricBundle(metric, unislicer, sql, displayDict=displayDict)
+        bundleList.append(bundle)
 
     return metricBundles.makeBundlesDictFromList(bundleList)
 
