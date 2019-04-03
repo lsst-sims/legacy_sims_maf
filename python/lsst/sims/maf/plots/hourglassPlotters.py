@@ -55,4 +55,19 @@ class HourglassPlot(BasePlotter):
         ax.set_ylabel(plotDict['ylabel'])
         ax.set_title(plotDict['title'])
 
+        # draw things in with lines if we are only plotting one night
+        if len(pernight['mjd']) == 1:
+            ax.axhline((pernight['twi6_rise'] - pernight['midnight']) * 24.,
+                       color='blue', label=r'6$^\circ$ twilight')
+            ax.axhline((pernight['twi6_set'] - pernight['midnight']) * 24.,
+                       color='blue')
+            ax.axhline((pernight['twi12_rise'] - pernight['midnight']) * 24.,
+                       color='yellow', label=r'12$^\circ$ twilight')
+            ax.axhline((pernight['twi12_set'] - pernight['midnight']) * 24.,
+                       color='yellow')
+            ax.axhline((pernight['twi18_rise'] - pernight['midnight']) * 24.,
+                       color='red', label=r'18$^\circ$ twilight')
+            ax.axhline((pernight['twi18_set'] - pernight['midnight']) * 24.,
+                       color='red')
+
         return fig.number
