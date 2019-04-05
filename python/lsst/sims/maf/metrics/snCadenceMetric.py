@@ -68,7 +68,7 @@ class SNCadenceMetric(metrics.BaseMetric):
         bins = np.arange(np.floor(sel[self.mjdCol].min()), np.ceil(
             sel[self.mjdCol].max()), 1.)
         c, b = np.histogram(sel[self.mjdCol], bins=bins)
-        if c.mean() < 1.e-8:
+        if (c.mean() < 1.e-8) | np.isnan(c).any() | np.isnan(c.mean()):
             cadence = 0.
         else:
             cadence = 1. / c.mean()
@@ -80,5 +80,8 @@ class SNCadenceMetric(metrics.BaseMetric):
             r, names=['fieldRA', 'fieldDec', 'band', 'm5_mean', 'cadence_mean'])
 
         zref = self.lim_sn.interp_griddata(res)
+
+        if np.isnan(zref):
+            zref = self.badval
 
         return zref

@@ -6,7 +6,12 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 import numpy as np
+import os
 from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
+from lsst.sims.maf.metrics.snCadenceMetric import SNcadenceMetric
+from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
+
+from lsst.sims.maf.utils.snUtils import Lims, Reference_Data
 
 __all__ = ['scienceRadarBatch']
 
@@ -97,6 +102,38 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     bundle = mb.MetricBundle(metric, slicer, sql, plotDict=plotDict,
                              displayDict=displayDict, summaryMetrics=summary,
                              plotFuncs=subsetPlots)
+    bundleList.append(bundle)
+    displayDict['order'] += 1
+
+    # let's put Type Ia SN in here
+    displayDict['subgroup'] = 'SNe Ia'
+    sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
+    Li_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
+    mag_to_flux_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
+    config_fake = os.path.join(sims_maf_contrib_dir, 'data', 'Fake_cadence.yaml')
+    SNR = dict(zip('griz', [30., 40., 30., 20.]))  # SNR for WFD
+    mag_range = [21., 25.5]  # WFD mag range
+    dt_range = [0.5, 30.]  # WFD dt range
+    band = 'r'
+    plotDict = {'percentileClip': 95.}
+    lim_sn = Lims(Li_files, mag_to_flux_files, band, SNR[band], mag_range=mag_range, dt_range=dt_range)
+    metric = SNcadenceMetric(lim_sn=lim_sn, coadd=False)
+    sql = extraSql
+    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia redshift (WFD)')]
+    summary.append(metrics.MedianMetric(metricName='Median SN Ia redsihft (all)'))
+    bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
+                             plotDict=plotDict, summaryMetrics=summary)
+    bundleList.append(bundle)
+    displayDict['order'] += 1
+
+    names_ref = ['SNCosmo']
+    z = 0.3
+    lim_sn = Reference_Data(Li_files, mag_to_flux_files, band, z)
+    metric = SNSNRMetric(lim_sn=lim_sn, coadd=False, names_ref=names_ref,
+                         season=1, z=0.3, config_fake=config_fake)
+    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia detection fraction (WFD)')]
+    bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
+                             plotDict=plotDict, summaryMetrics=summary)
     bundleList.append(bundle)
     displayDict['order'] += 1
 
