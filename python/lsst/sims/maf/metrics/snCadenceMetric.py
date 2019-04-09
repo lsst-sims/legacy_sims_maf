@@ -1,10 +1,10 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
 
-__all__ = ['SNcadenceMetric']
+__all__ = ['SNCadenceMetric']
 
 
-class SNcadenceMetric(metrics.BaseMetric):
+class SNCadenceMetric(metrics.BaseMetric):
     """
     Metric to estimate the redshift limit for faint supernovae (x1,color) = (-2.0,0.2)
 
@@ -42,7 +42,7 @@ class SNcadenceMetric(metrics.BaseMetric):
         if coadd:
             cols += ['coadd']
 
-        super(SNcadenceMetric, self).__init__(
+        super(SNCadenceMetric, self).__init__(
             col=cols, metricName=metricName, **kwargs)
 
         self.filterNames = np.array(['u', 'g', 'r', 'i', 'z', 'y'])
@@ -79,6 +79,6 @@ class SNcadenceMetric(metrics.BaseMetric):
         res = np.rec.fromrecords(
             r, names=['fieldRA', 'fieldDec', 'band', 'm5_mean', 'cadence_mean'])
 
-        zref = self.lim_sn.Interp_griddata(res)
+        zref = self.lim_sn.interp_griddata(res)
 
         return zref

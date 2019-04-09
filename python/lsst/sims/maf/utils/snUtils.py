@@ -37,12 +37,12 @@ class Lims:
         self.dt_range = dt_range
 
         for val in Li_files:
-            self.lims.append(self.Get_Lims(self.band, np.load(val), SNR))
+            self.lims.append(self.get_lims(self.band, np.load(val), SNR))
         for val in mag_to_flux_files:
             self.mag_to_flux.append(np.load(val))
-        self.Interp()
+        self.interp()
 
-    def Get_Lims(self, band, tab, SNR):
+    def get_lims(self, band, tab, SNR):
         """
         Estimations of the limits
 
@@ -70,15 +70,15 @@ class Lims:
             sel = tab[idx]
 
             if len(sel) > 0:
-                Li2 = np.sqrt(np.sum(sel['flux_e']**2))
-                lim = 5. * Li2 / SNR
+                li2 = np.sqrt(np.sum(sel['flux_e']**2))
+                lim = 5. * li2 / SNR
                 if z not in lims.keys():
                     lims[z] = {}
                 lims[z][band] = lim
 
         return lims
 
-    def Mesh(self, mag_to_flux):
+    def mesh(self, mag_to_flux):
         """
         Mesh grid to estimate five-sigma depth values (m5) from mags input.
 
@@ -105,7 +105,7 @@ class Lims:
 
         return M5, DT, metric
 
-    def Interp(self):
+    def interp(self):
         """
         Estimate a grid of interpolated values
         in the plane (m5, cadence, metric)
@@ -121,7 +121,7 @@ class Lims:
         metric_all = []
 
         for val in self.mag_to_flux:
-            M5, DT, metric = self.Mesh(val)
+            M5, DT, metric = self.mesh(val)
             M5_all.append(M5)
             DT_all.append(DT)
             metric_all.append(metric)
@@ -130,7 +130,7 @@ class Lims:
         for i in range(len(self.lims)):
             sorted_keys.append(np.sort([k for k in self.lims[i].keys()])[::-1])
         figa, axa = plt.subplots()
-        # self.Points_Ref = []
+
         for kk, lim in enumerate(self.lims):
             fmt = {}
             ll = [lim[zz][self.band] for zz in sorted_keys[kk]]
@@ -149,11 +149,11 @@ class Lims:
                         points_values = res
                     else:
                         points_values = np.concatenate((points_values, res))
-            self.Points_Ref = points_values
+            self.points_ref = points_values
 
         plt.close(figa)  # do not display
 
-    def Interp_griddata(self, data):
+    def interp_griddata(self, data):
         """
         Estimate metric interpolation for data (m5,cadence)
 
@@ -167,13 +167,13 @@ class Lims:
 
         """
 
-        ref_points = self.Points_Ref
+        ref_points = self.points_ref
         res = interpolate.griddata((ref_points['m5'], ref_points['cadence']), ref_points['z'], (
             data['m5_mean'], data['cadence_mean']), method='cubic')
         return res
 
 
-class Generate_Fake_Observations:
+class GenerateFakeObservations:
     """ Class to generate Fake observations
 
     Parameters
@@ -275,7 +275,7 @@ class Generate_Fake_Observations:
         return m5_coadd
 
 
-class Reference_Data:
+class ReferenceData:
     """
     class to handle light curve of SN
 
@@ -299,13 +299,13 @@ class Reference_Data:
         self.mag_to_flux = []
 
         for val in Li_files:
-            self.fluxes.append(self.Get_Interp_Fluxes(
+            self.fluxes.append(self.interp_fluxes(
                 self.band, np.load(val), self.z))
         for val in mag_to_flux_files:
             self.mag_to_flux.append(
-                self.Get_Interp_mag(self.band, np.load(val)))
+                self.interp_mag(self.band, np.load(val)))
 
-    def Get_Interp_Fluxes(self, band, tab, z):
+    def interp_fluxes(self, band, tab, z):
         """
         Flux interpolator
 
@@ -330,7 +330,7 @@ class Reference_Data:
         selc = rf.append_fields(selc, 'deltaT', difftime)
         return interpolate.interp1d(selc['deltaT'], selc['flux_e'], bounds_error=False, fill_value=0.)
 
-    def Get_Interp_mag(self, band, tab):
+    def interp_mag(self, band, tab):
         """
         magnitude (m5) to flux (e/sec) interpolator
 
