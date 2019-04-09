@@ -5,8 +5,8 @@ import numpy as np
 import unittest
 #import lsst.sims.maf.metrics as metrics
 import lsst.utils.tests
-from lsst.sims.maf.utils.snUtils import Lims, Reference_Data
-from lsst.sims.maf.metrics.snCadenceMetric import SNcadenceMetric
+from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
+from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
 from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
 import os
 import warnings
@@ -28,8 +28,10 @@ class TestSNmetrics(unittest.TestCase):
             SNR = dict(zip('griz', [30., 40., 30., 20.]))  # SNR for WFD
             mag_range = [21., 25.5]  # WFD mag range
             dt_range = [0.5, 30.]  # WFD dt range
-            Li_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
-            mag_to_flux_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
+            Li_files = [os.path.join(
+                sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
+            mag_to_flux_files = [os.path.join(
+                sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
             lim_sn = Lims(Li_files, mag_to_flux_files, band, SNR[band],
                           mag_range=mag_range, dt_range=dt_range)
 
@@ -58,7 +60,7 @@ class TestSNmetrics(unittest.TestCase):
 
             # Run the metric with these fake data
             slicePoint = [0]
-            metric = SNcadenceMetric(lim_sn=lim_sn, coadd=False)
+            metric = SNCadenceMetric(lim_sn=lim_sn, coadd=False)
             result = metric.run(data, slicePoint)
 
             # And the result should be...
@@ -66,7 +68,8 @@ class TestSNmetrics(unittest.TestCase):
 
             assert(np.abs(result-result_ref) < 1.e-5)
         else:
-            warnings.warn("skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
+            warnings.warn(
+                "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
     def testSNSNRMetric(self):
         """Test the SN SNR metric """
@@ -77,13 +80,16 @@ class TestSNmetrics(unittest.TestCase):
             band = 'r'
             z = 0.3
             season = 1.
-            Li_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
-            mag_to_flux_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
-            config_fake = os.path.join(sims_maf_contrib_dir, 'data', 'Fake_cadence.yaml')
+            Li_files = [os.path.join(
+                sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
+            mag_to_flux_files = [os.path.join(
+                sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
+            config_fake = os.path.join(
+                sims_maf_contrib_dir, 'data', 'Fake_cadence.yaml')
             names_ref = ['SNCosmo']
             coadd = False
 
-            lim_sn = Reference_Data(Li_files, mag_to_flux_files, band, z)
+            lim_sn = ReferenceData(Li_files, mag_to_flux_files, band, z)
 
             # Define fake data
             names = ['observationStartMJD', 'fieldRA', 'fieldDec',
@@ -120,11 +126,12 @@ class TestSNmetrics(unittest.TestCase):
             result = metric.run(data, slicePoint)
 
             # And the result should be...
-            result_ref = 0.5234375
+            result_ref = 0.4830508474576271
 
             assert(np.abs(result-result_ref) < 1.e-5)
         else:
-            warnings.warn("skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
+            warnings.warn(
+                "skipping SN test because no SIMS_MAF_CONTRIB_DIR set")
 
 
 def setup_module(module):

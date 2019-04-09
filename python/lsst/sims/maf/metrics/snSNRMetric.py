@@ -5,6 +5,7 @@ import yaml
 from scipy import interpolate
 import lsst.sims.maf.metrics as metrics
 from lsst.sims.maf.utils.snUtils import GenerateFakeObservations
+from collections import Iterable
 
 
 class SNSNRMetric(metrics.BaseMetric):
@@ -103,6 +104,9 @@ class SNSNRMetric(metrics.BaseMetric):
             seasons = self.season
         else:
             seasons = np.unique(dataSlice['season'])
+
+        if not isinstance(seasons, Iterable):
+            seasons = [seasons]
 
         self.info_season = None
         for seas in seasons:
