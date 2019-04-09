@@ -1,7 +1,7 @@
 import numpy as np
 from .baseMetric import BaseMetric
 
-__all__ = ['TgapsMetric', 'NightgapsMetric', 'NVisitsPerNightMetric']
+__all__ = ['TgapsMetric', 'NightgapsMetric', 'NVisitsPerNightMetric', 'MaxGapMetric']
 
 
 class TgapsMetric(BaseMetric):
@@ -130,3 +130,23 @@ class NVisitsPerNightMetric(BaseMetric):
         n, counts = np.unique(dataSlice[self.nightCol], return_counts=True)
         result, bins = np.histogram(counts, self.bins)
         return result
+
+
+class MaxGapMetric(BaseMetric):
+    """Find the maximum gap in observations. Useful for making sure there is an image within the last year that would
+    make a good template image.
+    """
+
+    def __init__(self, mjdCol='observationStartMJD', **kwargs):
+        self.mjdCol = mjdCol
+        units = 'Days'
+        super(MaxGapMetric, self).__init__(col=[self.mjdCol], units=units, **kwargs)
+
+    def run(self, dataSlice, slicePoint=None):
+        gaps = np.diff(np.sort(dataSlice[self.mjdCol]))
+        if np.size(gaps) > 0:
+            result = np.max(gaps)
+        else:
+            result = self.badval
+        return result
+
