@@ -115,24 +115,16 @@ class SNSNRMetric(metrics.BaseMetric):
                 else:
                     self.info_season = np.concatenate((self.info_season, info))
 
-        # print(time.time()-time_ref)
         self.info_season = self.check_seasons(self.info_season)
         if self.info_season is None:
             return 0.
 
-        #print('after', self.info_season)
-        """
-        diff = dataSlice['season']-np.array(seasons)[:, None]
-        idxb = np.argwhere(np.abs(diff) < 1.e-5)
-        sel = dataSlice[idxb[:, 1]]
-        """
         sel = dataSlice[np.in1d(dataSlice['season'], np.array(seasons))]
-        #print('hello', len(sel))
+
         detect_frac = None
         if len(sel) >= 5:
             detect_frac = self.process(sel)
 
-        # print(time.time()-time_ref)
         if detect_frac is not None:
             return np.median(detect_frac['frac_obs_{}'.format(self.names_ref[0])])
         else:
@@ -162,16 +154,13 @@ class SNSNRMetric(metrics.BaseMetric):
         self.band = np.unique(sel[self.filterCol])[0]
         time_ref = time.time()
         snr_obs = self.snr_slice(sel)  # SNR for observations
-        #print('one', time.time()-time_ref)
-        #time_ref = time.time()
         snr_fakes = self.snr_fakes(sel)  # SNR for fakes
-        #print('two', time.time()-time_ref)
-        #time_ref = time.time()
         detect_frac = self.detection_rate(
             snr_obs, snr_fakes)  # Detection rate
-        #print('three', time.time()-time_ref)
         snr_obs = np.asarray(snr_obs)
         snr_fakes = np.asarray(snr_fakes)
+        #self.plot(snr_obs, snr_fakes)
+        # plt.show()
         detect_frac = np.asarray(detect_frac)
 
         return detect_frac
@@ -252,7 +241,6 @@ class SNSNRMetric(metrics.BaseMetric):
         _, idx = np.unique(snr['season'], return_inverse=True)
         infos = self.info_season[idx]
 
-        #print('hello', infos, len(snr))
         vars_info = ['cadence', 'season_length', 'MJD_min']
         snr = rf.append_fields(
             snr, vars_info, [infos[name] for name in vars_info])
