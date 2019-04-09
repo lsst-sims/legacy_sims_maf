@@ -84,8 +84,7 @@ class TestSNmetrics(unittest.TestCase):
                 sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
             mag_to_flux_files = [os.path.join(
                 sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
-            config_fake = os.path.join(
-                sims_maf_contrib_dir, 'data', 'Fake_cadence.yaml')
+
             names_ref = ['SNCosmo']
             coadd = False
 
@@ -120,8 +119,7 @@ class TestSNmetrics(unittest.TestCase):
             # Run the metric with these fake data
             slicePoint = [0]
             metric = SNSNRMetric(
-                lim_sn=lim_sn, coadd=coadd, names_ref=names_ref, season=season, z=z,
-                config_fake=config_fake)
+                lim_sn=lim_sn, coadd=coadd, names_ref=names_ref, season=season, z=z)
 
             result = metric.run(data, slicePoint)
 

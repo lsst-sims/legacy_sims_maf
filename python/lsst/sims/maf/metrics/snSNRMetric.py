@@ -6,6 +6,7 @@ from scipy import interpolate
 import lsst.sims.maf.metrics as metrics
 from lsst.sims.maf.utils.snUtils import GenerateFakeObservations
 from collections import Iterable
+import time
 
 
 class SNSNRMetric(metrics.BaseMetric):
@@ -32,15 +33,13 @@ class SNSNRMetric(metrics.BaseMetric):
     z : float,opt
        redshift for this study
        Default : 0.01
-    config_fake : yaml
-       configuration file for fake observations
     """
 
     def __init__(self, metricName='SNSNRMetric',
                  mjdCol='observationStartMJD', RaCol='fieldRA', DecCol='fieldDec',
                  filterCol='filter', m5Col='fiveSigmaDepth', exptimeCol='visitExposureTime',
                  nightCol='night', obsidCol='observationId', nexpCol='numExposures',
-                 vistimeCol='visitTime', coadd=True, lim_sn=None, names_ref=None, season=1, z=0.01, config_fake=None, **kwargs):
+                 vistimeCol='visitTime', coadd=True, lim_sn=None, names_ref=None, season=1, z=0.01, **kwargs):
 
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -76,8 +75,6 @@ class SNSNRMetric(metrics.BaseMetric):
         # These are reference LC
         self.lim_sn = lim_sn
 
-        self.config_fake = config_fake
-
         self.display = False
 
     def run(self, dataSlice, slicePoint=None):
@@ -94,6 +91,7 @@ class SNSNRMetric(metrics.BaseMetric):
         detection rate : float
 
         """
+        time_ref = time.time()
         goodFilters = np.in1d(dataSlice['filter'], self.filterNames)
         dataSlice = dataSlice[goodFilters]
         if dataSlice.size == 0:
@@ -117,19 +115,24 @@ class SNSNRMetric(metrics.BaseMetric):
                 else:
                     self.info_season = np.concatenate((self.info_season, info))
 
+        # print(time.time()-time_ref)
         self.info_season = self.check_seasons(self.info_season)
         if self.info_season is None:
             return 0.
 
         #print('after', self.info_season)
+        """
         diff = dataSlice['season']-np.array(seasons)[:, None]
         idxb = np.argwhere(np.abs(diff) < 1.e-5)
         sel = dataSlice[idxb[:, 1]]
-
+        """
+        sel = dataSlice[np.in1d(dataSlice['season'], np.array(seasons))]
+        #print('hello', len(sel))
         detect_frac = None
         if len(sel) >= 5:
             detect_frac = self.process(sel)
 
+        # print(time.time()-time_ref)
         if detect_frac is not None:
             return np.median(detect_frac['frac_obs_{}'.format(self.names_ref[0])])
         else:
@@ -157,11 +160,16 @@ class SNSNRMetric(metrics.BaseMetric):
         """
 
         self.band = np.unique(sel[self.filterCol])[0]
+        time_ref = time.time()
         snr_obs = self.snr_slice(sel)  # SNR for observations
+        #print('one', time.time()-time_ref)
+        #time_ref = time.time()
         snr_fakes = self.snr_fakes(sel)  # SNR for fakes
+        #print('two', time.time()-time_ref)
+        #time_ref = time.time()
         detect_frac = self.detection_rate(
             snr_obs, snr_fakes)  # Detection rate
-
+        #print('three', time.time()-time_ref)
         snr_obs = np.asarray(snr_obs)
         snr_fakes = np.asarray(snr_fakes)
         detect_frac = np.asarray(detect_frac)
@@ -466,7 +474,7 @@ class SNSNRMetric(metrics.BaseMetric):
 
             # build the configuration file
 
-            config_fake = yaml.load(open(self.config_fake))
+            config_fake = {}
             config_fake['Ra'] = fieldRA
             config_fake['Dec'] = fieldDec
             config_fake['bands'] = [band]
@@ -477,12 +485,13 @@ class SNSNRMetric(metrics.BaseMetric):
             m5_nocoadd = m5-1.25*np.log10(float(Nvisits)*Tvisit/30.)
             config_fake['m5'] = [m5_nocoadd]
             config_fake['seasons'] = [val['season']]
+            config_fake['Exposure_Time'] = [30.]
+            config_fake['shift_days'] = 0.
             fake_obs_season = GenerateFakeObservations(
                 config_fake).Observations
             if fake_obs is None:
                 fake_obs = fake_obs_season
             else:
-                #print(config_fake, fake_obs_season)
                 fake_obs = np.concatenate((fake_obs, fake_obs_season))
         return fake_obs
 
