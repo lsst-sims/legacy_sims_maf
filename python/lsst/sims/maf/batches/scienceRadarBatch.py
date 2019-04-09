@@ -10,8 +10,9 @@ import os
 from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
 from lsst.sims.maf.metrics.snCadenceMetric import SNcadenceMetric
 from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
-
+from lsst.sims.featureScheduler.surveys import generate_dd_surveys
 from lsst.sims.maf.utils.snUtils import Lims, Reference_Data
+from lsst.sims.utils import hpid2RaDec, angularSeparation
 
 __all__ = ['scienceRadarBatch']
 
@@ -217,8 +218,47 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     # What are some good DDF-specific things? High resolution SN on each DDF or something?
 
+    ddf_surveys = generate_dd_surveys()
+    ddf_radius = 3.0  # Degrees
+    ddf_nside = 512
+
+    ra, dec = hpid2RaDec(ddf_nside, np.arange(hp.nside2npix(ddf_nside)))
+
+    displayDict = {'group': 'DDF', 'subgroup': 'Depth',
+                   'order': 0, 'caption': None}
+
+    for survey in ddf_surveys:
+        # Crop off the u-band only DDF
+        if survey.survey_name[0:4] != 'DD:u':
+            dist_to_ddf = angularSeparation(ra, dec, np.degrees(survey.ra), np.degrees(survey.dec))
+            goodhp = np.where(dist_to_ddf <= ddf_radius)
+            slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=True)
+            for filtername in ['u', 'g', 'r', 'i', 'z', 'y']:
+                metric = metrics.Coaddm5Metric(metricName=survey.survey_name+', ' + filtername)
+                summary = [metrics.MedianMetric(metricName='median depth ' + survey.survey_name+', ' + filtername)]
+                sql = extraSql + joiner + 'filter = "%s"' % filtername
+                bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                                         displayDict=displayDict, summaryMetrics=summary,
+                                         plotFuncs=[])
+                bundleList.append(bundle)
+                displayDict['order'] += 1
+
+            ## XXX--this seems to be running really slow for some reason?
+            displayDict['subgroup'] = 'SNe'
+            sql = extraSql
+            slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=False)
+            metric = SNSNRMetric(lim_sn=lim_sn, coadd=True, names_ref=names_ref,
+                                 z=0.3, config_fake=config_fake, metricName='SN, '+survey.survey_name)
+            summary = [metrics.MedianMetric(metricName='median SN ' + survey.survey_name)]
+            bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
+                                     displayDict=displayDict, summaryMetrics=summary,
+                                     plotFuncs=[])
+            # bundleList.append(bundle)
+            # displayDict['order'] += 1
 
 
+    for b in bundleList:
+        b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList)
 
 
