@@ -8,10 +8,10 @@ from .colMapDict import ColMapDict
 import numpy as np
 import os
 from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
-from lsst.sims.maf.metrics.snCadenceMetric import SNcadenceMetric
+from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
 from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
 from lsst.sims.featureScheduler.surveys import generate_dd_surveys
-from lsst.sims.maf.utils.snUtils import Lims, Reference_Data
+from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
 from lsst.sims.utils import hpid2RaDec, angularSeparation
 
 __all__ = ['scienceRadarBatch']
@@ -118,7 +118,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     band = 'r'
     plotDict = {'percentileClip': 95.}
     lim_sn = Lims(Li_files, mag_to_flux_files, band, SNR[band], mag_range=mag_range, dt_range=dt_range)
-    metric = SNcadenceMetric(lim_sn=lim_sn, coadd=False)
+    metric = SNCadenceMetric(lim_sn=lim_sn, coadd=False)
     sql = extraSql
     summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia redshift (WFD)')]
     summary.append(metrics.MedianMetric(metricName='Median SN Ia redsihft (all)'))
@@ -129,9 +129,9 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     names_ref = ['SNCosmo']
     z = 0.3
-    lim_sn = Reference_Data(Li_files, mag_to_flux_files, band, z)
+    lim_sn = ReferenceData(Li_files, mag_to_flux_files, band, z)
     metric = SNSNRMetric(lim_sn=lim_sn, coadd=False, names_ref=names_ref,
-                         season=1, z=0.3, config_fake=config_fake)
+                         season=-1, z=0.3)
     summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia detection fraction (WFD)')]
     bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
                              plotDict=plotDict, summaryMetrics=summary)
@@ -248,7 +248,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
             sql = extraSql
             slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=False)
             metric = SNSNRMetric(lim_sn=lim_sn, coadd=True, names_ref=names_ref,
-                                 z=0.3, config_fake=config_fake, metricName='SN, '+survey.survey_name)
+                                 z=0.3, metricName='SN, '+survey.survey_name)
             summary = [metrics.MedianMetric(metricName='median SN ' + survey.survey_name)]
             bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
                                      displayDict=displayDict, summaryMetrics=summary,
