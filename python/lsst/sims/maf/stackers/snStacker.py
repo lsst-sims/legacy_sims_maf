@@ -64,12 +64,12 @@ class CoaddStacker(BaseStacker):
             sel = simData[idx]
             for night in np.unique(sel[self.nightCol]):
                 idxb = sel[self.nightCol] == night
-                r.append(tuple(self.Fill(sel[idxb])))
+                r.append(tuple(self.fill(sel[idxb])))
 
         myarray = np.array(r, dtype=self.dtype)
         return myarray
 
-    def Fill(self, tab):
+    def fill(self, tab):
         """
         Estimation of new fields (m5 "coadded" values, ...) 
 
