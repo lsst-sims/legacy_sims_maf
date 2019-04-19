@@ -2,7 +2,7 @@ import numpy as np
 from .baseStacker import BaseStacker
 import warnings
 
-__all__ = ['BaseMoStacker', 'MoMagStacker', 'EclStacker']
+__all__ = ['BaseMoStacker', 'MoMagStacker', 'CometMagVStacker', 'EclStacker']
 
 
 class BaseMoStacker(BaseStacker):
@@ -88,6 +88,41 @@ class MoMagStacker(BaseMoStacker):
         probability = self._rng.random_sample(len(ssoObs['appMag']))
         ssoObs['vis'] = np.where(probability <= completeness, 1, 0)
         return ssoObs
+
+
+class CometMagVStacker(BaseMoStacker):
+    """Add an base V magnitude using a cometary magnitude model.
+
+    The cometV magnitude is intended to replace the 'magV' column coming from sims_movingObjects,
+    thus it does NOT take into account Hval, only Href. The full 'apparent magnitude' is calculated
+    with the MoMagStacker, configured for the appropriate 'vMagCol'.
+    
+    m = M + 5 log10(Δ) + (5 + K) log10(rh)
+        
+    Parameters
+    ----------
+    k : float, opt
+        Activity / intrinsic brightness dependence on heliocentric distance: rh**k.
+        Note the default here is k = 2.
+    rhCol : str, opt
+        The column name for the heliocentric distance. Default 'helio_dist'.
+    deltaCol : str, opt
+        The column name for the geocentric distance. Default 'geo_dist'.
+    """
+    colsAdded = ['cometV']
+
+    def __init__(self, k=2, rhCol='helio_dist', deltaCol='geo_dist'):
+        self.units = ['mag']  # new column units
+        self.k = k
+        self.rhCol = rhCol
+        self.deltaCol = deltaCol
+        self.colsReq = [self.rhCol, self.deltaCol]  # names of required columns
+        
+    def _run(self, ssObs, Href, Hval):
+        # comet apparent mag, use Href here and H-mag cloning will work later with MoMagStacker
+        ssObs['cometV'] = (Href + 5 * np.log10(ssObs[self.deltaCol]) 
+                           + (5 + self.k) * np.log10(ssObs[self.rhCol]))
+        return ssObs
 
 
 class EclStacker(BaseMoStacker):
