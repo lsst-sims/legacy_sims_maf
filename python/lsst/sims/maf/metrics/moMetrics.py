@@ -548,7 +548,8 @@ class ActivityOverPeriodMetric(BaseMoMetric):
     observations, in order to have a chance to detect activity.
     """
     def __init__(self, binsize, snrLimit=5,
-                 qCol='q', eCol='e', aCol='a', tPeriCol='tPeri', metricName=None, **kwargs):
+                 qCol='q', eCol='e', aCol='a', tPeriCol='tPeri', anomalyCol='meanAnomaly',
+                 metricName=None, **kwargs):
         """
         @ binsize : size of orbit slice, in degrees.
         """
@@ -559,6 +560,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         self.eCol = eCol
         self.aCol = aCol
         self.tPeriCol = tPeriCol
+        self.anomalyCol = anomalyCol
         self.snrLimit = snrLimit
         self.binsize = np.radians(binsize)
         self.anomalyBins = np.arange(0, 2 * np.pi, self.binsize)
@@ -569,21 +571,30 @@ class ActivityOverPeriodMetric(BaseMoMetric):
     def run(self, ssoObs, orb, Hval):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
-        try:
-            # We'll let this fail quietly for now, if the orbit is a different format.
+        if self.aCol in orb.keys():
+            a = orb[self.aCol]
+        elif self.qCol in orb.keys():
             a = orb[self.qCol] / (1 - orb[self.eCol])
-            tPeri = orb[self.tPeriCol]
-        except ValueError:
+        else: 
             return self.badval
-        period = np.power(a, 3./2.) * 365.25
-        anomaly = ((ssoObs[self.mjdCol] - tPeri) / period) % (2 * np.pi)
+        
+        period = np.power(a, 3./2.) * 365.25  # days
+
+        if self.anomalyCol in orb.keys():
+            curranomaly = np.radians(orb[self.anomalyCol] + (ssoObs[self.mjdCol] - orb['epoch']) 
+                                     / period * 360.0) % (2 * np.pi) 
+        elif self.tPeriCol in orb.keys():
+            curranomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol]) / period) % (2 * np.pi)
+        else:
+            return self.badval
+
         if self.snrLimit is not None:
             vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
         else:
             vis = np.where(ssoObs[self.visCol] > 0)[0]
         if len(vis) == 0:
             return self.badval
-        n, b = np.histogram(anomaly[vis], bins=self.anomalyBins)
+        n, b = np.histogram(curranomaly[vis], bins=self.anomalyBins)
         activityWindows = np.where(n>0)[0].size
         return activityWindows / float(self.nBins)
 
