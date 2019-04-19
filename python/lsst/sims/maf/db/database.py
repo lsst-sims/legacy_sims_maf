@@ -211,7 +211,15 @@ class Database(with_metaclass(DatabaseRegistry, DBObject)):
         # Determine dtype for numpy recarray.
         dtype = []
         for col in colnames:
-            dt = self.dbTypeMap[self.tables[tablename].c[col].type.__visit_name__]
+            ty = self.tables[tablename].c[col].type
+            dt = self.dbTypeMap[ty.__visit_name__]
+            try:
+                # Override the default length, if the type has it
+                # (for example, if it is VARCHAR(1))
+                if ty.length is not None:
+                    dt = dt[:-1] + (ty.length,)
+            except AttributeError:
+                pass
             dtype.append((col,) + dt)
 
         # Execute query on database.
