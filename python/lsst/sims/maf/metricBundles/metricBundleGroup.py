@@ -25,7 +25,7 @@ def makeBundlesDictFromList(bundleList):
 
     Parameters
     ----------
-    bundleList : List[MetricBundle]
+    bundleList : list of MetricBundles
     """
     bDict = {}
     for b in bundleList:
@@ -53,7 +53,7 @@ class MetricBundleGroup(object):
 
     Parameters
     ----------
-    bundleDict : dict[MetricBundle]
+    bundleDict : dict of MetricBundles
         Individual MetricBundles should be placed into a dictionary, and then passed to
         the MetricBundleGroup. The dictionary keys can then be used to identify MetricBundles
         if needed -- and to identify new MetricBundles which could be created if 'reduce'
@@ -65,18 +65,18 @@ class MetricBundleGroup(object):
         calculate metrics.
         Advanced use: It is possible to set this to None, in which case data should be passed
         directly to the runCurrent method (and runAll should not be used).
-    outDir : Optional[str]
+    outDir : str, opt
         Directory to save the metric results. Default is the current directory.
-    resultsDb : Optional[ResultsDb]
+    resultsDb : ResultsDb, opt
         A results database. If not specified, one will be created in the outDir.
         This database saves information about the metrics calculated, including their summary statistics.
-    verbose : Optional[bool]
+    verbose : bool, opt
         Flag to turn on/off verbose feedback.
-    saveEarly : Optional[bool]
+    saveEarly : bool, opt
         If True, metric values will be saved immediately after they are first calculated (to prevent
         data loss) as well as after summary statistics are calculated.
         If False, metric values will only be saved after summary statistics are calculated.
-    dbTable : Optional[str]
+    dbTable : str, opt
         The name of the table in the dbObj to query for data.
     """
     def __init__(self, bundleDict, dbObj, outDir='.', resultsDb=None, verbose=True,
@@ -227,11 +227,11 @@ class MetricBundleGroup(object):
 
         Parameters
         ----------
-        clearMemory : Optional[bool]
+        clearMemory : bool, opt
             If True, deletes metric values from memory after running each constraint group.
-        plotNow : Optional[bool]
+        plotNow : bool, opt
             If True, plots the metric values immediately after calculation.
-        plotKwargs : Optional[kwargs]
+        plotKwargs : bool, opt
             kwargs to pass to plotCurrent.
         """
         for constraint in self.constraints:
@@ -268,15 +268,15 @@ class MetricBundleGroup(object):
         ----------
         constraint : str
            constraint to use to set the currently active metrics
-        simData : Optional[numpy.ndarray]
+        simData : numpy.ndarray, opt
            If simData is not None, then this numpy structured array is used instead of querying
            data from the dbObj.
-        clearMemory : Optional[bool]
+        clearMemory : bool, opt
            If True, metric values are deleted from memory after they are calculated (and saved to disk).
-        plotNow : Optional[bool]
+        plotNow : bool, opt
            Plot immediately after calculating metric values (instead of the usual procedure, which
            is to plot after metric values are calculated for all constraints).
-        plotKwargs : Optional[kwargs]
+        plotKwargs : kwargs, opt
            Plotting kwargs to pass to plotCurrent.
         """
         # Build list of all the columns needed from the database.
@@ -507,7 +507,7 @@ class MetricBundleGroup(object):
 
         Parameters
         ----------
-        updateSummaries : Optional[bool]
+        updateSummaries : bool, opt
             If True, summary metrics are removed from the top-level (non-reduced)
             MetricBundle. Usually this should be True, as summary metrics are generally
             intended to run on the simpler data produced by reduce metrics.
@@ -521,7 +521,7 @@ class MetricBundleGroup(object):
 
         Parameters
         ----------
-        updateSummaries : Optional[bool]
+        updateSummaries : bool, opt
             If True, summary metrics are removed from the top-level (non-reduced)
             MetricBundle. Usually this should be True, as summary metrics are generally
             intended to run on the simpler data produced by reduce metrics.
@@ -565,8 +565,8 @@ class MetricBundleGroup(object):
         for b in self.currentBundleDict.values():
             b.computeSummaryStats(self.resultsDb)
 
-    def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
-                closefigs=True):
+    def plotAll(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, trimWhitespace=True,
+                thumbnail=True, closefigs=True):
         """Generate all the plots for all the metricBundles in bundleDict.
 
         Generating all ploots, for all MetricBundles, at this point, assumes that
@@ -574,19 +574,21 @@ class MetricBundleGroup(object):
 
         Parameters
         ----------
-        savefig : Optional[bool]
+        savefig : bool, opt
             If True, save figures to disk, to self.outDir directory.
-        outfileSuffix : Optional[str]
+        outfileSuffix : bool, opt
             Append outfileSuffix to the end of every plot file generated. Useful for generating
             sequential series of images for movies.
-        figformat : Optional[str]
+        figformat : str, opt
             Matplotlib figure format to use to save to disk. Default pdf.
-        dpi : Optional[str]
+        dpi : int, opt
             DPI for matplotlib figure. Default 600.
-        thumbnail : Optional[bool]
+        trimWhitespace : bool, opt
+            If True, trim additional whitespace from final figures. Default True.
+        thumbnail : bool, opt
             If True, save a small thumbnail jpg version of the output file to disk as well.
             This is useful for showMaf web pages. Default True.
-        closefigs : Optional[bool]
+        closefigs : bool, opt
             Close the matplotlib figures after they are saved to disk. If many figures are
             generated, closing the figures saves significant memory. Default True.
         """
@@ -596,32 +598,35 @@ class MetricBundleGroup(object):
 
             self.setCurrent(constraint)
             self.plotCurrent(savefig=savefig, outfileSuffix=outfileSuffix, figformat=figformat, dpi=dpi,
-                             thumbnail=thumbnail, closefigs=closefigs)
+                             trimWhitespace=trimWhitespace, thumbnail=thumbnail, closefigs=closefigs)
 
-    def plotCurrent(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, thumbnail=True,
-                    closefigs=True):
+    def plotCurrent(self, savefig=True, outfileSuffix=None, figformat='pdf', dpi=600, trimWhitespace=True,
+                    thumbnail=True, closefigs=True):
         """Generate the plots for the currently active set of MetricBundles.
 
         Parameters
         ----------
-        savefig : Optional[bool]
+        savefig : bool, opt
             If True, save figures to disk, to self.outDir directory.
-        outfileSuffix : Optional[str]
+        outfileSuffix : str, opt
             Append outfileSuffix to the end of every plot file generated. Useful for generating
             sequential series of images for movies.
-        figformat : Optional[str]
+        figformat : str, opt
             Matplotlib figure format to use to save to disk. Default pdf.
-        dpi : Optional[str]
+        dpi : int, opt
             DPI for matplotlib figure. Default 600.
-        thumbnail : Optional[bool]
+        trimWhitespace : bool, opt
+            If True, trim additional whitespace from final figures. Default True.
+        thumbnail : bool, opt
             If True, save a small thumbnail jpg version of the output file to disk as well.
             This is useful for showMaf web pages. Default True.
-        closefigs : Optional[bool]
+        closefigs : bool, opt
             Close the matplotlib figures after they are saved to disk. If many figures are
             generated, closing the figures saves significant memory. Default True.
         """
         plotHandler = PlotHandler(outDir=self.outDir, resultsDb=self.resultsDb,
-                                  savefig=savefig, figformat=figformat, dpi=dpi, thumbnail=thumbnail)
+                                  savefig=savefig, figformat=figformat, dpi=dpi,
+                                  trimWhitespace=trimWhitespace, thumbnail=thumbnail)
 
         for b in self.currentBundleDict.values():
             try:
