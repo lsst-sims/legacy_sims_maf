@@ -7,7 +7,8 @@ from .baseMetric import BaseMetric
 __all__ = ['BaseMoMetric', 'NObsMetric', 'NObsNoSinglesMetric',
            'NNightsMetric', 'ObsArcMetric',
            'DiscoveryMetric', 'Discovery_N_ChancesMetric', 'Discovery_N_ObsMetric',
-           'Discovery_TimeMetric', 'Discovery_RADecMetric', 'Discovery_EcLonLatMetric',
+           'Discovery_TimeMetric', 'Discovery_DistanceMetric', 
+           'Discovery_RADecMetric', 'Discovery_EcLonLatMetric',
            'Discovery_VelocityMetric',
            'ActivityOverTimeMetric', 'ActivityOverPeriodMetric',
            'MagicDiscoveryMetric',
@@ -100,7 +101,7 @@ class BaseChildMetric(BaseMoMetric):
         Value to return when metric cannot be calculated.
     """
     def __init__(self, parentDiscoveryMetric, badval=0, **kwargs):
-        super(BaseChildMetric, self).__init__(badval=badval, **kwargs)
+        super().__init__(badval=badval, **kwargs)
         self.parentMetric = parentDiscoveryMetric
         self.childMetrics = {}
         if 'metricDtype' in kwargs:
@@ -138,7 +139,7 @@ class NObsMetric(BaseMoMetric):
         @ snrLimit .. if snrLimit is None, this uses the _calcVis method/completeness
                       if snrLimit is not None, this uses that value as a cutoff instead.
         """
-        super(NObsMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
@@ -156,7 +157,7 @@ class NObsNoSinglesMetric(BaseMoMetric):
     Don't include any observations where it was a single observation on a night.
     """
     def __init__(self, snrLimit=None, **kwargs):
-        super(NObsNoSinglesMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
@@ -181,7 +182,7 @@ class NNightsMetric(BaseMoMetric):
         @ snrLimit : if SNRlimit is None, this uses _calcVis method/completeness
                      else if snrLimit is not None, it uses that value as a cutoff.
         """
-        super(NNightsMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
@@ -198,7 +199,7 @@ class ObsArcMetric(BaseMoMetric):
     """Calculate the difference between the first and last observation of an SSobject.
     """
     def __init__(self, snrLimit=None, **kwargs):
-        super(ObsArcMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
@@ -244,6 +245,7 @@ class DiscoveryMetric(BaseMoMetric):
         self.childMetrics = {'N_Chances': Discovery_N_ChancesMetric(self),
                              'N_Obs': Discovery_N_ObsMetric(self),
                              'Time': Discovery_TimeMetric(self),
+                             'Distance': Discovery_DistanceMetric(self),
                              'RADec': Discovery_RADecMetric(self),
                              'EcLonLat': Discovery_EcLonLatMetric(self)}
         if 'metricName' in kwargs:
@@ -252,7 +254,7 @@ class DiscoveryMetric(BaseMoMetric):
         else:
             metricName = 'Discovery_%.0fx%.0fin%.0f' % (nObsPerNight, nNightsPerWindow, tWindow)
         # Set up for inheriting from __init__.
-        super(DiscoveryMetric, self).__init__(metricName=metricName, childMetrics=self.childMetrics,
+        super().__init__(metricName=metricName, childMetrics=self.childMetrics,
                                               badval=badval, **kwargs)
         # Define anything needed for this metric.
         self.nObsPerNight = nObsPerNight
@@ -329,7 +331,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
     Child metric to be used with the Discovery Metric.
     """
     def __init__(self, parentDiscoveryMetric, nightStart=None, nightEnd=None, badval=0, **kwargs):
-        super(Discovery_N_ChancesMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
         self.nightStart = nightStart
         self.nightEnd = nightEnd
         self.snrLimit = parentDiscoveryMetric.snrLimit
@@ -370,7 +372,7 @@ class Discovery_N_ObsMetric(BaseChildMetric):
     """Calculates the number of observations in the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=0, **kwargs):
-        super(Discovery_N_ObsMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
         # The number of the discovery chance to use.
         self.i = i
 
@@ -387,7 +389,7 @@ class Discovery_TimeMetric(BaseChildMetric):
     """Returns the time of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, tStart=None, badval=-999, **kwargs):
-        super(Discovery_TimeMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
         self.i = i
         self.tStart = tStart
         self.snrLimit = parentDiscoveryMetric.snrLimit
@@ -410,11 +412,36 @@ class Discovery_TimeMetric(BaseChildMetric):
         return tDisc
 
 
+class Discovery_DistanceMetric(BaseChildMetric):
+    """Returns the distance of the i-th discovery track of an SSobject.                                                   
+    """
+    def __init__(self, parentDiscoveryMetric, i=0, distanceCol='geo_dist', badval=-999, **kwargs):
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        self.i = i
+        self.distanceCol = distanceCol
+        self.snrLimit = parentDiscoveryMetric.snrLimit
+
+    def run(self, ssoObs, orb, Hval, metricValues):
+        if self.i>=len(metricValues['start']):
+            return self.badval
+        if self.snrLimit is not None:
+            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
+        else:
+            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        if len(vis) == 0:
+            return self.badval
+        visSort = np.argsort(ssoObs[self.mjdCol][vis])
+        dists = ssoObs[self.distanceCol][vis][visSort]
+        startIdx = metricValues['start'][self.i]
+        distDisc = dists[startIdx]
+        return distDisc
+
+
 class Discovery_RADecMetric(BaseChildMetric):
     """Returns the RA/Dec of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=None, **kwargs):
-        super(Discovery_RADecMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
         self.i = i
         self.snrLimit = parentDiscoveryMetric.snrLimit
         self.metricDtype = 'object'
@@ -438,7 +465,7 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
     """Returns the ecliptic lon/lat and solar elong of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=None, **kwargs):
-        super(Discovery_EcLonLatMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
         self.i = i
         self.snrLimit = parentDiscoveryMetric.snrLimit
         self.metricDtype = 'object'
@@ -463,7 +490,7 @@ class Discovery_VelocityMetric(BaseChildMetric):
     """Returns the sky velocity of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, badval=-999, **kwargs):
-        super(Discovery_VelocityMetric, self).__init__(parentDiscoveryMetric, badval=badval, **kwargs)
+        super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
         self.i = i
         self.snrLimit = parentDiscoveryMetric.snrLimit
 
@@ -492,7 +519,7 @@ class ActivityOverTimeMetric(BaseMoMetric):
     def __init__(self, window, snrLimit=5, surveyYears=10.0, metricName=None, **kwargs):
         if metricName is None:
             metricName = 'Chance of detecting activity lasting %.0f days' %(window)
-        super(ActivityOverTimeMetric, self).__init__(metricName=metricName, **kwargs)
+        super().__init__(metricName=metricName, **kwargs)
         self.snrLimit = snrLimit
         self.window = window
         self.surveyYears = surveyYears
@@ -527,7 +554,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         """
         if metricName is None:
             metricName = 'Chance of detecting activity covering %.1f of the orbit' %(binsize)
-        super(ActivityOverPeriodMetric, self).__init__(metricName=metricName, **kwargs)
+        super().__init__(metricName=metricName, **kwargs)
         self.qCol = qCol
         self.eCol = eCol
         self.aCol = aCol
@@ -571,7 +598,7 @@ class MagicDiscoveryMetric(BaseMoMetric):
         @ snrLimit .. if snrLimit is None then uses 'completeness' calculation,
                    .. if snrLimit is not None, then uses this value as a cutoff.
         """
-        super(MagicDiscoveryMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.snrLimit = snrLimit
         self.nObs = nObs
         self.tWindow = tWindow
@@ -603,7 +630,7 @@ class HighVelocityMetric(BaseMoMetric):
         @ psfFactor = factor to multiply seeing/visitExpTime by
         (velocity(deg/day) >= 24*psfFactor*seeing(")/visitExptime(s))
         """
-        super(HighVelocityMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.velocityCol = velocityCol
         self.snrLimit = snrLimit
         self.psfFactor = psfFactor
@@ -647,7 +674,7 @@ class HighVelocityNightsMetric(BaseMoMetric):
         The time of the first detection where the conditions are satisifed.
     """
     def __init__(self, psfFactor=2.0, nObsPerNight=2, snrLimit=None, velocityCol='velocity', **kwargs):
-        super(HighVelocityNightsMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.velocityCol = velocityCol
         self.snrLimit = snrLimit
         self.psfFactor = psfFactor
@@ -691,7 +718,7 @@ class LightcurveInversionMetric(BaseMoMetric):
     within nDays.
     """
     def __init__(self, nObs=100, snrLimit=20., nDays=5*365, **kwargs):
-        super(LightcurveInversionMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.nObs = nObs
         self.snrLimit = snrLimit
         self.nDays = nDays
@@ -726,7 +753,7 @@ class ColorDeterminationMetric(BaseMoMetric):
     with SNR greater than snrLimit, in bands bandOne and bandTwo, within nHours.
     """
     def __init__(self, nPairs=1, snrLimit=10, nHours=2.0, bOne='g', bTwo='r', **kwargs):
-        super(ColorDeterminationMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.nPairs = nPairs
         self.snrLimit = snrLimit
         self.nHours = nHours
@@ -760,7 +787,7 @@ class PeakVMagMetric(BaseMoMetric):
     """Pull out the peak V magnitude of all observations of the SSobject.
     """
     def __init__(self, **kwargs):
-        super(PeakVMagMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def run(self, ssoObs, orb, Hval):
         peakVmag = np.min(ssoObs[self.appMagVCol])
@@ -816,7 +843,7 @@ class KnownObjectsMetric(BaseMoMetric):
                  vMagThresh3=22.0, eff3=0.1, tSwitch3=59580,
                  vMagThresh4=22.0, eff4=0.2,
                  elongCol='Elongation', mjdCol='MJD(UTC)', **kwargs):
-        super(KnownObjectsMetric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.elongThresh = elongThresh
         self.elongCol = elongCol
         self.vMagThresh1 = vMagThresh1
