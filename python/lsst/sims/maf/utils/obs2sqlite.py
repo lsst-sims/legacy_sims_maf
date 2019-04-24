@@ -8,11 +8,25 @@ import sqlite3
 import ephem
 import sys
 
-__all__ = ['obs2sqlite']
+__all__ = ['mjd2night', 'obs2sqlite']
 
 
 class mjd2night(object):
-    def __init__(self, mjd_start=59580.035):
+    """Convert MJD to LSST integer 'night' by simply estimating noon and splitting MJDs on this.
+
+    Assumes you have no chance of observing within an hour of noon (since UTC noon varies during year).
+    """
+    def __init__(self, mjd_start=59853, noon=(0.16-0.5)):
+        self.mjd_start = mjd_start
+        self.noon = noon
+    def __call__(self, mjd):
+        night = np.floor(mjd - self.noon - self.mjd_start)
+        return night
+
+
+class mjd2night_sunset(object):
+    """Convert MJD to 'night' after calculating actual times of sunsets. (deprecated?)"""
+    def __init__(self, mjd_start=59853.035):
         self.site = Site(name='LSST')
         self.obs = ephem.Observer()
         self.obs.lat = self.site.latitude_rad
@@ -34,7 +48,7 @@ class mjd2night(object):
 
         # Swipe dates to match sims_skybrightness_pre365
         mjd_start = self.mjd
-        mjd_end = np.arange(59560, 59560+365.25*nyears+day_pad+366, 366).max()
+        mjd_end = np.arange(mjd_start, mjd_start+365.25*nyears+day_pad+366, 366).max()
         step = 0.25
         mjds = np.arange(mjd_start, mjd_end+step, step)
         setting = mjds*0.
