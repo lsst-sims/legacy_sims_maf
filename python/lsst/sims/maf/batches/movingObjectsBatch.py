@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 from copy import deepcopy
 import numpy as np
+import numpy.ma as ma
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
