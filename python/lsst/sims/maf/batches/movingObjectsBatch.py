@@ -11,7 +11,7 @@ from .common import summaryCompletenessAtTime, summaryCompletenessOverH
 import warnings
 
 __all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'addMoCompletenessBundles',
-           'characterizationBatch']
+           'characterizationBatch', 'combineSubsets']
 
 
 def setupMoSlicer(orbitFile, Hrange, obsFile=None):
