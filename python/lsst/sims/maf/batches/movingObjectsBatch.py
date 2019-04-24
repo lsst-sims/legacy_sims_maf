@@ -701,7 +701,7 @@ def combineSubsets(mbSubsets):
     # The first bundle will be used as a bit of a template.
     joint = mb.createEmptyMoMetricBundle()
     # Check if they're the same slicer.
-    slicer = deepcopy(b[0].slicer)
+    slicer = deepcopy(mbSubsets[0].slicer)
     for i in mbSubsets:
         if np.any(slicer.slicePoints['H'] != mbSubsets[i].slicer.slicePoints['H']):
             if np.any(slicer.slicePoints['orbits'] != mbSubsets[i].slicer.slicePoints['orbits']):
