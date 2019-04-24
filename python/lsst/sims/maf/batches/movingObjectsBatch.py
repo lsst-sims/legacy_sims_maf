@@ -694,3 +694,29 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     for b in bundleList:
         b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList), plotBundles
+
+
+def combineSubsets(mbSubsets):
+    # Combine the data from the subsets.
+    # The first bundle will be used as a bit of a template.
+    joint = mb.createEmptyMoMetricBundle()
+    # Check if they're the same slicer.
+    slicer = deepcopy(b[0].slicer)
+    for i in mbSubsets:
+        if np.any(slicer.slicePoints['H'] != mbSubsets[i].slicer.slicePoints['H']):
+            if np.any(slicer.slicePoints['orbits'] != mbSubsets[i].slicer.slicePoints['orbits']):
+                raise ValueError('Bundle %s has a different slicer than the first bundle' % (i))
+    # Join metric values.
+    joint.slicer = slicer
+    joint.metric = mbSubsets[0].metric
+    # Don't just use the slicer shape to define the metricValues, because of CompletenessBundles.
+    metricValues = np.zeros(mbSubsets[0].metricValues.shape, float)
+    metricValuesMask = np.zeros(mbSubsets[0].metricValues.shape, bool)
+    for i in mbSubsets:
+        metricValues += mbSubsets[i].metricValues.filled(0)
+        metricValuesMask = np.where(metricValuesMask & mbSubsets[i].metricValues.mask, True, False)
+    joint.metricValues = ma.MaskedArray(data=metricValues, mask=metricValuesMask, fill_value=0)
+    joint.metadata = mbSubsets[0].metadata
+    joint.runName = mbSubsets[0].runName
+    joint.fileRoot = metricfile.replace('.npz', '')
+    return joint

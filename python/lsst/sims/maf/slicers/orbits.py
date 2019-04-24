@@ -24,7 +24,7 @@ class Orbits(object):
                                 'tPeri', 'epoch', 'H', 'g', 'sed_filename']
         self.dataCols['KEP'] = ['objId', 'a', 'e', 'inc', 'Omega', 'argPeri',
                                 'meanAnomaly', 'epoch', 'H', 'g', 'sed_filename']
-        self.dataCols['CART'] = ['objId', 'x', 'y', 'z', 'xdot', 'ydot', 'zdot',
+        self.dataCols['CAR'] = ['objId', 'x', 'y', 'z', 'xdot', 'ydot', 'zdot',
                                  'epoch', 'H', 'g', 'sed_filename']
 
     def __len__(self):
@@ -46,9 +46,7 @@ class Orbits(object):
             if self.orb_format != otherOrbits.orb_format:
                 return False
             for col in self.dataCols[self.orb_format]:
-                if col == 'objId':
-                    continue
-                if not self.orbits[col].equals(otherOrbits.orbits[col]):
+                if not np.all(self.orbits[col].values == otherOrbits.orbits[col].values):
                     return False
                 else:
                     return True
@@ -86,6 +84,9 @@ class Orbits(object):
         elif isinstance(orbits, np.record):
             # This was a single object in a numpy array and we should be a bit fancy.
             orbits = pd.DataFrame.from_records([orbits], columns=orbits.dtype.names)
+        elif isinstance(orbits, pd.DataFrame):
+            # This was a pandas dataframe .. but we probably want to drop the index and recount.
+            orbits.reset_index(drop=True, inplace=True)
 
         if 'index' in orbits:
             del orbits['index']
@@ -97,24 +98,37 @@ class Orbits(object):
             raise ValueError('Length of the orbits dataframe was 0.')
 
         # Discover which type of orbital parameters we have on disk.
-        format = None
+        self.orb_format = None
         if 'FORMAT' in orbits:
-            format = orbits['FORMAT'].iloc[0]
+            if ~(orbits['FORMAT'] == orbits['FORMAT'].iloc[0]).all():
+                raise ValueError('All orbital elements in the set should have the same FORMAT.')
+            self.orb_format = orbits['FORMAT'].iloc[0]
+            # Backwards compatibility .. a bit. CART is deprecated, so swap it to CAR.
+            if self.orb_format == 'CART':
+                self.orb_format = 'CAR'
             del orbits['FORMAT']
-        if 'q' in orbits:
-            self.orb_format = 'COM'
-        elif 'a' in orbits:
-            self.orb_format = 'KEP'
-        elif 'x' in orbits:
-            self.orb_format = 'CART'
-        else:
-            raise ValueError("Can't determine orbital type, as neither q, a or x in input orbital elements.\n"
-                             "Was attempting to base orbital element quantities on header row, "
-                             "with columns: \n%s" % orbits.columns)
-        # Report a warning if formats don't seem to match.
-        if (format is not None) and (format != self.orb_format):
-            warnings.warn("Format from input file (%s) doesn't match determined format (%s). "
-                          "Using %s" % (format, self.orb_format, self.orb_format))
+            # Check that the orbit format is approximately right.
+            if self.orb_format == 'COM':
+                if 'q' not in orbits:
+                    raise ValueError('The stated format was COM, but "q" not present in orbital elements?')
+            if self.orb_format == 'KEP':
+                if 'a' not in orbits:
+                    raise ValueError('The stated format was KEP, but "a" not present in orbital elements?')
+            if self.orb_format == 'CAR':
+                if 'x' not in orbits:
+                    raise ValueError('The stated format was CAR but "x" not present in orbital elements?')
+        if self.orb_format is None:
+            # Try to figure out the format, if it wasn't provided.
+            if 'q' in orbits:
+                self.orb_format = 'COM'
+            elif 'a' in orbits:
+                self.orb_format = 'KEP'
+            elif 'x' in orbits:
+                self.orb_format = 'CAR'
+            else:
+                raise ValueError("Can't determine orbital type, as neither q, a or x in input orbital elements.\n"
+                                 "Was attempting to base orbital element quantities on header row, "
+                                 "with columns: \n%s" % orbits.columns)
 
         # Check that the orbit epoch is within a 'reasonable' range, to detect possible column mismatches.
         general_epoch = orbits['epoch'].head(1).values[0]
@@ -129,13 +143,14 @@ class Orbits(object):
 
         # If these columns are not available in the input data, auto-generate them.
         if 'objId' not in orbits:
-            orbits['objId'] = np.arange(0, nSso, 1)
+            objId = np.arange(0, nSso, 1)
+            orbits = orbits.assign(objId = objId)
         if 'H' not in orbits:
-            orbits['H'] = np.zeros(nSso) + 20.0
+            orbits = orbits.assign(H = 20.0)
         if 'g' not in orbits:
-            orbits['g'] = np.zeros(nSso) + 0.15
+            orbits = orbits.assign(g = 0.15)
         if 'sed_filename' not in orbits:
-            orbits['sed_filename'] = self.assignSed(orbits)
+            orbits = orbits.assign(sed_filename = self.assignSed(orbits))
 
         # Make sure we gave all the columns we need.
         for col in self.dataCols[self.orb_format]:
@@ -144,7 +159,7 @@ class Orbits(object):
                                  % (col, self.orb_format))
 
         # Check to see if we have duplicates.
-        if len(np.unique(orbits['objId'])) != nSso:
+        if len(orbits['objId'].unique()) != nSso:
             warnings.warn('There are duplicates in the orbit objId values' +
                           ' - was this intended? (continuing).')
         # All is good.
@@ -195,76 +210,89 @@ class Orbits(object):
         return sedvals
 
     def readOrbits(self, orbitfile, delim=None, skiprows=None):
-        """Read orbits from a file, generating a pandas dataframe containing columns matching
-        dataCols, for the appropriate orbital parameter format (currently accepts COM or KEP formats).
+        """Read orbits from a file, generating a pandas dataframe containing columns matching dataCols,
+        for the appropriate orbital parameter format (currently accepts COM, KEP or CAR formats).
 
-        After reading and standardizing the column names, calls selfs.setOrbits to validate the
+        After reading and standardizing the column names, calls self.setOrbits to validate the
         orbital parameters. Expects angles in orbital element formats to be in degrees.
 
-        Note that readOrbits uses pandas.read_table to read the data file with the orbital parameters.
-        Thus, it should have column headers specifying the column names _unless_ skiprows == -1,
-        in which case it is assumed to be a standard DES COMETARY format file, with no header line.
+        Note that readOrbits uses pandas.read_csv to read the data file with the orbital parameters.
+        Thus, it should have column headers specifying the column names ..
+        unless skiprows = -1 or there is just no header line at all.
+        in which case it is assumed to be a standard DES format file, with no header line.
 
         Parameters
         ----------
         orbitfile : str
             The name of the input file containing orbital parameter information.
         delim : str, optional
-            The delimiter for the input orbit file -- default = None will use delim_whitespace=True.
+            The delimiter for the input orbit file. Default is None, will use delim_whitespace=True.
         skiprows : int, optional
             The number of rows to skip before reading the header information for pandas.
+            Default is None, which will trigger a check of the file to look for the header columns.
         """
         names = None
-        # Usually skiprows will be None and we should let readOrbits figure out the column headers.
-        # But if it is set, assume the user has modified the headers appropriately.
-        if skiprows is not None:
-            if delim is None:
-                orbits = pd.read_table(orbitfile, delim_whitespace=True, skiprows=skiprows)
-            else:
-                orbits = pd.read_table(orbitfile, sep=delim,  skiprows=skiprows)
 
-        else:
-            skiprows = 0
+        # If skiprows is set, then we will assume the user has handled this so that the
+        # first line read has the header information.
+        # But, if skiprows is not set, then we have to do some checking to see if there is
+        # header information and which row it might start in.
+        if skiprows is None:
+            skiprows = -1
             # Figure out whether the header is in the first line, or if there are rows to skip.
             # We need to do a bit of juggling to do this before pandas reads the whole orbit file though.
-            file = open(orbitfile, 'r')
-            for line in file:
-                values = line.split()
-                try:
-                    # If it is a valid orbit line, we expect 3 to be eccentricity.
-                    float(values[3])
-                    # And if it worked, we're done here.
-                    break
-                except (ValueError, IndexError):
-                    # This wasn't a valid number or there wasn't anything in the third value
-                    skiprows += 1
-                    valuesheader = values
-            skiprows -= 1
-            file.close()
+            with open(orbitfile, 'r') as fp:
+                headervalues = None
+                for line in fp:
+                    values = line.split()
+                    try:
+                        # If it is a valid orbit line, we expect column 3 to be a number.
+                        float(values[3])
+                        # And if it worked, we're done here (it's an orbit) - go on to parsing header values.
+                        break
+                    except (ValueError, IndexError):
+                        # This wasn't a valid number or there wasn't anything in the third value.
+                        # So this is either the header line or it's a comment line before the header columns.
+                        skiprows += 1
+                        headervalues = values
 
-            if skiprows == -1:
-                # No header; assume it's a typical DES file - but is format KEP or COM?
-                names_COM = ('objId', 'FORMAT', 'q', 'e', 'i', 'node', 'argperi', 't_p',
-                             'H',  'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
-                names_KEP = ('objId', 'FORMAT', 'a', 'e', 'i', 'node', 'argperi', 'meanAnomaly',
-                             'H', 'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
-                orbits = pd.read_table(orbitfile, delim_whitespace=True, skiprows=0,
-                                       names=names_COM)
-                if orbits['FORMAT'][0] == 'KEP':
-                    orbits.columns = names_KEP
 
-            else:
+            if headervalues is not None:  # (and skiprows > -1)
                 # There is a header, but we also need to check if there is a comment key at the start
                 # of the proper header line.
-                linestart = valuesheader[0]
+                # ... Because this varies as well, and is sometimes separated from header columns.
+                linestart = headervalues[0]
                 if linestart == '#' or linestart == '!!' or linestart == '##':
-                    names = valuesheader[1:]
-                    skiprows += 1
-                # Read the data from disk.
-                if delim is None:
-                    orbits = pd.read_table(orbitfile, delim_whitespace=True, names=names, skiprows=skiprows)
+                    names = headervalues[1:]
                 else:
-                    orbits = pd.read_table(orbitfile, sep=delim, names=names, skiprows=skiprows)
+                    names = headervalues
+                # Add 1 to skiprows, so that we skip the header column line.
+                skiprows += 1
+
+        # So now skiprows is a value. If it is -1, then there is no header information.
+        if skiprows == -1:
+            # No header; assume it's a typical DES file -
+            # we'll assign the column names based on the FORMAT.
+            names_COM = ('objId', 'FORMAT', 'q', 'e', 'i', 'node', 'argperi', 't_p',
+                         'H',  'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
+            names_KEP = ('objId', 'FORMAT', 'a', 'e', 'i', 'node', 'argperi', 'meanAnomaly',
+                         'H', 'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
+            names_CAR = ('objId', 'FORMAT', 'x', 'y', 'z', 'xdot', 'ydot', 'zdot',
+                          'H', 'epoch', 'INDEX', 'N_PAR', 'MOID', 'COMPCODE')
+            # First use names_COM, and then change if required.
+            orbits = pd.read_csv(orbitfile, delim_whitespace=True, header=None, names=names_COM)
+
+            if orbits['FORMAT'][0] == 'KEP':
+                orbits.columns = names_KEP
+            elif orbits['FORMAT'][0] == 'CAR':
+                orbits.columns = names_CAR
+
+        else:
+            if delim is None:
+                orbits = pd.read_csv(orbitfile, delim_whitespace=True, skiprows=skiprows,
+                                     names=names)
+            else:
+                orbits = pd.read_csv(orbitfile, sep=delim, skiprows=skiprows, names=names)
 
         # Drop some columns that are typically present in DES files but that we don't need.
         if 'INDEX' in orbits:
@@ -328,8 +356,8 @@ class Orbits(object):
         ----------
         neworb: pandas.DataFrame
         """
-        col_orig = ['objId', 'otype', 'model', 'H', 'g', 'sed_filename']
-        new_order = ['objId', 'otype'] + [n for n in neworb.columns] + ['H', 'g', 'model', 'sed_filename']
+        col_orig = ['objId', 'sed_filename']
+        new_order = ['objId'] + [n for n in neworb.columns] + ['sed_filename']
         updated_orbits = neworb.join(self.orbits[col_orig])[new_order]
         self.setOrbits(updated_orbits)
 
