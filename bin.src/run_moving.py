@@ -60,7 +60,7 @@ if __name__ == '__main__':
     parser.add_argument("--opsimRun", type=str, default='opsim',
                         help="Name of opsim run. Default 'opsim'.")
     parser.add_argument("--outDir", type=str, default='.',
-                        help="Output directory for moving object metrics. Default '.'")
+                        help="Output directory for moving object metrics. Default '.'.")
     parser.add_argument("--opsimDb", type=str, default=None,
                         help="Path and filename of opsim db, to write config* files to output directory."
                         " Optional: if not provided, config* files won't be created but analysis will run.")
@@ -131,8 +131,10 @@ if __name__ == '__main__':
         bdictD, pbundleD = batches.quickDiscoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
                                                      metadata=args.metadata, detectionLosses='detection',
                                                      albedo=args.albedo, Hmark=args.hMark, times=times)
-        bdict, pbundle = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun, metadata=args.metadata,
-                                                detectionLosses='detection', albedo=args.albedo, Hmark=args.hMark,
+        bdict, pbundle = batches.discoveryBatch(slicer, colmap=colmap, runName=args.opsimRun,
+                                                metadata=args.metadata,
+                                                detectionLosses='detection', albedo=args.albedo,
+                                                Hmark=args.hMark,
                                                 times=times)
         bdictD.update(bdict)
         pbundleD.append(pbundle)
