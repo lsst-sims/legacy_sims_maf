@@ -10,7 +10,6 @@ import os
 from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
 from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
 from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
-from lsst.sims.featureScheduler.surveys import generate_dd_surveys
 from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
 from lsst.sims.utils import hpid2RaDec, angularSeparation
 
@@ -18,7 +17,7 @@ __all__ = ['scienceRadarBatch']
 
 
 def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None, nside=64,
-                      benchmarkArea=18000, benchmarkNvisits=825, DDF=False):
+                      benchmarkArea=18000, benchmarkNvisits=825, DDF=True):
     """A batch of metrics for looking at survey performance relative to the SRD and the main
     science drivers of LSST.
 
@@ -71,12 +70,13 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     displayDict['order'] += 1
 
     displayDict = {'group': 'SRD', 'subgroup': 'Gaps', 'order': 0, 'caption': None}
+    plotDict = {'percentileClip': 95.}
     for filtername in 'ugrizy':
         sql = extraSql + joiner + 'filter ="%s"' % filtername
         metric = metrics.MaxGapMetric()
         summaryMetrics = [metrics.PercentileMetric(percentile=95, metricName='95th percentile of Max gap, %s' % filtername)]
         bundle = mb.MetricBundle(metric, healslicer, sql, plotFuncs=subsetPlots,
-                                 summaryMetrics=summaryMetrics, displayDict=displayDict)
+                                 summaryMetrics=summaryMetrics, displayDict=displayDict, plotDict=plotDict)
         bundleList.append(bundle)
         displayDict['order'] += 1
 
@@ -117,7 +117,6 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
     Li_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
     mag_to_flux_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
-    config_fake = os.path.join(sims_maf_contrib_dir, 'data', 'Fake_cadence.yaml')
     SNR = dict(zip('griz', [30., 40., 30., 20.]))  # SNR for WFD
     mag_range = [21., 25.5]  # WFD mag range
     dt_range = [0.5, 30.]  # WFD dt range
@@ -130,8 +129,9 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     summary.append(metrics.MedianMetric(metricName='Median SN Ia redsihft (all)'))
     bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
                              plotDict=plotDict, summaryMetrics=summary)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
+    # XXX--Are you slow?
+    # bundleList.append(bundle)
+    # displayDict['order'] += 1
 
     names_ref = ['SNCosmo']
     z = 0.3
@@ -141,9 +141,9 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia detection fraction (WFD)')]
     bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
                              plotDict=plotDict, summaryMetrics=summary)
-    bundleList.append(bundle)
-    displayDict['order'] += 1
-
+    # XXX- slow or crashes? 
+    # bundleList.append(bundle)
+    # displayDict['order'] += 1
 
     # XXX--need some sort of metric for weak lensing and telescope rotation.
 
@@ -225,6 +225,8 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     if DDF:
         # What are some good DDF-specific things? High resolution SN on each DDF or something?
 
+        # Hide this import to avoid adding a dependency.
+        from lsst.sims.featureScheduler.surveys import generate_dd_surveys
         ddf_surveys = generate_dd_surveys()
         ddf_radius = 3.0  # Degrees
         ddf_nside = 512
