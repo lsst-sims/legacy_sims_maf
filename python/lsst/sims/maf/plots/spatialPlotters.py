@@ -631,6 +631,40 @@ class HealpixSDSSSkyMap(BasePlotter):
         return fig.number
 
 
+def project_lambert(longitude, latitude):
+    """Project from RA,dec to plane
+    https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection
+    """
+
+    # flipping the sign on latitude goes north pole or south pole centered
+    r_polar = 2*np.cos((np.pi/2+latitude)/2.)
+    # Add pi/2 so north is up
+    theta_polar = longitude + np.pi/2
+
+    x = r_polar * np.cos(theta_polar)
+    y = r_polar * np.sin(theta_polar)
+    return x, y
+
+
+def draw_grat(ax):
+    """Draw some graticule lines on an axis
+    """
+    decs = np.radians(90.-np.array([20, 40, 60, 80]))
+    ra = np.radians(np.arange(0, 361, 1))
+    for dec in decs:
+        temp_dec = ra*0+dec
+        x, y = project_lambert(ra, temp_dec)
+        ax.plot(x, y, 'k--', alpha=0.5)
+
+    ras = np.radians(np.arange(0, 360+45, 45))
+    dec = np.radians(90.-np.arange(0, 81, 1))
+    for ra in ras:
+        temp_ra = dec*0 + ra
+        x, y = project_lambert(temp_ra, dec)
+        ax.plot(x, y, 'k--', alpha=0.5)
+
+    return ax
+
 class LambertSkyMap(BasePlotter):
     """
     Use basemap and contour to make a Lambertian projection.
@@ -670,17 +704,7 @@ class LambertSkyMap(BasePlotter):
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         ax = fig.add_subplot(plotDict['subplot'])
 
-        # if using anaconda, to get basemap:
-        # conda install basemap
-        # Note, this should be possible without basemap, but there are
-        # matplotlib bugs:
-        # http: //stackoverflow.com/questions/31975303/matplotlib-tricontourf-with-an-axis-projection
-        try:
-            from mpl_toolkits.basemap import Basemap
-        except ModuleNotFoundError:
-            raise('To use this plotting function, please install Basemap into your python distribution')
-
-        m = Basemap(**plotDict['basemap'])
+        x, y = project_lambert(slicer.slicePoints['ra'], slicer.slicePoints['dec'])
         # Contour the plot first to remove any anti-aliasing artifacts.  Doesn't seem to work though. See:
         # http: //stackoverflow.com/questions/15822159/aliasing-when-saving-matplotlib\
         # -filled-contour-plot-to-pdf-or-eps
@@ -696,19 +720,24 @@ class LambertSkyMap(BasePlotter):
             norm = colors.LogNorm(vmin=z_val.min(), vmax=z_val.max())
         else:
             norm = plotDict['norm']
-        CS = m.contourf(np.degrees(slicer.slicePoints['ra']),
-                        np.degrees(slicer.slicePoints['dec']),
-                        metricValue.filled(np.min(clims)-0.9), levels, tri=True,
-                        cmap=plotDict['cmap'], ax=ax, latlon=True, norm=norm)
+        tcf = ax.tricontourf(x, y, metricValue.filled(np.min(clims)-0.9), levels,
+                             cmap=plotDict['cmap'], norm=norm)
+
+        ax = draw_grat(ax)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+        alt_limit = 10.
+        x, y = project_lambert(0, np.radians(alt_limit))
+        max_val = np.max(np.abs([x, y]))
+        ax.set_xlim([-max_val, max_val])
+        ax.set_ylim([-max_val, max_val])
 
         # Try to fix the ugly pdf contour problem
-        for c in CS.collections:
+        for c in tcf.collections:
             c.set_edgecolor("face")
 
-        para = np.arange(0, 89, 20)
-        m.drawparallels(para, labels=[False, True, True, False])
-        m.drawmeridians(np.arange(-180, 181, 60), labels=[True, False, False, False])
-        cb = plt.colorbar(CS, format=plotDict['cbarFormat'])
+        cb = plt.colorbar(tcf, format=plotDict['cbarFormat'])
         cb.set_label(plotDict['xlabel'])
         if plotDict['labelsize'] is not None:
             cb.ax.tick_params(labelsize=plotDict['labelsize'])
