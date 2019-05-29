@@ -84,14 +84,11 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     # Solar System
     #########################
 
+    # XXX -- may want to do Solar system seperatly
+
     # XXX--fraction of NEOs detected (assume some nominal size and albido)
-
-
     # XXX -- fraction of MBAs detected
-
-
     # XXX -- fraction of KBOs detected
-
     # XXX--any others? Planet 9s? Comets? Neptune Trojans?
 
     #########################
@@ -114,38 +111,10 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     # let's put Type Ia SN in here
     displayDict['subgroup'] = 'SNe Ia'
-    sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
-    Li_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Li_SNCosmo_-2.0_0.2.npy')]
-    mag_to_flux_files = [os.path.join(sims_maf_contrib_dir, 'data', 'Mag_to_Flux_SNCosmo.npy')]
-    SNR = dict(zip('griz', [30., 40., 30., 20.]))  # SNR for WFD
-    mag_range = [21., 25.5]  # WFD mag range
-    dt_range = [0.5, 30.]  # WFD dt range
-    band = 'r'
-    plotDict = {'percentileClip': 95.}
-    lim_sn = Lims(Li_files, mag_to_flux_files, band, SNR[band], mag_range=mag_range, dt_range=dt_range)
-    metric = SNCadenceMetric(lim_sn=lim_sn, coadd=False)
-    sql = extraSql
-    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia redshift (WFD)')]
-    summary.append(metrics.MedianMetric(metricName='Median SN Ia redsihft (all)'))
-    bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
-                             plotDict=plotDict, summaryMetrics=summary)
-    # XXX--Are you slow?
-    # bundleList.append(bundle)
-    # displayDict['order'] += 1
+    # XXX-- use the light curves from PLASTICC here
 
-    names_ref = ['SNCosmo']
-    z = 0.3
-    lim_sn = ReferenceData(Li_files, mag_to_flux_files, band, z)
-    metric = SNSNRMetric(lim_sn=lim_sn, coadd=False, names_ref=names_ref,
-                         season=-1, z=0.3)
-    summary = [metrics.AreaSummaryMetric(area=18000, reduce_func=np.median, decreasing=True, metricName='Median SN Ia detection fraction (WFD)')]
-    bundle = mb.MetricBundle(metric, healslicer, sql, displayDict=displayDict, plotFuncs=subsetPlots,
-                             plotDict=plotDict, summaryMetrics=summary)
-    # XXX- slow or crashes? 
-    # bundleList.append(bundle)
-    # displayDict['order'] += 1
 
-    # XXX--need some sort of metric for weak lensing and telescope rotation.
+    # XXX--need some sort of metric for weak lensing and camera rotation.
 
     #########################
     # Variables and Transients
@@ -166,6 +135,11 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                                  plotFuncs=subsetPlots, summaryMetrics=summary)
         bundleList.append(bundle)
         displayDict['order'] += 1
+
+    # XXX add some PLASTICC metrics for kilovnova and tidal disruption events. 
+
+
+    # XXX -- would be good to add some microlensing events, for both MW and LMC/SMC.
 
     #########################
     # Milky Way
@@ -252,18 +226,8 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                     bundleList.append(bundle)
                     displayDict['order'] += 1
 
-                ## XXX--this seems to be running really slow for some reason?
-                displayDict['subgroup'] = 'SNe'
-                sql = extraSql
-                slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=False)
-                metric = SNSNRMetric(lim_sn=lim_sn, coadd=True, names_ref=names_ref,
-                                     z=0.3, metricName='SN, '+survey.survey_name)
-                summary = [metrics.MedianMetric(metricName='median SN ' + survey.survey_name)]
-                bundle = mb.MetricBundle(metric, slicer, sql, metadata=metadata,
-                                         displayDict=displayDict, summaryMetrics=summary,
-                                         plotFuncs=[])
-                # bundleList.append(bundle)
-                # displayDict['order'] += 1
+            # XXX -- maybe pack some SNe in the DDF area?
+
 
 
     for b in bundleList:
