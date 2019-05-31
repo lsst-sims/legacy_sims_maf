@@ -7,7 +7,7 @@ from .baseMetric import BaseMetric
 __all__ = ['BaseMoMetric', 'NObsMetric', 'NObsNoSinglesMetric',
            'NNightsMetric', 'ObsArcMetric',
            'DiscoveryMetric', 'Discovery_N_ChancesMetric', 'Discovery_N_ObsMetric',
-           'Discovery_TimeMetric', 'Discovery_DistanceMetric', 
+           'Discovery_TimeMetric', 'Discovery_DistanceMetric',
            'Discovery_RADecMetric', 'Discovery_EcLonLatMetric',
            'Discovery_VelocityMetric',
            'ActivityOverTimeMetric', 'ActivityOverPeriodMetric',
@@ -413,7 +413,7 @@ class Discovery_TimeMetric(BaseChildMetric):
 
 
 class Discovery_DistanceMetric(BaseChildMetric):
-    """Returns the distance of the i-th discovery track of an SSobject.                                                   
+    """Returns the distance of the i-th discovery track of an SSobject.
     """
     def __init__(self, parentDiscoveryMetric, i=0, distanceCol='geo_dist', badval=-999, **kwargs):
         super().__init__(parentDiscoveryMetric, badval=badval, **kwargs)
@@ -572,19 +572,19 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
         if self.aCol in orb.keys():
-            a = orb[self.aCol]
+            a = (orb[self.aCol]).values
         elif self.qCol in orb.keys():
-            a = orb[self.qCol] / (1 - orb[self.eCol])
-        else: 
+            a = (orb[self.qCol] / (1 - orb[self.eCol])).values
+        else:
             return self.badval
-        
+
         period = np.power(a, 3./2.) * 365.25  # days
 
         if self.anomalyCol in orb.keys():
-            curranomaly = np.radians(orb[self.anomalyCol] + (ssoObs[self.mjdCol] - orb['epoch']) 
-                                     / period * 360.0) % (2 * np.pi) 
+            curranomaly = np.radians(orb[self.anomalyCol].values + \
+                          (ssoObs[self.mjdCol] - orb['epoch'].values)/ period * 360.0) % (2 * np.pi)
         elif self.tPeriCol in orb.keys():
-            curranomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol]) / period) % (2 * np.pi)
+            curranomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol].values) / period) % (2 * np.pi)
         else:
             return self.badval
 
