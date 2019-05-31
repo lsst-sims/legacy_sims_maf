@@ -350,18 +350,26 @@ class OpsimDatabaseV4(BaseOpsimDatabase):
         propIds = {}
         # Add WFD and DD tags by default to propTags as we expect these every time. (avoids key errors).
         propTags = {'WFD': [], 'DD': [], 'NES': []}
+        assignData = True
+        try:
+            propData = self.query_columns('Proposal', colnames=[self.propIdCol, self.propNameCol],
+                                          sqlconstraint=None)
+        except ValueError:
+            propData = []
+            propIds = {}
+            propTags = {}
+            assignData = False
 
-        propData = self.query_columns('Proposal', colnames=[self.propIdCol, self.propNameCol],
-                                      sqlconstraint=None)
-        for propId, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
-            # Fix these in the future, to use the proper tags that will be added to output database.
-            propIds[propId] = propName
-            if 'widefastdeep' in propName.lower():
-                propTags['WFD'].append(propId)
-            if 'drilling' in propName.lower():
-                propTags['DD'].append(propId)
-            if 'northeclipticspur' in propName.lower():
-                propTags['NES'].append(propId)
+        if assignData:
+            for propId, propName in zip(propData[self.propIdCol], propData[self.propNameCol]):
+                # Fix these in the future, to use the proper tags that will be added to output database.
+                propIds[propId] = propName
+                if 'widefastdeep' in propName.lower():
+                    propTags['WFD'].append(propId)
+                if 'drilling' in propName.lower():
+                    propTags['DD'].append(propId)
+                if 'northeclipticspur' in propName.lower():
+                    propTags['NES'].append(propId)
         return propIds, propTags
 
     def createSlewConstraint(self, startTime=None, endTime=None):

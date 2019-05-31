@@ -35,17 +35,27 @@ def connectDb(dbfile):
 
 def setSQL(opsdb, sqlConstraint=None, extraMeta=None):
     # Fetch the proposal ID values from the database
+    # If there is no proposal database, propids and proptags will be empty dictionaries.
     propids, proptags = opsdb.fetchPropInfo()
-    # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
-    wfdWhere = opsdb.createSQLWhere('WFD', proptags)
-    ddWhere = opsdb.createSQLWhere('DD', proptags)
-    nesWhere = opsdb.createSQLWhere('NES', proptags)
+    sqltags = {'All': sqlConstraint}
+    metadata = {'All': ''}
+    if 'WFD' in proptags:
+        # Construct a WFD SQL where clause so multiple propIDs can query by WFD:
+        wfdWhere = opsdb.createSQLWhere('WFD', proptags)
+        sqltags['WFD'] = wfdWhere
+        metadata['WFD'] = 'WFD'
+    if 'DD' in proptags:
+        ddWhere = opsdb.createSQLWhere('DD', proptags)
+        sqltags['DD'] = ddWhere
+        metadata['DD'] = 'DD'
+    if 'NES' in proptags:
+        nesWhere = opsdb.createSQLWhere('NES', proptags)
+        sqltags['NES'] = nesWhere
+        metadata['NES'] = 'NES'
     if sqlConstraint is not None:
         wfdWhere = '(%s) and (%s)' % (sqlConstraint, wfdWhere)
         ddWhere = '(%s) and (%s)' % (sqlConstraint, ddWhere)
         nesWhere = '(%s) and (%s)' % (sqlConstraint, nesWhere)
-    sqltags = {'WFD': wfdWhere, 'DD': ddWhere, 'NES': nesWhere, 'All': sqlConstraint}
-    metadata = {'WFD': 'WFD', 'DD': 'DD', 'NES': 'NES', 'All': ''}
     if sqlConstraint is not None and len(sqlConstraint) > 0:
         md = sqlConstraint.replace('=', '').replace('filter', '').replace("'", '')
         md = md.replace('"','').replace('  ', ' ')
