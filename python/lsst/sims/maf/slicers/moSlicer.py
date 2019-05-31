@@ -1,7 +1,5 @@
 import numpy as np
-import numpy.ma as ma
 import pandas as pd
-import warnings
 
 from .baseSlicer import BaseSlicer
 from lsst.sims.maf.plots.moPlotters import MetricVsH, MetricVsOrbit
@@ -137,6 +135,7 @@ class MoObjSlicer(BaseSlicer):
         else:
             Hvals = np.array([orb['H']], float)
         # Note that ssoObs / obs is a recarray not Dataframe!
+        # But that the orbit IS a Dataframe.
         return {'obs': obs.to_records(),
                 'orbit': orb,
                 'Hvals': Hvals}
