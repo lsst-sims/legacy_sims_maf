@@ -92,13 +92,13 @@ class TestMoMetrics1(unittest.TestCase):
         orb['g'] = 0.15
         o = pd.DataFrame(orb)
         activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=360, snrLimit=5)
-        activity = activityPeriodMetric.run(self.ssoObs, o, self.Hval)
+        activity = activityPeriodMetric.run(self.ssoObs, o.iloc[0], self.Hval)
         self.assertEqual(activity, 1.0)
         activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=720, snrLimit=5)
-        activity = activityPeriodMetric.run(self.ssoObs, o, self.Hval)
+        activity = activityPeriodMetric.run(self.ssoObs, o.iloc[0], self.Hval)
         self.assertEqual(activity, 1.0)
         activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=10, snrLimit=5)
-        activity = activityPeriodMetric.run(self.ssoObs, o, self.Hval)
+        activity = activityPeriodMetric.run(self.ssoObs, o.iloc[0], self.Hval)
         self.assertLess(activity, 0.03)
         # different type of orbit - currently should fail quietly
         orb = np.recarray(1, dtype=([('objId', (str, 20)), ('a', float), ('e', float),
@@ -116,10 +116,10 @@ class TestMoMetrics1(unittest.TestCase):
         orb['g'] = 0.15
         o = pd.DataFrame(orb)
         activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=360, snrLimit=5)
-        activity = activityPeriodMetric.run(self.ssoObs, o, self.Hval)
+        activity = activityPeriodMetric.run(self.ssoObs, o.iloc[0], self.Hval)
         self.assertEqual(activity, 1.0)
         activityPeriodMetric = metrics.ActivityOverPeriodMetric(binsize=180, snrLimit=5)
-        activity = activityPeriodMetric.run(self.ssoObs, o, self.Hval)
+        activity = activityPeriodMetric.run(self.ssoObs, o.iloc[0], self.Hval)
         self.assertEqual(activity, 0.5)
 
     def tearDown(self):

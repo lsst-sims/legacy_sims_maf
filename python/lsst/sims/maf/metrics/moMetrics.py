@@ -572,19 +572,19 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
         if self.aCol in orb.keys():
-            a = (orb[self.aCol]).values
+            a = (orb[self.aCol])
         elif self.qCol in orb.keys():
-            a = (orb[self.qCol] / (1 - orb[self.eCol])).values
+            a = orb[self.qCol] / (1 - orb[self.eCol])
         else:
             return self.badval
 
         period = np.power(a, 3./2.) * 365.25  # days
 
         if self.anomalyCol in orb.keys():
-            curranomaly = np.radians(orb[self.anomalyCol].values + \
-                          (ssoObs[self.mjdCol] - orb['epoch'].values)/ period * 360.0) % (2 * np.pi)
+            curranomaly = np.radians(orb[self.anomalyCol] + \
+                          (ssoObs[self.mjdCol] - orb['epoch'])/ period * 360.0) % (2 * np.pi)
         elif self.tPeriCol in orb.keys():
-            curranomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol].values) / period) % (2 * np.pi)
+            curranomaly = ((ssoObs[self.mjdCol] - orb[self.tPeriCol]) / period) % (2 * np.pi)
         else:
             return self.badval
 
