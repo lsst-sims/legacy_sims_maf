@@ -8,10 +8,8 @@ from .colMapDict import ColMapDict
 import numpy as np
 import os
 from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
-from lsst.sims.maf.metrics.snCadenceMetric import SNCadenceMetric
-from lsst.sims.maf.metrics.snSNRMetric import SNSNRMetric
-from lsst.sims.maf.utils.snUtils import Lims, ReferenceData
 from lsst.sims.utils import hpid2RaDec, angularSeparation
+from mafContrib import Plasticc_metric, plasticc_slicer
 
 __all__ = ['scienceRadarBatch']
 
@@ -111,8 +109,19 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     # let's put Type Ia SN in here
     displayDict['subgroup'] = 'SNe Ia'
+    metadata = ''
     # XXX-- use the light curves from PLASTICC here
-
+    displayDict['Caption'] = 'Fraction of normal SNe Ia'
+    sql = ''
+    slicer = plasticc_slicer(model='SNIa-normal', seed=42, badval=0)
+    metric = Plasticc_metric(metricName='SNIa')
+    # Set the maskval so that we count missing objects as zero.
+    summary_stats = [metrics.MeanMetric(maskVal=0)]
+    plotFuncs = [plots.HealpixSkyMap()]
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
+                             plotFuncs=plotFuncs, metadata=metadata, displayDict=displayDict)
+    bundleList.append(bundle)
+    displayDict['order'] += 1
 
     # XXX--need some sort of metric for weak lensing and camera rotation.
 
@@ -136,8 +145,20 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         bundleList.append(bundle)
         displayDict['order'] += 1
 
-    # XXX add some PLASTICC metrics for kilovnova and tidal disruption events. 
+    # XXX add some PLASTICC metrics for kilovnova and tidal disruption events.
+    displayDict['subgroup'] = 'KN'
+    displayDict['caption'] = 'Fraction of Kilonova (from PLASTICC)'
+    sql = ''
+    slicer = plasticc_slicer(model='KN', seed=43, badval=0)
+    metric = Plasticc_metric(metricName='KN')
+    summary_stats = [metrics.MeanMetric(maskVal=0)]
+    plotFuncs = [plots.HealpixSkyMap()]
+    bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
+                             plotFuncs=plotFuncs, metadata=metadata,
+                             displayDict=displayDict)
+    bundleList.append(bundle)
 
+    displayDict['order'] += 1
 
     # XXX -- would be good to add some microlensing events, for both MW and LMC/SMC.
 

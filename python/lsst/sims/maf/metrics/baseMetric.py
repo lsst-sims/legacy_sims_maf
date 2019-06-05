@@ -125,7 +125,7 @@ class BaseMetric(with_metaclass(MetricRegistry, object)):
     colInfo = ColInfo()
 
     def __init__(self, col=None, metricName=None, maps=None, units=None,
-                 metricDtype=None, badval=-666):
+                 metricDtype=None, badval=-666, maskVal=None):
         # Turn cols into numpy array so we know we can iterate over the columns.
         self.colNameArr = np.array(col, copy=False, ndmin=1)
         # To support simple metrics operating on a single column, set self.colname
@@ -139,6 +139,8 @@ class BaseMetric(with_metaclass(MetricRegistry, object)):
         self.maps = maps
         # Value to return if the metric can't be computed
         self.badval = badval
+        if maskVal is not None:
+            self.maskVal = maskVal
         # Save a unique name for the metric.
         self.name = metricName
         if self.name is None:

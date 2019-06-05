@@ -15,9 +15,10 @@ from matplotlib.collections import PatchCollection
 from lsst.sims.maf.utils import optimalBins, percentileClipping
 from .plotHandler import BasePlotter, applyZPNorm
 
-from lsst.sims.utils import _equatorialFromGalactic
+from lsst.sims.utils import _equatorialFromGalactic, _healbin
 from .perceptual_rainbow import makePRCmap
 perceptual_rainbow = makePRCmap()
+import numpy.ma as ma
 
 __all__ = ['setColorLims', 'setColorMap', 'HealpixSkyMap', 'HealpixPowerSpectrum',
            'HealpixHistogram', 'OpsimHistogram', 'BaseHistogram',
@@ -80,7 +81,8 @@ class HealpixSkyMap(BasePlotter):
         # Set up the default plotting parameters.
         self.defaultPlotDict = {}
         self.defaultPlotDict.update(baseDefaultPlotDict)
-        self.defaultPlotDict.update({'rot': (0, 0, 0), 'flip': 'astro', 'coord': 'C'})
+        self.defaultPlotDict.update({'rot': (0, 0, 0), 'flip': 'astro', 'coord': 'C',
+                                    'nside': 8, 'reduceFunc': np.mean})
         # Note: for alt/az sky maps using the healpix plotter, you can use
         # {'rot': (90, 90, 90), 'flip': 'geo'}
 
@@ -104,8 +106,19 @@ class HealpixSkyMap(BasePlotter):
         plotDict = {}
         plotDict.update(self.defaultPlotDict)
         plotDict.update(userPlotDict)
-        # Update the metric data with zeropoint or normalization.
-        metricValue = applyZPNorm(metricValueIn, plotDict)
+
+        # Check if we have a valid HEALpix slicer
+        if 'Heal' in slicer.slicerName:
+            # Update the metric data with zeropoint or normalization.
+            metricValue = applyZPNorm(metricValueIn, plotDict)
+        else:
+            # Bin the values up on a healpix grid.
+            metricValue = _healbin(slicer.slicePoints['ra'], slicer.slicePoints['dec'],
+                                   metricValueIn.filled(slicer.badval), nside=plotDict['nside'],
+                                   reduceFunc=plotDict['reduceFunc'], fillVal=slicer.badval)
+            metricValue = ma.array(metricValue)
+            metricValue = applyZPNorm(metricValue, plotDict)
+
         # Generate a Mollweide full-sky plot.
         fig = plt.figure(fignum, figsize=plotDict['figsize'])
         # Set up color bar limits.
