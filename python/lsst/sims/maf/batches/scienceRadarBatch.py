@@ -6,10 +6,7 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
 import numpy as np
-import os
-from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
 from lsst.sims.utils import hpid2RaDec, angularSeparation
-from mafContrib import Plasticc_metric, plasticc_slicer
 
 __all__ = ['scienceRadarBatch']
 
@@ -23,6 +20,9 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     ----------
 
     """
+    # Hide dependencies
+    from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended
+    from mafContrib import Plasticc_metric, plasticc_slicer, load_plasticc_lc
 
     if colmap is None:
         colmap = ColMapDict('opsimV4')
@@ -38,6 +38,12 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     healslicer = slicers.HealpixSlicer(nside=nside)
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
+
+    # Load up the plastic light curves
+    models = ['SNIa-normal', 'KN']
+    plasticc_models_dict = {}
+    for model in models:
+        plasticc_models_dict[model] = list(load_plasticc_lc(model=model).values())
 
     #########################
     # SRD, DM, etc
@@ -113,7 +119,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     # XXX-- use the light curves from PLASTICC here
     displayDict['Caption'] = 'Fraction of normal SNe Ia'
     sql = ''
-    slicer = plasticc_slicer(model='SNIa-normal', seed=42, badval=0)
+    slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42, badval=0)
     metric = Plasticc_metric(metricName='SNIa')
     # Set the maskval so that we count missing objects as zero.
     summary_stats = [metrics.MeanMetric(maskVal=0)]
@@ -149,7 +155,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     displayDict['subgroup'] = 'KN'
     displayDict['caption'] = 'Fraction of Kilonova (from PLASTICC)'
     sql = ''
-    slicer = plasticc_slicer(model='KN', seed=43, badval=0)
+    slicer = plasticc_slicer(plcs=plasticc_models_dict['KN'], seed=43, badval=0)
     metric = Plasticc_metric(metricName='KN')
     summary_stats = [metrics.MeanMetric(maskVal=0)]
     plotFuncs = [plots.HealpixSkyMap()]
@@ -218,20 +224,20 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
 
     if DDF:
-        # What are some good DDF-specific things? High resolution SN on each DDF or something?
-
         # Hide this import to avoid adding a dependency.
         from lsst.sims.featureScheduler.surveys import generate_dd_surveys
         ddf_surveys = generate_dd_surveys()
+        # For doing a high-res sampling of the DDF for co-adds
         ddf_radius = 3.0  # Degrees
         ddf_nside = 512
 
         ra, dec = hpid2RaDec(ddf_nside, np.arange(hp.nside2npix(ddf_nside)))
 
-        displayDict = {'group': 'DDF', 'subgroup': 'Depth',
+        displayDict = {'group': 'DDF depths', 'subgroup': None,
                        'order': 0, 'caption': None}
 
         for survey in ddf_surveys:
+            displayDict['subgroup'] = survey.survey_name
             # Crop off the u-band only DDF
             if survey.survey_name[0:4] != 'DD:u':
                 dist_to_ddf = angularSeparation(ra, dec, np.degrees(survey.ra), np.degrees(survey.dec))
@@ -247,12 +253,24 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
                     bundleList.append(bundle)
                     displayDict['order'] += 1
 
-            # XXX -- maybe pack some SNe in the DDF area?
+        displayDict = {'group': 'DDF Transients', 'subgroup': None,
+                       'order': 0, 'caption': None}
+        for survey in ddf_surveys:
+            displayDict['subgroup'] = survey.survey_name
+            if survey.survey_name[0:4] != 'DD:u':
+                slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42,
+                                         ra_cen=survey.ra, dec_cen=survey.dec, radius=np.radians(3.), useCamera=True)
+                metric = Plasticc_metric(metricName=survey.survey_name+' SNIa')
+                sql = ''
+                summary_stats = [metrics.MeanMetric(maskVal=0)]
+                plotFuncs = [plots.HealpixSkyMap()]
+                bundle = mb.MetricBundle(metric, slicer, sql, runName=runName, summaryMetrics=summary_stats,
+                                         plotFuncs=plotFuncs, metadata=metadata,
+                                         displayDict=displayDict)
+                bundleList.append(bundle)
 
-
+    displayDict['order'] += 1
 
     for b in bundleList:
         b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList)
-
-
