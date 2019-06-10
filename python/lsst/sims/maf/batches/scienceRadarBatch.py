@@ -242,7 +242,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
             if survey.survey_name[0:4] != 'DD:u':
                 dist_to_ddf = angularSeparation(ra, dec, np.degrees(survey.ra), np.degrees(survey.dec))
                 goodhp = np.where(dist_to_ddf <= ddf_radius)
-                slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=True)
+                slicer = slicers.UserPointsSlicer(ra=ra[goodhp], dec=dec[goodhp], useCamera=False)
                 for filtername in ['u', 'g', 'r', 'i', 'z', 'y']:
                     metric = metrics.Coaddm5Metric(metricName=survey.survey_name+', ' + filtername)
                     summary = [metrics.MedianMetric(metricName='median depth ' + survey.survey_name+', ' + filtername)]
@@ -259,7 +259,7 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
             displayDict['subgroup'] = survey.survey_name
             if survey.survey_name[0:4] != 'DD:u':
                 slicer = plasticc_slicer(plcs=plasticc_models_dict['SNIa-normal'], seed=42,
-                                         ra_cen=survey.ra, dec_cen=survey.dec, radius=np.radians(3.), useCamera=True)
+                                         ra_cen=survey.ra, dec_cen=survey.dec, radius=np.radians(3.), useCamera=False)
                 metric = Plasticc_metric(metricName=survey.survey_name+' SNIa')
                 sql = ''
                 summary_stats = [metrics.MeanMetric(maskVal=0)]
