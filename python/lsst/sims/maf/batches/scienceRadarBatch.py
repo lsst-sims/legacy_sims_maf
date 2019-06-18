@@ -4,6 +4,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
+from lsst.sims.maf.batches import intraNight, interNight
 from .colMapDict import ColMapDict
 import numpy as np
 from lsst.sims.utils import hpid2RaDec, angularSeparation
@@ -222,19 +223,27 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
     #########################
     # DDF
     #########################
-
+    ddf_time_bundleDicts = []
     if DDF:
         # Hide this import to avoid adding a dependency.
         from lsst.sims.featureScheduler.surveys import generate_dd_surveys
         ddf_surveys = generate_dd_surveys()
         # For doing a high-res sampling of the DDF for co-adds
-        ddf_radius = 3.0  # Degrees
+        ddf_radius = 1.8  # Degrees
         ddf_nside = 512
 
         ra, dec = hpid2RaDec(ddf_nside, np.arange(hp.nside2npix(ddf_nside)))
 
         displayDict = {'group': 'DDF depths', 'subgroup': None,
                        'order': 0, 'caption': None}
+
+        # Run the inter and intra gaps at the center of the DDFs
+        for survey in ddf_surveys:
+            slicer = slicers.UserPointsSlicer(ra=np.degrees(survey.ra), dec=np.degrees(survey.dec), useCamera=False)
+            ddf_time_bundleDicts.append(interNight(colmap=colmap, slicer=slicer,
+                                                   runName=runName, nside=64, extraSql='note="%s"' % survey)[0])
+            ddf_time_bundleDicts.append(intraNight(colmap=colmap, slicer=slicer,
+                                                   runName=runName, nside=64, extraSql='note="%s"' % survey)[0])
 
         for survey in ddf_surveys:
             displayDict['subgroup'] = survey.survey_name
@@ -273,4 +282,17 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
 
     for b in bundleList:
         b.setRunName(runName)
-    return mb.makeBundlesDictFromList(bundleList)
+
+    bundleDict = mb.makeBundlesDictFromList(bundleList)
+
+    intraDict = intraNight(colmap=colmap, runName=runName, nside=nside,
+                           extraSql=extraSql, extraMetadata=extraMetadata)[0]
+    interDict = interNight(colmap=colmap, runName=runName, nside=nside,
+                           extraSql=extraSql, extraMetadata=extraMetadata)[0]
+
+    bundleDict.update(intraDict)
+    bundleDict.update(interDict)
+    for ddf_time in ddf_time_bundleDicts:
+        bundleDict.update(ddf_time)
+
+    return bundleDict

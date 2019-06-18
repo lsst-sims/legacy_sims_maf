@@ -13,7 +13,7 @@ __all__ = ['intraNight', 'interNight', 'seasons']
 
 
 def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
-               ditherStacker=None, ditherkwargs=None):
+               ditherStacker=None, ditherkwargs=None, slicer=None):
     """Generate a set of statistics about the pair/triplet/etc. rate within a night.
 
     Parameters
@@ -32,6 +32,8 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         Optional dither stacker to use to define ra/dec columns.
     ditherkwargs: dict, opt
         Optional dictionary of kwargs for the dither stacker.
+    slicer : slicer object (None)
+        Optinally use something other than a HealpixSlicer
 
     Returns
     -------
@@ -53,7 +55,8 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     standardStats = standardSummary()
     subsetPlots = [plots.HealpixSkyMap(), plots.HealpixHistogram()]
 
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
+    if slicer is None:
+        slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
     # Look for the fraction of visits in gri where there are pairs within dtMin/dtMax.
     displayDict = {'group': 'IntraNight', 'subgroup': 'Pairs', 'caption': None, 'order': 0}
@@ -149,7 +152,7 @@ def intraNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
 
 
 def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetadata=None,
-               ditherStacker=None, ditherkwargs=None):
+               ditherStacker=None, ditherkwargs=None, slicer=None):
     """Generate a set of statistics about the spacing between nights with observations.
 
     Parameters
@@ -168,6 +171,9 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
         Optional dither stacker to use to define ra/dec columns.
     ditherkwargs: dict, opt
         Optional dictionary of kwargs for the dither stacker.
+    slicer : slicer object (None)
+        Optinally use something other than a HealpixSlicer
+
     Returns
     -------
     metricBundleDict
@@ -185,7 +191,8 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
                                                             extraSql=extraSql,
                                                             extraMetadata=metadata)
 
-    slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
+    if slicer is None:
+        slicer = slicers.HealpixSlicer(nside=nside, latCol=decCol, lonCol=raCol, latLonDeg=degrees)
 
     displayDict = {'group': 'InterNight', 'subgroup': 'Night gaps', 'caption': None, 'order': 0}
 
@@ -214,7 +221,7 @@ def interNight(colmap=None, runName='opsim', nside=64, extraSql=None, extraMetad
     for f in filterlist:
         displayDict['caption'] = 'Median gap between nights with observations, %s.' % metadata[f]
         displayDict['order'] = orders[f]
-        plotDict = {'color': colors[f]}
+        plotDict = {'color': colors[f], 'percentileClip': 95.}
         bundle = mb.MetricBundle(metric, slicer, sqls[f], metadata=metadata[f],
                                  displayDict=displayDict,
                                  plotFuncs=subsetPlots, plotDict=plotDict,
