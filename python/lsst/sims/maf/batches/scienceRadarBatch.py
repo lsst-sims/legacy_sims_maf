@@ -241,9 +241,11 @@ def scienceRadarBatch(colmap=None, runName='', extraSql=None, extraMetadata=None
         for survey in ddf_surveys:
             slicer = slicers.UserPointsSlicer(ra=np.degrees(survey.ra), dec=np.degrees(survey.dec), useCamera=False)
             ddf_time_bundleDicts.append(interNight(colmap=colmap, slicer=slicer,
-                                                   runName=runName, nside=64, extraSql='note="%s"' % survey)[0])
+                                                   runName=runName, nside=64, extraSql='note="%s"' % survey.survey_name,
+                                                   subgroup=survey.survey_name)[0])
             ddf_time_bundleDicts.append(intraNight(colmap=colmap, slicer=slicer,
-                                                   runName=runName, nside=64, extraSql='note="%s"' % survey)[0])
+                                                   runName=runName, nside=64, extraSql='note="%s"' % survey.survey_name,
+                                                   subgroup=survey.survey_name)[0])
 
         for survey in ddf_surveys:
             displayDict['subgroup'] = survey.survey_name
