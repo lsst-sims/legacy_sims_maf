@@ -29,17 +29,19 @@ def createEmptyMoMetricBundle():
     return MoMetricBundle(BaseMoMetric(), MoObjSlicer(), None)
 
 
-def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=None, resultsDb=None):
+def makeCompletenessBundle(bundle, completenessMetric, Hmark=None, resultsDb=None):
     """
     Make a mock metric bundle from a bundle which had MoCompleteness or MoCumulativeCompleteness summary
     metrics run. This lets us use the plotHandler + plots.MetricVsH to generate plots.
+    Will also work with completeness metric run in order to calculate fraction of the population,
+    or with MoCompletenessAtTime metric.
 
     Parameters
     ----------
     bundle : ~lsst.sims.maf.metricBundles.MetricBundle
         The metric bundle with a completeness summary statistic.
-    summaryName : str, opt
-        The name of the summary statistic. Default "CumulativeCompleteness".
+    completenessMetric : ~lsst.sims.maf.metric
+        The summary (completeness) metric to run on the bundle.
     Hmark : float, opt
         The Hmark value to add to the plotting dictionary of the new mock bundle. Default None.
     resultsDb : ~lsst.sims.maf.db.ResultsDb, opt
@@ -49,23 +51,16 @@ def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=N
     -------
     ~lsst.sims.maf.metricBundles.MoMetricBundle
     """
-    # First look for summary value:
-    try:
-        bundle.summaryValues[summaryName]
-    # If not found, then just run it (assuming it's completeness metric).
-    except (TypeError, KeyError):
-        if summaryName == 'DifferentialCompleteness':
-            metric = MoCompletenessMetric(cumulative=False)
-        else:
-            metric = MoCompletenessMetric(cumulative=True)
-        bundle.setSummaryMetrics(metric)
-        bundle.computeSummaryStats(resultsDb)
+    bundle.setSummaryMetrics(completenessMetric)
+    bundle.computeSummaryStats(resultsDb)
+    summaryName = completenessMetric.name
     # Make up the bundle, including the metric values.
     completeness = ma.MaskedArray(data=bundle.summaryValues[summaryName]['value'],
                                   mask=np.zeros(len(bundle.summaryValues[summaryName]['value'])),
                                   fill_value=0)
-    mb = MoMetricBundle(MoCompletenessMetric(metricName=summaryName), bundle.slicer,
-                        constraint=bundle.constraint, runName=bundle.runName, metadata=bundle.metadata)
+    mb = MoMetricBundle(completenessMetric, bundle.slicer,
+                        constraint=bundle.constraint, runName=bundle.runName,
+                        metadata=bundle.metadata)
     plotDict = {}
     plotDict.update(bundle.plotDict)
     plotDict['label'] = bundle.metadata
@@ -75,7 +70,7 @@ def makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness', Hmark=N
         mb.setSummaryMetrics(metric)
         mb.computeSummaryStats(resultsDb)
         val = mb.summaryValues['Value At H=%.1f' % Hmark]
-        if summaryName == 'CumulativeCompleteness':
+        if summaryName.startswith('Cumulative'):
             plotDict['label'] += ' : @ H(<=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
         else:
             plotDict['label'] += ' : @ H(=%.1f) = %.1f%s' % (Hmark, val * 100, '%')

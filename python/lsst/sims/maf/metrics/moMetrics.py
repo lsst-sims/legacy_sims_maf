@@ -1,5 +1,4 @@
 from builtins import zip
-from builtins import range
 import numpy as np
 
 from .baseMetric import BaseMetric
@@ -13,8 +12,17 @@ __all__ = ['BaseMoMetric', 'NObsMetric', 'NObsNoSinglesMetric',
            'ActivityOverTimeMetric', 'ActivityOverPeriodMetric',
            'MagicDiscoveryMetric',
            'HighVelocityMetric', 'HighVelocityNightsMetric',
-           'LightcurveInversionMetric', 'ColorDeterminationMetric',
+           'LightcurveInversion_AsteroidMetric', 'Color_AsteroidMetric',
+           'InstantaneousColorMetric', 'LightcurveColor_OuterMetric',
            'PeakVMagMetric', 'KnownObjectsMetric']
+
+
+def _setVis(ssoObs, snrLimit, snrCol, visCol):
+    if snrLimit is not None:
+        vis = np.where(ssoObs[snrCol] >= snrLimit)[0]
+    else:
+        vis = np.where(ssoObs[visCol] > 0)[0]
+    return vis
 
 
 class BaseMoMetric(BaseMetric):
@@ -68,7 +76,6 @@ class BaseMoMetric(BaseMetric):
                 raise ValueError('childmetrics must be provided as a dictionary.')
             self.childMetrics = childMetrics
             self.metricDtype = 'object'
-
         self.shape = 1
 
     def run(self, ssoObs, orb, Hval):
@@ -161,10 +168,7 @@ class NObsNoSinglesMetric(BaseMoMetric):
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return 0
         nights = ssoObs[self.nightCol][vis]
@@ -186,14 +190,12 @@ class NNightsMetric(BaseMoMetric):
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return 0
         nights = len(np.unique(ssoObs[self.nightCol][vis]))
         return nights
+
 
 class ObsArcMetric(BaseMoMetric):
     """Calculate the difference between the first and last observation of an SSobject.
@@ -203,14 +205,12 @@ class ObsArcMetric(BaseMoMetric):
         self.snrLimit = snrLimit
 
     def run(self, ssoObs, orb, Hval):
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return 0
         arc = ssoObs[self.mjdCol][vis].max() - ssoObs[self.mjdCol][vis].min()
         return arc
+
 
 class DiscoveryMetric(BaseMoMetric):
     """Identify the discovery opportunities for an SSobject.
@@ -234,7 +234,8 @@ class DiscoveryMetric(BaseMoMetric):
         the completeness calculation added to the 'vis' column (probabilistic visibility,
         based on 5-sigma limit). If snrLimit is not None, it uses this SNR value as a cutoff.
     metricName : str, opt
-        The metric name to use; default will be to construct Discovery_nObsPerNightxnNightsPerWindowintWindow.
+        The metric name to use.
+        Default will be to construct Discovery_nObsPerNightxnNightsPerWindowintWindow.
     """
     def __init__(self, nObsPerNight=2,
                  tMin=5./60.0/24.0, tMax=90./60./24.0,
@@ -264,10 +265,7 @@ class DiscoveryMetric(BaseMoMetric):
         self.tWindow = tWindow
 
     def run(self, ssoObs, orb, Hval):
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         # Identify discovery opportunities.
@@ -293,28 +291,32 @@ class DiscoveryMetric(BaseMoMetric):
         timesEnd = ssoObs[self.mjdCol][vis][visSort][nIdxManyEnd]
         # Identify the nights with 'clearly good' observations.
         good = np.where((timesEnd - timesStart >= self.tMin) & (timesEnd - timesStart <= self.tMax), 1, 0)
-        # Identify the nights where we need more investigation (a subset of the visits may be within the interval).
-        check = np.where((good==0) & (nIdxManyEnd + 1 - nIdxMany > self.nObsPerNight) & (timesEnd-timesStart > self.tMax))[0]
+        # Identify the nights where we need more investigation
+        # (a subset of the visits may be within the interval).
+        check = np.where((good==0) & (nIdxManyEnd + 1 - nIdxMany > self.nObsPerNight)
+                         & (timesEnd-timesStart > self.tMax))[0]
         for i, j, c in zip(visSort[nIdxMany][check], visSort[nIdxManyEnd][check], check):
             t = ssoObs[self.mjdCol][vis][visSort][i:j+1]
             dtimes = (np.roll(t, 1- self.nObsPerNight) - t)[:-1]
             tidx = np.where((dtimes >= self.tMin) & (dtimes <= self.tMax))[0]
             if len(tidx) > 0:
                 good[c] = 1
-        # 'good' provides mask for observations which could count as 'good to make tracklets' against ssoObs[visSort][nIdxMany]
-        # Now identify tracklets which can make tracks.
+        # 'good' provides mask for observations which could count as 'good to make tracklets'
+        # against ssoObs[visSort][nIdxMany].  Now identify tracklets which can make tracks.
         goodIdx = visSort[nIdxMany][good == 1]
         goodIdxEnds = visSort[nIdxManyEnd][good == 1]
         #print 'good tracklets', nights[goodIdx]
         if len(goodIdx) < self.nNightsPerWindow:
             return self.badval
-        deltaNights = np.roll(ssoObs[self.nightCol][vis][goodIdx], 1 - self.nNightsPerWindow) - ssoObs[self.nightCol][vis][goodIdx]
-        # Identify the index in ssoObs[vis][goodIdx] (sorted by expMJD) where the discovery opportunity starts.
+        deltaNights = np.roll(ssoObs[self.nightCol][vis][goodIdx], 1 - self.nNightsPerWindow) \
+                      - ssoObs[self.nightCol][vis][goodIdx]
+        # Identify the index in ssoObs[vis][goodIdx] (sorted by mjd) where the discovery opportunity starts.
         startIdxs = np.where((deltaNights >= 0) & (deltaNights <= self.tWindow))[0]
         # Identify the index where the discovery opportunity ends.
         endIdxs = np.zeros(len(startIdxs), dtype='int')
         for i, sIdx in enumerate(startIdxs):
-            inWindow = np.where(ssoObs[self.nightCol][vis][goodIdx] - ssoObs[self.nightCol][vis][goodIdx][sIdx] <= self.tWindow)[0]
+            inWindow = np.where(ssoObs[self.nightCol][vis][goodIdx]
+                                - ssoObs[self.nightCol][vis][goodIdx][sIdx] <= self.tWindow)[0]
             endIdxs[i] = np.array([inWindow.max()])
         # Convert back to index based on ssoObs[vis] (sorted by expMJD).
         startIdxs = goodIdx[startIdxs]
@@ -345,10 +347,7 @@ class Discovery_N_ChancesMetric(BaseChildMetric):
     def run(self, ssoObs, orb, Hval, metricValues):
         """Return the number of different discovery chances we had for each object/H combination.
         """
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         if self.nightStart is None and self.nightEnd is None:
@@ -397,10 +396,7 @@ class Discovery_TimeMetric(BaseChildMetric):
     def run(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
             return self.badval
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         visSort = np.argsort(ssoObs[self.mjdCol][vis])
@@ -424,10 +420,7 @@ class Discovery_DistanceMetric(BaseChildMetric):
     def run(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
             return self.badval
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         visSort = np.argsort(ssoObs[self.mjdCol][vis])
@@ -449,10 +442,7 @@ class Discovery_RADecMetric(BaseChildMetric):
     def run(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
             return self.badval
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         visSort = np.argsort(ssoObs[self.mjdCol][vis])
@@ -460,6 +450,7 @@ class Discovery_RADecMetric(BaseChildMetric):
         dec = ssoObs[self.decCol][vis][visSort]
         startIdx = metricValues['start'][self.i]
         return (ra[startIdx], dec[startIdx])
+
 
 class Discovery_EcLonLatMetric(BaseChildMetric):
     """Returns the ecliptic lon/lat and solar elong of the i-th discovery track of an SSobject.
@@ -473,10 +464,7 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
     def run(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
             return self.badval
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         visSort = np.argsort(ssoObs[self.mjdCol][vis])
@@ -485,6 +473,7 @@ class Discovery_EcLonLatMetric(BaseChildMetric):
         solarElong = ssoObs['solarElong'][vis][visSort]
         startIdx = metricValues['start'][self.i]
         return (ecLon[startIdx], ecLat[startIdx], solarElong[startIdx])
+
 
 class Discovery_VelocityMetric(BaseChildMetric):
     """Returns the sky velocity of the i-th discovery track of an SSobject.
@@ -497,10 +486,7 @@ class Discovery_VelocityMetric(BaseChildMetric):
     def run(self, ssoObs, orb, Hval, metricValues):
         if self.i>=len(metricValues['start']):
             return self.badval
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         visSort = np.argsort(ssoObs[self.mjdCol][vis])
@@ -530,10 +516,7 @@ class ActivityOverTimeMetric(BaseMoMetric):
     def run(self, ssoObs, orb,  Hval):
         # For cometary activity, expect activity at the same point in its orbit at the same time, mostly
         # For collisions, expect activity at random times
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         n, b = np.histogram(ssoObs[vis][self.nightCol], bins=self.windowBins)
@@ -588,10 +571,7 @@ class ActivityOverPeriodMetric(BaseMoMetric):
         else:
             return self.badval
 
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         n, b = np.histogram(curranomaly[vis], bins=self.anomalyBins)
@@ -618,16 +598,14 @@ class MagicDiscoveryMetric(BaseMoMetric):
     def run(self, ssoObs, orb, Hval):
         """SsoObs = Dataframe, orb=Dataframe, Hval=single number."""
         # Calculate visibility for this orbit at this H.
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         tNights = np.sort(ssoObs[self.nightCol][vis])
         deltaNights = np.roll(tNights, 1-self.nObs) - tNights
         nDisc = np.where((deltaNights < self.tWindow) & (deltaNights >= 0))[0].size
         return nDisc
+
 
 class HighVelocityMetric(BaseMoMetric):
     """Count number of times an SSobject appears trailed.
@@ -648,16 +626,14 @@ class HighVelocityMetric(BaseMoMetric):
         self.badval = 0
 
     def run(self, ssoObs, orb, Hval):
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         highVelocityObs = np.where(ssoObs[self.velocityCol][vis] >=
                                    (24.*  self.psfFactor * ssoObs[self.seeingCol][vis] /
                                     ssoObs[self.expTimeCol][vis]))[0]
         return highVelocityObs.size
+
 
 class HighVelocityNightsMetric(BaseMoMetric):
     """Count the number of discovery opportunities (via trailing) for an SSobject.
@@ -690,20 +666,16 @@ class HighVelocityNightsMetric(BaseMoMetric):
         self.snrLimit = snrLimit
         self.psfFactor = psfFactor
         self.nObsPerNight = nObsPerNight
-        self.badval = 0
 
     def run(self, ssoObs, orb, Hval):
-        if self.snrLimit is not None:
-            vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        else:
-            vis = np.where(ssoObs[self.visCol] > 0)[0]
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
         if len(vis) == 0:
             return self.badval
         highVelocityObs = np.where(ssoObs[self.velocityCol][vis] >=
                                    (24. *  self.psfFactor * ssoObs[self.seeingCol][vis]
                                     / ssoObs[self.expTimeCol][vis]))[0]
         if len(highVelocityObs) == 0:
-            return self.badval
+            return 0
         nights = ssoObs[self.nightCol][vis][highVelocityObs]
         n = np.unique(nights)
         nIdx = np.searchsorted(nights, n)
@@ -722,48 +694,289 @@ class HighVelocityNightsMetric(BaseMoMetric):
         return found
 
 
-class LightcurveInversionMetric(BaseMoMetric):
-    """Identify SSobjects which would have observations suitable to do lightcurve inversion.
-
-    This is roughly defined as objects which have more than nObs observations with SNR greater than snrLimit,
-    within nDays.
+class LightcurveInversion_AsteroidMetric(BaseMoMetric):
     """
-    def __init__(self, nObs=100, snrLimit=20., nDays=5*365, **kwargs):
+    This metric is generally applicable to NEOs and MBAs - inner solar system objects.
+
+    Determine if the cumulative sum of observations of a target are enough to enable lightcurve
+    inversion for shape modeling. For this to be true, multiple conditions need to be
+    satisfied:
+
+    1) The SNR-weighted number of observations (each observation is weighted by its SNR, up to a max of 100)
+    must be larger than the threshhold weightDet (default 50)
+    2) Ecliptic longitudinal coverage needs to be at least 90 degrees, and the absolute deviation
+    needs to be at least 1/8th the longitudinal coverage.
+    3) The phase angle coverage needs to span at least 5 degrees.
+
+    For evaluation of condition 2, the median ecliptic longitude is subtracted from all longitudes,
+    and the modulo 360 of those values is taken. This ensures that the wrap around 360 is handled
+    correctly.
+
+    For more information on the above conditions, please see
+    https://docs.google.com/document/d/1GAriM7trpTS08uanjUF7PyKALB2JBTjVT7Y6R30i0-8/edit?usp=sharing
+    Contributed by Steve Chesley, Wes Fraser, Josef Durech, and the inner solar system working group.
+
+    Parameters
+    ----------
+    weightDet: float, opt
+        The SNR-weighted number of detections required (per bandpass in any ONE of the filters in filterlist).
+        Default 50.
+    snrLimit: float or None, opt
+        If snrLimit is set as a float, then requires object to be above snrLimit SNR in the image.
+        If snrLimit is None, this uses the probabilistic 'visibility' calculated by the vis stacker,
+        which means SNR ~ 5.   Default is None.
+    snrMax: float, opt
+        Maximum value toward the SNR-weighting to consider. Default 100.
+    filterlist: list of str, opt
+        The filters which the lightcurve inversion could be based on. Requirements must be met in one of
+        these filters.
+
+    Returns
+    -------
+    int
+        0 (could not perform lightcurve inversion) or 1 (could)
+    """
+
+    def __init__(self, weightDet=50, snrLimit=None, snrMax=100,
+                 filterlist=('u', 'g', 'r', 'i', 'z', 'y'), **kwargs):
         super().__init__(**kwargs)
-        self.nObs = nObs
         self.snrLimit = snrLimit
-        self.nDays = nDays
-        self.badval = -666
+        self.snrMax = snrMax
+        self.weightDet = weightDet
+        self.filterlist = filterlist
 
     def run(self, ssoObs, orb, Hval):
-        vis = np.where(ssoObs[self.snrCol] >= self.snrLimit)[0]
-        if len(vis) < self.nObs:
-            return 0
-        nights = ssoObs[self.nightCol][vis]
-        ncounts = np.bincount(nights)
-        # ncounts covers the range = np.arange(nights.min(), nights.max() + 1, 1)
-        if self.nDays % 2 == 0:
-            lWindow = self.nDays / 2
-            rWindow = self.nDays / 2
+        # Calculate the clipped SNR - ranges from snrLimit / SNR+vis to snrMax.
+        clipSnr = np.minimum(ssoObs[self.snrCol], self.snrMax)
+        if self.snrLimit is not None:
+            clipSnr = np.where(ssoObs[self.snrCol] <= self.snrLimit, 0, clipSnr)
         else:
-            lWindow = int(self.nDays / 2)
-            rWindow = int(self.nDays / 2) + 1
-        found = 0
-        for i in range(lWindow, len(ncounts) - rWindow):
-            nobs = ncounts[i - lWindow:i + rWindow].sum()
-            if nobs > self.nObs:
-                found = 1
+            clipSnr = np.where(ssoObs[self.visCol] == 0, 0, clipSnr)
+        if len(np.where(clipSnr > 0)[0]) == 0:
+            return 0
+        # Check each filter in filterlist:
+        # stop as soon as find a filter that matches requirements.
+        inversion_possible = 0
+        for f in self.filterlist:
+            # Is the SNR-weight sum of observations in this filter high enough?
+            match = np.where(ssoObs[self.filterCol] == f)
+            snrSum = np.sum(clipSnr[match]) / self.snrMax
+            if snrSum < self.weightDet:
+                # Do not have enough SNR-weighted observations, so skip on to the next filter.
+                continue
+            # Is the ecliptic longitude coverage for the visible observations sufficient?
+            # Is the phase coverage sufficient?
+            vis = np.where(clipSnr[match] > 0)
+            ecL = ssoObs['ecLon'][match][vis]
+            phaseAngle = ssoObs['phase'][match][vis]
+            # Calculate the absolute deviation and range of ecliptic longitude.
+            ecL_centred = (ecL - np.median(ecL)) % 360.0
+            aDev = np.sum(np.abs(ecL_centred - np.mean(ecL_centred))) / len(ecL_centred)
+            dL = np.max(ecL) - np.min(ecL)
+            # Calculate the range of the phase angle
+            dp = np.max(phaseAngle) - np.min(phaseAngle)
+            # Metric requirement is that dL >= 90 deg, absolute deviation is greater than dL/8
+            # and then that the phase coverage is more than 5 degrees.
+            # Stop as soon as find a case where this is true.
+            if dL >= 90.0 and aDev >= dL / 8 and dp >= 5:
+                inversion_possible += 1
                 break
-        return found
+        return inversion_possible
 
 
-class ColorDeterminationMetric(BaseMoMetric):
+class Color_AsteroidMetric(BaseMoMetric):
+    """
+    This metric is appropriate for MBAs and NEOs, and other inner solar system objects.
+
+    The metric evaluates if the SNR-weighted number of observations are enough to
+    determine an approximate lightcurve and phase function -- and from this,
+    then a color for the asteroid can be determined.
+    The assumption is that you must fit the lightcurve/phase function in each bandpass,
+    and could do this well-enough if you have at least weightDet SNR-weighted observations
+    in the bandpass.
+    e.g. to find a g-r color, you must have 10 (SNR-weighted) obs in g and 10 in r.
+
+    For more details, see
+    https://docs.google.com/document/d/1GAriM7trpTS08uanjUF7PyKALB2JBTjVT7Y6R30i0-8/edit?usp=sharing
+    Contributed by Wes Fraser, Steven Chesley & the inner solar system working group.
+
+    Parameters
+    ----------
+    weightDet: float, opt
+        The SNR-weighted number of detections required (per bandpass in any ONE of the filters in filterlist).
+        Default 10.
+    snrLimit: float or None, opt
+        If snrLimit is set as a float, then requires object to be above snrLimit SNR in the image.
+        If snrLimit is None, this uses the probabilistic 'visibility' calculated by the vis stacker,
+        which means SNR ~ 5.   Default is None.
+    snrMax: float, opt
+        Maximum value toward the SNR-weighting to consider. Default 20.
+
+    Returns
+    -------
+    int
+        An integer 'flag' that indicates whether the mean magnitude (and thus a color) was determined in:
+        0 = no bands
+        1 = g and (r or i) and (z or y). i.e. obtain colors g-r or g-i PLUS g-z or g-y
+        2 = Any 4 different filters (from grizy). i.e. colors = g-r, r-i, i-z, OR r-i, i-z, z-y..
+        3 = All 5 from grizy. i.e. colors g-r, r-i, i-z, z-y.
+        4 = All 6 filters (ugrizy) -- best possible! add u-g.
+    """
+
+    def __init__(self, weightDet=10, snrMax=20, snrLimit=None, **kwargs):
+        super().__init__(**kwargs)
+        self.weightDet = weightDet
+        self.snrLimit = snrLimit
+        self.snrMax = snrMax
+        self.filterlist = ('u', 'g', 'r', 'i', 'z', 'y')
+
+    def run(self, ssoObs, orb, Hval):
+        clipSnr = np.minimum(ssoObs[self.snrCol], self.snrMax)
+        if self.snrLimit is not None:
+            clipSnr = np.where(ssoObs[self.snrCol] <= self.snrLimit, 0, clipSnr)
+        else:
+            clipSnr = np.where(ssoObs[self.visCol] == 0, 0, clipSnr)
+        if len(np.where(clipSnr > 0)[0]) == 0:
+            return self.badval
+
+        # Evaluate SNR-weighted number of observations in each filter.
+        filterWeight = {}
+        for f in self.filterlist:
+            match = np.where(ssoObs[self.filterCol] == f)
+            snrweight = np.sum(clipSnr[match]) / self.snrMax
+            # If the snrweight exceeds the weightDet, add it to the dictionary.
+            if snrweight > self.weightDet:
+                filterWeight[f] = snrweight
+
+        # Now assign a flag:
+        # 0 = no bands
+        # 1 = g and (r or i) and (z or y). i.e. obtain colors g-r or g-i PLUS g-z or g-y
+        # 2 = Any 4 different filters (from grizy). i.e. colors = g-r, r-i, i-z, OR r-i, i-z, z-y..
+        # 3 = All 5 from grizy. i.e. colors g-r, r-i, i-z, z-y.
+        # 4 = All 6 filters (ugrizy) -- best possible! add u-g.
+        all_six = set(self.filterlist)
+        good_five = set(['g', 'r', 'i', 'z', 'y'])
+
+        if len(filterWeight) == 0:  # this lets us stop evaluating here if possible.
+            flag = 0
+        elif all_six.intersection(filterWeight) == all_six:
+            flag = 4
+        elif good_five.intersection(filterWeight) == good_five:
+            flag = 3
+        elif len(good_five.intersection(filterWeight)) == 4:
+            flag = 2
+        elif 'g' in filterWeight:
+            # Have 'g' - do we have (r or i) and (z or y)
+            if ('r' in filterWeight or 'i' in filterWeight) and ('z' in filterWeight or 'y' in filterWeight):
+                flag = 1
+            else:
+                flag = 0
+        else:
+            flag = 0
+
+        return flag
+
+
+class LightcurveColor_OuterMetric(BaseMoMetric):
+    """
+    This metric is appropriate for outer solar system objects, such as TNOs and SDOs.
+
+    This metric evaluates whether the number of observations is sufficient to fit a lightcurve
+    in a primary and secondary bandpass. The primary bandpass requires more observations than
+    the secondary. Essentially, it's a complete lightcurve in one or both bandpasses, with at
+    least a semi-complete lightcurve in the secondary band.
+
+    The lightcurve/color can be calculated with any two of the bandpasses in filterlist.
+    Contributed by Wes Fraser.
+
+    Parameters
+    ----------
+    snrLimit: float or None, opt
+        If snrLimit is set as a float, then requires object to be above snrLimit SNR in the image.
+        If snrLimit is None, this uses the probabilistic 'visibility' calculated by the vis stacker,
+        which means SNR ~ 5.   Default is None.
+    numReq: int, opt
+        Number of observations required for a lightcurve fitting. Default 30.
+    numSecFilt: int, opt
+        Number of observations required in a secondary band for color only. Default 20.
+    filterlist: list of str, opt
+        Filters that the primary/secondary measurements can be in.
+
+    Returns
+    -------
+    int
+        A flag that indicates whether a color/lightcurve was generated in:
+        0 = no lightcurve (although may have had 'color' in one or more band)
+        1 = a lightcurve in a single filter (but no additional color information)
+        2+ = lightcurves in more than one filter  (or lightcurve + color)
+        e.g. lightcurve in 2 bands, with additional color information in another = 3.
+    """
+
+    def __init__(self, snrLimit=None, numReq=30, numSecFilt=20,
+                 filterlist=('u', 'g', 'r', 'i', 'z', 'y'), **kwargs):
+        super().__init__(**kwargs)
+        self.snrLimit = snrLimit
+        self.numReq = numReq
+        self.numSecFilt = numSecFilt
+        self.filterlist = filterlist
+
+    def run(self, ssoObs, orb, Hval):
+        vis = _setVis(ssoObs, self.snrLimit, self.snrCol, self.visCol)
+        if len(vis) == 0:
+            return 0
+
+        lightcurves = set()
+        colors = set()
+        for f in self.filterlist:
+            nmatch = np.where(ssoObs[vis][self.filterCol] == f)[0]
+            if len(nmatch) >= self.numReq:
+                lightcurves.add(f)
+            if len(nmatch) >= self.numSecFilt:
+                colors.add(f)
+
+        # Set the flags - first the number of filters with lightcurves.
+        flag = len(lightcurves)
+        # And check if there were extra filters which had enough for a color
+        # but not enough for a full lightcurve.
+        if len(colors.difference(lightcurves)) > 0:
+            # If there was no lightcurve available to match against:
+            if len(lightcurves) == 0:
+                flag = 0
+            else:
+                # We had a lightcurve and now can add a color.
+                flag += 1
+        return flag
+
+
+class InstantaneousColorMetric(BaseMoMetric):
     """Identify SSobjects which could have observations suitable to determine colors.
+
+    Generally, this is not the mode LSST would work in - the lightcurves of the objects
+    mean that the time interval would have to be quite short.
 
     This is roughly defined as objects which have more than nPairs pairs of observations
     with SNR greater than snrLimit, in bands bandOne and bandTwo, within nHours.
+
+    Parameters
+    ----------
+    nPairs: int, opt
+        The number of pairs of observations (in each band) that must be within nHours
+        Default 1
+    snrLimit: float, opt
+        The SNR limit for the observations. Default 10.
+    nHours: float, opt
+        The time interval between observations in the two bandpasses (hours). Default 0.5 hours.
+    bOne: str, opt
+        The first bandpass for the color. Default 'g'.
+    bTwo: str, opt
+        The second bandpass for the color. Default 'r'.
+
+    Returns
+    -------
+    int
+        0 (no color possible under these constraints) or 1 (color possible).
     """
-    def __init__(self, nPairs=1, snrLimit=10, nHours=2.0, bOne='g', bTwo='r', **kwargs):
+    def __init__(self, nPairs=1, snrLimit=10, nHours=0.5, bOne='g', bTwo='r', **kwargs):
         super().__init__(**kwargs)
         self.nPairs = nPairs
         self.snrLimit = snrLimit
@@ -807,9 +1020,11 @@ class PeakVMagMetric(BaseMoMetric):
 
 class KnownObjectsMetric(BaseMoMetric):
     """Identify SSobjects which could be classified as 'previously known' based on their peak V magnitude.
+    This is most appropriate for NEO surveys, where most of the sky has been covered so the exact location
+    (beyond being in the visible sky) is not as important.
 
     Default parameters tuned to match NEO survey capabilities.
-    Returns the time at which each first reached that peak V magnitude.
+    Returns the time at which each first reached that threshold V magnitude.
     The default values are calibrated using the NEOs larger than 140m discovered in the last 20 years
     and assuming a 30% completeness in 2017.
 

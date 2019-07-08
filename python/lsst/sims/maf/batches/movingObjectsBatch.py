@@ -8,11 +8,12 @@ import lsst.sims.maf.stackers as stackers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as mb
 from .colMapDict import ColMapDict
-from .common import summaryCompletenessAtTime, summaryCompletenessOverH
-import warnings
+from .common import summaryCompletenessAtTime, summaryCompletenessOverH, fractionPopulationAtThreshold
 
-__all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch', 'addMoCompletenessBundles',
-           'characterizationBatch', 'combineSubsets']
+__all__ = ['setupMoSlicer', 'quickDiscoveryBatch', 'discoveryBatch',
+           'runCompletenessSummary', 'runFractionSummary',
+           'characterizationAsteroidBatch', 'characterizationOuterBatch',
+           'readAndCombine', 'combineSubsets']
 
 
 def setupMoSlicer(orbitFile, Hrange, obsFile=None):
@@ -40,7 +41,7 @@ def setupMoSlicer(orbitFile, Hrange, obsFile=None):
 
 
 def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detection', metadata='',
-                        albedo=None, Hmark=None, npReduce=np.mean, times=None, constraint=None):
+                        albedo=None, Hmark=None, npReduce=np.mean, constraint=None):
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
@@ -60,27 +61,6 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
         magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
         detectionLosses = ' detection loss'
 
-    if times is None:
-        try:
-            timestep = 30
-            times = np.arange(slicer.obs[colmap['mjd']].min(), slicer.obs[colmap['mjd']].max() + timestep/2,
-                              timestep)
-        except AttributeError:
-            raise warnings.warn('Cannot set times for completeness summary metrics. Will set up bundles, '
-                                'but without summary metrics.')
-
-    if Hmark is None:
-        Hval = slicer.Hrange.mean()
-    else:
-        Hval = Hmark
-
-    # Set up the summary metrics.
-    if times is not None:
-        summaryTimeMetrics = summaryCompletenessAtTime(times, Hval=Hval, Hindex=0.33)
-    else:
-        summaryTimeMetrics = None
-    summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
-
     # Set up a dictionary to pass to each metric for the column names.
     colkwargs = {'mjdCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
                  'expTimeCol': colmap['exptime'], 'm5Col': colmap['fiveSigmaDepth'],
@@ -97,11 +77,9 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
         dispDict = {'group': 'Discovery', 'subgroup': 'Time',
                     'caption': 'Time of discovery of objects', 'order': 0}
         parentBundle.childBundles['Time'].setDisplayDict(dispDict)
-        parentBundle.childBundles['Time'].setSummaryMetrics(summaryTimeMetrics)
         dispDict = {'group': 'Discovery', 'subgroup': 'NChances',
                     'caption': 'Number of chances for discovery of objects', 'order': 0}
         parentBundle.childBundles['N_Chances'].setDisplayDict(dispDict)
-        parentBundle.childBundles['N_Chances'].setSummaryMetrics(summaryHMetrics)
         return
 
     # 3 pairs in 15
@@ -144,7 +122,7 @@ def quickDiscoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='d
 
 
 def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detection', metadata='',
-                   albedo=None, Hmark=None, npReduce=np.mean, times=None, constraint=None):
+                   albedo=None, Hmark=None, npReduce=np.mean, constraint=None):
     if colmap is None:
         colmap = ColMapDict('opsimV4')
     bundleList = []
@@ -166,27 +144,6 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
         magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
         detectionLosses = ' detection loss'
 
-    if times is None:
-        try:
-            timestep = 30
-            times = np.arange(slicer.obs[colmap['mjd']].min(), slicer.obs[colmap['mjd']].max() + timestep/2,
-                              timestep)
-        except AttributeError:
-            raise warnings.warn('Cannot set times for completeness summary metrics. Will set up bundles, '
-                                'but without summary metrics.')
-
-    if Hmark is None:
-        Hval = slicer.Hrange.mean()
-    else:
-        Hval = Hmark
-
-    # Set up the summary metrics.
-    if times is not None:
-        summaryTimeMetrics = summaryCompletenessAtTime(times, Hval=Hval, Hindex=0.33)
-    else:
-        summaryTimeMetrics = None
-    summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
-
     # Set up a dictionary to pass to each metric for the column names.
     colkwargs = {'mjdCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
                  'expTimeCol': colmap['exptime'], 'm5Col': colmap['fiveSigmaDepth'],
@@ -203,11 +160,9 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
         dispDict = {'group': 'Discovery', 'subgroup': 'Time',
                     'caption': 'Time of discovery of objects', 'order': 0}
         parentBundle.childBundles['Time'].setDisplayDict(dispDict)
-        parentBundle.childBundles['Time'].setSummaryMetrics(summaryTimeMetrics)
         dispDict = {'group': 'Discovery', 'subgroup': 'NChances',
                     'caption': 'Number of chances for discovery of objects', 'order': 0}
         parentBundle.childBundles['N_Chances'].setDisplayDict(dispDict)
-        parentBundle.childBundles['N_Chances'].setSummaryMetrics(summaryHMetrics)
         return
 
     # First standard SNR / probabilistic visibility (SNR~5)
@@ -452,7 +407,6 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
                                 stackerList=[magStacker],
                                 runName=runName, metadata=md,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=summaryTimeMetrics,
                                 displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -465,7 +419,6 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
                                 stackerList=[magStacker],
                                 runName=runName, metadata=md,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=summaryHMetrics,
                                 displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -474,10 +427,13 @@ def discoveryBatch(slicer, colmap=None, runName='opsim', detectionLosses='detect
         b.setRunName(runName)
     return mb.makeBundlesDictFromList(bundleList), plotBundles
 
-def addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb):
+
+def runCompletenessSummary(bdict, Hmark, times, outDir, resultsDb):
     """
-    Generate completeness bundles from all N_Chances and Time child metrics of the (discovery) bundles in
-    bdict, and write completeness at Hmark to resultsDb, save bundle to disk.
+    Calculate completeness and create completeness bundles from all N_Chances and Time child metrics
+    of the (discovery) bundles in bdict, and write completeness at Hmark to resultsDb, save bundle to disk.
+
+    This should be done after combining any sub-sets of the metric results.
 
     Parameters
     ----------
@@ -486,6 +442,8 @@ def addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb):
         including bundles we're expecting to contain completeness.
     Hmark : float
         Hmark value to add to completeness plotting dict.
+    times : np.ndarray
+        The times at which to calculate completeness (over time).
     outDir : str
         Output directory to save completeness bundles to disk.
     resultsDb : ~lsst.sims.maf.db.ResultsDb
@@ -494,22 +452,32 @@ def addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb):
     Returns
     -------
     dict of metricBundles
-        Now the resulting metricBundles also includes new nested dicts with keys "DifferentialCompleteness"
-        and "CumulativeCompleteness", which contain bundles of completeness metrics at each year.
+        A dictionary of the new completeness bundles. Keys match original keys,
+        with additions of "[Differential,Cumulative]Completeness@Time"
+        and "[Differential,Cumulative]Completeness" to distinguish new entries.
     """
     # Add completeness bundles and write completeness at Hmark to resultsDb.
     completeness = {}
     group = 'Discovery'
     subgroup = 'Completeness @ H=%.1f' % (Hmark)
 
+    # Set up the summary metrics.
+    summaryTimeMetrics = summaryCompletenessAtTime(times, Hval=Hmark, Hindex=0.33)
+    summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
+
     def _compbundles(b, bundle, Hmark, resultsDb):
         comp = {}
-        newkey = b + ' differential completeness'
-        comp[newkey] = mb.makeCompletenessBundle(bundle, summaryName='DifferentialCompleteness',
-                                                 Hmark=Hmark, resultsDb=resultsDb)
-        newkey = b + ' cumulative completeness'
-        comp[newkey] = mb.makeCompletenessBundle(bundle, summaryName='CumulativeCompleteness',
-                                                 Hmark=Hmark, resultsDb=resultsDb)
+        # Bundle = single metric bundle. Add differential and cumulative completeness.
+        if 'Time' in bundle.metric.name:
+            for metric in summaryTimeMetrics:
+                newkey = b + ' ' + metric.name
+                comp[newkey] = mb.makeCompletenessBundle(bundle, metric,
+                                                         Hmark=None, resultsDb=resultsDb)
+        else:
+            for metric in summaryHMetrics:
+                newkey = b + ' ' + metric.name
+                comp[newkey] = mb.makeCompletenessBundle(bundle, metric,
+                                                         Hmark=Hmark, resultsDb=resultsDb)
         return comp
 
     # Generate the completeness bundles for the various discovery metrics.
@@ -534,9 +502,9 @@ def addMoCompletenessBundles(bdict, Hmark, outDir, resultsDb):
     return completeness
 
 
-def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
-                          albedo=None, Hmark=None, npReduce=np.mean, constraint=None,
-                          windows=None, bins=None):
+def characterizationAsteroidBatch(slicer, colmap=None, runName='opsim', metadata='',
+                                  albedo=None, Hmark=None, constraint=None, npReduce=np.mean,
+                                  windows=None, bins=None):
 
     if colmap is None:
         colmap = ColMapDict('opsimV4')
@@ -553,10 +521,17 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     plotFuncs = [plots.MetricVsH()]
     displayDict ={'group': 'Characterization'}
 
+    # Stackers
+    magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
+    eclStacker = stackers.EclStacker()
+    stackerList = [magStacker, eclStacker]
+
+    # Windows are the different 'length of activity'
     if windows is None:
-        windows = np.arange(1, 200, 15.)
+        windows = np.arange(10, 200, 30.)
+    # Bins are the different 'anomaly variations' of activity
     if bins is None:
-        bins = np.arange(5, 95, 10.)
+        bins = np.arange(5, 185, 20.)
 
     # Number of observations.
     md = metadata
@@ -565,9 +540,9 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     plotDict.update(basicPlotDict)
     metric = metrics.NObsMetric(**colkwargs)
     bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
                                 runName=runName, metadata=md,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
                                 displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -578,9 +553,9 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     plotDict.update(basicPlotDict)
     metric = metrics.ObsArcMetric(**colkwargs)
     bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
                                 runName=runName, metadata=md,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
                                 displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -592,18 +567,20 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
         metricName = 'Chances of detecting activity lasting %.0f days' % w
         metric = metrics.ActivityOverTimeMetric(w, metricName=metricName, **colkwargs)
         bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                   stackerList=stackerList,
                                     runName=runName, metadata=metadata,
                                     plotDict=plotDict, plotFuncs=plotFuncs,
                                     displayDict=displayDict)
         bundleList.append(bundle)
 
     for b in bins:
-        md = metadata + ' activity lasting %.2f of period' % (b/360.)
+        md = metadata + ' activity covering %.0f deg' % (b)
         plotDict = {'title': '%s: Chances of detecting %s' % (runName, md),
-                    'ylabel': 'Probability of detection per %.2f deg window' % b}
-        metricName = 'Chances of detecting activity lasting %.2f of the period' % (b/360.)
+                    'ylabel': 'Probability of detection per %.0f deg window' % b}
+        metricName = 'Chances of detecting activity covering %.0f deg' % (b)
         metric = metrics.ActivityOverPeriodMetric(b, metricName=metricName, **colkwargs)
         bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                   stackerList=stackerList,
                                     runName=runName, metadata=metadata,
                                     plotDict=plotDict, plotFuncs=plotFuncs,
                                     displayDict=displayDict)
@@ -614,80 +591,24 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     plotDict = {'yMin': 0, 'yMax': 1, 'ylabel': 'Fraction of objects',
                 'title': '%s: Fraction with potential lightcurve inversion %s' % (runName, md)}
     plotDict.update(basicPlotDict)
-    metric = metrics.LightcurveInversionMetric(snrLimit=20, nObs=100, nDays=5*365, **colkwargs)
+    metric = metrics.LightcurveInversion_AsteroidMetric(**colkwargs)
     bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
                                 runName=runName, metadata=md,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
                                 displayDict=displayDict)
     bundleList.append(bundle)
 
     # Color determination.
-    snrLimit = 10
-    nHours = 2.0
-    nPairs = 1
-    md = metadata + ' u-g color'
-    plotDict = {'label': md,
-                'title': '%s: Fraction with potential u-g color measurement %s' % (runName, md)}
+    md = metadata
+    plotDict = {'yMin': 0, 'yMax': 1, 'ylabel': 'Fraction of objects',
+                'title': '%s: Fraction of population with colors in X filters %s' % (runName, md)}
     plotDict.update(basicPlotDict)
-    metric = metrics.ColorDeterminationMetric(nPairs=nPairs, snrLimit=snrLimit, nHours=nHours,
-                                              bOne='u', bTwo='g', **colkwargs)
+    metric = metrics.Color_AsteroidMetric(**colkwargs)
     bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
                                 runName=runName, metadata=md,
                                 plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
-                                displayDict=displayDict)
-    bundleList.append(bundle)
-
-    md = metadata + ' g-r color'
-    plotDict = {'label': md,
-                'title': '%s: Fraction with potential g-r color measurement %s' % (runName, md)}
-    plotDict.update(basicPlotDict)
-    metric = metrics.ColorDeterminationMetric(nPairs=nPairs, snrLimit=snrLimit, nHours=nHours,
-                                              bOne='g', bTwo='r', **colkwargs)
-    bundle = mb.MoMetricBundle(metric, slicer, constraint,
-                                runName=runName, metadata=md,
-                                plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
-                                displayDict=displayDict)
-    bundleList.append(bundle)
-
-    md = metadata + ' r-i color'
-    plotDict = {'label': md,
-                'title': '%s: Fraction with potential r-i color measurement %s' % (runName, md)}
-    plotDict.update(basicPlotDict)
-    metric = metrics.ColorDeterminationMetric(nPairs=nPairs, snrLimit=snrLimit, nHours=nHours,
-                                              bOne='r', bTwo='i', **colkwargs)
-    bundle = mb.MoMetricBundle(metric, slicer, constraint,
-                                runName=runName, metadata=md,
-                                plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
-                                displayDict=displayDict)
-    bundleList.append(bundle)
-
-    md = metadata + ' i-z color'
-    plotDict = {'label': md,
-                'title': '%s: Fraction with potential i-z color measurement %s' % (runName, md)}
-    plotDict.update(basicPlotDict)
-    metric = metrics.ColorDeterminationMetric(nPairs=nPairs, snrLimit=snrLimit, nHours=nHours,
-                                              bOne='i', bTwo='z', **colkwargs)
-    bundle = mb.MoMetricBundle(metric, slicer, constraint,
-                                runName=runName, metadata=md,
-                                plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
-                                displayDict=displayDict)
-    bundleList.append(bundle)
-
-    md = metadata + ' z-y color'
-    plotDict = {'label': md,
-                'title': '%s: Fraction with potential z-y color measurement %s' % (runName, md)}
-    plotDict.update(basicPlotDict)
-    metric = metrics.ColorDeterminationMetric(nPairs=nPairs, snrLimit=snrLimit, nHours=nHours,
-                                              bOne='z', bTwo='y', **colkwargs)
-    bundle = mb.MoMetricBundle(metric, slicer, constraint,
-                                runName=runName, metadata=md,
-                                plotDict=plotDict, plotFuncs=plotFuncs,
-                                summaryMetrics=None,
                                 displayDict=displayDict)
     bundleList.append(bundle)
 
@@ -697,9 +618,210 @@ def characterizationBatch(slicer, colmap=None, runName='opsim', metadata='',
     return mb.makeBundlesDictFromList(bundleList), plotBundles
 
 
+def characterizationOuterBatch(slicer, colmap=None, runName='opsim', metadata='',
+                               albedo=None, Hmark=None, constraint=None, npReduce=np.mean,
+                               windows=None, bins=None):
+
+    if colmap is None:
+        colmap = ColMapDict('opsimV4')
+    bundleList = []
+    plotBundles = []
+
+    # Set up a dictionary to pass to each metric for the column names.
+    colkwargs = {'mjdCol': colmap['mjd'], 'seeingCol': colmap['seeingGeom'],
+                 'expTimeCol': colmap['exptime'], 'm5Col': colmap['fiveSigmaDepth'],
+                 'nightCol': colmap['night'], 'filterCol': colmap['filter']}
+
+    basicPlotDict = {'albedo': albedo, 'Hmark': Hmark, 'npReduce': npReduce,
+                     'nxbins': 200, 'nybins': 200}
+    plotFuncs = [plots.MetricVsH()]
+    displayDict ={'group': 'Characterization'}
+
+    # Stackers
+    magStacker = stackers.MoMagStacker(lossCol='dmagDetect')
+    eclStacker = stackers.EclStacker()
+    stackerList = [magStacker, eclStacker]
+
+    # Windows are the different 'length of activity'
+    if windows is None:
+        windows = np.arange(10, 200, 30.)
+    # Bins are the different 'anomaly variations' of activity
+    if bins is None:
+        bins = np.arange(5, 185, 20.)
+
+    # Number of observations.
+    md = metadata
+    plotDict = {'ylabel': 'Number of observations (#)',
+                'title': '%s: Number of observations %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.NObsMetric(**colkwargs)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
+                               runName=runName, metadata=md,
+                               plotDict=plotDict, plotFuncs=plotFuncs,
+                               displayDict=displayDict)
+    bundleList.append(bundle)
+
+    # Observational arc.
+    md = metadata
+    plotDict = {'ylabel': 'Observational Arc (days)',
+                'title': '%s: Observational Arc Length %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.ObsArcMetric(**colkwargs)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
+                               runName=runName, metadata=md,
+                               plotDict=plotDict, plotFuncs=plotFuncs,
+                               displayDict=displayDict)
+    bundleList.append(bundle)
+
+    # Activity detection.
+    for w in windows:
+        md = metadata + ' activity lasting %.0f days' % w
+        plotDict = {'title': '%s: Chances of detecting %s' % (runName, md),
+                    'ylabel': 'Probability of detection per %.0f day window' % w}
+        metricName = 'Chances of detecting activity lasting %.0f days' % w
+        metric = metrics.ActivityOverTimeMetric(w, metricName=metricName, **colkwargs)
+        bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                   stackerList=stackerList,
+                                    runName=runName, metadata=metadata,
+                                    plotDict=plotDict, plotFuncs=plotFuncs,
+                                    displayDict=displayDict)
+        bundleList.append(bundle)
+
+    for b in bins:
+        md = metadata + ' activity covering %.0f deg' % (b)
+        plotDict = {'title': '%s: Chances of detecting %s' % (runName, md),
+                    'ylabel': 'Probability of detection per %.2f deg window' % b}
+        metricName = 'Chances of detecting activity covering %.0f deg' % (b)
+        metric = metrics.ActivityOverPeriodMetric(b, metricName=metricName, **colkwargs)
+        bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                                   stackerList=stackerList,
+                                    runName=runName, metadata=metadata,
+                                    plotDict=plotDict, plotFuncs=plotFuncs,
+                                    displayDict=displayDict)
+        bundleList.append(bundle)
+
+    # Color determination.
+    md = metadata
+    plotDict = {'yMin': 0, 'yMax': 1, 'ylabel': 'Fraction of objects',
+                'title': '%s: Fraction of population with colors in X filters %s' % (runName, md)}
+    plotDict.update(basicPlotDict)
+    metric = metrics.LightcurveColor_OuterMetric(**colkwargs)
+    bundle = mb.MoMetricBundle(metric, slicer, constraint,
+                               stackerList=stackerList,
+                                runName=runName, metadata=md,
+                                plotDict=plotDict, plotFuncs=plotFuncs,
+                                displayDict=displayDict)
+    bundleList.append(bundle)
+
+    # Set the runName for all bundles and return the bundleDict.
+    for b in bundleList:
+        b.setRunName(runName)
+    return mb.makeBundlesDictFromList(bundleList), plotBundles
+
+
+def runFractionSummary(bdict, Hmark, outDir, resultsDb):
+    """
+    Calculate fractional completeness of the population for color and lightcurve metrics.
+
+    This should be done after combining any sub-sets of the metric results.
+
+    Parameters
+    ----------
+    bdict : dict of metricBundles
+        Dict containing ~lsst.sims.maf.MoMetricBundles,
+        including bundles we're expecting to contain lightcurve/color evaluations.
+    Hmark : float
+        Hmark value to add to completeness plotting dict.
+    times : np.ndarray
+        The times at which to calculate completeness (over time).
+    outDir : str
+        Output directory to save completeness bundles to disk.
+    resultsDb : ~lsst.sims.maf.db.ResultsDb
+        Results database to save information about completeness bundle.
+
+    Returns
+    -------
+    dict of metricBundles
+        Now the resulting metricBundles also includes new nested dicts with keys "FracPop_*".
+    """
+    fractions = {}
+    group = 'Characterization'
+    subgroup = 'Fraction of Population with Color/Lightcurve'
+
+    # Look for metrics from asteroid or outer solar system color/lightcurve metrics.
+    inversionSummary = fractionPopulationAtThreshold([1], ['inversion'])
+    asteroidColorSummary = fractionPopulationAtThreshold([4, 3, 2, 1], ['6 of ugrizy', '5 of grizy',
+                                                                        '4 of grizy',
+                                                                        '2 of g, r or i, z or y'])
+    asteroidSummaryMetrics = {'LightcurveInversion_Asteroid': inversionSummary,
+                              'Color_Asteroid': asteroidColorSummary}
+
+    outerColorSummary = fractionPopulationAtThreshold([6, 5, 4, 3, 2, 1], ['6 filters', '5 filters',
+                                                                           '4 filters', '3 filters',
+                                                                           '2 filters', '1 filters'])
+    outerSummaryMetrics = {'LightcurveColor_Outer': outerColorSummary}
+
+    for b, bundle in bdict.items():
+        for k in asteroidSummaryMetrics:
+            if k in b:
+                for metric in asteroidSummaryMetrics[k]:
+                    newkey = b + ' ' + metric.name
+                    fractions[newkey] = mb.makeCompletenessBundle(bundle, metric,
+                                                                  Hmark=Hmark, resultsDb=resultsDb)
+        for k in outerSummaryMetrics:
+            if k in b:
+                for metric in outerSummaryMetrics[k]:
+                    newkey = b + ' ' + metric.name
+                    fractions[newkey] = mb.makeCompletenessBundle(bundle, metric,
+                                                                  Hmark=Hmark, resultsDb=resultsDb)
+    # Write the fractional populations bundles to disk, so we can re-read them later.
+    # (also set the display dict properties, for the resultsDb output).
+    for b, bundle in fractions.items():
+        bundle.setDisplayDict({'group': group, 'subgroup': subgroup})
+        bundle.write(outDir=outDir, resultsDb=resultsDb)
+
+    return fractions
+
+def readAndCombine(orbitRoot, baseDir, splits, metricfile):
+    """Read and combine the metric results from split locations, returning a single bundle.
+
+    This will read the files from
+    baseDir/orbitRoot_[split]/metricfile
+    where split = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], etc. (the subsets the original orbit file was split into).
+
+    Parameters
+    ----------
+    orbitRoot: str
+        The root of the orbit file - l7_5k, mbas_5k, etc.
+    baseDir: str
+        The root directory containing the subset directories. (e.g. '.' often)
+    splits: np.ndarray or list of ints
+        The integers describing the split directories (e.g. [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    metricfile: str
+        The metric filename.
+
+    Returns
+    -------
+    ~lsst.sims.maf.bundle
+        A single metric bundle containing the combined data from each of the subsets.
+
+    Note that this won't work for particularly complex metric values, such as the parent Discovery metrics.
+    However, you can read and combine their child metrics, as for these we can propagate the data masks.
+    """
+    subsets = {}
+    for i in splits:
+        subsets[i] = mb.createEmptyMoMetricBundle()
+        ddir = os.path.join(baseDir, orbitRoot + '_%d' % i)
+        subsets[i].read(os.path.join(ddir, metricfile))
+    bundle = combineSubsets(subsets)
+    return bundle
+
+
 def combineSubsets(mbSubsets):
-    # Combine the data from the subsets.
-    # The first bundle will be used as a bit of a template.
+    # Combine the data from the subset metric bundles.
+    # The first bundle will be used a template for the slicer.
     if isinstance(mbSubsets, dict):
         first = mbSubsets[list(mbSubsets.keys())[0]]
     else:

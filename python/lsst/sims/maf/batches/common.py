@@ -6,7 +6,7 @@ import lsst.sims.maf.stackers as stackers
 
 __all__ = ['combineMetadata', 'filterList', 'radecCols', 'standardSummary', 'extendedSummary',
            'standardMetrics', 'extendedMetrics', 'standardAngleMetrics',
-           'summaryCompletenessAtTime', 'summaryCompletenessOverH']
+           'summaryCompletenessAtTime', 'summaryCompletenessOverH', 'fractionPopulationAtThreshold']
 
 
 def combineMetadata(meta1, meta2):
@@ -266,8 +266,35 @@ def summaryCompletenessOverH(requiredChances=1, Hindex=0.33):
     -------
     List of moving object MoCompleteness metrics (cumulative and differential)
     """
-    summaryMetrics = [metrics.MoCompletenessMetric(requiredChances=requiredChances,
+    summaryMetrics = [metrics.MoCompletenessMetric(threshold=requiredChances,
                                                    cumulative=False, Hindex=Hindex),
-                      metrics.MoCompletenessMetric(requiredChances=requiredChances,
+                      metrics.MoCompletenessMetric(threshold=requiredChances,
                                                    cumulative=True, Hindex=Hindex)]
     return summaryMetrics
+
+
+def fractionPopulationAtThreshold(thresholds, optnames=None):
+    """Creates a list of summary metrics to be applied to any moving object metric
+    which reports a float value, calculating the fraction of the population above X.
+
+    Parameters
+    ----------
+    thresholds : list of float
+        The thresholds at which to calculate what fraction of the population exceeds these values.
+    optnames : list of str, opt
+        If provided, these names will be used instead of the threshold values when constructing
+        the metric names. This allows more descriptive summary statistic names.
+    Returns
+    -------
+    List of moving object MoCompleteness metrics (differential fractions of the population).
+    """
+    fracMetrics = []
+    for i, threshold in enumerate(thresholds):
+        if optnames is not None:
+            opt = optnames[i]
+        else:
+            opt = threshold
+        m = metrics.MoCompletenessMetric(threshold=threshold, cumulative=False,
+                                         metricName=f'FractionPop_{opt}')
+        fracMetrics.append(m)
+    return fracMetrics
