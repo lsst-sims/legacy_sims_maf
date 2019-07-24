@@ -371,6 +371,18 @@ class MetricBundle(object):
         if updateFileRoot:
             self._buildFileRoot()
 
+    def writeDb(self, resultsDb=None, outfileSuffix=None):
+        """Write the metricValues to the database
+        """
+        if outfileSuffix is not None:
+            outfile = self.fileRoot + '_' + outfileSuffix + '.npz'
+        else:
+            outfile = self.fileRoot + '.npz'
+        metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
+                                          self.runName, self.constraint,
+                                          self.metadata, outfile)
+        resultsDb.updateDisplay(metricId, self.displayDict)
+
     def write(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
         """Write metricValues (and associated metadata) to disk.
 
@@ -397,11 +409,8 @@ class MetricBundle(object):
                               metadata=self.metadata + comment,
                               displayDict=self.displayDict,
                               plotDict=self.plotDict)
-        if resultsDb:
-            metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
-                                              self.runName, self.constraint,
-                                              self.metadata, outfile)
-            resultsDb.updateDisplay(metricId, self.displayDict)
+        if resultsDb is not None:
+            self.writeDb(resultsDb=resultsDb)
 
     def outputJSON(self):
         """Set up and call the baseSlicer outputJSON method, to output to IO string.
