@@ -86,7 +86,7 @@ if __name__ == '__main__':
                                                  albedo=args.albedo, Hmark=args.hMark)
     # Run these discovery metrics
     print("Calculating quick discovery metrics with simple trailing losses.")
-    bg = mmb.MoMetricBundleGroup(bdict, outDir=outDir, resultsDb=resultsDb)
+    bg = mmb.MoMetricBundleGroup(bdictT, outDir=args.outDir, resultsDb=resultsDb)
     bg.runAll()
 
     # Run all discovery metrics using 'detection' losses
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     # Run these discovery metrics
     print("Calculating full discovery metrics with detection losses.")
-    bg = mmb.MoMetricBundleGroup(bdictD, outDir=outDir, resultsDb=resultsDb)
+    bg = mmb.MoMetricBundleGroup(bdictD, outDir=args.outDir, resultsDb=resultsDb)
     bg.runAll()
 
     # Run all characterization metrics
@@ -116,7 +116,7 @@ if __name__ == '__main__':
                                                              Hmark=args.hMark, constraint=None)
     # Run these characterization metrics
     print("Calculating characterization metrics.")
-    bg = mmb.MoMetricBundleGroup(bdictC, outDir=outDir, resultsDb=resultsDb)
+    bg = mmb.MoMetricBundleGroup(bdictC, outDir=args.outDir, resultsDb=resultsDb)
     bg.runAll()
 
     if args.opsimDb is not None:
