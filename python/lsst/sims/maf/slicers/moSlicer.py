@@ -85,7 +85,7 @@ class MoObjSlicer(BaseSlicer):
             The file containing the observation information.
         """
         # For now, just read all the observations (should be able to chunk this though).
-        self.allObs = pd.read_table(obsFile, delim_whitespace=True, comment='#')
+        self.allObs = pd.read_csv(obsFile, delim_whitespace=True, comment='#')
         self.obsFile = obsFile
         # We may have to rename the first column from '#objId' to 'objId'.
         if self.allObs.columns.values[0].startswith('#'):
