@@ -49,7 +49,7 @@ if __name__ == '__main__':
         print('Must specify an orbitFile')
         exit()
 
-    if args.characterization.lower() is not in ['inner', 'outer']:
+    if args.characterization.lower() not in ['inner', 'outer']:
         print('Please choose either inner (asteroid) or outer (TNO/SDO?) for characterization.')
         exit()
 
