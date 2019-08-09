@@ -66,6 +66,10 @@ if __name__ == '__main__':
         print(f"Could not read any metric files from {tempdir}")
         exit()
 
+    # Create the output directory.
+    if not (os.path.isdir(outDir)):
+        os.makedirs(outDir)
+
     # Read and combine the metric files.
     for m in metricNames:
         b = batches.readAndCombine(orbitRoot, args.baseDir, splits, m)

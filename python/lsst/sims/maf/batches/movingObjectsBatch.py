@@ -814,7 +814,7 @@ def readAndCombine(orbitRoot, baseDir, splits, metricfile):
     subsets = {}
     for i in splits:
         subsets[i] = mb.createEmptyMoMetricBundle()
-        ddir = os.path.join(baseDir, orbitRoot + '_%d' % i)
+        ddir = os.path.join(baseDir, f'{orbitRoot}_{i}')
         subsets[i].read(os.path.join(ddir, metricfile))
     bundle = combineSubsets(subsets)
     return bundle
