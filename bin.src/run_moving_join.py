@@ -35,7 +35,6 @@ if __name__ == '__main__':
     # Assume splits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     splits = np.arange(0, 10, 1)
     orbitRoot = args.orbitFile.replace('.txt', '').replace('.des', '').replace('.s3m', '')
-    print(f'# Joining files from {orbitRoot}_[0-9]; will use {tempdir} as template.')
 
     if args.outDir is not None:
         outDir = args.outDir
@@ -69,5 +68,5 @@ if __name__ == '__main__':
 
     # Read and combine the metric files.
     for m in metricNames:
-        b = batches.readAndCombine(orbitRoot, baseDir, splits, m)
+        b = batches.readAndCombine(orbitRoot, args.baseDir, splits, m)
         b.write(outDir=outDir)

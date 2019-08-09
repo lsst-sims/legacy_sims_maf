@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 from copy import deepcopy
+import os
 import numpy as np
 import numpy.ma as ma
 import lsst.sims.maf.metrics as metrics
