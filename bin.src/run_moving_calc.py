@@ -11,9 +11,11 @@ import lsst.sims.maf.metricBundles as mmb
 import lsst.sims.maf.utils as utils
 import lsst.sims.maf.batches as batches
 
-# Assumes you have already created observation file, this calculates the metrics for a given split.
-# (i.e. you can run this on an input file created by split observations OR on all observations ..
-#  but you should know/track which one you've done. )
+"""Calculate metric values for an input population. Can be used on either a split or complete population.
+If running on a split population for later re-combining, use the complete set of orbits as the 
+'orbitFile'. Assumes you have already created the moving object observation files.
+"""
+
 
 if __name__ == '__main__':
 

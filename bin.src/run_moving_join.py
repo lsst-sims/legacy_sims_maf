@@ -7,9 +7,8 @@ import numpy as np
 
 import lsst.sims.maf.batches as batches
 
+"""Join split metric outputs into a single metric output file."""
 
-# Assumes you have run (potentially split) metrics.
-# This will join the splits into a single metric output file.
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Join moving object metrics (from splits) for a particular "
@@ -22,6 +21,9 @@ if __name__ == '__main__':
                         help="Output directory for moving object metrics. Default [orbitRoot]")
     args = parser.parse_args()
 
+    if args.orbitFile is None:
+        print('Must specify an orbitFile')
+        exit()
 
     # Outputs from the metrics are generally like so:
     #  <baseDir>/<splitDir>/<metricFileName>
