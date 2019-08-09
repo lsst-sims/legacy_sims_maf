@@ -5,48 +5,24 @@ import glob
 import argparse
 import numpy as np
 
-import lsst.sims.maf.db as db
-import lsst.sims.maf.metricBundles as mmb
-import lsst.sims.maf.utils as utils
 import lsst.sims.maf.batches as batches
 
 
 # Assumes you have run (potentially split) metrics.
-# This will join the splits into a single metric output file and add completeness/fraction outputs.
-# So - even if you've run run_moving_calc on a single/non-split set of observations, you should still
-# run this afterwards.
-# It has to know about all of the split output subdirectories.
+# This will join the splits into a single metric output file.
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Join moving object metrics (from splits) for a particular "
-                                                 "opsim run. Calculates fractions/completeness also.")
+                                                 "opsim run.")
     parser.add_argument("--orbitFile", type=str, help="File containing the moving object orbits.")
     parser.add_argument("--opsimRun", type=str, default='opsim',
                         help="Name of opsim run. Default 'opsim'.")
     parser.add_argument("--baseDir", type=str, default='.',
                         help="Root directory containing split (or single) metric outputs.")
-    parser.add_argument("--split", type=bool, default=True,
-                        help="False = single directory of output, in baseDir. Will not join metric outputs."
-                             "True = multiple subdirectories [0, 1,..., 9] under baseDir. Will join outputs.")
-    parser.add_argument("--outDir", type=str, default='.',
-                        help="Output directory for moving object metrics. Default '.'.")
-    parser.add_argument("--metadata", type=str, default='',
-                        help="Base string to add to all metric metadata. Typically the object type.")
-    parser.add_argument("--albedo", type=float, default=None,
-                        help="Albedo value, to add diameters to upper scales on plots. Default None.")
-    parser.add_argument("--hMark", type=float, default=None,
-                        help="Add vertical lines at H=hMark on plots. Default None.")
-    parser.add_argument("--nYearsMax", type=int, default=10,
-                        help="Maximum number of years out to which to evaluate completeness."
-                             "Default 10.")
-    parser.add_argument("--startTime", type=float, default=59853,
-                        help="Time at start of survey (to set time for summary metrics).")
+    parser.add_argument("--outDir", type=str, default=None,
+                        help="Output directory for moving object metrics. Default [orbitRoot]")
     args = parser.parse_args()
 
-    # Default parameters for completeness metric setup.
-    stepsize = 365 / 2.
-    times = np.arange(0, args.nYearsMax * 365 + stepsize / 2, stepsize)
-    times += args.startTime
 
     # Outputs from the metrics are generally like so:
     #  <baseDir>/<splitDir>/<metricFileName>
@@ -61,17 +37,21 @@ if __name__ == '__main__':
     splits = np.arange(0, 10, 1)
     orbitRoot = args.orbitFile.replace('.txt', '').replace('.des', '').replace('.s3m', '')
 
-    # Scan first splitDir (or baseDir, if not split) for all metric files.
-    tempdir = args.baseDir
-    if args.split:
-        tempdir = os.path.join(args.baseDir, orbitRoot + "_" + splits[0])
+    if args.outDir is not None:
+        outDir = args.outDir
+    else:
+        outDir = f'{orbitRoot}'
+
+    # Scan first splitDir for all metric files.
+    tempdir = os.path.join(args.baseDir, orbitRoot + "_" + splits[0])
     metricfiles = glob.glob(tempdir + '*MOOB.npz')
     # Identify metric names that we want to join - cannot join parent Discovery*Metric data.
     metricNames = []
     for m in metricfiles:
         # Pull out metric name only.
         mname = '_'.join(m.rstrip('_MOOB.npz').split('/')[-1].split('_')[1:])
-        # Hack out raw Discovery outputs.
+        # Hack out raw Discovery outputs. We don't want to join the raw discovery files.
+        # This is a hack because currently we're just pulling out _Time and _N_Chances to join.
         if mname.startswith('Discovery_'):
             if mname.startswith('Discovery_Time'):
                 metricNames.append(mname)
@@ -86,19 +66,7 @@ if __name__ == '__main__':
         print(f"Could not read any metric files from {tempdir}")
         exit()
 
-    # Generate the column map.
-    if args.opsimDb is not None:
-        opsdb = db.OpsimDatabase(args.opsimDb)
-        colmap = batches.getColMap(opsdb)
-        opsdb.close()
-    else:
-        # Use the default (currently, v4).
-        colmap = batches.ColMapDict()
-
-    # Set up resultsDb, to save fraction/completeness values.
-    if not (os.path.isdir(args.outDir)):
-        os.makedirs(args.outDir)
-    resultsDb = db.ResultsDb(outDir=args.outDir)
-
     # Read and combine the metric files.
-    readAndCombine(orbitRoot, baseDir, splits, metricfile + "_MOOB.npz")
+    for m in metricNames:
+        b = batches.readAndCombine(orbitRoot, baseDir, splits, m + "_MOOB.npz")
+        b.write(outDir=outDir)
