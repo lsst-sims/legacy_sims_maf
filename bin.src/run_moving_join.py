@@ -13,10 +13,9 @@ import lsst.sims.maf.batches as batches
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Join moving object metrics (from splits) for a particular "
-                                                 "opsim run.")
+                                                 "opsim run.  Assumes split metric files are in "
+                                                 "<orbitRoot_split> subdirectories of baseDir. ")
     parser.add_argument("--orbitFile", type=str, help="File containing the moving object orbits.")
-    parser.add_argument("--opsimRun", type=str, default='opsim',
-                        help="Name of opsim run. Default 'opsim'.")
     parser.add_argument("--baseDir", type=str, default='.',
                         help="Root directory containing split (or single) metric outputs.")
     parser.add_argument("--outDir", type=str, default=None,
@@ -36,6 +35,7 @@ if __name__ == '__main__':
     # Assume splits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     splits = np.arange(0, 10, 1)
     orbitRoot = args.orbitFile.replace('.txt', '').replace('.des', '').replace('.s3m', '')
+    print(f'# Joining files from {orbitRoot}_[0-9]; will use {tempdir} as template.')
 
     if args.outDir is not None:
         outDir = args.outDir
@@ -43,19 +43,20 @@ if __name__ == '__main__':
         outDir = f'{orbitRoot}'
 
     # Scan first splitDir for all metric files.
-    tempdir = os.path.join(args.baseDir, orbitRoot + "_" + splits[0])
-    metricfiles = glob.glob(tempdir + '*MOOB.npz')
-    # Identify metric names that we want to join - cannot join parent Discovery*Metric data.
+    tempdir = os.path.join(args.baseDir, f'{orbitRoot}_{splits[0]}')
+    print(f'# Joining files from {orbitRoot}_[0-9]; will use {tempdir} to find metric names.')
+
+    metricfiles = glob.glob(os.path.join(tempdir, '*MOOB.npz'))
+    # Identify metric names that we want to join.
     metricNames = []
     for m in metricfiles:
-        # Pull out metric name only.
-        mname = '_'.join(m.rstrip('_MOOB.npz').split('/')[-1].split('_')[1:])
+        mname = os.path.split(m)[-1]
         # Hack out raw Discovery outputs. We don't want to join the raw discovery files.
         # This is a hack because currently we're just pulling out _Time and _N_Chances to join.
-        if mname.startswith('Discovery_'):
-            if mname.startswith('Discovery_Time'):
+        if 'Discovery' in mname:
+            if 'Discovery_Time' in mname:
                 metricNames.append(mname)
-            elif mname.startswith('Discovery_N_Chances'):
+            elif 'Discovery_N_Chances' in mname:
                 metricNames.append(mname)
             else:
                 pass
@@ -68,5 +69,5 @@ if __name__ == '__main__':
 
     # Read and combine the metric files.
     for m in metricNames:
-        b = batches.readAndCombine(orbitRoot, baseDir, splits, m + "_MOOB.npz")
+        b = batches.readAndCombine(orbitRoot, baseDir, splits, m)
         b.write(outDir=outDir)
