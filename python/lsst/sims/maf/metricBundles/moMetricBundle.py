@@ -64,6 +64,8 @@ def makeCompletenessBundle(bundle, completenessMetric, Hmark=None, resultsDb=Non
     plotDict = {}
     plotDict.update(bundle.plotDict)
     plotDict['label'] = bundle.metadata
+    if 'Completeness' not in summaryName:
+        plotDict['label'] += ' ' + summaryName.replace('FractionPop_', '')
     mb.metricValues = completeness.reshape(1, len(completeness))
     if Hmark is not None:
         metric = ValueAtHMetric(Hmark=Hmark)
@@ -71,9 +73,9 @@ def makeCompletenessBundle(bundle, completenessMetric, Hmark=None, resultsDb=Non
         mb.computeSummaryStats(resultsDb)
         val = mb.summaryValues['Value At H=%.1f' % Hmark]
         if summaryName.startswith('Cumulative'):
-            plotDict['label'] += ' : @ H(<=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
+            plotDict['label'] += ': @ H(<=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
         else:
-            plotDict['label'] += ' : @ H(=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
+            plotDict['label'] += ': @ H(=%.1f) = %.1f%s' % (Hmark, val * 100, '%')
     mb.setPlotDict(plotDict)
     return mb
 

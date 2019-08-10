@@ -211,9 +211,9 @@ class MoCompletenessAtTimeMetric(BaseMoMetric):
         else:
             self.cumulative = cumulative
             if self.cumulative:
-                self.metricName = 'CumulativeCompleteness@Time'
+                self.metricName = 'CumulativeCompleteness@Time@H=%.2f' % self.Hval
             else:
-                self.metricName = 'DifferentialCompleteness@Time'
+                self.metricName = 'DifferentialCompleteness@Time@H=%.2f' % self.Hval
         self._setLabels()
         super(MoCompletenessAtTimeMetric, self).__init__(metricName=self.metricName, units=self.units,
                                                          **kwargs)

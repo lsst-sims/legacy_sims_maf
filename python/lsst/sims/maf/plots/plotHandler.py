@@ -501,7 +501,7 @@ class PlotHandler(object):
                 for pd in self.plotDicts:
                     pd[key] = None
 
-    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileSuffix=None):
+    def plot(self, plotFunc, plotDicts=None, displayDict=None, outfileRoot=None, outfileSuffix=None):
         """
         Create plot for mBundles, using plotFunc.
 
@@ -520,7 +520,10 @@ class PlotHandler(object):
         # Update x/y labels using plotType.
         self.setPlotDicts(plotDicts=plotDicts, plotFunc=plotFunc, reset=False)
         # Set outfile name.
-        outfile = self._buildFileRoot(outfileSuffix)
+        if outfileRoot is None:
+            outfile = self._buildFileRoot(outfileSuffix)
+        else:
+            outfile = outfileRoot
         plotType = plotFunc.plotType
         if len(self.mBundles) > 1:
             plotType = 'Combo' + plotType

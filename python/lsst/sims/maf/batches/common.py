@@ -295,6 +295,6 @@ def fractionPopulationAtThreshold(thresholds, optnames=None):
         else:
             opt = threshold
         m = metrics.MoCompletenessMetric(threshold=threshold, cumulative=False,
-                                         metricName=f'FractionPop_{opt}')
+                                         metricName=f'FractionPop {opt}')
         fracMetrics.append(m)
     return fracMetrics
