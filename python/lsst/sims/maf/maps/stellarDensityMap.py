@@ -42,12 +42,12 @@ class StellarDensityMap(BaseMap):
         nsideMatch = False
         if 'nside' in slicePoints:
             if slicePoints['nside'] == self.starmapNside:
-                slicePoints['starLumFunc'] = self.starMap
+                slicePoints[f'starLumFunc_{self.filtername}'] = self.starMap
                 nsideMatch = True
         if not nsideMatch:
             # Compute the healpix for each slicepoint on the nside=64 grid
             indx = radec2pix(self.starmapNside, slicePoints['ra'], slicePoints['dec'])
-            slicePoints['starLumFunc'] = self.starMap[indx,:]
+            slicePoints[f'starLumFunc_{self.filtername}'] = self.starMap[indx,:]
 
-        slicePoints['starMapBins'] = self.starMapBins
+        slicePoints[f'starMapBins_{self.filtername}'] = self.starMapBins
         return slicePoints

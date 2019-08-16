@@ -10,20 +10,19 @@ class ExgalM5(BaseMetric):
 
     Uses photUtils
     """
-    def __init__(self, m5Col='fiveSigmaDepth', units='mag', maps=['DustMap'],
+    def __init__(self, m5Col='fiveSigmaDepth', units='mag',
                  lsstFilter='r', wavelen_min=None , wavelen_max=None , wavelen_step=1., **kwargs ):
         """
         Args:
             m5Col (str): Column name that ('fiveSigmaDepth')
             units (str): units of the metric ('mag')
-            maps (list): List of maps to use with the metric (['DustMap'])
             lsstFilter (str): Which LSST filter to calculate m5 for
             wavelen_min (float): Minimum wavength of your filter (None)
             wavelen_max (float): (None)
             wavelen_step (float): (1.)
             **kwargs:
         """
-
+        maps = ['DustMap']
         waveMins={'u':330.,'g':403.,'r':552.,'i':691.,'z':818.,'y':950.}
         waveMaxes={'u':403.,'g':552.,'r':691.,'i':818.,'z':922.,'y':1070.}
 
@@ -38,7 +37,7 @@ class ExgalM5(BaseMetric):
         testsed = Sed()
         testsed.setFlatSED(wavelen_min = wavelen_min,
                            wavelen_max = wavelen_max, wavelen_step = 1)
-        self.a,self.b = testsed.setupCCMab()
+        self.a,self.b = testsed.setupCCM_ab()
         self.R_v = 3.1
         self.Coaddm5Metric = Coaddm5Metric(m5Col=m5Col)
 
