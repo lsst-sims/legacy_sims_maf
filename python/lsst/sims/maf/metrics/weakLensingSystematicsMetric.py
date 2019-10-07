@@ -1,36 +1,35 @@
-import numpy as np
-from .metrics import BaseMetric, ExgalM5
-from .maps import DustMap
-from .slicers import HealpixSlicer
-from lsst.sims.utils import angularSeparation
+from lsst.sims.maf.metrics import BaseMetric, ExgalM5
+from lsst.sims.maf.maps import DustMap
 
 
-__all__ = ['NumberOfVisitsMetric']
+__all__ = ['AverageVisitMetric']
 
-class NumberOfVisitsMetric(BaseMetric):
+class AverageVisitsMetric(BaseMetric):
+    """Note:
+        Should be run with the HealpixSlicer. If using dithering (which
+        should be the case unless dithering is already implemented in the run)
+        then should be run with a stacker and appropriate column names for 
+        dithered RA and Dec should be provided.
+    """
 
-    
     
     def __init__(self,
-                 runName,
                  maps,
-                 depthlim,
-                 Stacker=stackers.RandomDitherFieldPerVisitStacker(
-                                        degrees=True),
+                 depthlim=24.5,
                  metricName='AverageVisitsMetric',
                  **kwargs):
         """Weak Lensing systematics metric
 
-        Computes the number of visits per object for a healpix
-        grid of points, within the WFD, after LSS cuts"""
+        Computes the average number of visits per point on a HEALPix grid
+        after E(B-V) and co-added depth cuts.
+        """
         
-        super(AverageVisitsMetric, self).__init__(
-            metricName=metricName, col=['fieldId', 'fieldDec', 'fiveSigmaDepth'],
-            maps=maps, **kwargs
+        super().__init__(
+            metricName=metricName, 
+            col=['fieldId', 'fieldDec', 'fiveSigmaDepth'],
+            maps=maps, 
+            **kwargs
             )
-        self.FOVradius = 1.75
-        self.runName = runName
-        self.Stacker = Stacker
         self.ExgalM5 = ExgalM5()
         self.depthlim = depthlim
 
@@ -41,21 +40,12 @@ class NumberOfVisitsMetric(BaseMetric):
             dataSlice (ndarray): positional data from querying the database
             slicePoint (dict): queried data along with data from stackers
         Returns:
-            (int): total number of visits at this healpix point
+            the number of visits that can observe this healpix point.
         """
-        result = 0
         if slicePoint['ebv'] > 0.2:
             return self.badval
         ExgalM5 = self.ExgalM5.run(dataSlice=dataSlice, slicePoint=slicePoint)
         if ExgalM5 < self.depthlim:
             return self.badval
-        for datum in dataSlice:
-            if angularSeparation(
-                datum[3],
-                datum[4],
-                slicePoint['ra']*np.degrees(1),
-                slicePoint['dec']*np.degrees(1)
-                ) < self.FOVradius:
-                result += 1
-        return result
+        return len(dataSlice)
 
