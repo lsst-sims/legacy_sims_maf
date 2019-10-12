@@ -378,10 +378,11 @@ class MetricBundle(object):
             outfile = self.fileRoot + '_' + outfileSuffix + '.npz'
         else:
             outfile = self.fileRoot + '.npz'
-        metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
-                                          self.runName, self.constraint,
-                                          self.metadata, outfile)
-        resultsDb.updateDisplay(metricId, self.displayDict)
+        if resultsDb is not None:
+            metricId = resultsDb.updateMetric(self.metric.name, self.slicer.slicerName,
+                                              self.runName, self.constraint,
+                                              self.metadata, outfile)
+            resultsDb.updateDisplay(metricId, self.displayDict)
 
     def write(self, comment='', outDir='.', outfileSuffix=None, resultsDb=None):
         """Write metricValues (and associated metadata) to disk.
