@@ -1,5 +1,6 @@
-from lsst.sims.maf.metrics import BaseMetric, ExgalM5
-from lsst.sims.maf.maps import DustMap
+from .baseMetric import BaseMetric
+from .exgalM5 import ExgalM5
+from ..maps import DustMap
 
 
 __all__ = ['NumberOfVisitsMetric']
