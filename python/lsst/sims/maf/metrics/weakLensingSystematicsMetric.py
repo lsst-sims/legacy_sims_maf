@@ -2,9 +2,9 @@ from lsst.sims.maf.metrics import BaseMetric, ExgalM5
 from lsst.sims.maf.maps import DustMap
 
 
-__all__ = ['AverageVisitMetric']
+__all__ = ['NumberOfVisitsMetric']
 
-class AverageVisitsMetric(BaseMetric):
+class NumberOfVisitsMetric(BaseMetric):
     """Note:
         Should be run with the HealpixSlicer. If using dithering (which
         should be the case unless dithering is already implemented in the run)
@@ -16,7 +16,7 @@ class AverageVisitsMetric(BaseMetric):
     def __init__(self,
                  maps,
                  depthlim=24.5,
-                 metricName='AverageVisitsMetric',
+                 metricName='NumberOfVisitsMetric',
                  **kwargs):
         """Weak Lensing systematics metric
 
