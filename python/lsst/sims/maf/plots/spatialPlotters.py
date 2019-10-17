@@ -83,6 +83,10 @@ class HealpixSkyMap(BasePlotter):
         self.defaultPlotDict.update({'rot': (0, 0, 0), 'flip': 'astro', 'coord': 'C'})
         # Note: for alt/az sky maps using the healpix plotter, you can use
         # {'rot': (90, 90, 90), 'flip': 'geo'}
+        self.healpy_visufunc = hp.mollview
+        self.healpy_visufunc_params = {}
+        self.ax = None
+        self.im = None
 
     def __call__(self, metricValueIn, slicer, userPlotDict, fignum=None):
         """
@@ -130,15 +134,27 @@ class HealpixSkyMap(BasePlotter):
             notext = True
         else:
             notext = False
-        hp.mollview(metricValue.filled(slicer.badval), title=plotDict['title'], cbar=False,
-                    min=clims[0], max=clims[1], rot=plotDict['rot'], flip=plotDict['flip'],
-                    coord=plotDict['coord'], cmap=cmap, norm=norm,
-                    sub=plotDict['subplot'], fig=fig.number, notext=notext)
+            
+        visufunc_params = {'title': plotDict['title'],
+                           'cbar': False,
+                           'min': clims[0],
+                           'max': clims[1],
+                           'rot': plotDict['rot'],
+                           'flip': plotDict['flip'],
+                           'coord': plotDict['coord'],
+                           'cmap': cmap,
+                           'norm': norm,
+                           'sub': plotDict['subplot'],
+                           'fig':fig.number,
+                           'notext': notext}
+        visufunc_params.update(self.healpy_visufunc_params)
+        self.healpy_visufunc(metricValue.filled(slicer.badval), **visufunc_params)
+        
         # Add a graticule (grid) over the globe.
         hp.graticule(dpar=30, dmer=30, verbose=False)
         # Add colorbar (not using healpy default colorbar because we want more tickmarks).
-        ax = plt.gca()
-        im = ax.get_images()[0]
+        self.ax = plt.gca()
+        im = self.ax.get_images()[0]
         # Add label.
         if plotDict['label'] is not None:
             plt.figtext(0.8, 0.8, '%s' % (plotDict['label']))
@@ -163,7 +179,7 @@ class HealpixSkyMap(BasePlotter):
             cb.solids.set_edgecolor("face")
         return fig.number
 
-
+    
 class HealpixPowerSpectrum(BasePlotter):
     def __init__(self):
         self.plotType = 'PowerSpectrum'
