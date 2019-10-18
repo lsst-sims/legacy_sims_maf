@@ -1,4 +1,3 @@
-from __future__ import print_function
 from builtins import map
 from builtins import object
 # Base class for metrics - defines methods which must be implemented.
@@ -12,50 +11,8 @@ from builtins import object
 import numpy as np
 import inspect
 from lsst.sims.maf.stackers.getColInfo import ColInfo
-from future.utils import with_metaclass
 
-__all__ = ['MetricRegistry', 'BaseMetric']
-
-
-class MetricRegistry(type):
-    """
-    Meta class for metrics, to build a registry of metric classes.
-    """
-    def __init__(cls, name, bases, dict):
-        super(MetricRegistry, cls).__init__(name, bases, dict)
-        if not hasattr(cls, 'registry'):
-            cls.registry = {}
-        modname = inspect.getmodule(cls).__name__
-        if modname.startswith('lsst.sims.maf.metrics'):
-            modname = ''
-        else:
-            if len(modname.split('.')) > 1:
-                modname = '.'.join(modname.split('.')[:-1]) + '.'
-            else:
-                modname = modname + '.'
-        metricname = modname + name
-        if metricname in cls.registry:
-            raise Exception('Redefining metric %s! (there are >1 metrics with the same name)' % (metricname))
-        if metricname not in ['BaseMetric', 'SimpleScalarMetric']:
-            cls.registry[metricname] = cls
-
-    def getClass(cls, metricname):
-        return cls.registry[metricname]
-
-    def help(cls, doc=False):
-        for metricname in sorted(cls.registry):
-            if not doc:
-                print(metricname)
-            if doc:
-                print('---- ', metricname, ' ----')
-                print(inspect.getdoc(cls.registry[metricname]))
-
-    def help_metric(cls, metricname):
-        print(metricname)
-        print(inspect.getdoc(cls.registry[metricname]))
-        k = inspect.signature(cls.registry[metricname])
-        print(' Metric __init__ keyword args and defaults: ')
-        print(k)
+__all__ = ['BaseMetric']
 
 
 class ColRegistry(object):
@@ -95,7 +52,7 @@ class ColRegistry(object):
                         self.stackerDict[col] = source
 
 
-class BaseMetric(with_metaclass(MetricRegistry, object)):
+class BaseMetric(object):
     """
     Base class for the metrics.
     Sets up some basic functionality for the MAF framework: after __init__ every metric will
