@@ -29,15 +29,23 @@ def defaultHrange(metadata):
                      'Trojan': [14, 22, 0.2],
                      'TNO': [4, 12, 0.2],
                      'SDO': [4, 12, 0.2]}
+    defaultHmark = {'PHA': 22, 'NEO': 22, 'MBA': 20,
+                    'Trojan': 18, 'TNO': 8, 'SDO': 8}
     if metadata in defaultRanges:
         Hrange = defaultRanges[metadata]
+        Hmark = defaultHmark[metadata]
     elif metadata.upper().startswith('GRANVIK'):
         Hrange = defaultRanges['NEO']
+        Hmark = defaultHmark['NEO']
     elif metadata.upper().startswith('L7'):
         Hrange = defaultRanges('TNO')
+        Hmark = defaultHmark['TNO']
     else:
-        raise ValueError('metadata not in known populations')
-    return Hrange
+        print(f'## Could not find {metadata} in default keys ({defaultRanges.keys()}). \n'
+              f'## Using expanded default range instead.')
+        Hrange = [4, 28, 0.5]
+        Hmark = 10
+    return Hrange, Hmark
 
 
 def defaultCharacterization(metadata):
@@ -52,7 +60,9 @@ def defaultCharacterization(metadata):
     elif metadata.upper().startswith('L7'):
         char = 'outer'
     else:
-        raise ValueError('metadata not in known populations')
+        print(f'## Could not find {metadata} in default keys ({defaultChar.keys()}). \n'
+              f'## Using Inner (Asteroid) characterization by default.')
+        char = 'inner'
     return char
 
 
@@ -967,7 +977,7 @@ def plotSingle(bundle, resultsDb=None, outDir='.', figformat='pdf'):
     """
     pDict = {'95%ile': {'color': 'k', 'linestyle': '--', 'label': '95th %ile',
                         'npReduce': lambda x, axis: np.percentile(x, 95, axis=axis)},
-             '75%ile': {'color': 'r', 'linestyle': ':', 'label': '75th %ile',
+             '75%ile': {'color': 'magenta', 'linestyle': ':', 'label': '75th %ile',
                         'npReduce': lambda x, axis: np.percentile(x, 75, axis=axis)},
              'Median': {'color': 'b', 'linestyle': '-', 'label': 'Median',
                         'npReduce': lambda x, axis: np.median(x, axis=axis)},
@@ -985,8 +995,15 @@ def plotSingle(bundle, resultsDb=None, outDir='.', figformat='pdf'):
         plotBundles.append(bundle)
         plotDicts.append(pDict[r])
     plotDicts[0].update({'figsize': (8, 6), 'legendloc': 'upper right', 'yMin': 0})
+    # Remove the Hmark line because these plots get complicated.
+    for r in plotDicts:
+        del plotDicts[r]['Hmark']
     ph.setMetricBundles(plotBundles)
     ph.plot(plotFunc=plots.MetricVsH(), plotDicts=plotDicts, displayDict=displayDict)
+
+
+def plotNotFound(nChances, Hmark):
+    pass
 
 
 def plotActivity(bdict, figroot=None, resultsDb=None, outDir='.', figformat='pdf'):
