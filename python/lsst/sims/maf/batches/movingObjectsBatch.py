@@ -467,14 +467,18 @@ def runCompletenessSummary(bdict, Hmark, times, outDir, resultsDb):
     # Add completeness bundles and write completeness at Hmark to resultsDb.
     completeness = {}
     group = 'Discovery'
-    subgroup = 'Completeness @ H=%.1f' % (Hmark)
-
-    # Set up the summary metrics.
-    summaryTimeMetrics = summaryCompletenessAtTime(times, Hval=Hmark, Hindex=0.33)
-    summaryTimeMetrics2 = summaryCompletenessAtTime(times, Hval=Hmark-2, Hindex=0.33)
-    summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
+    subgroup = 'Completeness' % (Hmark)
 
     def _compbundles(b, bundle, Hmark, resultsDb):
+        # Find Hmark if not set (this may be different for different bundles).
+        if Hmark is None and 'Hmark' in bundle.plotDict:
+            Hmark = bundle.plotDict['Hmark']
+        if Hmark is None:
+            Hmark = np.median(bundle.slicer.slicePoints['H'])
+        # Set up the summary metrics.
+        summaryTimeMetrics = summaryCompletenessAtTime(times, Hval=Hmark, Hindex=0.33)
+        summaryTimeMetrics2 = summaryCompletenessAtTime(times, Hval=Hmark - 2, Hindex=0.33)
+        summaryHMetrics = summaryCompletenessOverH(requiredChances=1, Hindex=0.33)
         comp = {}
         # Bundle = single metric bundle. Add differential and cumulative completeness.
         if 'Time' in bundle.metric.name:
@@ -858,6 +862,11 @@ def runFractionSummary(bdict, Hmark, outDir, resultsDb):
     outerSummaryMetrics = {'LightcurveColor_Outer': outerColorSummary}
 
     for b, bundle in bdict.items():
+        # Find Hmark if not set (this may be different for different bundles).
+        if Hmark is None and 'Hmark' in bundle.plotDict:
+            Hmark = bundle.plotDict['Hmark'] - 2
+        if Hmark is None:
+            Hmark = np.median(bundle.slicer.slicePoints['H']) - 2
         for k in asteroidSummaryMetrics:
             if k in b:
                 for summary_metric in asteroidSummaryMetrics[k]:
@@ -1037,4 +1046,5 @@ def combineSubsets(mbSubsets):
     joint.metadata = first.metadata
     joint.runName = first.runName
     joint.fileRoot = first.fileRoot.replace('.npz', '')
+    joint.plotDict = first.plotDict
     return joint

@@ -15,8 +15,10 @@ import lsst.sims.maf.batches as batches
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run moving object metrics for a particular opsim run.")
-    parser.add_argument("--outDir", type=str, default='.',
+    parser.add_argument("--workDir", type=str, default='.',
                         help="Output (and input) directory for moving object metrics. Default '.'.")
+    parser.add_argument('--metadata', type=str, default=None,
+                        help="Select only files matching this metadata string. Default None (all files).")
     parser.add_argument("--albedo", type=float, default=None,
                         help="Albedo value, to add diameters to upper scales on plots. Default None.")
     parser.add_argument("--hMark", type=float, default=None,
@@ -39,7 +41,11 @@ if __name__ == '__main__':
 
     # Just read in all metrics in the (joint or single) directory, then run completeness and fraction
     # summaries, using the methods in the batches.
-    metricfiles = glob.glob(os.path.join(args.outDir, '*MOOB.npz'))
+    if args.metadata is None:
+        matchstring = os.path.join(args.workDir, '*MOOB.npz')
+    else:
+        matchstring = os.path.join(args.workDir, f'{args.metadata}*MOOB.npz')
+    metricfiles = glob.glob(matchstring)
     metricNames = []
     for m in metricfiles:
         mname = os.path.split(m)[-1].rstrip('_MOOB.npz')
@@ -54,10 +60,6 @@ if __name__ == '__main__':
     figroot = f'{first.runName}'
     if args.outDir is not '.':
         figroot += f'_{args.outDir}'
-    # hstep/hmin/hmax are defined when the original H range is defined and the metric run.
-    # However, hMark can be changed here for summary stats.
-    if args.hMark is None:
-        args.hMark = np.median(first.slicer.slicePoints['H'])
 
     # Calculate completeness. This utility writes these to disk.
     bdictCompleteness = batches.runCompletenessSummary(bdict, args.hMark, times, args.outDir, resultsDb)
@@ -69,10 +71,7 @@ if __name__ == '__main__':
                              resultsDb=resultsDb, outDir=args.outDir)
 
     # Calculate fractions of population for characterization. This utility writes these to disk.
-    bdictFractions = batches.runFractionSummary(bdict, args.hMark - 2, args.outDir, resultsDb)
-    # Plot the fractions for colors and lightcurves.
-    batches.plotFractions(bdictFractions, figroot=figroot,
-                          resultsDb=resultsDb, outDir=args.outDir)
+    bdictFractions = batches.runFractionSummary(bdict, args.hMark, args.outDir, resultsDb)
     # Plot the fractions for colors and lightcurves.
     batches.plotFractions(bdictFractions, figroot=figroot,
                           resultsDb=resultsDb, outDir=args.outDir)
