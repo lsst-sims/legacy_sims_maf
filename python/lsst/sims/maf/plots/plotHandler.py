@@ -529,7 +529,6 @@ class PlotHandler(object):
             plotType = 'Combo' + plotType
         # Make plot.
         fignum = None
-        plotlims = {'x': [None, None], 'y': [None, None]}
         for mB, plotDict in zip(self.mBundles, self.plotDicts):
             if mB.metricValues is None:
                 # Skip this metricBundle.

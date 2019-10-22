@@ -70,13 +70,13 @@ class MetricVsH(BasePlotter):
         plt.plot(Hvals, mVals, color=plotDict['color'], linestyle=plotDict['linestyle'],
                 label=plotDict['label'])
         if 'xMin' in plotDict:
-            plt.xlim(xmin = plotDict['xMin'])
+            plt.xlim(left = plotDict['xMin'])
         if 'xMax' in plotDict:
-            plt.xlim(xmax = plotDict['xMax'])
+            plt.xlim(right = plotDict['xMax'])
         if 'yMin' in plotDict:
-            plt.ylim(ymin = plotDict['yMin'])
+            plt.ylim(bottom = plotDict['yMin'])
         if 'yMax' in plotDict:
-            plt.ylim(ymax = plotDict['yMax'])
+            plt.ylim(top = plotDict['yMax'])
         # Convert Hvals to diameter, using 'albedo'
         albedo = plotDict['albedo']
         y = 1.0
